@@ -260,9 +260,7 @@ export const InviteUserDialog = ({
                     {t(
                       'Invite team members to collaborate and build amazing flows together.',
                     )}{' '}
-                    {t(
-                      'Email addresses that already have access are skipped.',
-                    )}
+                    {t('Email addresses that already have access are skipped.')}
                   </>
                 ) : (
                   <>
@@ -274,9 +272,7 @@ export const InviteUserDialog = ({
                     {t(
                       'Platform members get instant access to this project. New members get access after accepting the invitation.',
                     )}{' '}
-                    {t(
-                      'Email addresses that already have access are skipped.',
-                    )}
+                    {t('Email addresses that already have access are skipped.')}
                   </>
                 )}
               </DialogDescription>

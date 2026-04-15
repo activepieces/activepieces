@@ -103,9 +103,7 @@ export const RoleSelector = ({
         {showProjectSpinner ? (
           <span className="flex items-center gap-2 font-normal text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
-            {projectRoleAssigning
-              ? t('Saving...')
-              : t('Loading...')}
+            {projectRoleAssigning ? t('Saving...') : t('Loading...')}
           </span>
         ) : selectedRole ? (
           <span className="font-normal">{selectedRole.label}</span>
