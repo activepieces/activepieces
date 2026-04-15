@@ -14,6 +14,11 @@ export function createFilesService({ stepName, flowId, engineToken, apiUrl }: Cr
 
     return {
         write: async ({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> => {
+            if (!Buffer.isBuffer(data)) {
+                throw new Error(
+                    `Expected file data to be a Buffer, but received ${typeof data === 'object' ? Object.prototype.toString.call(data) : typeof data}`,
+                )
+            }
             validateFileSize(data, maxFileSizeMb)
             const formData = createFormData({ fileName, data, stepName, flowId, useSignedUrl })
             const result = await uploadFileMetadata({ formData, engineToken, apiUrl })
@@ -89,7 +94,7 @@ async function uploadFileContent({ url, data }: { url: string, data: Buffer }): 
     if (!uploadResponse.ok) {
         throw new FileStoreError({
             status: uploadResponse.status,
-            body: uploadResponse.body,
+            body: await uploadResponse.text(),
         })
     }
 }
