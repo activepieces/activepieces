@@ -12,7 +12,7 @@ import {
   TriggerPayload,
   TriggerStrategy,
 } from '@activepieces/shared';
-import { LanguageModel, ToolSet } from 'ai'
+import { LanguageModel, Tool } from 'ai'
 
 import {
   BasicAuthProperty,
@@ -238,7 +238,7 @@ export type ConstructToolParams = {
 }
 
 export interface AgentContext {
-  tools: (params: ConstructToolParams) => Promise<ToolSet>;
+  tools: (params: ConstructToolParams) => Promise<Tool>;
 }
 
 export interface FilesService {
