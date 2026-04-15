@@ -35,10 +35,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
-import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
-import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { PlatformRoleSelect } from '@/features/members/components/platform-role-select';
 import { ProjectRoleSelect } from '@/features/members/components/project-role-select';
+import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
+import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -239,10 +239,7 @@ export const InviteUserDialog = ({
           <DialogContent
             className="sm:max-w-[475px]"
             onEscapeKeyDown={(e) => {
-              if (suggestionsOpen) {
-                e.preventDefault();
-                (document.activeElement as HTMLElement)?.blur();
-              }
+              if (suggestionsOpen) e.preventDefault();
             }}
           >
             <DialogHeader>

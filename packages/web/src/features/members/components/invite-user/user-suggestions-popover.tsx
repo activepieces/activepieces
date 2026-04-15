@@ -31,7 +31,7 @@ function UserSuggestionsPopover({
     platformUserEmails,
   } = useUserSuggestions({
     inputValue,
-    currentEmails: value as string[],
+    currentEmails: Array.from(value),
     isPlatformPage: isPlatformPage ?? false,
   });
 
@@ -68,6 +68,13 @@ function UserSuggestionsPopover({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape' && isOpen) {
+      e.nativeEvent.stopImmediatePropagation();
+      setShowSuggestions(false);
+      setSelectedValue('');
+      onOpenChange?.(false);
+      return;
+    }
     if (
       e.key === 'Enter' &&
       selectedValue &&

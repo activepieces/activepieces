@@ -16,12 +16,6 @@ import {
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
-type TagMeta = {
-  className?: string;
-  icon?: React.ReactNode;
-  tooltip?: string;
-};
-
 type TagInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   value?: ReadonlyArray<string>;
   onChange: (value: ReadonlyArray<string>) => void;
@@ -249,4 +243,11 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
 TagInput.displayName = 'TagInput';
 
 export { TagInput };
+
+type TagMeta = {
+  className?: string;
+  icon?: React.ReactNode;
+  tooltip?: string;
+};
+
 export type { TagMeta };
