@@ -20,7 +20,7 @@ describe('step-files service', () => {
         const files = createFilesService(SERVICE_PARAMS)
         await expect(
             files.write({ fileName: 'test.txt', data: {} as any }),
-        ).rejects.toThrow('Expected file data to be a Buffer, but received Object')
+        ).rejects.toThrow('Expected file data to be a Buffer, but received [object Object]')
     })
 
     it('throws when data is a string', async () => {

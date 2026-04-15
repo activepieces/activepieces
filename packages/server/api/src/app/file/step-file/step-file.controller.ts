@@ -85,17 +85,6 @@ async function getFileByToken(token: string, log: FastifyBaseLogger): Promise<Om
     }
 }
 
-const SignedFileRequest = {
-    config: {
-        security: securityAccess.public(),
-    },
-    schema: {
-        querystring: z.object({
-            token: z.string(),
-        }),
-    },
-}
-
 function extractBufferOrUndefined(value: unknown): Buffer | undefined {
     if (value === undefined || value === null) {
         return undefined
@@ -113,6 +102,17 @@ function extractBufferOrUndefined(value: unknown): Buffer | undefined {
         code: ErrorCode.VALIDATION,
         params: { message: 'File data must be a Buffer' },
     })
+}
+
+const SignedFileRequest = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        querystring: z.object({
+            token: z.string(),
+        }),
+    },
 }
 
 const UpsertStepFileRequest = {

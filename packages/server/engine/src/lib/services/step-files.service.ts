@@ -16,7 +16,7 @@ export function createFilesService({ stepName, flowId, engineToken, apiUrl }: Cr
         write: async ({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> => {
             if (!Buffer.isBuffer(data)) {
                 throw new Error(
-                    `Expected file data to be a Buffer, but received ${typeof data === 'object' ? ((data as unknown as { constructor?: { name?: string } })?.constructor?.name ?? 'Object') : typeof data}`,
+                    `Expected file data to be a Buffer, but received ${typeof data === 'object' ? Object.prototype.toString.call(data) : typeof data}`,
                 )
             }
             validateFileSize(data, maxFileSizeMb)
