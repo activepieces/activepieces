@@ -1,16 +1,13 @@
 import {
   InvitationStatus,
   PlatformRole,
-  SeekPage,
   UserWithMetaInformation,
 } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { platformUserApi } from '@/api/platform-user-api';
 import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
 import { userInvitationsHooks } from '@/features/members/hooks/user-invitations-hooks';
-import { platformUserKeys } from '@/features/platform-admin/hooks/platform-user-hooks';
+import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
 import { EmailStatusType } from './types';
@@ -45,14 +42,8 @@ export function useUserSuggestions({
   isPlatformPage,
 }: UseUserSuggestionsParams) {
   const { data: currentUser } = userHooks.useCurrentUser();
-  const isAdmin = currentUser ? isPlatformAdminOrOperator(currentUser) : false;
-  const { data: platformUsersData } = useQuery<
-    SeekPage<UserWithMetaInformation>
-  >({
-    queryKey: platformUserKeys.users,
-    queryFn: () => platformUserApi.list({ limit: 2000 }),
-    enabled: isAdmin,
-  });
+  const isAdmin = currentUser?.platformRole === PlatformRole.ADMIN;
+  const { data: platformUsersData } = platformUserHooks.useUsers();
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const { invitations } = userInvitationsHooks.useInvitations();
 
@@ -116,7 +107,7 @@ export function useUserSuggestions({
   ]);
 
   const emailStatus = useMemo<EmailStatusType | null>(() => {
-    if (!searchTerm) return null;
+    if (isPlatformPage || !isAdmin || !searchTerm) return null;
 
     const email = searchTerm.toLowerCase();
 

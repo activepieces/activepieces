@@ -35,6 +35,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
+import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
+import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { PlatformRoleSelect } from '@/features/members/components/platform-role-select';
 import { ProjectRoleSelect } from '@/features/members/components/project-role-select';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
@@ -111,6 +113,14 @@ export const InviteUserDialog = ({
   const userHasPermissionToInviteUser = checkAccess(
     Permission.WRITE_INVITATION,
   );
+  const { data: platformUsersData } = platformUserHooks.useUsers();
+  const platformUserEmails = new Set(
+    platformUsersData?.data.map((u) => u.email.toLowerCase()) ?? [],
+  );
+  const { projectMembers } = projectMembersHooks.useProjectMembers();
+  const projectMemberEmails = new Set(
+    projectMembers?.map((m) => m.user.email.toLowerCase()) ?? [],
+  );
 
   const { mutate, isPending } = useMutation<
     UserInvitationWithLink,
@@ -172,10 +182,15 @@ export const InviteUserDialog = ({
 
   const handleEmailsChange = useCallback(
     (emails: ReadonlyArray<string>) => {
-      form.setValue('emails', [...emails]);
+      const filtered = emails.filter((e) => {
+        const lower = e.toLowerCase();
+        if (isPlatformPage) return !platformUserEmails.has(lower);
+        return !projectMemberEmails.has(lower);
+      });
+      form.setValue('emails', [...filtered]);
       form.trigger('emails');
     },
-    [form],
+    [form, isPlatformPage, platformUserEmails, projectMemberEmails],
   );
 
   const onSubmit = (data: FormSchema) => {
@@ -282,6 +297,11 @@ export const InviteUserDialog = ({
                           onOpenChange={setSuggestionsOpen}
                         />
                         <FormMessage />
+                        <p className="text-xs text-muted-foreground">
+                          {isPlatformPage
+                            ? t('Existing users will be skipped if added.')
+                            : t('Existing members will be skipped if added.')}
+                        </p>
                       </FormItem>
                     )}
                   />
