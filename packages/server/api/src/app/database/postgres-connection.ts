@@ -356,9 +356,9 @@ import { AddMcpOAuthTables1774500000000 } from './migration/postgres/17745000000
 import { AddCanaryToPlatformPlan1774600000000 } from './migration/postgres/1774600000000-AddCanaryToPlatformPlan'
 import { MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000 } from './migration/postgres/1775656136000-MergeCanaryAndDedicatedWorkersIntoWorkerGroupId'
 import { AddAiProvidersEnabledToPlatformPlan1775728983000 } from './migration/postgres/1775728983000-AddAiProvidersEnabledToPlatformPlan'
+import { AddConcurrencyPoolTable1775800000000 } from './migration/postgres/1775800000000-AddConcurrencyPoolTable'
 import { AddCopilotFilesAndCodeChunks1775800000000 } from './migration/postgres/1775800000000-AddCopilotFilesAndCodeChunks'
 import { RecreateCopilotCodeChunks1775800000001 } from './migration/postgres/1775800000001-RecreateCopilotCodeChunks'
-import { AddConcurrencyPoolTable1775800000000 } from './migration/postgres/1775800000000-AddConcurrencyPoolTable'
 import { AddDefaultToAiProvidersEnabled1776000000000 } from './migration/postgres/1776000000000-AddDefaultToAiProvidersEnabled'
 
 const getSslConfig = (): boolean | TlsOptions => {
