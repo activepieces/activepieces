@@ -12,7 +12,8 @@
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
 				"cipchk.cssrem",
-				"huizhou.githd"
+				"huizhou.githd",
+				"Anthropic.claude-code"
 			]
 		}
 	},
@@ -29,5 +30,5 @@
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "yarn install",
 	"remoteUser": "root",
-	"postCreateCommand": "bun install"
+	"postCreateCommand": "bun install && HOST_IP=$(getent ahostsv4 host.docker.internal | awk '{print $1}' | head -1) && claude mcp add chrome-devtools --scope user -- npx chrome-devtools-mcp@latest --browserUrl=http://${HOST_IP}:4222"
 }

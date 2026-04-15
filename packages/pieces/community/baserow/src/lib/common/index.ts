@@ -1,17 +1,40 @@
 import {
   DynamicPropsValue,
   DropdownState,
-  PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
-import { baserowAuth } from '../auth';
+import {
+  baserowAuth,
+  BaserowAuthValue,
+  BaserowJwtAuthValue,
+  isDatabaseTokenAuth,
+} from '../auth';
 import { BaserowClient } from './client';
 import { BaserowFieldType } from './constants';
 
-export function makeClient(
-  auth: PiecePropValueSchema<typeof baserowAuth>
-): BaserowClient {
-  return new BaserowClient(auth.apiUrl, auth.token);
+export async function makeClient(
+  auth: BaserowAuthValue
+): Promise<BaserowClient> {
+  if (isDatabaseTokenAuth(auth)) {
+    return new BaserowClient(auth.props.apiUrl, `Token ${auth.props.token}`);
+  }
+  const jwt = await BaserowClient.getJwtToken(
+    auth.props.apiUrl,
+    auth.props.email,
+    auth.props.password
+  );
+  return new BaserowClient(auth.props.apiUrl, `JWT ${jwt}`);
+}
+
+export async function makeJwtClient(
+  auth: BaserowJwtAuthValue
+): Promise<BaserowClient> {
+  const jwt = await BaserowClient.getJwtToken(
+    auth.props.apiUrl,
+    auth.props.email,
+    auth.props.password
+  );
+  return new BaserowClient(auth.props.apiUrl, `JWT ${jwt}`);
 }
 
 export function formatFieldValues(
@@ -72,7 +95,6 @@ export function formatFieldValues(
         break;
     }
   }
-  // Remove undefined entries (from skipEmpty mode)
   for (const key of Object.keys(result)) {
     if (result[key] === undefined) {
       delete result[key];
@@ -97,7 +119,7 @@ export const baserowCommon = {
             options: [],
           };
         }
-        const client = makeClient(auth.props);
+        const client = await makeClient(auth);
         const tables = await client.listTables();
         return {
           disabled: false,
@@ -113,16 +135,16 @@ export const baserowCommon = {
       auth: baserowAuth,
       refreshers: ['auth', 'table_id'],
       options: async ({ auth, table_id }): Promise<DropdownState<number>> => {
-        if (!auth || !table_id) {
+        if (!auth || typeof table_id !== 'number') {
           return {
             disabled: true,
             placeholder: 'Select a table first.',
             options: [],
           };
         }
-        const client = makeClient(auth.props);
+        const client = await makeClient(auth);
         const response = (await client.listRows(
-          table_id as unknown as number,
+          table_id,
           undefined,
           200
         )) as { results: Record<string, unknown>[] };
@@ -148,14 +170,12 @@ export const baserowCommon = {
       required,
       refreshers: ['table_id'],
       props: async ({ auth, table_id }) => {
-        if (!auth || !table_id) return {};
+        if (!auth || typeof table_id !== 'number') return {};
 
         const fields: DynamicPropsValue = {};
         try {
-          const client = makeClient(auth.props);
-          const tableFields = await client.listTableFields(
-            table_id as unknown as number
-          );
+          const client = await makeClient(auth);
+          const tableFields = await client.listTableFields(table_id);
           for (const field of tableFields) {
             if (
               !field.read_only &&

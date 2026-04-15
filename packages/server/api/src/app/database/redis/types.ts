@@ -1,11 +1,6 @@
 import { z } from 'zod'
 
-
-export enum RedisType {
-    SENTINEL = 'SENTINEL',
-    MEMORY = 'MEMORY',
-    STANDALONE = 'STANDALONE',
-}
+export { RedisType } from '@activepieces/server-utils'
 
 export const RedisConnectionSettings = z.object({
     REDIS_TYPE: z.string(),

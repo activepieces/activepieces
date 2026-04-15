@@ -1,6 +1,5 @@
 {
   "Email delivery service for sending transactional and marketing emails": "Serviço de entrega de e-mail para envio de e-mails de transacção e marketing",
-  "API key acquired from your SendGrid settings": "Chave API adquirida das suas configurações do SendGrid",
   "Send Email": "Enviar e-mail",
   "Send Dynamic Template": "Enviar Modelo Dinâmico",
   "Custom API Call": "Chamada de API personalizada",
@@ -14,6 +13,7 @@
   "Subject": "Cargo",
   "Content Type": "Tipo de Conteúdo",
   "Content": "Conteúdo",
+  "Attachments": "Anexos",
   "Template Id": "ID do modelo",
   "Template Data": "Dados do modelo",
   "Method": "Método",

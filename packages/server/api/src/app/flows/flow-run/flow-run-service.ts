@@ -45,6 +45,7 @@ import { projectService } from '../../project/project-service'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { payloadOffloader } from '../../workers/payload-offloader'
+import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
@@ -377,6 +378,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
     async test({ projectId, flowVersionId, parentRunId, stepNameToTest, triggeredBy }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
+        await flowService(log).getOneOrThrow({ id: flowVersion.flowId, projectId })
 
         const triggerPayload = await sampleDataService(log).getOrReturnEmpty({
             projectId,
@@ -408,6 +410,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     },
     async startManualTrigger({ projectId, flowVersionId, triggeredBy }: StartManualTriggerParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
+        await flowService(log).getOneOrThrow({ id: flowVersion.flowId, projectId })
         const triggerPayload = {}
         const flowRun = await queueOrCreateInstantly({
             projectId,

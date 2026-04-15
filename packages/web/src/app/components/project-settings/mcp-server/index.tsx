@@ -69,7 +69,7 @@ export const McpServerSettings = () => {
             </TabsList>
 
             <TabsContent value="connection" className="mt-4 pb-6" tabIndex={-1}>
-              <McpCredentials mcpServer={mcpServer} />
+              <McpCredentials />
             </TabsContent>
 
             <TabsContent

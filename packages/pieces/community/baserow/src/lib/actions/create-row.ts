@@ -15,7 +15,7 @@ export const createRowAction = createAction({
     const table_id = context.propsValue.table_id!;
     const tableFieldsInput = context.propsValue.table_fields!;
 
-    const client = makeClient(context.auth.props);
+    const client = await makeClient(context.auth);
     const tableSchema = await client.listTableFields(table_id);
 
     const fieldTypeMap: Record<string, string> = {};

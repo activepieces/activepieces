@@ -213,6 +213,9 @@
       "@activepieces/piece-chainalysis-api": [
         "packages/pieces/community/chainalysis-api/src/index.ts"
       ],
+      "@activepieces/piece-chargebee": [
+        "packages/pieces/community/chargebee/src/index.ts"
+      ],
       "@activepieces/piece-chargekeep": [
         "packages/pieces/community/chargekeep/src/index.ts"
       ],
@@ -451,6 +454,9 @@
       ],
       "@activepieces/piece-freshdesk": [
         "packages/pieces/community/freshdesk/src/index.ts"
+      ],
+      "@activepieces/piece-freshservice": [
+        "packages/pieces/community/freshservice/src/index.ts"
       ],
       "@activepieces/piece-freshsales": [
         "packages/pieces/community/freshsales/src/index.ts"
@@ -833,11 +839,17 @@
       "@activepieces/piece-oracle-fusion-cloud-erp": [
         "packages/pieces/community/oracle-fusion-cloud-erp/src/index.ts"
       ],
+      "@activepieces/piece-paddle": [
+        "packages/pieces/community/paddle/src/index.ts"
+      ],
       "@activepieces/piece-pandadoc": [
         "packages/pieces/community/pandadoc/src/index.ts"
       ],
       "@activepieces/piece-paperform": [
         "packages/pieces/community/paperform/src/index.ts"
+      ],
+      "@activepieces/piece-pagerduty": [
+        "packages/pieces/community/pagerduty/src/index.ts"
       ],
       "@activepieces/piece-parseur": [
         "packages/pieces/community/parseur/src/index.ts"
@@ -953,6 +965,9 @@
       ],
       "@activepieces/piece-respond-io": [
         "packages/pieces/community/respond-io/src/index.ts"
+      ],
+      "@activepieces/piece-reply-io": [
+        "packages/pieces/community/reply-io/src/index.ts"
       ],
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"

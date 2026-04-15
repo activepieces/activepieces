@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const setupGuideInput = z.object({
     topic: z.enum(['connection', 'ai_provider']).describe('What to get setup instructions for'),
@@ -15,7 +15,7 @@ const setupGuideInput = z.object({
 export const apSetupGuideTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_setup_guide',
-        description: 'Get step-by-step instructions for setting up connections or AI providers. Use this when a piece needs authentication or when no AI providers are configured. Returns instructions for the user to follow in the UI — sensitive credentials are never handled through MCP.',
+        description: 'Get setup instructions for connections or AI providers. Returns steps for the user to follow in the UI.',
         inputSchema: setupGuideInput.shape,
         annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -29,7 +29,7 @@ export const apSetupGuideTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_setup_guide failed')
-                return mcpToolError('Failed to generate setup guide', err)
+                return mcpUtils.mcpToolError('Failed to generate setup guide', err)
             }
         },
     }

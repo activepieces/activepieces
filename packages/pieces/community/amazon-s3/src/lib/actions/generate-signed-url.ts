@@ -10,8 +10,8 @@ export const generateSignedUrl = createAction({
   description: 'Generate a signed URL for a file in a s3 bucket',
   props: {
     key: Property.ShortText({
-      displayName: 'Key',
-      description: 'The path/filename of the file to get',
+      displayName: 'File Path',
+      description: 'The full path to the file within your S3 bucket (e.g. "documents/report.csv" or "myfile.txt"). This is also called the S3 "key".',
       required: true,
     }),
     expiresIn: Property.Number({

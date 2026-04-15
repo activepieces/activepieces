@@ -18,6 +18,7 @@ import {
     ScheduleOptions,
     TriggerHookType,
     TriggerSourceScheduleType,
+    tryCatch,
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -88,17 +89,25 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
             }
             const { flowId, flowVersionId, projectId, simulate, pieceTrigger } = params
             const platformId = await projectService(log).getPlatformId(projectId)
-            const engineHelperResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.ON_DISABLE>>>({
-                jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
-                hookType: TriggerHookType.ON_DISABLE,
-                flowId,
-                flowVersionId,
-                test: simulate,
-                projectId,
-                platformId,
-            }, log)
-            if (!params.ignoreError) {
-                assertEngineResponseIsOk(engineHelperResponse, flowId, flowVersionId)
+            const { error, data: engineHelperResponse } = await tryCatch(
+                () => userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.ON_DISABLE>>>({
+                    jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
+                    hookType: TriggerHookType.ON_DISABLE,
+                    flowId,
+                    flowVersionId,
+                    test: simulate,
+                    projectId,
+                    platformId,
+                }, log),
+            )
+            if (!isNil(error)) {
+                if (!params.ignoreError) {
+                    throw error
+                }
+                log.warn({ flowId, error: error.message }, '[flowTriggerSideEffect#disable] Ignored error during trigger disable')
+            }
+            else if (!params.ignoreError) {
+                assertEngineResponseIsOk(engineHelperResponse!, flowId, flowVersionId)
             }
             switch (pieceTrigger.type) {
                 case TriggerStrategy.APP_WEBHOOK:

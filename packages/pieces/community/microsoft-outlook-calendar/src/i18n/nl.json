@@ -1,5 +1,9 @@
 {
   "Calendar software by Microsoft": "Agenda software van Microsoft",
+  "Cloud Environment": "Cloud Omgeving",
+  "Select your Microsoft cloud environment.": "Selecteer je Microsoft cloud omgeving.",
+  "Commercial (Global)": "Commerciële (globaal)",
+  "US Government (GCC High)": "Amerikaanse regering (GCC High)",
   "\nIf you’d like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n - User.Read\n - Calendars.ReadWrite\n - offline_access": "\nAls u uw eigen aangepaste Azure app wilt gebruiken in plaats van de standaard Activepieces app, Volg de [Azure app creatie handleiding] (https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n zet de **Redirect URI** naar {{redirectUrl}} en voeg de volgende **Microsoft Graph (Delegated) permissies** toe onder **API permissies**:\n - gebruiker. ead\n - Kalendars.ReadWrite\n - offline_access",
   "Create a new event in a calendar": "Maak een nieuwe afspraak aan in een kalender",
   "Delete an event in a calendar": "Een afspraak in een kalender verwijderen",

@@ -22,9 +22,9 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 
 // --- module mocks (must appear before the import under test) ---
 
-const { mockSystemGet, mockGetCanaryPlatformIds } = vi.hoisted(() => ({
+const { mockSystemGet, mockIsCanaryPlatform } = vi.hoisted(() => ({
     mockSystemGet: vi.fn(),
-    mockGetCanaryPlatformIds: vi.fn(),
+    mockIsCanaryPlatform: vi.fn(),
 }))
 
 vi.mock('../../../../../src/app/helper/system/system', () => ({
@@ -33,9 +33,9 @@ vi.mock('../../../../../src/app/helper/system/system', () => ({
     },
 }))
 
-vi.mock('../../../../../src/app/core/canary/platform-canary.service', () => ({
-    platformCanaryService: () => ({
-        getCanaryPlatformIds: mockGetCanaryPlatformIds,
+vi.mock('../../../../../src/app/ee/platform/platform-plan/worker-group.service', () => ({
+    workerGroupService: () => ({
+        isCanaryPlatform: mockIsCanaryPlatform,
     }),
 }))
 
@@ -121,7 +121,7 @@ beforeEach(async () => {
     mockSystemGet.mockImplementation((prop: string) =>
         prop === 'CANARY_APP_URL' ? canaryUrl : undefined,
     )
-    mockGetCanaryPlatformIds.mockResolvedValue(['canary-platform'])
+    mockIsCanaryPlatform.mockResolvedValue(true)
 
     primaryApp = await buildPrimaryApp()
     await primaryApp.ready()
@@ -195,7 +195,7 @@ describe('canary proxy — actual HTTP forwarding', () => {
     })
 
     it('falls through to primary handler when platform is not in canary list', async () => {
-        mockGetCanaryPlatformIds.mockResolvedValue(['other-platform'])
+        mockIsCanaryPlatform.mockResolvedValue(false)
 
         const response = await primaryApp.inject({ method: 'GET', url: '/v1/test' })
 
