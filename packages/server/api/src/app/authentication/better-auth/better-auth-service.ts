@@ -3,7 +3,7 @@ import { AuthContext, MiddlewareContext, MiddlewareOptions } from 'better-auth/*
 import { getOAuthState } from 'better-auth/api'
 import { BetterAuthOptions, User } from 'better-auth/types'
 import { FastifyBaseLogger } from 'fastify'
-import { platformUtils } from 'src/app/platform/platform.utils'
+import { platformUtils } from '../../platform/platform.utils'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { emailService } from '../../ee/helper/email/email-service'
 import { applicationEvents } from '../../helper/application-events'
