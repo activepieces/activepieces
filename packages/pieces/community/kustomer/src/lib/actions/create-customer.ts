@@ -13,7 +13,7 @@ export const createCustomerAction = createAction({
   props: {
     name: Property.ShortText({
       displayName: 'Full Name',
-      description: "The customer's full name (e.g. \"Jane Doe\").",
+      description: 'The customer\'s full name (e.g. "Jane Doe").',
       required: false,
     }),
     email: Property.ShortText({
@@ -23,7 +23,8 @@ export const createCustomerAction = createAction({
     }),
     phone: Property.ShortText({
       displayName: 'Phone Number',
-      description: 'Primary phone number in E.164 format (e.g. "+14155551234").',
+      description:
+        'Primary phone number in E.164 format (e.g. "+14155551234").',
       required: false,
     }),
     company: Property.ShortText({
@@ -44,7 +45,8 @@ export const createCustomerAction = createAction({
     }),
     locale: Property.ShortText({
       displayName: 'Locale',
-      description: 'Language/locale code for the customer (e.g. "en_US", "fr_FR", "de_DE").',
+      description:
+        'Language/locale code for the customer (e.g. "en_US", "fr_FR", "de_DE").',
       required: false,
     }),
     timeZone: Property.ShortText({
@@ -81,18 +83,6 @@ export const createCustomerAction = createAction({
       description: "URL of the customer's profile image.",
       required: false,
     }),
-    tags: Property.ShortText({
-      displayName: 'Tags',
-      description:
-        'Comma-separated list of tags to assign to this customer (e.g. "vip, enterprise, trial"). Maximum 20 tags.',
-      required: false,
-    }),
-    custom: Property.Json({
-      displayName: 'Custom Fields',
-      description:
-        'JSON object of custom attribute fields defined in your Kustomer account (e.g. `{"plan": "enterprise", "score": 95}`).',
-      required: false,
-    }),
   },
   async run(context) {
     const apiKey = context.auth.secret_text as string;
@@ -112,23 +102,9 @@ export const createCustomerAction = createAction({
     if (props.avatarUrl) customer['avatarUrl'] = props.avatarUrl;
     if (props.email) customer['emails'] = [{ email: props.email }];
     if (props.phone) customer['phones'] = [{ phone: props.phone }];
-    if (props.tags) {
-      customer['tags'] = props.tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean);
-    }
-    if (props.custom !== null && props.custom !== undefined) {
-      customer['custom'] = kustomerUtils.parseJsonObject({
-        value: props.custom,
-        fieldName: 'Custom Fields',
-      });
-    }
 
     const response = await kustomerClient.createCustomer({ apiKey, customer });
 
-    return response
+    return response;
   },
 });
-
-

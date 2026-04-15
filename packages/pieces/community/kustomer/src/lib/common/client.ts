@@ -86,14 +86,17 @@ async function getCustomer({
 async function getCustomObjects({
   apiKey,
   klassName,
+  fromDate,
 }: {
   apiKey: string;
   klassName: string;
+  fromDate?: string;
 }): Promise<KustomerJsonValue> {
   return sendRequest({
     apiKey,
     method: HttpMethod.GET,
     path: `/kobjects/${encodeURIComponent(klassName)}`,
+    ...(fromDate ? { queryParams: { fromDate } } : {}),
   });
 }
 
