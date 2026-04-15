@@ -7,7 +7,7 @@ const RETRY_CONFIG = {
     retryDelay: 3000,
 } as const
 
-export function createFilesService({ stepName, flowId, engineToken, apiUrl }: CreateFilesServiceParams): FilesService {
+export function createFileUploader({ stepName, flowId, engineToken, apiUrl }: CreateFileUploaderParams): FilesService {
     const maxFileSizeMb = Number(process.env.AP_MAX_FILE_SIZE_MB)
     const fileStorageLocation = process.env.AP_FILE_STORAGE_LOCATION as FileLocation
     const useSignedUrl = (process.env.AP_S3_USE_SIGNED_URLS === 'true') && fileStorageLocation === FileLocation.S3
@@ -99,4 +99,4 @@ async function uploadFileContent({ url, data }: { url: string, data: Buffer }): 
     }
 }
 
-type CreateFilesServiceParams = { apiUrl: string, stepName: string, flowId: string, engineToken: string }
+type CreateFileUploaderParams = { apiUrl: string, stepName: string, flowId: string, engineToken: string }
