@@ -5,7 +5,7 @@ import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildCodeAction, buildPieceAction, buildRouterWithOneCondition, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
 
-vi.mock('../../src/lib/services/waitpoint-client', () => ({
+vi.mock('../../src/lib/piece-context/waitpoint-client', () => ({
     waitpointClient: {
         create: vi.fn().mockResolvedValue({ id: 'mock-waitpoint-id', resumeUrl: 'http://localhost/resume' }),
     },

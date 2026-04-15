@@ -9,7 +9,7 @@ const { mockSendFlowResponse } = vi.hoisted(() => ({
     mockSendFlowResponse: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock('../../src/lib/services/waitpoint-client', () => ({
+vi.mock('../../src/lib/piece-context/waitpoint-client', () => ({
     waitpointClient: {
         create: vi.fn().mockResolvedValue({ id: 'mock-waitpoint-id', resumeUrl: 'http://localhost/resume' }),
     },

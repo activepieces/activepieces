@@ -2,10 +2,10 @@ import { FlowRunStatus } from '@activepieces/shared'
 import { vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
-import { waitpointClient } from '../../src/lib/services/waitpoint-client'
+import { waitpointClient } from '../../src/lib/piece-context/waitpoint-client'
 import { buildCodeAction, buildPieceAction, generateMockEngineConstants } from './test-helper'
 
-vi.mock('../../src/lib/services/waitpoint-client', () => ({
+vi.mock('../../src/lib/piece-context/waitpoint-client', () => ({
     waitpointClient: {
         create: vi.fn().mockResolvedValue({ id: 'mock-waitpoint-id', resumeUrl: 'http://localhost/resume' }),
     },
