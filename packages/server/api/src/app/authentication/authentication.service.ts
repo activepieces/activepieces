@@ -292,7 +292,7 @@ async function getPersonalPlatformIdForIdentity(identityId: string, log: Fastify
 
 async function countRemainingBackupCodes(identityId: string): Promise<number> {
     const rows = await databaseConnection().query(
-        'SELECT "backupCodes" FROM "two_factor" WHERE "userId" = $1 LIMIT 1',
+        'SELECT "backupCodes" FROM "twoFactor" WHERE "userId" = $1 LIMIT 1',
         [identityId],
     ) as Array<{ backupCodes: string | null }>
     if (!rows.length || !rows[0].backupCodes) {
