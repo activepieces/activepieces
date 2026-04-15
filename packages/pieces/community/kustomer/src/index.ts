@@ -9,15 +9,15 @@ import { getCustomObjectsAction } from './lib/actions/get-custom-objects';
 import { updateConversationAction } from './lib/actions/update-conversation';
 import { kustomerAuth } from './lib/common/auth';
 import { KUSTOMER_API_BASE_URL, kustomerClient } from './lib/common/client';
-import { kustomerUtils } from './lib/common/utils';
 
 export const kustomer = createPiece({
   displayName: 'Kustomer',
-  description: 'Create and manage Kustomer customers, conversations, and custom objects.',
+  description:
+    'Create and manage Kustomer customers, conversations, and custom objects.',
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/kustomer.png',
   categories: [PieceCategory.CUSTOMER_SUPPORT],
-  authors: ['veri5ied'],
+  authors: ['veri5ied', 'sanket-a11y'],
   auth: kustomerAuth,
   actions: [
     createCustomerAction,
@@ -29,10 +29,7 @@ export const kustomer = createPiece({
       auth: kustomerAuth,
       baseUrl: () => KUSTOMER_API_BASE_URL,
       authMapping: async (auth) => {
-        const apiKey = kustomerUtils.parseAuthToken({
-          value: auth,
-        });
-
+        const apiKey = auth.secret_text as string;
         return kustomerClient.createAuthHeaders({
           apiKey,
         });

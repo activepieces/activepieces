@@ -18,9 +18,7 @@ export const createConversationAction = createAction({
     }),
   },
   async run(context) {
-    const apiKey = kustomerUtils.parseAuthToken({
-      value: context.auth,
-    });
+    const apiKey= context.auth.secret_text as string;
     const conversation = kustomerUtils.parseJsonObject({
       value: context.propsValue.conversation,
       fieldName: 'Conversation',

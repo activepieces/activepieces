@@ -17,9 +17,7 @@ export const getCustomObjectsAction = createAction({
     }),
   },
   async run(context) {
-    const apiKey = kustomerUtils.parseAuthToken({
-      value: context.auth,
-    });
+    const apiKey= context.auth.secret_text as string;
     const klassName = kustomerUtils.parseRequiredString({
       value: context.propsValue.klassName,
       fieldName: 'Klass Name',

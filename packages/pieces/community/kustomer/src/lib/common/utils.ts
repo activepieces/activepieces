@@ -28,48 +28,6 @@ function parseJsonObject({
   return value;
 }
 
-function isKustomerAuthValue(value: unknown): value is string {
-  return typeof value === 'string' && value.trim().length > 0;
-}
-
-function parseOptionalAuthToken({
-  value,
-}: {
-  value: unknown;
-}): string | undefined {
-  if (isKustomerAuthValue(value)) {
-    return value.trim();
-  }
-
-  if (!isObject(value)) {
-    return undefined;
-  }
-
-  const secretText = value['secret_text'];
-
-  if (typeof secretText !== 'string' || secretText.trim().length === 0) {
-    return undefined;
-  }
-
-  return secretText.trim();
-}
-
-function parseAuthToken({
-  value,
-}: {
-  value: unknown;
-}): string {
-  const token = parseOptionalAuthToken({
-    value,
-  });
-
-  if (!token) {
-    throw new Error('API token is required.');
-  }
-
-  return token;
-}
-
 function isKustomerJsonObject(value: unknown): value is KustomerJsonObject {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return false;
@@ -102,7 +60,4 @@ function isObject(value: unknown): value is Record<string, unknown> {
 export const kustomerUtils = {
   parseRequiredString,
   parseJsonObject,
-  parseOptionalAuthToken,
-  parseAuthToken,
-  isKustomerAuthValue,
 };

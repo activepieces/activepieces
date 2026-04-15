@@ -17,9 +17,7 @@ export const getCustomerAction = createAction({
     }),
   },
   async run(context) {
-    const apiKey = kustomerUtils.parseAuthToken({
-      value: context.auth,
-    });
+    const apiKey= context.auth.secret_text as string;
     const customerId = kustomerUtils.parseRequiredString({
       value: context.propsValue.customerId,
       fieldName: 'Customer ID',

@@ -1,8 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { tryCatch } from '@activepieces/shared';
-
 import { kustomerClient } from './client';
-import { kustomerUtils } from './utils';
 
 export const kustomerAuth = PieceAuth.SecretText({
   displayName: 'API Token',
@@ -11,9 +9,7 @@ export const kustomerAuth = PieceAuth.SecretText({
 Paste a private Kustomer API token with access to customers, conversations, and KObjects.`,
   required: true,
   validate: async ({ auth }) => {
-    const apiKey = kustomerUtils.parseOptionalAuthToken({
-      value: auth,
-    });
+    const apiKey = auth as string;
 
     if (!apiKey) {
       return {
@@ -25,7 +21,7 @@ Paste a private Kustomer API token with access to customers, conversations, and 
     const { error } = await tryCatch(() =>
       kustomerClient.validateAuth({
         apiKey,
-      }),
+      })
     );
 
     if (error) {

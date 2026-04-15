@@ -23,9 +23,7 @@ export const updateConversationAction = createAction({
     }),
   },
   async run(context) {
-    const apiKey = kustomerUtils.parseAuthToken({
-      value: context.auth,
-    });
+    const apiKey= context.auth.secret_text as string;
     const conversationId = kustomerUtils.parseRequiredString({
       value: context.propsValue.conversationId,
       fieldName: 'Conversation ID',
