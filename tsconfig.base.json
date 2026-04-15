@@ -1934,7 +1934,9 @@
       ],
       "@activepieces/piece-knock": [
         "packages/pieces/community/knock/src/index.ts"
-      ]
+      ],
+      "@activepieces/piece-langsmith": [
+        "packages/pieces/community/langsmith/src/index.ts"]
     },
     "resolveJsonModule": true
   },
