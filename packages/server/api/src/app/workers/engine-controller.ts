@@ -43,7 +43,7 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
 
         const newFlow = await flowService(request.log).create({
             projectId,
-            request: { displayName },
+            request: { displayName, projectId },
         })
 
         if (!isNil(triggerPieceName) && !isNil(triggerName)) {
@@ -74,9 +74,7 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
                             pieceVersion: pieceMetadata.version,
                             triggerName,
                             input: {},
-                            inputUiInfo: {},
-                            packageType: pieceMetadata.packageType,
-                            pieceType: pieceMetadata.pieceType,
+                            propertySettings: {},
                         },
                     },
                 },

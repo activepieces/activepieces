@@ -741,7 +741,9 @@ async function validateSubflowsAreEnabled(
             step.settings.pieceName === SUBFLOWS_PIECE_NAME &&
             step.settings.actionName === CALL_FLOW_ACTION_NAME
         ) {
-            const targetExternalId = step.settings.input?.flow?.externalId
+            const input = step.settings.input ?? {}
+            const flowValue = input['flow'] as Record<string, unknown> | undefined
+            const targetExternalId = flowValue?.['externalId'] as string | undefined
             if (!isNil(targetExternalId)) {
                 referencedExternalIds.push({
                     externalId: targetExternalId,
