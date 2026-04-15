@@ -226,6 +226,7 @@ export const userService = (log: FastifyBaseLogger) => ({
             updated: user.updated,
             lastActiveDate: user.lastActiveDate,
             imageUrl: identity.imageUrl,
+            provider: identity.provider,
         }
     },
 

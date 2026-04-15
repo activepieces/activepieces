@@ -3,6 +3,7 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 import {
     PlatformRole,
     PrincipalType,
+    UserIdentityProvider,
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
@@ -49,6 +50,135 @@ describe('Enterprise User API', () => {
             expect(Object.keys(responseBody)).toHaveLength(3)
             expect(responseBody.data).toHaveLength(1)
             expect(responseBody.data[0].id).toBe(mockOwner.id)
+        })
+
+        it('Allows non-JWT users to list platform users', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                userIdentity: {
+                    provider: UserIdentityProvider.EMAIL,
+                },
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                    status: UserStatus.ACTIVE,
+                },
+            })
+
+            const mockUserToken = await generateMockToken({
+                id: mockUser.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/users',
+                headers: {
+                    authorization: `Bearer ${mockUserToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+            expect(responseBody.data.length).toBeGreaterThanOrEqual(1)
+        })
+
+        it('Rejects JWT users from listing platform users', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                userIdentity: {
+                    provider: UserIdentityProvider.JWT,
+                },
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                    status: UserStatus.ACTIVE,
+                },
+            })
+
+            const mockUserToken = await generateMockToken({
+                id: mockUser.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/users',
+                headers: {
+                    authorization: `Bearer ${mockUserToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('Allows admin JWT users to list platform users', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                userIdentity: {
+                    provider: UserIdentityProvider.JWT,
+                },
+            })
+
+            const mockOwnerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/users',
+                headers: {
+                    authorization: `Bearer ${mockOwnerToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('Returns provider field in user list response', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const mockOwnerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/users',
+                headers: {
+                    authorization: `Bearer ${mockOwnerToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+            expect(responseBody.data[0].provider).toBeDefined()
+            expect(responseBody.data[0].provider).toBe(UserIdentityProvider.EMAIL)
         })
 
     })
