@@ -10,11 +10,11 @@ export const telnyx = createPiece({
   displayName: 'Telnyx',
   description:
     'Telecom API platform for SMS messaging, voice calls, and messaging webhooks.',
-  minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://www.telnyx.com/favicon.ico',
+  minimumSupportedRelease: '0.36.1',
+  logoUrl: 'https://cdn.activepieces.com/pieces/telnyx.png',
   categories: [PieceCategory.COMMUNICATION, PieceCategory.DEVELOPER_TOOLS],
   auth: telnyxAuth,
-  authors: ['Harmatta'],
+  authors: ['Harmatta', 'sanket-a11y'],
   actions: [
     sendSmsAction,
     makeCallAction,
@@ -22,7 +22,7 @@ export const telnyx = createPiece({
       baseUrl: () => 'https://api.telnyx.com/v2',
       auth: telnyxAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as { secret_text: string }).secret_text}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

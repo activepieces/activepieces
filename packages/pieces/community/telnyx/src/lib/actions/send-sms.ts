@@ -29,15 +29,9 @@ export const sendSmsAction = createAction({
       description: 'Optional Telnyx messaging profile ID.',
       required: false,
     }),
-    webhook_url: Property.ShortText({
-      displayName: 'Webhook URL',
-      description: 'Optional URL for delivery webhooks related to this message.',
-      required: false,
-    }),
   },
   async run(context) {
-    const { from, to, text, messaging_profile_id, webhook_url } =
-      context.propsValue;
+    const { from, to, text, messaging_profile_id } = context.propsValue;
 
     return await telnyxRequest({
       apiKey: context.auth.secret_text,
@@ -47,10 +41,7 @@ export const sendSmsAction = createAction({
         from,
         to,
         text,
-        ...(messaging_profile_id
-          ? { messaging_profile_id }
-          : {}),
-        ...(webhook_url ? { webhook_url } : {}),
+        ...(messaging_profile_id ? { messaging_profile_id } : {}),
       },
     });
   },

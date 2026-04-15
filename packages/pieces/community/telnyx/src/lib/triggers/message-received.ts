@@ -9,7 +9,8 @@ export const messageReceivedTrigger = createTrigger({
   auth: telnyxAuth,
   name: 'message_received',
   displayName: 'Message Received',
-  description: 'Triggers when Telnyx delivers a message.received webhook event.',
+  description:
+    'Triggers when Telnyx delivers a message.received webhook event.',
   props: {
     webhook_instructions: Property.MarkDown({
       value: `
@@ -30,27 +31,44 @@ To use this trigger, configure your Telnyx messaging webhook manually:
   },
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
-    id: 'evt_123',
     event_type: 'message.received',
-    occurred_at: '2026-03-24T20:15:00Z',
-    record_type: 'event',
+    id: 'b301ed3f-1490-491f-995f-6e64e69674d4',
+    occurred_at: '2024-01-15T20:16:07.588+00:00',
     payload: {
-      id: '182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e',
+      completed_at: null,
+      cost: { amount: '0.0000', currency: 'USD' },
       direction: 'inbound',
-      record_type: 'message',
-      received_at: '2026-03-24T20:14:59Z',
-      text: 'Hello from Telnyx',
-      type: 'SMS',
+      encoding: 'GSM-7',
+      errors: [],
       from: {
-        phone_number: '+15550001111',
+        carrier: 'T-Mobile USA',
+        line_type: 'long_code',
+        phone_number: '+13125550001',
       },
+      id: '84cca175-9755-4859-b67f-4730d7f58aa3',
+      media: [],
+      messaging_profile_id: '740572b6-099c-44a1-89b9-6c92163bc68d',
+      organization_id: '47a530f8-4362-4526-829b-bcee17fd9f7a',
+      parts: 1,
+      received_at: '2024-01-15T20:16:07.503+00:00',
+      record_type: 'message',
+      sent_at: null,
+      tags: [],
+      text: 'Hello from Telnyx!',
       to: [
         {
-          phone_number: '+15550002222',
-          status: 'received',
+          carrier: 'Telnyx',
+          line_type: 'Wireless',
+          phone_number: '+17735550002',
+          status: 'webhook_delivered',
         },
       ],
+      type: 'SMS',
+      valid_until: null,
+      webhook_failover_url: null,
+      webhook_url: 'https://example.com/webhooks',
     },
+    record_type: 'event',
   },
   async onEnable() {
     // Manual webhook setup in Telnyx portal.
@@ -59,10 +77,10 @@ To use this trigger, configure your Telnyx messaging webhook manually:
     // Manual webhook setup in Telnyx portal.
   },
   async run(context) {
-    const body = context.payload.body as { event_type?: string };
-    if (body?.event_type !== 'message.received') {
+    const body = context.payload.body as { data?: { event_type?: string } };
+    if (body?.data?.event_type !== 'message.received') {
       return [];
     }
-    return [body];
+    return [body.data];
   },
 });
