@@ -3,7 +3,34 @@ import { Store, StoreScope } from '@activepieces/pieces-framework'
 import { DeleteStoreEntryRequest, ExecutionError, FetchError, FlowId, isNil, PutStoreEntryRequest, StorageError, StorageInvalidKeyError, StorageLimitError, STORE_KEY_MAX_LENGTH, STORE_VALUE_MAX_SIZE, StoreEntry } from '@activepieces/shared'
 import { utils } from '../utils'
 
-const createStoreClient = ({ engineToken, apiUrl }: CreateStoreClientParams): StoreClient => {
+export function createContextStore({ apiUrl, prefix, flowId, engineToken }: { apiUrl: string, prefix: string, flowId: FlowId, engineToken: string }): Store {
+    return {
+        async put<T>(key: string, value: T, scope = StoreScope.FLOW): Promise<T> {
+            const modifiedKey = createKey(prefix, scope, flowId, key)
+            await createStoreClient({ apiUrl, engineToken }).put({
+                key: modifiedKey,
+                value,
+            })
+            return value
+        },
+        async delete(key: string, scope = StoreScope.FLOW): Promise<void> {
+            const modifiedKey = createKey(prefix, scope, flowId, key)
+            await createStoreClient({ apiUrl, engineToken }).delete({
+                key: modifiedKey,
+            })
+        },
+        async get<T>(key: string, scope = StoreScope.FLOW): Promise<T | null> {
+            const modifiedKey = createKey(prefix, scope, flowId, key)
+            const storeEntry = await createStoreClient({ apiUrl, engineToken }).get(modifiedKey)
+            if (storeEntry === null) {
+                return null
+            }
+            return storeEntry.value as T
+        },
+    }
+}
+
+function createStoreClient({ engineToken, apiUrl }: CreateStoreClientParams): StoreClient {
     return {
         async get(key: string): Promise<StoreEntry | null> {
             if (isNil(key) || key.length === 0) {
@@ -107,33 +134,6 @@ const createStoreClient = ({ engineToken, apiUrl }: CreateStoreClientParams): St
     }
 }
 
-export function createContextStore({ apiUrl, prefix, flowId, engineToken }: { apiUrl: string, prefix: string, flowId: FlowId, engineToken: string }): Store {
-    return {
-        async put<T>(key: string, value: T, scope = StoreScope.FLOW): Promise<T> {
-            const modifiedKey = createKey(prefix, scope, flowId, key)
-            await createStoreClient({ apiUrl, engineToken }).put({
-                key: modifiedKey,
-                value,
-            })
-            return value
-        },
-        async delete(key: string, scope = StoreScope.FLOW): Promise<void> {
-            const modifiedKey = createKey(prefix, scope, flowId, key)
-            await createStoreClient({ apiUrl, engineToken }).delete({
-                key: modifiedKey,
-            })
-        },
-        async get<T>(key: string, scope = StoreScope.FLOW): Promise<T | null> {
-            const modifiedKey = createKey(prefix, scope, flowId, key)
-            const storeEntry = await createStoreClient({ apiUrl, engineToken }).get(modifiedKey)
-            if (storeEntry === null) {
-                return null
-            }
-            return storeEntry.value as T
-        },
-    }
-}
-
 function createKey(prefix: string, scope: StoreScope, flowId: FlowId, key: string): string {
     if (isNil(key) || typeof key !== 'string' || key.length === 0 || key.length > STORE_KEY_MAX_LENGTH) {
         throw new StorageInvalidKeyError(key)
@@ -146,12 +146,19 @@ function createKey(prefix: string, scope: StoreScope, flowId: FlowId, key: strin
     }
 }
 
-const buildUrl = (apiUrl: string, key?: string): URL => {
+function buildUrl(apiUrl: string, key?: string): URL {
     const url = new URL(`${apiUrl}v1/store-entries`)
     if (key) {
         url.searchParams.set('key', key)
     }
     return url
+}
+
+function handleFetchError({ url, cause }: HandleFetchErrorParams): never {
+    if (cause instanceof ExecutionError) {
+        throw cause
+    }
+    throw new FetchError(url.toString(), cause)
 }
 
 const handleResponseError = async ({ key, response }: HandleResponseErrorParams): Promise<null> => {
@@ -163,13 +170,6 @@ const handleResponseError = async ({ key, response }: HandleResponseErrorParams)
     }
     const cause = await response.text()
     throw new StorageError(key, cause)
-}
-
-const handleFetchError = ({ url, cause }: HandleFetchErrorParams): never => {
-    if (cause instanceof ExecutionError) {
-        throw cause
-    }
-    throw new FetchError(url.toString(), cause)
 }
 
 type CreateStoreClientParams = {
