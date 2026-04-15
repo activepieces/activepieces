@@ -9,7 +9,7 @@ describe('Property Validation', () => {
                     required: true,
                 }),
             }
-            
+
             const { errors: validErrors } = await propsProcessor.applyProcessorsAndValidators(
                 { text: 'valid text' },
                 props,
@@ -49,7 +49,7 @@ describe('Property Validation', () => {
                     required: true,
                 }),
             }
-            
+
             const { errors: validErrors } = await propsProcessor.applyProcessorsAndValidators(
                 { number: 42 },
                 props,
@@ -89,7 +89,7 @@ describe('Property Validation', () => {
                     required: true,
                 }),
             }
-            
+
             const { errors: validErrors } = await propsProcessor.applyProcessorsAndValidators(
                 { date: '2024-03-14T12:00:00.000Z' },
                 props,
@@ -118,7 +118,7 @@ describe('Property Validation', () => {
                     required: true,
                 }),
             }
-            
+
             const { errors: validErrors } = await propsProcessor.applyProcessorsAndValidators(
                 { array: [1, 2, 3] },
                 props,
@@ -147,7 +147,7 @@ describe('Property Validation', () => {
                     required: true,
                 }),
             }
-            
+
             const { errors: validErrors } = await propsProcessor.applyProcessorsAndValidators(
                 { json: { key: 'value' } },
                 props,
@@ -236,7 +236,7 @@ describe('Property Validation', () => {
                     required: false,
                 }),
             }
-            
+
             const { errors: validNullErrors } = await propsProcessor.applyProcessorsAndValidators(
                 { json: null },
                 props,
@@ -293,7 +293,7 @@ describe('Property Validation', () => {
                     required: true,
                 }),
             }
-            
+
             const { errors: validErrors } = await propsProcessor.applyProcessorsAndValidators(
                 { object: { key: 'value' } },
                 props,
@@ -357,9 +357,9 @@ describe('Property Validation', () => {
                     required: false,
                 }),
             }
-            
+
             const { errors } = await propsProcessor.applyProcessorsAndValidators(
-                { 
+                {
                     text: null,
                     number: undefined,
                 },

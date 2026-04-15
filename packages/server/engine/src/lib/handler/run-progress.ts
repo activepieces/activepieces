@@ -6,10 +6,10 @@ import { CONTENT_ENCODING_ZSTD, DEFAULT_MCP_DATA, EngineGenericError, FlowAction
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import fetchRetry from 'fetch-retry'
-import { EngineConstants } from '../handler/context/engine-constants'
-import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { utils } from '../utils'
 import { workerSocket } from '../worker-socket'
+import { EngineConstants } from './context/engine-constants'
+import { FlowExecutorContext } from './context/flow-execution-context'
 
 
 const zstdCompress = promisify(zstdCompressCallback)
@@ -27,14 +27,13 @@ async function backupLoop(signal: AbortSignal): Promise<void> {
     while (!signal.aborted) {
         try {
             if (latestUpdateParams) {
-                await progressService.backup(latestUpdateParams)
+                await runProgressService.backup(latestUpdateParams)
             }
         }
         catch (err) {
             console.error('[Progress] Backup failed', err)
         }
 
-        // Sleep for interval or until aborted
         try {
             await setTimeout(BACKUP_INTERVAL_MS, undefined, { signal })
         }
@@ -44,7 +43,7 @@ async function backupLoop(signal: AbortSignal): Promise<void> {
     }
 }
 
-export const progressService = {
+export const runProgressService = {
     init: (): void => {
         if (backupController) {
             return
@@ -95,7 +94,7 @@ export const progressService = {
             update: async (params: { data: unknown }) => {
                 const steps = flowExecutorContext
                     .upsertStep(stepName, stepOutput.setOutput(params.data)).steps
-                    
+
                 const stepResponse = extractStepResponse({
                     steps,
                     runId: engineConstants.flowRunId,
@@ -133,13 +132,13 @@ export const progressService = {
             if (!uploadLogResponse.ok) {
                 throw new EngineGenericError('ProgressUpdateError', 'Failed to upload execution state', uploadLogResponse)
             }
-    
+
             const stepResponse = extractStepResponse({
                 steps: flowExecutorContext.steps,
                 runId: engineConstants.flowRunId,
                 stepName: engineConstants.stepNameToTest,
             })
-    
+
             const request: UploadRunLogsRequest = {
                 runId: engineConstants.flowRunId,
                 projectId: engineConstants.projectId,
@@ -178,15 +177,8 @@ export const progressService = {
     },
 }
 
-process.on('SIGTERM', () => void progressService.shutdown())
-process.on('SIGINT', () => void progressService.shutdown())
-
-type CreateOutputContextParams = {
-    engineConstants: EngineConstants
-    flowExecutorContext: FlowExecutorContext
-    stepName: string
-    stepOutput: GenericStepOutput<FlowActionType.PIECE, unknown>
-}
+process.on('SIGTERM', () => void runProgressService.shutdown())
+process.on('SIGINT', () => void runProgressService.shutdown())
 
 const sendUpdateProgress = async (request: UpdateRunProgressRequest): Promise<void> => {
     const result = await utils.tryCatchAndThrowOnEngineError(() =>
@@ -244,7 +236,6 @@ const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | und
     }
 }
 
-
 type UpdateStepProgressParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
@@ -256,6 +247,13 @@ type BackUpLogsParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
     stepNameToUpdate?: string
+}
+
+type CreateOutputContextParams = {
+    engineConstants: EngineConstants
+    flowExecutorContext: FlowExecutorContext
+    stepName: string
+    stepOutput: GenericStepOutput<FlowActionType.PIECE, unknown>
 }
 
 type ExtractStepResponse = {

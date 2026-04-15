@@ -4,17 +4,17 @@ import type { ToolSet } from 'ai'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { pieceLoader } from '../helper/piece-loader'
-import { createFlowsContext } from '../services/flows.service'
-import { progressService } from '../services/progress.service'
-import { createFilesService } from '../services/step-files.service'
-import { createContextStore } from '../services/storage.service'
-import { waitpointClient } from '../services/waitpoint-client'
+import { createFileUploader } from '../piece-context/file-uploader'
+import { createFlowsContext } from '../piece-context/flows'
+import { createContextStore } from '../piece-context/store'
+import { waitpointClient } from '../piece-context/waitpoint-client'
 import { agentTools } from '../tools'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { workerSocket } from '../worker-socket'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
+import { runProgressService } from './run-progress'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -73,7 +73,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 tags: [],
             },
         }
-        const outputContext = progressService.createOutputContext({
+        const outputContext = runProgressService.createOutputContext({
             engineConstants: constants,
             flowExecutorContext: executionState,
             stepName: action.name,
@@ -82,7 +82,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         const isPaused = executionState.isPaused({ stepName: action.name })
         if (!isPaused) {
-            await progressService.sendUpdate({
+            await runProgressService.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
                 stepNameToUpdate: action.name,
@@ -108,7 +108,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 name: action.name,
             },
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
-            files: createFilesService({
+            files: createFileUploader({
                 apiUrl: constants.internalApiUrl,
                 engineToken: constants.engineToken,
                 stepName: action.name,

@@ -10,8 +10,8 @@ import {
 } from '@activepieces/shared'
 import type { BeginExecuteFlowOperation, FlowVersion } from '@activepieces/shared'
 
-vi.mock('../../src/lib/services/progress.service', () => ({
-    progressService: {
+vi.mock('../../src/lib/handler/run-progress', () => ({
+    runProgressService: {
         backup: vi.fn(),
     },
 }))

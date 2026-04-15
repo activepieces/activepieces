@@ -3,7 +3,6 @@ import { EngineGenericError, ExecuteFlowOperation, ExecutionType, FlowAction, Fl
 import dayjs from 'dayjs'
 import { loggingUtils } from '../helper/logging-utils'
 import { triggerHelper } from '../helper/trigger-helper'
-import { progressService } from '../services/progress.service'
 import { BaseExecutor } from './base-executor'
 import { codeExecutor } from './code-executor'
 import { EngineConstants } from './context/engine-constants'
@@ -11,6 +10,7 @@ import { FlowExecutorContext } from './context/flow-execution-context'
 import { loopExecutor } from './loop-executor'
 import { pieceExecutor } from './piece-executor'
 import { routerExecuter } from './router-executor'
+import { runProgressService } from './run-progress'
 
 function getExecuteFunction(): Record<FlowActionType, BaseExecutor<FlowAction>> {
     return {
@@ -39,14 +39,14 @@ export const flowExecutor = {
     }): Promise<FlowExecutorContext> {
         const trigger = input.flowVersion.trigger
         if (input.executionType === ExecutionType.BEGIN) {
-            void progressService.backup({
+            void runProgressService.backup({
                 engineConstants: constants,
                 flowExecutorContext: executionState,
             }).catch((err) => {
                 console.error('[Progress] Initial payload upload failed', err)
             })
             await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
-            await progressService.sendUpdate({
+            await runProgressService.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState,
                 stepNameToUpdate: trigger.name,
@@ -82,7 +82,7 @@ export const flowExecutor = {
             }
             const handler = this.getExecutorForAction(currentAction.type)
 
-            await progressService.sendUpdate({
+            await runProgressService.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: flowExecutionContext,
                 stepNameToUpdate: previousAction!.name,
@@ -108,7 +108,7 @@ export const flowExecutor = {
 
         }
 
-        await progressService.sendUpdate({
+        await runProgressService.sendUpdate({
             engineConstants: constants,
             flowExecutorContext: flowExecutionContext,
             stepNameToUpdate: previousAction?.name,

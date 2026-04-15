@@ -3,7 +3,7 @@ import { inspect } from 'node:util'
 import path from 'path'
 import { ConnectionsManager, ContextVersion, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
 import { ExecutionError, ExecutionErrorType, RespondResponse, Result, tryCatch } from '@activepieces/shared'
-import { createConnectionService } from './services/connections.service'
+import { createConnectionResolver } from './piece-context/connection-resolver'
 
 export type FileEntry = {
     name: string
@@ -73,7 +73,7 @@ export const utils = {
     createConnectionManager(params: CreateConnectionManagerParams): ConnectionsManager {
         return {
             get: async (key: string) => {
-                const connection = await createConnectionService({ projectId: params.projectId, engineToken: params.engineToken, apiUrl: params.apiUrl, contextVersion: params.contextVersion }).obtain(key)
+                const connection = await createConnectionResolver({ projectId: params.projectId, engineToken: params.engineToken, apiUrl: params.apiUrl, contextVersion: params.contextVersion }).obtain(key)
                 if (params.target === 'actions') {
                     params.hookResponse.tags.push(`connection:${key}`)
                 }
