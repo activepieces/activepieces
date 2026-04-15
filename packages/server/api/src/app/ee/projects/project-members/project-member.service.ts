@@ -232,7 +232,7 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             relations: ['projectRole'],
         })
         return memberships.some((m) => {
-            const role = m.projectRole as ProjectRole
+            const role = m.projectRole
             return role.permissions?.includes(permission)
         })
     },
