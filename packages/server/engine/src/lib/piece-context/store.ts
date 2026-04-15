@@ -3,7 +3,7 @@ import { Store, StoreScope } from '@activepieces/pieces-framework'
 import { DeleteStoreEntryRequest, ExecutionError, FetchError, FlowId, isNil, PutStoreEntryRequest, StorageError, StorageInvalidKeyError, StorageLimitError, STORE_KEY_MAX_LENGTH, STORE_VALUE_MAX_SIZE, StoreEntry } from '@activepieces/shared'
 import { utils } from '../utils'
 
-export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServiceParams): StorageService => {
+const createStoreClient = ({ engineToken, apiUrl }: CreateStoreClientParams): StoreClient => {
     return {
         async get(key: string): Promise<StoreEntry | null> {
             if (isNil(key) || key.length === 0) {
@@ -95,7 +95,7 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
 
                 return null
             }))
-            
+
             if (storeEntryError) {
                 return handleFetchError({
                     url,
@@ -111,7 +111,7 @@ export function createContextStore({ apiUrl, prefix, flowId, engineToken }: { ap
     return {
         async put<T>(key: string, value: T, scope = StoreScope.FLOW): Promise<T> {
             const modifiedKey = createKey(prefix, scope, flowId, key)
-            await createStorageService({ apiUrl, engineToken }).put({
+            await createStoreClient({ apiUrl, engineToken }).put({
                 key: modifiedKey,
                 value,
             })
@@ -119,13 +119,13 @@ export function createContextStore({ apiUrl, prefix, flowId, engineToken }: { ap
         },
         async delete(key: string, scope = StoreScope.FLOW): Promise<void> {
             const modifiedKey = createKey(prefix, scope, flowId, key)
-            await createStorageService({ apiUrl, engineToken }).delete({
+            await createStoreClient({ apiUrl, engineToken }).delete({
                 key: modifiedKey,
             })
         },
         async get<T>(key: string, scope = StoreScope.FLOW): Promise<T | null> {
             const modifiedKey = createKey(prefix, scope, flowId, key)
-            const storeEntry = await createStorageService({ apiUrl, engineToken }).get(modifiedKey)
+            const storeEntry = await createStoreClient({ apiUrl, engineToken }).get(modifiedKey)
             if (storeEntry === null) {
                 return null
             }
@@ -172,12 +172,12 @@ const handleFetchError = ({ url, cause }: HandleFetchErrorParams): never => {
     throw new FetchError(url.toString(), cause)
 }
 
-type CreateStorageServiceParams = {
+type CreateStoreClientParams = {
     engineToken: string
     apiUrl: string
 }
 
-type StorageService = {
+type StoreClient = {
     get(key: string): Promise<StoreEntry | null>
     put(request: PutStoreEntryRequest): Promise<StoreEntry | null>
     delete(request: DeleteStoreEntryRequest): Promise<null>
