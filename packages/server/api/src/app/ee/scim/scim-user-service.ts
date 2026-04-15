@@ -59,6 +59,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
                 trackEvents: false,
                 newsLetter: false,
                 provider: UserIdentityProvider.SAML,
+                emailVerified: true,
             })
         }
 

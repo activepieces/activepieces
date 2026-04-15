@@ -75,7 +75,7 @@ export const UserWithMetaInformationAndProject = z.object({
     ...UserWithMetaInformation.shape,
     trackEvents: z.boolean(),
     newsLetter: z.boolean(),
-    verified: z.boolean(),
+    emailVerified: z.boolean(),
     projectId: z.string(),
 })
 

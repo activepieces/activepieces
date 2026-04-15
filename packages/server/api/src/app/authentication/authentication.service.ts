@@ -1,5 +1,6 @@
 import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, MfaChallengeResponse, PlatformRole, PlatformWithoutSensitiveData, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { databaseConnection } from '../database/database-connection'
 import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
@@ -123,20 +124,16 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     async get2faStatus(params: Get2faStatusParams): Promise<{ enabled: boolean, backupCodesRemaining: number, hasPassword: boolean }> {
         const user = await userService(log).getOneOrFail({ id: params.userId })
         const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
+        const backupCodesRemaining = await countRemainingBackupCodes(identity.id)
         return {
             enabled: identity.twoFactorEnabled ?? false,
-            backupCodesRemaining: 0,
+            backupCodesRemaining,
             hasPassword: identity.provider === UserIdentityProvider.EMAIL,
         }
     },
     async socialSignIn(params: FederatedAuthnParams): Promise<AuthenticationResponse | MfaChallengeResponse> {
-        log.info({ params }, '[socialsingin]')
-
-
         const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(params.identityId, log) : params.predefinedPlatformId
         const userIdentity = await userIdentityService(log).getOneOrFail({ id: params.identityId })
-
-        log.info({ platformId, userIdentity }, '[socialsingin]')
         if (isNil(platformId)) {
             await userIdentityService(log).unDraft(params.identityId)
             return createUserAndPlatform(userIdentity, log)
@@ -291,6 +288,23 @@ async function getPersonalPlatformIdForIdentity(identityId: string, log: Fastify
         return platform?.id ?? null
     }
     return null
+}
+
+async function countRemainingBackupCodes(identityId: string): Promise<number> {
+    const rows = await databaseConnection().query(
+        'SELECT "backupCodes" FROM "two_factor" WHERE "userId" = $1 LIMIT 1',
+        [identityId],
+    ) as Array<{ backupCodes: string | null }>
+    if (!rows.length || !rows[0].backupCodes) {
+        return 0
+    }
+    try {
+        const codes = JSON.parse(rows[0].backupCodes) as unknown[]
+        return Array.isArray(codes) ? codes.length : 0
+    }
+    catch {
+        return 0
+    }
 }
 
 async function assertCanSignup(log: FastifyBaseLogger, params: AssertSignupParams): Promise<void> {

@@ -15,6 +15,7 @@ import {
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { invalidatePlatformAuthCache } from '../authentication/better-auth/auth'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -61,6 +62,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             fullLogoUrl,
             favIconUrl,
         })
+        invalidatePlatformAuthCache({ platformId: req.params.id })
         return platformService(req.log).getOneWithPlanAndUsageOrThrow(req.params.id)
     })
 

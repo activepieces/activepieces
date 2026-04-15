@@ -3,6 +3,7 @@ import { AuthContext, MiddlewareContext, MiddlewareOptions } from 'better-auth/*
 import { getOAuthState } from 'better-auth/api'
 import { BetterAuthOptions, User } from 'better-auth/types'
 import { FastifyBaseLogger } from 'fastify'
+import { databaseConnection } from '../../database/database-connection'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { emailService } from '../../ee/helper/email/email-service'
 import { applicationEvents } from '../../helper/application-events'
@@ -10,6 +11,7 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { platformUtils } from '../../platform/platform.utils'
 import { authenticationService } from '../authentication.service'
+import { UserIdentityEntity } from '../user-identity/user-identity-entity'
 
 type SentData = {
     user: User
@@ -67,6 +69,12 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
                 from: oAuthState?.from,
             })
 
+            // Read draft before socialSignIn changes it, to distinguish sign-up vs sign-in
+            const identityBeforeSignIn = await databaseConnection()
+                .getRepository(UserIdentityEntity)
+                .findOneBy({ id: identityId })
+            const isNewUser = identityBeforeSignIn?.draft ?? false
+
             const { data: response, error } = await tryCatch(async () => authenticationService(log).socialSignIn({
                 identityId,
                 predefinedPlatformId: platformId,
@@ -94,7 +102,7 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
                 projectId: response.projectId,
                 ip: ctx.request!.headers.get(system.get(AppSystemProp.CLIENT_REAL_IP_HEADER) ?? '') ?? '',
             }, {
-                action: ApplicationEventName.USER_SIGNED_UP,
+                action: isNewUser ? ApplicationEventName.USER_SIGNED_UP : ApplicationEventName.USER_SIGNED_IN,
                 data: {
                     source: 'sso',
                 },
@@ -108,8 +116,12 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
 
 const platformIdFromRequestQuery = (request: Request | undefined) => {
     if (request) {
-        const queryParams = new URLSearchParams(request.url)
-        return queryParams.get('platformId')
+        try {
+            return new URL(request.url).searchParams.get('platformId')
+        }
+        catch {
+            return null
+        }
     }
     return null
 }

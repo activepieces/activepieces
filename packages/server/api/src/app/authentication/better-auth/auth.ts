@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck - better-auth type references internal bun paths which are non-portable
 import { cryptoUtils } from '@activepieces/server-utils'
 import { UserIdentityProvider } from '@activepieces/shared'
@@ -129,7 +128,7 @@ const auth = betterAuth({
     },
     trustedOrigins: ['*'],
     plugins: [
-        twoFactor({ issuer: 'Activepieces', allowPasswordless: true }),
+        twoFactor({ issuer: 'Activepieces' }),
     ],
     hooks: {
         before: createAuthMiddleware(service.beforeHook),
