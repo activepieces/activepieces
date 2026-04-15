@@ -1,1 +1,0 @@
-export const BASE_URL = 'https://api.raia2.com/external'

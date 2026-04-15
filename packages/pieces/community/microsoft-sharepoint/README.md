@@ -1,2 +1,0 @@
-# pieces-microsoft-sharepoint
-

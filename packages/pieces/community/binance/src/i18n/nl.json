@@ -1,9 +1,0 @@
-{
-  "Fetch the price of a crypto pair from Binance": "De prijs van een crypto-paar ophalen van Binance",
-  "Fetch Pair Price": "Pakket Pair Prijs",
-  "Fetch the current price of a pair (e.g. BTC/USDT)": "Ophalen van de huidige prijs van een paar (bijvoorbeeld BTC/USDT)",
-  "First Coin Symbol": "Eerste Munt Symbool",
-  "Second Coin Symbol": "Tweede Munt Symbool",
-  "The currency to fetch the price for (e.g. 'BTC' in 'BTC/USDT')": "De valuta om de prijs van (bijvoorbeeld 'BTC' in 'BTC/USDT') op te halen",
-  "The currency to fetch the price in (e.g. 'USDT' in 'BTC/USDT')": "De valuta om de prijs op te halen (bijvoorbeeld 'USDT' in 'BTC/USDT')"
-}

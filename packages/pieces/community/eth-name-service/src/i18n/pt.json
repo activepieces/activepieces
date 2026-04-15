@@ -1,8 +1,0 @@
-{
-  "Ethereum Name Service (ENS) is a decentralized naming system on the Ethereum blockchain.": "O Serviço de Nome Ethereum (ENS) é um sistema de nomes descentralizado na blockchain Ethereum.",
-  "*Get your api Key: https://thegraph.com/studio/apikeys": "*Obtenha sua chave de api: https://thegraph.com/studio/apikeys",
-  "List ENS Domains": "Listar domínios ENS",
-  "List the ENS domains for a given address.": "Lista os domínios ENS para um endereço fornecido.",
-  "Address": "Endereço",
-  "Address to list ENS domains for": "Endereço para listar domínios ENS para"
-}

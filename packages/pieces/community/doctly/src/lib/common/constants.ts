@@ -1,1 +1,0 @@
-export const BASE_URL = 'https://api.doctly.ai/api/v1'

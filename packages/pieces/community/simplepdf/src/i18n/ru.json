@@ -1,8 +1,0 @@
-{
-  "SimplePDF": "SimplePDF",
-  "PDF editing and generation tool": "Инструмент для редактирования и генерации PDF",
-  "New Submission": "Новая заявка",
-  "Triggers when a form receives a new submission": "Срабатывает при получении формы",
-  "Markdown": "Markdown",
-  "\n- Paste this URL in the webhook integration endpoint:\n```text\n{{webhookUrl}}\n```\n- Click update (keep other settings unchanged)\n<br>\n<br>\n\n_[Read more about configuring webhooks](https://simplepdf.eu/help/how-to/configure-webhooks-pdf-form-submissions)_\n": "\n- Вставьте этот URL в конечную точку интеграции webhook:\n```text\n{{webhookUrl}}\n```\n- нажмите на обновление (сохранить другие настройки)\n<br>\n<br>\n\n_[Подробнее о настройке webhooks](https://simplepdf.eu/help/how-to/configure-webhooks-pdf-form-submissions)_\n"
-}

@@ -1,9 +1,0 @@
-{
-  "Fetch the price of a crypto pair from Binance": "Rufe den Preis eines Krypto-Paares aus Binanz ab",
-  "Fetch Pair Price": "Paarpreis abrufen",
-  "Fetch the current price of a pair (e.g. BTC/USDT)": "Holen Sie den aktuellen Preis eines Paares (z.B. BTC/USDT)",
-  "First Coin Symbol": "Erstes Münzsymbol",
-  "Second Coin Symbol": "Zweites Münzsymbol",
-  "The currency to fetch the price for (e.g. 'BTC' in 'BTC/USDT')": "Die Währung, für die der Preis abgerufen wird (z.B. 'BTC' in 'BTC/USDT')",
-  "The currency to fetch the price in (e.g. 'USDT' in 'BTC/USDT')": "Die Währung, in der der Preis abgerufen wird (z.B. 'USDT' in 'BTC/USDT')"
-}

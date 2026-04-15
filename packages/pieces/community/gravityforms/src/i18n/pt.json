@@ -1,7 +1,0 @@
-{
-  "Build and publish your WordPress forms": "Crie e publique seus formulários do WordPress",
-  "New Submission": "Nova Submissão",
-  "Triggers when form receives a new submission": "Gatilhos quando o formulário receber uma nova submissão",
-  "Markdown": "Markdown",
-  "\n- Go to the \"Plugins\" section.\n- Find and click on the \"Webhook\" plugin to activate it.\n- Now, locate the form where you want the trigger to occur.\n- Add a webhook to that form.\n- In the webhook settings, paste this URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n- Keep the other settings unchanged (default).\n": "\n- Go to the \"Plugins\" section.\n- Find and click on the \"Webhook\" plugin to activate it.\n- Now, locate the form where you want the trigger to occur.\n- Add a webhook to that form.\n- In the webhook settings, paste this URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n- Keep the other settings unchanged (default).\n"
-}
