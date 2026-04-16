@@ -2,9 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { azureDevOpsAuth } from '../../';
 import {
-  azureDevOpsApiCall,
   azureDevOpsCommon,
-  flattenWorkItem,
   AzureDevOpsWorkItem,
   JsonPatchOperation,
 } from '../common';
@@ -68,16 +66,16 @@ export const createWorkItemAction = createAction({
       });
     }
 
-    const response = await azureDevOpsApiCall<AzureDevOpsWorkItem>({
+    const response = await azureDevOpsCommon.apiCall<AzureDevOpsWorkItem>({
       organizationUrl: orgUrl,
       pat: auth.props.pat,
       method: HttpMethod.POST,
-      endpoint: `/${encodeURIComponent(String(project))}/_apis/wit/workitems/$${encodeURIComponent(String(work_item_type))}`,
+      endpoint: `/${encodeURIComponent(project)}/_apis/wit/workitems/$${encodeURIComponent(work_item_type as string)}`,
       queryParams: { 'api-version': '7.1' },
       body: operations,
       isJsonPatch: true,
     });
 
-    return flattenWorkItem(response);
+    return azureDevOpsCommon.flattenWorkItem(response);
   },
 });

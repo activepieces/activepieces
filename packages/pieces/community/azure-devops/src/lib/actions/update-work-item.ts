@@ -2,9 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { azureDevOpsAuth } from '../../';
 import {
-  azureDevOpsApiCall,
   azureDevOpsCommon,
-  flattenWorkItem,
   AzureDevOpsWorkItem,
   JsonPatchOperation,
 } from '../common';
@@ -48,7 +46,7 @@ export const updateWorkItemAction = createAction({
       context.propsValue;
     const auth = context.auth;
     const orgUrl = azureDevOpsCommon.sanitizeOrgUrl(auth.props.organizationUrl);
-    const encodedProject = encodeURIComponent(String(project));
+    const encodedProject = encodeURIComponent(project);
 
     const operations: JsonPatchOperation[] = [];
 
@@ -93,7 +91,7 @@ export const updateWorkItemAction = createAction({
     }
 
     if (operations.length === 0) {
-      const getResponse = await azureDevOpsApiCall<AzureDevOpsWorkItem>({
+      const getResponse = await azureDevOpsCommon.apiCall<AzureDevOpsWorkItem>({
         organizationUrl: orgUrl,
         pat: auth.props.pat,
         method: HttpMethod.GET,
@@ -103,10 +101,10 @@ export const updateWorkItemAction = createAction({
           'api-version': '7.1',
         },
       });
-      return flattenWorkItem(getResponse);
+      return azureDevOpsCommon.flattenWorkItem(getResponse);
     }
 
-    const response = await azureDevOpsApiCall<AzureDevOpsWorkItem>({
+    const response = await azureDevOpsCommon.apiCall<AzureDevOpsWorkItem>({
       organizationUrl: orgUrl,
       pat: auth.props.pat,
       method: HttpMethod.PATCH,
@@ -116,6 +114,6 @@ export const updateWorkItemAction = createAction({
       isJsonPatch: true,
     });
 
-    return flattenWorkItem(response);
+    return azureDevOpsCommon.flattenWorkItem(response);
   },
 });

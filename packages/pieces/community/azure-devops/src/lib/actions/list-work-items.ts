@@ -2,9 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { azureDevOpsAuth } from '../../';
 import {
-  azureDevOpsApiCall,
   azureDevOpsCommon,
-  fetchWorkItemsByIds,
   WiqlResponse,
 } from '../common';
 
@@ -37,13 +35,13 @@ export const listWorkItemsAction = createAction({
     const query = wiql_query || DEFAULT_WIQL;
     const maxItems = Math.min(limit ?? 50, 200);
 
-    const wiqlResponse = await azureDevOpsApiCall<WiqlResponse>({
+    const wiqlResponse = await azureDevOpsCommon.apiCall<WiqlResponse>({
       organizationUrl: orgUrl,
       pat: auth.props.pat,
       method: HttpMethod.POST,
-      endpoint: `/${encodeURIComponent(String(project))}/_apis/wit/wiql`,
+      endpoint: `/${encodeURIComponent(project)}/_apis/wit/wiql`,
       queryParams: {
-        '$top': String(maxItems),
+        '$top': `${maxItems}`,
         'api-version': '7.1',
       },
       body: { query },
@@ -55,7 +53,7 @@ export const listWorkItemsAction = createAction({
 
     const ids = wiqlResponse.workItems.map((wi) => wi.id);
 
-    const workItems = await fetchWorkItemsByIds({
+    const workItems = await azureDevOpsCommon.fetchWorkItemsByIds({
       organizationUrl: orgUrl,
       pat: auth.props.pat,
       ids,

@@ -2,9 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { azureDevOpsAuth } from '../../';
 import {
-  azureDevOpsApiCall,
   azureDevOpsCommon,
-  flattenWorkItem,
   AzureDevOpsWorkItem,
 } from '../common';
 
@@ -26,17 +24,17 @@ export const getWorkItemAction = createAction({
     const auth = context.auth;
     const orgUrl = azureDevOpsCommon.sanitizeOrgUrl(auth.props.organizationUrl);
 
-    const response = await azureDevOpsApiCall<AzureDevOpsWorkItem>({
+    const response = await azureDevOpsCommon.apiCall<AzureDevOpsWorkItem>({
       organizationUrl: orgUrl,
       pat: auth.props.pat,
       method: HttpMethod.GET,
-      endpoint: `/${encodeURIComponent(String(project))}/_apis/wit/workitems/${work_item_id}`,
+      endpoint: `/${encodeURIComponent(project)}/_apis/wit/workitems/${work_item_id}`,
       queryParams: {
         '$expand': 'all',
         'api-version': '7.1',
       },
     });
 
-    return flattenWorkItem(response);
+    return azureDevOpsCommon.flattenWorkItem(response);
   },
 });

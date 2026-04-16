@@ -12,7 +12,7 @@ import { updateWorkItemAction } from './lib/actions/update-work-item';
 import { listWorkItemsAction } from './lib/actions/list-work-items';
 import { addCommentAction } from './lib/actions/add-comment';
 import { newUpdatedWorkItemTrigger } from './lib/triggers/new-updated-work-item';
-import { azureDevOpsCommon } from './lib/common';
+import { azureDevOpsCommon, ProjectListResponse } from './lib/common';
 
 const authDescription = `To get your Personal Access Token (PAT):
 
@@ -80,30 +80,19 @@ export const azureDevOps = createPiece({
     listWorkItemsAction,
     addCommentAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => {
-        const typedAuth = auth as { props: { organizationUrl: string; pat: string } };
-        return azureDevOpsCommon.sanitizeOrgUrl(typedAuth.props.organizationUrl);
-      },
+      baseUrl: (auth) =>
+        azureDevOpsCommon.sanitizeOrgUrl(
+          (auth as AzureDevOpsAuth).props.organizationUrl,
+        ),
       auth: azureDevOpsAuth,
-      authMapping: async (auth) => {
-        const typedAuth = auth as { props: { organizationUrl: string; pat: string } };
-        const encoded = Buffer.from(`:${typedAuth.props.pat}`).toString('base64');
-        return {
-          Authorization: `Basic ${encoded}`,
-        };
-      },
+      authMapping: async (auth) => ({
+        Authorization: `Basic ${Buffer.from(
+          `:${(auth as AzureDevOpsAuth).props.pat}`,
+        ).toString('base64')}`,
+      }),
     }),
   ],
   triggers: [newUpdatedWorkItemTrigger],
 });
-
-interface ProjectListResponse {
-  count: number;
-  value: Array<{
-    id: string;
-    name: string;
-    state: string;
-  }>;
-}
 
 export type AzureDevOpsAuth = AppConnectionValueForAuthProperty<typeof azureDevOpsAuth>;

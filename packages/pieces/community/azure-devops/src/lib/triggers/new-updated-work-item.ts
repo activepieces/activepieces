@@ -7,9 +7,7 @@ import {
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import { azureDevOpsAuth, AzureDevOpsAuth } from '../../';
 import {
-  azureDevOpsApiCall,
   azureDevOpsCommon,
-  fetchWorkItemsByIds,
   FlatWorkItem,
   WiqlResponse,
 } from '../common';
@@ -46,7 +44,7 @@ const polling: Polling<AzureDevOpsAuth, StaticPropsValue<typeof props>> = {
 
     wiqlQuery += ' ORDER BY [System.ChangedDate] DESC';
 
-    const wiqlResponse = await azureDevOpsApiCall<WiqlResponse>({
+    const wiqlResponse = await azureDevOpsCommon.apiCall<WiqlResponse>({
       organizationUrl: orgUrl,
       pat: auth.props.pat,
       method: HttpMethod.POST,
@@ -64,7 +62,7 @@ const polling: Polling<AzureDevOpsAuth, StaticPropsValue<typeof props>> = {
 
     const ids = wiqlResponse.workItems.map((wi) => wi.id);
 
-    const workItems = await fetchWorkItemsByIds({
+    const workItems = await azureDevOpsCommon.fetchWorkItemsByIds({
       organizationUrl: orgUrl,
       pat: auth.props.pat,
       ids,
