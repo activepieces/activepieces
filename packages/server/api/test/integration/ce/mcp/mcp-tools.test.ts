@@ -1068,7 +1068,7 @@ describe('MCP Tools integration', () => {
         expect(output).toContain('subject')
     })
 
-    it('43. ap_list_connections — short piece name auto-expands', async () => {
+    it('43. ap_list_flows — returns success response', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 

@@ -106,7 +106,7 @@ async function resolvePropertyOptions({ props, componentProps, pieceName, pieceV
         try {
             const result = await withTimeout({
                 promise: userInteractionWatcher.submitAndWaitForResponse<EngineResponse<{
-                    options: unknown
+                    options: Array<{ label: string, value: unknown }> | PiecePropertyMap
                     disabled?: boolean
                 }>>({
                     jobType: WorkerJobType.EXECUTE_PROPERTY,
@@ -128,8 +128,8 @@ async function resolvePropertyOptions({ props, componentProps, pieceName, pieceV
             }
 
             const { options } = result.response
-            if (prop.type === PropertyType.DYNAMIC && isObject(options)) {
-                prop.dynamicFields = mcpUtils.buildPropSummaries(options as PiecePropertyMap)
+            if (prop.type === PropertyType.DYNAMIC && isObject(options) && !Array.isArray(options)) {
+                prop.dynamicFields = mcpUtils.buildPropSummaries(options)
                 prop.note = undefined
             }
             else if (Array.isArray(options)) {
