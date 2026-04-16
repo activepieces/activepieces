@@ -11,6 +11,7 @@ import { setPlatformOAuthService } from './app-connection/app-connection-service
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
+import { collaborativeModule } from './core/collaborative/collaborative.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { authenticationMiddleware } from './core/security/v2/authn/authentication-middleware'
 import { authorizationMiddleware } from './core/security/v2/authz/authorization-middleware'
@@ -201,6 +202,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await pieceSyncService(app.log).setup()
     await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
+    await app.register(collaborativeModule)
     await app.register(flowModule)
     await app.register(flowRunModule)
     await app.register(webhookModule)

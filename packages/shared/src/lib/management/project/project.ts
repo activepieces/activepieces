@@ -63,6 +63,7 @@ export const Project = z.object({
     externalId: Nullable(z.string()),
     releasesEnabled: z.boolean(),
     metadata: Nullable(Metadata),
+    poolId: Nullable(ApId),
 })
 
 const projectAnalytics = z.object({

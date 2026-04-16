@@ -19,6 +19,12 @@ export const mcpOAuthRegisterController: FastifyPluginAsyncZod = async (app) => 
     })
 }
 
+function isPrivateUseScheme(protocol: string): boolean {
+    const scheme = protocol.replace(/:$/, '')
+    return /^[a-z][a-z0-9+\-.]*\.[a-z][a-z0-9+\-.]*$/.test(scheme)
+        || ['cursor', 'vscode', 'vscode-insiders', 'windsurf', 'claude'].includes(scheme)
+}
+
 const RegisterRequest = {
     config: { security: securityAccess.public() },
     schema: {
@@ -26,8 +32,8 @@ const RegisterRequest = {
         body: z.object({
             redirect_uris: z.array(z.string().url().refine((uri) => {
                 const scheme = new URL(uri).protocol
-                return scheme === 'http:' || scheme === 'https:'
-            }, { message: 'Only http and https redirect URIs are allowed' })).min(1),
+                return scheme === 'http:' || scheme === 'https:' || isPrivateUseScheme(scheme)
+            }, { message: 'Only http, https, or private-use URI schemes (RFC 8252) are allowed' })).min(1),
             client_name: z.string().max(255).optional(),
             grant_types: z.array(z.string()).optional(),
             response_types: z.array(z.string()).optional(),

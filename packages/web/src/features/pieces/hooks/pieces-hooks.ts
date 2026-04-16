@@ -152,6 +152,9 @@ export const piecesHooks = {
           locale: i18n.language as LocalesEnum,
         }),
       staleTime: searchQuery ? 0 : Infinity,
+      meta: isTableQuery
+        ? { showErrorDialog: true, loadSubsetOptions: {} }
+        : undefined,
     });
     return {
       pieces: query.data,

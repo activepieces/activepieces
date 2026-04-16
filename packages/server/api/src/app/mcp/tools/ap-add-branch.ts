@@ -13,7 +13,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const addBranchInput = z.object({
     flowId: z.string(),
@@ -26,7 +26,7 @@ export const apAddBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
     return {
         title: 'ap_add_branch',
         permission: Permission.WRITE_FLOW,
-        description: 'Add a new conditional branch to a router (ROUTER) step. The branch is inserted before the fallback branch. Use ap_flow_structure to get the router step name.',
+        description: 'Add a conditional branch to a router step. Inserted before the fallback branch.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             routerStepName: z.string().describe('The name of the ROUTER step to add a branch to. Use ap_flow_structure to get valid values.'),
@@ -98,7 +98,7 @@ export const apAddBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                 }
             }
             catch (err) {
-                return mcpToolError('Add branch failed', err)
+                return mcpUtils.mcpToolError('Add branch failed', err)
             }
         },
     }
