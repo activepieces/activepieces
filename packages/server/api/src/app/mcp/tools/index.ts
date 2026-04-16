@@ -2,6 +2,7 @@ import { McpServer, McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { apAddBranchTool } from './ap-add-branch'
 import { apAddStepTool } from './ap-add-step'
+import { apBuildFlowTool } from './ap-build-flow'
 import { apChangeFlowStatusTool } from './ap-change-flow-status'
 import { apCreateFlowTool } from './ap-create-flow'
 import { apCreateTableTool } from './ap-create-table'
@@ -54,6 +55,7 @@ export const LOCKED_TOOL_NAMES: string[] = [
 // packages/web/src/app/components/project-settings/mcp-server/utils/mcp-tools-metadata.ts
 // Any tool added here must also be added there so it appears in the UI settings panel.
 export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = [
+    'ap_build_flow',
     'ap_create_flow',
     'ap_rename_flow',
     'ap_update_trigger',
@@ -77,6 +79,7 @@ export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = [
 ]
 
 export const activepiecesTools = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition[] => [
+    apBuildFlowTool(mcp, log),
     apCreateFlowTool(mcp, log),
     apRenameFlowTool(mcp, log),
     apListFlowsTool(mcp, log),
