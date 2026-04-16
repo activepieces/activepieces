@@ -6,11 +6,11 @@ export const findCompany = createAction({
   auth: folkAuth,
   name: 'findCompany',
   displayName: 'Find Company',
-  description: 'Search for companies in your Folk workspace by name or email address.',
+  description: 'Search for companies in your Folk workspace by name.',
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',
-      description: 'Enter company name or email to search for',
+      description: 'Enter company name to search for',
       required: false,
     }),
     limit: Property.Number({
