@@ -2,12 +2,13 @@ import { EnvelopesApi } from 'docusign-esign';
 
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { docusignAuth } from '../auth';
+import { DocusignAuthType } from '../../';
 import { createApiClient } from '../common';
 
 export const getEnvelope = createAction({
   name: 'getEnvelope',
-  displayName: 'Get Envelope',
-  description: 'Retrieve full details of an envelope by its ID.',
+  displayName: 'Get envelope',
+  description: 'Get Docusign envelope',
   auth: docusignAuth,
   props: {
     accountId: Property.ShortText({

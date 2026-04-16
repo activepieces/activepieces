@@ -3,12 +3,13 @@ import { EnvelopesApi } from 'docusign-esign';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { docusignAuth } from '../auth';
+import { DocusignAuthType } from '../..';
 import { createApiClient } from '../common';
 
 export const getDocument = createAction({
   name: 'getDocument',
-  displayName: 'Get Document',
-  description: 'Download a document from an envelope as a file.',
+  displayName: 'Get document',
+  description: 'Get document from a specific envelope',
   auth: docusignAuth,
   props: {
     accountId: Property.ShortText({
@@ -19,36 +20,16 @@ export const getDocument = createAction({
       displayName: 'Envelope ID',
       required: true,
     }),
-    documentId: Property.StaticDropdown({
-      displayName: 'Document',
+    documentId: Property.ShortText({
+      displayName: 'Document ID',
       description:
-        'Choose a specific document by its numeric ID, or select a special option to download all documents at once.',
+        'The ID of the document to retrieve. Alternatively, you can use one of the following special keywords:\n' +
+        '\n' +
+        'combined: Retrieves all of the documents as a single PDF file. When the query parameter certificate is true, the certificate of completion is included in the PDF file. When the query parameter certificate is false, the certificate of completion is not included in the PDF file.\n' +
+        'archive: Retrieves a ZIP archive that contains all of the PDF documents and the certificate of completion.\n' +
+        'certificate: Retrieves only the certificate of completion as a PDF file.\n' +
+        'portfolio: Retrieves the envelope documents as a PDF portfolio.\n',
       required: true,
-      options: {
-        options: [
-          {
-            label: 'Combined PDF (all documents + certificate)',
-            value: 'combined',
-          },
-          {
-            label: 'Archive ZIP (all documents)',
-            value: 'archive',
-          },
-          {
-            label: 'Certificate of Completion only',
-            value: 'certificate',
-          },
-          {
-            label: 'Portfolio PDF',
-            value: 'portfolio',
-          },
-          { label: 'Document 1', value: '1' },
-          { label: 'Document 2', value: '2' },
-          { label: 'Document 3', value: '3' },
-          { label: 'Document 4', value: '4' },
-          { label: 'Document 5', value: '5' },
-        ],
-      },
     }),
   },
   async run({ auth, propsValue, files }) {

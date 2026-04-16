@@ -1,64 +1,39 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { docusignAuth } from '../auth';
+import { DocusignAuthType } from '../..';
 import { createApiClient } from '../common';
 import { Envelope, EnvelopesApi, EnvelopesInformation } from 'docusign-esign';
 
 export const listEnvelopes = createAction({
+  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'listEnvelopes',
-  displayName: 'Search Envelopes',
-  description: 'Search and list envelopes with optional filters.',
+  displayName: 'List envelopes',
+  description: 'List / search envelopes',
   auth: docusignAuth,
   props: {
     accountId: Property.ShortText({
       displayName: 'Account ID',
       required: true,
     }),
-    status: Property.StaticDropdown({
-      displayName: 'Status',
-      description: 'Filter envelopes by their current status.',
-      required: false,
-      options: {
-        options: [
-          { label: 'Any', value: '' },
-          { label: 'Created (draft)', value: 'created' },
-          { label: 'Sent', value: 'sent' },
-          { label: 'Delivered (viewed)', value: 'delivered' },
-          { label: 'Completed', value: 'completed' },
-          { label: 'Declined', value: 'declined' },
-          { label: 'Voided', value: 'voided' },
-        ],
-      },
-    }),
     fromDate: Property.DateTime({
-      displayName: 'From Date',
-      description: 'Return envelopes last changed on or after this date.',
+      displayName: 'From date',
       required: false,
     }),
     toDate: Property.DateTime({
-      displayName: 'To Date',
-      description: 'Return envelopes last changed on or before this date.',
+      displayName: 'To date',
       required: false,
     }),
     searchText: Property.ShortText({
-      displayName: 'Search Text',
-      description:
-        'Filter by envelope name, recipient name, or recipient email.',
+      displayName: 'Search text',
       required: false,
     }),
-    include: Property.StaticMultiSelectDropdown({
-      displayName: 'Include Extra Data',
-      description: 'Additional data to include in each envelope.',
+    status: Property.ShortText({
+      displayName: 'Status',
       required: false,
-      options: {
-        options: [
-          { label: 'Recipients', value: 'recipients' },
-          { label: 'Tabs', value: 'tabs' },
-          { label: 'Documents', value: 'documents' },
-          { label: 'Custom Fields', value: 'custom_fields' },
-          { label: 'Folders', value: 'folders' },
-          { label: 'Notifications', value: 'notifications' },
-        ],
-      },
+    }),
+    include: Property.Array({
+      displayName: 'Include (e.g. recipients)',
+      required: false,
     }),
   },
   async run({ auth, propsValue }) {
@@ -72,7 +47,7 @@ export const listEnvelopes = createAction({
         fromDate: propsValue.fromDate,
         toDate: propsValue.toDate,
         searchText: propsValue.searchText,
-        status: propsValue.status || undefined,
+        status: propsValue.status,
         include: propsValue.include?.join(','),
       });
     };
