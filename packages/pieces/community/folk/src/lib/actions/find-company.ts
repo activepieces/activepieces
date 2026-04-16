@@ -10,14 +10,14 @@ export const findCompany = createAction({
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',
-      description: 'Enter company name to search for',
-      required: false,
+      description: 'Enter company name or email to search for',
+      required: true,
     }),
     limit: Property.Number({
       displayName: 'Limit',
       description: 'The number of items to return (1-100)',
       required: false,
-      defaultValue: 20,
+      defaultValue: 100,
     }),
     cursor: Property.ShortText({
       displayName: 'Cursor',
@@ -36,21 +36,16 @@ export const findCompany = createAction({
         ],
       },
     }),
-    nameFilter: Property.ShortText({
-      displayName: 'Name Filter',
-      description: 'Filter by company name',
-      required: false,
-    }),
   },
   async run(context) {
-    const { limit, cursor, combinator, nameFilter, query } = context.propsValue;
+    const { limit, cursor, combinator, query } = context.propsValue;
 
     const res = await folkClient.getCompaniesWithFilters({
       apiKey: context.auth,
-      limit: limit || 20,
+      limit: limit || 100,
       cursor,
       combinator: (combinator === 'or' ? 'or' : 'and'),
-      nameFilter: nameFilter || query,
+      nameFilter: query,
     });
 
     return {
