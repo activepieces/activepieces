@@ -49,13 +49,14 @@ export const findCompany = createAction({
       apiKey: context.auth,
       limit: limit || 20,
       cursor,
-      combinator: combinator as 'and' | 'or',
+      combinator: (combinator === 'or' ? 'or' : 'and'),
       nameFilter: query || nameFilter,
     });
 
     return {
-      companies: res.data?.items || [],
-      count: res.data?.items?.length || 0,
+      companies: res.data?.items ?? [],
+      count: res.data?.items?.length ?? 0,
+      next_cursor: res.data?.pagination?.nextLink,
       pagination: res.data?.pagination,
     };
   },
