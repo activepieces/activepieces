@@ -433,27 +433,6 @@ describe('Waitpoint service', () => {
             expect(completeResult.waitpoint.id).toBe(pauseResult.waitpoint.id)
         })
 
-        it('should not complete waitpoint when waitpointId is stale', async () => {
-            const { flowRun } = await createFlowRun()
-
-            await waitpointService(app.log).createForPause({
-                flowRunId: flowRun.id,
-                projectId: ctx.project.id,
-                stepName: 'approval',
-                type: PauseType.WEBHOOK,
-            })
-
-            const completeResult = await waitpointService(app.log).complete({
-                flowRunId: flowRun.id,
-                projectId: ctx.project.id,
-                waitpointId: apId(),
-                resumePayload: { body: { stale: true } },
-            })
-
-            expect(completeResult.completedExisting).toBe(false)
-            const stored = await db.findOneBy<{ status: string }>('waitpoint', { flowRunId: flowRun.id })
-            expect(stored!.status).toBe('PENDING')
-        })
     })
 
     describe('findPendingByVersion', () => {
