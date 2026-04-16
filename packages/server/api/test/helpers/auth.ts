@@ -96,6 +96,8 @@ export const generateMockExternalToken = (
         firstName: params?.externalFirstName ?? faker.person.firstName(),
         pieces: params?.pieces ?? undefined,
         lastName: params?.externalLastName ?? faker.person.lastName(),
+        concurrencyPoolKey: params?.concurrencyPoolKey,
+        concurrencyPoolLimit: params?.concurrencyPoolLimit,
     }
 
     const algorithm = 'RS256'

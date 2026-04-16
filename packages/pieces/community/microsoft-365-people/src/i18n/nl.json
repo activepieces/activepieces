@@ -1,5 +1,9 @@
 {
   "Manage contacts in Microsoft 365 People": "Beheer contacten in Microsoft 365 mensen",
+  "Cloud Environment": "Cloud Omgeving",
+  "Select your Microsoft cloud environment.": "Selecteer je Microsoft cloud omgeving.",
+  "Commercial (Global)": "Commerciële (globaal)",
+  "US Government (GCC High)": "Amerikaanse regering (GCC High)",
   "\nIf you’d like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n - Contacts.ReadWrite\n - offline_access": "\nAls u uw eigen aangepaste Azure app wilt gebruiken in plaats van de standaard Activepieces app, Volg de [Azure app creatie handleiding] (https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n zet de **Redirect URI** in op {{redirectUrl}} en voeg de volgende **Microsoft Graph (Delegated) permissies** toe onder **API permissies**:\n - Contacten. eadWrite\n - offline_access",
   "Create a Contact": "Een contactpersoon aanmaken",
   "Delete a Contact": "Verwijder een contactpersoon",

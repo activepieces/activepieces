@@ -6,6 +6,7 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { projectMembersApi } from '../api/project-members-api';
@@ -13,8 +14,10 @@ import { projectMembersApi } from '../api/project-members-api';
 export const projectMembersHooks = {
   useProjectMembers: () => {
     const { data } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_PROJECT_MEMBERS);
+    const { platform } = platformHooks.useCurrentPlatform();
     const query = useQuery<ProjectMemberWithUser[]>({
       queryKey: ['project-members', authenticationSession.getProjectId()],
+      meta: { showErrorDialog: true, loadSubsetOptions: {} },
       queryFn: async () => {
         const projectId = authenticationSession.getProjectId();
         assertNotNullOrUndefined(projectId, 'Project ID is null');
@@ -26,7 +29,7 @@ export const projectMembersHooks = {
         });
         return res.data;
       },
-      enabled: !!data,
+      enabled: !!data && platform.plan.projectRolesEnabled,
     });
     return {
       projectMembers: query.data,

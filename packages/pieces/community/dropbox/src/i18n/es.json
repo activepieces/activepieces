@@ -107,5 +107,10 @@
   "None": "Ninguna",
   "JSON": "JSON",
   "Form Data": "Datos de Formulario",
-  "Raw": "Rápido"
+  "Raw": "Rápido",
+  "New Folder": "Nueva carpeta",
+  "Triggers when a new folder is created inside a watched Dropbox folder.": "Dispara cuando se crea una nueva carpeta dentro de una carpeta de Dropbox observada.",
+  "Watched Folder Path": "Ruta de la carpeta vista",
+  "Folder path to watch. Use empty string \"\" for root.": "Ruta de la carpeta a ver. Utilice una cadena vacía \"\" para la raíz.",
+  "Watch subfolders recursively. May return many results.": "Ver subcarpetas recursivamente. Puede devolver muchos resultados."
 }

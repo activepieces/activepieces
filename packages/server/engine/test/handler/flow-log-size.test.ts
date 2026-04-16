@@ -4,8 +4,8 @@ import { FlowExecutorContext } from '../../src/lib/handler/context/flow-executio
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildCodeAction, buildMockBeginExecuteFlowOperation, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
 
-vi.mock('../../src/lib/services/progress.service', () => ({
-    progressService: {
+vi.mock('../../src/lib/handler/run-progress', () => ({
+    runProgressService: {
         sendUpdate: vi.fn().mockResolvedValue(undefined),
         backup: vi.fn().mockResolvedValue(undefined),
         init: vi.fn(),

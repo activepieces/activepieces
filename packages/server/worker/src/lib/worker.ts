@@ -95,6 +95,13 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     polling = true
 
     const generation = connectionGeneration
+
+    if (sandboxManagers.length > 0) {
+        logger.info({ count: sandboxManagers.length }, 'Shutting down old sandbox managers before creating new ones')
+        await Promise.all(sandboxManagers.map((sm) => sm.shutdown(logger)))
+        sandboxManagers = []
+    }
+
     const rawConcurrency = Number(system.get(WorkerSystemProp.WORKER_CONCURRENCY) ?? '1')
     const concurrency = Number.isInteger(rawConcurrency) && rawConcurrency > 0 ? rawConcurrency : 1
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {

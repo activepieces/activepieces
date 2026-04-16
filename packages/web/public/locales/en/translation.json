@@ -320,6 +320,11 @@
   "External ID": "External ID",
   "org-3412321": "org-3412321",
   "Used to identify the project based on your SaaS ID": "Used to identify the project based on your SaaS ID",
+  "Max Concurrent Jobs": "Max Concurrent Jobs",
+  "Maximum number of flows that can run at the same time for this project": "Maximum number of flows that can run at the same time for this project",
+  "The rate limiting feature is disabled. Enable the PROJECT_RATE_LIMITER_ENABLED environment variable to use this feature.": "The rate limiting feature is disabled. Enable the PROJECT_RATE_LIMITER_ENABLED environment variable to use this feature.",
+  "Default": "Default",
+  "Default ({value})": "Default ({value})",
   "Your changes have been saved.": "Your changes have been saved.",
   "General": "General",
   "Members": "",
@@ -1243,8 +1248,10 @@
   "Flow Is Busy": "",
   "Flows have been exported.": "Flows have been exported.",
   "Untitled": "Untitled",
-  "Flow Is In Use": "Flow Is In Use",
-  "Flow is being used by another user, please try again later.": "Flow is being used by another user, please try again later.",
+  "{name} is editing": "{name} is editing",
+  "{name} is editing this flow. Only one person can edit at a time.": "{name} is editing this flow. Only one person can edit at a time.",
+  "{name} is editing this {resource}. Only one person can edit at a time.": "{name} is editing this {resource}. Only one person can edit at a time.",
+  "Take Over": "Take Over",
   "Run": "Run",
   "Real time flow": "Real time flow",
   "Flow can't be published with empty trigger {name}": "Flow can't be published with empty trigger {name}",
@@ -1460,5 +1467,6 @@
   "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.": "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.",
   "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.": "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.",
   "Personal": "Personal",
-  "Team": "Team"
+  "Team": "Team",
+  "+{count} more": "+{count} more"
 }

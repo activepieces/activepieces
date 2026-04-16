@@ -15,7 +15,7 @@ import type { Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 type StepInfo = {
     name: string
@@ -202,8 +202,7 @@ function formatFlowStructure(
     lines.push('Step types: trigger = EMPTY | PIECE_TRIGGER; action = CODE | PIECE | LOOP_ON_ITEMS | ROUTER')
     lines.push('')
     lines.push('## Referencing step outputs')
-    lines.push('Use `{{stepName.output.fieldName}}` in step inputs to reference data from previous steps.')
-    lines.push('Example: `{{trigger.output.body.email}}`')
+    lines.push(mcpUtils.STEP_REFERENCE_HINT)
     lines.push('Use ap_test_step or ap_test_flow to generate sample data and see available output fields.')
 
     lines.push('')
@@ -245,7 +244,7 @@ export const apFlowStructureTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                 return { content: [{ type: 'text', text }] }
             }
             catch (err) {
-                return mcpToolError('Failed to get flow structure', err)
+                return mcpUtils.mcpToolError('Failed to get flow structure', err)
             }
         },
     }
