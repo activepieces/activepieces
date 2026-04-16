@@ -136,8 +136,8 @@ function findResolvableProps({ props, componentProps, auth, providedInput }: Fin
 }
 
 function validateAuth(auth: string | undefined): { content: [{ type: 'text', text: string }] } | null {
-    if (auth !== undefined && auth.includes('\'')) {
-        return { content: [{ type: 'text', text: '❌ auth value must not contain single quotes. Use the exact externalId from ap_list_connections.' }] }
+    if (auth !== undefined && /['{}\[\]]/.test(auth)) {
+        return { content: [{ type: 'text', text: '❌ auth must be a plain externalId with no special characters. Use the exact value from ap_list_connections.' }] }
     }
     return null
 }

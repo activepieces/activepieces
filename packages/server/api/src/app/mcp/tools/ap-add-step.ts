@@ -93,7 +93,7 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                                 code: sourceCode ?? 'export const code = async (inputs) => { return {} }',
                                 packageJson: packageJson ?? '{}',
                             },
-                            input: input ?? {},
+                            input: resolvedInput,
                             errorHandlingOptions: { continueOnFailure: { value: false }, retryOnFailure: { value: false } },
                         },
                     }
@@ -192,7 +192,7 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                     operation,
                 })
 
-                const hasConfig = input !== undefined || sourceCode !== undefined || loopItems !== undefined
+                const hasConfig = input !== undefined || auth !== undefined || sourceCode !== undefined || loopItems !== undefined
                 const addedStep = flowStructureUtil.getStep(stepName, updatedFlow.version.trigger)
                 if (hasConfig && addedStep && !addedStep.valid) {
                     return {
