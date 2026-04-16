@@ -9,6 +9,7 @@ import {
   AzureDevOpsHookEvent,
   FlatWorkItem,
   WebhookPayload,
+  WEBHOOK_EVENT_OPTIONS,
   WorkItemResource,
 } from '../common';
 
@@ -53,11 +54,7 @@ export const newUpdatedWorkItemWebhookTrigger = createTrigger({
       required: true,
       defaultValue: ['workitem.created', 'workitem.updated'],
       options: {
-        options: [
-          { label: 'Work Item Created', value: 'workitem.created' },
-          { label: 'Work Item Updated', value: 'workitem.updated' },
-          { label: 'Work Item Commented', value: 'workitem.commented' },
-        ],
+        options: [...WEBHOOK_EVENT_OPTIONS],
       },
     }),
   },
@@ -188,13 +185,8 @@ function verifyBasicAuth(header: string, expectedUser: string, expectedToken: st
 }
 
 function filterToHookEvents(values: readonly unknown[]): AzureDevOpsHookEvent[] {
-  const allowed: AzureDevOpsHookEvent[] = [
-    'workitem.created',
-    'workitem.updated',
-    'workitem.commented',
-  ];
+  const allowed: readonly string[] = WEBHOOK_EVENT_OPTIONS.map((o) => o.value);
   return values.filter(
-    (v): v is AzureDevOpsHookEvent =>
-      typeof v === 'string' && (allowed as readonly string[]).includes(v),
+    (v): v is AzureDevOpsHookEvent => typeof v === 'string' && allowed.includes(v),
   );
 }

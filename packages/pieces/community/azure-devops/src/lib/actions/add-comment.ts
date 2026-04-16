@@ -31,6 +31,9 @@ export const addCommentAction = createAction({
       pat: auth.props.pat,
       method: HttpMethod.POST,
       endpoint: `/${encodeURIComponent(project)}/_apis/wit/workItems/${work_item_id}/comments`,
+      // Work-item comments remain in preview on REST 7.1; the stable 7.1
+      // endpoint does not exist. See
+      // https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/comments
       queryParams: { 'api-version': '7.1-preview.4' },
       body: { text: comment },
     });

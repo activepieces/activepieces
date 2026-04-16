@@ -614,7 +614,10 @@ export const azureDevOpsCommon = {
 
   assignedToDropdown: createAssignedToDropdown(false),
 
-  stateDropdown: createStateDropdown(false, 'New state for the work item'),
+  stateDropdown: createStateDropdown(
+    false,
+    'New state for the work item. Leave empty to keep the current state.',
+  ),
 
   stateDropdownOptional: createStateDropdown(
     false,
@@ -789,6 +792,12 @@ export type AzureDevOpsHookEvent =
   | 'workitem.created'
   | 'workitem.updated'
   | 'workitem.commented';
+
+export const WEBHOOK_EVENT_OPTIONS: ReadonlyArray<{ label: string; value: AzureDevOpsHookEvent }> = [
+  { label: 'Work Item Created', value: 'workitem.created' },
+  { label: 'Work Item Updated', value: 'workitem.updated' },
+  { label: 'Work Item Commented', value: 'workitem.commented' },
+];
 
 export interface SubscriptionResponse {
   id: string;
