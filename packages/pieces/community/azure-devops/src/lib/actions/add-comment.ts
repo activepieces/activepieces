@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { azureDevOpsAuth } from '../../';
+import { azureDevOpsAuth } from '../common';
 import { azureDevOpsCommon, IdentityRef } from '../common';
 
 export const addCommentAction = createAction({

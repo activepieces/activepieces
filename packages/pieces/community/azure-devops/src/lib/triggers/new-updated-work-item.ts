@@ -4,7 +4,7 @@ import {
   StaticPropsValue,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
-import { azureDevOpsAuth, AzureDevOpsAuth } from '../../';
+import { azureDevOpsAuth, AzureDevOpsAuth } from '../common';
 import {
   azureDevOpsCommon,
   FlatWorkItem,

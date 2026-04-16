@@ -3,7 +3,7 @@ import {
   TriggerStrategy,
   Property,
 } from '@activepieces/pieces-framework';
-import { azureDevOpsAuth } from '../../';
+import { azureDevOpsAuth } from '../common';
 import {
   azureDevOpsCommon,
   AzureDevOpsHookEvent,
