@@ -5,9 +5,14 @@ import { folkClient } from '../common/client';
 export const findCompany = createAction({
   auth: folkAuth,
   name: 'findCompany',
-  displayName: 'List Companies',
-  description: 'Retrieve a paginated list of companies from your Folk workspace.',
+  displayName: 'Find Company',
+  description: 'Search for companies in your Folk workspace by name or email address.',
   props: {
+    query: Property.ShortText({
+      displayName: 'Search Query',
+      description: 'Enter company name or email to search for',
+      required: false,
+    }),
     limit: Property.Number({
       displayName: 'Limit',
       description: 'The number of items to return (1-100)',
@@ -38,19 +43,20 @@ export const findCompany = createAction({
     }),
   },
   async run(context) {
-    const { limit, cursor, combinator, nameFilter } = context.propsValue;
+    const { limit, cursor, combinator, nameFilter, query } = context.propsValue;
 
     const res = await folkClient.getCompaniesWithFilters({
       apiKey: context.auth,
       limit: limit || 20,
       cursor,
       combinator: combinator as 'and' | 'or',
-      nameFilter,
+      nameFilter: query || nameFilter,
     });
 
     return {
-      companies: res.data?.items ?? [],
-      next_cursor: res.data?.pagination?.nextLink,
+      companies: res.data?.items || [],
+      count: res.data?.items?.length || 0,
+      pagination: res.data?.pagination,
     };
   },
 });

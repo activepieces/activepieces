@@ -36,7 +36,7 @@ export const bigcommerce = createPiece({
     'BigCommerce is a leading e-commerce platform that enables businesses to create and manage online stores.',
   auth: bigcommerceAuth,
   categories: [PieceCategory.COMMERCE],
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.82.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bigcommerce.png',
   authors: ['gs03-dev', 'sanket-a11y', 'Angelebeats'],
   actions: [
