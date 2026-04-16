@@ -149,6 +149,8 @@ export const snowflakeCommonProps = {
   database: Property.Dropdown({
     auth: snowflakeAuth,
     displayName: 'Database',
+    description:
+      'Select the Snowflake database to use. Databases are listed under **Data → Databases** in the Snowflake console.',
     refreshers: [],
     required: true,
     options: async ({ auth }) => {
@@ -179,6 +181,8 @@ export const snowflakeCommonProps = {
   schema: Property.Dropdown({
     auth: snowflakeAuth,
     displayName: 'Schema',
+    description:
+      'Select the schema within the chosen database. Schemas are listed under **Data → Databases → [your database]** in the Snowflake console.',
     refreshers: ['database'],
     required: true,
     options: async ({ auth, database }) => {
@@ -193,7 +197,7 @@ export const snowflakeCommonProps = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select database first',
+          placeholder: 'Please select a database first',
         };
       }
 
@@ -220,6 +224,7 @@ export const snowflakeCommonProps = {
   table: Property.Dropdown({
     auth: snowflakeAuth,
     displayName: 'Table',
+    description: 'Select the table to work with.',
     refreshers: ['database', 'schema'],
     required: true,
     options: async ({ auth, database, schema }) => {
@@ -234,14 +239,14 @@ export const snowflakeCommonProps = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select database first',
+          placeholder: 'Please select a database first',
         };
       }
       if (!schema) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select schema first',
+          placeholder: 'Please select a schema first',
         };
       }
 
@@ -265,9 +270,42 @@ export const snowflakeCommonProps = {
       };
     },
   }),
+  warehouse: Property.Dropdown({
+    auth: snowflakeAuth,
+    displayName: 'Warehouse',
+    description:
+      'Select the virtual warehouse to use for this operation. Warehouses are listed under **Admin → Warehouses** in the Snowflake console. Leave empty to use the warehouse set in your connection.',
+    refreshers: [],
+    required: false,
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your account first',
+        };
+      }
+
+      const connection = configureConnection(auth as SnowflakeAuthValue);
+      await connect(connection);
+      const response = await execute(connection, 'SHOW WAREHOUSES', []);
+      await destroy(connection);
+
+      return {
+        disabled: false,
+        options: response
+          ? response.map((wh: Record<string, unknown>) => ({
+              label: wh['name'] as string,
+              value: wh['name'] as string,
+            }))
+          : [],
+      };
+    },
+  }),
   table_column_values: Property.DynamicProperties({
     auth: snowflakeAuth,
-    displayName: 'Rows',
+    displayName: 'Row Data',
+    description: 'Enter the value for each column in the new row.',
     required: true,
     refreshers: ['database', 'schema', 'table'],
     props: async ({ auth, table }) => {
