@@ -70,7 +70,7 @@ export const generateEmbeddings = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = createBedrockRuntimeClient(auth.props);
+    const client = await createBedrockRuntimeClient(auth.props);
     const { model, inputText, dimensions, normalize } = propsValue;
 
     const isTitan = model.startsWith('amazon.titan-embed');

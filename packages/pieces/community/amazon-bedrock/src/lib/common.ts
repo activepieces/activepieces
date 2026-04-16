@@ -13,34 +13,19 @@ import {
   ImageFormat,
   VideoFormat,
 } from '@aws-sdk/client-bedrock-runtime';
+import { STSClient, AssumeRoleCommand } from '@aws-sdk/client-sts';
 import { ApFile } from '@activepieces/pieces-framework';
 
-export interface BedrockAuth {
-  accessKeyId: string;
-  secretAccessKey: string;
-  region: string;
+export async function createBedrockClient(auth: BedrockAuth): Promise<BedrockClient> {
+  const creds = await resolveAwsCredentials(auth);
+  return new BedrockClient({ credentials: creds, region: auth.region });
 }
 
-export function createBedrockClient(auth: BedrockAuth): BedrockClient {
-  return new BedrockClient({
-    credentials: {
-      accessKeyId: auth.accessKeyId,
-      secretAccessKey: auth.secretAccessKey,
-    },
-    region: auth.region,
-  });
-}
-
-export function createBedrockRuntimeClient(
-  auth: BedrockAuth
-): BedrockRuntimeClient {
-  return new BedrockRuntimeClient({
-    credentials: {
-      accessKeyId: auth.accessKeyId,
-      secretAccessKey: auth.secretAccessKey,
-    },
-    region: auth.region,
-  });
+export async function createBedrockRuntimeClient(
+  auth: BedrockAuth,
+): Promise<BedrockRuntimeClient> {
+  const creds = await resolveAwsCredentials(auth);
+  return new BedrockRuntimeClient({ credentials: creds, region: auth.region });
 }
 
 export async function getBedrockModelOptions(
@@ -61,7 +46,7 @@ export async function getBedrockModelOptions(
   }
 
   try {
-    const client = createBedrockClient(auth);
+    const client = await createBedrockClient(auth);
 
     if (filters?.useInferenceProfiles) {
       const [profileResponse, modelsResponse] = await Promise.all([
@@ -281,4 +266,38 @@ export function formatBedrockError(error: unknown): string {
     default:
       return err.message ?? 'An unexpected error occurred.';
   }
+}
+
+export async function resolveAwsCredentials(auth: BedrockAuth) {
+  if (auth.authType !== 'assume_role' || !auth.roleArn) {
+    return { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey };
+  }
+  const sts = new STSClient({
+    credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey },
+    region: auth.region,
+  });
+  const { Credentials } = await sts.send(
+    new AssumeRoleCommand({
+      RoleArn: auth.roleArn,
+      RoleSessionName: 'activepieces-session',
+      ...(auth.externalId ? { ExternalId: auth.externalId } : {}),
+    }),
+  );
+  if (!Credentials?.AccessKeyId || !Credentials?.SecretAccessKey) {
+    throw new Error('AWS STS returned empty credentials. Verify the Role ARN and permissions.');
+  }
+  return {
+    accessKeyId: Credentials.AccessKeyId,
+    secretAccessKey: Credentials.SecretAccessKey,
+    sessionToken: Credentials.SessionToken,
+  };
+}
+
+export interface BedrockAuth {
+  accessKeyId: string;
+  secretAccessKey: string;
+  region: string;
+  authType?: string;
+  roleArn?: string;
+  externalId?: string;
 }

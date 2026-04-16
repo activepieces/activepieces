@@ -106,7 +106,7 @@ export const generateContentFromImage = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = createBedrockRuntimeClient(auth.props);
+    const client = await createBedrockRuntimeClient(auth.props);
     const { model, source, image, prompt, systemPrompt, temperature, maxTokens } = propsValue;
 
     const imageBlock =

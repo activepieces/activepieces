@@ -65,7 +65,7 @@ export const generateImage = createAction({
     }),
   },
   async run({ auth, propsValue, files }) {
-    const client = createBedrockRuntimeClient(auth.props);
+    const client = await createBedrockRuntimeClient(auth.props);
     const { model, prompt, negativePrompt, width, height, seed } = propsValue;
 
     const isTitan = model.startsWith('amazon.titan-image');

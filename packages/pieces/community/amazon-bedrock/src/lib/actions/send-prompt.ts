@@ -130,7 +130,7 @@ export const sendPrompt = createAction({
     }),
   },
   async run({ auth, propsValue, store }) {
-    const client = createBedrockRuntimeClient(auth.props);
+    const client = await createBedrockRuntimeClient(auth.props);
     const {
       model,
       prompt,

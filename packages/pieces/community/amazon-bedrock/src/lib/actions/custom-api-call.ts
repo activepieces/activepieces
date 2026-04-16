@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient, HttpRequest } from '@activepieces/pieces-common';
 import { awsBedrockAuth } from '../auth';
+import { resolveAwsCredentials } from '../common';
 import { SignatureV4 } from '@smithy/signature-v4';
 import { HttpRequest as AwsHttpRequest } from '@smithy/protocol-http';
 import { Sha256 } from '@aws-crypto/sha256-js';
@@ -18,6 +19,7 @@ const AWS_BEDROCK_SERVICES = [
 async function signAwsRequest({
   accessKeyId,
   secretAccessKey,
+  sessionToken,
   region,
   service,
   method,
@@ -27,6 +29,7 @@ async function signAwsRequest({
 }: {
   accessKeyId: string;
   secretAccessKey: string;
+  sessionToken?: string;
   region: string;
   service: string;
   method: string;
@@ -54,6 +57,7 @@ async function signAwsRequest({
     credentials: {
       accessKeyId,
       secretAccessKey,
+      ...(sessionToken ? { sessionToken } : {}),
     },
     region,
     service,
@@ -166,9 +170,11 @@ export const customApiCall = createAction({
       requestHeaders['content-type'] = requestHeaders['content-type'] ?? 'application/json';
     }
 
+    const creds = await resolveAwsCredentials(auth);
     const signed = await signAwsRequest({
-      accessKeyId: auth.accessKeyId,
-      secretAccessKey: auth.secretAccessKey,
+      accessKeyId: creds.accessKeyId,
+      secretAccessKey: creds.secretAccessKey,
+      sessionToken: 'sessionToken' in creds ? creds.sessionToken : undefined,
       region: auth.region,
       service,
       method,

@@ -13,6 +13,18 @@ export const awsBedrockAuth = PieceAuth.CustomAuth({
 
 **Enable model access:** In the [AWS Bedrock Console](https://console.aws.amazon.com/bedrock/), go to **Model access** and request access to the models you want to use.`,
   props: {
+    authType: Property.StaticDropdown({
+      displayName: 'Auth Method',
+      description: 'Choose how to authenticate with AWS.',
+      required: true,
+      defaultValue: 'direct',
+      options: {
+        options: [
+          { label: 'Direct Credentials (Access Key + Secret)', value: 'direct' },
+          { label: 'AssumeRole (temporary credentials via STS)', value: 'assume_role' },
+        ],
+      },
+    }),
     accessKeyId: Property.ShortText({
       displayName: 'Access Key ID',
       description: 'Your AWS access key ID. Found in AWS IAM Console → Users → Security credentials.',
@@ -87,16 +99,31 @@ export const awsBedrockAuth = PieceAuth.CustomAuth({
         ],
       },
     }),
+    roleArn: Property.ShortText({
+      displayName: 'Role ARN',
+      description:
+        'Required when Auth Method is AssumeRole. ARN of the IAM Role to assume (e.g. arn:aws:iam::123456789012:role/MyRole).',
+      required: false,
+    }),
+    externalId: PieceAuth.SecretText({
+      displayName: 'External ID',
+      description: 'Optional. Only used with AssumeRole. External ID for cross-account role security.',
+      required: false,
+    }),
   },
   validate: async ({ auth }) => {
+    if (auth.authType === 'assume_role' && !auth.roleArn) {
+      return { valid: false, error: 'Role ARN is required when Auth Method is AssumeRole.' };
+    }
     try {
-      const client = createBedrockClient(auth);
+      const client = await createBedrockClient(auth);
       await client.send(new ListFoundationModelsCommand({}));
       return { valid: true };
     } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
       return {
         valid: false,
-        error: (e as Error)?.message,
+        error: message,
       };
     }
   },
