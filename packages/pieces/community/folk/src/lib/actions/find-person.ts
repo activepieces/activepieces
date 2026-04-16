@@ -49,14 +49,16 @@ export const findPerson = createAction({
       apiKey: context.auth,
       limit: limit || 20,
       cursor,
-      combinator: combinator as 'and' | 'or',
+      combinator: (combinator === 'or' ? 'or' : 'and'),
       nameFilter,
       emailFilter,
     });
 
     return {
-      data: res.data,
-      success: true,
+      people: res.data?.items ?? [],
+      count: res.data?.items?.length ?? 0,
+      next_cursor: res.data?.pagination?.nextLink,
+      pagination: res.data?.pagination,
     };
   },
 });
