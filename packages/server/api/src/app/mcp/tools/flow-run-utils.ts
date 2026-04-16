@@ -15,7 +15,7 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
     triggerTestData?: Record<string, unknown>
     log: FastifyBaseLogger
 }): Promise<{ content: [{ type: 'text', text: string }] }> {
-    const flow = await flowService(log).getOnePopulated({ id: flowId, projectId })
+    let flow = await flowService(log).getOnePopulated({ id: flowId, projectId })
     if (isNil(flow)) {
         return { content: [{ type: 'text', text: '❌ Flow not found' }] }
     }
@@ -50,7 +50,7 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
             payload: triggerTestData,
             type: SampleDataFileType.OUTPUT,
         })
-        await flowService(log).update({
+        const updatedFlow = await flowService(log).update({
             id: flow.id,
             projectId,
             userId: null,
@@ -60,6 +60,7 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
                 request: { stepName: flow.version.trigger.name, sampleDataSettings },
             },
         })
+        flow = updatedFlow
     }
 
     const flowRun = await flowRunService(log).test({
