@@ -210,6 +210,13 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             registered: true,
         }
     },
+    async hasAnyAcceptedInvitationsForEmail({ email }: { email: string }): Promise<boolean> {
+        const count = await repo().createQueryBuilder('user_invitation')
+            .where('LOWER("user_invitation"."email") = :email', { email: email.toLowerCase().trim() })
+            .andWhere({ status: InvitationStatus.ACCEPTED })
+            .getCount()
+        return count > 0
+    },
     async hasAnyAcceptedInvitations({
         email,
         platformId,

@@ -323,7 +323,7 @@ describe('Authentication API', () => {
             // arrange - enterprise platform exists
             const { mockPlatform, mockUser } = await createMockPlatformAndDomain({
                 platform: { emailAuthEnabled: true },
-                plan: { projectRolesEnabled: true },
+                plan: { projectRolesEnabled: true, licenseKey: 'test-key' },
             })
 
             const mockProject = createMockProject({
@@ -365,6 +365,10 @@ describe('Authentication API', () => {
                 .getRepository('user_invitation')
                 .findOneBy({ id: mockUserInvitation.id })
             expect(remainingInvitation).toBeNull()
+
+            // A personal platform was also created for the user
+            const allPlatforms = await databaseConnection().getRepository('platform').find()
+            expect(allPlatforms.length).toBe(2)
         })
 
         it('fails to sign up invited user platform if no project exist', async () => {
