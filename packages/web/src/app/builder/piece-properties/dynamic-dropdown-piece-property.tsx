@@ -91,10 +91,15 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         },
         {
           onSuccess: (response) => {
-            if (!firstDropdownState.current) {
+            const isFirstLoad = !firstDropdownState.current;
+            if (isFirstLoad) {
               firstDropdownState.current = response.options;
             }
             setDropdownState(response.options);
+            const defaultValue = response.options.defaultValue;
+            if (isFirstLoad && isNil(props.value) && !isNil(defaultValue)) {
+              props.onChange(defaultValue);
+            }
           },
         },
       );

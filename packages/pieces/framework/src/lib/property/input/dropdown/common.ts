@@ -16,6 +16,7 @@ export const DropdownState = z.object({
     placeholder: z.string().optional(),
     options: z.array(DropdownOption),
     creatable: z.object({ label: z.string() }).optional(),
+    defaultValue: z.unknown().optional(),
 })
 
 export type DropdownState<T> = {
@@ -23,5 +24,6 @@ export type DropdownState<T> = {
     placeholder?: string;
     options: DropdownOption<T>[];
     creatable?: { label: string };
+    defaultValue?: T;
 }
 

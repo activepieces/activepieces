@@ -5,7 +5,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
+import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, isNil, MarkdownVariant, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
 import { CallableFlowRequest, CallableFlowResponse, subflowsCommon } from '../common';
 
 export const callFlow = createAction({
@@ -26,6 +26,7 @@ export const callFlow = createAction({
           options: flows.map((flow) => ({
             value: {
               externalId: flow.externalId ?? flow.id,
+              status: flow.status,
             },
             label: flow.status === FlowStatus.DISABLED
               ? `${flow.version.displayName} (Disabled)`
@@ -44,9 +45,27 @@ export const callFlow = createAction({
           });
           return {
             label: newFlow.version.displayName,
-            value: { externalId: newFlow.externalId ?? newFlow.id },
+            value: { externalId: newFlow.externalId ?? newFlow.id, status: newFlow.status },
           };
         },
+      },
+    }),
+    disabledSubflowWarning: Property.DynamicProperties({
+      auth: PieceAuth.None(),
+      description: '',
+      displayName: '',
+      required: false,
+      refreshers: ['flow'],
+      props: async (propsValue) => {
+        const selectedFlow = propsValue['flow'] as unknown as FlowValue | undefined;
+        const fields: DynamicPropsValue = {};
+        if (!isNil(selectedFlow) && selectedFlow.status === FlowStatus.DISABLED) {
+          fields['warning'] = Property.MarkDown({
+            value: 'The selected subflow is not enabled. You can still test this step, but you must publish and enable the subflow before you can publish this flow.',
+            variant: MarkdownVariant.WARNING,
+          });
+        }
+        return fields;
       },
     }),
     mode: Property.StaticDropdown({
@@ -158,4 +177,5 @@ export const callFlow = createAction({
 
 type FlowValue = {
   externalId: string;
+  status: FlowStatus;
 };

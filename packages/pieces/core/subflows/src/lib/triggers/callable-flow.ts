@@ -31,15 +31,24 @@ export const callableFlow = createTrigger({
             options: [],
           };
         }
-        const options = parents.map((parent) => ({
-          value: {
-            flowId: parent.flow.id,
-            flowName: parent.flow.version.displayName,
-            stepName: parent.stepName,
-            payload: parent.payload,
-          },
-          label: `${parent.flow.version.displayName} > ${parent.stepDisplayName}`,
-        }));
+        const labelCounts = new Map<string, number>();
+        for (const parent of parents) {
+          const baseLabel = `${parent.flow.version.displayName} > ${parent.stepDisplayName}`;
+          labelCounts.set(baseLabel, (labelCounts.get(baseLabel) ?? 0) + 1);
+        }
+        const options = parents.map((parent) => {
+          const baseLabel = `${parent.flow.version.displayName} > ${parent.stepDisplayName}`;
+          const needsDisambiguation = (labelCounts.get(baseLabel) ?? 0) > 1;
+          return {
+            value: {
+              flowId: parent.flow.id,
+              flowName: parent.flow.version.displayName,
+              stepName: parent.stepName,
+              payload: parent.payload,
+            },
+            label: needsDisambiguation ? `${baseLabel} (${parent.stepName})` : baseLabel,
+          };
+        });
         return {
           options,
           defaultValue: parents.length === 1 ? options[0].value : undefined,
