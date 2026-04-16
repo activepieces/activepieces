@@ -10,11 +10,13 @@ const AUTH_TYPES = new Set<PropertyType>([
     PropertyType.CUSTOM_AUTH,
 ])
 
-const DYNAMIC_PROP_TYPES = new Set<PropertyType>([
+const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
     PropertyType.DROPDOWN,
     PropertyType.MULTI_SELECT_DROPDOWN,
     PropertyType.DYNAMIC,
 ])
+
+const STEP_REFERENCE_HINT = 'Use {{stepName.field}} to reference prior steps (no .output. in path).'
 
 function mcpToolError(prefix: string, err: unknown): { content: [{ type: 'text', text: string }] } {
     const message = err instanceof Error ? err.message : String(err)
@@ -33,7 +35,7 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
         if (prop.required) {
             const value = input[propName]
             if (value === undefined || value === null || value === '') {
-                if (DYNAMIC_PROP_TYPES.has(prop.type)) {
+                if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
                     uiRequired.push(`${propName} (${prop.displayName})`)
                 }
                 else {
@@ -85,7 +87,7 @@ function buildPropSummaries(props: PiecePropertyMap): PropSummary[] {
                 summary.note = 'Dynamic dropdown — options load from your account via API. Configure in the Activepieces UI, or provide a known value.'
             }
             if (prop.type === PropertyType.DYNAMIC) {
-                summary.note = 'Dynamic properties — fields are generated based on other input values. Configure in the Activepieces UI.'
+                summary.note = 'DYNAMIC — call ap_get_piece_props with auth+input to resolve sub-fields.'
             }
             return summary
         })
@@ -121,7 +123,27 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
     return { piece, component, pieceName: normalized }
 }
 
-export const mcpUtils = { mcpToolError, diagnosePieceProps, buildPropSummaries, normalizePieceName, lookupPieceComponent }
+function findResolvableProps({ props, componentProps, auth, providedInput }: FindResolvablePropsParams): PropSummary[] {
+    return props.filter(prop => {
+        const propDef = componentProps[prop.name]
+        if (isNil(propDef) || !RESOLVABLE_PROP_TYPES.has(prop.type) || !('refreshers' in propDef)) {
+            return false
+        }
+        const refreshers = (propDef as { refreshers: string[] }).refreshers
+        return refreshers.every(r => r === 'auth' ? !!auth : providedInput[r] !== undefined)
+    })
+}
+
+export const mcpUtils = { mcpToolError, diagnosePieceProps, buildPropSummaries, normalizePieceName, lookupPieceComponent, findResolvableProps, STEP_REFERENCE_HINT }
+
+export type { PropSummary }
+
+type FindResolvablePropsParams = {
+    props: PropSummary[]
+    componentProps: PiecePropertyMap
+    auth: string | undefined
+    providedInput: Record<string, unknown>
+}
 
 type DiagnosePiecePropsParams = {
     props: PiecePropertyMap
@@ -146,6 +168,7 @@ type PropSummary = {
     description?: string
     defaultValue?: unknown
     options?: Array<{ label: string, value: unknown }>
+    dynamicFields?: PropSummary[]
     note?: string
 }
 
