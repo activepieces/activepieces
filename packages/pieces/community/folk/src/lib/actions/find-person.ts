@@ -55,10 +55,9 @@ export const findPerson = createAction({
     });
 
     return {
-      people: res.data?.items ?? [],
-      count: res.data?.items?.length ?? 0,
+      data: res.data,
+      success: true,
       next_cursor: res.data?.pagination?.nextLink,
-      pagination: res.data?.pagination,
     };
   },
 });
