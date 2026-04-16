@@ -3,6 +3,7 @@ import { ApMultipartFile } from '../../../core/common'
 import { OptionalArrayFromQuery, OptionalBooleanFromQuery } from '../../../core/common/base-model'
 import { ApEdition } from '../../../core/flag/flag'
 import { PackageType, PieceCategory } from '../piece'
+import { SeekPage } from '../../../core/common/seek-page'
 
 export const EXACT_VERSION_PATTERN = '^[0-9]+\\.[0-9]+\\.[0-9]+$'
 export const EXACT_VERSION_REGEX = new RegExp(EXACT_VERSION_PATTERN)
@@ -111,3 +112,31 @@ export const AddPieceRequestBody = z.union([
 
 export type AddPieceRequestBody = z.infer<typeof AddPieceRequestBody>
 
+export const ListPieceVersionsRequestParams = z.object({
+    name: z.string(),
+})
+export const ListPieceVersionsWithScopeRequestParams = z.object({
+    name: z.string(),
+    scope: z.string(),
+})
+export type ListPieceVersionsWithScopeRequestParams = z.infer<typeof ListPieceVersionsWithScopeRequestParams>
+
+export type ListPieceVersionsRequestParams = z.infer<typeof ListPieceVersionsRequestParams>
+
+export const ListPieceVersionsResponse = z.object({ version: z.string() })
+export type ListPieceVersionsResponse = SeekPage<z.infer<typeof ListPieceVersionsResponse>>
+
+export const ExecuteActionRequest = z.object({
+    pieceVersion: VersionType.optional(),
+    input: z.record(z.string(), z.unknown()),
+    stepNameToTest: z.string().optional(),
+})
+
+export type ExecuteActionRequest = z.infer<typeof ExecuteActionRequest>
+
+export const ExecuteActionRequestParams = z.object({
+    name: z.string(),
+    actionName: z.string(),
+})
+
+export type ExecuteActionRequestParams = z.infer<typeof ExecuteActionRequestParams>

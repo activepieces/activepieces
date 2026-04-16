@@ -15,6 +15,7 @@ export enum EngineOperationType {
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_VALIDATE_AUTH = 'EXECUTE_VALIDATE_AUTH',
+    EXECUTE_ACTION = 'EXECUTE_ACTION',
 }
 
 export enum TriggerHookType {
@@ -33,6 +34,7 @@ export type EngineOperation =
     | ExecuteTriggerOperation<TriggerHookType>
     | ExecuteExtractPieceMetadataOperation
     | ExecuteValidateAuthOperation
+    | ExecuteActionOperation
 
 
 export const EngineStdout = z.object({
@@ -55,6 +57,13 @@ export type BaseEngineOperation = {
     publicApiUrl: string
     timeoutInSeconds: number
     platformId: PlatformId
+}
+
+export type ExecuteActionOperation = BaseEngineOperation & {
+    piece: PiecePackage
+    actionName: string
+    input: Record<string, unknown>
+    stepNameToTest?: string
 }
 
 export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'> & {

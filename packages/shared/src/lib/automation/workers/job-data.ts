@@ -60,6 +60,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
         case WorkerJobType.EXECUTE_VALIDATION:
         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
+        case WorkerJobType.EXECUTE_ACTION:
             return 'critical'
     }
 }
@@ -75,6 +76,7 @@ export enum WorkerJobType {
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
     EVENT_DESTINATION = 'EVENT_DESTINATION',
+    EXECUTE_ACTION = 'EXECUTE_ACTION',
 }
 
 export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
@@ -206,11 +208,26 @@ export const ExecuteExtractPieceMetadataJobData = z.object({
 })
 export type ExecuteExtractPieceMetadataJobData = z.infer<typeof ExecuteExtractPieceMetadataJobData>
 
+export const ExecuteActionJobData = z.object({
+    jobType: z.literal(WorkerJobType.EXECUTE_ACTION),
+    projectId: z.string(),
+    platformId: z.string(),
+    schemaVersion: z.number(),
+    piece: PiecePackage,
+    actionName: z.string(),
+    input: z.record(z.string(), z.unknown()),
+    stepNameToTest: z.string().optional(),
+    requestId: z.string(),
+    webserverId: z.string(),
+})
+export type ExecuteActionJobData = z.infer<typeof ExecuteActionJobData>
+
 export const UserInteractionJobData = z.union([
     ExecuteValidateAuthJobData,
     ExecuteTriggerHookJobData,
     ExecutePropertyJobData,
     ExecuteExtractPieceMetadataJobData,
+    ExecuteActionJobData,
 ])
 export type UserInteractionJobData = z.infer<typeof UserInteractionJobData>
 
@@ -219,6 +236,7 @@ export const UserInteractionJobDataWithoutWatchingInformation = z.union([
     ExecuteTriggerHookJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecutePropertyJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecuteExtractPieceMetadataJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
+    ExecuteActionJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof UserInteractionJobDataWithoutWatchingInformation>
 
