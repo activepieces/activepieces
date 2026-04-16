@@ -87,7 +87,7 @@ export const analyzeDocument = createAction({
     const s3Key = source === 's3' ? (document['s3Key'] as string) : undefined;
 
     try {
-      const client = createTextractClient(context.auth.props);
+      const client = await createTextractClient(context.auth.props);
       const documentInput = buildDocumentInput(file, s3Bucket, s3Key);
 
       // Always strip QUERIES from dropdown value — it requires QueriesConfig

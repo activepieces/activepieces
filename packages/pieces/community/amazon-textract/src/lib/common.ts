@@ -1,4 +1,5 @@
 import { ApFile } from '@activepieces/pieces-framework';
+import { STSClient, AssumeRoleCommand } from '@aws-sdk/client-sts';
 import {
   TextractClient,
   Block,
@@ -13,6 +14,9 @@ export interface TextractAuth {
   accessKeyId: string;
   secretAccessKey: string;
   region: string;
+  authType?: string;
+  roleArn?: string;
+  externalId?: string;
 }
 
 // ─── Output Types ────────────────────────────────────────────────────────────
@@ -111,14 +115,9 @@ export interface AnalyzeIDResult {
 
 // ─── Client Factory ───────────────────────────────────────────────────────────
 
-export function createTextractClient(auth: TextractAuth): TextractClient {
-  return new TextractClient({
-    credentials: {
-      accessKeyId: auth.accessKeyId,
-      secretAccessKey: auth.secretAccessKey,
-    },
-    region: auth.region,
-  });
+export async function createTextractClient(auth: TextractAuth): Promise<TextractClient> {
+  const creds = await resolveAwsCredentials(auth);
+  return new TextractClient({ credentials: creds, region: auth.region });
 }
 
 // ─── Document Input Builder ───────────────────────────────────────────────────
@@ -485,6 +484,30 @@ export function parseIdentityDocuments(
   }
 
   return result;
+}
+
+// ─── Credential Resolver ──────────────────────────────────────────────────────
+
+async function resolveAwsCredentials(auth: TextractAuth) {
+  if (auth.authType !== 'assume_role' || !auth.roleArn) {
+    return { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey };
+  }
+  const sts = new STSClient({
+    credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey },
+    region: auth.region,
+  });
+  const { Credentials } = await sts.send(
+    new AssumeRoleCommand({
+      RoleArn: auth.roleArn,
+      RoleSessionName: 'activepieces-session',
+      ...(auth.externalId ? { ExternalId: auth.externalId } : {}),
+    }),
+  );
+  return {
+    accessKeyId: Credentials!.AccessKeyId!,
+    secretAccessKey: Credentials!.SecretAccessKey!,
+    sessionToken: Credentials!.SessionToken,
+  };
 }
 
 // ─── Error Formatter ──────────────────────────────────────────────────────────

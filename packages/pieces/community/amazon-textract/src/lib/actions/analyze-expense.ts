@@ -65,7 +65,7 @@ export const analyzeExpense = createAction({
     const s3Key = source === 's3' ? (document['s3Key'] as string) : undefined;
 
     try {
-      const client = createTextractClient(context.auth.props);
+      const client = await createTextractClient(context.auth.props);
       const documentInput = buildDocumentInput(file, s3Bucket, s3Key);
       const response = await client.send(new AnalyzeExpenseCommand({ Document: documentInput }));
       return parseExpenseDocuments(response.ExpenseDocuments ?? []);

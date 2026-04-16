@@ -37,7 +37,7 @@ export const getDocumentAnalysis = createAction({
     const { jobId, nextToken, maxResults } = context.propsValue;
 
     try {
-      const client = createTextractClient(context.auth.props);
+      const client = await createTextractClient(context.auth.props);
 
       const response = await client.send(
         new GetDocumentAnalysisCommand({

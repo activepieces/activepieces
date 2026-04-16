@@ -6,6 +6,18 @@ export const amazonTextractAuth = PieceAuth.CustomAuth({
   description:
     'Authenticate with AWS using your Access Key ID and Secret Access Key. The IAM user or role must have permissions for AWS Textract (e.g., the `AmazonTextractFullAccess` managed policy).',
   props: {
+    authType: Property.StaticDropdown({
+      displayName: 'Auth Method',
+      description: 'Choose how to authenticate with AWS.',
+      required: true,
+      defaultValue: 'direct',
+      options: {
+        options: [
+          { label: 'Direct Credentials (Access Key + Secret)', value: 'direct' },
+          { label: 'AssumeRole (temporary credentials via STS)', value: 'assume_role' },
+        ],
+      },
+    }),
     accessKeyId: Property.ShortText({
       displayName: 'Access Key ID',
       description: 'Your AWS access key ID. Found in AWS IAM Console → Users → Security credentials.',
@@ -64,10 +76,24 @@ export const amazonTextractAuth = PieceAuth.CustomAuth({
         ],
       },
     }),
+    roleArn: Property.ShortText({
+      displayName: 'Role ARN',
+      description:
+        'Required when Auth Method is AssumeRole. ARN of the IAM Role to assume (e.g. arn:aws:iam::123456789012:role/MyRole).',
+      required: false,
+    }),
+    externalId: PieceAuth.SecretText({
+      displayName: 'External ID',
+      description: 'Optional. Only used with AssumeRole. External ID for cross-account role security.',
+      required: false,
+    }),
   },
   validate: async ({ auth }) => {
+    if (auth.authType === 'assume_role' && !auth.roleArn) {
+      return { valid: false, error: 'Role ARN is required when Auth Method is AssumeRole.' };
+    }
     try {
-      const client = createTextractClient(auth);
+      const client = await createTextractClient(auth);
       await client.send(
         new GetDocumentAnalysisCommand({ JobId: 'validate-credentials' })
       );

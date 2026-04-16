@@ -9,6 +9,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@aws-sdk/client-textract": "^3.0.0",
+    "@aws-sdk/client-sts": "^3.0.0",
     "tslib": "^2.3.0"
   },
   "scripts": {
