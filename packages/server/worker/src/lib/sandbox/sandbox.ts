@@ -4,8 +4,27 @@ import path from 'path'
 import { ActivepiecesError, assertNotNullOrUndefined, createNotifyServer, createRpcClient, createRpcServer, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, ErrorCode, isNil, WorkerContract, WorkerNotifyContract } from '@activepieces/shared'
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
-import { getGlobalCachePathLatestVersion } from '../cache/cache-paths'
+import { getGlobalCachePathLatestVersion, getGlobalCodeCachePath } from '../cache/cache-paths'
 import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
+
+function buildCodeMount({ flowVersionId, reusable }: { flowVersionId: string | undefined, reusable: boolean }): SandboxMount | null {
+    const codeCachePath = getGlobalCodeCachePath()
+    if (reusable) {
+        return {
+            hostPath: codeCachePath,
+            sandboxPath: '/root/codes',
+            optional: true,
+        }
+    }
+    if (!isNil(flowVersionId)) {
+        return {
+            hostPath: path.join(codeCachePath, flowVersionId),
+            sandboxPath: `/root/codes/${flowVersionId}`,
+            optional: true,
+        }
+    }
+    return null
+}
 
 export function createSandbox(
     log: SandboxLogger,
@@ -89,6 +108,7 @@ export function createSandbox(
 
             const port = createSocketServer()
 
+            const codeMount = buildCodeMount({ flowVersionId, reusable: options.reusable })
             const customPieceMounts: SandboxMount[] = []
             if (platformId) {
                 const customPiecesHostPath = path.resolve(getGlobalCachePathLatestVersion(), 'custom_pieces', platformId)
@@ -102,7 +122,7 @@ export function createSandbox(
             childProcess = await processMaker.create({
                 sandboxId,
                 command: options.command ?? [],
-                mounts: [...(options.baseMounts ?? []), ...mounts, ...customPieceMounts],
+                mounts: [...(options.baseMounts ?? []), ...(codeMount ? [codeMount] : []), ...mounts, ...customPieceMounts],
                 env: {
                     ...options.env,
                     AP_SANDBOX_WS_PORT: String(port),
