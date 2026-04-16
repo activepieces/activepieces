@@ -29,7 +29,6 @@ export function createSandboxForJob(params: {
 
     const baseMounts: SandboxMount[] = [
         { hostPath: getGlobalCacheCommonPath(), sandboxPath: '/root/common' },
-        { hostPath: getGlobalCodeCachePath(), sandboxPath: '/root/codes', optional: true },
     ]
 
     return createSandbox(
