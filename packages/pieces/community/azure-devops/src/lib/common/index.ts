@@ -159,6 +159,178 @@ async function fetchWorkItemsByIds({
   return results;
 }
 
+async function fetchProjectId(
+  auth: AzureDevOpsAuth,
+  projectName: string,
+): Promise<string | null> {
+  const project = await azureDevOpsApiCall<ProjectReference>({
+    organizationUrl: auth.props.organizationUrl,
+    pat: auth.props.pat,
+    method: HttpMethod.GET,
+    endpoint: `/_apis/projects/${encodeURIComponent(projectName)}`,
+    queryParams: { 'api-version': '7.1' },
+  });
+  return project.id ?? null;
+}
+
+async function fetchTeamMembers(
+  auth: AzureDevOpsAuth,
+  projectName: string,
+): Promise<IdentityRef[]> {
+  const teamsResponse = await azureDevOpsApiCall<TeamListResponse>({
+    organizationUrl: auth.props.organizationUrl,
+    pat: auth.props.pat,
+    method: HttpMethod.GET,
+    endpoint: `/_apis/projects/${encodeURIComponent(projectName)}/teams`,
+    queryParams: { 'api-version': '7.1', '$top': '100' },
+  });
+
+  const seen = new Map<string, IdentityRef>();
+  for (const team of teamsResponse.value ?? []) {
+    const members = await azureDevOpsApiCall<TeamMemberListResponse>({
+      organizationUrl: auth.props.organizationUrl,
+      pat: auth.props.pat,
+      method: HttpMethod.GET,
+      endpoint: `/_apis/projects/${encodeURIComponent(projectName)}/teams/${team.id}/members`,
+      queryParams: { 'api-version': '7.1', '$top': '200' },
+    });
+    for (const member of members.value ?? []) {
+      const identity = member.identity;
+      if (identity?.id && !seen.has(identity.id)) {
+        seen.set(identity.id, identity);
+      }
+    }
+  }
+  return Array.from(seen.values());
+}
+
+async function fetchWorkItemTypeStates(
+  auth: AzureDevOpsAuth,
+  projectName: string,
+  workItemType: string,
+): Promise<WorkItemStateColor[]> {
+  const response = await azureDevOpsApiCall<WorkItemTypeResponse>({
+    organizationUrl: auth.props.organizationUrl,
+    pat: auth.props.pat,
+    method: HttpMethod.GET,
+    endpoint: `/${encodeURIComponent(projectName)}/_apis/wit/workitemtypes/${encodeURIComponent(workItemType)}`,
+    queryParams: { 'api-version': '7.1' },
+  });
+  return response.states ?? [];
+}
+
+function createAssignedToDropdown(required: boolean) {
+  return Property.Dropdown({
+    displayName: 'Assigned To',
+    description:
+      'Select the person to assign this work item to. Only project team members are listed — use the Custom API Call action if you need to assign a user outside your teams.',
+    refreshers: ['project'],
+    required,
+    auth: azureDevOpsAuth,
+    options: async ({ auth, project }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your Azure DevOps account first',
+        };
+      }
+      if (!project) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a project first',
+        };
+      }
+      const typedAuth = auth as AzureDevOpsAuth;
+      try {
+        const members = await fetchTeamMembers(typedAuth, project as string);
+        if (members.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No team members found in this project.',
+          };
+        }
+        return {
+          disabled: false,
+          options: members.map((m) => ({
+            label: m.uniqueName ? `${m.displayName} (${m.uniqueName})` : m.displayName,
+            value: m.uniqueName ?? m.displayName,
+          })),
+        };
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load team members. Check your connection.',
+        };
+      }
+    },
+  });
+}
+
+function createStateDropdown(required: boolean, description: string) {
+  return Property.Dropdown({
+    displayName: 'State',
+    description,
+    refreshers: ['project', 'work_item_type'],
+    required,
+    auth: azureDevOpsAuth,
+    options: async ({ auth, project, work_item_type }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your Azure DevOps account first',
+        };
+      }
+      if (!project) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a project first',
+        };
+      }
+      if (!work_item_type) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a work item type first',
+        };
+      }
+      const typedAuth = auth as AzureDevOpsAuth;
+      try {
+        const states = await fetchWorkItemTypeStates(
+          typedAuth,
+          project as string,
+          work_item_type as string,
+        );
+        if (states.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No states defined for this work item type.',
+          };
+        }
+        return {
+          disabled: false,
+          options: states.map((s) => ({
+            label: s.category ? `${s.name} (${s.category})` : s.name,
+            value: s.name,
+          })),
+        };
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load states. Check your connection.',
+        };
+      }
+    },
+  });
+}
+
 function createWorkItemTypeDropdown(required: boolean, description: string) {
   return Property.Dropdown({
     displayName: 'Work Item Type',
@@ -261,6 +433,15 @@ export const azureDevOpsCommon = {
     'Filter by work item type. Leave empty to trigger for all types.',
   ),
 
+  assignedToDropdown: createAssignedToDropdown(false),
+
+  stateDropdown: createStateDropdown(false, 'New state for the work item'),
+
+  stateDropdownOptional: createStateDropdown(
+    false,
+    'Filter by state. Leave empty to trigger for all states.',
+  ),
+
   priorityDropdown: Property.StaticDropdown({
     displayName: 'Priority',
     description: 'The priority of the work item',
@@ -281,6 +462,9 @@ export const azureDevOpsCommon = {
   apiCall: azureDevOpsApiCall,
   fetchWorkItemsByIds,
   flattenWorkItem,
+  fetchProjectId,
+  fetchTeamMembers,
+  fetchWorkItemTypeStates,
 };
 
 export interface JsonPatchOperation {
@@ -368,4 +552,31 @@ interface WorkItemTypeListResponse {
 interface WorkItemBatchResponse {
   count: number;
   value: AzureDevOpsWorkItem[];
+}
+
+interface ProjectReference {
+  id: string;
+  name: string;
+  state?: string;
+}
+
+interface TeamListResponse {
+  count: number;
+  value: Array<{ id: string; name: string; projectId: string }>;
+}
+
+interface TeamMemberListResponse {
+  count: number;
+  value: Array<{ identity: IdentityRef }>;
+}
+
+interface WorkItemTypeResponse {
+  name: string;
+  states?: WorkItemStateColor[];
+}
+
+export interface WorkItemStateColor {
+  name: string;
+  color?: string;
+  category?: string;
 }

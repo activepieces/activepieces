@@ -14,6 +14,7 @@ export const updateWorkItemAction = createAction({
   description: 'Updates an existing work item in Azure DevOps',
   props: {
     project: azureDevOpsCommon.projectDropdown,
+    work_item_type: azureDevOpsCommon.workItemTypeDropdown,
     work_item_id: Property.Number({
       displayName: 'Work Item ID',
       description: 'The ID of the work item to update (e.g. 123)',
@@ -29,16 +30,8 @@ export const updateWorkItemAction = createAction({
       description: 'New description for the work item (supports HTML)',
       required: false,
     }),
-    state: Property.ShortText({
-      displayName: 'State',
-      description: 'New state for the work item (e.g. Active, Resolved, Closed)',
-      required: false,
-    }),
-    assigned_to: Property.ShortText({
-      displayName: 'Assigned To',
-      description: 'Email or display name of the person to assign this work item to',
-      required: false,
-    }),
+    state: azureDevOpsCommon.stateDropdown,
+    assigned_to: azureDevOpsCommon.assignedToDropdown,
     priority: azureDevOpsCommon.priorityDropdown,
   },
   async run(context) {

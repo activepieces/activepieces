@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  Property,
   StaticPropsValue,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
@@ -15,11 +14,7 @@ import {
 const props = {
   project: azureDevOpsCommon.projectDropdown,
   work_item_type: azureDevOpsCommon.workItemTypeDropdownOptional,
-  state_filter: Property.ShortText({
-    displayName: 'State Filter',
-    description: 'Filter by state (e.g. Active, Resolved). Leave empty for all states.',
-    required: false,
-  }),
+  state_filter: azureDevOpsCommon.stateDropdownOptional,
 };
 
 const polling: Polling<AzureDevOpsAuth, StaticPropsValue<typeof props>> = {
@@ -81,7 +76,8 @@ export const newUpdatedWorkItemTrigger = createTrigger({
   auth: azureDevOpsAuth,
   name: 'new_updated_work_item',
   displayName: 'New or Updated Work Item',
-  description: 'Triggers when a work item is created or updated in Azure DevOps',
+  description:
+    'Polls Azure DevOps every few minutes and fires when a work item is created or updated. Pick a work item type to unlock the state filter.',
   props,
   sampleData: {
     id: 123,

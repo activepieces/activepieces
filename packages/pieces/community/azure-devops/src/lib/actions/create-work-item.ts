@@ -25,11 +25,7 @@ export const createWorkItemAction = createAction({
       description: 'Detailed description of the work item (supports HTML)',
       required: false,
     }),
-    assigned_to: Property.ShortText({
-      displayName: 'Assigned To',
-      description: 'Email or display name of the person to assign this work item to',
-      required: false,
-    }),
+    assigned_to: azureDevOpsCommon.assignedToDropdown,
     priority: azureDevOpsCommon.priorityDropdown,
   },
   async run(context) {
