@@ -29,9 +29,9 @@ const polling: Polling<AzureDevOpsAuth, StaticPropsValue<typeof props>> = {
 
     const sinceEpoch =
       lastFetchEpochMS && lastFetchEpochMS > 0
-        ? lastFetchEpochMS
+        ? lastFetchEpochMS + 1
         : Date.now() - POLLING_FIRST_RUN_LOOKBACK_DAYS * 24 * 60 * 60 * 1000;
-    const sinceIso = new Date(sinceEpoch).toISOString();
+    const sinceIso = new Date(sinceEpoch).toISOString().replace(/\.\d{3}Z$/, '');
 
     const escapedProject = azureDevOpsCommon.escapeWiqlString(projectName);
     let wiqlQuery =
