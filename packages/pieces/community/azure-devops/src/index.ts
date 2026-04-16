@@ -4,8 +4,14 @@ import {
   Property,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
+import { createWorkItemAction } from './lib/actions/create-work-item';
+import { getWorkItemAction } from './lib/actions/get-work-item';
+import { updateWorkItemAction } from './lib/actions/update-work-item';
+import { listWorkItemsAction } from './lib/actions/list-work-items';
+import { addCommentAction } from './lib/actions/add-comment';
+import { newUpdatedWorkItemTrigger } from './lib/triggers/new-updated-work-item';
 
 const authDescription = `To get your Personal Access Token (PAT):
 
@@ -63,8 +69,28 @@ export const azureDevOps = createPiece({
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: azureDevOpsAuth,
   authors: ['majewskibartosz'],
-  actions: [],
-  triggers: [],
+  actions: [
+    createWorkItemAction,
+    getWorkItemAction,
+    updateWorkItemAction,
+    listWorkItemsAction,
+    addCommentAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => {
+        const typedAuth = auth as AzureDevOpsAuth;
+        return typedAuth.props.organizationUrl.replace(/\/+$/, '');
+      },
+      auth: azureDevOpsAuth,
+      authMapping: async (auth) => {
+        const typedAuth = auth as AzureDevOpsAuth;
+        const encoded = Buffer.from(`:${typedAuth.props.pat}`).toString('base64');
+        return {
+          Authorization: `Basic ${encoded}`,
+        };
+      },
+    }),
+  ],
+  triggers: [newUpdatedWorkItemTrigger],
 });
 
 interface ProjectListResponse {
