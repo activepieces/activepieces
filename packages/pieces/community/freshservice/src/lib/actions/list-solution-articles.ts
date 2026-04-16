@@ -34,8 +34,8 @@ export const listSolutionArticles = createAction({
     const props = context.propsValue;
 
     const queryParams: Record<string, string> = {};
-    if (props.category_id) queryParams['category'] = String(props.category_id);
-    if (props.folder_id) queryParams['folder'] = String(props.folder_id);
+    if (props.category_id) queryParams['category_id'] = String(props.category_id);
+    if (props.folder_id) queryParams['folder_id'] = String(props.folder_id);
     if (props.page) queryParams['page'] = String(props.page);
     if (props.per_page) queryParams['per_page'] = String(props.per_page);
 
