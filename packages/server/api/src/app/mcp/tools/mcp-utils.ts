@@ -24,6 +24,17 @@ function mcpToolError(prefix: string, err: unknown): { content: [{ type: 'text',
     return { content: [{ type: 'text', text: `❌ ${prefix}: ${message}` }] }
 }
 
+function formatOptionsHint(options: Array<{ label: string, value: unknown }> | undefined): string {
+    if (!options || options.length === 0) {
+        return ''
+    }
+    const values = options.map(o => String(o.value))
+    if (values.length > 10) {
+        return ` — options: ${values.slice(0, 10).join(', ')}... (${values.length} total)`
+    }
+    return ` — options: ${values.join(', ')}`
+}
+
 function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentType }: DiagnosePiecePropsParams): DiagnosisResult {
     const missing: string[] = []
     const uiRequired: string[] = []
@@ -40,7 +51,10 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
                     uiRequired.push(`${propName} (${prop.displayName})`)
                 }
                 else {
-                    missing.push(`${propName} (${prop.type})`)
+                    const hint = (prop.type === PropertyType.STATIC_DROPDOWN || prop.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN)
+                        ? formatOptionsHint(prop.options?.options)
+                        : ''
+                    missing.push(`${propName} (${prop.type}${hint})`)
                 }
             }
         }
