@@ -18,7 +18,7 @@ export const deleteFile = createAction({
     const { bucket } = context.auth.props
     const { key } = context.propsValue;
 
-    const s3 = createS3(context.auth.props);
+    const s3 = await createS3(context.auth.props);
 
     const response = await s3.deleteObject({
       Bucket: bucket,

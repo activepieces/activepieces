@@ -16,6 +16,18 @@ Using a non-AWS S3-compatible service (MinIO, DigitalOcean Spaces, Backblaze B2,
 export const amazonS3Auth = PieceAuth.CustomAuth({
   description: description,
   props: {
+    authType: Property.StaticDropdown({
+      displayName: 'Auth Method',
+      description: 'Choose how to authenticate with AWS.',
+      required: true,
+      defaultValue: 'direct',
+      options: {
+        options: [
+          { label: 'Direct Credentials (Access Key + Secret)', value: 'direct' },
+          { label: 'AssumeRole (temporary credentials via STS)', value: 'assume_role' },
+        ],
+      },
+    }),
     accessKeyId: Property.ShortText({
       displayName: 'Access Key ID',
       description: 'Your AWS access key ID. Found in AWS IAM Console → Users → Security credentials.',
@@ -164,22 +176,29 @@ export const amazonS3Auth = PieceAuth.CustomAuth({
       },
       required: true,
     }),
+    roleArn: Property.ShortText({
+      displayName: 'Role ARN',
+      description:
+        'Required when Auth Method is AssumeRole. ARN of the IAM Role to assume (e.g. arn:aws:iam::123456789012:role/MyRole).',
+      required: false,
+    }),
+    externalId: PieceAuth.SecretText({
+      displayName: 'External ID',
+      description: 'Optional. Only used with AssumeRole. External ID for cross-account role security.',
+      required: false,
+    }),
   },
   validate: async ({ auth }) => {
-    const s3 = createS3(auth);
+    if (auth.authType === 'assume_role' && !auth.roleArn) {
+      return { valid: false, error: 'Role ARN is required when Auth Method is AssumeRole.' };
+    }
     try {
-      await s3.listObjectsV2({
-        Bucket: auth.bucket,
-        MaxKeys: 1,
-      });
-      return {
-        valid: true,
-      };
+      const s3 = await createS3(auth);
+      await s3.listObjectsV2({ Bucket: auth.bucket, MaxKeys: 1 });
+      return { valid: true };
     } catch (e) {
-      return {
-        valid: false,
-        error: (e as Error)?.message,
-      };
+      const message = e instanceof Error ? e.message : String(e);
+      return { valid: false, error: message };
     }
   },
   required: true,

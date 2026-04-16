@@ -9,6 +9,7 @@
     "@activepieces/shared": "workspace:*",
     "@aws-sdk/client-s3": "3.974.0",
     "@aws-sdk/client-secrets-manager": "^3.0.0",
+    "@aws-sdk/client-sts": "^3.0.0",
     "@aws-sdk/s3-request-presigner": "3.894.0",
     "dayjs": "1.11.9",
     "mime-types": "2.1.35",

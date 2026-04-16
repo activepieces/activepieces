@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { amazonS3Auth } from '../auth';
+import { createS3 } from '../common';
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export const generateSignedUrl = createAction({
@@ -22,31 +23,11 @@ export const generateSignedUrl = createAction({
     }),
   },
   async run(context) {
-  const { bucket, region, accessKeyId, secretAccessKey } = context.auth.props;
-  const { key, expiresIn } = context.propsValue;
+    const { bucket } = context.auth.props;
+    const { key, expiresIn } = context.propsValue;
 
-  const clientUrl = await createPresignedUrlWithClient({
-    region,
-    bucket,
-    key,
-    accessKeyId,
-    secretAccessKey,
-    expiresIn
-  });
-
-    return clientUrl
+    const client = await createS3(context.auth.props);
+    const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+    return getSignedUrl(client, command, { expiresIn: expiresIn * 60 });
   },
 });
-
-const createPresignedUrlWithClient = ({ region, bucket, key, accessKeyId, secretAccessKey, expiresIn }: any) => {
-   const client = new S3Client({ 
-    region,
-    credentials: {
-      accessKeyId,
-      secretAccessKey,
-    },
-  });
-  
-  const command = new GetObjectCommand({ Bucket: bucket, Key: key });
-  return getSignedUrl(client, command, { expiresIn: expiresIn * 60 });
-};

@@ -46,10 +46,10 @@ export const decryptPgpFile = createAction({
   async run(context) {
     const { bucket } = context.auth.props;
     const { key, secretArn, passphraseArn, secretsManagerRegion, allowUnauthenticatedMessages, allowInsecureDecryptionWithSigningKeys } = context.propsValue;
-    const { accessKeyId, secretAccessKey, region } = context.auth.props;
+    const { region } = context.auth.props;
 
     // Create S3 client
-    const s3 = createS3(context.auth.props);
+    const s3 = await createS3(context.auth.props);
 
     // Download the encrypted file from S3
     let encryptedData: Buffer;
@@ -69,9 +69,8 @@ export const decryptPgpFile = createAction({
     }
 
     // Create AWS Secrets Manager client
-    const secretsClient = createSecretsManagerClient({
-      accessKeyId: accessKeyId,
-      secretAccessKey: secretAccessKey,
+    const secretsClient = await createSecretsManagerClient({
+      ...context.auth.props,
       region: secretsManagerRegion || region,
     });
 

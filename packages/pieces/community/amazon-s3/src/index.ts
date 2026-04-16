@@ -1,12 +1,7 @@
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { readFile } from './lib/actions/read-file';
 import { amazons3UploadFile } from './lib/actions/upload-file';
-import { createS3 } from './lib/common';
 import { newFile } from './lib/triggers/new-file';
 import { generateSignedUrl } from './lib/actions/generate-signed-url';
 import { moveFile } from './lib/actions/move-file';

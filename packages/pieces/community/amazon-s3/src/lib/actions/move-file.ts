@@ -22,7 +22,7 @@ export const moveFile = createAction({
   async run(context) {
     const { bucket } = context.auth.props;
     const { fileKey, folderKey } = context.propsValue;
-    const s3 = createS3(context.auth.props);
+    const s3 = await createS3(context.auth.props);
 
     const fileName = fileKey.split('/').pop();
 

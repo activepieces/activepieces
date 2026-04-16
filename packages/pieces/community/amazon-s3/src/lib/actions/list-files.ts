@@ -37,7 +37,7 @@ export const listFiles = createAction({
 
   },
   async run(context) {
-    const s3 = createS3(context.auth.props);
+    const s3 = await createS3(context.auth.props);
 
     const params: ListObjectsV2CommandInput = {
       Bucket: context.auth.props.bucket,

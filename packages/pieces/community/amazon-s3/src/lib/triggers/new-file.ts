@@ -13,7 +13,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof amazonS3Auth>, {
 	items: async ({ auth, lastFetchEpochMS, propsValue }) => {
 		const isTest = lastFetchEpochMS === 0;
 
-		const s3 = createS3(auth.props);
+		const s3 = await createS3(auth.props);
 
 		const bucketFiles = [];
 

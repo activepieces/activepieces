@@ -67,7 +67,7 @@ export const amazons3UploadFile = createAction({
     const { bucket } = context.auth.props;
     const { file, fileName, acl, type } = context.propsValue;
 
-    const s3 = createS3(context.auth.props);
+    const s3 = await createS3(context.auth.props);
 
     let contentType, extension = null
 
