@@ -6,7 +6,7 @@ export const findPerson = createAction({
   auth: folkAuth,
   name: 'findPerson',
   displayName: 'List People',
-  description: 'Retrieve a paginated list of people in your Folk workspace with optional filtering.',
+  description: 'Retrieve a paginated list of people from your Folk workspace.',
   props: {
     limit: Property.Number({
       displayName: 'Limit',
@@ -16,12 +16,12 @@ export const findPerson = createAction({
     }),
     cursor: Property.ShortText({
       displayName: 'Cursor',
-      description: 'A cursor for pagination. Use the nextLink value from a previous response.',
+      description: 'A cursor for pagination.',
       required: false,
     }),
     combinator: Property.StaticDropdown({
       displayName: 'Filter Combinator',
-      description: 'The logical operator to combine multiple filters',
+      description: 'Logical operator for multiple filters',
       required: false,
       defaultValue: 'and',
       options: {
@@ -33,19 +33,19 @@ export const findPerson = createAction({
     }),
     nameFilter: Property.ShortText({
       displayName: 'Name Filter',
-      description: 'Filter by person name (contains)',
+      description: 'Filter by name (partial match)',
       required: false,
     }),
     emailFilter: Property.ShortText({
       displayName: 'Email Filter',
-      description: 'Filter by email address (contains)',
+      description: 'Filter by email (partial match)',
       required: false,
     }),
   },
   async run(context) {
     const { limit, cursor, combinator, nameFilter, emailFilter } = context.propsValue;
 
-    const response = await folkClient.getPeopleWithFilters({
+    const res = await folkClient.getPeopleWithFilters({
       apiKey: context.auth,
       limit: limit || 20,
       cursor,
@@ -55,9 +55,8 @@ export const findPerson = createAction({
     });
 
     return {
-      data: response.data,
-      success: true,
+      people: res.data?.items ?? [],
+      next_cursor: res.data?.pagination?.nextLink,
     };
   },
 });
-

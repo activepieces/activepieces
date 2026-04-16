@@ -5,28 +5,52 @@ import { folkClient } from '../common/client';
 export const findCompany = createAction({
   auth: folkAuth,
   name: 'findCompany',
-  displayName: 'Find Company',
-  description: 'Search for companies in your Folk workspace by name or email address.',
+  displayName: 'List Companies',
+  description: 'Retrieve a paginated list of companies from your Folk workspace.',
   props: {
-    query: Property.ShortText({
-      displayName: 'Search Query',
-      description: 'Enter company name or email to search for',
-      required: true,
+    limit: Property.Number({
+      displayName: 'Limit',
+      description: 'The number of items to return (1-100)',
+      required: false,
+      defaultValue: 20,
+    }),
+    cursor: Property.ShortText({
+      displayName: 'Cursor',
+      description: 'A cursor for pagination.',
+      required: false,
+    }),
+    combinator: Property.StaticDropdown({
+      displayName: 'Filter Combinator',
+      description: 'Logical operator for multiple filters',
+      required: false,
+      defaultValue: 'and',
+      options: {
+        options: [
+          { label: 'AND', value: 'and' },
+          { label: 'OR', value: 'or' },
+        ],
+      },
+    }),
+    nameFilter: Property.ShortText({
+      displayName: 'Name Filter',
+      description: 'Filter by company name',
+      required: false,
     }),
   },
   async run(context) {
-    const { query } = context.propsValue;
+    const { limit, cursor, combinator, nameFilter } = context.propsValue;
 
-    const response = await folkClient.searchCompany({
+    const res = await folkClient.getCompaniesWithFilters({
       apiKey: context.auth,
-      query,
+      limit: limit || 20,
+      cursor,
+      combinator: combinator as 'and' | 'or',
+      nameFilter,
     });
 
     return {
-      companies: response.data?.items || [],
-      count: response.data?.items?.length || 0,
-      pagination: response.data?.pagination,
+      companies: res.data?.items ?? [],
+      next_cursor: res.data?.pagination?.nextLink,
     };
   },
 });
-

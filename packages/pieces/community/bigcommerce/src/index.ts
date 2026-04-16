@@ -1,4 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { abandonedCart } from './lib/triggers/abandoned-cart';
 import { cartCreated } from './lib/triggers/cart-created';
 import { customerAddressCreated } from './lib/triggers/customer-address-created';
@@ -34,6 +35,7 @@ export const bigcommerce = createPiece({
   description:
     'BigCommerce is a leading e-commerce platform that enables businesses to create and manage online stores.',
   auth: bigcommerceAuth,
+  categories: [PieceCategory.COMMERCE],
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/bigcommerce.png',
   authors: ['gs03-dev', 'sanket-a11y', 'Angelebeats'],
