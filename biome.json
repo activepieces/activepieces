@@ -6,7 +6,16 @@
         "useIgnoreFile": true
     },
     "files": {
-        "includes": ["**", "!**/deploy/**", "!**/.husky/**", "!**/*.css", "!docs/**", "!**/*.html", "!**/*.d.ts"]
+        "includes": [
+            "**",
+            "!**/deploy/**",
+            "!**/.husky/**",
+            "!**/*.css",
+            "!docs/**",
+            "!**/*.html",
+            "!**/*.d.ts",
+            "!.claude/**"
+        ]
     },
     "formatter": {
         "enabled": true,
