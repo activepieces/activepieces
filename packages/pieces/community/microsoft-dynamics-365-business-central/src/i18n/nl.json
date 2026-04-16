@@ -1,7 +1,11 @@
 {
   "All-in-one business management solution by Microsoft.": "Alles-in-één oplossing voor bedrijfsbeheer door Microsoft.",
+  "Cloud Environment": "Cloud Omgeving",
   "Environment": "Milieu",
+  "Select your Microsoft cloud environment.": "Selecteer je Microsoft cloud omgeving.",
   "Name of the environment to connect to, e.g. 'Production' or 'Sandbox'. Environment names can be found in the Business Central Admin Center.": "Naam van de omgeving waarmee u verbinding wilt maken, bijvoorbeeld 'Productie' of 'Sandbox'. Omgevingsnamen zijn te vinden in het Business Central Admin Centrum.",
+  "Commercial (Global)": "Commerciële (globaal)",
+  "US Government (GCC High)": "Amerikaanse regering (GCC High)",
   "\nIf you’d like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Dynamics 365 Business Central permissions** under **API permissions**:\n - Financials.ReadWrite.All\n - user_impersonation\n": "\nAls u uw eigen aangepaste Azure app wilt gebruiken in plaats van de standaard Activepieces app, Volg de [Azure app creatie handleiding] (https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n zet de **Redirect URI** naar {{redirectUrl}} en voeg de volgende **Dynamics 365 Business Central permissies** toe onder **API permissies**:\n - Financiën. eadWrite.Alle\n - user_impersonation\n",
   "Create Record": "Record Maken",
   "Delete Record": "Record verwijderen",

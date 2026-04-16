@@ -8,7 +8,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@activepieces/import-fresh-webpack": "3.3.0",
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
