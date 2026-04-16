@@ -1,4 +1,3 @@
-import { PropertyType } from '@activepieces/pieces-framework'
 import {
     BranchExecutionType,
     FlowActionType,
@@ -16,7 +15,6 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
-import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
 
@@ -72,10 +70,9 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
 
             const stepName = flowStructureUtil.findUnusedName(flow.version.trigger)
 
-            if (auth !== undefined && auth.includes('\'')) {
-                return {
-                    content: [{ type: 'text', text: '❌ auth value must not contain single quotes. Use the exact externalId from ap_list_connections.' }],
-                }
+            const authError = mcpUtils.validateAuth(auth)
+            if (authError) {
+                return authError
             }
 
             const resolvedInput = {
@@ -119,7 +116,7 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                         errorHandlingOptions: { continueOnFailure: { value: false }, retryOnFailure: { value: false } },
                     }
                     if (input !== undefined) {
-                        await fillDefaultsForMissingOptionalProps({ settings: pieceSettings, platformId: project.platformId, log })
+                        await mcpUtils.fillDefaultsForMissingOptionalProps({ settings: pieceSettings, platformId: project.platformId, log })
                     }
                     skeletonAction = {
                         type: FlowActionType.PIECE,
@@ -224,41 +221,5 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                 return mcpUtils.mcpToolError('Step add failed', err)
             }
         },
-    }
-}
-
-async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }: {
-    settings: Record<string, unknown>
-    platformId: string
-    log: FastifyBaseLogger
-}): Promise<void> {
-    const pieceName = settings.pieceName
-    const pieceVersion = settings.pieceVersion
-    const actionName = settings.actionName
-    if (typeof pieceName !== 'string' || typeof pieceVersion !== 'string' || typeof actionName !== 'string') {
-        return
-    }
-    try {
-        const piece = await pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion })
-        const action = piece.actions[actionName]
-        if (isNil(action)) {
-            return
-        }
-        const defaults: Record<string, unknown> = {}
-        for (const [propName, prop] of Object.entries(action.props)) {
-            if (prop.type === PropertyType.ARRAY && !prop.required) {
-                defaults[propName] = []
-            }
-            else if (prop.type === PropertyType.DYNAMIC && !prop.required) {
-                defaults[propName] = {}
-            }
-            else if (prop.type === PropertyType.CHECKBOX && !prop.required) {
-                defaults[propName] = prop.defaultValue ?? false
-            }
-        }
-        settings.input = { ...defaults, ...(typeof settings.input === 'object' && settings.input !== null ? settings.input : {}) }
-    }
-    catch (err) {
-        log.warn({ err, pieceName, actionName }, 'fillDefaultsForMissingOptionalProps: failed, skipping defaults')
     }
 }
