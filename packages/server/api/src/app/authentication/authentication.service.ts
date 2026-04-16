@@ -14,29 +14,31 @@ import { userIdentityService } from './user-identity/user-identity-service'
 
 export const authenticationService = (log: FastifyBaseLogger) => ({
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
-        if (!isNil(params.platformId)) {
+        const platformId = params.platformId
+        if (!isNil(platformId)) {
             await authenticationUtils(log).assertEmailAuthIsEnabled({
-                platformId: params.platformId,
+                platformId,
                 provider: params.provider,
             })
             await authenticationUtils(log).assertDomainIsAllowed({
                 email: params.email,
-                platformId: params.platformId,
+                platformId,
             })
         }
-        if (isNil(params.platformId)) {
+        if (isNil(platformId)) {
             const userIdentity = await userIdentityService(log).create({
                 ...params,
                 verified: params.provider === UserIdentityProvider.GOOGLE || params.provider === UserIdentityProvider.JWT || params.provider === UserIdentityProvider.SAML,
             })
             const response = await createUserAndPlatform(userIdentity, log)
+            await userInvitationsService(log).provisionUserInvitation({ email: params.email })
             log.info({ email: params.email, provider: params.provider }, 'User signed up and platform created')
             return response
         }
 
         await authenticationUtils(log).assertUserIsInvitedToPlatformOrProject({
             email: params.email,
-            platformId: params.platformId,
+            platformId,
         })
         const userIdentity = await userIdentityService(log).create({
             ...params,
@@ -44,17 +46,14 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         })
         const user = await userService(log).getOrCreateWithProject({
             identity: userIdentity,
-            platformId: params.platformId,
+            platformId,
         })
-        await userInvitationsService(log).provisionUserInvitation({
-            email: params.email,
-            user,
-        })
+        await userInvitationsService(log).provisionUserInvitation({ email: params.email })
 
-        log.info({ email: params.email, platformId: params.platformId }, 'User signed up to existing platform')
+        log.info({ email: params.email, platformId }, 'User signed up to existing platform')
         return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
-            platformId: params.platformId,
+            platformId,
             projectId: null,
         })
     },
@@ -128,10 +127,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             identity: userIdentity,
             platformId,
         })
-        await userInvitationsService(log).provisionUserInvitation({
-            email: params.email,
-            user,
-        })
+        await userInvitationsService(log).provisionUserInvitation({ email: params.email })
         return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId,
