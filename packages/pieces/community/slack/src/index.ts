@@ -13,6 +13,7 @@ import { requestSendApprovalMessageAction } from './lib/actions/request-approval
 import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action';
 import { slackSendMessageAction } from './lib/actions/send-message-action';
 import { newReactionAdded } from './lib/triggers/new-reaction-added';
+import { newReactionRemoved } from './lib/triggers/new-reaction-removed';
 import { uploadFile } from './lib/actions/upload-file';
 import { searchMessages } from './lib/actions/search-messages';
 import { updateMessage } from './lib/actions/update-message';
@@ -203,6 +204,7 @@ export const slack = createPiece({
     newMention,
     newMentionInDirectMessageTrigger,
     newReactionAdded,
+    newReactionRemoved,
     channelCreated,
     newCommand,
     newCommandInDirectMessageTrigger,
