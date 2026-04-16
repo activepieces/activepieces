@@ -40,6 +40,15 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
+function extractHttpStatus(error: unknown): string {
+  if (typeof error === 'object' && error !== null) {
+    const err = error as { response?: { status?: number }; status?: number };
+    const status = err.response?.status ?? err.status;
+    if (typeof status === 'number') return ` (HTTP ${status})`;
+  }
+  return '';
+}
+
 function parseWebhookPayload(body: unknown): WebhookPayload | null {
   if (!isRecord(body)) return null;
   const { eventType, resource } = body;
@@ -414,11 +423,11 @@ function createAssignedToDropdown(required: boolean) {
             value: m.uniqueName ?? m.displayName,
           })),
         };
-      } catch {
+      } catch (error) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Failed to load team members. Check your connection.',
+          placeholder: `Failed to load team members. Check your connection${extractHttpStatus(error)}.`,
         };
       }
     },
@@ -475,11 +484,11 @@ function createStateDropdown(required: boolean, description: string) {
             value: s.name,
           })),
         };
-      } catch {
+      } catch (error) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Failed to load states. Check your connection.',
+          placeholder: `Failed to load states. Check your connection${extractHttpStatus(error)}.`,
         };
       }
     },
@@ -525,11 +534,11 @@ function createWorkItemTypeDropdown(required: boolean, description: string) {
             value: t.name,
           })),
         };
-      } catch {
+      } catch (error) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Failed to load work item types. Check your connection.',
+          placeholder: `Failed to load work item types. Check your connection${extractHttpStatus(error)}.`,
         };
       }
     },
@@ -568,11 +577,11 @@ export const azureDevOpsCommon = {
             value: p.name,
           })),
         };
-      } catch {
+      } catch (error) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Failed to load projects. Check your connection.',
+          placeholder: `Failed to load projects. Check your connection${extractHttpStatus(error)}.`,
         };
       }
     },
@@ -619,6 +628,7 @@ export const azureDevOpsCommon = {
   parseWebhookPayload,
   generateWebhookToken,
   timingSafeEqual,
+  extractHttpStatus,
   apiCall: azureDevOpsApiCall,
   fetchWorkItemsByIds,
   flattenWorkItem,
