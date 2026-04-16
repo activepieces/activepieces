@@ -134,20 +134,16 @@ export const apBuildFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                     })
                 }
 
-                const finalFlow = currentFlow
-                if (!finalFlow) {
-                    return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId}).` }] }
-                }
-
-                const allSteps = flowStructureUtil.getAllSteps(finalFlow.version.trigger)
+                const allSteps = flowStructureUtil.getAllSteps(currentFlow.version.trigger)
                 const validCount = allSteps.filter(s => s.valid).length
                 const invalidSteps = allSteps.filter(s => !s.valid).map(s => s.name)
+                const stepWord = allSteps.length === 1 ? 'step' : 'steps'
 
                 const skippedHint = skippedSteps.length > 0 ? ` Skipped: ${skippedSteps.join(', ')}.` : ''
                 if (invalidSteps.length === 0 && skippedSteps.length === 0) {
-                    return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} steps, all valid.` }] }
+                    return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord}, all valid.` }] }
                 }
-                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} steps (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix.` }] }
+                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix.` }] }
             }
             catch (err) {
                 return mcpUtils.mcpToolError('Failed to build flow', err)

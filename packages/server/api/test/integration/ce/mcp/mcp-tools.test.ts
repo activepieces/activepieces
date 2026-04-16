@@ -1230,7 +1230,7 @@ describe('MCP Tools integration', () => {
         })
 
         expect(text(result)).toContain('✅')
-        expect(text(result)).toContain('1 steps')
+        expect(text(result)).toContain('1 step')
     })
 
     it('49. ap_build_flow — flow can be validated and published after creation', async () => {
