@@ -13,6 +13,8 @@ import { findChannelAction } from './lib/actions/find-channel';
 import { findTeamMemberAction } from './lib/actions/find-team-member';
 import { getChannelMessageAction } from './lib/actions/get-channel-message';
 import { getChatMessageAction } from './lib/actions/get-chat-message';
+import { getMeetingTranscriptAction } from './lib/actions/get-meeting-transcript';
+import { getMeetingRecordingAction } from './lib/actions/get-meeting-recording';
 import { replyToChannelMessageAction } from './lib/actions/reply-to-channel-message';
 import { requestApprovalInChannel } from './lib/actions/request-approval-channel-message';
 import { requestApprovalDirectMessage } from './lib/actions/request-approval-direct-message';
@@ -46,6 +48,8 @@ export const microsoftTeams = createPiece({
     getChannelMessageAction,
     findChannelAction,
     findTeamMemberAction,
+    getMeetingTranscriptAction,
+    getMeetingRecordingAction,
     requestApprovalInChannel,
     requestApprovalDirectMessage,
     createCustomApiCallAction({
