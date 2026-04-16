@@ -54,7 +54,6 @@
     },
     "@activepieces/engine#test": {
       "dependsOn": [
-        "build",
         "@activepieces/piece-http#build",
         "@activepieces/piece-data-mapper#build",
         "@activepieces/piece-approval#build",
@@ -69,20 +68,26 @@
       "outputs": []
     },
     "test": {
-      "dependsOn": ["build"],
-      "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*"],
+      "dependsOn": [],
+      "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*", "vitest.workspace.*"],
       "outputs": ["coverage/**"]
     },
+    "api#test": {
+      "dependsOn": [],
+      "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*", "vitest.workspace.*"],
+      "outputs": ["coverage/**"],
+      "cache": false
+    },
     "test-ce": {
-      "dependsOn": ["build"],
+      "dependsOn": [],
       "cache": false
     },
     "test-ee": {
-      "dependsOn": ["build"],
+      "dependsOn": [],
       "cache": false
     },
     "test-cloud": {
-      "dependsOn": ["build"],
+      "dependsOn": [],
       "cache": false
     },
     "check-migrations": {

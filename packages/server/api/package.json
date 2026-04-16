@@ -140,7 +140,7 @@
     "build": "tsc -p tsconfig.app.json",
     "serve": "cd ../../.. && npx tsx watch --exclude 'packages/pieces/**' --exclude 'packages/**/dist/**' --tsconfig packages/server/api/tsconfig.app.json packages/server/api/src/bootstrap.ts",
     "lint": "eslint 'src/**/*.ts'",
-    "test": "npm run test-ce && npm run test-ee && npm run test-cloud",
+    "test": "export $(cat .env.tests | xargs) && vitest run --workspace vitest.workspace.integration.ts --bail 1",
     "test-unit": "vitest run test/unit --bail 1 --passWithNoTests=false",
     "test-ce-command": "vitest run test/integration/ce --bail 1 --passWithNoTests=false",
     "test-ee-command": "vitest run test/integration/ee --bail 1 --passWithNoTests=false",

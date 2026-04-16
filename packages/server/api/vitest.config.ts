@@ -1,10 +1,6 @@
 import path from 'path'
 import { defineConfig } from 'vitest/config'
 
-// Change CWD to repo root for compatibility with piece-loader path resolution
-const repoRoot = path.resolve(__dirname, '../../..')
-process.chdir(repoRoot)
-
 export default defineConfig({
   test: {
     globals: true,
@@ -22,7 +18,10 @@ export default defineConfig({
       '@activepieces/pieces-framework': path.resolve(__dirname, '../../../packages/pieces/framework/src/index.ts'),
       '@activepieces/pieces-common': path.resolve(__dirname, '../../../packages/pieces/common/src/index.ts'),
       '@activepieces/server-utils': path.resolve(__dirname, '../../../packages/server/utils/src/index.ts'),
-
+      '@activepieces/piece-slack': path.resolve(__dirname, '../../../packages/pieces/community/slack/src/index.ts'),
+      '@activepieces/piece-intercom': path.resolve(__dirname, '../../../packages/pieces/community/intercom/src/index.ts'),
+      '@activepieces/piece-square': path.resolve(__dirname, '../../../packages/pieces/community/square/src/index.ts'),
+      '@activepieces/piece-facebook-leads': path.resolve(__dirname, '../../../packages/pieces/community/facebook-leads/src/index.ts'),
     },
   },
 })

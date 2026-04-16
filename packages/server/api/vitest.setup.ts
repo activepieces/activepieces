@@ -1,6 +1,10 @@
 import path from 'path'
 import dotenv from 'dotenv'
 
+// Change CWD to repo root for compatibility with piece-loader path resolution
+const repoRoot = path.resolve(__dirname, '../../..')
+process.chdir(repoRoot)
+
 const resolvedPath = path.resolve(__dirname, '.env.tests')
 dotenv.config({ path: resolvedPath })
 // Increase webhook timeout for E2E tests that exercise the sync webhook route with subflow chains.

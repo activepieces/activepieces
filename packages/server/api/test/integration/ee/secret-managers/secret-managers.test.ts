@@ -12,7 +12,7 @@ import {
     mockVaultConfig,
 } from './hashicorp-mock'
 import { AppConnectionScope, AppConnectionType, ErrorCode, PrincipalType, SecretManagerConnectionScope, SecretManagerFieldsSeparator, SecretManagerProviderId, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
-import { validatePathFormat } from 'packages/server/api/src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider'
+import { validatePathFormat } from '../../../../src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider'
 
 let app: FastifyInstance | null = null
 let axiosRequestSpy: MockInstance
