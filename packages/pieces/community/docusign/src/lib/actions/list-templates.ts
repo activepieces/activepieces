@@ -9,8 +9,8 @@ import {
 
 export const listTemplates = createAction({
   name: 'listTemplates',
-  displayName: 'Find template by name',
-  description: 'Search for templates by name and return all matches',
+  displayName: 'Find Templates by Name',
+  description: 'Search for templates by name and return all matches.',
   auth: docusignAuth,
   props: {
     accountId: Property.ShortText({
@@ -18,8 +18,8 @@ export const listTemplates = createAction({
       required: true,
     }),
     templateName: Property.ShortText({
-      displayName: 'Template name',
-      description: 'The name (or partial name) of the template to search for',
+      displayName: 'Template Name',
+      description: 'Full or partial name of the template to search for.',
       required: true,
     }),
   },

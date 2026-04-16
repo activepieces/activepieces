@@ -28,28 +28,23 @@ function normalizePrivateKey(key: string): string {
 export async function createApiClient(
   auth: AppConnectionValueForAuthProperty<typeof docusignAuth>
 ) {
-  try {
-    const oAuthBasePath =
-      auth.props.environment === 'demo'
-        ? 'account-d.docusign.com'
-        : 'account.docusign.com';
-    const dsApi = new ApiClient({
-      basePath: `https://${auth.props.environment}.docusign.net/restapi`,
-      oAuthBasePath,
-    });
+  const oAuthBasePath =
+    auth.props.environment === 'demo'
+      ? 'account-d.docusign.com'
+      : 'account.docusign.com';
+  const dsApi = new ApiClient({
+    basePath: `https://${auth.props.environment}.docusign.net/restapi`,
+    oAuthBasePath,
+  });
 
-    const results = await dsApi.requestJWTUserToken(
-      auth.props.clientId,
-      auth.props.impersonatedUserId,
-      auth.props.scopes.split(','),
-      Buffer.from(normalizePrivateKey(auth.props.privateKey), 'utf-8'),
-      10 * 60 // 10mn lifetime
-    );
-    const accessToken = results.body.access_token;
-    dsApi.addDefaultHeader('Authorization', `Bearer ${accessToken}`);
-    return dsApi;
-  } catch (error) {
-    console.error('Error creating DocuSign API client:', error);
-    throw error;
-  }
+  const results = await dsApi.requestJWTUserToken(
+    auth.props.clientId,
+    auth.props.impersonatedUserId,
+    auth.props.scopes.split(',').map((s) => s.trim()),
+    Buffer.from(normalizePrivateKey(auth.props.privateKey), 'utf-8'),
+    10 * 60 // 10mn lifetime
+  );
+  const accessToken = results.body.access_token;
+  dsApi.addDefaultHeader('Authorization', `Bearer ${accessToken}`);
+  return dsApi;
 }

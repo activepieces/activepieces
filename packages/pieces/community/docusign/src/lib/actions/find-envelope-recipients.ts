@@ -5,9 +5,9 @@ import { EnvelopesApi } from 'docusign-esign';
 
 export const findEnvelopeRecipients = createAction({
   name: 'findEnvelopeRecipients',
-  displayName: 'Find Recipients for Envelope',
+  displayName: 'Get Envelope Recipients',
   description:
-    'Retrieves all recipients (signers, agents, editors, carbon copies, etc.) for a specific envelope by ID. Use this search when you need to fetch recipient data without triggering hydration timeouts in your trigger steps.',
+    'Retrieve all recipients (signers, carbon copies, etc.) for an envelope.',
   auth: docusignAuth,
   props: {
     accountId: Property.ShortText({
@@ -23,11 +23,9 @@ export const findEnvelopeRecipients = createAction({
     const apiClient = await createApiClient(auth);
     const envelopesApiClient = new EnvelopesApi(apiClient);
 
-    const recipients = await envelopesApiClient.listRecipients(
+    return await envelopesApiClient.listRecipients(
       propsValue.accountId,
       propsValue.envelopeId
     );
-
-    return recipients;
   },
 });
