@@ -10,12 +10,43 @@ import {
 } from '@activepieces/pieces-common';
 import {
   uptimeRobotApiCall,
+  uptimeRobotCommon,
   UptimeRobotMonitorsResponse,
 } from '../common';
 import { uptimeRobotAuth } from '../auth';
 
 const LOG_TYPE_DOWN = 1;
 const LOG_TYPE_UP = 2;
+const LOGS_PER_MONITOR = 50;
+
+async function fetchAllMonitorsWithLogs({
+  apiKey,
+}: {
+  apiKey: string;
+}): Promise<UptimeRobotMonitorsResponse['monitors']> {
+  const allMonitors: UptimeRobotMonitorsResponse['monitors'] = [];
+  let offset = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const data = await uptimeRobotApiCall<UptimeRobotMonitorsResponse>({
+      apiKey,
+      endpoint: 'getMonitors',
+      body: {
+        limit: uptimeRobotCommon.MAX_MONITORS_PER_PAGE,
+        offset,
+        logs: 1,
+        logs_limit: LOGS_PER_MONITOR,
+      },
+    });
+
+    allMonitors.push(...data.monitors);
+    offset += uptimeRobotCommon.MAX_MONITORS_PER_PAGE;
+    hasMore = data.monitors.length === uptimeRobotCommon.MAX_MONITORS_PER_PAGE && offset < data.pagination.total;
+  }
+
+  return allMonitors;
+}
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof uptimeRobotAuth>,
@@ -23,24 +54,16 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
-    const data = await uptimeRobotApiCall<UptimeRobotMonitorsResponse>({
+    const monitors = await fetchAllMonitorsWithLogs({
       apiKey: auth.secret_text,
-      endpoint: 'getMonitors',
-      body: {
-        limit: 50,
-        offset: 0,
-        logs: 1,
-        logs_limit: 50,
-      },
     });
 
     const events: { epochMilliSeconds: number; data: MonitorStatusEvent }[] = [];
 
-    for (const monitor of data.monitors) {
+    for (const monitor of monitors) {
       const logs = monitor.logs ?? [];
 
       for (const log of logs) {
-        // Only emit events for down (1) and up (2) — ignore paused/started
         if (log.type !== LOG_TYPE_DOWN && log.type !== LOG_TYPE_UP) {
           continue;
         }
