@@ -1,10 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  SecretsManagerClient,
-  CreateSecretCommand,
-  type Tag,
-} from '@aws-sdk/client-secrets-manager';
-import { awsSecretsManagerAuth } from '../common/auth';
+import { CreateSecretCommand } from '@aws-sdk/client-secrets-manager';
+import { awsSecretsManagerAuth, createSecretsManagerClient } from '../common/auth';
 
 export const createSecret = createAction({
   auth: awsSecretsManagerAuth,
@@ -46,32 +42,16 @@ export const createSecret = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new SecretsManagerClient({
-      region: auth.props.region,
-      credentials: {
-        accessKeyId: auth.props.accessKeyId,
-        secretAccessKey: auth.props.secretAccessKey,
-      },
+    const client = await createSecretsManagerClient(auth.props);
+    const command = new CreateSecretCommand({
+      Name: propsValue.name,
+      SecretString: propsValue.secretValue,
+      Description: propsValue.description,
+      Tags: (propsValue.tags as Array<{ key: string; value: string }>)?.map((tag) => ({
+        Key: tag.key,
+        Value: tag.value,
+      })),
     });
-
-    try {
-      const command = new CreateSecretCommand({
-        Name: propsValue.name,
-        SecretString: propsValue.secretValue,
-        Description: propsValue.description,
-        Tags: propsValue.tags?.map((tag: any) => ({
-          Key: tag.key,
-          Value: tag.value,
-        })),
-      });
-
-      const response = await client.send(command);
-
-      return response;
-    } catch (error: any) {
-      throw new Error(
-        `Failed to create secret: ${error.message ?? 'Unknown error'}`
-      );
-    }
+    return client.send(command);
   },
 });

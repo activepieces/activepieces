@@ -1,9 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  SecretsManagerClient,
-  GetSecretValueCommand,
-} from '@aws-sdk/client-secrets-manager';
-import { awsSecretsManagerAuth } from '../common/auth';
+import { GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
+import { awsSecretsManagerAuth, createSecretsManagerClient } from '../common/auth';
 import { secretIdDropdown } from '../common/props';
 
 export const getSecretValue = createAction({
@@ -25,28 +22,12 @@ export const getSecretValue = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new SecretsManagerClient({
-      region: auth.props.region,
-      credentials: {
-        accessKeyId: auth.props.accessKeyId,
-        secretAccessKey: auth.props.secretAccessKey,
-      },
+    const client = await createSecretsManagerClient(auth.props);
+    const command = new GetSecretValueCommand({
+      SecretId: propsValue.secretId,
+      VersionId: propsValue.versionId,
+      VersionStage: propsValue.versionStage,
     });
-
-    try {
-      const command = new GetSecretValueCommand({
-        SecretId: propsValue.secretId,
-        VersionId: propsValue.versionId,
-        VersionStage: propsValue.versionStage,
-      });
-
-      const response = await client.send(command);
-
-      return response;
-    } catch (error: any) {
-      throw new Error(
-        `Failed to retrieve secret: ${error.message ?? 'Unknown error'}`
-      );
-    }
+    return client.send(command);
   },
 });

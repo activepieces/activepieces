@@ -1,9 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  SecretsManagerClient,
-  UpdateSecretCommand,
-} from '@aws-sdk/client-secrets-manager';
-import { awsSecretsManagerAuth } from '../common/auth';
+import { UpdateSecretCommand } from '@aws-sdk/client-secrets-manager';
+import { awsSecretsManagerAuth, createSecretsManagerClient } from '../common/auth';
 import { secretIdDropdown } from '../common/props';
 
 export const updateSecret = createAction({
@@ -30,29 +27,13 @@ export const updateSecret = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new SecretsManagerClient({
-      region: auth.props.region,
-      credentials: {
-        accessKeyId: auth.props.accessKeyId,
-        secretAccessKey: auth.props.secretAccessKey,
-      },
+    const client = await createSecretsManagerClient(auth.props);
+    const command = new UpdateSecretCommand({
+      SecretId: propsValue.secretId,
+      SecretString: propsValue.secretValue,
+      Description: propsValue.description,
+      ClientRequestToken: propsValue.clientRequestToken,
     });
-
-    try {
-      const command = new UpdateSecretCommand({
-        SecretId: propsValue.secretId,
-        SecretString: propsValue.secretValue,
-        Description: propsValue.description,
-        ClientRequestToken: propsValue.clientRequestToken,
-      });
-
-      const response = await client.send(command);
-
-      return response;
-    } catch (error: any) {
-      throw new Error(
-        `Failed to update secret: ${error.message ?? 'Unknown error'}`
-      );
-    }
+    return client.send(command);
   },
 });

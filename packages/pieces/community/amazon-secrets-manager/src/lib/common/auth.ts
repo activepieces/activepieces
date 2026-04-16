@@ -3,10 +3,35 @@ import {
   SecretsManagerClient,
   ListSecretsCommand,
 } from '@aws-sdk/client-secrets-manager';
+import { STSClient, AssumeRoleCommand } from '@aws-sdk/client-sts';
+
+export async function createSecretsManagerClient(auth: {
+  accessKeyId: string;
+  secretAccessKey: string;
+  region: string;
+  authType?: string;
+  roleArn?: string;
+  externalId?: string;
+}) {
+  const creds = await resolveAwsCredentials(auth);
+  return new SecretsManagerClient({ region: auth.region, credentials: creds });
+}
 
 export const awsSecretsManagerAuth = PieceAuth.CustomAuth({
   description: '',
   props: {
+    authType: Property.StaticDropdown({
+      displayName: 'Auth Method',
+      description: 'Choose how to authenticate with AWS.',
+      required: true,
+      defaultValue: 'direct',
+      options: {
+        options: [
+          { label: 'Direct Credentials (Access Key + Secret)', value: 'direct' },
+          { label: 'AssumeRole (temporary credentials via STS)', value: 'assume_role' },
+        ],
+      },
+    }),
     accessKeyId: PieceAuth.SecretText({
       displayName: 'Access Key ID',
       required: true,
@@ -143,28 +168,62 @@ export const awsSecretsManagerAuth = PieceAuth.CustomAuth({
       },
       required: true,
     }),
+    roleArn: Property.ShortText({
+      displayName: 'Role ARN',
+      description:
+        'Required when Auth Method is AssumeRole. ARN of the IAM Role to assume (e.g. arn:aws:iam::123456789012:role/MyRole).',
+      required: false,
+    }),
+    externalId: PieceAuth.SecretText({
+      displayName: 'External ID',
+      description: 'Optional. Only used with AssumeRole. External ID for cross-account role security.',
+      required: false,
+    }),
   },
   validate: async ({ auth }) => {
+    if (auth.authType === 'assume_role' && !auth.roleArn) {
+      return { valid: false, error: 'Role ARN is required when Auth Method is AssumeRole.' };
+    }
     try {
-      const client = new SecretsManagerClient({
-        region: auth.region,
-        credentials: {
-          accessKeyId: auth.accessKeyId,
-          secretAccessKey: auth.secretAccessKey,
-        },
-      });
-
+      const client = await createSecretsManagerClient(auth);
       await client.send(new ListSecretsCommand({ MaxResults: 1 }));
-
       return { valid: true };
-    } catch (error: any) {
-      return {
-        valid: false,
-        error: `AWS credential validation failed: ${
-          error.name ?? 'Unknown error'
-        } - ${error.message ?? ''}`,
-      };
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      return { valid: false, error: message };
     }
   },
   required: true,
 });
+
+async function resolveAwsCredentials(auth: {
+  accessKeyId: string;
+  secretAccessKey: string;
+  region: string;
+  authType?: string;
+  roleArn?: string;
+  externalId?: string;
+}) {
+  if (auth.authType !== 'assume_role' || !auth.roleArn) {
+    return { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey };
+  }
+  const sts = new STSClient({
+    credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey },
+    region: auth.region,
+  });
+  const { Credentials } = await sts.send(
+    new AssumeRoleCommand({
+      RoleArn: auth.roleArn,
+      RoleSessionName: 'activepieces-session',
+      ...(auth.externalId ? { ExternalId: auth.externalId } : {}),
+    }),
+  );
+  if (!Credentials?.AccessKeyId || !Credentials?.SecretAccessKey) {
+    throw new Error('AWS STS returned empty credentials. Verify the Role ARN and permissions.');
+  }
+  return {
+    accessKeyId: Credentials.AccessKeyId,
+    secretAccessKey: Credentials.SecretAccessKey,
+    sessionToken: Credentials.SessionToken,
+  };
+}

@@ -1,9 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  SecretsManagerClient,
-  ListSecretsCommand,
-} from '@aws-sdk/client-secrets-manager';
-import { awsSecretsManagerAuth } from '../common/auth';
+import { ListSecretsCommand } from '@aws-sdk/client-secrets-manager';
+import { awsSecretsManagerAuth, createSecretsManagerClient } from '../common/auth';
 
 export const findSecret = createAction({
   auth: awsSecretsManagerAuth,
@@ -63,41 +60,25 @@ export const findSecret = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new SecretsManagerClient({
-      region: auth.props.region,
-      credentials: {
-        accessKeyId: auth.props.accessKeyId,
-        secretAccessKey: auth.props.secretAccessKey,
-      },
+    const client = await createSecretsManagerClient(auth.props);
+    const command = new ListSecretsCommand({
+      Filters: [
+        {
+          Key: propsValue.filterKey as
+            | 'description'
+            | 'name'
+            | 'tag-key'
+            | 'tag-value'
+            | 'primary-region'
+            | 'owning-service'
+            | 'all',
+          Values: [propsValue.filterValue],
+        },
+      ],
+      MaxResults: propsValue.maxResults,
+      SortBy: propsValue.sortBy as 'created-date' | 'last-accessed-date' | 'last-changed-date' | 'name' | undefined,
+      SortOrder: propsValue.sortOrder as 'asc' | 'desc' | undefined,
     });
-
-    try {
-      const command = new ListSecretsCommand({
-        Filters: [
-          {
-            Key: propsValue.filterKey as
-              | 'description'
-              | 'name'
-              | 'tag-key'
-              | 'tag-value'
-              | 'primary-region'
-              | 'owning-service'
-              | 'all',
-            Values: [propsValue.filterValue],
-          },
-        ],
-        MaxResults: propsValue.maxResults,
-        SortBy: propsValue.sortBy as any,
-        SortOrder: propsValue.sortOrder as any,
-      });
-
-      const response = await client.send(command);
-
-      return response;
-    } catch (error: any) {
-      throw new Error(
-        `Failed to find secret: ${error.message ?? 'Unknown error'}`
-      );
-    }
+    return client.send(command);
   },
 });

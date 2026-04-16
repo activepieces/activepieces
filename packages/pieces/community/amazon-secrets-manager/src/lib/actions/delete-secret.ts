@@ -1,9 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  SecretsManagerClient,
-  DeleteSecretCommand,
-} from '@aws-sdk/client-secrets-manager';
-import { awsSecretsManagerAuth } from '../common/auth';
+import { DeleteSecretCommand } from '@aws-sdk/client-secrets-manager';
+import { awsSecretsManagerAuth, createSecretsManagerClient } from '../common/auth';
 import { secretIdDropdown } from '../common/props';
 
 export const deleteSecret = createAction({
@@ -27,28 +24,12 @@ export const deleteSecret = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new SecretsManagerClient({
-      region: auth.props.region,
-      credentials: {
-        accessKeyId: auth.props.accessKeyId,
-        secretAccessKey: auth.props.secretAccessKey,
-      },
+    const client = await createSecretsManagerClient(auth.props);
+    const command = new DeleteSecretCommand({
+      SecretId: propsValue.secretId,
+      RecoveryWindowInDays: propsValue.recoveryWindowInDays,
+      ForceDeleteWithoutRecovery: propsValue.forceDeleteWithoutRecovery,
     });
-
-    try {
-      const command = new DeleteSecretCommand({
-        SecretId: propsValue.secretId,
-        RecoveryWindowInDays: propsValue.recoveryWindowInDays,
-        ForceDeleteWithoutRecovery: propsValue.forceDeleteWithoutRecovery,
-      });
-
-      const response = await client.send(command);
-
-      return response;
-    } catch (error: any) {
-      throw new Error(
-        `Failed to delete secret: ${error.message ?? 'Unknown error'}`
-      );
-    }
+    return client.send(command);
   },
 });

@@ -1,9 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  SecretsManagerClient,
-  GetRandomPasswordCommand,
-} from '@aws-sdk/client-secrets-manager';
-import { awsSecretsManagerAuth } from '../common/auth';
+import { GetRandomPasswordCommand } from '@aws-sdk/client-secrets-manager';
+import { awsSecretsManagerAuth, createSecretsManagerClient } from '../common/auth';
 
 export const getARandomPassword = createAction({
   auth: awsSecretsManagerAuth,
@@ -53,35 +50,17 @@ export const getARandomPassword = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new SecretsManagerClient({
-      region: auth.props.region,
-      credentials: {
-        accessKeyId: auth.props.accessKeyId,
-        secretAccessKey: auth.props.secretAccessKey,
-      },
+    const client = await createSecretsManagerClient(auth.props);
+    const command = new GetRandomPasswordCommand({
+      PasswordLength: propsValue.passwordLength,
+      ExcludeCharacters: propsValue.excludeCharacters,
+      ExcludeNumbers: propsValue.excludeNumbers,
+      ExcludePunctuation: propsValue.excludePunctuation,
+      ExcludeUppercase: propsValue.excludeUppercase,
+      ExcludeLowercase: propsValue.excludeLowercase,
+      IncludeSpace: propsValue.includeSpace,
+      RequireEachIncludedType: propsValue.requireEachIncludedType,
     });
-
-    try {
-      const command = new GetRandomPasswordCommand({
-        PasswordLength: propsValue.passwordLength,
-        ExcludeCharacters: propsValue.excludeCharacters,
-        ExcludeNumbers: propsValue.excludeNumbers,
-        ExcludePunctuation: propsValue.excludePunctuation,
-        ExcludeUppercase: propsValue.excludeUppercase,
-        ExcludeLowercase: propsValue.excludeLowercase,
-        IncludeSpace: propsValue.includeSpace,
-        RequireEachIncludedType: propsValue.requireEachIncludedType,
-      });
-
-      const response = await client.send(command);
-
-      return response;
-    } catch (error: any) {
-      throw new Error(
-        `Failed to generate random password: ${
-          error.message ?? 'Unknown error'
-        }`
-      );
-    }
+    return client.send(command);
   },
 });

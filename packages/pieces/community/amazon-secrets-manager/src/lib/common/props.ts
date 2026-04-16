@@ -1,9 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
-import {
-  ListSecretsCommand,
-  SecretsManagerClient,
-} from '@aws-sdk/client-secrets-manager';
-import { awsSecretsManagerAuth } from './auth';
+import { ListSecretsCommand } from '@aws-sdk/client-secrets-manager';
+import { awsSecretsManagerAuth, createSecretsManagerClient } from './auth';
 
 export const secretIdDropdown = Property.Dropdown<
   string,
@@ -25,13 +22,7 @@ export const secretIdDropdown = Property.Dropdown<
     }
 
     try {
-      const client = new SecretsManagerClient({
-        region: auth.props.region,
-        credentials: {
-          accessKeyId: auth.props.accessKeyId,
-          secretAccessKey: auth.props.secretAccessKey,
-        },
-      });
+      const client = await createSecretsManagerClient(auth.props);
 
       const options: Array<{ label: string; value: string }> = [];
       let nextToken: string | undefined;
