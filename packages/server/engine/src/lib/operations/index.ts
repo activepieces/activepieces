@@ -9,11 +9,13 @@ import {
     ExecutePropsOptions,
     ExecuteTriggerOperation,
     ExecuteValidateAuthOperation,
+    ExecuteActionOperation,
     ExecutionError,
     ExecutionErrorType,
     TriggerHookType,
     tryCatch,
 } from '@activepieces/shared'
+import { actionOperation } from './action.operation'
 import { authValidationOperation } from './auth-validation.operation'
 import { flowOperation } from './flow.operation'
 import { pieceMetadataOperation } from './piece-metadata.operation'
@@ -38,6 +40,9 @@ export async function execute(operationType: EngineOperationType, operation: Eng
             }
             case EngineOperationType.EXECUTE_VALIDATE_AUTH: {
                 return authValidationOperation.execute(operation as ExecuteValidateAuthOperation)
+            }
+            case EngineOperationType.EXECUTE_ACTION: {
+                return actionOperation.execute(operation as ExecuteActionOperation)
             }
             default: {
                 throw new ExecutionError('Unsupported operation type', `Unsupported operation type: ${operationType}`, ExecutionErrorType.ENGINE)
