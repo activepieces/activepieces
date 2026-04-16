@@ -8,7 +8,8 @@ import { listWorkItemsAction } from './lib/actions/list-work-items';
 import { addCommentAction } from './lib/actions/add-comment';
 import { newUpdatedWorkItemTrigger } from './lib/triggers/new-updated-work-item';
 import { newUpdatedWorkItemWebhookTrigger } from './lib/triggers/new-updated-work-item-webhook';
-import { azureDevOpsAuth, azureDevOpsCommon, AzureDevOpsAuth } from './lib/common';
+import { azureDevOpsAuth, azureDevOpsCommon } from './lib/common';
+import type { AzureDevOpsAuth } from './lib/common';
 
 export { azureDevOpsAuth };
 export type { AzureDevOpsAuth };
@@ -30,12 +31,12 @@ export const azureDevOps = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) =>
         azureDevOpsCommon.sanitizeOrgUrl(
-          (auth as AzureDevOpsAuth).props.organizationUrl,
+          azureDevOpsCommon.asAuth(auth).props.organizationUrl,
         ),
       auth: azureDevOpsAuth,
       authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
-          `:${(auth as AzureDevOpsAuth).props.pat}`,
+          `:${azureDevOpsCommon.asAuth(auth).props.pat}`,
         ).toString('base64')}`,
       }),
     }),

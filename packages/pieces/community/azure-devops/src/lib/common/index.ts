@@ -27,6 +27,10 @@ function isValidUrl(url: string): boolean {
   }
 }
 
+function asAzureAuth(auth: unknown): AzureDevOpsAuth {
+  return auth as AzureDevOpsAuth;
+}
+
 const authDescription = `To get your Personal Access Token (PAT):
 
 1. Go to **Azure DevOps** and click your profile icon (top-right)
@@ -355,7 +359,7 @@ function createAssignedToDropdown(required: boolean) {
           placeholder: 'Please select a project first',
         };
       }
-      const typedAuth = auth as AzureDevOpsAuth;
+      const typedAuth = asAzureAuth(auth);
       try {
         const members = await fetchTeamMembers(typedAuth, project as string);
         if (members.length === 0) {
@@ -412,7 +416,7 @@ function createStateDropdown(required: boolean, description: string) {
           placeholder: 'Please select a work item type first',
         };
       }
-      const typedAuth = auth as AzureDevOpsAuth;
+      const typedAuth = asAzureAuth(auth);
       try {
         const states = await fetchWorkItemTypeStates(
           typedAuth,
@@ -466,7 +470,7 @@ function createWorkItemTypeDropdown(required: boolean, description: string) {
           placeholder: 'Please select a project first',
         };
       }
-      const typedAuth = auth as AzureDevOpsAuth;
+      const typedAuth = asAzureAuth(auth);
       try {
         const response = await fetchWorkItemTypes(typedAuth, project as string);
         if (!response.value || response.value.length === 0) {
@@ -509,7 +513,7 @@ export const azureDevOpsCommon = {
           placeholder: 'Please connect your Azure DevOps account first',
         };
       }
-      const typedAuth = auth as AzureDevOpsAuth;
+      const typedAuth = asAzureAuth(auth);
       try {
         const response = await fetchProjects(typedAuth);
         if (!response.value || response.value.length === 0) {
@@ -572,6 +576,7 @@ export const azureDevOpsCommon = {
   escapeWiqlString,
   sanitizeOrgUrl,
   isValidUrl,
+  asAuth: asAzureAuth,
   apiCall: azureDevOpsApiCall,
   fetchWorkItemsByIds,
   flattenWorkItem,
