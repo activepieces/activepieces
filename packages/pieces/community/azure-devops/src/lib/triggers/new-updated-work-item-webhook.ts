@@ -3,12 +3,13 @@ import {
   TriggerStrategy,
   Property,
 } from '@activepieces/pieces-framework';
-import { azureDevOpsAuth } from '../common';
 import {
+  azureDevOpsAuth,
   azureDevOpsCommon,
   AzureDevOpsHookEvent,
-  AzureDevOpsWorkItem,
   FlatWorkItem,
+  WebhookPayload,
+  WorkItemResource,
 } from '../common';
 
 const TRIGGER_STORE_KEY = 'azure_devops_workitem_subscription_ids';
@@ -62,9 +63,16 @@ export const newUpdatedWorkItemWebhookTrigger = createTrigger({
   type: TriggerStrategy.WEBHOOK,
 
   async onEnable(context) {
-    const projectName = context.propsValue.project as string;
-    const workItemType = context.propsValue.work_item_type as string | undefined;
-    const events = (context.propsValue.events ?? []) as AzureDevOpsHookEvent[];
+    const projectName = azureDevOpsCommon.narrowString(
+      context.propsValue.project,
+      'project',
+    );
+    const workItemType =
+      typeof context.propsValue.work_item_type === 'string' &&
+      context.propsValue.work_item_type.length > 0
+        ? context.propsValue.work_item_type
+        : undefined;
+    const events = filterToHookEvents(context.propsValue.events ?? []);
 
     const projectId = await azureDevOpsCommon.fetchProjectId(
       context.auth,
@@ -99,23 +107,20 @@ export const newUpdatedWorkItemWebhookTrigger = createTrigger({
           subscriptionId,
         });
       } catch {
-        // best-effort cleanup
+        // best-effort cleanup: if the user already deleted the subscription
+        // in Azure DevOps, the DELETE will 404 and we intentionally swallow
       }
     }
     await context.store.delete(TRIGGER_STORE_KEY);
   },
 
   async run(context) {
-    const payload = context.payload.body as WebhookPayload;
-    if (!payload?.resource) {
-      return [];
-    }
+    const payload = azureDevOpsCommon.parseWebhookPayload(context.payload.body);
+    if (!payload) return [];
     if (payload.eventType === 'workitem.commented') {
       return [flattenCommentEvent(payload)];
     }
-    return [
-      azureDevOpsCommon.flattenWorkItem(payload.resource as AzureDevOpsWorkItem),
-    ];
+    return [flattenResource(payload.resource)];
   },
 
   async test() {
@@ -123,27 +128,33 @@ export const newUpdatedWorkItemWebhookTrigger = createTrigger({
   },
 });
 
+function flattenResource(resource: WorkItemResource): FlatWorkItem {
+  return azureDevOpsCommon.flattenWorkItem({
+    id: resource.id ?? resource.workItemId ?? 0,
+    rev: resource.rev ?? 0,
+    url: resource.url,
+    fields: resource.fields ?? {},
+  });
+}
+
 function flattenCommentEvent(payload: WebhookPayload): FlatWorkItem & {
   comment: string | null;
 } {
-  const resource = payload.resource as AzureDevOpsWorkItem & {
-    workItemId?: number;
-    revision?: { comment?: { content?: string } };
-  };
-  const flat = azureDevOpsCommon.flattenWorkItem({
-    ...resource,
-    id: resource.workItemId ?? resource.id,
-  });
+  const { resource } = payload;
   return {
-    ...flat,
+    ...flattenResource(resource),
     comment: resource.revision?.comment?.content ?? null,
   };
 }
 
-interface WebhookPayload {
-  eventType: AzureDevOpsHookEvent;
-  resource: unknown;
-  resourceContainers?: {
-    project?: { id: string };
-  };
+function filterToHookEvents(values: readonly unknown[]): AzureDevOpsHookEvent[] {
+  const allowed: AzureDevOpsHookEvent[] = [
+    'workitem.created',
+    'workitem.updated',
+    'workitem.commented',
+  ];
+  return values.filter(
+    (v): v is AzureDevOpsHookEvent =>
+      typeof v === 'string' && (allowed as readonly string[]).includes(v),
+  );
 }

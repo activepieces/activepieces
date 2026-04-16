@@ -38,6 +38,27 @@ function narrowString(value: unknown, fieldName: string): string {
   return value;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function parseWebhookPayload(body: unknown): WebhookPayload | null {
+  if (!isRecord(body)) return null;
+  const { eventType, resource } = body;
+  if (typeof eventType !== 'string' || !isRecord(resource)) return null;
+  if (
+    eventType !== 'workitem.created' &&
+    eventType !== 'workitem.updated' &&
+    eventType !== 'workitem.commented'
+  ) {
+    return null;
+  }
+  return {
+    eventType,
+    resource: resource as WorkItemResource,
+  };
+}
+
 const authDescription = `To get your Personal Access Token (PAT):
 
 1. Go to **Azure DevOps** and click your profile icon (top-right)
@@ -585,6 +606,7 @@ export const azureDevOpsCommon = {
   isValidUrl,
   asAuth: asAzureAuth,
   narrowString,
+  parseWebhookPayload,
   apiCall: azureDevOpsApiCall,
   fetchWorkItemsByIds,
   flattenWorkItem,
@@ -720,4 +742,21 @@ export interface SubscriptionResponse {
   eventType: string;
   consumerId: string;
   consumerActionId: string;
+}
+
+export interface WorkItemResource {
+  id?: number;
+  rev?: number;
+  url?: string;
+  workItemId?: number;
+  fields?: AzureDevOpsWorkItem['fields'];
+  revision?: {
+    comment?: { content?: string };
+    fields?: AzureDevOpsWorkItem['fields'];
+  };
+}
+
+export interface WebhookPayload {
+  eventType: AzureDevOpsHookEvent;
+  resource: WorkItemResource;
 }
