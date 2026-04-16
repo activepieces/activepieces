@@ -5,7 +5,6 @@ import { createApiClient } from '../common';
 import { Envelope, EnvelopesApi, EnvelopesInformation } from 'docusign-esign';
 
 export const listEnvelopes = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'listEnvelopes',
   displayName: 'List envelopes',
   description: 'List / search envelopes',

@@ -52,12 +52,14 @@ export const docusignAuth = PieceAuth.CustomAuth({
         valid: true,
       };
     } catch (error) {
+      const errorMessage = String(error);
+
+      // Check for consent_required in any error type
       if (
-        error instanceof AxiosError &&
-        error.response &&
-        error.response.status === 400 &&
-        error.response.data &&
-        error.response.data.error === 'consent_required'
+        errorMessage.includes('consent_required') ||
+        (error instanceof AxiosError &&
+          error.response?.status === 400 &&
+          error.response?.data?.error === 'consent_required')
       ) {
         const formattedScopes = auth.scopes.split(',').join(encodeURI(' '));
         const oAuthBasePath =
@@ -65,8 +67,6 @@ export const docusignAuth = PieceAuth.CustomAuth({
             ? 'account-d.docusign.com'
             : 'account.docusign.com';
 
-        // We don't use the built-in getAuthorizationUri method from docusign
-        // because it currently limits the scopes that can be requested to signature, extended, and impersonation
         const consentUrl =
           'https://' +
           oAuthBasePath +
@@ -80,6 +80,7 @@ export const docusignAuth = PieceAuth.CustomAuth({
           encodeURIComponent(
             `${server.publicUrl.replace('/api', '')}/redirect`
           );
+
         return {
           valid: false,
           error:
@@ -87,6 +88,7 @@ export const docusignAuth = PieceAuth.CustomAuth({
             consentUrl,
         };
       }
+
       return {
         valid: false,
         error: 'Invalid connection: ' + error,
