@@ -165,12 +165,11 @@ async function discoverAvailableConnections({ pieceName, projectId, log }: {
             cursorRequest: null,
             scope: undefined,
             displayName: undefined,
-            status: undefined,
+            status: [AppConnectionStatus.ACTIVE],
             limit: 10,
             externalIds: undefined,
         })
         const active = connections.data
-            .filter(c => c.status === AppConnectionStatus.ACTIVE)
             .map(c => ({ externalId: c.externalId, displayName: c.displayName }))
         if (active.length > 0) {
             return { message: 'Pass one as the auth param.', connections: active }
