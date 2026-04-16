@@ -83,11 +83,11 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/accept', AcceptUserInvitationRequestParams, async (request, reply) => {
         const invitation = await userInvitationsService(request.log).getOneByInvitationTokenOrThrow(request.body.invitationToken)
-        const result = await userInvitationsService(request.log).accept({
+        await userInvitationsService(request.log).accept({
             invitationId: invitation.id,
             platformId: invitation.platformId,
         })
-        await reply.status(StatusCodes.OK).send(result)
+        await reply.status(StatusCodes.OK).send(invitation)
     })
 
     app.delete('/:id', DeleteInvitationRequestParams, async (request, reply) => {

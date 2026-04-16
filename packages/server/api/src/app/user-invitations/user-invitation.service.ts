@@ -192,23 +192,18 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         }
         return invitation
     },
-    async accept({ invitationId, platformId }: AcceptParams): Promise<{ registered: boolean }> {
+    async accept({ invitationId, platformId }: AcceptParams): Promise<void> {
         const invitation = await this.getOneOrThrow({ id: invitationId, platformId })
         await repo().update(invitation.id, {
             status: InvitationStatus.ACCEPTED,
         })
         const identity = await userIdentityService(log).getIdentityByEmail(invitation.email)
         if (isNil(identity)) {
-            return {
-                registered: false,
-            }
+            return
         }
         await this.provisionUserInvitation({
             email: invitation.email,
         })
-        return {
-            registered: true,
-        }
     },
     async hasAnyAcceptedInvitationsForEmail({ email }: { email: string }): Promise<boolean> {
         const count = await repo().createQueryBuilder('user_invitation')
