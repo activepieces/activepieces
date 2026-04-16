@@ -1,4 +1,3 @@
-import { PropertyType } from '@activepieces/pieces-framework'
 import {
     FlowActionType,
     FlowOperationRequest,
@@ -74,10 +73,9 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
 
-            if (auth !== undefined && auth.includes('\'')) {
-                return {
-                    content: [{ type: 'text', text: '❌ auth value must not contain single quotes. Use the exact externalId from ap_list_connections.' }],
-                }
+            const authError = mcpUtils.validateAuth(auth)
+            if (authError) {
+                return authError
             }
 
             const currentSettings = step.settings as Record<string, unknown>
@@ -122,7 +120,7 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             }
 
             if (step.type === FlowActionType.PIECE && input !== undefined) {
-                await fillDefaultsForMissingOptionalProps({
+                await mcpUtils.fillDefaultsForMissingOptionalProps({
                     settings: updatedSettings,
                     platformId: project.platformId,
                     log,
@@ -208,45 +206,5 @@ async function diagnoseMissingInputs({ settings, platformId, log }: {
     catch (err) {
         log.warn({ err, pieceName, actionName }, 'diagnoseMissingInputs: failed to fetch piece metadata')
         return null
-    }
-}
-
-async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }: {
-    settings: Record<string, unknown>
-    platformId: string
-    log: FastifyBaseLogger
-}): Promise<void> {
-    const pieceName = settings.pieceName
-    const pieceVersion = settings.pieceVersion
-    const actionName = settings.actionName
-    if (typeof pieceName !== 'string' || typeof pieceVersion !== 'string' || typeof actionName !== 'string') {
-        return
-    }
-    try {
-        const piece = await pieceMetadataService(log).getOrThrow({
-            platformId,
-            name: pieceName,
-            version: pieceVersion,
-        })
-        const action = piece.actions[actionName]
-        if (isNil(action)) {
-            return
-        }
-        const defaults: Record<string, unknown> = {}
-        for (const [propName, prop] of Object.entries(action.props)) {
-            if (prop.type === PropertyType.ARRAY && !prop.required) {
-                defaults[propName] = []
-            }
-            else if (prop.type === PropertyType.DYNAMIC && !prop.required) {
-                defaults[propName] = {}
-            }
-            else if (prop.type === PropertyType.CHECKBOX && !prop.required) {
-                defaults[propName] = prop.defaultValue ?? false
-            }
-        }
-        settings.input = { ...defaults, ...(typeof settings.input === 'object' && settings.input !== null ? settings.input : {}) }
-    }
-    catch (err) {
-        log.warn({ err, pieceName, actionName }, 'fillDefaultsForMissingOptionalProps: failed to fetch piece metadata, skipping defaults')
     }
 }

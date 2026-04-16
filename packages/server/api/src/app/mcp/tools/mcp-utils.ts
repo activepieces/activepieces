@@ -3,11 +3,12 @@ import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 
-const AUTH_TYPES = new Set<PropertyType>([
+const NON_INPUT_PROP_TYPES = new Set<PropertyType>([
     PropertyType.OAUTH2,
     PropertyType.SECRET_TEXT,
     PropertyType.BASIC_AUTH,
     PropertyType.CUSTOM_AUTH,
+    PropertyType.MARKDOWN,
 ])
 
 const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
@@ -28,7 +29,7 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
     const uiRequired: string[] = []
     const allProps: string[] = []
     for (const [propName, prop] of Object.entries(props)) {
-        if (AUTH_TYPES.has(prop.type)) {
+        if (NON_INPUT_PROP_TYPES.has(prop.type)) {
             continue
         }
         allProps.push(`${propName} (${prop.type}${prop.required ? ', required' : ''})`)
@@ -66,7 +67,7 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
 
 function buildPropSummaries(props: PiecePropertyMap): PropSummary[] {
     return Object.entries(props)
-        .filter(([, prop]) => !AUTH_TYPES.has(prop.type))
+        .filter(([, prop]) => !NON_INPUT_PROP_TYPES.has(prop.type))
         .map(([name, prop]) => {
             const summary: PropSummary = {
                 name,
@@ -134,7 +135,50 @@ function findResolvableProps({ props, componentProps, auth, providedInput }: Fin
     })
 }
 
-export const mcpUtils = { mcpToolError, diagnosePieceProps, buildPropSummaries, normalizePieceName, lookupPieceComponent, findResolvableProps, STEP_REFERENCE_HINT }
+function validateAuth(auth: string | undefined): { content: [{ type: 'text', text: string }] } | null {
+    if (auth !== undefined && /['{}\[\]]/.test(auth)) {
+        return { content: [{ type: 'text', text: '❌ auth must be a plain externalId with no special characters. Use the exact value from ap_list_connections.' }] }
+    }
+    return null
+}
+
+async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }: {
+    settings: Record<string, unknown>
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<void> {
+    const pieceName = settings.pieceName
+    const pieceVersion = settings.pieceVersion
+    const actionName = settings.actionName
+    if (typeof pieceName !== 'string' || typeof pieceVersion !== 'string' || typeof actionName !== 'string') {
+        return
+    }
+    try {
+        const piece = await pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion })
+        const action = piece.actions[actionName]
+        if (isNil(action)) {
+            return
+        }
+        const defaults: Record<string, unknown> = {}
+        for (const [propName, prop] of Object.entries(action.props)) {
+            if (prop.type === PropertyType.ARRAY && !prop.required) {
+                defaults[propName] = []
+            }
+            else if (prop.type === PropertyType.DYNAMIC && !prop.required) {
+                defaults[propName] = {}
+            }
+            else if (prop.type === PropertyType.CHECKBOX && !prop.required) {
+                defaults[propName] = prop.defaultValue ?? false
+            }
+        }
+        settings.input = { ...defaults, ...(typeof settings.input === 'object' && settings.input !== null ? settings.input : {}) }
+    }
+    catch (err) {
+        log.warn({ err, pieceName, actionName }, 'fillDefaultsForMissingOptionalProps: failed, skipping defaults')
+    }
+}
+
+export const mcpUtils = { mcpToolError, diagnosePieceProps, buildPropSummaries, normalizePieceName, lookupPieceComponent, findResolvableProps, validateAuth, fillDefaultsForMissingOptionalProps, STEP_REFERENCE_HINT }
 
 export type { PropSummary }
 
