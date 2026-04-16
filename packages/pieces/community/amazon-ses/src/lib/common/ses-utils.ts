@@ -8,31 +8,27 @@ import {
   ListCustomVerificationEmailTemplatesCommand,
   GetCustomVerificationEmailTemplateCommand,
 } from '@aws-sdk/client-ses';
+import { STSClient, AssumeRoleCommand } from '@aws-sdk/client-sts';
 
 export interface SESAuth {
   accessKeyId: string;
   secretAccessKey: string;
   region: string;
+  authType?: string;
+  roleArn?: string;
+  externalId?: string;
 }
 
-/**
- * Creates a configured SES client
- */
-export function createSESClient(auth: SESAuth): SESClient {
-  return new SESClient({
-    credentials: {
-      accessKeyId: auth.accessKeyId,
-      secretAccessKey: auth.secretAccessKey,
-    },
-    region: auth.region,
-  });
+export async function createSESClient(auth: SESAuth): Promise<SESClient> {
+  const creds = await resolveAwsCredentials(auth);
+  return new SESClient({ credentials: creds, region: auth.region });
 }
 
 /**
  * Fetches and filters verified identities from AWS SES
  */
 export async function getVerifiedIdentities(auth: SESAuth): Promise<string[]> {
-  const sesClient = createSESClient(auth);
+  const sesClient = await createSESClient(auth);
 
   try {
     // Get all identities
@@ -70,7 +66,7 @@ export async function getVerifiedIdentities(auth: SESAuth): Promise<string[]> {
  * Fetches configuration sets from AWS SES
  */
 export async function getConfigurationSets(auth: SESAuth): Promise<string[]> {
-  const sesClient = createSESClient(auth);
+  const sesClient = await createSESClient(auth);
 
   try {
     const response = await sesClient.send(new ListConfigurationSetsCommand({}));
@@ -273,7 +269,7 @@ export function createConfigSetDropdownOptions(configSets: string[]): {
  * Fetches existing email templates from AWS SES
  */
 export async function getEmailTemplates(auth: SESAuth): Promise<string[]> {
-  const sesClient = createSESClient(auth);
+  const sesClient = await createSESClient(auth);
 
   try {
     const response = await sesClient.send(new ListTemplatesCommand({}));
@@ -300,7 +296,7 @@ export async function getEmailTemplate(
   htmlPart?: string;
   textPart?: string;
 } | null> {
-  const sesClient = createSESClient(auth);
+  const sesClient = await createSESClient(auth);
 
   try {
     const response = await sesClient.send(
@@ -536,7 +532,7 @@ export function compareTemplateContent(
 export async function getCustomVerificationTemplates(
   auth: SESAuth
 ): Promise<string[]> {
-  const sesClient = createSESClient(auth);
+  const sesClient = await createSESClient(auth);
 
   try {
     const response = await sesClient.send(
@@ -567,7 +563,7 @@ export async function getCustomVerificationTemplate(
   successRedirectionURL?: string;
   failureRedirectionURL?: string;
 } | null> {
-  const sesClient = createSESClient(auth);
+  const sesClient = await createSESClient(auth);
 
   try {
     const response = await sesClient.send(
@@ -742,4 +738,29 @@ export function formatContentSize(content: string): {
       formatted: `${Math.round((bytes / 1024 / 1024) * 10) / 10}MB`,
     };
   }
+}
+
+async function resolveAwsCredentials(auth: SESAuth) {
+  if (auth.authType !== 'assume_role' || !auth.roleArn) {
+    return { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey };
+  }
+  const sts = new STSClient({
+    credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey },
+    region: auth.region,
+  });
+  const { Credentials } = await sts.send(
+    new AssumeRoleCommand({
+      RoleArn: auth.roleArn,
+      RoleSessionName: 'activepieces-session',
+      ...(auth.externalId ? { ExternalId: auth.externalId } : {}),
+    }),
+  );
+  if (!Credentials?.AccessKeyId || !Credentials?.SecretAccessKey) {
+    throw new Error('AWS STS returned empty credentials. Verify the Role ARN and permissions.');
+  }
+  return {
+    accessKeyId: Credentials.AccessKeyId,
+    secretAccessKey: Credentials.SecretAccessKey,
+    sessionToken: Credentials.SessionToken,
+  };
 }

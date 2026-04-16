@@ -152,11 +152,9 @@ export const sendTemplatedEmail = createAction({
       returnPathArn,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth.props;
-
     if (
       !templateData ||
-      Object.keys(templateData as Record<string, any>).length === 0
+      Object.keys(templateData as Record<string, unknown>).length === 0
     ) {
       throw new Error(
         'Template variables are required. Provide at least one key-value pair.'
@@ -193,7 +191,7 @@ export const sendTemplatedEmail = createAction({
       throw new Error(`Invalid return path email: ${returnPath}`);
     }
 
-    const sesClient = createSESClient({ accessKeyId, secretAccessKey, region });
+    const sesClient = await createSESClient(context.auth.props);
 
     let templateDataString: string;
     try {

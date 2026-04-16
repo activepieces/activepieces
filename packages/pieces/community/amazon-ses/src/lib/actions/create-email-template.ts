@@ -75,8 +75,6 @@ export const createEmailTemplate = createAction({
       sampleData,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth.props;
-
     validateTemplateName(templateName);
 
     if (templateFormat === 'html' && !htmlPart) {
@@ -99,15 +97,11 @@ export const createEmailTemplate = createAction({
       textPart
     );
 
-    const sesClient = createSESClient({ accessKeyId, secretAccessKey, region });
+    const sesClient = await createSESClient(context.auth.props);
 
     if (checkExisting) {
       try {
-        const existingTemplates = await getEmailTemplates({
-          accessKeyId,
-          secretAccessKey,
-          region,
-        });
+        const existingTemplates = await getEmailTemplates(context.auth.props);
         if (existingTemplates.includes(templateName)) {
           throw new Error(
             `Template "${templateName}" already exists. Please choose a different name.`

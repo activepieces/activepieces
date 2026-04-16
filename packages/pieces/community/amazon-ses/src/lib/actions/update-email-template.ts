@@ -109,14 +109,12 @@ export const updateEmailTemplate = createAction({
       sampleData,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth.props;
-
-    const sesClient = createSESClient({ accessKeyId, secretAccessKey, region });
+    const sesClient = await createSESClient(context.auth.props);
 
     let currentTemplate = null;
     if (preserveUnspecified) {
       currentTemplate = await getEmailTemplate(
-        { accessKeyId, secretAccessKey, region },
+        context.auth.props,
         templateName
       );
 

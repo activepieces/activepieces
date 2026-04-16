@@ -1,9 +1,22 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { SES } from '@aws-sdk/client-ses';
 import { GetSendQuotaCommand } from '@aws-sdk/client-ses';
+import { STSClient, AssumeRoleCommand } from '@aws-sdk/client-sts';
 
 export const amazonSesAuth = PieceAuth.CustomAuth({
   props: {
+    authType: Property.StaticDropdown({
+      displayName: 'Auth Method',
+      description: 'Choose how to authenticate with AWS.',
+      required: true,
+      defaultValue: 'direct',
+      options: {
+        options: [
+          { label: 'Direct Credentials (Access Key + Secret)', value: 'direct' },
+          { label: 'AssumeRole (temporary credentials via STS)', value: 'assume_role' },
+        ],
+      },
+    }),
     accessKeyId: Property.ShortText({
       displayName: 'Access Key ID',
       required: true,
@@ -140,26 +153,63 @@ export const amazonSesAuth = PieceAuth.CustomAuth({
       },
       required: true,
     }),
+    roleArn: Property.ShortText({
+      displayName: 'Role ARN',
+      description:
+        'Required when Auth Method is AssumeRole. ARN of the IAM Role to assume (e.g. arn:aws:iam::123456789012:role/MyRole).',
+      required: false,
+    }),
+    externalId: PieceAuth.SecretText({
+      displayName: 'External ID',
+      description: 'Optional. Only used with AssumeRole. External ID for cross-account role security.',
+      required: false,
+    }),
   },
   validate: async ({ auth }) => {
+    if (auth.authType === 'assume_role' && !auth.roleArn) {
+      return { valid: false, error: 'Role ARN is required when Auth Method is AssumeRole.' };
+    }
     try {
-      const ses = new SES({
-        credentials: {
-          accessKeyId: auth.accessKeyId,
-          secretAccessKey: auth.secretAccessKey,
-        },
-        region: auth.region,
-      });
+      const creds = await resolveAwsCredentials(auth);
+      const ses = new SES({ credentials: creds, region: auth.region });
       await ses.send(new GetSendQuotaCommand({}));
-      return {
-        valid: true,
-      };
+      return { valid: true };
     } catch (e) {
-      return {
-        valid: false,
-        error: (e as Error)?.message,
-      };
+      const message = e instanceof Error ? e.message : String(e);
+      return { valid: false, error: message };
     }
   },
   required: true,
 });
+
+async function resolveAwsCredentials(auth: {
+  accessKeyId: string;
+  secretAccessKey: string;
+  region: string;
+  authType?: string;
+  roleArn?: string;
+  externalId?: string;
+}) {
+  if (auth.authType !== 'assume_role' || !auth.roleArn) {
+    return { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey };
+  }
+  const sts = new STSClient({
+    credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey },
+    region: auth.region,
+  });
+  const { Credentials } = await sts.send(
+    new AssumeRoleCommand({
+      RoleArn: auth.roleArn,
+      RoleSessionName: 'activepieces-session',
+      ...(auth.externalId ? { ExternalId: auth.externalId } : {}),
+    }),
+  );
+  if (!Credentials?.AccessKeyId || !Credentials?.SecretAccessKey) {
+    throw new Error('AWS STS returned empty credentials. Verify the Role ARN and permissions.');
+  }
+  return {
+    accessKeyId: Credentials.AccessKeyId,
+    secretAccessKey: Credentials.SecretAccessKey,
+    sessionToken: Credentials.SessionToken,
+  };
+}

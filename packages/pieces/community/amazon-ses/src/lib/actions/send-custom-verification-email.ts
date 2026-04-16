@@ -87,8 +87,6 @@ export const sendCustomVerificationEmail = createAction({
       checkExistingIdentity,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth.props;
-
     if (validateEmailFormat) {
       const validatedEmails = validateEmailAddresses(
         [emailAddress],
@@ -99,16 +97,12 @@ export const sendCustomVerificationEmail = createAction({
       }
     }
 
-    const sesClient = createSESClient({ accessKeyId, secretAccessKey, region });
+    const sesClient = await createSESClient(context.auth.props);
 
     if (checkExistingIdentity) {
       try {
         const { getVerifiedIdentities } = await import('../common/ses-utils');
-        const verifiedIdentities = await getVerifiedIdentities({
-          accessKeyId,
-          secretAccessKey,
-          region,
-        });
+        const verifiedIdentities = await getVerifiedIdentities(context.auth.props);
 
         if (verifiedIdentities.includes(emailAddress)) {
           console.warn(

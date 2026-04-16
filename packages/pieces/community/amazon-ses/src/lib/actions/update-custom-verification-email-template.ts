@@ -129,16 +129,14 @@ export const updateCustomVerificationEmailTemplate = createAction({
       validateUrls,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth.props;
-
     validateCustomVerificationTemplateName(templateName);
 
-    const sesClient = createSESClient({ accessKeyId, secretAccessKey, region });
+    const sesClient = await createSESClient(context.auth.props);
 
     let currentTemplate = null;
     if (preserveUnspecified) {
       currentTemplate = await getCustomVerificationTemplate(
-        { accessKeyId, secretAccessKey, region },
+        context.auth.props,
         templateName
       );
 

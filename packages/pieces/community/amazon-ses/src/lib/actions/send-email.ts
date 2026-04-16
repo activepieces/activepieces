@@ -144,8 +144,6 @@ export const sendEmail = createAction({
       returnPathArn,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth.props;
-
     if (bodyFormat === 'html' && !htmlBody) {
       throw new Error('HTML content is required when using HTML format');
     }
@@ -180,7 +178,7 @@ export const sendEmail = createAction({
       throw new Error(`Invalid return path email: ${returnPath}`);
     }
 
-    const sesClient = createSESClient({ accessKeyId, secretAccessKey, region });
+    const sesClient = await createSESClient(context.auth.props);
 
     const emailBody: any = {};
 

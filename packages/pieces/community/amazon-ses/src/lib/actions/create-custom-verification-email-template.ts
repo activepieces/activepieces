@@ -86,8 +86,6 @@ export const createCustomVerificationEmailTemplate = createAction({
       validateUrls,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth.props;
-
     validateCustomVerificationTemplateName(templateName);
 
     if (!isValidEmail(fromEmailAddress)) {
@@ -103,15 +101,11 @@ export const createCustomVerificationEmailTemplate = createAction({
 
     const contentSize = formatContentSize(templateContent);
 
-    const sesClient = createSESClient({ accessKeyId, secretAccessKey, region });
+    const sesClient = await createSESClient(context.auth.props);
 
     if (checkExisting) {
       try {
-        const existingTemplates = await getCustomVerificationTemplates({
-          accessKeyId,
-          secretAccessKey,
-          region,
-        });
+        const existingTemplates = await getCustomVerificationTemplates(context.auth.props);
         if (existingTemplates.includes(templateName)) {
           throw new Error(
             `Custom verification template "${templateName}" already exists. Please choose a different name.`
