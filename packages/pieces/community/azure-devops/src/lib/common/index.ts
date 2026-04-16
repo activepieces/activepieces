@@ -25,6 +25,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function generateWebhookToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
 function parseWebhookPayload(body: unknown): WebhookPayload | null {
   if (!isRecord(body)) return null;
   const { eventType, resource } = body;
@@ -236,16 +251,33 @@ async function createSubscription({
   eventType,
   webhookUrl,
   workItemType,
+  basicAuthUsername,
+  basicAuthPassword,
 }: {
   auth: AzureDevOpsAuth;
   projectId: string;
   eventType: AzureDevOpsHookEvent;
   webhookUrl: string;
   workItemType?: string;
+  basicAuthUsername?: string;
+  basicAuthPassword?: string;
 }): Promise<SubscriptionResponse> {
   const publisherInputs: Record<string, string> = { projectId };
   if (workItemType) {
     publisherInputs['workItemType'] = workItemType;
+  }
+
+  const consumerInputs: Record<string, string> = {
+    url: webhookUrl,
+    resourceDetailsToSend: 'all',
+    messagesToSend: 'none',
+    detailedMessagesToSend: 'none',
+  };
+  if (basicAuthUsername !== undefined) {
+    consumerInputs['basicAuthUsername'] = basicAuthUsername;
+  }
+  if (basicAuthPassword !== undefined) {
+    consumerInputs['basicAuthPassword'] = basicAuthPassword;
   }
 
   return azureDevOpsApiCall<SubscriptionResponse>({
@@ -261,12 +293,7 @@ async function createSubscription({
       consumerId: 'webHooks',
       consumerActionId: 'httpRequest',
       publisherInputs,
-      consumerInputs: {
-        url: webhookUrl,
-        resourceDetailsToSend: 'all',
-        messagesToSend: 'none',
-        detailedMessagesToSend: 'none',
-      },
+      consumerInputs,
     },
   });
 }
@@ -590,6 +617,8 @@ export const azureDevOpsCommon = {
   asAuth: asAzureAuth,
   narrowString,
   parseWebhookPayload,
+  generateWebhookToken,
+  timingSafeEqual,
   apiCall: azureDevOpsApiCall,
   fetchWorkItemsByIds,
   flattenWorkItem,

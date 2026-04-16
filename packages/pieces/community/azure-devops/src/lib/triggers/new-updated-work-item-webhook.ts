@@ -13,6 +13,8 @@ import {
 } from '../common';
 
 const TRIGGER_STORE_KEY = 'azure_devops_workitem_subscription_ids';
+const TRIGGER_TOKEN_STORE_KEY = 'azure_devops_workitem_webhook_token';
+const BASIC_AUTH_USERNAME = 'activepieces';
 
 const sampleWebhookOutput: FlatWorkItem = {
   id: 123,
@@ -82,6 +84,9 @@ export const newUpdatedWorkItemWebhookTrigger = createTrigger({
       throw new Error(`Project "${projectName}" not found in Azure DevOps.`);
     }
 
+    const token = azureDevOpsCommon.generateWebhookToken();
+    await context.store.put<string>(TRIGGER_TOKEN_STORE_KEY, token);
+
     const subscriptionIds: string[] = [];
     for (const event of events) {
       const subscription = await azureDevOpsCommon.createSubscription({
@@ -90,6 +95,8 @@ export const newUpdatedWorkItemWebhookTrigger = createTrigger({
         eventType: event,
         webhookUrl: context.webhookUrl,
         workItemType,
+        basicAuthUsername: BASIC_AUTH_USERNAME,
+        basicAuthPassword: token,
       });
       subscriptionIds.push(subscription.id);
     }
@@ -112,9 +119,18 @@ export const newUpdatedWorkItemWebhookTrigger = createTrigger({
       }
     }
     await context.store.delete(TRIGGER_STORE_KEY);
+    await context.store.delete(TRIGGER_TOKEN_STORE_KEY);
   },
 
   async run(context) {
+    const expectedToken = await context.store.get<string>(TRIGGER_TOKEN_STORE_KEY);
+    if (!expectedToken) return [];
+
+    const authHeader = extractAuthHeader(context.payload.headers);
+    if (!authHeader || !verifyBasicAuth(authHeader, BASIC_AUTH_USERNAME, expectedToken)) {
+      return [];
+    }
+
     const payload = azureDevOpsCommon.parseWebhookPayload(context.payload.body);
     if (!payload) return [];
     if (payload.eventType === 'workitem.commented') {
@@ -145,6 +161,30 @@ function flattenCommentEvent(payload: WebhookPayload): FlatWorkItem & {
     ...flattenResource(resource),
     comment: resource.revision?.comment?.content ?? null,
   };
+}
+
+function extractAuthHeader(headers: Record<string, string | undefined>): string | null {
+  const raw = headers['authorization'] ?? headers['Authorization'];
+  return typeof raw === 'string' ? raw : null;
+}
+
+function verifyBasicAuth(header: string, expectedUser: string, expectedToken: string): boolean {
+  const prefix = 'Basic ';
+  if (!header.startsWith(prefix)) return false;
+  let decoded: string;
+  try {
+    decoded = Buffer.from(header.slice(prefix.length), 'base64').toString('utf-8');
+  } catch {
+    return false;
+  }
+  const sep = decoded.indexOf(':');
+  if (sep < 0) return false;
+  const username = decoded.slice(0, sep);
+  const password = decoded.slice(sep + 1);
+  return (
+    azureDevOpsCommon.timingSafeEqual(username, expectedUser) &&
+    azureDevOpsCommon.timingSafeEqual(password, expectedToken)
+  );
 }
 
 function filterToHookEvents(values: readonly unknown[]): AzureDevOpsHookEvent[] {
