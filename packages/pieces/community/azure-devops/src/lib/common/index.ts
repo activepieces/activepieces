@@ -10,23 +10,6 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 
-function sanitizeOrgUrl(url: string): string {
-  return url.replace(/\/+$/, '');
-}
-
-function escapeWiqlString(value: string): string {
-  return value.replace(/'/g, "''");
-}
-
-function isValidUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
 function asAzureAuth(auth: unknown): AzureDevOpsAuth {
   return auth as AzureDevOpsAuth;
 }
@@ -616,6 +599,23 @@ export const azureDevOpsCommon = {
   createSubscription,
   deleteSubscription,
 };
+
+function sanitizeOrgUrl(url: string): string {
+  return url.replace(/\/+$/, '');
+}
+
+function escapeWiqlString(value: string): string {
+  return value.replace(/'/g, "''");
+}
+
+function isValidUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
 
 export interface JsonPatchOperation {
   op: 'add' | 'replace' | 'remove' | 'test';
