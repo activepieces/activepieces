@@ -35,7 +35,7 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
             pieceName: z.string().describe('The piece name for the trigger (e.g. "@activepieces/piece-gmail"). Use ap_list_pieces to get valid values.'),
             pieceVersion: z.string().describe('The piece version (e.g. "~0.1.0"). Use ap_list_pieces to get valid values.'),
             triggerName: z.string().describe('The trigger name within the piece (e.g. "new_email"). Use ap_list_pieces with includeTriggers=true to get valid values.'),
-            input: z.record(z.string(), z.unknown()).optional().describe('Input settings for the trigger (key-value pairs). Use `{{stepName.output.field}}` to reference data from previous steps (e.g. `{{trigger.output.body.email}}`, `{{step_1.output.id}}`).'),
+            input: z.record(z.string(), z.unknown()).optional().describe(`Input settings for the trigger (key-value pairs). ${mcpUtils.STEP_REFERENCE_HINT}`),
             auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. The tool wraps it automatically as `{{connections[\'externalId\']}}`.'),
             displayName: z.string().optional().describe('Display name for the trigger step'),
         },
@@ -49,10 +49,6 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                 }
             }
 
-            const input = {
-                ...(rawInput ?? {}),
-                ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
-            }
             const displayName = rawDisplayName ?? triggerName
 
             const [flow, project] = await Promise.all([
@@ -61,6 +57,20 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
             ])
             if (isNil(flow)) {
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
+            }
+
+            const existingTrigger = flow.version.trigger
+            const existingPieceSettings = existingTrigger.type === FlowTriggerType.PIECE
+                && existingTrigger.settings.pieceName === pieceName
+                && existingTrigger.settings.triggerName === triggerName
+                ? existingTrigger.settings
+                : null
+
+            const { auth: _rawAuth, ...rawInputWithoutAuth } = rawInput ?? {}
+            const input = {
+                ...(existingPieceSettings?.input ?? {}),
+                ...rawInputWithoutAuth,
+                ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
             }
 
             const triggerPayload = {
@@ -74,7 +84,7 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                     pieceVersion,
                     triggerName,
                     input,
-                    propertySettings: {},
+                    propertySettings: existingPieceSettings?.propertySettings ?? {},
                 },
             }
 
