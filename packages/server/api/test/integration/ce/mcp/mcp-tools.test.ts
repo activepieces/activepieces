@@ -14,6 +14,7 @@ import { createTestContext } from '../../../helpers/test-context'
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
+import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
 import { apFlowStructureTool } from '../../../../src/app/mcp/tools/ap-flow-structure'
 import { apListPiecesTool } from '../../../../src/app/mcp/tools/ap-list-pieces'
@@ -1104,5 +1105,161 @@ describe('MCP Tools integration', () => {
         const structure = await apFlowStructureTool(mcp, mockLog).execute({ flowId })
         expect(text(structure)).toContain('Attempt 5')
         expect(text(structure)).toContain('configured')
+    })
+
+    // ── ap_build_flow — batch flow creation ──────────────────────────
+
+    it('45. ap_build_flow — creates trigger + CODE step, all valid', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool(mcp, mockLog).execute({
+            flowName: 'Build Test 1',
+            trigger: {
+                pieceName: '@activepieces/piece-test-email',
+                pieceVersion: '~0.1.0',
+                triggerName: 'new_email',
+            },
+            steps: [
+                {
+                    type: FlowActionType.CODE,
+                    displayName: 'Process',
+                    sourceCode: 'export const code = async () => { return { ok: true }; };',
+                    input: {},
+                },
+            ],
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).toContain('2 steps')
+        expect(text(result)).toContain('all valid')
+    })
+
+    it('46. ap_build_flow — creates trigger + multiple steps in correct order', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool(mcp, mockLog).execute({
+            flowName: 'Build Test 2',
+            trigger: {
+                pieceName: '@activepieces/piece-test-email',
+                pieceVersion: '~0.1.0',
+                triggerName: 'new_email',
+            },
+            steps: [
+                {
+                    type: FlowActionType.CODE,
+                    displayName: 'Step A',
+                    sourceCode: 'export const code = async () => { return { a: 1 }; };',
+                    input: {},
+                },
+                {
+                    type: FlowActionType.CODE,
+                    displayName: 'Step B',
+                    sourceCode: 'export const code = async () => { return { b: 2 }; };',
+                    input: {},
+                },
+                {
+                    type: FlowActionType.LOOP_ON_ITEMS,
+                    displayName: 'Loop',
+                    loopItems: '{{step_1.items}}',
+                },
+            ],
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).toContain('4 steps')
+
+        const flowId = text(result).match(/\(id: (\S+?)\)/)?.[1]
+        expect(flowId).toBeDefined()
+
+        const structure = await apFlowStructureTool(mcp, mockLog).execute({ flowId: flowId! })
+        const output = text(structure)
+        expect(output).toContain('Step A')
+        expect(output).toContain('Step B')
+        expect(output).toContain('Loop')
+        expect(output).toContain('step_1')
+        expect(output).toContain('step_2')
+        expect(output).toContain('step_3')
+    })
+
+    it('47. ap_build_flow — partial success: invalid steps reported', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool(mcp, mockLog).execute({
+            flowName: 'Build Test Partial',
+            trigger: {
+                pieceName: '@activepieces/piece-test-email',
+                pieceVersion: '~0.1.0',
+                triggerName: 'new_email',
+            },
+            steps: [
+                {
+                    type: FlowActionType.CODE,
+                    displayName: 'Valid Code',
+                    sourceCode: 'export const code = async () => { return {}; };',
+                    input: {},
+                },
+                {
+                    type: FlowActionType.PIECE,
+                    displayName: 'Invalid Piece',
+                    pieceName: '@activepieces/piece-test-email',
+                    pieceVersion: '~0.1.0',
+                },
+            ],
+        })
+
+        expect(text(result)).toContain('⚠️')
+        expect(text(result)).toContain('step_2')
+        expect(text(result)).toContain('invalid')
+    })
+
+    it('48. ap_build_flow — empty steps array creates trigger-only flow', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool(mcp, mockLog).execute({
+            flowName: 'Build Test Empty',
+            trigger: {
+                pieceName: '@activepieces/piece-test-email',
+                pieceVersion: '~0.1.0',
+                triggerName: 'new_email',
+            },
+            steps: [],
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).toContain('1 step')
+    })
+
+    it('49. ap_build_flow — flow can be validated and published after creation', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool(mcp, mockLog).execute({
+            flowName: 'Build Test Lifecycle',
+            trigger: {
+                pieceName: '@activepieces/piece-test-email',
+                pieceVersion: '~0.1.0',
+                triggerName: 'new_email',
+            },
+            steps: [
+                {
+                    type: FlowActionType.CODE,
+                    displayName: 'Compute',
+                    sourceCode: 'export const code = async () => { return { x: 42 }; };',
+                    input: {},
+                },
+            ],
+        })
+
+        expect(text(result)).toContain('✅')
+        const flowId = text(result).match(/\(id: (\S+?)\)/)?.[1]
+        expect(flowId).toBeDefined()
+
+        const validation = await apValidateFlowTool(mcp, mockLog).execute({ flowId: flowId! })
+        expect(text(validation)).toContain('✅')
+        expect(text(validation)).toContain('ready to publish')
     })
 })
