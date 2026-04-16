@@ -91,8 +91,8 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             }
 
             const existing = await repo.findOneBy({ flowRunId: params.flowRunId })
-            if (!isNil(existing)) {
-                log.info({ flowRunId: params.flowRunId }, '[waitpointService#complete] Waitpoint already exists, skipping pre-complete')
+            if (!isNil(existing) && existing.status === WaitpointStatus.COMPLETED) {
+                log.info({ flowRunId: params.flowRunId }, '[waitpointService#complete] Waitpoint already completed, skipping pre-complete')
                 return { completedExisting: false, waitpoint: existing }
             }
 
