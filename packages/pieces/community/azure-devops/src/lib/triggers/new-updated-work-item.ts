@@ -27,17 +27,21 @@ const props = {
 const polling: Polling<AzureDevOpsAuth, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
-    const orgUrl = auth.props.organizationUrl.replace(/\/+$/, '');
+    const orgUrl = azureDevOpsCommon.sanitizeOrgUrl(auth.props.organizationUrl);
     const { project, work_item_type, state_filter } = propsValue;
+    const projectStr = String(project);
 
-    let wiqlQuery = `SELECT [System.Id], [System.ChangedDate] FROM WorkItems WHERE [System.TeamProject] = '${project}' AND [System.ChangedDate] >= @StartOfDay - 1`;
+    const escapedProject = azureDevOpsCommon.escapeWiqlString(projectStr);
+    let wiqlQuery = `SELECT [System.Id], [System.ChangedDate] FROM WorkItems WHERE [System.TeamProject] = '${escapedProject}' AND [System.ChangedDate] >= @StartOfDay - 1`;
 
     if (work_item_type) {
-      wiqlQuery += ` AND [System.WorkItemType] = '${work_item_type}'`;
+      const escapedType = azureDevOpsCommon.escapeWiqlString(String(work_item_type));
+      wiqlQuery += ` AND [System.WorkItemType] = '${escapedType}'`;
     }
 
     if (state_filter) {
-      wiqlQuery += ` AND [System.State] = '${state_filter}'`;
+      const escapedState = azureDevOpsCommon.escapeWiqlString(String(state_filter));
+      wiqlQuery += ` AND [System.State] = '${escapedState}'`;
     }
 
     wiqlQuery += ' ORDER BY [System.ChangedDate] DESC';
@@ -46,7 +50,7 @@ const polling: Polling<AzureDevOpsAuth, StaticPropsValue<typeof props>> = {
       organizationUrl: orgUrl,
       pat: auth.props.pat,
       method: HttpMethod.POST,
-      endpoint: `/${project}/_apis/wit/wiql`,
+      endpoint: `/${encodeURIComponent(projectStr)}/_apis/wit/wiql`,
       queryParams: {
         '$top': '200',
         'api-version': '7.1',

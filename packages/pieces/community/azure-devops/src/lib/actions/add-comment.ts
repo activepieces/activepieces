@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { azureDevOpsAuth } from '../../';
-import { azureDevOpsApiCall, azureDevOpsCommon } from '../common';
+import { azureDevOpsApiCall, azureDevOpsCommon, IdentityRef } from '../common';
 
 export const addCommentAction = createAction({
   auth: azureDevOpsAuth,
@@ -24,13 +24,13 @@ export const addCommentAction = createAction({
   async run(context) {
     const { project, work_item_id, comment } = context.propsValue;
     const auth = context.auth;
-    const orgUrl = auth.props.organizationUrl.replace(/\/+$/, '');
+    const orgUrl = azureDevOpsCommon.sanitizeOrgUrl(auth.props.organizationUrl);
 
     const response = await azureDevOpsApiCall<CommentResponse>({
       organizationUrl: orgUrl,
       pat: auth.props.pat,
       method: HttpMethod.POST,
-      endpoint: `/${project}/_apis/wit/workItems/${work_item_id}/comments`,
+      endpoint: `/${encodeURIComponent(String(project))}/_apis/wit/workItems/${work_item_id}/comments`,
       queryParams: { 'api-version': '7.1-preview.4' },
       body: { text: comment },
     });
@@ -47,12 +47,6 @@ export const addCommentAction = createAction({
     };
   },
 });
-
-interface IdentityRef {
-  displayName: string;
-  uniqueName: string;
-  id: string;
-}
 
 interface CommentResponse {
   id: number;

@@ -5,7 +5,24 @@ import {
   QueryParams,
 } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import { azureDevOpsAuth, AzureDevOpsAuth } from '../../';
+import { azureDevOpsAuth } from '../../';
+
+function sanitizeOrgUrl(url: string): string {
+  return url.replace(/\/+$/, '');
+}
+
+function escapeWiqlString(value: string): string {
+  return value.replace(/'/g, "''");
+}
+
+function isValidUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
 
 export async function azureDevOpsApiCall<T extends HttpMessageBody>({
   organizationUrl,
@@ -24,7 +41,7 @@ export async function azureDevOpsApiCall<T extends HttpMessageBody>({
   queryParams?: Record<string, string>;
   isJsonPatch?: boolean;
 }): Promise<T> {
-  const baseUrl = organizationUrl.replace(/\/+$/, '');
+  const baseUrl = sanitizeOrgUrl(organizationUrl);
   const encoded = Buffer.from(`:${pat}`).toString('base64');
 
   const qs: QueryParams = {};
@@ -57,6 +74,81 @@ export async function azureDevOpsApiCall<T extends HttpMessageBody>({
   return response.body;
 }
 
+async function fetchProjects(auth: {
+  props: { organizationUrl: string; pat: string };
+}): Promise<ProjectListResponse> {
+  return azureDevOpsApiCall<ProjectListResponse>({
+    organizationUrl: auth.props.organizationUrl,
+    pat: auth.props.pat,
+    method: HttpMethod.GET,
+    endpoint: '/_apis/projects',
+    queryParams: { 'api-version': '7.1' },
+  });
+}
+
+async function fetchWorkItemTypes(
+  auth: { props: { organizationUrl: string; pat: string } },
+  project: string
+): Promise<WorkItemTypeListResponse> {
+  return azureDevOpsApiCall<WorkItemTypeListResponse>({
+    organizationUrl: auth.props.organizationUrl,
+    pat: auth.props.pat,
+    method: HttpMethod.GET,
+    endpoint: `/${encodeURIComponent(project)}/_apis/wit/workitemtypes`,
+    queryParams: { 'api-version': '7.1' },
+  });
+}
+
+function createWorkItemTypeDropdown(required: boolean, description: string) {
+  return Property.Dropdown({
+    displayName: 'Work Item Type',
+    description,
+    refreshers: ['project'],
+    required,
+    auth: azureDevOpsAuth,
+    options: async ({ auth, project }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your Azure DevOps account first',
+        };
+      }
+      if (!project) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a project first',
+        };
+      }
+      const typedAuth = auth as { props: { organizationUrl: string; pat: string } };
+      try {
+        const response = await fetchWorkItemTypes(typedAuth, String(project));
+        if (!response.value || response.value.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No work item types found.',
+          };
+        }
+        return {
+          disabled: false,
+          options: response.value.map((t) => ({
+            label: t.name,
+            value: t.name,
+          })),
+        };
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load work item types. Check your connection.',
+        };
+      }
+    },
+  });
+}
+
 export const azureDevOpsCommon = {
   projectDropdown: Property.Dropdown({
     displayName: 'Project',
@@ -72,15 +164,9 @@ export const azureDevOpsCommon = {
           placeholder: 'Please connect your Azure DevOps account first',
         };
       }
-      const typedAuth = auth as AzureDevOpsAuth;
+      const typedAuth = auth as { props: { organizationUrl: string; pat: string } };
       try {
-        const response = await azureDevOpsApiCall<ProjectListResponse>({
-          organizationUrl: typedAuth.props.organizationUrl,
-          pat: typedAuth.props.pat,
-          method: HttpMethod.GET,
-          endpoint: '/_apis/projects',
-          queryParams: { 'api-version': '7.1' },
-        });
+        const response = await fetchProjects(typedAuth);
         if (!response.value || response.value.length === 0) {
           return {
             disabled: false,
@@ -105,113 +191,15 @@ export const azureDevOpsCommon = {
     },
   }),
 
-  workItemTypeDropdown: Property.Dropdown({
-    displayName: 'Work Item Type',
-    description: 'Select the type of work item (e.g. Bug, Task, User Story)',
-    refreshers: ['project'],
-    required: true,
-    auth: azureDevOpsAuth,
-    options: async ({ auth, project }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please connect your Azure DevOps account first',
-        };
-      }
-      if (!project) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please select a project first',
-        };
-      }
-      const typedAuth = auth as AzureDevOpsAuth;
-      try {
-        const response = await azureDevOpsApiCall<WorkItemTypeListResponse>({
-          organizationUrl: typedAuth.props.organizationUrl,
-          pat: typedAuth.props.pat,
-          method: HttpMethod.GET,
-          endpoint: `/${project}/_apis/wit/workitemtypes`,
-          queryParams: { 'api-version': '7.1' },
-        });
-        if (!response.value || response.value.length === 0) {
-          return {
-            disabled: false,
-            options: [],
-            placeholder: 'No work item types found.',
-          };
-        }
-        return {
-          disabled: false,
-          options: response.value.map((t) => ({
-            label: t.name,
-            value: t.name,
-          })),
-        };
-      } catch {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Failed to load work item types. Check your connection.',
-        };
-      }
-    },
-  }),
+  workItemTypeDropdown: createWorkItemTypeDropdown(
+    true,
+    'Select the type of work item (e.g. Bug, Task, User Story)'
+  ),
 
-  workItemTypeDropdownOptional: Property.Dropdown({
-    displayName: 'Work Item Type',
-    description: 'Filter by work item type. Leave empty to trigger for all types.',
-    refreshers: ['project'],
-    required: false,
-    auth: azureDevOpsAuth,
-    options: async ({ auth, project }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please connect your Azure DevOps account first',
-        };
-      }
-      if (!project) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please select a project first',
-        };
-      }
-      const typedAuth = auth as AzureDevOpsAuth;
-      try {
-        const response = await azureDevOpsApiCall<WorkItemTypeListResponse>({
-          organizationUrl: typedAuth.props.organizationUrl,
-          pat: typedAuth.props.pat,
-          method: HttpMethod.GET,
-          endpoint: `/${project}/_apis/wit/workitemtypes`,
-          queryParams: { 'api-version': '7.1' },
-        });
-        if (!response.value || response.value.length === 0) {
-          return {
-            disabled: false,
-            options: [],
-            placeholder: 'No work item types found.',
-          };
-        }
-        return {
-          disabled: false,
-          options: response.value.map((t) => ({
-            label: t.name,
-            value: t.name,
-          })),
-        };
-      } catch {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Failed to load work item types. Check your connection.',
-        };
-      }
-    },
-  }),
+  workItemTypeDropdownOptional: createWorkItemTypeDropdown(
+    false,
+    'Filter by work item type. Leave empty to trigger for all types.'
+  ),
 
   priorityDropdown: Property.StaticDropdown({
     displayName: 'Priority',
@@ -226,6 +214,10 @@ export const azureDevOpsCommon = {
       ],
     },
   }),
+
+  escapeWiqlString,
+  sanitizeOrgUrl,
+  isValidUrl,
 };
 
 export function flattenWorkItem(workItem: AzureDevOpsWorkItem): FlatWorkItem {
@@ -290,6 +282,18 @@ export async function fetchWorkItemsByIds({
   return results;
 }
 
+export interface JsonPatchOperation {
+  op: 'add' | 'replace' | 'remove' | 'test';
+  path: string;
+  value?: unknown;
+}
+
+export interface IdentityRef {
+  displayName: string;
+  uniqueName: string;
+  id: string;
+}
+
 interface ProjectListResponse {
   count: number;
   value: Array<{
@@ -305,12 +309,6 @@ interface WorkItemTypeListResponse {
     name: string;
     description: string;
   }>;
-}
-
-interface IdentityRef {
-  displayName: string;
-  uniqueName: string;
-  id: string;
 }
 
 export interface AzureDevOpsWorkItem {

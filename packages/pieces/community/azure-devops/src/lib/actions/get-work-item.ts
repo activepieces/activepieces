@@ -24,13 +24,13 @@ export const getWorkItemAction = createAction({
   async run(context) {
     const { project, work_item_id } = context.propsValue;
     const auth = context.auth;
-    const orgUrl = auth.props.organizationUrl.replace(/\/+$/, '');
+    const orgUrl = azureDevOpsCommon.sanitizeOrgUrl(auth.props.organizationUrl);
 
     const response = await azureDevOpsApiCall<AzureDevOpsWorkItem>({
       organizationUrl: orgUrl,
       pat: auth.props.pat,
       method: HttpMethod.GET,
-      endpoint: `/${project}/_apis/wit/workitems/${work_item_id}`,
+      endpoint: `/${encodeURIComponent(String(project))}/_apis/wit/workitems/${work_item_id}`,
       queryParams: {
         '$expand': 'all',
         'api-version': '7.1',

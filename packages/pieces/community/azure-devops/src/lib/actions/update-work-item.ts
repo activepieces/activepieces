@@ -6,6 +6,7 @@ import {
   azureDevOpsCommon,
   flattenWorkItem,
   AzureDevOpsWorkItem,
+  JsonPatchOperation,
 } from '../common';
 
 export const updateWorkItemAction = createAction({
@@ -46,7 +47,8 @@ export const updateWorkItemAction = createAction({
     const { project, work_item_id, title, description, state, assigned_to, priority } =
       context.propsValue;
     const auth = context.auth;
-    const orgUrl = auth.props.organizationUrl.replace(/\/+$/, '');
+    const orgUrl = azureDevOpsCommon.sanitizeOrgUrl(auth.props.organizationUrl);
+    const encodedProject = encodeURIComponent(String(project));
 
     const operations: JsonPatchOperation[] = [];
 
@@ -95,7 +97,7 @@ export const updateWorkItemAction = createAction({
         organizationUrl: orgUrl,
         pat: auth.props.pat,
         method: HttpMethod.GET,
-        endpoint: `/${project}/_apis/wit/workitems/${work_item_id}`,
+        endpoint: `/${encodedProject}/_apis/wit/workitems/${work_item_id}`,
         queryParams: {
           '$expand': 'all',
           'api-version': '7.1',
@@ -108,7 +110,7 @@ export const updateWorkItemAction = createAction({
       organizationUrl: orgUrl,
       pat: auth.props.pat,
       method: HttpMethod.PATCH,
-      endpoint: `/${project}/_apis/wit/workitems/${work_item_id}`,
+      endpoint: `/${encodedProject}/_apis/wit/workitems/${work_item_id}`,
       queryParams: { 'api-version': '7.1' },
       body: operations,
       isJsonPatch: true,
@@ -117,9 +119,3 @@ export const updateWorkItemAction = createAction({
     return flattenWorkItem(response);
   },
 });
-
-interface JsonPatchOperation {
-  op: 'add' | 'replace' | 'remove' | 'test';
-  path: string;
-  value?: unknown;
-}

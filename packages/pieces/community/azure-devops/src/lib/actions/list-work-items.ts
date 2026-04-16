@@ -32,7 +32,7 @@ export const listWorkItemsAction = createAction({
   async run(context) {
     const { project, wiql_query, limit } = context.propsValue;
     const auth = context.auth;
-    const orgUrl = auth.props.organizationUrl.replace(/\/+$/, '');
+    const orgUrl = azureDevOpsCommon.sanitizeOrgUrl(auth.props.organizationUrl);
 
     const query = wiql_query || DEFAULT_WIQL;
     const maxItems = Math.min(limit ?? 50, 200);
@@ -41,7 +41,7 @@ export const listWorkItemsAction = createAction({
       organizationUrl: orgUrl,
       pat: auth.props.pat,
       method: HttpMethod.POST,
-      endpoint: `/${project}/_apis/wit/wiql`,
+      endpoint: `/${encodeURIComponent(String(project))}/_apis/wit/wiql`,
       queryParams: {
         '$top': String(maxItems),
         'api-version': '7.1',

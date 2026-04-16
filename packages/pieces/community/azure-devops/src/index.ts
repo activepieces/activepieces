@@ -12,6 +12,7 @@ import { updateWorkItemAction } from './lib/actions/update-work-item';
 import { listWorkItemsAction } from './lib/actions/list-work-items';
 import { addCommentAction } from './lib/actions/add-comment';
 import { newUpdatedWorkItemTrigger } from './lib/triggers/new-updated-work-item';
+import { azureDevOpsCommon } from './lib/common';
 
 const authDescription = `To get your Personal Access Token (PAT):
 
@@ -42,7 +43,10 @@ export const azureDevOpsAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
-    const orgUrl = auth.organizationUrl.replace(/\/+$/, '');
+    if (!azureDevOpsCommon.isValidUrl(auth.organizationUrl)) {
+      return { valid: false, error: 'Organization URL must be a valid HTTP/HTTPS URL' };
+    }
+    const orgUrl = azureDevOpsCommon.sanitizeOrgUrl(auth.organizationUrl);
     const encoded = Buffer.from(`:${auth.pat}`).toString('base64');
     try {
       const response = await httpClient.sendRequest<ProjectListResponse>({
@@ -77,12 +81,12 @@ export const azureDevOps = createPiece({
     addCommentAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        const typedAuth = auth as AzureDevOpsAuth;
-        return typedAuth.props.organizationUrl.replace(/\/+$/, '');
+        const typedAuth = auth as { props: { organizationUrl: string; pat: string } };
+        return azureDevOpsCommon.sanitizeOrgUrl(typedAuth.props.organizationUrl);
       },
       auth: azureDevOpsAuth,
       authMapping: async (auth) => {
-        const typedAuth = auth as AzureDevOpsAuth;
+        const typedAuth = auth as { props: { organizationUrl: string; pat: string } };
         const encoded = Buffer.from(`:${typedAuth.props.pat}`).toString('base64');
         return {
           Authorization: `Basic ${encoded}`,
