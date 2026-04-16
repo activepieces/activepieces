@@ -26,7 +26,7 @@ export const listCommissions = createAction({
     const response = await promotekitApiCall<{
       data: Record<string, unknown>[];
     }>({
-      token: context.auth as unknown as string,
+      token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/commissions',
       queryParams: {

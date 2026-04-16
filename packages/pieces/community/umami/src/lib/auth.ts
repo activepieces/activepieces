@@ -35,17 +35,10 @@ const selfHostedAuth = PieceAuth.CustomAuth({
   validate: async ({ auth }) => {
     try {
       const baseUrl = auth.baseUrl.replace(/\/+$/, '');
-      const loginResponse = await httpClient.sendRequest<{ token: string }>({
+      await httpClient.sendRequest<{ token: string }>({
         method: HttpMethod.POST,
         url: `${baseUrl}/api/auth/login`,
         body: { username: auth.username, password: auth.password },
-      });
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${baseUrl}/api/me`,
-        headers: {
-          Authorization: `Bearer ${loginResponse.body.token}`,
-        },
       });
       return { valid: true };
     } catch {

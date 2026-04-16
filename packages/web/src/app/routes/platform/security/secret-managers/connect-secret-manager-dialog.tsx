@@ -134,9 +134,8 @@ const AddEditSecretManagerForm = ({
                 name="providerId"
                 render={({ field }) => (
                   <FormItem className="space-y-2">
-                    <Label htmlFor="provider-select">
+                    <Label htmlFor="provider-select" showRequiredIndicator>
                       {t('Provider')}
-                      <span className="text-red-500 ml-1">*</span>
                     </Label>
                     <Select
                       value={field.value ?? ''}
@@ -183,9 +182,8 @@ const AddEditSecretManagerForm = ({
               name="name"
               render={({ field }) => (
                 <FormItem className="space-y-2">
-                  <Label htmlFor="connection-name">
+                  <Label htmlFor="connection-name" showRequiredIndicator>
                     {t('Name')}
-                    <span className="text-red-500 ml-1">*</span>
                   </Label>
                   <Input
                     {...field}
@@ -202,9 +200,8 @@ const AddEditSecretManagerForm = ({
               name="scope"
               render={({ field }) => (
                 <FormItem className="space-y-2">
-                  <Label htmlFor="connection-scope">
+                  <Label htmlFor="connection-scope" showRequiredIndicator>
                     {t('Scope')}
-                    <span className="text-red-500 ml-1">*</span>
                   </Label>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger id="connection-scope">
@@ -236,11 +233,11 @@ const AddEditSecretManagerForm = ({
                     name={`config.${fieldId}`}
                     render={({ field: formField }) => (
                       <FormItem className="space-y-2">
-                        <Label htmlFor={fieldId}>
+                        <Label
+                          htmlFor={fieldId}
+                          showRequiredIndicator={!field.optional}
+                        >
                           {field.displayName}
-                          {!field.optional && (
-                            <span className="text-red-500 ml-1">*</span>
-                          )}
                         </Label>
                         <div className="flex gap-2 items-center justify-center">
                           <Input

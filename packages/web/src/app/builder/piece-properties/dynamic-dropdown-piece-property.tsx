@@ -15,21 +15,6 @@ import { MultiSelectPieceProperty } from '../../../components/custom/multi-selec
 import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';
 import { DynamicPropertiesContext } from './dynamic-properties-context';
 
-type DynamicDropdownProps = {
-  refreshers: string[];
-  propertyName: string;
-  value?: unknown;
-  multiple?: boolean;
-  disabled: boolean;
-  onChange: (value: unknown | undefined) => void;
-  showDeselect?: boolean;
-  shouldRefreshOnSearch?: boolean;
-  actionOrTriggerName: string;
-  pieceName: string;
-  pieceVersion: string;
-  form: UseFormReturn;
-  placedInside: 'stepSettings' | 'predefinedAgentInputs';
-};
 const DynamicDropdownPiecePropertyImplementation = React.memo(
   (props: DynamicDropdownProps) => {
     const [flowVersion, readonly] = useBuilderStateContext((state) => [
@@ -184,3 +169,18 @@ DynamicDropdownPieceProperty.displayName = 'DynamicDropdownPieceProperty';
 DynamicDropdownPiecePropertyImplementation.displayName =
   'DynamicDropdownPiecePropertyImplementation';
 export { DynamicDropdownPieceProperty };
+type DynamicDropdownProps = {
+  refreshers: string[];
+  propertyName: string;
+  value?: unknown;
+  multiple?: boolean;
+  disabled: boolean;
+  onChange: (value: unknown | undefined) => void;
+  showDeselect?: boolean;
+  shouldRefreshOnSearch?: boolean;
+  actionOrTriggerName: string;
+  pieceName: string;
+  pieceVersion: string;
+  form: UseFormReturn;
+  placedInside: 'stepSettings' | 'predefinedAgentInputs';
+};

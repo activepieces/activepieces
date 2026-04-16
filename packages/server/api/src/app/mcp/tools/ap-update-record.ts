@@ -1,8 +1,8 @@
-import { McpServer, McpToolDefinition } from '@activepieces/shared'
+import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 import { formatPopulatedRecord, resolveFieldNamesForTable } from './table-utils'
 
 const updateRecordInput = z.object({
@@ -14,7 +14,8 @@ const updateRecordInput = z.object({
 export const apUpdateRecordTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_record',
-        description: 'Update specific cells in a record. Pass field names and new values — only specified fields are updated, others remain unchanged. Use ap_find_records to get record IDs.',
+        permission: Permission.WRITE_TABLE,
+        description: 'Update specific cells in a record. Only specified fields are changed.',
         inputSchema: updateRecordInput.shape,
         annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -51,7 +52,7 @@ export const apUpdateRecordTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_update_record failed')
-                return mcpToolError('Failed to update record', err)
+                return mcpUtils.mcpToolError('Failed to update record', err)
             }
         },
     }

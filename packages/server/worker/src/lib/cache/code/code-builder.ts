@@ -6,7 +6,7 @@ import { trace } from '@opentelemetry/api'
 import { Logger } from 'pino'
 import { workerSettings } from '../../config/worker-settings'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
-import { packageRunner } from './package-runner'
+import { bunRunner } from './bun-runner'
 
 const tracer = trace.getTracer('code-builder')
 
@@ -156,7 +156,7 @@ async function installDependencies({ path, packageJson }: InstallDependenciesPar
     await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
     const deps = Object.entries(JSON.parse(packageJson).dependencies ?? {})
     if (deps.length > 0) {
-        await packageRunner(log).install({ path })
+        await bunRunner(log).install({ path, filtersPath: [] })
     }
 }
 
@@ -167,7 +167,7 @@ async function compileCode({ path, code }: CompileCodeParams, log: Logger): Prom
     })
     await fs.writeFile(`${path}/index.ts`, code, { encoding: 'utf8', flag: 'w' })
 
-    await packageRunner(log).build({
+    await bunRunner(log).build({
         path,
         entryFile: `${path}/index.ts`,
         outputFile: `${path}/index.js`,

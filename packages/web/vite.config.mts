@@ -29,12 +29,33 @@ export default defineConfig(({ command, mode }) => {
           },
           ws: true,
         },
-        '/mcp': {
+        '^/mcp$': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+          rewrite: (p: string) => p,
+        },
+        '/.well-known': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
         },
-        '/.well-known/oauth-authorization-server': {
+        '/register': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
+        '/authorize': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
+        '/token': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
+        '/revoke': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
@@ -49,6 +70,12 @@ export default defineConfig(({ command, mode }) => {
       host: 'localhost',
     },
     resolve: {
+      dedupe: [
+        '@codemirror/state',
+        '@codemirror/view',
+        '@codemirror/language',
+        '@codemirror/commands',
+      ],
       alias: {
         '@': path.resolve(__dirname, './src'),
         '@activepieces/shared': path.resolve(

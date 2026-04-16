@@ -3,13 +3,14 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
+import { getGraphBaseUrl } from './microsoft-cloud';
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { oneDriveAuth } from '../auth';
 
 export const oneDriveCommon = {
-  baseUrl: 'https://graph.microsoft.com/v1.0/me/drive',
+  getBaseUrl: (cloud?: string | null) => getGraphBaseUrl(cloud) + '/v1.0/me/drive',
 
   parentFolder: Property.Dropdown({
     auth: oneDriveAuth,
@@ -26,10 +27,11 @@ export const oneDriveCommon = {
       }
 
       const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+      const cloud = authProp.props?.['cloud'] as string | undefined;
       let folders: { id: string; label: string }[] = [];
 
       try {
-        folders = await getFoldersRecursively(authProp, 'root', '');
+        folders = await getFoldersRecursively(authProp, 'root', '', [], cloud);
       } catch (e) {
         throw new Error(`Failed to get folders\nError:${e}`);
       }
@@ -61,11 +63,13 @@ export const oneDriveCommon = {
       parentFolder?: string;
       createdTime?: string | number | Date;
       createdTimeOp?: string;
-    }
+    },
+    cloud?: string | null
   ) {
-    let url = `${this.baseUrl}/items/root/children?$filter=folder eq null`;
+    const baseUrl = this.getBaseUrl(cloud);
+    let url = `${baseUrl}/items/root/children?$filter=folder eq null`;
     if (search?.parentFolder) {
-      url = `${this.baseUrl}/items/${search.parentFolder}/children?$filter=folder eq null`;
+      url = `${baseUrl}/items/${search.parentFolder}/children?$filter=folder eq null`;
     }
 
     const response = await httpClient.sendRequest<{
@@ -105,14 +109,15 @@ async function getFoldersRecursively(
   auth: OAuth2PropertyValue,
   folderId: string,
   parentPath = '',
-  result: { label: string; id: string }[] = []
+  result: { label: string; id: string }[] = [],
+  cloud?: string | null
 ) {
   // Stop recursion if limit is reached
   if (result.length >= 1000) {
     return result;
   }
 
-  const url = `${oneDriveCommon.baseUrl}/items/${folderId}/children?$select=id,name,folder`;
+  const url = `${oneDriveCommon.getBaseUrl(cloud)}/items/${folderId}/children?$select=id,name,folder`;
 
   try {
     const response = await httpClient.sendRequest<getFoldersResponse>({
@@ -134,7 +139,7 @@ async function getFoldersRecursively(
       result.push({ label: path, id: folder.id });
 
       if (folder.folder?.childCount && folder.folder.childCount > 0) {
-        await getFoldersRecursively(auth, folder.id, path, result);
+        await getFoldersRecursively(auth, folder.id, path, result, cloud);
       }
     }
   } catch (e) {

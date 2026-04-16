@@ -1,0 +1,56 @@
+import { createCannyTrigger } from './register-trigger';
+
+export const newVoteTrigger = createCannyTrigger({
+  name: 'new_vote',
+  displayName: 'New Vote',
+  description: 'Triggers when a user votes on a post.',
+  eventType: 'vote.created',
+  sampleData: {
+    created: '2026-04-06T10:47:47.056Z',
+    objectType: 'vote',
+    type: 'vote.created',
+    object: {
+      id: 'vote123',
+      created: '2026-04-06T10:47:46.858Z',
+      score: 1,
+      votePriority: 'No priority',
+      by: null,
+      voter: {
+        id: 'user123',
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+        isAdmin: false,
+        avatarURL: null,
+        created: '2026-01-08T07:26:38.452Z',
+        url: 'https://yourcompany.canny.io/admin/users/jane-doe',
+        userID: null,
+      },
+      post: {
+        id: 'post123',
+        title: 'Sample feature request',
+        details: 'It would be great if the app had dark mode.',
+        status: 'open',
+        score: 1,
+        created: '2026-04-06T10:35:58.342Z',
+        url: 'https://yourcompany.canny.io/admin/board/feature-requests/p/sample-feature-request',
+        board: {
+          id: 'board123',
+          name: 'Feature Requests',
+          postCount: 1,
+          created: '2026-04-06T10:35:08.905Z',
+          url: 'https://yourcompany.canny.io/admin/board/feature-requests',
+        },
+        author: {
+          id: 'author123',
+          name: 'John Smith',
+          email: 'john@example.com',
+          isAdmin: false,
+          avatarURL: null,
+          created: '2026-01-08T07:26:38.452Z',
+          url: 'https://yourcompany.canny.io/admin/users/john-smith',
+          userID: null,
+        },
+      },
+    },
+  },
+});

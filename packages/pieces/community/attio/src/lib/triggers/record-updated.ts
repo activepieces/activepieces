@@ -1,8 +1,8 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { attioApiCall, verifyWebhookSignature } from '../common/client';
 import { attioAuth } from '../auth';
-import { objectTypeIdDropdown } from '../common/props';
+import { objectAttributeDropdown, objectTypeIdDropdown } from '../common/props';
 import { ObjectWebhookPayload, WebhookResponse } from '../common/types';
 import { isNil } from '@activepieces/shared';
 
@@ -19,9 +19,20 @@ export const recordUpdatedTrigger = createTrigger({
 			displayName: 'Object',
 			required: true,
 		}),
+		filter_attribute: objectAttributeDropdown({
+			displayName: 'Filter Field',
+			description: 'Only trigger when this field is involved in the update.',
+			required: false,
+		}),
+		filter_value: Property.ShortText({
+			displayName: 'Filter Value',
+			description:
+				'Only trigger when the selected field equals this value (case-insensitive). Leave empty to trigger on any update to that field.',
+			required: false,
+		}),
 	},
 	type: TriggerStrategy.WEBHOOK,
-	sampleData:{},
+	sampleData: {},
 	async onEnable(context) {
 		const response = await attioApiCall<{ data: WebhookResponse }>({
 			accessToken: context.auth.secret_text,
@@ -66,17 +77,21 @@ export const recordUpdatedTrigger = createTrigger({
 		}
 	},
 	async test(context) {
-		const response = await attioApiCall<{ data: Array<Record<string, any>> }>({
+		const { filter_attribute, filter_value } = context.propsValue;
+		const fetchLimit = filter_attribute ? 20 : 5;
+
+		const response = await attioApiCall<{ data: Array<Record<string, unknown>> }>({
 			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/objects/${context.propsValue.objectTypeId}/records/query`,
-			body: {
-				limit: 5,
-				offset: 0,
-			},
+			body: { limit: fetchLimit, offset: 0 },
 		});
 
-		return response.data;
+		const filtered = response.data.filter((record) =>
+			recordMatchesFilter(record, filter_attribute, filter_value),
+		);
+
+		return filtered.slice(0, 5);
 	},
 	async run(context) {
 		const triggerData = await context.store.get<{ webhookId: string; WebhookSecret: string }>(
@@ -92,13 +107,71 @@ export const recordUpdatedTrigger = createTrigger({
 		}
 
 		const payload = context.payload.body as ObjectWebhookPayload;
-		const recordId = payload.events[0].id.record_id;
+		const event = payload.events?.[0];
 
-		const response = await attioApiCall<{ data: Record<string, any> }>({
+		if (!event) return [];
+
+		const recordId = event.id.record_id;
+
+		const response = await attioApiCall<{ data: Record<string, unknown> }>({
 			accessToken: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/objects/${context.propsValue.objectTypeId}/records/${recordId}`,
 		});
-		return [response.data];
+
+		const record = response.data;
+		const { filter_attribute, filter_value } = context.propsValue;
+
+		if (!recordMatchesFilter(record, filter_attribute, filter_value)) {
+			return [];
+		}
+
+		return [record];
 	},
 });
+
+function recordMatchesFilter(
+	record: Record<string, unknown>,
+	filterAttribute: string | undefined,
+	filterValue: string | undefined,
+): boolean {
+	if (!filterAttribute) return true;
+
+	const values = record['values'];
+	const attrValues: Array<Record<string, unknown>> =
+		values !== null && typeof values === 'object' && !Array.isArray(values)
+			? ((values as Record<string, unknown>)[filterAttribute] as Array<Record<string, unknown>> ?? [])
+			: [];
+
+	if (filterValue) {
+		return attrValues.some((v) => {
+			const current = extractAttributeDisplayValue(v);
+			return current !== null && current.toLowerCase() === filterValue.toLowerCase();
+		});
+	}
+
+	return attrValues.length > 0;
+}
+
+function extractAttributeDisplayValue(valueObj: Record<string, unknown>): string | null {
+	if (isNil(valueObj)) return null;
+	// active_until being non-null means the value is no longer active
+	if (!isNil(valueObj['active_until'])) return null;
+
+	const status = valueObj['status'];
+	const option = valueObj['option'];
+
+	return (
+		(typeof valueObj['full_name'] === 'string' ? valueObj['full_name'] : null) ??
+		(typeof valueObj['email_address'] === 'string' ? valueObj['email_address'] : null) ??
+		(typeof valueObj['domain'] === 'string' ? valueObj['domain'] : null) ??
+		(typeof valueObj['phone_number'] === 'string' ? valueObj['phone_number'] : null) ??
+		(status !== null && typeof status === 'object'
+			? ((status as Record<string, unknown>)['title'] as string | undefined) ?? null
+			: null) ??
+		(option !== null && typeof option === 'object'
+			? ((option as Record<string, unknown>)['title'] as string | undefined) ?? null
+			: null) ??
+		(valueObj['value'] !== undefined ? String(valueObj['value']) : null)
+	);
+}

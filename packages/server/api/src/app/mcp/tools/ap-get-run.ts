@@ -1,9 +1,9 @@
-import { McpServer, McpToolDefinition } from '@activepieces/shared'
+import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { formatRunResult } from './flow-run-utils'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const getRunInput = z.object({
     flowRunId: z.string().describe('The ID of the flow run. Use ap_list_runs to find it.'),
@@ -12,7 +12,8 @@ const getRunInput = z.object({
 export const apGetRunTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_get_run',
-        description: 'Get detailed results of a flow run including step-by-step outputs, errors, and durations. Use ap_list_runs or ap_test_flow to get run IDs.',
+        permission: Permission.READ_RUN,
+        description: 'Get detailed results of a flow run including step-by-step outputs, errors, and durations.',
         inputSchema: getRunInput.shape,
         annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -33,7 +34,7 @@ export const apGetRunTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDef
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_get_run failed')
-                return mcpToolError('Failed to get run', err)
+                return mcpUtils.mcpToolError('Failed to get run', err)
             }
         },
     }

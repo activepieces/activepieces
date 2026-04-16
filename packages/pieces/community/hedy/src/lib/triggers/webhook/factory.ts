@@ -2,7 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { hedyAuth } from '../../auth';
-import { HedyApiClient, unwrapResource } from '../../common/client';
+import { createClient, unwrapResource } from '../../common/client';
 import { HedyWebhookEvent, WebhookRegistration } from '../../common/types';
 
 interface TriggerConfig {
@@ -31,7 +31,7 @@ export function createHedyWebhookTrigger(config: TriggerConfig) {
     },
     sampleData: config.sampleData,
     async onEnable(context) {
-      const client = new HedyApiClient(context.auth.secret_text);
+      const client = createClient(context.auth);
       const webhookUrl = context.webhookUrl;
 
       if (!webhookUrl) {
@@ -67,7 +67,7 @@ export function createHedyWebhookTrigger(config: TriggerConfig) {
         return;
       }
 
-      const client = new HedyApiClient(context.auth.secret_text);
+      const client = createClient(context.auth);
       try {
         await client.request({
           method: HttpMethod.DELETE,

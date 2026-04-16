@@ -18,7 +18,7 @@ const markdown = `
 To obtain your API key, follow these steps:
 
 1. Go to settings by clicking your profile-pic (top-left)
-2. Go to API section inside My Account.
+2. Go to Security & Access section
 3. On Personal API keys, give label and press create key.`;
 
 export const linearAuth = PieceAuth.SecretText({
