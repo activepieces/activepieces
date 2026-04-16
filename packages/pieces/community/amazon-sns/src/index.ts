@@ -12,6 +12,18 @@ Refer to [this](https://docs.aws.amazon.com/general/latest/gr/sns.html) for **Re
 export const amazonSnsAuth = PieceAuth.CustomAuth({
   description: description,
   props: {
+    authType: Property.StaticDropdown({
+      displayName: 'Auth Method',
+      description: 'Choose how to authenticate with AWS.',
+      required: true,
+      defaultValue: 'direct',
+      options: {
+        options: [
+          { label: 'Direct Credentials (Access Key + Secret)', value: 'direct' },
+          { label: 'AssumeRole (temporary credentials via STS)', value: 'assume_role' },
+        ],
+      },
+    }),
     accessKeyId: Property.ShortText({
       displayName: 'Access Key ID',
       required: true,
@@ -152,19 +164,34 @@ export const amazonSnsAuth = PieceAuth.CustomAuth({
       displayName: 'Endpoint',
       required: false,
     }),
+    roleArn: Property.ShortText({
+      displayName: 'Role ARN',
+      description:
+        'Required when Auth Method is AssumeRole. ARN of the IAM Role to assume (e.g. arn:aws:iam::123456789012:role/MyRole).',
+      required: false,
+    }),
+    externalId: PieceAuth.SecretText({
+      displayName: 'External ID',
+      description: 'Optional. Only used with AssumeRole. External ID for cross-account role security.',
+      required: false,
+    }),
   },
   validate: async ({ auth }) => {
-    const sns = createSNS(auth);
+    if (auth.authType === 'assume_role' && !auth.roleArn) {
+      return { valid: false, error: 'Role ARN is required when Auth Method is AssumeRole.' };
+    }
     try {
+      const sns = await createSNS(auth);
       const command = new ListTopicsCommand({});
       await sns.send(command);
       return {
         valid: true,
       };
     } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
       return {
         valid: false,
-        error: (e as Error)?.message,
+        error: message,
       };
     }
   },

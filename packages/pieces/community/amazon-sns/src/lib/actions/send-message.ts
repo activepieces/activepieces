@@ -49,7 +49,7 @@ export const sendMessageAction = createAction({
   },
   async run(context) {
       const { topic, message } = context.propsValue;
-      const sns = createSNS(context.auth.props);
+      const sns = await createSNS(context.auth.props);
       const response = await sns.send(new PublishCommand({ TopicArn: topic, Message: message }));
 
       return response;
