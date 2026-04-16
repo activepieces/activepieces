@@ -33,7 +33,7 @@ export const listWorkItemsAction = createAction({
     const orgUrl = azureDevOpsCommon.sanitizeOrgUrl(auth.props.organizationUrl);
 
     const query = wiql_query || DEFAULT_WIQL;
-    const maxItems = Math.min(limit ?? 50, 200);
+    const maxItems = Math.max(1, Math.min(limit ?? 50, 200));
 
     const wiqlResponse = await azureDevOpsCommon.apiCall<WiqlResponse>({
       organizationUrl: orgUrl,
