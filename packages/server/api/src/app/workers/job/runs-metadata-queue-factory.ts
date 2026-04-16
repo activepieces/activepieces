@@ -1,5 +1,5 @@
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { apId, ApId, FlowRunStatus, PauseMetadata, RunEnvironment } from '@activepieces/shared'
+import { apId, ApId, FlowRunStatus, RunEnvironment } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import Redis from 'ioredis'
@@ -69,7 +69,7 @@ export const runsMetadataQueueFactory = ({
 
 const RUNS_METADATA_UPSERT_KEYS: (keyof RunsMetadataUpsertData)[] = [
     'id', 'projectId', 'created', 'flowId', 'flowVersionId', 'environment',
-    'triggeredBy', 'startTime', 'finishTime', 'status', 'tags', 'pauseMetadata',
+    'triggeredBy', 'startTime', 'finishTime', 'status', 'tags',
     'failedStep', 'stepNameToTest', 'parentRunId', 'failParentOnFailure',
     'logsFileId', 'updated', 'stepsCount', 'requestId',
 ]
@@ -112,7 +112,6 @@ export type RunsMetadataUpsertData = {
     finishTime?: string
     status?: FlowRunStatus
     tags?: string[]
-    pauseMetadata?: PauseMetadata
     failedStep?: { name: string, displayName: string }
     stepNameToTest?: string
     parentRunId?: string

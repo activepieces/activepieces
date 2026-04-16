@@ -62,6 +62,6 @@ export const createAProduct = createAction({
         price: context.propsValue.price,
         brand_id: context.propsValue.brand_id,
       },
-    });;
+    });
   },
 });
