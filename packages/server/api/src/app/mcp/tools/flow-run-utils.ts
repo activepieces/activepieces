@@ -1,15 +1,18 @@
-import { FlowRun, FlowRunStatus, flowStructureUtil, isFlowRunStateTerminal, isNil, RunEnvironment, StepOutputStatus } from '@activepieces/shared'
+import { FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, isFlowRunStateTerminal, isNil, RunEnvironment, SampleDataFileType, StepOutputStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
+import { sampleDataService } from '../../flows/step-run/sample-data.service'
+import { projectService } from '../../project/project-service'
 
 const POLL_INTERVAL_MS = 2000
 const MAX_WAIT_MS = 120_000
 
-export async function executeFlowTest({ flowId, projectId, stepName, log }: {
+export async function executeFlowTest({ flowId, projectId, stepName, triggerTestData, log }: {
     flowId: string
     projectId: string
     stepName?: string
+    triggerTestData?: Record<string, unknown>
     log: FastifyBaseLogger
 }): Promise<{ content: [{ type: 'text', text: string }] }> {
     const flow = await flowService(log).getOnePopulated({ id: flowId, projectId })
@@ -36,6 +39,27 @@ export async function executeFlowTest({ flowId, projectId, stepName, log }: {
         if (invalidSteps.length > 0) {
             warning = `⚠️ These steps are not fully configured: ${invalidSteps.join(', ')}. Results may be incomplete.\n\n`
         }
+    }
+
+    if (triggerTestData) {
+        const project = await projectService(log).getOneOrThrow(projectId)
+        const sampleDataSettings = await sampleDataService(log).saveSampleDataFileIdsInStep({
+            projectId,
+            flowVersionId: flow.version.id,
+            stepName: flow.version.trigger.name,
+            payload: triggerTestData,
+            type: SampleDataFileType.OUTPUT,
+        })
+        await flowService(log).update({
+            id: flow.id,
+            projectId,
+            userId: null,
+            platformId: project.platformId,
+            operation: {
+                type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+                request: { stepName: flow.version.trigger.name, sampleDataSettings },
+            },
+        })
     }
 
     const flowRun = await flowRunService(log).test({
