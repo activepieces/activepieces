@@ -337,6 +337,9 @@ async function fetchProjectId(
   return project.id ?? null;
 }
 
+const MAX_TEAMS_FOR_MEMBER_DROPDOWN = 25;
+const MEMBER_FETCH_CONCURRENCY = 5;
+
 async function fetchTeamMembers(
   auth: AzureDevOpsAuth,
   projectName: string,
@@ -346,22 +349,34 @@ async function fetchTeamMembers(
     pat: auth.props.pat,
     method: HttpMethod.GET,
     endpoint: `/_apis/projects/${encodeURIComponent(projectName)}/teams`,
-    queryParams: { 'api-version': '7.1', '$top': '100' },
+    queryParams: {
+      'api-version': '7.1',
+      '$top': String(MAX_TEAMS_FOR_MEMBER_DROPDOWN),
+    },
   });
 
+  const teams = teamsResponse.value ?? [];
   const seen = new Map<string, IdentityRef>();
-  for (const team of teamsResponse.value ?? []) {
-    const members = await azureDevOpsApiCall<TeamMemberListResponse>({
-      organizationUrl: auth.props.organizationUrl,
-      pat: auth.props.pat,
-      method: HttpMethod.GET,
-      endpoint: `/_apis/projects/${encodeURIComponent(projectName)}/teams/${team.id}/members`,
-      queryParams: { 'api-version': '7.1', '$top': '200' },
-    });
-    for (const member of members.value ?? []) {
-      const identity = member.identity;
-      if (identity?.id && !seen.has(identity.id)) {
-        seen.set(identity.id, identity);
+
+  for (let i = 0; i < teams.length; i += MEMBER_FETCH_CONCURRENCY) {
+    const batch = teams.slice(i, i + MEMBER_FETCH_CONCURRENCY);
+    const results = await Promise.all(
+      batch.map((team) =>
+        azureDevOpsApiCall<TeamMemberListResponse>({
+          organizationUrl: auth.props.organizationUrl,
+          pat: auth.props.pat,
+          method: HttpMethod.GET,
+          endpoint: `/_apis/projects/${encodeURIComponent(projectName)}/teams/${team.id}/members`,
+          queryParams: { 'api-version': '7.1', '$top': '200' },
+        }),
+      ),
+    );
+    for (const response of results) {
+      for (const member of response.value ?? []) {
+        const identity = member.identity;
+        if (identity?.id && !seen.has(identity.id)) {
+          seen.set(identity.id, identity);
+        }
       }
     }
   }
