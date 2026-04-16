@@ -1,6 +1,11 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
-import { baserowCommon, formatFieldValues, makeClient } from '../common';
+import {
+  baserowCommon,
+  ensureSelectOptionsExist,
+  formatFieldValues,
+  makeClient,
+} from '../common';
 
 export const createRowAction = createAction({
   name: 'baserow_create_row',
@@ -9,11 +14,19 @@ export const createRowAction = createAction({
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),
+    create_missing_options: Property.Checkbox({
+      displayName: 'Create missing select options',
+      description:
+        'When enabled, single/multi select values not yet in the field options are automatically created before inserting the row.',
+      required: false,
+      defaultValue: false,
+    }),
     table_fields: baserowCommon.tableFields(true),
   },
   async run(context) {
     const table_id = context.propsValue.table_id!;
     const tableFieldsInput = context.propsValue.table_fields!;
+    const createMissingOptions = context.propsValue.create_missing_options ?? false;
 
     const client = await makeClient(context.auth);
     const tableSchema = await client.listTableFields(table_id);
@@ -26,6 +39,15 @@ export const createRowAction = createAction({
     const formattedFields = formatFieldValues(tableFieldsInput, fieldTypeMap, {
       skipEmpty: true,
     });
+
+    if (createMissingOptions) {
+      await ensureSelectOptionsExist({
+        fields: tableSchema,
+        payload: formattedFields,
+        client,
+      });
+    }
+
     return await client.createRow(table_id, formattedFields);
   },
 });

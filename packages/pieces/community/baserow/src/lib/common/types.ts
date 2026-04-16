@@ -84,19 +84,11 @@ interface CreatedOnField extends BaserowCommonField {
 
 interface SingleSelectField extends BaserowCommonField {
   type: BaserowFieldType.SINGLE_SELECT;
-  select_options: {
-    id: number;
-    value: string;
-    color: string;
-  }[];
+  select_options: BaserowSelectOption[];
 }
 interface MultiSelectField extends BaserowCommonField {
   type: BaserowFieldType.MULTI_SELECT;
-  select_options: {
-    id: number;
-    value: string;
-    color: string;
-  }[];
+  select_options: BaserowSelectOption[];
 }
 interface PhoneNumberField extends BaserowCommonField {
   type: BaserowFieldType.PHONE_NUMBER;
@@ -153,3 +145,9 @@ export type BaserowField =
   | UUIDField
   | AutoNumberField
   | MultipleCollaboratorsField;
+
+export interface BaserowSelectOption {
+  id: number;
+  value: string;
+  color: string;
+}

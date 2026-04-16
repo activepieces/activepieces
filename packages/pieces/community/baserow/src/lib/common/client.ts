@@ -4,7 +4,7 @@ import {
   QueryParams,
   httpClient,
 } from '@activepieces/pieces-common';
-import { BaserowField, BaserowTable } from './types';
+import { BaserowField, BaserowSelectOption, BaserowTable } from './types';
 
 function emptyValueFilter(
   accessor: (key: string) => unknown
@@ -208,5 +208,33 @@ export class BaserowClient {
       url: `${this.baseUrl}/api/database/webhooks/${webhookId}/`,
       headers: { Authorization: this.authHeader },
     });
+  }
+  async getFieldSelectOptions(fieldId: number): Promise<BaserowSelectOption[]> {
+    const field = await this.makeRequest<{ select_options: BaserowSelectOption[] }>(
+      HttpMethod.GET,
+      `/database/fields/${fieldId}/`
+    );
+    return field.select_options ?? [];
+  }
+  async updateFieldSelectOptions({
+    fieldId,
+    newOption,
+    existingOptions,
+  }: {
+    fieldId: number;
+    newOption: string;
+    existingOptions: BaserowSelectOption[];
+  }): Promise<void> {
+    await this.makeRequest(
+      HttpMethod.PATCH,
+      `/database/fields/${fieldId}/`,
+      undefined,
+      {
+        select_options: [
+          ...existingOptions.map((o) => ({ id: o.id, value: o.value, color: o.color })),
+          { value: newOption, color: 'light-blue' },
+        ],
+      }
+    );
   }
 }

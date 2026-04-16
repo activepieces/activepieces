@@ -3,6 +3,7 @@ import {
   DropdownState,
   Property,
 } from '@activepieces/pieces-framework';
+import { tryCatch } from '@activepieces/shared';
 import {
   baserowAuth,
   BaserowAuthValue,
@@ -11,6 +12,7 @@ import {
 } from '../auth';
 import { BaserowClient } from './client';
 import { BaserowFieldType } from './constants';
+import { BaserowField } from './types';
 
 export async function makeClient(
   auth: BaserowAuthValue
@@ -101,6 +103,55 @@ export function formatFieldValues(
     }
   }
   return result;
+}
+
+export async function ensureSelectOptionsExist({
+  fields,
+  payload,
+  client,
+}: {
+  fields: BaserowField[];
+  payload: Record<string, unknown>;
+  client: BaserowClient;
+}): Promise<void> {
+  for (const field of fields) {
+    if (
+      field.type !== BaserowFieldType.SINGLE_SELECT &&
+      field.type !== BaserowFieldType.MULTI_SELECT
+    ) {
+      continue;
+    }
+    if (!(field.name in payload)) {
+      continue;
+    }
+
+    const rawValue = payload[field.name];
+    const values: string[] =
+      field.type === BaserowFieldType.MULTI_SELECT
+        ? Array.isArray(rawValue)
+          ? rawValue.filter((v): v is string => typeof v === 'string')
+          : []
+        : typeof rawValue === 'string'
+        ? [rawValue]
+        : [];
+
+    for (const value of values) {
+      const alreadyExists = field.select_options.some((o) => o.value === value);
+      if (alreadyExists) continue;
+
+      const { error } = await tryCatch(() =>
+        client.updateFieldSelectOptions({
+          fieldId: field.id,
+          newOption: value,
+          existingOptions: field.select_options,
+        })
+      );
+
+      if (!error) {
+        field.select_options.push({ id: -1, value, color: 'light-blue' });
+      }
+    }
+  }
 }
 
 export const baserowCommon = {
