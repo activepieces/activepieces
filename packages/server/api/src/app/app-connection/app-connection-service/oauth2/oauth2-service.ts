@@ -1,16 +1,10 @@
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import {
-    BaseOAuth2ConnectionValue,
-    OAuth2GrantType,
-} from '@activepieces/shared'
+import { BaseOAuth2ConnectionValue, OAuth2GrantType } from '@activepieces/shared'
 
-export type OAuth2Service<CONNECTION_VALUE extends BaseOAuth2ConnectionValue> =
-  {
-      claim(request: ClaimOAuth2Request): Promise<CONNECTION_VALUE>
-      refresh(
-          request: RefreshOAuth2Request<CONNECTION_VALUE>
-      ): Promise<CONNECTION_VALUE>
-  }
+export type OAuth2Service<CONNECTION_VALUE extends BaseOAuth2ConnectionValue> = {
+    claim(request: ClaimOAuth2Request): Promise<CONNECTION_VALUE>
+    refresh(request: RefreshOAuth2Request<CONNECTION_VALUE>): Promise<CONNECTION_VALUE>
+}
 
 export type RefreshOAuth2Request<T extends BaseOAuth2ConnectionValue> = {
     pieceName: string

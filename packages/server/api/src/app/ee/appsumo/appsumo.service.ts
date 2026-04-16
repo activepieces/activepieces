@@ -1,4 +1,11 @@
-import { APPSUMO_PLAN, isNil, PlanName, PlatformPlanWithOnlyLimits, PlatformRole, STANDARD_CLOUD_PLAN } from '@activepieces/shared'
+import {
+    APPSUMO_PLAN,
+    isNil,
+    PlanName,
+    PlatformPlanWithOnlyLimits,
+    PlatformRole,
+    STANDARD_CLOUD_PLAN,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -70,13 +77,11 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
                         platformId: project.platformId,
                         ...STANDARD_CLOUD_PLAN,
                     })
-                }
-                else {
+                } else {
                     await platformPlanService(log).update({
                         platformId: project.platformId,
                         ...appSumoPlan,
                     })
-
                 }
             }
         }
@@ -85,8 +90,7 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
             await appsumoService(log).delete({
                 email: activation_email,
             })
-        }
-        else {
+        } else {
             await appsumoService(log).upsert({
                 uuid,
                 plan_id,

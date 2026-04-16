@@ -1,9 +1,9 @@
 import {
     FlowActionType,
-    flowStructureUtil,
     FlowTriggerType,
     FlowVersion,
     FlowVersionState,
+    flowStructureUtil,
     isNil,
     tryCatch,
 } from '@activepieces/shared'
@@ -35,11 +35,12 @@ export const migrateV12FixPieceVersion: Migration = {
         const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         for (const step of steps) {
             if (step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE) {
-                const { data: pieceMetadata } = await tryCatch(async () => pieceMetadataService(system.globalLogger()).getOrThrow({
-                    platformId,
-                    name: step.settings.pieceName,
-                    version: step.settings.pieceVersion,
-                }),
+                const { data: pieceMetadata } = await tryCatch(async () =>
+                    pieceMetadataService(system.globalLogger()).getOrThrow({
+                        platformId,
+                        name: step.settings.pieceName,
+                        version: step.settings.pieceVersion,
+                    }),
                 )
                 if (!isNil(pieceMetadata)) {
                     stepNameToPieceVersion[step.name] = pieceMetadata.version
@@ -64,4 +65,3 @@ export const migrateV12FixPieceVersion: Migration = {
         }
     },
 }
-

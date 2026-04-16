@@ -1,49 +1,47 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { TableField } from './types';
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { SoftrAuth } from './auth';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework'
+import { SoftrAuth } from './auth'
+import { TableField } from './types'
 
-export const BASE_URL = `https://tables-api.softr.io/api/v1`;
+export const BASE_URL = `https://tables-api.softr.io/api/v1`
 
 export async function makeRequest<T>(
-  api_key: AppConnectionValueForAuthProperty<typeof SoftrAuth>,
-  method: HttpMethod,
-  path: string,
-  body?: unknown
+    api_key: AppConnectionValueForAuthProperty<typeof SoftrAuth>,
+    method: HttpMethod,
+    path: string,
+    body?: unknown,
 ) {
-  try {
-    const response = await httpClient.sendRequest<T>({
-      method,
-      url: `${BASE_URL}${path}`,
-      headers: {
-        'Softr-Api-Key': api_key.secret_text,
-        'Content-Type': 'application/json',
-      },
-      body,
-    });
-    return response.body;
-  } catch (error: any) {
-    throw new Error(`Unexpected error: ${error.message || String(error)}`);
-  }
+    try {
+        const response = await httpClient.sendRequest<T>({
+            method,
+            url: `${BASE_URL}${path}`,
+            headers: {
+                'Softr-Api-Key': api_key.secret_text,
+                'Content-Type': 'application/json',
+            },
+            body,
+        })
+        return response.body
+    } catch (error: any) {
+        throw new Error(`Unexpected error: ${error.message || String(error)}`)
+    }
 }
 
+export function transformRecordFields(tableFields: TableField[], tableValues: Record<string, any>) {
+    const fieldMap: Record<string, string> = tableFields.reduce(
+        (acc, field) => {
+            acc[field.id] = field.name
+            return acc
+        },
+        {} as Record<string, string>,
+    )
 
-export function transformRecordFields(
-  tableFields: TableField[],
-  	tableValues: Record<string, any>,
-)
-{
-  const fieldMap: Record<string, string> = tableFields.reduce((acc, field) => {
-		acc[field.id] = field.name;
-		return acc;
-	}, {} as Record<string, string>);
+    const transformedFields: Record<string, any> = {}
 
-	const transformedFields: Record<string, any> = {};
+    for (const [key, value] of Object.entries(tableValues)) {
+        const label = fieldMap[key] ?? key
+        transformedFields[label] = value
+    }
 
-	for (const [key, value] of Object.entries(tableValues)) {
-		const label = fieldMap[key] ?? key;
-		transformedFields[label] = value;
-	}
-
-	return transformedFields;
+    return transformedFields
 }

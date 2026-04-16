@@ -1,4 +1,16 @@
-import { ActivepiecesError, apId, assertNotNullOrUndefined, EnginePrincipal, ErrorCode, PlatformId, Principal, PrincipalType, ProjectId, UserStatus, WorkerPrincipal } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    apId,
+    assertNotNullOrUndefined,
+    EnginePrincipal,
+    ErrorCode,
+    PlatformId,
+    Principal,
+    PrincipalType,
+    ProjectId,
+    UserStatus,
+    WorkerPrincipal,
+} from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { jwtUtils } from '../../helper/jwt-utils'
@@ -6,7 +18,10 @@ import { userService } from '../../user/user-service'
 import { userIdentityService } from '../user-identity/user-identity-service'
 
 export const accessTokenManager = (log: FastifyBaseLogger) => ({
-    async generateToken(principal: Principal, expiresInSeconds: number = dayjs.duration(7, 'day').asSeconds()): Promise<string> {
+    async generateToken(
+        principal: Principal,
+        expiresInSeconds: number = dayjs.duration(7, 'day').asSeconds(),
+    ): Promise<string> {
         const secret = await jwtUtils.getJwtSecret()
         return jwtUtils.sign({
             payload: principal,
@@ -49,7 +64,6 @@ export const accessTokenManager = (log: FastifyBaseLogger) => ({
         })
     },
 
-
     async verifyPrincipal(token: string): Promise<Principal> {
         const secret = await jwtUtils.getJwtSecret()
 
@@ -61,8 +75,7 @@ export const accessTokenManager = (log: FastifyBaseLogger) => ({
             assertNotNullOrUndefined(decoded.type, 'decoded.type')
             await assertUserSession(log, decoded)
             return decoded
-        }
-        catch (e) {
+        } catch (e) {
             if (e instanceof ActivepiecesError) {
                 throw e
             }

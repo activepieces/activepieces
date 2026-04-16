@@ -1,13 +1,16 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, isObject } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { databaseConnection } from '../../../../database/database-connection'
-import { EntitySourceType, ProjectBodyResource, ProjectParamResource, ProjectQueryResource, ProjectTableResource } from '../../authorization/common'
+import {
+    EntitySourceType,
+    ProjectBodyResource,
+    ProjectParamResource,
+    ProjectQueryResource,
+    ProjectTableResource,
+} from '../../authorization/common'
 
 export const projectIdExtractor = {
-    async fromTable(
-        request: FastifyRequest,
-        projectTableResource: ProjectTableResource,
-    ): Promise<string | undefined> {
+    async fromTable(request: FastifyRequest, projectTableResource: ProjectTableResource): Promise<string | undefined> {
         const entitySourceType = projectTableResource.entitySourceType ?? EntitySourceType.PARAM
         let entityValue: string | undefined
         const { paramKey, entityField } = projectTableResource.lookup ?? {
@@ -28,9 +31,11 @@ export const projectIdExtractor = {
         if (isNil(entityValue)) {
             return undefined
         }
-        const entity = await databaseConnection().getRepository(projectTableResource.tableName).findOneBy({
-            [entityField]: entityValue,
-        })
+        const entity = await databaseConnection()
+            .getRepository(projectTableResource.tableName)
+            .findOneBy({
+                [entityField]: entityValue,
+            })
         if (isNil(entity)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -72,10 +77,11 @@ const entityValueExtractor = {
     fromParam(request: FastifyRequest, paramKey: string): string | undefined {
         const routerPath = request.routeOptions.url
         assertNotNullOrUndefined(routerPath, 'routerPath is undefined')
-        const hasIdParam = routerPath.includes(`:${paramKey}`) &&
-          isObject(request.params) &&
-          paramKey in request.params &&
-          typeof request.params[paramKey] === 'string'
+        const hasIdParam =
+            routerPath.includes(`:${paramKey}`) &&
+            isObject(request.params) &&
+            paramKey in request.params &&
+            typeof request.params[paramKey] === 'string'
 
         if (!hasIdParam) {
             return undefined

@@ -37,7 +37,7 @@ function HorizontalSeparatorWithText({
   );
 }
 
-export { Separator, HorizontalSeparatorWithText };
+export { HorizontalSeparatorWithText, Separator };
 
 type HorizontalSeparatorWithTextProps = {
   className?: string;

@@ -63,9 +63,11 @@ jobs:
             echo "pieces_filters=" >> $GITHUB_OUTPUT
           fi
 
+      - name: Lint (Biome - all files)
+        run: npx biome check .
+
       - name: Lint core projects
         run: npm run lint-core
-
 
       - name: Lint all pieces projects
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
@@ -93,10 +95,13 @@ jobs:
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
         run: npx turbo run build --filter='@activepieces/piece-*'
 
-      - name: Run all tests and migration checks in parallel
+      - name: Run type-aware lint and all tests in parallel
         run: |
           set -euo pipefail
           pids=()
+
+          npm run lint-typeaware &
+          pids+=($!)
 
           npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared &
           pids+=($!)

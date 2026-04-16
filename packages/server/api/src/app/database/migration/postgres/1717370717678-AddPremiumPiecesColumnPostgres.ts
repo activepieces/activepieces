@@ -23,5 +23,4 @@ export class AddPremiumPiecesColumnPostgres1717370717678 implements MigrationInt
             ALTER TABLE "platform" DROP COLUMN "premiumPieces"
         `)
     }
-
 }

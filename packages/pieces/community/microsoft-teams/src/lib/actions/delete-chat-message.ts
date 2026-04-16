@@ -1,7 +1,7 @@
-import { microsoftTeamsAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient } from '../common/graph';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { microsoftTeamsAuth } from '../auth'
+import { microsoftTeamsCommon } from '../common'
+import { createGraphClient } from '../common/graph'
 
 export const deleteChatMessageAction = createAction({
     auth: microsoftTeamsAuth,
@@ -17,20 +17,15 @@ export const deleteChatMessageAction = createAction({
         }),
     },
     async run(context) {
-        const { chatId, messageId } = context.propsValue;
+        const { chatId, messageId } = context.propsValue
 
-        const cloud = context.auth.props?.['cloud'] as string | undefined;
-        const client = createGraphClient(context.auth.access_token, cloud);
-        
+        const cloud = context.auth.props?.['cloud'] as string | undefined
+        const client = createGraphClient(context.auth.access_token, cloud)
 
-        const me = await client.api('/me').select('id,userPrincipalName').get();
+        const me = await client.api('/me').select('id,userPrincipalName').get()
 
-        await client.api(`/users/${me.id}/chats/${chatId}/messages/${messageId}/softDelete`).post({});
+        await client.api(`/users/${me.id}/chats/${chatId}/messages/${messageId}/softDelete`).post({})
 
-        return {success:true,messageId,chatId}
-
-
+        return { success: true, messageId, chatId }
     },
-});
-
-
+})

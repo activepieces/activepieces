@@ -1,4 +1,12 @@
-import { FlowOperationType, FlowState, FlowStatus, flowStructureUtil, FlowSyncError, isNil, PopulatedFlow } from '@activepieces/shared'
+import {
+    FlowOperationType,
+    FlowState,
+    FlowStatus,
+    FlowSyncError,
+    flowStructureUtil,
+    isNil,
+    PopulatedFlow,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../../../flows/flow/flow.service'
 import { projectService } from '../../../../project/project-service'
@@ -15,9 +23,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
         return this.updateFlowInProject(createdFlow, flow, projectId)
     },
 
-    async updateFlowInProject(originalFlow: FlowState, newFlow: FlowState,
-        projectId: string,
-    ): Promise<PopulatedFlow> {
+    async updateFlowInProject(originalFlow: FlowState, newFlow: FlowState, projectId: string): Promise<PopulatedFlow> {
         const project = await projectService(log).getOneOrThrow(projectId)
 
         const newFlowVersion = flowStructureUtil.transferFlow(newFlow.version, (step) => {
@@ -84,8 +90,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
                 },
             })
             return null
-        }
-        catch (e) {
+        } catch (e) {
             return {
                 flowId: flow.id,
                 message: `Failed to publish flow ${flow.version.displayName} #${flow.id}`,

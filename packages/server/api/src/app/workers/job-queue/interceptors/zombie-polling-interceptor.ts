@@ -18,12 +18,20 @@ export const zombiePollingInterceptor: JobInterceptor = {
         if (!isNil(activeTriggerSource)) {
             return { verdict: InterceptorVerdict.ALLOW }
         }
-        log.warn({ flowVersionId }, '[zombiePollingInterceptor] No active trigger source — discarding repeat job (flow disabled, re-published, or deleted)')
+        log.warn(
+            { flowVersionId },
+            '[zombiePollingInterceptor] No active trigger source — discarding repeat job (flow disabled, re-published, or deleted)',
+        )
         await jobQueue(log).removeRepeatingJob({ flowVersionId })
         return { verdict: InterceptorVerdict.DISCARD }
     },
 
-    async onJobFinished(_params: { jobId: string, jobData: JobData, failed: boolean, log: FastifyBaseLogger }): Promise<void> {
+    async onJobFinished(_params: {
+        jobId: string
+        jobData: JobData
+        failed: boolean
+        log: FastifyBaseLogger
+    }): Promise<void> {
         // Nothing to release
     },
 }

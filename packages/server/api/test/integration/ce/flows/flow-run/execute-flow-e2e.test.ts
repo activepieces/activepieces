@@ -25,8 +25,10 @@ import {
     RunEnvironment,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { worker } from '../../../../../../worker/src/lib/worker'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { flowRunService } from '../../../../../src/app/flows/flow-run/flow-run-service'
+import { db } from '../../../../helpers/db'
 import { setupE2eEnvironment } from '../../../../helpers/e2e-setup'
 import {
     createMockFlow,
@@ -34,8 +36,6 @@ import {
     createMockPieceMetadata,
     mockAndSaveBasicSetup,
 } from '../../../../helpers/mocks'
-import { db } from '../../../../helpers/db'
-import { worker } from '../../../../../../worker/src/lib/worker'
 
 let app: FastifyInstance
 
@@ -662,9 +662,7 @@ describe('Execute Flow E2E', () => {
 
         const statuses = [...results.values()]
         const succeeded = statuses.filter((s) => s === FlowRunStatus.SUCCEEDED).length
-        const stuck = statuses.filter(
-            (s) => s === FlowRunStatus.QUEUED || s === FlowRunStatus.RUNNING,
-        ).length
+        const stuck = statuses.filter((s) => s === FlowRunStatus.QUEUED || s === FlowRunStatus.RUNNING).length
 
         expect(stuck).toBe(0)
         expect(succeeded).toBe(concurrentCount)
@@ -800,9 +798,7 @@ describe('Execute Flow E2E', () => {
 
         const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
         expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
-        expect(result.steps.step_2.output).toEqual(
-            expect.objectContaining({ resumed: true }),
-        )
+        expect(result.steps.step_2.output).toEqual(expect.objectContaining({ resumed: true }))
     }, 60_000)
 
     it('executes parent → child subflow with wait-for-response in test step mode', async () => {

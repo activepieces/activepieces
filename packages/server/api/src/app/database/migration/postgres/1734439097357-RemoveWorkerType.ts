@@ -29,5 +29,4 @@ export class RemoveWorkerType1734439097357 implements MigrationInterface {
             ADD CONSTRAINT "FK_7f3c83a5162a2de787dc62bf519" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
     }
-
 }

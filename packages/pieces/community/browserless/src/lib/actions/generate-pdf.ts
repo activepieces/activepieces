@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { browserlessAuth } from '../common/auth';
-import { browserlessCommon, convertBinaryToBase64 } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { browserlessAuth } from '../common/auth'
+import { browserlessCommon, convertBinaryToBase64 } from '../common/client'
 
 export const generatePdf = createAction({
     name: 'generate_pdf',
@@ -36,9 +36,9 @@ export const generatePdf = createAction({
                     { label: 'Letter', value: 'Letter' },
                     { label: 'Legal', value: 'Legal' },
                     { label: 'Ledger', value: 'Ledger' },
-                    { label: 'Tabloid', value: 'Tabloid' }
-                ]
-            }
+                    { label: 'Tabloid', value: 'Tabloid' },
+                ],
+            },
         }),
         landscape: Property.Checkbox({
             displayName: 'Landscape',
@@ -193,11 +193,11 @@ export const generatePdf = createAction({
     },
     async run(context) {
         if (!context.propsValue.url && !context.propsValue.html) {
-            throw new Error('Either URL or HTML content must be provided');
+            throw new Error('Either URL or HTML content must be provided')
         }
 
         if (context.propsValue.url && context.propsValue.html) {
-            throw new Error('Cannot provide both URL and HTML content. Choose one.');
+            throw new Error('Cannot provide both URL and HTML content. Choose one.')
         }
 
         const requestBody: any = {
@@ -206,115 +206,115 @@ export const generatePdf = createAction({
                 landscape: context.propsValue.landscape || false,
                 printBackground: context.propsValue.printBackground !== false,
                 displayHeaderFooter: context.propsValue.displayHeaderFooter || false,
-            }
-        };
+            },
+        }
 
         if (context.propsValue.url) {
-            requestBody.url = context.propsValue.url;
+            requestBody.url = context.propsValue.url
         } else if (context.propsValue.html) {
-            requestBody.html = context.propsValue.html;
+            requestBody.html = context.propsValue.html
         }
 
         if (context.propsValue.userAgent) {
-            requestBody.userAgent = context.propsValue.userAgent;
+            requestBody.userAgent = context.propsValue.userAgent
         }
 
         if (context.propsValue.waitForTimeout) {
-            requestBody.waitForTimeout = context.propsValue.waitForTimeout;
+            requestBody.waitForTimeout = context.propsValue.waitForTimeout
         }
 
         if (context.propsValue.bestAttempt) {
-            requestBody.bestAttempt = context.propsValue.bestAttempt;
+            requestBody.bestAttempt = context.propsValue.bestAttempt
         }
 
-        const margin: any = {};
-        if (context.propsValue.marginTop) margin.top = context.propsValue.marginTop;
-        if (context.propsValue.marginRight) margin.right = context.propsValue.marginRight;
-        if (context.propsValue.marginBottom) margin.bottom = context.propsValue.marginBottom;
-        if (context.propsValue.marginLeft) margin.left = context.propsValue.marginLeft;
-        
+        const margin: any = {}
+        if (context.propsValue.marginTop) margin.top = context.propsValue.marginTop
+        if (context.propsValue.marginRight) margin.right = context.propsValue.marginRight
+        if (context.propsValue.marginBottom) margin.bottom = context.propsValue.marginBottom
+        if (context.propsValue.marginLeft) margin.left = context.propsValue.marginLeft
+
         if (Object.keys(margin).length > 0) {
-            requestBody.options.margin = margin;
+            requestBody.options.margin = margin
         }
 
         if (context.propsValue.headerTemplate) {
-            requestBody.options.headerTemplate = context.propsValue.headerTemplate;
+            requestBody.options.headerTemplate = context.propsValue.headerTemplate
         }
 
         if (context.propsValue.footerTemplate) {
-            requestBody.options.footerTemplate = context.propsValue.footerTemplate;
+            requestBody.options.footerTemplate = context.propsValue.footerTemplate
         }
 
         if (context.propsValue.scale) {
-            requestBody.options.scale = Math.max(0.1, Math.min(2.0, context.propsValue.scale));
+            requestBody.options.scale = Math.max(0.1, Math.min(2.0, context.propsValue.scale))
         }
 
         if (context.propsValue.waitForSelector) {
             const waitForSelectorObj: any = {
                 selector: context.propsValue.waitForSelector,
-            };
+            }
 
             if (context.propsValue.waitForSelectorTimeout !== undefined) {
-                waitForSelectorObj.timeout = context.propsValue.waitForSelectorTimeout;
+                waitForSelectorObj.timeout = context.propsValue.waitForSelectorTimeout
             }
 
             if (context.propsValue.waitForSelectorVisible !== undefined) {
-                waitForSelectorObj.visible = context.propsValue.waitForSelectorVisible;
+                waitForSelectorObj.visible = context.propsValue.waitForSelectorVisible
             }
 
             if (context.propsValue.waitForSelectorHidden !== undefined) {
-                waitForSelectorObj.hidden = context.propsValue.waitForSelectorHidden;
+                waitForSelectorObj.hidden = context.propsValue.waitForSelectorHidden
             }
 
-            requestBody.options.waitForSelector = waitForSelectorObj;
+            requestBody.options.waitForSelector = waitForSelectorObj
         }
 
         if (context.propsValue.preferCSSPageSize) {
-            requestBody.options.preferCSSPageSize = context.propsValue.preferCSSPageSize;
+            requestBody.options.preferCSSPageSize = context.propsValue.preferCSSPageSize
         }
 
         if (context.propsValue.pageRanges) {
-            requestBody.options.pageRanges = context.propsValue.pageRanges;
+            requestBody.options.pageRanges = context.propsValue.pageRanges
         }
 
         if (context.propsValue.width) {
-            requestBody.options.width = context.propsValue.width;
+            requestBody.options.width = context.propsValue.width
         }
 
         if (context.propsValue.height) {
-            requestBody.options.height = context.propsValue.height;
+            requestBody.options.height = context.propsValue.height
         }
 
         if (context.propsValue.omitBackground) {
-            requestBody.options.omitBackground = context.propsValue.omitBackground;
+            requestBody.options.omitBackground = context.propsValue.omitBackground
         }
 
         if (context.propsValue.tagged) {
-            requestBody.options.tagged = context.propsValue.tagged;
+            requestBody.options.tagged = context.propsValue.tagged
         }
 
         if (context.propsValue.outline) {
-            requestBody.options.outline = context.propsValue.outline;
+            requestBody.options.outline = context.propsValue.outline
         }
 
         if (context.propsValue.timeout) {
-            requestBody.options.timeout = context.propsValue.timeout;
+            requestBody.options.timeout = context.propsValue.timeout
         }
 
         if (context.propsValue.waitForFunction) {
             const waitForFunctionObj: any = {
                 fn: context.propsValue.waitForFunction,
-            };
+            }
 
             if (context.propsValue.waitForFunctionPolling !== undefined) {
-                waitForFunctionObj.polling = context.propsValue.waitForFunctionPolling;
+                waitForFunctionObj.polling = context.propsValue.waitForFunctionPolling
             }
 
             if (context.propsValue.waitForFunctionTimeout !== undefined) {
-                waitForFunctionObj.timeout = context.propsValue.waitForFunctionTimeout;
+                waitForFunctionObj.timeout = context.propsValue.waitForFunctionTimeout
             }
 
-            requestBody.options.waitForFunction = waitForFunctionObj;
+            requestBody.options.waitForFunction = waitForFunctionObj
         }
 
         const response = await browserlessCommon.apiCall({
@@ -322,26 +322,26 @@ export const generatePdf = createAction({
             method: HttpMethod.POST,
             resourceUri: '/pdf',
             body: requestBody,
-        });
+        })
 
-        const fileName = 'document.pdf';
-        
-        let fileData: Buffer;
-        
+        const fileName = 'document.pdf'
+
+        let fileData: Buffer
+
         if (response.body instanceof ArrayBuffer) {
-            fileData = Buffer.from(response.body);
+            fileData = Buffer.from(response.body)
         } else if (Buffer.isBuffer(response.body)) {
-            fileData = response.body;
+            fileData = response.body
         } else if (typeof response.body === 'string') {
-            fileData = Buffer.from(response.body, 'latin1');
+            fileData = Buffer.from(response.body, 'latin1')
         } else {
-            fileData = Buffer.from(String(response.body), 'latin1');
+            fileData = Buffer.from(String(response.body), 'latin1')
         }
 
         const file = await context.files.write({
             data: fileData,
             fileName: fileName,
-        });
+        })
 
         return {
             success: true,
@@ -356,7 +356,7 @@ export const generatePdf = createAction({
                 timestamp: new Date().toISOString(),
                 fileName: fileName,
                 contentType: 'application/pdf',
-            }
-        };
+            },
+        }
     },
-});
+})

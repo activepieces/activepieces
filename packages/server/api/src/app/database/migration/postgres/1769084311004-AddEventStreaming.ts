@@ -91,5 +91,4 @@ export class AddEventStreaming1769084311004 implements MigrationInterface {
             DROP TABLE "event_destination"
         `)
     }
-
 }

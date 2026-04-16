@@ -1,6 +1,6 @@
-import { PieceAuth } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { BASE_URL } from "./constants";
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
+import { BASE_URL } from './constants'
 
 export const altTextAiAuth = PieceAuth.SecretText({
     displayName: 'API Key',
@@ -12,19 +12,18 @@ export const altTextAiAuth = PieceAuth.SecretText({
                 method: HttpMethod.GET,
                 url: BASE_URL + '/account',
                 headers: {
-                    'X-API-Key': auth
-                }
+                    'X-API-Key': auth,
+                },
             })
 
             return {
-                valid: true
+                valid: true,
             }
-
         } catch {
             return {
                 valid: false,
-                error: 'Invalid API Key'
+                error: 'Invalid API Key',
             }
         }
-    }
+    },
 })

@@ -41,7 +41,6 @@ export const UpdateTableRequest = z.object({
 
 export type UpdateTableRequest = z.infer<typeof UpdateTableRequest>
 
-
 export const ListTablesRequest = z.object({
     projectId: z.string(),
     limit: z.coerce.number().optional(),

@@ -1,4 +1,4 @@
-import { PopulatedFlow, FlowVersionState } from '@activepieces/shared';
+import { FlowVersionState, PopulatedFlow } from '@activepieces/shared';
 import { t } from 'i18next';
 
 const isFlowSelectable = (flow: PopulatedFlow) => {

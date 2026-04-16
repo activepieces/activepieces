@@ -9,7 +9,8 @@ export const apListTablesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
     return {
         title: 'ap_list_tables',
         permission: Permission.READ_TABLE,
-        description: 'List all tables in the current project with their fields (name, type, id) and row counts. Use this to discover available tables before querying or modifying data. Returns table IDs needed by other table tools.',
+        description:
+            'List all tables in the current project with their fields (name, type, id) and row counts. Use this to discover available tables before querying or modifying data. Returns table IDs needed by other table tools.',
         inputSchema: {},
         annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async () => {
@@ -28,7 +29,7 @@ export const apListTablesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                     return { content: [{ type: 'text', text: 'No tables found in this project.' }] }
                 }
 
-                const tableIds = result.data.map(t => t.id)
+                const tableIds = result.data.map((t) => t.id)
                 const fieldsByTable = await fieldService.getAllByTableIds({
                     projectId: mcp.projectId,
                     tableIds,
@@ -37,22 +38,24 @@ export const apListTablesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 const tableDetails = result.data.map((table) => {
                     const fields = fieldsByTable.get(table.id) ?? []
                     const rowCount = table.rowCount ?? 0
-                    const fieldLines = fields.map(f => `    - ${formatFieldInfo(f)}`).join('\n')
+                    const fieldLines = fields.map((f) => `    - ${formatFieldInfo(f)}`).join('\n')
                     return `- ${table.name} (id: ${table.id}) — ${rowCount} records\n  Fields:\n${fieldLines}`
                 })
 
                 const output = tableDetails.join('\n\n')
-                const truncationNote = result.data.length >= 100
-                    ? '\n\n⚠️ Showing first 100 tables. There may be more in this project.'
-                    : ''
+                const truncationNote =
+                    result.data.length >= 100
+                        ? '\n\n⚠️ Showing first 100 tables. There may be more in this project.'
+                        : ''
                 return {
-                    content: [{
-                        type: 'text',
-                        text: output + truncationNote,
-                    }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: output + truncationNote,
+                        },
+                    ],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_list_tables failed')
                 return mcpUtils.mcpToolError('Failed to list tables', err)
             }

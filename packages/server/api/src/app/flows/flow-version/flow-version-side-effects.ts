@@ -2,8 +2,8 @@ import {
     FileType,
     FlowOperationRequest,
     FlowOperationType,
-    flowStructureUtil,
     FlowVersion,
+    flowStructureUtil,
     isNil,
     ProjectId,
 } from '@activepieces/shared'
@@ -19,39 +19,36 @@ type OnApplyOperationParams = {
     operation: FlowOperationRequest
 }
 
-
 export const flowVersionSideEffects = (log: FastifyBaseLogger) => ({
-    async preApplyOperation({
-        projectId,
-        flowVersion,
-        operation,
-    }: OnApplyOperationParams): Promise<void> {
+    async preApplyOperation({ projectId, flowVersion, operation }: OnApplyOperationParams): Promise<void> {
         try {
             await handleSampleDataDeletion(projectId, flowVersion, operation, log)
             await handleUpdateTriggerWebhookSimulation(projectId, flowVersion, operation, log)
             await handleUpdateFlowLastModified(projectId, flowVersion, log)
-        }
-        catch (e) {
+        } catch (e) {
             // Ignore error and continue the operation peacefully
             exceptionHandler.handle(e, log)
         }
     },
 })
 
-
-
-
-async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest, log: FastifyBaseLogger): Promise<void> {
+async function handleSampleDataDeletion(
+    projectId: ProjectId,
+    flowVersion: FlowVersion,
+    operation: FlowOperationRequest,
+    log: FastifyBaseLogger,
+): Promise<void> {
     if (operation.type !== FlowOperationType.UPDATE_TRIGGER && operation.type !== FlowOperationType.DELETE_ACTION) {
         return
     }
     switch (operation.type) {
-        case FlowOperationType.UPDATE_TRIGGER:
-        {
+        case FlowOperationType.UPDATE_TRIGGER: {
             const stepToDelete = flowStructureUtil.getStepOrThrow(operation.request.name, flowVersion.trigger)
-            const triggerChanged = operation.type === FlowOperationType.UPDATE_TRIGGER && (flowVersion.trigger.type !== operation.request.type
-                    || flowVersion.trigger.settings.triggerName !== operation.request.settings.triggerName
-                    || flowVersion.trigger.settings.pieceName !== operation.request.settings.pieceName)
+            const triggerChanged =
+                operation.type === FlowOperationType.UPDATE_TRIGGER &&
+                (flowVersion.trigger.type !== operation.request.type ||
+                    flowVersion.trigger.settings.triggerName !== operation.request.settings.triggerName ||
+                    flowVersion.trigger.settings.pieceName !== operation.request.settings.pieceName)
             const sampleDataExists = !isNil(stepToDelete?.settings.sampleData?.sampleDataFileId)
             if (triggerChanged && sampleDataExists) {
                 await sampleDataService(log).deleteForStep({
@@ -75,7 +72,9 @@ async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowV
             break
         }
         case FlowOperationType.DELETE_ACTION: {
-            const stepsToDelete = operation.request.names.map(name => flowStructureUtil.getStepOrThrow(name, flowVersion.trigger))
+            const stepsToDelete = operation.request.names.map((name) =>
+                flowStructureUtil.getStepOrThrow(name, flowVersion.trigger),
+            )
             for (const step of stepsToDelete) {
                 const sampleDataExists = !isNil(step.settings.sampleData?.sampleDataFileId)
                 if (sampleDataExists) {
@@ -103,10 +102,14 @@ async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowV
         default:
             return
     }
-
 }
 
-async function handleUpdateTriggerWebhookSimulation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest, log: FastifyBaseLogger): Promise<void> {
+async function handleUpdateTriggerWebhookSimulation(
+    projectId: ProjectId,
+    flowVersion: FlowVersion,
+    operation: FlowOperationRequest,
+    log: FastifyBaseLogger,
+): Promise<void> {
     if (operation.type === FlowOperationType.UPDATE_TRIGGER) {
         await triggerSourceService(log).disable({
             flowId: flowVersion.flowId,
@@ -117,6 +120,10 @@ async function handleUpdateTriggerWebhookSimulation(projectId: ProjectId, flowVe
     }
 }
 
-async function handleUpdateFlowLastModified(projectId: ProjectId, flowVersion: FlowVersion, log: FastifyBaseLogger): Promise<void> {
+async function handleUpdateFlowLastModified(
+    projectId: ProjectId,
+    flowVersion: FlowVersion,
+    log: FastifyBaseLogger,
+): Promise<void> {
     await flowService(log).updateLastModified(flowVersion.flowId, projectId)
 }

@@ -1,84 +1,78 @@
-import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
-import { CustomField } from '../types';
-import { fetchCustomFields } from '../service';
-import { convertkitAuth } from '../../..';
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework'
+import { convertkitAuth } from '../../..'
+import { fetchCustomFields } from '../service'
+import { CustomField } from '../types'
 
 export const fieldsArray = Property.Array({
-  displayName: 'Fields',
-  description: 'The custom fields',
-  required: true,
-});
+    displayName: 'Fields',
+    description: 'The custom fields',
+    required: true,
+})
 
 export const label = Property.Dropdown({
-  auth: convertkitAuth,
-  displayName: 'Custom Label',
-  required: true,
-  refreshers: ['auth'],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Connect your account',
-        options: [],
-      };
-    }
+    auth: convertkitAuth,
+    displayName: 'Custom Label',
+    required: true,
+    refreshers: ['auth'],
+    options: async ({ auth }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                placeholder: 'Connect your account',
+                options: [],
+            }
+        }
 
-    const fields: CustomField[] = await fetchCustomFields(auth.secret_text);
+        const fields: CustomField[] = await fetchCustomFields(auth.secret_text)
 
-    // loop through data and map to options
-    const options = fields.map(
-      (field: { id: string; label: string; key: string; name: string }) => {
+        // loop through data and map to options
+        const options = fields.map((field: { id: string; label: string; key: string; name: string }) => {
+            return {
+                label: field.label,
+                value: field.id,
+            }
+        })
+
         return {
-          label: field.label,
-          value: field.id,
-        };
-      }
-    );
-
-    return {
-      options,
-    };
-  },
-});
+            options,
+        }
+    },
+})
 
 export const new_label = Property.ShortText({
-  displayName: 'New Label',
-  description: 'The new label for the custom field',
-  required: true,
-});
+    displayName: 'New Label',
+    description: 'The new label for the custom field',
+    required: true,
+})
 
 export const allFields = Property.DynamicProperties({
-  auth: convertkitAuth,
-  displayName: 'Custom Fields',
-  description: 'The custom fields',
-  required: false,
-  refreshers: ['auth'],
-  props: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Connect your account',
-        options: [],
-      };
-    }
+    auth: convertkitAuth,
+    displayName: 'Custom Fields',
+    description: 'The custom fields',
+    required: false,
+    refreshers: ['auth'],
+    props: async ({ auth }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                placeholder: 'Connect your account',
+                options: [],
+            }
+        }
 
-    const fields: DynamicPropsValue = {};
+        const fields: DynamicPropsValue = {}
 
-    const customFields: CustomField[] = await fetchCustomFields(
-      auth.secret_text
-    );
+        const customFields: CustomField[] = await fetchCustomFields(auth.secret_text)
 
-    // loop through data and map to fields
-    customFields.forEach(
-      (field: { id: string; label: string; key: string; name: string }) => {
-        fields[field.key] = Property.ShortText({
-          displayName: field.label,
-          description: `Enter the value for custom field: ${field.label}`,
-          required: false,
-        });
-      }
-    );
+        // loop through data and map to fields
+        customFields.forEach((field: { id: string; label: string; key: string; name: string }) => {
+            fields[field.key] = Property.ShortText({
+                displayName: field.label,
+                description: `Enter the value for custom field: ${field.label}`,
+                required: false,
+            })
+        })
 
-    return fields;
-  },
-});
+        return fields
+    },
+})

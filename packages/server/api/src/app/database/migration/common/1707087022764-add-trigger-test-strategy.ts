@@ -31,23 +31,13 @@ export class AddTriggerTestStrategy1707087022764 implements MigrationInterface {
     }
 }
 
-const getAllPieceMetadataIds = async (
-    queryRunner: QueryRunner,
-): Promise<string[]> => {
-    const queryResult: { id: string }[] = await queryRunner.query(
-        'SELECT id FROM piece_metadata',
-    )
+const getAllPieceMetadataIds = async (queryRunner: QueryRunner): Promise<string[]> => {
+    const queryResult: { id: string }[] = await queryRunner.query('SELECT id FROM piece_metadata')
     return queryResult.map(({ id }) => id)
 }
 
-const getPieceMetadataById = async (
-    queryRunner: QueryRunner,
-    id: string,
-): Promise<PieceMetadata> => {
-    const queryResult = await queryRunner.query(
-        'SELECT id, triggers FROM piece_metadata WHERE id = $1',
-        [id],
-    )
+const getPieceMetadataById = async (queryRunner: QueryRunner, id: string): Promise<PieceMetadata> => {
+    const queryResult = await queryRunner.query('SELECT id, triggers FROM piece_metadata WHERE id = $1', [id])
     return queryResult[0]
 }
 
@@ -73,14 +63,11 @@ const removeTestStrategyFromTriggers = (pieceMetadata: PieceMetadata): void => {
     }
 }
 
-const updatePieceMetadata = async (
-    queryRunner: QueryRunner,
-    pieceMetadata: PieceMetadata,
-): Promise<void> => {
-    await queryRunner.query(
-        'UPDATE piece_metadata SET triggers = $1 WHERE id = $2',
-        [JSON.stringify(pieceMetadata.triggers), pieceMetadata.id],
-    )
+const updatePieceMetadata = async (queryRunner: QueryRunner, pieceMetadata: PieceMetadata): Promise<void> => {
+    await queryRunner.query('UPDATE piece_metadata SET triggers = $1 WHERE id = $2', [
+        JSON.stringify(pieceMetadata.triggers),
+        pieceMetadata.id,
+    ])
 }
 
 const parseTriggers = (triggers: string | Record<string, Trigger>): Record<string, Trigger> => {

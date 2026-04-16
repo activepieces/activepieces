@@ -1,11 +1,11 @@
 /// <reference types='vitest' />
-import path from 'path';
 
-import tsconfigPaths from 'vite-tsconfig-paths';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import path from 'path';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
-import tailwindcss from '@tailwindcss/vite';
+import tsconfigPaths from 'vite-tsconfig-paths';
 import customHtmlPlugin from './vite-plugins/html-plugin';
 
 export default defineConfig(({ command, mode }) => {

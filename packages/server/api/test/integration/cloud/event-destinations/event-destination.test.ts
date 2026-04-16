@@ -1,16 +1,11 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    apId,
-    ApplicationEventName,
-    PlatformRole,
-    PrincipalType,
-} from '@activepieces/shared'
+import { ApplicationEventName, apId, PlatformRole, PrincipalType } from '@activepieces/shared'
+import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { faker } from '@faker-js/faker'
 import { generateMockToken } from '../../../helpers/auth'
 import { mockBasicUser } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 

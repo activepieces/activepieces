@@ -1,8 +1,8 @@
 export { AgentTimeline } from './agent-timeline';
 export { AddToolDropdown } from './agent-tools/add-agent-tool-dropwdown';
 export { AgentFlowToolComponent } from './agent-tools/components/flow-tool';
-export { AgentMcpToolComponent } from './agent-tools/components/mcp-tool';
 export { KnowledgeBaseSection } from './agent-tools/components/knowledge-base-tool';
+export { AgentMcpToolComponent } from './agent-tools/components/mcp-tool';
 export { AgentPieceToolComponent } from './agent-tools/components/piece-tool';
 export { AgentFlowToolDialog } from './agent-tools/flow-tool-dialog';
 export { AgentMcpDialog } from './agent-tools/mcp-tool-dialog';
@@ -11,7 +11,7 @@ export { PieceActionsList } from './agent-tools/piece-tool-dialog/dialog-pages/p
 export { PiecesList } from './agent-tools/piece-tool-dialog/dialog-pages/pieces-list';
 export { usePieceToolsDialogStore } from './agent-tools/stores/pieces-tools';
 export { AIModelSelector, PROVIDER_EMBEDDING_MODELS } from './ai-model';
-export { SUPPORTED_AI_PROVIDERS } from './ai-providers';
 export type { AiProviderInfo } from './ai-providers';
+export { SUPPORTED_AI_PROVIDERS } from './ai-providers';
+export { agentMutations, agentQueries } from './hooks/agent-hooks';
 export { AgentStructuredOutput } from './structured-output';
-export { agentQueries, agentMutations } from './hooks/agent-hooks';

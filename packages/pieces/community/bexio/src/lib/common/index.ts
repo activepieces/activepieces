@@ -1,5 +1,4 @@
 export const bexioCommon = {
-  baseUrl: 'https://api.bexio.com',
-  api_version: '3.0',
-};
-
+    baseUrl: 'https://api.bexio.com',
+    api_version: '3.0',
+}

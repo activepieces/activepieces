@@ -1,5 +1,5 @@
-import { OAuth2GrantType } from '@activepieces/shared';
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
+import { OAuth2GrantType } from '@activepieces/shared'
 
 export const cloudconvertAuth = PieceAuth.OAuth2({
     description: 'Connect your CloudConvert account using OAuth2',
@@ -18,9 +18,9 @@ export const cloudconvertAuth = PieceAuth.OAuth2({
                     { label: 'Auto (Nearest)', value: 'auto' },
                     { label: 'EU Central (Germany)', value: 'eu-central' },
                     { label: 'US East (Virginia)', value: 'us-east' },
-                ]
+                ],
             },
-            defaultValue: 'auto'
-        })
-    }
-});
+            defaultValue: 'auto',
+        }),
+    },
+})

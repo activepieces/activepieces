@@ -39,14 +39,8 @@ export type EnginePrincipal = {
     }
 }
 
-
 export type PrincipalForType<T extends PrincipalType> = Extract<Principal, { type: T }>
 
 export type PrincipalForTypes<R extends readonly PrincipalType[]> = PrincipalForType<R[number]>
 
-export type Principal =
-    | WorkerPrincipal
-    | AnnonymousPrincipal
-    | ServicePrincipal
-    | UserPrincipal
-    | EnginePrincipal
+export type Principal = WorkerPrincipal | AnnonymousPrincipal | ServicePrincipal | UserPrincipal | EnginePrincipal

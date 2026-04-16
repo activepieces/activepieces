@@ -1,7 +1,7 @@
 import {
   FlowActionType,
-  isNil,
   FlowTriggerType,
+  isNil,
   TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -12,17 +12,18 @@ import { CardList } from '@/components/custom/card-list';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
+  CORE_ACTIONS_METADATA,
   PieceSelectorItem,
   PieceSelectorOperation,
-  StepMetadataWithSuggestions,
   pieceSelectorUtils,
-  CORE_ACTIONS_METADATA,
+  StepMetadataWithSuggestions,
   usePieceSearchContext,
 } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
 import GenericActionOrTriggerItem from './generic-piece-selector-item';
+
 type PieceActionsOrTriggersListProps = {
   hidePieceIconAndDescription: boolean;
   stepMetadataWithSuggestions: StepMetadataWithSuggestions | null;

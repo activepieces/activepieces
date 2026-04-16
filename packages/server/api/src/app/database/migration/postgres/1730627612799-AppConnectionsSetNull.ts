@@ -23,5 +23,4 @@ export class AppConnectionsSetNull1730627612799 implements MigrationInterface {
             ADD CONSTRAINT "fk_app_connection_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
     }
-
 }

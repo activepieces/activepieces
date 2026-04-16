@@ -5,10 +5,10 @@ import {
     FileType,
     FlowAction,
     FlowId,
-    flowStructureUtil,
     FlowTrigger,
     FlowVersion,
     FlowVersionId,
+    flowStructureUtil,
     isNil,
     ProjectId,
     SampleDataDataType,
@@ -16,7 +16,8 @@ import {
     SampleDataSettings,
     SaveSampleDataResponse,
     Step,
-    stringifyNullOrUndefined } from '@activepieces/shared'
+    stringifyNullOrUndefined,
+} from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { fileRepo, fileService } from '../../file/file.service'
@@ -28,15 +29,24 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
         const sampleDataFile = await saveSampleData(params, log)
         const clonedStep: Step = JSON.parse(JSON.stringify(step))
         return {
-            sampleDataFileId: params.type === SampleDataFileType.OUTPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataFileId,
-            sampleDataInputFileId: params.type === SampleDataFileType.INPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataInputFileId,
+            sampleDataFileId:
+                params.type === SampleDataFileType.OUTPUT
+                    ? sampleDataFile.id
+                    : clonedStep.settings.sampleData?.sampleDataFileId,
+            sampleDataInputFileId:
+                params.type === SampleDataFileType.INPUT
+                    ? sampleDataFile.id
+                    : clonedStep.settings.sampleData?.sampleDataInputFileId,
             lastTestDate: dayjs().toISOString(),
         }
     },
     async getOrReturnEmpty(params: GetSampleDataParams): Promise<unknown> {
         const step = flowStructureUtil.getStepOrThrow(params.stepName, params.flowVersion.trigger)
         const fileType = params.type === SampleDataFileType.INPUT ? FileType.SAMPLE_DATA_INPUT : FileType.SAMPLE_DATA
-        const fileId = params.type === SampleDataFileType.OUTPUT ? step.settings.sampleData?.sampleDataFileId : step.settings.sampleData?.sampleDataInputFileId
+        const fileId =
+            params.type === SampleDataFileType.OUTPUT
+                ? step.settings.sampleData?.sampleDataFileId
+                : step.settings.sampleData?.sampleDataInputFileId
         if (isNil(fileId)) {
             return {}
         }
@@ -57,22 +67,35 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             return JSON.parse(decodedData)
         }
         return undefined
-
     },
     async deleteForStep(params: DeleteSampleDataForStepParams): Promise<void> {
-        await fileRepo().createQueryBuilder().delete().where({
-            id: params.fileId,
-            projectId: params.projectId,
-            type: params.fileType,
-        }).andWhere('metadata->>\'flowVersionId\' = :flowVersionId', { flowVersionId: params.flowVersionId }).execute()
+        await fileRepo()
+            .createQueryBuilder()
+            .delete()
+            .where({
+                id: params.fileId,
+                projectId: params.projectId,
+                type: params.fileType,
+            })
+            .andWhere("metadata->>'flowVersionId' = :flowVersionId", { flowVersionId: params.flowVersionId })
+            .execute()
     },
     async deleteForFlow(params: DeleteSampleDataParams): Promise<void> {
-        await fileRepo().createQueryBuilder().delete().where({
-            projectId: params.projectId,
-            type: params.fileType,
-        }).andWhere('metadata->>\'flowId\' = :flowId', { flowId: params.flowId }).execute()
+        await fileRepo()
+            .createQueryBuilder()
+            .delete()
+            .where({
+                projectId: params.projectId,
+                type: params.fileType,
+            })
+            .andWhere("metadata->>'flowId' = :flowId", { flowId: params.flowId })
+            .execute()
     },
-    async getSampleDataForFlow(projectId: ProjectId, flowVersion: FlowVersion, type: SampleDataFileType): Promise<Record<string, unknown>> {
+    async getSampleDataForFlow(
+        projectId: ProjectId,
+        flowVersion: FlowVersion,
+        type: SampleDataFileType,
+    ): Promise<Record<string, unknown>> {
         const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         const sampleDataPromises = steps.map(async (step) => {
             const data = await this.getOrReturnEmpty({
@@ -88,19 +111,19 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
     },
 })
 
-export async function saveSampleData({
-    projectId,
-    flowVersionId,
-    stepName,
-    payload,
-    type,
-}: SaveSampleDataParams, log: FastifyBaseLogger): Promise<SaveSampleDataResponse> {
+export async function saveSampleData(
+    { projectId, flowVersionId, stepName, payload, type }: SaveSampleDataParams,
+    log: FastifyBaseLogger,
+): Promise<SaveSampleDataResponse> {
     const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
     const step = flowStructureUtil.getStepOrThrow(stepName, flowVersion.trigger)
     const fileType = type === SampleDataFileType.INPUT ? FileType.SAMPLE_DATA_INPUT : FileType.SAMPLE_DATA
     const fileId = await useExistingOrCreateNewSampleId(projectId, flowVersion, step, fileType, log)
     const payloadWithStringifiedNullOrUndefined = isNil(payload) ? stringifyNullOrUndefined(payload) : payload
-    const data = typeof payloadWithStringifiedNullOrUndefined === 'string' ? Buffer.from(payloadWithStringifiedNullOrUndefined) : Buffer.from(JSON.stringify(payloadWithStringifiedNullOrUndefined))
+    const data =
+        typeof payloadWithStringifiedNullOrUndefined === 'string'
+            ? Buffer.from(payloadWithStringifiedNullOrUndefined)
+            : Buffer.from(JSON.stringify(payloadWithStringifiedNullOrUndefined))
     return fileService(log).save({
         projectId,
         fileId,
@@ -112,13 +135,25 @@ export async function saveSampleData({
             flowId: flowVersion.flowId,
             flowVersionId,
             stepName,
-            [DATA_TYPE_KEY_IN_FILE_METADATA]: typeof payloadWithStringifiedNullOrUndefined === 'string' ? SampleDataDataType.STRING : SampleDataDataType.JSON,
+            [DATA_TYPE_KEY_IN_FILE_METADATA]:
+                typeof payloadWithStringifiedNullOrUndefined === 'string'
+                    ? SampleDataDataType.STRING
+                    : SampleDataDataType.JSON,
         },
     })
 }
 
-async function useExistingOrCreateNewSampleId(projectId: ProjectId, flowVersion: FlowVersion, step: FlowAction | FlowTrigger, fileType: FileType, log: FastifyBaseLogger): Promise<string> {
-    const sampleDataId = fileType === FileType.SAMPLE_DATA ? step.settings.sampleData?.sampleDataFileId : step.settings.sampleData?.sampleDataInputFileId
+async function useExistingOrCreateNewSampleId(
+    projectId: ProjectId,
+    flowVersion: FlowVersion,
+    step: FlowAction | FlowTrigger,
+    fileType: FileType,
+    log: FastifyBaseLogger,
+): Promise<string> {
+    const sampleDataId =
+        fileType === FileType.SAMPLE_DATA
+            ? step.settings.sampleData?.sampleDataFileId
+            : step.settings.sampleData?.sampleDataInputFileId
     if (isNil(sampleDataId)) {
         return apId()
     }
@@ -133,7 +168,6 @@ async function useExistingOrCreateNewSampleId(projectId: ProjectId, flowVersion:
     }
     return file.id
 }
-
 
 type DeleteSampleDataForStepParams = {
     projectId: ProjectId

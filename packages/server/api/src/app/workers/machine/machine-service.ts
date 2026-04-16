@@ -42,7 +42,11 @@ async function buildSettingsResponse(_log: FastifyBaseLogger): Promise<WorkerSet
         MAX_FLOW_RUN_LOG_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB),
         MAX_FILE_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB),
         SANDBOX_MEMORY_LIMIT: system.getOrThrow(AppSystemProp.SANDBOX_MEMORY_LIMIT),
-        SANDBOX_PROPAGATED_ENV_VARS: system.get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)?.split(',').map(f => f.trim()) ?? [],
+        SANDBOX_PROPAGATED_ENV_VARS:
+            system
+                .get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)
+                ?.split(',')
+                .map((f) => f.trim()) ?? [],
         DEV_PIECES: system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? [],
         SENTRY_DSN: system.get(AppSystemProp.SENTRY_DSN),
         LOKI_PASSWORD: system.get(AppSystemProp.LOKI_PASSWORD),
@@ -58,7 +62,11 @@ async function buildSettingsResponse(_log: FastifyBaseLogger): Promise<WorkerSet
         S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
         EVENT_DESTINATION_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS),
         EDITION: system.getOrThrow(AppSystemProp.EDITION),
-        SSRF_ALLOW_LIST: system.get(AppSystemProp.SSRF_ALLOW_LIST)?.split(',').map(f => f.trim()) ?? [],
+        SSRF_ALLOW_LIST:
+            system
+                .get(AppSystemProp.SSRF_ALLOW_LIST)
+                ?.split(',')
+                .map((f) => f.trim()) ?? [],
         SSRF_PROTECTION_ENABLED: system.get(AppSystemProp.SSRF_PROTECTION_ENABLED) === 'true',
         PAGE_ONCALL_WEBHOOK: system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK),
     }
@@ -75,16 +83,22 @@ export const machineService = (log: FastifyBaseLogger) => {
             })
             await workerMachineCache().delete([request.workerId])
         },
-        async onConnection(request: WorkerMachineHealthcheckRequest, workerGroupId?: string | undefined): Promise<WorkerSettingsResponse> {
+        async onConnection(
+            request: WorkerMachineHealthcheckRequest,
+            workerGroupId?: string | undefined,
+        ): Promise<WorkerSettingsResponse> {
             const existingWorker = await workerMachineCache().findOne(request.workerId)
 
             const type = isNil(workerGroupId) ? 'SHARED' : 'DEDICATED'
-            await workerMachineCache().upsert({
-                id: request.workerId,
-                information: request,
-                type,
-                workerGroupId,
-            }, existingWorker)
+            await workerMachineCache().upsert(
+                {
+                    id: request.workerId,
+                    information: request,
+                    type,
+                    workerGroupId,
+                },
+                existingWorker,
+            )
             return buildSettingsResponse(log)
         },
         async list(platformId: string): Promise<WorkerMachineWithStatus[]> {
@@ -92,19 +106,21 @@ export const machineService = (log: FastifyBaseLogger) => {
 
             const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
 
-            const [onlineWorkers, offLineWorkers] = partition(allWorkers, (worker) => dayjs(worker.updated).isAfter(offlineThreshold))
+            const [onlineWorkers, offLineWorkers] = partition(allWorkers, (worker) =>
+                dayjs(worker.updated).isAfter(offlineThreshold),
+            )
 
-            await workerMachineCache().delete(offLineWorkers.map(worker => worker.id))
+            await workerMachineCache().delete(offLineWorkers.map((worker) => worker.id))
 
             const platformWorkerGroupId = await workerGroupService(log).getWorkerGroupId({ platformId })
             return onlineWorkers
-                .filter(worker => {
+                .filter((worker) => {
                     if (worker.type === WorkerMachineType.DEDICATED) {
                         return !isNil(platformWorkerGroupId) && worker.workerGroupId === platformWorkerGroupId
                     }
                     return isNil(platformWorkerGroupId)
                 })
-                .map(worker => ({
+                .map((worker) => ({
                     ...worker,
                     status: WorkerMachineStatus.ONLINE,
                     type: worker.type === 'DEDICATED' ? WorkerMachineType.DEDICATED : WorkerMachineType.SHARED,

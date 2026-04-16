@@ -14,5 +14,4 @@ export class AddIndexForAppEvents1759392852559 implements MigrationInterface {
             DROP INDEX "idx_app_event_appName_identifier_event"
         `)
     }
-
 }

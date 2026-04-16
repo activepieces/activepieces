@@ -23,5 +23,4 @@ export class AddPaymentMethodToPlatformPlan1751021111433 implements MigrationInt
             ALTER TABLE "platform_plan" DROP COLUMN "stripePaymentMethod"
         `)
     }
-
 }

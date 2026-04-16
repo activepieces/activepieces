@@ -5,13 +5,13 @@ import {
   PropertySettings,
 } from '@activepieces/shared';
 import deepEqual from 'deep-equal';
-import React, { useState, useRef, useContext } from 'react';
-import { useFormContext, UseFormReturn, useWatch } from 'react-hook-form';
+import React, { useContext, useRef, useState } from 'react';
+import { UseFormReturn, useFormContext, useWatch } from 'react-hook-form';
 import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SkeletonList } from '@/components/ui/skeleton';
-import { piecesHooks, formUtils } from '@/features/pieces';
+import { formUtils, piecesHooks } from '@/features/pieces';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';
@@ -209,6 +209,7 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
 });
 DynamicPropertiesImplementation.displayName = 'DynamicPropertiesImplementation';
 DynamicProperties.displayName = 'DynamicProperties';
+
 export { DynamicProperties };
 
 const prependPrefixToPropertyName = ({

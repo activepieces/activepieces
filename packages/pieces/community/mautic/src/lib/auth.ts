@@ -1,4 +1,4 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
 
 const markdownDescription = `
 Follow these steps:
@@ -7,23 +7,23 @@ Follow these steps:
 
 2. **Enable Basic Authentication:** Log in to Mautic, go to **Settings** > **Configuration** > **API Settings**, and ensure that Basic Authentication is enabled.
 
-`;
+`
 
 export const mauticAuth = PieceAuth.CustomAuth({
-  description: markdownDescription,
-  props: {
-    base_url: Property.ShortText({
-      displayName: 'Base URL',
-      required: true,
-    }),
-    username: Property.ShortText({
-      displayName: 'Username',
-      required: true,
-    }),
-    password: PieceAuth.SecretText({
-      displayName: 'Password',
-      required: true,
-    }),
-  },
-  required: true,
-});
+    description: markdownDescription,
+    props: {
+        base_url: Property.ShortText({
+            displayName: 'Base URL',
+            required: true,
+        }),
+        username: Property.ShortText({
+            displayName: 'Username',
+            required: true,
+        }),
+        password: PieceAuth.SecretText({
+            displayName: 'Password',
+            required: true,
+        }),
+    },
+    required: true,
+})

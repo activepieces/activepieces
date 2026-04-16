@@ -1,8 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-    HttpMethod
-} from '@activepieces/pieces-common';
-import { insightlyAuth, makeInsightlyRequest } from '../common/common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { insightlyAuth, makeInsightlyRequest } from '../common/common'
 
 export const deleteRecord = createAction({
     auth: insightlyAuth,
@@ -12,9 +10,10 @@ export const deleteRecord = createAction({
     props: {
         pod: Property.ShortText({
             displayName: 'Pod',
-            description: 'Your Insightly pod (e.g., "na1", "eu1"). Find this in your API URL: https://api.{pod}.insightly.com',
+            description:
+                'Your Insightly pod (e.g., "na1", "eu1"). Find this in your API URL: https://api.{pod}.insightly.com',
             required: true,
-            defaultValue: 'na1'
+            defaultValue: 'na1',
         }),
         objectName: Property.StaticDropdown({
             displayName: 'Object Type',
@@ -30,9 +29,9 @@ export const deleteRecord = createAction({
                     { label: 'Task', value: 'Tasks' },
                     { label: 'Event', value: 'Events' },
                     { label: 'Product', value: 'Products' },
-                    { label: 'Quote', value: 'Quotations' }
-                ]
-            }
+                    { label: 'Quote', value: 'Quotations' },
+                ],
+            },
         }),
         recordId: Property.Dropdown({
             auth: insightlyAuth,
@@ -45,60 +44,58 @@ export const deleteRecord = createAction({
                     return {
                         disabled: true,
                         placeholder: 'Please select an object type and pod first',
-                        options: []
-                    };
+                        options: [],
+                    }
                 }
 
-                const response = await makeInsightlyRequest(
-                    auth,
-                    `/${objectName}?top=100&brief=true`,
-                    pod as string
-                );
+                const response = await makeInsightlyRequest(auth, `/${objectName}?top=100&brief=true`, pod as string)
 
-                const records = Array.isArray(response.body) ? response.body : [];
-                
+                const records = Array.isArray(response.body) ? response.body : []
+
                 return {
                     options: records.map((record: any) => {
-                        const idKey = Object.keys(record).find(key => key.endsWith('_ID'));
-                        const recordId = idKey ? record[idKey] : 'Unknown ID';
+                        const idKey = Object.keys(record).find((key) => key.endsWith('_ID'))
+                        const recordId = idKey ? record[idKey] : 'Unknown ID'
 
-                        const nameKey = Object.keys(record).find(key => key.endsWith('_NAME') || key === 'TITLE' || key === 'FIRST_NAME');
-                        let recordName = nameKey ? record[nameKey] : `Record ${recordId}`;
+                        const nameKey = Object.keys(record).find(
+                            (key) => key.endsWith('_NAME') || key === 'TITLE' || key === 'FIRST_NAME',
+                        )
+                        let recordName = nameKey ? record[nameKey] : `Record ${recordId}`
 
                         if (objectName === 'Contacts' || objectName === 'Leads') {
-                            recordName = `${record.FIRST_NAME || ''} ${record.LAST_NAME || ''}`.trim();
+                            recordName = `${record.FIRST_NAME || ''} ${record.LAST_NAME || ''}`.trim()
                         }
-                        
+
                         return {
                             label: `${recordName} (ID: ${recordId})`,
-                            value: recordId
-                        };
-                    })
-                };
-            }
-        })
+                            value: recordId,
+                        }
+                    }),
+                }
+            },
+        }),
     },
     async run(context) {
-        const { pod, objectName, recordId } = context.propsValue;
-        
+        const { pod, objectName, recordId } = context.propsValue
+
         try {
             await makeInsightlyRequest(
                 context.auth,
                 `/${objectName as string}/${recordId as string}`,
                 pod as string,
-                HttpMethod.DELETE
-            );
+                HttpMethod.DELETE,
+            )
 
             return {
                 success: true,
-                message: `Record ${recordId} successfully deleted from ${objectName}`
-            };
+                message: `Record ${recordId} successfully deleted from ${objectName}`,
+            }
         } catch (error: any) {
             if (error.response?.status === 404) {
-                throw new Error(`Record with ID ${recordId} not found in ${objectName}`);
+                throw new Error(`Record with ID ${recordId} not found in ${objectName}`)
             } else {
-                throw new Error(`Failed to delete record: ${error.message}`);
+                throw new Error(`Failed to delete record: ${error.message}`)
             }
         }
     },
-});
+})

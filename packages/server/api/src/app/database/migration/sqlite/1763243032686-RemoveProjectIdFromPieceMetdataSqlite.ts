@@ -364,5 +364,4 @@ export class RemoveProjectIdFromPieceMetdataSqlite1763243032686 implements Migra
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
     }
-
 }

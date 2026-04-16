@@ -1,11 +1,11 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { makeRequest } from './client';
-import { AppConnectionType } from '@activepieces/shared';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
+import { AppConnectionType } from '@activepieces/shared'
+import { makeRequest } from './client'
 
 export const guideliteAuth = PieceAuth.SecretText({
-  displayName: 'Guidelite API Key',
-  description: `
+    displayName: 'Guidelite API Key',
+    description: `
 To get your API key:
 1. Sign in to your GuideLite dashboard
 2. Click on your account in the left panel
@@ -15,24 +15,28 @@ To get your API key:
 
 For more information, visit: https://docs.guidelite.ai/reference/quickstart
 `,
-  required: true,
-  validate: async ({ auth }) => {
-    if (auth) {
-      try {
-        await makeRequest({secret_text: auth, type: AppConnectionType.SECRET_TEXT}, HttpMethod.GET, '/assistant/list');
+    required: true,
+    validate: async ({ auth }) => {
+        if (auth) {
+            try {
+                await makeRequest(
+                    { secret_text: auth, type: AppConnectionType.SECRET_TEXT },
+                    HttpMethod.GET,
+                    '/assistant/list',
+                )
+                return {
+                    valid: true,
+                }
+            } catch (error) {
+                return {
+                    valid: false,
+                    error: 'Invalid API Key',
+                }
+            }
+        }
         return {
-          valid: true,
-        };
-      } catch (error) {
-        return {
-          valid: false,
-          error: 'Invalid API Key',
-        };
-      }
-    }
-    return {
-      valid: false,
-      error: 'Invalid API Key',
-    };
-  },
-});
+            valid: false,
+            error: 'Invalid API Key',
+        }
+    },
+})

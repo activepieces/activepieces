@@ -31,5 +31,4 @@ export class AddUserInvitationSqlite1717943564437 implements MigrationInterface 
             DROP TABLE "user_invitation"
         `)
     }
-
 }

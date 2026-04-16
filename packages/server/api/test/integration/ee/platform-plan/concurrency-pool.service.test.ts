@@ -1,12 +1,12 @@
-import { Redis } from 'ioredis'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { Redis } from 'ioredis'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { getConcurrencyPoolLimitKey, getProjectConcurrencyPoolKey } from '../../../../src/app/database/redis/keys'
 import { distributedStore, redisConnections } from '../../../../src/app/database/redis-connections'
 import { concurrencyPoolService } from '../../../../src/app/ee/platform/concurrency-pool/concurrency-pool.service'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 async function deleteKeysByPattern(redis: Redis, pattern: string): Promise<void> {
     const stream = redis.scanStream({ match: pattern, count: 100 })
@@ -34,7 +34,6 @@ beforeEach(async () => {
 })
 
 describe('concurrencyPoolService', () => {
-
     describe('upsertPool', () => {
         it('creates a new pool and writes redis limit key', async () => {
             const { mockPlatform } = await mockAndSaveBasicSetup()
@@ -45,9 +44,11 @@ describe('concurrencyPoolService', () => {
                 maxConcurrentJobs: 10,
             })
 
-            const pool = await databaseConnection()
-                .getRepository('concurrency_pool')
-                .findOneBy({ id: poolId }) as { maxConcurrentJobs: number, platformId: string, key: string }
+            const pool = (await databaseConnection().getRepository('concurrency_pool').findOneBy({ id: poolId })) as {
+                maxConcurrentJobs: number
+                platformId: string
+                key: string
+            }
 
             expect(pool).not.toBeNull()
             expect(pool.maxConcurrentJobs).toBe(10)
@@ -76,9 +77,9 @@ describe('concurrencyPoolService', () => {
 
             expect(secondPoolId).toBe(firstPoolId)
 
-            const pool = await databaseConnection()
+            const pool = (await databaseConnection()
                 .getRepository('concurrency_pool')
-                .findOneBy({ id: firstPoolId }) as { maxConcurrentJobs: number }
+                .findOneBy({ id: firstPoolId })) as { maxConcurrentJobs: number }
 
             expect(pool.maxConcurrentJobs).toBe(20)
 
@@ -101,9 +102,9 @@ describe('concurrencyPoolService', () => {
                 key: 'keep-limit-pool',
             })
 
-            const pool = await databaseConnection()
-                .getRepository('concurrency_pool')
-                .findOneBy({ id: poolId }) as { maxConcurrentJobs: number }
+            const pool = (await databaseConnection().getRepository('concurrency_pool').findOneBy({ id: poolId })) as {
+                maxConcurrentJobs: number
+            }
 
             expect(pool.maxConcurrentJobs).toBe(15)
         })
@@ -138,9 +139,7 @@ describe('concurrencyPoolService', () => {
                 key: 'project-pool',
                 maxConcurrentJobs: 5,
             })
-            await databaseConnection()
-                .getRepository('project')
-                .update({ id: mockProject.id }, { poolId })
+            await databaseConnection().getRepository('project').update({ id: mockProject.id }, { poolId })
 
             const result = await service.getProjectPoolId(mockProject.id)
 

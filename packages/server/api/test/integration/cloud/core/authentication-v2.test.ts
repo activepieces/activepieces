@@ -1,19 +1,11 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    ActivepiecesError,
-    ErrorCode,
-    Principal,
-    PrincipalType,
-} from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, Principal, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { nanoid } from 'nanoid'
 import { authenticateOrThrow } from '../../../../src/app/core/security/v2/authn/authenticate'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
-import {
-    mockAndSaveBasicSetup,
-    mockAndSaveBasicSetupWithApiKey,
-} from '../../../helpers/mocks'
+import { mockAndSaveBasicSetup, mockAndSaveBasicSetupWithApiKey } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 let log: FastifyBaseLogger
@@ -29,10 +21,9 @@ afterAll(async () => {
 describe('authenticateOrThrow', () => {
     describe('API Key Authentication', () => {
         it('should authenticate with valid API key', async () => {
-            
             const { mockPlatform, mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
 
-            const principal = await authenticateOrThrow(log,`Bearer ${mockApiKey.value}`)
+            const principal = await authenticateOrThrow(log, `Bearer ${mockApiKey.value}`)
 
             expect(principal).toEqual({
                 id: mockApiKey.id,
@@ -44,30 +35,27 @@ describe('authenticateOrThrow', () => {
         })
 
         it('should throw AUTHENTICATION error for invalid API key', async () => {
-            
             const invalidApiKey = 'sk-invalid-api-key'
 
-            await expect(authenticateOrThrow(log,`Bearer ${invalidApiKey}`))
-                .rejects.toEqual(
-                    new ActivepiecesError({
-                        code: ErrorCode.AUTHENTICATION,
-                        params: {
-                            message: 'invalid api key',
-                        },
-                    }),
-                )
+            await expect(authenticateOrThrow(log, `Bearer ${invalidApiKey}`)).rejects.toEqual(
+                new ActivepiecesError({
+                    code: ErrorCode.AUTHENTICATION,
+                    params: {
+                        message: 'invalid api key',
+                    },
+                }),
+            )
         })
     })
 
     describe('Access Token Authentication', () => {
         it('should authenticate with valid access token', async () => {
-
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const mockPrincipal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -75,13 +63,13 @@ describe('authenticateOrThrow', () => {
 
             const mockAccessToken = await generateMockToken(mockPrincipal)
 
-            const principal = await authenticateOrThrow(log,`Bearer ${mockAccessToken}`)
+            const principal = await authenticateOrThrow(log, `Bearer ${mockAccessToken}`)
 
             expect(principal).toEqual(
                 expect.objectContaining({
                     id: mockOwner.id,
                     type: PrincipalType.USER,
-                    
+
                     platform: {
                         id: mockPlatform.id,
                     },
@@ -92,15 +80,14 @@ describe('authenticateOrThrow', () => {
         it('should throw INVALID_BEARER_TOKEN error for invalid access token', async () => {
             const invalidAccessToken = 'invalid-access-token'
 
-            await expect(authenticateOrThrow(log,`Bearer ${invalidAccessToken}`))
-                .rejects.toEqual(
-                    new ActivepiecesError({
-                        code: ErrorCode.INVALID_BEARER_TOKEN,
-                        params: {
-                            message: 'invalid access token or session expired',
-                        },
-                    }),
-                )
+            await expect(authenticateOrThrow(log, `Bearer ${invalidAccessToken}`)).rejects.toEqual(
+                new ActivepiecesError({
+                    code: ErrorCode.INVALID_BEARER_TOKEN,
+                    params: {
+                        message: 'invalid access token or session expired',
+                    },
+                }),
+            )
         })
 
         it('should throw SESSION_EXPIRED error for expired access token', async () => {
@@ -109,7 +96,7 @@ describe('authenticateOrThrow', () => {
             const mockPrincipal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -121,28 +108,27 @@ describe('authenticateOrThrow', () => {
                 tokenVersion: nanoid(),
             })
 
-            await expect(authenticateOrThrow(log,`Bearer ${mockAccessToken}`))
-                .rejects.toEqual(
-                    new ActivepiecesError({
-                        code: ErrorCode.SESSION_EXPIRED,
-                        params: {
-                            message: 'The session has expired or the user is not verified.',
-                        },
-                    }),
-                )
+            await expect(authenticateOrThrow(log, `Bearer ${mockAccessToken}`)).rejects.toEqual(
+                new ActivepiecesError({
+                    code: ErrorCode.SESSION_EXPIRED,
+                    params: {
+                        message: 'The session has expired or the user is not verified.',
+                    },
+                }),
+            )
         })
     })
 
     describe('Anonymous Authentication', () => {
         it('should return UNKNOWN principal when no token is provided', async () => {
-            const principal = await authenticateOrThrow(log,null)
+            const principal = await authenticateOrThrow(log, null)
 
             expect(principal.type).toBe(PrincipalType.UNKNOWN)
             expect(principal.id).toBeDefined()
         })
 
         it('should return UNKNOWN principal when empty string is provided', async () => {
-            const principal = await authenticateOrThrow(log,'')
+            const principal = await authenticateOrThrow(log, '')
 
             expect(principal.type).toBe(PrincipalType.UNKNOWN)
             expect(principal.id).toBeDefined()

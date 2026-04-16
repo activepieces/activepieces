@@ -15,5 +15,4 @@ export class AddLastActiveToUser1765325909187 implements MigrationInterface {
             ALTER TABLE "user" DROP COLUMN "lastActiveDate"
         `)
     }
-
 }

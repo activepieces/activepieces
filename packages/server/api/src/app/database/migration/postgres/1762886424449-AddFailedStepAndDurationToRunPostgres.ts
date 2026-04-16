@@ -49,5 +49,4 @@ export class AddFailedStepAndDurationToRunPostgres1762886424449 implements Migra
             CREATE INDEX "idx_flow_run_flow_failed_step" ON "flow_run" ("flowId", "failedStepName")
         `)
     }
-
 }

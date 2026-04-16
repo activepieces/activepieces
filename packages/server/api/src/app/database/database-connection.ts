@@ -1,8 +1,5 @@
 import { isNil } from '@activepieces/shared'
-import {
-    DataSource,
-    EntitySchema,
-} from 'typeorm'
+import { DataSource, EntitySchema } from 'typeorm'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
@@ -49,8 +46,8 @@ import { StoreEntryEntity } from '../store-entry/store-entry-entity'
 import { FieldEntity } from '../tables/field/field.entity'
 import { CellEntity } from '../tables/record/cell.entity'
 import { RecordEntity } from '../tables/record/record.entity'
-import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
+import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TemplateEntity } from '../template/template.entity'
 import { AppEventRoutingEntity } from '../trigger/app-event-routing/app-event-routing.entity'
 import { TriggerEventEntity } from '../trigger/trigger-events/trigger-event.entity'
@@ -121,7 +118,6 @@ function getEntities(): EntitySchema<unknown>[] {
         AppCredentialEntity,
         PlatformPlanEntity,
         EventDestinationEntity,
-
     ]
 }
 
@@ -137,7 +133,7 @@ function getPersistedConnection(): DataSource | null {
 }
 
 function setPersistedConnection(ds: DataSource | null): void {
-    (globalThis as Record<string, unknown>)[DB_GLOBAL_KEY] = ds
+    ;(globalThis as Record<string, unknown>)[DB_GLOBAL_KEY] = ds
 }
 
 const createDataSource = (): DataSource => {

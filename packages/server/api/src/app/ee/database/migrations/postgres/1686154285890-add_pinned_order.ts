@@ -10,26 +10,16 @@ export class AddPinnedOrder1686154285890 implements MigrationInterface {
             return
         }
         await queryRunner.query('ALTER TABLE "flow_template" DROP COLUMN "pinned"')
-        await queryRunner.query(
-            'ALTER TABLE "flow_template" ADD "pinnedOrder" integer',
-        )
-        await queryRunner.query(
-            'ALTER TABLE "flow_template" ALTER COLUMN "blogUrl" DROP NOT NULL',
-        )
+        await queryRunner.query('ALTER TABLE "flow_template" ADD "pinnedOrder" integer')
+        await queryRunner.query('ALTER TABLE "flow_template" ALTER COLUMN "blogUrl" DROP NOT NULL')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
             return
         }
-        await queryRunner.query(
-            'ALTER TABLE "flow_template" ALTER COLUMN "blogUrl" SET NOT NULL',
-        )
-        await queryRunner.query(
-            'ALTER TABLE "flow_template" DROP COLUMN "pinnedOrder"',
-        )
-        await queryRunner.query(
-            'ALTER TABLE "flow_template" ADD "pinned" boolean NOT NULL',
-        )
+        await queryRunner.query('ALTER TABLE "flow_template" ALTER COLUMN "blogUrl" SET NOT NULL')
+        await queryRunner.query('ALTER TABLE "flow_template" DROP COLUMN "pinnedOrder"')
+        await queryRunner.query('ALTER TABLE "flow_template" ADD "pinned" boolean NOT NULL')
     }
 }

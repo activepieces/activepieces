@@ -3,8 +3,8 @@ import {
     assertNotNullOrUndefined,
     ListUsersRequestBody,
     PrincipalType,
-    SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    SeekPage,
     UpdateUserRequestBody,
     UserWithMetaInformation,
 } from '@activepieces/shared'
@@ -15,7 +15,6 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { userService } from '../user-service'
 
 export const platformUserController: FastifyPluginAsyncZod = async (app) => {
-
     app.get('/', ListUsersRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')

@@ -1,7 +1,7 @@
-import { z } from "zod";
-import { BasePropertySchema, TPropertyValue } from "../common";
-import { DropdownState } from "./common";
-import { PropertyType } from "../property-type";
+import { z } from 'zod'
+import { BasePropertySchema, TPropertyValue } from '../common'
+import { PropertyType } from '../property-type'
+import { DropdownState } from './common'
 
 export const StaticDropdownProperty = z.object({
     ...BasePropertySchema.shape,
@@ -9,13 +9,9 @@ export const StaticDropdownProperty = z.object({
     ...TPropertyValue(z.unknown(), PropertyType.STATIC_DROPDOWN).shape,
 })
 
-export type StaticDropdownProperty<
-    T,
-    R extends boolean
-> = BasePropertySchema & {
-    options: DropdownState<T>;
-} & TPropertyValue<T, PropertyType.STATIC_DROPDOWN, R>;
-
+export type StaticDropdownProperty<T, R extends boolean> = BasePropertySchema & {
+    options: DropdownState<T>
+} & TPropertyValue<T, PropertyType.STATIC_DROPDOWN, R>
 
 export const StaticMultiSelectDropdownProperty = z.object({
     ...BasePropertySchema.shape,
@@ -23,13 +19,6 @@ export const StaticMultiSelectDropdownProperty = z.object({
     ...TPropertyValue(z.array(z.unknown()), PropertyType.STATIC_MULTI_SELECT_DROPDOWN).shape,
 })
 
-export type StaticMultiSelectDropdownProperty<
-    T,
-    R extends boolean
-> = BasePropertySchema & {
-    options: DropdownState<T>;
-} & TPropertyValue<
-    T[],
-    PropertyType.STATIC_MULTI_SELECT_DROPDOWN,
-    R
->;
+export type StaticMultiSelectDropdownProperty<T, R extends boolean> = BasePropertySchema & {
+    options: DropdownState<T>
+} & TPropertyValue<T[], PropertyType.STATIC_MULTI_SELECT_DROPDOWN, R>

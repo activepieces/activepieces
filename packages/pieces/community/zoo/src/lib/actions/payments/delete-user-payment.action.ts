@@ -1,22 +1,22 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../auth'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const deleteUserPaymentAction = createAction({
-  name: 'delete_user_payment',
-  displayName: 'Delete User Payment Info',
-  description: 'Delete payment information for your user account',
-  auth: zooAuth,
-  // category: 'Payments',
-  props: {},
-  async run({ auth }) {
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.DELETE,
-      url: 'https://api.zoo.dev/user/payment',
-      headers: {
-        Authorization: `Bearer ${auth.secret_text}`,
-      },
-    });
-    return response.body;
-  },
-});
+    name: 'delete_user_payment',
+    displayName: 'Delete User Payment Info',
+    description: 'Delete payment information for your user account',
+    auth: zooAuth,
+    // category: 'Payments',
+    props: {},
+    async run({ auth }) {
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.DELETE,
+            url: 'https://api.zoo.dev/user/payment',
+            headers: {
+                Authorization: `Bearer ${auth.secret_text}`,
+            },
+        })
+        return response.body
+    },
+})

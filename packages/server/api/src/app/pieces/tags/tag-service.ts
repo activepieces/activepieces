@@ -6,9 +6,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { pieceTagService } from './pieces/piece-tag.service'
 import { TagEntity } from './tag-entity'
 
-
 const repo = repoFactory(TagEntity)
-
 
 export const tagService = {
     async delete(platformId: string, id: string): Promise<void> {
@@ -20,16 +18,19 @@ export const tagService = {
             platformId,
             name: In(names),
         })
-        return tagEntities.map(tag => tag.id)
+        return tagEntities.map((tag) => tag.id)
     },
     async findNamesByIds(tagIds: string[]): Promise<Record<string, string>> {
         const tagEntities = await repo().findBy({
             id: In(tagIds),
         })
-        return tagEntities.reduce((acc, tag) => {
-            acc[tag.id] = tag.name
-            return acc
-        }, {} as Record<string, string>)
+        return tagEntities.reduce(
+            (acc, tag) => {
+                acc[tag.id] = tag.name
+                return acc
+            },
+            {} as Record<string, string>,
+        )
     },
     async upsert(platformId: string, name: string): Promise<Tag> {
         const clonedName = name.trim().toLocaleLowerCase()
@@ -41,7 +42,7 @@ export const tagService = {
         return repo().findOneByOrFail({ name: clonedName, platformId })
     },
 
-    async list({ platformId, request }: { platformId: string, request: ListTagsRequest }): Promise<SeekPage<Tag>> {
+    async list({ platformId, request }: { platformId: string; request: ListTagsRequest }): Promise<SeekPage<Tag>> {
         const decodedCursor = paginationHelper.decodeCursor(request.cursor ?? null)
         const paginator = buildPaginator({
             entity: TagEntity,
@@ -52,10 +53,7 @@ export const tagService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const { data, cursor } = await paginator.paginate(
-            repo().createQueryBuilder().where({ platformId }),
-        )
+        const { data, cursor } = await paginator.paginate(repo().createQueryBuilder().where({ platformId }))
         return paginationHelper.createPage<Tag>(data, cursor)
     },
 }
-

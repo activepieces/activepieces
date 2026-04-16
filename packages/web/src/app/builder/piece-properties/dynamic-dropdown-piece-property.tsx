@@ -168,7 +168,9 @@ const DynamicDropdownPieceProperty = React.memo(
 DynamicDropdownPieceProperty.displayName = 'DynamicDropdownPieceProperty';
 DynamicDropdownPiecePropertyImplementation.displayName =
   'DynamicDropdownPiecePropertyImplementation';
+
 export { DynamicDropdownPieceProperty };
+
 type DynamicDropdownProps = {
   refreshers: string[];
   propertyName: string;

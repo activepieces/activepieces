@@ -1,6 +1,6 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { hastewireAuth } from "../common/auth";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { hastewireAuth } from '../common/auth'
 
 export const humanizeTextAction = createAction({
     name: 'humanize-text',
@@ -10,21 +10,21 @@ export const humanizeTextAction = createAction({
     props: {
         text: Property.LongText({
             displayName: 'Input Text',
-            required: true
+            required: true,
         }),
         style: Property.StaticDropdown({
             displayName: 'Text Style',
             required: false,
-            description:'The desired writing style for the output.',
+            description: 'The desired writing style for the output.',
             options: {
                 disabled: false,
                 options: [
                     { label: 'formal', value: 'formal' },
                     { label: 'standard', value: 'standard' },
-                    { label: 'academic', value: 'academic' }
-                ]
-            }
-        })
+                    { label: 'academic', value: 'academic' },
+                ],
+            },
+        }),
     },
     async run(context) {
         const response = await httpClient.sendRequest({
@@ -32,14 +32,14 @@ export const humanizeTextAction = createAction({
             url: 'https://hastewire.com/api/v1/humanize',
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: context.auth.secret_text
+                token: context.auth.secret_text,
             },
             body: {
                 text: context.propsValue.text,
-                style:context.propsValue.style
-            }
+                style: context.propsValue.style,
+            },
         })
 
-        return response.body;
-    }
+        return response.body
+    },
 })

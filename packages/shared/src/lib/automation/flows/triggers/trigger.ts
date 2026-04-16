@@ -1,12 +1,16 @@
 import { z } from 'zod'
 import { STEP_NAME_REGEX } from '../../../core/common'
 import { VersionType } from '../../pieces'
-import { CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings, RouterActionSettings } from '../actions/action'
+import {
+    CodeActionSettings,
+    LoopOnItemsActionSettings,
+    PieceActionSettings,
+    RouterActionSettings,
+} from '../actions/action'
 import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
 
 export const AUTHENTICATION_PROPERTY_NAME = 'auth'
-
 
 const pieceTriggerSettingsFields = {
     sampleData: SampleDataSetting.optional(),
@@ -24,7 +28,6 @@ export const PieceTriggerSettings = z.object({
 
 export type PieceTriggerSettings = z.infer<typeof PieceTriggerSettings>
 
-
 export enum FlowTriggerType {
     EMPTY = 'EMPTY',
     PIECE = 'PIECE_TRIGGER',
@@ -38,7 +41,6 @@ const commonProps = {
     lastUpdatedDate: z.string(),
 }
 
-
 export const EmptyTrigger = z.object({
     ...commonProps,
     type: z.literal(FlowTriggerType.EMPTY),
@@ -46,7 +48,6 @@ export const EmptyTrigger = z.object({
 })
 
 export type EmptyTrigger = z.infer<typeof EmptyTrigger>
-
 
 export const PieceTrigger = z.object({
     ...commonProps,
@@ -56,17 +57,13 @@ export const PieceTrigger = z.object({
 
 export type PieceTrigger = z.infer<typeof PieceTrigger>
 
-export const FlowTrigger = z.union([
-    PieceTrigger,
-    EmptyTrigger,
-])
+export const FlowTrigger = z.union([PieceTrigger, EmptyTrigger])
 
 export type FlowTrigger = z.infer<typeof FlowTrigger>
 
-
 export type StepSettings =
-  | CodeActionSettings
-  | PieceActionSettings
-  | PieceTriggerSettings
-  | RouterActionSettings
-  | LoopOnItemsActionSettings
+    | CodeActionSettings
+    | PieceActionSettings
+    | PieceTriggerSettings
+    | RouterActionSettings
+    | LoopOnItemsActionSettings

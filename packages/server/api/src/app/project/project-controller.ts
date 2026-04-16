@@ -1,4 +1,11 @@
-import { ApId, PrincipalType, Project, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRequestInCommunity } from '@activepieces/shared'
+import {
+    ApId,
+    PrincipalType,
+    Project,
+    SERVICE_KEY_SECURITY_OPENAPI,
+    SeekPage,
+    UpdateProjectRequestInCommunity,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -21,7 +28,10 @@ export const projectController: FastifyPluginAsyncZod = async (fastify) => {
     })
 
     fastify.get('/', ListProjectsRequest, async (request) => {
-        return paginationHelper.createPage([await projectService(request.log).getUserProjectOrThrow(request.principal.id)], null)
+        return paginationHelper.createPage(
+            [await projectService(request.log).getUserProjectOrThrow(request.principal.id)],
+            null,
+        )
     })
 }
 
@@ -41,7 +51,6 @@ const UpdateProjectRequest = {
     },
 }
 
-
 const GetProjectRequest = {
     config: {
         security: securityAccess.project([PrincipalType.USER], undefined, {
@@ -58,7 +67,7 @@ const GetProjectRequest = {
             [StatusCodes.OK]: Project,
         },
     },
-}   
+}
 
 const ListProjectsRequest = {
     config: {
@@ -71,4 +80,4 @@ const ListProjectsRequest = {
         },
         security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
-}   
+}

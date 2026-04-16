@@ -1,5 +1,5 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
 
 export const fellowAuth = PieceAuth.CustomAuth({
     required: true,
@@ -21,23 +21,22 @@ export const fellowAuth = PieceAuth.CustomAuth({
                 method: HttpMethod.GET,
                 url: getBaseUrl(auth.subdomain) + '/me',
                 headers: {
-                    'X-API-KEY': auth.apiKey
-                }
+                    'X-API-KEY': auth.apiKey,
+                },
             })
 
             return {
-                valid: true
+                valid: true,
             }
-        }
-        catch {
+        } catch {
             return {
                 valid: false,
-                error: 'Invalid Credentials.'
+                error: 'Invalid Credentials.',
             }
         }
-    }
-});
+    },
+})
 
 export const getBaseUrl = (subdomain: string) => {
-    return `https://${subdomain}.fellow.app/api/v1`;
-};
+    return `https://${subdomain}.fellow.app/api/v1`
+}

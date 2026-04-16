@@ -183,7 +183,5 @@ export class RestrictPiecesSqlite1739544872722 implements MigrationInterface {
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
-
     }
-
 }

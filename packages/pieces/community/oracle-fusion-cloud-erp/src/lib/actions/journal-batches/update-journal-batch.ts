@@ -1,12 +1,13 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const updateJournalBatch = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'update_journal_batch',
     displayName: 'Update Journal Batch',
-    description: 'Updates batch completion status and reversal attributes. Note: Only status and reversal attributes can be updated.',
+    description:
+        'Updates batch completion status and reversal attributes. Note: Only status and reversal attributes can be updated.',
     props: {
         jeBatchId: Property.ShortText({
             displayName: 'Journal Batch ID',
@@ -53,22 +54,23 @@ export const updateJournalBatch = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
-        const { jeBatchId, status, reversalFlag, reversalDate, reversalPeriod, reversalMethodMeaning } = context.propsValue;
+        const client = makeClient(context.auth.props)
+        const { jeBatchId, status, reversalFlag, reversalDate, reversalPeriod, reversalMethodMeaning } =
+            context.propsValue
 
-        const payload: Record<string, unknown> = {};
+        const payload: Record<string, unknown> = {}
 
-        if (status) payload['Status'] = status;
-        if (reversalFlag !== undefined) payload['ReversalFlag'] = reversalFlag;
-        if (reversalDate) payload['ReversalDate'] = reversalDate;
-        if (reversalPeriod) payload['ReversalPeriod'] = reversalPeriod;
-        if (reversalMethodMeaning) payload['ReversalMethodMeaning'] = reversalMethodMeaning;
+        if (status) payload['Status'] = status
+        if (reversalFlag !== undefined) payload['ReversalFlag'] = reversalFlag
+        if (reversalDate) payload['ReversalDate'] = reversalDate
+        if (reversalPeriod) payload['ReversalPeriod'] = reversalPeriod
+        if (reversalMethodMeaning) payload['ReversalMethodMeaning'] = reversalMethodMeaning
 
         if (Object.keys(payload).length === 0) {
-            throw new Error('At least one field (Status or reversal attributes) must be provided to update.');
+            throw new Error('At least one field (Status or reversal attributes) must be provided to update.')
         }
 
-        const response = await client.updateRecord(`/journalBatches/${jeBatchId}`, payload);
-        return response;
+        const response = await client.updateRecord(`/journalBatches/${jeBatchId}`, payload)
+        return response
     },
-});
+})

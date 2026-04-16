@@ -1,4 +1,3 @@
-
 import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework'
 import { isNil } from '@activepieces/shared'
 import { redisConnections } from '../database/redis-connections'
@@ -7,7 +6,9 @@ const DUPLICATE_RECORD_EXPIRATION_SECONDS = 30
 
 export const dedupeService = {
     filterUniquePayloads: async (flowVersionId: string, payloads: unknown[]): Promise<unknown[]> => {
-        const filteredPayloads = await Promise.all(payloads.map(async (payload) => isDuplicated(flowVersionId, payload)))
+        const filteredPayloads = await Promise.all(
+            payloads.map(async (payload) => isDuplicated(flowVersionId, payload)),
+        )
         return payloads.filter((_, index) => !filteredPayloads[index]).map(removeDedupeKey)
     },
 }
@@ -37,7 +38,6 @@ function extractDedupeKey(payload: unknown): unknown {
     return (payload as Record<string, unknown>)[DEDUPE_KEY_PROPERTY]
 }
 
-
 async function incrementInRedis(key: string, expireySeconds: number): Promise<number> {
     const redisConnection = await redisConnections.useExisting()
     const value = await redisConnection.incrby(key, 1)
@@ -47,4 +47,3 @@ async function incrementInRedis(key: string, expireySeconds: number): Promise<nu
     await redisConnection.expire(key, expireySeconds)
     return value
 }
-

@@ -3,11 +3,11 @@
     "compilerOptions": {
         "module": "commonjs",
         "rootDir": ".",
-    "baseUrl": ".",
-    "paths": {},
-    "outDir": "./dist",
+        "baseUrl": ".",
+        "paths": {},
+        "outDir": "./dist",
         "declaration": true,
-    "declarationMap": true,
+        "declarationMap": true,
         "types": ["node"]
     },
     "include": ["src/**/*.ts"],

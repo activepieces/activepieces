@@ -12,12 +12,7 @@ import {
 import { FastifyInstance, InjectOptions } from 'fastify'
 import { generateMockToken } from './auth'
 import { db } from './db'
-import {
-    createMockApiKey,
-    createMockProjectMember,
-    mockAndSaveBasicSetup,
-    mockBasicUser,
-} from './mocks'
+import { createMockApiKey, createMockProjectMember, mockAndSaveBasicSetup, mockBasicUser } from './mocks'
 
 export async function createTestContext(app: FastifyInstance, params?: TestContextParams): Promise<TestContext> {
     const { mockUserIdentity, mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
@@ -80,10 +75,7 @@ export async function createMemberContext(
     })
 }
 
-export async function createServiceContext(
-    app: FastifyInstance,
-    parentCtx: TestContext,
-): Promise<TestContext> {
+export async function createServiceContext(app: FastifyInstance, parentCtx: TestContext): Promise<TestContext> {
     const mockApiKey = createMockApiKey({
         platformId: parentCtx.platform.id,
     })
@@ -112,8 +104,7 @@ function buildContext(app: FastifyInstance, data: ContextData): TestContext {
                 if (bodyOrQuery) {
                     inject.query = bodyOrQuery as Record<string, string>
                 }
-            }
-            else {
+            } else {
                 inject.body = bodyOrQuery
             }
             if (opts?.query) {
@@ -176,6 +167,10 @@ export type TestContext = {
     get: (url: string, query?: Record<string, unknown>, opts?: RequestOptions) => ReturnType<FastifyInstance['inject']>
     post: (url: string, body?: Record<string, unknown>, opts?: RequestOptions) => ReturnType<FastifyInstance['inject']>
     put: (url: string, body?: Record<string, unknown>, opts?: RequestOptions) => ReturnType<FastifyInstance['inject']>
-    delete: (url: string, query?: Record<string, unknown>, opts?: RequestOptions) => ReturnType<FastifyInstance['inject']>
+    delete: (
+        url: string,
+        query?: Record<string, unknown>,
+        opts?: RequestOptions,
+    ) => ReturnType<FastifyInstance['inject']>
     inject: (opts: InjectOptions) => ReturnType<FastifyInstance['inject']>
 }

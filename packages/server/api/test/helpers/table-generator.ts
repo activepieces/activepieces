@@ -37,11 +37,8 @@ export const tableGenerator = {
             type: FieldType.STATIC_DROPDOWN,
             externalId: apId(),
             data: {
-                options: [
-                    { value: faker.lorem.word() },
-                    { value: faker.lorem.word() },
-                ],
+                options: [{ value: faker.lorem.word() }, { value: faker.lorem.word() }],
             },
         }
     },
-} 
+}

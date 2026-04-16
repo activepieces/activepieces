@@ -23,8 +23,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
             const smtpClient = initSmtpClient()
             try {
                 await smtpClient.verify()
-            }
-            catch (e) {
+            } catch (e) {
                 throw new ActivepiecesError({
                     code: ErrorCode.INVALID_SMTP_CREDENTIALS,
                     params: { message: String(e) },
@@ -37,45 +36,53 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
                 const emailSubject = getEmailSubject(templateData.name, templateData.vars)
                 const senderName = system.get(AppSystemProp.SMTP_SENDER_NAME)
                 const senderEmail = system.get(AppSystemProp.SMTP_SENDER_EMAIL)
-    
+
                 if (!smtpEmailSender(log).isSmtpConfigured()) {
                     log.error({ emailSubject }, '[smtpEmailSender#send] SMTP is not configured')
                     return
                 }
-    
+
                 const emailBody = await renderEmailBody({
                     platform,
                     templateData,
                 })
-    
+
                 const smtpClient = initSmtpClient()
-                log.info({
-                    emails,
-                    platformId,
-                    templateData,
-                }, '[smtpEmailSender#send] sending email')
+                log.info(
+                    {
+                        emails,
+                        platformId,
+                        templateData,
+                    },
+                    '[smtpEmailSender#send] sending email',
+                )
                 await smtpClient.sendMail({
                     from: `${senderName} <${senderEmail}>`,
                     to: emails.join(','),
                     subject: emailSubject,
                     html: emailBody,
                 })
-            }
-            catch (e) {
-                log.error({
-                    error: e,
-                    emails,
-                    platformId,
-                    title: templateData.name,
-                }, '[smtpEmailSender#send] error sending email')
+            } catch (e) {
+                log.error(
+                    {
+                        error: e,
+                        emails,
+                        platformId,
+                        title: templateData.name,
+                    },
+                    '[smtpEmailSender#send] error sending email',
+                )
                 throw e
             }
-          
         },
 
         isSmtpConfigured(): boolean {
-            return [AppSystemProp.SMTP_HOST, AppSystemProp.SMTP_PORT, AppSystemProp.SMTP_USERNAME, AppSystemProp.SMTP_PASSWORD]
-                .every(prop => !isNil(system.get(prop)))
+            return [
+                AppSystemProp.SMTP_HOST,
+                AppSystemProp.SMTP_PORT,
+                AppSystemProp.SMTP_USERNAME,
+                AppSystemProp.SMTP_PASSWORD,
+            ].every((prop) => !isNil(system.get(prop)))
         },
     }
 }
@@ -94,22 +101,26 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
     const fullLogoUrl = platform?.fullLogoUrl ?? defaultTheme.logos.fullLogoUrl
     const platformName = platform?.name ?? defaultTheme.websiteName
 
-    return Mustache.render(template, {
-        ...templateData.vars,
-        primaryColor,
-        fullLogoUrl,
-        platformName,
-        checkIssuesEnabled() {
-            return templateData.name === 'issue-created' && templateData.vars.isIssue === 'true'
+    return Mustache.render(
+        template,
+        {
+            ...templateData.vars,
+            primaryColor,
+            fullLogoUrl,
+            platformName,
+            checkIssuesEnabled() {
+                return templateData.name === 'issue-created' && templateData.vars.isIssue === 'true'
+            },
+            footerContent() {
+                return edition === ApEdition.CLOUD
+                    ? `   Activepieces, Inc. 398 11th Street,
+                    2nd floor, San Francisco, CA 94103`
+                    : ''
+            },
         },
-        footerContent() {
-            return edition === ApEdition.CLOUD ? `   Activepieces, Inc. 398 11th Street,
-                    2nd floor, San Francisco, CA 94103` : ''
+        {
+            footer,
         },
-    },
-    {
-        footer,
-    },
     )
 }
 

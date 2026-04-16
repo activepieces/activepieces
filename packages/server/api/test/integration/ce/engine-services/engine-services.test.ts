@@ -1,9 +1,8 @@
-import { AddressInfo } from 'net'
-import { ContextVersion } from '@activepieces/pieces-framework'
+import { ContextVersion, StoreScope } from '@activepieces/pieces-framework'
 import {
-    apId,
     AppConnectionStatus,
     AppConnectionType,
+    apId,
     ConnectionExpiredError,
     ConnectionNotFoundError,
     FetchError,
@@ -12,7 +11,12 @@ import {
     PrincipalType,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { AddressInfo } from 'net'
+import { createConnectionResolver } from '../../../../../engine/src/lib/piece-context/connection-resolver'
+import { createFileUploader } from '../../../../../engine/src/lib/piece-context/file-uploader'
+import { createFlowsContext } from '../../../../../engine/src/lib/piece-context/flows'
+import { createContextStore } from '../../../../../engine/src/lib/piece-context/store'
+import { encryptUtils } from '../../../../src/app/helper/encryption'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import {
@@ -21,12 +25,7 @@ import {
     createMockFlowVersion,
     mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
-import { encryptUtils } from '../../../../src/app/helper/encryption'
-import { createFlowsContext } from '../../../../../engine/src/lib/piece-context/flows'
-import { createConnectionResolver } from '../../../../../engine/src/lib/piece-context/connection-resolver'
-import { createContextStore } from '../../../../../engine/src/lib/piece-context/store'
-import { createFileUploader } from '../../../../../engine/src/lib/piece-context/file-uploader'
-import { StoreScope } from '@activepieces/pieces-framework'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 let apiUrl: string
@@ -97,7 +96,7 @@ describe('Engine Services Integration', () => {
             expect(Array.isArray(result.data)).toBe(true)
             expect(result.data.length).toBeGreaterThanOrEqual(1)
 
-            const populatedFlow = result.data.find(f => f.id === flowId)
+            const populatedFlow = result.data.find((f) => f.id === flowId)
             expect(populatedFlow).toBeDefined()
             expect(populatedFlow!.id).toBe(flowId)
             expect(populatedFlow!.projectId).toBe(projectId)
@@ -166,12 +165,15 @@ describe('Engine Services Integration', () => {
             }
             const encryptedValue = await encryptUtils.encryptObject(connectionValue)
 
-            const mockConn = createMockConnection({
-                platformId,
-                projectIds: [projectId],
-                externalId,
-                status: AppConnectionStatus.ACTIVE,
-            }, ownerId)
+            const mockConn = createMockConnection(
+                {
+                    platformId,
+                    projectIds: [projectId],
+                    externalId,
+                    status: AppConnectionStatus.ACTIVE,
+                },
+                ownerId,
+            )
 
             await db.save('app_connection', {
                 ...mockConn,
@@ -202,12 +204,15 @@ describe('Engine Services Integration', () => {
             }
             const encryptedValue = await encryptUtils.encryptObject(connectionValue)
 
-            const mockConn = createMockConnection({
-                platformId,
-                projectIds: [projectId],
-                externalId,
-                status: AppConnectionStatus.ACTIVE,
-            }, ownerId)
+            const mockConn = createMockConnection(
+                {
+                    platformId,
+                    projectIds: [projectId],
+                    externalId,
+                    status: AppConnectionStatus.ACTIVE,
+                },
+                ownerId,
+            )
 
             await db.save('app_connection', {
                 ...mockConn,
@@ -245,11 +250,14 @@ describe('Engine Services Integration', () => {
             }
             const encryptedValue = await encryptUtils.encryptObject(connectionValue)
 
-            const mockConn = createMockConnection({
-                platformId,
-                projectIds: [projectId],
-                externalId,
-            }, ownerId)
+            const mockConn = createMockConnection(
+                {
+                    platformId,
+                    projectIds: [projectId],
+                    externalId,
+                },
+                ownerId,
+            )
 
             await db.save('app_connection', {
                 ...mockConn,
@@ -350,12 +358,10 @@ describe('Engine Services Integration', () => {
 
                 expect(typeof result).toBe('string')
                 expect(result).toContain('/v1/step-files/signed?token=')
-            }
-            finally {
+            } finally {
                 if (originalMaxFileSize === undefined) {
                     delete process.env.AP_MAX_FILE_SIZE_MB
-                }
-                else {
+                } else {
                     process.env.AP_MAX_FILE_SIZE_MB = originalMaxFileSize
                 }
             }
@@ -379,12 +385,10 @@ describe('Engine Services Integration', () => {
                         data: Buffer.from('this data is too large for the limit'),
                     }),
                 ).rejects.toThrow()
-            }
-            finally {
+            } finally {
                 if (originalMaxFileSize === undefined) {
                     delete process.env.AP_MAX_FILE_SIZE_MB
-                }
-                else {
+                } else {
                     process.env.AP_MAX_FILE_SIZE_MB = originalMaxFileSize
                 }
             }

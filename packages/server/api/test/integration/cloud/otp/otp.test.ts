@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { OtpType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -7,6 +6,7 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
 import { db } from '../../../helpers/db'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -32,7 +32,6 @@ beforeEach(() => {
         sendBadgeAwardedEmail: vi.fn(),
         sendProjectMemberAdded: vi.fn(),
     }))
-
 })
 describe('OTP API', () => {
     describe('Create and Send Endpoint', () => {
@@ -77,13 +76,15 @@ describe('OTP API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
             expect(sendOtpSpy).toHaveBeenCalledTimes(1)
-            expect(sendOtpSpy).toHaveBeenCalledWith(expect.objectContaining({
-                otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
-                type: OtpType.EMAIL_VERIFICATION,
-                userIdentity: expect.objectContaining({
-                    email: mockUserIdentity.email,
+            expect(sendOtpSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
+                    type: OtpType.EMAIL_VERIFICATION,
+                    userIdentity: expect.objectContaining({
+                        email: mockUserIdentity.email,
+                    }),
                 }),
-            }))
+            )
         })
 
         it('OTP is unique per user per OTP type', async () => {

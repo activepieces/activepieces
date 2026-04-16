@@ -1,8 +1,8 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const asknewsAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: `
+    displayName: 'API Key',
+    description: `
 To obtain your AskNews API key:
 
 1. Visit [AskNews](https://asknews.app)
@@ -11,5 +11,5 @@ To obtain your AskNews API key:
 4. Generate a new API key
 5. Copy and paste the key here
 `,
-  required: true,
-});
+    required: true,
+})

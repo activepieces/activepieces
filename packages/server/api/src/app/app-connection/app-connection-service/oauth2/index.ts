@@ -1,20 +1,11 @@
-import {
-    AppConnectionType,
-    PlatformOAuth2ConnectionValue,
-} from '@activepieces/shared'
+import { AppConnectionType, PlatformOAuth2ConnectionValue } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import {
-    ClaimOAuth2Request,
-    OAuth2Service,
-    RefreshOAuth2Request,
-} from './oauth2-service'
+import { ClaimOAuth2Request, OAuth2Service, RefreshOAuth2Request } from './oauth2-service'
 import { cloudOAuth2Service } from './services/cloud-oauth2-service'
 import { credentialsOauth2Service } from './services/credentials-oauth2-service'
 
 const unimplementedService = (_log: FastifyBaseLogger): OAuth2Service<PlatformOAuth2ConnectionValue> => ({
-    claim: async (
-        _req: ClaimOAuth2Request,
-    ): Promise<PlatformOAuth2ConnectionValue> => {
+    claim: async (_req: ClaimOAuth2Request): Promise<PlatformOAuth2ConnectionValue> => {
         throw new Error('Unimplemented platform oauth')
     },
     refresh: async (

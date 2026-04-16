@@ -1,7 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-
-import { saleorAuth } from '../..';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { saleorAuth } from '../..'
 
 export const getOrder = createAction({
     name: 'getOrder',
@@ -9,14 +8,14 @@ export const getOrder = createAction({
     description: 'Get an order according to the ID',
     auth: saleorAuth,
     props: {
-      orderId: Property.ShortText({ 
-        displayName: 'The ID of the order',
-        required: true 
-      }),
+        orderId: Property.ShortText({
+            displayName: 'The ID of the order',
+            required: true,
+        }),
     },
-    async run({auth, propsValue}) {
+    async run({ auth, propsValue }) {
         const orderId = propsValue.orderId
-        const { token, apiUrl } = auth.props;
+        const { token, apiUrl } = auth.props
 
         const query = `
             query GetOrder($orderId: ID!) {
@@ -59,14 +58,14 @@ export const getOrder = createAction({
             method: HttpMethod.POST,
             body: JSON.stringify({
                 query: query,
-                variables: { orderId }
+                variables: { orderId },
             }),
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: token,
             },
-        });
+        })
 
-        return response;
+        return response
     },
-});
+})

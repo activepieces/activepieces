@@ -5,9 +5,9 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import {
+  type DayButton,
   DayPicker,
   getDefaultClassNames,
-  type DayButton,
 } from 'react-day-picker';
 
 import { Button, buttonVariants } from '@/components/ui/button';

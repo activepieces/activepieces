@@ -1,5 +1,5 @@
-import { TemplateType, isNil } from '@activepieces/shared';
-import { Navigate, useParams, useLocation } from 'react-router-dom';
+import { isNil, TemplateType } from '@activepieces/shared';
+import { Navigate, useLocation, useParams } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
 import { ProjectDashboardLayout } from '@/app/components/project-layout';

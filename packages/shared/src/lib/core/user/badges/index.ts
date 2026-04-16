@@ -5,7 +5,6 @@ export const UserBadge = z.object({
     ...BaseModelSchema,
     name: z.string(),
     userId: z.string(),
-
 })
 
 export type UserBadge = z.infer<typeof UserBadge>
@@ -19,16 +18,16 @@ export const BADGES = {
     'on-a-roll': {
         imageUrl: 'https://cdn.activepieces.com/badges/on-a-roll.gif',
         title: 'On a Roll',
-        description: 'I have 5 active flows and I\'m getting the hang of this.',
+        description: "I have 5 active flows and I'm getting the hang of this.",
     },
     'automation-addict': {
         imageUrl: 'https://cdn.activepieces.com/badges/automation-addict.gif',
         title: 'Automation Addict',
-        description: 'I have 10 active flows and I\'m basically an automation pro.',
+        description: "I have 10 active flows and I'm basically an automation pro.",
     },
     'cant-stop': {
         imageUrl: 'https://cdn.activepieces.com/badges/cant-stop.gif',
-        title: 'Can\'t Stop',
+        title: "Can't Stop",
         description: 'I have 50 active flows and automation just happens around me.',
     },
     'webhook-wizard': {
@@ -51,7 +50,7 @@ export const BADGES = {
         title: 'Back Again',
         description: 'I tested a flow and it failed to run... but I learned something valuable.',
     },
-    'victory': {
+    victory: {
         imageUrl: 'https://cdn.activepieces.com/badges/victory.gif',
         title: 'Victory',
         description: 'I tested a flow and it ran successfully... the joy is real!',

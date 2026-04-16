@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sapAribaAuth } from '../auth';
-import { sapAribaCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { sapAribaAuth } from '../auth'
+import { sapAribaCommon } from '../common'
 
 export const getDocumentChanges = createAction({
     auth: sapAribaAuth,
@@ -37,33 +37,27 @@ export const getDocumentChanges = createAction({
         }),
     },
     async run(context) {
-        const { realm, changeSequenceId, count, top, skip } = context.propsValue;
+        const { realm, changeSequenceId, count, top, skip } = context.propsValue
 
         const queryParams: Record<string, string> = {
             realm,
-        };
+        }
 
         if (changeSequenceId !== undefined && changeSequenceId !== null) {
-            queryParams['$filter'] = `changeSequenceId gt ${changeSequenceId}`;
+            queryParams['$filter'] = `changeSequenceId gt ${changeSequenceId}`
         }
         if (count) {
-            queryParams['$count'] = 'true';
+            queryParams['$count'] = 'true'
         }
         if (top) {
-            queryParams['$top'] = top.toString();
+            queryParams['$top'] = top.toString()
         }
         if (skip) {
-            queryParams['$skip'] = skip.toString();
+            queryParams['$skip'] = skip.toString()
         }
 
-        const response = await sapAribaCommon.makeRequest(
-            context.auth,
-            HttpMethod.GET,
-            '/changes',
-            queryParams
-        );
+        const response = await sapAribaCommon.makeRequest(context.auth, HttpMethod.GET, '/changes', queryParams)
 
-        return response;
+        return response
     },
-});
-
+})

@@ -1,6 +1,6 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import Odoo from "../../commom/index";
-import { odooAuth } from '../auth';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import Odoo from '../../commom/index'
+import { odooAuth } from '../auth'
 
 export default createAction({
     name: 'create_record',
@@ -10,7 +10,7 @@ export default createAction({
     props: {
         model: Property.ShortText({
             displayName: 'Model',
-            description: "Model name. e.g.: res.partner",
+            description: 'Model name. e.g.: res.partner',
             required: true,
             defaultValue: 'res.partner',
         }),
@@ -19,10 +19,10 @@ export default createAction({
             description: 'JSON object of field names and their corresponding values',
             required: true,
             defaultValue: {
-                "name": "New Partner",
-                "email": "newpartner@example.com"
+                name: 'New Partner',
+                email: 'newpartner@example.com',
             },
-        })
+        }),
     },
     async run(context) {
         const odoo = new Odoo({
@@ -31,17 +31,16 @@ export default createAction({
             db: context.auth.props.database,
             username: context.auth.props.username,
             password: context.auth.props.api_key,
-        });
+        })
 
         try {
-            await odoo.connect();
-            const fields = context.propsValue.fields;
-            const model = context.propsValue.model;
-            const recordId = await odoo.createRecord({ model, fields });
-            return { id: recordId };
+            await odoo.connect()
+            const fields = context.propsValue.fields
+            const model = context.propsValue.model
+            const recordId = await odoo.createRecord({ model, fields })
+            return { id: recordId }
         } catch (err) {
-            return err;
+            return err
         }
-    }
-});
-
+    },
+})

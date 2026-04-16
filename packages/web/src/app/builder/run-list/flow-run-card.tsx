@@ -18,9 +18,9 @@ import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
+  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuContent,
 } from '@/components/ui/dropdown-menu';
 import {
   Tooltip,
@@ -219,4 +219,5 @@ const FlowRunCard = React.memo(
 );
 
 FlowRunCard.displayName = 'FlowRunCard';
+
 export { FlowRunCard };

@@ -28,5 +28,4 @@ export class RemoveAgentidFromMcpEntity1760452015041 implements MigrationInterfa
             ADD CONSTRAINT "fk_mcp_agent_id" FOREIGN KEY ("agentId") REFERENCES "agent"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
     }
-
 }

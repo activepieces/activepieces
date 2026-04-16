@@ -20,16 +20,13 @@ export class RemoveOpenRounterKeysFromPlatformPlan1766094015801 implements Migra
 
             const encryptedConfig = await encryptUtils.encryptObject(config)
 
-            await queryRunner.query(`
+            await queryRunner.query(
+                `
                 INSERT INTO "ai_provider" ("id", "platformId", "provider", "displayName", "config", "created", "updated")
                 VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-            `, [
-                apId(),
-                plan.platformId,
-                AIProviderName.ACTIVEPIECES,
-                'Activepieces',
-                encryptedConfig,
-            ])
+            `,
+                [apId(), plan.platformId, AIProviderName.ACTIVEPIECES, 'Activepieces', encryptedConfig],
+            )
         }
 
         await queryRunner.query(`
@@ -50,5 +47,4 @@ export class RemoveOpenRounterKeysFromPlatformPlan1766094015801 implements Migra
             ADD "openRouterApiKeyHash" character varying
         `)
     }
-
 }

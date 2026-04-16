@@ -10,8 +10,8 @@ import {
     PrincipalType,
     ProjectType,
     ProjectWithLimits,
-    SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    SeekPage,
     TeamProjectsLimit,
     UpdateProjectPlatformRequest,
 } from '@activepieces/shared'
@@ -29,11 +29,9 @@ import { platformProjectService } from './platform-project-service'
 const DEFAULT_LIMIT_SIZE = 50
 
 export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
-
     app.get('/:id', GetProjectRequest, async (request) => {
         return platformProjectService(request.log).getWithPlanAndUsageOrThrow(request.projectId)
     })
-
 
     app.post('/', CreateProjectRequest, async (request, reply) => {
         const platformId = request.principal.platform.id
@@ -68,11 +66,15 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
     app.post('/:id', UpdateProjectRequest, async (request) => {
         const project = await projectService(request.log).getOneOrThrow(request.params.id)
         const haveTokenForTheProject = request.projectId === project.id
-        const ownThePlatform = await isPlatformAdmin({
-            platformId: request.principal.platform.id,
-            type: request.principal.type,
-            id: request.principal.id,
-        }, project.platformId, request.log)
+        const ownThePlatform = await isPlatformAdmin(
+            {
+                platformId: request.principal.platform.id,
+                type: request.principal.type,
+                id: request.principal.id,
+            },
+            project.platformId,
+            request.log,
+        )
         if (!haveTokenForTheProject && !ownThePlatform) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -108,11 +110,15 @@ async function getUserId(principal: Principal, log: FastifyBaseLogger): Promise<
     return principal.id
 }
 
-async function isPlatformAdmin(principal: {
-    platformId: string
-    type: PrincipalType
-    id: string
-}, projectPlatformId: string, log: FastifyBaseLogger): Promise<boolean> {
+async function isPlatformAdmin(
+    principal: {
+        platformId: string
+        type: PrincipalType
+        id: string
+    },
+    projectPlatformId: string,
+    log: FastifyBaseLogger,
+): Promise<boolean> {
     if (principal.platformId !== projectPlatformId) {
         return false
     }
@@ -124,9 +130,6 @@ async function isPlatformAdmin(principal: {
     })
     return user.platformRole === PlatformRole.ADMIN
 }
-
-
-
 
 async function assertProjectToDeleteIsNotPersonalProject(projectId: string, log: FastifyBaseLogger): Promise<void> {
     const project = await projectService(log).getOneOrThrow(projectId)
@@ -140,7 +143,10 @@ async function assertProjectToDeleteIsNotPersonalProject(projectId: string, log:
     }
 }
 
-async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string, log: FastifyBaseLogger): Promise<void> {
+async function assertMaximumNumberOfProjectsReachedByEdition(
+    platformId: string,
+    log: FastifyBaseLogger,
+): Promise<void> {
     const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
 
     switch (platform.plan.teamProjectsLimit) {
@@ -158,7 +164,8 @@ async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string,
                 throw new ActivepiecesError({
                     code: ErrorCode.FEATURE_DISABLED,
                     params: {
-                        message: 'Maximum limit of 1 team project reached for this plan. Upgrade your plan to add more team projects.',
+                        message:
+                            'Maximum limit of 1 team project reached for this plan. Upgrade your plan to add more team projects.',
                     },
                 })
             }
@@ -172,12 +179,10 @@ async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string,
 
 const GetProjectRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE],
-            undefined, {
-                type: ProjectResourceType.PARAM,
-                paramKey: 'id',
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], undefined, {
+            type: ProjectResourceType.PARAM,
+            paramKey: 'id',
+        }),
     },
 }
 

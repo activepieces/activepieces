@@ -1,7 +1,13 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { cambaiAuth } from '../auth';
-import { API_BASE_URL, listSourceLanguagesDropdown, listTargetLanguagesDropdown ,POLLING_INTERVAL_MS,MAX_POLLING_ATTEMPTS} from '../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { cambaiAuth } from '../auth'
+import {
+    API_BASE_URL,
+    listSourceLanguagesDropdown,
+    listTargetLanguagesDropdown,
+    MAX_POLLING_ATTEMPTS,
+    POLLING_INTERVAL_MS,
+} from '../common'
 
 export const createTranslation = createAction({
     auth: cambaiAuth,
@@ -11,7 +17,8 @@ export const createTranslation = createAction({
     props: {
         texts: Property.LongText({
             displayName: 'Text to Translate',
-            description: 'The text to be translated. You can enter multiple lines; each line will be treated as a separate text segment.',
+            description:
+                'The text to be translated. You can enter multiple lines; each line will be treated as a separate text segment.',
             required: true,
         }),
         source_language: listSourceLanguagesDropdown,
@@ -24,8 +31,8 @@ export const createTranslation = createAction({
                 options: [
                     { label: 'Formal', value: 1 },
                     { label: 'Informal', value: 2 },
-                ]
-            }
+                ],
+            },
         }),
         gender: Property.StaticDropdown({
             displayName: 'Gender',
@@ -38,7 +45,7 @@ export const createTranslation = createAction({
                     { label: 'Neutral', value: 0 },
                     { label: 'Unspecified', value: 9 },
                 ],
-            }
+            },
         }),
         age: Property.Number({
             displayName: 'Audience Age',
@@ -52,62 +59,57 @@ export const createTranslation = createAction({
         }),
     },
     async run(context) {
-        const { auth } = context;
-        const { texts, source_language, target_language, formality, gender, age, project_name } = context.propsValue;
+        const { auth } = context
+        const { texts, source_language, target_language, formality, gender, age, project_name } = context.propsValue
 
         const payload: Record<string, unknown> = {
-            texts: texts.split('\n').filter(line => line.trim().length > 0),
+            texts: texts.split('\n').filter((line) => line.trim().length > 0),
             source_language: Number(source_language),
             target_language: Number(target_language),
-        };
-        if (formality !== undefined) payload['formality'] = formality;
-        if (gender !== undefined) payload['gender'] = gender;
-        if (age) payload['age'] = age;
-        if (project_name) payload['project_name'] = project_name;
+        }
+        if (formality !== undefined) payload['formality'] = formality
+        if (gender !== undefined) payload['gender'] = gender
+        if (age) payload['age'] = age
+        if (project_name) payload['project_name'] = project_name
 
         const initialResponse = await httpClient.sendRequest<{ task_id: string }>({
             method: HttpMethod.POST,
             url: `${API_BASE_URL}/translate`,
             headers: { 'x-api-key': auth.secret_text, 'Content-Type': 'application/json' },
             body: payload,
-        });
-        const taskId = initialResponse.body.task_id;
-        let run_id: string | null = null;
-        
-        let attempts = 0;
+        })
+        const taskId = initialResponse.body.task_id
+        let run_id: string | null = null
+
+        let attempts = 0
         while (attempts < MAX_POLLING_ATTEMPTS) {
             const statusResponse = await httpClient.sendRequest<{ status: string; run_id?: string }>({
                 method: HttpMethod.GET,
                 url: `${API_BASE_URL}/translate/${taskId}`,
                 headers: { 'x-api-key': auth.secret_text },
-            });
-          
-            if (statusResponse.body.status === 'SUCCESS') {
+            })
 
-                run_id = statusResponse.body.run_id ?? null;
-                break;
+            if (statusResponse.body.status === 'SUCCESS') {
+                run_id = statusResponse.body.run_id ?? null
+                break
             }
             if (statusResponse.body.status === 'ERROR' || statusResponse.body.status === 'FAILED') {
-
-                throw new Error(`Translation task failed: ${JSON.stringify(statusResponse.body)}`);
+                throw new Error(`Translation task failed: ${JSON.stringify(statusResponse.body)}`)
             }
-            await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
-            attempts++;
+            await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL_MS))
+            attempts++
         }
-        
 
         if (!run_id) {
-            throw new Error("Translation task timed out or failed to return a task_id.");
+            throw new Error('Translation task timed out or failed to return a task_id.')
         }
 
         const resultResponse = await httpClient.sendRequest<{ translations: string[] }>({
             method: HttpMethod.GET,
             url: `${API_BASE_URL}/translation-result/${run_id}`,
             headers: { 'x-api-key': auth.secret_text },
-        }); 
+        })
 
-        return resultResponse.body;
-
-        
+        return resultResponse.body
     },
-});
+})

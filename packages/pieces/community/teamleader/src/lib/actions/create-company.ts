@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { teamleaderAuth } from '../common/auth';
-import { teamleaderCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { teamleaderAuth } from '../common/auth'
+import { teamleaderCommon } from '../common/client'
 
 export const createCompany = createAction({
     name: 'create_company',
@@ -20,23 +20,25 @@ export const createCompany = createAction({
             required: false,
         }),
         business_type_id: Property.Dropdown({
-          auth:teamleaderAuth,
+            auth: teamleaderAuth,
             displayName: 'Business Type',
             description: 'Legal structure of the company',
             required: false,
             refreshers: ['country_for_business_type'],
             options: async ({ auth, country_for_business_type }) => {
-                if (!auth) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please authenticate first'
-                };
+                if (!auth)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please authenticate first',
+                    }
 
-                if (!country_for_business_type) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please select a country first'
-                };
+                if (!country_for_business_type)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please select a country first',
+                    }
 
                 try {
                     const response = await teamleaderCommon.apiCall({
@@ -44,25 +46,25 @@ export const createCompany = createAction({
                         method: HttpMethod.POST,
                         resourceUri: '/businessTypes.list',
                         body: {
-                            country: country_for_business_type
-                        }
-                    });
+                            country: country_for_business_type,
+                        },
+                    })
 
                     return {
                         disabled: false,
                         options: response.body.data.map((businessType: any) => ({
                             label: businessType.name,
-                            value: businessType.id
-                        }))
-                    };
+                            value: businessType.id,
+                        })),
+                    }
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading business types'
-                    };
+                        placeholder: 'Error loading business types',
+                    }
                 }
-            }
+            },
         }),
         vat_number: Property.ShortText({
             displayName: 'VAT Number',
@@ -85,15 +87,15 @@ export const createCompany = createAction({
                     options: {
                         options: [
                             { label: 'Primary', value: 'primary' },
-                            { label: 'Invoicing', value: 'invoicing' }
-                        ]
-                    }
+                            { label: 'Invoicing', value: 'invoicing' },
+                        ],
+                    },
                 }),
                 email: Property.ShortText({
                     displayName: 'Email Address',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         telephones: Property.Array({
             displayName: 'Phone Numbers',
@@ -106,15 +108,15 @@ export const createCompany = createAction({
                     options: {
                         options: [
                             { label: 'Phone', value: 'phone' },
-                            { label: 'Fax', value: 'fax' }
-                        ]
-                    }
+                            { label: 'Fax', value: 'fax' },
+                        ],
+                    },
                 }),
                 number: Property.ShortText({
                     displayName: 'Phone Number',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         website: Property.ShortText({
             displayName: 'Website',
@@ -134,9 +136,9 @@ export const createCompany = createAction({
                             { label: 'Primary', value: 'primary' },
                             { label: 'Invoicing', value: 'invoicing' },
                             { label: 'Delivery', value: 'delivery' },
-                            { label: 'Visiting', value: 'visiting' }
-                        ]
-                    }
+                            { label: 'Visiting', value: 'visiting' },
+                        ],
+                    },
                 }),
                 line_1: Property.ShortText({
                     displayName: 'Address Line 1',
@@ -164,8 +166,8 @@ export const createCompany = createAction({
                     displayName: 'Addressee',
                     description: 'Name/company for this address',
                     required: false,
-                })
-            }
+                }),
+            },
         }),
         iban: Property.ShortText({
             displayName: 'IBAN',
@@ -200,8 +202,8 @@ export const createCompany = createAction({
                 tag: Property.ShortText({
                     displayName: 'Tag',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         custom_fields: Property.Array({
             displayName: 'Custom Fields',
@@ -217,8 +219,8 @@ export const createCompany = createAction({
                     displayName: 'Value',
                     description: 'Field value (string, number, or boolean)',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         marketing_mails_consent: Property.Checkbox({
             displayName: 'Marketing Consent',
@@ -253,44 +255,45 @@ export const createCompany = createAction({
                     { label: 'Peruvian Sol (PEN)', value: 'PEN' },
                     { label: 'Moroccan Dirham (MAD)', value: 'MAD' },
                     { label: 'Icelandic Krona (ISK)', value: 'ISK' },
-                    { label: 'Bosnia and Herzegovina Mark (BAM)', value: 'BAM' }
-                ]
-            }
+                    { label: 'Bosnia and Herzegovina Mark (BAM)', value: 'BAM' },
+                ],
+            },
         }),
     },
     async run(context) {
         const company: Record<string, any> = {
             name: context.propsValue.name,
-        };
+        }
 
-        if (context.propsValue.business_type_id) company['business_type_id'] = context.propsValue.business_type_id;
-        if (context.propsValue.vat_number) company['vat_number'] = context.propsValue.vat_number;
+        if (context.propsValue.business_type_id) company['business_type_id'] = context.propsValue.business_type_id
+        if (context.propsValue.vat_number) company['vat_number'] = context.propsValue.vat_number
         if (context.propsValue.national_identification_number) {
-            company['national_identification_number'] = context.propsValue.national_identification_number;
+            company['national_identification_number'] = context.propsValue.national_identification_number
         }
-        if (context.propsValue.website) company['website'] = context.propsValue.website;
-        if (context.propsValue.iban) company['iban'] = context.propsValue.iban;
-        if (context.propsValue.bic) company['bic'] = context.propsValue.bic;
-        if (context.propsValue.language) company['language'] = context.propsValue.language;
-        if (context.propsValue.responsible_user_id) company['responsible_user_id'] = context.propsValue.responsible_user_id;
-        if (context.propsValue.remarks) company['remarks'] = context.propsValue.remarks;
+        if (context.propsValue.website) company['website'] = context.propsValue.website
+        if (context.propsValue.iban) company['iban'] = context.propsValue.iban
+        if (context.propsValue.bic) company['bic'] = context.propsValue.bic
+        if (context.propsValue.language) company['language'] = context.propsValue.language
+        if (context.propsValue.responsible_user_id)
+            company['responsible_user_id'] = context.propsValue.responsible_user_id
+        if (context.propsValue.remarks) company['remarks'] = context.propsValue.remarks
         if (context.propsValue.marketing_mails_consent !== undefined) {
-            company['marketing_mails_consent'] = context.propsValue.marketing_mails_consent;
+            company['marketing_mails_consent'] = context.propsValue.marketing_mails_consent
         }
-        if (context.propsValue.preferred_currency) company['preferred_currency'] = context.propsValue.preferred_currency;
+        if (context.propsValue.preferred_currency) company['preferred_currency'] = context.propsValue.preferred_currency
 
         if (context.propsValue.emails && context.propsValue.emails.length > 0) {
             company['emails'] = context.propsValue.emails.map((emailObj: any) => ({
                 type: emailObj.type,
-                email: emailObj.email
-            }));
+                email: emailObj.email,
+            }))
         }
 
         if (context.propsValue.telephones && context.propsValue.telephones.length > 0) {
             company['telephones'] = context.propsValue.telephones.map((phoneObj: any) => ({
                 type: phoneObj.type,
-                number: phoneObj.number
-            }));
+                number: phoneObj.number,
+            }))
         }
 
         if (context.propsValue.addresses && context.propsValue.addresses.length > 0) {
@@ -302,29 +305,29 @@ export const createCompany = createAction({
                     city: addressObj.city || null,
                     country: addressObj.country,
                     ...(addressObj.area_level_two_id && { area_level_two_id: addressObj.area_level_two_id }),
-                    ...(addressObj.addressee && { addressee: addressObj.addressee })
-                }
-            }));
+                    ...(addressObj.addressee && { addressee: addressObj.addressee }),
+                },
+            }))
         }
 
         if (context.propsValue.tags && context.propsValue.tags.length > 0) {
-            company['tags'] = context.propsValue.tags.map((tagObj: any) => tagObj.tag);
+            company['tags'] = context.propsValue.tags.map((tagObj: any) => tagObj.tag)
         }
 
         if (context.propsValue.custom_fields && context.propsValue.custom_fields.length > 0) {
             company['custom_fields'] = context.propsValue.custom_fields.map((fieldObj: any) => ({
                 id: fieldObj.id,
-                value: fieldObj.value
-            }));
+                value: fieldObj.value,
+            }))
         }
 
         const response = await teamleaderCommon.apiCall({
             auth: context.auth,
             method: HttpMethod.POST,
             resourceUri: '/companies.add',
-            body: company
-        });
+            body: company,
+        })
 
-        return response.body;
+        return response.body
     },
-});
+})

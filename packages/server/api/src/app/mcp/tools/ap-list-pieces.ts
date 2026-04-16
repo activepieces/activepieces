@@ -1,10 +1,4 @@
-import {
-    LocalesEnum,
-    McpServer,
-    McpToolDefinition,
-    PieceCategory,
-    SuggestionType,
-} from '@activepieces/shared'
+import { LocalesEnum, McpServer, McpToolDefinition, PieceCategory, SuggestionType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
@@ -23,15 +17,22 @@ const listPiecesSchema = z.object({
 export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_pieces',
-        description: 'List available pieces with their actions and triggers. Use includeActions/includeTriggers for details.',
+        description:
+            'List available pieces with their actions and triggers. Use includeActions/includeTriggers for details.',
         inputSchema: {
             categories: listPiecesSchema.shape.categories,
             tags: listPiecesSchema.shape.tags,
             searchQuery: listPiecesSchema.shape.searchQuery,
             suggestionType: listPiecesSchema.shape.suggestionType,
             locale: listPiecesSchema.shape.locale,
-            includeActions: z.boolean().optional().describe('When true, include action names and descriptions for each piece'),
-            includeTriggers: z.boolean().optional().describe('When true, include trigger names and descriptions for each piece'),
+            includeActions: z
+                .boolean()
+                .optional()
+                .describe('When true, include action names and descriptions for each piece'),
+            includeTriggers: z
+                .boolean()
+                .optional()
+                .describe('When true, include trigger names and descriptions for each piece'),
         },
         annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -50,7 +51,7 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 if (!params.includeActions && !params.includeTriggers) {
                     const totalCount = pieces.length
                     const LIST_CAP = 50
-                    const capped = pieces.slice(0, LIST_CAP).map(p => ({
+                    const capped = pieces.slice(0, LIST_CAP).map((p) => ({
                         name: p.name,
                         displayName: p.displayName,
                         version: p.version,
@@ -58,57 +59,69 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                         actions: p.actions,
                         triggers: p.triggers,
                     }))
-                    const hint = totalCount > LIST_CAP ? ` (showing ${LIST_CAP} of ${totalCount} — use searchQuery to narrow results)` : ''
+                    const hint =
+                        totalCount > LIST_CAP
+                            ? ` (showing ${LIST_CAP} of ${totalCount} — use searchQuery to narrow results)`
+                            : ''
                     return {
-                        content: [{ type: 'text', text: `✅ Successfully listed pieces${hint}:\n${JSON.stringify(capped)}` }],
+                        content: [
+                            { type: 'text', text: `✅ Successfully listed pieces${hint}:\n${JSON.stringify(capped)}` },
+                        ],
                     }
                 }
 
                 const totalCount = pieces.length
                 const ENRICHED_CAP = 10
                 const piecesToEnrich = pieces.slice(0, ENRICHED_CAP)
-                const enrichedPieces = await Promise.all(piecesToEnrich.map(async (piece) => {
-                    const base: Record<string, unknown> = {
-                        name: piece.name,
-                        displayName: piece.displayName,
-                        version: piece.version,
-                        description: piece.description,
-                    }
-                    const fullPiece = await pieceMetadataService(log).get({
-                        name: piece.name,
-                        version: piece.version,
-                        projectId: mcp.projectId,
-                        platformId: undefined,
-                    })
-                    if (fullPiece) {
-                        if (params.includeActions) {
-                            base.actions = Object.values(fullPiece.actions).map(a => ({
-                                name: a.name,
-                                displayName: a.displayName,
-                                description: a.description,
-                                requireAuth: a.requireAuth,
-                            }))
+                const enrichedPieces = await Promise.all(
+                    piecesToEnrich.map(async (piece) => {
+                        const base: Record<string, unknown> = {
+                            name: piece.name,
+                            displayName: piece.displayName,
+                            version: piece.version,
+                            description: piece.description,
                         }
-                        if (params.includeTriggers) {
-                            base.triggers = Object.values(fullPiece.triggers).map(t => ({
-                                name: t.name,
-                                displayName: t.displayName,
-                                description: t.description,
-                                requireAuth: t.requireAuth,
-                            }))
+                        const fullPiece = await pieceMetadataService(log).get({
+                            name: piece.name,
+                            version: piece.version,
+                            projectId: mcp.projectId,
+                            platformId: undefined,
+                        })
+                        if (fullPiece) {
+                            if (params.includeActions) {
+                                base.actions = Object.values(fullPiece.actions).map((a) => ({
+                                    name: a.name,
+                                    displayName: a.displayName,
+                                    description: a.description,
+                                    requireAuth: a.requireAuth,
+                                }))
+                            }
+                            if (params.includeTriggers) {
+                                base.triggers = Object.values(fullPiece.triggers).map((t) => ({
+                                    name: t.name,
+                                    displayName: t.displayName,
+                                    description: t.description,
+                                    requireAuth: t.requireAuth,
+                                }))
+                            }
                         }
-                    }
-                    return base
-                }))
+                        return base
+                    }),
+                )
 
-                const overflowHint = totalCount > ENRICHED_CAP
-                    ? ` (showing top ${ENRICHED_CAP} of ${totalCount} results — use a more specific searchQuery to narrow results)`
-                    : ''
+                const overflowHint =
+                    totalCount > ENRICHED_CAP
+                        ? ` (showing top ${ENRICHED_CAP} of ${totalCount} results — use a more specific searchQuery to narrow results)`
+                        : ''
                 return {
-                    content: [{ type: 'text', text: `✅ Successfully listed pieces${overflowHint}:\n${JSON.stringify(enrichedPieces)}` }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `✅ Successfully listed pieces${overflowHint}:\n${JSON.stringify(enrichedPieces)}`,
+                        },
+                    ],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 return mcpUtils.mcpToolError('Failed to list pieces', err)
             }
         },

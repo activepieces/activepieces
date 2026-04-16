@@ -8,9 +8,9 @@ import type {
 } from '@dnd-kit/core';
 import {
   closestCenter,
-  defaultDropAnimationSideEffects,
   DndContext,
   DragOverlay,
+  defaultDropAnimationSideEffects,
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
@@ -26,9 +26,9 @@ import {
   arrayMove,
   horizontalListSortingStrategy,
   SortableContext,
+  type SortableContextProps,
   useSortable,
   verticalListSortingStrategy,
-  type SortableContextProps,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Slot } from 'radix-ui';

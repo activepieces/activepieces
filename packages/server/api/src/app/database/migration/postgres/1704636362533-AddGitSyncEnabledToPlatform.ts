@@ -2,8 +2,7 @@ import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
-export class AddGitSyncEnabledToPlatform1704636362533
-implements MigrationInterface {
+export class AddGitSyncEnabledToPlatform1704636362533 implements MigrationInterface {
     name = 'AddGitSyncEnabledToPlatform1704636362533'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

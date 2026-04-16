@@ -180,5 +180,4 @@ export class RemoveDefaultLocaleFromPlatform1749735242946 implements MigrationIn
             DROP TABLE "temporary_platform"
         `)
     }
-
 }

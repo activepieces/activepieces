@@ -1,12 +1,12 @@
 {
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "rootDir": ".",
-    "baseUrl": ".",
-    "paths": {},
-    "outDir": "./dist",
-    "declaration": true,
-    "types": ["node"]
-  },
-  "include": ["src/**/*.ts"]
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "rootDir": ".",
+        "baseUrl": ".",
+        "paths": {},
+        "outDir": "./dist",
+        "declaration": true,
+        "types": ["node"]
+    },
+    "include": ["src/**/*.ts"]
 }

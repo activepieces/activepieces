@@ -1,10 +1,9 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { autocallsAuth } from '../..';
-import { baseApiUrl } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { autocallsAuth, baseApiUrl } from '../..'
 
 export const inboundCall = createTrigger({
-    auth:autocallsAuth,
+    auth: autocallsAuth,
     name: 'inboundCall',
     displayName: 'Inbound Call',
     description: 'Triggers for variables before connecting an inbound call.',
@@ -21,24 +20,24 @@ export const inboundCall = createTrigger({
                     method: HttpMethod.GET,
                     url: baseApiUrl + 'api/user/assistants',
                     headers: {
-                        Authorization: "Bearer " + auth?.secret_text,
+                        Authorization: 'Bearer ' + auth?.secret_text,
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json'
+                        Accept: 'application/json',
                     },
-                });
+                })
 
                 if (res.status !== 200) {
                     return {
                         disabled: true,
                         placeholder: 'Error fetching assistants',
                         options: [],
-                    };
+                    }
                 } else if (res.body.length === 0) {
                     return {
                         disabled: true,
                         placeholder: 'No assistants found. Create one first.',
                         options: [],
-                    };
+                    }
                 }
 
                 return {
@@ -46,8 +45,8 @@ export const inboundCall = createTrigger({
                         value: assistant.id,
                         label: assistant.name,
                     })),
-                };
-            }
+                }
+            },
         }),
     },
     sampleData: {
@@ -64,11 +63,11 @@ export const inboundCall = createTrigger({
                 webhook_url: context.webhookUrl,
             },
             headers: {
-                Authorization: "Bearer " + context.auth.secret_text,
+                Authorization: 'Bearer ' + context.auth.secret_text,
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                Accept: 'application/json',
             },
-        });
+        })
     },
     async onDisable(context) {
         await httpClient.sendRequest({
@@ -78,13 +77,13 @@ export const inboundCall = createTrigger({
                 assistant_id: context.propsValue['assistant'],
             },
             headers: {
-                Authorization: "Bearer " + context.auth.secret_text,
+                Authorization: 'Bearer ' + context.auth.secret_text,
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                Accept: 'application/json',
             },
-        });
+        })
     },
     async run(context) {
         return [context.payload.body]
-    }
+    },
 })

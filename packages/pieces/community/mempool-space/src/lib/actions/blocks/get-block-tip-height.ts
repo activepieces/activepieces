@@ -1,9 +1,9 @@
-import { createAction, PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { MEMPOOL_API_BASE_URL } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, PieceAuth } from '@activepieces/pieces-framework'
+import { MEMPOOL_API_BASE_URL } from '../../common'
 
 export const getBlockTipHeight = createAction({
- auth:PieceAuth.None(),
+    auth: PieceAuth.None(),
     name: 'get_block_tip_height',
     displayName: 'Get Block Tip Height',
     description: 'Returns the height of the last block',
@@ -13,7 +13,7 @@ export const getBlockTipHeight = createAction({
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${MEMPOOL_API_BASE_URL}/api/blocks/tip/height`,
-        });
-        return response.body;
+        })
+        return response.body
     },
-});
+})

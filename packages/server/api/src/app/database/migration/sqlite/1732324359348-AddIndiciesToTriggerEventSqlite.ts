@@ -20,5 +20,4 @@ export class AddIndiciesToTriggerEventSqlite1732324359348 implements MigrationIn
             DROP INDEX "idx_trigger_event_project_id_flow_id"
         `)
     }
-
 }

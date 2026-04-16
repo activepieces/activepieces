@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 const authGuide = `
 ### To obtain your Vimeo API access token, follow these steps:
@@ -10,12 +10,12 @@ const authGuide = `
 5. Scroll down and find "Your callback URLs" section, and add new URL. Make sure you copy the **Redirect URL** from the field below to Vimeo's redirect URL.
 6. Click **Connect** from below and allow access to your account.
 7. Save
-`;
+`
 
 export const vimeoAuth = PieceAuth.OAuth2({
-  description: authGuide,
-  authUrl: 'https://api.vimeo.com/oauth/authorize',
-  tokenUrl: 'https://api.vimeo.com/oauth/access_token',
-  required: true,
-  scope: ['public', 'private', 'edit', 'upload', 'delete', 'interact'],
-});
+    description: authGuide,
+    authUrl: 'https://api.vimeo.com/oauth/authorize',
+    tokenUrl: 'https://api.vimeo.com/oauth/access_token',
+    required: true,
+    scope: ['public', 'private', 'edit', 'upload', 'delete', 'interact'],
+})

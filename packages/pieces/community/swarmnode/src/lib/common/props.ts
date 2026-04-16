@@ -1,8 +1,8 @@
-import { Property } from "@activepieces/pieces-framework";
-import { swarmnodeAuth } from "./auth";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { BASE_URL } from "./constants";
-import { ListAgentResponse } from "./types";
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property } from '@activepieces/pieces-framework'
+import { swarmnodeAuth } from './auth'
+import { BASE_URL } from './constants'
+import { ListAgentResponse } from './types'
 
 export const agentIdDropdown = Property.Dropdown({
     displayName: 'Agent',
@@ -15,7 +15,7 @@ export const agentIdDropdown = Property.Dropdown({
                 disabled: true,
                 options: [],
                 placeholder: 'Please authenticate first',
-            };
+            }
         }
 
         const response = await httpClient.sendRequest<ListAgentResponse>({
@@ -23,18 +23,16 @@ export const agentIdDropdown = Property.Dropdown({
             url: BASE_URL + '/agents/',
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: auth.secret_text
-            }
+                token: auth.secret_text,
+            },
         })
 
         return {
             disabled: false,
             options: response.body.results.map((agent) => ({
                 label: agent.name,
-                value: agent.id
-            }))
+                value: agent.id,
+            })),
         }
-
-
-    }
+    },
 })

@@ -1,8 +1,6 @@
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
-
-
 export const hooksFactory = {
     create<T>(defaultHooks: (log: FastifyBaseLogger) => T) {
         let hooksCreator: (log: FastifyBaseLogger) => T

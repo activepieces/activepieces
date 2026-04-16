@@ -1,13 +1,9 @@
-import { azureOpenaiAuth } from '../auth';
-import {
-    Property,
-    StoreScope,
-    createAction,
-} from '@activepieces/pieces-framework';
-import { OpenAIClient, AzureKeyCredential } from '@azure/openai';
-import { calculateMessagesTokenSize, exceedsHistoryLimit, reduceContextSize } from '../common';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { createAction, Property, StoreScope } from '@activepieces/pieces-framework'
+import { AzureKeyCredential, OpenAIClient } from '@azure/openai'
+import { z } from 'zod'
+import { azureOpenaiAuth } from '../auth'
+import { calculateMessagesTokenSize, exceedsHistoryLimit, reduceContextSize } from '../common'
 
 export const askGpt = createAction({
     auth: azureOpenaiAuth,
@@ -69,57 +65,49 @@ export const askGpt = createAction({
             displayName: 'Roles',
             required: false,
             description: 'Array of roles to specify more accurate response',
-            defaultValue: [
-                { role: 'system', content: 'You are a helpful assistant.' },
-            ],
+            defaultValue: [{ role: 'system', content: 'You are a helpful assistant.' }],
         }),
     },
 
     async run(context) {
-        const { propsValue, store } = context;
-        const auth = context.auth.props;
+        const { propsValue, store } = context
+        const auth = context.auth.props
 
         await propsValidation.validateZod(propsValue, {
             temperature: z.number().min(0).max(1.0).optional(),
             frequencyPenalty: z.number().min(-2.0).max(2.0).optional(),
             presencePenalty: z.number().min(-2.0).max(2.0).optional(),
-        });
+        })
 
-        const openai = new OpenAIClient(
-            auth.endpoint,
-            new AzureKeyCredential(auth.apiKey),
-            {
-                apiVersion: '2024-12-01-preview',
-            }
-        );
+        const openai = new OpenAIClient(auth.endpoint, new AzureKeyCredential(auth.apiKey), {
+            apiVersion: '2024-12-01-preview',
+        })
 
-        let messageHistory: any[] | null = [];
+        let messageHistory: any[] | null = []
         // If memory key is set, retrieve messages stored in history
         if (propsValue.memoryKey) {
-            messageHistory = (await store.get(propsValue.memoryKey, StoreScope.PROJECT)) ?? [];
+            messageHistory = (await store.get(propsValue.memoryKey, StoreScope.PROJECT)) ?? []
         }
 
         // Add user prompt to message history
         messageHistory.push({
             role: 'user',
             content: propsValue.prompt,
-        });
+        })
 
         // Add system instructions if set by user
-        const rolesArray = propsValue.roles ? (propsValue.roles as any) : [];
+        const rolesArray = propsValue.roles ? (propsValue.roles as any) : []
         const roles = rolesArray.map((item: any) => {
-            const rolesEnum = ['system', 'user', 'assistant'];
+            const rolesEnum = ['system', 'user', 'assistant']
             if (!rolesEnum.includes(item.role)) {
-                throw new Error(
-                    'The only available roles are: [system, user, assistant]'
-                );
+                throw new Error('The only available roles are: [system, user, assistant]')
             }
 
             return {
                 role: item.role,
                 content: item.content,
-            };
-        });
+            }
+        })
 
         const completionOptions = {
             maxCompletionTokens: propsValue.maxTokens,
@@ -127,31 +115,31 @@ export const askGpt = createAction({
             frequencyPenalty: propsValue.frequencyPenalty,
             presencePenalty: propsValue.presencePenalty,
             topP: propsValue.topP,
-        };
+        }
 
-        const completion = await openai.getChatCompletions(propsValue.deploymentId, [...roles, ...messageHistory], completionOptions);
+        const completion = await openai.getChatCompletions(
+            propsValue.deploymentId,
+            [...roles, ...messageHistory],
+            completionOptions,
+        )
 
-        const responseText = completion.choices[0].message?.content;
+        const responseText = completion.choices[0].message?.content
 
         // Add response to message history
-        messageHistory = [...messageHistory, responseText];
+        messageHistory = [...messageHistory, responseText]
 
         // Check message history token size
         // System limit is 32K tokens, we can probably make it bigger but this is a safe spot
-        const tokenLength = await calculateMessagesTokenSize(messageHistory, '');
+        const tokenLength = await calculateMessagesTokenSize(messageHistory, '')
         if (propsValue.memoryKey) {
             // If tokens exceed 90% system limit or 90% of model limit - maxTokens, reduce history token size
             if (exceedsHistoryLimit(tokenLength, '', propsValue.maxTokens)) {
-                messageHistory = await reduceContextSize(
-                    messageHistory,
-                    '',
-                    propsValue.maxTokens
-                );
+                messageHistory = await reduceContextSize(messageHistory, '', propsValue.maxTokens)
             }
             // Store history
-            await store.put(propsValue.memoryKey, messageHistory, StoreScope.PROJECT);
+            await store.put(propsValue.memoryKey, messageHistory, StoreScope.PROJECT)
         }
 
-        return responseText;
+        return responseText
     },
-});
+})

@@ -1,10 +1,10 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
 // 👇 1. Remove `isAxiosError` and import `HttpError` instead
-import { HttpError, HttpMethod } from "@activepieces/pieces-common";
-import { createHash } from "crypto";
-import { emailOctopusAuth } from "../common/auth";
-import { EmailOctopusClient } from "../common/client";
-import { emailOctopusProps } from "../common/props";
+import { HttpError, HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { createHash } from 'crypto'
+import { emailOctopusAuth } from '../common/auth'
+import { EmailOctopusClient } from '../common/client'
+import { emailOctopusProps } from '../common/props'
 
 export const findContact = createAction({
     auth: emailOctopusAuth,
@@ -21,32 +21,26 @@ export const findContact = createAction({
     },
 
     async run(context) {
-        const { list_id, email_address } = context.propsValue;
-        const client = new EmailOctopusClient(context.auth.secret_text);
+        const { list_id, email_address } = context.propsValue
+        const client = new EmailOctopusClient(context.auth.secret_text)
 
-        const contactId = createHash('md5')
-            .update(email_address.toLowerCase())
-            .digest('hex');
+        const contactId = createHash('md5').update(email_address.toLowerCase()).digest('hex')
 
         try {
-            const response =  await client.makeRequest(
-                HttpMethod.GET,
-                `/lists/${list_id}/contacts/${contactId}`
-            );
+            const response = await client.makeRequest(HttpMethod.GET, `/lists/${list_id}/contacts/${contactId}`)
 
             return {
-                found:true,
-                result:response
+                found: true,
+                result: response,
             }
         } catch (error) {
-            
             if (error instanceof HttpError && error.response.status === 404) {
                 return {
-                    found:false,
-                    result:{}
-                };
+                    found: false,
+                    result: {},
+                }
             }
-            throw error;
+            throw error
         }
     },
-});
+})

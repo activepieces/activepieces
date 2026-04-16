@@ -20,5 +20,4 @@ export class MakeExternalIdNotNullable1746531094548 implements MigrationInterfac
             ALTER COLUMN "externalId" DROP NOT NULL
         `)
     }
-
 }

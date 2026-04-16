@@ -1,10 +1,10 @@
 import {
-  OtpType,
   ApEdition,
   ApFlagId,
   AuthenticationResponse,
   ErrorCode,
   isNil,
+  OtpType,
   SignInRequest,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,7 +21,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { HttpError, api } from '@/lib/api';
+import { api, HttpError } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';

@@ -38,5 +38,4 @@ export class AddAiOverageState1751466404493 implements MigrationInterface {
                 RENAME COLUMN "aiCreditsOverageState" TO "aiCreditsOverageEnabled"
         `)
     }
-
 }

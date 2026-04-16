@@ -1,0 +1,104 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true
+    },
+    "files": {
+        "includes": ["**", "!**/deploy/**", "!**/.husky/**", "!**/*.css", "!docs/**", "!**/*.html", "!**/*.d.ts"]
+    },
+    "formatter": {
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 120
+    },
+    "javascript": {
+        "formatter": {
+            "quoteStyle": "single",
+            "semicolons": "asNeeded",
+            "trailingCommas": "all"
+        }
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": false,
+            "correctness": {
+                "noUnusedImports": "warn",
+                "noUnusedVariables": "warn"
+            },
+            "style": {
+                "useShorthandAssign": "warn"
+            },
+            "suspicious": {
+                "noExplicitAny": "warn"
+            }
+        }
+    },
+    "overrides": [
+        {
+            "includes": ["packages/web/**"],
+            "formatter": {
+                "indentWidth": 2,
+                "lineWidth": 80
+            },
+            "javascript": {
+                "formatter": {
+                    "semicolons": "always"
+                }
+            },
+            "linter": {
+                "rules": {
+                    "suspicious": {
+                        "noExplicitAny": "off"
+                    }
+                }
+            }
+        },
+        {
+            "includes": [
+                "packages/server/api/src/**",
+                "packages/server/worker/src/**",
+                "packages/shared/src/**",
+                "packages/server/utils/src/**",
+                "packages/server/engine/src/**"
+            ],
+            "linter": {
+                "rules": {
+                    "suspicious": {
+                        "noExplicitAny": "error",
+                        "noConsole": "error"
+                    }
+                }
+            }
+        },
+        {
+            "includes": [
+                "packages/server/api/src/app/database/migration/**",
+                "packages/server/api/src/app/database/rollback-migrations.ts",
+                "packages/server/api/src/rollback.ts"
+            ],
+            "linter": {
+                "rules": {
+                    "suspicious": {
+                        "noExplicitAny": "warn",
+                        "noConsole": "off"
+                    }
+                }
+            }
+        },
+        {
+            "includes": ["packages/server/engine/src/**"],
+            "linter": {
+                "rules": {
+                    "suspicious": {
+                        "noConsole": "warn",
+                        "noExplicitAny": "warn"
+                    }
+                }
+            }
+        }
+    ]
+}

@@ -16,5 +16,4 @@ export class RenameApprovalUrlToResolveUrl1742991137557 implements MigrationInte
                 RENAME COLUMN "resolveUrl" TO "approvalUrl"
         `)
     }
-
 }

@@ -1,4 +1,4 @@
-import { Property, StoreScope } from "@activepieces/pieces-framework"
+import { Property, StoreScope } from '@activepieces/pieces-framework'
 
 export enum PieceStoreScope {
     PROJECT = 'COLLECTION',
@@ -6,15 +6,14 @@ export enum PieceStoreScope {
     RUN = 'RUN',
 }
 
-const testRunId = 'test-run-id-CbVidYfEuCRpUanfEb3RU';
-export function getScopeAndKey(params: Params): { scope: StoreScope, key: string } {
+const testRunId = 'test-run-id-CbVidYfEuCRpUanfEb3RU'
+export function getScopeAndKey(params: Params): { scope: StoreScope; key: string } {
     switch (params.scope) {
         case PieceStoreScope.PROJECT:
             return { scope: StoreScope.PROJECT, key: params.key }
         case PieceStoreScope.FLOW:
             return { scope: StoreScope.FLOW, key: params.key }
-        case PieceStoreScope.RUN:
-            // Use a consistent test run ID when testing to allow store operations to work together
+        case PieceStoreScope.RUN: // Use a consistent test run ID when testing to allow store operations to work together
             {
                 const runId = params.isTestMode ? testRunId : params.runId
                 return { scope: StoreScope.FLOW, key: `run_${runId}/${params.key}` }
@@ -51,5 +50,5 @@ export const common = {
             ],
         },
         defaultValue: PieceStoreScope.PROJECT,
-    })
+    }),
 }

@@ -1,4 +1,13 @@
-import { ActivepiecesError, ChatUIResponse, ErrorCode, FlowId, FormInputType, FormResponse, isNil, PopulatedFlow } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    ChatUIResponse,
+    ErrorCode,
+    FlowId,
+    FormInputType,
+    FormResponse,
+    isNil,
+    PopulatedFlow,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { platformService } from '../../../platform/platform.service'
@@ -20,10 +29,7 @@ const SIMPLE_FILE_PROPS = {
     ],
     waitForResponse: true,
 }
-const FORMS_TRIGGER_NAMES = [
-    FORM_TRIIGGER,
-    FILE_TRIGGER,
-]
+const FORMS_TRIGGER_NAMES = [FORM_TRIIGGER, FILE_TRIGGER]
 
 function isFormTrigger(flow: PopulatedFlow | null): flow is PopulatedFlow {
     if (isNil(flow)) {
@@ -62,9 +68,11 @@ export const humanInputService = (log: FastifyBaseLogger) => ({
     },
     getChatUIByFlowIdOrThrow: async (flowId: string, useDraft: boolean): Promise<ChatUIResponse> => {
         const flow = await getPopulatedFlowById(log, flowId, useDraft)
-        if (!flow
-            || flow.version.trigger.settings.triggerName !== 'chat_submission'
-            || flow.version.trigger.settings.pieceName !== FORMS_PIECE_NAME) {
+        if (
+            !flow ||
+            flow.version.trigger.settings.triggerName !== 'chat_submission' ||
+            flow.version.trigger.settings.pieceName !== FORMS_PIECE_NAME
+        ) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
@@ -87,7 +95,11 @@ export const humanInputService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function getPopulatedFlowById(log: FastifyBaseLogger, id: FlowId, useDraft: boolean): Promise<PopulatedFlow | null> {
+async function getPopulatedFlowById(
+    log: FastifyBaseLogger,
+    id: FlowId,
+    useDraft: boolean,
+): Promise<PopulatedFlow | null> {
     const flow = await flowRepo().findOneBy({ id })
     if (isNil(flow) || (isNil(flow.publishedVersionId) && !useDraft)) {
         return null

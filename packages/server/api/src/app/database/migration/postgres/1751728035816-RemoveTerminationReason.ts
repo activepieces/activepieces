@@ -20,5 +20,4 @@ export class RemoveTerminationReason1751728035816 implements MigrationInterface 
             ADD "terminationReason" character varying
         `)
     }
-
 }

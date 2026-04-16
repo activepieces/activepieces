@@ -1,10 +1,4 @@
-import {
-    FileType,
-    Flow,
-    FlowStatus,
-    FlowVersion,
-    isNil,
-} from '@activepieces/shared'
+import { FileType, Flow, FlowStatus, FlowVersion, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { sampleDataService } from '../step-run/sample-data.service'
@@ -40,10 +34,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
     },
 
     async preDelete({ flowToDelete }: PreDeleteParams): Promise<void> {
-        if (
-            flowToDelete.status === FlowStatus.DISABLED ||
-            isNil(flowToDelete.publishedVersionId)
-        ) {
+        if (flowToDelete.status === FlowStatus.DISABLED || isNil(flowToDelete.publishedVersionId)) {
             return
         }
         await triggerSourceService(log).disable({
@@ -71,9 +62,8 @@ type PreUpdateStatusParams = {
     flowToUpdate: Flow
     publishedFlowVersion: FlowVersion
     newStatus: FlowStatus
-    templateId?: string 
+    templateId?: string
 }
-
 
 type PreDeleteParams = {
     flowToDelete: Flow

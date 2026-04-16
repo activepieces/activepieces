@@ -10,9 +10,7 @@ type ActionCreationProps = {
     nextAction?: FlowAction
 }
 
-function createAction(request: UpdateActionRequest, {
-    nextAction,
-}: ActionCreationProps): FlowAction {
+function createAction(request: UpdateActionRequest, { nextAction }: ActionCreationProps): FlowAction {
     const baseProperties = {
         displayName: request.displayName,
         name: request.name,
@@ -71,36 +69,34 @@ function handleLoopOnItems(parentStep: LoopOnItemsAction, request: AddActionRequ
         parentStep.firstLoopAction = createAction(request.action, {
             nextAction: parentStep.firstLoopAction,
         })
-    }
-    else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
+    } else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
         parentStep.nextAction = createAction(request.action, {
             nextAction: parentStep.nextAction,
         })
-    }
-    else {
-        throw new ActivepiecesError(
-            {
-                code: ErrorCode.FLOW_OPERATION_INVALID,
-                params: {
-                    message: `Loop step parent ${request.stepLocationRelativeToParent} not found`,
-                },
-            })
+    } else {
+        throw new ActivepiecesError({
+            code: ErrorCode.FLOW_OPERATION_INVALID,
+            params: {
+                message: `Loop step parent ${request.stepLocationRelativeToParent} not found`,
+            },
+        })
     }
     return parentStep
 }
 
 function handleRouter(parentStep: RouterAction, request: AddActionRequest): Step {
-    if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH && !isNil(request.branchIndex)) {
+    if (
+        request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH &&
+        !isNil(request.branchIndex)
+    ) {
         parentStep.children[request.branchIndex] = createAction(request.action, {
             nextAction: parentStep.children[request.branchIndex] ?? undefined,
         })
-    }
-    else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
+    } else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
         parentStep.nextAction = createAction(request.action, {
             nextAction: parentStep.nextAction,
         })
-    }
-    else {
+    } else {
         throw new ActivepiecesError({
             code: ErrorCode.FLOW_OPERATION_INVALID,
             params: {

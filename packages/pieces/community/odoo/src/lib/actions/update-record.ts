@@ -1,6 +1,6 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import Odoo from "../../commom/index";
-import { odooAuth } from '../auth';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import Odoo from '../../commom/index'
+import { odooAuth } from '../auth'
 
 export default createAction({
     name: 'update_record',
@@ -10,7 +10,7 @@ export default createAction({
     props: {
         model: Property.ShortText({
             displayName: 'Model',
-            description: "Model name. e.g.: res.partner",
+            description: 'Model name. e.g.: res.partner',
             required: true,
             defaultValue: 'res.partner',
         }),
@@ -24,9 +24,9 @@ export default createAction({
             description: 'JSON object of field names and their corresponding values',
             required: true,
             defaultValue: {
-                "email": "updatedemail@example.com"
+                email: 'updatedemail@example.com',
             },
-        })
+        }),
     },
     async run(context) {
         const odoo = new Odoo({
@@ -35,17 +35,17 @@ export default createAction({
             db: context.auth.props.database,
             username: context.auth.props.username,
             password: context.auth.props.api_key,
-        });
+        })
 
         try {
-            await odoo.connect();
-            const fields = context.propsValue.fields;
-            const recordId = context.propsValue.recordId;
-            const model = context.propsValue.model;
-            const result = await odoo.updateRecord({ model, recordId, fields });
-            return { success: result };
+            await odoo.connect()
+            const fields = context.propsValue.fields
+            const recordId = context.propsValue.recordId
+            const model = context.propsValue.model
+            const result = await odoo.updateRecord({ model, recordId, fields })
+            return { success: result }
         } catch (err) {
-            return err;
+            return err
         }
-    }
-});
+    },
+})

@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Check, TrendingUp, TrendingDown } from 'lucide-react';
+import { Check, TrendingDown, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 

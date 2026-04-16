@@ -1,6 +1,6 @@
-import { PieceAuth } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { BASE_URL } from "./constants";
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
+import { BASE_URL } from './constants'
 
 export const raiaAiAuth = PieceAuth.SecretText({
     displayName: 'API Key',
@@ -15,19 +15,18 @@ export const raiaAiAuth = PieceAuth.SecretText({
                 method: HttpMethod.GET,
                 url: BASE_URL + '/agents/by-api-key',
                 headers: {
-                    'Agent-Secret-Key': auth
-                }
+                    'Agent-Secret-Key': auth,
+                },
             })
 
             return {
-                valid: true
+                valid: true,
             }
-        }
-        catch {
+        } catch {
             return {
                 valid: false,
-                error: 'Invalid API Key.'
+                error: 'Invalid API Key.',
             }
         }
-    }
+    },
 })

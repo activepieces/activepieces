@@ -1,9 +1,9 @@
 import { FlowRetryStrategy, FlowRunStatus, FlowVersionState, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { db } from '../../../../helpers/db'
+import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
-import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
-import { db } from '../../../../helpers/db'
 
 let app: FastifyInstance
 let ctx: TestContext
@@ -20,9 +20,7 @@ beforeEach(async () => {
     ctx = await createTestContext(app)
 })
 
-async function createFailedFlowRun(params: {
-    projectId: string
-}) {
+async function createFailedFlowRun(params: { projectId: string }) {
     const flow = createMockFlow({ projectId: params.projectId })
     await db.save('flow', flow)
 
@@ -57,7 +55,7 @@ describe('Retry flow run', () => {
 
         expect(response.statusCode).toBe(200)
 
-        const updatedRun = await db.findOneByOrFail<{ id: string, status: string }>('flow_run', { id: flowRun.id })
+        const updatedRun = await db.findOneByOrFail<{ id: string; status: string }>('flow_run', { id: flowRun.id })
         expect(updatedRun.status).toBe(FlowRunStatus.QUEUED)
     })
 

@@ -131,5 +131,4 @@ export class AddMaximumConcurrentJobsPerProjectSqlite1761499100171 implements Mi
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
     }
-
 }

@@ -7,7 +7,13 @@ import { resolveFieldNamesForTable } from './table-utils'
 
 const insertRecordsInput = z.object({
     tableId: z.string().describe('The table ID'),
-    records: z.array(z.record(z.string(), z.string())).min(1).max(50).describe('Array of records (1–50). Each record maps field names to values. Example: [{"Name": "Alice", "Age": "30"}]'),
+    records: z
+        .array(z.record(z.string(), z.string()))
+        .min(1)
+        .max(50)
+        .describe(
+            'Array of records (1–50). Each record maps field names to values. Example: [{"Name": "Alice", "Age": "30"}]',
+        ),
 })
 
 export const apInsertRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -21,13 +27,17 @@ export const apInsertRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
             try {
                 const { tableId, records } = insertRecordsInput.parse(args)
 
-                const allFieldNames = [...new Set(records.flatMap(r => Object.keys(r)))]
-                const { fields, fieldMap, errors } = await resolveFieldNamesForTable(mcp.projectId, tableId, allFieldNames)
+                const allFieldNames = [...new Set(records.flatMap((r) => Object.keys(r)))]
+                const { fields, fieldMap, errors } = await resolveFieldNamesForTable(
+                    mcp.projectId,
+                    tableId,
+                    allFieldNames,
+                )
                 if (errors.length > 0) {
                     return { content: [{ type: 'text', text: `❌ Field resolution error:\n${errors.join('\n')}` }] }
                 }
 
-                const convertedRecords = records.map(record =>
+                const convertedRecords = records.map((record) =>
                     Object.entries(record).map(([fieldName, value]) => ({
                         fieldId: fieldMap.get(fieldName)!,
                         value,
@@ -42,13 +52,14 @@ export const apInsertRecordsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                 })
 
                 return {
-                    content: [{
-                        type: 'text',
-                        text: `✅ Inserted ${result.length} record(s). IDs: ${result.map(r => r.id).join(', ')}`,
-                    }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `✅ Inserted ${result.length} record(s). IDs: ${result.map((r) => r.id).join(', ')}`,
+                        },
+                    ],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_insert_records failed')
                 return mcpUtils.mcpToolError('Failed to insert records', err)
             }

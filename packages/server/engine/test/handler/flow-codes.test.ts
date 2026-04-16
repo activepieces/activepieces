@@ -5,18 +5,19 @@ import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildCodeAction, generateMockEngineConstants } from './test-helper'
 
 describe('codeExecutor', () => {
-
     it('should execute code that echo parameters action successfully', async () => {
         const result = await codeExecutor.handle({
             action: buildCodeAction({
                 name: 'echo_step',
                 input: {
-                    'key': '{{ 1 + 2 }}',
+                    key: '{{ 1 + 2 }}',
                 },
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
         })
         expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
-        expect(result.steps.echo_step.output).toEqual({ 'key': 3 })
+        expect(result.steps.echo_step.output).toEqual({ key: 3 })
     })
 
     it('should execute code a code that throws an error', async () => {
@@ -24,7 +25,9 @@ describe('codeExecutor', () => {
             action: buildCodeAction({
                 name: 'runtime',
                 input: {},
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
         })
         expect(result.verdict).toStrictEqual({
             status: FlowRunStatus.FAILED,
@@ -120,7 +123,9 @@ describe('codeExecutor', () => {
                 name: 'echo_step',
                 input: {},
                 skip: true,
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
         })
         expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
         expect(result.steps.echo_step).toBeUndefined()
@@ -136,16 +141,18 @@ describe('codeExecutor', () => {
                 ...buildCodeAction({
                     name: 'echo_step_1',
                     input: {
-                        'key': '{{ 1 + 2 }}',
+                        key: '{{ 1 + 2 }}',
                     },
                 }),
             },
         }
         const result = await flowExecutor.execute({
-            action: flow, executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            action: flow,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
         })
         expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
         expect(result.steps.echo_step).toBeUndefined()
-        expect(result.steps.echo_step_1.output).toEqual({ 'key': 3 })
+        expect(result.steps.echo_step_1.output).toEqual({ key: 3 })
     })
 })

@@ -1,7 +1,7 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { swarmnodeAuth } from "../common/auth";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { BASE_URL } from "../common/constants";
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { swarmnodeAuth } from '../common/auth'
+import { BASE_URL } from '../common/constants'
 
 export const getExecutionAction = createAction({
     name: 'get-execution',
@@ -11,8 +11,8 @@ export const getExecutionAction = createAction({
     props: {
         jobId: Property.ShortText({
             displayName: 'Agent Executor Job ID',
-            required: true
-        })
+            required: true,
+        }),
     },
     async run(context) {
         const response = await httpClient.sendRequest({
@@ -20,11 +20,10 @@ export const getExecutionAction = createAction({
             url: BASE_URL + `/executions/${context.propsValue.jobId}/`,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: context.auth.secret_text
-            }
+                token: context.auth.secret_text,
+            },
         })
 
-        return response.body;
-
-    }
+        return response.body
+    },
 })

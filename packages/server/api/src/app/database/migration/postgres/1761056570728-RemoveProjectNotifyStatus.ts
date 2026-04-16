@@ -15,5 +15,4 @@ export class RemoveProjectNotifyStatus1761056570728 implements MigrationInterfac
             ADD "notifyStatus" character varying NOT NULL DEFAULT 'ALWAYS'
         `)
     }
-
 }

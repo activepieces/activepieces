@@ -1,18 +1,18 @@
 type Agent = {
-    id:string,
-    name:string
+    id: string
+    name: string
 }
 
 export type ListAgentResponse = {
-    results:Array<Agent>
+    results: Array<Agent>
 }
 
 export type Execution = {
-    id:string,
-    agent_id:string,
-    status:'success'|'in_progress'|'failure'|'termination',
+    id: string
+    agent_id: string
+    status: 'success' | 'in_progress' | 'failure' | 'termination'
 }
 
 export type ListExecutionResponse = {
-    results:Array<Execution>
+    results: Array<Execution>
 }

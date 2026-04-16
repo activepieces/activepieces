@@ -29,18 +29,38 @@ export const apAddBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
         description: 'Add a conditional branch to a router step. Inserted before the fallback branch.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
-            routerStepName: z.string().describe('The name of the ROUTER step to add a branch to. Use ap_flow_structure to get valid values.'),
+            routerStepName: z
+                .string()
+                .describe('The name of the ROUTER step to add a branch to. Use ap_flow_structure to get valid values.'),
             branchName: z.string().describe('Display name for the new branch (e.g. "Branch 1")'),
-            conditions: z.array(
-                z.array(
-                    z.object({
-                        firstValue: z.string().describe('Left-hand value (can be a template expression like {{step_1.output}})'),
-                        operator: z.string().optional().describe('Comparison operator (e.g. TEXT_CONTAINS, NUMBER_IS_GREATER_THAN, EXISTS)'),
-                        secondValue: z.string().optional().describe('Right-hand value (not needed for single-value operators like EXISTS, BOOLEAN_IS_TRUE)'),
-                        caseSensitive: z.boolean().optional().describe('For text operators: whether to match case sensitively'),
-                    }),
+            conditions: z
+                .array(
+                    z.array(
+                        z.object({
+                            firstValue: z
+                                .string()
+                                .describe('Left-hand value (can be a template expression like {{step_1.output}})'),
+                            operator: z
+                                .string()
+                                .optional()
+                                .describe('Comparison operator (e.g. TEXT_CONTAINS, NUMBER_IS_GREATER_THAN, EXISTS)'),
+                            secondValue: z
+                                .string()
+                                .optional()
+                                .describe(
+                                    'Right-hand value (not needed for single-value operators like EXISTS, BOOLEAN_IS_TRUE)',
+                                ),
+                            caseSensitive: z
+                                .boolean()
+                                .optional()
+                                .describe('For text operators: whether to match case sensitively'),
+                        }),
+                    ),
+                )
+                .optional()
+                .describe(
+                    'Conditions array (outer array = OR groups, inner array = AND conditions). Required for condition-type branches; omit to use an empty condition group.',
                 ),
-            ).optional().describe('Conditions array (outer array = OR groups, inner array = AND conditions). Required for condition-type branches; omit to use an empty condition group.'),
         },
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
@@ -56,15 +76,18 @@ export const apAddBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
 
             const routerStep = flowStructureUtil.getStep(routerStepName, flow.version.trigger)
             if (isNil(routerStep) || routerStep.type !== FlowActionType.ROUTER) {
-                const routers = flowStructureUtil.getAllSteps(flow.version.trigger)
-                    .filter(s => s.type === FlowActionType.ROUTER)
-                    .map(s => s.name)
+                const routers = flowStructureUtil
+                    .getAllSteps(flow.version.trigger)
+                    .filter((s) => s.type === FlowActionType.ROUTER)
+                    .map((s) => s.name)
                     .join(', ')
                 return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Step "${routerStepName}" is not a ROUTER step. Available routers: ${routers || 'none'}`,
-                    }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `❌ Step "${routerStepName}" is not a ROUTER step. Available routers: ${routers || 'none'}`,
+                        },
+                    ],
                 }
             }
 
@@ -91,13 +114,14 @@ export const apAddBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                     operation,
                 })
                 return {
-                    content: [{
-                        type: 'text',
-                        text: `✅ Branch "${branchName}" added at index ${branchIndex} in router "${routerStepName}". Use ap_add_step with stepLocationRelativeToParent=INSIDE_BRANCH and branchIndex=${branchIndex} to add steps inside this branch.`,
-                    }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `✅ Branch "${branchName}" added at index ${branchIndex} in router "${routerStepName}". Use ap_add_step with stepLocationRelativeToParent=INSIDE_BRANCH and branchIndex=${branchIndex} to add steps inside this branch.`,
+                        },
+                    ],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 return mcpUtils.mcpToolError('Add branch failed', err)
             }
         },

@@ -12,7 +12,10 @@ import {
     ProjectRole,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
-import { AuthorizationRouteSecurity, ProjectAuthorizationConfig } from '../../../core/security/authorization/authorization'
+import {
+    AuthorizationRouteSecurity,
+    ProjectAuthorizationConfig,
+} from '../../../core/security/authorization/authorization'
 import { AuthorizationType, RouteKind } from '../../../core/security/authorization/common'
 import { convertToSecurityAccessRequest } from '../../../core/security/v2/authz/authorization-middleware'
 import { system } from '../../../helper/system/system'
@@ -50,8 +53,8 @@ export async function assertUserHasPermissionToFlow(
             await assertRoleHasPermission(principal, projectId, Permission.UPDATE_FLOW_STATUS, log)
             break
         }
-        case FlowOperationType.UPDATE_MINUTES_SAVED: 
-        case FlowOperationType.SAVE_SAMPLE_DATA: 
+        case FlowOperationType.UPDATE_MINUTES_SAVED:
+        case FlowOperationType.SAVE_SAMPLE_DATA:
         case FlowOperationType.ADD_ACTION:
         case FlowOperationType.UPDATE_ACTION:
         case FlowOperationType.DELETE_ACTION:
@@ -77,12 +80,16 @@ export async function assertUserHasPermissionToFlow(
             await assertRoleHasPermission(principal, projectId, Permission.WRITE_FLOW, log)
             break
         }
-
     }
 }
 
-export const assertRoleHasPermission = async (principal: Principal, projectId: ProjectId, permission: Permission, log: FastifyBaseLogger): Promise<void> => {
-    if (principal.type !== PrincipalType.USER) { 
+export const assertRoleHasPermission = async (
+    principal: Principal,
+    projectId: ProjectId,
+    permission: Permission,
+    log: FastifyBaseLogger,
+): Promise<void> => {
+    if (principal.type !== PrincipalType.USER) {
         return
     }
     const principalRole = await getPrincipalRoleOrThrow(principal.id, projectId, log)
@@ -100,20 +107,29 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
         return true
     }
     const ignoredPrefixes = ['/redirect', '/ui', '/api/ui']
-    if (ignoredPrefixes.some(p => req.url.startsWith(p))) {
+    if (ignoredPrefixes.some((p) => req.url.startsWith(p))) {
         return true
     }
     return false
 }
 
-const extractProjectConfig = (securityAccessRequest: AuthorizationRouteSecurity): ProjectAuthorizationConfig | undefined => {
-    if (securityAccessRequest.kind !== RouteKind.AUTHENTICATED || securityAccessRequest.authorization.type !== AuthorizationType.PROJECT) {
+const extractProjectConfig = (
+    securityAccessRequest: AuthorizationRouteSecurity,
+): ProjectAuthorizationConfig | undefined => {
+    if (
+        securityAccessRequest.kind !== RouteKind.AUTHENTICATED ||
+        securityAccessRequest.authorization.type !== AuthorizationType.PROJECT
+    ) {
         return undefined
     }
     return securityAccessRequest.authorization
 }
 
-export const getPrincipalRoleOrThrow = async (userId: ApId, projectId: ProjectId, log: FastifyBaseLogger): Promise<ProjectRole> => {
+export const getPrincipalRoleOrThrow = async (
+    userId: ApId,
+    projectId: ProjectId,
+    log: FastifyBaseLogger,
+): Promise<ProjectRole> => {
     const projectRole = await projectMemberService(log).getRole({
         projectId,
         userId,
@@ -131,7 +147,6 @@ export const getPrincipalRoleOrThrow = async (userId: ApId, projectId: ProjectId
     }
 
     return projectRole
-
 }
 
 const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs): Promise<boolean> => {
@@ -142,7 +157,7 @@ const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs
     const principalRole = await projectRoleService.getOneOrThrowById({
         id: principalRoleId,
     })
-    
+
     if (isNil(principalRole)) {
         return false
     }
@@ -150,7 +165,12 @@ const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs
     return principalRole.permissions?.includes(routePermission)
 }
 
-const throwPermissionDenied = (projectRole: ProjectRole, userId: ApId, projectId: ProjectId, permission: Permission | undefined): never => {
+const throwPermissionDenied = (
+    projectRole: ProjectRole,
+    userId: ApId,
+    projectId: ProjectId,
+    permission: Permission | undefined,
+): never => {
     throw new ActivepiecesError({
         code: ErrorCode.PERMISSION_DENIED,
         params: {

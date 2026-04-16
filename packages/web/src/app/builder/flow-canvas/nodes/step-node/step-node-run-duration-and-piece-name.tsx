@@ -50,4 +50,5 @@ const StepNodeRunDurationAndPieceName = ({
   );
 };
 StepNodeRunDurationAndPieceName.displayName = 'StepNodeRunDurationAndPieceName';
+
 export { StepNodeRunDurationAndPieceName };

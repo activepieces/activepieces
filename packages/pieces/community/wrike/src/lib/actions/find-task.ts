@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { wrikeAuth } from '../common/auth';
-import { wrikeCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { wrikeAuth } from '../common/auth'
+import { wrikeCommon } from '../common/client'
 
 export const findTask = createAction({
     name: 'find_task',
@@ -108,34 +108,35 @@ export const findTask = createAction({
         }),
     },
     async run(context) {
-        const props = context.propsValue as any;
-        const { taskId, title, folderId, status, importance, assignees, authors, pageSize, sortField, sortOrder } = props;
+        const props = context.propsValue as any
+        const { taskId, title, folderId, status, importance, assignees, authors, pageSize, sortField, sortOrder } =
+            props
 
         if (taskId) {
             const response = await wrikeCommon.apiCall({
                 auth: context.auth,
                 method: HttpMethod.GET,
                 resourceUri: `/tasks/${taskId}`,
-            });
-            return response.body;
+            })
+            return response.body
         }
 
-        const queryParams: Record<string, string> = {};
+        const queryParams: Record<string, string> = {}
 
-        if (title) queryParams['title'] = title;
-        if (folderId) queryParams['folderId'] = folderId;
-        if (status) queryParams['status'] = status;
-        if (importance) queryParams['importance'] = importance;
-        if (pageSize) queryParams['pageSize'] = pageSize.toString();
-        if (sortField) queryParams['sortField'] = sortField;
-        if (sortOrder) queryParams['sortOrder'] = sortOrder;
+        if (title) queryParams['title'] = title
+        if (folderId) queryParams['folderId'] = folderId
+        if (status) queryParams['status'] = status
+        if (importance) queryParams['importance'] = importance
+        if (pageSize) queryParams['pageSize'] = pageSize.toString()
+        if (sortField) queryParams['sortField'] = sortField
+        if (sortOrder) queryParams['sortOrder'] = sortOrder
 
         if (assignees && assignees.length > 0) {
-            queryParams['responsibles'] = assignees.map((assignee: any) => assignee.userId).join(',');
+            queryParams['responsibles'] = assignees.map((assignee: any) => assignee.userId).join(',')
         }
 
         if (authors && authors.length > 0) {
-            queryParams['authors'] = authors.map((author: any) => author.userId).join(',');
+            queryParams['authors'] = authors.map((author: any) => author.userId).join(',')
         }
 
         const response = await wrikeCommon.apiCall({
@@ -143,8 +144,8 @@ export const findTask = createAction({
             method: HttpMethod.GET,
             resourceUri: '/tasks',
             queryParams,
-        });
+        })
 
-        return response.body;
+        return response.body
     },
-});
+})

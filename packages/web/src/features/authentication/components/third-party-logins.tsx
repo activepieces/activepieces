@@ -34,9 +34,8 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
   ) => {
     event.preventDefault();
     event.stopPropagation();
-    const { loginUrl } = await authenticationApi.getFederatedAuthLoginUrl(
-      providerName,
-    );
+    const { loginUrl } =
+      await authenticationApi.getFederatedAuthLoginUrl(providerName);
 
     if (!loginUrl || !thirdPartyRedirectUrl) {
       internalErrorToast();
@@ -81,4 +80,5 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
 });
 
 ThirdPartyLogin.displayName = 'ThirdPartyLogin';
+
 export { ThirdPartyLogin };

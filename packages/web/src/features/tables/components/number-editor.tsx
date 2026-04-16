@@ -64,4 +64,5 @@ const NumberEditor = () => {
   );
 };
 NumberEditor.displayName = 'NumberEditor';
+
 export { NumberEditor };

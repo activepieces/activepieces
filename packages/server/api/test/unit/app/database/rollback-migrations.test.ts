@@ -1,22 +1,28 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../../../src/app/database/migration'
-import { identifyCandidatesByManifest, identifyReleaseCandidates, verifyDatabaseState } from '../../../../src/app/database/rollback-migrations'
+import {
+    identifyCandidatesByManifest,
+    identifyReleaseCandidates,
+    verifyDatabaseState,
+} from '../../../../src/app/database/rollback-migrations'
 
 function createMockMigration(overrides: Partial<Migration> & { name: string }): new () => Migration {
     return class implements Migration {
         name = overrides.name
         breaking = overrides.breaking
         release = overrides.release
-        async up(_queryRunner: QueryRunner): Promise<void> { /* noop */ }
-        async down(_queryRunner: QueryRunner): Promise<void> { /* noop */ }
+        async up(_queryRunner: QueryRunner): Promise<void> {
+            /* noop */
+        }
+        async down(_queryRunner: QueryRunner): Promise<void> {
+            /* noop */
+        }
     }
 }
 
 function createMockDataSource(executedMigrationNames: string[]): { query: ReturnType<typeof vi.fn> } {
     return {
-        query: vi.fn().mockResolvedValue(
-            executedMigrationNames.map((name) => ({ name })),
-        ),
+        query: vi.fn().mockResolvedValue(executedMigrationNames.map((name) => ({ name }))),
     }
 }
 
@@ -72,10 +78,7 @@ describe('identifyReleaseCandidates', () => {
     })
 
     it('should return empty array when all migrations lack release', () => {
-        const migrations = [
-            createMockMigration({ name: 'M1' }),
-            createMockMigration({ name: 'M2' }),
-        ]
+        const migrations = [createMockMigration({ name: 'M1' }), createMockMigration({ name: 'M2' })]
 
         const candidates = identifyReleaseCandidates(migrations, '0.77.0')
 
@@ -179,9 +182,7 @@ describe('verifyDatabaseState', () => {
     })
 
     it('should throw when DB has different migration names', async () => {
-        const candidates: Migration[] = [
-            { name: 'M3', up: vi.fn(), down: vi.fn() },
-        ]
+        const candidates: Migration[] = [{ name: 'M3', up: vi.fn(), down: vi.fn() }]
         const mockDataSource = createMockDataSource(['SomethingElse'])
 
         await expect(

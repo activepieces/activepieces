@@ -1,14 +1,14 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { frontAuth } from './auth';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework'
+import { frontAuth } from './auth'
 
-export const BASE_URL = `https://api2.frontapp.com`;
+export const BASE_URL = `https://api2.frontapp.com`
 
 export async function makeRequest(
-    {secret_text}: AppConnectionValueForAuthProperty<typeof frontAuth>,
+    { secret_text }: AppConnectionValueForAuthProperty<typeof frontAuth>,
     method: HttpMethod,
     path: string,
-    body?: unknown
+    body?: unknown,
 ) {
     try {
         const response = await httpClient.sendRequest({
@@ -19,9 +19,9 @@ export async function makeRequest(
                 'Content-Type': 'application/json',
             },
             body,
-        });
-        return response.body;
+        })
+        return response.body
     } catch (error: any) {
-        throw new Error(`Unexpected error: ${error.message || String(error)}`);
+        throw new Error(`Unexpected error: ${error.message || String(error)}`)
     }
 }

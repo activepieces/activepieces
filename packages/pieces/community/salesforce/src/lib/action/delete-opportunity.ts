@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
-import { callSalesforceApi, salesforcesCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { callSalesforceApi, salesforcesCommon } from '../common'
 
 export const deleteOpportunity = createAction({
     auth: salesforceAuth,
@@ -12,17 +12,17 @@ export const deleteOpportunity = createAction({
         opportunity_id: salesforcesCommon.opportunity,
     },
     async run(context) {
-        const { opportunity_id } = context.propsValue;
+        const { opportunity_id } = context.propsValue
 
         await callSalesforceApi(
             HttpMethod.DELETE,
             context.auth,
             `/services/data/v56.0/sobjects/Opportunity/${opportunity_id}`,
-            undefined
-        );
+            undefined,
+        )
 
         return {
             success: true,
-        };
+        }
     },
-});
+})

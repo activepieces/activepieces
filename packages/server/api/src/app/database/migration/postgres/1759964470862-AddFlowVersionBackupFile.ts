@@ -15,5 +15,4 @@ export class AddFlowVersionBackupFile1759964470862 implements MigrationInterface
             ALTER TABLE "flow_version" DROP COLUMN "backupFiles"
         `)
     }
-
 }

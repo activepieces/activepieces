@@ -13,5 +13,4 @@ export class MakeTriggerNullable1753366163403 implements MigrationInterface {
     public async down(_queryRunner: QueryRunner): Promise<void> {
         // do nothing
     }
-
 }

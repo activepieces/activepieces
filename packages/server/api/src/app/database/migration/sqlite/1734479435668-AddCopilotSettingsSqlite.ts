@@ -305,5 +305,4 @@ export class AddCopilotSettingsSqlite1734479435668 implements MigrationInterface
             DROP TABLE "temporary_platform"
         `)
     }
-
 }

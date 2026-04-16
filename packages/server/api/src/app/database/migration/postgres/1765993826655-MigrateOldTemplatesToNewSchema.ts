@@ -23,7 +23,6 @@ enum TemplateCategory {
 const ColorHex = z.string().regex(/^#[0-9A-Fa-f]{6}$/)
 type ColorHex = z.infer<typeof ColorHex>
 
-
 const TemplateTag = z.object({
     title: z.string(),
     color: ColorHex,
@@ -37,12 +36,14 @@ enum TemplateType {
     CUSTOM = 'CUSTOM',
 }
 
-type FlowVersionTemplate = Omit<FlowVersion, 'id' | 'created' | 'updated' | 'flowId' | 'state' | 'updatedBy' | 'agentIds' | 'connectionIds' | 'backupFiles'>
-
+type FlowVersionTemplate = Omit<
+    FlowVersion,
+    'id' | 'created' | 'updated' | 'flowId' | 'state' | 'updatedBy' | 'agentIds' | 'connectionIds' | 'backupFiles'
+>
 
 export class MigrateOldTemplatesToNewSchema1765993826655 implements MigrationInterface {
     name = 'MigrateOldTemplatesToNewSchema1765993826655'
-    
+
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DELETE FROM "template" WHERE "created" = (SELECT MIN("created") FROM "template")
@@ -58,14 +59,14 @@ export class MigrateOldTemplatesToNewSchema1765993826655 implements MigrationInt
         const flowTemplates = await queryRunner.query(`
             SELECT * FROM "flow_template"
         `)
-        
+
         if (flowTemplates.length === 0) {
             logger.info('No flow templates to migrate')
             return
         }
 
         const templateValues: unknown[][] = []
-        
+
         for (const flowTemplate of flowTemplates) {
             const id = flowTemplate.id
             const name = flowTemplate.name
@@ -80,10 +81,20 @@ export class MigrateOldTemplatesToNewSchema1765993826655 implements MigrationInt
             const blogUrl = flowTemplate.blogUrl
             const metadata = flowTemplate.metadata
             const usageCount = 0
-            const author = flowTemplate.platformId === cloudPlatformId ? 'Activepieces Team' : isNil(flowTemplate.projectId) ? '' : 'Platform Admin'
+            const author =
+                flowTemplate.platformId === cloudPlatformId
+                    ? 'Activepieces Team'
+                    : isNil(flowTemplate.projectId)
+                      ? ''
+                      : 'Platform Admin'
             const categories: TemplateCategory[] = []
             const pieces = flowTemplate.pieces
-            const type = flowTemplate.platformId === cloudPlatformId ? TemplateType.OFFICIAL : isNil(flowTemplate.projectId) ? TemplateType.CUSTOM : TemplateType.SHARED
+            const type =
+                flowTemplate.platformId === cloudPlatformId
+                    ? TemplateType.OFFICIAL
+                    : isNil(flowTemplate.projectId)
+                      ? TemplateType.CUSTOM
+                      : TemplateType.SHARED
             const platformId = flowTemplate.platformId === cloudPlatformId ? null : flowTemplate.platformId
             const status = TemplateStatus.PUBLISHED
 
@@ -106,23 +117,30 @@ export class MigrateOldTemplatesToNewSchema1765993826655 implements MigrationInt
             ])
         }
 
-        const valuesPlaceholders = templateValues.map((_, index) => {
-            const offset = index * 15
-            return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}, $${offset + 14}, $${offset + 15})`
-        }).join(', ')
+        const valuesPlaceholders = templateValues
+            .map((_, index) => {
+                const offset = index * 15
+                return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}, $${offset + 14}, $${offset + 15})`
+            })
+            .join(', ')
 
         const flattenedValues = templateValues.flat()
 
-        await queryRunner.query(`
+        await queryRunner.query(
+            `
             INSERT INTO "template" ("id", "name", "summary", "description", "flows", "tags", "blogUrl", "metadata", "usageCount", "author", "categories", "pieces", "type", "platformId", "status") 
             VALUES ${valuesPlaceholders}
-        `, flattenedValues)
-        
-        logger.info({ migratedCount: flowTemplates.length }, 'Finished migration MigrateOldTemplatesToNewSchema1765993826655')
+        `,
+            flattenedValues,
+        )
+
+        logger.info(
+            { migratedCount: flowTemplates.length },
+            'Finished migration MigrateOldTemplatesToNewSchema1765993826655',
+        )
     }
 
     public async down(_queryRunner: QueryRunner): Promise<void> {
         // No thing to do here
     }
-
 }

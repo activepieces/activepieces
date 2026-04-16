@@ -7,7 +7,11 @@ export const tsort = {
         const depth: Record<string, number> = {}
 
         Object.entries(properties).forEach(([key, property]) => {
-            const hasRefreshers = 'refreshers' in property && property.refreshers && Array.isArray(property.refreshers) && property.refreshers.length > 0
+            const hasRefreshers =
+                'refreshers' in property &&
+                property.refreshers &&
+                Array.isArray(property.refreshers) &&
+                property.refreshers.length > 0
             if (hasRefreshers) {
                 for (const refresher of property.refreshers) {
                     if (typeof properties[refresher] === 'undefined' || properties[refresher] === null) {
@@ -28,14 +32,14 @@ export const tsort = {
             .filter(([, degree]) => degree === 0)
             .map(([name]) => name)
 
-        queue.forEach(property => depth[property] = 0)
+        queue.forEach((property) => (depth[property] = 0))
 
         while (queue.length > 0) {
             const current = queue.shift()!
             order.push(current)
 
             const neighbors = graph[current] || []
-            neighbors.forEach(neighbor => {
+            neighbors.forEach((neighbor) => {
                 inDegree[neighbor]--
                 if (inDegree[neighbor] === 0) {
                     queue.push(neighbor)
@@ -53,4 +57,3 @@ export const tsort = {
         return depthToPropertyMap
     },
 }
-

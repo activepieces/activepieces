@@ -1,10 +1,10 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const airtableAuth = PieceAuth.SecretText({
-  displayName: 'Personal Access Token',
-  required: true,
-  description: `
+    displayName: 'Personal Access Token',
+    required: true,
+    description: `
     To obtain your personal token, follow these steps:
 
     1. Log in to your Airtable account.
@@ -13,24 +13,24 @@ export const airtableAuth = PieceAuth.SecretText({
     4. Click on "+ Add a scope" and select "data.records.read", "data.records.write" and "schema.bases.read".
     5. Click on "Create token" and copy the token.
     `,
-  validate: async (auth) => {
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: 'https://api.airtable.com/v0/meta/bases',
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth,
-        },
-      });
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid personal access token',
-      };
-    }
-  },
-});
+    validate: async (auth) => {
+        try {
+            await httpClient.sendRequest({
+                method: HttpMethod.GET,
+                url: 'https://api.airtable.com/v0/meta/bases',
+                authentication: {
+                    type: AuthenticationType.BEARER_TOKEN,
+                    token: auth.auth,
+                },
+            })
+            return {
+                valid: true,
+            }
+        } catch (e) {
+            return {
+                valid: false,
+                error: 'Invalid personal access token',
+            }
+        }
+    },
+})

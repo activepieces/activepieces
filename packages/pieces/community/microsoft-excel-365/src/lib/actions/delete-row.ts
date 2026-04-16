@@ -1,7 +1,7 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { excelAuth } from '../auth';
-import { commonProps } from '../common/props';
-import { getDrivePath, createMSGraphClient } from '../common/helpers';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
+import { excelAuth } from '../auth'
+import { createMSGraphClient, getDrivePath } from '../common/helpers'
+import { commonProps } from '../common/props'
 
 export const deleteRowAction = createAction({
     auth: excelAuth,
@@ -21,26 +21,28 @@ export const deleteRowAction = createAction({
         }),
     },
     async run(context) {
-        const { storageSource, siteId, documentId, workbookId, worksheetId, row_id } = context.propsValue;
-        const { access_token } = context.auth;
-        const cloud = (context.auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+        const { storageSource, siteId, documentId, workbookId, worksheetId, row_id } = context.propsValue
+        const { access_token } = context.auth
+        const cloud = (context.auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined
 
         if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
-            throw new Error('Please select a SharePoint site and document library.');
+            throw new Error('Please select a SharePoint site and document library.')
         }
 
         if (typeof row_id !== 'number' || !Number.isInteger(row_id) || row_id < 1) {
-            throw new Error('Row number must be a positive integer.');
+            throw new Error('Row number must be a positive integer.')
         }
 
-        const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
-        const rowAddress = `${row_id}:${row_id}`;
+        const drivePath = getDrivePath(storageSource, siteId as string, documentId as string)
+        const rowAddress = `${row_id}:${row_id}`
 
-        const client = createMSGraphClient(access_token, cloud);
+        const client = createMSGraphClient(access_token, cloud)
         await client
-            .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rowAddress}')/delete`)
-            .post({ shift: 'Up' });
+            .api(
+                `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rowAddress}')/delete`,
+            )
+            .post({ shift: 'Up' })
 
-        return { success: true, deleted_row: row_id };
+        return { success: true, deleted_row: row_id }
     },
-});
+})

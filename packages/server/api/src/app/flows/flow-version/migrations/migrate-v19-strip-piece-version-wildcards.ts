@@ -1,9 +1,9 @@
 import {
     FlowActionType,
-    flowPieceUtil,
-    flowStructureUtil,
     FlowTriggerType,
     FlowVersion,
+    flowPieceUtil,
+    flowStructureUtil,
     isNil,
 } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
@@ -17,9 +17,7 @@ export const migrateV19StripPieceVersionWildcards: Migration = {
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const log = system.globalLogger()
         const flow = await flowService(log).getOneById(flowVersion.flowId)
-        const platformId = isNil(flow)
-            ? undefined
-            : await projectService(log).getPlatformId(flow.projectId)
+        const platformId = isNil(flow) ? undefined : await projectService(log).getPlatformId(flow.projectId)
 
         const stepNameToExactVersion: Record<string, string> = {}
         const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)

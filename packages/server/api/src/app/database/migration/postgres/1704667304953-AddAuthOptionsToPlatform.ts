@@ -2,8 +2,7 @@ import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
-export class AddAuthOptionsToPlatform1704667304953
-implements MigrationInterface {
+export class AddAuthOptionsToPlatform1704667304953 implements MigrationInterface {
     name = 'AddAuthOptionsToPlatform1704667304953'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
@@ -53,15 +52,9 @@ implements MigrationInterface {
         `)
 
         // federatedAuthProviders
-        await queryRunner.query(
-            'ALTER TABLE "platform" ADD COLUMN "federatedAuthProviders" jsonb',
-        )
-        await queryRunner.query(
-            'UPDATE "platform" SET "federatedAuthProviders" = \'{}\'',
-        )
-        await queryRunner.query(
-            'ALTER TABLE "platform" ALTER COLUMN "federatedAuthProviders" SET NOT NULL',
-        )
+        await queryRunner.query('ALTER TABLE "platform" ADD COLUMN "federatedAuthProviders" jsonb')
+        await queryRunner.query('UPDATE "platform" SET "federatedAuthProviders" = \'{}\'')
+        await queryRunner.query('ALTER TABLE "platform" ALTER COLUMN "federatedAuthProviders" SET NOT NULL')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

@@ -1,14 +1,10 @@
-import chalk from 'chalk';
-import { Command } from 'commander';
-import inquirer from 'inquirer';
-import { writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import { checkIfFileExists, makeFolderRecursive } from '../utils/files';
-import {
-    assertPieceExists,
-  displayNameToCamelCase,
-  displayNameToKebabCase, findPiece,
-} from '../utils/piece-utils';
+import { writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import chalk from 'chalk'
+import { Command } from 'commander'
+import inquirer from 'inquirer'
+import { checkIfFileExists, makeFolderRecursive } from '../utils/files'
+import { assertPieceExists, displayNameToCamelCase, displayNameToKebabCase, findPiece } from '../utils/piece-utils'
 
 function createTriggerTemplate(displayName: string, description: string, technique: string) {
     const camelCase = displayNameToCamelCase(displayName)
@@ -56,9 +52,8 @@ async onDisable(context) {
 async run(context) {
     return await pollingHelper.poll(polling, context);
 },
-});`;
-    }
-    else {
+});`
+    } else {
         triggerTemplate = `
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 export const ${camelCase} = createTrigger({
@@ -78,22 +73,26 @@ export const ${camelCase} = createTrigger({
     async run(context){
         return [context.payload.body]
     }
-})`;
-
+})`
     }
 
     return triggerTemplate
 }
 const checkIfTriggerExists = async (triggerPath: string) => {
     if (await checkIfFileExists(triggerPath)) {
-        console.log(chalk.red(`🚨 Trigger already exists at ${triggerPath}`));
-        process.exit(1);
+        console.log(chalk.red(`🚨 Trigger already exists at ${triggerPath}`))
+        process.exit(1)
     }
 }
-const createTrigger = async (pieceName: string, displayTriggerName: string, triggerDescription: string, triggerTechnique: string) => {
+const createTrigger = async (
+    pieceName: string,
+    displayTriggerName: string,
+    triggerDescription: string,
+    triggerTechnique: string,
+) => {
     const triggerTemplate = createTriggerTemplate(displayTriggerName, triggerDescription, triggerTechnique)
     const triggerName = displayNameToKebabCase(displayTriggerName)
-    const pieceFolder = await findPiece(pieceName);
+    const pieceFolder = await findPiece(pieceName)
     assertPieceExists(pieceFolder)
     console.log(chalk.blue(`Piece path: ${pieceFolder}`))
 
@@ -101,41 +100,38 @@ const createTrigger = async (pieceName: string, displayTriggerName: string, trig
     const triggerPath = join(triggersFolder, `${triggerName}.ts`)
     await checkIfTriggerExists(triggerPath)
 
-    await makeFolderRecursive(triggersFolder);
-    await writeFile(triggerPath, triggerTemplate);
-    console.log(chalk.yellow('✨'), `Trigger ${triggerPath} created`);
-};
+    await makeFolderRecursive(triggersFolder)
+    await writeFile(triggerPath, triggerTemplate)
+    console.log(chalk.yellow('✨'), `Trigger ${triggerPath} created`)
+}
 
+export const createTriggerCommand = new Command('create').description('Create a new trigger').action(async () => {
+    const questions = [
+        {
+            type: 'input',
+            name: 'pieceName',
+            message: 'Enter the piece folder name:',
+            placeholder: 'google-drive',
+        },
+        {
+            type: 'input',
+            name: 'triggerName',
+            message: 'Enter the trigger display name:',
+        },
+        {
+            type: 'input',
+            name: 'triggerDescription',
+            message: 'Enter the trigger description:',
+        },
+        {
+            type: 'list',
+            name: 'triggerTechnique',
+            message: 'Select the trigger technique:',
+            choices: ['polling', 'webhook'],
+            default: 'webhook',
+        },
+    ]
 
-export const createTriggerCommand = new Command('create')
-    .description('Create a new trigger')
-    .action(async () => {
-        const questions = [
-            {
-                type: 'input',
-                name: 'pieceName',
-                message: 'Enter the piece folder name:',
-                placeholder: 'google-drive',
-            },
-            {
-                type: 'input',
-                name: 'triggerName',
-                message: 'Enter the trigger display name:',
-            },
-            {
-                type: 'input',
-                name: 'triggerDescription',
-                message: 'Enter the trigger description:',
-            },
-            {
-                type: 'list',
-                name: 'triggerTechnique',
-                message: 'Select the trigger technique:',
-                choices: ['polling', 'webhook'],
-                default: 'webhook',
-            },
-        ];
-
-        const answers = await inquirer.prompt(questions);
-        createTrigger(answers.pieceName, answers.triggerName, answers.triggerDescription, answers.triggerTechnique);
-    });
+    const answers = await inquirer.prompt(questions)
+    createTrigger(answers.pieceName, answers.triggerName, answers.triggerDescription, answers.triggerTechnique)
+})

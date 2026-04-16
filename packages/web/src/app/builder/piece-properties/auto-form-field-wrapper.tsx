@@ -9,7 +9,7 @@ import {
   PropertyExecutionType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Calendar, SquareFunction, File } from 'lucide-react';
+import { Calendar, File, SquareFunction } from 'lucide-react';
 import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';

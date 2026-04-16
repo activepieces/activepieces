@@ -1,8 +1,12 @@
 import { QueryRunner } from 'typeorm'
-import { databaseConnection, resetDatabaseConnection } from '../../../../src/app/database/database-connection'
 import { initializeDatabase } from '../../../../src/app/database'
+import { databaseConnection, resetDatabaseConnection } from '../../../../src/app/database/database-connection'
 import { Migration } from '../../../../src/app/database/migration'
-import { identifyCandidatesByManifest, identifyReleaseCandidates, verifyDatabaseState } from '../../../../src/app/database/rollback-migrations'
+import {
+    identifyCandidatesByManifest,
+    identifyReleaseCandidates,
+    verifyDatabaseState,
+} from '../../../../src/app/database/rollback-migrations'
 
 const TEST_TABLE = 'rollback_test_table'
 
@@ -53,10 +57,7 @@ async function applyTestMigration(ds: ReturnType<typeof databaseConnection>, mig
     await queryRunner.connect()
     await migration.up(queryRunner)
     await queryRunner.release()
-    await ds.query(
-        `INSERT INTO "migrations" ("timestamp", "name") VALUES ($1, $2)`,
-        [Date.now(), migration.name],
-    )
+    await ds.query(`INSERT INTO "migrations" ("timestamp", "name") VALUES ($1, $2)`, [Date.now(), migration.name])
 }
 
 async function revertTestMigration(ds: ReturnType<typeof databaseConnection>, migration: Migration): Promise<void> {
@@ -68,8 +69,12 @@ async function revertTestMigration(ds: ReturnType<typeof databaseConnection>, mi
 }
 
 async function cleanupTestState(ds: ReturnType<typeof databaseConnection>): Promise<void> {
-    await ds.query(`DROP TABLE IF EXISTS "${TEST_TABLE}"`).catch(() => { /* ignore */ })
-    await ds.query(`DELETE FROM "migrations" WHERE "name" LIKE 'TestMigration%'`).catch(() => { /* ignore */ })
+    await ds.query(`DROP TABLE IF EXISTS "${TEST_TABLE}"`).catch(() => {
+        /* ignore */
+    })
+    await ds.query(`DELETE FROM "migrations" WHERE "name" LIKE 'TestMigration%'`).catch(() => {
+        /* ignore */
+    })
 }
 
 async function getTableColumns(ds: ReturnType<typeof databaseConnection>, tableName: string): Promise<string[]> {
@@ -81,10 +86,7 @@ async function getTableColumns(ds: ReturnType<typeof databaseConnection>, tableN
 }
 
 async function tableExists(ds: ReturnType<typeof databaseConnection>, tableName: string): Promise<boolean> {
-    const result = await ds.query(
-        `SELECT table_name FROM information_schema.tables WHERE table_name = $1`,
-        [tableName],
-    )
+    const result = await ds.query(`SELECT table_name FROM information_schema.tables WHERE table_name = $1`, [tableName])
     return result.length > 0
 }
 
@@ -144,14 +146,15 @@ describe('Rollback Integration', () => {
         it('should skip migrations without a release field', () => {
             const NoReleaseMigration = class implements Migration {
                 name = 'NoRelease'
-                async up(): Promise<void> { /* noop */ }
-                async down(): Promise<void> { /* noop */ }
+                async up(): Promise<void> {
+                    /* noop */
+                }
+                async down(): Promise<void> {
+                    /* noop */
+                }
             }
 
-            const candidates = identifyReleaseCandidates(
-                [NoReleaseMigration, TestMigrationSafe1999000000001],
-                '98.0.0',
-            )
+            const candidates = identifyReleaseCandidates([NoReleaseMigration, TestMigrationSafe1999000000001], '98.0.0')
 
             expect(candidates).toHaveLength(1)
             expect(candidates[0].name).toBe('TestMigrationSafe1999000000001')
@@ -180,22 +183,34 @@ describe('Rollback Integration', () => {
                 name = 'TestMigrationSafe1999000000001'
                 breaking = false
                 release = '99.0.0'
-                async up(): Promise<void> { /* noop */ }
-                async down(): Promise<void> { /* noop */ }
+                async up(): Promise<void> {
+                    /* noop */
+                }
+                async down(): Promise<void> {
+                    /* noop */
+                }
             }
             const SameReleaseMigration2 = class implements Migration {
                 name = 'TestMigrationSafe1999000000002'
                 breaking = false
                 release = '99.0.0'
-                async up(): Promise<void> { /* noop */ }
-                async down(): Promise<void> { /* noop */ }
+                async up(): Promise<void> {
+                    /* noop */
+                }
+                async down(): Promise<void> {
+                    /* noop */
+                }
             }
             const SameReleaseMigration3 = class implements Migration {
                 name = 'TestMigrationBreaking1999000000003'
                 breaking = true
                 release = '99.0.0'
-                async up(): Promise<void> { /* noop */ }
-                async down(): Promise<void> { /* noop */ }
+                async up(): Promise<void> {
+                    /* noop */
+                }
+                async down(): Promise<void> {
+                    /* noop */
+                }
             }
 
             const candidates = identifyCandidatesByManifest(
@@ -244,10 +259,7 @@ describe('Rollback Integration', () => {
             await applyTestMigration(ds, new TestMigrationSafe1999000000001())
             await applyTestMigration(ds, new TestMigrationSafe1999000000002())
 
-            const candidates = [
-                new TestMigrationSafe1999000000002(),
-                new TestMigrationSafe1999000000001(),
-            ]
+            const candidates = [new TestMigrationSafe1999000000002(), new TestMigrationSafe1999000000001()]
 
             await expect(verifyDatabaseState(ds, candidates)).resolves.toBeUndefined()
         })
@@ -256,10 +268,7 @@ describe('Rollback Integration', () => {
             await applyTestMigration(ds, new TestMigrationSafe1999000000001())
             await applyTestMigration(ds, new TestMigrationSafe1999000000002())
 
-            const wrongOrder = [
-                new TestMigrationSafe1999000000001(),
-                new TestMigrationSafe1999000000002(),
-            ]
+            const wrongOrder = [new TestMigrationSafe1999000000001(), new TestMigrationSafe1999000000002()]
 
             await expect(verifyDatabaseState(ds, wrongOrder)).rejects.toThrow('Migration order mismatch')
         })
@@ -275,9 +284,7 @@ describe('Rollback Integration', () => {
             await applyTestMigration(ds, m2)
 
             expect(await tableExists(ds, TEST_TABLE)).toBe(true)
-            expect(await getTableColumns(ds, TEST_TABLE)).toEqual(
-                expect.arrayContaining(['id', 'value', 'extra']),
-            )
+            expect(await getTableColumns(ds, TEST_TABLE)).toEqual(expect.arrayContaining(['id', 'value', 'extra']))
 
             // Revert m2 — drops "extra" column
             await revertTestMigration(ds, m2)
@@ -289,9 +296,7 @@ describe('Rollback Integration', () => {
             expect(await tableExists(ds, TEST_TABLE)).toBe(false)
 
             // Migration records cleaned up
-            const remaining = await ds.query(
-                `SELECT "name" FROM "migrations" WHERE "name" LIKE 'TestMigration%'`,
-            )
+            const remaining = await ds.query(`SELECT "name" FROM "migrations" WHERE "name" LIKE 'TestMigration%'`)
             expect(remaining).toHaveLength(0)
         })
 

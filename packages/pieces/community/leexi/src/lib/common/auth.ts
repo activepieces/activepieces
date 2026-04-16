@@ -1,6 +1,6 @@
-import { PieceAuth } from "@activepieces/pieces-framework";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common"
-import { BASE_URL } from "./constants";
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
+import { BASE_URL } from './constants'
 
 export const leexiAuth = PieceAuth.BasicAuth({
     required: true,
@@ -9,7 +9,7 @@ export const leexiAuth = PieceAuth.BasicAuth({
         displayName: 'Key ID',
     },
     password: {
-        displayName: 'Key Secret'
+        displayName: 'Key Secret',
     },
     validate: async ({ auth }) => {
         try {
@@ -19,20 +19,18 @@ export const leexiAuth = PieceAuth.BasicAuth({
                 authentication: {
                     type: AuthenticationType.BASIC,
                     username: auth.username,
-                    password: auth.password
-                }
+                    password: auth.password,
+                },
             })
 
             return {
-                valid: true
+                valid: true,
             }
-
-        }
-        catch {
+        } catch {
             return {
                 valid: false,
-                error: 'Invalid Credentials'
+                error: 'Invalid Credentials',
             }
         }
-    }
+    },
 })

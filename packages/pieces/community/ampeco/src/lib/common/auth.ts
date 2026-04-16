@@ -1,4 +1,4 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
 
 export const ampecoAuth = PieceAuth.CustomAuth({
     description: 'Ampeco Platform',
@@ -11,7 +11,7 @@ export const ampecoAuth = PieceAuth.CustomAuth({
         token: PieceAuth.SecretText({
             displayName: 'API Token',
             required: true,
-            description:`Navigate to the API Access Tokens menu within your account.Click the Create API Access Token button to initiate the token creation process.`
+            description: `Navigate to the API Access Tokens menu within your account.Click the Create API Access Token button to initiate the token creation process.`,
         }),
     },
-});
+})

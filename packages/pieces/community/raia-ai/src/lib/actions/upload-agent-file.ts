@@ -1,8 +1,8 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { raiaAiAuth } from "../common/auth";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { BASE_URL } from "../common/constants";
-import FormData from 'form-data';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import FormData from 'form-data'
+import { raiaAiAuth } from '../common/auth'
+import { BASE_URL } from '../common/constants'
 
 export const uploadAgentFileAction = createAction({
     name: 'upload-agent-file',
@@ -12,25 +12,25 @@ export const uploadAgentFileAction = createAction({
     props: {
         file: Property.File({
             displayName: 'File',
-            required: true
-        })
+            required: true,
+        }),
     },
     async run(context) {
-        const {file} = context.propsValue
+        const { file } = context.propsValue
 
-        const formData = new FormData();
-        formData.append('file',file.data,{filename:file.filename})
+        const formData = new FormData()
+        formData.append('file', file.data, { filename: file.filename })
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
             url: BASE_URL + '/agent-files/upload',
             headers: {
                 'Agent-Secret-Key': context.auth.secret_text,
-                ...formData.getHeaders()
+                ...formData.getHeaders(),
             },
-            body: formData
+            body: formData,
         })
 
         return response.body
-    }
+    },
 })

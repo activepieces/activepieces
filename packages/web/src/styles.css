@@ -1,46 +1,46 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 @custom-variant dark (&:is(.dark *));
 
 /* inter-regular - latin */
 @font-face {
   font-display: swap;
-  font-family: 'Inter';
+  font-family: "Inter";
   font-style: normal;
   font-weight: 400;
-  src: url('assets/fonts/inter-v20-latin-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url("assets/fonts/inter-v20-latin-regular.woff2") format("woff2"); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 /* inter-500 - latin */
 @font-face {
   font-display: swap;
-  font-family: 'Inter';
+  font-family: "Inter";
   font-style: normal;
   font-weight: 500;
-  src: url('assets/fonts/inter-v20-latin-500.ttf') format('truetype');
+  src: url("assets/fonts/inter-v20-latin-500.ttf") format("truetype");
 }
 /* inter-600 - latin */
 @font-face {
   font-display: swap;
-  font-family: 'Inter';
+  font-family: "Inter";
   font-style: normal;
   font-weight: 600;
-  src: url('assets/fonts/inter-v20-latin-600.ttf') format('truetype');
+  src: url("assets/fonts/inter-v20-latin-600.ttf") format("truetype");
 }
 /* inter-700 - latin */
 @font-face {
   font-display: swap;
-  font-family: 'Inter';
+  font-family: "Inter";
   font-style: normal;
   font-weight: 700;
-  src: url('assets/fonts/inter-v20-latin-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url("assets/fonts/inter-v20-latin-700.woff2") format("woff2"); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 /* inter-800 - latin */
 @font-face {
   font-display: swap;
-  font-family: 'Inter';
+  font-family: "Inter";
   font-style: normal;
   font-weight: 800;
-  src: url('assets/fonts/inter-v20-latin-800.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url("assets/fonts/inter-v20-latin-800.woff2") format("woff2"); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 
 @utility container {
@@ -266,30 +266,30 @@
 
 /* You can add global styles to this file, and also import other style files */
 @layer base {
-  input[type='number']::-webkit-inner-spin-button,
-  input[type='number']::-webkit-outer-spin-button {
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
 
   :root {
-    --background: theme('colors.white');
-    --foreground: theme('colors.neutral.950');
-    --popover: theme('colors.white');
+    --background: theme("colors.white");
+    --foreground: theme("colors.neutral.950");
+    --popover: theme("colors.white");
 
-    --secondary: theme('colors.black');
-    --secondary-foreground: theme('colors.white');
+    --secondary: theme("colors.black");
+    --secondary-foreground: theme("colors.white");
 
-    --muted: theme('colors.neutral.100');
-    --muted-foreground: theme('colors.neutral.500');
+    --muted: theme("colors.neutral.100");
+    --muted-foreground: theme("colors.neutral.500");
 
-    --accent: theme('colors.neutral.50');
-    --accent-foreground: theme('colors.neutral.900');
+    --accent: theme("colors.neutral.50");
+    --accent-foreground: theme("colors.neutral.900");
 
-    --border: theme('colors.neutral.200');
-    --input: theme('colors.neutral.200');
+    --border: theme("colors.neutral.200");
+    --input: theme("colors.neutral.200");
 
-    --ring: theme('colors.neutral.400');
+    --ring: theme("colors.neutral.400");
     --radius: 0.5rem;
 
     --primary-100: 257 75% 85%;
@@ -348,35 +348,35 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
 
-    --sidebar-background: theme('colors.neutral.50');
-    --sidebar-foreground: theme('colors.neutral.950');
+    --sidebar-background: theme("colors.neutral.50");
+    --sidebar-foreground: theme("colors.neutral.950");
     --sidebar-primary: 257 74% 57%;
-    --sidebar-primary-foreground: theme('colors.neutral.50');
+    --sidebar-primary-foreground: theme("colors.neutral.50");
     --sidebar-accent: color-mix(
       in srgb,
-      theme('colors.neutral.200') 60%,
+      theme("colors.neutral.200") 60%,
       transparent
     );
-    --sidebar-accent-foreground: theme('colors.neutral.900');
-    --sidebar-border: theme('colors.neutral.200');
-    --sidebar-ring: theme('colors.neutral.400');
+    --sidebar-accent-foreground: theme("colors.neutral.900");
+    --sidebar-border: theme("colors.neutral.200");
+    --sidebar-ring: theme("colors.neutral.400");
     --sidebar-progress: 0 0% 50%;
     --builder-background: #fbfbfb;
     --builder-background-pattern: #b2b2b2;
   }
 
   .dark {
-    --background: theme('colors.neutral.950');
-    --foreground: theme('colors.neutral.50');
-    --popover: theme('colors.neutral.800');
-    --muted: theme('colors.neutral.800');
-    --muted-foreground: theme('colors.neutral.400');
+    --background: theme("colors.neutral.950");
+    --foreground: theme("colors.neutral.50");
+    --popover: theme("colors.neutral.800");
+    --muted: theme("colors.neutral.800");
+    --muted-foreground: theme("colors.neutral.400");
 
-    --secondary: theme('colors.neutral.800');
-    --secondary-foreground: theme('colors.neutral.50');
+    --secondary: theme("colors.neutral.800");
+    --secondary-foreground: theme("colors.neutral.50");
 
-    --accent: theme('colors.neutral.700');
-    --accent-foreground: theme('colors.neutral.50');
+    --accent: theme("colors.neutral.700");
+    --accent-foreground: theme("colors.neutral.50");
 
     --primary-100: 210 80% 40%;
     --primary: 210 90% 50%;
@@ -391,7 +391,7 @@
     --border: hsla(0, 0%, 100%, 0.08);
     --input: hsla(0, 0%, 100%, 0.08);
 
-    --ring: theme('colors.neutral.500');
+    --ring: theme("colors.neutral.500");
     --radius: 0.5rem;
 
     --add-button-shadow: 0 0 0 6px hsl(var(--primary-100) / 0.4);
@@ -402,14 +402,14 @@
     --chart-4: 280 75% 65%;
     --chart-5: 340 80% 60%;
 
-    --sidebar-background: theme('colors.neutral.800');
-    --sidebar-foreground: theme('colors.neutral.50');
+    --sidebar-background: theme("colors.neutral.800");
+    --sidebar-foreground: theme("colors.neutral.50");
     --sidebar-primary: 210 85% 65%;
     --sidebar-primary-foreground: 210 90% 98%;
-    --sidebar-accent: theme('colors.neutral.700');
-    --sidebar-accent-foreground: theme('colors.neutral.50');
+    --sidebar-accent: theme("colors.neutral.700");
+    --sidebar-accent-foreground: theme("colors.neutral.50");
     --sidebar-border: hsla(0, 0%, 100%, 0.08);
-    --sidebar-ring: theme('colors.neutral.600');
+    --sidebar-ring: theme("colors.neutral.600");
     --sidebar-progress: 210 15% 40%;
     --builder-background: hsla(0, 0%, 9%, 1);
     --builder-background-pattern: hsla(0, 0%, 45%, 1);
@@ -473,11 +473,13 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: 'rlig' 1, 'calt' 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 
   button:not([disabled]),
-  [role='button']:not([disabled]) {
+  [role="button"]:not([disabled]) {
     cursor: pointer;
   }
 }
@@ -494,7 +496,8 @@
     --node-border-default: 0px solid #b1b1b7 !important;
     --xy-selection-border-default: 1px dotted hsl(var(--primary-300)) !important;
     --xy-selection-background-color-default: hsl(
-      var(--primary-100) / 0.25
+      var(--primary-100) /
+      0.25
     ) !important;
     --xy-resize-background-color: transparent !important;
     .react-flow__resize-control.handle {
@@ -517,20 +520,20 @@
     pointer-events: auto !important;
   }
 
-  [data-state='open'] {
+  [data-state="open"] {
     --tw-enter-translate-y: initial !important;
     --tw-enter-translate-x: initial !important;
   }
-  [data-state='closed'] {
+  [data-state="closed"] {
     --tw-exit-translate-y: initial !important;
     --tw-exit-translate-x: initial !important;
   }
 
   /* Restore slide animation for Sheet panels (overrides the broad reset above) */
-  [data-slot='sheet-content'][data-state='open'] {
+  [data-slot="sheet-content"][data-state="open"] {
     --tw-enter-translate-x: 100% !important;
   }
-  [data-slot='sheet-content'][data-state='closed'] {
+  [data-slot="sheet-content"][data-state="closed"] {
     --tw-exit-translate-x: 100% !important;
   }
 }

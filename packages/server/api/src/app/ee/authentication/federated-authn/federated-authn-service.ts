@@ -1,4 +1,6 @@
-import { assertNotNullOrUndefined, AuthenticationResponse,
+import {
+    AuthenticationResponse,
+    assertNotNullOrUndefined,
     FederatedAuthnLoginResponse,
     isNil,
     UserIdentityProvider,
@@ -12,9 +14,7 @@ import { domainHelper } from '../../custom-domains/domain-helper'
 import { googleAuthnProvider } from './google-authn-provider'
 
 export const federatedAuthnService = (log: FastifyBaseLogger) => ({
-    async login({
-        platformId,
-    }: LoginParams): Promise<FederatedAuthnLoginResponse> {
+    async login({ platformId }: LoginParams): Promise<FederatedAuthnLoginResponse> {
         const { clientId } = await getClientIdAndSecret(platformId, log)
         const loginUrl = await googleAuthnProvider(log).getLoginUrl({
             clientId,
@@ -26,10 +26,7 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async claim({
-        platformId,
-        code,
-    }: ClaimParams): Promise<AuthenticationResponse> {
+    async claim({ platformId, code }: ClaimParams): Promise<AuthenticationResponse> {
         const { clientId, clientSecret } = await getClientIdAndSecret(platformId, log)
         const idToken = await googleAuthnProvider(log).authenticate({
             clientId,
@@ -49,9 +46,7 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
             imageUrl: idToken.imageUrl,
         })
     },
-    async getThirdPartyRedirectUrl(
-        platformId: string | undefined,
-    ): Promise<string> {
+    async getThirdPartyRedirectUrl(platformId: string | undefined): Promise<string> {
         return domainHelper.getInternalUrl({
             path: '/redirect',
             platformId,

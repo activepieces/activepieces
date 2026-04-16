@@ -42,11 +42,20 @@ export const apDeleteStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             const allSteps = flowStructureUtil.getAllSteps(flow.version.trigger)
             const step = flowStructureUtil.getStep(stepName, flow.version.trigger)
             if (isNil(step)) {
-                const stepNames = allSteps.map(s => s.name).join(', ')
-                return { content: [{ type: 'text', text: `❌ Step "${stepName}" not found. Available steps: ${stepNames}` }] }
+                const stepNames = allSteps.map((s) => s.name).join(', ')
+                return {
+                    content: [{ type: 'text', text: `❌ Step "${stepName}" not found. Available steps: ${stepNames}` }],
+                }
             }
             if (flowStructureUtil.isTrigger(step.type)) {
-                return { content: [{ type: 'text', text: `❌ "${stepName}" is the trigger step and cannot be deleted. Use ap_update_trigger to reconfigure it.` }] }
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: `❌ "${stepName}" is the trigger step and cannot be deleted. Use ap_update_trigger to reconfigure it.`,
+                        },
+                    ],
+                }
             }
 
             const operation: FlowOperationRequest = {
@@ -67,8 +76,7 @@ export const apDeleteStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 return {
                     content: [{ type: 'text', text: `✅ Successfully deleted step "${stepName}" from flow.` }],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 return mcpUtils.mcpToolError('Step delete failed', err)
             }
         },

@@ -1,1 +1,1 @@
-export { uploadFile } from './upload';
+export { uploadFile } from './upload'

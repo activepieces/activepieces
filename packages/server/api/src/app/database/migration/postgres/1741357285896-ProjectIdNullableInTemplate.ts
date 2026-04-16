@@ -44,5 +44,4 @@ export class ProjectIdNullableInTemplate1741357285896 implements MigrationInterf
             ADD CONSTRAINT "fk_flow_template_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
     }
-
 }

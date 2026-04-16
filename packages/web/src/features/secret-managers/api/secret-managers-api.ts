@@ -1,7 +1,7 @@
 import {
   ConnectSecretManagerRequest,
-  SeekPage,
   SecretManagerConnectionWithStatus,
+  SeekPage,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';

@@ -37,7 +37,13 @@ process.once('message', async function(msg) {
 })
 `
 
-async function runInChildProcess({ codeFilePath, inputs }: { codeFilePath: string, inputs: Record<string, unknown> }): Promise<unknown> {
+async function runInChildProcess({
+    codeFilePath,
+    inputs,
+}: {
+    codeFilePath: string
+    inputs: Record<string, unknown>
+}): Promise<unknown> {
     return new Promise((resolve, reject) => {
         const child = spawn(process.execPath, ['--eval', CODE_RUNNER_SCRIPT], {
             stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
@@ -60,13 +66,12 @@ async function runInChildProcess({ codeFilePath, inputs }: { codeFilePath: strin
 
         let settled = false
 
-        child.on('message', (msg: { success: boolean, result?: unknown, error?: string }) => {
+        child.on('message', (msg: { success: boolean; result?: unknown; error?: string }) => {
             if (settled) return
             settled = true
             if (msg.success) {
                 resolve(msg.result)
-            }
-            else {
+            } else {
                 reject(buildError({ message: msg.error, stdout: capturedStdout, stderr: capturedStderr }))
             }
         })
@@ -74,7 +79,13 @@ async function runInChildProcess({ codeFilePath, inputs }: { codeFilePath: strin
         child.on('close', (code, signal) => {
             if (settled) return
             settled = true
-            reject(buildError({ message: `Code process exited with code ${code} and signal ${signal}`, stdout: capturedStdout, stderr: capturedStderr }))
+            reject(
+                buildError({
+                    message: `Code process exited with code ${code} and signal ${signal}`,
+                    stdout: capturedStdout,
+                    stderr: capturedStderr,
+                }),
+            )
         })
 
         child.on('error', (error) => {
@@ -87,7 +98,15 @@ async function runInChildProcess({ codeFilePath, inputs }: { codeFilePath: strin
     })
 }
 
-function buildError({ message, stdout, stderr }: { message: string | undefined, stdout: string, stderr: string }): Error {
+function buildError({
+    message,
+    stdout,
+    stderr,
+}: {
+    message: string | undefined
+    stdout: string
+    stderr: string
+}): Error {
     const parts: string[] = [message ?? 'Code execution failed']
     if (stdout.trim()) {
         parts.push(`\n--- stdout ---\n${stdout.trim()}`)

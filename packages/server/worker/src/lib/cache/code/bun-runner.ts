@@ -5,25 +5,21 @@ import { CommandOutput, spawnWithKill } from '../../utils/exec'
 
 export const bunRunner = (log: Logger) => ({
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
-        const filterArgs: string[] = filtersPath
-            .map(sanitizeFilterPath)
-            .flatMap((p) => ['--filter', `./${p}`])
-        const args = [
-            'install',
-            '--ignore-scripts',
-            ...filterArgs,
-        ]
+        const filterArgs: string[] = filtersPath.map(sanitizeFilterPath).flatMap((p) => ['--filter', `./${p}`])
+        const args = ['install', '--ignore-scripts', ...filterArgs]
         await fileSystemUtils.threadSafeMkdir(path)
         log.debug({ path, args }, '[bunRunner#install]')
-        const { error, data } = await tryCatch(async () => spawnWithKill({
-            cmd: 'bun',
-            args,
-            options: {
-                cwd: path,
-            },
-            printOutput: false,
-            timeoutMs: apDayjsDuration(10, 'minutes').asMilliseconds(),
-        }))
+        const { error, data } = await tryCatch(async () =>
+            spawnWithKill({
+                cmd: 'bun',
+                args,
+                options: {
+                    cwd: path,
+                },
+                printOutput: false,
+                timeoutMs: apDayjsDuration(10, 'minutes').asMilliseconds(),
+            }),
+        )
         if (error) {
             log.error({ error }, '[bunRunner#install] Failed to install dependencies')
             throw error
@@ -31,13 +27,7 @@ export const bunRunner = (log: Logger) => ({
         return data
     },
     async build({ path, entryFile, outputFile }: BuildParams): Promise<CommandOutput> {
-        const args = [
-            entryFile,
-            '--bundle',
-            '--platform=node',
-            '--format=cjs',
-            `--outfile=${outputFile}`,
-        ]
+        const args = [entryFile, '--bundle', '--platform=node', '--format=cjs', `--outfile=${outputFile}`]
         log.debug({ path, entryFile, outputFile, args }, '[bunRunner#build]')
         return spawnWithKill({
             cmd: 'esbuild',

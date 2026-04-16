@@ -21,7 +21,10 @@ export const platformBackgroundJobs = (log: FastifyBaseLogger) => ({
             .getCount()
 
         if (remainingProjects > 0) {
-            log.info({ platformId, remainingProjects }, '[hardDeletePlatformHandler] Projects still exist, retrying later')
+            log.info(
+                { platformId, remainingProjects },
+                '[hardDeletePlatformHandler] Projects still exist, retrying later',
+            )
             throw new Error(`Platform ${platformId} still has ${remainingProjects} projects, will retry`)
         }
 

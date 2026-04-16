@@ -5,9 +5,9 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   FlowAction,
-  setAtPath,
   FlowTrigger,
   PropertyExecutionType,
+  setAtPath,
 } from '@activepieces/shared';
 import {
   createContext,
@@ -18,9 +18,10 @@ import {
   useState,
 } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { z, ZodObject } from 'zod';
+import { ZodObject, z } from 'zod';
 
 import { formUtils } from '@/features/pieces';
+
 const numberReplacement = 'def.options.0.element';
 const stringReplacement = 'shape.';
 const createUpdatedSchemaKey = (propertyKey: string) => {

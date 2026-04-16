@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const cancelInvoice = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -15,12 +15,12 @@ export const cancelInvoice = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
-        const { invoiceId } = context.propsValue;
+        const client = makeClient(context.auth.props)
+        const { invoiceId } = context.propsValue
 
         const response = await client.executeAction('/invoices/action/cancelInvoice', {
             InvoiceId: invoiceId,
-        });
-        return response;
+        })
+        return response
     },
-});
+})

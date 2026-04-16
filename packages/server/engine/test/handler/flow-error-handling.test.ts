@@ -1,4 +1,3 @@
-
 import { FlowRunStatus } from '@activepieces/shared'
 import { codeExecutor } from '../../src/lib/handler/code-executor'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
@@ -6,7 +5,6 @@ import { pieceExecutor } from '../../src/lib/handler/piece-executor'
 import { buildCodeAction, buildPieceAction, generateMockEngineConstants } from './test-helper'
 
 describe('code piece with error handling', () => {
-
     it('should continue on failure when execute code a code that throws an error', async () => {
         const result = await codeExecutor.handle({
             action: buildCodeAction({
@@ -20,7 +18,9 @@ describe('code piece with error handling', () => {
                         value: false,
                     },
                 },
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
         })
         expect(result.verdict).toStrictEqual({
             status: FlowRunStatus.RUNNING,
@@ -28,11 +28,9 @@ describe('code piece with error handling', () => {
         expect(result.steps.runtime.status).toEqual('FAILED')
         expect(result.steps.runtime.errorMessage).toContain('Custom Runtime Error')
     })
-
 })
 
 describe('piece with error handling', () => {
-
     it('should continue on failure when piece fails', async () => {
         const result = await pieceExecutor.handle({
             action: buildPieceAction({
@@ -40,12 +38,12 @@ describe('piece with error handling', () => {
                 pieceName: '@activepieces/piece-http',
                 actionName: 'send_request',
                 input: {
-                    'method': 'POST',
-                    'url': 'https://cloud.activepieces.com/api/v1/flags',
-                    'headers': {},
-                    'queryParams': {},
-                    'body_type': 'none',
-                    'body': {},
+                    method: 'POST',
+                    url: 'https://cloud.activepieces.com/api/v1/flags',
+                    headers: {},
+                    queryParams: {},
+                    body_type: 'none',
+                    body: {},
                 },
                 errorHandlingOptions: {
                     continueOnFailure: {
@@ -55,7 +53,9 @@ describe('piece with error handling', () => {
                         value: false,
                     },
                 },
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
         })
 
         const expectedError = {
@@ -75,7 +75,5 @@ describe('piece with error handling', () => {
         })
         expect(result.steps.send_http.status).toBe('FAILED')
         expect(result.steps.send_http.errorMessage).toEqual(JSON.stringify(expectedError, null, 2))
-
     }, 10000)
-
 })

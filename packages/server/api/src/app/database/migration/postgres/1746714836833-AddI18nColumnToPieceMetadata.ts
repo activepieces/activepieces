@@ -15,5 +15,4 @@ export class AddI18nColumnToPieceMetadata1746714836833 implements MigrationInter
             ALTER TABLE "piece_metadata" DROP COLUMN "i18n"
         `)
     }
-
 }

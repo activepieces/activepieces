@@ -1,4 +1,4 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
 
 const markdown = `
 ## Quickbase Authentication Setup
@@ -17,21 +17,21 @@ Your user token needs access to:
 - Admin permissions for creating/deleting records (if needed)
 
 **Security Note:** Keep your user token secure - it provides access to your Quickbase data.
-`;
+`
 
 export const quickbaseAuth = PieceAuth.CustomAuth({
-  description: markdown,
-  required: true,
-  props: {
-    realmHostname: Property.ShortText({
-      displayName: 'Realm Hostname',
-      description: 'Enter your Quickbase Realm Hostname (e.g., yourrealm.quickbase.com)',
-      required: true,
-    }),
-    userToken: Property.ShortText({
-      displayName: 'User Token',
-      description: 'Enter your Quickbase User Token',
-      required: true,
-    }),
-  },
-});
+    description: markdown,
+    required: true,
+    props: {
+        realmHostname: Property.ShortText({
+            displayName: 'Realm Hostname',
+            description: 'Enter your Quickbase Realm Hostname (e.g., yourrealm.quickbase.com)',
+            required: true,
+        }),
+        userToken: Property.ShortText({
+            displayName: 'User Token',
+            description: 'Enter your Quickbase User Token',
+            required: true,
+        }),
+    },
+})

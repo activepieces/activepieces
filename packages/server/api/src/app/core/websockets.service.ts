@@ -1,4 +1,12 @@
-import { ActivepiecesError, ErrorCode, isNil, Principal, PrincipalForType, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    ErrorCode,
+    isNil,
+    Principal,
+    PrincipalForType,
+    PrincipalType,
+    WebsocketServerEvent,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
@@ -6,10 +14,19 @@ import { projectMemberService } from '../ee/projects/project-members/project-mem
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { app } from '../server'
 
-export type WebsocketListener<T, PR extends PrincipalType.USER | PrincipalType.WORKER> = (socket: Socket) => (data: T, principal: PrincipalForType<PR>, projectId: PR extends PrincipalType.USER ? string : null, callback?: (data: unknown) => void) => Promise<void>
+export type WebsocketListener<T, PR extends PrincipalType.USER | PrincipalType.WORKER> = (
+    socket: Socket,
+) => (
+    data: T,
+    principal: PrincipalForType<PR>,
+    projectId: PR extends PrincipalType.USER ? string : null,
+    callback?: (data: unknown) => void,
+) => Promise<void>
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ListenerMap<PR extends PrincipalType.USER | PrincipalType.WORKER> = Partial<Record<WebsocketServerEvent, WebsocketListener<any, PR>>>
+type ListenerMap<PR extends PrincipalType.USER | PrincipalType.WORKER> = Partial<
+    // biome-ignore lint/suspicious/noExplicitAny: required for generic websocket type
+    Record<WebsocketServerEvent, WebsocketListener<any, PR>>
+>
 
 const listener = {
     [PrincipalType.USER]: {} as ListenerMap<PrincipalType.USER>,
@@ -58,7 +75,9 @@ export const websocketService = {
             }
         }
         for (const [event, handler] of Object.entries(listener[castedType])) {
-            socket.on(event, async (data, callback) => rejectedPromiseHandler(handler(socket)(data, principal, projectId, callback), log))
+            socket.on(event, async (data, callback) =>
+                rejectedPromiseHandler(handler(socket)(data, principal, projectId, callback), log),
+            )
         }
         for (const handler of Object.values(listener[castedType][WebsocketServerEvent.CONNECT] ?? {})) {
             handler(socket)
@@ -74,16 +93,23 @@ export const websocketService = {
     async verifyPrincipal(socket: Socket): Promise<Principal> {
         return accessTokenManager(app!.log).verifyPrincipal(socket.handshake.auth.token)
     },
-    addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(principalType: PR, event: WebsocketServerEvent, handler: WebsocketListener<T, PR>): void {
+    addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(
+        principalType: PR,
+        event: WebsocketServerEvent,
+        handler: WebsocketListener<T, PR>,
+    ): void {
         switch (principalType) {
             case PrincipalType.USER: {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                // biome-ignore lint/suspicious/noExplicitAny: legacy code
                 listener[PrincipalType.USER][event] = handler as unknown as WebsocketListener<any, PrincipalType.USER>
                 break
             }
             case PrincipalType.WORKER: {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                listener[PrincipalType.WORKER][event] = handler as unknown as WebsocketListener<any, PrincipalType.WORKER>
+                listener[PrincipalType.WORKER][event] = handler as unknown as WebsocketListener<
+                    // biome-ignore lint/suspicious/noExplicitAny: legacy code
+                    any,
+                    PrincipalType.WORKER
+                >
                 break
             }
         }

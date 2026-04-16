@@ -59,12 +59,16 @@ export class RenameProjectBillingToPlatformPLan1747819919988 implements Migratio
                 WHERE pp."platformId" IS NULL
             `)
 
-                system.globalLogger().info({
-                    count: platforms.length,
-                }, 'Creating platform_plan entries for platforms that don\'t have one')
+                system.globalLogger().info(
+                    {
+                        count: platforms.length,
+                    },
+                    "Creating platform_plan entries for platforms that don't have one",
+                )
 
                 for (const platform of platforms) {
-                    await queryRunner.query(`
+                    await queryRunner.query(
+                        `
                     INSERT INTO "platform_plan" (
                         "id",
                         "platformId",
@@ -116,7 +120,9 @@ export class RenameProjectBillingToPlatformPLan1747819919988 implements Migratio
                         true,
                         true
                     )
-                `, [apId(), platform.id])
+                `,
+                        [apId(), platform.id],
+                    )
                 }
             }
 

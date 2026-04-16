@@ -1,8 +1,4 @@
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// biome-ignore lint/suspicious/noExplicitAny: legacy code
 import { PieceProperty } from '@activepieces/pieces-framework'
 
-export type ProcessorFn<INPUT = any, OUTPUT = any> = (
-    property: PieceProperty,
-    value: INPUT,
-) => OUTPUT
+export type ProcessorFn<INPUT = any, OUTPUT = any> = (property: PieceProperty, value: INPUT) => OUTPUT

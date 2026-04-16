@@ -289,5 +289,4 @@ export class AddFeatureFlagsToPlatform1714137103728 implements MigrationInterfac
             DROP TABLE "temporary_platform"
         `)
     }
-
 }

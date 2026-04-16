@@ -11,7 +11,7 @@ function getGlobalState(): TestGlobalState | undefined {
 }
 
 function setGlobalState(state: TestGlobalState | undefined): void {
-    (globalThis as Record<string, unknown>)[GLOBAL_KEY] = state
+    ;(globalThis as Record<string, unknown>)[GLOBAL_KEY] = state
 }
 
 /**
@@ -54,7 +54,7 @@ async function createFreshEnvironment(): Promise<FastifyInstance> {
 async function cleanDatabase(): Promise<void> {
     const ds = databaseConnection()
     const entities = ds.entityMetadatas
-    const tableNames = entities.map(e => `"${e.tableName}"`).join(', ')
+    const tableNames = entities.map((e) => `"${e.tableName}"`).join(', ')
     if (tableNames.length > 0) {
         await ds.query(`TRUNCATE TABLE ${tableNames} CASCADE`)
     }

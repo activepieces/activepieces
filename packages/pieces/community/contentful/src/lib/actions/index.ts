@@ -1,1 +1,1 @@
-export * as RecordActions from './records';
+export * as RecordActions from './records'

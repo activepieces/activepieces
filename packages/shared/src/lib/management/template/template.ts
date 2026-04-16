@@ -10,7 +10,6 @@ export const TemplateTag = z.object({
 })
 export type TemplateTag = z.infer<typeof TemplateTag>
 
-
 export enum TemplateType {
     OFFICIAL = 'OFFICIAL',
     SHARED = 'SHARED',
@@ -46,26 +45,37 @@ export enum TableImportDataType {
 
 export const TableDataState = z.object({
     type: z.nativeEnum(TableImportDataType),
-    rows: z.array(z.array(z.object({
-        fieldId: z.string(),
-        value: z.string(),
-    }))),
+    rows: z.array(
+        z.array(
+            z.object({
+                fieldId: z.string(),
+                value: z.string(),
+            }),
+        ),
+    ),
 })
 export type TableDataState = z.infer<typeof TableDataState>
 
 export const TableTemplate = z.object({
     name: z.string(),
     externalId: z.string(),
-    fields: z.array(z.object({
-        name: z.string(),
-        type: z.string(),
-        data: z.object({
-            options: z.array(z.object({
-                value: z.string(),
-            })),
-        }).nullable().optional(),
-        externalId: z.string(),
-    })),
+    fields: z.array(
+        z.object({
+            name: z.string(),
+            type: z.string(),
+            data: z
+                .object({
+                    options: z.array(
+                        z.object({
+                            value: z.string(),
+                        }),
+                    ),
+                })
+                .nullable()
+                .optional(),
+            externalId: z.string(),
+        }),
+    ),
     status: Nullable(z.string()),
     trigger: Nullable(z.string()),
     data: Nullable(TableDataState),

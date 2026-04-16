@@ -28,7 +28,6 @@ export type PopulatedMcpServer = z.infer<typeof PopulatedMcpServer>
 
 export type McpServer = z.infer<typeof McpServer>
 
-
 export const UpdateMcpServerRequest = z.object({
     status: z.nativeEnum(McpServerStatus).optional(),
     enabledTools: z.array(z.string()).optional(),
@@ -48,5 +47,5 @@ export type McpToolDefinition = {
         openWorldHint?: boolean
     }
     permission?: Permission
-    execute: (args: Record<string, unknown>) => Promise<{ content: Array<{ type: 'text', text: string }> }>
+    execute: (args: Record<string, unknown>) => Promise<{ content: Array<{ type: 'text'; text: string }> }>
 }

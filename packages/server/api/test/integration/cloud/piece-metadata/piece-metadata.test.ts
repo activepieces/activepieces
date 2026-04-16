@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     apId,
     FilteredPieceBehavior,
@@ -21,6 +20,7 @@ import {
     mockBasicUser,
 } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -104,12 +104,8 @@ describe('Piece Metadata API', () => {
             expect(responseBody.displayName).toBe(mockPieceMetadata.displayName)
             expect(responseBody.id).toBe(mockPieceMetadata.id)
             expect(responseBody.logoUrl).toBe(mockPieceMetadata.logoUrl)
-            expect(responseBody.maximumSupportedRelease).toBe(
-                mockPieceMetadata.maximumSupportedRelease,
-            )
-            expect(responseBody.minimumSupportedRelease).toBe(
-                mockPieceMetadata.minimumSupportedRelease,
-            )
+            expect(responseBody.maximumSupportedRelease).toBe(mockPieceMetadata.maximumSupportedRelease)
+            expect(responseBody.minimumSupportedRelease).toBe(mockPieceMetadata.minimumSupportedRelease)
             expect(responseBody.packageType).toBe(mockPieceMetadata.packageType)
             expect(responseBody.pieceType).toBe(mockPieceMetadata.pieceType)
             expect(responseBody.platformId).toBe(mockPieceMetadata.platformId)
@@ -136,7 +132,6 @@ describe('Piece Metadata API', () => {
                 platformId: mockPlatform.id,
                 ownerId: mockOwner.id,
             })
-
 
             // arrange
             const mockPieceMetadataA = createMockPieceMetadata({
@@ -173,7 +168,7 @@ describe('Piece Metadata API', () => {
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                
+
                 id: mockOwner.id,
                 platform: {
                     id: mockPlatform.id,
@@ -310,7 +305,12 @@ describe('Piece Metadata API', () => {
                 displayName: 'a',
                 version: '0.1.1',
             })
-            await db.save('piece_metadata', [mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC, mockPieceMetadataD])
+            await db.save('piece_metadata', [
+                mockPieceMetadataA,
+                mockPieceMetadataB,
+                mockPieceMetadataC,
+                mockPieceMetadataD,
+            ])
 
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
@@ -401,7 +401,6 @@ describe('Piece Metadata API', () => {
             expect(responseBody).toHaveLength(1)
             expect(responseBody?.[0].id).toBe(mockPieceMetadataB.id)
         })
-
 
         it('Sorts by piece name', async () => {
             // arrange

@@ -92,4 +92,5 @@ const JsonEditor = React.memo(
 );
 
 JsonEditor.displayName = 'JsonEditor';
+
 export { JsonEditor };

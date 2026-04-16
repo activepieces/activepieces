@@ -135,5 +135,4 @@ export class AddHandshakeConfigurationToFlowSqlite1746845932780 implements Migra
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
         `)
     }
-
 }

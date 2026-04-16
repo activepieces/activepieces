@@ -19,7 +19,10 @@ export const canaryRoutingMiddleware = async (request: FastifyRequest, reply: Fa
         workerGroupService(request.log).isCanaryPlatform({ platformId }),
     )
     if (canaryLookupError) {
-        request.log.error({ err: canaryLookupError }, '[canaryRoutingMiddleware] failed to fetch canary platform IDs, falling through')
+        request.log.error(
+            { err: canaryLookupError },
+            '[canaryRoutingMiddleware] failed to fetch canary platform IDs, falling through',
+        )
         return
     }
     if (!shouldForward) return
@@ -44,9 +47,10 @@ async function awaitProxy(request: FastifyRequest, reply: FastifyReply): Promise
 async function resolvePlatformId(request: FastifyRequest, log: FastifyBaseLogger): Promise<string | null> {
     const principal = request.principal
     if (!isNil(principal)) {
-        const resolvedFromPrincipal = principal.type === PrincipalType.USER
-            || principal.type === PrincipalType.SERVICE
-            || principal.type === PrincipalType.ENGINE
+        const resolvedFromPrincipal =
+            principal.type === PrincipalType.USER ||
+            principal.type === PrincipalType.SERVICE ||
+            principal.type === PrincipalType.ENGINE
         if (resolvedFromPrincipal) {
             return principal.platform.id
         }

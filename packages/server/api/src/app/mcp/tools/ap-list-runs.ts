@@ -9,7 +9,10 @@ const runStatusValues = Object.values(FlowRunStatus) as [FlowRunStatus, ...FlowR
 
 const listRunsInput = z.object({
     flowId: z.string().optional().describe('Filter by flow ID. Use ap_list_flows to find it.'),
-    status: z.enum(runStatusValues).optional().describe('Filter by status: SUCCEEDED, FAILED, RUNNING, QUEUED, PAUSED, TIMEOUT, etc.'),
+    status: z
+        .enum(runStatusValues)
+        .optional()
+        .describe('Filter by status: SUCCEEDED, FAILED, RUNNING, QUEUED, PAUSED, TIMEOUT, etc.'),
     limit: z.number().min(1).max(50).optional().describe('Max runs to return (default 10, max 50)'),
 })
 
@@ -17,7 +20,8 @@ export const apListRunsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolD
     return {
         title: 'ap_list_runs',
         permission: Permission.READ_RUN,
-        description: 'List recent flow runs with optional filters. Returns run ID, status, timestamps, and failed step info.',
+        description:
+            'List recent flow runs with optional filters. Returns run ID, status, timestamps, and failed step info.',
         inputSchema: listRunsInput.shape,
         annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -36,15 +40,16 @@ export const apListRunsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolD
                     return { content: [{ type: 'text', text: 'No flow runs found matching the criteria.' }] }
                 }
 
-                const lines = result.data.map(run => formatRunSummary(run))
+                const lines = result.data.map((run) => formatRunSummary(run))
                 return {
-                    content: [{
-                        type: 'text',
-                        text: `Flow runs (${result.data.length}):\n\n${lines.join('\n')}`,
-                    }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Flow runs (${result.data.length}):\n\n${lines.join('\n')}`,
+                        },
+                    ],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_list_runs failed')
                 return mcpUtils.mcpToolError('Failed to list runs', err)
             }

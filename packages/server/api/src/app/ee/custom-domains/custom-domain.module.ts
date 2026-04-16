@@ -1,7 +1,9 @@
 import {
     AddDomainRequest,
     assertNotNullOrUndefined,
-    ListCustomDomainsRequest, PrincipalType } from '@activepieces/shared'
+    ListCustomDomainsRequest,
+    PrincipalType,
+} from '@activepieces/shared'
 import { HttpStatusCode } from 'axios'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -16,7 +18,10 @@ const GetOneRequest = z.object({
 type GetOneRequest = z.infer<typeof GetOneRequest>
 
 export const customDomainModule: FastifyPluginAsyncZod = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.customDomainsEnabled))
+    app.addHook(
+        'preHandler',
+        platformMustHaveFeatureEnabled((platform) => platform.plan.customDomainsEnabled),
+    )
     await app.register(customDomainController, { prefix: '/v1/custom-domains' })
 }
 

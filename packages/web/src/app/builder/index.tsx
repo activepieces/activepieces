@@ -34,6 +34,7 @@ import { RunsList } from './run-list';
 import { CursorPositionProvider } from './state/cursor-position-context';
 import { StepSettingsContainer } from './step-settings';
 import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
+
 const animateResizeClassName = `transition-all `;
 
 const BuilderPage = () => {
@@ -174,6 +175,7 @@ const BuilderPage = () => {
 };
 
 BuilderPage.displayName = 'BuilderPage';
+
 export { BuilderPage };
 
 function constructContainerKey({

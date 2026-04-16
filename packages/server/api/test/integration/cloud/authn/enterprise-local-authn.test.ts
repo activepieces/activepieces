@@ -1,10 +1,10 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { OtpState, OtpType, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
 import { createMockOtp, mockBasicUser } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -176,7 +176,7 @@ describe('Enterprise Local Authn API', () => {
     describe('Reset Password Endpoint', () => {
         it('Updates user password', async () => {
             const { mockUserIdentity } = await mockBasicUser({
-                userIdentity: {                },
+                userIdentity: {},
             })
 
             const mockOtp = createMockOtp({
@@ -208,9 +208,7 @@ describe('Enterprise Local Authn API', () => {
         })
 
         it('Fails if OTP is wrong', async () => {
-            const { mockUserIdentity } = await mockBasicUser({
-
-            })
+            const { mockUserIdentity } = await mockBasicUser({})
 
             const correctOtp = '123456'
             const mockOtp = createMockOtp({

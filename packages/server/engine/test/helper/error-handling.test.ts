@@ -41,7 +41,6 @@ describe('runWithExponentialBackoff', () => {
         expect(requestFunction).toHaveBeenCalledWith({ action, executionState, constants })
     })
 
-
     it('should retry and return resultExecutionState when verdict is FAILED and retry is enabled', async () => {
         const resultExecutionState = FlowExecutorContext.empty().setVerdict({
             status: FlowRunStatus.FAILED,
@@ -75,7 +74,6 @@ describe('runWithExponentialBackoff', () => {
 
         requestFunction.mockResolvedValue(resultExecutionState)
 
-
         const actionWithDisabledRetry = buildCodeAction({
             name: 'runtime',
             input: {},
@@ -89,12 +87,15 @@ describe('runWithExponentialBackoff', () => {
             },
         })
 
-        const output = await runWithExponentialBackoff(executionState, actionWithDisabledRetry, constants, requestFunction)
+        const output = await runWithExponentialBackoff(
+            executionState,
+            actionWithDisabledRetry,
+            constants,
+            requestFunction,
+        )
 
         expect(output).toEqual(resultExecutionState)
         expect(requestFunction).toHaveBeenCalledTimes(1)
         expect(requestFunction).toHaveBeenCalledWith({ action: actionWithDisabledRetry, executionState, constants })
-
     })
-
 })

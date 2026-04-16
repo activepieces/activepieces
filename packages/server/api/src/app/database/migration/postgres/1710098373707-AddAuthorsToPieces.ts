@@ -21,8 +21,6 @@ export class AddAuthorsToPieces1710098373707 implements MigrationInterface {
             ALTER TABLE "piece_metadata"
             ALTER COLUMN "authors" SET NOT NULL;
         `)
-
-
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -30,5 +28,4 @@ export class AddAuthorsToPieces1710098373707 implements MigrationInterface {
             ALTER TABLE "piece_metadata" DROP COLUMN "authors"
         `)
     }
-
 }

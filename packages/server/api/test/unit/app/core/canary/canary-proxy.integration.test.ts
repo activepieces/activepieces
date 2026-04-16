@@ -56,7 +56,7 @@ type RecordedRequest = {
     body: string
 }
 
-type ResponseOverride = { status: number, body: unknown }
+type ResponseOverride = { status: number; body: unknown }
 
 let canaryApp: FastifyInstance
 let canaryUrl: string
@@ -75,9 +75,7 @@ beforeAll(async () => {
             body: req.body as string,
         })
         const override = canaryResponseOverride
-        return override
-            ? reply.status(override.status).send(override.body)
-            : reply.status(200).send({ proxied: true })
+        return override ? reply.status(override.status).send(override.body) : reply.status(200).send({ proxied: true })
     })
 
     await canaryApp.listen({ port: 0, host: '127.0.0.1' })
@@ -118,9 +116,7 @@ beforeEach(async () => {
     canaryRequests.length = 0
     canaryResponseOverride = null
 
-    mockSystemGet.mockImplementation((prop: string) =>
-        prop === 'CANARY_APP_URL' ? canaryUrl : undefined,
-    )
+    mockSystemGet.mockImplementation((prop: string) => (prop === 'CANARY_APP_URL' ? canaryUrl : undefined))
     mockIsCanaryPlatform.mockResolvedValue(true)
 
     primaryApp = await buildPrimaryApp()
@@ -163,7 +159,7 @@ describe('canary proxy — actual HTTP forwarding', () => {
             url: '/v1/test',
             headers: {
                 'x-custom-header': 'my-value',
-                'authorization': 'Bearer secret',
+                authorization: 'Bearer secret',
             },
         })
 

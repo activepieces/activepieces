@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { useMemo } from 'react';
 
-import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
+import { flowRunUtils, StepStatusIcon } from '@/features/flow-runs';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';

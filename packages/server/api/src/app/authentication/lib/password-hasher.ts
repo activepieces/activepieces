@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 import { FirebaseScrypt } from 'firebase-scrypt'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+
 const SALT_ROUNDS = 10
 const SCRYPT_SEPARATOR = '~'
 
@@ -11,10 +12,7 @@ export const passwordHasher = {
         return bcrypt.hash(plainTextPassword, SALT_ROUNDS)
     },
 
-    compare: async (
-        plainTextPassword: string,
-        hashedPassword: string,
-    ): Promise<boolean> => {
+    compare: async (plainTextPassword: string, hashedPassword: string): Promise<boolean> => {
         assertNotNullOrUndefined(plainTextPassword, 'plainTextPassword')
         assertNotNullOrUndefined(hashedPassword, 'hashedPassword')
         if (isBcryptHash(hashedPassword)) {
@@ -22,23 +20,15 @@ export const passwordHasher = {
         }
         if (isScrypt(hashedPassword)) {
             const salt = hashedPassword.split(SCRYPT_SEPARATOR)[1]
-            const rawHashedPassword = hashedPassword
-                .split(SCRYPT_SEPARATOR)[0]
-                .substring('$scrypt$'.length)
+            const rawHashedPassword = hashedPassword.split(SCRYPT_SEPARATOR)[0].substring('$scrypt$'.length)
             return compareScrypt(plainTextPassword, salt, rawHashedPassword)
         }
         return false
     },
 }
 
-async function compareScrypt(
-    password: string,
-    salt: string,
-    hashedPassword: string,
-): Promise<boolean> {
-    const firebaseParameter = JSON.parse(
-        system.getOrThrow(AppSystemProp.FIREBASE_HASH_PARAMETERS),
-    )
+async function compareScrypt(password: string, salt: string, hashedPassword: string): Promise<boolean> {
+    const firebaseParameter = JSON.parse(system.getOrThrow(AppSystemProp.FIREBASE_HASH_PARAMETERS))
     const firebaseScrypt = new FirebaseScrypt(firebaseParameter)
     return firebaseScrypt.verify(password, salt, hashedPassword)
 }

@@ -1,11 +1,11 @@
 import {
-  RouterAction,
   BranchExecutionType,
   isNil,
+  RouterAction,
   RouterActionSettings,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { GripVertical, Trash, CopyPlus, Pencil } from 'lucide-react';
+import { CopyPlus, GripVertical, Pencil, Trash } from 'lucide-react';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 

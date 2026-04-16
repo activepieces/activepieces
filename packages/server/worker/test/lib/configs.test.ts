@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { getApiUrl, getSocketUrl } from '../../src/lib/config/configs'
 
 const savedContainerType = process.env.AP_CONTAINER_TYPE

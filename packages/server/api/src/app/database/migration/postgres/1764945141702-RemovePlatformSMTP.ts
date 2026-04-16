@@ -15,5 +15,4 @@ export class RemovePlatformSMTP1764945141702 implements MigrationInterface {
             ADD "smtp" jsonb
         `)
     }
-
 }

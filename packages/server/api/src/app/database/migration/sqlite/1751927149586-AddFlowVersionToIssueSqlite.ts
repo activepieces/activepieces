@@ -211,5 +211,4 @@ export class AddFlowVersionToIssueSqlite1751927149586 implements MigrationInterf
             CREATE UNIQUE INDEX "idx_issue_flowId_stepName" ON "issue" ("flowId", "stepName")
         `)
     }
-
 }

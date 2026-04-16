@@ -328,8 +328,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
     },
 })
 
-
-
 function getSupportedAppWebhooks(): string[] {
     const webhookSecrets = system.get(AppSystemProp.APP_WEBHOOK_SECRETS)
     if (isNil(webhookSecrets)) {

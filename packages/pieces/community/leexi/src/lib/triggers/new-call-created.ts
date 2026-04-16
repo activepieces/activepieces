@@ -1,20 +1,28 @@
-import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from "@activepieces/pieces-framework";
-import { leexiAuth } from "../common/auth";
-import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper, QueryParams } from "@activepieces/pieces-common";
-import dayjs from 'dayjs';
-import { BASE_URL } from "../common/constants";
-import { ListCallResponse } from "../common/types";
-import { isEmpty } from "@activepieces/shared";
+import {
+    AuthenticationType,
+    DedupeStrategy,
+    HttpMethod,
+    httpClient,
+    Polling,
+    pollingHelper,
+    QueryParams,
+} from '@activepieces/pieces-common'
+import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework'
+import { isEmpty } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { leexiAuth } from '../common/auth'
+import { BASE_URL } from '../common/constants'
+import { ListCallResponse } from '../common/types'
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof leexiAuth>, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
     async items({ auth, lastFetchEpochMS }) {
-        const isTestMode = lastFetchEpochMS === 0;
+        const isTestMode = lastFetchEpochMS === 0
 
-        let page = 1;
-        let hasMore = true;
+        let page = 1
+        let hasMore = true
 
-        const calls = [];
+        const calls = []
 
         do {
             const qs: QueryParams = {
@@ -22,7 +30,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof leexiAuth>, Reco
                 items: isTestMode ? '5' : '100',
             }
 
-            if (!isTestMode) qs['from'] = dayjs(lastFetchEpochMS).toISOString();
+            if (!isTestMode) qs['from'] = dayjs(lastFetchEpochMS).toISOString()
 
             const response = await httpClient.sendRequest<ListCallResponse>({
                 method: HttpMethod.GET,
@@ -30,29 +38,27 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof leexiAuth>, Reco
                 authentication: {
                     type: AuthenticationType.BASIC,
                     username: auth.username,
-                    password: auth.password
-                }
-            });
+                    password: auth.password,
+                },
+            })
 
-            const callList = response.body.data ?? [];
+            const callList = response.body.data ?? []
 
             for (const call of callList) {
                 calls.push(call)
             }
 
-            if (isTestMode) break;
+            if (isTestMode) break
 
-            page++;
+            page++
             hasMore = !isEmpty(callList)
-
-        } while (hasMore);
-
+        } while (hasMore)
 
         return calls.map((call) => ({
             epochMilliSeconds: dayjs(call.created_at).valueOf(),
-            data: call
+            data: call,
         }))
-    }
+    },
 }
 
 export const newCallCreatedTrigger = createTrigger({
@@ -67,20 +73,20 @@ export const newCallCreatedTrigger = createTrigger({
             auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
-        });
+        })
     },
     async onDisable(context) {
         await pollingHelper.onDisable(polling, {
             auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
-        });
+        })
     },
     async test(context) {
-        return await pollingHelper.test(polling, context);
+        return await pollingHelper.test(polling, context)
     },
     async run(context) {
-        return await pollingHelper.poll(polling, context);
+        return await pollingHelper.poll(polling, context)
     },
-    sampleData: undefined
+    sampleData: undefined,
 })

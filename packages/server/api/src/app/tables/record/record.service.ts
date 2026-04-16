@@ -2,9 +2,9 @@ import {
     ActivepiecesError,
     apId,
     Cell,
-    chunk,
     CreateRecordsRequest,
     Cursor,
+    chunk,
     ErrorCode,
     Field,
     Filter,
@@ -34,21 +34,17 @@ const recordRepo = repoFactory(RecordEntity)
 const cellsRepo = repoFactory(CellEntity)
 
 export const recordService = {
-    async create({
-        request,
-        projectId,
-        fields,
-    }: CreateParams): Promise<PopulatedRecord[]> {
+    async create({ request, projectId, fields }: CreateParams): Promise<PopulatedRecord[]> {
         await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
-        const existingFields = fields ?? await fieldService.getAll({
-            tableId: request.tableId,
-            projectId,
-        })
+        const existingFields =
+            fields ??
+            (await fieldService.getAll({
+                tableId: request.tableId,
+                projectId,
+            }))
 
         const validRecords = request.records.map((recordData) =>
-            recordData.filter((cellData) =>
-                existingFields.some((field) => field.id === cellData.fieldId),
-            ),
+            recordData.filter((cellData) => existingFields.some((field) => field.id === cellData.fieldId)),
         )
 
         let insertedRecordIds: string[] = []
@@ -78,7 +74,12 @@ export const recordService = {
                 created: 'ASC',
             },
         })
-        return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId, fields: existingFields })
+        return formatRecordsAndFetchField({
+            records: insertedRecords,
+            tableId: request.tableId,
+            projectId,
+            fields: existingFields,
+        })
     },
 
     async list({
@@ -88,10 +89,12 @@ export const recordService = {
         limit,
         fields: prefetchedFields,
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-        const fields = prefetchedFields ?? await fieldService.getAll({
-            tableId,
-            projectId,
-        })
+        const fields =
+            prefetchedFields ??
+            (await fieldService.getAll({
+                tableId,
+                projectId,
+            }))
         const records = await recordRepo().find({
             where: {
                 projectId,
@@ -114,8 +117,7 @@ export const recordService = {
             const group = cellsByRecordId.get(cell.recordId)
             if (group) {
                 group.push(cell)
-            }
-            else {
+            } else {
                 cellsByRecordId.set(cell.recordId, [cell])
             }
         }
@@ -127,7 +129,7 @@ export const recordService = {
                 return true
             }
             return filters.every((filter) => {
-                const cell = record.cells.find(c => c.fieldId === filter.fieldId)
+                const cell = record.cells.find((c) => c.fieldId === filter.fieldId)
                 if (!cell) {
                     return filter.operator === FilterOperator.NOT_EXISTS
                 }
@@ -135,7 +137,12 @@ export const recordService = {
             })
         })
 
-        const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId, fields })
+        const populatedRecords = await formatRecordsAndFetchField({
+            records: filteredOutRecords,
+            tableId,
+            projectId,
+            fields,
+        })
 
         return {
             data: populatedRecords.slice(0, limit),
@@ -144,10 +151,7 @@ export const recordService = {
         }
     },
 
-    async getById({
-        id,
-        projectId,
-    }: GetByIdParams): Promise<PopulatedRecord> {
+    async getById({ id, projectId }: GetByIdParams): Promise<PopulatedRecord> {
         const record = await recordRepo().findOne({
             where: { id, projectId },
             relations: ['cells'],
@@ -163,15 +167,15 @@ export const recordService = {
             })
         }
 
-        const result = await formatRecordsAndFetchField({ records: [record], tableId: record.tableId, projectId: record.projectId })
+        const result = await formatRecordsAndFetchField({
+            records: [record],
+            tableId: record.tableId,
+            projectId: record.projectId,
+        })
         return result[0]
     },
 
-    async update({
-        id,
-        projectId,
-        request,
-    }: UpdateParams): Promise<PopulatedRecord> {
+    async update({ id, projectId, request }: UpdateParams): Promise<PopulatedRecord> {
         const { tableId } = request
         return transaction(async (entityManager: EntityManager) => {
             const record = await entityManager.getRepository(RecordEntity).findOne({
@@ -189,11 +193,9 @@ export const recordService = {
             }
 
             if (request.cells && request.cells.length > 0) {
-                const existingFields = await entityManager
-                    .getRepository(FieldEntity)
-                    .find({
-                        where: { projectId, tableId },
-                    })
+                const existingFields = await entityManager.getRepository(FieldEntity).find({
+                    where: { projectId, tableId },
+                })
 
                 // Filter out cells with non-existing fields
                 const validCells = request.cells.filter((cellData) =>
@@ -220,12 +222,10 @@ export const recordService = {
             }
 
             // Fetch and return the updated record with full details
-            const updatedRecord = await entityManager
-                .getRepository(RecordEntity)
-                .findOne({
-                    where: { id, projectId, tableId },
-                    relations: ['cells'],
-                })
+            const updatedRecord = await entityManager.getRepository(RecordEntity).findOne({
+                where: { id, projectId, tableId },
+                relations: ['cells'],
+            })
 
             if (isNil(updatedRecord)) {
                 throw new ActivepiecesError({
@@ -237,15 +237,16 @@ export const recordService = {
                 })
             }
 
-            const result = await formatRecordsAndFetchField({ records: [updatedRecord], tableId: updatedRecord.tableId, projectId: updatedRecord.projectId })
+            const result = await formatRecordsAndFetchField({
+                records: [updatedRecord],
+                tableId: updatedRecord.tableId,
+                projectId: updatedRecord.projectId,
+            })
             return result[0]
         })
     },
 
-    async delete({
-        ids,
-        projectId,
-    }: DeleteParams): Promise<PopulatedRecord[]> {
+    async delete({ ids, projectId }: DeleteParams): Promise<PopulatedRecord[]> {
         const firstRecord = await recordRepo().findOne({
             where: { id: ids[0], projectId },
             select: ['tableId'],
@@ -275,10 +276,7 @@ export const recordService = {
         return formatRecordsAndFetchField({ records, tableId: firstRecord.tableId, projectId })
     },
 
-    async deleteAll({
-        tableId,
-        projectId,
-    }: DeleteAllParams): Promise<PopulatedRecord[]> {
+    async deleteAll({ tableId, projectId }: DeleteAllParams): Promise<PopulatedRecord[]> {
         const deletedRecords = await transaction(async (entityManager: EntityManager) => {
             const records = await entityManager.getRepository(RecordEntity).find({
                 where: { projectId, tableId },
@@ -322,25 +320,27 @@ export const recordService = {
         if (webhooks.length === 0) {
             return
         }
-        await Promise.all(webhooks.map((webhook) => {
-            return webhookService.handleWebhook({
-                async: true,
-                flowId: webhook.flowId,
-                flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                saveSampleData: false,
-                data: async (_projectId: string) => ({
-                    method: 'POST',
-                    headers: {
-                        authorization,
-                    },
-                    body: data,
-                    queryParams: {},
-                }),
-                execute: true,
-                logger,
-                failParentOnFailure: true,
-            })
-        }))
+        await Promise.all(
+            webhooks.map((webhook) => {
+                return webhookService.handleWebhook({
+                    async: true,
+                    flowId: webhook.flowId,
+                    flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+                    saveSampleData: false,
+                    data: async (_projectId: string) => ({
+                        method: 'POST',
+                        headers: {
+                            authorization,
+                        },
+                        body: data,
+                        queryParams: {},
+                    }),
+                    execute: true,
+                    logger,
+                    failParentOnFailure: true,
+                })
+            }),
+        )
     },
 
     async count({ projectId, tableId }: CountParams): Promise<number> {
@@ -427,7 +427,7 @@ type CellInsertion = {
 }
 
 function prepareRecordInsertions(
-    records: Array<Array<{ fieldId: string, value: string | null }>>,
+    records: Array<Array<{ fieldId: string; value: string | null }>>,
     tableId: string,
     projectId: string,
     baseDate: Date,
@@ -444,7 +444,7 @@ function prepareRecordInsertions(
 }
 
 function prepareCellInsertions(
-    records: Array<Array<{ fieldId: string, value: string | null }>>,
+    records: Array<Array<{ fieldId: string; value: string | null }>>,
     recordInsertions: RecordInsertion[],
     projectId: string,
 ): CellInsertion[] {
@@ -461,19 +461,34 @@ function prepareCellInsertions(
     )
 }
 
-async function formatRecordsAndFetchField({ records, tableId, projectId, fields: prefetchedFields }: { records: RecordSchema[], tableId: string, projectId: string, fields?: Field[] }): Promise<PopulatedRecord[]> {
-    const fields = prefetchedFields ?? await fieldService.getAll({
-        tableId,
-        projectId,
-    })
+async function formatRecordsAndFetchField({
+    records,
+    tableId,
+    projectId,
+    fields: prefetchedFields,
+}: {
+    records: RecordSchema[]
+    tableId: string
+    projectId: string
+    fields?: Field[]
+}): Promise<PopulatedRecord[]> {
+    const fields =
+        prefetchedFields ??
+        (await fieldService.getAll({
+            tableId,
+            projectId,
+        }))
     return formatRecords(records, fields)
 }
 
 function formatRecords(records: RecordSchema[], fields: Field[]): PopulatedRecord[] {
-    const fieldsNamesMap: Record<string, string> = fields.reduce((acc, field) => {
-        acc[field.id] = field.name
-        return acc
-    }, {} as Record<string, string>)
+    const fieldsNamesMap: Record<string, string> = fields.reduce(
+        (acc, field) => {
+            acc[field.id] = field.name
+            return acc
+        },
+        {} as Record<string, string>,
+    )
     return records.map((record) => {
         const cells = record.cells.reduce<PopulatedRecord['cells']>((acc, cell) => {
             acc[cell.fieldId] = {
@@ -523,16 +538,32 @@ function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
                 return cell.value !== filter.value
             }
             case FilterOperator.GT: {
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue > filterValue })
+                return numberFilterValidator({
+                    cellValue: cell.value,
+                    filterValue: filter.value,
+                    cb: ({ cellValue, filterValue }) => cellValue > filterValue,
+                })
             }
             case FilterOperator.GTE: {
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue >= filterValue })
+                return numberFilterValidator({
+                    cellValue: cell.value,
+                    filterValue: filter.value,
+                    cb: ({ cellValue, filterValue }) => cellValue >= filterValue,
+                })
             }
             case FilterOperator.LT: {
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue < filterValue })
+                return numberFilterValidator({
+                    cellValue: cell.value,
+                    filterValue: filter.value,
+                    cb: ({ cellValue, filterValue }) => cellValue < filterValue,
+                })
             }
             case FilterOperator.LTE: {
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue <= filterValue })
+                return numberFilterValidator({
+                    cellValue: cell.value,
+                    filterValue: filter.value,
+                    cb: ({ cellValue, filterValue }) => cellValue <= filterValue,
+                })
             }
             case FilterOperator.CO: {
                 if (typeof cell.value === 'string') {
@@ -542,10 +573,17 @@ function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
             }
         }
     })
-
 }
 
-const numberFilterValidator = ({ cellValue, filterValue, cb }: { cellValue: unknown, filterValue: string, cb: ({ cellValue, filterValue }: { cellValue: number, filterValue: number }) => boolean }) => {
+const numberFilterValidator = ({
+    cellValue,
+    filterValue,
+    cb,
+}: {
+    cellValue: unknown
+    filterValue: string
+    cb: ({ cellValue, filterValue }: { cellValue: number; filterValue: number }) => boolean
+}) => {
     if (typeof cellValue === 'string' || typeof cellValue === 'number') {
         const cv = parseFloat(cellValue as string)
         const fv = parseFloat(filterValue)
@@ -556,5 +594,3 @@ const numberFilterValidator = ({ cellValue, filterValue, cb }: { cellValue: unkn
     }
     return false
 }
-
-

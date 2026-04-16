@@ -1,33 +1,48 @@
-import { ActionErrorHandlingOptions, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
+import {
+    ActionErrorHandlingOptions,
+    BeginExecuteFlowOperation,
+    BranchCondition,
+    BranchExecutionType,
+    CodeAction,
+    ExecutionType,
+    FlowAction,
+    FlowActionType,
+    FlowVersionState,
+    LoopOnItemsAction,
+    PieceAction,
+    ProgressUpdateType,
+    PropertyExecutionType,
+    RouterExecutionType,
+    RunEnvironment,
+} from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
-    return new EngineConstants(
-        {
-            platformId: params?.platformId ?? 'platformId',
-            timeoutInSeconds: params?.timeoutInSeconds ?? 10,
-            flowId: params?.flowId ?? 'flowId',
-            flowVersionId: params?.flowVersionId ?? 'flowVersionId',
-            flowVersionState: params?.flowVersionState ?? FlowVersionState.DRAFT,
-            flowRunId: params?.flowRunId ?? 'flowRunId',
-            publicApiUrl: params?.publicApiUrl ?? 'http://127.0.0.1:4200/api/',
-            internalApiUrl: params?.internalApiUrl ?? 'http://127.0.0.1:3000/',
-            retryConstants: params?.retryConstants ?? {
-                maxAttempts: 2,
-                retryExponential: 1,
-                retryInterval: 1,
-            },
-            engineToken: params?.engineToken ?? 'engineToken',
-            projectId: params?.projectId ?? 'projectId',
-            triggerPieceName: params?.triggerPieceName ?? 'mcp-trigger-piece-name',
-            progressUpdateType: params?.progressUpdateType ?? ProgressUpdateType.NONE,
-            serverHandlerId: params?.serverHandlerId ?? null,
-            httpRequestId: params?.httpRequestId ?? null,
-            resumePayload: params?.resumePayload,
-            runEnvironment: params?.runEnvironment ?? RunEnvironment.TESTING,
-            stepNameToTest: params?.stepNameToTest ?? undefined,
-            stepNames: params?.stepNames ?? [],
-        })
+    return new EngineConstants({
+        platformId: params?.platformId ?? 'platformId',
+        timeoutInSeconds: params?.timeoutInSeconds ?? 10,
+        flowId: params?.flowId ?? 'flowId',
+        flowVersionId: params?.flowVersionId ?? 'flowVersionId',
+        flowVersionState: params?.flowVersionState ?? FlowVersionState.DRAFT,
+        flowRunId: params?.flowRunId ?? 'flowRunId',
+        publicApiUrl: params?.publicApiUrl ?? 'http://127.0.0.1:4200/api/',
+        internalApiUrl: params?.internalApiUrl ?? 'http://127.0.0.1:3000/',
+        retryConstants: params?.retryConstants ?? {
+            maxAttempts: 2,
+            retryExponential: 1,
+            retryInterval: 1,
+        },
+        engineToken: params?.engineToken ?? 'engineToken',
+        projectId: params?.projectId ?? 'projectId',
+        triggerPieceName: params?.triggerPieceName ?? 'mcp-trigger-piece-name',
+        progressUpdateType: params?.progressUpdateType ?? ProgressUpdateType.NONE,
+        serverHandlerId: params?.serverHandlerId ?? null,
+        httpRequestId: params?.httpRequestId ?? null,
+        resumePayload: params?.resumePayload,
+        runEnvironment: params?.runEnvironment ?? RunEnvironment.TESTING,
+        stepNameToTest: params?.stepNameToTest ?? undefined,
+        stepNames: params?.stepNames ?? [],
+    })
 }
 
 export function buildSimpleLoopAction({
@@ -54,7 +69,17 @@ export function buildSimpleLoopAction({
     }
 }
 
-export function buildRouterWithOneCondition({ children, conditions, executionType, skip }: { children: FlowAction[], conditions: (BranchCondition | null)[], executionType: RouterExecutionType, skip?: boolean }): FlowAction {
+export function buildRouterWithOneCondition({
+    children,
+    conditions,
+    executionType,
+    skip,
+}: {
+    children: FlowAction[]
+    conditions: (BranchCondition | null)[]
+    executionType: RouterExecutionType
+    skip?: boolean
+}): FlowAction {
     return {
         name: 'router',
         displayName: 'Your Router Name',
@@ -81,7 +106,28 @@ export function buildRouterWithOneCondition({ children, conditions, executionTyp
     }
 }
 
-export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOptions }: { name: 'echo_step' | 'runtime' | 'echo_step_1' | 'system_error' | 'process_exit' | 'unhandled_rejection' | 'hello_world_npm' | 'stdout_on_failure' | 'setTimeout_error', input: Record<string, unknown>, skip?: boolean, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: FlowAction }): CodeAction {
+export function buildCodeAction({
+    name,
+    input,
+    skip,
+    nextAction,
+    errorHandlingOptions,
+}: {
+    name:
+        | 'echo_step'
+        | 'runtime'
+        | 'echo_step_1'
+        | 'system_error'
+        | 'process_exit'
+        | 'unhandled_rejection'
+        | 'hello_world_npm'
+        | 'stdout_on_failure'
+        | 'setTimeout_error'
+    input: Record<string, unknown>
+    skip?: boolean
+    errorHandlingOptions?: ActionErrorHandlingOptions
+    nextAction?: FlowAction
+}): CodeAction {
     return {
         name,
         displayName: 'Your Action Name',
@@ -100,7 +146,23 @@ export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOp
     }
 }
 
-export function buildPieceAction({ name, input, skip, pieceName, actionName, nextAction, errorHandlingOptions }: { errorHandlingOptions?: ActionErrorHandlingOptions, name: string, input: Record<string, unknown>, skip?: boolean, pieceName: string, actionName: string, nextAction?: FlowAction }): PieceAction {
+export function buildPieceAction({
+    name,
+    input,
+    skip,
+    pieceName,
+    actionName,
+    nextAction,
+    errorHandlingOptions,
+}: {
+    errorHandlingOptions?: ActionErrorHandlingOptions
+    name: string
+    input: Record<string, unknown>
+    skip?: boolean
+    pieceName: string
+    actionName: string
+    nextAction?: FlowAction
+}): PieceAction {
     return {
         name,
         displayName: 'Your Action Name',
@@ -111,10 +173,15 @@ export function buildPieceAction({ name, input, skip, pieceName, actionName, nex
             pieceName,
             pieceVersion: '1.0.0', // Not required since it's running in development mode
             actionName,
-            propertySettings: Object.fromEntries(Object.entries(input).map(([key]) => [key, {
-                type: PropertyExecutionType.MANUAL,
-                schema: undefined,
-            }])),
+            propertySettings: Object.fromEntries(
+                Object.entries(input).map(([key]) => [
+                    key,
+                    {
+                        type: PropertyExecutionType.MANUAL,
+                        schema: undefined,
+                    },
+                ]),
+            ),
             errorHandlingOptions,
         },
         nextAction,

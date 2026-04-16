@@ -6,19 +6,16 @@ export class productEmbed1677894800372 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        const appCredentialExistsQuery: { exists: boolean }[] =
-      await queryRunner.query(
-          `SELECT exists (
+        const appCredentialExistsQuery: { exists: boolean }[] = await queryRunner.query(
+            `SELECT exists (
             SELECT FROM information_schema.tables
               WHERE  table_schema = 'public'
               AND    table_name   = 'app_credential'
           )`,
-      )
+        )
 
         const appCredentialExists =
-      appCredentialExistsQuery &&
-      appCredentialExistsQuery.length > 0 &&
-      appCredentialExistsQuery[0].exists
+            appCredentialExistsQuery && appCredentialExistsQuery.length > 0 && appCredentialExistsQuery[0].exists
 
         if (appCredentialExists) {
             log.info('initializeSchema1676238396411: skipped')
@@ -33,9 +30,7 @@ export class productEmbed1677894800372 implements MigrationInterface {
         await queryRunner.query(
             'CREATE TABLE "connection_key" ("id" character varying(21) NOT NULL, "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "projectId" character varying(21) NOT NULL, "settings" jsonb NOT NULL, CONSTRAINT "PK_4dcf1d9ae4ba5eb261a6c775ad2" PRIMARY KEY ("id"))',
         )
-        await queryRunner.query(
-            'CREATE INDEX "idx_connection_key_project_id" ON "connection_key" ("projectId") ',
-        )
+        await queryRunner.query('CREATE INDEX "idx_connection_key_project_id" ON "connection_key" ("projectId") ')
         await queryRunner.query(
             'ALTER TABLE "app_credential" ADD CONSTRAINT "FK_d82bfb4c7432a69dc2419083a0e" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE NO ACTION ON UPDATE NO ACTION',
         )
@@ -45,19 +40,11 @@ export class productEmbed1677894800372 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(
-            'DROP INDEX "idx_connection_key_project_id"',
-        )
+        await queryRunner.query('DROP INDEX "idx_connection_key_project_id"')
         await queryRunner.query('DROP TABLE "connection_key"')
-        await queryRunner.query(
-            'DROP INDEX "idx_app_credentials_projectId_appName"',
-        )
+        await queryRunner.query('DROP INDEX "idx_app_credentials_projectId_appName"')
         await queryRunner.query('DROP TABLE "app_credential"')
-        await queryRunner.query(
-            'ALTER TABLE "connection_key" DROP CONSTRAINT "FK_03177dc6779e6e147866d43c050"',
-        )
-        await queryRunner.query(
-            'ALTER TABLE "app_credential" DROP CONSTRAINT "FK_d82bfb4c7432a69dc2419083a0e"',
-        )
+        await queryRunner.query('ALTER TABLE "connection_key" DROP CONSTRAINT "FK_03177dc6779e6e147866d43c050"')
+        await queryRunner.query('ALTER TABLE "app_credential" DROP CONSTRAINT "FK_d82bfb4c7432a69dc2419083a0e"')
     }
 }

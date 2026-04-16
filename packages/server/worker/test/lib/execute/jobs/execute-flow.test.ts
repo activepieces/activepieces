@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { ExecuteFlowJobData, FlowVersion } from '@activepieces/shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -12,7 +12,7 @@ import {
     StepOutputStatus,
     WorkerJobType,
 } from '@activepieces/shared'
-import type { ExecuteFlowJobData, FlowVersion } from '@activepieces/shared'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockGetVersion = vi.fn()
 
@@ -149,8 +149,7 @@ describe('executeFlowJob', () => {
             try {
                 await executeFlowJob.execute(ctx, data)
                 expect.fail('should have thrown')
-            }
-            catch (e) {
+            } catch (e) {
                 expect(e).toBeInstanceOf(ActivepiecesError)
                 expect((e as ActivepiecesError).error.code).toBe(ErrorCode.VALIDATION)
             }
@@ -168,19 +167,21 @@ describe('executeFlowJob', () => {
         it('should proceed normally when RESUME has non-empty execution state', async () => {
             const ctx = makeMockContext()
             ctx.apiClient.getPayloadFile.mockResolvedValue(
-                Buffer.from(JSON.stringify({
-                    executionState: {
-                        steps: {
-                            trigger_1: {
-                                type: FlowTriggerType.EMPTY,
-                                status: StepOutputStatus.SUCCEEDED,
-                                input: {},
-                                output: {},
+                Buffer.from(
+                    JSON.stringify({
+                        executionState: {
+                            steps: {
+                                trigger_1: {
+                                    type: FlowTriggerType.EMPTY,
+                                    status: StepOutputStatus.SUCCEEDED,
+                                    input: {},
+                                    output: {},
+                                },
                             },
+                            tags: [],
                         },
-                        tags: [],
-                    },
-                })),
+                    }),
+                ),
             )
 
             const data = makeResumeJobData()

@@ -21,7 +21,12 @@ import { mcpUtils } from './mcp-utils'
 const addStepInput = z.object({
     flowId: z.string(),
     parentStepName: z.string(),
-    stepLocationRelativeToParent: z.enum(Object.values(StepLocationRelativeToParent) as [StepLocationRelativeToParent, ...StepLocationRelativeToParent[]]),
+    stepLocationRelativeToParent: z.enum(
+        Object.values(StepLocationRelativeToParent) as [
+            StepLocationRelativeToParent,
+            ...StepLocationRelativeToParent[],
+        ],
+    ),
     branchIndex: z.number().optional(),
     stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]),
     displayName: z.string(),
@@ -39,26 +44,89 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
     return {
         title: 'ap_add_step',
         permission: Permission.WRITE_FLOW,
-        description: 'Add a new step to a flow. Optionally configure it in the same call by providing input/auth/sourceCode. Prefer PIECE over CODE.',
+        description:
+            'Add a new step to a flow. Optionally configure it in the same call by providing input/auth/sourceCode. Prefer PIECE over CODE.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
-            parentStepName: z.string().describe('The step name to insert after/into (e.g. "trigger", "step_1"). Use ap_flow_structure to get valid values.'),
-            stepLocationRelativeToParent: z.enum(Object.values(StepLocationRelativeToParent) as [string, ...string[]]).describe('Where to place the step: AFTER = after the parent, INSIDE_LOOP = first action inside a loop, INSIDE_BRANCH = first action inside a router branch'),
-            branchIndex: z.number().optional().describe('Branch index (required when stepLocationRelativeToParent is INSIDE_BRANCH)'),
-            stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]).describe('The type of step to add. Prefer PIECE over CODE — only use CODE when no piece exists for the task.'),
+            parentStepName: z
+                .string()
+                .describe(
+                    'The step name to insert after/into (e.g. "trigger", "step_1"). Use ap_flow_structure to get valid values.',
+                ),
+            stepLocationRelativeToParent: z
+                .enum(Object.values(StepLocationRelativeToParent) as [string, ...string[]])
+                .describe(
+                    'Where to place the step: AFTER = after the parent, INSIDE_LOOP = first action inside a loop, INSIDE_BRANCH = first action inside a router branch',
+                ),
+            branchIndex: z
+                .number()
+                .optional()
+                .describe('Branch index (required when stepLocationRelativeToParent is INSIDE_BRANCH)'),
+            stepType: z
+                .enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER])
+                .describe(
+                    'The type of step to add. Prefer PIECE over CODE — only use CODE when no piece exists for the task.',
+                ),
             displayName: z.string().describe('Display name for the step'),
-            pieceName: z.string().optional().describe('For PIECE steps: the piece name (e.g. "@activepieces/piece-gmail"). Use ap_list_pieces to get valid values.'),
-            pieceVersion: z.string().optional().describe('For PIECE steps: the piece version (e.g. "~0.1.0"). Use ap_list_pieces to get valid values.'),
-            actionName: z.string().optional().describe('For PIECE steps: the action name within the piece. Use ap_list_pieces with includeActions=true to get valid values.'),
-            input: z.record(z.string(), z.unknown()).optional().describe(`For PIECE/CODE steps: input config (key-value pairs). ${mcpUtils.STEP_REFERENCE_HINT}`),
-            auth: z.string().optional().describe('Connection externalId from ap_list_connections. Auto-wrapped as {{connections[\'externalId\']}}.'),
-            sourceCode: z.string().optional().describe('For CODE steps: JavaScript/TypeScript source. Must export a `code` function.'),
-            packageJson: z.string().optional().describe('For CODE steps: package.json as JSON string. Defaults to "{}".'),
-            loopItems: z.string().optional().describe('For LOOP steps: expression for items to iterate (e.g. "{{step_1.items}}").'),
+            pieceName: z
+                .string()
+                .optional()
+                .describe(
+                    'For PIECE steps: the piece name (e.g. "@activepieces/piece-gmail"). Use ap_list_pieces to get valid values.',
+                ),
+            pieceVersion: z
+                .string()
+                .optional()
+                .describe(
+                    'For PIECE steps: the piece version (e.g. "~0.1.0"). Use ap_list_pieces to get valid values.',
+                ),
+            actionName: z
+                .string()
+                .optional()
+                .describe(
+                    'For PIECE steps: the action name within the piece. Use ap_list_pieces with includeActions=true to get valid values.',
+                ),
+            input: z
+                .record(z.string(), z.unknown())
+                .optional()
+                .describe(`For PIECE/CODE steps: input config (key-value pairs). ${mcpUtils.STEP_REFERENCE_HINT}`),
+            auth: z
+                .string()
+                .optional()
+                .describe(
+                    "Connection externalId from ap_list_connections. Auto-wrapped as {{connections['externalId']}}.",
+                ),
+            sourceCode: z
+                .string()
+                .optional()
+                .describe('For CODE steps: JavaScript/TypeScript source. Must export a `code` function.'),
+            packageJson: z
+                .string()
+                .optional()
+                .describe('For CODE steps: package.json as JSON string. Defaults to "{}".'),
+            loopItems: z
+                .string()
+                .optional()
+                .describe('For LOOP steps: expression for items to iterate (e.g. "{{step_1.items}}").'),
         },
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, parentStepName, stepLocationRelativeToParent, branchIndex, stepType, displayName, pieceName, pieceVersion, actionName, input, auth, sourceCode, packageJson, loopItems } = addStepInput.parse(args)
+            const {
+                flowId,
+                parentStepName,
+                stepLocationRelativeToParent,
+                branchIndex,
+                stepType,
+                displayName,
+                pieceName,
+                pieceVersion,
+                actionName,
+                input,
+                auth,
+                sourceCode,
+                packageJson,
+                loopItems,
+            } = addStepInput.parse(args)
 
             const [flow, project] = await Promise.all([
                 flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
@@ -94,17 +162,22 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                                 packageJson: packageJson ?? '{}',
                             },
                             input: resolvedInput,
-                            errorHandlingOptions: { continueOnFailure: { value: false }, retryOnFailure: { value: false } },
+                            errorHandlingOptions: {
+                                continueOnFailure: { value: false },
+                                retryOnFailure: { value: false },
+                            },
                         },
                     }
                     break
                 case FlowActionType.PIECE: {
                     if (!pieceName || !pieceVersion) {
                         return {
-                            content: [{
-                                type: 'text',
-                                text: '❌ pieceName and pieceVersion are required for PIECE steps. Use ap_list_pieces to get valid values.',
-                            }],
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: '❌ pieceName and pieceVersion are required for PIECE steps. Use ap_list_pieces to get valid values.',
+                                },
+                            ],
                         }
                     }
                     const pieceSettings: Record<string, unknown> = {
@@ -116,7 +189,11 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                         errorHandlingOptions: { continueOnFailure: { value: false }, retryOnFailure: { value: false } },
                     }
                     if (input !== undefined) {
-                        await mcpUtils.fillDefaultsForMissingOptionalProps({ settings: pieceSettings, platformId: project.platformId, log })
+                        await mcpUtils.fillDefaultsForMissingOptionalProps({
+                            settings: pieceSettings,
+                            platformId: project.platformId,
+                            log,
+                        })
                     }
                     skeletonAction = {
                         type: FlowActionType.PIECE,
@@ -159,15 +236,23 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                     }
             }
 
-            if (stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH && branchIndex === undefined) {
+            if (
+                stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH &&
+                branchIndex === undefined
+            ) {
                 return {
-                    content: [{ type: 'text', text: '❌ branchIndex is required when stepLocationRelativeToParent is INSIDE_BRANCH. Use ap_flow_structure to get valid branch indices.' }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: '❌ branchIndex is required when stepLocationRelativeToParent is INSIDE_BRANCH. Use ap_flow_structure to get valid branch indices.',
+                        },
+                    ],
                 }
             }
 
             const parseResult = UpdateActionRequest.safeParse(skeletonAction)
             if (!parseResult.success) {
-                const message = parseResult.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join('; ')
+                const message = parseResult.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join('; ')
                 return {
                     content: [{ type: 'text', text: `❌ Invalid step: ${message}` }],
                 }
@@ -192,32 +277,38 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                     operation,
                 })
 
-                const hasConfig = input !== undefined || auth !== undefined || sourceCode !== undefined || loopItems !== undefined
+                const hasConfig =
+                    input !== undefined || auth !== undefined || sourceCode !== undefined || loopItems !== undefined
                 const addedStep = flowStructureUtil.getStep(stepName, updatedFlow.version.trigger)
                 if (hasConfig && addedStep && !addedStep.valid) {
                     return {
-                        content: [{
-                            type: 'text',
-                            text: `⚠️ Step "${displayName}" (${stepName}) added but still invalid. Use ap_get_piece_props to check required fields, then ap_update_step to fix.`,
-                        }],
+                        content: [
+                            {
+                                type: 'text',
+                                text: `⚠️ Step "${displayName}" (${stepName}) added but still invalid. Use ap_get_piece_props to check required fields, then ap_update_step to fix.`,
+                            },
+                        ],
                     }
                 }
                 if (hasConfig) {
                     return {
-                        content: [{
-                            type: 'text',
-                            text: `✅ Step "${displayName}" (${stepName}) added and configured.`,
-                        }],
+                        content: [
+                            {
+                                type: 'text',
+                                text: `✅ Step "${displayName}" (${stepName}) added and configured.`,
+                            },
+                        ],
                     }
                 }
                 return {
-                    content: [{
-                        type: 'text',
-                        text: `✅ Step "${displayName}" (${stepName}) added. Now use ap_update_step with stepName="${stepName}" to configure its settings.`,
-                    }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `✅ Step "${displayName}" (${stepName}) added. Now use ap_update_step with stepName="${stepName}" to configure its settings.`,
+                        },
+                    ],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 return mcpUtils.mcpToolError('Step add failed', err)
             }
         },

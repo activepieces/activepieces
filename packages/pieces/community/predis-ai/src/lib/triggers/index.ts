@@ -1,3 +1,3 @@
-import { postCreated } from './post-created';
+import { postCreated } from './post-created'
 
-export const predisAiTriggers = [postCreated];
+export const predisAiTriggers = [postCreated]

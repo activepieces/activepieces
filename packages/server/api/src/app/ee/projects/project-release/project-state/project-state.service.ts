@@ -1,4 +1,28 @@
-import { AppConnectionScope, AppConnectionStatus, AppConnectionType, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowOperationStatus, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
+import {
+    AppConnectionScope,
+    AppConnectionStatus,
+    AppConnectionType,
+    ConnectionOperationType,
+    ConnectionState,
+    DiffState,
+    FieldState,
+    FieldType,
+    FileCompression,
+    FileId,
+    FileType,
+    FlowOperationStatus,
+    FlowProjectOperationType,
+    FlowState,
+    FlowStatus,
+    FlowSyncError,
+    isNil,
+    PopulatedFlow,
+    PopulatedTable,
+    ProjectId,
+    ProjectState,
+    TableOperationType,
+    TableState,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../../file/file.service'
@@ -69,9 +93,11 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         },
                     })
 
-                    await Promise.all(operation.tableState.fields.map(async (field) => {
-                        await fieldService.createFromState({ projectId, field, tableId: table.id })
-                    }))
+                    await Promise.all(
+                        operation.tableState.fields.map(async (field) => {
+                            await fieldService.createFromState({ projectId, field, tableId: table.id })
+                        }),
+                    )
                     break
                 }
                 case TableOperationType.UPDATE_TABLE: {
@@ -88,28 +114,33 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         tableId: table.id,
                     })
 
-                    await Promise.all(operation.newTableState.fields.map(async (field) => {
-                        const existingField = fields.find((f) => f.externalId === field.externalId)
-                        if (!isNil(existingField)) {
-                            await fieldService.update({
+                    await Promise.all(
+                        operation.newTableState.fields.map(async (field) => {
+                            const existingField = fields.find((f) => f.externalId === field.externalId)
+                            if (!isNil(existingField)) {
+                                await fieldService.update({
+                                    projectId,
+                                    id: existingField.id,
+                                    request: field,
+                                })
+                            } else {
+                                await fieldService.createFromState({ projectId, field, tableId: table.id })
+                            }
+                        }),
+                    )
+
+                    const fieldsToDelete = fields.filter(
+                        (f) => !operation.newTableState.fields.some((nf) => nf.externalId === f.externalId),
+                    )
+
+                    await Promise.all(
+                        fieldsToDelete.map(async (field) => {
+                            await fieldService.delete({
+                                id: field.id,
                                 projectId,
-                                id: existingField.id,
-                                request: field,
                             })
-                        }
-                        else {
-                            await fieldService.createFromState({ projectId, field, tableId: table.id })
-                        }
-                    }))
-
-                    const fieldsToDelete = fields.filter((f) => !operation.newTableState.fields.some((nf) => nf.externalId === f.externalId))
-
-                    await Promise.all(fieldsToDelete.map(async (field) => {
-                        await fieldService.delete({
-                            id: field.id,
-                            projectId,
-                        })
-                    }))
+                        }),
+                    )
                     break
                 }
                 case TableOperationType.DELETE_TABLE: {
@@ -129,14 +160,29 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         for (const operation of flows) {
             switch (operation.type) {
                 case FlowProjectOperationType.UPDATE_FLOW: {
-                    const flowUpdated = await projectStateHelper(log).updateFlowInProject(operation.flowState, operation.newFlowState, projectId)
-                    const keepOriginalState = projectStateHelper(log).republishFlow({ flow: flowUpdated, projectId, status: operation.flowState.status })
+                    const flowUpdated = await projectStateHelper(log).updateFlowInProject(
+                        operation.flowState,
+                        operation.newFlowState,
+                        projectId,
+                    )
+                    const keepOriginalState = projectStateHelper(log).republishFlow({
+                        flow: flowUpdated,
+                        projectId,
+                        status: operation.flowState.status,
+                    })
                     publishJobs.push(keepOriginalState)
                     break
                 }
                 case FlowProjectOperationType.CREATE_FLOW: {
-                    const flowCreated = await projectStateHelper(log).createFlowInProject(operation.flowState, projectId)
-                    const alwaysEnableNewFlow = projectStateHelper(log).republishFlow({ flow: flowCreated, projectId, status: FlowStatus.ENABLED })
+                    const flowCreated = await projectStateHelper(log).createFlowInProject(
+                        operation.flowState,
+                        projectId,
+                    )
+                    const alwaysEnableNewFlow = projectStateHelper(log).republishFlow({
+                        flow: flowCreated,
+                        projectId,
+                        status: FlowStatus.ENABLED,
+                    })
                     publishJobs.push(alwaysEnableNewFlow)
                     break
                 }
@@ -199,9 +245,11 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 return {
                     ...flow,
                     version: flowVersionMap.get(flow.id)!,
-                    triggerSource: triggerSource ? {
-                        schedule: triggerSource.schedule,
-                    } : undefined,
+                    triggerSource: triggerSource
+                        ? {
+                              schedule: triggerSource.schedule,
+                          }
+                        : undefined,
                 }
             })
 
@@ -247,7 +295,9 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
 })
 
 async function toProjectState({ flows, connections, tables, log }: ToProjectStateParams): Promise<ProjectState> {
-    const flowsInProjectState: FlowState[] = await Promise.all(flows.map(async (flow) => projectStateService(log).getFlowState(flow)))
+    const flowsInProjectState: FlowState[] = await Promise.all(
+        flows.map(async (flow) => projectStateService(log).getFlowState(flow)),
+    )
 
     const tablesInProjectState: TableState[] = tables.map((table) => projectStateService(log).getTableState(table))
 

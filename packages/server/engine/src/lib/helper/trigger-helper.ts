@@ -1,5 +1,20 @@
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
-import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, FlowTrigger, InvalidCronExpressionError, isNil, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
+import {
+    AUTHENTICATION_PROPERTY_NAME,
+    assertEqual,
+    EngineGenericError,
+    EventPayload,
+    ExecuteTriggerOperation,
+    ExecuteTriggerResponse,
+    FlowTrigger,
+    InvalidCronExpressionError,
+    isNil,
+    PieceTrigger,
+    PropertySettings,
+    ScheduleOptions,
+    TriggerHookType,
+    TriggerSourceScheduleType,
+} from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -72,8 +87,13 @@ export const triggerHelper = {
         await pieceTrigger.onStart(context)
     },
 
-    async executeTrigger({ params, constants }: ExecuteTriggerParams): Promise<ExecuteTriggerResponse<TriggerHookType>> {
-        const { pieceName, pieceVersion, triggerName, input, propertySettings } = (params.flowVersion.trigger as PieceTrigger).settings
+    async executeTrigger({
+        params,
+        constants,
+    }: ExecuteTriggerParams): Promise<ExecuteTriggerResponse<TriggerHookType>> {
+        const { pieceName, pieceVersion, triggerName, input, propertySettings } = (
+            params.flowVersion.trigger as PieceTrigger
+        ).settings
 
         if (isNil(triggerName)) {
             throw new EngineGenericError('TriggerNameNotSetError', 'Trigger name is not set')
@@ -165,7 +185,8 @@ export const triggerHelper = {
                 return {}
             }
             case TriggerHookType.HANDSHAKE: {
-                const { data: handshakeResponse, error: handshakeResponseError } = await utils.tryCatchAndThrowOnEngineError(() => pieceTrigger.onHandshake(context))
+                const { data: handshakeResponse, error: handshakeResponseError } =
+                    await utils.tryCatchAndThrowOnEngineError(() => pieceTrigger.onHandshake(context))
 
                 if (handshakeResponseError) {
                     throw handshakeResponseError
@@ -175,15 +196,17 @@ export const triggerHelper = {
                 }
             }
             case TriggerHookType.TEST: {
-                const { data: testResponse, error: testResponseError } = await utils.tryCatchAndThrowOnEngineError(() => pieceTrigger.test({
-                    ...context,
-                    files: createFileUploader({
-                        apiUrl: constants.internalApiUrl,
-                        engineToken: params.engineToken!,
-                        stepName: triggerName,
-                        flowId: params.flowVersion.flowId,
+                const { data: testResponse, error: testResponseError } = await utils.tryCatchAndThrowOnEngineError(() =>
+                    pieceTrigger.test({
+                        ...context,
+                        files: createFileUploader({
+                            apiUrl: constants.internalApiUrl,
+                            engineToken: params.engineToken!,
+                            stepName: triggerName,
+                            flowId: params.flowVersion.flowId,
+                        }),
                     }),
-                }))
+                )
 
                 if (testResponseError) {
                     throw testResponseError
@@ -194,21 +217,28 @@ export const triggerHelper = {
             }
             case TriggerHookType.RUN: {
                 if (pieceTrigger.type === TriggerStrategy.APP_WEBHOOK) {
+                    const { data: verified, error: verifiedError } = await utils.tryCatchAndThrowOnEngineError(
+                        async () => {
+                            if (!params.appWebhookUrl) {
+                                throw new EngineGenericError(
+                                    'AppWebhookUrlNotAvailableError',
+                                    `App webhook url is not available for piece name ${pieceName}`,
+                                )
+                            }
+                            if (!params.webhookSecret) {
+                                throw new EngineGenericError(
+                                    'WebhookSecretNotAvailableError',
+                                    `Webhook secret is not available for piece name ${pieceName}`,
+                                )
+                            }
 
-                    const { data: verified, error: verifiedError } = await utils.tryCatchAndThrowOnEngineError(async () => {
-                        if (!params.appWebhookUrl) {
-                            throw new EngineGenericError('AppWebhookUrlNotAvailableError', `App webhook url is not available for piece name ${pieceName}`)
-                        }
-                        if (!params.webhookSecret) {
-                            throw new EngineGenericError('WebhookSecretNotAvailableError', `Webhook secret is not available for piece name ${pieceName}`)
-                        }
-
-                        return piece.events?.verify({
-                            appWebhookUrl: params.appWebhookUrl,
-                            payload: params.triggerPayload as EventPayload,
-                            webhookSecret: params.webhookSecret,
-                        })
-                    })
+                            return piece.events?.verify({
+                                appWebhookUrl: params.appWebhookUrl,
+                                payload: params.triggerPayload as EventPayload,
+                                webhookSecret: params.webhookSecret,
+                            })
+                        },
+                    )
 
                     if (verifiedError) {
                         throw verifiedError
@@ -218,20 +248,22 @@ export const triggerHelper = {
                     }
                 }
 
-                const { data: triggerRunResult, error: triggerRunError } = await utils.tryCatchAndThrowOnEngineError(async () => {
-                    const items = await pieceTrigger.run({
-                        ...context,
-                        files: createFileUploader({
-                            apiUrl: constants.internalApiUrl,
-                            engineToken: params.engineToken!,
-                            flowId: params.flowVersion.flowId,
-                            stepName: triggerName,
-                        }),
-                    })
-                    return {
-                        output: items,
-                    }
-                })
+                const { data: triggerRunResult, error: triggerRunError } = await utils.tryCatchAndThrowOnEngineError(
+                    async () => {
+                        const items = await pieceTrigger.run({
+                            ...context,
+                            files: createFileUploader({
+                                apiUrl: constants.internalApiUrl,
+                                engineToken: params.engineToken!,
+                                flowId: params.flowVersion.flowId,
+                                stepName: triggerName,
+                            }),
+                        })
+                        return {
+                            output: items,
+                        }
+                    },
+                )
 
                 if (triggerRunError) {
                     throw triggerRunError
@@ -247,7 +279,18 @@ type ExecuteTriggerParams = {
     constants: EngineConstants
 }
 
-async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, input, propertySettings, projectId, apiUrl, engineToken, devPieces, stepNames }: PrepareTriggerExecutionParams) {
+async function prepareTriggerExecution({
+    pieceName,
+    pieceVersion,
+    triggerName,
+    input,
+    propertySettings,
+    projectId,
+    apiUrl,
+    engineToken,
+    devPieces,
+    stepNames,
+}: PrepareTriggerExecutionParams) {
     const { piece, pieceTrigger } = await pieceLoader.getPieceAndTriggerOrThrow({
         pieceName,
         pieceVersion,
@@ -266,7 +309,13 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
         executionState: FlowExecutorContext.empty(),
     })
 
-    const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceTrigger.props, piece.auth, pieceTrigger.requireAuth, propertySettings)
+    const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+        resolvedInput,
+        pieceTrigger.props,
+        piece.auth,
+        pieceTrigger.requireAuth,
+        propertySettings,
+    )
 
     if (Object.keys(errors).length > 0) {
         throw new Error(JSON.stringify(errors, null, 2))

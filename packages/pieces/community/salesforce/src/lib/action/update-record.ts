@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
-import { callSalesforceApi, salesforcesCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { callSalesforceApi, salesforcesCommon } from '../common'
 
 export const updateRecord = createAction({
     auth: salesforceAuth,
@@ -19,21 +19,21 @@ export const updateRecord = createAction({
         }),
     },
     async run(context) {
-        const { object, record_id, data } = context.propsValue;
+        const { object, record_id, data } = context.propsValue
 
         if (!object) {
-            throw new Error('Object is not defined. Please select an object.');
+            throw new Error('Object is not defined. Please select an object.')
         }
 
         await callSalesforceApi(
             HttpMethod.PATCH,
             context.auth,
             `/services/data/v56.0/sobjects/${object}/${record_id}`,
-            data as Record<string, unknown>
-        );
+            data as Record<string, unknown>,
+        )
 
         return {
             success: true,
-        };
+        }
     },
-});
+})

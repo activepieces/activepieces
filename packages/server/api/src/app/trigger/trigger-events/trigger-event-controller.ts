@@ -1,9 +1,4 @@
-
-import {
-    ListTriggerEventsRequest,
-    PrincipalType,
-    SaveTriggerEventRequest,
-} from '@activepieces/shared'
+import { ListTriggerEventsRequest, PrincipalType, SaveTriggerEventRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
@@ -13,8 +8,6 @@ import { triggerEventService } from './trigger-event.service'
 const DEFAULT_PAGE_SIZE = 10
 
 export const triggerEventController: FastifyPluginAsyncZod = async (fastify) => {
-
-
     fastify.post('/', SaveTriggerEventRequestParams, async (request) => {
         return triggerEventService(request.log).saveEvent({
             projectId: request.projectId,
@@ -35,10 +28,8 @@ export const triggerEventController: FastifyPluginAsyncZod = async (fastify) => 
             cursor: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
         })
-    },
-    )
+    })
 }
-
 
 const ListTriggerEventsRequestParams = {
     schema: {

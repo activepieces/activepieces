@@ -1,56 +1,56 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { firefliesAiAuth } from '../auth';
-import { BASE_URL } from '../common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { firefliesAiAuth } from '../auth'
+import { BASE_URL } from '../common'
 
 export const findMeetingByQueryAction = createAction({
-	auth: firefliesAiAuth,
-	name: 'find_meeting_by_query',
-	displayName: 'Find Meeting by Call Deatils',
-	description: 'Searches meetings based on provided parameters.',
-	props: {
-		title: Property.ShortText({
-			displayName: 'Meeting Title',
-			required: false,
-		}),
-		hostEmail: Property.ShortText({
-			displayName: 'Host Email',
-			description: 'Filter meetings by host email.',
-			required: false,
-		}),
-		participantEmail: Property.ShortText({
-			displayName: 'Participant Email',
-			description: 'Filter meetings by participant email',
-			required: false,
-		}),
-		date: Property.DateTime({
-			displayName: 'Date',
-			description: 'Filter meetings on this date (YYYY-MM-DD).',
-			required: false,
-		}),
-	},
-	async run({ propsValue, auth }) {
-		const filterVariables: Record<string, any> = {};
+    auth: firefliesAiAuth,
+    name: 'find_meeting_by_query',
+    displayName: 'Find Meeting by Call Deatils',
+    description: 'Searches meetings based on provided parameters.',
+    props: {
+        title: Property.ShortText({
+            displayName: 'Meeting Title',
+            required: false,
+        }),
+        hostEmail: Property.ShortText({
+            displayName: 'Host Email',
+            description: 'Filter meetings by host email.',
+            required: false,
+        }),
+        participantEmail: Property.ShortText({
+            displayName: 'Participant Email',
+            description: 'Filter meetings by participant email',
+            required: false,
+        }),
+        date: Property.DateTime({
+            displayName: 'Date',
+            description: 'Filter meetings on this date (YYYY-MM-DD).',
+            required: false,
+        }),
+    },
+    async run({ propsValue, auth }) {
+        const filterVariables: Record<string, any> = {}
 
-		if (propsValue.title) {
-			filterVariables['title'] = propsValue.title;
-		}
+        if (propsValue.title) {
+            filterVariables['title'] = propsValue.title
+        }
 
-		if (propsValue.hostEmail) {
-			filterVariables['hostEmail'] = propsValue.hostEmail;
-		}
+        if (propsValue.hostEmail) {
+            filterVariables['hostEmail'] = propsValue.hostEmail
+        }
 
-		if (propsValue.participantEmail) {
-			filterVariables['participantEmail'] = propsValue.participantEmail;
-		}
+        if (propsValue.participantEmail) {
+            filterVariables['participantEmail'] = propsValue.participantEmail
+        }
 
-		if (propsValue.date) {
-			// Convert ISO string to milliseconds for the API
-			const dateMs = new Date(propsValue.date).getTime();
-			filterVariables['date'] = dateMs;
-		}
+        if (propsValue.date) {
+            // Convert ISO string to milliseconds for the API
+            const dateMs = new Date(propsValue.date).getTime()
+            filterVariables['date'] = dateMs
+        }
 
-		const query = `
+        const query = `
 			query Transcripts(
 				$title: String
 				$hostEmail: String
@@ -125,47 +125,47 @@ export const findMeetingByQueryAction = createAction({
 					meeting_link
 				}
 			}
-		`;
+		`
 
-		const limit = 50;
-		let skip = 0;
-		let hasMore = true;
-		const meetings = [];
+        const limit = 50
+        let skip = 0
+        let hasMore = true
+        const meetings = []
 
-		while (hasMore) {
-			const variables = {
-				...filterVariables,
-				limit,
-				skip,
-			};
+        while (hasMore) {
+            const variables = {
+                ...filterVariables,
+                limit,
+                skip,
+            }
 
-			const response = await httpClient.sendRequest<{
-				data: { transcripts: Record<string, any>[] };
-			}>({
-				url: BASE_URL,
-				method: HttpMethod.POST,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: auth.secret_text,
-				},
-				body: {
-					query: query,
-					variables,
-				},
-			});
+            const response = await httpClient.sendRequest<{
+                data: { transcripts: Record<string, any>[] }
+            }>({
+                url: BASE_URL,
+                method: HttpMethod.POST,
+                authentication: {
+                    type: AuthenticationType.BEARER_TOKEN,
+                    token: auth.secret_text,
+                },
+                body: {
+                    query: query,
+                    variables,
+                },
+            })
 
-			const transcripts = response?.body?.data?.transcripts || [];
-			if (transcripts.length === 0) {
-				hasMore = false;
-			} else {
-				meetings.push(...transcripts);
-				skip += transcripts.length;
-			}
-		}
+            const transcripts = response?.body?.data?.transcripts || []
+            if (transcripts.length === 0) {
+                hasMore = false
+            } else {
+                meetings.push(...transcripts)
+                skip += transcripts.length
+            }
+        }
 
-		return {
-			found: meetings.length !== 0,
-			meetings,
-		};
-	},
-});
+        return {
+            found: meetings.length !== 0,
+            meetings,
+        }
+    },
+})

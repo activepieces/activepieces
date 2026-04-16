@@ -2,7 +2,7 @@ import { AppConnectionScope, PopulatedFlow } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { GlobeIcon, WorkflowIcon } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { FieldErrors, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -449,4 +449,5 @@ const ReplaceConnectionsDialog = ({
 };
 
 ReplaceConnectionsDialog.displayName = 'ReplaceConnectionsDialog';
+
 export { ReplaceConnectionsDialog };

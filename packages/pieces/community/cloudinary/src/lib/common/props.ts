@@ -1,7 +1,7 @@
-import { Property } from "@activepieces/pieces-framework";
-import { makeRequest } from "./client";
-import { HttpMethod } from "@activepieces/pieces-common";
-import { cloudinaryAuth } from "./auth";
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property } from '@activepieces/pieces-framework'
+import { cloudinaryAuth } from './auth'
+import { makeRequest } from './client'
 
 export const resourceTypeDropdown = Property.Dropdown({
     auth: cloudinaryAuth,
@@ -17,9 +17,9 @@ export const resourceTypeDropdown = Property.Dropdown({
                 { label: 'Video', value: 'video' },
                 { label: 'Raw', value: 'raw' },
             ],
-        };
+        }
     },
-});
+})
 
 export const resourceDropdown = Property.Dropdown({
     auth: cloudinaryAuth,
@@ -33,27 +33,27 @@ export const resourceDropdown = Property.Dropdown({
                 disabled: true,
                 options: [],
                 placeholder: 'Please connect your account first',
-            };
+            }
         }
 
         try {
-            const resources = await makeRequest(auth, HttpMethod.GET, `/resources/${resource_type}`);
+            const resources = await makeRequest(auth, HttpMethod.GET, `/resources/${resource_type}`)
             return {
                 disabled: false,
                 options: resources.resources.map((resource: any) => ({
                     label: resource.public_id,
                     value: resource.asset_id,
                 })),
-            };
+            }
         } catch (error) {
             return {
                 disabled: true,
                 options: [],
                 placeholder: 'Error loading teams',
-            };
+            }
         }
     },
-});
+})
 
 export const resourceAssetIdsDropdown = Property.MultiSelectDropdown({
     auth: cloudinaryAuth,
@@ -67,27 +67,27 @@ export const resourceAssetIdsDropdown = Property.MultiSelectDropdown({
                 disabled: true,
                 options: [],
                 placeholder: 'Please connect your account first',
-            };
+            }
         }
 
         try {
-            const resources = await makeRequest(auth, HttpMethod.GET, `/resources/${resource_type}`);
+            const resources = await makeRequest(auth, HttpMethod.GET, `/resources/${resource_type}`)
             return {
                 disabled: false,
                 options: resources.resources.map((resource: any) => ({
                     label: resource.public_id,
                     value: resource.asset_id,
                 })),
-            };
+            }
         } catch (error) {
             return {
                 disabled: true,
                 options: [],
                 placeholder: 'Error loading teams',
-            };
+            }
         }
     },
-});
+})
 
 export const folderDropdown = Property.Dropdown({
     auth: cloudinaryAuth,
@@ -101,13 +101,13 @@ export const folderDropdown = Property.Dropdown({
                 disabled: true,
                 options: [],
                 placeholder: 'Please connect your account first',
-            };
+            }
         }
 
         try {
-            const response = await makeRequest(auth, HttpMethod.GET, `/folders`);
-            const folders = response.folders || [];
-            
+            const response = await makeRequest(auth, HttpMethod.GET, `/folders`)
+            const folders = response.folders || []
+
             return {
                 disabled: false,
                 options: [
@@ -118,16 +118,16 @@ export const folderDropdown = Property.Dropdown({
                     })),
                 ],
                 placeholder: 'Select a folder or type a new path',
-            };
+            }
         } catch (error) {
             return {
                 disabled: true,
                 options: [],
                 placeholder: 'Error loading folders - you can still type a folder path',
-            };
+            }
         }
     },
-});
+})
 
 export const tagsDropdown = Property.Dropdown({
     auth: cloudinaryAuth,
@@ -141,15 +141,15 @@ export const tagsDropdown = Property.Dropdown({
                 disabled: true,
                 options: [],
                 placeholder: 'Please connect your account first',
-            };
+            }
         }
 
-        const type = resource_type || 'image';
+        const type = resource_type || 'image'
 
         try {
-            const response = await makeRequest(auth, HttpMethod.GET, `/tags/${type}?max_results=100`);
-            const tags = response.tags || [];
-            
+            const response = await makeRequest(auth, HttpMethod.GET, `/tags/${type}?max_results=100`)
+            const tags = response.tags || []
+
             return {
                 disabled: false,
                 options: tags.map((tag: string) => ({
@@ -157,16 +157,16 @@ export const tagsDropdown = Property.Dropdown({
                     value: tag,
                 })),
                 placeholder: 'Select existing tags or type new ones',
-            };
+            }
         } catch (error) {
             return {
                 disabled: true,
                 options: [],
                 placeholder: 'Error loading tags - you can still type tags manually',
-            };
+            }
         }
     },
-});
+})
 
 export const multiTagsDropdown = Property.MultiSelectDropdown({
     auth: cloudinaryAuth,
@@ -180,31 +180,31 @@ export const multiTagsDropdown = Property.MultiSelectDropdown({
                 disabled: true,
                 options: [],
                 placeholder: 'Please connect your account first',
-            };
+            }
         }
 
-        const type = resource_type || 'image';
+        const type = resource_type || 'image'
 
         try {
-            const response = await makeRequest(auth, HttpMethod.GET, `/tags/${type}?max_results=100`);
-            const tags = response.tags || [];
-            
+            const response = await makeRequest(auth, HttpMethod.GET, `/tags/${type}?max_results=100`)
+            const tags = response.tags || []
+
             return {
                 disabled: false,
                 options: tags.map((tag: string) => ({
                     label: tag,
                     value: tag,
                 })),
-            };
+            }
         } catch (error) {
             return {
                 disabled: true,
                 options: [],
                 placeholder: 'Error loading tags',
-            };
+            }
         }
     },
-});
+})
 
 export const subfolderDropdown = Property.Dropdown({
     auth: cloudinaryAuth,
@@ -218,13 +218,13 @@ export const subfolderDropdown = Property.Dropdown({
                 disabled: true,
                 options: [],
                 placeholder: 'Please select a parent folder first',
-            };
+            }
         }
 
         try {
-            const response = await makeRequest(auth, HttpMethod.GET, `/folders/${encodeURIComponent(folder as string)}`);
-            const subfolders = response.folders || [];
-            
+            const response = await makeRequest(auth, HttpMethod.GET, `/folders/${encodeURIComponent(folder as string)}`)
+            const subfolders = response.folders || []
+
             return {
                 disabled: false,
                 options: [
@@ -234,16 +234,16 @@ export const subfolderDropdown = Property.Dropdown({
                         value: folder.path,
                     })),
                 ],
-            };
+            }
         } catch (error) {
             return {
                 disabled: true,
                 options: [],
                 placeholder: 'Error loading subfolders',
-            };
+            }
         }
     },
-});
+})
 
 export const publicIdsDropdown = Property.MultiSelectDropdown({
     auth: cloudinaryAuth,
@@ -257,15 +257,15 @@ export const publicIdsDropdown = Property.MultiSelectDropdown({
                 disabled: true,
                 options: [],
                 placeholder: 'Please connect your account first',
-            };
+            }
         }
 
-        const type = resource_type || 'image';
+        const type = resource_type || 'image'
 
         try {
-            const response = await makeRequest(auth, HttpMethod.GET, `/resources/${type}?max_results=100`);
-            const resources = response.resources || [];
-            
+            const response = await makeRequest(auth, HttpMethod.GET, `/resources/${type}?max_results=100`)
+            const resources = response.resources || []
+
             return {
                 disabled: false,
                 options: resources.map((resource: any) => ({
@@ -273,16 +273,16 @@ export const publicIdsDropdown = Property.MultiSelectDropdown({
                     value: resource.public_id,
                 })),
                 placeholder: 'Select assets to delete',
-            };
+            }
         } catch (error) {
             return {
                 disabled: true,
                 options: [],
                 placeholder: 'Error loading assets - you can still type public IDs manually',
-            };
+            }
         }
     },
-});
+})
 
 // Single-select version for finding a specific resource
 export const publicIdDropdown = Property.Dropdown({
@@ -297,15 +297,15 @@ export const publicIdDropdown = Property.Dropdown({
                 disabled: true,
                 options: [],
                 placeholder: 'Please connect your account first',
-            };
+            }
         }
 
-        const type = resource_type || 'image';
+        const type = resource_type || 'image'
 
         try {
-            const response = await makeRequest(auth, HttpMethod.GET, `/resources/${type}?max_results=100`);
-            const resources = response.resources || [];
-            
+            const response = await makeRequest(auth, HttpMethod.GET, `/resources/${type}?max_results=100`)
+            const resources = response.resources || []
+
             return {
                 disabled: false,
                 options: resources.map((resource: any) => ({
@@ -313,13 +313,13 @@ export const publicIdDropdown = Property.Dropdown({
                     value: resource.public_id,
                 })),
                 placeholder: 'Select an asset to find',
-            };
+            }
         } catch (error) {
             return {
                 disabled: true,
                 options: [],
                 placeholder: 'Error loading assets - you can still type public ID manually',
-            };
+            }
         }
     },
-});
+})

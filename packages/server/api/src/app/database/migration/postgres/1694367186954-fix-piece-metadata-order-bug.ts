@@ -3,20 +3,13 @@ import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 
-export class FixPieceMetadataOrderBug1694367186954
-implements MigrationInterface {
+export class FixPieceMetadataOrderBug1694367186954 implements MigrationInterface {
     name = 'FixPieceMetadataOrderBug1694367186954'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(
-            'ALTER TABLE "piece_metadata" ALTER COLUMN "auth" TYPE json',
-        )
-        await queryRunner.query(
-            'ALTER TABLE "piece_metadata" ALTER COLUMN "actions" TYPE json',
-        )
-        await queryRunner.query(
-            'ALTER TABLE "piece_metadata" ALTER COLUMN "triggers" TYPE json',
-        )
+        await queryRunner.query('ALTER TABLE "piece_metadata" ALTER COLUMN "auth" TYPE json')
+        await queryRunner.query('ALTER TABLE "piece_metadata" ALTER COLUMN "actions" TYPE json')
+        await queryRunner.query('ALTER TABLE "piece_metadata" ALTER COLUMN "triggers" TYPE json')
 
         log.info('[FixPieceMetadataOrderBug1694367186954] up')
     }

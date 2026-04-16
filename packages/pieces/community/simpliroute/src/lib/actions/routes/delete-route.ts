@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../auth';
-import { API_BASE_URL, commonHeaders } from '../../common/constants';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { simplirouteAuth } from '../../auth'
+import { API_BASE_URL, commonHeaders } from '../../common/constants'
 
 export const delete_route = createAction({
     name: 'delete_route',
@@ -9,25 +9,25 @@ export const delete_route = createAction({
     displayName: 'Delete Route',
     description: 'Delete a route by its ID.',
     props: {
-        route_id: Property.ShortText({ 
-            displayName: 'route_id', 
-            description: 'Route ID to delete (UUID).', 
-            required: true 
+        route_id: Property.ShortText({
+            displayName: 'route_id',
+            description: 'Route ID to delete (UUID).',
+            required: true,
         }),
     },
     async run(context) {
-        const url = `${API_BASE_URL}/v1/routes/routes/${context.propsValue.route_id}/`;
+        const url = `${API_BASE_URL}/v1/routes/routes/${context.propsValue.route_id}/`
         const response = await httpClient.sendRequest({
             method: HttpMethod.DELETE,
             url,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth.secret_text}`
-            }
-        });
+                Authorization: `Token ${context.auth.secret_text}`,
+            },
+        })
         return {
             status: response.status,
-            data: response.body
-        };
+            data: response.body,
+        }
     },
-});
+})

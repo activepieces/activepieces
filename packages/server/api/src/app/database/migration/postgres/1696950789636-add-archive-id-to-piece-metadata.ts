@@ -3,8 +3,7 @@ import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 
-export class AddArchiveIdToPieceMetadata1696950789636
-implements MigrationInterface {
+export class AddArchiveIdToPieceMetadata1696950789636 implements MigrationInterface {
     name = 'AddArchiveIdToPieceMetadata1696950789636'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

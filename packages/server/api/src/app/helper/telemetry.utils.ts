@@ -35,10 +35,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         const platform = await platformService(log).getOneOrThrow(platformId)
         await this.trackUser(platform.ownerId, event)
     },
-    async trackProject(
-        projectId: ProjectId,
-        event: TelemetryEvent,
-    ): Promise<void> {
+    async trackProject(projectId: ProjectId, event: TelemetryEvent): Promise<void> {
         if (!telemetryEnabled) {
             return
         }

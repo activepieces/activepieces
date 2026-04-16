@@ -86,5 +86,5 @@ type InputProps = React.ComponentProps<'input'> & {
   defaultFileName?: string;
 };
 
-export { Input };
 export type { InputProps };
+export { Input };

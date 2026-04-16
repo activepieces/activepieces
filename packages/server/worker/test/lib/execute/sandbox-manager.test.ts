@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ApEnvironment, ExecutionMode } from '@activepieces/shared'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockGetSettings = vi.fn()
 
@@ -31,10 +31,10 @@ vi.mock('../../../src/lib/config/logger', () => ({
     },
 }))
 
-import { createSandboxManager } from '../../../src/lib/execute/sandbox-manager'
 import { logger } from '../../../src/lib/config/logger'
+import { createSandboxManager } from '../../../src/lib/execute/sandbox-manager'
 
-function buildSettings({ executionMode, environment }: { executionMode: string, environment: string }) {
+function buildSettings({ executionMode, environment }: { executionMode: string; environment: string }) {
     return {
         PUBLIC_URL: 'http://localhost:3000',
         TRIGGER_TIMEOUT_SECONDS: 60,
@@ -69,10 +69,12 @@ describe('sandbox-manager canReuseSandbox', () => {
     })
 
     it('SANDBOX_PROCESS mode → sandbox NOT reusable (release invalidates)', async () => {
-        mockGetSettings.mockReturnValue(buildSettings({
-            executionMode: ExecutionMode.SANDBOX_PROCESS,
-            environment: ApEnvironment.PRODUCTION,
-        }))
+        mockGetSettings.mockReturnValue(
+            buildSettings({
+                executionMode: ExecutionMode.SANDBOX_PROCESS,
+                environment: ApEnvironment.PRODUCTION,
+            }),
+        )
 
         const manager = createSandboxManager(1)
         const mockApiClient = {} as never
@@ -90,10 +92,12 @@ describe('sandbox-manager canReuseSandbox', () => {
     })
 
     it('SANDBOX_CODE_AND_PROCESS mode → sandbox NOT reusable (release invalidates)', async () => {
-        mockGetSettings.mockReturnValue(buildSettings({
-            executionMode: ExecutionMode.SANDBOX_CODE_AND_PROCESS,
-            environment: ApEnvironment.PRODUCTION,
-        }))
+        mockGetSettings.mockReturnValue(
+            buildSettings({
+                executionMode: ExecutionMode.SANDBOX_CODE_AND_PROCESS,
+                environment: ApEnvironment.PRODUCTION,
+            }),
+        )
 
         const manager = createSandboxManager(1)
         const mockApiClient = {} as never
@@ -106,10 +110,12 @@ describe('sandbox-manager canReuseSandbox', () => {
     })
 
     it('SANDBOX_CODE_ONLY mode → sandbox reusable (release does NOT invalidate)', async () => {
-        mockGetSettings.mockReturnValue(buildSettings({
-            executionMode: ExecutionMode.SANDBOX_CODE_ONLY,
-            environment: ApEnvironment.PRODUCTION,
-        }))
+        mockGetSettings.mockReturnValue(
+            buildSettings({
+                executionMode: ExecutionMode.SANDBOX_CODE_ONLY,
+                environment: ApEnvironment.PRODUCTION,
+            }),
+        )
 
         const manager = createSandboxManager(1)
         const mockApiClient = {} as never
@@ -123,10 +129,12 @@ describe('sandbox-manager canReuseSandbox', () => {
     })
 
     it('UNSANDBOXED mode → sandbox reusable (release does NOT invalidate)', async () => {
-        mockGetSettings.mockReturnValue(buildSettings({
-            executionMode: ExecutionMode.UNSANDBOXED,
-            environment: ApEnvironment.PRODUCTION,
-        }))
+        mockGetSettings.mockReturnValue(
+            buildSettings({
+                executionMode: ExecutionMode.UNSANDBOXED,
+                environment: ApEnvironment.PRODUCTION,
+            }),
+        )
 
         const manager = createSandboxManager(1)
         const mockApiClient = {} as never
@@ -139,10 +147,12 @@ describe('sandbox-manager canReuseSandbox', () => {
     })
 
     it('DEVELOPMENT environment → sandbox reusable regardless of execution mode', async () => {
-        mockGetSettings.mockReturnValue(buildSettings({
-            executionMode: ExecutionMode.SANDBOX_PROCESS,
-            environment: ApEnvironment.DEVELOPMENT,
-        }))
+        mockGetSettings.mockReturnValue(
+            buildSettings({
+                executionMode: ExecutionMode.SANDBOX_PROCESS,
+                environment: ApEnvironment.DEVELOPMENT,
+            }),
+        )
 
         const manager = createSandboxManager(1)
         const mockApiClient = {} as never

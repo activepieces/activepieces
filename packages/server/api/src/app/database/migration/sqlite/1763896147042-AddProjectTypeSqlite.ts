@@ -112,7 +112,6 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
             `)
         excludedUsers = rows.map((row: { ownerId: string }) => row.ownerId) as string[]
 
-
         if (users.length > 0) {
             const values: string[] = []
             const params: (string | boolean)[] = []
@@ -128,7 +127,7 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
                 const created = new Date().toISOString()
                 const updated = new Date().toISOString()
                 const ownerId = user.id
-                const displayName = user.firstName + '\'s Project'
+                const displayName = user.firstName + "'s Project"
                 const type = ProjectType.PERSONAL
                 const platformId = user.platformId
                 const icon = JSON.stringify({ color: randomColor })
@@ -224,5 +223,4 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
     }
-
 }

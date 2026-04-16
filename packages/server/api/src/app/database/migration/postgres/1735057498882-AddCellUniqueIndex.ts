@@ -14,5 +14,4 @@ export class AddCellUniqueIndex1735057498882 implements MigrationInterface {
             DROP INDEX "idx_cell_project_id_field_id_record_id_unique"
         `)
     }
-
 }

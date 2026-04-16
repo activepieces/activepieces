@@ -23,7 +23,7 @@ const BINARY_CONTENT_TYPE_PATTERNS = [
 export function isBinaryContentType(contentType: string | undefined): boolean {
     if (!contentType) return false
     const baseContentType = contentType.split(';')[0].trim().toLowerCase()
-    return BINARY_CONTENT_TYPE_PATTERNS.some(pattern => pattern.test(baseContentType))
+    return BINARY_CONTENT_TYPE_PATTERNS.some((pattern) => pattern.test(baseContentType))
 }
 
 export async function convertRequest(
@@ -42,23 +42,19 @@ export async function convertRequest(
     }
 }
 
-export function extractHeaderFromRequest(request: FastifyRequest): Pick<FlowRun, 'parentRunId' | 'failParentOnFailure'> {
+export function extractHeaderFromRequest(
+    request: FastifyRequest,
+): Pick<FlowRun, 'parentRunId' | 'failParentOnFailure'> {
     return {
         parentRunId: request.headers[PARENT_RUN_ID_HEADER] as string,
         failParentOnFailure: request.headers[FAIL_PARENT_ON_FAILURE_HEADER] === 'true',
     }
 }
 
-async function convertBody(
-    request: FastifyRequest,
-    projectId: string,
-    flowId: string,
-): Promise<unknown> {
+async function convertBody(request: FastifyRequest, projectId: string, flowId: string): Promise<unknown> {
     if (request.isMultipart()) {
         const jsonResult: Record<string, unknown> = {}
-        const requestBodyEntries = Object.entries(
-            request.body as Record<string, unknown>,
-        )
+        const requestBodyEntries = Object.entries(request.body as Record<string, unknown>)
 
         const platformId = await projectService(request.log).getPlatformId(projectId)
 
@@ -74,8 +70,7 @@ async function convertBody(
                     projectId,
                 })
                 jsonResult[key] = file.url
-            }
-            else {
+            } else {
                 jsonResult[key] = value
             }
         }

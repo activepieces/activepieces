@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// biome-ignore lint/suspicious/noExplicitAny: legacy code
 /* eslint-disable no-case-declarations */
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
@@ -8,22 +8,16 @@ const log = system.globalLogger()
 
 export class SwitchToRouter1731019013340 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
-        const flowVersionIds = await queryRunner.query(
-            'SELECT id FROM flow_version WHERE "schemaVersion" IS NULL',
-        )
-        log.info(
-            'SwitchToRouter1731019013340: found ' +
-            flowVersionIds.length +
-            ' versions',
-        )
+        const flowVersionIds = await queryRunner.query('SELECT id FROM flow_version WHERE "schemaVersion" IS NULL')
+        log.info('SwitchToRouter1731019013340: found ' + flowVersionIds.length + ' versions')
         let updatedFlows = 0
         for (const { id } of flowVersionIds) {
-            const flowVersion = await queryRunner.query(
-                'SELECT * FROM flow_version WHERE id = $1',
-                [id],
-            )
+            const flowVersion = await queryRunner.query('SELECT * FROM flow_version WHERE id = $1', [id])
             if (flowVersion.length > 0) {
-                const trigger = typeof flowVersion[0].trigger === 'string' ? JSON.parse(flowVersion[0].trigger) : flowVersion[0].trigger
+                const trigger =
+                    typeof flowVersion[0].trigger === 'string'
+                        ? JSON.parse(flowVersion[0].trigger)
+                        : flowVersion[0].trigger
                 const originalStepCount = countSteps(trigger)
                 const updatedTrigger = traverseAndUpdateSubFlow(
                     convertBranchToRouter,
@@ -32,16 +26,19 @@ export class SwitchToRouter1731019013340 implements MigrationInterface {
 
                 const updatedStepCount = countSteps(updatedTrigger)
                 if (originalStepCount !== updatedStepCount) {
-                    throw new Error(`Step count mismatch for flow ${id}: original=${originalStepCount}, updated=${updatedStepCount}`)
+                    throw new Error(
+                        `Step count mismatch for flow ${id}: original=${originalStepCount}, updated=${updatedStepCount}`,
+                    )
                 }
 
                 if (hasBranchType(updatedTrigger)) {
                     throw new Error(`Flow ${id} still contains BRANCH type after migration`)
                 }
-                await queryRunner.query(
-                    'UPDATE flow_version SET trigger = $1, "schemaVersion" = $2 WHERE id = $3',
-                    [JSON.stringify(updatedTrigger), '1', flowVersion[0].id],
-                )
+                await queryRunner.query('UPDATE flow_version SET trigger = $1, "schemaVersion" = $2 WHERE id = $3', [
+                    JSON.stringify(updatedTrigger),
+                    '1',
+                    flowVersion[0].id,
+                ])
                 updatedFlows++
             }
         }
@@ -87,7 +84,7 @@ const hasBranchType = (step: Step | undefined): boolean => {
     let hasBranch = false
     switch (step.type) {
         case 'ROUTER':
-            hasBranch = step.children.some(child => hasBranchType(child))
+            hasBranch = step.children.some((child) => hasBranchType(child))
             break
         case 'LOOP_ON_ITEMS':
             hasBranch = hasBranchType(step.firstLoopAction)
@@ -101,10 +98,7 @@ const hasBranchType = (step: Step | undefined): boolean => {
     return hasBranch
 }
 
-const traverseAndUpdateSubFlow = (
-    updater: (s: Step) => void,
-    root: Step | undefined,
-): Step | undefined => {
+const traverseAndUpdateSubFlow = (updater: (s: Step) => void, root: Step | undefined): Step | undefined => {
     if (!root) {
         return undefined
     }
@@ -118,23 +112,25 @@ const traverseAndUpdateSubFlow = (
                 if (branch) {
                     const branchUpdated = traverseAndUpdateSubFlow(updater, branch)
                     updatedChildren.push(branchUpdated ?? null)
-                }
-                else {
+                } else {
                     updatedChildren.push(null)
                 }
             }
             clonedRoot.children = updatedChildren
             break
         case 'BRANCH':
-            clonedRoot.onSuccessAction = clonedRoot.onSuccessAction ?
-                traverseAndUpdateSubFlow(updater, clonedRoot.onSuccessAction) : undefined
-            clonedRoot.onFailureAction = clonedRoot.onFailureAction ?
-                traverseAndUpdateSubFlow(updater, clonedRoot.onFailureAction) : undefined
+            clonedRoot.onSuccessAction = clonedRoot.onSuccessAction
+                ? traverseAndUpdateSubFlow(updater, clonedRoot.onSuccessAction)
+                : undefined
+            clonedRoot.onFailureAction = clonedRoot.onFailureAction
+                ? traverseAndUpdateSubFlow(updater, clonedRoot.onFailureAction)
+                : undefined
             updater(clonedRoot)
             break
         case 'LOOP_ON_ITEMS':
-            clonedRoot.firstLoopAction = clonedRoot.firstLoopAction ?
-                traverseAndUpdateSubFlow(updater, clonedRoot.firstLoopAction) : undefined
+            clonedRoot.firstLoopAction = clonedRoot.firstLoopAction
+                ? traverseAndUpdateSubFlow(updater, clonedRoot.firstLoopAction)
+                : undefined
             break
         case 'PIECE':
         case 'PIECE_TRIGGER':
@@ -143,8 +139,7 @@ const traverseAndUpdateSubFlow = (
             break
     }
 
-    clonedRoot.nextAction = clonedRoot.nextAction ?
-        traverseAndUpdateSubFlow(updater, clonedRoot.nextAction) : undefined
+    clonedRoot.nextAction = clonedRoot.nextAction ? traverseAndUpdateSubFlow(updater, clonedRoot.nextAction) : undefined
 
     return clonedRoot
 }

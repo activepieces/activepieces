@@ -1,8 +1,8 @@
-import { AppConnectionValueForAuthProperty, PieceAuth } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PieceAuth } from '@activepieces/pieces-framework'
 
 export const cursorAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: `
+    displayName: 'API Key',
+    description: `
 User API Keys provide secure, programmatic access to your Cursor account, including the Cloud Agent API.
 
 To get your API Key:
@@ -14,8 +14,7 @@ To get your API Key:
 Treat your API key like a password: keep it secure and never share it publicly.
 Note: The Cloud Agent API is in beta.
   `,
-  required: true,
-});
+    required: true,
+})
 
-export type CursorAuth = AppConnectionValueForAuthProperty<typeof cursorAuth>;
-
+export type CursorAuth = AppConnectionValueForAuthProperty<typeof cursorAuth>

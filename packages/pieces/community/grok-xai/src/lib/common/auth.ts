@@ -1,12 +1,8 @@
-import {
-  AuthenticationType,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const grokAuth = PieceAuth.SecretText({
-  description: `
+    description: `
 **Get your xAI API Key**
 
 1. Sign up at [xAI](https://x.ai)
@@ -16,40 +12,40 @@ export const grokAuth = PieceAuth.SecretText({
 
 Your API key should start with \`xai-\`
   `,
-  displayName: 'API Key',
-  required: true,
-  validate: async (auth) => {
-    try {
-      await httpClient.sendRequest<{
-        data: { id: string }[];
-      }>({
-        url: 'https://api.x.ai/v1/models',
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth as string,
-        },
-      });
-      return {
-        valid: true,
-      };
-    } catch (e: any) {
-      if (e.response?.status === 429) {
-        return {
-          valid: false,
-          error: 'Your xAI account has run out of credits or reached its spending limit. Please add more credits at console.x.ai or raise your spending limit.',
-        };
-      }
-      if (e.response?.status === 401) {
-        return {
-          valid: false,
-          error: 'Invalid API key. Please check your xAI API key and try again.',
-        };
-      }
-      return {
-        valid: false,
-        error: 'Unable to validate API key. Please check your key and account status at console.x.ai.',
-      };
-    }
-  },
-}); 
+    displayName: 'API Key',
+    required: true,
+    validate: async (auth) => {
+        try {
+            await httpClient.sendRequest<{
+                data: { id: string }[]
+            }>({
+                url: 'https://api.x.ai/v1/models',
+                method: HttpMethod.GET,
+                authentication: {
+                    type: AuthenticationType.BEARER_TOKEN,
+                    token: auth.auth as string,
+                },
+            })
+            return {
+                valid: true,
+            }
+        } catch (e: any) {
+            if (e.response?.status === 429) {
+                return {
+                    valid: false,
+                    error: 'Your xAI account has run out of credits or reached its spending limit. Please add more credits at console.x.ai or raise your spending limit.',
+                }
+            }
+            if (e.response?.status === 401) {
+                return {
+                    valid: false,
+                    error: 'Invalid API key. Please check your xAI API key and try again.',
+                }
+            }
+            return {
+                valid: false,
+                error: 'Unable to validate API key. Please check your key and account status at console.x.ai.',
+            }
+        }
+    },
+})

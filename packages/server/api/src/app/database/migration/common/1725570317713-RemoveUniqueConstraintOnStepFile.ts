@@ -25,5 +25,4 @@ export class RemoveUniqueConstraintOnStepFile1725570317713 implements MigrationI
         `)
         log.info('[removeUniqueConstraintOnStepFile1725570317713#down]')
     }
-
 }

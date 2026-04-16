@@ -1,6 +1,13 @@
 import { z } from 'zod'
 import { BaseModelSchema, Nullable } from '../../core/common'
-import { AWSProviderConfigSchema, CyberarkConjurProviderConfigSchema, HashicorpProviderConfigSchema, OnePasswordProviderConfigSchema, SecretManagerConnectionScope, SecretManagerProviderId } from './dto'
+import {
+    AWSProviderConfigSchema,
+    CyberarkConjurProviderConfigSchema,
+    HashicorpProviderConfigSchema,
+    OnePasswordProviderConfigSchema,
+    SecretManagerConnectionScope,
+    SecretManagerProviderId,
+} from './dto'
 
 export * from './dto'
 
@@ -75,35 +82,49 @@ export const SecretManagerProviderMetaDataBaseSchema = z.object({
     id: z.nativeEnum(SecretManagerProviderId),
     name: z.string(),
     logo: z.string(),
-    connection: z.object({
-        configured: z.boolean(),
-        connected: z.boolean(),
-    }).optional(),
+    connection: z
+        .object({
+            configured: z.boolean(),
+            connected: z.boolean(),
+        })
+        .optional(),
 })
 
 export const SecretManagerProviderMetaDataSchema = z.discriminatedUnion('id', [
     z.object({
         ...SecretManagerProviderMetaDataBaseSchema.shape,
         id: z.literal(SecretManagerProviderId.HASHICORP),
-        fields: z.record(z.enum(Object.keys(HashicorpProviderConfigSchema.shape) as [string, ...string[]]), SecretManagerFieldSchema),
+        fields: z.record(
+            z.enum(Object.keys(HashicorpProviderConfigSchema.shape) as [string, ...string[]]),
+            SecretManagerFieldSchema,
+        ),
         secretParams: z.array(SecretManagerSecretParamSchema),
     }),
     z.object({
         ...SecretManagerProviderMetaDataBaseSchema.shape,
         id: z.literal(SecretManagerProviderId.AWS),
-        fields: z.record(z.enum(Object.keys(AWSProviderConfigSchema.shape) as [string, ...string[]]), SecretManagerFieldSchema),
+        fields: z.record(
+            z.enum(Object.keys(AWSProviderConfigSchema.shape) as [string, ...string[]]),
+            SecretManagerFieldSchema,
+        ),
         secretParams: z.array(SecretManagerSecretParamSchema),
     }),
     z.object({
         ...SecretManagerProviderMetaDataBaseSchema.shape,
         id: z.literal(SecretManagerProviderId.CYBERARK),
-        fields: z.record(z.enum(Object.keys(CyberarkConjurProviderConfigSchema.shape) as [string, ...string[]]), SecretManagerFieldSchema),
+        fields: z.record(
+            z.enum(Object.keys(CyberarkConjurProviderConfigSchema.shape) as [string, ...string[]]),
+            SecretManagerFieldSchema,
+        ),
         secretParams: z.array(SecretManagerSecretParamSchema),
     }),
     z.object({
         ...SecretManagerProviderMetaDataBaseSchema.shape,
         id: z.literal(SecretManagerProviderId.ONEPASSWORD),
-        fields: z.record(z.enum(Object.keys(OnePasswordProviderConfigSchema.shape) as [string, ...string[]]), SecretManagerFieldSchema),
+        fields: z.record(
+            z.enum(Object.keys(OnePasswordProviderConfigSchema.shape) as [string, ...string[]]),
+            SecretManagerFieldSchema,
+        ),
         secretParams: z.array(SecretManagerSecretParamSchema),
     }),
 ])

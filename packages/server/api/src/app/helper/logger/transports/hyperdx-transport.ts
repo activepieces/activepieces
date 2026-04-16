@@ -1,5 +1,5 @@
 import * as HyperDX from '@hyperdx/node-opentelemetry'
-import { Level, pino, transport, TransportTargetOptions } from 'pino'
+import { Level, pino, TransportTargetOptions, transport } from 'pino'
 import { AppSystemProp, environmentVariables } from '../../system/system-props'
 import { TransportProvider } from './transport-provider'
 

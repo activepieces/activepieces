@@ -1,8 +1,8 @@
 import { DiffState, FlowProjectOperationType, FlowStatus, FlowSyncError } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { Mock, MockedFunction } from 'vitest'
-import { projectStateHelper } from '../../../../../../../src/app/ee/projects/project-release/project-state/project-state-helper'
 import { projectStateService } from '../../../../../../../src/app/ee/projects/project-release/project-state/project-state.service'
+import { projectStateHelper } from '../../../../../../../src/app/ee/projects/project-release/project-state/project-state-helper'
 import { system } from '../../../../../../../src/app/helper/system/system'
 import { flowGenerator } from '../../../../../../helpers/flow-generator'
 
@@ -47,10 +47,12 @@ describe('ProjectStateService.apply - Flow Operations', () => {
             mockRepublishFlow.mockResolvedValue(null)
 
             const diffs = {
-                flows: [{
-                    type: FlowProjectOperationType.CREATE_FLOW as const,
-                    flowState,
-                }],
+                flows: [
+                    {
+                        type: FlowProjectOperationType.CREATE_FLOW as const,
+                        flowState,
+                    },
+                ],
                 connections: [],
                 tables: [],
                 agents: [],
@@ -85,9 +87,7 @@ describe('ProjectStateService.apply - Flow Operations', () => {
             const createdFlow1 = { ...flowState1, id: nanoid() }
             const createdFlow2 = { ...flowState2, id: nanoid() }
 
-            mockCreateFlowInProject
-                .mockResolvedValueOnce(createdFlow1)
-                .mockResolvedValueOnce(createdFlow2)
+            mockCreateFlowInProject.mockResolvedValueOnce(createdFlow1).mockResolvedValueOnce(createdFlow2)
             mockRepublishFlow.mockResolvedValue(null)
 
             const diffs = {
@@ -131,22 +131,26 @@ describe('ProjectStateService.apply - Flow Operations', () => {
             mockCreateFlowInProject.mockRejectedValue(expectedError)
 
             const diffs = {
-                flows: [{
-                    type: FlowProjectOperationType.CREATE_FLOW as const,
-                    flowState,
-                }],
+                flows: [
+                    {
+                        type: FlowProjectOperationType.CREATE_FLOW as const,
+                        flowState,
+                    },
+                ],
                 connections: [],
                 tables: [],
                 agents: [],
             }
 
             // Act & Assert
-            await expect(projectStateService(logger).apply({
-                projectId,
-                diffs,
-                platformId,
-                log: logger,
-            })).rejects.toThrow('Failed to create flow')
+            await expect(
+                projectStateService(logger).apply({
+                    projectId,
+                    diffs,
+                    platformId,
+                    log: logger,
+                }),
+            ).rejects.toThrow('Failed to create flow')
 
             expect(mockCreateFlowInProject).toHaveBeenCalledTimes(1)
             expect(mockRepublishFlow).not.toHaveBeenCalled()
@@ -168,11 +172,13 @@ describe('ProjectStateService.apply - Flow Operations', () => {
             mockRepublishFlow.mockResolvedValue(null)
 
             const diffs = {
-                flows: [{
-                    type: FlowProjectOperationType.UPDATE_FLOW as const,
-                    flowState: originalFlowState,
-                    newFlowState,
-                }],
+                flows: [
+                    {
+                        type: FlowProjectOperationType.UPDATE_FLOW as const,
+                        flowState: originalFlowState,
+                        newFlowState,
+                    },
+                ],
                 connections: [],
                 tables: [],
                 agents: [],
@@ -211,11 +217,13 @@ describe('ProjectStateService.apply - Flow Operations', () => {
             mockRepublishFlow.mockResolvedValue(null)
 
             const diffs = {
-                flows: [{
-                    type: FlowProjectOperationType.UPDATE_FLOW as const,
-                    flowState: originalFlowState,
-                    newFlowState,
-                }],
+                flows: [
+                    {
+                        type: FlowProjectOperationType.UPDATE_FLOW as const,
+                        flowState: originalFlowState,
+                        newFlowState,
+                    },
+                ],
                 connections: [],
                 tables: [],
                 agents: [],
@@ -251,9 +259,7 @@ describe('ProjectStateService.apply - Flow Operations', () => {
             const updatedFlow1 = { ...newFlow1, id: nanoid() }
             const updatedFlow2 = { ...newFlow2, id: nanoid() }
 
-            mockUpdateFlowInProject
-                .mockResolvedValueOnce(updatedFlow1)
-                .mockResolvedValueOnce(updatedFlow2)
+            mockUpdateFlowInProject.mockResolvedValueOnce(updatedFlow1).mockResolvedValueOnce(updatedFlow2)
             mockRepublishFlow.mockResolvedValue(null)
 
             const diffs = {
@@ -308,23 +314,27 @@ describe('ProjectStateService.apply - Flow Operations', () => {
             mockUpdateFlowInProject.mockRejectedValue(expectedError)
 
             const diffs = {
-                flows: [{
-                    type: FlowProjectOperationType.UPDATE_FLOW as const,
-                    flowState: originalFlowState,
-                    newFlowState,
-                }],
+                flows: [
+                    {
+                        type: FlowProjectOperationType.UPDATE_FLOW as const,
+                        flowState: originalFlowState,
+                        newFlowState,
+                    },
+                ],
                 connections: [],
                 tables: [],
                 agents: [],
             }
 
             // Act & Assert
-            await expect(projectStateService(logger).apply({
-                projectId,
-                diffs,
-                platformId,
-                log: logger,
-            })).rejects.toThrow('Failed to update flow')
+            await expect(
+                projectStateService(logger).apply({
+                    projectId,
+                    diffs,
+                    platformId,
+                    log: logger,
+                }),
+            ).rejects.toThrow('Failed to update flow')
 
             expect(mockUpdateFlowInProject).toHaveBeenCalledTimes(1)
             expect(mockRepublishFlow).not.toHaveBeenCalled()
@@ -341,10 +351,12 @@ describe('ProjectStateService.apply - Flow Operations', () => {
             mockDeleteFlowFromProject.mockResolvedValue(undefined)
 
             const diffs = {
-                flows: [{
-                    type: FlowProjectOperationType.DELETE_FLOW as const,
-                    flowState,
-                }],
+                flows: [
+                    {
+                        type: FlowProjectOperationType.DELETE_FLOW as const,
+                        flowState,
+                    },
+                ],
                 connections: [],
                 tables: [],
                 agents: [],
@@ -416,22 +428,26 @@ describe('ProjectStateService.apply - Flow Operations', () => {
             mockDeleteFlowFromProject.mockRejectedValue(expectedError)
 
             const diffs = {
-                flows: [{
-                    type: FlowProjectOperationType.DELETE_FLOW as const,
-                    flowState,
-                }],
+                flows: [
+                    {
+                        type: FlowProjectOperationType.DELETE_FLOW as const,
+                        flowState,
+                    },
+                ],
                 connections: [],
                 tables: [],
                 agents: [],
             }
 
             // Act & Assert
-            await expect(projectStateService(logger).apply({
-                projectId,
-                diffs,
-                platformId,
-                log: logger,
-            })).rejects.toThrow('Failed to delete flow')
+            await expect(
+                projectStateService(logger).apply({
+                    projectId,
+                    diffs,
+                    platformId,
+                    log: logger,
+                }),
+            ).rejects.toThrow('Failed to delete flow')
 
             expect(mockDeleteFlowFromProject).toHaveBeenCalledTimes(1)
         })
@@ -453,22 +469,26 @@ describe('ProjectStateService.apply - Flow Operations', () => {
             mockRepublishFlow.mockResolvedValue(syncError)
 
             const diffs = {
-                flows: [{
-                    type: FlowProjectOperationType.CREATE_FLOW as const,
-                    flowState,
-                }],
+                flows: [
+                    {
+                        type: FlowProjectOperationType.CREATE_FLOW as const,
+                        flowState,
+                    },
+                ],
                 connections: [],
                 tables: [],
                 agents: [],
             }
 
             // Act - Should not throw despite republish error
-            await expect(projectStateService(logger).apply({
-                projectId,
-                diffs,
-                platformId,
-                log: logger,
-            })).resolves.not.toThrow()
+            await expect(
+                projectStateService(logger).apply({
+                    projectId,
+                    diffs,
+                    platformId,
+                    log: logger,
+                }),
+            ).resolves.not.toThrow()
 
             // Assert
             expect(mockCreateFlowInProject).toHaveBeenCalledTimes(1)
@@ -491,11 +511,13 @@ describe('ProjectStateService.apply - Flow Operations', () => {
             mockRepublishFlow.mockResolvedValue(syncError)
 
             const diffs = {
-                flows: [{
-                    type: FlowProjectOperationType.UPDATE_FLOW as const,
-                    flowState: originalFlowState,
-                    newFlowState,
-                }],
+                flows: [
+                    {
+                        type: FlowProjectOperationType.UPDATE_FLOW as const,
+                        flowState: originalFlowState,
+                        newFlowState,
+                    },
+                ],
                 connections: [],
                 tables: [],
                 agents: [],
@@ -614,12 +636,14 @@ describe('ProjectStateService.apply - Flow Operations', () => {
             }
 
             // Act & Assert
-            await expect(projectStateService(logger).apply({
-                projectId,
-                diffs,
-                platformId,
-                log: logger,
-            })).rejects.toThrow('Update failed')
+            await expect(
+                projectStateService(logger).apply({
+                    projectId,
+                    diffs,
+                    platformId,
+                    log: logger,
+                }),
+            ).rejects.toThrow('Update failed')
 
             // First operation should have been executed
             expect(mockCreateFlowInProject).toHaveBeenCalledTimes(1)

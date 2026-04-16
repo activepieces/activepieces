@@ -7,9 +7,12 @@ export class StoreTriggerEventsInFile1731247581852 implements MigrationInterface
     name = 'StoreTriggerEventsInFile1731247581852'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'up',
+        )
         await queryRunner.query(`
             TRUNCATE TABLE "trigger_event"
         `)
@@ -31,9 +34,12 @@ export class StoreTriggerEventsInFile1731247581852 implements MigrationInterface
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'down')
+        log.info(
+            {
+                name: this.name,
+            },
+            'down',
+        )
         await queryRunner.query(`
             ALTER TABLE "trigger_event" DROP CONSTRAINT "fk_trigger_event_file_id"
         `)
@@ -49,5 +55,4 @@ export class StoreTriggerEventsInFile1731247581852 implements MigrationInterface
                 RENAME COLUMN "fileId" TO "payload"
         `)
     }
-
 }

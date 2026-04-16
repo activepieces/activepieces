@@ -15,5 +15,4 @@ export class AddLicenseKeyIntoPlatform1728827704109 implements MigrationInterfac
             ALTER TABLE "platform" DROP COLUMN "licenseKey"
         `)
     }
-
 }

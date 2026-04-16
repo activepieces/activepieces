@@ -75,5 +75,4 @@ export class AddTodoActivity1748525529096 implements MigrationInterface {
             DROP TABLE "todo_activity"
         `)
     }
-
 }

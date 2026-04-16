@@ -1,6 +1,6 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import Odoo from "../../commom/index";
-import { odooAuth } from '../auth';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import Odoo from '../../commom/index'
+import { odooAuth } from '../auth'
 
 export default createAction({
     name: 'create_contact', // Must be a unique across the piece, this shouldn't be changed.
@@ -45,18 +45,17 @@ export default createAction({
         })
 
         try {
-            await odoo.connect();
+            await odoo.connect()
             const c = await odoo.saveContact({
                 name: context.propsValue['name'],
                 phone: context.propsValue['name'],
                 email: context.propsValue['name'],
                 company: context.propsValue['company'],
-                title: context.propsValue['title']
-            });
+                title: context.propsValue['title'],
+            })
             return `Contact ${c} created!`
         } catch (err) {
             return err
         }
-    }
-});
-
+    },
+})

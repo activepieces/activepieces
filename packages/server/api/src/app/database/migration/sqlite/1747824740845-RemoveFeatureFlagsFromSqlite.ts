@@ -220,5 +220,4 @@ export class RemoveFeatureFlagsFromSqlite1747824740845 implements MigrationInter
             DROP TABLE "temporary_platform"
         `)
     }
-
 }

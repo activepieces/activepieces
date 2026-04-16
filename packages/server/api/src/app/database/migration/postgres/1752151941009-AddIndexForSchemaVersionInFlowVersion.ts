@@ -14,5 +14,4 @@ export class AddIndexForSchemaVersionInFlowVersion1752151941009 implements Migra
             DROP INDEX "idx_flow_version_schema_version"
         `)
     }
-
 }

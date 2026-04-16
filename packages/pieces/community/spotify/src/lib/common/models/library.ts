@@ -1,3 +1,3 @@
 export interface LibraryModifyItemsRequest {
-    uris: string[];
+    uris: string[]
 }

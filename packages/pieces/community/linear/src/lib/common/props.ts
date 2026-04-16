@@ -1,524 +1,517 @@
-import { DropdownOption, Property } from '@activepieces/pieces-framework';
-import { makeClient } from './client';
-import { LinearDocument } from '@linear/sdk';
-import { linearAuth } from '../..';
+import { DropdownOption, Property } from '@activepieces/pieces-framework'
+import { LinearDocument } from '@linear/sdk'
+import { linearAuth } from '../..'
+import { makeClient } from './client'
 
 export const props = {
-  team_id: (required = true) =>
-    Property.Dropdown({
-auth: linearAuth,
-      description:
-        'The team for which the issue, project or comment will be created',
-      displayName: 'Team',
-      required,
-      refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'connect your account first',
-            options: [],
-          };
-        }
-        const client = makeClient(auth);
-        const options: DropdownOption<string>[] = [];
+    team_id: (required = true) =>
+        Property.Dropdown({
+            auth: linearAuth,
+            description: 'The team for which the issue, project or comment will be created',
+            displayName: 'Team',
+            required,
+            refreshers: ['auth'],
+            options: async ({ auth }) => {
+                if (!auth) {
+                    return {
+                        disabled: true,
+                        placeholder: 'connect your account first',
+                        options: [],
+                    }
+                }
+                const client = makeClient(auth)
+                const options: DropdownOption<string>[] = []
 
-        let hasNextPage = false;
-        let cursor;
+                let hasNextPage = false
+                let cursor
 
-        do {
-          const teams = await client.listTeams({
-            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
-            first: 100,
-            after: cursor,
-          });
+                do {
+                    const teams = await client.listTeams({
+                        orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+                        first: 100,
+                        after: cursor,
+                    })
 
-          for (const team of teams.nodes) {
-            options.push({ label: team.name, value: team.id });
-          }
+                    for (const team of teams.nodes) {
+                        options.push({ label: team.name, value: team.id })
+                    }
 
-          hasNextPage = teams.pageInfo.hasNextPage;
-          cursor = teams.pageInfo.endCursor;
-        } while (hasNextPage);
+                    hasNextPage = teams.pageInfo.hasNextPage
+                    cursor = teams.pageInfo.endCursor
+                } while (hasNextPage)
 
-        return {
-          disabled: false,
-          options,
-        };
-      },
-    }),
-  status_id: (required = false) =>
-    Property.Dropdown({
-auth: linearAuth,
-      description: 'Status of the Issue',
-      displayName: 'Status',
-      required,
-      refreshers: ['auth', 'team_id'],
-      options: async ({ auth, team_id }) => {
-        if (!auth || !team_id) {
-          return {
-            disabled: true,
-            placeholder: 'connect your account first and select team',
-            options: [],
-          };
-        }
-        const client = makeClient(auth);
-        const options: DropdownOption<string>[] = [];
-
-        let hasNextPage = false;
-        let cursor;
-
-        do {
-          const filter: LinearDocument.WorkflowStatesQueryVariables = {
-            filter: {
-              team: {
-                id: {
-                  eq: team_id as string,
-                },
-              },
+                return {
+                    disabled: false,
+                    options,
+                }
             },
-            first: 100,
-            after: cursor,
-          };
-          const statusList = await client.listIssueStates(filter);
+        }),
+    status_id: (required = false) =>
+        Property.Dropdown({
+            auth: linearAuth,
+            description: 'Status of the Issue',
+            displayName: 'Status',
+            required,
+            refreshers: ['auth', 'team_id'],
+            options: async ({ auth, team_id }) => {
+                if (!auth || !team_id) {
+                    return {
+                        disabled: true,
+                        placeholder: 'connect your account first and select team',
+                        options: [],
+                    }
+                }
+                const client = makeClient(auth)
+                const options: DropdownOption<string>[] = []
 
-          for (const status of statusList.nodes) {
-            options.push({ label: status.name, value: status.id });
-          }
+                let hasNextPage = false
+                let cursor
 
-          hasNextPage = statusList.pageInfo.hasNextPage;
-          cursor = statusList.pageInfo.endCursor;
-        } while (hasNextPage);
+                do {
+                    const filter: LinearDocument.WorkflowStatesQueryVariables = {
+                        filter: {
+                            team: {
+                                id: {
+                                    eq: team_id as string,
+                                },
+                            },
+                        },
+                        first: 100,
+                        after: cursor,
+                    }
+                    const statusList = await client.listIssueStates(filter)
 
-        return {
-          disabled: false,
-          options,
-        };
-      },
-    }),
-  labels: (required = false) =>
-    Property.MultiSelectDropdown({
-auth: linearAuth,
-      description: 'Labels for the Issue',
-      displayName: 'Labels',
-      required,
-      refreshers: ['auth', 'team_id'],
-      options: async ({ auth, team_id }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'connect your account first',
-            options: [],
-          };
-        }
-        if (!team_id) {
-          return {
-            disabled: true,
-            placeholder: 'select a team to load labels',
-            options: [],
-          };
-        }
-        const client = makeClient(auth);
-        const teamLabels: DropdownOption<string>[] = [];
-        const workspaceLabels: DropdownOption<string>[] = [];
+                    for (const status of statusList.nodes) {
+                        options.push({ label: status.name, value: status.id })
+                    }
 
-        // Fetch team specific labels
-        let hasNextPage = false;
-        let cursor;
+                    hasNextPage = statusList.pageInfo.hasNextPage
+                    cursor = statusList.pageInfo.endCursor
+                } while (hasNextPage)
 
-        do {
-          const labels = await client.listIssueLabels({
-            filter: {
-              team: {
-                id: {
-                  eq: team_id as string,
-                },
-              },
+                return {
+                    disabled: false,
+                    options,
+                }
             },
-            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
-            first: 100,
-            after: cursor,
-          });
+        }),
+    labels: (required = false) =>
+        Property.MultiSelectDropdown({
+            auth: linearAuth,
+            description: 'Labels for the Issue',
+            displayName: 'Labels',
+            required,
+            refreshers: ['auth', 'team_id'],
+            options: async ({ auth, team_id }) => {
+                if (!auth) {
+                    return {
+                        disabled: true,
+                        placeholder: 'connect your account first',
+                        options: [],
+                    }
+                }
+                if (!team_id) {
+                    return {
+                        disabled: true,
+                        placeholder: 'select a team to load labels',
+                        options: [],
+                    }
+                }
+                const client = makeClient(auth)
+                const teamLabels: DropdownOption<string>[] = []
+                const workspaceLabels: DropdownOption<string>[] = []
 
-          for (const label of labels.nodes) {
-            teamLabels.push({ label: label.name, value: label.id });
-          }
+                // Fetch team specific labels
+                let hasNextPage = false
+                let cursor
 
-          hasNextPage = labels.pageInfo.hasNextPage;
-          cursor = labels.pageInfo.endCursor;
-        } while (hasNextPage);
+                do {
+                    const labels = await client.listIssueLabels({
+                        filter: {
+                            team: {
+                                id: {
+                                    eq: team_id as string,
+                                },
+                            },
+                        },
+                        orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+                        first: 100,
+                        after: cursor,
+                    })
 
-        // Fetch all workspace labels that are common to all teams
-        hasNextPage = false;
-        cursor = undefined;
+                    for (const label of labels.nodes) {
+                        teamLabels.push({ label: label.name, value: label.id })
+                    }
 
-        do {
-          const labels = await client.listIssueLabels({
-            filter: {
-              team: {
-                null: true,
-              },
+                    hasNextPage = labels.pageInfo.hasNextPage
+                    cursor = labels.pageInfo.endCursor
+                } while (hasNextPage)
+
+                // Fetch all workspace labels that are common to all teams
+                hasNextPage = false
+                cursor = undefined
+
+                do {
+                    const labels = await client.listIssueLabels({
+                        filter: {
+                            team: {
+                                null: true,
+                            },
+                        },
+                        orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+                        first: 100,
+                        after: cursor,
+                    })
+
+                    for (const label of labels.nodes) {
+                        // Prefix workspace labels with [Workspace]
+                        workspaceLabels.push({ label: `[Workspace] ${label.name}`, value: label.id })
+                    }
+
+                    hasNextPage = labels.pageInfo.hasNextPage
+                    cursor = labels.pageInfo.endCursor
+                } while (hasNextPage)
+
+                // team labels are displayed first in alphabetical order
+                teamLabels.sort((a, b) => a.label.localeCompare(b.label))
+
+                // followed by workspace labels in alphabetical order
+                workspaceLabels.sort((a, b) => a.label.localeCompare(b.label))
+
+                const options = [...teamLabels, ...workspaceLabels]
+
+                return {
+                    disabled: false,
+                    options,
+                }
             },
-            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
-            first: 100,
-            after: cursor,
-          });
+        }),
+    team_ids: (required = false) =>
+        Property.MultiSelectDropdown({
+            auth: linearAuth,
+            description: 'Filter by teams',
+            displayName: 'Teams',
+            required,
+            refreshers: ['auth'],
+            options: async ({ auth }) => {
+                if (!auth) {
+                    return {
+                        disabled: true,
+                        placeholder: 'connect your account first',
+                        options: [],
+                    }
+                }
+                const client = makeClient(auth)
+                const options: DropdownOption<string>[] = []
 
-          for (const label of labels.nodes) {
-            // Prefix workspace labels with [Workspace]
-            workspaceLabels.push({ label: `[Workspace] ${label.name}`, value: label.id });
-          }
+                let hasNextPage = false
+                let cursor
 
-          hasNextPage = labels.pageInfo.hasNextPage;
-          cursor = labels.pageInfo.endCursor;
-        } while (hasNextPage);
+                do {
+                    const teams = await client.listTeams({
+                        orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+                        first: 100,
+                        after: cursor,
+                    })
 
-        // team labels are displayed first in alphabetical order
-        teamLabels.sort((a, b) => a.label.localeCompare(b.label));
-        
-        // followed by workspace labels in alphabetical order
-        workspaceLabels.sort((a, b) => a.label.localeCompare(b.label));
+                    for (const team of teams.nodes) {
+                        options.push({ label: team.name, value: team.id })
+                    }
 
-        const options = [...teamLabels, ...workspaceLabels];
+                    hasNextPage = teams.pageInfo.hasNextPage
+                    cursor = teams.pageInfo.endCursor
+                } while (hasNextPage)
 
-        return {
-          disabled: false,
-          options,
-        };
-      },
-    }),
-  team_ids: (required = false) =>
-    Property.MultiSelectDropdown({
-      auth: linearAuth,
-      description: 'Filter by teams',
-      displayName: 'Teams',
-      required,
-      refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'connect your account first',
-            options: [],
-          };
-        }
-        const client = makeClient(auth);
-        const options: DropdownOption<string>[] = [];
-
-        let hasNextPage = false;
-        let cursor;
-
-        do {
-          const teams = await client.listTeams({
-            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
-            first: 100,
-            after: cursor,
-          });
-
-          for (const team of teams.nodes) {
-            options.push({ label: team.name, value: team.id });
-          }
-
-          hasNextPage = teams.pageInfo.hasNextPage;
-          cursor = teams.pageInfo.endCursor;
-        } while (hasNextPage);
-
-        return {
-          disabled: false,
-          options,
-        };
-      },
-    }),
-  author_ids: (required = false) =>
-    Property.MultiSelectDropdown({
-      auth: linearAuth,
-      description: 'Filter by authors',
-      displayName: 'Authors',
-      required,
-      refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'connect your account first',
-            options: [],
-          };
-        }
-        const client = makeClient(auth);
-        const options: DropdownOption<string>[] = [];
-
-        let hasNextPage = false;
-        let cursor;
-
-        do {
-          const users = await client.listUsers({
-            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
-            first: 100,
-            after: cursor,
-          });
-
-          for (const user of users.nodes) {
-            options.push({ label: user.name, value: user.id });
-          }
-
-          hasNextPage = users.pageInfo.hasNextPage;
-          cursor = users.pageInfo.endCursor;
-        } while (hasNextPage);
-
-        return {
-          disabled: false,
-          options,
-        };
-      },
-    }),
-  assignee_id: (required = false) =>
-    Property.Dropdown({
-auth: linearAuth,
-      description: 'Assignee of the Issue / Comment',
-      displayName: 'Assignee',
-      required,
-      refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'connect your account first',
-            options: [],
-          };
-        }
-        const client = makeClient(auth);
-        const options: DropdownOption<string>[] = [];
-
-        let hasNextPage = false;
-        let cursor;
-
-        do {
-          const users = await client.listUsers({
-            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
-            first: 100,
-            after: cursor,
-          });
-
-          for (const user of users.nodes) {
-            options.push({ label: user.name, value: user.id });
-          }
-
-          hasNextPage = users.pageInfo.hasNextPage;
-          cursor = users.pageInfo.endCursor;
-        } while (hasNextPage);
-
-        return {
-          disabled: false,
-          options,
-        };
-      },
-    }),
-  priority_id: (required = false) =>
-    Property.Dropdown({
-auth: linearAuth,
-      description: 'Priority of the Issue',
-      displayName: 'Priority',
-      required,
-      refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'connect your account first',
-            options: [],
-          };
-        }
-        const client = makeClient(auth);
-        const priorities = await client.listIssuePriorities();
-
-        return {
-          disabled: false,
-          options: priorities.map((priority: { label: any; priority: any }) => {
-            return {
-              label: priority.label,
-              value: priority.priority,
-            };
-          }),
-        };
-      },
-    }),
-  issue_id: (required = true) =>
-    Property.Dropdown({
-auth: linearAuth,
-      displayName: 'Issue',
-      required,
-      description: 'ID of Linear Issue',
-      refreshers: ['team_id'],
-      options: async ({ auth, team_id }) => {
-        if (!auth || !team_id) {
-          return {
-            disabled: true,
-            placeholder: 'connect your account first and select team',
-            options: [],
-          };
-        }
-        const client = makeClient(auth);
-        const filter: LinearDocument.IssuesQueryVariables = {
-          first: 50,
-          filter: {
-            team: {
-              id: {
-                eq: team_id as string,
-              },
+                return {
+                    disabled: false,
+                    options,
+                }
             },
-          },
-          orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
-        };
-        const issues = await client.listIssues(filter);
-        return {
-          disabled: false,
-          options: issues.nodes.map((issue: { title: any; id: any }) => {
-            return {
-              label: issue.title,
-              value: issue.id,
-            };
-          }),
-        };
-      },
-    }),
+        }),
+    author_ids: (required = false) =>
+        Property.MultiSelectDropdown({
+            auth: linearAuth,
+            description: 'Filter by authors',
+            displayName: 'Authors',
+            required,
+            refreshers: ['auth'],
+            options: async ({ auth }) => {
+                if (!auth) {
+                    return {
+                        disabled: true,
+                        placeholder: 'connect your account first',
+                        options: [],
+                    }
+                }
+                const client = makeClient(auth)
+                const options: DropdownOption<string>[] = []
 
-  project_id: (required = true) =>
-    Property.Dropdown({
-auth: linearAuth,
-      displayName: 'Project',
-      required,
-      description: 'ID of Linear Project',
-      refreshers: ['team_id'],
-      options: async ({ auth, team_id }) => {
-        if (!auth || !team_id) {
-          return {
-            disabled: true,
-            placeholder: 'connect your account first and select team',
-            options: [],
-          };
-        }
-        const client = makeClient(auth);
-        const options: DropdownOption<string>[] = [];
+                let hasNextPage = false
+                let cursor
 
-        let hasNextPage = false;
-        let cursor;
+                do {
+                    const users = await client.listUsers({
+                        orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+                        first: 100,
+                        after: cursor,
+                    })
 
-        do {
-          const projects = await client.listProjects({
-            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
-            first: 100,
-            after: cursor,
-          });
+                    for (const user of users.nodes) {
+                        options.push({ label: user.name, value: user.id })
+                    }
 
-          for (const project of projects.nodes) {
-            options.push({ label: project.name, value: project.id });
-          }
+                    hasNextPage = users.pageInfo.hasNextPage
+                    cursor = users.pageInfo.endCursor
+                } while (hasNextPage)
 
-          hasNextPage = projects.pageInfo.hasNextPage;
-          cursor = projects.pageInfo.endCursor;
-        } while (hasNextPage);
+                return {
+                    disabled: false,
+                    options,
+                }
+            },
+        }),
+    assignee_id: (required = false) =>
+        Property.Dropdown({
+            auth: linearAuth,
+            description: 'Assignee of the Issue / Comment',
+            displayName: 'Assignee',
+            required,
+            refreshers: ['auth'],
+            options: async ({ auth }) => {
+                if (!auth) {
+                    return {
+                        disabled: true,
+                        placeholder: 'connect your account first',
+                        options: [],
+                    }
+                }
+                const client = makeClient(auth)
+                const options: DropdownOption<string>[] = []
 
-        return {
-          disabled: false,
-          options,
-        };
-      },
-    }),
-  project_statuses: (required = false) =>
-    Property.Dropdown({
-      auth: linearAuth,
-      displayName: 'Project Status',
-      description: 'Filter by project status (leave empty to include all)',
-      required,
-      refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'connect your account first',
-            options: [],
-          };
-        }
-        const client = makeClient(auth);
-        const statuses = await client.listProjectStatuses();
-        // const seenTypes = new Set<string>();
-        // const uniqueStatuses = statuses.filter((s) => {
-        //   if (seenTypes.has(s.type)) return false;
-        //   seenTypes.add(s.type);
-        //   return true;
-        // });
-        return {
-          disabled: false,
-          options: statuses.map((s) => ({ label: s.name, value: s.name })),
-        };
-      },
-    }),
-  project_status: (required = false) =>
-    Property.StaticDropdown({
-      displayName: 'Project Status',
-      description: 'The status of the project',
-      required,
-      options: {
-        disabled: false,
-        options: [
-          { label: 'Backlog', value: 'backlog' },
-          { label: 'Planned', value: 'planned' },
-          { label: 'In Progress', value: 'started' },
-          { label: 'Paused', value: 'paused' },
-          { label: 'Completed', value: 'completed' },
-          { label: 'Canceled', value: 'canceled' },
-        ],
-      },
-    }),
-  template_id: (required = false) =>
-    Property.Dropdown({
-auth: linearAuth,
-      displayName: 'Template',
-      required,
-      description: 'ID of Template',
-      refreshers: ['auth', 'team_id'],
-      options: async ({ auth, team_id }) => {
-        if (!auth || !team_id) {
-          return {
-            disabled: true,
-            placeholder: 'connect your account first and select team',
-            options: [],
-          };
-        }
-        const client = makeClient(auth);
-        const options: DropdownOption<string>[] = [];
+                let hasNextPage = false
+                let cursor
 
-        let hasNextPage = false;
-        let cursor;
+                do {
+                    const users = await client.listUsers({
+                        orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+                        first: 100,
+                        after: cursor,
+                    })
 
-        do {
-          const filter: Omit<
-            LinearDocument.Team_TemplatesQueryVariables,
-            'id'
-          > = {
-            first: 100,
-            after: cursor,
-            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
-          };
-          const templatesConnection = await client.listTeamsTemplates(
-            team_id as string,
-            filter
-          );
+                    for (const user of users.nodes) {
+                        options.push({ label: user.name, value: user.id })
+                    }
 
-          const templates = await templatesConnection.nodes;
+                    hasNextPage = users.pageInfo.hasNextPage
+                    cursor = users.pageInfo.endCursor
+                } while (hasNextPage)
 
-          for (const template of templates) {
-            options.push({ label: template.name, value: template.id });
-          }
+                return {
+                    disabled: false,
+                    options,
+                }
+            },
+        }),
+    priority_id: (required = false) =>
+        Property.Dropdown({
+            auth: linearAuth,
+            description: 'Priority of the Issue',
+            displayName: 'Priority',
+            required,
+            refreshers: ['auth'],
+            options: async ({ auth }) => {
+                if (!auth) {
+                    return {
+                        disabled: true,
+                        placeholder: 'connect your account first',
+                        options: [],
+                    }
+                }
+                const client = makeClient(auth)
+                const priorities = await client.listIssuePriorities()
 
-          hasNextPage = templatesConnection.pageInfo.hasNextPage;
-          cursor = templatesConnection.pageInfo.endCursor;
-        } while (hasNextPage);
+                return {
+                    disabled: false,
+                    options: priorities.map((priority: { label: any; priority: any }) => {
+                        return {
+                            label: priority.label,
+                            value: priority.priority,
+                        }
+                    }),
+                }
+            },
+        }),
+    issue_id: (required = true) =>
+        Property.Dropdown({
+            auth: linearAuth,
+            displayName: 'Issue',
+            required,
+            description: 'ID of Linear Issue',
+            refreshers: ['team_id'],
+            options: async ({ auth, team_id }) => {
+                if (!auth || !team_id) {
+                    return {
+                        disabled: true,
+                        placeholder: 'connect your account first and select team',
+                        options: [],
+                    }
+                }
+                const client = makeClient(auth)
+                const filter: LinearDocument.IssuesQueryVariables = {
+                    first: 50,
+                    filter: {
+                        team: {
+                            id: {
+                                eq: team_id as string,
+                            },
+                        },
+                    },
+                    orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+                }
+                const issues = await client.listIssues(filter)
+                return {
+                    disabled: false,
+                    options: issues.nodes.map((issue: { title: any; id: any }) => {
+                        return {
+                            label: issue.title,
+                            value: issue.id,
+                        }
+                    }),
+                }
+            },
+        }),
 
-        return {
-          disabled: false,
-          options,
-        };
-      },
-    }),
-};
+    project_id: (required = true) =>
+        Property.Dropdown({
+            auth: linearAuth,
+            displayName: 'Project',
+            required,
+            description: 'ID of Linear Project',
+            refreshers: ['team_id'],
+            options: async ({ auth, team_id }) => {
+                if (!auth || !team_id) {
+                    return {
+                        disabled: true,
+                        placeholder: 'connect your account first and select team',
+                        options: [],
+                    }
+                }
+                const client = makeClient(auth)
+                const options: DropdownOption<string>[] = []
+
+                let hasNextPage = false
+                let cursor
+
+                do {
+                    const projects = await client.listProjects({
+                        orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+                        first: 100,
+                        after: cursor,
+                    })
+
+                    for (const project of projects.nodes) {
+                        options.push({ label: project.name, value: project.id })
+                    }
+
+                    hasNextPage = projects.pageInfo.hasNextPage
+                    cursor = projects.pageInfo.endCursor
+                } while (hasNextPage)
+
+                return {
+                    disabled: false,
+                    options,
+                }
+            },
+        }),
+    project_statuses: (required = false) =>
+        Property.Dropdown({
+            auth: linearAuth,
+            displayName: 'Project Status',
+            description: 'Filter by project status (leave empty to include all)',
+            required,
+            refreshers: ['auth'],
+            options: async ({ auth }) => {
+                if (!auth) {
+                    return {
+                        disabled: true,
+                        placeholder: 'connect your account first',
+                        options: [],
+                    }
+                }
+                const client = makeClient(auth)
+                const statuses = await client.listProjectStatuses()
+                // const seenTypes = new Set<string>();
+                // const uniqueStatuses = statuses.filter((s) => {
+                //   if (seenTypes.has(s.type)) return false;
+                //   seenTypes.add(s.type);
+                //   return true;
+                // });
+                return {
+                    disabled: false,
+                    options: statuses.map((s) => ({ label: s.name, value: s.name })),
+                }
+            },
+        }),
+    project_status: (required = false) =>
+        Property.StaticDropdown({
+            displayName: 'Project Status',
+            description: 'The status of the project',
+            required,
+            options: {
+                disabled: false,
+                options: [
+                    { label: 'Backlog', value: 'backlog' },
+                    { label: 'Planned', value: 'planned' },
+                    { label: 'In Progress', value: 'started' },
+                    { label: 'Paused', value: 'paused' },
+                    { label: 'Completed', value: 'completed' },
+                    { label: 'Canceled', value: 'canceled' },
+                ],
+            },
+        }),
+    template_id: (required = false) =>
+        Property.Dropdown({
+            auth: linearAuth,
+            displayName: 'Template',
+            required,
+            description: 'ID of Template',
+            refreshers: ['auth', 'team_id'],
+            options: async ({ auth, team_id }) => {
+                if (!auth || !team_id) {
+                    return {
+                        disabled: true,
+                        placeholder: 'connect your account first and select team',
+                        options: [],
+                    }
+                }
+                const client = makeClient(auth)
+                const options: DropdownOption<string>[] = []
+
+                let hasNextPage = false
+                let cursor
+
+                do {
+                    const filter: Omit<LinearDocument.Team_TemplatesQueryVariables, 'id'> = {
+                        first: 100,
+                        after: cursor,
+                        orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+                    }
+                    const templatesConnection = await client.listTeamsTemplates(team_id as string, filter)
+
+                    const templates = await templatesConnection.nodes
+
+                    for (const template of templates) {
+                        options.push({ label: template.name, value: template.id })
+                    }
+
+                    hasNextPage = templatesConnection.pageInfo.hasNextPage
+                    cursor = templatesConnection.pageInfo.endCursor
+                } while (hasNextPage)
+
+                return {
+                    disabled: false,
+                    options,
+                }
+            },
+        }),
+}

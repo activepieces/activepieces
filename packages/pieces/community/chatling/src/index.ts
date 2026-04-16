@@ -1,15 +1,12 @@
-import {
-  createCustomApiCallAction,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { makeRequest } from './lib/common';
-import { sendMessage } from './lib/actions/send-message';
-import { createChatbot } from './lib/actions/create-chatbot';
-import { newConversation } from './lib/triggers/new-conversation';
-import { newContact } from './lib/triggers/new-contact';
-import { chatlingAuth } from './lib/auth';
+import { createCustomApiCallAction, HttpMethod } from '@activepieces/pieces-common'
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { createChatbot } from './lib/actions/create-chatbot'
+import { sendMessage } from './lib/actions/send-message'
+import { chatlingAuth } from './lib/auth'
+import { makeRequest } from './lib/common'
+import { newContact } from './lib/triggers/new-contact'
+import { newConversation } from './lib/triggers/new-conversation'
 
 const markdownDescription = `
 To obtain your API key:
@@ -19,26 +16,26 @@ To obtain your API key:
 3. Click the **API Keys** tab
 4. Press **New API key** and generate a new key
 5. Copy the key (it's only shown once)
-`;
+`
 
 export const chatling = createPiece({
-  displayName: 'Chatling',
-  description: 'Build AI chatbots trained on your data.',
-  auth: chatlingAuth,
-  minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/chatling.png',
-  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ['onyedikachi-david'],
-  actions: [
-    sendMessage,
-    createChatbot,
-    createCustomApiCallAction({
-      auth: chatlingAuth,
-      baseUrl: () => 'https://api.chatling.ai/v2',
-      authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as { secret_text: string }).secret_text}`,
-      }),
-    }),
-  ],
-  triggers: [newConversation, newContact],
-});
+    displayName: 'Chatling',
+    description: 'Build AI chatbots trained on your data.',
+    auth: chatlingAuth,
+    minimumSupportedRelease: '0.36.1',
+    logoUrl: 'https://cdn.activepieces.com/pieces/chatling.png',
+    categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
+    authors: ['onyedikachi-david'],
+    actions: [
+        sendMessage,
+        createChatbot,
+        createCustomApiCallAction({
+            auth: chatlingAuth,
+            baseUrl: () => 'https://api.chatling.ai/v2',
+            authMapping: async (auth) => ({
+                Authorization: `Bearer ${(auth as { secret_text: string }).secret_text}`,
+            }),
+        }),
+    ],
+    triggers: [newConversation, newContact],
+})

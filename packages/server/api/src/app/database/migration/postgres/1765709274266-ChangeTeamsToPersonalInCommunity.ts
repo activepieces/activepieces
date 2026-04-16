@@ -25,7 +25,7 @@ export class ChangeTeamsToPersonalInCommunity1765709274266 implements MigrationI
             ON p."ownerId" = oldest."ownerId" AND p."created" = oldest.min_created
         `)
 
-        const oldestIds = oldestProjectRows.map(row => row.id)
+        const oldestIds = oldestProjectRows.map((row) => row.id)
 
         if (oldestIds.length > 0) {
             await queryRunner.query(
@@ -38,5 +38,4 @@ export class ChangeTeamsToPersonalInCommunity1765709274266 implements MigrationI
     public async down(_queryRunner: QueryRunner): Promise<void> {
         // No down migration needed
     }
-
 }

@@ -55,5 +55,4 @@ export class RemoveUnusedProjectBillingFields1736607721367 implements MigrationI
             ADD "minimumPollingInterval" integer NOT NULL
         `)
     }
-
 }

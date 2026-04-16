@@ -79,18 +79,15 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
     app.get('/assets/:id', GetAssetRequest, async (req, reply) => {
         const [file, data] = await Promise.all([
             fileService(app.log).getFileOrThrow({ fileId: req.params.id }),
-            fileService(app.log).getDataOrThrow({ fileId: req.params.id })])
+            fileService(app.log).getDataOrThrow({ fileId: req.params.id }),
+        ])
 
         return reply
-            .header(
-                'Content-Disposition',
-                `attachment; filename="${encodeURI(file.fileName ?? '')}"`,
-            )
+            .header('Content-Disposition', `attachment; filename="${encodeURI(file.fileName ?? '')}"`)
             .type(file.metadata?.mimetype ?? 'application/octet-stream')
             .status(StatusCodes.OK)
             .send(data.data)
     })
-
 
     if (edition === ApEdition.CLOUD) {
         app.delete('/:id', DeletePlatformRequest, async (req, res) => {
@@ -116,10 +113,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
                 id: req.principal.id,
             })
 
-            await userRepo().update(
-                { id: user.id, platformId },
-                { status: UserStatus.INACTIVE },
-            )
+            await userRepo().update({ id: user.id, platformId }, { status: UserStatus.INACTIVE })
 
             const projectIds = await projectService(req.log).getProjectIdsByPlatform(platformId)
             await Promise.all(
@@ -174,7 +168,6 @@ const UpdatePlatformRequest = {
     },
 }
 
-
 const GetPlatformRequest = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
@@ -213,4 +206,3 @@ const GetAssetRequest = {
         }),
     },
 }
-

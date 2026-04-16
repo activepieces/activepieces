@@ -22,5 +22,4 @@ export class AddParentRunIdToFlowRun1753699877817 implements MigrationInterface 
             ALTER TABLE "flow_run" DROP COLUMN "parentRunId", DROP COLUMN "failParentOnFailure"
         `)
     }
-
 }

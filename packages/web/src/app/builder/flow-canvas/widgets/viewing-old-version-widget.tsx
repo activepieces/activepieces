@@ -59,4 +59,5 @@ const ViewingOldVersionWidget = () => {
     </LargeWidgetWrapper>
   );
 };
+
 export { ViewingOldVersionWidget };

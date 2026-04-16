@@ -4,5 +4,5 @@ export enum ThirdPartyAuthnProviderEnum {
 }
 
 export type ThirdPartyAuthnProvidersToShowMap = {
-    [k in ThirdPartyAuthnProviderEnum]: boolean;
+    [k in ThirdPartyAuthnProviderEnum]: boolean
 }

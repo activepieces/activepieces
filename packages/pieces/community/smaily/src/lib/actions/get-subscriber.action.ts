@@ -1,40 +1,35 @@
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { smailyAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { smailyAuth } from '../auth'
 
 export const getSubscriberAction = createAction({
-  auth: smailyAuth,
-  name: 'get-subscriber',
-  displayName: 'Get Subscriber',
-  description:
-    'retrieves detailed subscriber information for a given email address.',
-  props: {
-    email: Property.ShortText({
-      displayName: 'Email',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://${context.auth.props.domain}.sendsmaily.net/api/contact.php`,
-      queryParams: {
-        email: context.propsValue.email,
-      },
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      authentication: {
-        type: AuthenticationType.BASIC,
-            username: context.auth.props.username,
-        password: context.auth.props.password,
-      },
-    });
+    auth: smailyAuth,
+    name: 'get-subscriber',
+    displayName: 'Get Subscriber',
+    description: 'retrieves detailed subscriber information for a given email address.',
+    props: {
+        email: Property.ShortText({
+            displayName: 'Email',
+            required: true,
+        }),
+    },
+    async run(context) {
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: `https://${context.auth.props.domain}.sendsmaily.net/api/contact.php`,
+            queryParams: {
+                email: context.propsValue.email,
+            },
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            authentication: {
+                type: AuthenticationType.BASIC,
+                username: context.auth.props.username,
+                password: context.auth.props.password,
+            },
+        })
 
-    return response.body;
-  },
-});
+        return response.body
+    },
+})

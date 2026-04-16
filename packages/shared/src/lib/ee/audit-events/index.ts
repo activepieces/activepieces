@@ -72,9 +72,11 @@ export const ConnectionEvent = z.object({
             created: DateOrString,
             updated: DateOrString,
         }),
-        project: z.object({
-            displayName: z.string(),
-        }).optional(),
+        project: z
+            .object({
+                displayName: z.string(),
+            })
+            .optional(),
     }),
 })
 export type ConnectionEvent = z.infer<typeof ConnectionEvent>
@@ -88,9 +90,11 @@ export const FolderEvent = z.object({
     ]),
     data: z.object({
         folder: Folder.pick({ id: true, displayName: true, created: true, updated: true }),
-        project: z.object({
-            displayName: z.string(),
-        }).optional(),
+        project: z
+            .object({
+                displayName: z.string(),
+            })
+            .optional(),
     }),
 })
 
@@ -118,9 +122,11 @@ export const FlowRunEvent = z.object({
             flowDisplayName: z.string().optional(),
             status: z.string(),
         }),
-        project: z.object({
-            displayName: z.string(),
-        }).optional(),
+        project: z
+            .object({
+                displayName: z.string(),
+            })
+            .optional(),
     }),
 })
 export type FlowRunEvent = z.infer<typeof FlowRunEvent>
@@ -130,9 +136,11 @@ export const FlowCreatedEvent = z.object({
     action: z.literal(ApplicationEventName.FLOW_CREATED),
     data: z.object({
         flow: Flow.pick({ id: true, created: true, updated: true }),
-        project: z.object({
-            displayName: z.string(),
-        }).optional(),
+        project: z
+            .object({
+                displayName: z.string(),
+            })
+            .optional(),
     }),
 })
 
@@ -150,9 +158,11 @@ export const FlowDeletedEvent = z.object({
             created: true,
             updated: true,
         }),
-        project: z.object({
-            displayName: z.string(),
-        }).optional(),
+        project: z
+            .object({
+                displayName: z.string(),
+            })
+            .optional(),
     }),
 })
 
@@ -170,9 +180,11 @@ export const FlowUpdatedEvent = z.object({
             updated: true,
         }),
         request: FlowOperationRequest,
-        project: z.object({
-            displayName: z.string(),
-        }).optional(),
+        project: z
+            .object({
+                displayName: z.string(),
+            })
+            .optional(),
     }),
 })
 
@@ -196,11 +208,7 @@ export const SignUpEvent = z.object({
     ...BaseAuditEventProps,
     action: z.literal(ApplicationEventName.USER_SIGNED_UP),
     data: z.object({
-        source: z.union([
-            z.literal('credentials'),
-            z.literal('sso'),
-            z.literal('managed'),
-        ]),
+        source: z.union([z.literal('credentials'), z.literal('sso'), z.literal('managed')]),
         user: UserMeta.optional(),
     }),
 })
@@ -251,20 +259,22 @@ export const ProjectReleaseEvent = z.object({
             description: Nullable(z.string()),
             type: z.string(),
             projectId: z.string(),
-            importedByUser: z.object({
-                id: z.string(),
-                email: z.string(),
-                firstName: z.string(),
-                status: z.string(),
-                externalId: Nullable(z.string()),
-                platformId: Nullable(z.string()),
-                platformRole: z.string(),
-                lastName: z.string(),
-                created: DateOrString,
-                updated: DateOrString,
-                lastActiveDate: Nullable(z.string()),
-                imageUrl: Nullable(z.string()),
-            }).optional(),
+            importedByUser: z
+                .object({
+                    id: z.string(),
+                    email: z.string(),
+                    firstName: z.string(),
+                    status: z.string(),
+                    externalId: Nullable(z.string()),
+                    platformId: Nullable(z.string()),
+                    platformRole: z.string(),
+                    lastName: z.string(),
+                    created: DateOrString,
+                    updated: DateOrString,
+                    lastActiveDate: Nullable(z.string()),
+                    imageUrl: Nullable(z.string()),
+                })
+                .optional(),
         }),
     }),
 })
@@ -344,8 +354,7 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
             return `Added action "${event.data.request.request.action.displayName}" to "${event.data.flowVersion.displayName}" Flow.`
         case FlowOperationType.UPDATE_ACTION:
             return `Updated action "${event.data.request.request.displayName}" in "${event.data.flowVersion.displayName}" Flow.`
-        case FlowOperationType.DELETE_ACTION:
-        {
+        case FlowOperationType.DELETE_ACTION: {
             const request = event.data.request.request
             const names = request.names
             return `Deleted actions "${names.join(', ')}" from "${event.data.flowVersion.displayName}" Flow.`
@@ -373,9 +382,7 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
         case FlowOperationType.DELETE_BRANCH: {
             return `Deleted branch number ${
                 event.data.request.request.branchIndex + 1
-            } in flow "${event.data.flowVersion.displayName}" for the step "${
-                event.data.request.request.stepName
-            }".`
+            } in flow "${event.data.flowVersion.displayName}" for the step "${event.data.request.request.stepName}".`
         }
         case FlowOperationType.SAVE_SAMPLE_DATA: {
             return `Saved sample data for step "${event.data.request.request.stepName}" in flow "${event.data.flowVersion.displayName}".`
@@ -383,18 +390,13 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
         case FlowOperationType.DUPLICATE_BRANCH: {
             return `Duplicated branch number ${
                 event.data.request.request.branchIndex + 1
-            } in flow "${event.data.flowVersion.displayName}" for the step "${
-                event.data.request.request.stepName
-            }".`
+            } in flow "${event.data.flowVersion.displayName}" for the step "${event.data.request.request.stepName}".`
         }
         case FlowOperationType.ADD_BRANCH:
             return `Added branch number ${
                 event.data.request.request.branchIndex + 1
-            } in flow "${event.data.flowVersion.displayName}" for the step "${
-                event.data.request.request.stepName
-            }".`
-        case FlowOperationType.SET_SKIP_ACTION:
-        {
+            } in flow "${event.data.flowVersion.displayName}" for the step "${event.data.request.request.stepName}".`
+        case FlowOperationType.SET_SKIP_ACTION: {
             const request = event.data.request.request
             const names = request.names
             return `Updated actions "${names.join(', ')}" in "${event.data.flowVersion.displayName}" Flow to skip.`
@@ -406,13 +408,9 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
         case FlowOperationType.UPDATE_OWNER:
             return `Updated owner for flow "${event.data.flowVersion.displayName}" to "${event.data.request.request.ownerId}".`
         case FlowOperationType.MOVE_BRANCH:
-            return `Moved branch number ${
-                event.data.request.request.sourceBranchIndex + 1
-            } to ${
+            return `Moved branch number ${event.data.request.request.sourceBranchIndex + 1} to ${
                 event.data.request.request.targetBranchIndex + 1
-            } in flow "${event.data.flowVersion.displayName}" for the step "${
-                event.data.request.request.stepName
-            }".`
+            } in flow "${event.data.flowVersion.displayName}" for the step "${event.data.request.request.stepName}".`
         case FlowOperationType.ADD_NOTE:
             return `Added note to flow "${event.data.flowVersion.displayName}".`
         case FlowOperationType.UPDATE_NOTE:

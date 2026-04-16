@@ -1,7 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddCategoriesToPieceMetadataPostgres1707231704973
-implements MigrationInterface {
+export class AddCategoriesToPieceMetadataPostgres1707231704973 implements MigrationInterface {
     name = 'AddCategoriesToPieceMetadataPostgres1707231704973'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

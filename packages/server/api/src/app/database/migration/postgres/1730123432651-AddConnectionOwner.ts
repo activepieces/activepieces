@@ -38,7 +38,6 @@ export class AddConnectionOwner1730123432651 implements MigrationInterface {
             ALTER TABLE "app_connection"
             ADD CONSTRAINT "fk_app_connection_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
-
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -52,5 +51,4 @@ export class AddConnectionOwner1730123432651 implements MigrationInterface {
             ALTER TABLE "app_connection" DROP COLUMN "ownerId"
         `)
     }
-
 }

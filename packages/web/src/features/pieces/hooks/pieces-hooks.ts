@@ -1,19 +1,19 @@
 import {
+  ExecutePropsResult,
   PieceMetadataModel,
   PieceMetadataModelSummary,
   PropertyType,
-  ExecutePropsResult,
 } from '@activepieces/pieces-framework';
 import {
   AddPieceRequestBody,
+  ApEnvironment,
+  ApFlagId,
   FlowActionType,
+  FlowTriggerType,
   flowPieceUtil,
   LocalesEnum,
   PieceOptionRequest,
   PlatformWithoutSensitiveData,
-  FlowTriggerType,
-  ApFlagId,
-  ApEnvironment,
   TelemetryEventName,
 } from '@activepieces/shared';
 import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
@@ -23,8 +23,8 @@ import { useTranslation } from 'react-i18next';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import {
-  StepMetadataWithSuggestions,
   CategorizedStepMetadataWithSuggestions,
+  StepMetadataWithSuggestions,
 } from '@/features/pieces/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';

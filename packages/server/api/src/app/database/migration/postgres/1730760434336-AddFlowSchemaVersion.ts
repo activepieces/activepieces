@@ -15,5 +15,4 @@ export class AddFlowSchemaVersion1730760434336 implements MigrationInterface {
             ALTER TABLE "flow_version" DROP COLUMN "schemaVersion"
         `)
     }
-
 }

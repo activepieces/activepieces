@@ -26,5 +26,4 @@ export class AddFlowVersionToIssue1751927222122 implements MigrationInterface {
             ALTER TABLE "issue" DROP COLUMN "flowVersionId"
         `)
     }
-
 }

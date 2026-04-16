@@ -1,6 +1,6 @@
-import { intercomAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { intercomClient } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { intercomAuth } from '../auth'
+import { intercomClient } from '../common'
 
 export const findCompanyAction = createAction({
     auth: intercomAuth,
@@ -25,20 +25,19 @@ export const findCompanyAction = createAction({
         }),
     },
     async run(context) {
-        const { searchField, searchValue } = context.propsValue;
+        const { searchField, searchValue } = context.propsValue
 
-        const client = intercomClient(context.auth);
+        const client = intercomClient(context.auth)
 
         const companyResponse = await client.companies.retrieve({
             company_id: searchField === 'company_id' ? searchValue : undefined,
             name: searchField === 'name' ? searchValue : undefined,
-            per_page:1
-
+            per_page: 1,
         })
 
         return {
             found: companyResponse.data.length > 0,
             user: companyResponse.data.length > 0 ? companyResponse.data[0] : {},
-        };
+        }
     },
-});
+})

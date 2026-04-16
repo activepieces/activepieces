@@ -9,11 +9,7 @@ import { adminPlatformTemplatesCloudController } from './admin-platform-template
 const TEMPLATES_API_KEY_HEADER = 'templates-api-key'
 const TEMPLATES_API_KEY = system.get(AppSystemProp.TEMPLATES_API_KEY)
 
-async function checkTemplatesApiKeyPreHandler(
-    req: FastifyRequest,
-    res: FastifyReply,
-): Promise<void> {
-
+async function checkTemplatesApiKeyPreHandler(req: FastifyRequest, res: FastifyReply): Promise<void> {
     const templatesApiKey = req.headers[TEMPLATES_API_KEY_HEADER] as string | undefined
     if (templatesApiKey !== TEMPLATES_API_KEY || isNil(TEMPLATES_API_KEY)) {
         const errorMessage = 'Invalid templates API key'

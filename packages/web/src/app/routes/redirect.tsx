@@ -89,4 +89,5 @@ const tryParseState = (state: string | null) => {
     return null;
   }
 };
+
 export { RedirectPage };

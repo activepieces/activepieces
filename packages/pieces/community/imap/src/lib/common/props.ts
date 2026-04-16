@@ -1,45 +1,43 @@
-import { Property } from '@activepieces/pieces-framework';
-import { fetchMailboxes } from './imap';
-import { imapAuth, type ImapAuth } from './auth';
+import { Property } from '@activepieces/pieces-framework'
+import { type ImapAuth, imapAuth } from './auth'
+import { fetchMailboxes } from './imap'
 
 interface DropdownParams {
-  description?: string;
-  displayName: string;
-  required: boolean;
+    description?: string
+    displayName: string
+    required: boolean
 }
 
 export const mailboxDropdown = (params: DropdownParams) =>
-  Property.Dropdown<string,boolean,typeof imapAuth>({
-    auth: imapAuth,
-    displayName: params.displayName,
-    description: params.description,
-    required: params.required,
-    refreshers: [],
-    async options({ auth }) {
-      if (!auth) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please connect your account first',
-        };
-      }
+    Property.Dropdown<string, boolean, typeof imapAuth>({
+        auth: imapAuth,
+        displayName: params.displayName,
+        description: params.description,
+        required: params.required,
+        refreshers: [],
+        async options({ auth }) {
+            if (!auth) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please connect your account first',
+                }
+            }
 
-      try {
-        const mailboxes = await fetchMailboxes(auth);
-        const options = mailboxes.map(
-          ({ name, path }: { name: string; path: string }) => ({
-            label: name,
-            value: path,
-          })
-        );
+            try {
+                const mailboxes = await fetchMailboxes(auth)
+                const options = mailboxes.map(({ name, path }: { name: string; path: string }) => ({
+                    label: name,
+                    value: path,
+                }))
 
-        return { disabled: false, options };
-      } catch (error: any) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: `Error: ${error.message}`,
-        };
-      }
-    },
-  });
+                return { disabled: false, options }
+            } catch (error: any) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: `Error: ${error.message}`,
+                }
+            }
+        },
+    })

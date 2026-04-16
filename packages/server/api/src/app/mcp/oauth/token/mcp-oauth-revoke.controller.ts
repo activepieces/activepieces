@@ -6,7 +6,6 @@ import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
 import { mcpOAuthTokenService } from './mcp-oauth-token.service'
 
 export const mcpOAuthRevokeController: FastifyPluginAsyncZod = async (app) => {
-
     app.post('/revoke', RevokeRequest, async (req, reply) => {
         const { token, client_id, client_secret, token_type_hint } = req.body
 
@@ -17,7 +16,9 @@ export const mcpOAuthRevokeController: FastifyPluginAsyncZod = async (app) => {
             }
             if (client.tokenEndpointAuthMethod === 'client_secret_post') {
                 if (!client_secret || !mcpOAuthClientService.validateClientSecret(client, client_secret)) {
-                    return reply.status(400).send({ error: 'invalid_client', error_description: 'Invalid client secret' })
+                    return reply
+                        .status(400)
+                        .send({ error: 'invalid_client', error_description: 'Invalid client secret' })
                 }
             }
         }

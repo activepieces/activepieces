@@ -1,8 +1,8 @@
-import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { sendMessage } from './lib/actions/send-message';
-import { sendMedia } from './lib/actions/send-media';
-import { sendTemplateMessageAction } from './lib/actions/send-from-template';
-import { whatsappAuth } from './lib/auth';
+import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework'
+import { sendTemplateMessageAction } from './lib/actions/send-from-template'
+import { sendMedia } from './lib/actions/send-media'
+import { sendMessage } from './lib/actions/send-message'
+import { whatsappAuth } from './lib/auth'
 
 const markdown = `
 To Obtain a Phone Number ID and a Permanent System User Access Token, follow these steps:
@@ -16,15 +16,15 @@ To Obtain a Phone Number ID and a Permanent System User Access Token, follow the
 7. Login to your [Meta Business Manager](https://business.facebook.com/).
 8. Click on Settings.
 9. Create a new System User with access over the app and copy the access token.
-`;
+`
 
 export const whatsapp = createPiece({
-	displayName: 'WhatsApp Business',
-	description: 'Manage your WhatsApp business account',
-	auth: whatsappAuth,
-	minimumSupportedRelease: '0.30.0',
-	logoUrl: 'https://cdn.activepieces.com/pieces/whatsapp.png',
-	authors: ['LevwTech', 'kishanprmr'],
-	actions: [sendMessage, sendMedia, sendTemplateMessageAction],
-	triggers: [],
-});
+    displayName: 'WhatsApp Business',
+    description: 'Manage your WhatsApp business account',
+    auth: whatsappAuth,
+    minimumSupportedRelease: '0.30.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/whatsapp.png',
+    authors: ['LevwTech', 'kishanprmr'],
+    actions: [sendMessage, sendMedia, sendTemplateMessageAction],
+    triggers: [],
+})

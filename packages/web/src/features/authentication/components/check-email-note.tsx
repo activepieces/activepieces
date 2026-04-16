@@ -48,4 +48,5 @@ const CheckEmailNote = ({ email, type }: CreateOtpRequestBody) => {
 };
 
 CheckEmailNote.displayName = 'CheckEmailNote';
+
 export { CheckEmailNote };

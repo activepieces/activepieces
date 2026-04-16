@@ -30,8 +30,7 @@ export class encryptCredentials1676505294811 implements MigrationInterface {
                         currentConnection.value,
                     )}' WHERE id = ${currentConnection.id}`,
                 )
-            }
-            catch (e) {
+            } catch (e) {
                 log.error(e)
             }
         }

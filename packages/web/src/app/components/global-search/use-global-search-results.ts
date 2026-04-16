@@ -4,7 +4,7 @@ import { t } from 'i18next';
 
 import { flowsApi } from '@/features/flows';
 import { foldersApi } from '@/features/folders';
-import { projectCollectionUtils, getProjectName } from '@/features/projects';
+import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { tablesApi } from '@/features/tables';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -119,7 +119,7 @@ export function useGlobalSearchResults(query: string, open: boolean) {
       type: 'flow' as const,
       label: flow.version.displayName,
       href: authenticationSession.appendProjectRoutePrefix(`/flows/${flow.id}`),
-      folderName: flow.folderId ? folderMap.get(flow.folderId) ?? null : null,
+      folderName: flow.folderId ? (folderMap.get(flow.folderId) ?? null) : null,
       updated: flow.updated ? String(flow.updated) : null,
       status: flow.status,
       projectName: currentProjectName,
@@ -134,7 +134,9 @@ export function useGlobalSearchResults(query: string, open: boolean) {
       href: authenticationSession.appendProjectRoutePrefix(
         `/tables/${table.id}`,
       ),
-      folderName: table.folderId ? folderMap.get(table.folderId) ?? null : null,
+      folderName: table.folderId
+        ? (folderMap.get(table.folderId) ?? null)
+        : null,
       updated: table.updated ? String(table.updated) : null,
       projectName: currentProjectName,
     }),

@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const updatePayment = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -30,20 +30,21 @@ export const updatePayment = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
-        const { checkId, paymentDescription, voidDate, voidAccountingDate } = context.propsValue;
+        const client = makeClient(context.auth.props)
+        const { checkId, paymentDescription, voidDate, voidAccountingDate } = context.propsValue
 
-        const payload: Record<string, unknown> = {};
+        const payload: Record<string, unknown> = {}
 
-        if (paymentDescription !== undefined && paymentDescription !== '') payload['PaymentDescription'] = paymentDescription;
-        if (voidDate) payload['VoidDate'] = voidDate;
-        if (voidAccountingDate) payload['VoidAccountingDate'] = voidAccountingDate;
+        if (paymentDescription !== undefined && paymentDescription !== '')
+            payload['PaymentDescription'] = paymentDescription
+        if (voidDate) payload['VoidDate'] = voidDate
+        if (voidAccountingDate) payload['VoidAccountingDate'] = voidAccountingDate
 
         if (Object.keys(payload).length === 0) {
-            throw new Error('At least one field must be provided to update the payment.');
+            throw new Error('At least one field must be provided to update the payment.')
         }
 
-        const response = await client.updateRecord(`/payablesPayments/${checkId}`, payload);
-        return response;
+        const response = await client.updateRecord(`/payablesPayments/${checkId}`, payload)
+        return response
     },
-});
+})

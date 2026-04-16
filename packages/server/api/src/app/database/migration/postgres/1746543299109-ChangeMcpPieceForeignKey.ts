@@ -15,5 +15,4 @@ export class ChangeMcpPieceForeignKey1746543299109 implements MigrationInterface
             ADD CONSTRAINT "fk_mcp_piece_mcp_id" FOREIGN KEY ("mcpId") REFERENCES "mcp"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
     }
-
 }

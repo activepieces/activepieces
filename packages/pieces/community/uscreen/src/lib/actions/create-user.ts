@@ -1,25 +1,22 @@
-
-
-import { createAction, Property, DynamicPropsValue, PieceAuth } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { uscreenAuth } from "../common/auth";
-import { uscreenApiUrl, UscreenClient } from "../common/client"; 
-
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, DynamicPropsValue, PieceAuth, Property } from '@activepieces/pieces-framework'
+import { uscreenAuth } from '../common/auth'
+import { UscreenClient, uscreenApiUrl } from '../common/client'
 
 interface CreateUserProps {
-    email: string;
-    first_name: string;
-    last_name: string;
-    password?: string;
-    opted_in_for_news_and_updates?: boolean;
-    custom_fields?: DynamicPropsValue;
+    email: string
+    first_name: string
+    last_name: string
+    password?: string
+    opted_in_for_news_and_updates?: boolean
+    custom_fields?: DynamicPropsValue
 }
 
 export const createUser = createAction({
     auth: uscreenAuth,
     name: 'create_user',
     displayName: 'Create User',
-    description: "Creates a new user and optionally sends them a welcome email to your storefront.",
+    description: 'Creates a new user and optionally sends them a welcome email to your storefront.',
 
     props: {
         email: Property.ShortText({
@@ -55,47 +52,38 @@ export const createUser = createAction({
             required: false,
             refreshers: [],
             props: async () => {
-                const fields: DynamicPropsValue = {};
+                const fields: DynamicPropsValue = {}
                 fields['add_field_helper'] = Property.ShortText({
-                    displayName: "Custom Field Instructions",
-                    description: "Click 'Add Property' to add a custom field. Use the 'Property Name' as the API key (e.g., 'favorite_genre') and enter the value below.",
+                    displayName: 'Custom Field Instructions',
+                    description:
+                        "Click 'Add Property' to add a custom field. Use the 'Property Name' as the API key (e.g., 'favorite_genre') and enter the value below.",
                     required: false,
-                });
-                return fields;
-            }
-        })
+                })
+                return fields
+            },
+        }),
     },
 
     async run(context) {
-        const { 
-            email, 
-            first_name, 
-            last_name, 
-            password, 
-            opted_in_for_news_and_updates, 
-            custom_fields 
-        } = context.propsValue as CreateUserProps;
-        const client = new UscreenClient(context.auth.secret_text);
-        const body: Record<string, unknown> = { ...custom_fields };
-        
-        delete body['add_field_helper'];
+        const { email, first_name, last_name, password, opted_in_for_news_and_updates, custom_fields } =
+            context.propsValue as CreateUserProps
+        const client = new UscreenClient(context.auth.secret_text)
+        const body: Record<string, unknown> = { ...custom_fields }
 
-        body['email'] = email;
-        body['name'] = first_name + ' ' + last_name;
-        
+        delete body['add_field_helper']
+
+        body['email'] = email
+        body['name'] = first_name + ' ' + last_name
+
         if (password) {
-            body['password'] = password;
+            body['password'] = password
         }
         if (opted_in_for_news_and_updates) {
-            body['opted_in_for_news_and_updates'] = opted_in_for_news_and_updates;
+            body['opted_in_for_news_and_updates'] = opted_in_for_news_and_updates
         }
 
-        const response = await client.makeRequest(
-            HttpMethod.POST,
-            `/customers`,
-            body
-        );
+        const response = await client.makeRequest(HttpMethod.POST, `/customers`, body)
 
-        return response;
+        return response
     },
-});
+})

@@ -1,16 +1,12 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { PlatformRole, PrincipalType, UpsertOAuth2AppRequest } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
-import {
-    createMockOAuthApp,
-    mockAndSaveBasicSetup,
-    mockBasicUser,
-} from '../../../helpers/mocks'
+import { createMockOAuthApp, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -44,7 +40,6 @@ describe('OAuth App API', () => {
             expect(responseBody.clientSecret).toBeUndefined()
         })
 
-
         it('Fails if user is not platform owner', async () => {
             // arrange
             const { mockPlatform } = await mockAndSaveBasicSetup()
@@ -59,7 +54,7 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
 

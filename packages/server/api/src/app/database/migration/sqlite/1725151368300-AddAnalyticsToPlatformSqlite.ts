@@ -325,5 +325,4 @@ export class AddAnalyticsToPlatformSqlite1725151368300 implements MigrationInter
             DROP TABLE "temporary_platform"
         `)
     }
-
 }

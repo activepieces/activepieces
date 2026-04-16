@@ -1,6 +1,6 @@
-import { createHash, randomBytes } from 'crypto'
 import { PropertyType } from '@activepieces/pieces-framework'
-import { ActivepiecesError,
+import {
+    ActivepiecesError,
     AppConnection,
     AppConnectionType,
     assertNotNullOrUndefined,
@@ -13,6 +13,7 @@ import { ActivepiecesError,
     resolveValueFromProps,
 } from '@activepieces/shared'
 import { isAxiosError } from 'axios'
+import { createHash, randomBytes } from 'crypto'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { secretManagersService } from '../../../ee/secret-managers/secret-managers.service'
@@ -27,29 +28,18 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
             claimed_at: secondsSinceEpoch,
         }
 
-        deleteProps(formattedResponse.data, [
-            'access_token',
-            'expires_in',
-            'refresh_token',
-            'scope',
-            'token_type',
-        ])
+        deleteProps(formattedResponse.data, ['access_token', 'expires_in', 'refresh_token', 'scope', 'token_type'])
         return formattedResponse
     },
     isExpired: (connection: BaseOAuth2ConnectionValue): boolean => {
         const secondsSinceEpoch = Math.round(Date.now() / 1000)
         const grantType = connection.grant_type ?? OAuth2GrantType.AUTHORIZATION_CODE
-        if (
-            grantType === OAuth2GrantType.AUTHORIZATION_CODE &&
-            !connection.refresh_token
-        ) {
+        if (grantType === OAuth2GrantType.AUTHORIZATION_CODE && !connection.refresh_token) {
             return false
         }
         const expiresIn = connection.expires_in ?? 60 * 60
         const refreshThreshold = 15 * 60
-        return (
-            secondsSinceEpoch + refreshThreshold >= connection.claimed_at + expiresIn
-        )
+        return secondsSinceEpoch + refreshThreshold >= connection.claimed_at + expiresIn
     },
     isUserError: (e: unknown): boolean => {
         if (isAxiosError(e)) {
@@ -68,17 +58,15 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         }
         return false
     },
-    getOAuth2TokenUrl: async ({
-        platformId,
-        pieceName,
-        props,
-    }: OAuth2TokenUrlParams): Promise<string> => {
+    getOAuth2TokenUrl: async ({ platformId, pieceName, props }: OAuth2TokenUrlParams): Promise<string> => {
         const pieceMetadata = await pieceMetadataService(log).getOrThrow({
             name: pieceName,
             platformId,
             version: undefined,
         })
-        const pieceAuth = Array.isArray(pieceMetadata.auth) ? pieceMetadata.auth.find(auth => auth.type === PropertyType.OAUTH2) : pieceMetadata.auth
+        const pieceAuth = Array.isArray(pieceMetadata.auth)
+            ? pieceMetadata.auth.find((auth) => auth.type === PropertyType.OAUTH2)
+            : pieceMetadata.auth
         assertNotNullOrUndefined(pieceAuth, 'auth')
         switch (pieceAuth.type) {
             case PropertyType.OAUTH2:
@@ -107,7 +95,7 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
             version: pieceVersion,
         })
         const pieceAuth = Array.isArray(pieceMetadata.auth)
-            ? pieceMetadata.auth.find(auth => auth.type === PropertyType.OAUTH2)
+            ? pieceMetadata.auth.find((auth) => auth.type === PropertyType.OAUTH2)
             : pieceMetadata.auth
         assertNotNullOrUndefined(pieceAuth, 'auth')
         if (pieceAuth.type !== PropertyType.OAUTH2) {
@@ -140,8 +128,7 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         const prompt = pieceAuth.prompt
         if (prompt === 'omit') {
             delete queryParams['prompt']
-        }
-        else if (prompt !== undefined && prompt !== null) {
+        } else if (prompt !== undefined && prompt !== null) {
             queryParams['prompt'] = prompt
         }
 
@@ -153,8 +140,7 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
             if (method === 'S256') {
                 const hash = createHash('sha256').update(codeVerifier).digest()
                 queryParams['code_challenge'] = Buffer.from(hash).toString('base64url')
-            }
-            else {
+            } else {
                 queryParams['code_challenge'] = codeVerifier
             }
         }
@@ -172,12 +158,17 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         }
     },
     removeRefreshTokenAndClientSecret: (connection: AppConnection): AppConnection => {
-        if (connection.value.type === AppConnectionType.OAUTH2 && connection.value.grant_type === OAuth2GrantType.CLIENT_CREDENTIALS) {
+        if (
+            connection.value.type === AppConnectionType.OAUTH2 &&
+            connection.value.grant_type === OAuth2GrantType.CLIENT_CREDENTIALS
+        ) {
             connection.value.client_secret = '(REDACTED)'
         }
-        if (connection.value.type === AppConnectionType.OAUTH2
-            || connection.value.type === AppConnectionType.CLOUD_OAUTH2
-            || connection.value.type === AppConnectionType.PLATFORM_OAUTH2) {
+        if (
+            connection.value.type === AppConnectionType.OAUTH2 ||
+            connection.value.type === AppConnectionType.CLOUD_OAUTH2 ||
+            connection.value.type === AppConnectionType.PLATFORM_OAUTH2
+        ) {
             connection.value = {
                 ...connection.value,
                 refresh_token: '(REDACTED)',

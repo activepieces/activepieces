@@ -838,5 +838,4 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
             CREATE UNIQUE INDEX "idx_issue_flowId_stepName" ON "issue" ("flowId", "stepName")
         `)
     }
-
 }

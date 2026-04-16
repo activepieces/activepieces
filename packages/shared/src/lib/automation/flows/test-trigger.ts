@@ -15,7 +15,6 @@ export const TestTriggerRequestBody = z.object({
 
 export type TestTriggerRequestBody = z.infer<typeof TestTriggerRequestBody>
 
-
 export const CancelTestTriggerRequestBody = z.object({
     projectId: ApId,
     flowId: ApId,

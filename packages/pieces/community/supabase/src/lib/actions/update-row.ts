@@ -1,7 +1,7 @@
-import { createAction, Property, DynamicPropsValue } from "@activepieces/pieces-framework";
-import { supabaseAuth } from '../auth';
-import { createClient } from "@supabase/supabase-js";
-import { supabaseCommon } from "../common/props";
+import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework'
+import { createClient } from '@supabase/supabase-js'
+import { supabaseAuth } from '../auth'
+import { supabaseCommon } from '../common/props'
 
 export const updateRow = createAction({
     name: 'update_row',
@@ -19,9 +19,9 @@ export const updateRow = createAction({
                 options: [
                     { label: 'Column equals value', value: 'eq' },
                     { label: 'Column is in list of values', value: 'in' },
-                    { label: 'Column is greater than value', value: 'gt' }
-                ]
-            }
+                    { label: 'Column is greater than value', value: 'gt' },
+                ],
+            },
         }),
         filter_column: Property.Dropdown({
             auth: supabaseAuth,
@@ -34,75 +34,77 @@ export const updateRow = createAction({
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Please select a table first'
-                    };
+                        placeholder: 'Please select a table first',
+                    }
                 }
-                
+
                 try {
-                    const { url, apiKey } = auth.props;
-                    const supabase = createClient(url, apiKey);
-                    
+                    const { url, apiKey } = auth.props
+                    const supabase = createClient(url, apiKey)
+
                     try {
-                        const { data: columns, error } = await supabase.rpc('get_table_columns', { 
-                            p_table_name: table_name as unknown as string 
-                        });
-                        
+                        const { data: columns, error } = await supabase.rpc('get_table_columns', {
+                            p_table_name: table_name as unknown as string,
+                        })
+
                         if (!error && columns && columns.length > 0) {
                             return {
                                 disabled: false,
                                 options: columns.map((col: any) => ({
                                     label: `${col.column_name} (${col.data_type})`,
-                                    value: col.column_name
-                                }))
-                            };
+                                    value: col.column_name,
+                                })),
+                            }
                         }
                     } catch (rpcError) {
                         // Continue to OpenAPI fallback
                     }
-                    
+
                     const response = await fetch(`${url}/rest/v1/`, {
                         method: 'GET',
                         headers: {
-                            'apikey': apiKey,
-                            'Authorization': `Bearer ${apiKey}`,
-                            'Accept': 'application/openapi+json'
-                        }
-                    });
+                            apikey: apiKey,
+                            Authorization: `Bearer ${apiKey}`,
+                            Accept: 'application/openapi+json',
+                        },
+                    })
 
                     if (response.ok) {
-                        const openApiSpec = await response.json();
-                        const definitions = openApiSpec.definitions || openApiSpec.components?.schemas || {};
-                        const tableDefinition = definitions[table_name as unknown as string];
-                        
+                        const openApiSpec = await response.json()
+                        const definitions = openApiSpec.definitions || openApiSpec.components?.schemas || {}
+                        const tableDefinition = definitions[table_name as unknown as string]
+
                         if (tableDefinition && tableDefinition.properties) {
-                            const options = Object.entries(tableDefinition.properties).map(([columnName, columnDef]: [string, any]) => {
-                                const type = columnDef.type || 'unknown';
-                                return {
-                                    label: `${columnName} (${type})`,
-                                    value: columnName
-                                };
-                            });
-                            
+                            const options = Object.entries(tableDefinition.properties).map(
+                                ([columnName, columnDef]: [string, any]) => {
+                                    const type = columnDef.type || 'unknown'
+                                    return {
+                                        label: `${columnName} (${type})`,
+                                        value: columnName,
+                                    }
+                                },
+                            )
+
                             return {
                                 disabled: false,
-                                options
-                            };
+                                options,
+                            }
                         }
                     }
-                    
+
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Could not load columns'
-                    };
+                        placeholder: 'Could not load columns',
+                    }
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading columns'
-                    };
+                        placeholder: 'Error loading columns',
+                    }
                 }
-            }
+            },
         }),
         filter_value: Property.ShortText({
             displayName: 'Filter Value',
@@ -126,78 +128,74 @@ export const updateRow = createAction({
             description: 'Whether to return the updated rows data',
             required: false,
             defaultValue: false,
-        })
+        }),
     },
     async run(context) {
-        const { 
-            table_name, 
-            filter_type, 
-            filter_column, 
-            filter_value, 
-            filter_values, 
+        const {
+            table_name,
+            filter_type,
+            filter_column,
+            filter_value,
+            filter_values,
             update_data,
-            count_updated, 
-            return_updated 
-        } = context.propsValue;
-        const { url, apiKey } = context.auth.props;
+            count_updated,
+            return_updated,
+        } = context.propsValue
+        const { url, apiKey } = context.auth.props
 
-        const supabase = createClient(url, apiKey);
-        
-        let updateQuery = supabase
-            .from(table_name as string)
-            .update(update_data, { 
-                count: count_updated ? 'exact' : undefined 
-            });
+        const supabase = createClient(url, apiKey)
 
-        const columnName = filter_column as string;
+        let updateQuery = supabase.from(table_name as string).update(update_data, {
+            count: count_updated ? 'exact' : undefined,
+        })
+
+        const columnName = filter_column as string
         switch (filter_type) {
             case 'eq':
-                if (!filter_value) throw new Error('Filter value is required for equality check');
-                updateQuery = updateQuery.eq(columnName, filter_value);
-                break;
+                if (!filter_value) throw new Error('Filter value is required for equality check')
+                updateQuery = updateQuery.eq(columnName, filter_value)
+                break
             case 'in':
                 if (!filter_values || filter_values.length === 0) {
-                    throw new Error('Filter values are required for "in list" filter type');
+                    throw new Error('Filter values are required for "in list" filter type')
                 }
-                updateQuery = updateQuery.in(columnName, filter_values);
-                break;
+                updateQuery = updateQuery.in(columnName, filter_values)
+                break
             case 'gt':
-                if (!filter_value) throw new Error('Filter value is required for greater-than check');
-                updateQuery = updateQuery.gt(columnName, filter_value);
-                break;
+                if (!filter_value) throw new Error('Filter value is required for greater-than check')
+                updateQuery = updateQuery.gt(columnName, filter_value)
+                break
             default:
-                throw new Error(`Unsupported filter type: ${filter_type}`);
+                throw new Error(`Unsupported filter type: ${filter_type}`)
         }
 
-        const { data, error, count } = return_updated 
-            ? await updateQuery.select()
-            : await updateQuery;
+        const { data, error, count } = return_updated ? await updateQuery.select() : await updateQuery
 
         if (error) {
-            let errorMessage = error.message || 'Unknown error occurred';
-            
+            let errorMessage = error.message || 'Unknown error occurred'
+
             if (error.code === '23505') {
-                errorMessage = `Duplicate value: ${error.message}`;
+                errorMessage = `Duplicate value: ${error.message}`
             } else if (error.code === '23503') {
-                errorMessage = `Foreign key constraint violation: ${error.message}`;
+                errorMessage = `Foreign key constraint violation: ${error.message}`
             } else if (error.code === '42703') {
-                errorMessage = `Column does not exist: ${error.message}`;
+                errorMessage = `Column does not exist: ${error.message}`
             } else if (error.code === '42P01') {
-                errorMessage = `Table does not exist: ${error.message}`;
+                errorMessage = `Table does not exist: ${error.message}`
             }
-            
-            throw new Error(errorMessage);
+
+            throw new Error(errorMessage)
         }
 
         const result: any = {
             success: true,
             updated_rows: return_updated ? data : undefined,
-        };
-
-        if (count_updated) {
-            result.updated_count = count;
         }
 
-        return result;
-    }
-});
+        if (count_updated) {
+            result.updated_count = count
+        }
+
+        return result
+    },
+})

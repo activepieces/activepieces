@@ -1,9 +1,6 @@
 import { Alert } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import {
-    ApIdSchema,
-    BaseColumnSchemaPart,
-} from '../../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 type AlertSchema = Alert
 

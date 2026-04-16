@@ -1,6 +1,14 @@
-import { FlowActionType, FlowStatus, flowStructureUtil, FlowTriggerType, isNil, PieceAction, PieceTrigger } from '@activepieces/shared'
+import {
+    FlowActionType,
+    FlowStatus,
+    FlowTriggerType,
+    flowStructureUtil,
+    isNil,
+    PieceAction,
+    PieceTrigger,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { repoFactory } from     '../core/db/repo-factory'
+import { repoFactory } from '../core/db/repo-factory'
 import { FlowEntity } from '../flows/flow/flow.entity'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { SystemJobName } from '../helper/system-jobs/common'
@@ -14,9 +22,15 @@ const flowRepo = repoFactory(FlowEntity)
 export const piecesAnalyticsService = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
         systemJobHandlers.registerJobHandler(SystemJobName.PIECES_ANALYTICS, async () => {
-            const flowIds: string[] = (await flowRepo().createQueryBuilder().select('id').where({
-                status: FlowStatus.ENABLED,
-            }).getRawMany()).map((flow) => flow.id)
+            const flowIds: string[] = (
+                await flowRepo()
+                    .createQueryBuilder()
+                    .select('id')
+                    .where({
+                        status: FlowStatus.ENABLED,
+                    })
+                    .getRawMany()
+            ).map((flow) => flow.id)
             const activeProjects: Record<string, Set<string>> = {}
             log.info('Syncing pieces analytics')
             for (const flowId of flowIds) {
@@ -31,20 +45,20 @@ export const piecesAnalyticsService = (log: FastifyBaseLogger) => ({
                 if (isNil(flowVersion)) {
                     continue
                 }
-                const pieces = flowStructureUtil.getAllSteps(flowVersion.trigger).filter(
-                    (step) =>
-                        step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE,
-                ).map((step) => {
-                    const clonedStep = step as (PieceTrigger | PieceAction)
-                    return {
-                        name: clonedStep.settings.pieceName,
-                        version: clonedStep.settings.pieceVersion,
-                    }
-                })
+                const pieces = flowStructureUtil
+                    .getAllSteps(flowVersion.trigger)
+                    .filter((step) => step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE)
+                    .map((step) => {
+                        const clonedStep = step as PieceTrigger | PieceAction
+                        return {
+                            name: clonedStep.settings.pieceName,
+                            version: clonedStep.settings.pieceVersion,
+                        }
+                    })
                 const platformId = await projectService(log).getPlatformId(flow.projectId)
 
                 for (const piece of pieces) {
-                    try {   
+                    try {
                         const pieceMetadata = await pieceMetadataService(log).getOrThrow({
                             name: piece.name,
                             version: piece.version,
@@ -53,12 +67,14 @@ export const piecesAnalyticsService = (log: FastifyBaseLogger) => ({
                         const pieceId = pieceMetadata.id!
                         activeProjects[pieceId] = activeProjects[pieceId] || new Set()
                         activeProjects[pieceId].add(flow.projectId)
-                    }
-                    catch (e) {
-                        log.error({
-                            name: piece.name,
-                            version: piece.version,
-                        }, 'Piece not found in pieces analytics service')
+                    } catch (e) {
+                        log.error(
+                            {
+                                name: piece.name,
+                                version: piece.version,
+                            },
+                            'Piece not found in pieces analytics service',
+                        )
                     }
                 }
             }

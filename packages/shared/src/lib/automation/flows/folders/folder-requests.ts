@@ -14,7 +14,6 @@ export const UpdateFolderRequest = z.object({
 
 export type UpdateFolderRequest = z.infer<typeof UpdateFolderRequest>
 
-
 export const DeleteFolderRequest = z.object({
     id: z.string(),
 })

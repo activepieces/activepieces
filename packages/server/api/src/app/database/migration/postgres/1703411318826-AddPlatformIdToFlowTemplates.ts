@@ -2,8 +2,7 @@ import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
-export class AddPlatformIdToFlowTemplates1703411318826
-implements MigrationInterface {
+export class AddPlatformIdToFlowTemplates1703411318826 implements MigrationInterface {
     name = 'AddPlatformIdToFlowTemplates1703411318826'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

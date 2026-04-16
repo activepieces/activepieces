@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const teamleaderAuth = PieceAuth.OAuth2({
     description: `
@@ -16,6 +16,5 @@ export const teamleaderAuth = PieceAuth.OAuth2({
     authUrl: 'https://focus.teamleader.eu/oauth2/authorize',
     tokenUrl: 'https://focus.teamleader.eu/oauth2/access_token',
     required: true,
-    scope: [
-    ]
-});
+    scope: [],
+})

@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
-import { querySalesforceApi, salesforcesCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { querySalesforceApi, salesforcesCommon } from '../common'
 
 export const findRecord = createAction({
     auth: salesforceAuth,
@@ -15,25 +15,21 @@ export const findRecord = createAction({
             displayName: 'Search Value',
             description: 'The value to search for in the selected field.',
             required: true,
-        })
+        }),
     },
     async run(context) {
-        const { object, field, search_value } = context.propsValue;
+        const { object, field, search_value } = context.propsValue
 
         if (!object || !field) {
-            throw new Error('Object and Field must be selected.');
+            throw new Error('Object and Field must be selected.')
         }
 
-        const escapedSearchValue = search_value.replace(/'/g, "\\'");
+        const escapedSearchValue = search_value.replace(/'/g, "\\'")
 
-        const query = `SELECT FIELDS(ALL) FROM ${object} WHERE ${field} = '${escapedSearchValue}' LIMIT 2000`;
+        const query = `SELECT FIELDS(ALL) FROM ${object} WHERE ${field} = '${escapedSearchValue}' LIMIT 2000`
 
-        const response = await querySalesforceApi(
-            HttpMethod.GET,
-            context.auth,
-            query
-        );
+        const response = await querySalesforceApi(HttpMethod.GET, context.auth, query)
 
-        return response.body;
+        return response.body
     },
-});
+})

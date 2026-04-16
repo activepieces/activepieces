@@ -27,11 +27,14 @@ export class AddExternalIdForFlow1735262417593 implements MigrationInterface {
                     if (!sourceId) {
                         continue
                     }
-                    await queryRunner.query(`
+                    await queryRunner.query(
+                        `
                             UPDATE "flow"
                             SET "externalId" = $1
                             WHERE "id" = $2
-                        `, [sourceId, key])
+                        `,
+                        [sourceId, key],
+                    )
                 }
             }
 
@@ -45,7 +48,7 @@ export class AddExternalIdForFlow1735262417593 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "flow" DROP COLUMN "externalId"
         `)
-        
+
         // Only add the mapping column if the git_repo table exists
         const hasGitRepoTable = await queryRunner.hasTable('git_repo')
         if (hasGitRepoTable) {

@@ -148,4 +148,5 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
 });
 
 PieceSettings.displayName = 'PieceSettings';
+
 export { PieceSettings };

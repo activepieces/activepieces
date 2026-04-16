@@ -23,7 +23,7 @@ import { flowService } from '../../flows/flow/flow.service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { projectService } from '../../project/project-service'
 import { WebhookFlowVersionToRun, webhookService } from '../../webhooks/webhook.service'
-import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
+import { JobType, jobQueue } from '../../workers/job-queue/job-queue'
 import { payloadOffloader } from '../../workers/payload-offloader'
 import { triggerSourceService } from '../trigger-source/trigger-source-service'
 import { appEventRoutingService } from './app-event-routing.service'
@@ -45,9 +45,7 @@ export const appEventRoutingModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(appEventRoutingController, { prefix: '/v1/app-events' })
 }
 
-export const appEventRoutingController: FastifyPluginAsyncZod = async (
-    fastify,
-) => {
+export const appEventRoutingController: FastifyPluginAsyncZod = async (fastify) => {
     fastify.all(
         '/:pieceUrl',
         {
@@ -122,7 +120,10 @@ export const appEventRoutingController: FastifyPluginAsyncZod = async (
             })
             const eventsQueue = listeners.map(async (listener) => {
                 const requestId = apId()
-                const flow = await flowService(request.log).getOne({ id: listener.flowId, projectId: listener.projectId })
+                const flow = await flowService(request.log).getOne({
+                    id: listener.flowId,
+                    projectId: listener.projectId,
+                })
                 if (isNil(flow)) {
                     return
                 }
@@ -135,7 +136,12 @@ export const appEventRoutingController: FastifyPluginAsyncZod = async (
                     flow,
                 )
                 const platformId = await projectService(request.log).getPlatformId(listener.projectId)
-                const jobPayload = await payloadOffloader.offloadPayload(request.log, payload, listener.projectId, platformId)
+                const jobPayload = await payloadOffloader.offloadPayload(
+                    request.log,
+                    payload,
+                    listener.projectId,
+                    platformId,
+                )
                 return jobQueue(request.log).add({
                     id: requestId,
                     type: JobType.ONE_TIME,

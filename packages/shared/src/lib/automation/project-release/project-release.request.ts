@@ -19,7 +19,6 @@ export const CreateProjectReleaseFromGitRequestBody = z.object({
     ...BaseProjectReleaseRequestBody,
 })
 
-
 export const CreateProjectReleaseFromRollbackRequestBody = z.object({
     type: z.literal(ProjectReleaseType.ROLLBACK),
     ...BaseProjectReleaseRequestBody,
@@ -39,7 +38,6 @@ export const CreateProjectReleaseRequestBody = z.discriminatedUnion('type', [
 ])
 
 export type CreateProjectReleaseRequestBody = z.infer<typeof CreateProjectReleaseRequestBody>
-
 
 export const DiffReleaseRequest = z.union([
     z.object({

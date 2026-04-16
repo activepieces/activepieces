@@ -1,8 +1,13 @@
-import { hunterAuth } from '../auth';
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { hunterApiCall } from '../common';
-import { Lead } from '../common/types';
+import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common'
+import {
+    AppConnectionValueForAuthProperty,
+    createTrigger,
+    PiecePropValueSchema,
+    TriggerStrategy,
+} from '@activepieces/pieces-framework'
+import { hunterAuth } from '../auth'
+import { hunterApiCall } from '../common'
+import { Lead } from '../common/types'
 
 export const newLeadTrigger = createTrigger({
     auth: hunterAuth,
@@ -15,21 +20,21 @@ export const newLeadTrigger = createTrigger({
         await pollingHelper.onEnable(polling, {
             auth: context.auth,
             store: context.store,
-            propsValue: context.propsValue
-        });
+            propsValue: context.propsValue,
+        })
     },
     async onDisable(context) {
         await pollingHelper.onDisable(polling, {
             auth: context.auth,
             store: context.store,
-            propsValue: context.propsValue
-        });
+            propsValue: context.propsValue,
+        })
     },
     async test(context) {
-        return await pollingHelper.test(polling, context);
+        return await pollingHelper.test(polling, context)
     },
     async run(context) {
-        return await pollingHelper.poll(polling, context);
+        return await pollingHelper.poll(polling, context)
     },
     sampleData: {
         id: 123,
@@ -38,9 +43,9 @@ export const newLeadTrigger = createTrigger({
         last_name: 'Doe',
         company: 'Example Inc.',
         position: 'CEO',
-        created_at: '2025-07-24T12:00:00Z'
-    }
-});
+        created_at: '2025-07-24T12:00:00Z',
+    },
+})
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hunterAuth>, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
@@ -49,12 +54,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hunterAuth>, Rec
             apiKey: auth,
             endpoint: '/leads',
             method: HttpMethod.GET,
-            qparams: { limit: '100' }
-        });
-        const leads = (response as { data: { leads: Lead[] } }).data?.leads as Lead[];
+            qparams: { limit: '100' },
+        })
+        const leads = (response as { data: { leads: Lead[] } }).data?.leads as Lead[]
         return leads.map((lead) => ({
             epochMilliSeconds: new Date(lead.created_at).valueOf(),
-            data: lead
-        }));
-    }
-};
+            data: lead,
+        }))
+    },
+}

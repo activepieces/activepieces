@@ -37,5 +37,4 @@ export class SetNotNullOnPlatform1709505632771 implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
         `)
     }
-
 }

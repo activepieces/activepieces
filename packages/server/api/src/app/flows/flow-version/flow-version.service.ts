@@ -5,20 +5,20 @@ import {
     ErrorCode,
     FlowId,
     FlowOperationRequest,
-    flowOperations,
     FlowOperationType,
-    flowStructureUtil,
     FlowTriggerType,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
+    flowOperations,
+    flowStructureUtil,
     isNil,
     LATEST_FLOW_SCHEMA_VERSION,
     Note,
     PlatformId,
     ProjectId,
-    sanitizeObjectForPostgresql,
     SeekPage,
+    sanitizeObjectForPostgresql,
     UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -55,15 +55,17 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                     versionId: userOperation.request.versionId,
                     removeConnectionsName: false,
                 })
-                operations = [{
-                    type: FlowOperationType.IMPORT_FLOW,
-                    request: {
-                        trigger: previousVersion.trigger,
-                        displayName: previousVersion.displayName,
-                        schemaVersion: previousVersion.schemaVersion,
-                        notes: previousVersion.notes,
+                operations = [
+                    {
+                        type: FlowOperationType.IMPORT_FLOW,
+                        request: {
+                            trigger: previousVersion.trigger,
+                            displayName: previousVersion.displayName,
+                            schemaVersion: previousVersion.schemaVersion,
+                            notes: previousVersion.notes,
+                        },
                     },
-                }]
+                ]
                 break
             }
             case FlowOperationType.SAVE_SAMPLE_DATA: {
@@ -74,13 +76,15 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                     payload: userOperation.request.payload,
                     type: userOperation.request.type,
                 })
-                operations = [{
-                    type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
-                    request: {
-                        stepName: userOperation.request.stepName,
-                        sampleDataSettings,
+                operations = [
+                    {
+                        type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+                        request: {
+                            stepName: userOperation.request.stepName,
+                            sampleDataSettings,
+                        },
                     },
-                }]
+                ]
                 break
             }
             default: {
@@ -192,11 +196,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
 
         return flowVersion
     },
-    async list({
-        cursorRequest,
-        limit,
-        flowId,
-    }: ListFlowVersionParams): Promise<SeekPage<FlowVersion>> {
+    async list({ cursorRequest, limit, flowId }: ListFlowVersionParams): Promise<SeekPage<FlowVersion>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: FlowVersionEntity,
@@ -208,23 +208,21 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             },
         })
         const paginationResult = await paginator.paginate(
-            flowVersionRepo().createQueryBuilder()
-                .where({
-                    flowId,
-                }),
+            flowVersionRepo().createQueryBuilder().where({
+                flowId,
+            }),
         )
         const promises = paginationResult.data.map(async (flowVersion) => {
             return {
                 ...flowVersion,
-                updatedByUser: isNil(flowVersion.updatedBy) ? null : await userService(log).getMetaInformation({
-                    id: flowVersion.updatedBy,
-                }),
+                updatedByUser: isNil(flowVersion.updatedBy)
+                    ? null
+                    : await userService(log).getMetaInformation({
+                          id: flowVersion.updatedBy,
+                      }),
             }
         })
-        return paginationHelper.createPage<FlowVersion>(
-            await Promise.all(promises),
-            paginationResult.cursor,
-        )
+        return paginationHelper.createPage<FlowVersion>(await Promise.all(promises), paginationResult.cursor)
     },
     async getFlowVersionOrThrow({
         flowId,
@@ -234,16 +232,21 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         entityManager,
         projectId,
     }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
-        const flowVersion: FlowVersion | null = await findOne(log, {
-            where: {
-                flowId,
-                id: versionId,
+        const flowVersion: FlowVersion | null = await findOne(
+            log,
+            {
+                where: {
+                    flowId,
+                    id: versionId,
+                },
+                //This is needed to return draft by default because it is always the latest one
+                order: {
+                    created: 'DESC',
+                },
             },
-            //This is needed to return draft by default because it is always the latest one
-            order: {
-                created: 'DESC',
-            },
-        }, entityManager, projectId)
+            entityManager,
+            projectId,
+        )
 
         if (isNil(flowVersion)) {
             throw new ActivepiecesError({
@@ -256,11 +259,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        return this.removeConnectionsAndSampleDataFromFlowVersion(
-            flowVersion,
-            removeConnectionsName,
-            removeSampleData,
-        )
+        return this.removeConnectionsAndSampleDataFromFlowVersion(flowVersion, removeConnectionsName, removeSampleData)
     },
     async createEmptyVersion(
         flowId: FlowId,
@@ -310,16 +309,18 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
     },
 })
 
-
-
-async function findOne(log: FastifyBaseLogger, options: FindOneOptions, entityManager?: EntityManager, projectId?: ProjectId): Promise<FlowVersion | null> {
+async function findOne(
+    log: FastifyBaseLogger,
+    options: FindOneOptions,
+    entityManager?: EntityManager,
+    projectId?: ProjectId,
+): Promise<FlowVersion | null> {
     const flowVersion = await flowVersionRepo(entityManager).findOne(options)
     if (isNil(flowVersion)) {
         return null
     }
     return flowVersionMigrationService(log).migrate(flowVersion, projectId)
 }
-
 
 async function applySingleOperation(
     projectId: ProjectId,
@@ -334,14 +335,16 @@ async function applySingleOperation(
         flowVersion,
         operation,
     })
-    const preparedOperation = await flowVersionValidationUtil(log).prepareRequest({ platformId, request: operation, userId })
+    const preparedOperation = await flowVersionValidationUtil(log).prepareRequest({
+        platformId,
+        request: operation,
+        userId,
+    })
     const updatedFlowVersion = flowOperations.apply(flowVersion, preparedOperation)
     return updatedFlowVersion
 }
 
-function removeConnectionsFromInput(
-    obj: Record<string, unknown>,
-): Record<string, unknown> {
+function removeConnectionsFromInput(obj: Record<string, unknown>): Record<string, unknown> {
     if (isNil(obj)) {
         return obj
     }
@@ -350,15 +353,12 @@ function removeConnectionsFromInput(
     for (const [key, value] of Object.entries(obj)) {
         if (Array.isArray(value)) {
             replacedObj[key] = value
-        }
-        else if (typeof value === 'object' && value !== null) {
+        } else if (typeof value === 'object' && value !== null) {
             replacedObj[key] = removeConnectionsFromInput(value as Record<string, unknown>)
-        }
-        else if (typeof value === 'string') {
+        } else if (typeof value === 'string') {
             const replacedValue = value.replace(/\{{connections\.[^}]*}}/g, '')
             replacedObj[key] = replacedValue === '' ? undefined : replacedValue
-        }
-        else {
+        } else {
             replacedObj[key] = value
         }
     }
@@ -390,4 +390,3 @@ type ApplyOperationParams = {
     userOperation: FlowOperationRequest
     entityManager?: EntityManager
 }
-

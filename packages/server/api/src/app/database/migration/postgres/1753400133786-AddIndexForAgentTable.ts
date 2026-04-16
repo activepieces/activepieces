@@ -14,5 +14,4 @@ export class AddIndexForAgentTable1753400133786 implements MigrationInterface {
             DROP INDEX "idx_agent_run_project_agent_starttime"
         `)
     }
-
 }

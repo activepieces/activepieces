@@ -24,5 +24,4 @@ export class AddTablesIntoTemplateEntity1768306510367 implements MigrationInterf
             ALTER TABLE "template" DROP COLUMN "tables"
         `)
     }
-
 }

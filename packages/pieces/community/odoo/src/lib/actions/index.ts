@@ -1,17 +1,9 @@
-import createContact from './create-contact';
-import createCompany from './create-company';
-import getContacts from './get-contacts';
-import getRecords from './get-records';
-import createRecord from './create-record';
-import updateRecord from './update-record';
-import customOdooApiCall from './custom-api-call';
+import createCompany from './create-company'
+import createContact from './create-contact'
+import createRecord from './create-record'
+import customOdooApiCall from './custom-api-call'
+import getContacts from './get-contacts'
+import getRecords from './get-records'
+import updateRecord from './update-record'
 
-export default [
-    getContacts,
-    createContact,
-    createCompany,
-    getRecords,
-    createRecord,
-    updateRecord,
-    customOdooApiCall,
-];
+export default [getContacts, createContact, createCompany, getRecords, createRecord, updateRecord, customOdooApiCall]

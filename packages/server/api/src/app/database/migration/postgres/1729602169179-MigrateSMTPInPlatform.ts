@@ -7,9 +7,12 @@ export class MigrateSMTPInPlatform1729602169179 implements MigrationInterface {
     name = 'MigrateSMTPInPlatform1729602169179'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'up',
+        )
         await queryRunner.query(`
             ALTER TABLE "platform"
             ADD "smtp" jsonb
@@ -54,9 +57,12 @@ export class MigrateSMTPInPlatform1729602169179 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'down')
+        log.info(
+            {
+                name: this.name,
+            },
+            'down',
+        )
         await queryRunner.query(`
             ALTER TABLE "platform"
             ADD "termsOfServiceUrl" character varying
@@ -102,7 +108,5 @@ export class MigrateSMTPInPlatform1729602169179 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "platform" DROP COLUMN "smtp"
         `)
-       
     }
-
 }

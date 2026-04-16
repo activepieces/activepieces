@@ -4,9 +4,9 @@ import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { flowRunRepo } from '../flow-run/flow-run-service'
 import { flowVersionRepo } from '../flow-version/flow-version.service'
+import { flowRepo } from './flow.repo'
 import { flowExecutionCache } from './flow-execution-cache'
 import { flowSideEffects } from './flow-service-side-effects'
-import { flowRepo } from './flow.repo'
 
 const BATCH_SIZE = 1000
 
@@ -16,7 +16,10 @@ export async function batchDeleteByFlowId(flowId: string): Promise<void> {
         const result = await flowRunRepo()
             .createQueryBuilder()
             .delete()
-            .where('id IN (SELECT id FROM flow_run WHERE "flowId" = :flowId LIMIT :limit)', { flowId, limit: BATCH_SIZE })
+            .where('id IN (SELECT id FROM flow_run WHERE "flowId" = :flowId LIMIT :limit)', {
+                flowId,
+                limit: BATCH_SIZE,
+            })
             .execute()
         deleted = result.affected ?? 0
     } while (deleted > 0)
@@ -27,14 +30,16 @@ export async function batchDeleteByFlowId(flowId: string): Promise<void> {
         const result = await flowVersionRepo()
             .createQueryBuilder()
             .delete()
-            .where('id IN (SELECT id FROM flow_version WHERE "flowId" = :flowId LIMIT :limit)', { flowId, limit: BATCH_SIZE })
+            .where('id IN (SELECT id FROM flow_version WHERE "flowId" = :flowId LIMIT :limit)', {
+                flowId,
+                limit: BATCH_SIZE,
+            })
             .execute()
         deleted = result.affected ?? 0
     } while (deleted > 0)
 }
 
 export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
-
     deleteFlowHandler: async (data: SystemJobData<SystemJobName.DELETE_FLOW>) => {
         const { flow, preDeleteDone } = data
         const job = await systemJobsSchedule(log).getJob(`delete-flow-${flow.id}`)
@@ -59,5 +64,4 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
         await flowRepo().delete({ id: flow.id })
         await flowExecutionCache(log).invalidate(flow.id)
     },
-
 })

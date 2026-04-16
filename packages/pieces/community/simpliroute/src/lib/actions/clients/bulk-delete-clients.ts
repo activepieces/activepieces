@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../auth';
-import { API_BASE_URL, commonHeaders } from '../../common/constants';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { simplirouteAuth } from '../../auth'
+import { API_BASE_URL, commonHeaders } from '../../common/constants'
 
 export const bulk_delete_clients = createAction({
     name: 'bulk_delete_clients',
@@ -15,24 +15,24 @@ export const bulk_delete_clients = createAction({
             required: true,
             properties: {
                 id: Property.Number({ displayName: 'ID', required: true }),
-            }
+            },
         }),
     },
     async run(context) {
-        const theIds = context.propsValue.ids;
-        const body = (theIds as Array<{ id: number }>).map(client => client.id);
+        const theIds = context.propsValue.ids
+        const body = (theIds as Array<{ id: number }>).map((client) => client.id)
         const response = await httpClient.sendRequest({
             method: HttpMethod.DELETE,
             url: `${API_BASE_URL}/v1/accounts/clients/`,
             body,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth.secret_text}`
-            }
-        });
+                Authorization: `Token ${context.auth.secret_text}`,
+            },
+        })
         return {
             status: response.status,
-            data: response.body
-        };
+            data: response.body,
+        }
     },
-});
+})

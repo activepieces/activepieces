@@ -64,5 +64,4 @@ export class AddPieceTags1712107871405 implements MigrationInterface {
             DROP TABLE "tag"
         `)
     }
-
 }

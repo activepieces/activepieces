@@ -33,5 +33,4 @@ export class AddUniqueNameToFolder1713643694049 implements MigrationInterface {
             CREATE INDEX "idx_folder_project_id" ON "folder" ("projectId")
         `)
     }
-
 }

@@ -1,6 +1,6 @@
-import { randomBytes } from 'crypto'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { apId, McpOAuthToken } from '@activepieces/shared'
+import { randomBytes } from 'crypto'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { jwtUtils } from '../../../helper/jwt-utils'
 import { system } from '../../../helper/system/system'
@@ -117,15 +117,12 @@ export const mcpOAuthTokenService = {
 
     async revokeRefreshToken(refreshToken: string, clientId: string | undefined): Promise<void> {
         const hashed = hashRefreshToken(refreshToken)
-        const criteria = clientId
-            ? { refreshToken: hashed, clientId }
-            : { refreshToken: hashed }
+        const criteria = clientId ? { refreshToken: hashed, clientId } : { refreshToken: hashed }
         await repo().update(criteria, { revoked: true })
     },
 
     getIssuerUrl(): string {
-        return system.get(AppSystemProp.MCP_OAUTH_ISSUER_URL)
-            ?? system.getOrThrow(AppSystemProp.FRONTEND_URL)
+        return system.get(AppSystemProp.MCP_OAUTH_ISSUER_URL) ?? system.getOrThrow(AppSystemProp.FRONTEND_URL)
     },
 }
 

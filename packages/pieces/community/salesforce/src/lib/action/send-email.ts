@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
-import { callSalesforceApi ,salesforcesCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { callSalesforceApi, salesforcesCommon } from '../common'
 
 export const sendEmail = createAction({
     auth: salesforceAuth,
@@ -23,10 +23,10 @@ export const sendEmail = createAction({
             displayName: 'Related To ID (Optional)',
             description: 'The ID of a record to relate the email to (e.g., an Account, Opportunity, or Case ID).',
             required: false,
-        })
+        }),
     },
     async run(context) {
-        const { recipientId, subject, body, relatedToId } = context.propsValue;
+        const { recipientId, subject, body, relatedToId } = context.propsValue
 
         const emailMessage = {
             ToIds: [recipientId],
@@ -34,22 +34,25 @@ export const sendEmail = createAction({
             HtmlBody: body,
             Status: '3',
             ...(relatedToId && { RelatedToId: relatedToId }),
-        };
+        }
 
-        const cleanedBody = Object.entries(emailMessage).reduce((acc, [key, value]) => {
-            if (value !== undefined && value !== null && value !== '') {
-                acc[key] = value;
-            }
-            return acc;
-        }, {} as Record<string, unknown>);
+        const cleanedBody = Object.entries(emailMessage).reduce(
+            (acc, [key, value]) => {
+                if (value !== undefined && value !== null && value !== '') {
+                    acc[key] = value
+                }
+                return acc
+            },
+            {} as Record<string, unknown>,
+        )
 
         const response = await callSalesforceApi(
             HttpMethod.POST,
             context.auth,
             `/services/data/v56.0/sobjects/EmailMessage`,
-            cleanedBody
-        );
+            cleanedBody,
+        )
 
-        return response.body;
+        return response.body
     },
-});
+})

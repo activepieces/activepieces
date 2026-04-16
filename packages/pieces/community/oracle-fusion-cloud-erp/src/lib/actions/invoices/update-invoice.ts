@@ -1,12 +1,13 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const updateInvoice = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'update_invoice',
     displayName: 'Update Invoice',
-    description: 'Updates an existing payables invoice. Note: Only certain attributes can be updated and cascade defaulting does not apply.',
+    description:
+        'Updates an existing payables invoice. Note: Only certain attributes can be updated and cascade defaulting does not apply.',
     props: {
         invoiceId: Property.ShortText({
             displayName: 'Invoice ID',
@@ -55,7 +56,7 @@ export const updateInvoice = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
+        const client = makeClient(context.auth.props)
         const {
             invoiceId,
             description,
@@ -66,24 +67,24 @@ export const updateInvoice = createAction({
             remittanceMessageOne,
             remittanceMessageTwo,
             remittanceMessageThree,
-        } = context.propsValue;
+        } = context.propsValue
 
-        const payload: Record<string, unknown> = {};
+        const payload: Record<string, unknown> = {}
 
-        if (description !== undefined && description !== '') payload['Description'] = description;
-        if (paymentTerms) payload['PaymentTerms'] = paymentTerms;
-        if (payGroup) payload['PayGroup'] = payGroup;
-        if (invoiceGroup) payload['InvoiceGroup'] = invoiceGroup;
-        if (paymentMethodCode) payload['PaymentMethodCode'] = paymentMethodCode;
-        if (remittanceMessageOne) payload['RemittanceMessageOne'] = remittanceMessageOne;
-        if (remittanceMessageTwo) payload['RemittanceMessageTwo'] = remittanceMessageTwo;
-        if (remittanceMessageThree) payload['RemittanceMessageThree'] = remittanceMessageThree;
+        if (description !== undefined && description !== '') payload['Description'] = description
+        if (paymentTerms) payload['PaymentTerms'] = paymentTerms
+        if (payGroup) payload['PayGroup'] = payGroup
+        if (invoiceGroup) payload['InvoiceGroup'] = invoiceGroup
+        if (paymentMethodCode) payload['PaymentMethodCode'] = paymentMethodCode
+        if (remittanceMessageOne) payload['RemittanceMessageOne'] = remittanceMessageOne
+        if (remittanceMessageTwo) payload['RemittanceMessageTwo'] = remittanceMessageTwo
+        if (remittanceMessageThree) payload['RemittanceMessageThree'] = remittanceMessageThree
 
         if (Object.keys(payload).length === 0) {
-            throw new Error('At least one field must be provided to update the invoice.');
+            throw new Error('At least one field must be provided to update the invoice.')
         }
 
-        const response = await client.updateRecord(`/invoices/${invoiceId}`, payload);
-        return response;
+        const response = await client.updateRecord(`/invoices/${invoiceId}`, payload)
+        return response
     },
-});
+})

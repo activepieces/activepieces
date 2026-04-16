@@ -169,8 +169,8 @@ async function applyPieceVersionChange({
   const pieceName = step.settings.pieceName;
   const actionOrTriggerName =
     step.type === FlowTriggerType.PIECE
-      ? step.settings.triggerName ?? ''
-      : step.settings.actionName ?? '';
+      ? (step.settings.triggerName ?? '')
+      : (step.settings.actionName ?? '');
 
   const piece = await piecesApi.get({
     name: pieceName,

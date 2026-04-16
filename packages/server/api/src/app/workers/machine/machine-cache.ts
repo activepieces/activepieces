@@ -14,7 +14,6 @@ export type WorkerMachine = {
 const REDIS_KEY = 'workerMachines'
 
 export const workerMachineCache = () => ({
-
     async find(): Promise<WorkerMachine[]> {
         const redisConnection = await redisConnections.useExisting()
 
@@ -52,7 +51,10 @@ export const workerMachineCache = () => ({
         }
     },
 
-    async upsert(worker: { id: string } & Partial<Omit<WorkerMachine, 'id'>>, existing?: WorkerMachine | null): Promise<void> {
+    async upsert(
+        worker: { id: string } & Partial<Omit<WorkerMachine, 'id'>>,
+        existing?: WorkerMachine | null,
+    ): Promise<void> {
         const redisConnection = await redisConnections.useExisting()
 
         const now = apDayjs().toISOString()
@@ -63,8 +65,7 @@ export const workerMachineCache = () => ({
                 updated: now,
             }
             await redisConnection.hset(REDIS_KEY, worker.id, JSON.stringify(updated))
-        }
-        else {
+        } else {
             const newWorker: WorkerMachine = {
                 ...worker,
                 updated: now,

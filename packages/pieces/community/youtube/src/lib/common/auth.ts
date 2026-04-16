@@ -1,7 +1,7 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const youtubeAuth = PieceAuth.OAuth2({
-  description: `
+    description: `
     1. Sign in to [Google Cloud Console](https://console.cloud.google.com/).
     2. Create a new project or you can use existing one.
     3. Go to **APIs & Services** and click **Enable APIs & Services**.
@@ -20,13 +20,13 @@ export const youtubeAuth = PieceAuth.OAuth2({
     12. Add https://cloud.activepieces.com/redirect in **Authorized redirect URIs** field, and click on the Create button.
     13. Copy **Client ID** and **Client Secret**.`,
 
-  authUrl: 'https://accounts.google.com/o/oauth2/auth',
-  tokenUrl: 'https://oauth2.googleapis.com/token',
-  required: true,
-  scope: [
-    'https://www.googleapis.com/auth/youtube',
-    'https://www.googleapis.com/auth/youtube.readonly',
-    'https://www.googleapis.com/auth/youtube.upload',
-    'https://www.googleapis.com/auth/youtube.force-ssl'
-  ],
-});
+    authUrl: 'https://accounts.google.com/o/oauth2/auth',
+    tokenUrl: 'https://oauth2.googleapis.com/token',
+    required: true,
+    scope: [
+        'https://www.googleapis.com/auth/youtube',
+        'https://www.googleapis.com/auth/youtube.readonly',
+        'https://www.googleapis.com/auth/youtube.upload',
+        'https://www.googleapis.com/auth/youtube.force-ssl',
+    ],
+})

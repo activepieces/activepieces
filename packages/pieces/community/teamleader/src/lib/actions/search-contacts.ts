@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { teamleaderAuth } from '../common/auth';
-import { teamleaderCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { teamleaderAuth } from '../common/auth'
+import { teamleaderCommon } from '../common/client'
 
 export const searchContacts = createAction({
     name: 'search_contacts',
@@ -20,41 +20,42 @@ export const searchContacts = createAction({
             required: false,
         }),
         company_id: Property.Dropdown({
-          auth:teamleaderAuth,
+            auth: teamleaderAuth,
             displayName: 'Company',
             description: 'Filter contacts by company',
             required: false,
             refreshers: [],
             options: async ({ auth }) => {
-                if (!auth) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please authenticate first'
-                };
+                if (!auth)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please authenticate first',
+                    }
 
                 try {
                     const response = await teamleaderCommon.apiCall({
                         auth,
                         method: HttpMethod.POST,
                         resourceUri: '/companies.list',
-                        body: {}
-                    });
+                        body: {},
+                    })
 
                     return {
                         disabled: false,
                         options: response.body.data.map((company: any) => ({
                             label: company.name,
-                            value: company.id
-                        }))
-                    };
+                            value: company.id,
+                        })),
+                    }
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading companies'
-                    };
+                        placeholder: 'Error loading companies',
+                    }
                 }
-            }
+            },
         }),
         status: Property.StaticDropdown({
             displayName: 'Status',
@@ -63,9 +64,9 @@ export const searchContacts = createAction({
             options: {
                 options: [
                     { label: 'Active', value: 'active' },
-                    { label: 'Deactivated', value: 'deactivated' }
-                ]
-            }
+                    { label: 'Deactivated', value: 'deactivated' },
+                ],
+            },
         }),
         tags: Property.ShortText({
             displayName: 'Tags',
@@ -85,9 +86,9 @@ export const searchContacts = createAction({
                 options: [
                     { label: 'Name', value: 'name' },
                     { label: 'Date Added', value: 'added_at' },
-                    { label: 'Date Updated', value: 'updated_at' }
-                ]
-            }
+                    { label: 'Date Updated', value: 'updated_at' },
+                ],
+            },
         }),
         sort_order: Property.StaticDropdown({
             displayName: 'Sort Order',
@@ -96,9 +97,9 @@ export const searchContacts = createAction({
             options: {
                 options: [
                     { label: 'Ascending (A-Z, Oldest First)', value: 'asc' },
-                    { label: 'Descending (Z-A, Newest First)', value: 'desc' }
-                ]
-            }
+                    { label: 'Descending (Z-A, Newest First)', value: 'desc' },
+                ],
+            },
         }),
         page_size: Property.Number({
             displayName: 'Results Per Page',
@@ -117,78 +118,83 @@ export const searchContacts = createAction({
         }),
     },
     async run(context) {
-        const requestBody: Record<string, any> = {};
+        const requestBody: Record<string, any> = {}
 
-        const filter: Record<string, any> = {};
+        const filter: Record<string, any> = {}
 
         if (context.propsValue.term) {
-            filter['term'] = context.propsValue.term;
+            filter['term'] = context.propsValue.term
         }
 
         if (context.propsValue.email) {
             filter['email'] = {
                 type: 'primary',
-                email: context.propsValue.email
-            };
+                email: context.propsValue.email,
+            }
         }
 
         if (context.propsValue.company_id) {
-            filter['company_id'] = context.propsValue.company_id;
+            filter['company_id'] = context.propsValue.company_id
         }
 
         if (context.propsValue.status) {
-            filter['status'] = context.propsValue.status;
+            filter['status'] = context.propsValue.status
         }
 
         if (context.propsValue.tags) {
-            const tagList = context.propsValue.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+            const tagList = context.propsValue.tags
+                .split(',')
+                .map((tag) => tag.trim())
+                .filter((tag) => tag)
             if (tagList.length > 0) {
-                filter['tags'] = tagList;
+                filter['tags'] = tagList
             }
         }
 
         if (context.propsValue.updated_since) {
-            const updatedSince = new Date(context.propsValue.updated_since);
-            filter['updated_since'] = updatedSince.toISOString();
+            const updatedSince = new Date(context.propsValue.updated_since)
+            filter['updated_since'] = updatedSince.toISOString()
         }
 
         // Add filter to request body if any filters are specified
         if (Object.keys(filter).length > 0) {
-            requestBody['filter'] = filter;
+            requestBody['filter'] = filter
         }
 
-        const page: Record<string, number> = {};
+        const page: Record<string, number> = {}
 
         if (context.propsValue.page_size) {
-            page['size'] = context.propsValue.page_size;
+            page['size'] = context.propsValue.page_size
         }
 
         if (context.propsValue.page_number) {
-            page['number'] = context.propsValue.page_number;
+            page['number'] = context.propsValue.page_number
         }
 
         if (Object.keys(page).length > 0) {
-            requestBody['page'] = page;
+            requestBody['page'] = page
         }
 
         if (context.propsValue.sort_field && context.propsValue.sort_order) {
-            requestBody['sort'] = [{
-                field: context.propsValue.sort_field,
-                order: context.propsValue.sort_order
-            }];
+            requestBody['sort'] = [
+                {
+                    field: context.propsValue.sort_field,
+                    order: context.propsValue.sort_order,
+                },
+            ]
         }
 
         if (context.propsValue.include_custom_fields) {
-            requestBody['includes'] = 'custom_fields';
+            requestBody['includes'] = 'custom_fields'
         }
 
         const response = await teamleaderCommon.apiCall({
             auth: context.auth,
             method: HttpMethod.POST,
             resourceUri: '/contacts.list',
-            body: requestBody
-        });
+            body: requestBody,
+        })
 
-        return response.body;
+        return response.body
     },
-});
+})

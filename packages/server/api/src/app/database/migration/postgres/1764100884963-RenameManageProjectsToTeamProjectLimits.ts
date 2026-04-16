@@ -11,14 +11,14 @@ export class RenameManageProjectsToTeamProjectLimits1764100884963 implements Mig
             return
         }
         const edition = system.getEdition()
-        
+
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
             ADD "teamProjectsLimit" character varying
         `)
-        
+
         const teamProjectsLimitForFalse = edition === ApEdition.CLOUD ? TeamProjectsLimit.ONE : TeamProjectsLimit.NONE
-        
+
         await queryRunner.query(`
             UPDATE "platform_plan"
             SET "teamProjectsLimit" = CASE
@@ -26,12 +26,12 @@ export class RenameManageProjectsToTeamProjectLimits1764100884963 implements Mig
                 ELSE '${teamProjectsLimitForFalse}'
             END
         `)
-        
+
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
             ALTER COLUMN "teamProjectsLimit" SET NOT NULL
         `)
-        
+
         await queryRunner.query(`
             ALTER TABLE "platform_plan" DROP COLUMN "manageProjectsEnabled"
         `)
@@ -45,7 +45,7 @@ export class RenameManageProjectsToTeamProjectLimits1764100884963 implements Mig
             ALTER TABLE "platform_plan"
             ADD "manageProjectsEnabled" boolean
         `)
-        
+
         await queryRunner.query(`
             UPDATE "platform_plan"
             SET "manageProjectsEnabled" = CASE
@@ -53,12 +53,12 @@ export class RenameManageProjectsToTeamProjectLimits1764100884963 implements Mig
                 ELSE false
             END
         `)
-        
+
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
             ALTER COLUMN "manageProjectsEnabled" SET NOT NULL
         `)
-        
+
         await queryRunner.query(`
             ALTER TABLE "platform_plan" DROP COLUMN "teamProjectsLimit"
         `)

@@ -1,19 +1,19 @@
-import { HttpMethod, httpClient, HttpRequest, QueryParams } from "@activepieces/pieces-common";
-import { sapAribaAuth } from "../auth";
-import { AppConnectionValueForAuthProperty } from "@activepieces/pieces-framework";
+import { HttpMethod, HttpRequest, httpClient, QueryParams } from '@activepieces/pieces-common'
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework'
+import { sapAribaAuth } from '../auth'
 
-export type SapAribaAuth = AppConnectionValueForAuthProperty<typeof sapAribaAuth>;
+export type SapAribaAuth = AppConnectionValueForAuthProperty<typeof sapAribaAuth>
 
 export const sapAribaCommon = {
     async getAccessToken(auth: SapAribaAuth): Promise<string | null> {
         if (!auth.props.clientId || !auth.props.clientSecret || !auth.props.oauthServerUrl) {
-            return null;
+            return null
         }
 
-        const credentials = Buffer.from(`${auth.props.clientId}:${auth.props.clientSecret}`).toString('base64');
-        
-        const params = new URLSearchParams();
-        params.append('grant_type', 'openapi_2lo');
+        const credentials = Buffer.from(`${auth.props.clientId}:${auth.props.clientSecret}`).toString('base64')
+
+        const params = new URLSearchParams()
+        params.append('grant_type', 'openapi_2lo')
 
         const request: HttpRequest = {
             method: HttpMethod.POST,
@@ -22,16 +22,16 @@ export const sapAribaCommon = {
                 Authorization: `Basic ${credentials}`,
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: params.toString(), 
-        };
-        
-        const response = await httpClient.sendRequest<{ access_token: string }>(request);
+            body: params.toString(),
+        }
+
+        const response = await httpClient.sendRequest<{ access_token: string }>(request)
 
         if (response.status !== 200) {
-            throw new Error(`Failed to authenticate with SAP Ariba: ${JSON.stringify(response.body)}`);
+            throw new Error(`Failed to authenticate with SAP Ariba: ${JSON.stringify(response.body)}`)
         }
-        
-        return response.body.access_token;
+
+        return response.body.access_token
     },
 
     async makeRequest<T>(
@@ -40,19 +40,19 @@ export const sapAribaCommon = {
         endpoint: string,
         queryParams?: QueryParams,
         body?: unknown,
-        additionalHeaders?: Record<string, string>
+        additionalHeaders?: Record<string, string>,
     ): Promise<T> {
-        const accessToken = await this.getAccessToken(auth);
+        const accessToken = await this.getAccessToken(auth)
 
         const headers: Record<string, string> = {
             apiKey: auth.props.apiKey,
             Accept: 'application/json',
             'Content-Type': 'application/json',
             ...additionalHeaders,
-        };
+        }
 
         if (accessToken) {
-            headers['Authorization'] = `Bearer ${accessToken}`;
+            headers['Authorization'] = `Bearer ${accessToken}`
         }
 
         const request: HttpRequest = {
@@ -61,9 +61,9 @@ export const sapAribaCommon = {
             headers,
             queryParams,
             body,
-        };
+        }
 
-        const response = await httpClient.sendRequest<T>(request);
-        return response.body;
+        const response = await httpClient.sendRequest<T>(request)
+        return response.body
     },
 }

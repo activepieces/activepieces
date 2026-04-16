@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const findJournalBatches = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -54,26 +54,26 @@ export const findJournalBatches = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
-        const { batchName, status, defaultPeriodName, userJeSourceName, createdBy, limit, offset } = context.propsValue;
+        const client = makeClient(context.auth.props)
+        const { batchName, status, defaultPeriodName, userJeSourceName, createdBy, limit, offset } = context.propsValue
 
         const queryParams: Record<string, string | number> = {
             limit: Math.min(limit || 25, 500),
             offset: offset || 0,
-        };
-
-        const filters: string[] = [];
-        if (batchName) filters.push(`BatchName LIKE "*${batchName}*"`);
-        if (status) filters.push(`Status="${status}"`);
-        if (defaultPeriodName) filters.push(`DefaultPeriodName="${defaultPeriodName}"`);
-        if (userJeSourceName) filters.push(`UserJeSourceName="${userJeSourceName}"`);
-        if (createdBy) filters.push(`CreatedBy="${createdBy}"`);
-
-        if (filters.length > 0) {
-            queryParams['q'] = filters.join(' AND ');
         }
 
-        const response = await client.searchRecords('/journalBatches', queryParams);
-        return response;
+        const filters: string[] = []
+        if (batchName) filters.push(`BatchName LIKE "*${batchName}*"`)
+        if (status) filters.push(`Status="${status}"`)
+        if (defaultPeriodName) filters.push(`DefaultPeriodName="${defaultPeriodName}"`)
+        if (userJeSourceName) filters.push(`UserJeSourceName="${userJeSourceName}"`)
+        if (createdBy) filters.push(`CreatedBy="${createdBy}"`)
+
+        if (filters.length > 0) {
+            queryParams['q'] = filters.join(' AND ')
+        }
+
+        const response = await client.searchRecords('/journalBatches', queryParams)
+        return response
     },
-});
+})

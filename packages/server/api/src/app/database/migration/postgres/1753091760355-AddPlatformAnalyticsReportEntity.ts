@@ -47,5 +47,4 @@ export class AddPlatformAnalyticsReportEntity1753091760355 implements MigrationI
             DROP TABLE "platform_analytics_report"
         `)
     }
-
 }

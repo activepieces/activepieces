@@ -15,7 +15,10 @@ export const secretManagersHooks = {
   useListSecretManagerConnections: ({
     connectedOnly,
     listForPlatform,
-  }: { connectedOnly?: boolean; listForPlatform?: boolean } = {}) => {
+  }: {
+    connectedOnly?: boolean;
+    listForPlatform?: boolean;
+  } = {}) => {
     const { platform } = platformHooks.useCurrentPlatform();
     const projectId = listForPlatform
       ? undefined

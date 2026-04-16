@@ -1,7 +1,7 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework'
 
 export const instructionProp = Property.MarkDown({
-  value: `
+    value: `
 ## Webhook Setup Instructions
 
 To enable this trigger, you need to set up a webhook in your Heymarket account:
@@ -24,4 +24,4 @@ Copy the URL below and add it to your Heymarket webhook configuration:
 
 4. **Test the webhook** - Send a test message to your Heymarket inbox to verify the webhook is working
   `,
-});
+})

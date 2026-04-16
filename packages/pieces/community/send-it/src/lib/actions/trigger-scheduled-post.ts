@@ -1,23 +1,19 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sendItAuth } from '../auth';
-import { scheduleIdProperty, sendItRequest } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { sendItAuth } from '../auth'
+import { scheduleIdProperty, sendItRequest } from '../common'
 
 export const triggerScheduledPost = createAction({
-  auth: sendItAuth,
-  name: 'trigger_scheduled_post',
-  displayName: 'Trigger Scheduled Post Now',
-  description: 'Immediately publish a scheduled post',
-  props: {
-    scheduleId: scheduleIdProperty,
-  },
-  async run(context) {
-    const { scheduleId } = context.propsValue;
+    auth: sendItAuth,
+    name: 'trigger_scheduled_post',
+    displayName: 'Trigger Scheduled Post Now',
+    description: 'Immediately publish a scheduled post',
+    props: {
+        scheduleId: scheduleIdProperty,
+    },
+    async run(context) {
+        const { scheduleId } = context.propsValue
 
-    return await sendItRequest(
-      context.auth.secret_text,
-      HttpMethod.POST,
-      `/scheduled/${scheduleId}/trigger`
-    );
-  },
-});
+        return await sendItRequest(context.auth.secret_text, HttpMethod.POST, `/scheduled/${scheduleId}/trigger`)
+    },
+})

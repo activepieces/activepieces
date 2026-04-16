@@ -12,9 +12,9 @@ import { platformHooks } from '@/hooks/platform-hooks';
 
 import { globalConnectionsApi } from '../api/global-connections';
 import {
-  NoProjectSelected,
   ConnectionNameAlreadyExists,
   isConnectionNameUnique,
+  NoProjectSelected,
 } from '../utils/utils';
 
 type UseGlobalConnectionsProps = {

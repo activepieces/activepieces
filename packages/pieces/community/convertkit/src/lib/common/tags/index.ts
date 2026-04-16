@@ -1,225 +1,209 @@
-import {
-  Property,
-} from '@activepieces/pieces-framework';
-import {
-  fetchSubscriberByEmail,
-  fetchSubscribedTags,
-  fetchTags,
-} from '../service';
-import { Tag, AuthEmail } from '../types';
-import { convertkitAuth } from '../../..';
+import { Property } from '@activepieces/pieces-framework'
+import { convertkitAuth } from '../../..'
+import { fetchSubscribedTags, fetchSubscriberByEmail, fetchTags } from '../service'
+import { AuthEmail, Tag } from '../types'
 
 export const tagId = Property.ShortText({
-  displayName: 'Tag Id',
-  description: 'The tag id',
-  required: true,
-});
+    displayName: 'Tag Id',
+    description: 'The tag id',
+    required: true,
+})
 
 export const name = Property.ShortText({
-  displayName: 'Name',
-  description: 'The name of the tag',
-  required: true,
-});
+    displayName: 'Name',
+    description: 'The name of the tag',
+    required: true,
+})
 
 export const tags = Property.MultiSelectDropdown({
-  displayName: 'Tags',
-  description: 'Choose the Tags',
-  required: false,
-  refreshers: ['auth'],
-  auth: convertkitAuth,
-  options: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Connect your account',
-        options: [],
-      };
-    }
-    const tags = await fetchTags(auth.secret_text);
-    const options = tags.map((tag: Tag) => {
-      return {
-        label: tag.name,
-        value: tag.id,
-      };
-    });
+    displayName: 'Tags',
+    description: 'Choose the Tags',
+    required: false,
+    refreshers: ['auth'],
+    auth: convertkitAuth,
+    options: async ({ auth }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                placeholder: 'Connect your account',
+                options: [],
+            }
+        }
+        const tags = await fetchTags(auth.secret_text)
+        const options = tags.map((tag: Tag) => {
+            return {
+                label: tag.name,
+                value: tag.id,
+            }
+        })
 
-    return {
-      options,
-    };
-  },
-});
+        return {
+            options,
+        }
+    },
+})
 
-export const tagsRequired = { ...tags, required: true };
+export const tagsRequired = { ...tags, required: true }
 
 export const tag = Property.Dropdown({
-  displayName: 'Tag',
-  description: 'Choose a Tag',
-  required: true,
-  refreshers: ['auth'],
-  auth: convertkitAuth,
-  options: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Connect your account',
-        options: [],
-      };
-    }
+    displayName: 'Tag',
+    description: 'Choose a Tag',
+    required: true,
+    refreshers: ['auth'],
+    auth: convertkitAuth,
+    options: async ({ auth }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                placeholder: 'Connect your account',
+                options: [],
+            }
+        }
 
-    const tags = await fetchTags(auth.secret_text);
+        const tags = await fetchTags(auth.secret_text)
 
-    // loop through data and map to options
-    const options = tags.map((tag: Tag) => {
-      return {
-        label: tag.name,
-        value: tag.id,
-      };
-    });
+        // loop through data and map to options
+        const options = tags.map((tag: Tag) => {
+            return {
+                label: tag.name,
+                value: tag.id,
+            }
+        })
 
-    return {
-      options,
-    };
-  },
-});
+        return {
+            options,
+        }
+    },
+})
 
 export const tagsPageNumber = Property.Number({
-  displayName: 'Page',
-  description: 'Each page of results will contain up to 50 tags.',
-  required: false,
-  defaultValue: 1,
-});
+    displayName: 'Page',
+    description: 'Each page of results will contain up to 50 tags.',
+    required: false,
+    defaultValue: 1,
+})
 export const sortOrder = Property.StaticDropdown({
-  displayName: 'Sort Order',
-  description: 'Sort order',
-  required: false,
-  options: {
-    options: [
-      { label: 'Ascending', value: 'asc' },
-      { label: 'Descending', value: 'desc' },
-    ],
-  },
-});
+    displayName: 'Sort Order',
+    description: 'Sort order',
+    required: false,
+    options: {
+        options: [
+            { label: 'Ascending', value: 'asc' },
+            { label: 'Descending', value: 'desc' },
+        ],
+    },
+})
 export const subscriberState = Property.StaticDropdown({
-  displayName: 'Subscriber State',
-  description: 'Subscriber state',
-  required: false,
-  options: {
-    options: [
-      { label: 'Active', value: 'active' },
-      { label: 'canceled', value: 'canceled' },
-    ],
-  },
-});
+    displayName: 'Subscriber State',
+    description: 'Subscriber state',
+    required: false,
+    options: {
+        options: [
+            { label: 'Active', value: 'active' },
+            { label: 'canceled', value: 'canceled' },
+        ],
+    },
+})
 
 // Generate options for tags based on email address
 
-
 export const tagIdByEmail = Property.Dropdown({
-  displayName: 'Tag',
-  description: 'The tag to remove',
-  required: true,
-  refreshers: ['auth', 'email'],
-  auth: convertkitAuth,
-  options: async (params) => {
-    const { auth, email } = params;
-    if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Connect your account.',
-        options: [],
-      };
-    }
-    if (!email) {
-      return {
-        disabled: true,
-        placeholder: 'Provide a subscriber email address.',
-        options: [],
-      };
-    }
-    const subscriber = await fetchSubscriberByEmail(
-      auth.toString(),
-      email.toString()
-    );
+    displayName: 'Tag',
+    description: 'The tag to remove',
+    required: true,
+    refreshers: ['auth', 'email'],
+    auth: convertkitAuth,
+    options: async (params) => {
+        const { auth, email } = params
+        if (!auth) {
+            return {
+                disabled: true,
+                placeholder: 'Connect your account.',
+                options: [],
+            }
+        }
+        if (!email) {
+            return {
+                disabled: true,
+                placeholder: 'Provide a subscriber email address.',
+                options: [],
+            }
+        }
+        const subscriber = await fetchSubscriberByEmail(auth.toString(), email.toString())
 
-    if (!subscriber) {
-      return {
-        disabled: true,
-        placeholder: 'No subscribers found for this email address.',
-        options: [],
-      };
-    }
+        if (!subscriber) {
+            return {
+                disabled: true,
+                placeholder: 'No subscribers found for this email address.',
+                options: [],
+            }
+        }
 
-    const subscriberId = subscriber.id;
-    const tags = await fetchSubscribedTags(
-      auth.toString(),
-      subscriberId.toString()
-    );
+        const subscriberId = subscriber.id
+        const tags = await fetchSubscribedTags(auth.toString(), subscriberId.toString())
 
-    // loop through data and map to options
-    const options = tags.map((tag: Tag) => {
-      return {
-        label: tag.name,
-        value: tag.id,
-      };
-    });
+        // loop through data and map to options
+        const options = tags.map((tag: Tag) => {
+            return {
+                label: tag.name,
+                value: tag.id,
+            }
+        })
 
-    return {
-      disabled: false,
-      placeholder: 'Choose a tag',
-      options,
-    };
-  },
-});
+        return {
+            disabled: false,
+            placeholder: 'Choose a tag',
+            options,
+        }
+    },
+})
 
 export const tagIdBySubscriberId = Property.Dropdown({
-  displayName: 'Tag',
-  description: 'The tag to remove',
-  required: true,
-  auth: convertkitAuth,
-  refreshers: ['auth', 'subscriberId'],
-  options: async ({ auth, subscriberId }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Connect your account and',
-        options: [],
-      };
-    }
+    displayName: 'Tag',
+    description: 'The tag to remove',
+    required: true,
+    auth: convertkitAuth,
+    refreshers: ['auth', 'subscriberId'],
+    options: async ({ auth, subscriberId }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                placeholder: 'Connect your account and',
+                options: [],
+            }
+        }
 
-    if (!subscriberId) {
-      return {
-        disabled: true,
-        placeholder: 'Provide a subscriber id.',
-        options: [],
-      };
-    }
+        if (!subscriberId) {
+            return {
+                disabled: true,
+                placeholder: 'Provide a subscriber id.',
+                options: [],
+            }
+        }
 
-    {
-      const tags = await fetchSubscribedTags(
-        auth.secret_text,
-        subscriberId.toString()
-      );
-      if (!tags) {
-        return {
-          disabled: true,
-          placeholder: 'Something went wrong.',
-          options: [],
-        };
-      }
-      // loop through data and map to options
-      const options = tags.map((tag: Tag) => {
-        return {
-          label: tag.name,
-          value: tag.id,
-        };
-      });
+        {
+            const tags = await fetchSubscribedTags(auth.secret_text, subscriberId.toString())
+            if (!tags) {
+                return {
+                    disabled: true,
+                    placeholder: 'Something went wrong.',
+                    options: [],
+                }
+            }
+            // loop through data and map to options
+            const options = tags.map((tag: Tag) => {
+                return {
+                    label: tag.name,
+                    value: tag.id,
+                }
+            })
 
-      return {
-        options,
-      };
-    }
-  },
-});
+            return {
+                options,
+            }
+        }
+    },
+})
 
 // WIP debounce
 

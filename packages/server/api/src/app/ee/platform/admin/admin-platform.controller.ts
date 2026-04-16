@@ -1,5 +1,22 @@
-import { ErrorHandlingOptionsParam, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
-import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, isNil, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
+import {
+    ErrorHandlingOptionsParam,
+    PieceMetadata,
+    PieceMetadataModel,
+    WebhookRenewConfiguration,
+} from '@activepieces/pieces-framework'
+import {
+    AdminRetryRunsRequestBody,
+    ApplyLicenseKeyByEmailRequestBody,
+    ExactVersionType,
+    IncreaseAICreditsForPlatformRequestBody,
+    isNil,
+    PackageType,
+    PieceCategory,
+    PieceType,
+    TriggerStrategy,
+    TriggerTestStrategy,
+    WebhookHandshakeConfiguration,
+} from '@activepieces/shared'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -14,11 +31,7 @@ import { adminPlatformService } from './admin-platform.service'
 const API_KEY_HEADER = 'api-key'
 const API_KEY = system.get(AppSystemProp.API_KEY)
 
-async function checkCertainKeyPreHandler(
-    req: FastifyRequest,
-    res: FastifyReply,
-): Promise<void> {
-
+async function checkCertainKeyPreHandler(req: FastifyRequest, res: FastifyReply): Promise<void> {
     const key = req.headers[API_KEY_HEADER] as string | undefined
     if (key !== API_KEY || isNil(API_KEY)) {
         await res.status(StatusCodes.FORBIDDEN).send({ message: 'Forbidden' })
@@ -31,18 +44,14 @@ export const adminPlatformModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(adminPlatformController, { prefix: '/v1/admin/' })
 }
 
-const adminPlatformController: FastifyPluginAsyncZod = async (
-    app,
-) => {
-
+const adminPlatformController: FastifyPluginAsyncZod = async (app) => {
     app.post('/pieces', CreatePieceRequest, async (req): Promise<PieceMetadataModel> => {
         return pieceMetadataService(req.log).create({
             pieceMetadata: req.body as PieceMetadata,
             packageType: PackageType.REGISTRY,
             pieceType: PieceType.OFFICIAL,
         })
-    },
-    )
+    })
 
     app.post('/platforms/runs/retry', AdminRetryRunsRequest, async (req, res) => {
         await adminPlatformService(req.log).retryRuns(req.body)
@@ -68,12 +77,14 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
 
     app.post('/platforms/canary', UpdateCanaryRequest, async (req, res) => {
         const { platformId, canary } = req.body
-        await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId: canary ? CANARY_WORKER_GROUP_ID : null })
+        await workerGroupService(req.log).moveJobsToTargetQueue({
+            platformId,
+            workerGroupId: canary ? CANARY_WORKER_GROUP_ID : null,
+        })
         await workerGroupService(req.log).updateCanary({ platformId, canary })
         return res.status(StatusCodes.OK).send()
     })
 }
-
 
 const UpdateWorkerGroupRequest = {
     schema: {
@@ -125,7 +136,6 @@ const IncreaseAICreditsForPlatformRequest = {
         security: securityAccess.public(),
     },
 }
-
 
 const Action = z.object({
     name: z.string(),

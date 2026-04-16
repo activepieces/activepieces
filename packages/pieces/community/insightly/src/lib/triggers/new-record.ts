@@ -1,9 +1,5 @@
-import {
-    createTrigger,
-    Property,
-    TriggerStrategy
-} from '@activepieces/pieces-framework';
-import { insightlyAuth } from '../common/common';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { insightlyAuth } from '../common/common'
 
 export const newRecord = createTrigger({
     auth: insightlyAuth,
@@ -24,9 +20,9 @@ export const newRecord = createTrigger({
                     { label: 'Organization', value: 'Organisations' },
                     { label: 'Project', value: 'Projects' },
                     { label: 'Task', value: 'Tasks' },
-                    { label: 'Event', value: 'Events' }
-                ]
-            }
+                    { label: 'Event', value: 'Events' },
+                ],
+            },
         }),
         webhookUrl: Property.MarkDown({
             value: `
@@ -52,11 +48,11 @@ export const newRecord = createTrigger({
         // The user will manually disable the webhook in Insightly
     },
     async run(context) {
-        const payload = context.payload.body as { entity: Record<string, unknown> };
+        const payload = context.payload.body as { entity: Record<string, unknown> }
         if (payload && payload.entity) {
-            return [payload.entity];
+            return [payload.entity]
         }
-        return [];
+        return []
     },
     async test(context) {
         // The user needs to trigger the webhook manually from Insightly to test it
@@ -68,8 +64,8 @@ export const newRecord = createTrigger({
                 LAST_NAME: 'Doe',
                 EMAIL_ADDRESS: 'john.doe@example.com',
                 DATE_CREATED_UTC: new Date().toISOString(),
-            }
-        ];
+            },
+        ]
     },
-    sampleData: {} // Webhook triggers don't need sample data in the same way
-});
+    sampleData: {}, // Webhook triggers don't need sample data in the same way
+})

@@ -45,19 +45,19 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { SkeletonList } from '@/components/ui/skeleton';
 import {
-  ProjectSelector,
   appConnectionsMutations,
-  oauthAppsQueries,
-  oauth2Utils,
-  PiecesOAuth2AppsMap,
   newConnectionUtils,
+  oauth2Utils,
+  oauthAppsQueries,
+  PiecesOAuth2AppsMap,
+  ProjectSelector,
 } from '@/features/connections';
 import { formUtils } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
-import { MutliAuthList, AuthListItem } from './multi-auth-list';
+import { AuthListItem, MutliAuthList } from './multi-auth-list';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 
@@ -410,6 +410,7 @@ function hasOAuth2PieceAuth(
 }
 
 CreateOrEditConnectionDialog.displayName = 'CreateOrEditConnectionDialog';
+
 export { CreateOrEditConnectionDialog, CreateOrEditConnectionDialogContent };
 
 function getInitallySelectedAuthProperty(

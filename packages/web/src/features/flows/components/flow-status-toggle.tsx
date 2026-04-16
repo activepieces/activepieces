@@ -1,8 +1,8 @@
 import {
   FlowStatus,
+  isNil,
   Permission,
   PopulatedFlow,
-  isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
@@ -67,8 +67,8 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
             ? isNil(flow.publishedVersionId)
               ? t('Please publish flow first')
               : isFlowPublished
-              ? t('Flow is on')
-              : t('Flow is off')
+                ? t('Flow is on')
+                : t('Flow is off')
             : t('Permission Needed')}
         </TooltipContent>
       </Tooltip>
@@ -93,4 +93,5 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
 };
 
 FlowStatusToggle.displayName = 'FlowStatusToggle';
+
 export { FlowStatusToggle };

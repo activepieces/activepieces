@@ -35,14 +35,9 @@ export const pieceModule: FastifyPluginAsyncZod = async (app) => {
 }
 
 const basePiecesController: FastifyPluginAsyncZod = async (app) => {
-
-    app.get(
-        '/categories',
-        ListCategoriesRequest,
-        async (): Promise<PieceCategory[]> => {
-            return Object.values(PieceCategory)
-        },
-    )
+    app.get('/categories', ListCategoriesRequest, async (): Promise<PieceCategory[]> => {
+        return Object.values(PieceCategory)
+    })
 
     app.get('/', ListPiecesRequest, async (req): Promise<PieceMetadataModelSummary[]> => {
         const query = req.query
@@ -95,55 +90,43 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
         },
     )
 
-    app.get(
-        '/:name/versions',
-        ListPieceVersionsRequest,
-        async (req): Promise<ListPieceVersionsResponse> => {
-            const { name } = req.params
-            const decodedName = decodeURIComponent(name)
-            return pieceMetadataService(req.log).listVersions({
-                name: decodedName,
-                platformId: req.principal.platform.id,
-                projectId: req.projectId,
-            })
-        },
-    )
+    app.get('/:name/versions', ListPieceVersionsRequest, async (req): Promise<ListPieceVersionsResponse> => {
+        const { name } = req.params
+        const decodedName = decodeURIComponent(name)
+        return pieceMetadataService(req.log).listVersions({
+            name: decodedName,
+            platformId: req.principal.platform.id,
+            projectId: req.projectId,
+        })
+    })
 
-    app.get(
-        '/:scope/:name',
-        GetPieceParamsWithScopeRequest,
-        async (req) => {
-            const { name, scope } = req.params
-            const { version } = req.query
+    app.get('/:scope/:name', GetPieceParamsWithScopeRequest, async (req) => {
+        const { name, scope } = req.params
+        const { version } = req.query
 
-            const decodeScope = decodeURIComponent(scope)
-            const decodedName = decodeURIComponent(name)
-            const platformId = getPlatformId(req.principal)
-            return pieceMetadataService(req.log).getOrThrow({
-                platformId,
-                name: `${decodeScope}/${decodedName}`,
-                version,
-                locale: req.query.locale as LocalesEnum | undefined,
-            })
-        },
-    )
+        const decodeScope = decodeURIComponent(scope)
+        const decodedName = decodeURIComponent(name)
+        const platformId = getPlatformId(req.principal)
+        return pieceMetadataService(req.log).getOrThrow({
+            platformId,
+            name: `${decodeScope}/${decodedName}`,
+            version,
+            locale: req.query.locale as LocalesEnum | undefined,
+        })
+    })
 
-    app.get(
-        '/:name',
-        GetPieceParamsRequest,
-        async (req): Promise<PieceMetadataModel> => {
-            const { name } = req.params
-            const { version } = req.query
-            const decodedName = decodeURIComponent(name)
-            const platformId = getPlatformId(req.principal)
-            return pieceMetadataService(req.log).getOrThrow({
-                platformId,
-                name: decodedName,
-                version,
-                locale: req.query.locale as LocalesEnum | undefined,
-            })
-        },
-    )
+    app.get('/:name', GetPieceParamsRequest, async (req): Promise<PieceMetadataModel> => {
+        const { name } = req.params
+        const { version } = req.query
+        const decodedName = decodeURIComponent(name)
+        const platformId = getPlatformId(req.principal)
+        return pieceMetadataService(req.log).getOrThrow({
+            platformId,
+            name: decodedName,
+            version,
+            locale: req.query.locale as LocalesEnum | undefined,
+        })
+    })
 
     app.get('/registry', RegistryPiecesRequest, async (req) => {
         const pieces = await pieceMetadataService(req.log).registry({
@@ -154,19 +137,21 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync({ publishCacheRefresh: true }))
 
-    app.post(
-        '/options',
-        OptionsPieceRequest,
-        async (req) => {
-            const projectId = req.projectId
-            const platform = req.principal.platform
-            const flow = await flowService(req.log).getOnePopulatedOrThrow({
-                projectId,
-                id: req.body.flowId,
-                versionId: req.body.flowVersionId,
-            })
-            const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, SampleDataFileType.OUTPUT)
-            const { response } = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<unknown>>({
+    app.post('/options', OptionsPieceRequest, async (req) => {
+        const projectId = req.projectId
+        const platform = req.principal.platform
+        const flow = await flowService(req.log).getOnePopulatedOrThrow({
+            projectId,
+            id: req.body.flowId,
+            versionId: req.body.flowVersionId,
+        })
+        const sampleData = await sampleDataService(req.log).getSampleDataForFlow(
+            projectId,
+            flow.version,
+            SampleDataFileType.OUTPUT,
+        )
+        const { response } = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<unknown>>(
+            {
                 jobType: WorkerJobType.EXECUTE_PROPERTY,
                 platformId: platform.id,
                 projectId,
@@ -177,15 +162,17 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 sampleData,
                 searchValue: req.body.searchValue,
                 piece: await getPiecePackageWithoutArchive(req.log, platform.id, req.body),
-            }, req.log)
-            return response
-        },
-    )
-
+            },
+            req.log,
+        )
+        return response
+    })
 }
 
 function getPlatformId(principal: Principal): string | undefined {
-    return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN ? undefined : principal.platform?.id
+    return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN
+        ? undefined
+        : principal.platform?.id
 }
 
 const RegistryPiecesRequest = {
@@ -203,9 +190,7 @@ const ListPiecesRequest = {
     },
     schema: {
         querystring: ListPiecesRequestQuery,
-
     },
-
 }
 const GetPieceParamsRequest = {
     config: {

@@ -1,8 +1,8 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { ApEdition } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../../../src/app/helper/system/system'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -46,9 +46,7 @@ describe('AppSumo API', () => {
             const responseBody = response?.json()
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             expect(responseBody?.message).toBe('success')
-            expect(responseBody?.redirect_url).toBe(
-                `https://cloud.activepieces.com/sign-up?email=${mockEmail}`,
-            )
+            expect(responseBody?.redirect_url).toBe(`https://cloud.activepieces.com/sign-up?email=${mockEmail}`)
         })
     })
 })

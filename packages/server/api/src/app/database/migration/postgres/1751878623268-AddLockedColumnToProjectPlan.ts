@@ -23,5 +23,4 @@ export class AddLockedColumnToProjectPlan1751878623268 implements MigrationInter
             ALTER TABLE "project_plan" DROP COLUMN "locked"
         `)
     }
-
 }

@@ -76,4 +76,5 @@ const AcceptInvitation = () => {
   );
 };
 AcceptInvitation.displayName = 'AcceptInvitation';
+
 export { AcceptInvitation };

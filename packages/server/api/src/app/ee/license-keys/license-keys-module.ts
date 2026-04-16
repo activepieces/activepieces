@@ -29,8 +29,7 @@ export const licenseKeysModule: FastifyPluginAsyncZod = async (app) => {
                     continue
                 }
                 await licenseKeysService(app.log).applyLimits(platformWithPlan.id, key)
-            }
-            catch (e) {
+            } catch (e) {
                 exceptionHandler.handle(e, app.log)
             }
         }

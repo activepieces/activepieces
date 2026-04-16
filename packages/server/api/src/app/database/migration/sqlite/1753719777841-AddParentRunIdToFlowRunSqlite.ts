@@ -349,5 +349,4 @@ export class AddParentRunIdToFlowRunSqlite1753719777841 implements MigrationInte
             CREATE INDEX "idx_run_flow_id" ON "flow_run" ("flowId")
         `)
     }
-
 }

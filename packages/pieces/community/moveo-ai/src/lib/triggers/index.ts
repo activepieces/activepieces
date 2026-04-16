@@ -1,4 +1,4 @@
-import { dialogExpired } from './dialog-expired';
-import { dialogInsights } from './dialog-insights';
+import { dialogExpired } from './dialog-expired'
+import { dialogInsights } from './dialog-insights'
 
-export const moveoTriggers = [dialogExpired, dialogInsights];
+export const moveoTriggers = [dialogExpired, dialogInsights]

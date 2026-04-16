@@ -1,25 +1,23 @@
 import {
     AuthenticationType,
-    httpClient,
+    HttpMessageBody,
     HttpMethod,
     HttpRequest,
     HttpResponse,
-    HttpMessageBody, 
-} from '@activepieces/pieces-common';
-import { zendeskSellAuth } from './auth';
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+    httpClient,
+} from '@activepieces/pieces-common'
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework'
+import { zendeskSellAuth } from './auth'
 
-
-export const ZENDESK_SELL_API_URL = 'https://api.getbase.com';
+export const ZENDESK_SELL_API_URL = 'https://api.getbase.com'
 
 export async function callZendeskApi<T>(
     method: HttpMethod,
     endpoint: string,
     auth: AppConnectionValueForAuthProperty<typeof zendeskSellAuth>,
-    body?: HttpMessageBody, 
-    query?: Record<string, string> 
+    body?: HttpMessageBody,
+    query?: Record<string, string>,
 ): Promise<HttpResponse<T>> {
-
     const request: HttpRequest = {
         method: method,
         url: `${ZENDESK_SELL_API_URL}/${endpoint}`,
@@ -29,11 +27,11 @@ export async function callZendeskApi<T>(
             password: auth.props.api_token,
         },
         body: body,
-        queryParams: query, 
+        queryParams: query,
         headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    };
-    return httpClient.sendRequest<T>(request);
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        },
+    }
+    return httpClient.sendRequest<T>(request)
 }

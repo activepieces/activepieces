@@ -20,7 +20,6 @@ export const AcceptProjectResponse = z.object({
 
 export type AcceptProjectResponse = z.infer<typeof AcceptProjectResponse>
 
-
 export const UpdateProjectMemberRoleRequestBody = z.object({
     role: z.string(),
 })

@@ -1,25 +1,24 @@
-import { wedofAuth } from '../auth';
-import {createAction} from '@activepieces/pieces-framework';
-import {HttpMethod, httpClient} from '@activepieces/pieces-common';
-import {wedofCommon} from '../common/wedof';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { wedofAuth } from '../auth'
+import { wedofCommon } from '../common/wedof'
 
 export const me = createAction({
     auth: wedofAuth,
     name: 'me',
-    displayName: "Récupérer mes informations",
-    description: "Récupérer mes informations et mes détails",
+    displayName: 'Récupérer mes informations',
+    description: 'Récupérer mes informations et mes détails',
     props: {},
     async run(context) {
         return (
             await httpClient.sendRequest({
                 method: HttpMethod.GET,
-                url:
-                    wedofCommon.baseUrl + '/users/me',
+                url: wedofCommon.baseUrl + '/users/me',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Api-Key': context.auth.secret_text,
                 },
             })
-        ).body;
+        ).body
     },
-});
+})

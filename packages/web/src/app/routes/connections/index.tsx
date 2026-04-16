@@ -8,13 +8,13 @@ import {
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
-  CheckIcon,
-  Globe,
-  Trash2,
-  Clock,
   Activity,
-  Workflow,
+  CheckIcon,
+  Clock,
+  Globe,
   Puzzle,
+  Trash2,
+  Workflow,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -47,11 +47,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  EditGlobalConnectionDialog,
-  RenameConnectionDialog,
   appConnectionsMutations,
   appConnectionsQueries,
   appConnectionUtils,
+  EditGlobalConnectionDialog,
+  RenameConnectionDialog,
 } from '@/features/connections';
 import { PieceIconWithPieceName, piecesHooks } from '@/features/pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';

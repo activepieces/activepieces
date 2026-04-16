@@ -23,7 +23,14 @@ export const renewWebhookJob: JobHandler<RenewWebhookJobData, FireAndForgetJobRe
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
-        const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
+        const provisioned = await provisionFlowPieces({
+            flowVersion,
+            platformId: data.platformId,
+            flowId: data.flowId,
+            projectId: data.projectId,
+            log: ctx.log,
+            apiClient: ctx.apiClient,
+        })
         if (!provisioned) {
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
@@ -54,12 +61,10 @@ export const renewWebhookJob: JobHandler<RenewWebhookJobData, FireAndForgetJobRe
             )
 
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
-        }
-        catch (e) {
+        } catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
             throw e
-        }
-        finally {
+        } finally {
             await ctx.sandboxManager.release(ctx.log)
         }
     },

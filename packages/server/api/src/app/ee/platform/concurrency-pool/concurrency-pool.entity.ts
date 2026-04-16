@@ -14,9 +14,7 @@ export const ConcurrencyPoolEntity = new EntitySchema<ConcurrencyPoolEntitySchem
         key: { type: String },
         maxConcurrentJobs: { type: Number },
     },
-    indices: [
-        { name: 'idx_concurrency_pool_platform_key', columns: ['platformId', 'key'], unique: true },
-    ],
+    indices: [{ name: 'idx_concurrency_pool_platform_key', columns: ['platformId', 'key'], unique: true }],
     relations: {
         projects: {
             type: 'one-to-many',

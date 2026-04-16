@@ -35,5 +35,4 @@ export class AddBadges1767141831647 implements MigrationInterface {
             DROP TABLE "user_badge"
         `)
     }
-
 }

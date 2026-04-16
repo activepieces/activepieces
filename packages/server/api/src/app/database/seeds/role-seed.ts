@@ -1,4 +1,4 @@
-import { DefaultProjectRole, rolePermissions, RoleType } from '@activepieces/shared'
+import { DefaultProjectRole, RoleType, rolePermissions } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ProjectRoleEntity } from '../../ee/projects/project-role/project-role.entity'
 import { system } from '../../helper/system/system'
@@ -9,7 +9,7 @@ const projectMemberRoleRepo = repoFactory(ProjectRoleEntity)
 // DO NOT CHANGE THESE IDS OR SHUFFLE THEM
 const roleIds: Record<DefaultProjectRole, string> = {
     [DefaultProjectRole.ADMIN]: '461ueYHzMykyk5dIL8HzQ',
-    [DefaultProjectRole.EDITOR]: 'sjWe85TwaFYxyhn2AgOha', 
+    [DefaultProjectRole.EDITOR]: 'sjWe85TwaFYxyhn2AgOha',
     [DefaultProjectRole.VIEWER]: 'aJVBSSJ3YqZ7r1laFjM0a',
 }
 
@@ -18,12 +18,15 @@ export const rolesSeed: DataSeed = {
         system.globalLogger().info({ name: 'rolesSeed' }, 'Seeding roles')
         for (const role of Object.values(DefaultProjectRole)) {
             const permissions = rolePermissions[role]
-            await projectMemberRoleRepo().upsert({
-                name: role,
-                permissions,
-                type: RoleType.DEFAULT,
-                id: roleIds[role],
-            }, ['id'])
+            await projectMemberRoleRepo().upsert(
+                {
+                    name: role,
+                    permissions,
+                    type: RoleType.DEFAULT,
+                    id: roleIds[role],
+                },
+                ['id'],
+            )
         }
     },
 }

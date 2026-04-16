@@ -1,6 +1,6 @@
+import { EventEmitter } from 'node:events'
 import { PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
-import { EventEmitter } from 'node:events'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // --- mocks (must be before the import under test) ---
@@ -47,7 +47,6 @@ const mockLog: FastifyBaseLogger = {
     level: 'info',
 } as unknown as FastifyBaseLogger
 
-
 function makeRequest(overrides: Partial<FastifyRequest> = {}): FastifyRequest {
     return {
         headers: {},
@@ -69,7 +68,7 @@ function makeRequest(overrides: Partial<FastifyRequest> = {}): FastifyRequest {
  * This is needed because `awaitProxy` wraps `reply.from()` in a Promise that
  * only resolves once reply.raw emits 'finish'.
  */
-function makeReply(opts: { sent?: boolean, proxyError?: Error } = {}): FastifyReply {
+function makeReply(opts: { sent?: boolean; proxyError?: Error } = {}): FastifyReply {
     const { sent = false, proxyError } = opts
     const rawEmitter = new EventEmitter()
 
@@ -81,20 +80,17 @@ function makeReply(opts: { sent?: boolean, proxyError?: Error } = {}): FastifyRe
         send: vi.fn().mockReturnValue(undefined),
     }
 
-    reply.from = vi.fn().mockImplementation(
-        (_url: string, fromOpts: { onError?: Function }) => {
-            if (proxyError) {
-                Promise.resolve().then(() => {
-                    fromOpts?.onError?.(reply, { error: proxyError })
-                    rawEmitter.emit('finish')
-                })
-            }
-            else {
-                Promise.resolve().then(() => rawEmitter.emit('finish'))
-            }
-            return reply
-        },
-    )
+    reply.from = vi.fn().mockImplementation((_url: string, fromOpts: { onError?: Function }) => {
+        if (proxyError) {
+            Promise.resolve().then(() => {
+                fromOpts?.onError?.(reply, { error: proxyError })
+                rawEmitter.emit('finish')
+            })
+        } else {
+            Promise.resolve().then(() => rawEmitter.emit('finish'))
+        }
+        return reply
+    })
 
     return reply as unknown as FastifyReply
 }
@@ -166,10 +162,7 @@ describe('canaryRoutingMiddleware', () => {
 
         await canaryRoutingMiddleware(request, reply)
 
-        expect(reply.from).toHaveBeenCalledWith(
-            '/v1/flows',
-            expect.objectContaining({ onError: expect.any(Function) }),
-        )
+        expect(reply.from).toHaveBeenCalledWith('/v1/flows', expect.objectContaining({ onError: expect.any(Function) }))
     })
 
     it('proxies request for a canary platform resolved from flowId cache', async () => {

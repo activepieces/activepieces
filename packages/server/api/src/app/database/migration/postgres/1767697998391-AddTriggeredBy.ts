@@ -26,5 +26,4 @@ export class AddTriggeredBy1767697998391 implements MigrationInterface {
             ALTER TABLE "flow_run" DROP COLUMN "triggeredBy"
         `)
     }
-
 }

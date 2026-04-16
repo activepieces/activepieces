@@ -9,7 +9,6 @@ export const federatedAuthnLoginResponse = z.object({
 })
 export type FederatedAuthnLoginResponse = z.infer<typeof federatedAuthnLoginResponse>
 
-
 export const ClaimTokenRequest = z.object({
     providerName: z.nativeEnum(ThirdPartyAuthnProviderEnum),
     code: z.string(),
@@ -48,4 +47,6 @@ export const FederatedAuthnProviderConfigWithoutSensitiveData = z.object({
     saml: Nullable(z.object({})),
 })
 
-export type FederatedAuthnProviderConfigWithoutSensitiveData = z.infer<typeof FederatedAuthnProviderConfigWithoutSensitiveData>
+export type FederatedAuthnProviderConfigWithoutSensitiveData = z.infer<
+    typeof FederatedAuthnProviderConfigWithoutSensitiveData
+>

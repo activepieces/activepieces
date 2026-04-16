@@ -1,20 +1,20 @@
 import {
-    setAtPath,
-    kebabCase,
     camelCase,
-    startCase,
-    isEmpty,
     chunk,
-    partition,
-    unique,
-    mapsAreSame,
-    validateIndexBound,
-    pickBy,
-    isEnumValue,
     insertAt,
+    isEmpty,
+    isEnumValue,
     isNil,
     isString,
+    kebabCase,
+    mapsAreSame,
     parseToJsonIfPossible,
+    partition,
+    pickBy,
+    setAtPath,
+    startCase,
+    unique,
+    validateIndexBound,
 } from '../../../../src/lib/core/common/utils/utils'
 
 describe('setAtPath', () => {
@@ -145,14 +145,23 @@ describe('unique', () => {
 
 describe('mapsAreSame', () => {
     it('should return true for equal maps', () => {
-        const a = new Map([['x', 1], ['y', 2]])
-        const b = new Map([['x', 1], ['y', 2]])
+        const a = new Map([
+            ['x', 1],
+            ['y', 2],
+        ])
+        const b = new Map([
+            ['x', 1],
+            ['y', 2],
+        ])
         expect(mapsAreSame(a, b)).toBe(true)
     })
 
     it('should return false for maps with different sizes', () => {
         const a = new Map([['x', 1]])
-        const b = new Map([['x', 1], ['y', 2]])
+        const b = new Map([
+            ['x', 1],
+            ['y', 2],
+        ])
         expect(mapsAreSame(a, b)).toBe(false)
     })
 

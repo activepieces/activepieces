@@ -37,7 +37,9 @@ const mockLog: FastifyBaseLogger = {
     level: 'info',
 } as unknown as FastifyBaseLogger
 
-type WorkerGroupService = ReturnType<typeof import('../../../../../src/app/ee/platform/platform-plan/worker-group.service').workerGroupService>
+type WorkerGroupService = ReturnType<
+    typeof import('../../../../../src/app/ee/platform/platform-plan/worker-group.service').workerGroupService
+>
 
 async function loadService(): Promise<WorkerGroupService> {
     const mod = await import('../../../../../src/app/ee/platform/platform-plan/worker-group.service')
@@ -112,13 +114,13 @@ describe('workerGroupService', () => {
 
         it('concurrent calls only hit DB once', async () => {
             let resolveFind!: (value: { platformId: string }[]) => void
-            mockFind.mockReturnValue(new Promise((resolve) => {
-                resolveFind = resolve
-            }))
-
-            const promises = Array.from({ length: 10 }, () =>
-                service.isCanaryPlatform({ platformId: 'p1' }),
+            mockFind.mockReturnValue(
+                new Promise((resolve) => {
+                    resolveFind = resolve
+                }),
             )
+
+            const promises = Array.from({ length: 10 }, () => service.isCanaryPlatform({ platformId: 'p1' }))
 
             await new Promise((r) => setTimeout(r, 50))
             resolveFind([{ platformId: 'p1' }])

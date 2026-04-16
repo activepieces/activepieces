@@ -17,10 +17,10 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import * as s3HelperModule from '../../../../../src/app/file/s3-helper'
 import { flowRunLogsService } from '../../../../../src/app/flows/flow-run/logs/flow-run-logs-service'
-import { jwtUtils, JwtSignAlgorithm } from '../../../../../src/app/helper/jwt-utils'
-import { databaseConnection } from '../../../../../src/app/database/database-connection'
+import { JwtSignAlgorithm, jwtUtils } from '../../../../../src/app/helper/jwt-utils'
 import { generateMockToken } from '../../../../helpers/auth'
 import { db } from '../../../../helpers/db'
 import {
@@ -80,9 +80,7 @@ describe('Flow Run Logs API', () => {
                 behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
             })
 
-            const compressedData = await zstdCompress(
-                Buffer.from(JSON.stringify(MOCK_EXECUTION_OUTPUT)),
-            )
+            const compressedData = await zstdCompress(Buffer.from(JSON.stringify(MOCK_EXECUTION_OUTPUT)))
 
             // Upload
             const uploadResponse = await app!.inject({
@@ -125,9 +123,7 @@ describe('Flow Run Logs API', () => {
                 behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
             })
 
-            const compressedData = await zstdCompress(
-                Buffer.from(JSON.stringify(MOCK_EXECUTION_OUTPUT)),
-            )
+            const compressedData = await zstdCompress(Buffer.from(JSON.stringify(MOCK_EXECUTION_OUTPUT)))
 
             // Upload
             const uploadResponse = await app!.inject({
@@ -262,9 +258,7 @@ describe('Flow Run Logs API', () => {
             const logsFileId = apId()
             const flowRunId = apId()
 
-            const compressedData = await zstdCompress(
-                Buffer.from(JSON.stringify(MOCK_EXECUTION_OUTPUT)),
-            )
+            const compressedData = await zstdCompress(Buffer.from(JSON.stringify(MOCK_EXECUTION_OUTPUT)))
             const mockFile = createMockFile({
                 id: logsFileId,
                 projectId: mockProject.id,
@@ -303,9 +297,7 @@ describe('Flow Run Logs API', () => {
             const flowRunId = apId()
 
             // Simulate a mismatch: zstd-compressed data stored with compression: NONE
-            const compressedData = await zstdCompress(
-                Buffer.from(JSON.stringify(MOCK_EXECUTION_OUTPUT)),
-            )
+            const compressedData = await zstdCompress(Buffer.from(JSON.stringify(MOCK_EXECUTION_OUTPUT)))
             const mockFile = createMockFile({
                 id: logsFileId,
                 projectId: mockProject.id,
@@ -442,10 +434,7 @@ describe('Flow Run Logs API', () => {
 
             expect(response.statusCode).toBe(StatusCodes.MOVED_TEMPORARILY)
             expect(response.headers.location).toBe(fakeSignedUrl)
-            expect(s3HelperSpy.mock.results[0].value.getS3SignedUrl).toHaveBeenCalledWith(
-                s3Key,
-                expect.any(String),
-            )
+            expect(s3HelperSpy.mock.results[0].value.getS3SignedUrl).toHaveBeenCalledWith(s3Key, expect.any(String))
 
             s3HelperSpy.mockRestore()
         })
@@ -455,9 +444,7 @@ describe('Flow Run Logs API', () => {
             const logsFileId = apId()
             const s3Key = `project/${mockProject.id}/${FileType.FLOW_RUN_LOG}/${logsFileId}`
 
-            const compressedData = await zstdCompress(
-                Buffer.from(JSON.stringify(MOCK_EXECUTION_OUTPUT)),
-            )
+            const compressedData = await zstdCompress(Buffer.from(JSON.stringify(MOCK_EXECUTION_OUTPUT)))
 
             const s3HelperSpy = mockS3Helper({
                 getFile: vi.fn().mockResolvedValue(compressedData),
@@ -493,9 +480,7 @@ describe('Flow Run Logs API', () => {
             const flowRunId = apId()
             const s3Key = `project/${mockProject.id}/${FileType.FLOW_RUN_LOG}/${logsFileId}`
 
-            const compressedData = await zstdCompress(
-                Buffer.from(JSON.stringify(MOCK_EXECUTION_OUTPUT)),
-            )
+            const compressedData = await zstdCompress(Buffer.from(JSON.stringify(MOCK_EXECUTION_OUTPUT)))
 
             const s3HelperSpy = mockS3Helper({
                 getFile: vi.fn().mockResolvedValue(compressedData),
@@ -586,9 +571,7 @@ describe('Flow Run Logs API', () => {
                 behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
             })
 
-            const compressedData = await zstdCompress(
-                Buffer.from(JSON.stringify(MOCK_EXECUTION_OUTPUT)),
-            )
+            const compressedData = await zstdCompress(Buffer.from(JSON.stringify(MOCK_EXECUTION_OUTPUT)))
 
             await app!.inject({
                 method: 'PUT',
@@ -644,20 +627,17 @@ describe('Flow Run Logs API', () => {
                 finishTime: oneYearAgo,
             })
             await db.save('flow_run', flowRun)
-            await databaseConnection().query(
-                'UPDATE flow_run SET created = $1 WHERE id = $2',
-                [oneYearAgo, flowRun.id],
-            )
+            await databaseConnection().query('UPDATE flow_run SET created = $1 WHERE id = $2', [oneYearAgo, flowRun.id])
 
             return { token, mockProject, flowRun }
         }
 
         it('should return 410 GONE when retrying a single run created over a year ago', async () => {
             const { token, mockProject, flowRun } = await setupOutdatedFlowRun()
-           // fetch the run from the database
-           const run = await db.findOneByOrFail('flow_run', { id: flowRun.id })
-           //log the run
-           console.log(run)
+            // fetch the run from the database
+            const run = await db.findOneByOrFail('flow_run', { id: flowRun.id })
+            //log the run
+            console.log(run)
 
             const response = await app!.inject({
                 method: 'POST',

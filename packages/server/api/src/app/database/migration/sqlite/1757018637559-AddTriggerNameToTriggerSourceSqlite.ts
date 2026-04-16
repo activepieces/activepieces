@@ -158,5 +158,4 @@ export class AddTriggerNameToTriggerSourceSqlite1757018637559 implements Migrati
             WHERE deleted IS NULL
         `)
     }
-
 }

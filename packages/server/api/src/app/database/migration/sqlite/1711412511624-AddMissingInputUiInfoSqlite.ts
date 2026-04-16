@@ -14,5 +14,4 @@ export class AddMissingInputUiInfoSqlite1711412511624 implements MigrationInterf
     public async down(_queryRunner: QueryRunner): Promise<void> {
         // No down migration needed
     }
-
 }

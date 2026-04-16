@@ -1,7 +1,7 @@
 import { emptyCondition } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { BranchConditionGroup } from '@/app/builder/step-settings/branch-settings/branch-condition-group';
 
@@ -71,4 +71,5 @@ const BranchSettings = React.memo(
 );
 
 BranchSettings.displayName = 'BranchSettings';
+
 export { BranchSettings };

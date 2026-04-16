@@ -26,5 +26,4 @@ export class RemoveProjectIdFromIndex1750712746125 implements MigrationInterface
             CREATE INDEX "idx_app_connection_project_ids_and_external_id" ON "app_connection" ("projectIds", "externalId")
         `)
     }
-
 }

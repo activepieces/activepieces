@@ -13,13 +13,10 @@ export const ListPlatformEventDestinationsRequestBody = z.object({
 
 export type ListPlatformEventDestinationsRequestBody = z.infer<typeof ListPlatformEventDestinationsRequestBody>
 
-
-
 export const CreatePlatformEventDestinationRequestBody = z.object({
     events: z.array(z.nativeEnum(ApplicationEventName)),
     url: z.string().url(),
 })
-
 
 export type CreatePlatformEventDestinationRequestBody = z.infer<typeof CreatePlatformEventDestinationRequestBody>
 

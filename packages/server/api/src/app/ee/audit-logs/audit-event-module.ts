@@ -6,12 +6,14 @@ import { auditLogService } from './audit-event-service'
 
 export const auditEventModule: FastifyPluginAsyncZod = async (app) => {
     auditLogService(app.log).setup()
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.auditLogEnabled))
+    app.addHook(
+        'preHandler',
+        platformMustHaveFeatureEnabled((platform) => platform.plan.auditLogEnabled),
+    )
     await app.register(auditEventController, { prefix: '/v1/audit-events' })
 }
 
 const auditEventController: FastifyPluginAsyncZod = async (app) => {
-
     app.get('/', ListAuditEventsRequestEndpoint, async (request) => {
         return auditLogService(request.log).list({
             platformId: request.principal.platform.id,
@@ -25,7 +27,6 @@ const auditEventController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 }
-
 
 const ListAuditEventsRequestEndpoint = {
     config: {

@@ -13,7 +13,6 @@ vi.mock('../../../../../../../../src/app/flows/flow-version/migrations', () => (
 
 const logger = system.globalLogger()
 describe('Flow Diff Service', () => {
-
     it('should return the flow to delete', async () => {
         const flowTwo = flowGenerator.simpleActionAndTrigger()
         const diff = await projectDiffService.diff({
@@ -86,7 +85,6 @@ describe('Flow Diff Service', () => {
             newFlowState: flowTwo,
         })
     })
-
 
     it('should skip the flow to update if the flow is not changed', async () => {
         const flowOne = flowGenerator.simpleActionAndTrigger()
@@ -177,7 +175,6 @@ describe('Flow Diff Service', () => {
             },
         ])
     })
-
 
     it('should not detect flow as changed when trigger properties are in different order', async () => {
         const flowOne = flowGenerator.simpleActionAndTrigger()

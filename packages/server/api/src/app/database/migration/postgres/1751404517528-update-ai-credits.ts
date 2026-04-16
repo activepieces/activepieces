@@ -37,5 +37,4 @@ export class UpdateAiCredits1751404517528 implements MigrationInterface {
             ADD "aiCreditsLimit" integer NOT NULL
         `)
     }
-
 }

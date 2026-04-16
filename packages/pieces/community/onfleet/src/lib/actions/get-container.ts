@@ -1,53 +1,45 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
-
-import Onfleet from '@onfleet/node-onfleet';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import Onfleet from '@onfleet/node-onfleet'
+import { onfleetAuth } from '../..'
 
 export const getContainer = createAction({
-  auth: onfleetAuth,
-  name: 'get_container',
-  displayName: 'Get Container',
-  description: 'Get a specific container',
-  props: {
-    containerType: Property.Dropdown<
-      'organizations' | 'workers' | 'teams',
-      true,
-      typeof onfleetAuth
-    >({
-      displayName: 'Container Type',  
-      auth: onfleetAuth,
-      required: true,
-      refreshers: [],
-      options: async () => {
-        return {
-          options: [
-            {
-              label: 'Organizations',
-              value: 'organizations',
+    auth: onfleetAuth,
+    name: 'get_container',
+    displayName: 'Get Container',
+    description: 'Get a specific container',
+    props: {
+        containerType: Property.Dropdown<'organizations' | 'workers' | 'teams', true, typeof onfleetAuth>({
+            displayName: 'Container Type',
+            auth: onfleetAuth,
+            required: true,
+            refreshers: [],
+            options: async () => {
+                return {
+                    options: [
+                        {
+                            label: 'Organizations',
+                            value: 'organizations',
+                        },
+                        {
+                            label: 'Teams',
+                            value: 'teams',
+                        },
+                        {
+                            label: 'Workers',
+                            value: 'workers',
+                        },
+                    ],
+                }
             },
-            {
-              label: 'Teams',
-              value: 'teams',
-            },
-            {
-              label: 'Workers',
-              value: 'workers',
-            },
-          ],
-        };
-      },
-    }),
-    containerId: Property.ShortText({
-      displayName: 'Container ID',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const onfleetApi = new Onfleet(context.auth.secret_text);
+        }),
+        containerId: Property.ShortText({
+            displayName: 'Container ID',
+            required: true,
+        }),
+    },
+    async run(context) {
+        const onfleetApi = new Onfleet(context.auth.secret_text)
 
-    return await onfleetApi.containers.get(
-      context.propsValue.containerId,
-      context.propsValue.containerType
-    );
-  },
-});
+        return await onfleetApi.containers.get(context.propsValue.containerId, context.propsValue.containerType)
+    },
+})

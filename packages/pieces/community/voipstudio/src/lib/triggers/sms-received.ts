@@ -1,18 +1,14 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { voipstudioAuth } from '../common/auth';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { voipstudioAuth } from '../common/auth'
 
 export const smsReceived = createTrigger({
-  auth: voipstudioAuth,
-  name: 'smsReceived',
-  displayName: 'SMS Received',
-  description: 'Triggers when an SMS message is received in VoipStudio.',
-  props: {
-    instruction: Property.MarkDown({
-      value: `
+    auth: voipstudioAuth,
+    name: 'smsReceived',
+    displayName: 'SMS Received',
+    description: 'Triggers when an SMS message is received in VoipStudio.',
+    props: {
+        instruction: Property.MarkDown({
+            value: `
               1. Login to https://voipstudio.com/
               2. Click on **Integrations**
               3. Scroll down to **Webhooks** and Enable
@@ -25,31 +21,31 @@ export const smsReceived = createTrigger({
                 \`\`\`
     
                     `,
-    }),
-  },
-  sampleData: {
-    id: 'uk003.608920d55f7ac3.77053295',
-    event_time: '2021-04-28 08:46:13',
-    event_name: 'sms.received',
-    customer_id: 100,
-    user_id: 50,
-    from_no: '447854740947',
-    to_no: '441183211001',
-    text: 'Hello, this is a test SMS message',
-  },
-  type: TriggerStrategy.WEBHOOK,
-  async onEnable(context) {
-    // Register the webhook with VoIPStudio
-  },
+        }),
+    },
+    sampleData: {
+        id: 'uk003.608920d55f7ac3.77053295',
+        event_time: '2021-04-28 08:46:13',
+        event_name: 'sms.received',
+        customer_id: 100,
+        user_id: 50,
+        from_no: '447854740947',
+        to_no: '441183211001',
+        text: 'Hello, this is a test SMS message',
+    },
+    type: TriggerStrategy.WEBHOOK,
+    async onEnable(context) {
+        // Register the webhook with VoIPStudio
+    },
 
-  async onDisable(context) {
-    // Clean up the stored webhook URL
-  },
+    async onDisable(context) {
+        // Clean up the stored webhook URL
+    },
 
-  async run(context) {
-    const payload = context.payload.body as any;
+    async run(context) {
+        const payload = context.payload.body as any
 
-    // Return the webhook payload as a single item
-    return [payload];
-  },
-});
+        // Return the webhook payload as a single item
+        return [payload]
+    },
+})

@@ -14,6 +14,4 @@ export class DeleteLastChangelogDismissedAt1762018344394 implements MigrationInt
             ALTER TABLE "user" ADD "lastChangelogDismissed" TIMESTAMP
         `)
     }
-
 }
-

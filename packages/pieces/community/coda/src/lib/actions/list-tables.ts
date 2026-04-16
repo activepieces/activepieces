@@ -1,47 +1,47 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { codaAuth } from '../auth';
-import { CodaTableReference, codaClient } from '../common/types';
-import { docIdDropdown } from '../common/props';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { codaAuth } from '../auth'
+import { docIdDropdown } from '../common/props'
+import { CodaTableReference, codaClient } from '../common/types'
 
 export const listTablesAction = createAction({
-	auth: codaAuth,
-	name: 'list-tables',
-	displayName: 'List Table(s)',
-	description: 'List tables in a selected document.',
-	props: {
-		docId: docIdDropdown,
-		max: Property.Number({
-			displayName: 'Max Tables',
-			description: 'Maximum number of results to return.',
-			required: true,
-		}),
-	},
-	async run(context) {
-		const { docId, max } = context.propsValue;
-		const client = codaClient(context.auth);
+    auth: codaAuth,
+    name: 'list-tables',
+    displayName: 'List Table(s)',
+    description: 'List tables in a selected document.',
+    props: {
+        docId: docIdDropdown,
+        max: Property.Number({
+            displayName: 'Max Tables',
+            description: 'Maximum number of results to return.',
+            required: true,
+        }),
+    },
+    async run(context) {
+        const { docId, max } = context.propsValue
+        const client = codaClient(context.auth)
 
-		const allTables: CodaTableReference[] = [];
-		let nextPageToken: string | undefined = undefined;
+        const allTables: CodaTableReference[] = []
+        let nextPageToken: string | undefined = undefined
 
-		do {
-			const response = await client.listTables(docId as string, {
-				limit: 100,
-				sortBy: 'name',
-				tableTypes: 'table',
-				pageToken: nextPageToken,
-			});
+        do {
+            const response = await client.listTables(docId as string, {
+                limit: 100,
+                sortBy: 'name',
+                tableTypes: 'table',
+                pageToken: nextPageToken,
+            })
 
-			if (response.items) {
-				allTables.push(...response.items);
-			}
-			nextPageToken = response.nextPageToken;
-		} while (nextPageToken && allTables.length < max);
+            if (response.items) {
+                allTables.push(...response.items)
+            }
+            nextPageToken = response.nextPageToken
+        } while (nextPageToken && allTables.length < max)
 
-		if (allTables.length > max) allTables.length = max;
+        if (allTables.length > max) allTables.length = max
 
-		return {
-			found: allTables.length > 0,
-			result: allTables,
-		};
-	},
-});
+        return {
+            found: allTables.length > 0,
+            result: allTables,
+        }
+    },
+})

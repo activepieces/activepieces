@@ -612,5 +612,4 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
             CREATE INDEX "idx_todo_agent_id" ON "todo" ("agentId")
         `)
     }
-
 }

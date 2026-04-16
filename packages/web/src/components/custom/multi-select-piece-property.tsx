@@ -169,4 +169,5 @@ const MultiSelectPieceProperty = ({
 };
 
 MultiSelectPieceProperty.displayName = 'MultiSelectPieceProperty';
+
 export { MultiSelectPieceProperty };

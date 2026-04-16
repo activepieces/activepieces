@@ -24,7 +24,9 @@ export class AddConcurrencyPoolTable1775800000000 implements Migration {
                 CONSTRAINT "pk_concurrency_pool" PRIMARY KEY ("id")
             )
         `)
-        await queryRunner.query('CREATE UNIQUE INDEX "idx_concurrency_pool_platform_key" ON "concurrency_pool" ("platformId", "key")')
+        await queryRunner.query(
+            'CREATE UNIQUE INDEX "idx_concurrency_pool_platform_key" ON "concurrency_pool" ("platformId", "key")',
+        )
         await queryRunner.query('ALTER TABLE "project" ADD "poolId" character varying(21)')
         await queryRunner.query(`
             ALTER TABLE "project"
@@ -34,8 +36,7 @@ export class AddConcurrencyPoolTable1775800000000 implements Migration {
         `)
         if (isPGlite) {
             await queryRunner.query('CREATE INDEX "idx_project_pool_id" ON "project" ("poolId")')
-        }
-        else {
+        } else {
             await queryRunner.query('CREATE INDEX CONCURRENTLY "idx_project_pool_id" ON "project" ("poolId")')
         }
     }
@@ -43,8 +44,7 @@ export class AddConcurrencyPoolTable1775800000000 implements Migration {
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (isPGlite) {
             await queryRunner.query('DROP INDEX "idx_project_pool_id"')
-        }
-        else {
+        } else {
             await queryRunner.query('DROP INDEX CONCURRENTLY "idx_project_pool_id"')
         }
         await queryRunner.query('ALTER TABLE "project" DROP CONSTRAINT "fk_project_pool_id"')

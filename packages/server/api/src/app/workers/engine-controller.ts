@@ -1,4 +1,3 @@
-
 import { FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -8,7 +7,6 @@ import { flowService } from '../flows/flow/flow.service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 
 export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
-
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     app.get('/populated-flows', GetAllFlowsByProjectParams, async (request) => {
@@ -34,10 +32,7 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
         })
         return flowVersion
     })
-
-
 }
-
 
 const GetAllFlowsByProjectParams = {
     config: {

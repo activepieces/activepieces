@@ -1,9 +1,20 @@
-import { BranchOperator, FlowRunStatus, LoopStepOutput, RouterExecutionType, RouterStepOutput } from '@activepieces/shared'
+import {
+    BranchOperator,
+    FlowRunStatus,
+    LoopStepOutput,
+    RouterExecutionType,
+    RouterStepOutput,
+} from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
-import { buildCodeAction, buildPieceAction, buildRouterWithOneCondition, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
-
+import {
+    buildCodeAction,
+    buildPieceAction,
+    buildRouterWithOneCondition,
+    buildSimpleLoopAction,
+    generateMockEngineConstants,
+} from './test-helper'
 
 const simplePauseFlow = buildPieceAction({
     name: 'approval',
@@ -34,10 +45,8 @@ const flawWithTwoPause = buildPieceAction({
                 input: {},
             }),
         }),
-
     }),
 })
-
 
 const pauseFlowWithLoopAndBranch = buildSimpleLoopAction({
     name: 'loop',
@@ -48,17 +57,13 @@ const pauseFlowWithLoopAndBranch = buildSimpleLoopAction({
                 operator: BranchOperator.BOOLEAN_IS_TRUE,
                 firstValue: '{{ loop.item }}',
             },
-            
         ],
         executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
-        children: [
-            simplePauseFlow,
-        ],
+        children: [simplePauseFlow],
     }),
 })
 
 describe('flow with pause', () => {
-
     it('should pause and resume successfully with loops and branch', async () => {
         const pauseResult = await flowExecutor.execute({
             action: pauseFlowWithLoopAndBranch,
@@ -71,7 +76,7 @@ describe('flow with pause', () => {
                 response: {},
                 requestId: 'requestId',
                 requestIdToReply: undefined,
-                'type': 'WEBHOOK',
+                type: 'WEBHOOK',
             },
         })
         expect(Object.keys(pauseResult.steps)).toEqual(['loop'])
@@ -81,7 +86,6 @@ describe('flow with pause', () => {
         expect(loopOutputBeforeResume.output?.iterations.length).toBe(2)
         expect(loopOutputBeforeResume.output?.item).toBe(true)
         expect(Object.keys(loopOutputBeforeResume.output?.iterations[0] ?? {})).toContain('router')
-        
 
         const resumeResultTwo = await flowExecutor.execute({
             action: pauseFlowWithLoopAndBranch,
@@ -99,19 +103,16 @@ describe('flow with pause', () => {
                 },
             }),
         })
-        
+
         expect(resumeResultTwo.verdict).toStrictEqual({
             status: FlowRunStatus.RUNNING,
-        },
-        )
+        })
         expect(Object.keys(resumeResultTwo.steps)).toEqual(['loop'])
-        
+
         const loopOut = resumeResultTwo.steps.loop as LoopStepOutput
         expect(Object.keys(loopOut.output?.iterations[1] ?? {})).toEqual(['router', 'approval', 'echo_step'])
         expect((loopOut.output?.iterations[0].router as RouterStepOutput).output?.branches[0].evaluation).toBe(false)
         expect((loopOut.output?.iterations[1].router as RouterStepOutput).output?.branches[0].evaluation).toBe(true)
-        
-
     })
 
     it('should pause and resume with two different steps in same flow successfully', async () => {
@@ -139,7 +140,7 @@ describe('flow with pause', () => {
                 response: {},
                 requestId: 'requestId',
                 requestIdToReply: undefined,
-                'type': 'WEBHOOK',
+                type: 'WEBHOOK',
             },
         })
         const resumeResult2 = await flowExecutor.execute({
@@ -160,9 +161,7 @@ describe('flow with pause', () => {
         expect(resumeResult2.verdict).toStrictEqual({
             status: FlowRunStatus.RUNNING,
         })
-
     })
-
 
     it('should pause and resume successfully', async () => {
         const pauseResult = await flowExecutor.execute({
@@ -176,7 +175,7 @@ describe('flow with pause', () => {
                 response: {},
                 requestId: 'requestId',
                 requestIdToReply: undefined,
-                'type': 'WEBHOOK',
+                type: 'WEBHOOK',
             },
         })
         const currentState = pauseResult.currentState()
@@ -199,7 +198,7 @@ describe('flow with pause', () => {
             status: FlowRunStatus.RUNNING,
         })
         expect(resumeResult.currentState()).toEqual({
-            'approval': {
+            approval: {
                 approved: true,
             },
             echo_step: {},
@@ -255,22 +254,21 @@ describe('flow with pause', () => {
                 response: {},
                 requestId: 'requestId',
                 requestIdToReply: undefined,
-                'type': 'WEBHOOK',
+                type: 'WEBHOOK',
             },
         })
 
         const routerOutput = result.steps.router as RouterStepOutput
         expect(routerOutput).toBeDefined()
         expect(routerOutput.output).toBeDefined()
-        
+
         const executedBranches = routerOutput.output?.branches?.filter((branch) => branch.evaluation === true)
         expect(executedBranches).toHaveLength(2)
-        
+
         expect(result.steps.approval_1).toBeDefined()
         expect(result.steps.approval_1.status).toBe('PAUSED')
         expect(result.steps.approval_2).toBeUndefined()
-        
+
         expect(Object.keys(result.steps)).toEqual(['router', 'approval_1'])
     })
-
 })

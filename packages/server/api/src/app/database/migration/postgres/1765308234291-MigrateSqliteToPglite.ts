@@ -25,7 +25,6 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
             return
         }
 
-
         log.info('[MigrateSqliteToPglite] Starting SQLite to PGLite data migration...')
 
         try {
@@ -46,11 +45,10 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
             for (const entity of sortedEntities) {
                 await this.copyTableData(sqliteDataSource, queryRunner, entity)
             }
-            
+
             await sqliteDataSource.destroy()
             log.info('[MigrateSqliteToPglite] SQLite to PGLite migration completed successfully')
-        }
-        catch (error) {
+        } catch (error) {
             log.error({ error }, '[MigrateSqliteToPglite] Failed to migrate data from SQLite')
             throw error
         }
@@ -63,15 +61,15 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
     private async hasExistingData(queryRunner: QueryRunner): Promise<boolean> {
         const result = await queryRunner.query('SELECT 1 FROM project LIMIT 1')
         return result.length > 0
-        
     }
 
-    private async sqliteHasData(sqliteDataSource: ReturnType<typeof createSqlLiteDataSourceForMigrations>): Promise<boolean> {
+    private async sqliteHasData(
+        sqliteDataSource: ReturnType<typeof createSqlLiteDataSourceForMigrations>,
+    ): Promise<boolean> {
         try {
             const result = await sqliteDataSource.query('SELECT 1 FROM project LIMIT 1')
             return result.length > 0
-        }
-        catch {
+        } catch {
             return false
         }
     }
@@ -127,17 +125,22 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
         // Get SQLite column names for this table
         const sqliteColumns = await this.getSqliteColumnNames(sqliteDataSource, tableName)
         if (sqliteColumns.length === 0) {
-            log.info({ tableName }, '[MigrateSqliteToPglite1765308234291#copyTableData] Table does not exist in SQLite, skipping')
+            log.info(
+                { tableName },
+                '[MigrateSqliteToPglite1765308234291#copyTableData] Table does not exist in SQLite, skipping',
+            )
             return
         }
 
         let rows: Record<string, unknown>[] = []
         try {
             rows = await sqliteDataSource.query(`SELECT * FROM "${tableName}"`)
-        }
-        catch (error) {
+        } catch (error) {
             if (error instanceof Error && error.message.includes('no such table')) {
-                log.info({ tableName }, '[MigrateSqliteToPglite1765308234291#copyTableData] Table does not exist in SQLite, skipping')
+                log.info(
+                    { tableName },
+                    '[MigrateSqliteToPglite1765308234291#copyTableData] Table does not exist in SQLite, skipping',
+                )
                 return
             }
             throw error
@@ -148,7 +151,10 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
             return
         }
 
-        log.info({ rowCount: rows.length, tableName }, '[MigrateSqliteToPglite1765308234291#copyTableData] Copying rows')
+        log.info(
+            { rowCount: rows.length, tableName },
+            '[MigrateSqliteToPglite1765308234291#copyTableData] Copying rows',
+        )
 
         const transformedRows = rows.map((row) => this.transformRowForPostgres(row, entity, sqliteColumns))
 
@@ -156,21 +162,23 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
         await queryRunner.query('SET LOCAL session_replication_role = replica')
 
         const BATCH_SIZE = 100
-            
+
         for (let i = 0; i < transformedRows.length; i += BATCH_SIZE) {
             const batch = transformedRows.slice(i, i + BATCH_SIZE)
             await this.insertBatchRaw(queryRunner, tableName, batch, sqliteColumns, entity)
         }
 
-        log.info({ rowCount: rows.length, tableName }, '[MigrateSqliteToPglite1765308234291#copyTableData] Successfully migrated rows')
+        log.info(
+            { rowCount: rows.length, tableName },
+            '[MigrateSqliteToPglite1765308234291#copyTableData] Successfully migrated rows',
+        )
     }
 
     private async getSqliteColumnNames(sqliteDataSource: DataSource, tableName: string): Promise<string[]> {
         try {
             const tableInfo = await sqliteDataSource.query(`PRAGMA table_info("${tableName}")`)
             return tableInfo.map((col: { name: string }) => col.name)
-        }
-        catch {
+        } catch {
             return []
         }
     }
@@ -206,20 +214,17 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
 
                 if (value === undefined || value === null) {
                     rowPlaceholders.push('NULL')
-                }
-                else if (isArrayColumn && Array.isArray(value)) {
+                } else if (isArrayColumn && Array.isArray(value)) {
                     // Convert JavaScript array to PostgreSQL array literal format
                     rowPlaceholders.push(`$${paramIndex}`)
                     parameters.push(this.toPostgresArrayLiteral(value))
                     paramIndex++
-                }
-                else if (typeof value === 'object' && value !== null) {
+                } else if (typeof value === 'object' && value !== null) {
                     // JSON/JSONB columns
                     rowPlaceholders.push(`$${paramIndex}`)
                     parameters.push(JSON.stringify(value))
                     paramIndex++
-                }
-                else {
+                } else {
                     rowPlaceholders.push(`$${paramIndex}`)
                     parameters.push(value)
                     paramIndex++
@@ -253,7 +258,11 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
         return `{${escaped.join(',')}}`
     }
 
-    private transformRowForPostgres(row: Record<string, unknown>, entity: EntityMetadata, sqliteColumns: string[]): Record<string, unknown> {
+    private transformRowForPostgres(
+        row: Record<string, unknown>,
+        entity: EntityMetadata,
+        sqliteColumns: string[],
+    ): Record<string, unknown> {
         const transformed: Record<string, unknown> = {}
         const sqliteColumnSet = new Set(sqliteColumns)
         const entityColumnMap = new Map(entity.columns.map((col) => [col.databaseName, col]))
@@ -281,8 +290,7 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
             if ((column.type === 'json' || column.type === 'jsonb') && typeof value === 'string') {
                 try {
                     value = JSON.parse(value)
-                }
-                catch {
+                } catch {
                     // Keep original value if parsing fails
                 }
             }

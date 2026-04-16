@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sapAribaAuth } from '../auth';
-import { sapAribaCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { sapAribaAuth } from '../auth'
+import { sapAribaCommon } from '../common'
 
 export const getFacetData = createAction({
     auth: sapAribaAuth,
@@ -27,12 +27,12 @@ export const getFacetData = createAction({
         }),
     },
     async run(context) {
-        const { realm, select, rsqlfilter } = context.propsValue;
+        const { realm, select, rsqlfilter } = context.propsValue
 
         const queryParams: Record<string, string> = {
             select,
             rsqlfilter,
-        };
+        }
 
         const response = await sapAribaCommon.makeRequest(
             context.auth,
@@ -40,9 +40,9 @@ export const getFacetData = createAction({
             '/facets',
             queryParams,
             undefined,
-            { realm }
-        );
+            { realm },
+        )
 
-        return response;
+        return response
     },
-});
+})

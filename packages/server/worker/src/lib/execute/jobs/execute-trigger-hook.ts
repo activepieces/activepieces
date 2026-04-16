@@ -23,7 +23,14 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
             return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: undefined }
         }
 
-        const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
+        const provisioned = await provisionFlowPieces({
+            flowVersion,
+            platformId: data.platformId,
+            flowId: data.flowId,
+            projectId: data.projectId,
+            log: ctx.log,
+            apiClient: ctx.apiClient,
+        })
         if (!provisioned) {
             ctx.log.info({ flowId: data.flowId }, 'Failed to provision pieces for trigger hook, skipping')
             return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: undefined }

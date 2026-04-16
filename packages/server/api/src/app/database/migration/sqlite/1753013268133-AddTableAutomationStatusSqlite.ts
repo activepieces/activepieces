@@ -107,5 +107,4 @@ export class AddTableAutomationStatusSqlite1753013268133 implements MigrationInt
             CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
         `)
     }
-
 }

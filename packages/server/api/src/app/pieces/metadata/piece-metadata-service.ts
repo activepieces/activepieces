@@ -1,4 +1,10 @@
-import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, PiecePackageInformation, pieceTranslation } from '@activepieces/pieces-framework'
+import {
+    PieceMetadata,
+    PieceMetadataModel,
+    PieceMetadataModelSummary,
+    PiecePackageInformation,
+    pieceTranslation,
+} from '@activepieces/pieces-framework'
 import {
     ActivepiecesError,
     apId,
@@ -27,7 +33,12 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { pubsub } from '../../helper/pubsub'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
-import { PIECE_METADATA_REFRESH_CHANNEL, pieceCache, PieceMetadataRefreshMessage, PieceMetadataRefreshType } from './piece-cache'
+import {
+    PIECE_METADATA_REFRESH_CHANNEL,
+    PieceMetadataRefreshMessage,
+    PieceMetadataRefreshType,
+    pieceCache,
+} from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { pieceListUtils } from './utils'
 
@@ -69,9 +80,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 }
             }
             const registry = await pieceCache(log).getRegistry({ release: undefined, platformId })
-            const versions = registry
-                .filter((entry) => entry.name === name)
-                .map((entry) => entry.version)
+            const versions = registry.filter((entry) => entry.name === name).map((entry) => entry.version)
             return {
                 data: versions.sort((a, b) => semVer.rcompare(a, b)).map((version) => ({ version })),
                 next: null,
@@ -129,7 +138,12 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             })
             const message: PieceMetadataRefreshMessage = {
                 type: PieceMetadataRefreshType.UPDATE_USAGE,
-                piece: { name: existingMetadata.name, version: existingMetadata.version, platformId: existingMetadata.platformId, projectUsage: usage },
+                piece: {
+                    name: existingMetadata.name,
+                    version: existingMetadata.version,
+                    platformId: existingMetadata.platformId,
+                    projectUsage: usage,
+                },
             }
             await pubsub.publish(PIECE_METADATA_REFRESH_CHANNEL, JSON.stringify(message))
         },
@@ -183,23 +197,28 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 ...pieceMetadata,
             })
             if (publishCacheRefresh) {
-                const message: PieceMetadataRefreshMessage = { type: PieceMetadataRefreshType.CREATE, piece: savedPiece }
+                const message: PieceMetadataRefreshMessage = {
+                    type: PieceMetadataRefreshType.CREATE,
+                    piece: savedPiece,
+                }
                 await pubsub.publish(PIECE_METADATA_REFRESH_CHANNEL, JSON.stringify(message))
             }
             return savedPiece
         },
 
-        async bulkDelete(pieces: { name: string, version: string }[]): Promise<void> {
-            const deleted: { name: string, version: string }[] = []
-            await Promise.all(pieces.map(async (piece) => {
-                const result = await pieceRepos().delete({
-                    name: piece.name,
-                    version: piece.version,
-                })
-                if (result.affected && result.affected > 0) {
-                    deleted.push(piece)
-                }
-            }))
+        async bulkDelete(pieces: { name: string; version: string }[]): Promise<void> {
+            const deleted: { name: string; version: string }[] = []
+            await Promise.all(
+                pieces.map(async (piece) => {
+                    const result = await pieceRepos().delete({
+                        name: piece.name,
+                        version: piece.version,
+                    })
+                    if (result.affected && result.affected > 0) {
+                        deleted.push(piece)
+                    }
+                }),
+            )
             if (deleted.length > 0) {
                 const message: PieceMetadataRefreshMessage = { type: PieceMetadataRefreshType.DELETE, pieces: deleted }
                 await pubsub.publish(PIECE_METADATA_REFRESH_CHANNEL, JSON.stringify(message))
@@ -211,7 +230,9 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
 export const getPiecePackageWithoutArchive = async (
     log: FastifyBaseLogger,
     platformId: PlatformId | undefined,
-    pkg: Omit<PublicPiecePackage, 'directoryPath' | 'pieceType' | 'packageType'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive' | 'pieceType' | 'packageType'>,
+    pkg:
+        | Omit<PublicPiecePackage, 'directoryPath' | 'pieceType' | 'packageType'>
+        | Omit<PrivatePiecePackage, 'archiveId' | 'archive' | 'pieceType' | 'packageType'>,
 ): Promise<PiecePackage> => {
     const pieceMetadata = await pieceMetadataService(log).getOrThrow({
         name: pkg.pieceName,
@@ -263,15 +284,19 @@ export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | Piec
             ...pieceMetadataEntity,
             actions: Object.keys(originalMetadata.actions).length,
             triggers: Object.keys(originalMetadata.triggers).length,
-            suggestedActions: suggestionType === SuggestionType.ACTION || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
-                Object.values(pieceMetadataEntity.actions) : undefined,
-            suggestedTriggers: suggestionType === SuggestionType.TRIGGER || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
-                Object.values(pieceMetadataEntity.triggers) : undefined,
+            suggestedActions:
+                suggestionType === SuggestionType.ACTION || suggestionType === SuggestionType.ACTION_AND_TRIGGER
+                    ? Object.values(pieceMetadataEntity.actions)
+                    : undefined,
+            suggestedTriggers:
+                suggestionType === SuggestionType.TRIGGER || suggestionType === SuggestionType.ACTION_AND_TRIGGER
+                    ? Object.values(pieceMetadataEntity.triggers)
+                    : undefined,
         }
     })
 }
 
-const findOldestCreatedDate = async ({ name, platformId }: { name: string, platformId?: string }): Promise<string> => {
+const findOldestCreatedDate = async ({ name, platformId }: { name: string; platformId?: string }): Promise<string> => {
     const piece = await pieceRepos().findOne({
         where: {
             name,
@@ -284,7 +309,11 @@ const findOldestCreatedDate = async ({ name, platformId }: { name: string, platf
     return piece?.created ?? dayjs().toISOString()
 }
 
-const enrichTags = async (platformId: string | undefined, pieces: PieceMetadataSchema[], includeTags: boolean | undefined): Promise<PieceMetadataSchema[]> => {
+const enrichTags = async (
+    platformId: string | undefined,
+    pieces: PieceMetadataSchema[],
+    includeTags: boolean | undefined,
+): Promise<PieceMetadataSchema[]> => {
     if (!includeTags || isNil(platformId)) {
         return pieces
     }
@@ -314,8 +343,8 @@ const sortByVersionDescending = <T extends { version: string }>(a: T, b: T): num
 
 const findExactVersion = async (
     log: FastifyBaseLogger,
-    params: { name: string, version: string | undefined, platformId: string | undefined },
-): Promise<{ name: string, version: string, platformId: string | undefined } | undefined> => {
+    params: { name: string; version: string | undefined; platformId: string | undefined },
+): Promise<{ name: string; version: string; platformId: string | undefined } | undefined> => {
     const { name, version, platformId } = params
     const versionToSearch = findNextExcludedVersion(version)
     const registry = await pieceCache(log).getRegistry({ release: undefined, platformId })
@@ -326,8 +355,10 @@ const findExactVersion = async (
         if (isNil(versionToSearch)) {
             return true
         }
-        return semVer.compare(entry.version, versionToSearch.nextExcludedVersion) < 0
-            && semVer.compare(entry.version, versionToSearch.baseVersion) >= 0
+        return (
+            semVer.compare(entry.version, versionToSearch.nextExcludedVersion) < 0 &&
+            semVer.compare(entry.version, versionToSearch.baseVersion) >= 0
+        )
     })
 
     if (matchingRegistryEntries.length === 0) {
@@ -342,7 +373,9 @@ const findExactVersion = async (
     }
 }
 
-const findNextExcludedVersion = (version: string | undefined): { baseVersion: string, nextExcludedVersion: string } | undefined => {
+const findNextExcludedVersion = (
+    version: string | undefined,
+): { baseVersion: string; nextExcludedVersion: string } | undefined => {
     if (version?.startsWith('^')) {
         const baseVersion = version.substring(1)
         return {
@@ -389,7 +422,6 @@ const increaseMajorVersion = (version: string): string => {
     }
     return incrementedVersion
 }
-
 
 // Types
 
@@ -443,7 +475,6 @@ type RegistryParams = {
 
 type ListVersionsParams = {
     name: string
-    platformId: string 
+    platformId: string
     projectId: string
 }
-

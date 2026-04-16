@@ -2,8 +2,8 @@ import { ProjectRole, RoleType, SeekPage } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Eye,
-  PenLine,
   Pencil,
+  PenLine,
   Shield,
   ShieldCheck,
   Trash,

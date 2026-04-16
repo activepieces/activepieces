@@ -1,15 +1,15 @@
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import {
     FlowActionType,
-    flowStructureUtil,
     FlowTriggerType,
     FlowVersion,
+    flowStructureUtil,
     GenericStepOutput,
     isNil,
     LoopStepOutput,
     RouterStepOutput,
-    spreadIfDefined,
     StepOutputStatus,
+    spreadIfDefined,
 } from '@activepieces/shared'
 import { createPropsResolver } from '../../variables/props-resolver'
 import { EngineConstants } from './engine-constants'
@@ -29,7 +29,7 @@ export const testExecutionContext = {
         if (isNil(flowVersion)) {
             return flowExecutionContext
         }
-        
+
         const flowSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
 
         for (const step of flowSteps) {
@@ -78,19 +78,21 @@ export const testExecutionContext = {
                 case FlowActionType.CODE:
                 case FlowTriggerType.EMPTY:
                 case FlowTriggerType.PIECE:
-                    flowExecutionContext = flowExecutionContext.upsertStep(step.name, GenericStepOutput.create({
-                        input: {},
-                        type: stepType,
-                        status: StepOutputStatus.SUCCEEDED,
-                        ...spreadIfDefined('output', sampleData?.[step.name]),
-                    }))
+                    flowExecutionContext = flowExecutionContext.upsertStep(
+                        step.name,
+                        GenericStepOutput.create({
+                            input: {},
+                            type: stepType,
+                            status: StepOutputStatus.SUCCEEDED,
+                            ...spreadIfDefined('output', sampleData?.[step.name]),
+                        }),
+                    )
                     break
             }
         }
         return flowExecutionContext
     },
 }
-
 
 type TestExecutionParams = {
     engineConstants: EngineConstants

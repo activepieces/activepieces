@@ -1,8 +1,8 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const voipstudioAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: `VoIPstudio API Key
+    displayName: 'API Key',
+    description: `VoIPstudio API Key
 
 **Web Dashboard - Add API Key**
 
@@ -13,5 +13,5 @@ Follow steps below to add API Key for a user:
 3. Enter a name for your API Key, this can be anything you like. For example a name of your application that will use this API Key.
 4. Click "Add" button.
 5. Click "Eye" icon to retrieve the actual API Key`,
-  required: true,
-});
+    required: true,
+})

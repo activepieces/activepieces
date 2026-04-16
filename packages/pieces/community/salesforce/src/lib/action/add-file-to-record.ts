@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
-import { callSalesforceApi, salesforcesCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { callSalesforceApi, salesforcesCommon } from '../common'
 
 export const addFileToRecord = createAction({
     auth: salesforceAuth,
@@ -20,25 +20,25 @@ export const addFileToRecord = createAction({
             displayName: 'File Name',
             description: 'The name of the file, including its extension (e.g., "report.pdf").',
             required: true,
-        })
+        }),
     },
     async run(context) {
-        const { record_id, file, file_name } = context.propsValue;
+        const { record_id, file, file_name } = context.propsValue
 
         const body = {
             Title: file_name,
             PathOnClient: file_name,
             VersionData: file.base64,
-            FirstPublishLocationId: record_id, 
-        };
+            FirstPublishLocationId: record_id,
+        }
 
         const response = await callSalesforceApi(
             HttpMethod.POST,
             context.auth,
             '/services/data/v56.0/sobjects/ContentVersion',
-            body
-        );
+            body,
+        )
 
-        return response.body;
+        return response.body
     },
-});
+})

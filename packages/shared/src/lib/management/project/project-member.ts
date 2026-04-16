@@ -3,4 +3,3 @@ export enum DefaultProjectRole {
     EDITOR = 'Editor',
     VIEWER = 'Viewer',
 }
-

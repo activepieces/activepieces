@@ -1,5 +1,12 @@
 import { ProjectId } from '@activepieces/shared'
-import { NoneAuthorization, PlatformAuthorization, ProjectAuthorization, PublicRoute, RouteKind, UnscopedAuthorization } from './common'
+import {
+    NoneAuthorization,
+    PlatformAuthorization,
+    ProjectAuthorization,
+    PublicRoute,
+    RouteKind,
+    UnscopedAuthorization,
+} from './common'
 
 export type ProjectAuthorizationConfig = Omit<ProjectAuthorization, 'projectResource'> & {
     projectId: ProjectId | undefined

@@ -1,7 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { AuthorizationType } from '../src/app/core/security/authorization/common'
 import { FastifyRouteSecurity } from '../src/app/core/security/authorization/fastify-security'
-import { ApId, EndpointScope, MaybeProjectExtra, Permission, Principal, Principal, PrincipalForTypes, PrincipalForTypes, PrincipalType } from '@activepieces/shared'
+import {
+    ApId,
+    EndpointScope,
+    MaybeProjectExtra,
+    Permission,
+    Principal,
+    Principal,
+    PrincipalForTypes,
+    PrincipalForTypes,
+    PrincipalType,
+} from '@activepieces/shared'
 import fastify, {
     RouteShorthandOptions as BaseRouteShorthandOptions,
     FastifyBaseLogger,
@@ -30,12 +40,17 @@ declare module 'fastify' {
         Logger = unknown,
         RequestType = unknown,
     > {
-        principal:
-        ContextConfig['security'] extends { authorization: { allowedPrincipals: infer Q extends readonly PrincipalType[] } }
+        principal: ContextConfig['security'] extends {
+            authorization: { allowedPrincipals: infer Q extends readonly PrincipalType[] }
+        }
             ? PrincipalForTypes<Q>
-            : typeof ContextConfig['security'] extends undefined ? Principal : Principal
-        
-        projectId: ContextConfig['security'] extends { authorization: { type: AuthorizationType.PROJECT } } ? string : undefined
+            : (typeof ContextConfig)['security'] extends undefined
+              ? Principal
+              : Principal
+
+        projectId: ContextConfig['security'] extends { authorization: { type: AuthorizationType.PROJECT } }
+            ? string
+            : undefined
         rawBody?: string | Buffer
         isMultipart(): boolean
     }
@@ -51,7 +66,6 @@ declare module 'fastify' {
         security: FastifyRouteSecurity
         otel?: boolean
     }
-    
 
     export type RouteShorthandOptions<
         RawServer extends RawServerBase = RawServerDefault,

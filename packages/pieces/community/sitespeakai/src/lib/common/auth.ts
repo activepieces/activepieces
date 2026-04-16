@@ -1,6 +1,6 @@
-import { PieceAuth } from "@activepieces/pieces-framework";
-import { makeRequest } from "./client";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { HttpMethod } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
+import { makeRequest } from './client'
 
 export const SiteSpeakAuth = PieceAuth.SecretText({
     displayName: 'SiteSpeakAI API Key',
@@ -18,19 +18,19 @@ export const SiteSpeakAuth = PieceAuth.SecretText({
             return {
                 valid: false,
                 error: 'API Key is required',
-            };
+            }
         }
 
         try {
-            await makeRequest(auth as string, HttpMethod.GET, `/me`);
+            await makeRequest(auth as string, HttpMethod.GET, `/me`)
             return {
                 valid: true,
-            };
+            }
         } catch (error) {
             return {
                 valid: false,
                 error: 'Invalid SiteSpeakAI API Key',
-            };
+            }
         }
     },
-});
+})

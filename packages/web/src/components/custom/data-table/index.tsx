@@ -2,18 +2,18 @@
 
 import { apId, isNil, SeekPage } from '@activepieces/shared';
 import {
-  ColumnDef as TanstackColumnDef,
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   SortingState,
+  ColumnDef as TanstackColumnDef,
   useReactTable,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { t } from 'i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
 
@@ -21,10 +21,10 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import {
   Table,
@@ -184,12 +184,15 @@ export function DataTable<
         ])
       : columnsWithSelect;
 
-  const columnVisibility = columnsInitial.reduce((acc, column) => {
-    if (column.enableHiding && 'accessorKey' in column) {
-      acc[column.accessorKey as string] = false;
-    }
-    return acc;
-  }, {} as Record<string, boolean>);
+  const columnVisibility = columnsInitial.reduce(
+    (acc, column) => {
+      if (column.enableHiding && 'accessorKey' in column) {
+        acc[column.accessorKey as string] = false;
+      }
+      return acc;
+    },
+    {} as Record<string, boolean>,
+  );
 
   const [searchParams, setSearchParams] = useSearchParams();
   const startingCursor = searchParams.get('cursor') || undefined;

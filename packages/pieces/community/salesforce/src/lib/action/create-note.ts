@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
-import { callSalesforceApi, salesforcesCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { callSalesforceApi, salesforcesCommon } from '../common'
 
 export const createNote = createAction({
     auth: salesforceAuth,
@@ -10,7 +10,7 @@ export const createNote = createAction({
     description: 'Creates a note and attaches it to a record.',
     props: {
         object: salesforcesCommon.object,
-        parent_id: salesforcesCommon.record, 
+        parent_id: salesforcesCommon.record,
         Title: Property.ShortText({
             displayName: 'Title',
             required: true,
@@ -22,21 +22,21 @@ export const createNote = createAction({
         }),
     },
     async run(context) {
-        const { parent_id, Title, Body } = context.propsValue;
+        const { parent_id, Title, Body } = context.propsValue
 
         const body = {
             ParentId: parent_id,
             Title: Title,
             Body: Body,
-        };
+        }
 
         const response = await callSalesforceApi(
             HttpMethod.POST,
             context.auth,
             '/services/data/v56.0/sobjects/Note',
-            body
-        );
+            body,
+        )
 
-        return response.body;
+        return response.body
     },
-});
+})

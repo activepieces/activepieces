@@ -1,9 +1,9 @@
-import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { MEMPOOL_API_BASE_URL } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework'
+import { MEMPOOL_API_BASE_URL } from '../../common'
 
 export const getBlockStatus = createAction({
- auth:PieceAuth.None(),
+    auth: PieceAuth.None(),
     name: 'get_block_status',
     displayName: 'Get Block Status',
     description: 'Returns the confirmation status of a block',
@@ -12,14 +12,14 @@ export const getBlockStatus = createAction({
         hash: Property.ShortText({
             displayName: 'Block Hash',
             description: 'The hash of the block to check status',
-            required: true
-        })
+            required: true,
+        }),
     },
     async run({ propsValue }) {
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${MEMPOOL_API_BASE_URL}/api/block/${propsValue.hash}/status`,
-        });
-        return response.body;
+        })
+        return response.body
     },
-});
+})

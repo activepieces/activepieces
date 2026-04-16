@@ -341,5 +341,4 @@ export class RemoveTerminationReasonSqlite1751727630516 implements MigrationInte
             CREATE INDEX "idx_ai_usage_project_created" ON "ai_usage" ("projectId", "created")
         `)
     }
-
 }

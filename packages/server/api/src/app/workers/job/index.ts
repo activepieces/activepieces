@@ -1,9 +1,4 @@
-import {
-    EngineOperationType,
-    JobData,
-    ProgressUpdateType,
-    RunEnvironment,
-} from '@activepieces/shared'
+import { EngineOperationType, JobData, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { z } from 'zod'
 
 export * from './runs-metadata-queue-factory'
@@ -59,10 +54,11 @@ export const SubmitPayloadsRequest = z.object({
 
 export type SubmitPayloadsRequest = z.infer<typeof SubmitPayloadsRequest>
 
-
-
-
-export function getEngineTimeout(operationType: EngineOperationType, flowTimeoutSandbox: number, triggerTimeoutSandbox: number): number {
+export function getEngineTimeout(
+    operationType: EngineOperationType,
+    flowTimeoutSandbox: number,
+    triggerTimeoutSandbox: number,
+): number {
     switch (operationType) {
         case EngineOperationType.EXECUTE_FLOW:
             return flowTimeoutSandbox

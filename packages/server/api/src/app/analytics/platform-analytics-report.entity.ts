@@ -1,8 +1,6 @@
 import { Platform, PlatformAnalyticsReport } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import {
-    BaseColumnSchemaPart,
-} from '../database/database-common'
+import { BaseColumnSchemaPart } from '../database/database-common'
 
 type PlatformAnalyticsReportEntity = PlatformAnalyticsReport & {
     platform: Platform
@@ -34,7 +32,7 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
             type: 'jsonb',
             nullable: false,
         },
-    },    
+    },
     indices: [
         {
             name: 'idx_platform_analytics_report_platform_id',

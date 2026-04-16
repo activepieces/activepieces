@@ -94,7 +94,7 @@ export default function ImpactPage() {
     }
   });
 
-  const report = isLoading ? undefined : data ?? undefined;
+  const report = isLoading ? undefined : (data ?? undefined);
 
   return (
     <LockedFeatureGuard

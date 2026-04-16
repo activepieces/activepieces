@@ -7,7 +7,8 @@ import {
     Folder,
     FolderDto,
     FolderId,
-    isNil, ProjectId,
+    isNil,
+    ProjectId,
     SeekPage,
     UpdateFolderRequest,
 } from '@activepieces/shared'
@@ -61,11 +62,14 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
             })
         }
         const folderId = apId()
-        await folderRepo().upsert({
-            id: folderId,
-            projectId,
-            displayName: request.displayName,
-        }, ['projectId', 'displayName'])
+        await folderRepo().upsert(
+            {
+                id: folderId,
+                projectId,
+                displayName: request.displayName,
+            },
+            ['projectId', 'displayName'],
+        )
         const folder = await folderRepo().findOneByOrFail({ projectId, id: folderId })
         return {
             ...folder,
@@ -84,7 +88,7 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        
+
         const queryBuilder = folderRepo()
             .createQueryBuilder('folder')
             .leftJoin('flow', 'flow', 'flow.folderId = folder.id')
@@ -97,7 +101,8 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
     },
     async getOneByDisplayNameCaseInsensitive(params: GetOneByDisplayNameParams): Promise<Folder | null> {
         const { projectId, displayName } = params
-        return folderRepo().createQueryBuilder('folder')
+        return folderRepo()
+            .createQueryBuilder('folder')
             .where('folder.projectId = :projectId', { projectId })
             .andWhere('LOWER(folder.displayName) = LOWER(:displayName)', { displayName })
             .getOne()

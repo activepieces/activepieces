@@ -1,6 +1,6 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { opnformCommon } from './common';
-import { AppConnectionType } from '@activepieces/shared';
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
+import { AppConnectionType } from '@activepieces/shared'
+import { opnformCommon } from './common'
 
 export const opnformAuth = PieceAuth.CustomAuth({
     description:
@@ -22,13 +22,13 @@ export const opnformAuth = PieceAuth.CustomAuth({
             const isValid = await opnformCommon.validateAuth({
                 props: auth,
                 type: AppConnectionType.CUSTOM_AUTH,
-            });
+            })
             if (isValid) {
-                return { valid: true };
+                return { valid: true }
             }
-            return { valid: false, error: 'Invalid API Key' };
+            return { valid: false, error: 'Invalid API Key' }
         } catch (e) {
-            return { valid: false, error: 'Invalid API Key' };
+            return { valid: false, error: 'Invalid API Key' }
         }
     },
-});
+})

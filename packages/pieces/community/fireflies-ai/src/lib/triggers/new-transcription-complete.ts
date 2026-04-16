@@ -1,17 +1,17 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { firefliesAiAuth } from '../auth';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { getTranscript } from '../common/queries';
-import { BASE_URL } from '../common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { firefliesAiAuth } from '../auth'
+import { BASE_URL } from '../common'
+import { getTranscript } from '../common/queries'
 
 export const newTranscriptionCompletedTrigger = createTrigger({
-	auth: firefliesAiAuth,
-	name: 'new_transcription_completed',
-	displayName: 'New Transcription Completed',
-	description: 'Triggered when a new meeting is transcribed.',
-	props: {
-		webhookInstructions: Property.MarkDown({
-			value: `
+    auth: firefliesAiAuth,
+    name: 'new_transcription_completed',
+    displayName: 'New Transcription Completed',
+    description: 'Triggered when a new meeting is transcribed.',
+    props: {
+        webhookInstructions: Property.MarkDown({
+            value: `
 			## Fireflies.ai Webhook Setup
 			To use this trigger, you need to manually set up a webhook in your Fireflies.ai account:
 
@@ -25,18 +25,18 @@ export const newTranscriptionCompletedTrigger = createTrigger({
 
 			This webhook will be triggered when a meeting transcription is completed.
 			`,
-		}),
-	},
-	type: TriggerStrategy.WEBHOOK,
-	sampleData: undefined,
-	async onEnable(context) {
-		// No need to register webhooks programmatically as user will do it manually
-	},
-	async onDisable(context) {
-		// No need to unregister webhooks as user will do it manually
-	},
-	async test(context) {
-		const query = `
+        }),
+    },
+    type: TriggerStrategy.WEBHOOK,
+    sampleData: undefined,
+    async onEnable(context) {
+        // No need to register webhooks programmatically as user will do it manually
+    },
+    async onDisable(context) {
+        // No need to unregister webhooks as user will do it manually
+    },
+    async test(context) {
+        const query = `
 		query Transcripts(
 		$limit: Int
 		$skip: Int 
@@ -109,47 +109,45 @@ export const newTranscriptionCompletedTrigger = createTrigger({
 			}
 			meeting_link
 		}
-		}`;
-		const response = await httpClient.sendRequest<{ data: { transcripts: Record<string, any>[] } }>(
-			{
-				url: BASE_URL,
-				method: HttpMethod.POST,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: context.auth.secret_text,
-				},
-				body: {
-					query,
-					variables: {
-						limit: 5,
-						skip: 0,
-					},
-				},
-			},
-		);
-		return response.body.data.transcripts;
-	},
-	async run(context) {
-		const payload = context.payload.body as { meetingId: string; eventType: string };
-		if (payload.eventType !== 'Transcription completed') {
-			return [];
-		}
+		}`
+        const response = await httpClient.sendRequest<{ data: { transcripts: Record<string, any>[] } }>({
+            url: BASE_URL,
+            method: HttpMethod.POST,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: context.auth.secret_text,
+            },
+            body: {
+                query,
+                variables: {
+                    limit: 5,
+                    skip: 0,
+                },
+            },
+        })
+        return response.body.data.transcripts
+    },
+    async run(context) {
+        const payload = context.payload.body as { meetingId: string; eventType: string }
+        if (payload.eventType !== 'Transcription completed') {
+            return []
+        }
 
-		const response = await httpClient.sendRequest<{ data: { transcript: Record<string, any> } }>({
-			url:BASE_URL,
-			method: HttpMethod.POST,
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.secret_text,
-			},
-			body: {
-				query: getTranscript,
-				variables: {
-					transcriptId: payload.meetingId,
-				},
-			},
-		});
+        const response = await httpClient.sendRequest<{ data: { transcript: Record<string, any> } }>({
+            url: BASE_URL,
+            method: HttpMethod.POST,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: context.auth.secret_text,
+            },
+            body: {
+                query: getTranscript,
+                variables: {
+                    transcriptId: payload.meetingId,
+                },
+            },
+        })
 
-		return [response.body.data.transcript];
-	},
-});
+        return [response.body.data.transcript]
+    },
+})

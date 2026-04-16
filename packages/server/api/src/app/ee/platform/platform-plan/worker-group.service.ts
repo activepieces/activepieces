@@ -32,18 +32,30 @@ export const workerGroupService = (log: FastifyBaseLogger) => ({
         return groupId === CANARY_WORKER_GROUP_ID
     },
 
-    async updateWorkerGroup({ platformId, workerGroupId }: { platformId: string, workerGroupId: string | null }): Promise<void> {
+    async updateWorkerGroup({
+        platformId,
+        workerGroupId,
+    }: {
+        platformId: string
+        workerGroupId: string | null
+    }): Promise<void> {
         await platformPlanRepo().update({ platformId }, { workerGroupId })
         await distributedStore.delete(getWorkerGroupCacheKey(platformId))
     },
 
-    async updateCanary({ platformId, canary }: { platformId: string, canary: boolean }): Promise<void> {
+    async updateCanary({ platformId, canary }: { platformId: string; canary: boolean }): Promise<void> {
         const workerGroupId = canary ? CANARY_WORKER_GROUP_ID : null
         await platformPlanRepo().update({ platformId }, { workerGroupId })
         await distributedStore.delete(getWorkerGroupCacheKey(platformId))
     },
 
-    async moveJobsToTargetQueue({ platformId, workerGroupId }: { platformId: string, workerGroupId: string | null }): Promise<void> {
+    async moveJobsToTargetQueue({
+        platformId,
+        workerGroupId,
+    }: {
+        platformId: string
+        workerGroupId: string | null
+    }): Promise<void> {
         const currentGroupId = await workerGroupService(log).getWorkerGroupId({ platformId })
         const targetQueue = isNil(workerGroupId) ? QueueName.WORKER_JOBS : getWorkerGroupQueueName(workerGroupId)
         const fromQueueName = isNil(currentGroupId) ? QueueName.WORKER_JOBS : getWorkerGroupQueueName(currentGroupId)

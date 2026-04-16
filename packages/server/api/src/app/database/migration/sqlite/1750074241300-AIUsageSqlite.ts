@@ -357,5 +357,4 @@ export class AIUsageSqlite1750074241300 implements MigrationInterface {
             DROP TABLE "ai_usage"
         `)
     }
-
 }

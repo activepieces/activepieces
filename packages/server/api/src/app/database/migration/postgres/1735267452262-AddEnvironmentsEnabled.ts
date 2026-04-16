@@ -23,5 +23,4 @@ export class AddEnvironmentsEnabled1735267452262 implements MigrationInterface {
                 RENAME COLUMN "environmentsEnabled" TO "gitSyncEnabled"
         `)
     }
-
 }

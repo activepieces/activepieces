@@ -7,10 +7,10 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   PieceIcon,
-  piecesHooks,
-  PieceSelectorTabType,
-  usePieceSelectorTabs,
   PieceSelectorOperation,
+  PieceSelectorTabType,
+  piecesHooks,
+  usePieceSelectorTabs,
 } from '@/features/pieces';
 
 import { PieceActionsOrTriggersList } from './piece-actions-or-triggers-list';

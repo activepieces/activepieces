@@ -1,7 +1,10 @@
 import { z } from 'zod'
 import { BaseModelSchema, DateOrString, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
-import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../../core/federated-authn'
+import {
+    FederatedAuthnProviderConfig,
+    FederatedAuthnProviderConfigWithoutSensitiveData,
+} from '../../core/federated-authn'
 
 export type PlatformId = ApId
 
@@ -94,9 +97,11 @@ export const PlatformPlan = z.object({
     activeFlowsLimit: Nullable(z.number()),
 
     /** @deprecated use workerGroupId instead — will be removed in 0.83.0 */
-    dedicatedWorkers: Nullable(z.object({
-        trustedEnvironment: z.boolean(),
-    })),
+    dedicatedWorkers: Nullable(
+        z.object({
+            trustedEnvironment: z.boolean(),
+        }),
+    ),
     /** @deprecated use workerGroupId instead — will be removed in 0.83.0 */
     canary: z.boolean(),
     workerGroupId: Nullable(z.string()),
@@ -105,7 +110,10 @@ export type PlatformPlan = z.infer<typeof PlatformPlan>
 
 export const PlatformPlanLimits = PlatformPlan.omit({ id: true, platformId: true, created: true, updated: true })
 export type PlatformPlanLimits = z.infer<typeof PlatformPlanLimits>
-export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate' | 'stripeBillingCycle'>
+export type PlatformPlanWithOnlyLimits = Omit<
+    PlatformPlanLimits,
+    'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate' | 'stripeBillingCycle'
+>
 
 export const Platform = z.object({
     ...BaseModelSchema,
@@ -116,12 +124,12 @@ export const Platform = z.object({
     fullLogoUrl: z.string(),
     favIconUrl: z.string(),
     /**
-    * @deprecated Use projects filter instead.
-    */
+     * @deprecated Use projects filter instead.
+     */
     filteredPieceNames: z.array(z.string()),
     /**
-    * @deprecated Use projects filter instead.
-    */
+     * @deprecated Use projects filter instead.
+     */
     filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior),
     cloudAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),

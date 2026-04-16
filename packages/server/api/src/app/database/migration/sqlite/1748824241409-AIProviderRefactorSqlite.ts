@@ -18,7 +18,6 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
     public async up(queryRunner: QueryRunner): Promise<void> {
         log.info('[AIProviderRefactorSqlite1748824241409#up] started')
 
-    
         // Create backup table first
         await queryRunner.query(`
             CREATE TABLE "ai_provider_backup" AS 
@@ -36,20 +35,23 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
 
             for (const provider of aiProviders) {
                 try {
-                    const decryptedConfig: OldAiProviderConfig = await encryptUtils.decryptObject(JSON.parse(provider.config))
-                    
+                    const decryptedConfig: OldAiProviderConfig = await encryptUtils.decryptObject(
+                        JSON.parse(provider.config),
+                    )
+
                     // Validate that we have the expected structure
                     if (!decryptedConfig.defaultHeaders || typeof decryptedConfig.defaultHeaders !== 'object') {
-                        throw new Error(`Invalid config structure for provider ${provider.id}: missing or invalid defaultHeaders`)
+                        throw new Error(
+                            `Invalid config structure for provider ${provider.id}: missing or invalid defaultHeaders`,
+                        )
                     }
-                    
+
                     let apiKey = ''
                     const providerType = provider.provider.toLowerCase()
-                    
+
                     if (providerType === 'anthropic') {
                         apiKey = decryptedConfig.defaultHeaders['x-api-key'] || ''
-                    }
-                    else if (providerType === 'openai' || providerType === 'replicate') {
+                    } else if (providerType === 'openai' || providerType === 'replicate') {
                         const authHeader = decryptedConfig.defaultHeaders['Authorization'] || ''
                         apiKey = authHeader.replace(/^Bearer\s+/i, '')
                     }
@@ -63,47 +65,61 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
                     }
 
                     const encryptedNewConfig = encryptUtils.encryptObject(newConfig)
-                    
-                    await queryRunner.query(`
+
+                    await queryRunner.query(
+                        `
                         UPDATE "ai_provider" SET config = ? WHERE id = ?
-                    `, [JSON.stringify(encryptedNewConfig), provider.id])
-                    
+                    `,
+                        [JSON.stringify(encryptedNewConfig), provider.id],
+                    )
+
                     successCount++
-                    log.info({ providerId: provider.id, providerType }, '[AIProviderRefactorSqlite1748824241409#up] Successfully migrated provider')
-                }
-                catch (error) {
+                    log.info(
+                        { providerId: provider.id, providerType },
+                        '[AIProviderRefactorSqlite1748824241409#up] Successfully migrated provider',
+                    )
+                } catch (error) {
                     errorCount++
-                    log.error({
-                        err: error,
-                        providerId: provider.id,
-                    }, '[AIProviderRefactorSqlite1748824241409#up] Failed to transform config for provider')
-                    throw new Error(`Migration failed for provider ${provider.id}: ${error instanceof Error ? error.message : String(error)}`)
+                    log.error(
+                        {
+                            err: error,
+                            providerId: provider.id,
+                        },
+                        '[AIProviderRefactorSqlite1748824241409#up] Failed to transform config for provider',
+                    )
+                    throw new Error(
+                        `Migration failed for provider ${provider.id}: ${error instanceof Error ? error.message : String(error)}`,
+                    )
                 }
             }
 
-            log.info({ successCount, errorCount }, '[AIProviderRefactorSqlite1748824241409#up] Migration completed successfully')
+            log.info(
+                { successCount, errorCount },
+                '[AIProviderRefactorSqlite1748824241409#up] Migration completed successfully',
+            )
 
             // Only proceed with schema changes if all data migrations succeeded
             await queryRunner.query('DROP INDEX IF EXISTS "idx_ai_provider_platform_id_provider"')
             await queryRunner.query('ALTER TABLE "ai_provider" DROP COLUMN "baseUrl"')
-            
+
             await queryRunner.query(`
                 CREATE UNIQUE INDEX "idx_ai_provider_platform_id_provider" ON "ai_provider" ("platformId", "provider")
             `)
 
             await queryRunner.query('DROP TABLE "ai_provider_backup"')
             log.info('[AIProviderRefactorSqlite1748824241409#up] Dropped backup table after successful migration')
+        } catch (error) {
+            log.error(
+                {
+                    err: error,
+                },
+                '[AIProviderRefactorSqlite1748824241409#up] Migration failed, restoring from backup',
+            )
 
-        }
-        catch (error) {
-            log.error({
-                err: error,
-            }, '[AIProviderRefactorSqlite1748824241409#up] Migration failed, restoring from backup')
-                
             // Restore from backup
             await queryRunner.query('DROP TABLE "ai_provider"')
             await queryRunner.query('ALTER TABLE "ai_provider_backup" RENAME TO "ai_provider"')
-            
+
             throw error instanceof Error ? error : new Error(String(error))
         }
 
@@ -130,22 +146,24 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
 
             for (const provider of aiProviders) {
                 try {
-                    const decryptedConfig: NewAiProviderConfig = await encryptUtils.decryptObject(JSON.parse(provider.config))
-                    
+                    const decryptedConfig: NewAiProviderConfig = await encryptUtils.decryptObject(
+                        JSON.parse(provider.config),
+                    )
+
                     if (!decryptedConfig.apiKey || typeof decryptedConfig.apiKey !== 'string') {
-                        throw new Error(`Invalid config structure for provider ${provider.id}: missing or invalid apiKey`)
+                        throw new Error(
+                            `Invalid config structure for provider ${provider.id}: missing or invalid apiKey`,
+                        )
                     }
-                    
+
                     const defaultHeaders: Record<string, string> = {}
                     const providerType = provider.provider.toLowerCase()
-                    
+
                     if (providerType === 'anthropic') {
                         defaultHeaders['x-api-key'] = decryptedConfig.apiKey
-                    }
-                    else if (providerType === 'openai' || providerType === 'replicate') {
+                    } else if (providerType === 'openai' || providerType === 'replicate') {
                         defaultHeaders['Authorization'] = `Bearer ${decryptedConfig.apiKey}`
-                    }
-                    else {
+                    } else {
                         defaultHeaders['Authorization'] = decryptedConfig.apiKey
                     }
 
@@ -154,47 +172,61 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
                     }
 
                     const encryptedOldConfig = encryptUtils.encryptObject(oldConfig)
-                    
-                    await queryRunner.query(`
+
+                    await queryRunner.query(
+                        `
                         UPDATE "ai_provider" SET config = ? WHERE id = ?
-                    `, [JSON.stringify(encryptedOldConfig), provider.id])
-                    
+                    `,
+                        [JSON.stringify(encryptedOldConfig), provider.id],
+                    )
+
                     successCount++
-                    log.info({ providerId: provider.id, providerType }, '[AIProviderRefactorSqlite1748824241409#down] Successfully rolled back provider')
-                }
-                catch (error) {
+                    log.info(
+                        { providerId: provider.id, providerType },
+                        '[AIProviderRefactorSqlite1748824241409#down] Successfully rolled back provider',
+                    )
+                } catch (error) {
                     errorCount++
-                    log.error({
-                        err: error,
-                        providerId: provider.id,
-                    }, '[AIProviderRefactorSqlite1748824241409#down] Failed to reverse transform config for provider')
-                    
+                    log.error(
+                        {
+                            err: error,
+                            providerId: provider.id,
+                        },
+                        '[AIProviderRefactorSqlite1748824241409#down] Failed to reverse transform config for provider',
+                    )
+
                     // Don't use a fallback - keep original data and fail the migration
-                    throw new Error(`Rollback failed for provider ${provider.id}: ${error instanceof Error ? error.message : String(error)}`)
+                    throw new Error(
+                        `Rollback failed for provider ${provider.id}: ${error instanceof Error ? error.message : String(error)}`,
+                    )
                 }
             }
 
-            log.info({ successCount, errorCount }, '[AIProviderRefactorSqlite1748824241409#down] Rollback completed successfully')
+            log.info(
+                { successCount, errorCount },
+                '[AIProviderRefactorSqlite1748824241409#down] Rollback completed successfully',
+            )
 
             await queryRunner.query('DROP INDEX IF EXISTS "idx_ai_provider_platform_id_provider"')
             await queryRunner.query('ALTER TABLE "ai_provider" ADD COLUMN "baseUrl" varchar NOT NULL DEFAULT ""')
-            
+
             await queryRunner.query(`
                 CREATE UNIQUE INDEX "idx_ai_provider_platform_id_provider" ON "ai_provider" ("platformId", "provider")
             `)
 
             await queryRunner.query('DROP TABLE "ai_provider_backup"')
             log.info('[AIProviderRefactorSqlite1748824241409#down] Dropped backup table after successful rollback')
+        } catch (error) {
+            log.error(
+                {
+                    err: error,
+                },
+                '[AIProviderRefactorSqlite1748824241409#down] Rollback failed, restoring from backup',
+            )
 
-        }
-        catch (error) {
-            log.error({
-                err: error,
-            }, '[AIProviderRefactorSqlite1748824241409#down] Rollback failed, restoring from backup')
-            
             await queryRunner.query('DROP TABLE "ai_provider"')
             await queryRunner.query('ALTER TABLE "ai_provider_backup" RENAME TO "ai_provider"')
-            
+
             throw error instanceof Error ? error : new Error(String(error))
         }
 

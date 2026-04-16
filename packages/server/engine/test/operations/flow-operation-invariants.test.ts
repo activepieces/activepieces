@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import type { BeginExecuteFlowOperation, FlowVersion } from '@activepieces/shared'
 import {
     EngineGenericError,
     ExecutionType,
@@ -8,7 +8,7 @@ import {
     RunEnvironment,
     StepOutputStatus,
 } from '@activepieces/shared'
-import type { BeginExecuteFlowOperation, FlowVersion } from '@activepieces/shared'
+import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('../../src/lib/handler/run-progress', () => ({
     runProgressService: {
@@ -84,7 +84,9 @@ describe('flow operation invariants', () => {
             })
 
             await expect(flowOperation.execute(operation)).rejects.toThrow(EngineGenericError)
-            await expect(flowOperation.execute(operation)).rejects.toThrow('BEGIN operation received with non-empty execution state')
+            await expect(flowOperation.execute(operation)).rejects.toThrow(
+                'BEGIN operation received with non-empty execution state',
+            )
         })
 
         it('should pass the assertion when BEGIN has empty execution state', async () => {
@@ -96,8 +98,7 @@ describe('flow operation invariants', () => {
             // but it should NOT throw InvalidBeginStateError
             try {
                 await flowOperation.execute(operation)
-            }
-            catch (e) {
+            } catch (e) {
                 expect((e as Error).name).not.toBe('InvalidBeginStateError')
             }
         })

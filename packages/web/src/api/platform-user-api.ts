@@ -1,9 +1,9 @@
 import {
+  ListUsersRequestBody,
   SeekPage,
   UpdateUserRequestBody,
   User,
   UserWithMetaInformation,
-  ListUsersRequestBody,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';

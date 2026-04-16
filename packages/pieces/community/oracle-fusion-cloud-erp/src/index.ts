@@ -1,11 +1,6 @@
-
-import {
-    createPiece,
-    PieceAuth,
-    Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
 
 const authDesc = `
 Connect to your Oracle Fusion Cloud ERP instance using Basic Authentication.
@@ -16,43 +11,44 @@ Connect to your Oracle Fusion Cloud ERP instance using Basic Authentication.
 - **Password**: Your Oracle Cloud password
 
 Contact your Oracle administrator if you need REST API access enabled.
-`;
+`
 
 import {
-    createInvoice,
-    getInvoice,
-    findInvoices,
-    updateInvoice,
-    deleteInvoice,
-    validateInvoice,
     cancelInvoice,
-} from './lib/actions/invoices';
+    createInvoice,
+    deleteInvoice,
+    findInvoices,
+    getInvoice,
+    updateInvoice,
+    validateInvoice,
+} from './lib/actions/invoices'
 import {
-    createReceivablesInvoice,
-    getReceivablesInvoice,
-    findReceivablesInvoices,
-    updateReceivablesInvoice,
-    deleteReceivablesInvoice,
-} from './lib/actions/receivables-invoices';
+    deleteJournalBatch,
+    findJournalBatches,
+    getJournalBatch,
+    updateJournalBatch,
+} from './lib/actions/journal-batches'
 import {
     createPayment,
-    getPayment,
     findPayments,
-    updatePayment,
+    getPayment,
     stopPayment,
+    updatePayment,
     voidPayment,
-} from './lib/actions/payments';
+} from './lib/actions/payments'
 import {
-    getJournalBatch,
-    findJournalBatches,
-    updateJournalBatch,
-    deleteJournalBatch,
-} from './lib/actions/journal-batches';
-import { oracleFusionCloudErpAuth } from './lib/auth';
+    createReceivablesInvoice,
+    deleteReceivablesInvoice,
+    findReceivablesInvoices,
+    getReceivablesInvoice,
+    updateReceivablesInvoice,
+} from './lib/actions/receivables-invoices'
+import { oracleFusionCloudErpAuth } from './lib/auth'
 
 export const oracleFusionCloudErp = createPiece({
     displayName: 'Oracle Fusion Cloud ERP',
-    description: 'Enterprise resource planning suite covering financials, procurement, project accounting, supply chain, and more.',
+    description:
+        'Enterprise resource planning suite covering financials, procurement, project accounting, supply chain, and more.',
     minimumSupportedRelease: '0.36.1',
     logoUrl: 'https://cdn.activepieces.com/pieces/oracle-fusion-cloud-erp.png',
     authors: ['owuzo', 'onyedikachi-david'],
@@ -82,17 +78,15 @@ export const oracleFusionCloudErp = createPiece({
         updateJournalBatch,
         deleteJournalBatch,
         createCustomApiCallAction({
-            baseUrl: (auth) =>
-                `${auth?.props.serverUrl}/fscmRestApi/resources/11.13.18.05`,
+            baseUrl: (auth) => `${auth?.props.serverUrl}/fscmRestApi/resources/11.13.18.05`,
             auth: oracleFusionCloudErpAuth,
             authMapping: async (auth) => {
-                const { username, password } = auth.props;
+                const { username, password } = auth.props
                 return {
                     Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
-                };
+                }
             },
         }),
     ],
     triggers: [],
-});
-    
+})

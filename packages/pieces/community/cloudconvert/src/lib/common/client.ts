@@ -1,22 +1,22 @@
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
 
 export class CloudConvertClient {
-    private readonly auth: any;
-    private readonly baseUrl: string;
+    private readonly auth: any
+    private readonly baseUrl: string
 
     constructor(auth: any) {
-        this.auth = auth;
+        this.auth = auth
 
-        const region = auth.region || 'auto';
+        const region = auth.region || 'auto'
         switch (region) {
             case 'eu-central':
-                this.baseUrl = 'https://eu-central.api.cloudconvert.com/v2';
-                break;
+                this.baseUrl = 'https://eu-central.api.cloudconvert.com/v2'
+                break
             case 'us-east':
-                this.baseUrl = 'https://us-east.api.cloudconvert.com/v2';
-                break;
+                this.baseUrl = 'https://us-east.api.cloudconvert.com/v2'
+                break
             default:
-                this.baseUrl = 'https://api.cloudconvert.com/v2';
+                this.baseUrl = 'https://api.cloudconvert.com/v2'
         }
     }
 
@@ -26,26 +26,26 @@ export class CloudConvertClient {
         body = undefined,
         queryParams = undefined,
     }: {
-        method: HttpMethod;
-        resourceUri: string;
-        body?: any;
-        queryParams?: Record<string, string>;
+        method: HttpMethod
+        resourceUri: string
+        body?: any
+        queryParams?: Record<string, string>
     }) {
         // OAuth2 authentication
         const authConfig = {
             type: AuthenticationType.BEARER_TOKEN as const,
             token: this.auth.access_token,
-        };
+        }
 
         const response = await httpClient.sendRequest({
             method: method,
             url: `${this.baseUrl}${resourceUri}`,
             body,
             queryParams,
-            authentication: authConfig
-        });
+            authentication: authConfig,
+        })
 
-        return response;
+        return response
     }
 
     async createImportTask(fileUrl: string, filename?: string) {
@@ -54,15 +54,17 @@ export class CloudConvertClient {
             resourceUri: '/import/url',
             body: {
                 url: fileUrl,
-                ...(filename && { filename })
-            }
-        });
+                ...(filename && { filename }),
+            },
+        })
 
         if (response.status !== 201) {
-            throw new Error(`Failed to create import task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+            throw new Error(
+                `Failed to create import task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`,
+            )
         }
 
-        return response.body.data;
+        return response.body.data
     }
 
     async createUploadTask(filename: string) {
@@ -70,15 +72,17 @@ export class CloudConvertClient {
             method: HttpMethod.POST,
             resourceUri: '/import/upload',
             body: {
-                filename
-            }
-        });
+                filename,
+            },
+        })
 
         if (response.status !== 201) {
-            throw new Error(`Failed to create upload task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+            throw new Error(
+                `Failed to create upload task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`,
+            )
         }
 
-        return response.body.data;
+        return response.body.data
     }
 
     async createImportBase64Task(fileContent: string, filename: string) {
@@ -87,161 +91,177 @@ export class CloudConvertClient {
             resourceUri: '/import/base64',
             body: {
                 file: fileContent,
-                filename
-            }
-        });
+                filename,
+            },
+        })
 
         if (response.status !== 201) {
-            throw new Error(`Failed to create base64 import task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+            throw new Error(
+                `Failed to create base64 import task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`,
+            )
         }
 
-        return response.body.data;
+        return response.body.data
     }
 
-    async createArchiveTask(input: string | string[], outputFormat: string, options?: {
-        filename?: string;
-        engine?: string;
-        engineVersion?: string;
-        timeout?: number;
-    }) {
+    async createArchiveTask(
+        input: string | string[],
+        outputFormat: string,
+        options?: {
+            filename?: string
+            engine?: string
+            engineVersion?: string
+            timeout?: number
+        },
+    ) {
         const body: any = {
             input: Array.isArray(input) && input.length === 1 ? input[0] : input,
             output_format: outputFormat,
-        };
+        }
 
         if (options?.filename) {
-            body.filename = options.filename;
+            body.filename = options.filename
         }
         if (options?.engine) {
-            body.engine = options.engine;
+            body.engine = options.engine
             if (options.engineVersion) {
-                body.engine_version = options.engineVersion;
+                body.engine_version = options.engineVersion
             }
         }
         if (options?.timeout) {
-            body.timeout = options.timeout;
+            body.timeout = options.timeout
         }
 
         const response = await this.apiCall({
             method: HttpMethod.POST,
             resourceUri: '/archive',
-            body
-        });
+            body,
+        })
 
         if (response.status !== 201) {
-            throw new Error(`Failed to create archive task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+            throw new Error(
+                `Failed to create archive task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`,
+            )
         }
 
-        return response.body.data;
+        return response.body.data
     }
 
     async createCaptureTask(options: {
-        url: string;
-        output_format: string;
-        pages?: string;
-        zoom?: number;
-        page_width?: number;
-        page_height?: number;
-        page_format?: string;
-        page_orientation?: string;
-        margin_top?: number;
-        margin_bottom?: number;
-        margin_left?: number;
-        margin_right?: number;
-        print_background?: boolean;
-        display_header_footer?: boolean;
-        header_template?: string;
-        footer_template?: string;
-        wait_until?: string;
-        wait_for_element?: string;
-        wait_time?: number;
-        css_media_type?: string;
-        filename?: string;
-        engine?: string;
-        engine_version?: string;
-        timeout?: number;
+        url: string
+        output_format: string
+        pages?: string
+        zoom?: number
+        page_width?: number
+        page_height?: number
+        page_format?: string
+        page_orientation?: string
+        margin_top?: number
+        margin_bottom?: number
+        margin_left?: number
+        margin_right?: number
+        print_background?: boolean
+        display_header_footer?: boolean
+        header_template?: string
+        footer_template?: string
+        wait_until?: string
+        wait_for_element?: string
+        wait_time?: number
+        css_media_type?: string
+        filename?: string
+        engine?: string
+        engine_version?: string
+        timeout?: number
     }) {
         const response = await this.apiCall({
             method: HttpMethod.POST,
             resourceUri: '/capture-website',
-            body: options
-        });
+            body: options,
+        })
 
         if (response.status !== 201) {
-            throw new Error(`Failed to create capture task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+            throw new Error(
+                `Failed to create capture task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`,
+            )
         }
 
-        return response.body.data;
+        return response.body.data
     }
 
     async createConvertTask(options: {
-        input: string | string[];
-        input_format?: string;
-        output_format: string;
-        filename?: string;
-        engine?: string;
-        engine_version?: string;
-        timeout?: number;
-        [key: string]: any;
+        input: string | string[]
+        input_format?: string
+        output_format: string
+        filename?: string
+        engine?: string
+        engine_version?: string
+        timeout?: number
+        [key: string]: any
     }) {
         const response = await this.apiCall({
             method: HttpMethod.POST,
             resourceUri: '/convert',
-            body: options
-        });
+            body: options,
+        })
 
         if (response.status !== 201) {
-            throw new Error(`Failed to create convert task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+            throw new Error(
+                `Failed to create convert task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`,
+            )
         }
 
-        return response.body.data;
+        return response.body.data
     }
 
     async createMergeTask(options: {
-        input: string | string[];
-        output_format: string;
-        filename?: string;
-        engine?: string;
-        engine_version?: string;
-        timeout?: number;
-        [key: string]: any;
+        input: string | string[]
+        output_format: string
+        filename?: string
+        engine?: string
+        engine_version?: string
+        timeout?: number
+        [key: string]: any
     }) {
         const response = await this.apiCall({
             method: HttpMethod.POST,
             resourceUri: '/merge',
-            body: options
-        });
+            body: options,
+        })
 
         if (response.status !== 201) {
-            throw new Error(`Failed to create merge task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+            throw new Error(
+                `Failed to create merge task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`,
+            )
         }
 
-        return response.body.data;
+        return response.body.data
     }
 
     async createOptimizeTask(options: {
-        input: string | string[];
-        input_format?: string;
-        profile?: string;
-        flatten_signatures?: boolean;
-        colorspace?: string;
-        filename?: string;
-        engine?: string;
-        engine_version?: string;
-        timeout?: number;
-        [key: string]: any;
+        input: string | string[]
+        input_format?: string
+        profile?: string
+        flatten_signatures?: boolean
+        colorspace?: string
+        filename?: string
+        engine?: string
+        engine_version?: string
+        timeout?: number
+        [key: string]: any
     }) {
         const response = await this.apiCall({
             method: HttpMethod.POST,
             resourceUri: '/optimize',
-            body: options
-        });
+            body: options,
+        })
 
         if (response.status !== 201) {
-            throw new Error(`Failed to create optimize task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+            throw new Error(
+                `Failed to create optimize task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`,
+            )
         }
 
-        return response.body.data;
+        return response.body.data
     }
 
     async createExportTask(inputTaskId: string) {
@@ -249,15 +269,17 @@ export class CloudConvertClient {
             method: HttpMethod.POST,
             resourceUri: '/export/url',
             body: {
-                input: inputTaskId
-            }
-        });
+                input: inputTaskId,
+            },
+        })
 
         if (response.status !== 201) {
-            throw new Error(`Failed to create export task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+            throw new Error(
+                `Failed to create export task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`,
+            )
         }
 
-        return response.body.data;
+        return response.body.data
     }
 
     async createJob(tasks: Record<string, any>, tag?: string) {
@@ -266,76 +288,82 @@ export class CloudConvertClient {
             resourceUri: '/jobs',
             body: {
                 tasks,
-                ...(tag && { tag })
-            }
-        });
+                ...(tag && { tag }),
+            },
+        })
 
         if (response.status !== 201) {
-            throw new Error(`Failed to create job: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+            throw new Error(
+                `Failed to create job: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`,
+            )
         }
 
-        return response.body.data;
+        return response.body.data
     }
 
     async getJob(jobId: string) {
         const response = await this.apiCall({
             method: HttpMethod.GET,
-            resourceUri: `/jobs/${jobId}`
-        });
+            resourceUri: `/jobs/${jobId}`,
+        })
 
         if (response.status !== 200) {
-            throw new Error(`Failed to get job: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+            throw new Error(`Failed to get job: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`)
         }
 
-        return response.body.data;
+        return response.body.data
     }
 
     async getTask(taskId: string, queryParams?: Record<string, string>) {
         const response = await this.apiCall({
             method: HttpMethod.GET,
             resourceUri: `/tasks/${taskId}`,
-            queryParams
-        });
+            queryParams,
+        })
 
         if (response.status !== 200) {
-            throw new Error(`Failed to get task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+            throw new Error(
+                `Failed to get task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`,
+            )
         }
 
-        return response.body.data;
+        return response.body.data
     }
 
     async getSupportedFormats(options?: {
-        inputFormat?: string;
-        outputFormat?: string;
-        engine?: string;
-        include?: string[];
+        inputFormat?: string
+        outputFormat?: string
+        engine?: string
+        include?: string[]
     }) {
-        const queryParams: Record<string, string> = {};
+        const queryParams: Record<string, string> = {}
 
         if (options?.inputFormat) {
-            queryParams['filter[input_format]'] = options.inputFormat;
+            queryParams['filter[input_format]'] = options.inputFormat
         }
         if (options?.outputFormat) {
-            queryParams['filter[output_format]'] = options.outputFormat;
+            queryParams['filter[output_format]'] = options.outputFormat
         }
         if (options?.engine) {
-            queryParams['filter[engine]'] = options.engine;
+            queryParams['filter[engine]'] = options.engine
         }
         if (options?.include) {
-            queryParams['include'] = options.include.join(',');
+            queryParams['include'] = options.include.join(',')
         }
 
         const response = await this.apiCall({
             method: HttpMethod.GET,
             resourceUri: '/convert/formats',
-            queryParams
-        });
+            queryParams,
+        })
 
         if (response.status !== 200) {
-            throw new Error(`Failed to get supported formats: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+            throw new Error(
+                `Failed to get supported formats: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`,
+            )
         }
 
-        return response.body.data || [];
+        return response.body.data || []
     }
 }
 
@@ -343,16 +371,16 @@ export const cloudconvertCommon = {
     baseUrl: (region = 'auto') => {
         switch (region) {
             case 'eu-central':
-                return 'https://eu-central.api.cloudconvert.com/v2';
+                return 'https://eu-central.api.cloudconvert.com/v2'
             case 'us-east':
-                return 'https://us-east.api.cloudconvert.com/v2';
+                return 'https://us-east.api.cloudconvert.com/v2'
             default:
-                return 'https://api.cloudconvert.com/v2';
+                return 'https://api.cloudconvert.com/v2'
         }
     },
 
     createClient(auth: any) {
-        return new CloudConvertClient(auth);
+        return new CloudConvertClient(auth)
     },
 
     async apiCall({
@@ -362,18 +390,18 @@ export const cloudconvertCommon = {
         body = undefined,
         queryParams = undefined,
     }: {
-        auth: any;
-        method: HttpMethod;
-        resourceUri: string;
-        body?: any;
-        queryParams?: Record<string, string>;
+        auth: any
+        method: HttpMethod
+        resourceUri: string
+        body?: any
+        queryParams?: Record<string, string>
     }) {
-        const client = new CloudConvertClient(auth);
+        const client = new CloudConvertClient(auth)
         return await client.apiCall({
             method,
             resourceUri,
             body,
-            queryParams
-        });
+            queryParams,
+        })
     },
-};
+}

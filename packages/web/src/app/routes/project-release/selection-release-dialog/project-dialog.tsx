@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { projectReleaseApi } from '@/features/project-releases';
 import { projectCollectionUtils } from '@/features/projects';

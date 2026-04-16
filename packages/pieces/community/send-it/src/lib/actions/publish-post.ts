@@ -1,44 +1,38 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sendItAuth } from '../auth';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { sendItAuth } from '../auth'
 import {
-  platformProperty,
-  textProperty,
-  mediaUrlProperty,
-  mediaUrlsProperty,
-  mediaTypeProperty,
-  sendItRequest,
-} from '../common';
+    mediaTypeProperty,
+    mediaUrlProperty,
+    mediaUrlsProperty,
+    platformProperty,
+    sendItRequest,
+    textProperty,
+} from '../common'
 
 export const publishPost = createAction({
-  auth: sendItAuth,
-  name: 'publish_post',
-  displayName: 'Publish Post',
-  description: 'Publish content to social media platforms immediately',
-  props: {
-    platforms: platformProperty,
-    text: textProperty,
-    mediaUrl: mediaUrlProperty,
-    mediaUrls: mediaUrlsProperty,
-    mediaType: mediaTypeProperty,
-  },
-  async run(context) {
-    const { platforms, text, mediaUrl, mediaUrls, mediaType } =
-      context.propsValue;
+    auth: sendItAuth,
+    name: 'publish_post',
+    displayName: 'Publish Post',
+    description: 'Publish content to social media platforms immediately',
+    props: {
+        platforms: platformProperty,
+        text: textProperty,
+        mediaUrl: mediaUrlProperty,
+        mediaUrls: mediaUrlsProperty,
+        mediaType: mediaTypeProperty,
+    },
+    async run(context) {
+        const { platforms, text, mediaUrl, mediaUrls, mediaType } = context.propsValue
 
-    return await sendItRequest(
-      context.auth.secret_text,
-      HttpMethod.POST,
-      '/publish',
-      {
-        platforms,
-        content: {
-          text,
-          mediaUrl,
-          mediaUrls,
-          mediaType,
-        },
-      }
-    );
-  },
-});
+        return await sendItRequest(context.auth.secret_text, HttpMethod.POST, '/publish', {
+            platforms,
+            content: {
+                text,
+                mediaUrl,
+                mediaUrls,
+                mediaType,
+            },
+        })
+    },
+})

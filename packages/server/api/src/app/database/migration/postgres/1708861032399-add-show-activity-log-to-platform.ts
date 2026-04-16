@@ -40,5 +40,4 @@ export class AddShowActivityLogToPlatform1708861032399 implements MigrationInter
 
         log.info('[addShowActivityLogToPlatform1708861032399#down]')
     }
-
 }

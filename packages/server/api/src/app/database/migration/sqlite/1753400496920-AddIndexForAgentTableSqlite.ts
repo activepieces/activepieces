@@ -238,5 +238,4 @@ export class AddIndexForAgentTableSqlite1753400496920 implements MigrationInterf
             CREATE INDEX "idx_flow_version_flow_id" ON "flow_version" ("flowId")
         `)
     }
-
 }

@@ -24,5 +24,4 @@ export class AddNotesToFlowVersion1768130030028 implements MigrationInterface {
             ALTER TABLE "flow_version" DROP COLUMN "notes"
         `)
     }
-
 }

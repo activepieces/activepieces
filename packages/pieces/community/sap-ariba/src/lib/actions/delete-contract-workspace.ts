@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sapAribaAuth } from '../auth';
-import { sapAribaCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { sapAribaAuth } from '../auth'
+import { sapAribaCommon } from '../common'
 
 export const deleteContractWorkspace = createAction({
     auth: sapAribaAuth,
@@ -31,21 +31,21 @@ export const deleteContractWorkspace = createAction({
         }),
     },
     async run(context) {
-        const { realm, user, passwordAdapter, contractId } = context.propsValue;
+        const { realm, user, passwordAdapter, contractId } = context.propsValue
 
         const queryParams: Record<string, string> = {
             realm,
             user,
             passwordAdapter,
-        };
+        }
 
         const response = await sapAribaCommon.makeRequest(
             context.auth,
             HttpMethod.DELETE,
             `/contractWorkspaces/${encodeURIComponent(contractId)}`,
-            queryParams
-        );
+            queryParams,
+        )
 
-        return response;
+        return response
     },
-});
+})

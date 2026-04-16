@@ -1,14 +1,10 @@
-import { hubspotAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-    fromObjectTypeAssociationDropdown,
-    associationTypeDropdown,
-    toObjectIdsDropdown,
-} from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
-import { Client } from '@hubspot/api-client';
-import { AssociationSpecAssociationCategoryEnum } from '../common/types';
-import { chunk } from '@activepieces/shared';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { chunk } from '@activepieces/shared'
+import { Client } from '@hubspot/api-client'
+import { hubspotAuth } from '../auth'
+import { OBJECT_TYPE } from '../common/constants'
+import { associationTypeDropdown, fromObjectTypeAssociationDropdown, toObjectIdsDropdown } from '../common/props'
+import { AssociationSpecAssociationCategoryEnum } from '../common/types'
 
 export const removeAssociationsAction = createAction({
     auth: hubspotAuth,
@@ -37,31 +33,31 @@ export const removeAssociationsAction = createAction({
         toObjectIds: toObjectIdsDropdown({
             objectType: OBJECT_TYPE.COMPANY,
             displayName: 'To Object IDs',
-            description: 'The IDs of the currently associated objects that you\'re removing the association from.',
+            description: "The IDs of the currently associated objects that you're removing the association from.",
             required: true,
         }),
     },
     async run(context) {
-        const { fromObjectId, fromObjectType, toObjectType, associationType } = context.propsValue;
+        const { fromObjectId, fromObjectType, toObjectType, associationType } = context.propsValue
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: context.auth.access_token })
 
-        if(context.propsValue.toObjectIds === undefined) {            
-            throw new Error('Please provide To Object IDs');
+        if (context.propsValue.toObjectIds === undefined) {
+            throw new Error('Please provide To Object IDs')
         }
 
-        let toObjectIds: any[];
+        let toObjectIds: any[]
         if (Array.isArray(context.propsValue.toObjectIds)) {
-            toObjectIds = context.propsValue.toObjectIds;
+            toObjectIds = context.propsValue.toObjectIds
         } else {
             try {
-                toObjectIds = JSON.parse(context.propsValue.toObjectIds);
+                toObjectIds = JSON.parse(context.propsValue.toObjectIds)
             } catch {
                 throw new Error(
                     `Please provide To Object IDs in a valid format. Provided : ${JSON.stringify(
                         context.propsValue.toObjectIds,
                     )}`,
-                );
+                )
             }
         }
 
@@ -69,21 +65,19 @@ export const removeAssociationsAction = createAction({
         const associationLabels = await client.crm.associations.v4.schema.definitionsApi.getAll(
             fromObjectType as string,
             toObjectType as string,
-        );
+        )
         const association = associationLabels.results.find(
             (associationLabel) => associationLabel.typeId === associationType,
-        );
+        )
         if (!association) {
-            throw new Error(
-                `Association type ${associationType} not found for ${fromObjectType} to ${toObjectType}`,
-            );
+            throw new Error(`Association type ${associationType} not found for ${fromObjectType} to ${toObjectType}`)
         }
-        const associationCategory = association.category;
+        const associationCategory = association.category
 
         // Batch API limit is 1000, but using 100 for consistency and safety
-        const BATCH_SIZE = 100;
-        const chunks = chunk(toObjectIds, BATCH_SIZE);
-        const responses = [];
+        const BATCH_SIZE = 100
+        const chunks = chunk(toObjectIds, BATCH_SIZE)
+        const responses = []
 
         for (const chunkBatch of chunks) {
             const response = await client.crm.associations.v4.batchApi.archiveLabels(
@@ -105,11 +99,11 @@ export const removeAssociationsAction = createAction({
                                     associationTypeId: associationType,
                                 },
                             ],
-                        };
+                        }
                     }),
                 },
-            );
-            responses.push(response);
+            )
+            responses.push(response)
         }
 
         return {
@@ -117,6 +111,6 @@ export const removeAssociationsAction = createAction({
             totalAssociations: toObjectIds.length,
             batchCount: chunks.length,
             responses,
-        };
+        }
     },
-});
+})

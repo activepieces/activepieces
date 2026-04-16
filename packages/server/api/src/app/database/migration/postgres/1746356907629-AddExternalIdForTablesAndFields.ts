@@ -9,7 +9,7 @@ export class AddExternalIdForTablesAndFields1746356907629 implements MigrationIn
             ALTER TABLE "table"
             ADD "externalId" character varying
         `)
-        
+
         const tables = await queryRunner.query(`
             SELECT * FROM "table"
         `)
@@ -31,7 +31,7 @@ export class AddExternalIdForTablesAndFields1746356907629 implements MigrationIn
             ALTER TABLE "field"
             ADD "externalId" character varying
         `)
-        
+
         const fields = await queryRunner.query(`
             SELECT * FROM "field"
         `)
@@ -58,5 +58,4 @@ export class AddExternalIdForTablesAndFields1746356907629 implements MigrationIn
             ALTER TABLE "table" DROP COLUMN "externalId"
         `)
     }
-
 }

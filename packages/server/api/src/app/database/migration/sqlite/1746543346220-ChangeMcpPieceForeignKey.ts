@@ -900,5 +900,4 @@ export class ChangeMcpPieceForeignKey1746543346220 implements MigrationInterface
             CREATE UNIQUE INDEX "mcp_piece_unique_piece_per_mcp" ON "mcp_piece" ("mcpId", "pieceName")
         `)
     }
-
 }

@@ -66,5 +66,4 @@ export class AddMcpRunEntity1748358415599 implements MigrationInterface {
             DROP TABLE "mcp_run"
         `)
     }
-
 }

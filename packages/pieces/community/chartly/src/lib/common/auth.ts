@@ -1,4 +1,4 @@
-import { PieceAuth } from "@activepieces/pieces-framework";
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const chartlyAuth = PieceAuth.SecretText({
     displayName: 'API Key',
@@ -15,31 +15,31 @@ export const chartlyAuth = PieceAuth.SecretText({
                 headers: {
                     'X-Api-Key': auth,
                 },
-            });
+            })
 
             if (!response.ok) {
                 return {
                     valid: false,
                     error: `Invalid API key: ${response.status} ${response.statusText}`,
-                };
+                }
             }
 
-            const data = await response.json();
+            const data = await response.json()
             if (data.status !== 'ok') {
                 return {
                     valid: false,
                     error: 'Chartly service is currently unhealthy',
-                };
+                }
             }
 
             return {
                 valid: true,
-            };
+            }
         } catch (error) {
             return {
                 valid: false,
                 error: `Connection error: ${(error as Error).message}`,
-            };
+            }
         }
     },
-});
+})

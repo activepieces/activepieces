@@ -16,7 +16,7 @@ export class AddGlobalConnectionsAndRbacForPlatform1731532843905 implements Migr
             ALTER TABLE "platform"
             ALTER COLUMN "globalConnectionsEnabled" SET NOT NULL
         `)
-        
+
         await queryRunner.query(`
             ALTER TABLE "platform"
             ADD "customRolesEnabled" boolean
@@ -49,5 +49,4 @@ export class AddGlobalConnectionsAndRbacForPlatform1731532843905 implements Migr
             ALTER TABLE "platform" DROP COLUMN "globalConnectionsEnabled"
         `)
     }
-
 }

@@ -22,5 +22,4 @@ export class AddDeletedToProjectPostgres1710243591721 implements MigrationInterf
 
         log.info('[addDeletedToProjectPostgres1710243591721#down]')
     }
-
 }

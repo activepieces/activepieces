@@ -4,9 +4,7 @@ export class AddUserMetaInformation1693850082449 implements MigrationInterface {
     name = 'AddUserMetaInformation1693850082449'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(
-            'ALTER TABLE "user" ADD "imageUrl" character varying',
-        )
+        await queryRunner.query('ALTER TABLE "user" ADD "imageUrl" character varying')
         await queryRunner.query('ALTER TABLE "user" ADD "title" character varying')
     }
 

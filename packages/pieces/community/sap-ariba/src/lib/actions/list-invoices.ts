@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sapAribaAuth } from '../auth';
-import { sapAribaCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { sapAribaAuth } from '../auth'
+import { sapAribaCommon } from '../common'
 
 export const listInvoices = createAction({
     auth: sapAribaAuth,
@@ -11,7 +11,7 @@ export const listInvoices = createAction({
     props: {
         anId: Property.ShortText({
             displayName: 'Ariba Network ID',
-            description: "Buyer/Supplier Ariba Network ID (ANID).",
+            description: 'Buyer/Supplier Ariba Network ID (ANID).',
             required: true,
         }),
         buyerANID: Property.ShortText({
@@ -125,33 +125,35 @@ export const listInvoices = createAction({
             includeInvoiceProfile,
             top,
             skip,
-        } = context.propsValue;
+        } = context.propsValue
 
-        const filters: string[] = [];
-        if (buyerANID) filters.push(`buyerANID eq '${buyerANID}'`);
-        if (supplierANID) filters.push(`supplierANID eq '${supplierANID}'`);
-        if (documentNumber) filters.push(`documentNumber eq '${documentNumber}'`);
-        if (documentStatus) filters.push(`documentStatus eq '${documentStatus}'`);
-        if (routingStatus) filters.push(`routingStatus eq '${routingStatus}'`);
-        if (startDate) filters.push(`startDate eq '${startDate}'`);
-        if (endDate) filters.push(`endDate eq '${endDate}'`);
-        if (documentStatusUpdatedStartDate) filters.push(`documentStatusUpdatedStartDate eq '${documentStatusUpdatedStartDate}'`);
-        if (documentStatusUpdatedEndDate) filters.push(`documentStatusUpdatedEndDate eq '${documentStatusUpdatedEndDate}'`);
-        if (documentPurpose) filters.push(`documentPurpose eq '${documentPurpose}'`);
+        const filters: string[] = []
+        if (buyerANID) filters.push(`buyerANID eq '${buyerANID}'`)
+        if (supplierANID) filters.push(`supplierANID eq '${supplierANID}'`)
+        if (documentNumber) filters.push(`documentNumber eq '${documentNumber}'`)
+        if (documentStatus) filters.push(`documentStatus eq '${documentStatus}'`)
+        if (routingStatus) filters.push(`routingStatus eq '${routingStatus}'`)
+        if (startDate) filters.push(`startDate eq '${startDate}'`)
+        if (endDate) filters.push(`endDate eq '${endDate}'`)
+        if (documentStatusUpdatedStartDate)
+            filters.push(`documentStatusUpdatedStartDate eq '${documentStatusUpdatedStartDate}'`)
+        if (documentStatusUpdatedEndDate)
+            filters.push(`documentStatusUpdatedEndDate eq '${documentStatusUpdatedEndDate}'`)
+        if (documentPurpose) filters.push(`documentPurpose eq '${documentPurpose}'`)
 
-        const queryParams: Record<string, string> = {};
+        const queryParams: Record<string, string> = {}
 
         if (filters.length > 0) {
-            queryParams['$filter'] = filters.join(' and ');
+            queryParams['$filter'] = filters.join(' and ')
         }
         if (includeInvoiceProfile) {
-            queryParams['includeInvoiceProfile'] = 'true';
+            queryParams['includeInvoiceProfile'] = 'true'
         }
         if (top) {
-            queryParams['$top'] = top.toString();
+            queryParams['$top'] = top.toString()
         }
         if (skip) {
-            queryParams['$skip'] = skip.toString();
+            queryParams['$skip'] = skip.toString()
         }
 
         const response = await sapAribaCommon.makeRequest(
@@ -160,9 +162,9 @@ export const listInvoices = createAction({
             '/invoices',
             queryParams,
             undefined,
-            { 'X-ARIBA-NETWORK-ID': anId }
-        );
+            { 'X-ARIBA-NETWORK-ID': anId },
+        )
 
-        return response;
+        return response
     },
-});
+})

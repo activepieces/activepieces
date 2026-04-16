@@ -1,8 +1,8 @@
+import { randomUUID } from 'node:crypto'
 import { readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { randomUUID } from 'node:crypto'
-import { describe, it, expect, afterEach } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { cacheState } from '../../../src/lib/cache/cache-state'
 
 const folders: string[] = []
@@ -39,7 +39,9 @@ describe('cacheState', () => {
             const result2 = await cacheState(folder).getOrSetCache({
                 key: 'myKey',
                 cacheMiss: () => false,
-                installFn: async () => { throw new Error('should not be called') },
+                installFn: async () => {
+                    throw new Error('should not be called')
+                },
                 skipSave: () => false,
             })
 
@@ -57,7 +59,9 @@ describe('cacheState', () => {
             const result = await cacheState(folder).getOrSetCache({
                 key: 'diskKey',
                 cacheMiss: () => false,
-                installFn: async () => { throw new Error('should not be called') },
+                installFn: async () => {
+                    throw new Error('should not be called')
+                },
                 skipSave: () => false,
             })
 
@@ -99,7 +103,10 @@ describe('cacheState', () => {
             expect(result).toEqual({ cacheHit: false, state: 'no-save-value' })
 
             // cache.json should not exist
-            const exists = await readFile(join(folder, 'cache.json'), 'utf8').then(() => true, () => false)
+            const exists = await readFile(join(folder, 'cache.json'), 'utf8').then(
+                () => true,
+                () => false,
+            )
             expect(exists).toBe(false)
         })
 

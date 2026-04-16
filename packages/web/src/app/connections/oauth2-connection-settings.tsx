@@ -7,15 +7,15 @@ import {
 import {
   ApFlagId,
   AppConnectionType,
+  isNil,
   OAuth2GrantType,
   UpsertCloudOAuth2Request,
   UpsertOAuth2Request,
   UpsertPlatformOAuth2Request,
-  isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Dispatch, SetStateAction, useState } from 'react';
-import { useFormContext, UseFormReturn } from 'react-hook-form';
+import { UseFormReturn, useFormContext } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -63,7 +63,7 @@ function OAuth2ConnectionSettings({
   const redirectUrl =
     oauth2App.oauth2Type === AppConnectionType.CLOUD_OAUTH2
       ? 'https://secrets.activepieces.com/redirect'
-      : thirdPartyUrl ?? 'no_redirect_url_found';
+      : (thirdPartyUrl ?? 'no_redirect_url_found');
 
   const showRedirectUrlInput =
     oauth2App.oauth2Type === AppConnectionType.OAUTH2 &&
@@ -187,6 +187,7 @@ function OAuth2ConnectionSettings({
 }
 
 OAuth2ConnectionSettings.displayName = 'OAuth2ConnectionSettings';
+
 export { OAuth2ConnectionSettings };
 
 async function openPopup({

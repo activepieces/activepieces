@@ -23,5 +23,4 @@ export class AddMetadataFieldToFlowTemplates1744780800000 implements MigrationIn
             ALTER TABLE "flow_template" DROP COLUMN "metadata"
         `)
     }
-
 }

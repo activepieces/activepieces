@@ -15,5 +15,4 @@ export class RemoveDefaultLocaleFromPlatform1749733527371 implements MigrationIn
             ADD "defaultLocale" character varying
         `)
     }
-
 }

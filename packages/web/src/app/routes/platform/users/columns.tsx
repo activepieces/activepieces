@@ -2,14 +2,14 @@ import { PlatformRole, UserStatus } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
-  Tag,
-  Fingerprint,
-  Shield,
-  Clock,
   Activity,
+  Clock,
+  Fingerprint,
+  Hash,
   Info,
   Mail,
-  Hash,
+  Shield,
+  Tag,
 } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
@@ -120,8 +120,8 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
           {platformRole === PlatformRole.ADMIN
             ? t('Admin')
             : platformRole === PlatformRole.OPERATOR
-            ? t('Operator')
-            : t('Member')}
+              ? t('Operator')
+              : t('Member')}
         </div>
       );
     },

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockFindOneBy = vi.fn()
 const mockDelete = vi.fn()
@@ -116,9 +116,7 @@ describe('knowledgeBaseService', () => {
         })
 
         it('should return exact score for normal distances', async () => {
-            mockDbQuery.mockResolvedValue([
-                { id: '1', content: 'match', metadata: {}, chunkIndex: 0, distance: 0 },
-            ])
+            mockDbQuery.mockResolvedValue([{ id: '1', content: 'match', metadata: {}, chunkIndex: 0, distance: 0 }])
 
             const results = await knowledgeBaseService(mockLog).search({
                 projectId: 'proj-1',
@@ -165,9 +163,7 @@ describe('knowledgeBaseService', () => {
         })
 
         it('should include results when threshold is 0', async () => {
-            mockDbQuery.mockResolvedValue([
-                { id: '1', content: 'match', metadata: {}, chunkIndex: 0, distance: 0.5 },
-            ])
+            mockDbQuery.mockResolvedValue([{ id: '1', content: 'match', metadata: {}, chunkIndex: 0, distance: 0.5 }])
 
             const results = await knowledgeBaseService(mockLog).search({
                 projectId: 'proj-1',
@@ -186,10 +182,12 @@ describe('knowledgeBaseService', () => {
             await knowledgeBaseService(mockLog).storeChunks({
                 projectId: 'proj-1',
                 knowledgeBaseFileId: 'kb-file-1',
-                chunks: [{
-                    content: 'test content',
-                    chunkIndex: 0,
-                }],
+                chunks: [
+                    {
+                        content: 'test content',
+                        chunkIndex: 0,
+                    },
+                ],
             })
 
             expect(mockInsert).toHaveBeenCalledTimes(1)
@@ -200,10 +198,12 @@ describe('knowledgeBaseService', () => {
             await knowledgeBaseService(mockLog).storeChunks({
                 projectId: 'proj-1',
                 knowledgeBaseFileId: 'kb-file-1',
-                chunks: [{
-                    id: 'chunk-1',
-                    embedding: [0.1, 0.2, 0.3],
-                }],
+                chunks: [
+                    {
+                        id: 'chunk-1',
+                        embedding: [0.1, 0.2, 0.3],
+                    },
+                ],
             })
 
             expect(mockInsert).not.toHaveBeenCalled()

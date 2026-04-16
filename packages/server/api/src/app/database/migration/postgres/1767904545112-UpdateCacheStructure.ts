@@ -86,5 +86,4 @@ export class UpdateCacheStructure1767904545112 implements MigrationInterface {
             ADD "topPieces" jsonb NOT NULL
         `)
     }
-
 }

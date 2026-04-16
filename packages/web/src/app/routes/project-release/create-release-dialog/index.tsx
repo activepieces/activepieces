@@ -9,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { PencilIcon, Plus, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
-import { Resolver, useForm, UseFormReturn } from 'react-hook-form';
+import { Resolver, UseFormReturn, useForm } from 'react-hook-form';
 import * as z from 'zod';
 
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -376,8 +376,8 @@ const CreateReleaseDialog = ({
             {diffRequest.type === ProjectReleaseType.GIT
               ? t('Create Git Release')
               : diffRequest.type === ProjectReleaseType.PROJECT
-              ? t('Create Project Release')
-              : `${t('Create Rollback to')} ${form.getValues('name')}`}
+                ? t('Create Project Release')
+                : `${t('Create Rollback to')} ${form.getValues('name')}`}
           </DialogTitle>
         </DialogHeader>
 

@@ -39,9 +39,12 @@ export class SupportS3Files1726364421096 implements MigrationInterface {
             ALTER TABLE "file"
             ALTER COLUMN "data" DROP NOT NULL
         `)
-        log.info({
-            name: this.name,
-        }, 'is up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'is up',
+        )
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -69,9 +72,11 @@ export class SupportS3Files1726364421096 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "file" DROP COLUMN "location"
         `)
-        log.info({
-            name: this.name,
-        }, 'is down')
+        log.info(
+            {
+                name: this.name,
+            },
+            'is down',
+        )
     }
-
 }

@@ -23,5 +23,4 @@ export class AddDedicatedWorkersToPlatformPlanPostgres1760998784106 implements M
             ALTER TABLE "platform_plan" DROP COLUMN "dedicatedWorkers"
         `)
     }
-
 }

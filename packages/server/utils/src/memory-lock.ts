@@ -8,8 +8,7 @@ export const memoryLock = {
         if (!lock) {
             if (timeout) {
                 lock = withTimeout(new Mutex(), timeout)
-            }
-            else {
+            } else {
                 lock = new Mutex()
             }
             memoryLocks.set(key, lock)
@@ -28,8 +27,7 @@ export const memoryLock = {
         const lock = await memoryLock.acquire(key)
         try {
             return await fn()
-        }
-        finally {
+        } finally {
             await lock.release()
         }
     },

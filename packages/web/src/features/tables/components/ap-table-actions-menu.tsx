@@ -2,11 +2,11 @@ import { Permission, Table } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Download,
+  FileJson,
+  Import,
   PencilIcon,
   TrashIcon,
   UploadCloud,
-  Import,
-  FileJson,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
@@ -195,4 +195,5 @@ const ApTableActionsMenu = ({
 };
 
 ApTableActionsMenu.displayName = 'ApTableActionsMenu';
+
 export { ApTableActionsMenu };

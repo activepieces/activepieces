@@ -47,7 +47,6 @@ export const SendUserInvitationRequest = z.union([
     }),
 ])
 
-
 export type SendUserInvitationRequest = z.infer<typeof SendUserInvitationRequest>
 
 export const AcceptUserInvitationRequest = z.object({

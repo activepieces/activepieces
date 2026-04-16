@@ -33,8 +33,8 @@ const TestButtonTooltip = ({
             {invalid
               ? t('Please fix inputs first')
               : isLoadingDynamicProperties
-              ? t('Please wait until all inputs are loaded')
-              : t('Saving...')}
+                ? t('Please wait until all inputs are loaded')
+                : t('Saving...')}
           </TooltipContent>
         )}
       </Tooltip>
@@ -43,4 +43,5 @@ const TestButtonTooltip = ({
 };
 
 TestButtonTooltip.displayName = 'TestButtonTooltip';
+
 export { TestButtonTooltip };

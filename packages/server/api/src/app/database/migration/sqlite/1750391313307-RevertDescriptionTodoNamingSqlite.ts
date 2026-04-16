@@ -207,5 +207,4 @@ export class RevertDescriptionTodoNamingSqlite1750391313307 implements Migration
             CREATE INDEX "idx_todo_project_id" ON "todo" ("projectId")
         `)
     }
-
 }

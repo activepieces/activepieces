@@ -31,5 +31,4 @@ export class AddAiTokensForProjectPlan1726446092010 implements MigrationInterfac
             ALTER TABLE "project_plan" DROP COLUMN "aiTokens"
         `)
     }
-
 }

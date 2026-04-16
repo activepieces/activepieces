@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sapAribaAuth } from '../auth';
-import { sapAribaCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { sapAribaAuth } from '../auth'
+import { sapAribaCommon } from '../common'
 
 export const searchContractWorkspaces = createAction({
     auth: sapAribaAuth,
@@ -31,7 +31,7 @@ export const searchContractWorkspaces = createAction({
         }),
         filter: Property.ShortText({
             displayName: 'Filter',
-            description: 'Filter criteria (e.g., LastModified ge \'2023-01-01T00:00:00Z\').',
+            description: "Filter criteria (e.g., LastModified ge '2023-01-01T00:00:00Z').",
             required: false,
         }),
         top: Property.Number({
@@ -59,40 +59,40 @@ export const searchContractWorkspaces = createAction({
         }),
     },
     async run(context) {
-        const { realm, user, passwordAdapter, select, filter, top, skip, count, expand } = context.propsValue;
+        const { realm, user, passwordAdapter, select, filter, top, skip, count, expand } = context.propsValue
 
         const queryParams: Record<string, string> = {
             realm,
             user,
             passwordAdapter,
-        };
+        }
 
         if (select) {
-            queryParams['$select'] = select;
+            queryParams['$select'] = select
         }
         if (filter) {
-            queryParams['$filter'] = filter;
+            queryParams['$filter'] = filter
         }
         if (top) {
-            queryParams['$top'] = top.toString();
+            queryParams['$top'] = top.toString()
         }
         if (skip) {
-            queryParams['$skip'] = skip.toString();
+            queryParams['$skip'] = skip.toString()
         }
         if (count) {
-            queryParams['$count'] = 'true';
+            queryParams['$count'] = 'true'
         }
         if (expand) {
-            queryParams['$expand'] = expand;
+            queryParams['$expand'] = expand
         }
 
         const response = await sapAribaCommon.makeRequest(
             context.auth,
             HttpMethod.GET,
             '/contractWorkspaces',
-            queryParams
-        );
+            queryParams,
+        )
 
-        return response;
+        return response
     },
-});
+})

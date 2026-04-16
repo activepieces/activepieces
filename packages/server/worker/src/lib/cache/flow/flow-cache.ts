@@ -1,6 +1,13 @@
-import path from 'path'
-import { FlowVersion, FlowVersionId, FlowVersionState, isNil, LATEST_FLOW_SCHEMA_VERSION, WorkerToApiContract } from '@activepieces/shared'
+import {
+    FlowVersion,
+    FlowVersionId,
+    FlowVersionState,
+    isNil,
+    LATEST_FLOW_SCHEMA_VERSION,
+    WorkerToApiContract,
+} from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
+import path from 'path'
 import { Logger } from 'pino'
 import { getGlobalCacheFlowsPath } from '../cache-paths'
 import { cacheState } from '../cache-state'
@@ -18,7 +25,7 @@ export const flowCache = (log: Logger, apiClient: WorkerToApiContract) => ({
                     if (isNil(flow)) {
                         return true
                     }
-                    const parsedFlow = flow === 'null' ? null : JSON.parse(flow) as FlowVersion
+                    const parsedFlow = flow === 'null' ? null : (JSON.parse(flow) as FlowVersion)
                     if (isNil(parsedFlow)) {
                         return false
                     }
@@ -31,14 +38,16 @@ export const flowCache = (log: Logger, apiClient: WorkerToApiContract) => ({
                             const flowVersion = await apiClient.getFlowVersion({
                                 versionId: flowVersionId,
                             })
-                            log.info({
-                                flowVersionId,
-                                state: flowVersion?.state,
-                                found: !isNil(flowVersion),
-                            }, 'Fetched flow version')
+                            log.info(
+                                {
+                                    flowVersionId,
+                                    state: flowVersion?.state,
+                                    found: !isNil(flowVersion),
+                                },
+                                'Fetched flow version',
+                            )
                             return JSON.stringify(flowVersion)
-                        }
-                        finally {
+                        } finally {
                             span.end()
                         }
                     })
@@ -59,8 +68,7 @@ export const flowCache = (log: Logger, apiClient: WorkerToApiContract) => ({
                 return null
             }
             return JSON.parse(state as string) as FlowVersion
-        }
-        catch (e) {
+        } catch (e) {
             if (e instanceof Error && 'status' in e && (e as unknown as { status: number }).status === 404) {
                 return null
             }

@@ -1,7 +1,7 @@
-import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getTaskListsDropdown, getTasksInListDropdown, createTodoClient } from '../common';
-import { TaskFileAttachment } from '@microsoft/microsoft-graph-types';
-import { microsoftToDoAuth } from '../auth';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
+import { TaskFileAttachment } from '@microsoft/microsoft-graph-types'
+import { microsoftToDoAuth } from '../auth'
+import { createTodoClient, getTaskListsDropdown, getTasksInListDropdown } from '../common'
 
 export const addAttachmentAction = createAction({
     auth: microsoftToDoAuth,
@@ -10,7 +10,7 @@ export const addAttachmentAction = createAction({
     description: 'Adds an attachment to a task.',
     props: {
         task_list_id: Property.Dropdown({
-   auth: microsoftToDoAuth,
+            auth: microsoftToDoAuth,
             displayName: 'Task List',
             description: 'The task list that contains the task.',
             required: true,
@@ -21,19 +21,19 @@ export const addAttachmentAction = createAction({
                         disabled: true,
                         placeholder: 'Connect your account first',
                         options: [],
-                    };
+                    }
                 }
-                return await getTaskListsDropdown(auth as OAuth2PropertyValue);
+                return await getTaskListsDropdown(auth as OAuth2PropertyValue)
             },
         }),
         task_id: Property.Dropdown({
-   auth: microsoftToDoAuth,
+            auth: microsoftToDoAuth,
             displayName: 'Task',
             description: 'The task to which you are adding the attachment.',
             required: true,
             refreshers: ['task_list_id'],
             options: async ({ auth, task_list_id }) => {
-                const authValue = auth as OAuth2PropertyValue;
+                const authValue = auth as OAuth2PropertyValue
                 if (!authValue?.access_token || !task_list_id) {
                     return {
                         disabled: true,
@@ -41,9 +41,9 @@ export const addAttachmentAction = createAction({
                             ? 'Connect your account first'
                             : 'Select a task list first',
                         options: [],
-                    };
+                    }
                 }
-                return await getTasksInListDropdown(authValue, task_list_id as string);
+                return await getTasksInListDropdown(authValue, task_list_id as string)
             },
         }),
         file: Property.File({
@@ -58,26 +58,26 @@ export const addAttachmentAction = createAction({
         }),
     },
     async run(context) {
-        const { auth, propsValue } = context;
-        const { task_list_id, task_id, file, filename } = propsValue;
+        const { auth, propsValue } = context
+        const { task_list_id, task_id, file, filename } = propsValue
 
         if (!task_list_id || !task_id) {
-            throw new Error('Task List ID and Task ID are required');
+            throw new Error('Task List ID and Task ID are required')
         }
 
         if (!file || !file.data) {
-            throw new Error('File or file data is missing. Please provide a valid file.');
+            throw new Error('File or file data is missing. Please provide a valid file.')
         }
 
-        const fileSizeInBytes = file.data.length;
-        const fileSizeInMB = fileSizeInBytes / (1024 * 1024);
-        const attachmentName = filename || file.filename;
+        const fileSizeInBytes = file.data.length
+        const fileSizeInMB = fileSizeInBytes / (1024 * 1024)
+        const attachmentName = filename || file.filename
 
         if (fileSizeInMB > 25) {
-            throw new Error(`File size (${fileSizeInMB.toFixed(2)} MB) exceeds the 25 MB limit.`);
+            throw new Error(`File size (${fileSizeInMB.toFixed(2)} MB) exceeds the 25 MB limit.`)
         }
 
-        const client = createTodoClient(auth);
+        const client = createTodoClient(auth)
 
         try {
             if (fileSizeInMB < 3) {
@@ -86,13 +86,13 @@ export const addAttachmentAction = createAction({
                     name: attachmentName,
                     contentBytes: file.data.toString('base64'),
                     contentType: file.extension ? `application/${file.extension}` : 'application/octet-stream',
-                };
+                }
 
                 const response = await client
                     .api(`/me/todo/lists/${task_list_id}/tasks/${task_id}/attachments`)
-                    .post(attachmentBody);
+                    .post(attachmentBody)
 
-                return response as TaskFileAttachment;
+                return response as TaskFileAttachment
             }
 
             const uploadSession = await client
@@ -103,16 +103,16 @@ export const addAttachmentAction = createAction({
                         name: attachmentName,
                         size: fileSizeInBytes,
                     },
-                });
+                })
 
-            const uploadUrl = uploadSession.uploadUrl;
-            const chunkSize = 4 * 1024 * 1024;
-            let uploadedBytes = 0;
+            const uploadUrl = uploadSession.uploadUrl
+            const chunkSize = 4 * 1024 * 1024
+            let uploadedBytes = 0
 
             while (uploadedBytes < fileSizeInBytes) {
-                const chunkEnd = Math.min(uploadedBytes + chunkSize, fileSizeInBytes);
-                const chunk = file.data.slice(uploadedBytes, chunkEnd);
-                const contentRange = `bytes ${uploadedBytes}-${chunkEnd - 1}/${fileSizeInBytes}`;
+                const chunkEnd = Math.min(uploadedBytes + chunkSize, fileSizeInBytes)
+                const chunk = file.data.slice(uploadedBytes, chunkEnd)
+                const contentRange = `bytes ${uploadedBytes}-${chunkEnd - 1}/${fileSizeInBytes}`
 
                 const uploadResponse = await client
                     .api(uploadUrl)
@@ -121,18 +121,18 @@ export const addAttachmentAction = createAction({
                         'Content-Range': contentRange,
                         'Content-Type': 'application/octet-stream',
                     })
-                    .put(chunk);
+                    .put(chunk)
 
-                uploadedBytes = chunkEnd;
+                uploadedBytes = chunkEnd
 
                 if (uploadedBytes >= fileSizeInBytes) {
-                    return uploadResponse as TaskFileAttachment;
+                    return uploadResponse as TaskFileAttachment
                 }
             }
 
-            throw new Error('Upload completed but no response received');
+            throw new Error('Upload completed but no response received')
         } catch (error: any) {
-            throw new Error(`Failed to add attachment: ${error?.message || error}`);
+            throw new Error(`Failed to add attachment: ${error?.message || error}`)
         }
     },
-});
+})

@@ -1,107 +1,99 @@
-import {
-  Property,
-  DropdownOption,
-  DynamicPropsValue,
-} from '@activepieces/pieces-framework';
-import { makeRequest } from './index';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { cognitoFormsAuth } from '../auth';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { DropdownOption, DynamicPropsValue, Property } from '@activepieces/pieces-framework'
+import { cognitoFormsAuth } from '../auth'
+import { makeRequest } from './index'
 
 export const formIdDropdown = Property.Dropdown({
-  auth: cognitoFormsAuth,
-  displayName: 'Form',
-  required: true,
-  refreshers: [],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Please connect your Cognito Forms account',
-        options: [],
-      };
-    }
+    auth: cognitoFormsAuth,
+    displayName: 'Form',
+    required: true,
+    refreshers: [],
+    options: async ({ auth }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                placeholder: 'Please connect your Cognito Forms account',
+                options: [],
+            }
+        }
 
-    const apiKey = auth;
-    const forms = await makeRequest(apiKey, HttpMethod.GET, '/forms');
+        const apiKey = auth
+        const forms = await makeRequest(apiKey, HttpMethod.GET, '/forms')
 
-    const options: DropdownOption<string>[] = forms.map((form: any) => ({
-      label: form.Name,
-      value: form.Id,
-    }));
+        const options: DropdownOption<string>[] = forms.map((form: any) => ({
+            label: form.Name,
+            value: form.Id,
+        }))
 
-    return {
-      disabled: false,
-      options,
-    };
-  },
-});
+        return {
+            disabled: false,
+            options,
+        }
+    },
+})
 
 export const formFields = Property.DynamicProperties({
-  displayName: 'Fields',
-  auth: cognitoFormsAuth,
-  refreshers: ['formId'],
-  required: true,
-  props: async ({ auth, formId }) => {
-    if (!auth || !formId) return {};
+    displayName: 'Fields',
+    auth: cognitoFormsAuth,
+    refreshers: ['formId'],
+    required: true,
+    props: async ({ auth, formId }) => {
+        if (!auth || !formId) return {}
 
-    const apiKey = auth;
-    const response = await makeRequest(
-      apiKey,
-      HttpMethod.GET,
-      `/forms/${formId}/schema`
-    );
+        const apiKey = auth
+        const response = await makeRequest(apiKey, HttpMethod.GET, `/forms/${formId}/schema`)
 
-    const fields = response as FormSchemaResponse;
+        const fields = response as FormSchemaResponse
 
-    const props: DynamicPropsValue = {};
+        const props: DynamicPropsValue = {}
 
-    for (const [key, value] of Object.entries(fields.properties)) {
-      const fieldType = value.type;
-      const fieldName = key;
-      const fieldDes = value.description;
-      const isReadOnly = value.readOnly;
+        for (const [key, value] of Object.entries(fields.properties)) {
+            const fieldType = value.type
+            const fieldName = key
+            const fieldDes = value.description
+            const isReadOnly = value.readOnly
 
-      if (isReadOnly) continue;
+            if (isReadOnly) continue
 
-      switch (fieldType) {
-        case 'string':
-          props[fieldName] = Property.ShortText({
-            displayName: fieldName,
-            description: fieldDes ?? '',
-            required: false,
-          });
-          break;
-        case 'boolean':
-          props[fieldName] = Property.Checkbox({
-            displayName: fieldName,
-            description: fieldDes ?? '',
+            switch (fieldType) {
+                case 'string':
+                    props[fieldName] = Property.ShortText({
+                        displayName: fieldName,
+                        description: fieldDes ?? '',
+                        required: false,
+                    })
+                    break
+                case 'boolean':
+                    props[fieldName] = Property.Checkbox({
+                        displayName: fieldName,
+                        description: fieldDes ?? '',
 
-            required: false,
-          });
-          break;
-        case 'number':
-          props[fieldName] = Property.Number({
-            displayName: fieldName,
-            description: fieldDes ?? '',
+                        required: false,
+                    })
+                    break
+                case 'number':
+                    props[fieldName] = Property.Number({
+                        displayName: fieldName,
+                        description: fieldDes ?? '',
 
-            required: false,
-          });
-          break;
-        default:
-          break;
-      }
-    }
-    return props;
-  },
-});
+                        required: false,
+                    })
+                    break
+                default:
+                    break
+            }
+        }
+        return props
+    },
+})
 
 type FormSchemaResponse = {
-  type: string;
-  properties: {
-    [x: string]: {
-      type: string;
-      readOnly: boolean;
-      description: string;
-    };
-  };
-};
+    type: string
+    properties: {
+        [x: string]: {
+            type: string
+            readOnly: boolean
+            description: string
+        }
+    }
+}

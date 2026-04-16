@@ -1,9 +1,6 @@
 import { STORE_KEY_MAX_LENGTH, StoreEntry } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import {
-    ApIdSchema,
-    BaseColumnSchemaPart,
-} from '../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
 type StoreEntrySchema = StoreEntry
 
@@ -20,7 +17,7 @@ export const StoreEntryEntity = new EntitySchema<StoreEntrySchema>({
             type: 'jsonb',
             nullable: true,
         },
-    },    
+    },
     uniques: [
         {
             columns: ['projectId', 'key'],

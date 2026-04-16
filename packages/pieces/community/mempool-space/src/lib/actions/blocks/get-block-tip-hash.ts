@@ -1,9 +1,9 @@
-import { createAction, PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { MEMPOOL_API_BASE_URL } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, PieceAuth } from '@activepieces/pieces-framework'
+import { MEMPOOL_API_BASE_URL } from '../../common'
 
 export const getBlockTipHash = createAction({
- auth:PieceAuth.None(),
+    auth: PieceAuth.None(),
     name: 'get_block_tip_hash',
     displayName: 'Get Block Tip Hash',
     description: 'Returns the hash of the last block',
@@ -13,7 +13,7 @@ export const getBlockTipHash = createAction({
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${MEMPOOL_API_BASE_URL}/api/blocks/tip/hash`,
-        });
-        return response.body;
+        })
+        return response.body
     },
-});
+})

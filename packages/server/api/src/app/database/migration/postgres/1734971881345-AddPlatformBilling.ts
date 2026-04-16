@@ -48,5 +48,4 @@ export class AddPlatformBilling1734971881345 implements MigrationInterface {
             DROP TABLE "platform_billing"
         `)
     }
-
 }

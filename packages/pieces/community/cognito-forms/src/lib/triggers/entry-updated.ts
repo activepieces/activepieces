@@ -1,18 +1,14 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { cognitoFormsAuth } from '../auth';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { cognitoFormsAuth } from '../auth'
 
 export const entryUpdatedTrigger = createTrigger({
-  name: 'entry_updated',
-  displayName: 'Entry Updated',
-  description: 'Triggers when an existing form entry is updated.',
-  auth: cognitoFormsAuth,
-  props: {
-    webhookInstructions: Property.MarkDown({
-      value: `
+    name: 'entry_updated',
+    displayName: 'Entry Updated',
+    description: 'Triggers when an existing form entry is updated.',
+    auth: cognitoFormsAuth,
+    props: {
+        webhookInstructions: Property.MarkDown({
+            value: `
           To use this trigger, you need to manually set up a webhook in your Cognito Forms account:
     
           1. Login to your Cognito Forms account.
@@ -23,18 +19,18 @@ export const entryUpdatedTrigger = createTrigger({
           \`\`\`
           4. Click Save to save the form changes.
           `,
-    }),
-  },
-  type: TriggerStrategy.WEBHOOK,
-  sampleData: undefined,
-  async onEnable(context) {
-    // No need to register webhooks programmatically as user will do it manually
-  },
-  async onDisable(context) {
-    // No need to unregister webhooks as user will do it manually
-  },
+        }),
+    },
+    type: TriggerStrategy.WEBHOOK,
+    sampleData: undefined,
+    async onEnable(context) {
+        // No need to register webhooks programmatically as user will do it manually
+    },
+    async onDisable(context) {
+        // No need to unregister webhooks as user will do it manually
+    },
 
-  async run(context) {
-    return [context.payload.body];
-  },
-});
+    async run(context) {
+        return [context.payload.body]
+    },
+})

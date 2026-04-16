@@ -1,6 +1,12 @@
 import { z } from 'zod'
 import { isNil, Nullable } from '../../core/common'
-import { AiCreditsAutoTopUpState, PlanName, PlatformPlanWithOnlyLimits, PlatformUsageMetric, TeamProjectsLimit } from '../../management/platform'
+import {
+    AiCreditsAutoTopUpState,
+    PlanName,
+    PlatformPlanWithOnlyLimits,
+    PlatformUsageMetric,
+    TeamProjectsLimit,
+} from '../../management/platform'
 import { PiecesFilterType } from '../../management/project'
 
 export const PRICE_PER_EXTRA_ACTIVE_FLOWS = 5

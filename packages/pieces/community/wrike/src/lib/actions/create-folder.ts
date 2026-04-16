@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/dot-notation */
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { wrikeAuth } from '../common/auth';
-import { wrikeCommon } from '../common/client';
+
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { wrikeAuth } from '../common/auth'
+import { wrikeCommon } from '../common/client'
 
 export const createFolder = createAction({
     name: 'create_folder',
@@ -13,7 +14,8 @@ export const createFolder = createAction({
     props: {
         parentFolderId: Property.ShortText({
             displayName: 'Parent Folder ID',
-            description: 'The ID of the parent folder where the new folder will be created. Leave empty to create at root level.',
+            description:
+                'The ID of the parent folder where the new folder will be created. Leave empty to create at root level.',
             required: false,
         }),
         title: Property.ShortText({
@@ -60,42 +62,51 @@ export const createFolder = createAction({
         }),
     },
     async run(context) {
-        const props = context.propsValue as any;
-        const { parentFolderId, title, description, shareds, project, projectOwnerId, projectStartDate, projectEndDate } = props;
+        const props = context.propsValue as any
+        const {
+            parentFolderId,
+            title,
+            description,
+            shareds,
+            project,
+            projectOwnerId,
+            projectStartDate,
+            projectEndDate,
+        } = props
 
         const folderData: Record<string, any> = {
             title,
-        };
+        }
 
-        if (description) folderData['description'] = description;
+        if (description) folderData['description'] = description
 
         if (shareds && shareds.length > 0) {
-            folderData['shareds'] = shareds.map((shared: any) => shared.userId);
+            folderData['shareds'] = shareds.map((shared: any) => shared.userId)
         }
 
         if (project) {
-            const projectData: Record<string, any> = {};
+            const projectData: Record<string, any> = {}
 
             if (projectOwnerId) {
-                projectData['ownerIds'] = [projectOwnerId];
+                projectData['ownerIds'] = [projectOwnerId]
             } else {
-                projectData['ownerIds'] = [context.auth.access_token.split('.')[0]];
+                projectData['ownerIds'] = [context.auth.access_token.split('.')[0]]
             }
 
             if (projectStartDate) {
-                projectData['startDate'] = projectStartDate.split('T')[0]; // Format as YYYY-MM-DD
+                projectData['startDate'] = projectStartDate.split('T')[0] // Format as YYYY-MM-DD
             }
 
             if (projectEndDate) {
-                projectData['endDate'] = projectEndDate.split('T')[0]; // Format as YYYY-MM-DD
+                projectData['endDate'] = projectEndDate.split('T')[0] // Format as YYYY-MM-DD
             }
 
-            folderData['project'] = projectData;
+            folderData['project'] = projectData
         }
 
-        let resourceUri = '/folders';
+        let resourceUri = '/folders'
         if (parentFolderId) {
-            resourceUri = `/folders/${parentFolderId}/folders`;
+            resourceUri = `/folders/${parentFolderId}/folders`
         }
 
         const response = await wrikeCommon.apiCall({
@@ -103,8 +114,8 @@ export const createFolder = createAction({
             method: HttpMethod.POST,
             resourceUri,
             body: folderData,
-        });
+        })
 
-        return response.body;
+        return response.body
     },
-});
+})

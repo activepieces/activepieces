@@ -13,7 +13,7 @@ function getApiUrl(): string {
     return frontendUrl + '/api/'
 }
 
-function getSocketUrl(): { url: string, path: string } {
+function getSocketUrl(): { url: string; path: string } {
     const containerType = system.get(WorkerSystemProp.CONTAINER_TYPE) ?? 'WORKER_AND_APP'
     if (containerType === 'WORKER_AND_APP') {
         const port = process.env[WorkerSystemProp.PORT] ?? system.get(WorkerSystemProp.PORT)
@@ -58,7 +58,12 @@ export const system = {
     },
     getList(prop: WorkerSystemProp): string[] {
         const value = env.get(prop).asString() ?? defaultValues[prop]
-        return value ? value.split(',').map(s => s.trim()).filter(Boolean) : []
+        return value
+            ? value
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+            : []
     },
 }
 

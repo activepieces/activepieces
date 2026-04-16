@@ -1,14 +1,13 @@
-import fs from 'fs/promises'
-import path from 'path'
 import { ActivepiecesError, ApEnvironment, ConfigureRepoRequest, ErrorCode, GitRepo } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import fs from 'fs/promises'
 import { nanoid } from 'nanoid'
+import path from 'path'
 import simpleGit, { SimpleGit } from 'simple-git'
 import { userIdentityService } from '../../../../authentication/user-identity/user-identity-service'
 import { system } from '../../../../helper/system/system'
 import { AppSystemProp } from '../../../../helper/system/system-props'
 import { userService } from '../../../../user/user-service'
-
 
 export const gitHelper = {
     commitAndPush,
@@ -16,11 +15,7 @@ export const gitHelper = {
     validateConnection,
 }
 
-async function commitAndPush(
-    git: SimpleGit,
-    gitRepo: GitRepo,
-    commitMessage: string,
-): Promise<void> {
+async function commitAndPush(git: SimpleGit, gitRepo: GitRepo, commitMessage: string): Promise<void> {
     await git.add('.')
     await git.commit(commitMessage)
     await git.push('origin', gitRepo.branch)
@@ -30,41 +25,26 @@ async function createGitRepoAndReturnPaths(
     log: FastifyBaseLogger,
     gitRepo: GitRepo,
     userId: string,
-): Promise<{ flowFolderPath: string, git: SimpleGit, stateFolderPath: string, connectionsFolderPath: string, tablesFolderPath: string }> {
+): Promise<{
+    flowFolderPath: string
+    git: SimpleGit
+    stateFolderPath: string
+    connectionsFolderPath: string
+    tablesFolderPath: string
+}> {
     const tmpFolder = path.join('/', 'tmp', 'repo', gitRepo.projectId)
     try {
         await fs.rmdir(tmpFolder, { recursive: true })
-    }
-    catch (e) {
+    } catch (e) {
         // ignore
     }
-    const flowFolderPath = path.join(
-        tmpFolder,
-        'projects',
-        gitRepo.slug,
-        'flows',
-    )
-    const connectionsFolderPath = path.join(
-        tmpFolder,
-        'projects',
-        gitRepo.slug,
-        'connections',
-    )
-    const tablesFolderPath = path.join(
-        tmpFolder,
-        'projects',
-        gitRepo.slug,
-        'tables',
-    )
+    const flowFolderPath = path.join(tmpFolder, 'projects', gitRepo.slug, 'flows')
+    const connectionsFolderPath = path.join(tmpFolder, 'projects', gitRepo.slug, 'connections')
+    const tablesFolderPath = path.join(tmpFolder, 'projects', gitRepo.slug, 'tables')
     await fs.mkdir(flowFolderPath, { recursive: true })
     await fs.mkdir(connectionsFolderPath, { recursive: true })
     await fs.mkdir(tablesFolderPath, { recursive: true })
-    const stateFolderPath = path.join(
-        tmpFolder,
-        'projects',
-        gitRepo.slug,
-        'state',
-    )
+    const stateFolderPath = path.join(tmpFolder, 'projects', gitRepo.slug, 'state')
     await fs.mkdir(stateFolderPath, { recursive: true })
     const keyPath = path.resolve(path.join('tmp', 'keys', gitRepo.id))
     await createOrGetSshKeyPath({ keyPath, sshPrivateKey: gitRepo.sshPrivateKey ?? '' })
@@ -86,18 +66,19 @@ async function createGitRepoAndReturnPaths(
     }
 }
 
-async function createOrGetSshKeyPath({ keyPath, sshPrivateKey }: { keyPath: string, sshPrivateKey: string }): Promise<void> {
+async function createOrGetSshKeyPath({
+    keyPath,
+    sshPrivateKey,
+}: {
+    keyPath: string
+    sshPrivateKey: string
+}): Promise<void> {
     await fs.mkdir(path.dirname(keyPath), { recursive: true })
     await fs.writeFile(keyPath, sshPrivateKey)
     await fs.chmod(keyPath, 0o600)
 }
 
-async function initGitRepo(
-    keyPath: string,
-    remoteUrl: string,
-    baseDir: string,
-    branch: string,
-): Promise<SimpleGit> {
+async function initGitRepo(keyPath: string, remoteUrl: string, baseDir: string, branch: string): Promise<SimpleGit> {
     const git = simpleGit({
         baseDir,
         binary: 'git',
@@ -123,16 +104,14 @@ async function validateConnection(request: ConfigureRepoRequest): Promise<void> 
         await fs.mkdir(tmpFolder, { recursive: true })
         await createOrGetSshKeyPath({ keyPath, sshPrivateKey })
         await initGitRepo(keyPath, remoteUrl, tmpFolder, branch)
-    }
-    catch (error) {
+    } catch (error) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_GIT_CREDENTIALS,
             params: {
                 message: (error as Error).message,
             },
         })
-    }
-    finally {
+    } finally {
         await fs.rmdir(tmpFolder, { recursive: true })
         await fs.unlink(keyPath)
     }

@@ -5,8 +5,8 @@ import {
     Permission,
     PopulatedRecord,
     PrincipalType,
-    SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    SeekPage,
     UpdateRecordRequest,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -16,9 +16,9 @@ import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/author
 import { EntitySourceType, ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { TableEntity } from '../table/table.entity'
-import { recordSideEffects } from './record-side-effects'
 import { RecordEntity } from './record.entity'
 import { recordService } from './record.service'
+import { recordSideEffects } from './record-side-effects'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -32,13 +32,16 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
             logger: request.log,
         })
         await reply.status(StatusCodes.CREATED).send(records)
-        await recordSideEffects(fastify.log).handleRecordsEvent({
-            tableId: request.body.tableId,
-            projectId: request.projectId,
-            records,
-            logger: request.log,
-            authorization: request.headers.authorization as string,
-        }, 'created')
+        await recordSideEffects(fastify.log).handleRecordsEvent(
+            {
+                tableId: request.body.tableId,
+                projectId: request.projectId,
+                records,
+                logger: request.log,
+                authorization: request.headers.authorization as string,
+            },
+            'created',
+        )
     })
 
     fastify.get('/:id', GetRecordByIdRequest, async (request) => {
@@ -55,14 +58,17 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
             projectId: request.projectId,
         })
         await reply.status(StatusCodes.OK).send(record)
-        await recordSideEffects(fastify.log).handleRecordsEvent({
-            tableId: request.body.tableId,
-            projectId: request.projectId,
-            records: [record],
-            logger: request.log,
-            authorization: request.headers.authorization as string,
-            agentUpdate: request.body.agentUpdate ?? false,
-        }, 'updated')
+        await recordSideEffects(fastify.log).handleRecordsEvent(
+            {
+                tableId: request.body.tableId,
+                projectId: request.projectId,
+                records: [record],
+                logger: request.log,
+                authorization: request.headers.authorization as string,
+                agentUpdate: request.body.agentUpdate ?? false,
+            },
+            'updated',
+        )
     })
 
     fastify.delete('/', DeleteRecordRequest, async (request, reply) => {
@@ -71,13 +77,16 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
             projectId: request.projectId,
         })
         await reply.status(StatusCodes.OK).send([])
-        await recordSideEffects(fastify.log).handleRecordsEvent({
-            tableId: deletedRecords[0]?.tableId,
-            projectId: request.projectId,
-            records: deletedRecords,
-            logger: request.log,
-            authorization: request.headers.authorization as string,
-        }, 'deleted')
+        await recordSideEffects(fastify.log).handleRecordsEvent(
+            {
+                tableId: deletedRecords[0]?.tableId,
+                projectId: request.projectId,
+                records: deletedRecords,
+                logger: request.log,
+                authorization: request.headers.authorization as string,
+            },
+            'deleted',
+        )
     })
 
     fastify.get('/', ListRequest, async (request) => {
@@ -131,10 +140,14 @@ const GetRecordByIdRequest = {
 
 const UpdateRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
-            type: ProjectResourceType.TABLE,
-            tableName: RecordEntity,
-        }),
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE],
+            Permission.WRITE_TABLE,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: RecordEntity,
+            },
+        ),
     },
     schema: {
         tags: ['records'],
@@ -147,21 +160,24 @@ const UpdateRequest = {
         response: {
             [StatusCodes.OK]: PopulatedRecord,
         },
-
     },
 }
 
 const DeleteRecordRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
-            type: ProjectResourceType.TABLE,
-            tableName: TableEntity,
-            entitySourceType: EntitySourceType.BODY,
-            lookup: {
-                paramKey: 'tableId',
-                entityField: 'id',
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE],
+            Permission.WRITE_TABLE,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: TableEntity,
+                entitySourceType: EntitySourceType.BODY,
+                lookup: {
+                    paramKey: 'tableId',
+                    entityField: 'id',
+                },
             },
-        }),
+        ),
     },
     schema: {
         tags: ['records'],
@@ -176,15 +192,19 @@ const DeleteRecordRequest = {
 
 const ListRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.READ_TABLE, {
-            type: ProjectResourceType.TABLE,
-            tableName: TableEntity,
-            entitySourceType: EntitySourceType.QUERY,
-            lookup: {
-                paramKey: 'tableId',
-                entityField: 'id',
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE],
+            Permission.READ_TABLE,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: TableEntity,
+                entitySourceType: EntitySourceType.QUERY,
+                lookup: {
+                    paramKey: 'tableId',
+                    entityField: 'id',
+                },
             },
-        }),
+        ),
     },
     schema: {
         querystring: ListRecordsRequest,
@@ -196,4 +216,3 @@ const ListRequest = {
         },
     },
 }
-

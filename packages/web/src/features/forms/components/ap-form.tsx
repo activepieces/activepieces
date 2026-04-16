@@ -1,12 +1,12 @@
 import {
   ApFlagId,
+  createKeyForFormInput,
   FileResponseInterface,
   FormInput,
   FormInputType,
   FormResponse,
-  HumanInputFormResultTypes,
   HumanInputFormResult,
-  createKeyForFormInput,
+  HumanInputFormResultTypes,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -15,7 +15,7 @@ import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { z, ZodType } from 'zod';
+import { ZodType, z } from 'zod';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { ReadMoreDescription } from '@/components/custom/read-more-description';
@@ -26,8 +26,8 @@ import {
   Form,
   FormControl,
   FormField,
-  FormLabel,
   FormItem,
+  FormLabel,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -51,11 +51,14 @@ const putBackQuotesForInputNames = (
   value: Record<string, unknown>,
   inputs: FormInputWithName[],
 ) => {
-  return inputs.reduce((acc, input) => {
-    const key = createKeyForFormInput(input.displayName);
-    acc[key] = value[key];
-    return acc;
-  }, {} as Record<string, unknown>);
+  return inputs.reduce(
+    (acc, input) => {
+      const key = createKeyForFormInput(input.displayName);
+      acc[key] = value[key];
+      return acc;
+    },
+    {} as Record<string, unknown>,
+  );
 };
 
 const createPropertySchema = (input: FormInputWithName): ZodType => {
@@ -318,4 +321,5 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
 };
 
 ApForm.displayName = 'ApForm';
+
 export { ApForm };

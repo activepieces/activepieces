@@ -1,8 +1,8 @@
 import {
   FlowOperationType,
-  Step,
   FlowTriggerType,
   flowStructureUtil,
+  Step,
 } from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
 import { Handle, NodeProps, Position } from '@xyflow/react';
@@ -206,6 +206,7 @@ const ApStepCanvasNode = React.memo(
 );
 
 ApStepCanvasNode.displayName = 'ApStepCanvasNode';
+
 export { ApStepCanvasNode };
 
 function getPieceSelectorOperationType(step: Step) {

@@ -36,7 +36,6 @@ export class AddFeaturesToPlatform1714145914415 implements MigrationInterface {
             ALTER TABLE "platform" DROP COLUMN "customDomainsEnabled"
         `)
     }
-
 }
 
 async function addColumnWithFalse(queryRunner: QueryRunner, feature: string): Promise<void> {
@@ -54,5 +53,4 @@ async function addColumnWithFalse(queryRunner: QueryRunner, feature: string): Pr
         ALTER TABLE "platform"
         ALTER COLUMN "${feature}" SET NOT NULL
     `)
-
 }

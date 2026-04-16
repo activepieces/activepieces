@@ -627,5 +627,4 @@ export class AddAgentsSqlite1749953500521 implements MigrationInterface {
             CREATE INDEX "mcp_project_id" ON "mcp" ("projectId")
         `)
     }
-
 }

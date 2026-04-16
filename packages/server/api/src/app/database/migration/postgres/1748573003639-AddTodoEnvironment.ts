@@ -25,5 +25,4 @@ export class AddTodoEnvironment1748573003639 implements MigrationInterface {
             ALTER TABLE "todo" DROP COLUMN "environment"
         `)
     }
-
 }

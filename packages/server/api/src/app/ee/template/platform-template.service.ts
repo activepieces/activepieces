@@ -1,12 +1,35 @@
-import { apId, flowPieceUtil, FlowVersionTemplate, Metadata, sanitizeObjectForPostgresql, spreadIfDefined, Template, TemplateStatus, TemplateTag, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
+import {
+    apId,
+    FlowVersionTemplate,
+    flowPieceUtil,
+    Metadata,
+    sanitizeObjectForPostgresql,
+    spreadIfDefined,
+    Template,
+    TemplateStatus,
+    TemplateTag,
+    TemplateType,
+    UpdateTemplateRequestBody,
+} from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { TemplateEntity } from '../../template/template.entity'
-
 
 const templateRepo = repoFactory<Template>(TemplateEntity)
 
 export const platformTemplateService = () => ({
-    async create({ platformId, name, summary, description, pieces, tags, blogUrl, metadata, author, categories, flows }: CreateParams): Promise<Template> {
+    async create({
+        platformId,
+        name,
+        summary,
+        description,
+        pieces,
+        tags,
+        blogUrl,
+        metadata,
+        author,
+        categories,
+        flows,
+    }: CreateParams): Promise<Template> {
         const newTags = tags ?? []
         const newTemplate: NewTemplate = {
             id: apId(),

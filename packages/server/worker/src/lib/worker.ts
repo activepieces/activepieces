@@ -1,5 +1,3 @@
-import { createServer } from 'http'
-import os from 'os'
 import { systemUsage } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
@@ -16,7 +14,9 @@ import {
     WorkerToApiContract,
 } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
+import { createServer } from 'http'
 import { nanoid } from 'nanoid'
+import os from 'os'
 import { io, Socket } from 'socket.io-client'
 import { pieceInstaller } from './cache/pieces/piece-installer'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'
@@ -25,7 +25,6 @@ import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
 import { createSandboxManager, SandboxManager } from './execute/sandbox-manager'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
-
 
 const tracer = trace.getTracer('worker')
 
@@ -111,13 +110,16 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
 
     logger.info({ concurrency }, 'Starting polling workers')
 
-    const workers = sandboxManagers.map((sbManager, index) =>
-        pollAndExecute(apiClient, sbManager, index, generation),
-    )
+    const workers = sandboxManagers.map((sbManager, index) => pollAndExecute(apiClient, sbManager, index, generation))
     await Promise.all(workers)
 }
 
-async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: SandboxManager, workerIndex: number, generation: number): Promise<void> {
+async function pollAndExecute(
+    apiClient: WorkerToApiContract,
+    sbManager: SandboxManager,
+    workerIndex: number,
+    generation: number,
+): Promise<void> {
     const workerLog = logger.child({ workerIndex })
     workerLog.info('Polling worker started')
 
@@ -144,26 +146,23 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
         workerLog.debug({ jobId: job.jobId, jobType: job.jobData.jobType }, 'Job received from poll')
 
         const lockExtensionInterval = setInterval(() => {
-            void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
+            void tryCatch(() =>
+                apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName }),
+            ).then(({ error }) => {
                 if (error) {
                     workerLog.warn({ error, jobId: job.jobId }, 'Failed to extend lock')
                 }
             })
         }, 30_000)
 
-        const { data: result, error: execError } = await tryCatch(() =>
-            executeJob(apiClient, job, sbManager),
-        )
-
+        const { data: result, error: execError } = await tryCatch(() => executeJob(apiClient, job, sbManager))
 
         const { error: completeError } = await tryCatch(() =>
             apiClient.completeJob({
                 jobId: job.jobId,
                 token: job.token,
                 queueName: job.queueName,
-                status: execError
-                    ? EngineResponseStatus.INTERNAL_ERROR
-                    : result.status,
+                status: execError ? EngineResponseStatus.INTERNAL_ERROR : result.status,
                 errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
                 logs: extractLogs(execError ?? undefined, result ?? undefined),
                 delayInSeconds: result?.kind === JobResultKind.FIRE_AND_FORGET ? result.delayInSeconds : undefined,
@@ -179,44 +178,51 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
     }
 }
 
-async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, sbManager: SandboxManager): Promise<JobResult> {
+async function executeJob(
+    apiClient: WorkerToApiContract,
+    job: ConsumeJobRequest,
+    sbManager: SandboxManager,
+): Promise<JobResult> {
     const rawData = job.jobData
     const jobData = JobData.parse(rawData)
-    return tracer.startActiveSpan('worker.executeJob', {
-        attributes: {
-            'worker.jobId': job.jobId,
-            'worker.jobType': jobData.jobType,
+    return tracer.startActiveSpan(
+        'worker.executeJob',
+        {
+            attributes: {
+                'worker.jobId': job.jobId,
+                'worker.jobType': jobData.jobType,
+            },
         },
-    }, async (span) => {
-        const log = logger.child({ jobId: job.jobId, jobType: jobData.jobType })
-        const apiUrl = getApiUrl()
-        const { PUBLIC_URL: publicUrl } = await workerSettings.waitForSettings()
-        log.debug({ apiUrl, publicUrl }, 'Worker settings resolved')
-        const ctx: JobContext = {
-            apiClient,
-            sandboxManager: sbManager,
-            jobId: job.jobId,
-            engineToken: job.engineToken,
-            internalApiUrl: apiUrl,
-            publicApiUrl: ensurePublicApiUrl(publicUrl),
-            log,
-        }
-        try {
-            const handler = getHandler(jobData.jobType)
-            log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
-            const { data: result, error } = await tryCatch(() => handler.execute(ctx, jobData))
-            if (error) {
-                log.error({ error }, 'Job execution failed')
-                span.recordException(error)
-                throw error
+        async (span) => {
+            const log = logger.child({ jobId: job.jobId, jobType: jobData.jobType })
+            const apiUrl = getApiUrl()
+            const { PUBLIC_URL: publicUrl } = await workerSettings.waitForSettings()
+            log.debug({ apiUrl, publicUrl }, 'Worker settings resolved')
+            const ctx: JobContext = {
+                apiClient,
+                sandboxManager: sbManager,
+                jobId: job.jobId,
+                engineToken: job.engineToken,
+                internalApiUrl: apiUrl,
+                publicApiUrl: ensurePublicApiUrl(publicUrl),
+                log,
             }
-            log.debug('Job completed')
-            return result
-        }
-        finally {
-            span.end()
-        }
-    })
+            try {
+                const handler = getHandler(jobData.jobType)
+                log.debug({ handlerType: handler.jobType }, 'Executing job with handler')
+                const { data: result, error } = await tryCatch(() => handler.execute(ctx, jobData))
+                if (error) {
+                    log.error({ error }, 'Job execution failed')
+                    span.recordException(error)
+                    throw error
+                }
+                log.debug('Job completed')
+                return result
+            } finally {
+                span.end()
+            }
+        },
+    )
 }
 
 export function ensurePublicApiUrl(publicUrl: string): string {
@@ -242,15 +248,22 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
             if (!isNil(workerGroupId)) {
                 const processSandboxedModes = [ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_AND_PROCESS]
                 if (!processSandboxedModes.includes(response.EXECUTION_MODE as ExecutionMode)) {
-                    throw new Error(`Worker group "${workerGroupId}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`)
+                    throw new Error(
+                        `Worker group "${workerGroupId}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`,
+                    )
                 }
                 const reuseSandbox = system.get(WorkerSystemProp.REUSE_SANDBOX)
                 if (isNil(reuseSandbox)) {
-                    throw new Error(`Worker group "${workerGroupId}" requires AP_REUSE_SANDBOX to be set (true or false)`)
+                    throw new Error(
+                        `Worker group "${workerGroupId}" requires AP_REUSE_SANDBOX to be set (true or false)`,
+                    )
                 }
             }
             workerSettings.set(response)
-            logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE }, 'Worker settings loaded')
+            logger.info(
+                { environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE },
+                'Worker settings loaded',
+            )
             resolve()
         })
     })
@@ -265,8 +278,7 @@ function getWorkerProps(): Record<string, string> {
             SANDBOX_MEMORY_LIMIT: settings.SANDBOX_MEMORY_LIMIT,
             REUSE_SANDBOX: system.get(WorkerSystemProp.REUSE_SANDBOX) ?? 'false',
         }
-    }
-    catch {
+    } catch {
         return {}
     }
 }
@@ -303,8 +315,7 @@ async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<vo
     )
     if (installError) {
         logger.error({ error: installError }, 'Failed to install pieces during startup warmup')
-    }
-    else {
+    } else {
         void tryCatch(() => apiClient.markPieceAsUsed({ pieces }))
     }
     logger.info({ count: pieces.length }, 'Piece cache warmup complete')
@@ -339,7 +350,6 @@ function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-
 function startHealthServer(): ReturnType<typeof createServer> {
     const port = Number(system.get(WorkerSystemProp.PORT))
     const healthPaths = new Set(['/worker/health', '/v1/health'])
@@ -347,8 +357,7 @@ function startHealthServer(): ReturnType<typeof createServer> {
         if (req.method === 'GET' && req.url && healthPaths.has(req.url)) {
             res.writeHead(200, { 'Content-Type': 'application/json' })
             res.end(JSON.stringify({ status: 'ok' }))
-        }
-        else {
+        } else {
             res.writeHead(404)
             res.end()
         }
@@ -361,7 +370,7 @@ function startHealthServer(): ReturnType<typeof createServer> {
 
 type WorkerStartParams = {
     apiUrl: string
-    socketUrl: { url: string, path: string }
+    socketUrl: { url: string; path: string }
     workerToken: string
     withHealthServer?: boolean
 }

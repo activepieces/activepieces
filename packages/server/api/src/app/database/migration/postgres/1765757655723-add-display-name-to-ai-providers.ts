@@ -26,5 +26,4 @@ export class AddDisplayNameToAiProviders1765757655723 implements MigrationInterf
             CREATE UNIQUE INDEX "idx_ai_provider_platform_id_provider" ON "ai_provider" ("platformId", "provider")
         `)
     }
-
 }

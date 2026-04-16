@@ -43,4 +43,5 @@ const ApStepNodeSkippedStatus = ({ stepName }: { stepName: string }) => {
 };
 
 ApStepNodeSkippedStatus.displayName = 'ApStepNodeSkippedStatus';
+
 export { ApStepNodeSkippedStatus };

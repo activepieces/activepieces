@@ -1,8 +1,8 @@
 import {
   FlowOperationType,
-  StepLocationRelativeToParent,
   flowStructureUtil,
   isNil,
+  StepLocationRelativeToParent,
 } from '@activepieces/shared';
 import {
   DndContext,
@@ -10,11 +10,11 @@ import {
   DragOverlay,
   DragStartEvent,
   PointerSensor,
-  TouchSensor,
+  PointerSensorOptions,
   rectIntersection,
+  TouchSensor,
   useSensor,
   useSensors,
-  PointerSensorOptions,
 } from '@dnd-kit/core';
 import { ReactFlowInstance, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';

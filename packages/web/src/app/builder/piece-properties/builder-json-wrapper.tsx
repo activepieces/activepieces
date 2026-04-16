@@ -37,4 +37,5 @@ const BuilderJsonEditorWrapper = ({
 };
 
 BuilderJsonEditorWrapper.displayName = 'BuilderJsonEditorWrapper';
+
 export { BuilderJsonEditorWrapper };

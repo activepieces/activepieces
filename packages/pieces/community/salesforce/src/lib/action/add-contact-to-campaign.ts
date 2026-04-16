@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
-import { callSalesforceApi, salesforcesCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { callSalesforceApi, salesforcesCommon } from '../common'
 
 export const addContactToCampaign = createAction({
     auth: salesforceAuth,
@@ -14,21 +14,21 @@ export const addContactToCampaign = createAction({
         status: salesforcesCommon.status,
     },
     async run(context) {
-        const { campaign_id, contact_id, status } = context.propsValue;
+        const { campaign_id, contact_id, status } = context.propsValue
 
         const body = {
             CampaignId: campaign_id,
             ContactId: contact_id,
             Status: status,
-        };
+        }
 
         const response = await callSalesforceApi(
             HttpMethod.POST,
             context.auth,
             '/services/data/v56.0/sobjects/CampaignMember',
-            body
-        );
+            body,
+        )
 
-        return response.body;
+        return response.body
     },
-});
+})

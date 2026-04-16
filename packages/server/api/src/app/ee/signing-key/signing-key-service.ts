@@ -1,4 +1,7 @@
-import { ActivepiecesError, AddSigningKeyResponse, apId,
+import {
+    ActivepiecesError,
+    AddSigningKeyResponse,
+    apId,
     ErrorCode,
     isNil,
     PlatformId,

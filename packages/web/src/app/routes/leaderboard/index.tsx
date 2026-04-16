@@ -61,8 +61,8 @@ import {
   TimeUnit,
 } from '../impact/lib/impact-utils';
 
-import { ProjectsLeaderboard, ProjectStats } from './projects-leaderboard';
-import { UsersLeaderboard, UserStats } from './users-leaderboard';
+import { ProjectStats, ProjectsLeaderboard } from './projects-leaderboard';
+import { UserStats, UsersLeaderboard } from './users-leaderboard';
 
 type TimeSavedFilter = {
   min: string;

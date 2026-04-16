@@ -33,5 +33,4 @@ export class RegenerateIssuesTable1750392148590 implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_issue_flowId_stepName" ON "issue" ("flowId", "stepName")
         `)
     }
-
 }

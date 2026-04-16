@@ -1,8 +1,8 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const logrocketAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: `
+    displayName: 'API Key',
+    description: `
 To get your LogRocket API key:
 
 1. **Login to your LogRocket Dashboard**
@@ -12,6 +12,5 @@ To get your LogRocket API key:
 
 Your API key is used to authenticate requests to the LogRocket API.
   `,
-  required: true,
-});
-
+    required: true,
+})

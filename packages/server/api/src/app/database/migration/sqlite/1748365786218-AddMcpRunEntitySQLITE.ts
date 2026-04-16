@@ -175,5 +175,4 @@ export class AddMcpRunEntitySQLITE1748365786218 implements MigrationInterface {
             DROP TABLE "mcp_run"
         `)
     }
-
 }

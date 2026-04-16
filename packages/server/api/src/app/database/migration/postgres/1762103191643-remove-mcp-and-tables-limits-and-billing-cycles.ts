@@ -37,5 +37,4 @@ export class RemoveMcpAndTablesLimitsAndBillingCycles1762103191643 implements Mi
             ADD "tablesLimit" integer
         `)
     }
-
 }

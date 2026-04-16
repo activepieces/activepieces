@@ -247,5 +247,4 @@ export class AppConnectionsSetNullSqlite1730627777709 implements MigrationInterf
             CREATE INDEX "idx_app_connection_owner_id" ON "app_connection" ("ownerId")
         `)
     }
-
 }

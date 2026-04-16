@@ -1,5 +1,5 @@
-import { ChildProcess } from 'child_process'
 import { EngineOperation, EngineOperationType, EngineResponse } from '@activepieces/shared'
+import { ChildProcess } from 'child_process'
 
 export type SandboxMount = {
     hostPath: string
@@ -32,7 +32,11 @@ export type SandboxResult = EngineResponse<unknown> & {
 export type Sandbox = {
     id: string
     start: (options: SandboxStartOptions) => Promise<void>
-    execute: (operationType: EngineOperationType, operation: EngineOperation, options: SandboxOptions) => Promise<SandboxResult>
+    execute: (
+        operationType: EngineOperationType,
+        operation: EngineOperation,
+        options: SandboxOptions,
+    ) => Promise<SandboxResult>
     shutdown: () => Promise<void>
     isReady: () => boolean
 }

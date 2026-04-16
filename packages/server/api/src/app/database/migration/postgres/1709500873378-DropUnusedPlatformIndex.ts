@@ -23,5 +23,4 @@ export class DropUnusedPlatformIndex1709500873378 implements MigrationInterface 
             ADD CONSTRAINT "fk_project_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
     }
-
 }

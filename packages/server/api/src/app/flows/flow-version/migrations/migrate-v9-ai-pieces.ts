@@ -3,14 +3,13 @@ import {
     ApEdition,
     FlowAction,
     FlowActionType,
-    flowStructureUtil,
     FlowVersion,
+    flowStructureUtil,
     isNil,
     PieceAction,
 } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
 import { Migration } from '.'
-
 
 export const migrateV9AiPieces: Migration = {
     targetSchemaVersion: '9',
@@ -160,7 +159,10 @@ function extractModelFromInput(input: Record<string, unknown>): string {
     return (model as { modelId: string })?.modelId
 }
 
-function migrateModel(provider: string | undefined, modelId: string): { model: string | undefined, provider: string | undefined } {
+function migrateModel(
+    provider: string | undefined,
+    modelId: string,
+): { model: string | undefined; provider: string | undefined } {
     if (isNil(provider)) {
         return {
             provider,
@@ -179,4 +181,3 @@ function migrateModel(provider: string | undefined, modelId: string): { model: s
         model: `${provider.toLocaleLowerCase()}/${modelIdToOpenRouter[modelId] ?? modelId}`,
     }
 }
-

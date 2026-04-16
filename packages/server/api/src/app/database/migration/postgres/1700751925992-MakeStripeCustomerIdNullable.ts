@@ -5,8 +5,7 @@ import { isNotOneOfTheseEditions } from '../../database-common'
 
 const log = system.globalLogger()
 
-export class MakeStripeCustomerIdNullable1700751925992
-implements MigrationInterface {
+export class MakeStripeCustomerIdNullable1700751925992 implements MigrationInterface {
     name = 'MakeStripeCustomerIdNullable1700751925992'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

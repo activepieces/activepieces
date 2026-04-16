@@ -1,10 +1,10 @@
 import {
-  GitPushOperationType,
-  PushGitRepoRequest,
-  PushFlowsGitRepoRequest,
-  PushTablesGitRepoRequest,
   assertNotNullOrUndefined,
+  GitPushOperationType,
   PopulatedFlow,
+  PushFlowsGitRepoRequest,
+  PushGitRepoRequest,
+  PushTablesGitRepoRequest,
   Table,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,10 +18,10 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -163,4 +163,5 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
 };
 
 PushToGitDialog.displayName = 'PushToGitDialog';
+
 export { PushToGitDialog };

@@ -1,7 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 
-
 enum TemplateCategory {
     ANALYTICS = 'ANALYTICS',
     COMMUNICATION = 'COMMUNICATION',
@@ -63,7 +62,7 @@ export class MigrateOldTemplateCategoriesToDynamicOne1767624311536 implements Mi
                 }
                 return category
             })
-            
+
             allUpdatedCategories[id] = categories
         }
 
@@ -71,10 +70,7 @@ export class MigrateOldTemplateCategoriesToDynamicOne1767624311536 implements Mi
 
         if (templateIds.length > 0) {
             for (const [id, categories] of Object.entries(allUpdatedCategories)) {
-                await queryRunner.query(
-                    'UPDATE "template" SET "categories" = $1 WHERE "id" = $2',
-                    [categories, id],
-                )
+                await queryRunner.query('UPDATE "template" SET "categories" = $1 WHERE "id" = $2', [categories, id])
             }
             logger.info({ migratedCount: templateIds.length }, 'Migrated templates')
         }
@@ -85,5 +81,4 @@ export class MigrateOldTemplateCategoriesToDynamicOne1767624311536 implements Mi
     public async down(_queryRunner: QueryRunner): Promise<void> {
         // No down migration needed
     }
-
 }

@@ -1,16 +1,12 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
 
 export const missedCall = createTrigger({
-  name: 'missedCall',
-  displayName: 'Missed Call',
-  description: 'Triggered when an incoming call is not answered (missed call)',
-  props: {
-    instruction: Property.MarkDown({
-      value: `
+    name: 'missedCall',
+    displayName: 'Missed Call',
+    description: 'Triggered when an incoming call is not answered (missed call)',
+    props: {
+        instruction: Property.MarkDown({
+            value: `
           1. Login to https://voipstudio.com/
           2. Click on **Integrations**
           3. Scroll down to **Webhooks** and Enable
@@ -23,38 +19,38 @@ export const missedCall = createTrigger({
 			\`\`\`
 
                 `,
-    }),
-  },
-  sampleData: {
-    id: 'uk003.608920d55f7ac3.77053295',
-    event_time: '2021-04-28 08:46:13',
-    event_name: 'call.missed',
-    call_id: 139543232,
-    state: 'MISSED',
-    connected_at: null,
-    start_time: '2021-04-28 08:45:55',
-    context: 'LOCAL_USER',
-    destination: 'in',
-    duration: 0,
-    t_cause: 'No Answer',
-    src: '447854740947',
-    src_id: '0',
-    src_name: '"442035141598" <2035141598>',
-    src_hash: 'fe5935cefbc82fc4e924bdaa21342a49c18c5dd9',
-    dst: '441183211001',
-    dst_id: '10002',
-    dst_name: 'John Smith',
-    terminated_by: 'caller',
-  },
-  type: TriggerStrategy.WEBHOOK,
-  async onEnable(context) {
-    // VoIPStudio webhooks are configured manually in the admin panel
-    // This trigger will receive POST requests when a call is missed
-  },
-  async onDisable(context) {
-    // VoIPStudio webhooks are disabled manually in the admin panel
-  },
-  async run(context) {
-    return [context.payload.body];
-  },
-});
+        }),
+    },
+    sampleData: {
+        id: 'uk003.608920d55f7ac3.77053295',
+        event_time: '2021-04-28 08:46:13',
+        event_name: 'call.missed',
+        call_id: 139543232,
+        state: 'MISSED',
+        connected_at: null,
+        start_time: '2021-04-28 08:45:55',
+        context: 'LOCAL_USER',
+        destination: 'in',
+        duration: 0,
+        t_cause: 'No Answer',
+        src: '447854740947',
+        src_id: '0',
+        src_name: '"442035141598" <2035141598>',
+        src_hash: 'fe5935cefbc82fc4e924bdaa21342a49c18c5dd9',
+        dst: '441183211001',
+        dst_id: '10002',
+        dst_name: 'John Smith',
+        terminated_by: 'caller',
+    },
+    type: TriggerStrategy.WEBHOOK,
+    async onEnable(context) {
+        // VoIPStudio webhooks are configured manually in the admin panel
+        // This trigger will receive POST requests when a call is missed
+    },
+    async onDisable(context) {
+        // VoIPStudio webhooks are disabled manually in the admin panel
+    },
+    async run(context) {
+        return [context.payload.body]
+    },
+})

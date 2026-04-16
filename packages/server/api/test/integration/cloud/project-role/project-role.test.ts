@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { PlatformRole, PrincipalType, ProjectRole, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
@@ -7,6 +6,7 @@ import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { createMockProjectRole, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -105,7 +105,10 @@ describe('Project Role API', () => {
                 permissions: ['read', 'write'],
             }
 
-            const response = await ctx.post(`/v1/project-roles/${projectRole.id}`, request as unknown as Record<string, unknown>)
+            const response = await ctx.post(
+                `/v1/project-roles/${projectRole.id}`,
+                request as unknown as Record<string, unknown>,
+            )
             expect(response?.statusCode).toBe(StatusCodes.OK)
         })
 

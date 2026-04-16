@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sapAribaAuth } from '../auth';
-import { sapAribaCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { sapAribaAuth } from '../auth'
+import { sapAribaCommon } from '../common'
 
 export const updateContractStatus = createAction({
     auth: sapAribaAuth,
@@ -81,24 +81,24 @@ export const updateContractStatus = createAction({
             amendmentType,
             amendmentReason,
             isTemplateUpgradeRequired,
-        } = context.propsValue;
+        } = context.propsValue
 
         const queryParams: Record<string, string> = {
             realm,
             user,
             passwordAdapter,
-        };
+        }
 
         const body: Record<string, unknown> = {
             action,
-        };
+        }
 
         if (action === 'amend') {
             body['amendAttributes'] = {
                 ...(amendmentType && { amendmentType }),
                 ...(amendmentReason && { amendmentReason }),
                 isTemplateUpgradeRequired,
-            };
+            }
         }
 
         const response = await sapAribaCommon.makeRequest(
@@ -106,9 +106,9 @@ export const updateContractStatus = createAction({
             HttpMethod.POST,
             `/contractWorkspaces/${encodeURIComponent(contractId)}/state`,
             queryParams,
-            body
-        );
+            body,
+        )
 
-        return response;
+        return response
     },
-});
+})

@@ -3,9 +3,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
 export class UpdatePlaformInSqlite1729330108485 implements MigrationInterface {
     name = 'UpdatePlaformInSqlite1729330108485'
 
-   
     public async up(queryRunner: QueryRunner): Promise<void> {
-
         await queryRunner.query(`
             CREATE TABLE "temporary_platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -330,5 +328,4 @@ export class UpdatePlaformInSqlite1729330108485 implements MigrationInterface {
             DROP TABLE "temporary_platform"
         `)
     }
-    
 }

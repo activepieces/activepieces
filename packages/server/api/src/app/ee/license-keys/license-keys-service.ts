@@ -1,4 +1,14 @@
-import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlanName, TeamProjectsLimit, TelemetryEventName } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    ApEdition,
+    CreateTrialLicenseKeyRequestBody,
+    ErrorCode,
+    isNil,
+    LicenseKeyEntity,
+    PlanName,
+    TeamProjectsLimit,
+    TelemetryEventName,
+} from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -12,7 +22,10 @@ import { platformPlanService } from '../platform/platform-plan/platform-plan.ser
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 
 const handleUnexpectedSecretsManagerError = (log: FastifyBaseLogger, message: string) => {
-    log.error({ message }, '[licenseKeysService#handleUnexpectedSecretsManagerError] Unexpected error from secret manager')
+    log.error(
+        { message },
+        '[licenseKeysService#handleUnexpectedSecretsManagerError] Unexpected error from secret manager',
+    )
     throw new Error(message)
 }
 
@@ -38,7 +51,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         const responseBody = await response.json()
         return responseBody
     },
-    async markAsActiviated(request: { key: string, platformId?: string }): Promise<void> {
+    async markAsActiviated(request: { key: string; platformId?: string }): Promise<void> {
         try {
             const response = await fetch(`${secretManagerLicenseKeysRoute}/activate`, {
                 method: 'POST',
@@ -58,16 +71,18 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 handleUnexpectedSecretsManagerError(log, errorMessage)
             }
             if (request.platformId) {
-                rejectedPromiseHandler(telemetry(log).trackPlatform(request.platformId, {
-                    name: TelemetryEventName.KEY_ACTIVATED,
-                    payload: {
-                        date: dayjs().toISOString(),
-                        key: request.key,
-                    },
-                }), log)
+                rejectedPromiseHandler(
+                    telemetry(log).trackPlatform(request.platformId, {
+                        name: TelemetryEventName.KEY_ACTIVATED,
+                        payload: {
+                            date: dayjs().toISOString(),
+                            key: request.key,
+                        },
+                    }),
+                    log,
+                )
             }
-        }
-        catch (e) {
+        } catch (e) {
             // ignore
         }
     },
@@ -85,7 +100,13 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         }
         return response.json()
     },
-    async verifyKeyOrReturnNull({ platformId, license }: { license: string | undefined, platformId: string }): Promise<LicenseKeyEntity | null> {
+    async verifyKeyOrReturnNull({
+        platformId,
+        license,
+    }: {
+        license: string | undefined
+        platformId: string
+    }): Promise<LicenseKeyEntity | null> {
         if (isNil(license)) {
             return null
         }
@@ -94,7 +115,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         const isExpired = isNil(key) || dayjs(key.expiresAt).isBefore(dayjs())
         return isExpired ? null : key
     },
-    async extendTrial({ email, days }: { email: string, days: number }): Promise<void> {
+    async extendTrial({ email, days }: { email: string; days: number }): Promise<void> {
         const SECRET_MANAGER_API_KEY = system.getOrThrow(AppSystemProp.SECRET_MANAGER_API_KEY)
         const response = await fetch(`${secretManagerLicenseKeysRoute}/extend-trial`, {
             method: 'POST',
@@ -130,7 +151,11 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
     },
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
         const isInternalPlan = !key.ssoEnabled && !key.embeddingEnabled && system.getEdition() === ApEdition.CLOUD
-        const teamProjectsLimit = key.manageProjectsEnabled ? TeamProjectsLimit.UNLIMITED : system.getEdition() === ApEdition.CLOUD ? TeamProjectsLimit.ONE : TeamProjectsLimit.NONE
+        const teamProjectsLimit = key.manageProjectsEnabled
+            ? TeamProjectsLimit.UNLIMITED
+            : system.getEdition() === ApEdition.CLOUD
+              ? TeamProjectsLimit.ONE
+              : TeamProjectsLimit.NONE
         await platformService(log).update({
             id: platformId,
             plan: {
@@ -166,7 +191,10 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
     },
 })
 
-const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt' | 'activatedAt' | 'isTrial' | 'email' | 'customerName' | 'key'> = {
+const turnedOffFeatures: Omit<
+    LicenseKeyEntity,
+    'id' | 'createdAt' | 'expiresAt' | 'activatedAt' | 'isTrial' | 'email' | 'customerName' | 'key'
+> = {
     ssoEnabled: false,
     scimEnabled: false,
     analyticsEnabled: false,

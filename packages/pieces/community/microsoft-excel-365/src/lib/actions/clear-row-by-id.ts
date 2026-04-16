@@ -1,7 +1,7 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { excelAuth } from '../auth';
-import { commonProps } from '../common/props';
-import { getDrivePath, createMSGraphClient } from '../common/helpers';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
+import { excelAuth } from '../auth'
+import { createMSGraphClient, getDrivePath } from '../common/helpers'
+import { commonProps } from '../common/props'
 
 export const clearRowAction = createAction({
     auth: excelAuth,
@@ -20,52 +20,53 @@ export const clearRowAction = createAction({
             required: true,
         }),
         applyTo: Property.StaticDropdown({
-            displayName: "Clear Type",
-            description: "Specify what to clear from the row.",
+            displayName: 'Clear Type',
+            description: 'Specify what to clear from the row.',
             required: true,
             defaultValue: 'All',
             options: {
                 options: [
                     {
                         label: 'All (Contents and Formatting)',
-                        value: 'All'
+                        value: 'All',
                     },
                     {
                         label: 'Contents Only',
-                        value: 'Contents'
+                        value: 'Contents',
                     },
                     {
                         label: 'Formats Only',
-                        value: 'Formats'
-                    }
-                ]
-            }
-        })
+                        value: 'Formats',
+                    },
+                ],
+            },
+        }),
     },
     async run(context) {
-        const { storageSource, siteId, documentId, workbookId, worksheetId, row_id, applyTo } = context.propsValue;
-        const { access_token } = context.auth;
-        const cloud = (context.auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+        const { storageSource, siteId, documentId, workbookId, worksheetId, row_id, applyTo } = context.propsValue
+        const { access_token } = context.auth
+        const cloud = (context.auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined
 
         if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
-            throw new Error('please select SharePoint site and document library.');
+            throw new Error('please select SharePoint site and document library.')
         }
-        const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
+        const drivePath = getDrivePath(storageSource, siteId as string, documentId as string)
 
         if (typeof row_id !== 'number' || !Number.isInteger(row_id) || row_id < 1) {
-            throw new Error('Row index must be a positive integer.');
+            throw new Error('Row index must be a positive integer.')
         }
 
-
         // Construct the range address for the entire row, e.g., '5:5'
-        const rowAddress = `${row_id}:${row_id}`;
+        const rowAddress = `${row_id}:${row_id}`
 
-        const client = createMSGraphClient(access_token, cloud);
+        const client = createMSGraphClient(access_token, cloud)
         await client
-            .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rowAddress}')/clear`)
-            .post({ applyTo: applyTo });
+            .api(
+                `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rowAddress}')/clear`,
+            )
+            .post({ applyTo: applyTo })
 
         // A successful request returns a 200 OK with no body.
-        return {};
+        return {}
     },
-});
+})

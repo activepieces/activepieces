@@ -1,4 +1,14 @@
-import { ApplicationEvent, ApplicationEventName, BADGES, FlowActionType, FlowOperationType, flowStructureUtil, FlowTriggerType, FlowUpdatedEvent, isNil } from '@activepieces/shared'
+import {
+    ApplicationEvent,
+    ApplicationEventName,
+    BADGES,
+    FlowActionType,
+    FlowOperationType,
+    FlowTriggerType,
+    FlowUpdatedEvent,
+    flowStructureUtil,
+    isNil,
+} from '@activepieces/shared'
 import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
 import { BadgeCheck, BadgeCheckResult } from '../badge-check'
 
@@ -26,23 +36,23 @@ export const flowContentBadgesCheck: BadgeCheck = {
         const badges: (keyof typeof BADGES)[] = []
         const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
 
-        const hasWebhook = allSteps.some(step =>
-            step.type === FlowTriggerType.PIECE &&
-            step.settings?.pieceName === WEBHOOK_PIECE_NAME,
+        const hasWebhook = allSteps.some(
+            (step) => step.type === FlowTriggerType.PIECE && step.settings?.pieceName === WEBHOOK_PIECE_NAME,
         )
         if (hasWebhook) {
             badges.push('webhook-wizard')
         }
 
-        const hasAI = allSteps.some(step =>
-            (step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE) &&
-            step.settings?.pieceName === AI_PIECE_NAME,
+        const hasAI = allSteps.some(
+            (step) =>
+                (step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE) &&
+                step.settings?.pieceName === AI_PIECE_NAME,
         )
         if (hasAI) {
             badges.push('agentic-genius')
         }
 
-        const hasCode = allSteps.some(step => step.type === FlowActionType.CODE)
+        const hasCode = allSteps.some((step) => step.type === FlowActionType.CODE)
         if (hasCode) {
             badges.push('coding-chad')
         }
@@ -50,4 +60,3 @@ export const flowContentBadgesCheck: BadgeCheck = {
         return { userId, badges }
     },
 }
-

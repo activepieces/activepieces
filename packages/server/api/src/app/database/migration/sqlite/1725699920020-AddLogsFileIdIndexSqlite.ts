@@ -26,5 +26,4 @@ export class AddLogsFileIdIndexSqlite1725699920020 implements MigrationInterface
             DROP INDEX "idx_file_project_id"
         `)
     }
-
 }

@@ -85,5 +85,4 @@ export class AddFolderDisplayOrder1747062679388 implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_folder_project_id_display_name" ON "folder" ("projectId", "displayName")
         `)
     }
-
 }

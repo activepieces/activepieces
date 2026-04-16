@@ -1,4 +1,14 @@
-import { ActivepiecesError, ApMultipartFile, ErrorCode, FileCompression, FileType, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, tryCatch } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    ApMultipartFile,
+    ErrorCode,
+    FileCompression,
+    FileType,
+    Permission,
+    PrincipalType,
+    SERVICE_KEY_SECURITY_OPENAPI,
+    tryCatch,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -8,11 +18,15 @@ import { fileService } from '../file/file.service'
 import { knowledgeBaseService } from './knowledge-base.service'
 
 const KB_PRINCIPALS = [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE] as const
-const KB_ALLOWED_MIME_TYPES = ['application/pdf', 'text/plain', 'text/csv', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+const KB_ALLOWED_MIME_TYPES = [
+    'application/pdf',
+    'text/plain',
+    'text/csv',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]
 const EMBEDDING_DIMENSIONS = 768
 
 export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) => {
-
     fastify.post('/', CreateKnowledgeBaseFileRequest, async (request, reply) => {
         const result = await knowledgeBaseService(request.log).createFile({
             projectId: request.projectId,
@@ -48,8 +62,8 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
             displayName: request.body.displayName,
         })
 
-        const { data: chunks, error } = await tryCatch(
-            () => knowledgeBaseService(request.log).extractChunks({
+        const { data: chunks, error } = await tryCatch(() =>
+            knowledgeBaseService(request.log).extractChunks({
                 projectId: request.projectId,
                 knowledgeBaseFileId: kbFile.id,
             }),
@@ -246,18 +260,21 @@ const StoreChunksRequest = {
     schema: {
         tags: ['knowledge-base'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'Store or update chunks for a knowledge base file. Provide id to update existing chunks, or content to create new ones.',
+        description:
+            'Store or update chunks for a knowledge base file. Provide id to update existing chunks, or content to create new ones.',
         params: z.object({
             id: z.string(),
         }),
         body: z.object({
-            chunks: z.array(z.object({
-                id: z.string().optional(),
-                content: z.string().optional(),
-                embedding: z.array(z.number()).length(EMBEDDING_DIMENSIONS).optional(),
-                chunkIndex: z.number().optional(),
-                metadata: z.record(z.string(), z.unknown()).optional(),
-            })),
+            chunks: z.array(
+                z.object({
+                    id: z.string().optional(),
+                    content: z.string().optional(),
+                    embedding: z.array(z.number()).length(EMBEDDING_DIMENSIONS).optional(),
+                    chunkIndex: z.number().optional(),
+                    metadata: z.record(z.string(), z.unknown()).optional(),
+                }),
+            ),
         }),
     },
 }

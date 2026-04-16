@@ -1,3 +1,3 @@
-import { createContent } from './create-content';
+import { createContent } from './create-content'
 
-export const predisAiActions = [createContent];
+export const predisAiActions = [createContent]

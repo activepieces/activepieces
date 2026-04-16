@@ -1,17 +1,17 @@
 import {
-  CreateOtpRequestBody,
-  GetCurrentProjectMemberRoleQuery,
-  ResetPasswordRequestBody,
-  VerifyEmailRequestBody,
   AuthenticationResponse,
   ClaimTokenRequest,
+  CreateOtpRequestBody,
   FederatedAuthnLoginResponse,
+  GetCurrentProjectMemberRoleQuery,
   ProjectRole,
+  ResetPasswordRequestBody,
   SignInRequest,
   SignUpRequest,
   SwitchPlatformRequest,
   ThirdPartyAuthnProviderEnum,
   UserIdentity,
+  VerifyEmailRequestBody,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';

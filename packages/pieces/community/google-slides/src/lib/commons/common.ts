@@ -1,85 +1,85 @@
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
 
 export interface PageElement {
-    objectId: string;
+    objectId: string
     table?: Table
     sheetsChart?: {
-        spreadsheetId: string;
-        chartId: number;
-    };
+        spreadsheetId: string
+        chartId: number
+    }
     shape?: Shape
 }
 
 interface Presentation {
-    slides?: Slide[];
+    slides?: Slide[]
 }
 
 interface Slide {
-    pageElements?: PageElement[];
+    pageElements?: PageElement[]
 }
 
-
 interface Shape {
-    text?: Text;
+    text?: Text
 }
 
 interface Text {
-    textElements?: TextElement[];
+    textElements?: TextElement[]
 }
 
 export interface TextElement {
-    textRun?: TextRun;
+    textRun?: TextRun
 }
 
 interface TextRun {
-    content?: string;
+    content?: string
 }
 
 interface Table {
-    tableRows?: TableRow[];
+    tableRows?: TableRow[]
 }
 
 interface TableRow {
-    tableCells?: TableCell[];
+    tableCells?: TableCell[]
 }
 
 export interface TableCell {
-    text?: Text;
+    text?: Text
 }
 
 export const googleSheetsCommon = {
-	baseUrl: 'https://slides.googleapis.com/v1/presentations/',
+    baseUrl: 'https://slides.googleapis.com/v1/presentations/',
     batchUpdate,
     getSlide,
-    createSlide
-};
+    createSlide,
+}
 
 export async function batchUpdate(access_token: string, slide_id: string, requests: any) {
     return (
         await httpClient.sendRequest<{
-            spreadsheetId: string;
+            spreadsheetId: string
         }>({
             method: HttpMethod.POST,
             url: `https://slides.googleapis.com/v1/presentations/${slide_id}:batchUpdate`,
             body: {
-                requests: requests
+                requests: requests,
             },
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: access_token,
             },
         })
-    ).body;
+    ).body
 }
 
 export async function getSlide(access_token: string, slide_id: string) {
     return (
         await httpClient.sendRequest<{
-            presentationId: string;
-            title: string;
+            presentationId: string
+            title: string
             slides: {
-                pageElements: any; objectId: object; 
-}[];
+                pageElements: any
+                objectId: object
+            }[]
         }>({
             method: HttpMethod.GET,
             url: `https://slides.googleapis.com/v1/presentations/${slide_id}`,
@@ -88,26 +88,26 @@ export async function getSlide(access_token: string, slide_id: string) {
                 token: access_token,
             },
         })
-    ).body;
+    ).body
 }
 
 export async function createSlide(access_token: string, requests: any) {
     return (
         await httpClient.sendRequest<{
-            presentationId: string;
-            title: string;
-            spreadsheetId: string;
-            replies: any[];
+            presentationId: string
+            title: string
+            spreadsheetId: string
+            replies: any[]
         }>({
             method: HttpMethod.POST,
             url: `https://slides.googleapis.com/v1/presentations`,
             body: {
-                requests: requests
+                requests: requests,
             },
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: access_token,
             },
         })
-    ).body;
+    ).body
 }

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mockRedisStore: Record<string, { value: string, ttl: number }> = {}
+const mockRedisStore: Record<string, { value: string; ttl: number }> = {}
 
 vi.mock('../../../../../src/app/database/redis-connections', () => ({
     redisConnections: {

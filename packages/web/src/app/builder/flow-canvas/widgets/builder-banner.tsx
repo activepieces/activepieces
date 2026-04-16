@@ -34,4 +34,5 @@ const BuilderBanner = () => {
 };
 
 BuilderBanner.displayName = 'BuilderBanner';
+
 export { BuilderBanner };

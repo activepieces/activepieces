@@ -58,13 +58,10 @@ export class MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258 impl
 
         log.info('[moveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258#down]')
     }
-
 }
 
 const getAllSigningKeyIds = async (queryRunner: QueryRunner): Promise<string[]> => {
-    const queryResult: { id: string }[] = await queryRunner.query(
-        'SELECT id FROM "signing_key"',
-    )
+    const queryResult: { id: string }[] = await queryRunner.query('SELECT id FROM "signing_key"')
 
     return queryResult.map(({ id }) => id)
 }
@@ -121,20 +118,23 @@ const getAllCreatedSigningKeyAuditEventIds = async (queryRunner: QueryRunner): P
     return queryResult.map(({ id }) => id)
 }
 
-const getCreatedSigningKeyAuditEventById = async (id: string, queryRunner: QueryRunner): Promise<CreatedSigningKeyAuditEvent> => {
-    const queryResult = await queryRunner.query(
-        'SELECT "userId", "data" FROM "audit_event" WHERE "id" = $1',
-        [id],
-    )
+const getCreatedSigningKeyAuditEventById = async (
+    id: string,
+    queryRunner: QueryRunner,
+): Promise<CreatedSigningKeyAuditEvent> => {
+    const queryResult = await queryRunner.query('SELECT "userId", "data" FROM "audit_event" WHERE "id" = $1', [id])
 
     return queryResult[0]
 }
 
-const populateSigningKeyGeneratedBy = async (auditEvent: CreatedSigningKeyAuditEvent, queryRunner: QueryRunner): Promise<void> => {
-    await queryRunner.query(
-        'UPDATE "signing_key" SET "generatedBy" = $1 WHERE "id" = $2',
-        [auditEvent.userId, auditEvent.data.signingKeyId],
-    )
+const populateSigningKeyGeneratedBy = async (
+    auditEvent: CreatedSigningKeyAuditEvent,
+    queryRunner: QueryRunner,
+): Promise<void> => {
+    await queryRunner.query('UPDATE "signing_key" SET "generatedBy" = $1 WHERE "id" = $2', [
+        auditEvent.userId,
+        auditEvent.data.signingKeyId,
+    ])
 }
 
 type SigningKey = {

@@ -1,5 +1,5 @@
-import fs from 'fs'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import fs from 'fs'
 import Redis, { RedisOptions } from 'ioredis'
 import { RedisConnectionSettings } from './types'
 
@@ -15,14 +15,13 @@ export async function createSentinelRedisConnection(settings: RedisConnectionSet
     assertNotNullOrUndefined(sentinelList, 'Sentinel list is required')
     assertNotNullOrUndefined(sentinelName, 'Sentinel name is required')
 
-
     const sentinels = sentinelList.split(',').map((sentinel) => {
         const [host, port] = sentinel.split(':')
         return { host, port: Number.parseInt(port, 10) }
     })
 
     const tlsCa = readCAFile(sslCaFile)
-    
+
     const redisOptions: RedisOptions = {
         maxRetriesPerRequest: null,
         sentinels,
@@ -52,7 +51,6 @@ function getTlsOptionsForSentinel(useSsl: boolean, tlsCa: string | undefined): P
         },
     }
 }
-
 
 function readCAFile(file: string | undefined): string | undefined {
     if (isNil(file)) {

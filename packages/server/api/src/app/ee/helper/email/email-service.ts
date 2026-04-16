@@ -1,4 +1,14 @@
-import { AlertChannel, ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
+import {
+    AlertChannel,
+    ApEdition,
+    assertNotNullOrUndefined,
+    BADGES,
+    InvitationType,
+    isNil,
+    OtpType,
+    UserIdentity,
+    UserInvitation,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { system } from '../../../helper/system/system'
@@ -8,7 +18,7 @@ import { userService } from '../../../user/user-service'
 import { alertsService } from '../../alerts/alerts-service'
 import { domainHelper } from '../../custom-domains/domain-helper'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
-import { emailSender, EmailTemplateData } from './email-sender/email-sender'
+import { EmailTemplateData, emailSender } from './email-sender/email-sender'
 
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
@@ -120,7 +130,9 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
 
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const emails = alerts.data
+            .filter((alert) => alert.channel === AlertChannel.EMAIL)
+            .map((alert) => alert.receiver)
 
         if (emails.length === 0) {
             return
@@ -150,12 +162,15 @@ export const emailService = (log: FastifyBaseLogger) => ({
             return
         }
 
-        log.info({
-            email: userIdentity.email,
-            otp,
-            identityId: userIdentity.id,
-            type,
-        }, 'Sending OTP email')
+        log.info(
+            {
+                email: userIdentity.email,
+                otp,
+                identityId: userIdentity.id,
+                type,
+            },
+            'Sending OTP email',
+        )
 
         const frontendPath = {
             [OtpType.EMAIL_VERIFICATION]: 'verify-email',
@@ -193,7 +208,10 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const user = await userService(log).getMetaInformation({ id: userId })
 
         if (isNil(user) || !isValidEmail(user.email)) {
-            log.info({ userId, email: user?.email }, '[emailService#sendBadgeAwardedEmail] Skipping: external user has no valid email')
+            log.info(
+                { userId, email: user?.email },
+                '[emailService#sendBadgeAwardedEmail] Skipping: external user has no valid email',
+            )
             return
         }
         const badge = BADGES[badgeName as keyof typeof BADGES]
@@ -213,7 +231,10 @@ export const emailService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function getEntityNameForInvitation(userInvitation: UserInvitation, log: FastifyBaseLogger): Promise<{ name: string, role: string }> {
+async function getEntityNameForInvitation(
+    userInvitation: UserInvitation,
+    log: FastifyBaseLogger,
+): Promise<{ name: string; role: string }> {
     switch (userInvitation.type) {
         case InvitationType.PLATFORM: {
             const platform = await platformService(log).getOneOrThrow(userInvitation.platformId)

@@ -11,7 +11,7 @@ import { securityAccess } from '../core/security/authorization/fastify-security'
 import { storeEntryService } from './store-entry.service'
 
 export const storeEntryController: FastifyPluginAsyncZod = async (fastify) => {
-    fastify.post( '/', CreateRequest, async (request, reply) => {
+    fastify.post('/', CreateRequest, async (request, reply) => {
         const sizeOfValue = sizeof(request.body.value)
         if (sizeOfValue > STORE_VALUE_MAX_SIZE) {
             await reply.status(StatusCodes.REQUEST_TOO_LONG).send({})
@@ -22,8 +22,7 @@ export const storeEntryController: FastifyPluginAsyncZod = async (fastify) => {
             request: request.body,
         })
         await reply.status(StatusCodes.OK).send(response)
-    },
-    )
+    })
 
     fastify.get('/', GetRequest, async (request, reply) => {
         const value = await storeEntryService.getOne({
@@ -36,19 +35,17 @@ export const storeEntryController: FastifyPluginAsyncZod = async (fastify) => {
         }
 
         return value
-    },
-    )
+    })
 
     fastify.delete('/', DeleteStoreRequest, async (request) => {
         return storeEntryService.delete({
             projectId: request.principal.projectId,
             key: request.query.key,
         })
-    },
-    )
+    })
 }
 
-const CreateRequest =  {
+const CreateRequest = {
     config: {
         security: securityAccess.engine(),
     },
@@ -65,7 +62,6 @@ const GetRequest = {
         querystring: GetStoreEntryRequest,
     },
 }
-
 
 const DeleteStoreRequest = {
     config: {

@@ -13,10 +13,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-
-import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
-
 import { ProjectDashboardLayoutHeaderTab } from '.';
+import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
 
 type AnimatedIconHandle = {
   startAnimation: () => void;

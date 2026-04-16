@@ -763,12 +763,14 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
     }
-
 }
 async function migrateProjects(queryRunner: QueryRunner) {
     log.info('[CreateDefaultPlaformSqlite1709051625110#migrateProjects] started')
     const standaloneProjects = await queryRunner.query('select * from project where "platformId" is null;')
-    log.info({ count: standaloneProjects.length }, '[CreateDefaultPlaformSqlite1709051625110#migrateProjects] Found standalone projects')
+    log.info(
+        { count: standaloneProjects.length },
+        '[CreateDefaultPlaformSqlite1709051625110#migrateProjects] Found standalone projects',
+    )
     for (const project of standaloneProjects) {
         const ownerId = project.ownerId
         const platformId = apId()

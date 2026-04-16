@@ -33,18 +33,22 @@ const commonActionSettings = {
     customLogoUrl: z.string().optional(),
 }
 
-export const ActionErrorHandlingOptions = z.object({
-    continueOnFailure: z.object({
-        value: z.boolean().optional(),
-    }).optional(),
-    retryOnFailure: z.object({
-        value: z.boolean().optional(),
-    }).optional(),
-}).optional()
+export const ActionErrorHandlingOptions = z
+    .object({
+        continueOnFailure: z
+            .object({
+                value: z.boolean().optional(),
+            })
+            .optional(),
+        retryOnFailure: z
+            .object({
+                value: z.boolean().optional(),
+            })
+            .optional(),
+    })
+    .optional()
 
-export type ActionErrorHandlingOptions = z.infer<
-  typeof ActionErrorHandlingOptions
->
+export type ActionErrorHandlingOptions = z.infer<typeof ActionErrorHandlingOptions>
 
 export const SourceCode = z.object({
     packageJson: z.string(),
@@ -94,9 +98,7 @@ export const LoopOnItemsActionSettings = z.object({
     ...commonActionSettings,
     items: z.string(),
 })
-export type LoopOnItemsActionSettings = z.infer<
-  typeof LoopOnItemsActionSettings
->
+export type LoopOnItemsActionSettings = z.infer<typeof LoopOnItemsActionSettings>
 
 export const LoopOnItemsActionSchema = z.object({
     ...commonActionProps,
@@ -242,12 +244,8 @@ export type BranchNumberCondition = z.infer<typeof BranchNumberCondition>
 export const BranchDateCondition = buildBranchDateConditionValid(false)
 export type BranchDateCondition = z.infer<typeof BranchDateCondition>
 
-export const BranchSingleValueCondition =
-  buildBranchSingleValueConditionValid(false)
-export type BranchSingleValueCondition = z.infer<
-  typeof BranchSingleValueCondition
->
-
+export const BranchSingleValueCondition = buildBranchSingleValueConditionValid(false)
+export type BranchSingleValueCondition = z.infer<typeof BranchSingleValueCondition>
 
 export const RouterBranchesSchema = (addMinLength: boolean) =>
     z.array(
@@ -276,8 +274,6 @@ export const RouterActionSettingsWithValidation = z.object({
 })
 
 export type RouterActionSettings = z.infer<typeof RouterActionSettings>
-
-
 
 // Union of all actions
 
@@ -325,10 +321,20 @@ type BaseActionProps = {
 }
 
 export type FlowAction =
-    | (BaseActionProps & { type: FlowActionType.CODE, settings: CodeActionSettings, nextAction?: FlowAction })
-    | (BaseActionProps & { type: FlowActionType.PIECE, settings: PieceActionSettings, nextAction?: FlowAction })
-    | (BaseActionProps & { type: FlowActionType.LOOP_ON_ITEMS, settings: LoopOnItemsActionSettings, nextAction?: FlowAction, firstLoopAction?: FlowAction })
-    | (BaseActionProps & { type: FlowActionType.ROUTER, settings: RouterActionSettings, nextAction?: FlowAction, children: (FlowAction | null)[] })
+    | (BaseActionProps & { type: FlowActionType.CODE; settings: CodeActionSettings; nextAction?: FlowAction })
+    | (BaseActionProps & { type: FlowActionType.PIECE; settings: PieceActionSettings; nextAction?: FlowAction })
+    | (BaseActionProps & {
+          type: FlowActionType.LOOP_ON_ITEMS
+          settings: LoopOnItemsActionSettings
+          nextAction?: FlowAction
+          firstLoopAction?: FlowAction
+      })
+    | (BaseActionProps & {
+          type: FlowActionType.ROUTER
+          settings: RouterActionSettings
+          nextAction?: FlowAction
+          children: (FlowAction | null)[]
+      })
 
 export type RouterAction = BaseActionProps & {
     type: FlowActionType.ROUTER
@@ -355,7 +361,6 @@ export type CodeAction = BaseActionProps & {
     settings: CodeActionSettings
     nextAction?: FlowAction
 }
-
 
 export const emptyCondition: ValidBranchCondition = {
     firstValue: '',

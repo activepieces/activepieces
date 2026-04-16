@@ -2,8 +2,7 @@ import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
-export class AddGitRepoMigrationPostgres1704503804056
-implements MigrationInterface {
+export class AddGitRepoMigrationPostgres1704503804056 implements MigrationInterface {
     name = 'AddGitRepoMigrationPostgres1704503804056'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

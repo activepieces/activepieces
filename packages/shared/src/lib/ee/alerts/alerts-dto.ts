@@ -6,7 +6,6 @@ export enum AlertChannel {
     EMAIL = 'EMAIL',
 }
 
-
 export const Alert = z.object({
     ...BaseModelSchema,
     projectId: ApId,

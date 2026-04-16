@@ -10,8 +10,7 @@ export const jsonProcessor: ProcessorFn = (_property, value) => {
             return value
         }
         return JSON.parse(value)
-    }
-    catch (error) {
+    } catch (error) {
         console.error(error)
         return undefined
     }

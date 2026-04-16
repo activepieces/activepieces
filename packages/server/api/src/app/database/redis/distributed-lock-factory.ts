@@ -4,9 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import Redis from 'ioredis'
 import RedLock from 'redlock'
 
-export const distributedLockFactory = (
-    createRedisConnection: () => Promise<Redis>,
-) => {
+export const distributedLockFactory = (createRedisConnection: () => Promise<Redis>) => {
     const lockMutex = new Mutex()
     let redLock: RedLock | undefined
 
@@ -25,11 +23,7 @@ export const distributedLockFactory = (
     }
 
     return (_log: FastifyBaseLogger) => ({
-        runExclusive: async <T>({
-            key,
-            timeoutInSeconds,
-            fn,
-        }: RunExclusiveParams<T>): Promise<T> => {
+        runExclusive: async <T>({ key, timeoutInSeconds, fn }: RunExclusiveParams<T>): Promise<T> => {
             const timeout = timeoutInSeconds * 1000
             const redLockInstance = await getOrCreateRedLock()
             return redLockInstance.using(

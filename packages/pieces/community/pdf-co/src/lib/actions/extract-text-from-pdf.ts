@@ -1,37 +1,37 @@
-import { Property, createAction } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod, HttpError } from "@activepieces/pieces-common";
-import { pdfCoAuth } from '../auth';
-import { BASE_URL, commonProps } from "../common/props";
+import { HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { pdfCoAuth } from '../auth'
+import { BASE_URL, commonProps } from '../common/props'
 
 interface PdfCoExtractTextSuccessResponse {
-    body: string; // The extracted text content
-    pageCount: number;
-    error: false;
-    status: number;
-    name: string; // Output file name (e.g., sample.txt)
-    remainingCredits: number;
-    credits: number;
-    url?: string; // URL to output file if inline=false
+    body: string // The extracted text content
+    pageCount: number
+    error: false
+    status: number
+    name: string // Output file name (e.g., sample.txt)
+    remainingCredits: number
+    credits: number
+    url?: string // URL to output file if inline=false
 }
 
 // Define a type for the expected error response body (can use common one if it matches)
 interface PdfCoErrorResponse {
-    error: true;
-    status: number;
-    message?: string;
-    [key: string]: unknown;
+    error: true
+    status: number
+    message?: string
+    [key: string]: unknown
 }
 
 // Interface for the request body
 interface PdfConvertToTextSimpleRequestBody {
-    url: string;
-    async: boolean;
-    inline: boolean; // Keep true to get text directly in response body
-    name?: string;
-    pages?: string;
-    password?: string;
-    httpusername?: string;
-	httppassword?: string;
+    url: string
+    async: boolean
+    inline: boolean // Keep true to get text directly in response body
+    name?: string
+    pages?: string
+    password?: string
+    httpusername?: string
+    httppassword?: string
 }
 
 export const extractTextFromPdf = createAction({
@@ -52,31 +52,24 @@ export const extractTextFromPdf = createAction({
         }),
         password: commonProps.pdfPassword,
         outputName: commonProps.fileName,
-        httpUsername:commonProps.httpUsername,
-        httpPassword:commonProps.httpPassword
+        httpUsername: commonProps.httpUsername,
+        httpPassword: commonProps.httpPassword,
     },
     async run(context) {
-        const { auth, propsValue } = context;
-        const {
-            url,
-            pages,
-            password,
-            outputName,
-            httpPassword,
-            httpUsername
-        } = propsValue;
+        const { auth, propsValue } = context
+        const { url, pages, password, outputName, httpPassword, httpUsername } = propsValue
 
         const requestBody: PdfConvertToTextSimpleRequestBody = {
             url: url,
             async: false,
-            httpusername:httpUsername,
-            httppassword:httpPassword,
+            httpusername: httpUsername,
+            httppassword: httpPassword,
             inline: true, // Get text directly in response.body.body
-        };
+        }
 
-        if (pages !== undefined && pages !== '') requestBody.pages = pages;
-        if (password !== undefined && password !== '') requestBody.password = password;
-        if (outputName !== undefined && outputName !== '') requestBody.name = outputName;
+        if (pages !== undefined && pages !== '') requestBody.pages = pages
+        if (password !== undefined && password !== '') requestBody.password = password
+        if (outputName !== undefined && outputName !== '') requestBody.name = outputName
 
         try {
             const response = await httpClient.sendRequest<PdfCoExtractTextSuccessResponse | PdfCoErrorResponse>({
@@ -87,21 +80,21 @@ export const extractTextFromPdf = createAction({
                     'Content-Type': 'application/json',
                 },
                 body: requestBody,
-            });
+            })
 
             if (response.body.error) {
-                const errorBody = response.body as PdfCoErrorResponse;
-                let errorMessage = `PDF.co API Error (Extract Text): Status ${errorBody.status}.`;
+                const errorBody = response.body as PdfCoErrorResponse
+                let errorMessage = `PDF.co API Error (Extract Text): Status ${errorBody.status}.`
                 if (errorBody.message) {
-                    errorMessage += ` Message: ${errorBody.message}.`;
+                    errorMessage += ` Message: ${errorBody.message}.`
                 } else {
-                    errorMessage += ` An unspecified error occurred.`;
+                    errorMessage += ` An unspecified error occurred.`
                 }
-                errorMessage += ` Raw response: ${JSON.stringify(errorBody)}`;
-                throw new Error(errorMessage);
+                errorMessage += ` Raw response: ${JSON.stringify(errorBody)}`
+                throw new Error(errorMessage)
             }
 
-            const successBody = response.body as PdfCoExtractTextSuccessResponse;
+            const successBody = response.body as PdfCoExtractTextSuccessResponse
 
             return {
                 extractedText: successBody.body,
@@ -109,20 +102,19 @@ export const extractTextFromPdf = createAction({
                 outputName: successBody.name,
                 creditsUsed: successBody.credits,
                 remainingCredits: successBody.remainingCredits,
-            };
-
+            }
         } catch (error) {
             if (error instanceof HttpError) {
-                const responseBody = error.response?.body as (PdfCoErrorResponse | undefined);
-                let detailedMessage = `HTTP Error calling PDF.co API (Extract Text): ${error.message}.`;
+                const responseBody = error.response?.body as PdfCoErrorResponse | undefined
+                let detailedMessage = `HTTP Error calling PDF.co API (Extract Text): ${error.message}.`
                 if (responseBody && responseBody.message) {
-                    detailedMessage += ` Server message: ${responseBody.message}.`;
+                    detailedMessage += ` Server message: ${responseBody.message}.`
                 } else if (responseBody) {
-                    detailedMessage += ` Server response: ${JSON.stringify(responseBody)}.`;
+                    detailedMessage += ` Server response: ${JSON.stringify(responseBody)}.`
                 }
-                throw new Error(detailedMessage);
+                throw new Error(detailedMessage)
             }
-            throw error;
+            throw error
         }
     },
-});
+})

@@ -10,8 +10,13 @@ import { appearanceHelper } from '../helper/appearance-helper'
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
         const modifiedFlags: Record<string, string | boolean | number | Record<string, unknown>> = { ...flags }
-        const platformIdFromPrincipal = !request.principal || request.principal.type === PrincipalType.UNKNOWN || request.principal.type === PrincipalType.WORKER ? null : request.principal.platform.id
-        const platformId = platformIdFromPrincipal ?? await platformUtils.getPlatformIdForRequest(request)
+        const platformIdFromPrincipal =
+            !request.principal ||
+            request.principal.type === PrincipalType.UNKNOWN ||
+            request.principal.type === PrincipalType.WORKER
+                ? null
+                : request.principal.platform.id
+        const platformId = platformIdFromPrincipal ?? (await platformUtils.getPlatformIdForRequest(request))
         const edition = system.getEdition()
         if (isNil(platformId)) {
             if (edition === ApEdition.CLOUD) {
@@ -24,12 +29,8 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         const platformWithPlan = await platformService(request.log).getOneWithPlanOrThrow(platformId)
         const platform = await platformService(request.log).getOneOrThrow(platformId)
         modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
-            [ThirdPartyAuthnProviderEnum.GOOGLE]: !isNil(
-                platform.federatedAuthProviders.google,
-            ),
-            [ThirdPartyAuthnProviderEnum.SAML]: !isNil(
-                platform.federatedAuthProviders.saml,
-            ),
+            [ThirdPartyAuthnProviderEnum.GOOGLE]: !isNil(platform.federatedAuthProviders.google),
+            [ThirdPartyAuthnProviderEnum.SAML]: !isNil(platform.federatedAuthProviders.saml),
         }
         modifiedFlags[ApFlagId.EMAIL_AUTH_ENABLED] = platform.emailAuthEnabled
         modifiedFlags[ApFlagId.SHOW_POWERED_BY_IN_FORM] = platformWithPlan.plan.showPoweredBy
@@ -38,7 +39,8 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             log: request.log,
         })
         modifiedFlags[ApFlagId.SHOW_COMMUNITY] = platformWithPlan.plan.showPoweredBy
-        modifiedFlags[ApFlagId.SHOW_BILLING_PAGE] = flags[ApFlagId.SHOW_BILLING_PAGE] && !platformUtils.isCustomerOnDedicatedDomain(platformWithPlan)
+        modifiedFlags[ApFlagId.SHOW_BILLING_PAGE] =
+            flags[ApFlagId.SHOW_BILLING_PAGE] && !platformUtils.isCustomerOnDedicatedDomain(platformWithPlan)
         modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled
         modifiedFlags[ApFlagId.SHOW_BADGES] = !platformWithPlan.plan.embeddingEnabled
         modifiedFlags[ApFlagId.SHOW_PROJECT_MEMBERS] = platformWithPlan.plan.projectRolesEnabled
@@ -50,15 +52,13 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             path: '/v1/authn/saml/acs',
             platformId,
         })
-        modifiedFlags[
-            ApFlagId.WEBHOOK_URL_PREFIX
-        ] = await domainHelper.getPublicApiUrl({
+        modifiedFlags[ApFlagId.WEBHOOK_URL_PREFIX] = await domainHelper.getPublicApiUrl({
             path: '/v1/webhooks',
             platformId,
         })
-        modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = await federatedAuthnService(request.log).getThirdPartyRedirectUrl(platformId)
+        modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = await federatedAuthnService(
+            request.log,
+        ).getThirdPartyRedirectUrl(platformId)
         return modifiedFlags
     },
 }
-
-

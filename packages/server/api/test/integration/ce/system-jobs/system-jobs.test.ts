@@ -1,8 +1,8 @@
-import { FastifyInstance } from 'fastify'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { systemJobsQueue, systemJobsSchedule } from '../../../../src/app/helper/system-jobs/system-job'
-import { SystemJobName } from '../../../../src/app/helper/system-jobs/common'
 import { apDayjs } from '@activepieces/server-utils'
+import { FastifyInstance } from 'fastify'
+import { SystemJobName } from '../../../../src/app/helper/system-jobs/common'
+import { systemJobsQueue, systemJobsSchedule } from '../../../../src/app/helper/system-jobs/system-job'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 const TEST_PREFIX = 'test-'
 
@@ -24,14 +24,18 @@ afterEach(async () => {
     const jobs = await systemJobsQueue.getJobs()
     for (const job of jobs) {
         if (job.id?.startsWith(TEST_PREFIX)) {
-            await job.remove().catch(() => { /* already removed */ })
+            await job.remove().catch(() => {
+                /* already removed */
+            })
         }
     }
     const schedulers = await systemJobsQueue.getJobSchedulers()
     for (const s of schedulers) {
         const key = s.id ?? s.key
         if (key.startsWith(TEST_PREFIX) || key.includes('::') || key === 'pieces-analytics') {
-            await systemJobsQueue.removeJobScheduler(key).catch(() => { /* already removed */ })
+            await systemJobsQueue.removeJobScheduler(key).catch(() => {
+                /* already removed */
+            })
         }
     }
 })
@@ -85,7 +89,7 @@ describe('System Jobs', () => {
         })
 
         const allJobs = await systemJobsQueue.getJobs()
-        const matching = allJobs.filter(j => j.id === jobId)
+        const matching = allJobs.filter((j) => j.id === jobId)
         expect(matching).toHaveLength(1)
     })
 
@@ -105,7 +109,7 @@ describe('System Jobs', () => {
         })
 
         const schedulers = await systemJobsQueue.getJobSchedulers()
-        const matching = schedulers.filter(s => s.name === SystemJobName.FILE_CLEANUP_TRIGGER)
+        const matching = schedulers.filter((s) => s.name === SystemJobName.FILE_CLEANUP_TRIGGER)
         expect(matching.length).toBeGreaterThanOrEqual(1)
     })
 
@@ -118,40 +122,44 @@ describe('System Jobs', () => {
         // Simulate a legacy scheduler by creating one with a key containing '::'
         // This mimics what older BullMQ versions produced when no jobId was set.
         const legacyKey = `${SystemJobName.FILE_CLEANUP_TRIGGER}::0:UTC:0 3 * * *`
-        await systemJobsQueue.upsertJobScheduler(legacyKey, {
-            pattern: '0 3 * * *',
-            tz: 'UTC',
-        }, {
-            name: SystemJobName.FILE_CLEANUP_TRIGGER,
-            data: {} as never,
-        })
+        await systemJobsQueue.upsertJobScheduler(
+            legacyKey,
+            {
+                pattern: '0 3 * * *',
+                tz: 'UTC',
+            },
+            {
+                name: SystemJobName.FILE_CLEANUP_TRIGGER,
+                data: {} as never,
+            },
+        )
 
         const before = await systemJobsQueue.getJobSchedulers()
-        const legacyBefore = before.filter(
-            s => s.name === SystemJobName.FILE_CLEANUP_TRIGGER && s.key.includes('::'),
-        )
+        const legacyBefore = before.filter((s) => s.name === SystemJobName.FILE_CLEANUP_TRIGGER && s.key.includes('::'))
         expect(legacyBefore.length).toBeGreaterThanOrEqual(1)
 
         // Re-init triggers removeDeprecatedJobs which should clean up legacy schedulers
         await schedule.init()
 
         const after = await systemJobsQueue.getJobSchedulers()
-        const legacyAfter = after.filter(
-            s => s.name === SystemJobName.FILE_CLEANUP_TRIGGER && s.key.includes('::'),
-        )
+        const legacyAfter = after.filter((s) => s.name === SystemJobName.FILE_CLEANUP_TRIGGER && s.key.includes('::'))
         expect(legacyAfter).toHaveLength(0)
     })
 
     it('should keep new-format schedulers while removing legacy ones', async () => {
         // Create a legacy scheduler (key contains ::)
         const legacyKey = `${SystemJobName.PIECES_ANALYTICS}::0:UTC:0 12 * * *`
-        await systemJobsQueue.upsertJobScheduler(legacyKey, {
-            pattern: '0 12 * * *',
-            tz: 'UTC',
-        }, {
-            name: SystemJobName.PIECES_ANALYTICS,
-            data: {} as never,
-        })
+        await systemJobsQueue.upsertJobScheduler(
+            legacyKey,
+            {
+                pattern: '0 12 * * *',
+                tz: 'UTC',
+            },
+            {
+                name: SystemJobName.PIECES_ANALYTICS,
+                data: {} as never,
+            },
+        )
 
         // Create a new-format scheduler (key is just the jobId, no ::)
         await schedule.upsertJob({
@@ -167,18 +175,14 @@ describe('System Jobs', () => {
         })
 
         const before = await systemJobsQueue.getJobSchedulers()
-        const analyticsBefore = before.filter(s => s.name === SystemJobName.PIECES_ANALYTICS)
+        const analyticsBefore = before.filter((s) => s.name === SystemJobName.PIECES_ANALYTICS)
         expect(analyticsBefore.length).toBeGreaterThanOrEqual(2)
 
         await schedule.init()
 
         const after = await systemJobsQueue.getJobSchedulers()
-        const legacyAfter = after.filter(
-            s => s.name === SystemJobName.PIECES_ANALYTICS && s.key.includes('::'),
-        )
-        const newAfter = after.filter(
-            s => s.name === SystemJobName.PIECES_ANALYTICS && !s.key.includes('::'),
-        )
+        const legacyAfter = after.filter((s) => s.name === SystemJobName.PIECES_ANALYTICS && s.key.includes('::'))
+        const newAfter = after.filter((s) => s.name === SystemJobName.PIECES_ANALYTICS && !s.key.includes('::'))
         expect(legacyAfter).toHaveLength(0)
         expect(newAfter.length).toBeGreaterThanOrEqual(1)
     })

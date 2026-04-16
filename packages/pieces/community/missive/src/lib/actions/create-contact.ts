@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { missiveAuth } from '../common/auth';
-import { missiveCommon } from '../common/client';
-import { contactBookDropdown } from '../common/dynamic-dropdowns';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { missiveAuth } from '../common/auth'
+import { missiveCommon } from '../common/client'
+import { contactBookDropdown } from '../common/dynamic-dropdowns'
 
 export const createContact = createAction({
     name: 'create_contact',
@@ -80,9 +80,9 @@ export const createContact = createAction({
                 options: [
                     { label: 'Male', value: 'Male' },
                     { label: 'Female', value: 'Female' },
-                    { label: 'Other', value: 'Other' }
-                ]
-            }
+                    { label: 'Other', value: 'Other' },
+                ],
+            },
         }),
         infos: Property.Array({
             displayName: 'Contact Information',
@@ -101,13 +101,14 @@ export const createContact = createAction({
                             { label: 'Facebook', value: 'facebook' },
                             { label: 'Physical Address', value: 'physical_address' },
                             { label: 'URL', value: 'url' },
-                            { label: 'Custom', value: 'custom' }
-                        ]
-                    }
+                            { label: 'Custom', value: 'custom' },
+                        ],
+                    },
                 }),
                 label: Property.StaticDropdown({
                     displayName: 'Label',
-                    description: 'Label for contact info. Choose based on Type: Email(home,work,personal,other) | Phone(main,mobile,home,work,fax,pager,other) | Address(work,home,other) | Social(work,personal,other) | URL(homepage,profile,blog,work,personal,other)',
+                    description:
+                        'Label for contact info. Choose based on Type: Email(home,work,personal,other) | Phone(main,mobile,home,work,fax,pager,other) | Address(work,home,other) | Social(work,personal,other) | URL(homepage,profile,blog,work,personal,other)',
                     required: true,
                     options: {
                         options: [
@@ -123,9 +124,9 @@ export const createContact = createAction({
                             { label: 'Homepage', value: 'homepage' },
                             { label: 'Profile', value: 'profile' },
                             { label: 'Blog', value: 'blog' },
-                            { label: 'Other', value: 'other' }
-                        ]
-                    }
+                            { label: 'Other', value: 'other' },
+                        ],
+                    },
                 }),
                 value: Property.ShortText({
                     displayName: 'Value',
@@ -176,11 +177,12 @@ export const createContact = createAction({
                     displayName: 'Country',
                     description: 'Country (only for physical address type)',
                     required: false,
-                })
-            }
+                }),
+            },
         }),
         memberships: Property.DynamicProperties({
-    auth: missiveAuth,            displayName: 'Memberships',
+            auth: missiveAuth,
+            displayName: 'Memberships',
             description: 'Organizations and groups the contact belongs to',
             required: false,
             refreshers: ['contact_book'],
@@ -196,29 +198,29 @@ export const createContact = createAction({
                                     displayName: 'Authenticate First',
                                     description: 'Please authenticate to access memberships',
                                     required: false,
-                                })
-                            }
-                        })
-                    };
+                                }),
+                            },
+                        }),
+                    }
                 }
 
-                let organizationOptions: Array<{ label: string; value: string }> = [];
-                let contactGroupOptions: Array<{ label: string; value: string }> = [];
+                let organizationOptions: Array<{ label: string; value: string }> = []
+                let contactGroupOptions: Array<{ label: string; value: string }> = []
 
                 try {
                     const orgsResponse = await missiveCommon.apiCall({
                         auth: auth,
                         method: HttpMethod.GET,
                         resourceUri: '/organizations',
-                    });
-                    
-                    const organizations = orgsResponse.body?.organizations || [];
+                    })
+
+                    const organizations = orgsResponse.body?.organizations || []
                     organizationOptions = organizations.map((org: any) => ({
                         label: org.name,
                         value: org.id,
-                    }));
+                    }))
                 } catch (error) {
-                    console.error('Failed to fetch organizations:', error);
+                    console.error('Failed to fetch organizations:', error)
                 }
 
                 if (contact_book) {
@@ -227,15 +229,15 @@ export const createContact = createAction({
                             auth: auth,
                             method: HttpMethod.GET,
                             resourceUri: `/contact_groups?contact_book=${contact_book}&kind=group`,
-                        });
-                        
-                        const contactGroups = groupsResponse.body?.contact_groups || [];
+                        })
+
+                        const contactGroups = groupsResponse.body?.contact_groups || []
                         contactGroupOptions = contactGroups.map((group: any) => ({
                             label: group.name,
                             value: group.id,
-                        }));
+                        }))
                     } catch (error) {
-                        console.error('Failed to fetch contact groups:', error);
+                        console.error('Failed to fetch contact groups:', error)
                     }
                 }
 
@@ -252,31 +254,40 @@ export const createContact = createAction({
                                 options: {
                                     options: [
                                         { label: 'Organization', value: 'organization' },
-                                        { label: 'Group', value: 'group' }
-                                    ]
-                                }
+                                        { label: 'Group', value: 'group' },
+                                    ],
+                                },
                             }),
                             organization: Property.StaticDropdown({
                                 displayName: 'Organization',
                                 description: 'Select organization (only for Organization type)',
                                 required: false,
                                 options: {
-                                    options: organizationOptions.length > 0 ? organizationOptions : [
-                                        { label: 'No organizations found', value: '' }
-                                    ]
-                                }
+                                    options:
+                                        organizationOptions.length > 0
+                                            ? organizationOptions
+                                            : [{ label: 'No organizations found', value: '' }],
+                                },
                             }),
                             contact_group: Property.StaticDropdown({
                                 displayName: 'Contact Group',
-                                description: contact_book 
-                                    ? 'Select contact group (only for Group type)' 
+                                description: contact_book
+                                    ? 'Select contact group (only for Group type)'
                                     : 'Select contact book first to see groups',
                                 required: false,
                                 options: {
-                                    options: contactGroupOptions.length > 0 ? contactGroupOptions : [
-                                        { label: contact_book ? 'No groups found' : 'Select contact book first', value: '' }
-                                    ]
-                                }
+                                    options:
+                                        contactGroupOptions.length > 0
+                                            ? contactGroupOptions
+                                            : [
+                                                  {
+                                                      label: contact_book
+                                                          ? 'No groups found'
+                                                          : 'Select contact book first',
+                                                      value: '',
+                                                  },
+                                              ],
+                                },
                             }),
                             title: Property.ShortText({
                                 displayName: 'Title',
@@ -297,19 +308,19 @@ export const createContact = createAction({
                                 displayName: 'Description',
                                 description: 'Description of role or membership',
                                 required: false,
-                            })
-                        }
-                    })
-                };
+                            }),
+                        },
+                    }),
+                }
             },
-        })
+        }),
     },
     async run(context) {
-        const propsValue = context.propsValue as any;
-        const { 
-            contact_book, 
-            first_name, 
-            last_name, 
+        const propsValue = context.propsValue as any
+        const {
+            contact_book,
+            first_name,
+            last_name,
             middle_name,
             phonetic_first_name,
             phonetic_last_name,
@@ -321,89 +332,95 @@ export const createContact = createAction({
             notes,
             starred,
             gender,
-            infos
-        } = propsValue;
+            infos,
+        } = propsValue
 
         const contactData: Record<string, any> = {
             contact_book,
-        };
+        }
 
-        if (first_name) contactData['first_name'] = first_name;
-        if (last_name) contactData['last_name'] = last_name;
-        if (middle_name) contactData['middle_name'] = middle_name;
-        if (phonetic_first_name) contactData['phonetic_first_name'] = phonetic_first_name;
-        if (phonetic_last_name) contactData['phonetic_last_name'] = phonetic_last_name;
-        if (phonetic_middle_name) contactData['phonetic_middle_name'] = phonetic_middle_name;
-        if (prefix) contactData['prefix'] = prefix;
-        if (suffix) contactData['suffix'] = suffix;
-        if (nickname) contactData['nickname'] = nickname;
-        if (file_as) contactData['file_as'] = file_as;
-        if (notes) contactData['notes'] = notes;
-        if (starred !== undefined) contactData['starred'] = starred;
-        if (gender) contactData['gender'] = gender;
+        if (first_name) contactData['first_name'] = first_name
+        if (last_name) contactData['last_name'] = last_name
+        if (middle_name) contactData['middle_name'] = middle_name
+        if (phonetic_first_name) contactData['phonetic_first_name'] = phonetic_first_name
+        if (phonetic_last_name) contactData['phonetic_last_name'] = phonetic_last_name
+        if (phonetic_middle_name) contactData['phonetic_middle_name'] = phonetic_middle_name
+        if (prefix) contactData['prefix'] = prefix
+        if (suffix) contactData['suffix'] = suffix
+        if (nickname) contactData['nickname'] = nickname
+        if (file_as) contactData['file_as'] = file_as
+        if (notes) contactData['notes'] = notes
+        if (starred !== undefined) contactData['starred'] = starred
+        if (gender) contactData['gender'] = gender
 
         if (infos && Array.isArray(infos) && infos.length > 0) {
             contactData['infos'] = infos.map((info: any) => {
                 const infoObj: any = {
                     kind: info.kind,
                     label: info.label,
-                };
+                }
 
                 if (info.custom_label && info.label === 'other') {
-                    infoObj.custom_label = info.custom_label;
+                    infoObj.custom_label = info.custom_label
                 }
 
-                if (info.kind === 'email' || info.kind === 'phone_number' || info.kind === 'twitter' || info.kind === 'url' || info.kind === 'custom') {
-                    infoObj.value = info.value;
+                if (
+                    info.kind === 'email' ||
+                    info.kind === 'phone_number' ||
+                    info.kind === 'twitter' ||
+                    info.kind === 'url' ||
+                    info.kind === 'custom'
+                ) {
+                    infoObj.value = info.value
                 } else if (info.kind === 'facebook') {
-                    infoObj.name = info.name;
+                    infoObj.name = info.name
                 } else if (info.kind === 'physical_address') {
-                    if (info.street) infoObj.street = info.street;
-                    if (info.extended_address) infoObj.extended_address = info.extended_address;
-                    if (info.city) infoObj.city = info.city;
-                    if (info.region) infoObj.region = info.region;
-                    if (info.postal_code) infoObj.postal_code = info.postal_code;
-                    if (info.po_box) infoObj.po_box = info.po_box;
-                    if (info.country) infoObj.country = info.country;
+                    if (info.street) infoObj.street = info.street
+                    if (info.extended_address) infoObj.extended_address = info.extended_address
+                    if (info.city) infoObj.city = info.city
+                    if (info.region) infoObj.region = info.region
+                    if (info.postal_code) infoObj.postal_code = info.postal_code
+                    if (info.po_box) infoObj.po_box = info.po_box
+                    if (info.country) infoObj.country = info.country
                 }
 
-                return infoObj;
-            });
+                return infoObj
+            })
         }
 
-        const membershipsArray = propsValue.memberships_array;
+        const membershipsArray = propsValue.memberships_array
         if (membershipsArray && Array.isArray(membershipsArray) && membershipsArray.length > 0) {
-            const memberships: any[] = [];
+            const memberships: any[] = []
 
             for (const membership of membershipsArray) {
-                if (!membership.type) continue;
+                if (!membership.type) continue
 
-                const membershipObj: any = {};
+                const membershipObj: any = {}
 
-                if (membership.title) membershipObj.title = membership.title;
-                if (membership.location) membershipObj.location = membership.location;
-                if (membership.department) membershipObj.department = membership.department;
-                if (membership.description) membershipObj.description = membership.description;
+                if (membership.title) membershipObj.title = membership.title
+                if (membership.location) membershipObj.location = membership.location
+                if (membership.department) membershipObj.department = membership.department
+                if (membership.description) membershipObj.description = membership.description
 
                 if (membership.type === 'organization' && membership.organization) {
                     membershipObj.group = {
                         kind: 'organization',
-                        id: membership.organization
-                    };
+                        id: membership.organization,
+                    }
                 } else if (membership.type === 'group' && membership.contact_group) {
                     membershipObj.group = {
                         kind: 'group',
-                        id: membership.contact_group
-                    };
+                        id: membership.contact_group,
+                    }
                 }
 
                 if (membershipObj.group) {
-                    memberships.push(membershipObj);
+                    memberships.push(membershipObj)
                 }
             }
 
             if (memberships.length > 0) {
-                contactData['memberships'] = memberships;
+                contactData['memberships'] = memberships
             }
         }
 
@@ -412,10 +429,10 @@ export const createContact = createAction({
             method: HttpMethod.POST,
             resourceUri: '/contacts',
             body: {
-                contacts: [contactData]
+                contacts: [contactData],
             },
-        });
+        })
 
-        return response.body;
+        return response.body
     },
-});
+})

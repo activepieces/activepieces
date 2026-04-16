@@ -1,6 +1,6 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { MachineInformation, WorkerMachineStatus, WorkerMachineType } from '@activepieces/shared'
-import { workerMachineCache, WorkerMachine } from '../../../../../src/app/workers/machine/machine-cache'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { WorkerMachine, workerMachineCache } from '../../../../../src/app/workers/machine/machine-cache'
 import { machineService } from '../../../../../src/app/workers/machine/machine-service'
 
 let inMemoryStore: Map<string, WorkerMachine>
@@ -20,8 +20,7 @@ vi.mock('../../../../../src/app/workers/machine/machine-cache', () => ({
             const existing = inMemoryStore.get(worker.id)
             if (existing) {
                 inMemoryStore.set(worker.id, { ...existing, ...worker, updated: now })
-            }
-            else {
+            } else {
                 inMemoryStore.set(worker.id, { ...worker, updated: now, created: now } as WorkerMachine)
             }
         },

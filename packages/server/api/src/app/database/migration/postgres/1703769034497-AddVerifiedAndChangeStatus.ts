@@ -1,7 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddVerifiedAndChangeStatus1703769034497
-implements MigrationInterface {
+export class AddVerifiedAndChangeStatus1703769034497 implements MigrationInterface {
     name = 'AddVerifiedAndChangeStatus1703769034497'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

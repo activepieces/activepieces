@@ -14,5 +14,4 @@ export class AddIndiciesToRunSqlite1732324481815 implements MigrationInterface {
             DROP INDEX "idx_run_flow_id"
         `)
     }
-
 }

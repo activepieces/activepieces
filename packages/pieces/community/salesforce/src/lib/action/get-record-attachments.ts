@@ -1,11 +1,10 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
-import { querySalesforceApi, salesforcesCommon } from '../common';
-
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { querySalesforceApi, salesforcesCommon } from '../common'
 
 interface QueryResult {
-    records: any[];
+    records: any[]
 }
 
 export const getRecordAttachments = createAction({
@@ -18,25 +17,19 @@ export const getRecordAttachments = createAction({
         record_id: salesforcesCommon.record,
     },
     async run(context) {
-        const { record_id } = context.propsValue;
+        const { record_id } = context.propsValue
 
-
-        const classicAttachmentsQuery = `SELECT Id, Name, BodyLength, ContentType FROM Attachment WHERE ParentId = '${record_id}'`;
+        const classicAttachmentsQuery = `SELECT Id, Name, BodyLength, ContentType FROM Attachment WHERE ParentId = '${record_id}'`
         const classicAttachmentsResponse = await querySalesforceApi<QueryResult>(
             HttpMethod.GET,
             context.auth,
-            classicAttachmentsQuery
-        );
-        const classicAttachments = classicAttachmentsResponse.body?.records || [];
+            classicAttachmentsQuery,
+        )
+        const classicAttachments = classicAttachmentsResponse.body?.records || []
 
-
-        const filesQuery = `SELECT ContentDocument.Id, ContentDocument.Title FROM ContentDocumentLink WHERE LinkedEntityId = '${record_id}'`;
-        const filesResponse = await querySalesforceApi<QueryResult>(
-            HttpMethod.GET,
-            context.auth,
-            filesQuery
-        );
-        const files = filesResponse.body?.records || [];
+        const filesQuery = `SELECT ContentDocument.Id, ContentDocument.Title FROM ContentDocumentLink WHERE LinkedEntityId = '${record_id}'`
+        const filesResponse = await querySalesforceApi<QueryResult>(HttpMethod.GET, context.auth, filesQuery)
+        const files = filesResponse.body?.records || []
 
         const allAttachments = {
             classic_attachments: classicAttachments,
@@ -44,8 +37,8 @@ export const getRecordAttachments = createAction({
                 Id: file.ContentDocument.Id,
                 Title: file.ContentDocument.Title,
             })),
-        };
+        }
 
-        return allAttachments;
+        return allAttachments
     },
-});
+})

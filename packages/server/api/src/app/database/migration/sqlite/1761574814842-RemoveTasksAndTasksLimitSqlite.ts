@@ -279,5 +279,4 @@ export class RemoveTasksAndTasksLimitSqlite1761574814842 implements MigrationInt
             CREATE INDEX "idx_run_flow_version_id" ON "flow_run" ("flowVersionId")
         `)
     }
-
 }

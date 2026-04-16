@@ -15,8 +15,8 @@ import {
     ProgressUpdateType,
     RetryFlowRequestBody,
     RunEnvironment,
-    SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    SeekPage,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -46,17 +46,13 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
-    app.get(
-        '/:id',
-        GetRequest,
-        async (request, reply) => {
-            const flowRun = await flowRunService(request.log).getOnePopulatedOrThrow({
-                projectId: request.projectId,
-                id: request.params.id,
-            })
-            await reply.send(flowRun)
-        },
-    )
+    app.get('/:id', GetRequest, async (request, reply) => {
+        const flowRun = await flowRunService(request.log).getOnePopulatedOrThrow({
+            projectId: request.projectId,
+            id: request.params.id,
+        })
+        await reply.send(flowRun)
+    })
 
     app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
@@ -152,7 +148,6 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
             failedStepName: req.body.failedStepName,
         })
     })
-
 }
 
 const FlowRunFiltered = FlowRun.omit({ pauseMetadata: true })
@@ -160,11 +155,9 @@ const FlowRunFilteredWithNoSteps = FlowRun.omit({ pauseMetadata: true, steps: tr
 
 const ListRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.READ_RUN, {
-                type: ProjectResourceType.QUERY,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_RUN, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         tags: ['flow-runs'],
@@ -179,12 +172,10 @@ const ListRequest = {
 
 const GetRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.READ_RUN, {
-                type: ProjectResourceType.TABLE,
-                tableName: FlowRunEntity,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_RUN, {
+            type: ProjectResourceType.TABLE,
+            tableName: FlowRunEntity,
+        }),
     },
     schema: {
         tags: ['flow-runs'],
@@ -213,12 +204,10 @@ const ResumeFlowRunRequest = {
 
 const RetryFlowRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.WRITE_RUN, {
-                type: ProjectResourceType.TABLE,
-                tableName: FlowRunEntity,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_RUN, {
+            type: ProjectResourceType.TABLE,
+            tableName: FlowRunEntity,
+        }),
     },
     schema: {
         params: z.object({
@@ -230,11 +219,9 @@ const RetryFlowRequest = {
 
 const BulkCancelFlowRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.WRITE_RUN, {
-                type: ProjectResourceType.BODY,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_RUN, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         tags: ['flow-runs'],
@@ -246,11 +233,9 @@ const BulkCancelFlowRequest = {
 
 const ArchiveFlowRunRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.WRITE_RUN, {
-                type: ProjectResourceType.BODY,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_RUN, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         body: BulkArchiveActionOnRunsRequestBody,
@@ -259,11 +244,9 @@ const ArchiveFlowRunRequest = {
 
 const BulkRetryFlowRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.WRITE_RUN, {
-                type: ProjectResourceType.BODY,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_RUN, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         body: BulkActionOnRunsRequestBody,

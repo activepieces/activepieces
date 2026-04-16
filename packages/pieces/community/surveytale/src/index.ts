@@ -1,8 +1,8 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common'
 import { createPiece } from '@activepieces/pieces-framework'
 import { PieceCategory } from '@activepieces/shared'
-import { triggers } from './lib/triggers'
 import { SURVEYTALE_BASE_URL, surveyTaleAuth } from './lib/auth'
+import { triggers } from './lib/triggers'
 
 export const surveytale = createPiece({
     displayName: 'SurveyTale',
@@ -10,7 +10,7 @@ export const surveytale = createPiece({
     auth: surveyTaleAuth,
     minimumSupportedRelease: '0.30.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/surveytale.png',
-    categories: [PieceCategory.BUSINESS_INTELLIGENCE,PieceCategory.FORMS_AND_SURVEYS],
+    categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.FORMS_AND_SURVEYS],
     authors: ['nag381'],
     actions: [
         createCustomApiCallAction({

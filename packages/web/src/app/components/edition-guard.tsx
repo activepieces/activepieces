@@ -17,4 +17,5 @@ const EditionGuard = ({ children, allowedEditions }: EditionGuardProps) => {
 };
 
 EditionGuard.displayName = 'EditionGuard';
+
 export { EditionGuard };

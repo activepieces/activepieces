@@ -1,4 +1,4 @@
-import { PopulatedFlow, FlowTriggerType } from '@activepieces/shared';
+import { FlowTriggerType, PopulatedFlow } from '@activepieces/shared';
 import cronstrue from 'cronstrue/i18n';
 import { t } from 'i18next';
 import JSZip from 'jszip';

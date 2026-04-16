@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button, ButtonProps } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -152,9 +152,9 @@ const ChatBubbleAction: React.FC<ChatBubbleActionProps> = ({
 
 export {
   ChatBubble,
+  ChatBubbleAction,
   ChatBubbleAvatar,
   ChatBubbleMessage,
-  chatBubbleVariant,
   chatBubbleMessageVariants,
-  ChatBubbleAction,
+  chatBubbleVariant,
 };

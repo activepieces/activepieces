@@ -13,23 +13,20 @@ import { jobQueue } from './job-queue'
 const QUEUE_BASE_PATH = '/ui'
 
 export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
-    const isQueueEnabled = (system.getBoolean(AppSystemProp.QUEUE_UI_ENABLED) ?? false)
+    const isQueueEnabled = system.getBoolean(AppSystemProp.QUEUE_UI_ENABLED) ?? false
     if (!isQueueEnabled) {
         app.log.info('[setupBullMQBoard] Queue UI is disabled')
         return
     }
     const queueUsername = system.getOrThrow(AppSystemProp.QUEUE_UI_USERNAME)
     const queuePassword = system.getOrThrow(AppSystemProp.QUEUE_UI_PASSWORD)
-    app.log.info(
-        '[setupBullMQBoard] Setting up bull board, visit /ui to see the queues',
-    )
+    app.log.info('[setupBullMQBoard] Setting up bull board, visit /ui to see the queues')
 
     await app.register(basicAuth, {
         validate: (username, password, _req, _reply, done) => {
             if (username === queueUsername && password === queuePassword) {
                 done()
-            }
-            else {
+            } else {
                 done(new Error('Unauthorized'))
             }
         },
@@ -40,7 +37,7 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     assertNotNullOrUndefined(jobQueues.length > 0, 'No job queues available')
     assertNotNullOrUndefined(runsMetadataQueue(app.log).get(), 'runsMetadataQueueInstance')
 
-    const jobQueueAdapters = jobQueues.map(queue => new BullMQAdapter(queue))
+    const jobQueueAdapters = jobQueues.map((queue) => new BullMQAdapter(queue))
 
     const allQueues = [
         ...jobQueueAdapters,
@@ -57,19 +54,15 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     serverAdapter.setBasePath(`/api${QUEUE_BASE_PATH}`)
     app.addHook('onRequest', (req, reply, next) => {
         const routerPath = req.routeOptions.url
-        assertNotNullOrUndefined(routerPath, 'routerPath is undefined'  )    
+        assertNotNullOrUndefined(routerPath, 'routerPath is undefined')
         if (!routerPath.startsWith(QUEUE_BASE_PATH)) {
             next()
-        }
-        else {
+        } else {
             app.basicAuth(req, reply, function (error?: unknown) {
-                const castedError = error as { statusCode: number, name: string }
+                const castedError = error as { statusCode: number; name: string }
                 if (!isNil(castedError)) {
-                    void reply
-                        .code(castedError.statusCode || 500)
-                        .send({ error: castedError.name })
-                }
-                else {
+                    void reply.code(castedError.statusCode || 500).send({ error: castedError.name })
+                } else {
                     next()
                 }
             })
@@ -77,5 +70,4 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     })
 
     await app.register(serverAdapter.registerPlugin(), { prefix: QUEUE_BASE_PATH })
-
 }

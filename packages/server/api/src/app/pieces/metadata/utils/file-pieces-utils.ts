@@ -1,17 +1,16 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
-import { sep } from 'path'
 import { Piece, PieceMetadata, pieceTranslation } from '@activepieces/pieces-framework'
 import { extractPieceFromModule } from '@activepieces/shared'
 import clearModule from 'clear-module'
 import { FastifyBaseLogger } from 'fastify'
+import { sep } from 'path'
 import { AppSystemProp, environmentVariables } from '../../../helper/system/system-props'
 
 const SOURCE_PIECES_PATH = resolve(cwd(), 'packages', 'pieces')
 
 export const filePiecesUtils = (log: FastifyBaseLogger) => ({
-
     getPackageNameFromFolderPath: async (folderPath: string): Promise<string> => {
         const packageJson = await readFile(join(folderPath, 'package.json'), 'utf-8').then(JSON.parse)
         return packageJson.name
@@ -19,13 +18,12 @@ export const filePiecesUtils = (log: FastifyBaseLogger) => ({
 
     getPieceDependencies: async (folderPath: string): Promise<Record<string, string> | null> => {
         try {
-            const packageJson =  await readFile(join(folderPath, 'package.json'), 'utf-8').then(JSON.parse)
+            const packageJson = await readFile(join(folderPath, 'package.json'), 'utf-8').then(JSON.parse)
             if (!packageJson.dependencies) {
                 return null
             }
             return packageJson.dependencies
-        }
-        catch (e) {
+        } catch (e) {
             return null
         }
     },
@@ -38,12 +36,14 @@ export const filePiecesUtils = (log: FastifyBaseLogger) => ({
                 if (packageJsonName === packageName) {
                     return path
                 }
-            }
-            catch (e) {
-                log.error({
-                    name: 'findDistPiecePathByPackageName',
-                    message: JSON.stringify(e),
-                }, 'Error finding dist piece path by package name')
+            } catch (e) {
+                log.error(
+                    {
+                        name: 'findDistPiecePathByPackageName',
+                        message: JSON.stringify(e),
+                    },
+                    'Error finding dist piece path by package name',
+                )
             }
         }
         return null
@@ -58,17 +58,17 @@ export const filePiecesUtils = (log: FastifyBaseLogger) => ({
     loadDistPiecesMetadata: async (piecesNames: string[]): Promise<PieceMetadata[]> => {
         try {
             const devPieces = await findAllDistPiecesFolders(SOURCE_PIECES_PATH)
-            const paths = devPieces.filter(path => piecesNames.some(name => path.endsWith(sep + name + sep + 'dist')))
+            const paths = devPieces.filter((path) =>
+                piecesNames.some((name) => path.endsWith(sep + name + sep + 'dist')),
+            )
             const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
             return pieces.filter((p): p is PieceMetadata => p !== null)
-        }
-        catch (e) {
+        } catch (e) {
             const err = e as Error
             log.warn({ err }, '[filePieceMetadataService#loadDistPiecesMetadata] Failed to load pieces from folder')
             return []
         }
     },
-
 
     clearPieceModuleCache: (distFolderPath: string): void => {
         const indexPath = join(distFolderPath, 'src', 'index')
@@ -86,13 +86,9 @@ const findAllPiecesFolder = async (folderPath: string): Promise<string[]> => {
     for (const file of files) {
         const filePath = join(folderPath, file)
         const fileStats = await stat(filePath)
-        if (
-            fileStats.isDirectory() &&
-            !ignoredFiles.includes(file)
-        ) {
+        if (fileStats.isDirectory() && !ignoredFiles.includes(file)) {
             paths.push(...(await findAllPiecesFolder(filePath)))
-        }
-        else if (file === 'package.json') {
+        } else if (file === 'package.json') {
             paths.push(folderPath)
         }
     }
@@ -109,17 +105,14 @@ const findAllDistPiecesFolders = async (sourcePiecesPath: string): Promise<strin
             if (distStats.isDirectory()) {
                 distFolders.push(distPath)
             }
-        }
-        catch {
+        } catch {
             // dist folder doesn't exist for this piece, skip
         }
     }
     return distFolders
 }
 
-const loadPieceFromFolder = async (
-    folderPath: string,
-): Promise<PieceMetadata | null> => {
+const loadPieceFromFolder = async (folderPath: string): Promise<PieceMetadata | null> => {
     const indexPath = join(folderPath, 'src', 'index')
     const packageJsonPath = join(folderPath, 'package.json')
     // eslint-disable-next-line @typescript-eslint/no-var-requires

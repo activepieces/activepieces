@@ -16,7 +16,6 @@ export class AddAuthConfigInAiProviders1766328841463 implements MigrationInterfa
         await queryRunner.query(`
             UPDATE "ai_provider" SET "config" = "config"::jsonb - 'apiKey'
         `)
-
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -24,5 +23,4 @@ export class AddAuthConfigInAiProviders1766328841463 implements MigrationInterfa
             ALTER TABLE "ai_provider" DROP COLUMN "auth"
         `)
     }
-
 }

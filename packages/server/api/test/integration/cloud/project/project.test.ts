@@ -1,19 +1,18 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     ApiKeyResponseWithValue,
     FlowStatus,
-
     Platform,
     PlatformRole,
     PrincipalType,
     Project,
     UpdateProjectPlatformRequest,
-    User } from '@activepieces/shared'
+    User,
+} from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { generateMockToken } from '../../../helpers/auth'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import {
     createMockApiKey,
@@ -22,9 +21,9 @@ import {
     mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
-
 
 beforeAll(async () => {
     app = await setupTestEnvironment()
@@ -40,7 +39,7 @@ describe('Project API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
 
@@ -126,7 +125,11 @@ describe('Project API', () => {
     describe('List Projects by user', () => {
         it('it should list owned projects in platform', async () => {
             await mockAndSaveBasicSetup()
-            const { mockOwner: mockUserTwo, mockProject: mockProjectTwo, mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup()
+            const {
+                mockOwner: mockUserTwo,
+                mockProject: mockProjectTwo,
+                mockPlatform: mockPlatformTwo,
+            } = await mockAndSaveBasicSetup()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -178,8 +181,7 @@ describe('Project API', () => {
 
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
-                plan: {
-                },
+                plan: {},
             }
             const response = await app?.inject({
                 method: 'POST',
@@ -200,12 +202,10 @@ describe('Project API', () => {
         })
 
         it('it should update project as platform owner with api key', async () => {
-            const { mockProject, mockApiKey } =
-                await createProjectAndPlatformAndApiKey()
+            const { mockProject, mockApiKey } = await createProjectAndPlatformAndApiKey()
             const request = {
                 displayName: faker.animal.bird(),
-                plan: {
-                },
+                plan: {},
             }
             const response = await app?.inject({
                 method: 'POST',
@@ -219,8 +219,7 @@ describe('Project API', () => {
         })
 
         it('it should update project as platform owner', async () => {
-            const { mockProject, mockPlatform, mockUser } =
-                await createProjectAndPlatformAndApiKey()
+            const { mockProject, mockPlatform, mockUser } = await createProjectAndPlatformAndApiKey()
             const mockProjectTwo = createMockProject({
                 ownerId: mockUser.id,
                 platformId: mockPlatform.id,
@@ -236,8 +235,7 @@ describe('Project API', () => {
 
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
-                plan: {
-                },
+                plan: {},
             }
 
             const response = await app?.inject({
@@ -307,7 +305,7 @@ describe('Project API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockProject.platformId,
                 },
@@ -363,8 +361,7 @@ describe('Project API', () => {
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
                 metadata,
-                plan: {
-                },
+                plan: {},
             }
             const response = await app?.inject({
                 method: 'POST',
@@ -413,7 +410,9 @@ describe('Project API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            const deletedProject = await databaseConnection().getRepository('project').findOne({ where: { id: mockProjectToDelete.id }, withDeleted: true })
+            const deletedProject = await databaseConnection()
+                .getRepository('project')
+                .findOne({ where: { id: mockProjectToDelete.id }, withDeleted: true })
             expect(deletedProject!.deleted).not.toBeNull()
         })
 
@@ -430,7 +429,7 @@ describe('Project API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockProject.platformId,
                 },
@@ -459,7 +458,7 @@ describe('Project API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockProject.platformId,
                 },
@@ -479,14 +478,13 @@ describe('Project API', () => {
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('AUTHORIZATION')
         })
-
     })
 
     describe('Platform Operator Access', () => {
         it('Platform operator can access all projects in their platform', async () => {
             // arrange
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
-            
+
             // Create a platform operator user
             const { mockUser: operatorUser } = await mockBasicUser({
                 user: {
@@ -494,7 +492,7 @@ describe('Project API', () => {
                     platformRole: PlatformRole.OPERATOR,
                 },
             })
-            
+
             // Create multiple projects owned by different users
             const project1 = createMockProject({
                 ownerId: mockOwner.id,
@@ -506,15 +504,15 @@ describe('Project API', () => {
                 platformId: mockPlatform.id,
                 displayName: 'Project 2',
             })
-            
+
             await db.save('project', [project1, project2])
-            
+
             const operatorToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: operatorUser.id,
                 platform: { id: mockPlatform.id },
             })
-            
+
             // act - list projects
             const response = await app?.inject({
                 method: 'GET',
@@ -523,7 +521,7 @@ describe('Project API', () => {
                     authorization: `Bearer ${operatorToken}`,
                 },
             })
-            
+
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
@@ -537,21 +535,21 @@ describe('Project API', () => {
         it('Platform operator cannot update platform settings', async () => {
             // arrange
             const { mockPlatform } = await mockAndSaveBasicSetup()
-            
+
             const { mockUser: operatorUser } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
                     platformRole: PlatformRole.OPERATOR,
                 },
             })
-            
+
             const operatorToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: operatorUser.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
-            
+
             // act - try to update platform
             const response = await app?.inject({
                 method: 'POST',
@@ -563,15 +561,14 @@ describe('Project API', () => {
                     name: 'Should not be allowed',
                 },
             })
-            
-         
+
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
         it('Platform member cannot access projects they are not member of', async () => {
             // arrange
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
-            
+
             // Create a regular platform member
             const { mockUser: memberUser } = await mockBasicUser({
                 user: {
@@ -579,22 +576,22 @@ describe('Project API', () => {
                     platformRole: PlatformRole.MEMBER,
                 },
             })
-            
+
             // Create a project the member is NOT part of
             const project = createMockProject({
                 ownerId: mockOwner.id,
                 platformId: mockPlatform.id,
                 displayName: 'Restricted Project',
             })
-            
+
             await db.save('project', project)
-            
+
             const memberToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: memberUser.id,
                 platform: { id: mockPlatform.id },
             })
-            
+
             // act - list projects
             const response = await app?.inject({
                 method: 'GET',
@@ -603,15 +600,13 @@ describe('Project API', () => {
                     authorization: `Bearer ${memberToken}`,
                 },
             })
-            
+
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
             expect(responseBody.data).toHaveLength(0) // Should not see any projects
         })
     })
-
-
 })
 
 async function createProjectAndPlatformAndApiKey(): Promise<{

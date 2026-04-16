@@ -1,14 +1,14 @@
-import { pipedriveAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {  pipedrivePaginatedV1ApiCall } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { isNil } from '@activepieces/shared'
+import { pipedriveAuth } from '../auth'
+import { pipedrivePaginatedV1ApiCall } from '../common'
 
 export const findNotesAction = createAction({
     auth: pipedriveAuth,
     name: 'find-notes',
     displayName: 'Find Notes',
-    description: 'Finds notes by Deal, Lead, Person, or Organization ID.', 
+    description: 'Finds notes by Deal, Lead, Person, or Organization ID.',
     props: {
         objectType: Property.StaticDropdown({
             displayName: 'Search By',
@@ -35,33 +35,33 @@ export const findNotesAction = createAction({
                 ],
             },
         }),
-        objectId: Property.ShortText({ 
+        objectId: Property.ShortText({
             displayName: 'ID',
             required: true,
         }),
     },
     async run(context) {
-		const response = await pipedrivePaginatedV1ApiCall({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.GET,
-			resourceUri: `/v1/notes`,
-			query: {
-				sort: 'update_time DESC',
-				[context.propsValue.objectType]:context.propsValue.objectId
-			},
-		});
+        const response = await pipedrivePaginatedV1ApiCall({
+            accessToken: context.auth.access_token,
+            apiDomain: context.auth.data['api_domain'],
+            method: HttpMethod.GET,
+            resourceUri: `/v1/notes`,
+            query: {
+                sort: 'update_time DESC',
+                [context.propsValue.objectType]: context.propsValue.objectId,
+            },
+        })
 
-		if (isNil(response) || response.length === 0) {
-			return {
-				found: false,
-				data: [],
-			};
-		}
+        if (isNil(response) || response.length === 0) {
+            return {
+                found: false,
+                data: [],
+            }
+        }
 
-		return {
-			found: response.length > 0,
-			data: response,
-		};
-	},
-});
+        return {
+            found: response.length > 0,
+            data: response,
+        }
+    },
+})

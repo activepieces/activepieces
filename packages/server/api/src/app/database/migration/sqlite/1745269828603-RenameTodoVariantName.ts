@@ -29,12 +29,15 @@ export class RenameTodoVariantName1745269828603 implements MigrationInterface {
                 }
             }
 
-            await queryRunner.query('UPDATE todo SET status = $1, "statusOptions" = $2 WHERE id = $3', [JSON.stringify(status), JSON.stringify(statusOptions), todo.id])
+            await queryRunner.query('UPDATE todo SET status = $1, "statusOptions" = $2 WHERE id = $3', [
+                JSON.stringify(status),
+                JSON.stringify(statusOptions),
+                todo.id,
+            ])
         }
     }
 
     public async down(_queryRunner: QueryRunner): Promise<void> {
         // No need to do anything, the data is already migrated
     }
-
 }

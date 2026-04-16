@@ -1,17 +1,16 @@
-import { OAuth2PropertyValue, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { getTaskListsDropdown, createTodoClient } from '../common';
-import { microsoftToDoAuth } from '../auth';
-import dayjs from 'dayjs';
-import { TodoTask } from '@microsoft/microsoft-graph-types';
-
+import { createTrigger, OAuth2PropertyValue, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { TodoTask } from '@microsoft/microsoft-graph-types'
+import dayjs from 'dayjs'
+import { microsoftToDoAuth } from '../auth'
+import { createTodoClient, getTaskListsDropdown } from '../common'
 
 interface WebhookNotification {
     value: {
-        resource: string;
+        resource: string
         resourceData?: {
-            id: string;
-        };
-    }[];
+            id: string
+        }
+    }[]
 }
 
 export const taskCompletedTrigger = createTrigger({
@@ -21,17 +20,17 @@ export const taskCompletedTrigger = createTrigger({
     description: 'Triggers when a task is completed in a specific list.',
     props: {
         task_list_id: Property.Dropdown({
-   auth: microsoftToDoAuth,
+            auth: microsoftToDoAuth,
             displayName: 'Task List',
             description: 'The list to watch for completed tasks.',
             required: true,
             refreshers: [],
             options: async ({ auth }) => {
-                const authValue = auth as OAuth2PropertyValue;
+                const authValue = auth as OAuth2PropertyValue
                 if (!authValue?.access_token) {
-                    return { disabled: true, placeholder: 'Connect your account first', options: [] };
+                    return { disabled: true, placeholder: 'Connect your account first', options: [] }
                 }
-                return await getTaskListsDropdown(authValue);
+                return await getTaskListsDropdown(authValue)
             },
         }),
     },
@@ -46,84 +45,84 @@ export const taskCompletedTrigger = createTrigger({
 
     async onEnable(context) {
         try {
-            const client = createTodoClient(context.auth);
+            const client = createTodoClient(context.auth)
 
-            const clientState = Math.random().toString(36).substring(7);
-            const expirationDateTime = dayjs().add(2, 'days').toISOString();
-            
+            const clientState = Math.random().toString(36).substring(7)
+            const expirationDateTime = dayjs().add(2, 'days').toISOString()
+
             const response = await client.api('/subscriptions').post({
                 changeType: 'updated',
                 notificationUrl: context.webhookUrl,
                 resource: `/me/todo/lists/${context.propsValue.task_list_id}/tasks`,
                 expirationDateTime: expirationDateTime,
                 clientState: clientState,
-            });
+            })
 
-            await context.store.put('subscriptionId', response.id);
-            await context.store.put('clientState', clientState);
+            await context.store.put('subscriptionId', response.id)
+            await context.store.put('clientState', clientState)
         } catch (error: any) {
-            throw new Error(`Failed to create webhook subscription: ${error?.message || error}`);
+            throw new Error(`Failed to create webhook subscription: ${error?.message || error}`)
         }
     },
 
     async onDisable(context) {
         try {
-            const subscriptionId = await context.store.get('subscriptionId') as string | null;
+            const subscriptionId = (await context.store.get('subscriptionId')) as string | null
             if (subscriptionId) {
-                const client = createTodoClient(context.auth);
-                await client.api(`/subscriptions/${subscriptionId}`).delete();
-                await context.store.delete('subscriptionId');
-                await context.store.delete('clientState');
+                const client = createTodoClient(context.auth)
+                await client.api(`/subscriptions/${subscriptionId}`).delete()
+                await context.store.delete('subscriptionId')
+                await context.store.delete('clientState')
             }
         } catch (error: any) {
-            console.warn(`Failed to delete subscription: ${error?.message || error}`);
+            console.warn(`Failed to delete subscription: ${error?.message || error}`)
         }
     },
 
     async onRenew(context) {
         try {
-            const subscriptionId = await context.store.get('subscriptionId') as string | null;
+            const subscriptionId = (await context.store.get('subscriptionId')) as string | null
             if (subscriptionId) {
-                const client = createTodoClient(context.auth);
+                const client = createTodoClient(context.auth)
                 await client.api(`/subscriptions/${subscriptionId}`).patch({
                     expirationDateTime: dayjs().add(2, 'days').toISOString(),
-                });
+                })
             }
         } catch (error: any) {
-            throw new Error(`Failed to renew subscription: ${error?.message || error}`);
+            throw new Error(`Failed to renew subscription: ${error?.message || error}`)
         }
     },
 
     async run(context) {
-        const payload = context.payload.body as WebhookNotification;
-        
-        const storedClientState = await context.store.get('clientState') as string | null;
-        const receivedClientState = (context.payload.body as any)?.value?.[0]?.clientState;
-        
+        const payload = context.payload.body as WebhookNotification
+
+        const storedClientState = (await context.store.get('clientState')) as string | null
+        const receivedClientState = (context.payload.body as any)?.value?.[0]?.clientState
+
         if (storedClientState && receivedClientState !== storedClientState) {
-            console.warn('Invalid clientState received in webhook notification');
-            return [];
+            console.warn('Invalid clientState received in webhook notification')
+            return []
         }
 
-        const completedTasks: TodoTask[] = [];
+        const completedTasks: TodoTask[] = []
 
-        const client = createTodoClient(context.auth);
+        const client = createTodoClient(context.auth)
 
         for (const notification of payload.value) {
-            const taskId = notification.resourceData?.id;
-            if (!taskId) continue;
+            const taskId = notification.resourceData?.id
+            if (!taskId) continue
 
             try {
-                const task = await client.api(notification.resource).get() as TodoTask;
-                
+                const task = (await client.api(notification.resource).get()) as TodoTask
+
                 if (task.status === 'completed') {
-                    completedTasks.push(task);
+                    completedTasks.push(task)
                 }
             } catch (e) {
-                console.warn(`Failed to fetch task ${taskId}, it may have been deleted.`);
+                console.warn(`Failed to fetch task ${taskId}, it may have been deleted.`)
             }
         }
 
-        return completedTasks;
+        return completedTasks
     },
-});
+})

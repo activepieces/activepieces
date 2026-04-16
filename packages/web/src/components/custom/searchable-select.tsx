@@ -1,7 +1,7 @@
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import { Check, ChevronsUpDown, RefreshCcw, Trash2, X } from 'lucide-react';
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { SelectUtilButton } from '@/components/custom/select-util-button';
 import {

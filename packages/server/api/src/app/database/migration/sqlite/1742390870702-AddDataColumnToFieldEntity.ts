@@ -197,5 +197,4 @@ export class AddDataColumnToFieldEntity1742390870702 implements MigrationInterfa
             CREATE INDEX "idx_field_project_id_table_id_name" ON "field" ("projectId", "tableId", "name")
         `)
     }
-
 }

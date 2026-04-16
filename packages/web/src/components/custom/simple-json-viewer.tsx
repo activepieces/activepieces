@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Copy, Check } from 'lucide-react';
+import { Check, Copy } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactJson from 'react-json-view';
 import { toast } from 'sonner';

@@ -2,14 +2,14 @@ import { TriggerStatusReport } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import {
-  CheckCircle,
-  XCircle,
   AlertCircle,
-  Puzzle,
-  Hash,
   BarChart3,
-  Clock,
   Calendar,
+  CheckCircle,
+  Clock,
+  Hash,
+  Puzzle,
+  XCircle,
 } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
@@ -17,14 +17,14 @@ import { DataTable } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { triggerRunHooks } from '@/features/flows';
 import { PieceDisplayName, PieceIconWithPieceName } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
-import { StatusProgressBar, type DayStatus } from './status-progress-bar';
+import { type DayStatus, StatusProgressBar } from './status-progress-bar';
 
 type TriggerHealthRow = {
   id: string;
@@ -91,8 +91,8 @@ export default function TriggerHealthPage() {
               last14Days === 100
                 ? STATUS.SUCCESS
                 : last14Days > 0
-                ? STATUS.WARNING
-                : STATUS.FAULT,
+                  ? STATUS.WARNING
+                  : STATUS.FAULT,
           },
           last24Hours,
           last7Days,

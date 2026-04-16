@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { browserlessAuth } from '../common/auth';
-import { browserlessCommon, convertBinaryToBase64, isBinaryResponse } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { browserlessAuth } from '../common/auth'
+import { browserlessCommon, convertBinaryToBase64, isBinaryResponse } from '../common/client'
 
 export const captureScreenshot = createAction({
     name: 'capture_screenshot',
@@ -22,9 +22,9 @@ export const captureScreenshot = createAction({
             options: {
                 options: [
                     { label: 'PNG', value: 'png' },
-                    { label: 'JPEG', value: 'jpeg' }
-                ]
-            }
+                    { label: 'JPEG', value: 'jpeg' },
+                ],
+            },
         }),
         quality: Property.Number({
             displayName: 'Quality',
@@ -90,44 +90,46 @@ export const captureScreenshot = createAction({
             options: {
                 type: context.propsValue.imageType || 'png',
                 fullPage: context.propsValue.fullPage || false,
-            }
-        };
+            },
+        }
 
         if (context.propsValue.quality && context.propsValue.imageType === 'jpeg') {
-            requestBody.options.quality = context.propsValue.quality;
+            requestBody.options.quality = context.propsValue.quality
         }
 
         if (context.propsValue.width && context.propsValue.height) {
             requestBody.viewport = {
                 width: context.propsValue.width,
                 height: context.propsValue.height,
-            };
+            }
         }
 
         if (context.propsValue.waitForSelector) {
             requestBody.waitForSelector = {
                 selector: context.propsValue.waitForSelector,
-            };
+            }
         }
 
         if (context.propsValue.delay) {
-            requestBody.waitForTimeout = context.propsValue.delay;
+            requestBody.waitForTimeout = context.propsValue.delay
         }
 
         if (context.propsValue.omitBackground) {
-            requestBody.options.omitBackground = context.propsValue.omitBackground;
+            requestBody.options.omitBackground = context.propsValue.omitBackground
         }
 
-        if (context.propsValue.clipX !== undefined && 
-            context.propsValue.clipY !== undefined && 
-            context.propsValue.clipWidth !== undefined && 
-            context.propsValue.clipHeight !== undefined) {
+        if (
+            context.propsValue.clipX !== undefined &&
+            context.propsValue.clipY !== undefined &&
+            context.propsValue.clipWidth !== undefined &&
+            context.propsValue.clipHeight !== undefined
+        ) {
             requestBody.options.clip = {
                 x: context.propsValue.clipX,
                 y: context.propsValue.clipY,
                 width: context.propsValue.clipWidth,
                 height: context.propsValue.clipHeight,
-            };
+            }
         }
 
         const response = await browserlessCommon.apiCall({
@@ -135,27 +137,27 @@ export const captureScreenshot = createAction({
             method: HttpMethod.POST,
             resourceUri: '/screenshot',
             body: requestBody,
-        });
+        })
 
-        const imageType = context.propsValue.imageType || 'png';
-        const fileName = `screenshot.${imageType}`;
-        
-        let fileData: Buffer;
-        
+        const imageType = context.propsValue.imageType || 'png'
+        const fileName = `screenshot.${imageType}`
+
+        let fileData: Buffer
+
         if (response.body instanceof ArrayBuffer) {
-            fileData = Buffer.from(response.body);
+            fileData = Buffer.from(response.body)
         } else if (Buffer.isBuffer(response.body)) {
-            fileData = response.body;
+            fileData = response.body
         } else if (typeof response.body === 'string') {
-            fileData = Buffer.from(response.body, 'latin1');
+            fileData = Buffer.from(response.body, 'latin1')
         } else {
-            fileData = Buffer.from(String(response.body), 'latin1');
+            fileData = Buffer.from(String(response.body), 'latin1')
         }
 
         const file = await context.files.write({
             data: fileData,
             fileName: fileName,
-        });
+        })
 
         return {
             success: true,
@@ -168,7 +170,7 @@ export const captureScreenshot = createAction({
                 timestamp: new Date().toISOString(),
                 contentType: response.headers?.['content-type'] || `image/${imageType}`,
                 fileName: fileName,
-            }
-        };
+            },
+        }
     },
-});
+})

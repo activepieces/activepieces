@@ -1,10 +1,12 @@
-import https from 'https'
 import { SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import https from 'https'
 import { apAxios } from '../../../helper/ap-axios'
 import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
 
-export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.CYBERARK> => ({
+export const cyberarkConjurProvider = (
+    log: FastifyBaseLogger,
+): SecretManagerProvider<SecretManagerProviderId.CYBERARK> => ({
     checkConnection: async (config) => {
         const url = removeEndingSlash(config.url)
         const response = await conjurApi({
@@ -27,8 +29,7 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
         return Promise.resolve()
     },
     getSecret: async (request, config) => {
-
-        const token = await cyberarkConjurProvider(log).checkConnection(config) as string
+        const token = (await cyberarkConjurProvider(log).checkConnection(config)) as string
         const url = removeEndingSlash(config.url)
         const response = await conjurApi({
             url: `${url}/secrets/${config.organizationAccountName}/variable/${encodeURIComponent(request.path)}`,
@@ -40,7 +41,13 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
         const data = response.data
 
         if (!data) {
-            throwGetSecretError({ error: 'No secret found at requested path', path: request.path, provider: SecretManagerProviderId.CYBERARK, request, log })
+            throwGetSecretError({
+                error: 'No secret found at requested path',
+                path: request.path,
+                provider: SecretManagerProviderId.CYBERARK,
+                request,
+                log,
+            })
         }
         return data
     },
@@ -66,7 +73,7 @@ const conjurApi = async ({
         url,
         method,
         headers: {
-            ...(token && { 'Authorization': `Token token="${token}"` }),
+            ...(token && { Authorization: `Token token="${token}"` }),
             ...(typeof body === 'string' && { 'Content-Type': 'text/plain' }),
         },
         data: body,

@@ -1,18 +1,18 @@
-import { makeClient } from '../../common';
-import { clockodoAuth } from '../../auth';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework'
+import { clockodoAuth } from '../../auth'
+import { makeClient } from '../../common'
 
 export default createAction({
-  auth: clockodoAuth,
-  name: 'list_services',
-  displayName: 'Get Services',
-  description: 'Fetches services from clockodo',
-  props: {},
-  async run({ auth }) {
-    const client = makeClient(auth.props);
-    const res = await client.listServices();
-    return {
-      services: res.services,
-    };
-  },
-});
+    auth: clockodoAuth,
+    name: 'list_services',
+    displayName: 'Get Services',
+    description: 'Fetches services from clockodo',
+    props: {},
+    async run({ auth }) {
+        const client = makeClient(auth.props)
+        const res = await client.listServices()
+        return {
+            services: res.services,
+        }
+    },
+})

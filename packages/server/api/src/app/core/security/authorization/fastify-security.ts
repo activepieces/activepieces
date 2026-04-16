@@ -1,5 +1,14 @@
 import { Permission, PrincipalType } from '@activepieces/shared'
-import { AuthorizationType, NoneAuthorization, PlatformAuthorization, ProjectAuthorization, ProjectResource, PublicRoute, RouteKind, UnscopedAuthorization } from './common'
+import {
+    AuthorizationType,
+    NoneAuthorization,
+    PlatformAuthorization,
+    ProjectAuthorization,
+    ProjectResource,
+    PublicRoute,
+    RouteKind,
+    UnscopedAuthorization,
+} from './common'
 
 type FastifySecurityAuthorization =
     | PlatformAuthorization
@@ -11,11 +20,10 @@ type RouteAccessRequest = {
     kind: RouteKind.AUTHENTICATED
     authorization: FastifySecurityAuthorization
 }
-    
+
 export type FastifyRouteSecurity = RouteAccessRequest | PublicRoute
 
 export const securityAccess = {
-
     /**
      * Creates a security configuration that restricts access to platform administrators only.
      *
@@ -29,7 +37,9 @@ export const securityAccess = {
      * @param allowedPrincipals - Array of allowed principal types (USER, ENGINE, or SERVICE)
      * @returns Security configuration for platform admin-only routes
      */
-    platformAdminOnly: (allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]) => {
+    platformAdminOnly: (
+        allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[],
+    ) => {
         return {
             kind: RouteKind.AUTHENTICATED,
             authorization: {
@@ -39,7 +49,7 @@ export const securityAccess = {
             },
         } as const
     },
-    
+
     /**
      * Creates a security configuration for public platform routes.
      *
@@ -53,7 +63,10 @@ export const securityAccess = {
      * @param projectResource - Optional resource configuration for extracting projectId from the request
      * @returns Security configuration for public platform routes
      */
-    publicPlatform: (allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[], projectResource?: ProjectResource) => {
+    publicPlatform: (
+        allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[],
+        projectResource?: ProjectResource,
+    ) => {
         return {
             kind: RouteKind.AUTHENTICATED,
             authorization: {
@@ -64,7 +77,7 @@ export const securityAccess = {
             },
         } as const
     },
-    
+
     /**
      * Creates a security configuration for public routes that require no authentication.
      *
@@ -78,7 +91,7 @@ export const securityAccess = {
             kind: RouteKind.PUBLIC,
         } as const
     },
-    
+
     /**
      * Creates a security configuration for project-scoped routes.
      *
@@ -102,7 +115,11 @@ export const securityAccess = {
      * @param projectResource - Resource configuration for extracting projectId from the request
      * @returns Security configuration for project-scoped routes
      */
-    project: (allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.SERVICE | PrincipalType.ENGINE)[], permission: Permission | undefined, projectResource: ProjectResource) => {
+    project: (
+        allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.SERVICE | PrincipalType.ENGINE)[],
+        permission: Permission | undefined,
+        projectResource: ProjectResource,
+    ) => {
         return {
             kind: RouteKind.AUTHENTICATED,
             authorization: {
@@ -113,7 +130,7 @@ export const securityAccess = {
             },
         } as const
     },
-    
+
     /**
      * Creates a security configuration for unscoped routes that do not require platformId or projectId.
      *
@@ -139,7 +156,7 @@ export const securityAccess = {
             },
         } as const
     },
-    
+
     /**
      * Creates a security configuration for routes that are only accessible to Engine principal.
      *
@@ -151,7 +168,7 @@ export const securityAccess = {
     engine: () => {
         return securityAccess.unscoped([PrincipalType.ENGINE])
     },
-    
+
     /**
      * Creates a security configuration for routes that are only accessible to Worker principal.
      *

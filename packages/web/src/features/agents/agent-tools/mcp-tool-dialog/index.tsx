@@ -7,7 +7,7 @@ import {
   ValidateAgentMcpToolResponse,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';

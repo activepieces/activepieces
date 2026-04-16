@@ -8,7 +8,6 @@ export class AddPieceVersionToAppConnection1764841091811 implements MigrationInt
             ALTER TABLE "app_connection"
             ADD "pieceVersion" character varying
         `)
-        
 
         await queryRunner.query(`
             UPDATE "app_connection" ac
@@ -25,26 +24,22 @@ export class AddPieceVersionToAppConnection1764841091811 implements MigrationInt
             )
             WHERE ac."pieceName" IS NOT NULL
         `)
-        
 
         await queryRunner.query(`
             UPDATE "app_connection"
             SET "pieceVersion" = '0.0.0'
             WHERE "pieceVersion" IS NULL
         `)
-        
+
         await queryRunner.query(`
             ALTER TABLE "app_connection"
             ALTER COLUMN "pieceVersion" SET NOT NULL
         `)
-
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-
         await queryRunner.query(`
             ALTER TABLE "app_connection" DROP COLUMN "pieceVersion"
         `)
     }
-
 }

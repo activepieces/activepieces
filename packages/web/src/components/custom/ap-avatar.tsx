@@ -4,8 +4,8 @@ import { Mail } from 'lucide-react';
 import { UserBadges } from '@/components/custom/user-badges';
 import {
   HoverCard,
-  HoverCardTrigger,
   HoverCardContent,
+  HoverCardTrigger,
 } from '@/components/ui/hover-card';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';

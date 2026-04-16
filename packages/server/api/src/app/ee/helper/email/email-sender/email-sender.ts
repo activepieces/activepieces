@@ -25,58 +25,82 @@ type BaseEmailTemplateData<Name extends string, Vars extends Record<string, stri
     vars: Vars
 }
 
-type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
-    projectName: string
-    role: string
-    setupLink: string
-}>
+type InvitationEmailTemplateData = BaseEmailTemplateData<
+    'invitation-email',
+    {
+        projectName: string
+        role: string
+        setupLink: string
+    }
+>
 
-type ProjectMemberAddedEmailTemplateData = BaseEmailTemplateData<'project-member-added', {
-    projectName: string
-    role: string
-    loginLink: string
-}>
+type ProjectMemberAddedEmailTemplateData = BaseEmailTemplateData<
+    'project-member-added',
+    {
+        projectName: string
+        role: string
+        loginLink: string
+    }
+>
 
-type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
-    setupLink: string
-}>
+type ResetPasswordEmailTemplateData = BaseEmailTemplateData<
+    'reset-password',
+    {
+        setupLink: string
+    }
+>
 
-type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
-    setupLink: string
-}>
+type VerifyEmailTemplateData = BaseEmailTemplateData<
+    'verify-email',
+    {
+        setupLink: string
+    }
+>
 
-type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
-    issueUrl: string
-    flowName: string
-    isIssue: string
-    createdAt: string
-}>
+type IssueCreatedTemplateData = BaseEmailTemplateData<
+    'issue-created',
+    {
+        issueUrl: string
+        flowName: string
+        isIssue: string
+        createdAt: string
+    }
+>
 
-type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failure', {
-    flowName: string
-    projectName: string
-}>
+type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<
+    'trigger-failure',
+    {
+        flowName: string
+        projectName: string
+    }
+>
 
-type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
-    badgeTitle: string
-    badgeDescription: string
-    badgeImageUrl: string
-    firstName: string
-}>
+type BadgeAwardedTemplateData = BaseEmailTemplateData<
+    'badge-awarded',
+    {
+        badgeTitle: string
+        badgeDescription: string
+        badgeImageUrl: string
+        firstName: string
+    }
+>
 
-type ScimUserWelcomeTemplateData = BaseEmailTemplateData<'scim-user-welcome', {
-    loginLink: string
-}>
+type ScimUserWelcomeTemplateData = BaseEmailTemplateData<
+    'scim-user-welcome',
+    {
+        loginLink: string
+    }
+>
 
 export type EmailTemplateData =
-  | InvitationEmailTemplateData
-  | ProjectMemberAddedEmailTemplateData
-  | ResetPasswordEmailTemplateData
-  | VerifyEmailTemplateData
-  | IssueCreatedTemplateData
-  | TriggerFailureThresholdTemplateData
-  | BadgeAwardedTemplateData
-  | ScimUserWelcomeTemplateData
+    | InvitationEmailTemplateData
+    | ProjectMemberAddedEmailTemplateData
+    | ResetPasswordEmailTemplateData
+    | VerifyEmailTemplateData
+    | IssueCreatedTemplateData
+    | TriggerFailureThresholdTemplateData
+    | BadgeAwardedTemplateData
+    | ScimUserWelcomeTemplateData
 
 type SendArgs = {
     emails: string[]

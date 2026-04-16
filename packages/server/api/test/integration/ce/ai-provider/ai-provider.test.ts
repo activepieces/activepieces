@@ -113,7 +113,7 @@ describe('AI Providers API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
-           
+
             expect(body.provider).toBe(AIProviderName.CUSTOM)
             expect(body.platformId).toBe(ctx.platform.id)
             expect(body.config.defaultHeaders).toEqual({ 'X-Org': 'org-789' })
@@ -163,7 +163,7 @@ describe('AI Providers API', () => {
                     apiKeyHeader: 'Authorization',
                     models: [],
                     defaultHeaders: { 'X-Test': 'test' },
-                }
+                },
             })
 
             const response = await ctx.get('/v1/ai-providers')
@@ -171,9 +171,7 @@ describe('AI Providers API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
 
-            const customProvider = body.find(
-                (p: any) => p.provider === AIProviderName.CUSTOM,
-            )
+            const customProvider = body.find((p: any) => p.provider === AIProviderName.CUSTOM)
             expect(customProvider).toBeDefined()
             expect(customProvider.config.defaultHeaders).toEqual({ 'X-Test': 'test' })
         })

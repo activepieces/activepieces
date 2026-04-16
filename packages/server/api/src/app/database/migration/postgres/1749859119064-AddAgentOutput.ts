@@ -22,5 +22,4 @@ export class AddAgentOutput1749859119064 implements MigrationInterface {
             ALTER TABLE "agent" DROP COLUMN "outputType"
         `)
     }
-
 }

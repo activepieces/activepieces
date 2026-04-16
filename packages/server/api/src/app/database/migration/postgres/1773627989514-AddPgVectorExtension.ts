@@ -15,9 +15,10 @@ export class AddPgVectorExtension1773627989514 implements MigrationInterface {
             await queryRunner.query(`
                 CREATE EXTENSION IF NOT EXISTS "vector"
             `)
-        }
-        else {
-            log.warn('[Migration] pgvector extension is not available — knowledge base vector search will not work. Install pgvector on your PostgreSQL server to enable this feature.')
+        } else {
+            log.warn(
+                '[Migration] pgvector extension is not available — knowledge base vector search will not work. Install pgvector on your PostgreSQL server to enable this feature.',
+            )
         }
         log.info('[AddPgVectorExtension1773627989514] done')
     }

@@ -1,5 +1,5 @@
 import { apDayjsDuration } from '@activepieces/server-utils'
-import {  FlowExecutionState, flowExecutionStateKey, FlowId, isNil } from '@activepieces/shared'
+import { FlowExecutionState, FlowId, flowExecutionStateKey, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../database/redis-connections'
 import { projectService } from '../../project/project-service'
@@ -16,7 +16,11 @@ export const flowExecutionCache = (log: FastifyBaseLogger) => ({
         const cachedValue = await distributedStore.get<FlowExecutionState>(flowExecutionStateKey(params.flowId))
         if (isNil(cachedValue)) {
             const flowExecutionCache = await getFlowExecutionCache(params, log)
-            await distributedStore.put(flowExecutionStateKey(params.flowId), flowExecutionCache, apDayjsDuration(30, 'day').asSeconds())
+            await distributedStore.put(
+                flowExecutionStateKey(params.flowId),
+                flowExecutionCache,
+                apDayjsDuration(30, 'day').asSeconds(),
+            )
             return flowExecutionCache
         }
         return cachedValue
@@ -27,7 +31,6 @@ export const flowExecutionCache = (log: FastifyBaseLogger) => ({
         await distributedStore.delete(keys)
     },
 })
-
 
 async function getFlowExecutionCache(params: GetParams, log: FastifyBaseLogger): Promise<FlowExecutionState> {
     const flow = await flowService(log).getOneById(params.flowId)
@@ -43,7 +46,8 @@ async function getFlowExecutionCache(params: GetParams, log: FastifyBaseLogger):
     })
     return {
         exists: true,
-        handshakeConfiguration: await webhookHandshake.getWebhookHandshakeConfiguration({ triggerSource, logger: log }) ?? undefined,
+        handshakeConfiguration:
+            (await webhookHandshake.getWebhookHandshakeConfiguration({ triggerSource, logger: log })) ?? undefined,
         flow,
         platformId: await projectService(log).getPlatformId(flow.projectId),
     }

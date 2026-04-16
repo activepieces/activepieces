@@ -1,8 +1,7 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
-    apId,
     AppConnectionScope,
     AppConnectionType,
+    apId,
     PackageType,
     PlatformRole,
     PrincipalType,
@@ -13,11 +12,8 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
-import {
-    createMockPieceMetadata,
-    mockAndSaveBasicSetup,
-    mockBasicUser,
-} from '../../../helpers/mocks'
+import { createMockPieceMetadata, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -30,8 +26,7 @@ afterAll(async () => {
 })
 const setupWithGlobalConnections = () => {
     return mockAndSaveBasicSetup({
-        platform: {
-        },
+        platform: {},
         plan: {
             globalConnectionsEnabled: true,
         },
@@ -50,12 +45,10 @@ describe('GlobalConnection API', () => {
             })
             await db.save('piece_metadata', [mockPieceMetadata])
 
-            
-
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -72,7 +65,6 @@ describe('GlobalConnection API', () => {
                     type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
-               
             }
 
             // act
@@ -105,12 +97,10 @@ describe('GlobalConnection API', () => {
             })
             await db.save('piece_metadata', [mockPieceMetadata])
 
-            
-
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -127,7 +117,6 @@ describe('GlobalConnection API', () => {
                     type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
-               
             }
 
             // act
@@ -139,7 +128,6 @@ describe('GlobalConnection API', () => {
                 },
                 body: mockUpsertGlobalConnectionRequest,
             })
-
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
@@ -155,12 +143,10 @@ describe('GlobalConnection API', () => {
             })
             await db.save('piece_metadata', [mockPieceMetadata])
 
-            
-
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -177,7 +163,6 @@ describe('GlobalConnection API', () => {
                     type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
-               
             }
 
             // act
@@ -202,7 +187,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -233,7 +218,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -267,7 +252,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -284,7 +269,6 @@ describe('GlobalConnection API', () => {
                     type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
-               
             }
 
             const upsertResponse = await app?.inject({
@@ -323,12 +307,10 @@ describe('GlobalConnection API', () => {
             })
             await db.save('piece_metadata', [mockPieceMetadata])
 
-            
-
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -345,7 +327,6 @@ describe('GlobalConnection API', () => {
                     type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
-               
             }
 
             const upsertResponse = await app?.inject({
@@ -361,12 +342,11 @@ describe('GlobalConnection API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
             })
-
 
             // act
             const response = await app?.inject({
@@ -392,12 +372,10 @@ describe('GlobalConnection API', () => {
             })
             await db.save('piece_metadata', [mockPieceMetadata])
 
-            
-
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -414,7 +392,6 @@ describe('GlobalConnection API', () => {
                     type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
-               
             }
 
             const upsertResponse = await app?.inject({
@@ -430,7 +407,6 @@ describe('GlobalConnection API', () => {
             const mockUpdateGlobalConnectionRequest: UpdateGlobalConnectionValueRequestBody = {
                 displayName: 'updated-global-connection',
             }
-            
 
             // act
             const response = await app?.inject({
@@ -463,12 +439,10 @@ describe('GlobalConnection API', () => {
             })
             await db.save('piece_metadata', [mockPieceMetadata])
 
-            
-
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -485,8 +459,6 @@ describe('GlobalConnection API', () => {
                     type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
-               
-                
             }
 
             const upsertResponse = await app?.inject({
@@ -502,7 +474,7 @@ describe('GlobalConnection API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -516,7 +488,7 @@ describe('GlobalConnection API', () => {
             const response = await app?.inject({
                 method: 'POST',
                 url: `/api/v1/global-connections/${connectionId}`,
-                headers: {  
+                headers: {
                     authorization: `Bearer ${mockUserToken}`,
                 },
                 body: mockUpdateGlobalConnectionRequest,
@@ -536,17 +508,14 @@ describe('GlobalConnection API', () => {
             })
             await db.save('piece_metadata', [mockPieceMetadata])
 
-            
-
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
             })
-
 
             const mockUpsertGlobalConnectionRequest: UpsertGlobalConnectionRequestBody = {
                 pieceVersion: mockPieceMetadata.version,
@@ -559,7 +528,6 @@ describe('GlobalConnection API', () => {
                     type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
-               
             }
 
             const upsertResponse = await app?.inject({

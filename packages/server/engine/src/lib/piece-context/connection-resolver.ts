@@ -1,32 +1,49 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '@activepieces/shared'
+import {
+    AppConnection,
+    AppConnectionStatus,
+    AppConnectionType,
+    AppConnectionValue,
+    ConnectionExpiredError,
+    ConnectionLoadingError,
+    ConnectionNotFoundError,
+    ExecutionError,
+    FetchError,
+} from '@activepieces/shared'
 import { utils } from '../utils'
 
-export const createConnectionResolver = ({ projectId, engineToken, apiUrl, contextVersion }: CreateConnectionResolverParams): ConnectionResolver => {
+export const createConnectionResolver = ({
+    projectId,
+    engineToken,
+    apiUrl,
+    contextVersion,
+}: CreateConnectionResolverParams): ConnectionResolver => {
     return {
         async obtain(externalId: string): Promise<AppConnectionValue> {
             const url = `${apiUrl}v1/worker/app-connections/${encodeURIComponent(externalId)}?projectId=${projectId}`
 
-            const { data: connectionValue, error: connectionValueError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        Authorization: `Bearer ${engineToken}`,
-                    },
-                })
-
-                if (!response.ok) {
-                    return handleResponseError({
-                        externalId,
-                        httpStatus: response.status,
+            const { data: connectionValue, error: connectionValueError } = await utils.tryCatchAndThrowOnEngineError(
+                async () => {
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            Authorization: `Bearer ${engineToken}`,
+                        },
                     })
-                }
-                const connection: AppConnection = await response.json()
-                if (connection.status === AppConnectionStatus.ERROR) {
-                    throw new ConnectionExpiredError(externalId)
-                }
-                return getConnectionValue(connection, contextVersion)
-            }))
+
+                    if (!response.ok) {
+                        return handleResponseError({
+                            externalId,
+                            httpStatus: response.status,
+                        })
+                    }
+                    const connection: AppConnection = await response.json()
+                    if (connection.status === AppConnectionStatus.ERROR) {
+                        throw new ConnectionExpiredError(externalId)
+                    }
+                    return getConnectionValue(connection, contextVersion)
+                },
+            )
 
             if (connectionValueError) {
                 if (connectionValueError instanceof ExecutionError) {
@@ -54,7 +71,10 @@ const handleFetchError = ({ url, cause }: HandleFetchErrorParams): never => {
     throw new FetchError(url, cause)
 }
 
-const getConnectionValue = (connection: AppConnection, contextVersion: ContextVersion | undefined): AppConnectionValue => {
+const getConnectionValue = (
+    connection: AppConnection,
+    contextVersion: ContextVersion | undefined,
+): AppConnectionValue => {
     switch (contextVersion) {
         case undefined:
             return makeConnectionValueCompatibleWithContextV0(connection)

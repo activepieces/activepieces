@@ -37,7 +37,6 @@ export const GetPieceRequestWithScopeParams = z.object({
 
 export type GetPieceRequestWithScopeParams = z.infer<typeof GetPieceRequestWithScopeParams>
 
-
 export const GetPieceRequestParams = z.object({
     name: z.string(),
 })
@@ -59,7 +58,6 @@ export const ListPiecesRequestQuery = z.object({
 })
 
 export type ListPiecesRequestQuery = z.infer<typeof ListPiecesRequestQuery>
-
 
 export const RegistryPiecesRequestQuery = z.object({
     release: ExactVersionType,
@@ -95,19 +93,23 @@ export enum PieceScope {
 }
 
 export const AddPieceRequestBody = z.union([
-    z.object({
-        packageType: z.literal(PackageType.ARCHIVE),
-        scope: z.literal(PieceScope.PLATFORM),
-        pieceName: z.string().min(1),
-        pieceVersion: ExactVersionType,
-        pieceArchive: ApMultipartFile,
-    }).describe('Private Piece'),
-    z.object({
-        packageType: z.literal(PackageType.REGISTRY),
-        scope: z.literal(PieceScope.PLATFORM),
-        pieceName: z.string().min(1),
-        pieceVersion: ExactVersionType,
-    }).describe('NPM Piece'),
+    z
+        .object({
+            packageType: z.literal(PackageType.ARCHIVE),
+            scope: z.literal(PieceScope.PLATFORM),
+            pieceName: z.string().min(1),
+            pieceVersion: ExactVersionType,
+            pieceArchive: ApMultipartFile,
+        })
+        .describe('Private Piece'),
+    z
+        .object({
+            packageType: z.literal(PackageType.REGISTRY),
+            scope: z.literal(PieceScope.PLATFORM),
+            pieceName: z.string().min(1),
+            pieceVersion: ExactVersionType,
+        })
+        .describe('NPM Piece'),
 ])
 
 export type AddPieceRequestBody = z.infer<typeof AddPieceRequestBody>

@@ -1,10 +1,10 @@
 import {
   CreateTemplateRequestBody,
-  ListTemplatesRequestQuery,
-  Template,
-  SeekPage,
-  UpdateTemplateRequestBody,
   Flag,
+  ListTemplatesRequestQuery,
+  SeekPage,
+  Template,
+  UpdateTemplateRequestBody,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';

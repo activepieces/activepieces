@@ -1,1 +1,1 @@
-export * from './check-redirect';
+export * from './check-redirect'

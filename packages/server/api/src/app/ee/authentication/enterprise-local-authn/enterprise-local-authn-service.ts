@@ -4,7 +4,12 @@ import {
     ApplicationEventName,
     ErrorCode,
     isNil,
-    OtpType, ResetPasswordRequestBody, UserId, UserIdentity, VerifyEmailRequestBody } from '@activepieces/shared'
+    OtpType,
+    ResetPasswordRequestBody,
+    UserId,
+    UserIdentity,
+    VerifyEmailRequestBody,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { applicationEvents } from '../../../helper/application-events'
@@ -26,19 +31,19 @@ export const enterpriseLocalAuthnService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        await sendAuditLogForIdentity(identityId, {
-            action: ApplicationEventName.USER_EMAIL_VERIFIED,
-            data: {},
-        }, log)
+        await sendAuditLogForIdentity(
+            identityId,
+            {
+                action: ApplicationEventName.USER_EMAIL_VERIFIED,
+                data: {},
+            },
+            log,
+        )
 
         return userIdentityService(log).verify(identityId)
     },
 
-    async resetPassword({
-        identityId,
-        otp,
-        newPassword,
-    }: ResetPasswordRequestBody): Promise<void> {
+    async resetPassword({ identityId, otp, newPassword }: ResetPasswordRequestBody): Promise<void> {
         const isOtpValid = await otpService(log).confirm({
             identityId,
             type: OtpType.PASSWORD_RESET,
@@ -52,10 +57,14 @@ export const enterpriseLocalAuthnService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        await sendAuditLogForIdentity(identityId, {
-            action: ApplicationEventName.USER_PASSWORD_RESET,
-            data: {},
-        }, log)
+        await sendAuditLogForIdentity(
+            identityId,
+            {
+                action: ApplicationEventName.USER_PASSWORD_RESET,
+                data: {},
+            },
+            log,
+        )
 
         await userIdentityService(log).updatePassword({
             id: identityId,

@@ -1,59 +1,42 @@
-import { KustomerJsonObject, KustomerJsonValue } from './types';
+import { KustomerJsonObject, KustomerJsonValue } from './types'
 
-function parseRequiredString({
-  value,
-  fieldName,
-}: {
-  value: unknown;
-  fieldName: string;
-}): string {
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    throw new Error(`${fieldName} is required.`);
-  }
+function parseRequiredString({ value, fieldName }: { value: unknown; fieldName: string }): string {
+    if (typeof value !== 'string' || value.trim().length === 0) {
+        throw new Error(`${fieldName} is required.`)
+    }
 
-  return value.trim();
+    return value.trim()
 }
 
-function parseJsonObject({
-  value,
-  fieldName,
-}: {
-  value: unknown;
-  fieldName: string;
-}): KustomerJsonObject {
-  if (!isKustomerJsonObject(value)) {
-    throw new Error(`${fieldName} must be a JSON object.`);
-  }
+function parseJsonObject({ value, fieldName }: { value: unknown; fieldName: string }): KustomerJsonObject {
+    if (!isKustomerJsonObject(value)) {
+        throw new Error(`${fieldName} must be a JSON object.`)
+    }
 
-  return value;
+    return value
 }
 
 function isKustomerJsonObject(value: unknown): value is KustomerJsonObject {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return false;
-  }
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+        return false
+    }
 
-  return Object.values(value).every(isKustomerJsonValue);
+    return Object.values(value).every(isKustomerJsonValue)
 }
 
 function isKustomerJsonValue(value: unknown): value is KustomerJsonValue {
-  if (
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    typeof value === 'boolean' ||
-    value === null
-  ) {
-    return true;
-  }
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value === null) {
+        return true
+    }
 
-  if (Array.isArray(value)) {
-    return value.every(isKustomerJsonValue);
-  }
+    if (Array.isArray(value)) {
+        return value.every(isKustomerJsonValue)
+    }
 
-  return isKustomerJsonObject(value);
+    return isKustomerJsonObject(value)
 }
 
 export const kustomerUtils = {
-  parseRequiredString,
-  parseJsonObject,
-};
+    parseRequiredString,
+    parseJsonObject,
+}

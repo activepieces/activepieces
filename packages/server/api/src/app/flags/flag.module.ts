@@ -30,5 +30,4 @@ export const flagController: FastifyPluginAsyncZod = async (app) => {
             })
         },
     )
-    
 }

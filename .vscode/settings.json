@@ -1,10 +1,5 @@
 {
-    "cSpell.words": [
-        "Activepieces",
-        "Fastify",
-        "mpim",
-        "sendgrid"
-    ],
+    "cSpell.words": ["Activepieces", "Fastify", "mpim", "sendgrid"],
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": "explicit"
     },
@@ -12,5 +7,5 @@
     "editor.formatOnSave": false,
     "typescript.tsdk": "node_modules/typescript/lib",
     "javascript.preferences.importModuleSpecifier": "relative",
-    "nxConsole.generateAiAgentRules": true,
+    "nxConsole.generateAiAgentRules": true
 }

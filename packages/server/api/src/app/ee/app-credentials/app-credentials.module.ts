@@ -3,7 +3,9 @@ import {
     AppCredentialType,
     ListAppCredentialsRequest,
     PrincipalType,
-    SeekPage, UpsertAppCredentialRequest } from '@activepieces/shared'
+    SeekPage,
+    UpsertAppCredentialRequest,
+} from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -40,32 +42,24 @@ const appCredentialController: FastifyPluginAsyncZod = async (fastify) => {
         },
     )
 
-    fastify.post(
-        '/',
-        UpsertAppCredentialRequestOptions,
-        async (request) => {
-            return appCredentialService.upsert({
-                projectId: request.projectId,
-                request: request.body,
-            })
-        },
-    )
+    fastify.post('/', UpsertAppCredentialRequestOptions, async (request) => {
+        return appCredentialService.upsert({
+            projectId: request.projectId,
+            request: request.body,
+        })
+    })
 
-    fastify.delete(
-        '/:id', DeleteAppCredentialRequestOptions, async (request, reply) => {
-            await appCredentialService.delete({
-                id: request.params.id,
-                projectId: request.projectId,
-            })
+    fastify.delete('/:id', DeleteAppCredentialRequestOptions, async (request, reply) => {
+        await appCredentialService.delete({
+            id: request.params.id,
+            projectId: request.projectId,
+        })
 
-            return reply.status(StatusCodes.OK).send()
-        },
-    )
+        return reply.status(StatusCodes.OK).send()
+    })
 }
 
-function censorClientSecret(
-    page: SeekPage<AppCredential>,
-): SeekPage<AppCredential> {
+function censorClientSecret(page: SeekPage<AppCredential>): SeekPage<AppCredential> {
     page.data = page.data.map((f) => {
         if (f.settings.type === AppCredentialType.OAUTH2) {
             f.settings.clientSecret = undefined
@@ -89,26 +83,18 @@ const UpsertAppCredentialRequestOptions = {
         body: UpsertAppCredentialRequest,
     },
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            undefined,
-            {
-                type: ProjectResourceType.BODY,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.BODY,
+        }),
     },
 }
 
 const DeleteAppCredentialRequestOptions = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            undefined,
-            {
-                type: ProjectResourceType.TABLE,
-                tableName: AppCredentialEntity,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.TABLE,
+            tableName: AppCredentialEntity,
+        }),
     },
     schema: {
         params: z.object({

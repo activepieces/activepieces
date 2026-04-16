@@ -1,10 +1,10 @@
 type sFtpError = {
-    error: string;
-    description?: string;
+    error: string
+    description?: string
 }
 
 type sFtpErrorWithCode = {
-    [code: number]: sFtpError;
+    [code: number]: sFtpError
 }
 
 const sftpErrors: sFtpErrorWithCode = {
@@ -14,7 +14,8 @@ const sftpErrors: sFtpErrorWithCode = {
     },
     1: {
         error: 'EOF',
-        description: 'An attempt to read past the end-of-file was made; or, there are no more directory entries to return.',
+        description:
+            'An attempt to read past the end-of-file was made; or, there are no more directory entries to return.',
     },
     2: {
         error: 'No such file',
@@ -26,7 +27,8 @@ const sftpErrors: sFtpErrorWithCode = {
     },
     4: {
         error: 'Failure',
-        description: 'An error occurred, but no specific error code exists to describe the failure. This error message should always have meaningful text in the error message field.',
+        description:
+            'An error occurred, but no specific error code exists to describe the failure. This error message should always have meaningful text in the error message field.',
     },
     5: {
         error: 'Bad message',
@@ -34,15 +36,18 @@ const sftpErrors: sFtpErrorWithCode = {
     },
     6: {
         error: 'No connection',
-        description: 'There is no connection to the server. This error may be used locally, but must not be returned by a server.',
+        description:
+            'There is no connection to the server. This error may be used locally, but must not be returned by a server.',
     },
     7: {
         error: 'Connection lost',
-        description: 'The connection to the server was lost. This error may be used locally, but must not be returned by a server.',
+        description:
+            'The connection to the server was lost. This error may be used locally, but must not be returned by a server.',
     },
     8: {
         error: 'Operation unsupported',
-        description: 'An attempted operation could not be completed by the server because the server does not support the operation.',
+        description:
+            'An attempted operation could not be completed by the server because the server does not support the operation.',
     },
     9: {
         error: 'Invalid handle',
@@ -66,15 +71,17 @@ const sftpErrors: sFtpErrorWithCode = {
     },
     14: {
         error: 'No space on file-system',
-        description: 'The requested operation cannot be completed because there is insufficient free space on the filesystem.',
+        description:
+            'The requested operation cannot be completed because there is insufficient free space on the filesystem.',
     },
     15: {
         error: 'Quota exceeded',
-        description: "The operation cannot be completed because it would exceed the user’s storage quota.",
+        description: 'The operation cannot be completed because it would exceed the user’s storage quota.',
     },
     16: {
         error: 'Unknown principal',
-        description: 'A principal referenced by the request (either the owner, group, or who field of an ACL), was unknown.',
+        description:
+            'A principal referenced by the request (either the owner, group, or who field of an ACL), was unknown.',
     },
     17: {
         error: 'Lock conflict',
@@ -94,11 +101,13 @@ const sftpErrors: sFtpErrorWithCode = {
     },
     21: {
         error: 'Link loop',
-        description: 'Too many symbolic links encountered or an SSH_FXF_NOFOLLOW encountered a symbolic link as the final component.',
+        description:
+            'Too many symbolic links encountered or an SSH_FXF_NOFOLLOW encountered a symbolic link as the final component.',
     },
     22: {
         error: 'Cannot delete',
-        description: 'The file cannot be deleted. One possible reason is that the advisory read-only attribute-bit is set.',
+        description:
+            'The file cannot be deleted. One possible reason is that the advisory read-only attribute-bit is set.',
     },
     23: {
         error: 'Invalid parameter',
@@ -110,7 +119,8 @@ const sftpErrors: sFtpErrorWithCode = {
     },
     25: {
         error: 'Range lock conflict',
-        description: 'A read or write operation failed because another process’s mandatory byte-range lock overlaps with the request.',
+        description:
+            'A read or write operation failed because another process’s mandatory byte-range lock overlaps with the request.',
     },
     26: {
         error: 'Range lock refused',
@@ -134,11 +144,12 @@ const sftpErrors: sFtpErrorWithCode = {
     },
     31: {
         error: 'No matching byte range lock',
-        description: 'The requested operation could not be completed because the specified byte range lock has not been granted.',
+        description:
+            'The requested operation could not be completed because the specified byte range lock has not been granted.',
     },
-};
+}
 
 export function getSftpError(code: number): sFtpError {
-    const error = sftpErrors[code];
-    return error ?? { error: 'Unknown error code' };
+    const error = sftpErrors[code]
+    return error ?? { error: 'Unknown error code' }
 }

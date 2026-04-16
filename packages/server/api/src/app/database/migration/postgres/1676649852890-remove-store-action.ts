@@ -42,11 +42,7 @@ export class removeStoreAction1676649852890 implements MigrationInterface {
             }
         }
 
-        log.info(
-            'Finished running migration removeStoreAction1676649852890, changed ' +
-        count +
-        ' actions',
-        )
+        log.info('Finished running migration removeStoreAction1676649852890, changed ' + count + ' actions')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -56,10 +52,7 @@ export class removeStoreAction1676649852890 implements MigrationInterface {
             let changed = false
             let action = currentFlowVersion.trigger?.nextAction
             while (action !== undefined && action !== null) {
-                if (
-                    action.type === 'PIECE' &&
-          action.settings.pieceName === 'storage'
-                ) {
+                if (action.type === 'PIECE' && action.settings.pieceName === 'storage') {
                     action.type = 'STORAGE'
                     action.settings = {
                         operation: action.setings.operation.toUpperCase(),

@@ -1,22 +1,22 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { getPowerBiBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsoft-cloud';
-import { microsoftPowerBiAuth } from '../auth';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
+import { microsoftPowerBiAuth } from '../auth'
+import { getMicrosoftCloudFromAuth, getPowerBiBaseUrl } from '../common/microsoft-cloud'
 
 type ColumnDefinition = {
-    name: string;
-    dataType: 'String' | 'Int64' | 'Double' | 'DateTime' | 'Boolean';
-};
+    name: string
+    dataType: 'String' | 'Int64' | 'Double' | 'DateTime' | 'Boolean'
+}
 
 type TableDefinition = {
-    name: string;
-    columns: ColumnDefinition[];
-};
+    name: string
+    columns: ColumnDefinition[]
+}
 
-type DatasetMode = 'Push' | 'Streaming' | 'PushStreaming';
+type DatasetMode = 'Push' | 'Streaming' | 'PushStreaming'
 
 export const createDatasetAction = createAction({
-    auth:microsoftPowerBiAuth,
+    auth: microsoftPowerBiAuth,
     name: 'create_dataset',
     displayName: 'Create Dataset',
     description: 'Create a new dataset in Power BI with custom schema (Push, Streaming, or PushStreaming mode).',
@@ -25,7 +25,7 @@ export const createDatasetAction = createAction({
             displayName: 'Dataset Name',
             description: 'Name of the dataset to create',
             required: true,
-            defaultValue: 'ActivepiecesDataset'
+            defaultValue: 'ActivepiecesDataset',
         }),
         mode: Property.StaticDropdown({
             displayName: 'Dataset Mode',
@@ -36,9 +36,9 @@ export const createDatasetAction = createAction({
                 options: [
                     { label: 'Push', value: 'Push' },
                     { label: 'Streaming', value: 'Streaming' },
-                    { label: 'PushStreaming', value: 'PushStreaming' }
-                ]
-            }
+                    { label: 'PushStreaming', value: 'PushStreaming' },
+                ],
+            },
         }),
         tables: Property.Json({
             displayName: 'Tables',
@@ -51,83 +51,83 @@ export const createDatasetAction = createAction({
                         { name: 'Id', dataType: 'Int64' },
                         { name: 'Name', dataType: 'String' },
                         { name: 'Value', dataType: 'Double' },
-                        { name: 'Timestamp', dataType: 'DateTime' }
-                    ]
-                }
-            ]
-        })
+                        { name: 'Timestamp', dataType: 'DateTime' },
+                    ],
+                },
+            ],
+        }),
     },
     async run(context) {
-        const auth = context.auth;
-        const datasetName = context.propsValue.dataset_name;
-        const mode = context.propsValue.mode as DatasetMode;
-                
-        let tables: TableDefinition[];
+        const auth = context.auth
+        const datasetName = context.propsValue.dataset_name
+        const mode = context.propsValue.mode as DatasetMode
+
+        let tables: TableDefinition[]
         try {
             // Parse the tables JSON
-            const parsedTables = typeof context.propsValue.tables === 'string' 
-                ? JSON.parse(context.propsValue.tables)
-                : context.propsValue.tables;
-            
+            const parsedTables =
+                typeof context.propsValue.tables === 'string'
+                    ? JSON.parse(context.propsValue.tables)
+                    : context.propsValue.tables
+
             // Expect tables to be an array directly
             if (Array.isArray(parsedTables)) {
-                tables = parsedTables;
+                tables = parsedTables
             } else {
-                throw new Error('Tables must be an array of table definitions');
+                throw new Error('Tables must be an array of table definitions')
             }
-            
         } catch (e) {
-            console.error('Error parsing tables:', e);
-            throw new Error(`Invalid tables JSON format. Received value: ${JSON.stringify(context.propsValue.tables)}`);
+            console.error('Error parsing tables:', e)
+            throw new Error(`Invalid tables JSON format. Received value: ${JSON.stringify(context.propsValue.tables)}`)
         }
 
-        const cloud = getMicrosoftCloudFromAuth(auth as OAuth2PropertyValue);
-        const baseUrl = getPowerBiBaseUrl(cloud);
+        const cloud = getMicrosoftCloudFromAuth(auth as OAuth2PropertyValue)
+        const baseUrl = getPowerBiBaseUrl(cloud)
 
         // Define the dataset schema
         const datasetDefinition = {
             name: datasetName,
             defaultMode: mode,
-            tables: tables.map(table => ({
+            tables: tables.map((table) => ({
                 name: table.name,
-                columns: table.columns.map(column => ({
+                columns: table.columns.map((column) => ({
                     name: column.name,
-                    dataType: column.dataType.toLowerCase()
-                }))
-            }))
-        };
+                    dataType: column.dataType.toLowerCase(),
+                })),
+            })),
+        }
 
         try {
             // Create the dataset
             const requestBody = {
                 name: datasetName,
                 defaultMode: mode,
-                tables: datasetDefinition.tables
-            };
-            
+                tables: datasetDefinition.tables,
+            }
+
             const response = await httpClient.sendRequest({
                 method: HttpMethod.POST,
                 url: `${baseUrl}/datasets`,
                 headers: {
-                    'Authorization': `Bearer ${auth.access_token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${auth.access_token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: requestBody
-            });
+                body: requestBody,
+            })
 
             if (response.status >= 400) {
-                throw new Error(`Failed to create dataset: ${response.status} - ${JSON.stringify(response.body)}`);
+                throw new Error(`Failed to create dataset: ${response.status} - ${JSON.stringify(response.body)}`)
             }
 
             return {
                 success: true,
                 statusCode: response.status,
                 datasetInfo: response.body,
-                schema: datasetDefinition
-            };
+                schema: datasetDefinition,
+            }
         } catch (error) {
-            console.error('Error creating dataset:', error);
-            throw error;
+            console.error('Error creating dataset:', error)
+            throw error
         }
-    }
-}); 
+    },
+})

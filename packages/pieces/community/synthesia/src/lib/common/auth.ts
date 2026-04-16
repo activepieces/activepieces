@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 const markdownDescription = `
 To get your Synthesia API Key:
@@ -10,10 +10,10 @@ To get your Synthesia API Key:
 5. Paste it below.
 
 **Note:** When you create an API key it will belong to your account, not the workspace.
-`;
+`
 
 export const synthesiaAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: markdownDescription,
-  required: true,
-});
+    displayName: 'API Key',
+    description: markdownDescription,
+    required: true,
+})

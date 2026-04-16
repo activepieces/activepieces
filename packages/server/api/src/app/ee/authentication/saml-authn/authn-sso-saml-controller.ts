@@ -26,22 +26,28 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
         })
         const url = new URL('/authenticate', `${req.protocol}://${req.hostname}`)
         url.searchParams.append('response', JSON.stringify(response))
-        applicationEvents(req.log).sendUserEvent({
-            platformId,
-            userId: response.id,
-            projectId: response.projectId,
-            ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, {
-            action: ApplicationEventName.USER_SIGNED_UP,
-            data: {
-                source: 'sso',
+        applicationEvents(req.log).sendUserEvent(
+            {
+                platformId,
+                userId: response.id,
+                projectId: response.projectId,
+                ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
             },
-        })
+            {
+                action: ApplicationEventName.USER_SIGNED_UP,
+                data: {
+                    source: 'sso',
+                },
+            },
+        )
         return res.redirect(url.toString())
     })
 }
 
-async function getSamlConfigOrThrow(req: FastifyRequest, log: FastifyBaseLogger): Promise<{ saml: SAMLAuthnProviderConfig, platformId: string }> {
+async function getSamlConfigOrThrow(
+    req: FastifyRequest,
+    log: FastifyBaseLogger,
+): Promise<{ saml: SAMLAuthnProviderConfig; platformId: string }> {
     const platformId = await platformUtils.getPlatformIdForRequest(req)
     assertNotNullOrUndefined(platformId, 'Platform ID is required for SAML authentication')
     const platform = await platformService(log).getOneOrThrow(platformId)

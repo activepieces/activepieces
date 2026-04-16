@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { browserlessAuth } from '../common/auth';
-import { browserlessCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { browserlessAuth } from '../common/auth'
+import { browserlessCommon } from '../common/client'
 
 export const scrapeUrl = createAction({
     name: 'scrape_url',
@@ -29,7 +29,7 @@ export const scrapeUrl = createAction({
                     description: 'Timeout in milliseconds for this specific selector',
                     required: false,
                 }),
-            }
+            },
         }),
         waitForSelector: Property.ShortText({
             displayName: 'Wait for Selector',
@@ -114,7 +114,7 @@ export const scrapeUrl = createAction({
                     displayName: 'Domain',
                     required: false,
                 }),
-            }
+            },
         }),
         timeout: Property.Number({
             displayName: 'Timeout (ms)',
@@ -132,9 +132,9 @@ export const scrapeUrl = createAction({
                     { label: 'Load Event', value: 'load' },
                     { label: 'DOM Content Loaded', value: 'domcontentloaded' },
                     { label: 'Network Idle 0', value: 'networkidle0' },
-                    { label: 'Network Idle 2', value: 'networkidle2' }
-                ]
-            }
+                    { label: 'Network Idle 2', value: 'networkidle2' },
+                ],
+            },
         }),
         waitForFunction: Property.LongText({
             displayName: 'Wait for Function',
@@ -158,123 +158,122 @@ export const scrapeUrl = createAction({
         const requestBody: any = {
             url: context.propsValue.url,
             elements: (context.propsValue.elements || []).map((element: any) => {
-                let selector = element.selector;
+                let selector = element.selector
                 if (typeof selector === 'string') {
                     try {
-                        const parsed = JSON.parse(selector);
+                        const parsed = JSON.parse(selector)
                         if (parsed.selector) {
-                            selector = parsed.selector;
+                            selector = parsed.selector
                         }
                     } catch (e) {
-                        console.error('Error parsing selector:', e);
+                        console.error('Error parsing selector:', e)
                     }
                 } else if (typeof selector === 'object' && selector.selector) {
-                    selector = selector.selector;
+                    selector = selector.selector
                 }
 
                 const elementConfig: any = {
                     selector: selector,
-                };
-
-                if (element.timeout !== undefined) {
-                    elementConfig.timeout = element.timeout;
                 }
 
-                return elementConfig;
-            })
-        };
+                if (element.timeout !== undefined) {
+                    elementConfig.timeout = element.timeout
+                }
+
+                return elementConfig
+            }),
+        }
 
         if (context.propsValue.timeout || context.propsValue.waitUntil) {
-            requestBody.gotoOptions = {};
+            requestBody.gotoOptions = {}
             if (context.propsValue.timeout) {
-                requestBody.gotoOptions.timeout = context.propsValue.timeout;
+                requestBody.gotoOptions.timeout = context.propsValue.timeout
             }
             if (context.propsValue.waitUntil) {
-                requestBody.gotoOptions.waitUntil = context.propsValue.waitUntil;
+                requestBody.gotoOptions.waitUntil = context.propsValue.waitUntil
             }
         }
 
         if (context.propsValue.waitForSelector) {
             const waitForSelectorObj: any = {
                 selector: context.propsValue.waitForSelector,
-            };
+            }
 
             if (context.propsValue.waitForSelectorTimeout !== undefined) {
-                waitForSelectorObj.timeout = context.propsValue.waitForSelectorTimeout;
+                waitForSelectorObj.timeout = context.propsValue.waitForSelectorTimeout
             }
 
             if (context.propsValue.waitForSelectorVisible !== undefined) {
-                waitForSelectorObj.visible = context.propsValue.waitForSelectorVisible;
+                waitForSelectorObj.visible = context.propsValue.waitForSelectorVisible
             }
 
             if (context.propsValue.waitForSelectorHidden !== undefined) {
-                waitForSelectorObj.hidden = context.propsValue.waitForSelectorHidden;
+                waitForSelectorObj.hidden = context.propsValue.waitForSelectorHidden
             }
 
-            requestBody.waitForSelector = waitForSelectorObj;
+            requestBody.waitForSelector = waitForSelectorObj
         }
 
         if (context.propsValue.waitForTimeout) {
-            requestBody.waitForTimeout = context.propsValue.waitForTimeout;
+            requestBody.waitForTimeout = context.propsValue.waitForTimeout
         }
 
         if (context.propsValue.waitForEvent) {
             const waitForEventObj: any = {
                 event: context.propsValue.waitForEvent,
-            };
-
-            if (context.propsValue.waitForEventTimeout !== undefined) {
-                waitForEventObj.timeout = context.propsValue.waitForEventTimeout;
             }
 
-            requestBody.waitForEvent = waitForEventObj;
+            if (context.propsValue.waitForEventTimeout !== undefined) {
+                waitForEventObj.timeout = context.propsValue.waitForEventTimeout
+            }
+
+            requestBody.waitForEvent = waitForEventObj
         }
 
-        const debugOpts: any = {};
-        if (context.propsValue.debugConsole) debugOpts.console = true;
-        if (context.propsValue.debugCookies) debugOpts.cookies = true;
-        if (context.propsValue.debugNetwork) debugOpts.network = true;
+        const debugOpts: any = {}
+        if (context.propsValue.debugConsole) debugOpts.console = true
+        if (context.propsValue.debugCookies) debugOpts.cookies = true
+        if (context.propsValue.debugNetwork) debugOpts.network = true
 
         if (Object.keys(debugOpts).length > 0) {
-            requestBody.debugOpts = debugOpts;
+            requestBody.debugOpts = debugOpts
         }
 
         if (context.propsValue.bestAttempt) {
-            requestBody.bestAttempt = context.propsValue.bestAttempt;
+            requestBody.bestAttempt = context.propsValue.bestAttempt
         }
 
         if (context.propsValue.waitForFunction) {
             requestBody.waitForFunction = {
-                fn: context.propsValue.waitForFunction
-            };
+                fn: context.propsValue.waitForFunction,
+            }
         }
 
         if (context.propsValue.userAgent) {
-            requestBody.userAgent = context.propsValue.userAgent;
+            requestBody.userAgent = context.propsValue.userAgent
         }
 
         if (context.propsValue.viewportWidth && context.propsValue.viewportHeight) {
             requestBody.viewport = {
                 width: context.propsValue.viewportWidth,
                 height: context.propsValue.viewportHeight,
-            };
+            }
         }
 
         if (context.propsValue.cookies && context.propsValue.cookies.length > 0) {
             requestBody.cookies = context.propsValue.cookies.map((cookie: any) => ({
                 name: cookie.name,
                 value: cookie.value,
-                ...(cookie.domain && { domain: cookie.domain })
-            }));
+                ...(cookie.domain && { domain: cookie.domain }),
+            }))
         }
-
 
         const response = await browserlessCommon.apiCall({
             auth: context.auth.props,
             method: HttpMethod.POST,
             resourceUri: '/scrape',
             body: requestBody,
-        });
+        })
 
         return {
             success: true,
@@ -283,7 +282,7 @@ export const scrapeUrl = createAction({
                 url: context.propsValue.url,
                 elementsCount: (context.propsValue.elements || []).length,
                 timestamp: new Date().toISOString(),
-            }
-        };
+            },
+        }
     },
-});
+})

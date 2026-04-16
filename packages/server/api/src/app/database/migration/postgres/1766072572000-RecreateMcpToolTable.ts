@@ -57,4 +57,3 @@ export class RecreateMcpToolTable1766072572000 implements MigrationInterface {
         `)
     }
 }
-

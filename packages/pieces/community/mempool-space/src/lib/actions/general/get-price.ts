@@ -1,9 +1,9 @@
-import { createAction, PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { MEMPOOL_API_BASE_URL } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, PieceAuth } from '@activepieces/pieces-framework'
+import { MEMPOOL_API_BASE_URL } from '../../common'
 
 export const getPrice = createAction({
- auth:PieceAuth.None(),
+    auth: PieceAuth.None(),
     name: 'get_price',
     displayName: 'Get Price',
     description: 'Returns bitcoin latest price in main currencies',
@@ -14,7 +14,7 @@ export const getPrice = createAction({
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${MEMPOOL_API_BASE_URL}/api/v1/prices`,
-        });
-        return response.body;
+        })
+        return response.body
     },
-});
+})

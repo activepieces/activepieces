@@ -1,8 +1,12 @@
 import {
-    apId,
     AppCredential,
     AppCredentialId,
-    Cursor, ProjectId, SeekPage, UpsertAppCredentialRequest } from '@activepieces/shared'
+    apId,
+    Cursor,
+    ProjectId,
+    SeekPage,
+    UpsertAppCredentialRequest,
+} from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -27,9 +31,7 @@ export const appCredentialService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        let queryBuilder = appCredentialRepo()
-            .createQueryBuilder('app_credential')
-            .where({ projectId })
+        let queryBuilder = appCredentialRepo().createQueryBuilder('app_credential').where({ projectId })
         if (appName !== undefined) {
             queryBuilder = queryBuilder.where({ appName })
         }

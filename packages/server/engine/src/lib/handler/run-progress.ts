@@ -1,16 +1,31 @@
 import { promisify } from 'node:util'
 import { zstdCompress as zstdCompressCallback } from 'node:zlib'
-import { setTimeout } from 'timers/promises'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { CONTENT_ENCODING_ZSTD, DEFAULT_MCP_DATA, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import {
+    CONTENT_ENCODING_ZSTD,
+    DEFAULT_MCP_DATA,
+    EngineGenericError,
+    FlowActionType,
+    FlowRunStatus,
+    GenericStepOutput,
+    isFlowRunStateTerminal,
+    isNil,
+    logSerializer,
+    RunEnvironment,
+    StepOutput,
+    StepOutputStatus,
+    StepRunResponse,
+    UpdateRunProgressRequest,
+    UploadRunLogsRequest,
+} from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import fetchRetry from 'fetch-retry'
+import { setTimeout } from 'timers/promises'
 import { utils } from '../utils'
 import { workerSocket } from '../worker-socket'
 import { EngineConstants } from './context/engine-constants'
 import { FlowExecutorContext } from './context/flow-execution-context'
-
 
 const zstdCompress = promisify(zstdCompressCallback)
 const lock = new Mutex()
@@ -29,15 +44,13 @@ async function backupLoop(signal: AbortSignal): Promise<void> {
             if (latestUpdateParams) {
                 await runProgressService.backup(latestUpdateParams)
             }
-        }
-        catch (err) {
+        } catch (err) {
             console.error('[Progress] Backup failed', err)
         }
 
         try {
             await setTimeout(BACKUP_INTERVAL_MS, undefined, { signal })
-        }
-        catch {
+        } catch {
             // sleep aborted → loop will exit naturally
         }
     }
@@ -58,7 +71,8 @@ export const runProgressService = {
                 savedStartTime = params.startTime
             }
             latestUpdateParams = params
-            if (!stepNameToUpdate || !engineConstants.isTestFlow) { // live runs are updated by backup job
+            if (!stepNameToUpdate || !engineConstants.isTestFlow) {
+                // live runs are updated by backup job
                 return
             }
             const step = flowExecutorContext.getStepOutput(stepNameToUpdate)
@@ -92,8 +106,7 @@ export const runProgressService = {
         const { engineConstants, flowExecutorContext, stepName, stepOutput } = params
         return {
             update: async (params: { data: unknown }) => {
-                const steps = flowExecutorContext
-                    .upsertStep(stepName, stepOutput.setOutput(params.data)).steps
+                const steps = flowExecutorContext.upsertStep(stepName, stepOutput.setOutput(params.data)).steps
 
                 const stepResponse = extractStepResponse({
                     steps,
@@ -130,7 +143,11 @@ export const runProgressService = {
             }
             const uploadLogResponse = await uploadExecutionState(logsUploadUrl!, executionState)
             if (!uploadLogResponse.ok) {
-                throw new EngineGenericError('ProgressUpdateError', 'Failed to upload execution state', uploadLogResponse)
+                throw new EngineGenericError(
+                    'ProgressUpdateError',
+                    'Failed to upload execution state',
+                    uploadLogResponse,
+                )
             }
 
             const stepResponse = extractStepResponse({
@@ -147,15 +164,21 @@ export const runProgressService = {
                 status: flowExecutorContext.verdict.status,
                 progressUpdateType: engineConstants.progressUpdateType,
                 logsFileId: engineConstants.logsFileId,
-                failedStep: 'failedStep' in flowExecutorContext.verdict ? flowExecutorContext.verdict.failedStep : undefined,
+                failedStep:
+                    'failedStep' in flowExecutorContext.verdict ? flowExecutorContext.verdict.failedStep : undefined,
                 stepNameToTest: engineConstants.stepNameToTest,
                 stepResponse,
-                pauseMetadata: flowExecutorContext.verdict.status === FlowRunStatus.PAUSED ? flowExecutorContext.verdict.pauseMetadata : undefined,
+                pauseMetadata:
+                    flowExecutorContext.verdict.status === FlowRunStatus.PAUSED
+                        ? flowExecutorContext.verdict.pauseMetadata
+                        : undefined,
                 startTime: savedStartTime ?? undefined,
                 finishTime: isFlowRunStateTerminal({
                     status: flowExecutorContext.verdict.status,
                     ignoreInternalError: false,
-                }) ? dayjs().toISOString() : undefined,
+                })
+                    ? dayjs().toISOString()
+                    : undefined,
                 tags: Array.from(flowExecutorContext.tags),
                 stepsCount: flowExecutorContext.stepsCount,
             }
@@ -193,15 +216,17 @@ const sendUpdateProgress = async (request: UpdateRunProgressRequest): Promise<vo
 }
 
 const sendLogsUpdate = async (request: UploadRunLogsRequest): Promise<void> => {
-    const result = await utils.tryCatchAndThrowOnEngineError(() =>
-        workerSocket.getWorkerClient().uploadRunLog(request),
-    )
+    const result = await utils.tryCatchAndThrowOnEngineError(() => workerSocket.getWorkerClient().uploadRunLog(request))
     if (result.error) {
         throw new EngineGenericError('ProgressUpdateError', 'Failed to send uploadRunLog', result.error)
     }
 }
 
-const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, followRedirects = true): Promise<Response> => {
+const uploadExecutionState = async (
+    uploadUrl: string,
+    executionState: Buffer,
+    followRedirects = true,
+): Promise<Response> => {
     const response = await fetchWithRetry(uploadUrl, {
         method: 'PUT',
         body: new Uint8Array(executionState),
@@ -221,14 +246,14 @@ const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, f
     return response
 }
 
-
 const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | undefined => {
     if (isNil(params.stepName)) {
         return undefined
     }
 
     const stepOutput = params.steps?.[params.stepName]
-    const isSuccess = stepOutput?.status === StepOutputStatus.SUCCEEDED || stepOutput?.status === StepOutputStatus.PAUSED
+    const isSuccess =
+        stepOutput?.status === StepOutputStatus.SUCCEEDED || stepOutput?.status === StepOutputStatus.PAUSED
     return {
         runId: params.runId,
         success: isSuccess,

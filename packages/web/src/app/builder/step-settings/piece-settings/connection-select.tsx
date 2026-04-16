@@ -5,14 +5,14 @@ import {
 import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
+  isNil,
   Permission,
   PieceAction,
   PieceTrigger,
   PropertyExecutionType,
-  isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Plus, Globe, Key } from 'lucide-react';
+import { Globe, Key, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -273,6 +273,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
 }
 
 ConnectionSelect.displayName = 'ConnectionSelect';
+
 export { ConnectionSelect };
 
 type ConnectionSelectProps = {

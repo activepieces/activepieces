@@ -42,5 +42,4 @@ export class AddAgentRunsEntityPostgres1752583341290 implements MigrationInterfa
             DROP TABLE "agent_run"
         `)
     }
-
 }

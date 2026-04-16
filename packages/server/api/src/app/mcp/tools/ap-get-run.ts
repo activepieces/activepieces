@@ -26,13 +26,14 @@ export const apGetRunTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDef
                 })
 
                 return {
-                    content: [{
-                        type: 'text',
-                        text: formatRunResult(run),
-                    }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: formatRunResult(run),
+                        },
+                    ],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_get_run failed')
                 return mcpUtils.mcpToolError('Failed to get run', err)
             }

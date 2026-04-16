@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { teamleaderAuth } from '../common/auth';
-import { teamleaderCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { teamleaderAuth } from '../common/auth'
+import { teamleaderCommon } from '../common/client'
 
 export const createContact = createAction({
     name: 'create_contact',
@@ -33,16 +33,14 @@ export const createContact = createAction({
                     displayName: 'Type',
                     required: true,
                     options: {
-                        options: [
-                            { label: 'Primary', value: 'primary' }
-                        ]
-                    }
+                        options: [{ label: 'Primary', value: 'primary' }],
+                    },
                 }),
                 email: Property.ShortText({
                     displayName: 'Email Address',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         telephones: Property.Array({
             displayName: 'Phone Numbers',
@@ -56,15 +54,15 @@ export const createContact = createAction({
                         options: [
                             { label: 'Phone', value: 'phone' },
                             { label: 'Mobile', value: 'mobile' },
-                            { label: 'Fax', value: 'fax' }
-                        ]
-                    }
+                            { label: 'Fax', value: 'fax' },
+                        ],
+                    },
                 }),
                 number: Property.ShortText({
                     displayName: 'Phone Number',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         website: Property.ShortText({
             displayName: 'Website',
@@ -84,9 +82,9 @@ export const createContact = createAction({
                             { label: 'Primary', value: 'primary' },
                             { label: 'Invoicing', value: 'invoicing' },
                             { label: 'Delivery', value: 'delivery' },
-                            { label: 'Visiting', value: 'visiting' }
-                        ]
-                    }
+                            { label: 'Visiting', value: 'visiting' },
+                        ],
+                    },
                 }),
                 line_1: Property.ShortText({
                     displayName: 'Address Line 1',
@@ -114,8 +112,8 @@ export const createContact = createAction({
                     displayName: 'Addressee',
                     description: 'Name/company for this address',
                     required: false,
-                })
-            }
+                }),
+            },
         }),
         language: Property.ShortText({
             displayName: 'Language',
@@ -169,8 +167,8 @@ export const createContact = createAction({
                 tag: Property.ShortText({
                     displayName: 'Tag',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         custom_fields: Property.Array({
             displayName: 'Custom Fields',
@@ -186,8 +184,8 @@ export const createContact = createAction({
                     displayName: 'Value',
                     description: 'Field value (string, number, or boolean)',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         marketing_mails_consent: Property.Checkbox({
             displayName: 'Marketing Consent',
@@ -199,35 +197,35 @@ export const createContact = createAction({
         const contact: Record<string, any> = {
             first_name: context.propsValue.first_name,
             last_name: context.propsValue.last_name,
-        };
-
-        if (context.propsValue.salutation) contact['salutation'] = context.propsValue.salutation;
-        if (context.propsValue.website) contact['website'] = context.propsValue.website;
-        if (context.propsValue.language) contact['language'] = context.propsValue.language;
-        if (context.propsValue.gender) contact['gender'] = context.propsValue.gender;
-        if (context.propsValue.birthdate) contact['birthdate'] = context.propsValue.birthdate;
-        if (context.propsValue.iban) contact['iban'] = context.propsValue.iban;
-        if (context.propsValue.bic) contact['bic'] = context.propsValue.bic;
-        if (context.propsValue.national_identification_number) {
-            contact['national_identification_number'] = context.propsValue.national_identification_number;
         }
-        if (context.propsValue.remarks) contact['remarks'] = context.propsValue.remarks;
+
+        if (context.propsValue.salutation) contact['salutation'] = context.propsValue.salutation
+        if (context.propsValue.website) contact['website'] = context.propsValue.website
+        if (context.propsValue.language) contact['language'] = context.propsValue.language
+        if (context.propsValue.gender) contact['gender'] = context.propsValue.gender
+        if (context.propsValue.birthdate) contact['birthdate'] = context.propsValue.birthdate
+        if (context.propsValue.iban) contact['iban'] = context.propsValue.iban
+        if (context.propsValue.bic) contact['bic'] = context.propsValue.bic
+        if (context.propsValue.national_identification_number) {
+            contact['national_identification_number'] = context.propsValue.national_identification_number
+        }
+        if (context.propsValue.remarks) contact['remarks'] = context.propsValue.remarks
         if (context.propsValue.marketing_mails_consent !== undefined) {
-            contact['marketing_mails_consent'] = context.propsValue.marketing_mails_consent;
+            contact['marketing_mails_consent'] = context.propsValue.marketing_mails_consent
         }
 
         if (context.propsValue.emails && context.propsValue.emails.length > 0) {
             contact['emails'] = context.propsValue.emails.map((emailObj: any) => ({
                 type: emailObj.type,
-                email: emailObj.email
-            }));
+                email: emailObj.email,
+            }))
         }
 
         if (context.propsValue.telephones && context.propsValue.telephones.length > 0) {
             contact['telephones'] = context.propsValue.telephones.map((phoneObj: any) => ({
                 type: phoneObj.type,
-                number: phoneObj.number
-            }));
+                number: phoneObj.number,
+            }))
         }
 
         // Handle addresses array
@@ -240,29 +238,29 @@ export const createContact = createAction({
                     city: addressObj.city || null,
                     country: addressObj.country,
                     ...(addressObj.area_level_two_id && { area_level_two_id: addressObj.area_level_two_id }),
-                    ...(addressObj.addressee && { addressee: addressObj.addressee })
-                }
-            }));
+                    ...(addressObj.addressee && { addressee: addressObj.addressee }),
+                },
+            }))
         }
 
         if (context.propsValue.tags && context.propsValue.tags.length > 0) {
-            contact['tags'] = context.propsValue.tags.map((tagObj: any) => tagObj.tag);
+            contact['tags'] = context.propsValue.tags.map((tagObj: any) => tagObj.tag)
         }
 
         if (context.propsValue.custom_fields && context.propsValue.custom_fields.length > 0) {
             contact['custom_fields'] = context.propsValue.custom_fields.map((fieldObj: any) => ({
                 id: fieldObj.id,
-                value: fieldObj.value
-            }));
+                value: fieldObj.value,
+            }))
         }
 
         const response = await teamleaderCommon.apiCall({
             auth: context.auth,
             method: HttpMethod.POST,
             resourceUri: '/contacts.add',
-            body: contact
-        });
+            body: contact,
+        })
 
-        return response.body;
+        return response.body
     },
-});
+})

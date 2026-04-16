@@ -1,17 +1,25 @@
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import {
+    AIProviderName,
+    AzureProviderConfig,
+    CloudflareGatewayProviderConfig,
+    GetProviderConfigResponse,
+    OpenAICompatibleProviderConfig,
+    splitCloudflareGatewayModelId,
+} from '@activepieces/shared'
 import { anthropic, createAnthropic } from '@ai-sdk/anthropic'
-import { createOpenAI, openai } from '@ai-sdk/openai'
-import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
-import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createAzure } from '@ai-sdk/azure'
+import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
+import { createOpenAI, openai } from '@ai-sdk/openai'
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
+import { ProviderOptions } from '@ai-sdk/provider-utils'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, ImageModel, LanguageModel } from 'ai'
-import { ProviderOptions } from '@ai-sdk/provider-utils'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderName, AzureProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/shared'
-import { createAiGateway } from 'ai-gateway-provider';
-import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
-import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
-async function fetchProviderConfig(params: { provider: AIProviderName, engineToken: string, apiUrl: string }) {
+import { createAiGateway } from 'ai-gateway-provider'
+import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic'
+import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google'
+
+async function fetchProviderConfig(params: { provider: AIProviderName; engineToken: string; apiUrl: string }) {
     const { body } = await httpClient.sendRequest<GetProviderConfigResponse>({
         method: HttpMethod.GET,
         url: `${params.apiUrl}v1/ai-providers/${params.provider}/config`,
@@ -23,19 +31,19 @@ async function fetchProviderConfig(params: { provider: AIProviderName, engineTok
 }
 
 type CreateAIModelParams<IsImage extends boolean = false> = {
-    provider: AIProviderName;
-    modelId: string;
-    engineToken: string;
-    projectId: string;
-    flowId: string;
-    runId: string;
-    apiUrl: string;
-    openaiResponsesModel?: boolean;
-    isImage?: IsImage;
+    provider: AIProviderName
+    modelId: string
+    engineToken: string
+    projectId: string
+    flowId: string
+    runId: string
+    apiUrl: string
+    openaiResponsesModel?: boolean
+    isImage?: IsImage
 }
 
-export function createAIModel(params: CreateAIModelParams<false>): Promise<LanguageModel>;
-export function createAIModel(params: CreateAIModelParams<true>): Promise<ImageModel>;
+export function createAIModel(params: CreateAIModelParams<false>): Promise<LanguageModel>
+export function createAIModel(params: CreateAIModelParams<true>): Promise<ImageModel>
 export async function createAIModel({
     provider,
     modelId,
@@ -47,7 +55,7 @@ export async function createAIModel({
     openaiResponsesModel = false,
     isImage,
 }: CreateAIModelParams<boolean>): Promise<ImageModel | LanguageModel> {
-    const { config, auth, platformId } = await fetchProviderConfig({ provider, engineToken, apiUrl });
+    const { config, auth, platformId } = await fetchProviderConfig({ provider, engineToken, apiUrl })
 
     switch (provider) {
         case AIProviderName.OPENAI: {
@@ -55,7 +63,7 @@ export async function createAIModel({
             if (isImage) {
                 return provider.imageModel(modelId)
             }
-            return (openaiResponsesModel ? provider.responses(modelId) : provider.chat(modelId))
+            return openaiResponsesModel ? provider.responses(modelId) : provider.chat(modelId)
         }
         case AIProviderName.ANTHROPIC: {
             const provider = createAnthropic({ apiKey: auth.apiKey })
@@ -78,12 +86,12 @@ export async function createAIModel({
             return provider.chat(modelId)
         }
         case AIProviderName.CLOUDFLARE_GATEWAY: {
-            const { accountId, gatewayId,vertexProject,vertexRegion } = config as CloudflareGatewayProviderConfig
+            const { accountId, gatewayId, vertexProject, vertexRegion } = config as CloudflareGatewayProviderConfig
             const aigateway = createAiGateway({
                 accountId: accountId,
                 gateway: gatewayId,
                 apiKey: auth.apiKey,
-              });
+            })
             const { provider: providerPrefix, model: actualModelId, publisher } = splitCloudflareGatewayModelId(modelId)
             const cfMetadataHeaders = {
                 'cf-aig-metadata': JSON.stringify({
@@ -92,7 +100,7 @@ export async function createAIModel({
                     runId,
                 }),
             }
-            
+
             const headers = {
                 'cf-aig-authorization': `Bearer ${auth.apiKey}`,
                 ...cfMetadataHeaders,
@@ -100,26 +108,26 @@ export async function createAIModel({
             switch (providerPrefix) {
                 case 'anthropic': {
                     const anthropicProvider = createAnthropicGateway({
-                        headers
-                    });
-                    return aigateway(anthropicProvider(actualModelId));
+                        headers,
+                    })
+                    return aigateway(anthropicProvider(actualModelId))
                 }
                 case 'google-ai-studio': {
                     const googleProvider = createGoogleGateway({
-                        headers
-                    });
-                    return aigateway(googleProvider(actualModelId));
+                        headers,
+                    })
+                    return aigateway(googleProvider(actualModelId))
                 }
                 case 'google-vertex-ai': {
-                    if(vertexProject && vertexRegion && publisher) {
+                    if (vertexProject && vertexRegion && publisher) {
                         const provider = createGoogleGenerativeAI({
                             apiKey: auth.apiKey,
                             baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/google-vertex-ai/v1/projects/${vertexProject}/locations/${vertexRegion}/publishers/${publisher}/`,
                             headers,
                         })
-                        return provider(actualModelId);
+                        return provider(actualModelId)
                     }
-                    return handleDefaultAiGatewayProvider({accountId, gatewayId, headers, isImage, modelId})
+                    return handleDefaultAiGatewayProvider({ accountId, gatewayId, headers, isImage, modelId })
                 }
                 case 'openai': {
                     const openaiProvider = createOpenAI({
@@ -140,7 +148,7 @@ export async function createAIModel({
                         : openaiProvider.chat(actualModelId)
                 }
                 default: {
-                    return handleDefaultAiGatewayProvider({accountId, gatewayId, headers, isImage, modelId})
+                    return handleDefaultAiGatewayProvider({ accountId, gatewayId, headers, isImage, modelId })
                 }
             }
         }
@@ -156,7 +164,7 @@ export async function createAIModel({
                 'x-ap-run-id': runId,
             }
 
-            const provider = createOpenAICompatible({ 
+            const provider = createOpenAICompatible({
                 name: 'openai-compatible',
                 baseURL: baseUrl,
                 headers: {
@@ -180,11 +188,9 @@ export async function createAIModel({
     }
 }
 
-
-
-export const anthropicSearchTool = anthropic.tools.webSearch_20250305;
-export const openaiSearchTool = openai.tools.webSearchPreview;
-export const googleSearchTool = google.tools.googleSearch;
+export const anthropicSearchTool = anthropic.tools.webSearch_20250305
+export const openaiSearchTool = openai.tools.webSearchPreview
+export const googleSearchTool = google.tools.googleSearch
 
 const EMBEDDING_DIMENSIONS = 768
 
@@ -221,7 +227,11 @@ export async function createEmbeddingModel({
     switch (provider) {
         case AIProviderName.OPENAI: {
             const p = createOpenAI({ apiKey: auth.apiKey })
-            return { model: p.embeddingModel(embeddingModelId), embeddingModelId, providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
+            return {
+                model: p.embeddingModel(embeddingModelId),
+                embeddingModelId,
+                providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS,
+            }
         }
         case AIProviderName.GOOGLE: {
             const p = createGoogleGenerativeAI({ apiKey: auth.apiKey })
@@ -230,12 +240,20 @@ export async function createEmbeddingModel({
         case AIProviderName.AZURE: {
             const { resourceName } = config as AzureProviderConfig
             const p = createAzure({ resourceName, apiKey: auth.apiKey })
-            return { model: p.embeddingModel(embeddingModelId), embeddingModelId, providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
+            return {
+                model: p.embeddingModel(embeddingModelId),
+                embeddingModelId,
+                providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS,
+            }
         }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const openRouterProvider = createOpenRouter({ apiKey: auth.apiKey })
-            return { model: openRouterProvider.textEmbeddingModel(embeddingModelId), embeddingModelId, providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
+            return {
+                model: openRouterProvider.textEmbeddingModel(embeddingModelId),
+                embeddingModelId,
+                providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS,
+            }
         }
         default:
             throw new Error(`Provider ${provider} does not support embedding models`)
@@ -248,13 +266,19 @@ type CreateEmbeddingModelResult = {
     providerOptions: ProviderOptions
 }
 
-const handleDefaultAiGatewayProvider = ({accountId, gatewayId, headers, isImage, modelId}: {
-    accountId: string;
-    gatewayId: string;
-    headers: Record<string, string>;
-    isImage?: boolean;
-    modelId: string;
-})=>{
+const handleDefaultAiGatewayProvider = ({
+    accountId,
+    gatewayId,
+    headers,
+    isImage,
+    modelId,
+}: {
+    accountId: string
+    gatewayId: string
+    headers: Record<string, string>
+    isImage?: boolean
+    modelId: string
+}) => {
     const provider = createOpenAICompatible({
         name: 'cloudflare',
         baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,

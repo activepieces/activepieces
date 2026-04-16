@@ -1,10 +1,7 @@
-import { productboardAuth } from '../common/auth';
-import { HttpMethod } from '@activepieces/pieces-common';
-import {
-    TriggerStrategy,
-    createTrigger,
-} from '@activepieces/pieces-framework';
-import { productboardCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework'
+import { productboardAuth } from '../common/auth'
+import { productboardCommon } from '../common/client'
 
 export const newFeature = createTrigger({
     name: 'new_feature',
@@ -23,7 +20,7 @@ export const newFeature = createTrigger({
         },
     },
     onEnable: async (context) => {
-        const { webhookUrl, auth } = context;
+        const { webhookUrl, auth } = context
         const response = await productboardCommon.apiCall({
             auth,
             method: HttpMethod.POST,
@@ -42,23 +39,23 @@ export const newFeature = createTrigger({
                     },
                 },
             },
-        });
+        })
 
-        await context.store.put('webhook_id', response.body['data'].id);
-        return response.body;
+        await context.store.put('webhook_id', response.body['data'].id)
+        return response.body
     },
     onDisable: async (context) => {
-        const { auth } = context;
-        const webhookId = await context.store.get('webhook_id');
+        const { auth } = context
+        const webhookId = await context.store.get('webhook_id')
         if (webhookId) {
             await productboardCommon.apiCall({
                 auth,
                 method: HttpMethod.DELETE,
                 resourceUri: `/webhooks/${webhookId}`,
-            });
+            })
         }
     },
     run: async (context) => {
-        return [context.payload.body];
+        return [context.payload.body]
     },
-});
+})

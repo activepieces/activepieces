@@ -51,7 +51,11 @@ export const PushEverythingGitRepoRequest = z.object({
 })
 export type PushEverythingGitRepoRequest = z.infer<typeof PushEverythingGitRepoRequest>
 
-export const PushGitRepoRequest = z.union([PushFlowsGitRepoRequest, PushTablesGitRepoRequest, PushEverythingGitRepoRequest])
+export const PushGitRepoRequest = z.union([
+    PushFlowsGitRepoRequest,
+    PushTablesGitRepoRequest,
+    PushEverythingGitRepoRequest,
+])
 
 export type PushGitRepoRequest = z.infer<typeof PushGitRepoRequest>
 

@@ -1,9 +1,6 @@
 import { Platform, PlatformPlan } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import {
-    ApIdSchema,
-    BaseColumnSchemaPart,
-} from '../../../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../../database/database-common'
 
 export type PlatformPlanSchema = PlatformPlan & {
     platform: Platform

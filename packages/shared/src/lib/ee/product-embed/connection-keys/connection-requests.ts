@@ -9,13 +9,11 @@ export const GetOrDeleteConnectionFromTokenRequest = z.object({
 
 export type GetOrDeleteConnectionFromTokenRequest = z.infer<typeof GetOrDeleteConnectionFromTokenRequest>
 
-
 export const ListConnectionKeysRequest = z.object({
     limit: z.coerce.number().optional(),
     cursor: z.string().optional(),
     projectId: z.string(),
 })
-
 
 export type ListConnectionKeysRequest = z.infer<typeof ListConnectionKeysRequest>
 

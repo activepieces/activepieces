@@ -16,7 +16,6 @@ export const RetryFlowRequestBody = z.object({
 
 export type RetryFlowRequestBody = z.infer<typeof RetryFlowRequestBody>
 
-
 export const BulkActionOnRunsRequestBody = z.object({
     projectId: ApId,
     flowRunIds: z.array(ApId).optional(),
@@ -35,10 +34,7 @@ export const BulkCancelFlowRequestBody = z.object({
     projectId: ApId,
     flowRunIds: z.array(ApId).optional(),
     excludeFlowRunIds: z.array(ApId).optional(),
-    status: z.array(z.union([
-        z.literal(FlowRunStatus.PAUSED),
-        z.literal(FlowRunStatus.QUEUED),
-    ])).optional(),
+    status: z.array(z.union([z.literal(FlowRunStatus.PAUSED), z.literal(FlowRunStatus.QUEUED)])).optional(),
     flowId: z.array(ApId).optional(),
     createdAfter: z.string().optional(),
     createdBefore: z.string().optional(),

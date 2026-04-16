@@ -1,6 +1,5 @@
-import { zohoCrmAuth } from '../auth';
-import { Property, createAction } from "@activepieces/pieces-framework";
-
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { zohoCrmAuth } from '../auth'
 
 export const readFile = createAction({
     auth: zohoCrmAuth,
@@ -13,33 +12,30 @@ export const readFile = createAction({
             description: 'The full URL to use, including the base URL',
             required: true,
             defaultValue: '',
-        })
+        }),
     },
     run: async ({ auth, propsValue, files }) => {
-        const url = propsValue['url'];
+        const url = propsValue['url']
 
         const download = await fetch(url, {
             headers: {
                 Authorization: `Bearer ${auth.access_token}`,
             },
         })
-            .then((response) =>
-                response.ok ? response.blob() : Promise.reject(response)
-            )
+            .then((response) => (response.ok ? response.blob() : Promise.reject(response)))
             .catch((error) =>
                 Promise.reject(
                     new Error(
-                        `Error when download file:\n\tDownload file response: ${(error as Error).message ?? error
-                        }`
-                    )
-                )
-            );
+                        `Error when download file:\n\tDownload file response: ${(error as Error).message ?? error}`,
+                    ),
+                ),
+            )
 
-        const fileName = url.split('/').pop() ?? url;
+        const fileName = url.split('/').pop() ?? url
 
         return files.write({
             fileName: fileName,
             data: Buffer.from(await download.arrayBuffer()),
-        });
+        })
     },
-});
+})

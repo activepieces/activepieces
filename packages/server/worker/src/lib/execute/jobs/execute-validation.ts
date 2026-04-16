@@ -50,8 +50,7 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
                 errorMessage: result.error,
                 logs: result.logs,
             }
-        }
-        catch (e) {
+        } catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
             if (e instanceof ActivepiecesError && e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
                 return {
@@ -61,8 +60,7 @@ export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData, Synchr
                 }
             }
             throw e
-        }
-        finally {
+        } finally {
             await ctx.sandboxManager.release(ctx.log)
         }
     },

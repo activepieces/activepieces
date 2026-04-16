@@ -18,14 +18,16 @@ export class AddConnectionIdsToFlowVersion1745530653784 implements MigrationInte
             // update the connection with empty array
             await queryRunner.query('UPDATE "flow_version" SET "connectionIds" = $1', [[]])
             return
-        }
-        else {
+        } else {
             // Update existing rows
             const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
             for (const flowVersion of flowVersions) {
                 const connectionIds = flowStructureUtil.extractConnectionIds(flowVersion)
 
-                await queryRunner.query('UPDATE flow_version SET "connectionIds" = $1 WHERE id = $2', [connectionIds, flowVersion.id])
+                await queryRunner.query('UPDATE flow_version SET "connectionIds" = $1 WHERE id = $2', [
+                    connectionIds,
+                    flowVersion.id,
+                ])
             }
         }
 
@@ -41,5 +43,4 @@ export class AddConnectionIdsToFlowVersion1745530653784 implements MigrationInte
             ALTER TABLE "flow_version" DROP COLUMN "connectionIds"
         `)
     }
-
 }

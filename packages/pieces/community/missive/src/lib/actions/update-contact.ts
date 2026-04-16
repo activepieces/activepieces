@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { missiveAuth } from '../common/auth';
-import { missiveCommon } from '../common/client';
-import { contactBookDropdown } from '../common/dynamic-dropdowns';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { missiveAuth } from '../common/auth'
+import { missiveCommon } from '../common/client'
+import { contactBookDropdown } from '../common/dynamic-dropdowns'
 
 export const updateContact = createAction({
     name: 'update_contact',
@@ -23,7 +23,7 @@ export const updateContact = createAction({
                         disabled: true,
                         placeholder: 'Please authenticate first',
                         options: [],
-                    };
+                    }
                 }
 
                 if (!contact_book) {
@@ -31,7 +31,7 @@ export const updateContact = createAction({
                         disabled: true,
                         placeholder: 'Please select a contact book first',
                         options: [],
-                    };
+                    }
                 }
 
                 try {
@@ -39,45 +39,45 @@ export const updateContact = createAction({
                         auth: auth,
                         method: HttpMethod.GET,
                         resourceUri: `/contacts?contact_book=${contact_book}`,
-                    });
-                    const contacts = response.body?.contacts || [];
+                    })
+                    const contacts = response.body?.contacts || []
                     const options = contacts.map((contact: any) => {
-                        let label = '';
+                        let label = ''
                         if (contact.first_name || contact.last_name) {
-                            label = `${contact.first_name || ''} ${contact.last_name || ''}`.trim();
+                            label = `${contact.first_name || ''} ${contact.last_name || ''}`.trim()
                         } else {
-                            label = 'Unnamed Contact';
+                            label = 'Unnamed Contact'
                         }
-                        
+
                         // Add email or phone if available for better identification
-                        const primaryEmail = contact.infos?.find((info: any) => info.kind === 'email')?.value;
-                        const primaryPhone = contact.infos?.find((info: any) => info.kind === 'phone_number')?.value;
-                        
+                        const primaryEmail = contact.infos?.find((info: any) => info.kind === 'email')?.value
+                        const primaryPhone = contact.infos?.find((info: any) => info.kind === 'phone_number')?.value
+
                         if (primaryEmail) {
-                            label += ` (${primaryEmail})`;
+                            label += ` (${primaryEmail})`
                         } else if (primaryPhone) {
-                            label += ` (${primaryPhone})`;
+                            label += ` (${primaryPhone})`
                         }
-                        
+
                         return {
                             label,
                             value: contact.id,
-                        };
-                    });
+                        }
+                    })
                     return {
                         disabled: false,
                         options,
-                    };
+                    }
                 } catch (error) {
                     return {
                         disabled: true,
                         placeholder: 'Failed to load contacts',
                         options: [],
-                    };
+                    }
                 }
             },
         }),
-        move_to_contact_book: Property.Dropdown({   
+        move_to_contact_book: Property.Dropdown({
             displayName: 'Move to Contact Book',
             description: 'Move contact to a different contact book (optional)',
             required: false,
@@ -89,7 +89,7 @@ export const updateContact = createAction({
                         disabled: true,
                         placeholder: 'Please authenticate first',
                         options: [],
-                    };
+                    }
                 }
 
                 try {
@@ -97,22 +97,22 @@ export const updateContact = createAction({
                         auth: auth,
                         method: HttpMethod.GET,
                         resourceUri: '/contact_books',
-                    });
-                    const contactBooks = response.body?.contact_books || [];
+                    })
+                    const contactBooks = response.body?.contact_books || []
                     const options = contactBooks.map((book: any) => ({
                         label: book.name,
                         value: book.id,
-                    }));
+                    }))
                     return {
                         disabled: false,
                         options,
-                    };
+                    }
                 } catch (error) {
                     return {
                         disabled: true,
                         placeholder: 'Failed to load contact books',
                         options: [],
-                    };
+                    }
                 }
             },
         }),
@@ -184,13 +184,14 @@ export const updateContact = createAction({
                 options: [
                     { label: 'Male', value: 'Male' },
                     { label: 'Female', value: 'Female' },
-                    { label: 'Other', value: 'Other' }
-                ]
-            }
+                    { label: 'Other', value: 'Other' },
+                ],
+            },
         }),
         infos: Property.Array({
             displayName: 'Contact Information',
-            description: 'Email addresses, phone numbers, and other contact information. Note: When updating infos, all existing infos will be replaced with the ones provided here.',
+            description:
+                'Email addresses, phone numbers, and other contact information. Note: When updating infos, all existing infos will be replaced with the ones provided here.',
             required: false,
             properties: {
                 kind: Property.StaticDropdown({
@@ -205,9 +206,9 @@ export const updateContact = createAction({
                             { label: 'Facebook', value: 'facebook' },
                             { label: 'Physical Address', value: 'physical_address' },
                             { label: 'URL', value: 'url' },
-                            { label: 'Custom', value: 'custom' }
-                        ]
-                    }
+                            { label: 'Custom', value: 'custom' },
+                        ],
+                    },
                 }),
                 label: Property.StaticDropdown({
                     displayName: 'Label',
@@ -227,9 +228,9 @@ export const updateContact = createAction({
                             { label: 'Homepage', value: 'homepage' },
                             { label: 'Profile', value: 'profile' },
                             { label: 'Blog', value: 'blog' },
-                            { label: 'Other', value: 'other' }
-                        ]
-                    }
+                            { label: 'Other', value: 'other' },
+                        ],
+                    },
                 }),
                 value: Property.ShortText({
                     displayName: 'Value',
@@ -280,12 +281,14 @@ export const updateContact = createAction({
                     displayName: 'Facebook Name',
                     description: 'Facebook user name (for facebook type)',
                     required: false,
-                })
-            }
+                }),
+            },
         }),
         memberships: Property.DynamicProperties({
-    auth: missiveAuth,            displayName: 'Memberships',
-            description: 'Organizations and groups the contact belongs to. Note: When updating memberships, all existing memberships will be replaced with the ones provided here.',
+            auth: missiveAuth,
+            displayName: 'Memberships',
+            description:
+                'Organizations and groups the contact belongs to. Note: When updating memberships, all existing memberships will be replaced with the ones provided here.',
             required: false,
             refreshers: ['contact_book'],
             props: async ({ auth, contact_book }) => {
@@ -300,27 +303,28 @@ export const updateContact = createAction({
                                     displayName: 'Authenticate First',
                                     description: 'Please authenticate to access memberships',
                                     required: false,
-                                })
-                            }
-                        })
-                    };
+                                }),
+                            },
+                        }),
+                    }
                 }
 
-                let organizationOptions: Array<{ label: string; value: string }> = [];
-                let contactGroupOptions: Array<{ label: string; value: string }> = [];
+                let organizationOptions: Array<{ label: string; value: string }> = []
+                let contactGroupOptions: Array<{ label: string; value: string }> = []
 
                 try {
                     const orgsResponse = await missiveCommon.apiCall({
                         auth: auth,
                         method: HttpMethod.GET,
                         resourceUri: '/organizations',
-                    });
-                    organizationOptions = orgsResponse.body?.organizations?.map((org: any) => ({ 
-                        label: org.name, 
-                        value: org.id 
-                    })) || [];
+                    })
+                    organizationOptions =
+                        orgsResponse.body?.organizations?.map((org: any) => ({
+                            label: org.name,
+                            value: org.id,
+                        })) || []
                 } catch (error) {
-                    console.error('Failed to fetch organizations:', error);
+                    console.error('Failed to fetch organizations:', error)
                 }
 
                 if (contact_book) {
@@ -329,22 +333,24 @@ export const updateContact = createAction({
                             auth: auth,
                             method: HttpMethod.GET,
                             resourceUri: `/contact_groups?contact_book=${contact_book}&kind=group`,
-                        });
-                        contactGroupOptions = groupsResponse.body?.contact_groups?.map((group: any) => ({ 
-                            label: group.name, 
-                            value: group.id 
-                        })) || [];
+                        })
+                        contactGroupOptions =
+                            groupsResponse.body?.contact_groups?.map((group: any) => ({
+                                label: group.name,
+                                value: group.id,
+                            })) || []
                     } catch (error) {
-                        console.error('Failed to fetch contact groups:', error);
+                        console.error('Failed to fetch contact groups:', error)
                     }
                 }
 
                 return {
                     memberships_array: Property.Array({
                         displayName: 'Memberships',
-                        description: 'Add, remove, and manage contact memberships. All existing memberships will be replaced.',
-            required: false,
-            properties: {
+                        description:
+                            'Add, remove, and manage contact memberships. All existing memberships will be replaced.',
+                        required: false,
+                        properties: {
                             type: Property.StaticDropdown({
                                 displayName: 'Type',
                                 description: 'Type of membership',
@@ -352,60 +358,75 @@ export const updateContact = createAction({
                                 options: {
                                     options: [
                                         { label: 'Organization', value: 'organization' },
-                                        { label: 'Group', value: 'group' }
-                                    ]
-                                }
+                                        { label: 'Group', value: 'group' },
+                                    ],
+                                },
                             }),
                             organization: Property.StaticDropdown({
                                 displayName: 'Organization',
                                 description: 'Select organization (only for Organization type)',
                                 required: false,
                                 options: {
-                                    options: organizationOptions.length > 0 ? organizationOptions : [{ label: 'No organizations found', value: '' }]
-                                }
+                                    options:
+                                        organizationOptions.length > 0
+                                            ? organizationOptions
+                                            : [{ label: 'No organizations found', value: '' }],
+                                },
                             }),
                             contact_group: Property.StaticDropdown({
                                 displayName: 'Contact Group',
-                                description: contact_book ? 'Select contact group (only for Group type)' : 'Select contact book first to see groups',
+                                description: contact_book
+                                    ? 'Select contact group (only for Group type)'
+                                    : 'Select contact book first to see groups',
                                 required: false,
                                 options: {
-                                    options: contactGroupOptions.length > 0 ? contactGroupOptions : [{ label: contact_book ? 'No groups found' : 'Select contact book first', value: '' }]
-                                }
+                                    options:
+                                        contactGroupOptions.length > 0
+                                            ? contactGroupOptions
+                                            : [
+                                                  {
+                                                      label: contact_book
+                                                          ? 'No groups found'
+                                                          : 'Select contact book first',
+                                                      value: '',
+                                                  },
+                                              ],
+                                },
                             }),
-                title: Property.ShortText({
-                    displayName: 'Title',
-                    description: 'Job title or role',
-                    required: false,
-                }),
-                location: Property.ShortText({
-                    displayName: 'Location',
-                    description: 'Location or office',
-                    required: false,
-                }),
-                department: Property.ShortText({
-                    displayName: 'Department',
+                            title: Property.ShortText({
+                                displayName: 'Title',
+                                description: 'Job title or role',
+                                required: false,
+                            }),
+                            location: Property.ShortText({
+                                displayName: 'Location',
+                                description: 'Location or office',
+                                required: false,
+                            }),
+                            department: Property.ShortText({
+                                displayName: 'Department',
                                 description: 'Department',
-                    required: false,
-                }),
-                description: Property.ShortText({
-                    displayName: 'Description',
+                                required: false,
+                            }),
+                            description: Property.ShortText({
+                                displayName: 'Description',
                                 description: 'Description of role or membership',
-                    required: false,
-                })
-            }
-                    })
-                };
+                                required: false,
+                            }),
+                        },
+                    }),
+                }
             },
-        })
+        }),
     },
     async run(context) {
-        const propsValue = context.propsValue as any;
-        const { 
+        const propsValue = context.propsValue as any
+        const {
             contact_id,
             contact_book,
             move_to_contact_book,
-            first_name, 
-            last_name, 
+            first_name,
+            last_name,
             middle_name,
             phonetic_first_name,
             phonetic_last_name,
@@ -417,88 +438,94 @@ export const updateContact = createAction({
             notes,
             starred,
             gender,
-            infos
-        } = propsValue;
+            infos,
+        } = propsValue
 
         const contactData: Record<string, any> = {
             id: contact_id,
-        };
+        }
 
-        if (move_to_contact_book) contactData['contact_book'] = move_to_contact_book;
-        if (first_name) contactData['first_name'] = first_name;
-        if (last_name) contactData['last_name'] = last_name;
-        if (middle_name) contactData['middle_name'] = middle_name;
-        if (phonetic_first_name) contactData['phonetic_first_name'] = phonetic_first_name;
-        if (phonetic_last_name) contactData['phonetic_last_name'] = phonetic_last_name;
-        if (phonetic_middle_name) contactData['phonetic_middle_name'] = phonetic_middle_name;
-        if (prefix) contactData['prefix'] = prefix;
-        if (suffix) contactData['suffix'] = suffix;
-        if (nickname) contactData['nickname'] = nickname;
-        if (file_as) contactData['file_as'] = file_as;
-        if (notes) contactData['notes'] = notes;
-        if (starred !== undefined) contactData['starred'] = starred;
-        if (gender) contactData['gender'] = gender;
+        if (move_to_contact_book) contactData['contact_book'] = move_to_contact_book
+        if (first_name) contactData['first_name'] = first_name
+        if (last_name) contactData['last_name'] = last_name
+        if (middle_name) contactData['middle_name'] = middle_name
+        if (phonetic_first_name) contactData['phonetic_first_name'] = phonetic_first_name
+        if (phonetic_last_name) contactData['phonetic_last_name'] = phonetic_last_name
+        if (phonetic_middle_name) contactData['phonetic_middle_name'] = phonetic_middle_name
+        if (prefix) contactData['prefix'] = prefix
+        if (suffix) contactData['suffix'] = suffix
+        if (nickname) contactData['nickname'] = nickname
+        if (file_as) contactData['file_as'] = file_as
+        if (notes) contactData['notes'] = notes
+        if (starred !== undefined) contactData['starred'] = starred
+        if (gender) contactData['gender'] = gender
 
         if (infos && infos.length > 0) {
             contactData['infos'] = infos.map((info: any) => {
                 const infoObj: any = {
                     kind: info.kind,
                     label: info.label,
-                };
+                }
 
-                if (info.kind === 'email' || info.kind === 'phone_number' || info.kind === 'twitter' || info.kind === 'url' || info.kind === 'custom') {
-                    infoObj.value = info.value;
+                if (
+                    info.kind === 'email' ||
+                    info.kind === 'phone_number' ||
+                    info.kind === 'twitter' ||
+                    info.kind === 'url' ||
+                    info.kind === 'custom'
+                ) {
+                    infoObj.value = info.value
                 } else if (info.kind === 'facebook') {
-                    infoObj.name = info.name;
+                    infoObj.name = info.name
                 } else if (info.kind === 'physical_address') {
-                    if (info.street) infoObj.street = info.street;
-                    if (info.extended_address) infoObj.extended_address = info.extended_address;
-                    if (info.city) infoObj.city = info.city;
-                    if (info.region) infoObj.region = info.region;
-                    if (info.postal_code) infoObj.postal_code = info.postal_code;
-                    if (info.po_box) infoObj.po_box = info.po_box;
-                    if (info.country) infoObj.country = info.country;
+                    if (info.street) infoObj.street = info.street
+                    if (info.extended_address) infoObj.extended_address = info.extended_address
+                    if (info.city) infoObj.city = info.city
+                    if (info.region) infoObj.region = info.region
+                    if (info.postal_code) infoObj.postal_code = info.postal_code
+                    if (info.po_box) infoObj.po_box = info.po_box
+                    if (info.country) infoObj.country = info.country
                 }
 
                 if (info.custom_label && info.label === 'other') {
-                    infoObj.custom_label = info.custom_label;
+                    infoObj.custom_label = info.custom_label
                 }
 
-                return infoObj;
-            });
+                return infoObj
+            })
         }
 
-        const membershipsArray = propsValue.memberships_array;
+        const membershipsArray = propsValue.memberships_array
         if (membershipsArray && Array.isArray(membershipsArray) && membershipsArray.length > 0) {
-            const memberships: any[] = [];
+            const memberships: any[] = []
             for (const membership of membershipsArray) {
-                if (!membership.type) continue;
-                
-                const membershipObj: any = {};
+                if (!membership.type) continue
 
-                if (membership.title) membershipObj.title = membership.title;
-                if (membership.location) membershipObj.location = membership.location;
-                if (membership.department) membershipObj.department = membership.department;
-                if (membership.description) membershipObj.description = membership.description;
+                const membershipObj: any = {}
+
+                if (membership.title) membershipObj.title = membership.title
+                if (membership.location) membershipObj.location = membership.location
+                if (membership.department) membershipObj.department = membership.department
+                if (membership.description) membershipObj.description = membership.description
 
                 if (membership.type === 'organization' && membership.organization) {
-                        membershipObj.group = {
-                            kind: 'organization',
-                        id: membership.organization
-                    };
+                    membershipObj.group = {
+                        kind: 'organization',
+                        id: membership.organization,
+                    }
                 } else if (membership.type === 'group' && membership.contact_group) {
-                        membershipObj.group = {
-                            kind: 'group',
-                        id: membership.contact_group
-                    };
+                    membershipObj.group = {
+                        kind: 'group',
+                        id: membership.contact_group,
+                    }
                 }
-                
+
                 if (membershipObj.group) {
-                    memberships.push(membershipObj);
+                    memberships.push(membershipObj)
                 }
             }
             if (memberships.length > 0) {
-                contactData['memberships'] = memberships;
+                contactData['memberships'] = memberships
             }
         }
 
@@ -507,10 +534,10 @@ export const updateContact = createAction({
             method: HttpMethod.PATCH,
             resourceUri: `/contacts/${contact_id}`,
             body: {
-                contacts: [contactData]
+                contacts: [contactData],
             },
-        });
+        })
 
-        return response.body;
+        return response.body
     },
-}); 
+})

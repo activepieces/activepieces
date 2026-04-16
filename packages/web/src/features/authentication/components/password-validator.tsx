@@ -21,4 +21,5 @@ const PasswordValidator = ({ password }: { password: string }) => {
   );
 };
 PasswordValidator.displayName = 'PasswordValidator';
+
 export { PasswordValidator };

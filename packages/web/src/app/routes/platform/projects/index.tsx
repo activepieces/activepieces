@@ -14,9 +14,9 @@ import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import {
+  BulkAction,
   DataTable,
   RowDataWithActions,
-  BulkAction,
 } from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PlusIcon } from '@/components/icons/plus';

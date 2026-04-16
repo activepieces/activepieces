@@ -25,5 +25,4 @@ export class RestrictOnDeleteProjectForFlow1760376319952 implements MigrationInt
             ADD CONSTRAINT "fk_flow_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
     }
-
 }

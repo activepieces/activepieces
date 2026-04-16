@@ -1,42 +1,40 @@
-import { microsoftSharePointAuth } from '../auth';
-import { createAction } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
-import { microsoftSharePointCommon } from '../common';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { createAction } from '@activepieces/pieces-framework'
+import { Client } from '@microsoft/microsoft-graph-client'
+import { microsoftSharePointAuth } from '../auth'
+import { microsoftSharePointCommon } from '../common'
+import { getGraphBaseUrl } from '../common/microsoft-cloud'
 
 export const updateListItemAction = createAction({
-  auth: microsoftSharePointAuth,
-  name: 'microsoft_sharepoint_update_list_item',
-  displayName: 'Update List Item',
-  description: 'Updates an existing item in a list.',
-  props: {
-    siteId: microsoftSharePointCommon.siteId,
-    listId: microsoftSharePointCommon.listId,
-    listItemId: microsoftSharePointCommon.listItemId,
-    listColumns: microsoftSharePointCommon.listColumns,
-  },
-  async run(context) {
-    const { siteId, listId, listItemId, listColumns } = context.propsValue;
+    auth: microsoftSharePointAuth,
+    name: 'microsoft_sharepoint_update_list_item',
+    displayName: 'Update List Item',
+    description: 'Updates an existing item in a list.',
+    props: {
+        siteId: microsoftSharePointCommon.siteId,
+        listId: microsoftSharePointCommon.listId,
+        listItemId: microsoftSharePointCommon.listItemId,
+        listColumns: microsoftSharePointCommon.listColumns,
+    },
+    async run(context) {
+        const { siteId, listId, listItemId, listColumns } = context.propsValue
 
-    const cloud = context.auth.props?.['cloud'] as string | undefined;
-    const client = Client.initWithMiddleware({
-      authProvider: {
-        getAccessToken: () => Promise.resolve(context.auth.access_token),
-      },
-      baseUrl: getGraphBaseUrl(cloud),
-    });
-    const fieldWithArrayValues: Record<string, string> = {};
+        const cloud = context.auth.props?.['cloud'] as string | undefined
+        const client = Client.initWithMiddleware({
+            authProvider: {
+                getAccessToken: () => Promise.resolve(context.auth.access_token),
+            },
+            baseUrl: getGraphBaseUrl(cloud),
+        })
+        const fieldWithArrayValues: Record<string, string> = {}
 
-    Object.entries(listColumns).forEach(([key, value]) => {
-      // https://learn.microsoft.com/en-us/answers/questions/1517379/upload-multiple-choice-fields-item-in-sharepoint-w
-      if (Array.isArray(value)) {
-        fieldWithArrayValues[`${key}@odata.type`] = 'Collection(Edm.String)';
-      }
-    });
-    const itemInput = { ...listColumns, ...fieldWithArrayValues };
+        Object.entries(listColumns).forEach(([key, value]) => {
+            // https://learn.microsoft.com/en-us/answers/questions/1517379/upload-multiple-choice-fields-item-in-sharepoint-w
+            if (Array.isArray(value)) {
+                fieldWithArrayValues[`${key}@odata.type`] = 'Collection(Edm.String)'
+            }
+        })
+        const itemInput = { ...listColumns, ...fieldWithArrayValues }
 
-    return await client
-      .api(`/sites/${siteId}/lists/${listId}/items/${listItemId}/fields`)
-      .patch(itemInput);
-  },
-});
+        return await client.api(`/sites/${siteId}/lists/${listId}/items/${listItemId}/fields`).patch(itemInput)
+    },
+})

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { codyAuth } from '../..';
-import { codyClient } from '../common/client';
-import { conversationIdDropdown } from '../common/props';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { codyAuth } from '../..'
+import { codyClient } from '../common/client'
+import { conversationIdDropdown } from '../common/props'
 
 export const sendMessageAction = createAction({
     auth: codyAuth,
@@ -17,9 +17,9 @@ export const sendMessageAction = createAction({
         }),
     },
     async run(context) {
-        const { conversation_id, content } = context.propsValue;
-        const apiKey = context.auth;
+        const { conversation_id, content } = context.propsValue
+        const apiKey = context.auth
 
-        return await codyClient.sendMessage(apiKey, conversation_id, content);
+        return await codyClient.sendMessage(apiKey, conversation_id, content)
     },
-});
+})

@@ -25,15 +25,15 @@ export function createSandboxManager(boxId: number): SandboxManager {
     let currentSandbox: Sandbox | null = null
 
     return {
-        acquire(params: { log: Logger, apiClient: WorkerToApiContract }): Sandbox {
+        acquire(params: { log: Logger; apiClient: WorkerToApiContract }): Sandbox {
             if (canReuseSandbox() && currentSandbox && currentSandbox.isReady()) {
                 return currentSandbox
             }
             if (currentSandbox) {
                 params.log.info('Sandbox not ready or not reusable, creating fresh one')
-                currentSandbox.shutdown().catch((err) =>
-                    params.log.error({ err }, 'Error shutting down previous sandbox'),
-                )
+                currentSandbox
+                    .shutdown()
+                    .catch((err) => params.log.error({ err }, 'Error shutting down previous sandbox'))
             }
             currentSandbox = createSandboxForJob({ ...params, boxId })
             return currentSandbox
@@ -58,7 +58,7 @@ export function createSandboxManager(boxId: number): SandboxManager {
 }
 
 export type SandboxManager = {
-    acquire(params: { log: Logger, apiClient: WorkerToApiContract }): Sandbox
+    acquire(params: { log: Logger; apiClient: WorkerToApiContract }): Sandbox
     invalidate(log: Logger): Promise<void>
     release(log: Logger): Promise<void>
     shutdown(log: Logger): Promise<void>

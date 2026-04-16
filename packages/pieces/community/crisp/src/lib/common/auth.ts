@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 const authMarkdown = `
 
@@ -14,19 +14,19 @@ const authMarkdown = `
 (wait that your submission gets approved, this can take a few minutes);
 9.Once accepted, come back to Tokens, and copy your Production token keypair (configure it securely in your integration code);
 10.Finally, install the plugin on all websites you need to use it for (using the private install link, provided in the Settings section under Danger Zone / Visibility);
-`;
+`
 
 export const crispAuth = PieceAuth.CustomAuth({
-  description: authMarkdown,
-  required: true,
-  props: {
-    identifier: PieceAuth.SecretText({
-      displayName: 'Identifier',
-      required: true,
-    }),
-    token: PieceAuth.SecretText({
-      displayName: 'Key',
-      required: true,
-    }),
-  },
-});
+    description: authMarkdown,
+    required: true,
+    props: {
+        identifier: PieceAuth.SecretText({
+            displayName: 'Identifier',
+            required: true,
+        }),
+        token: PieceAuth.SecretText({
+            displayName: 'Key',
+            required: true,
+        }),
+    },
+})

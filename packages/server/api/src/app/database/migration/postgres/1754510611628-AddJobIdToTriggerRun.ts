@@ -24,5 +24,4 @@ export class AddJobIdToTriggerRun1754510611628 implements MigrationInterface {
             ALTER TABLE "trigger_run" DROP COLUMN "jobId"
         `)
     }
-
 }

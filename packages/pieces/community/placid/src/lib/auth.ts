@@ -1,9 +1,9 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PLACID_BASE_URL } from './common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
+import { PLACID_BASE_URL } from './common'
 
 export const placidAuth = PieceAuth.SecretText({
-	description: `
+    description: `
 To obtain your Placid API token:
 
 1. Log in to [placid.app](https://placid.app/login).
@@ -13,26 +13,26 @@ To obtain your Placid API token:
 5. Copy your API token.
 
 The token is project-specific and will only work with templates from that project.`,
-	displayName: 'API Token',
-	required: true,
-	validate: async (auth) => {
-		try {
-			await httpClient.sendRequest({
-				url: `${PLACID_BASE_URL}/templates`,
-				method: HttpMethod.GET,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: auth.auth,
-				},
-			});
-			return {
-				valid: true,
-			};
-		} catch (e) {
-			return {
-				valid: false,
-				error: 'Invalid API token or failed to connect to Placid API',
-			};
-		}
-	},
-});
+    displayName: 'API Token',
+    required: true,
+    validate: async (auth) => {
+        try {
+            await httpClient.sendRequest({
+                url: `${PLACID_BASE_URL}/templates`,
+                method: HttpMethod.GET,
+                authentication: {
+                    type: AuthenticationType.BEARER_TOKEN,
+                    token: auth.auth,
+                },
+            })
+            return {
+                valid: true,
+            }
+        } catch (e) {
+            return {
+                valid: false,
+                error: 'Invalid API token or failed to connect to Placid API',
+            }
+        }
+    },
+})

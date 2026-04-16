@@ -56,5 +56,4 @@ export class AddAgents1749405724276 implements MigrationInterface {
             ALTER TABLE "mcp" DROP COLUMN "agentId"
         `)
     }
-
 }

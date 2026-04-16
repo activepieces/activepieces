@@ -36,5 +36,4 @@ export class AIUsagePostgres1750090291551 implements MigrationInterface {
             DROP TABLE "ai_usage"
         `)
     }
-
 }

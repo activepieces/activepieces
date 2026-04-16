@@ -25,5 +25,4 @@ export class RemoveShowActivityLog1716105958530 implements MigrationInterface {
             ALTER COLUMN "showActivityLog" SET NOT NULL;
         `)
     }
-
 }

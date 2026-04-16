@@ -1,8 +1,8 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const documentproAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: `
+    displayName: 'API Key',
+    description: `
 To get your DocumentPro API Key:
 
 1. **Login** to your DocumentPro account
@@ -14,5 +14,5 @@ To get your DocumentPro API Key:
 7. **Click** the "Generate API Key" button
 8. **Copy** your API key and paste it here
   `,
-  required: true,
-});
+    required: true,
+})

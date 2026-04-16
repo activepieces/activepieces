@@ -1,9 +1,32 @@
 import { URL } from 'node:url'
 import { Store, StoreScope } from '@activepieces/pieces-framework'
-import { DeleteStoreEntryRequest, ExecutionError, FetchError, FlowId, isNil, PutStoreEntryRequest, StorageError, StorageInvalidKeyError, StorageLimitError, STORE_KEY_MAX_LENGTH, STORE_VALUE_MAX_SIZE, StoreEntry } from '@activepieces/shared'
+import {
+    DeleteStoreEntryRequest,
+    ExecutionError,
+    FetchError,
+    FlowId,
+    isNil,
+    PutStoreEntryRequest,
+    STORE_KEY_MAX_LENGTH,
+    STORE_VALUE_MAX_SIZE,
+    StorageError,
+    StorageInvalidKeyError,
+    StorageLimitError,
+    StoreEntry,
+} from '@activepieces/shared'
 import { utils } from '../utils'
 
-export function createContextStore({ apiUrl, prefix, flowId, engineToken }: { apiUrl: string, prefix: string, flowId: FlowId, engineToken: string }): Store {
+export function createContextStore({
+    apiUrl,
+    prefix,
+    flowId,
+    engineToken,
+}: {
+    apiUrl: string
+    prefix: string
+    flowId: FlowId
+    engineToken: string
+}): Store {
     return {
         async put<T>(key: string, value: T, scope = StoreScope.FLOW): Promise<T> {
             const modifiedKey = createKey(prefix, scope, flowId, key)
@@ -38,7 +61,7 @@ function createStoreClient({ engineToken, apiUrl }: CreateStoreClientParams): St
             }
             const url = buildUrl(apiUrl, key)
 
-            const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError((async () => {
+            const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError(async () => {
                 const response = await fetch(url, {
                     headers: {
                         Authorization: `Bearer ${engineToken}`,
@@ -52,7 +75,7 @@ function createStoreClient({ engineToken, apiUrl }: CreateStoreClientParams): St
                 }
 
                 return response.json()
-            }))
+            })
 
             if (storeEntryError) {
                 return handleFetchError({
@@ -66,7 +89,7 @@ function createStoreClient({ engineToken, apiUrl }: CreateStoreClientParams): St
         async put(request: PutStoreEntryRequest): Promise<StoreEntry | null> {
             const url = buildUrl(apiUrl)
 
-            const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError((async () => {
+            const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError(async () => {
                 const sizeOfValue = utils.sizeof(request.value)
                 if (sizeOfValue > STORE_VALUE_MAX_SIZE) {
                     throw new StorageLimitError(request.key, STORE_VALUE_MAX_SIZE)
@@ -88,7 +111,7 @@ function createStoreClient({ engineToken, apiUrl }: CreateStoreClientParams): St
                 }
 
                 return response.json()
-            }))
+            })
 
             if (storeEntryError) {
                 return handleFetchError({
@@ -105,7 +128,7 @@ function createStoreClient({ engineToken, apiUrl }: CreateStoreClientParams): St
             }
             const url = buildUrl(apiUrl, request.key)
 
-            const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError((async () => {
+            const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError(async () => {
                 const response = await fetch(url, {
                     method: 'DELETE',
                     headers: {
@@ -121,7 +144,7 @@ function createStoreClient({ engineToken, apiUrl }: CreateStoreClientParams): St
                 }
 
                 return null
-            }))
+            })
 
             if (storeEntryError) {
                 return handleFetchError({

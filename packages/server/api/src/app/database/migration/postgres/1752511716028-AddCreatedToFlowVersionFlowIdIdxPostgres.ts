@@ -20,5 +20,4 @@ export class AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028 implements Mi
             CREATE INDEX "idx_flow_version_flow_id" ON "flow_version" ("flowId")
         `)
     }
-
 }

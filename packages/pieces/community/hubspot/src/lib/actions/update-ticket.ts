@@ -1,10 +1,15 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { Client } from '@hubspot/api-client';
-
-import { MarkdownVariant } from '@activepieces/shared';
-import { hubspotAuth } from '../auth';
-import { getDefaultPropertiesForObject, pipelineDropdown, pipelineStageDropdown, standardObjectDynamicProperties, standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { MarkdownVariant } from '@activepieces/shared'
+import { Client } from '@hubspot/api-client'
+import { hubspotAuth } from '../auth'
+import { OBJECT_TYPE } from '../common/constants'
+import {
+    getDefaultPropertiesForObject,
+    pipelineDropdown,
+    pipelineStageDropdown,
+    standardObjectDynamicProperties,
+    standardObjectPropertiesDropdown,
+} from '../common/props'
 
 export const updateTicketAction = createAction({
     auth: hubspotAuth,
@@ -51,55 +56,45 @@ export const updateTicketAction = createAction({
         }),
     },
     async run(context) {
-        const {
-            ticketId,
-            ticketName,
-            pipelineId,
-            pipelineStageId,
-        } = context.propsValue;
-        const objectProperties = context.propsValue.objectProperties??{};
-        const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve??[];
+        const { ticketId, ticketName, pipelineId, pipelineStageId } = context.propsValue
+        const objectProperties = context.propsValue.objectProperties ?? {}
+        const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? []
 
+        const ticketProperties: Record<string, string> = {}
 
-        const ticketProperties: Record<string, string> = {
-        };
-
-        if(ticketName)
-        {
-            ticketProperties['subject'] = ticketName;
+        if (ticketName) {
+            ticketProperties['subject'] = ticketName
         }
-        if(pipelineId)
-        {
-            ticketProperties['hs_pipeline'] = pipelineId;
+        if (pipelineId) {
+            ticketProperties['hs_pipeline'] = pipelineId
         }
-        if(pipelineStageId)
-        {
-            ticketProperties['hs_pipeline_stage'] = pipelineStageId;
+        if (pipelineStageId) {
+            ticketProperties['hs_pipeline_stage'] = pipelineStageId
         }
 
         // Add additional properties to the ticketProperties object
         Object.entries(objectProperties).forEach(([key, value]) => {
-            if ((Array.isArray(value) && value.length === 0)) {
-                return;  
-			}
+            if (Array.isArray(value) && value.length === 0) {
+                return
+            }
             // Format values if they are arrays
-            ticketProperties[key] = Array.isArray(value) ? value.join(';') : value;
-        });
+            ticketProperties[key] = Array.isArray(value) ? value.join(';') : value
+        })
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: context.auth.access_token })
 
-        const updatedTicket = await client.crm.tickets.basicApi.update(ticketId,{
+        const updatedTicket = await client.crm.tickets.basicApi.update(ticketId, {
             properties: ticketProperties,
-        });
+        })
 
         // Retrieve default properties for the ticket and merge with additional properties to retrieve
-        const defaultTicketProperties = getDefaultPropertiesForObject(OBJECT_TYPE.TICKET);
+        const defaultTicketProperties = getDefaultPropertiesForObject(OBJECT_TYPE.TICKET)
 
         const ticketDetails = await client.crm.tickets.basicApi.getById(updatedTicket.id, [
             ...defaultTicketProperties,
             ...additionalPropertiesToRetrieve,
-        ]);
+        ])
 
-        return ticketDetails;
+        return ticketDetails
     },
-});
+})

@@ -4,7 +4,6 @@ export class AddTagsToPiecesSqlite1712180673961 implements MigrationInterface {
     name = 'AddTagsToPiecesSqlite1712180673961'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-
         await queryRunner.query(`
             CREATE TABLE "tag" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -44,5 +43,4 @@ export class AddTagsToPiecesSqlite1712180673961 implements MigrationInterface {
             DROP TABLE "tag"
         `)
     }
-
 }

@@ -1,6 +1,6 @@
-import { intercomAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { intercomClient } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { intercomAuth } from '../auth'
+import { intercomClient } from '../common'
 
 export const findLeadAction = createAction({
     auth: intercomAuth,
@@ -26,9 +26,9 @@ export const findLeadAction = createAction({
         }),
     },
     async run(context) {
-        const { searchField, searchValue } = context.propsValue;
+        const { searchField, searchValue } = context.propsValue
 
-        const client = intercomClient(context.auth);
+        const client = intercomClient(context.auth)
 
         const contactResponse = await client.contacts.search({
             query: {
@@ -47,11 +47,11 @@ export const findLeadAction = createAction({
                 ],
             },
             pagination: { per_page: 1 },
-        });
+        })
 
         return {
             found: contactResponse.data.length > 0,
             lead: contactResponse.data.length > 0 ? contactResponse.data[0] : {},
-        };
+        }
     },
-});
+})

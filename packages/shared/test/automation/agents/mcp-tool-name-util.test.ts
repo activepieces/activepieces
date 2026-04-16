@@ -56,6 +56,8 @@ describe('createPieceToolName', () => {
     })
 
     it('normalizes the combined name correctly', () => {
-        expect(createPieceToolName('@activepieces/piece-google-sheets', 'insert_row')).toBe('google-sheets-insert_row_q388b6_mcp')
+        expect(createPieceToolName('@activepieces/piece-google-sheets', 'insert_row')).toBe(
+            'google-sheets-insert_row_q388b6_mcp',
+        )
     })
 })

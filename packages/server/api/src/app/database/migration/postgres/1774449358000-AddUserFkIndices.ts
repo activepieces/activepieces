@@ -18,8 +18,7 @@ export class AddUserFkIndices1774449358000 implements MigrationInterface {
             await queryRunner.query(`
                 CREATE INDEX IF NOT EXISTS "idx_flow_version_updated_by" ON "flow_version" ("updatedBy")
             `)
-        }
-        else {
+        } else {
             await queryRunner.query(`
                 CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_triggered_by" ON "flow_run" ("triggeredBy")
             `)

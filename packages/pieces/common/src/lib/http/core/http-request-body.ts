@@ -1,3 +1,3 @@
-import { HttpMessageBody } from "./http-message-body";
+import { HttpMessageBody } from './http-message-body'
 
-export type HttpRequestBody = HttpMessageBody | string;
+export type HttpRequestBody = HttpMessageBody | string

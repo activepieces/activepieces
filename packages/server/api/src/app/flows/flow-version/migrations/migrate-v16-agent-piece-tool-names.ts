@@ -2,8 +2,8 @@ import {
     AgentPieceProps,
     AgentToolType,
     FlowActionType,
-    flowStructureUtil,
     FlowVersion,
+    flowStructureUtil,
     mcpToolNameUtils,
 } from '@activepieces/shared'
 import { Migration } from '.'
@@ -22,7 +22,7 @@ function deriveFlowDisplayName(legacyToolName: string): string | undefined {
 type AgentToolInput = {
     type: string
     toolName: string
-    pieceMetadata?: { pieceName: string, pieceVersion: string, actionName: string, [key: string]: unknown }
+    pieceMetadata?: { pieceName: string; pieceVersion: string; actionName: string; [key: string]: unknown }
     flowId?: string
     externalFlowId?: string
     flowDisplayName?: string
@@ -33,21 +33,33 @@ export const migrateV16AgentPieceToolNames: Migration = {
     targetSchemaVersion: '16',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
-            if (step.type !== FlowActionType.PIECE || step.settings.pieceName !== '@activepieces/piece-ai' || step.settings.actionName !== 'run_agent') {
+            if (
+                step.type !== FlowActionType.PIECE ||
+                step.settings.pieceName !== '@activepieces/piece-ai' ||
+                step.settings.actionName !== 'run_agent'
+            ) {
                 return step
             }
 
             const tools = (step.settings.input?.[AgentPieceProps.AGENT_TOOLS] as AgentToolInput[] | undefined) ?? []
 
             const newTools = tools.map((tool) => {
-                if (tool.type === AgentToolType.PIECE && tool.pieceMetadata?.pieceName != null && tool.pieceMetadata?.actionName != null) {
+                if (
+                    tool.type === AgentToolType.PIECE &&
+                    tool.pieceMetadata?.pieceName != null &&
+                    tool.pieceMetadata?.actionName != null
+                ) {
                     return {
                         ...tool,
-                        toolName: mcpToolNameUtils.createPieceToolName(tool.pieceMetadata.pieceName, tool.pieceMetadata.actionName),
+                        toolName: mcpToolNameUtils.createPieceToolName(
+                            tool.pieceMetadata.pieceName,
+                            tool.pieceMetadata.actionName,
+                        ),
                     }
                 }
                 if (tool.type === AgentToolType.FLOW && tool.toolName != null) {
-                    const flowDisplayName = tool.flowDisplayName ?? deriveFlowDisplayName(tool.toolName) ?? tool.toolName
+                    const flowDisplayName =
+                        tool.flowDisplayName ?? deriveFlowDisplayName(tool.toolName) ?? tool.toolName
                     return {
                         ...tool,
                         toolName: mcpToolNameUtils.createToolName(tool.toolName),

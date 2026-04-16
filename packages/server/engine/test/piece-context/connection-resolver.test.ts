@@ -1,5 +1,12 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { AppConnectionStatus, AppConnectionType, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, FetchError } from '@activepieces/shared'
+import {
+    AppConnectionStatus,
+    AppConnectionType,
+    ConnectionExpiredError,
+    ConnectionLoadingError,
+    ConnectionNotFoundError,
+    FetchError,
+} from '@activepieces/shared'
 import { createConnectionResolver } from '../../src/lib/piece-context/connection-resolver'
 
 const RESOLVER_PARAMS = {
@@ -9,7 +16,11 @@ const RESOLVER_PARAMS = {
     contextVersion: ContextVersion.V1,
 }
 
-function makeConnection({ status = AppConnectionStatus.ACTIVE, type = AppConnectionType.SECRET_TEXT, value = { type: AppConnectionType.SECRET_TEXT, secret_text: 'my-secret' } }: {
+function makeConnection({
+    status = AppConnectionStatus.ACTIVE,
+    type = AppConnectionType.SECRET_TEXT,
+    value = { type: AppConnectionType.SECRET_TEXT, secret_text: 'my-secret' },
+}: {
     status?: AppConnectionStatus
     type?: AppConnectionType
     value?: Record<string, unknown>
@@ -23,17 +34,15 @@ function makeConnection({ status = AppConnectionStatus.ACTIVE, type = AppConnect
 }
 
 describe('connection-resolver service', () => {
-
     beforeEach(() => {
         vi.restoreAllMocks()
     })
 
     it('V1 happy path returns connection.value', async () => {
         const connection = makeConnection()
-        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
-            JSON.stringify(connection),
-            { status: 200, headers: { 'Content-Type': 'application/json' } },
-        ))
+        vi.spyOn(global, 'fetch').mockResolvedValue(
+            new Response(JSON.stringify(connection), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+        )
 
         const resolver = createConnectionResolver(RESOLVER_PARAMS)
         const result = await resolver.obtain('my-connection')
@@ -46,10 +55,9 @@ describe('connection-resolver service', () => {
             type: AppConnectionType.SECRET_TEXT,
             value: { type: AppConnectionType.SECRET_TEXT, secret_text: 'my-secret' },
         })
-        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
-            JSON.stringify(connection),
-            { status: 200, headers: { 'Content-Type': 'application/json' } },
-        ))
+        vi.spyOn(global, 'fetch').mockResolvedValue(
+            new Response(JSON.stringify(connection), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+        )
 
         const resolver = createConnectionResolver({ ...RESOLVER_PARAMS, contextVersion: undefined })
         const result = await resolver.obtain('my-connection')
@@ -63,10 +71,9 @@ describe('connection-resolver service', () => {
             type: AppConnectionType.CUSTOM_AUTH,
             value: { type: AppConnectionType.CUSTOM_AUTH, props: customProps },
         })
-        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
-            JSON.stringify(connection),
-            { status: 200, headers: { 'Content-Type': 'application/json' } },
-        ))
+        vi.spyOn(global, 'fetch').mockResolvedValue(
+            new Response(JSON.stringify(connection), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+        )
 
         const resolver = createConnectionResolver({ ...RESOLVER_PARAMS, contextVersion: undefined })
         const result = await resolver.obtain('my-connection')
@@ -79,10 +86,9 @@ describe('connection-resolver service', () => {
             type: AppConnectionType.OAUTH2,
             value: { type: AppConnectionType.OAUTH2, access_token: 'tok' },
         })
-        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
-            JSON.stringify(connection),
-            { status: 200, headers: { 'Content-Type': 'application/json' } },
-        ))
+        vi.spyOn(global, 'fetch').mockResolvedValue(
+            new Response(JSON.stringify(connection), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+        )
 
         const resolver = createConnectionResolver({ ...RESOLVER_PARAMS, contextVersion: undefined })
         const result = await resolver.obtain('my-connection')
@@ -99,10 +105,9 @@ describe('connection-resolver service', () => {
 
     it('throws ConnectionExpiredError when status is ERROR', async () => {
         const connection = makeConnection({ status: AppConnectionStatus.ERROR })
-        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
-            JSON.stringify(connection),
-            { status: 200, headers: { 'Content-Type': 'application/json' } },
-        ))
+        vi.spyOn(global, 'fetch').mockResolvedValue(
+            new Response(JSON.stringify(connection), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+        )
 
         const resolver = createConnectionResolver(RESOLVER_PARAMS)
         await expect(resolver.obtain('my-connection')).rejects.toThrow(ConnectionExpiredError)

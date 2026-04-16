@@ -56,5 +56,4 @@ export class RemoveProjectIdFromPieceMetadata1762358403172 implements MigrationI
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
     }
-
 }

@@ -27,5 +27,4 @@ export class AddStepsExecutedAndAICreditsToFlowRun1765461560795 implements Migra
             ALTER TABLE "flow_run" DROP COLUMN "stepsCount"
         `)
     }
-
 }

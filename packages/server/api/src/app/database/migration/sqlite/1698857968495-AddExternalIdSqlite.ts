@@ -1,18 +1,24 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { system } from '../../../helper/system/system'  
+import { system } from '../../../helper/system/system'
 
 export class AddExternalIdSqlite1698857968495 implements MigrationInterface {
     name = 'AddExternalIdSqlite1698857968495'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'up')
-        if (await migrationRan('AddExternalIdSqlite31698857968495', queryRunner)) {
-            log.info({
+        log.info(
+            {
                 name: this.name,
-            }, 'already ran')
+            },
+            'up',
+        )
+        if (await migrationRan('AddExternalIdSqlite31698857968495', queryRunner)) {
+            log.info(
+                {
+                    name: this.name,
+                },
+                'already ran',
+            )
             return
         }
         await queryRunner.query(`
@@ -235,13 +241,7 @@ export class AddExternalIdSqlite1698857968495 implements MigrationInterface {
     }
 }
 
-async function migrationRan(
-    migration: string,
-    queryRunner: QueryRunner,
-): Promise<boolean> {
-    const result = await queryRunner.query(
-        'SELECT * from migrations where name = ?',
-        [migration],
-    )
+async function migrationRan(migration: string, queryRunner: QueryRunner): Promise<boolean> {
+    const result = await queryRunner.query('SELECT * from migrations where name = ?', [migration])
     return result.length > 0
 }

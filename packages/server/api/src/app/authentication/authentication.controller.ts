@@ -1,4 +1,5 @@
-import { ApplicationEventName,
+import {
+    ApplicationEventName,
     assertNotNullOrUndefined,
     PrincipalType,
     SignInRequest,
@@ -17,11 +18,8 @@ import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'
 
-export const authenticationController: FastifyPluginAsyncZod = async (
-    app,
-) => {
+export const authenticationController: FastifyPluginAsyncZod = async (app) => {
     app.post('/sign-up', SignUpRequestOptions, async (request) => {
-
         const platformId = await platformUtils.getPlatformIdForRequest(request)
         const signUpResponse = await authenticationService(request.log).signUp({
             ...request.body,
@@ -29,23 +27,25 @@ export const authenticationController: FastifyPluginAsyncZod = async (
             platformId: platformId ?? null,
         })
 
-        applicationEvents(request.log).sendUserEvent({
-            platformId: signUpResponse.platformId!,
-            userId: signUpResponse.id,
-            projectId: signUpResponse.projectId,
-            ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, {
-            action: ApplicationEventName.USER_SIGNED_UP,
-            data: {
-                source: 'credentials',
+        applicationEvents(request.log).sendUserEvent(
+            {
+                platformId: signUpResponse.platformId!,
+                userId: signUpResponse.id,
+                projectId: signUpResponse.projectId,
+                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
             },
-        })
+            {
+                action: ApplicationEventName.USER_SIGNED_UP,
+                data: {
+                    source: 'credentials',
+                },
+            },
+        )
 
         return signUpResponse
     })
 
     app.post('/sign-in', SignInRequestOptions, async (request) => {
-
         const predefinedPlatformId = await platformUtils.getPlatformIdForRequest(request)
         const response = await authenticationService(request.log).signInWithPassword({
             email: request.body.email,
@@ -55,15 +55,18 @@ export const authenticationController: FastifyPluginAsyncZod = async (
 
         const responsePlatformId = response.platformId
         assertNotNullOrUndefined(responsePlatformId, 'Platform ID is required')
-        applicationEvents(request.log).sendUserEvent({
-            platformId: responsePlatformId,
-            userId: response.id,
-            projectId: response.projectId,
-            ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, {
-            action: ApplicationEventName.USER_SIGNED_IN,
-            data: {},
-        })
+        applicationEvents(request.log).sendUserEvent(
+            {
+                platformId: responsePlatformId,
+                userId: response.id,
+                projectId: response.projectId,
+                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            },
+            {
+                action: ApplicationEventName.USER_SIGNED_IN,
+                data: {},
+            },
+        )
 
         return response
     })
@@ -75,18 +78,12 @@ export const authenticationController: FastifyPluginAsyncZod = async (
             platformId: request.body.platformId,
         })
     })
-
 }
 
 const rateLimitOptions: RateLimitOptions = {
-    max: Number.parseInt(
-        system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_MAX),
-        10,
-    ),
+    max: Number.parseInt(system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_MAX), 10),
     timeWindow: system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
 }
-
-
 
 const SwitchPlatformRequestOptions = {
     config: {

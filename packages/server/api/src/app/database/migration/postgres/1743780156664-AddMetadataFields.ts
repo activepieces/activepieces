@@ -29,5 +29,4 @@ export class AddMetadataFields1743780156664 implements MigrationInterface {
             ALTER TABLE "flow" DROP COLUMN "metadata"
         `)
     }
-
 }

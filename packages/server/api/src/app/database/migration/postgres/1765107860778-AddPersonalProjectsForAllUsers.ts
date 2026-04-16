@@ -74,21 +74,26 @@ export class AddPersonalProjectsForAllUsers1765107860778 implements MigrationInt
                     params,
                 )
                 totalCreated += values.length
-                system.globalLogger().info({
-                    projectsCreated: totalCreated,
-                    batchSize: values.length,
-                    batchStart: i,
-                }, 'AddPersonalProjectsForAllUsers1765107860778 up BATCH')
+                system.globalLogger().info(
+                    {
+                        projectsCreated: totalCreated,
+                        batchSize: values.length,
+                        batchStart: i,
+                    },
+                    'AddPersonalProjectsForAllUsers1765107860778 up BATCH',
+                )
             }
         }
 
-        system.globalLogger().info({
-            totalProjectsCreated: totalCreated,
-        }, 'AddPersonalProjectsForAllUsers1765107860778 up COMPLETED')
+        system.globalLogger().info(
+            {
+                totalProjectsCreated: totalCreated,
+            },
+            'AddPersonalProjectsForAllUsers1765107860778 up COMPLETED',
+        )
     }
 
     public async down(_queryRunner: QueryRunner): Promise<void> {
         // No down migration needed
     }
-
 }

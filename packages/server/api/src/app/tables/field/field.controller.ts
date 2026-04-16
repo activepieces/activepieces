@@ -1,4 +1,10 @@
-import { CreateFieldRequest, Field, ListFieldsRequestQuery, PrincipalType, UpdateFieldRequest } from '@activepieces/shared'
+import {
+    CreateFieldRequest,
+    Field,
+    ListFieldsRequestQuery,
+    PrincipalType,
+    UpdateFieldRequest,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -9,36 +15,31 @@ import { FieldEntity } from './field.entity'
 import { fieldService } from './field.service'
 
 export const fieldController: FastifyPluginAsyncZod = async (fastify) => {
-
     fastify.post('/', CreateRequest, async (request, reply) => {
         const response = await fieldService.create({ request: request.body, projectId: request.projectId })
         await reply.status(StatusCodes.CREATED).send(response)
-    },
-    )
+    })
 
     fastify.get('/', GetFieldsRequest, async (request) => {
         return fieldService.getAll({
             projectId: request.projectId,
             tableId: request.query.tableId,
         })
-    },
-    )
+    })
 
     fastify.get('/:id', GetFieldByIdRequest, (request) => {
         return fieldService.getById({
             id: request.params.id,
             projectId: request.projectId,
         })
-    },
-    )
+    })
 
     fastify.delete('/:id', DeleteFieldRequest, async (request) => {
         return fieldService.delete({
             id: request.params.id,
             projectId: request.projectId,
         })
-    },
-    )
+    })
 
     fastify.post('/:id', UpdateRequest, async (request) => {
         return fieldService.update({
@@ -46,8 +47,7 @@ export const fieldController: FastifyPluginAsyncZod = async (fastify) => {
             projectId: request.projectId,
             request: request.body,
         })
-    },
-    )
+    })
 }
 const CreateRequest = {
     config: {

@@ -589,13 +589,13 @@ export type MultiSelectOption = {
 
 export {
   MultiSelect,
+  MultiSelectContent,
+  MultiSelectEmpty,
+  MultiSelectGroup,
+  MultiSelectItem,
+  MultiSelectList,
+  MultiSelectSearch,
+  MultiSelectSeparator,
   MultiSelectTrigger,
   MultiSelectValue,
-  MultiSelectSearch,
-  MultiSelectContent,
-  MultiSelectList,
-  MultiSelectItem,
-  MultiSelectGroup,
-  MultiSelectSeparator,
-  MultiSelectEmpty,
 };

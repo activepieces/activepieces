@@ -15,5 +15,4 @@ export class AddDurationForRuns1716725027424 implements MigrationInterface {
             ALTER TABLE "flow_run" DROP COLUMN "duration"
         `)
     }
-
 }

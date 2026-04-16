@@ -36,7 +36,7 @@ export class AddIssueEntityPostgres1714904516114 implements MigrationInterface {
             ALTER TABLE "platform"
             ALTER COLUMN "flowIssuesEnabled" SET NOT NULL
         `)
-    
+
         await queryRunner.query(`
             ALTER TABLE "issue"
             ADD CONSTRAINT "fk_issue_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow"("id") ON DELETE CASCADE ON UPDATE NO ACTION
@@ -67,5 +67,4 @@ export class AddIssueEntityPostgres1714904516114 implements MigrationInterface {
             DROP TABLE "issue"
         `)
     }
-
 }

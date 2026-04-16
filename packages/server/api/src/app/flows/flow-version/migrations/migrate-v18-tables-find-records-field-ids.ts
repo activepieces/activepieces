@@ -1,10 +1,4 @@
-import {
-    Field,
-    FlowActionType,
-    flowStructureUtil,
-    FlowVersion,
-    Step,
-} from '@activepieces/shared'
+import { Field, FlowActionType, FlowVersion, flowStructureUtil, Step } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { FieldEntity } from '../../../tables/field/field.entity'
@@ -81,7 +75,9 @@ export const migrateV18TablesFieldIds: Migration = {
 
             const input = step.settings?.input as Record<string, unknown> | undefined
             const filters = input?.filters as Record<string, unknown> | undefined
-            const filtersArray = filters?.filters as { field?: { id?: string, type?: string, name?: string } }[] | undefined
+            const filtersArray = filters?.filters as
+                | { field?: { id?: string; type?: string; name?: string } }[]
+                | undefined
             if (!Array.isArray(filtersArray)) {
                 return {
                     ...step,

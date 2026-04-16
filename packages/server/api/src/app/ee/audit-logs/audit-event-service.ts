@@ -1,9 +1,4 @@
-import {
-    ApplicationEvent,
-
-    Cursor,
-    isNil,
-    SeekPage } from '@activepieces/shared'
+import { ApplicationEvent, Cursor, isNil, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -26,7 +21,16 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async list({ platformId, cursorRequest, limit, userId, action, projectId, createdBefore, createdAfter }: ListParams): Promise<SeekPage<ApplicationEvent>> {
+    async list({
+        platformId,
+        cursorRequest,
+        limit,
+        userId,
+        action,
+        projectId,
+        createdBefore,
+        createdAfter,
+    }: ListParams): Promise<SeekPage<ApplicationEvent>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: AuditEventEntity,
@@ -37,8 +41,7 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = auditLogRepo().createQueryBuilder('audit_event')
-            .where({ platformId })
+        const queryBuilder = auditLogRepo().createQueryBuilder('audit_event').where({ platformId })
         if (!isNil(userId)) {
             queryBuilder.andWhere({ userId })
         }
@@ -62,13 +65,9 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
         }
 
         const paginationResponse = await paginator.paginate(queryBuilder)
-        return paginationHelper.createPage<ApplicationEvent>(
-            paginationResponse.data,
-            paginationResponse.cursor,
-        )
+        return paginationHelper.createPage<ApplicationEvent>(paginationResponse.data, paginationResponse.cursor)
     },
 })
-
 
 type ListParams = {
     platformId: string

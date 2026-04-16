@@ -1,7 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddPlatformIdToPieceMetadataSqlite1700524446967
-implements MigrationInterface {
+export class AddPlatformIdToPieceMetadataSqlite1700524446967 implements MigrationInterface {
     name = 'AddPlatformIdToPieceMetadataSqlite1700524446967'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

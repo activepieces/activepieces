@@ -1,4 +1,3 @@
-
 import { z } from 'zod'
 import { ProgressUpdateType } from '../../engine/engine-operation'
 
@@ -60,7 +59,13 @@ export type WebhookPauseMetadata = z.infer<typeof WebhookPauseMetadata>
 export const PauseMetadata = z.union([DelayPauseMetadata, WebhookPauseMetadata])
 export type PauseMetadata = z.infer<typeof PauseMetadata>
 
-export const isFlowRunStateTerminal = ({ status, ignoreInternalError }: { status: FlowRunStatus, ignoreInternalError: boolean }): boolean => {
+export const isFlowRunStateTerminal = ({
+    status,
+    ignoreInternalError,
+}: {
+    status: FlowRunStatus
+    ignoreInternalError: boolean
+}): boolean => {
     switch (status) {
         case FlowRunStatus.SUCCEEDED:
         case FlowRunStatus.TIMEOUT:
@@ -78,7 +83,6 @@ export const isFlowRunStateTerminal = ({ status, ignoreInternalError }: { status
             return false
     }
 }
-
 
 export const FAILED_STATES = [
     FlowRunStatus.FAILED,

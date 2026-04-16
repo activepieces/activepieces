@@ -1,7 +1,7 @@
 import {
   FlowVersionTemplate,
-  TemplateTag as TemplateTagType,
   Template,
+  TemplateTag as TemplateTagType,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';

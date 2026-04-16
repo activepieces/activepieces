@@ -1,9 +1,6 @@
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
 
-import {
-    PieceCategory,
-    SuggestionType,
-} from '@activepieces/shared'
+import { PieceCategory, SuggestionType } from '@activepieces/shared'
 import Fuse from 'fuse.js'
 import { PieceMetadataSchema } from '../piece-metadata-entity'
 
@@ -20,21 +17,20 @@ type SearchParams = {
     suggestionType?: SuggestionType
 }
 
-
 const filterBasedOnSearchQuery = ({ searchQuery, pieces, suggestionType }: SearchParams): PieceMetadataSchema[] => {
     if (!searchQuery) {
         return pieces
     }
     const putActionsAndTriggersInAnArray = pieces.map((piece) => {
-        const actions = suggestionType === SuggestionType.ACTION ||
-                    suggestionType === SuggestionType.ACTION_AND_TRIGGER
-            ? Object.values(piece.actions)
-            : []
+        const actions =
+            suggestionType === SuggestionType.ACTION || suggestionType === SuggestionType.ACTION_AND_TRIGGER
+                ? Object.values(piece.actions)
+                : []
 
-        const triggers = suggestionType === SuggestionType.TRIGGER ||
-                    suggestionType === SuggestionType.ACTION_AND_TRIGGER
-            ? Object.values(piece.triggers)
-            : []
+        const triggers =
+            suggestionType === SuggestionType.TRIGGER || suggestionType === SuggestionType.ACTION_AND_TRIGGER
+                ? Object.values(piece.triggers)
+                : []
         return {
             ...piece,
             actions,
@@ -66,16 +62,8 @@ const filterBasedOnSearchQuery = ({ searchQuery, pieces, suggestionType }: Searc
     })
 
     return fuse.search(searchQuery).map(({ item }) => {
-        const suggestedActions = searchForSuggestion(
-            item.actions,
-            searchQuery,
-            item.displayName,
-        )
-        const suggestedTriggers = searchForSuggestion(
-            item.triggers,
-            searchQuery,
-            item.displayName,
-        )
+        const suggestedActions = searchForSuggestion(item.actions, searchQuery, item.displayName)
+        const suggestedTriggers = searchForSuggestion(item.triggers, searchQuery, item.displayName)
 
         return {
             ...item,
@@ -85,7 +73,10 @@ const filterBasedOnSearchQuery = ({ searchQuery, pieces, suggestionType }: Searc
     })
 }
 
-const filterBasedOnCategories = (categories: PieceCategory[] | undefined, pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
+const filterBasedOnCategories = (
+    categories: PieceCategory[] | undefined,
+    pieces: PieceMetadataSchema[],
+): PieceMetadataSchema[] => {
     if (!categories) {
         return pieces
     }
@@ -100,12 +91,10 @@ function searchForSuggestion<T extends ActionBase | TriggerBase>(
     searchQuery: string,
     pieceDisplayName: string,
 ): Record<string, T> {
-    const actionsOrTriggerWithPieceDisplayName = actionsOrTriggers.map(
-        (actionOrTrigger) => ({
-            ...actionOrTrigger,
-            pieceDisplayName,
-        }),
-    )
+    const actionsOrTriggerWithPieceDisplayName = actionsOrTriggers.map((actionOrTrigger) => ({
+        ...actionOrTrigger,
+        pieceDisplayName,
+    }))
 
     const nestedFuse = new Fuse(actionsOrTriggerWithPieceDisplayName, {
         isCaseSensitive: false,
@@ -114,14 +103,11 @@ function searchForSuggestion<T extends ActionBase | TriggerBase>(
         threshold: 0.2,
     })
     const suggestions = nestedFuse.search(searchQuery)
-    return suggestions.reduce<Record<string, T>>(
-        (filteredSuggestions, { item }) => {
-            filteredSuggestions[item.name] = {
-                ...item,
-                pieceDisplayName: undefined,
-            }
-            return filteredSuggestions
-        },
-        {},
-    )
+    return suggestions.reduce<Record<string, T>>((filteredSuggestions, { item }) => {
+        filteredSuggestions[item.name] = {
+            ...item,
+            pieceDisplayName: undefined,
+        }
+        return filteredSuggestions
+    }, {})
 }

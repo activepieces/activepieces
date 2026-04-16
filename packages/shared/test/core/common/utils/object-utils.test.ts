@@ -1,30 +1,26 @@
 import {
-    applyFunctionToValuesSync,
     applyFunctionToValues,
-    sanitizeObjectForPostgresql,
-    groupBy,
-    omit,
+    applyFunctionToValuesSync,
     deleteProperties,
     deleteProps,
-    spreadIfNotUndefined,
-    spreadIfDefined,
+    groupBy,
     isObject,
+    omit,
+    sanitizeObjectForPostgresql,
+    spreadIfDefined,
+    spreadIfNotUndefined,
 } from '../../../../src/lib/core/common/utils/object-utils'
 
 describe('applyFunctionToValuesSync', () => {
     it('should apply function to string values in nested objects', () => {
-        const result = applyFunctionToValuesSync<Record<string, unknown>>(
-            { a: 'hello', b: { c: 'world' } },
-            (str) => str.toUpperCase(),
+        const result = applyFunctionToValuesSync<Record<string, unknown>>({ a: 'hello', b: { c: 'world' } }, (str) =>
+            str.toUpperCase(),
         )
         expect(result).toEqual({ a: 'HELLO', b: { c: 'WORLD' } })
     })
 
     it('should apply function to strings inside arrays', () => {
-        const result = applyFunctionToValuesSync<string[]>(
-            ['a', 'b'],
-            (str) => str.toUpperCase(),
-        )
+        const result = applyFunctionToValuesSync<string[]>(['a', 'b'], (str) => str.toUpperCase())
         expect(result).toEqual(['A', 'B'])
     })
 
@@ -49,10 +45,7 @@ describe('applyFunctionToValues', () => {
     })
 
     it('should handle arrays with async function', async () => {
-        const result = await applyFunctionToValues<string[]>(
-            ['x', 'y'],
-            async (str) => str + '!',
-        )
+        const result = await applyFunctionToValues<string[]>(['x', 'y'], async (str) => str + '!')
         expect(result).toEqual(['x!', 'y!'])
     })
 })
@@ -78,7 +71,10 @@ describe('groupBy', () => {
         ]
         const result = groupBy(items, (item) => item.type)
         expect(result).toEqual({
-            a: [{ type: 'a', value: 1 }, { type: 'a', value: 3 }],
+            a: [
+                { type: 'a', value: 1 },
+                { type: 'a', value: 3 },
+            ],
             b: [{ type: 'b', value: 2 }],
         })
     })

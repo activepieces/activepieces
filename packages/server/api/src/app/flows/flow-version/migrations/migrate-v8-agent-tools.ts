@@ -1,10 +1,4 @@
-import {
-    AgentPieceProps,
-    FlowActionType,
-    flowStructureUtil,
-    FlowVersion,
-    isNil,
-} from '@activepieces/shared'
+import { AgentPieceProps, FlowActionType, FlowVersion, flowStructureUtil, isNil } from '@activepieces/shared'
 import { Migration } from '.'
 
 export const cleanUpAgentTools: Migration = {
@@ -12,8 +6,19 @@ export const cleanUpAgentTools: Migration = {
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
             if (step.type === FlowActionType.PIECE && step.settings.pieceName === '@activepieces/piece-agent') {
-                const tools = (step.settings.input['agentTools'] as { type: string, toolName: string, pieceMetadata: { pieceName: string, pieceVersion: string, actionName: string, connectionExternalId: string }, flowId: string }[]) ?? []
-                const newTools = tools.map(tool => {
+                const tools =
+                    (step.settings.input['agentTools'] as {
+                        type: string
+                        toolName: string
+                        pieceMetadata: {
+                            pieceName: string
+                            pieceVersion: string
+                            actionName: string
+                            connectionExternalId: string
+                        }
+                        flowId: string
+                    }[]) ?? []
+                const newTools = tools.map((tool) => {
                     switch (tool.type) {
                         case 'PIECE': {
                             return {
@@ -24,7 +29,9 @@ export const cleanUpAgentTools: Migration = {
                                     pieceVersion: tool.pieceMetadata.pieceVersion,
                                     actionName: tool.pieceMetadata.actionName,
                                     predefinedInput: {
-                                        auth: !isNil(tool.pieceMetadata.connectionExternalId) ? `{{connections['${tool.pieceMetadata.connectionExternalId}']}}` : undefined,
+                                        auth: !isNil(tool.pieceMetadata.connectionExternalId)
+                                            ? `{{connections['${tool.pieceMetadata.connectionExternalId}']}}`
+                                            : undefined,
                                     },
                                 },
                             }

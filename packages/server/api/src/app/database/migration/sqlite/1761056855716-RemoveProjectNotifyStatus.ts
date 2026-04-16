@@ -7,7 +7,6 @@ export class RemoveProjectNotifyStatus1761056855716 implements MigrationInterfac
         await queryRunner.query(`
             ALTER TABLE "project" DROP COLUMN "notifyStatus"
         `)
-       
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -16,5 +15,4 @@ export class RemoveProjectNotifyStatus1761056855716 implements MigrationInterfac
             ADD "notifyStatus" TEXT NOT NULL DEFAULT 'ALWAYS'
         `)
     }
-
 }

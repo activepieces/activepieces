@@ -1,10 +1,7 @@
 import { apId, DefaultProjectRole, Principal, SigningKeyId } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import jwt, { Algorithm, JwtPayload, SignOptions } from 'jsonwebtoken'
-import {
-    ExternalPrincipal,
-    ExternalTokenPayload,
-} from '../../src/app/ee/managed-authn/lib/external-token-extractor'
+import { ExternalPrincipal, ExternalTokenPayload } from '../../src/app/ee/managed-authn/lib/external-token-extractor'
 
 const generateToken = ({
     payload,
@@ -23,9 +20,7 @@ const generateToken = ({
     return jwt.sign(payload, key, options)
 }
 
-export const generateMockToken = async (
-    principal: Principal,
-): Promise<string> => {
+export const generateMockToken = async (principal: Principal): Promise<string> => {
     const mockPrincipal: Principal = principal
 
     return generateToken({
@@ -91,7 +86,7 @@ export const generateMockExternalToken = (
 ): GenerateMockExternalTokenReturn => {
     const mockExternalTokenPayload: ExternalTokenPayload = {
         externalUserId: params?.externalUserId ?? apId(),
-        role: params?.projectRole as DefaultProjectRole ?? DefaultProjectRole.ADMIN,
+        role: (params?.projectRole as DefaultProjectRole) ?? DefaultProjectRole.ADMIN,
         externalProjectId: params?.externalProjectId ?? apId(),
         firstName: params?.externalFirstName ?? faker.person.firstName(),
         pieces: params?.pieces ?? undefined,

@@ -22,7 +22,8 @@ export const apLockAndPublishTool = (mcp: McpServer, log: FastifyBaseLogger): Mc
     return {
         title: 'ap_lock_and_publish',
         permission: Permission.UPDATE_FLOW_STATUS,
-        description: 'Publish and enable the current draft version of a flow. This locks the draft, sets it as the published version, and enables the flow. Returns validation errors if the flow is not ready.',
+        description:
+            'Publish and enable the current draft version of a flow. This locks the draft, sets it as the published version, and enables the flow. Returns validation errors if the flow is not ready.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow to publish'),
         },
@@ -39,14 +40,16 @@ export const apLockAndPublishTool = (mcp: McpServer, log: FastifyBaseLogger): Mc
             }
 
             const allSteps = flowStructureUtil.getAllSteps(flow.version.trigger)
-            const invalidSteps = allSteps.filter(s => !s.valid && !(s as { skip?: boolean }).skip)
+            const invalidSteps = allSteps.filter((s) => !s.valid && !(s as { skip?: boolean }).skip)
             if (invalidSteps.length > 0) {
-                const stepList = invalidSteps.map(s => `"${s.name}" (${s.displayName})`).join(', ')
+                const stepList = invalidSteps.map((s) => `"${s.name}" (${s.displayName})`).join(', ')
                 return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Flow has invalid steps: ${stepList}. Fix these steps using ap_update_step or ap_update_trigger before publishing.`,
-                    }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `❌ Flow has invalid steps: ${stepList}. Fix these steps using ap_update_step or ap_update_trigger before publishing.`,
+                        },
+                    ],
                 }
             }
 
@@ -64,10 +67,14 @@ export const apLockAndPublishTool = (mcp: McpServer, log: FastifyBaseLogger): Mc
                     operation,
                 })
                 return {
-                    content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" published and enabled successfully.` }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `✅ Flow "${flow.version.displayName}" published and enabled successfully.`,
+                        },
+                    ],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 return mcpUtils.mcpToolError('Publish failed', err)
             }
         },

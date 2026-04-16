@@ -1,10 +1,4 @@
-import {
-    File,
-    FileCompression,
-    FileType,
-    isNil,
-    StepFileUpsertResponse,
-} from '@activepieces/shared'
+import { File, FileCompression, FileType, isNil, StepFileUpsertResponse } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
@@ -37,7 +31,12 @@ export const stepFileService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function constructUploadUrl(log: FastifyBaseLogger, s3Key: string | undefined, data: Buffer | undefined, contentLength: number): Promise<string | undefined> {
+async function constructUploadUrl(
+    log: FastifyBaseLogger,
+    s3Key: string | undefined,
+    data: Buffer | undefined,
+    contentLength: number,
+): Promise<string | undefined> {
     const dataSent = !isNil(data)
     const isNotS3 = isNil(s3Key)
     if (isNotS3 || dataSent) {
@@ -59,7 +58,6 @@ async function constructDownloadUrl(platformId: string, file: File): Promise<str
         platformId,
     })
 }
-
 
 type SaveParams = {
     fileName: string

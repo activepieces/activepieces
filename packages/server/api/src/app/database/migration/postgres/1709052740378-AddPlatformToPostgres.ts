@@ -72,7 +72,6 @@ export class AddPlatformToPostgres1709052740378 implements MigrationInterface {
             DROP TABLE "platform"
         `)
     }
-
 }
 
 async function migrateProjects(queryRunner: QueryRunner) {

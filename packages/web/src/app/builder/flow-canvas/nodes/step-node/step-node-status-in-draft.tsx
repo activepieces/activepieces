@@ -1,9 +1,9 @@
 import {
   FlowTriggerType,
   FlowVersionState,
-  StepOutputStatus,
   flowStructureUtil,
   isNil,
+  StepOutputStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { TriangleAlert } from 'lucide-react';
@@ -12,14 +12,15 @@ import React, { useMemo } from 'react';
 import { InvalidStepIcon } from '@/components/custom/alert-icon';
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
+import { flowRunUtils, StepStatusIcon } from '@/features/flow-runs';
 import { pieceSelectorUtils } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
+
 type DraftStepStatus =
   | 'invalid'
   | 'testing'
@@ -178,4 +179,5 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
 };
 
 ApStepNodeStatusInDraft.displayName = 'ApStepNodeStatusInDraft';
+
 export { ApStepNodeStatusInDraft };

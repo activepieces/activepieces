@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { codyAuth } from '../..';
-import { codyClient } from '../common/client';
-import { folderIdDropdown } from '../common/props';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { codyAuth } from '../..'
+import { codyClient } from '../common/client'
+import { folderIdDropdown } from '../common/props'
 
 export const createDocumentFromText = createAction({
     auth: codyAuth,
@@ -22,9 +22,9 @@ export const createDocumentFromText = createAction({
         }),
     },
     async run(context) {
-        const { folder_id, name, content } = context.propsValue;
-        const apiKey = context.auth;
+        const { folder_id, name, content } = context.propsValue
+        const apiKey = context.auth
 
-        return await codyClient.createDocument(apiKey, name, folder_id, content);
+        return await codyClient.createDocument(apiKey, name, folder_id, content)
     },
-});
+})

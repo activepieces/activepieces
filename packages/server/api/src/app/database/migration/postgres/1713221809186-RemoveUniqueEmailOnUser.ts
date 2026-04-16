@@ -15,5 +15,4 @@ export class RemoveUniqueEmailOnUser1713221809186 implements MigrationInterface 
             WHERE ("platformId" IS NULL)
         `)
     }
-
 }

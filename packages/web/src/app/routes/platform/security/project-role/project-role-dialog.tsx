@@ -1,6 +1,6 @@
 import { Permission, ProjectRole, RoleType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { useState, ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -210,8 +210,8 @@ export const ProjectRoleDialog = ({
             {mode === 'create'
               ? t('Create Role')
               : projectRole?.type === RoleType.DEFAULT
-              ? t('View Role: {name}', { name: projectRole?.name })
-              : t('Edit Role: {name}', { name: projectRole?.name })}
+                ? t('View Role: {name}', { name: projectRole?.name })
+                : t('Edit Role: {name}', { name: projectRole?.name })}
           </DialogTitle>
           <DialogDescription>
             {mode === 'create'

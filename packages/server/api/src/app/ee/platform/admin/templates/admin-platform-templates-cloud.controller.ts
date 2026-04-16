@@ -1,4 +1,12 @@
-import { ActivepiecesError, ApFlagId, CreateTemplateRequestBody, ErrorCode, TemplateType, UpdateTemplateRequestBody, UpdateTemplatesCategoriesFlagRequestBody } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    ApFlagId,
+    CreateTemplateRequestBody,
+    ErrorCode,
+    TemplateType,
+    UpdateTemplateRequestBody,
+    UpdateTemplatesCategoriesFlagRequestBody,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../../core/security/authorization/fastify-security'
@@ -6,10 +14,7 @@ import { flagService } from '../../../../flags/flag.service'
 import { migrateFlowVersionTemplateList } from '../../../../flows/flow-version/migrations'
 import { templateService } from '../../../../template/template.service'
 
-export const adminPlatformTemplatesCloudController: FastifyPluginAsyncZod = async (
-    app,
-) => {
-
+export const adminPlatformTemplatesCloudController: FastifyPluginAsyncZod = async (app) => {
     app.post('/categories', UpdateTemplatesCategoriesFlagRequest, async (request) => {
         return flagService(request.log).save({
             id: ApFlagId.TEMPLATES_CATEGORIES,
@@ -19,7 +24,7 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncZod = asyn
 
     app.get('/:id', GetTemplateRequest, async (request) => {
         const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
-        
+
         if (template.type !== TemplateType.OFFICIAL) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -28,51 +33,58 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncZod = asyn
         }
         return template
     })
-    
 
-    app.post('/', {
-        ...CreateTemplateRequest,
-        preValidation: async (request) => {
-            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
-            request.body.flows = migratedFlows
+    app.post(
+        '/',
+        {
+            ...CreateTemplateRequest,
+            preValidation: async (request) => {
+                const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
+                request.body.flows = migratedFlows
+            },
         },
-    }, async (request) => {
-        const { type } = request.body
-        if (type !== TemplateType.OFFICIAL) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Only official templates are supported to being created',
-                },
+        async (request) => {
+            const { type } = request.body
+            if (type !== TemplateType.OFFICIAL) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'Only official templates are supported to being created',
+                    },
+                })
+            }
+            return templateService(app.log).create({
+                platformId: undefined,
+                params: request.body,
             })
-        }
-        return templateService(app.log).create({
-            platformId: undefined,
-            params: request.body,
-        })
-    })
+        },
+    )
 
-    app.post('/:id', {
-        ...UpdateTemplateRequest,
-        preValidation: async (request) => {
-            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
-            request.body.flows = migratedFlows
+    app.post(
+        '/:id',
+        {
+            ...UpdateTemplateRequest,
+            preValidation: async (request) => {
+                const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
+                request.body.flows = migratedFlows
+            },
         },
-    }, async (request) => {
-        const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
-        
-        if (template.type !== TemplateType.OFFICIAL) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: 'Only official templates are supported to being updated' },
-            })
-        }
-        return templateService(app.log).update({ id: template.id, params: request.body })
-    })
+        async (request) => {
+            const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
+
+            if (template.type !== TemplateType.OFFICIAL) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: 'Only official templates are supported to being updated' },
+                })
+            }
+            return templateService(app.log).update({ id: template.id, params: request.body })
+        },
+    )
 
     app.delete('/:id', DeleteTemplateRequest, async (request) => {
         const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
-        
+
         if (template.type !== TemplateType.OFFICIAL) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,

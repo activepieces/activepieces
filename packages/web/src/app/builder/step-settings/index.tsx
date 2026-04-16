@@ -9,7 +9,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import deepEqual from 'deep-equal';
 import { useEffect, useRef, useState } from 'react';
-import { useForm, Resolver } from 'react-hook-form';
+import { Resolver, useForm } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Form } from '@/components/ui/form';
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { stepsHooks, pieceSelectorUtils, formUtils } from '@/features/pieces';
+import { formUtils, pieceSelectorUtils, stepsHooks } from '@/features/pieces';
 import { projectCollectionUtils } from '@/features/projects';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 
@@ -309,7 +309,9 @@ const StepSettingsContainer = () => {
   );
 };
 StepSettingsContainer.displayName = 'StepSettingsContainer';
+
 export { StepSettingsContainer };
+
 const stripSampleData = (step: FlowAction | FlowTrigger) => {
   const { sampleData: _, ...settingsWithoutSampleData } = step.settings;
   const { lastUpdatedDate: __, ...stepWithoutMetadata } = step;

@@ -3,10 +3,7 @@ import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { DeleteActionRequest } from './index'
 
-function _deleteAction(
-    flowVersion: FlowVersion,
-    request: DeleteActionRequest,
-): FlowVersion {
+function _deleteAction(flowVersion: FlowVersion, request: DeleteActionRequest): FlowVersion {
     let clonedVersion: FlowVersion = flowVersion
     for (const name of request.names) {
         clonedVersion = flowStructureUtil.transferFlow(clonedVersion, (parentStep) => {
@@ -16,10 +13,7 @@ function _deleteAction(
             }
             switch (parentStep.type) {
                 case FlowActionType.LOOP_ON_ITEMS: {
-                    if (
-                        parentStep.firstLoopAction &&
-                        parentStep.firstLoopAction.name === name
-                    ) {
+                    if (parentStep.firstLoopAction && parentStep.firstLoopAction.name === name) {
                         const stepToUpdate: FlowAction = parentStep.firstLoopAction
                         parentStep.firstLoopAction = stepToUpdate.nextAction
                     }

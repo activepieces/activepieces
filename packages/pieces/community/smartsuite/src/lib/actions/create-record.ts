@@ -1,64 +1,62 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { smartsuiteAuth } from '../auth';
-import { smartsuiteCommon, formatRecordFields, transformRecordFields } from '../common/props';
-import { smartSuiteApiCall, TableStucture } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { smartsuiteAuth } from '../auth'
+import { smartSuiteApiCall, TableStucture } from '../common'
+import { formatRecordFields, smartsuiteCommon, transformRecordFields } from '../common/props'
 
 export const createRecord = createAction({
-	name: 'create_record',
-	displayName: 'Create a Record',
-	description: 'Creates a new record in the specified table.',
-	auth: smartsuiteAuth,
-	props: {
-		solutionId: smartsuiteCommon.solutionId,
-		tableId: smartsuiteCommon.tableId,
-		fields: smartsuiteCommon.tableFields,
-	},
-	async run({ auth, propsValue }) {
-		const { tableId, fields, solutionId } = propsValue;
+    name: 'create_record',
+    displayName: 'Create a Record',
+    description: 'Creates a new record in the specified table.',
+    auth: smartsuiteAuth,
+    props: {
+        solutionId: smartsuiteCommon.solutionId,
+        tableId: smartsuiteCommon.tableId,
+        fields: smartsuiteCommon.tableFields,
+    },
+    async run({ auth, propsValue }) {
+        const { tableId, fields, solutionId } = propsValue
 
-		const tableResponse = await smartSuiteApiCall<{
-			structure: TableStucture[];
-		}>({
-			apiKey: auth.props.apiKey,
-			accountId: auth.props.accountId,
-			method: HttpMethod.GET,
-			resourceUri: `/applications/${tableId}`,
-		});
-		const tableSchema = tableResponse.structure;
+        const tableResponse = await smartSuiteApiCall<{
+            structure: TableStucture[]
+        }>({
+            apiKey: auth.props.apiKey,
+            accountId: auth.props.accountId,
+            method: HttpMethod.GET,
+            resourceUri: `/applications/${tableId}`,
+        })
+        const tableSchema = tableResponse.structure
 
-		const formattedFields = formatRecordFields(tableSchema, fields);
+        const formattedFields = formatRecordFields(tableSchema, fields)
 
-		try {
-			const response = await smartSuiteApiCall<Record<string, any>>({
-				apiKey: auth.props.apiKey,
-				accountId: auth.props.accountId,
-				method: HttpMethod.POST,
-				resourceUri: `/applications/${tableId}/records/`,
-				body: formattedFields,
-			});
+        try {
+            const response = await smartSuiteApiCall<Record<string, any>>({
+                apiKey: auth.props.apiKey,
+                accountId: auth.props.accountId,
+                method: HttpMethod.POST,
+                resourceUri: `/applications/${tableId}/records/`,
+                body: formattedFields,
+            })
 
-			const transformedFields = transformRecordFields(tableSchema, response);
+            const transformedFields = transformRecordFields(tableSchema, response)
 
-			return transformedFields;
-		} catch (error: any) {
-			if (error.response?.status === 422) {
-				throw new Error(
-					`Invalid request: ${
-						error.response?.body?.message || 'Missing required fields or invalid data'
-					}`,
-				);
-			}
+            return transformedFields
+        } catch (error: any) {
+            if (error.response?.status === 422) {
+                throw new Error(
+                    `Invalid request: ${error.response?.body?.message || 'Missing required fields or invalid data'}`,
+                )
+            }
 
-			if (error.response?.status === 403) {
-				throw new Error('You do not have permission to create records in this table');
-			}
+            if (error.response?.status === 403) {
+                throw new Error('You do not have permission to create records in this table')
+            }
 
-			if (error.response?.status === 404) {
-				throw new Error(`Solution or table not found: ${solutionId}/${tableId}`);
-			}
+            if (error.response?.status === 404) {
+                throw new Error(`Solution or table not found: ${solutionId}/${tableId}`)
+            }
 
-			throw new Error(`Failed to create record: ${error.message || 'Unknown error'}`);
-		}
-	},
-});
+            throw new Error(`Failed to create record: ${error.message || 'Unknown error'}`)
+        }
+    },
+})

@@ -1,15 +1,15 @@
-import { pipedriveAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { customFieldsProp, ownerIdProp, visibleToProp } from '../common/props';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { isEmpty } from '@activepieces/shared'
+import { pipedriveAuth } from '../auth'
 import {
     pipedriveApiCall,
     pipedrivePaginatedV1ApiCall,
     pipedriveParseCustomFields,
     pipedriveTransformCustomFields,
-} from '../common';
-import { GetField, GetProductResponse } from '../common/types';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+} from '../common'
+import { customFieldsProp, ownerIdProp, visibleToProp } from '../common/props'
+import { GetField, GetProductResponse } from '../common/types'
 
 export const updateProductAction = createAction({
     auth: pipedriveAuth,
@@ -82,9 +82,9 @@ export const updateProductAction = createAction({
             cost,
             overheadCost,
             visibleTo,
-        } = context.propsValue;
+        } = context.propsValue
 
-        const customFields = context.propsValue.customfields ?? {};
+        const customFields = context.propsValue.customfields ?? {}
 
         const productPayload: Record<string, any> = {
             name,
@@ -102,10 +102,10 @@ export const updateProductAction = createAction({
                 },
             ],
             visible_to: visibleTo,
-        };
+        }
 
         if (ownerId) {
-            productPayload.owner_id = ownerId;
+            productPayload.owner_id = ownerId
         }
 
         const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
@@ -113,12 +113,12 @@ export const updateProductAction = createAction({
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
             resourceUri: '/v1/productFields',
-        });
+        })
 
-        const productCustomFields = pipedriveParseCustomFields(customFieldsResponse, customFields);
+        const productCustomFields = pipedriveParseCustomFields(customFieldsResponse, customFields)
 
         if (!isEmpty(productCustomFields)) {
-            productPayload.custom_fields = productCustomFields;
+            productPayload.custom_fields = productCustomFields
         }
 
         const updatedProductResponse = await pipedriveApiCall<GetProductResponse>({
@@ -127,16 +127,16 @@ export const updateProductAction = createAction({
             method: HttpMethod.PATCH,
             resourceUri: '/v2/products/' + id,
             body: productPayload,
-        });
+        })
 
         const updatedProductProperties = pipedriveTransformCustomFields(
             customFieldsResponse,
             updatedProductResponse.data,
-        );
+        )
 
         return {
             ...updatedProductResponse,
             data: updatedProductProperties,
-        };
+        }
     },
-});
+})

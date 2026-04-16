@@ -11,7 +11,6 @@ import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 
 export const scimDiscoveryController: FastifyPluginAsyncZod = async (app) => {
-
     app.get('/ServiceProviderConfig', ServiceProviderConfigRequest, async (_request, reply) => {
         return reply.status(StatusCodes.OK).send({
             schemas: [SCIM_SERVICE_PROVIDER_CONFIG_SCHEMA],

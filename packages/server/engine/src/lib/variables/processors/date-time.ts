@@ -10,8 +10,7 @@ export const dateTimeProcessor: ProcessorFn = (_property, value) => {
     try {
         if (!dateTimeString) throw Error('Undefined input')
         return dayjs.tz(dateTimeString, 'UTC').toISOString()
-    }
-    catch (error) {
+    } catch (error) {
         console.error(error)
         return undefined
     }

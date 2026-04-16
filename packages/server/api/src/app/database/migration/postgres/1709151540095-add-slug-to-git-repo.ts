@@ -40,5 +40,4 @@ export class AddSlugToGitRepo1709151540095 implements MigrationInterface {
 
         log.info('[addSlugToGitRepo1709151540095#down]')
     }
-
 }

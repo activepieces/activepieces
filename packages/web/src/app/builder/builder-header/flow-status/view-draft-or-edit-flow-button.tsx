@@ -69,7 +69,9 @@ const EditFlowOrViewDraftButton = ({ onCanvas }: { onCanvas: boolean }) => {
   );
 };
 EditFlowOrViewDraftButton.displayName = 'EditFlowOrViewDraftButton';
+
 export { EditFlowOrViewDraftButton };
+
 function getButtonTextAndIcon({
   hasPermissionToEditFlow,
 }: {

@@ -1,14 +1,13 @@
-import { hubspotAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { MarkdownVariant } from '@activepieces/shared'
+import { Client } from '@hubspot/api-client'
+import { hubspotAuth } from '../auth'
+import { OBJECT_TYPE } from '../common/constants'
 import {
     getDefaultPropertiesForObject,
     standardObjectDynamicProperties,
     standardObjectPropertiesDropdown,
-
-} from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
-import { MarkdownVariant } from '@activepieces/shared';
-import { Client } from '@hubspot/api-client';
+} from '../common/props'
 
 export const updateContactAction = createAction({
     auth: hubspotAuth,
@@ -37,34 +36,34 @@ export const updateContactAction = createAction({
         }),
     },
     async run(context) {
-        const {contactId} = context.propsValue;
-        const objectProperties = context.propsValue.objectProperties ?? {};
-        const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? [];
+        const { contactId } = context.propsValue
+        const objectProperties = context.propsValue.objectProperties ?? {}
+        const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? []
 
-        const contactProperties: Record<string, string> = {};
+        const contactProperties: Record<string, string> = {}
 
         // Add additional properties to the contactProperties object
         Object.entries(objectProperties).forEach(([key, value]) => {
-            if ((Array.isArray(value) && value.length === 0)) {
-                return;  
+            if (Array.isArray(value) && value.length === 0) {
+                return
             }
             // Format values if they are arrays
-            contactProperties[key] = Array.isArray(value) ? value.join(';') : value;
-        });
+            contactProperties[key] = Array.isArray(value) ? value.join(';') : value
+        })
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: context.auth.access_token })
 
         const updatedContact = await client.crm.contacts.basicApi.update(contactId, {
             properties: contactProperties,
-        });
+        })
         // Retrieve default properties for the contact and merge with additional properties to retrieve
-        const defaultContactProperties = getDefaultPropertiesForObject(OBJECT_TYPE.CONTACT);
+        const defaultContactProperties = getDefaultPropertiesForObject(OBJECT_TYPE.CONTACT)
 
         const contactDetails = await client.crm.contacts.basicApi.getById(updatedContact.id, [
             ...defaultContactProperties,
             ...additionalPropertiesToRetrieve,
-        ]);
+        ])
 
-        return contactDetails;
+        return contactDetails
     },
-});
+})

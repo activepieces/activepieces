@@ -1,6 +1,6 @@
 import {
-  FlowTrigger,
   FlowActionType,
+  FlowTrigger,
   flowStructureUtil,
   PieceCategory,
 } from '@activepieces/shared';

@@ -1,6 +1,6 @@
 import {
-  FlowActionType,
   BranchExecutionType,
+  FlowActionType,
   FlowOperationType,
   flowStructureUtil,
   isNil,

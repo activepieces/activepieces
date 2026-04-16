@@ -2,8 +2,7 @@ import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
-export class AddSmtpAndPrivacyUrlToPlatform1699491705906
-implements MigrationInterface {
+export class AddSmtpAndPrivacyUrlToPlatform1699491705906 implements MigrationInterface {
     name = 'AddSmtpAndPrivacyUrlToPlatform1699491705906'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

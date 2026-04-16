@@ -1,4 +1,21 @@
-import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, isNil, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
+import {
+    AppConnection,
+    AppConnectionStatus,
+    AppConnectionType,
+    AppConnectionValue,
+    AppConnectionWithoutSensitiveData,
+    assertNotNullOrUndefined,
+    Flow,
+    FlowOperationType,
+    FlowVersion,
+    FlowVersionState,
+    flowStructureUtil,
+    isNil,
+    PlatformId,
+    PopulatedFlow,
+    ProjectId,
+    UserId,
+} from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains } from 'typeorm'
@@ -14,19 +31,41 @@ import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
 
 export const appConnectionHandler = (log: FastifyBaseLogger) => ({
-    async updateFlowsWithAppConnection(flows: PopulatedFlow[], params: UpdateFlowsWithAppConnectionParams): Promise<void> {
+    async updateFlowsWithAppConnection(
+        flows: PopulatedFlow[],
+        params: UpdateFlowsWithAppConnectionParams,
+    ): Promise<void> {
         const { appConnection, newAppConnection, userId } = params
 
-        await Promise.all(flows.map(async (flow) => {
-            const project = await projectService(log).getOneOrThrow(flow.projectId)
-            const lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
-                flowId: flow.id,
-                versionId: undefined,
-            })
-            // Don't Change the order of the following two functions
-            await handleLockedVersion(flow, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
-            await handleDraftVersion(flow, lastVersion, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
-        }))
+        await Promise.all(
+            flows.map(async (flow) => {
+                const project = await projectService(log).getOneOrThrow(flow.projectId)
+                const lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
+                    flowId: flow.id,
+                    versionId: undefined,
+                })
+                // Don't Change the order of the following two functions
+                await handleLockedVersion(
+                    flow,
+                    userId,
+                    flow.projectId,
+                    project.platformId,
+                    appConnection,
+                    newAppConnection,
+                    log,
+                )
+                await handleDraftVersion(
+                    flow,
+                    lastVersion,
+                    userId,
+                    flow.projectId,
+                    project.platformId,
+                    appConnection,
+                    newAppConnection,
+                    log,
+                )
+            }),
+        )
     },
 
     async refresh(connection: AppConnection, projectId: ProjectId, log: FastifyBaseLogger): Promise<AppConnection> {
@@ -62,9 +101,9 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
     },
 
     /**
- * We should make sure this is accessed only once, as a race condition could occur where the token needs to be
- * refreshed and it gets accessed at the same time, which could result in the wrong request saving incorrect data.
- */
+     * We should make sure this is accessed only once, as a race condition could occur where the token needs to be
+     * refreshed and it gets accessed at the same time, which could result in the wrong request saving incorrect data.
+     */
     async lockAndRefreshConnection({
         projectId,
         externalId,
@@ -74,7 +113,6 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
         externalId: string
         log: FastifyBaseLogger
     }) {
-
         return distributedLock(log).runExclusive({
             key: `${projectId}_${externalId}`,
             timeoutInSeconds: 60,
@@ -94,14 +132,13 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                         return appConnection
                     }
                     const refreshedAppConnection = await this.refresh(appConnection, projectId, log)
-        
+
                     await appConnectionsRepo().update(refreshedAppConnection.id, {
                         status: AppConnectionStatus.ACTIVE,
                         value: await encryptUtils.encryptObject(refreshedAppConnection.value),
                     })
                     return refreshedAppConnection
-                }
-                catch (e) {
+                } catch (e) {
                     exceptionHandler.handle(e, log)
                     if (!isNil(appConnection) && oauth2Util(log).isUserError(e)) {
                         appConnection.status = AppConnectionStatus.ERROR
@@ -115,9 +152,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async decryptConnection(
-        encryptedConnection: AppConnectionSchema,
-    ): Promise<AppConnection> {
+    async decryptConnection(encryptedConnection: AppConnectionSchema): Promise<AppConnection> {
         const value = await encryptUtils.decryptObject<AppConnectionValue>(encryptedConnection.value)
         const connection: AppConnection = {
             ...encryptedConnection,
@@ -140,8 +175,15 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
     },
 })
 
-
-async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
+async function handleLockedVersion(
+    flow: PopulatedFlow,
+    userId: UserId,
+    projectId: ProjectId,
+    platformId: PlatformId,
+    appConnection: AppConnectionWithoutSensitiveData,
+    newAppConnection: AppConnectionWithoutSensitiveData,
+    log: FastifyBaseLogger,
+) {
     if (isNil(flow.publishedVersionId)) {
         return
     }
@@ -172,7 +214,16 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
     })
 }
 
-async function handleDraftVersion(flow: Flow, lastVersion: FlowVersion, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
+async function handleDraftVersion(
+    flow: Flow,
+    lastVersion: FlowVersion,
+    userId: UserId,
+    projectId: ProjectId,
+    platformId: PlatformId,
+    appConnection: AppConnectionWithoutSensitiveData,
+    newAppConnection: AppConnectionWithoutSensitiveData,
+    log: FastifyBaseLogger,
+) {
     if (lastVersion.state !== FlowVersionState.DRAFT) {
         return
     }
@@ -187,9 +238,12 @@ async function handleDraftVersion(flow: Flow, lastVersion: FlowVersion, userId: 
             request: replaceConnectionInFlowVersion(lastVersion, appConnection, newAppConnection),
         },
     })
-
 }
-function replaceConnectionInFlowVersion(flowVersion: FlowVersion, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData) {
+function replaceConnectionInFlowVersion(
+    flowVersion: FlowVersion,
+    appConnection: AppConnectionWithoutSensitiveData,
+    newAppConnection: AppConnectionWithoutSensitiveData,
+) {
     return flowStructureUtil.transferFlow(flowVersion, (step) => {
         if (step.settings?.input?.auth?.includes(appConnection.externalId)) {
             return {
@@ -198,7 +252,11 @@ function replaceConnectionInFlowVersion(flowVersion: FlowVersion, appConnection:
                     ...step.settings,
                     input: {
                         ...step.settings?.input,
-                        auth: replaceConnectionIdInAuth(step.settings.input.auth, appConnection.externalId, newAppConnection.externalId),
+                        auth: replaceConnectionIdInAuth(
+                            step.settings.input.auth,
+                            appConnection.externalId,
+                            newAppConnection.externalId,
+                        ),
                     },
                 },
             }
@@ -208,10 +266,7 @@ function replaceConnectionInFlowVersion(flowVersion: FlowVersion, appConnection:
 }
 
 function replaceConnectionIdInAuth(auth: string, oldConnectionId: string, newConnectionId: string): string {
-    return auth.replace(
-        new RegExp(`connections\\['${oldConnectionId}'\\]`, 'g'),
-        `connections['${newConnectionId}']`,
-    )
+    return auth.replace(new RegExp(`connections\\['${oldConnectionId}'\\]`, 'g'), `connections['${newConnectionId}']`)
 }
 
 type UpdateFlowsWithAppConnectionParams = {

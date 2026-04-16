@@ -1,5 +1,25 @@
 import { memoryLock } from '@activepieces/server-utils'
-import { ActivepiecesError, apId, ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, DiffState, ErrorCode, FlowProjectOperation, FlowProjectOperationType, FlowSyncError, isNil, ListProjectReleasesRequest, PlatformId, ProjectId, ProjectRelease, ProjectReleaseType, ProjectState, ProjectSyncPlan, SeekPage } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    ApId,
+    apId,
+    CreateProjectReleaseRequestBody,
+    DiffReleaseRequest,
+    DiffState,
+    ErrorCode,
+    FlowProjectOperation,
+    FlowProjectOperationType,
+    FlowSyncError,
+    isNil,
+    ListProjectReleasesRequest,
+    PlatformId,
+    ProjectId,
+    ProjectRelease,
+    ProjectReleaseType,
+    ProjectState,
+    ProjectSyncPlan,
+    SeekPage,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
@@ -10,6 +30,7 @@ import { gitRepoService } from './git-sync/git-sync.service'
 import { ProjectReleaseEntity } from './project-release.entity'
 import { projectDiffService } from './project-state/project-diff.service'
 import { projectStateService } from './project-state/project-state.service'
+
 const projectReleaseRepo = repoFactory(ProjectReleaseEntity)
 
 export const projectReleaseService = {
@@ -40,8 +61,7 @@ export const projectReleaseService = {
                 type: params.type,
             }
             return await projectReleaseRepo().save(projectRelease)
-        }
-        finally {
+        } finally {
             await lock.release()
         }
     },
@@ -63,23 +83,25 @@ export const projectReleaseService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const { data, cursor } = await paginator.paginate(projectReleaseRepo()
-            .createQueryBuilder('project_release')
-            .where({
-                projectId,
-            })
-            .orderBy('created', 'DESC'))
-        const enrichedData = await Promise.all(data.map(
-            async (projectRelease) => this.enrich(projectRelease, log),
-        ))
+        const { data, cursor } = await paginator.paginate(
+            projectReleaseRepo()
+                .createQueryBuilder('project_release')
+                .where({
+                    projectId,
+                })
+                .orderBy('created', 'DESC'),
+        )
+        const enrichedData = await Promise.all(data.map(async (projectRelease) => this.enrich(projectRelease, log)))
         return paginationHelper.createPage<ProjectRelease>(enrichedData, cursor)
     },
     async enrich(projectRelease: ProjectRelease, log: FastifyBaseLogger): Promise<ProjectRelease> {
         return {
             ...projectRelease,
-            importedByUser: isNil(projectRelease.importedBy) ? undefined : await userService(log).getMetaInformation({
-                id: projectRelease.importedBy,
-            }) ?? undefined,
+            importedByUser: isNil(projectRelease.importedBy)
+                ? undefined
+                : ((await userService(log).getMetaInformation({
+                      id: projectRelease.importedBy,
+                  })) ?? undefined),
         }
     },
     async getOneOrThrow(params: GetOneProjectReleaseParams): Promise<ProjectRelease> {
@@ -98,7 +120,13 @@ export const projectReleaseService = {
         return projectRelease
     },
 }
-async function findDiffStates({ projectId, userId, platformId, params, log }: FindDiffStatesParams): Promise<DiffState> {
+async function findDiffStates({
+    projectId,
+    userId,
+    platformId,
+    params,
+    log,
+}: FindDiffStatesParams): Promise<DiffState> {
     const [newState, currentState] = await Promise.all([
         getStateFromCreateRequest({ projectId, userId, platformId, params, log }),
         projectStateService(log).getProjectState(projectId, log),
@@ -152,7 +180,13 @@ async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
         tables,
     }
 }
-async function getStateFromCreateRequest({ projectId, userId, platformId, params, log }: GetStateFromCreateRequestParams): Promise<ProjectState> {
+async function getStateFromCreateRequest({
+    projectId,
+    userId,
+    platformId,
+    params,
+    log,
+}: GetStateFromCreateRequestParams): Promise<ProjectState> {
     switch (params.type) {
         case ProjectReleaseType.GIT: {
             const gitRepo = await gitRepoService(log).getOneByProjectOrThrow({ projectId })
@@ -172,7 +206,15 @@ async function getStateFromCreateRequest({ projectId, userId, platformId, params
     }
 }
 
-async function assertTargetProjectOwnedByPlatform({ targetProjectId, platformId, log }: { targetProjectId: string, platformId: PlatformId, log: FastifyBaseLogger }): Promise<void> {
+async function assertTargetProjectOwnedByPlatform({
+    targetProjectId,
+    platformId,
+    log,
+}: {
+    targetProjectId: string
+    platformId: PlatformId
+    log: FastifyBaseLogger
+}): Promise<void> {
     const targetProject = await projectService(log).getOne(targetProjectId)
     if (isNil(targetProject) || targetProject.platformId !== platformId) {
         throw new ActivepiecesError({

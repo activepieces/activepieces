@@ -7,9 +7,12 @@ export class AddUserIdentitySqlite1735602676499 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'Starting migration')
+        log.info(
+            {
+                name: this.name,
+            },
+            'Starting migration',
+        )
 
         // Check for duplicate emails in user table
         const duplicateEmails = await queryRunner.query(`
@@ -20,7 +23,9 @@ export class AddUserIdentitySqlite1735602676499 implements MigrationInterface {
         `)
 
         if (duplicateEmails.length > 0) {
-            throw new Error('Migration failed: Duplicate emails found in user table. Please resolve duplicate emails before running migration.')
+            throw new Error(
+                'Migration failed: Duplicate emails found in user table. Please resolve duplicate emails before running migration.',
+            )
         }
 
         await queryRunner.query(`
@@ -74,28 +79,48 @@ export class AddUserIdentitySqlite1735602676499 implements MigrationInterface {
             const identityId = apId()
 
             // Insert into user_identity
-            await queryRunner.query(`
+            await queryRunner.query(
+                `
                 INSERT INTO "user_identity" (
                     "id", "email", "password", "trackEvents", "newsLetter", 
                     "verified", "firstName", "lastName", "tokenVersion", "provider"
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `, [
-                identityId, user.email, user.password, user.trackEvents, user.newsLetter,
-                user.verified, user.firstName, user.lastName, user.tokenVersion, 'EMAIL',
-            ])
+            `,
+                [
+                    identityId,
+                    user.email,
+                    user.password,
+                    user.trackEvents,
+                    user.newsLetter,
+                    user.verified,
+                    user.firstName,
+                    user.lastName,
+                    user.tokenVersion,
+                    'EMAIL',
+                ],
+            )
 
             // Insert into temporary_user with identityId
-            await queryRunner.query(`
+            await queryRunner.query(
+                `
                 INSERT INTO "temporary_user" (
                     "id", "created", "updated", "status", "externalId", 
                     "platformId", "platformRole", "identityId"
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            `, [
-                user.id, user.created, user.updated, user.status, user.externalId,
-                user.platformId, user.platformRole, identityId,
-            ])
+            `,
+                [
+                    user.id,
+                    user.created,
+                    user.updated,
+                    user.status,
+                    user.externalId,
+                    user.platformId,
+                    user.platformRole,
+                    identityId,
+                ],
+            )
         }
 
         await queryRunner.query(`
@@ -178,5 +203,4 @@ export class AddUserIdentitySqlite1735602676499 implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
     }
-
 }

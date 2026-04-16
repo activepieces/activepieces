@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
-import { callSalesforceApi, salesforcesCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { callSalesforceApi, salesforcesCommon } from '../common'
 
 export const deleteRecord = createAction({
     auth: salesforceAuth,
@@ -13,21 +13,21 @@ export const deleteRecord = createAction({
         record_id: salesforcesCommon.record,
     },
     async run(context) {
-        const { object, record_id } = context.propsValue;
+        const { object, record_id } = context.propsValue
 
         if (!object) {
-            throw new Error('Object is not defined. Please select an object.');
+            throw new Error('Object is not defined. Please select an object.')
         }
 
         await callSalesforceApi(
             HttpMethod.DELETE,
             context.auth,
             `/services/data/v56.0/sobjects/${object}/${record_id}`,
-            undefined
-        );
+            undefined,
+        )
 
         return {
             success: true,
-        };
+        }
     },
-});
+})

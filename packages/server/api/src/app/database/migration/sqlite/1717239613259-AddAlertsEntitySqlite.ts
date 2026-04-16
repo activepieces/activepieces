@@ -7,9 +7,12 @@ export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'up',
+        )
         await queryRunner.query(`
             CREATE TABLE "alert" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -182,7 +185,7 @@ export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
     `)
 
         let countAlerts = 0
-        const alertsToInsert = projects.map((project: { projectId: string, receiver: string }) => {
+        const alertsToInsert = projects.map((project: { projectId: string; receiver: string }) => {
             const alertId = apId()
             countAlerts++
             return queryRunner.query(
@@ -192,9 +195,12 @@ export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
         })
         await Promise.all(alertsToInsert)
 
-        log.info({
-            name: this.name,
-        }, `CreateAlerts1717239613259 Migrated ${countAlerts} alerts`)
+        log.info(
+            {
+                name: this.name,
+            },
+            `CreateAlerts1717239613259 Migrated ${countAlerts} alerts`,
+        )
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -353,5 +359,4 @@ export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
             DROP TABLE "alert"
         `)
     }
-
 }

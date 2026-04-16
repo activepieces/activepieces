@@ -1,4 +1,12 @@
-import { ConsumeJobRequest, ConsumeJobResponse, EngineResponseStatus, ExecutionType, isNil, JobData, tryCatch } from '@activepieces/shared'
+import {
+    ConsumeJobRequest,
+    ConsumeJobResponse,
+    EngineResponseStatus,
+    ExecutionType,
+    isNil,
+    JobData,
+    tryCatch,
+} from '@activepieces/shared'
 import { Worker as BullMQWorker, Job } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -33,20 +41,16 @@ function ensureBullMQWorker(queueName: string, log: FastifyBaseLogger): Promise<
 
 async function createBullMQWorker(queueName: string, log: FastifyBaseLogger): Promise<BullMQWorker> {
     const isOtelEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
-    const worker = new BullMQWorker(
-        queueName,
-        undefined,
-        {
-            connection: await redisConnections.create(),
-            telemetry: isOtelEnabled ? new BullMQOtel(queueName) : undefined,
-            concurrency: 500,
-            autorun: false,
-            lockDuration: LOCK_DURATION_MS,
-            stalledInterval: 30_000,
-            maxStalledCount: 3,
-            drainDelay: DRAIN_DELAY_SECONDS,
-        },
-    )
+    const worker = new BullMQWorker(queueName, undefined, {
+        connection: await redisConnections.create(),
+        telemetry: isOtelEnabled ? new BullMQOtel(queueName) : undefined,
+        concurrency: 500,
+        autorun: false,
+        lockDuration: LOCK_DURATION_MS,
+        stalledInterval: 30_000,
+        maxStalledCount: 3,
+        drainDelay: DRAIN_DELAY_SECONDS,
+    })
     await worker.waitUntilReady()
     await worker.startStalledCheckTimer()
 
@@ -83,11 +87,15 @@ function ensureDispatcher(queueName: string, worker: BullMQWorker, log: FastifyB
     return dispatcher
 }
 
-async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyBaseLogger): Promise<ConsumeJobRequest | null> {
+async function tryDequeue(
+    worker: BullMQWorker,
+    queueName: string,
+    log: FastifyBaseLogger,
+): Promise<ConsumeJobRequest | null> {
     const token = `token-${Date.now()}-${Math.random().toString(36).slice(2)}`
     const job = await worker.getNextJob(token)
     if (isNil(job)) {
-        return null  // waiting list empty — drainDelay provided backpressure
+        return null // waiting list empty — drainDelay provided backpressure
     }
     log.info({ queueName, jobId: job.id, jobName: job.name }, '[jobBroker#tryDequeue] Dequeued job')
 
@@ -109,7 +117,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
         if (interceptorResult.priority !== undefined) {
             await job.changePriority({ priority: interceptorResult.priority })
         }
-        return tryDequeue(worker, queueName, log)  // retry getNextJob instead of returning null
+        return tryDequeue(worker, queueName, log) // retry getNextJob instead of returning null
     }
 
     const engineToken = await accessTokenManager(log).generateEngineToken({
@@ -128,7 +136,12 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
     }
 }
 
-async function returnJobToQueue(jobId: string, token: string, queueName: string, log: FastifyBaseLogger): Promise<void> {
+async function returnJobToQueue(
+    jobId: string,
+    token: string,
+    queueName: string,
+    log: FastifyBaseLogger,
+): Promise<void> {
     const job = await fetchJobFromRedis(queueName, jobId, log)
     if (isNil(job)) {
         return
@@ -144,13 +157,25 @@ async function returnJobToQueue(jobId: string, token: string, queueName: string,
     log.info({ jobId }, '[jobBroker#returnJobToQueue] orphaned job returned to queue')
 }
 
-async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jobData: JobData, job: Job, log: FastifyBaseLogger }): Promise<{ delayInMs: number, priority?: number } | 'DISCARD' | null> {
+async function runInterceptors({
+    jobId,
+    jobData,
+    job,
+    log,
+}: {
+    jobId: string
+    jobData: JobData
+    job: Job
+    log: FastifyBaseLogger
+}): Promise<{ delayInMs: number; priority?: number } | 'DISCARD' | null> {
     const passed: JobInterceptor[] = []
     for (const interceptor of interceptors) {
         const result = await interceptor.preDispatch({ jobId, jobData, job, log })
         if (result.verdict === InterceptorVerdict.DISCARD) {
             for (const passedInterceptor of passed) {
-                const { error } = await tryCatch(() => passedInterceptor.onJobFinished({ jobId, jobData, failed: false, log }))
+                const { error } = await tryCatch(() =>
+                    passedInterceptor.onJobFinished({ jobId, jobData, failed: false, log }),
+                )
                 if (error) {
                     log.error({ jobId, error: String(error) }, '[jobBroker] Failed to clean up interceptor on discard')
                 }
@@ -159,7 +184,9 @@ async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jo
         }
         if (result.verdict === InterceptorVerdict.REJECT) {
             for (const passedInterceptor of passed) {
-                const { error } = await tryCatch(() => passedInterceptor.onJobFinished({ jobId, jobData, failed: false, log }))
+                const { error } = await tryCatch(() =>
+                    passedInterceptor.onJobFinished({ jobId, jobData, failed: false, log }),
+                )
                 if (error) {
                     log.error({ jobId, error: String(error) }, '[jobBroker] Failed to clean up interceptor on reject')
                 }
@@ -173,7 +200,11 @@ async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jo
 
 function isStalledJobError(error: unknown): boolean {
     const msg = error instanceof Error ? error.message : String(error)
-    return msg.includes('Missing lock') || msg.includes('job stalled') || msg.includes('Cannot read properties of null (reading \'moveToFinishedArgs\')')
+    return (
+        msg.includes('Missing lock') ||
+        msg.includes('job stalled') ||
+        msg.includes("Cannot read properties of null (reading 'moveToFinishedArgs')")
+    )
 }
 
 function buildFailedReason(errorMessage: string, logs?: string): string {
@@ -195,7 +226,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         return dispatcher.poll()
     },
 
-    async completeJob(input: ConsumeJobResponse & { jobId: string, token: string, queueName: string }): Promise<void> {
+    async completeJob(input: ConsumeJobResponse & { jobId: string; token: string; queueName: string }): Promise<void> {
         const job = await fetchJobFromRedis(input.queueName, input.jobId, log)
         if (isNil(job)) {
             return
@@ -212,7 +243,10 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
             }
 
             if (input.status === EngineResponseStatus.INTERNAL_ERROR) {
-                await job.moveToFailed(new Error(buildFailedReason(input.errorMessage ?? 'Internal error', input.logs)), input.token)
+                await job.moveToFailed(
+                    new Error(buildFailedReason(input.errorMessage ?? 'Internal error', input.logs)),
+                    input.token,
+                )
                 if (userJobData) {
                     await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
                         status: EngineResponseStatus.INTERNAL_ERROR,
@@ -236,10 +270,15 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         })
         if (error) {
             if (isStalledJobError(error)) {
-                log.warn({ jobId: input.jobId, error: String(error), originalError: input.errorMessage }, '[jobBroker] Stalled job error during completeJob')
-            }
-            else {
-                log.error({ jobId: input.jobId, error: String(error), originalError: input.errorMessage }, '[jobBroker] Failed to move job to final state')
+                log.warn(
+                    { jobId: input.jobId, error: String(error), originalError: input.errorMessage },
+                    '[jobBroker] Stalled job error during completeJob',
+                )
+            } else {
+                log.error(
+                    { jobId: input.jobId, error: String(error), originalError: input.errorMessage },
+                    '[jobBroker] Failed to move job to final state',
+                )
             }
             if (userJobData) {
                 await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
@@ -252,14 +291,19 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
 
         const failed = input.status === EngineResponseStatus.INTERNAL_ERROR || !isNil(error)
         for (const interceptor of interceptors) {
-            const { error: interceptorError } = await tryCatch(() => interceptor.onJobFinished({ jobId: input.jobId, jobData, failed, log }))
+            const { error: interceptorError } = await tryCatch(() =>
+                interceptor.onJobFinished({ jobId: input.jobId, jobData, failed, log }),
+            )
             if (interceptorError) {
-                log.error({ jobId: input.jobId, error: String(interceptorError) }, '[jobBroker] Interceptor onJobFinished failed')
+                log.error(
+                    { jobId: input.jobId, error: String(interceptorError) },
+                    '[jobBroker] Interceptor onJobFinished failed',
+                )
             }
         }
     },
 
-    async extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void> {
+    async extendLock(input: { jobId: string; token: string; queueName: string }): Promise<void> {
         const job = await fetchJobFromRedis(input.queueName, input.jobId, log)
         if (isNil(job)) {
             return
@@ -278,7 +322,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         await Promise.allSettled(
             workers
                 .filter((r): r is PromiseFulfilledResult<BullMQWorker> => r.status === 'fulfilled')
-                .map(r => r.value.close()),
+                .map((r) => r.value.close()),
         )
         workerPromises.clear()
     },

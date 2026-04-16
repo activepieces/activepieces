@@ -20,4 +20,4 @@ function _deleteBranch(flowVersion: FlowVersion, request: DeleteBranchRequest): 
     })
 }
 
-export { _deleteBranch } 
+export { _deleteBranch }

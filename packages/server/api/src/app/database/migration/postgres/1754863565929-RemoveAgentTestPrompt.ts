@@ -15,5 +15,4 @@ export class RemoveAgentTestPrompt1754863565929 implements MigrationInterface {
             ADD "testPrompt" character varying NOT NULL
         `)
     }
-
 }

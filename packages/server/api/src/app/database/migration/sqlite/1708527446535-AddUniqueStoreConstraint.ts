@@ -476,5 +476,4 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
     }
-
 }

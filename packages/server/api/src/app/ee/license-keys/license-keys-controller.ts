@@ -5,8 +5,6 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { licenseKeysService } from './license-keys-service'
 
 export const licenseKeysController: FastifyPluginAsyncZod = async (app) => {
-
-
     app.get('/:licenseKey', GetLicenseKeyRequest, async (req) => {
         const licenseKey = await licenseKeysService(app.log).getKey(req.params.licenseKey)
         return licenseKey
@@ -29,7 +27,6 @@ export const licenseKeysController: FastifyPluginAsyncZod = async (app) => {
         await licenseKeysService(app.log).applyLimits(platformId, key)
         return key
     })
-
 }
 const VerifyLicenseKeyRequest = {
     config: {

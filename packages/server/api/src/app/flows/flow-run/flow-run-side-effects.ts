@@ -1,17 +1,16 @@
-import { ApplicationEventName,
-    FlowRun,
-    isFlowRunStateTerminal,
-} from '@activepieces/shared'
+import { ApplicationEventName, FlowRun, isFlowRunStateTerminal } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { applicationEvents } from '../../helper/application-events'
 import { flowRunHooks } from './flow-run-hooks'
 
 export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
     async onFinish(flowRun: FlowRun): Promise<void> {
-        if (!isFlowRunStateTerminal({
-            status: flowRun.status,
-            ignoreInternalError: true,
-        })) {
+        if (
+            !isFlowRunStateTerminal({
+                status: flowRun.status,
+                ignoreInternalError: true,
+            })
+        ) {
             return
         }
         await flowRunHooks(log).onFinish(flowRun)
@@ -39,7 +38,6 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         })
     },
     async onStart(flowRun: FlowRun): Promise<void> {
-       
         applicationEvents(log).sendWorkerEvent(flowRun.projectId, {
             action: ApplicationEventName.FLOW_RUN_STARTED,
             data: {
@@ -48,4 +46,3 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         })
     },
 })
-

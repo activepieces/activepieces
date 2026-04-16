@@ -113,5 +113,4 @@ export class AddFlowSchemaVersionSqlite1730760312426 implements MigrationInterfa
             CREATE INDEX "idx_flow_version_flow_id" ON "flow_version" ("flowId")
         `)
     }
-
 }

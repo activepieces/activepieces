@@ -1,23 +1,23 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { lightfunnelsAuth } from '../auth';
-import { lightfunnelsCommon } from '../common/index';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { lightfunnelsAuth } from '../auth'
+import { lightfunnelsCommon } from '../common/index'
 
 export const getCustomer = createAction({
-  auth: lightfunnelsAuth,
-  name: 'get_customer',
-  displayName: 'Get Customer',
-  description: 'Retrieve a specific customer by ID',
-  props: {
-    customerId: Property.ShortText({
-      displayName: 'Customer ID',
-      description: 'The ID of the customer to retrieve',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const { customerId } = context.propsValue;
+    auth: lightfunnelsAuth,
+    name: 'get_customer',
+    displayName: 'Get Customer',
+    description: 'Retrieve a specific customer by ID',
+    props: {
+        customerId: Property.ShortText({
+            displayName: 'Customer ID',
+            description: 'The ID of the customer to retrieve',
+            required: true,
+        }),
+    },
+    async run(context) {
+        const { customerId } = context.propsValue
 
-    const graphqlQuery = `
+        const graphqlQuery = `
       query CustomerQuery($id: ID!) {
         node(id: $id) {
           ... on Customer {
@@ -37,14 +37,10 @@ export const getCustomer = createAction({
           }
         }
       }
-    `;
+    `
 
-    const response = await lightfunnelsCommon.makeGraphQLRequest(
-      context.auth,
-      graphqlQuery,
-      { id: customerId }
-    );
+        const response = await lightfunnelsCommon.makeGraphQLRequest(context.auth, graphqlQuery, { id: customerId })
 
-    return response.data.node;
-  },
-});
+        return response.data.node
+    },
+})

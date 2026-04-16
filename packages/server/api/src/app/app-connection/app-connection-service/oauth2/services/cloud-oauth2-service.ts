@@ -1,19 +1,9 @@
-
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
-    AppConnectionType,
-    CloudOAuth2ConnectionValue,
-    ErrorCode,
-} from '@activepieces/shared'
+import { ActivepiecesError, AppConnectionType, CloudOAuth2ConnectionValue, ErrorCode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { apAxios } from '../../../../helper/ap-axios'
 import { system } from '../../../../helper/system/system'
-import {
-    ClaimOAuth2Request,
-    OAuth2Service,
-    RefreshOAuth2Request,
-} from '../oauth2-service'
+import { ClaimOAuth2Request, OAuth2Service, RefreshOAuth2Request } from '../oauth2-service'
 
 export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudOAuth2ConnectionValue> => ({
     refresh: async ({
@@ -40,10 +30,7 @@ export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudO
             type: AppConnectionType.CLOUD_OAUTH2,
         }
     },
-    claim: async ({
-        request,
-        pieceName,
-    }: ClaimOAuth2Request): Promise<CloudOAuth2ConnectionValue> => {
+    claim: async ({ request, pieceName }: ClaimOAuth2Request): Promise<CloudOAuth2ConnectionValue> => {
         try {
             const cloudRequest: ClaimWithCloudRequest = {
                 code: request.code,
@@ -55,21 +42,16 @@ export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudO
                 edition: system.getEdition(),
             }
             const value = (
-                await apAxios.post<CloudOAuth2ConnectionValue>(
-                    'https://secrets.activepieces.com/claim',
-                    cloudRequest,
-                    {
-                        timeout: 10000,
-                    },
-                )
+                await apAxios.post<CloudOAuth2ConnectionValue>('https://secrets.activepieces.com/claim', cloudRequest, {
+                    timeout: 10000,
+                })
             ).data
             return {
                 ...value,
                 token_url: request.tokenUrl,
                 props: request.props,
             }
-        }
-        catch (e: unknown) {
+        } catch (e: unknown) {
             log.error(e)
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_CLOUD_CLAIM,

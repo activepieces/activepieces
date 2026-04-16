@@ -1,16 +1,16 @@
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { deleteContact } from './lib/actions/delete-contact';
-import { addOrUpdateContact } from './lib/actions/add-or-update-contact';
-import { createEvent } from "./lib/actions/create-event";
-import { BASE_URL } from "./lib/common/constants";
-import { InstasentAuthType } from './lib/common/types';
-import { PieceCategory } from "@activepieces/shared";
-import { instasentAuth } from './lib/auth';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { addOrUpdateContact } from './lib/actions/add-or-update-contact'
+import { createEvent } from './lib/actions/create-event'
+import { deleteContact } from './lib/actions/delete-contact'
+import { instasentAuth } from './lib/auth'
+import { BASE_URL } from './lib/common/constants'
+import { InstasentAuthType } from './lib/common/types'
 
-export const getBaseUrl = (auth: { projectId: string, datasourceId: string }) => {
-    return `${BASE_URL}/project/${auth.projectId}/datasource/${auth.datasourceId}`;
-};
+export const getBaseUrl = (auth: { projectId: string; datasourceId: string }) => {
+    return `${BASE_URL}/project/${auth.projectId}/datasource/${auth.datasourceId}`
+}
 
 const authDescriptionMarkdown = `
 ## Obtain your auth data
@@ -18,15 +18,15 @@ const authDescriptionMarkdown = `
 2. Access to your project
 3. Create an Activepieces data source
 4. Copy the auth parameters and paste them in the fields below
-`;
+`
 
 export const instasent = createPiece({
-    displayName: "Instasent",
+    displayName: 'Instasent',
     minimumSupportedRelease: '0.30.0',
-    logoUrl: "https://cdn.activepieces.com/pieces/instasent.jpg",
-    categories:[PieceCategory.MARKETING],
-    authors: ["dev-instasent", "https://github.com/dev-instasent"],
+    logoUrl: 'https://cdn.activepieces.com/pieces/instasent.jpg',
+    categories: [PieceCategory.MARKETING],
+    authors: ['dev-instasent', 'https://github.com/dev-instasent'],
     auth: instasentAuth,
     actions: [addOrUpdateContact, deleteContact, createEvent],
     triggers: [],
-});
+})

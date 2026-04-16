@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sapAribaAuth } from '../auth';
-import { sapAribaCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { sapAribaAuth } from '../auth'
+import { sapAribaCommon } from '../common'
 
 export const getPendingApprovables = createAction({
     auth: sapAribaAuth,
@@ -56,44 +56,43 @@ export const getPendingApprovables = createAction({
         }),
     },
     async run(context) {
-        const { realm, approvableType, user, passwordAdapter, count, top, skip } = context.propsValue;
+        const { realm, approvableType, user, passwordAdapter, count, top, skip } = context.propsValue
 
         const queryParams: Record<string, string> = {
             realm,
-        };
+        }
 
-        const filters: string[] = [];
+        const filters: string[] = []
         if (approvableType) {
-            filters.push(`approvableType eq '${approvableType}'`);
+            filters.push(`approvableType eq '${approvableType}'`)
         }
         if (user) {
-            filters.push(`user eq '${user}'`);
+            filters.push(`user eq '${user}'`)
         }
         if (passwordAdapter) {
-            filters.push(`passwordAdapter eq '${passwordAdapter}'`);
+            filters.push(`passwordAdapter eq '${passwordAdapter}'`)
         }
 
         if (filters.length > 0) {
-            queryParams['$filter'] = filters.join(' and ');
+            queryParams['$filter'] = filters.join(' and ')
         }
         if (count) {
-            queryParams['$count'] = 'true';
+            queryParams['$count'] = 'true'
         }
         if (top) {
-            queryParams['$top'] = top.toString();
+            queryParams['$top'] = top.toString()
         }
         if (skip) {
-            queryParams['$skip'] = skip.toString();
+            queryParams['$skip'] = skip.toString()
         }
 
         const response = await sapAribaCommon.makeRequest(
             context.auth,
             HttpMethod.GET,
             '/pendingApprovables',
-            queryParams
-        );
+            queryParams,
+        )
 
-        return response;
+        return response
     },
-});
-
+})

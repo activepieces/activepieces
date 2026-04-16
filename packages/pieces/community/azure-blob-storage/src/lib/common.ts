@@ -1,6 +1,6 @@
-import { Property } from '@activepieces/pieces-framework';
-import { BlobServiceClient } from '@azure/storage-blob';
-import { azureBlobStorageAuth } from './auth';
+import { Property } from '@activepieces/pieces-framework'
+import { BlobServiceClient } from '@azure/storage-blob'
+import { azureBlobStorageAuth } from './auth'
 
 export const containerProp = Property.Dropdown({
     displayName: 'Container',
@@ -14,16 +14,16 @@ export const containerProp = Property.Dropdown({
                 disabled: true,
                 options: [],
                 placeholder: 'Please authenticate first',
-            };
-        };
+            }
+        }
 
-        const blobServiceClient = BlobServiceClient.fromConnectionString(auth.props.connectionString);
-        const containers = [];
+        const blobServiceClient = BlobServiceClient.fromConnectionString(auth.props.connectionString)
+        const containers = []
         for await (const container of blobServiceClient.listContainers()) {
             containers.push({
                 label: container.name,
                 value: container.name,
-            });
+            })
         }
 
         return {
@@ -31,5 +31,5 @@ export const containerProp = Property.Dropdown({
             options: containers,
             placeholder: 'Select a container',
         }
-    }
+    },
 })

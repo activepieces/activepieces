@@ -1,4 +1,9 @@
-import { ActivepiecesError, ConnectSecretManagerRequest, ErrorCode, SecretManagerProviderId } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    ConnectSecretManagerRequest,
+    ErrorCode,
+    SecretManagerProviderId,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { awsProvider } from './aws-provider'
 import { cyberarkConjurProvider } from './cyberark-conjur-provider'
@@ -11,7 +16,11 @@ function extractErrorMessage(error: unknown): string {
     return 'Unknown error'
 }
 
-export function throwConnectionError({ error, provider, log }: {
+export function throwConnectionError({
+    error,
+    provider,
+    log,
+}: {
     error: unknown
     provider: SecretManagerProviderId
     log: FastifyBaseLogger
@@ -24,7 +33,13 @@ export function throwConnectionError({ error, provider, log }: {
     })
 }
 
-export function throwGetSecretError({ error, path, provider, request, log }: {
+export function throwGetSecretError({
+    error,
+    path,
+    provider,
+    request,
+    log,
+}: {
     error: unknown
     path: string
     provider: SecretManagerProviderId
@@ -46,10 +61,10 @@ export type SecretManagerProvider<K extends SecretManagerProviderId> = {
     getSecret: (params: { path: string }, config: SecretManagerConfigFor<K>) => Promise<string>
 }
 
-export type SecretManagerConfigFor<K extends SecretManagerProviderId> =
-  Extract<ConnectSecretManagerRequest, { providerId: K }>['config']
-
-
+export type SecretManagerConfigFor<K extends SecretManagerProviderId> = Extract<
+    ConnectSecretManagerRequest,
+    { providerId: K }
+>['config']
 
 export type SecretManagerProvidersMap = {
     [K in SecretManagerProviderId]: SecretManagerProvider<K>
@@ -64,6 +79,9 @@ const secretManagerProvidersMap = (log: FastifyBaseLogger): SecretManagerProvide
     }
 }
 
-export const secretManagerProvider = <K extends SecretManagerProviderId>(log: FastifyBaseLogger, providerId: K): SecretManagerProvider<K> => {
+export const secretManagerProvider = <K extends SecretManagerProviderId>(
+    log: FastifyBaseLogger,
+    providerId: K,
+): SecretManagerProvider<K> => {
     return secretManagerProvidersMap(log)[providerId]
 }

@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared';
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import posthog from 'posthog-js';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDeepCompareEffect } from 'react-use';
 
 import { flagsHooks } from '@/hooks/flags-hooks';

@@ -34,8 +34,7 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
                 registerLockDisconnectHandler({ socket, userId: principal.id, projectId, app })
 
                 callback?.(result)
-            }
-            catch (error) {
+            } catch (error) {
                 app.log.error({ err: error }, '[LOCK_RESOURCE] Failed to acquire lock')
                 callback?.({ acquired: false, lock: null })
             }
@@ -54,8 +53,7 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
                         resourceId: data.resourceId,
                     })
                 }
-            }
-            catch (error) {
+            } catch (error) {
                 app.log.error({ err: error }, '[UNLOCK_RESOURCE] Failed to release lock')
             }
         }
@@ -84,7 +82,7 @@ function registerLockDisconnectHandler({ socket, userId, projectId, app }: Regis
 }
 
 type RegisterDisconnectHandlerParams = {
-    socket: { data: Record<string, unknown>, once: (event: string, handler: () => void) => void, id: string }
+    socket: { data: Record<string, unknown>; once: (event: string, handler: () => void) => void; id: string }
     userId: string
     projectId: string
     app: FastifyInstance

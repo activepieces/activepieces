@@ -33,9 +33,11 @@ export const ScimMeta = z.object({
 })
 
 const ScimCustomAttributesSchema = {
-    [SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA]: z.object({
-        platformRole: z.nativeEnum(PlatformRole),
-    }).optional(),
+    [SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA]: z
+        .object({
+            platformRole: z.nativeEnum(PlatformRole),
+        })
+        .optional(),
 }
 
 export const ScimUserResource = z.object({
@@ -168,7 +170,10 @@ export const ScimResourceId = z.object({
 export type ScimResourceId = z.infer<typeof ScimResourceId>
 
 export class ScimError extends Error {
-    constructor(public status: number, public detail: string) {
+    constructor(
+        public status: number,
+        public detail: string,
+    ) {
         super(detail)
     }
 

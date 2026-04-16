@@ -9,11 +9,11 @@ export const systemJobHandlers = {
     },
     getJobHandler(name: SystemJobName): SystemJobHandler {
         const jobHandler = jobHandlers.get(name)
-    
+
         if (isNil(jobHandler)) {
             throw new Error(`No handler for job ${name}`)
         }
-        
+
         return jobHandler
     },
 }

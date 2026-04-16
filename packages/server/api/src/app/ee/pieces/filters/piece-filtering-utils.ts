@@ -54,15 +54,12 @@ async function filterBasedOnProject(
     projectId: string,
     pieces: PieceMetadataSchema[],
 ): Promise<PieceMetadataSchema[]> {
-    const { pieces: allowedPieces, piecesFilterType } = await projectLimitsService(log).getOrCreateDefaultPlan(projectId)
+    const { pieces: allowedPieces, piecesFilterType } =
+        await projectLimitsService(log).getOrCreateDefaultPlan(projectId)
 
-    const filterPredicate: Record<
-    PiecesFilterType,
-    (p: PieceMetadataSchema) => boolean
-    > = {
+    const filterPredicate: Record<PiecesFilterType, (p: PieceMetadataSchema) => boolean> = {
         [PiecesFilterType.NONE]: () => true,
-        [PiecesFilterType.ALLOWED]: (p) =>
-            allowedPieces.includes(p.name),
+        [PiecesFilterType.ALLOWED]: (p) => allowedPieces.includes(p.name),
     }
 
     const predicate = filterPredicate[piecesFilterType]
@@ -76,15 +73,9 @@ async function filterPiecesBasedPlatform(
     platformWithPlan: Platform,
     pieces: PieceMetadataSchema[],
 ): Promise<PieceMetadataSchema[]> {
-
-    const filterPredicate: Record<
-    FilteredPieceBehavior,
-    (p: PieceMetadataSchema) => boolean
-    > = {
-        [FilteredPieceBehavior.ALLOWED]: (p) =>
-            platformWithPlan.filteredPieceNames.includes(p.name),
-        [FilteredPieceBehavior.BLOCKED]: (p) =>
-            !platformWithPlan.filteredPieceNames.includes(p.name),
+    const filterPredicate: Record<FilteredPieceBehavior, (p: PieceMetadataSchema) => boolean> = {
+        [FilteredPieceBehavior.ALLOWED]: (p) => platformWithPlan.filteredPieceNames.includes(p.name),
+        [FilteredPieceBehavior.BLOCKED]: (p) => !platformWithPlan.filteredPieceNames.includes(p.name),
     }
 
     const predicate = filterPredicate[platformWithPlan.filteredPieceBehavior]

@@ -1,5 +1,5 @@
-import { PieceAuth, OAuth2AuthorizationMethod } from '@activepieces/pieces-framework';
-import { OAuth2GrantType } from '@activepieces/shared';
+import { OAuth2AuthorizationMethod, PieceAuth } from '@activepieces/pieces-framework'
+import { OAuth2GrantType } from '@activepieces/shared'
 
 const markdown = `
 To obtain your Reddit API credentials:
@@ -14,17 +14,17 @@ To obtain your Reddit API credentials:
    - redirect uri: as shown in Redirect URL field
 5. Click "create app".
 6. Note down the client ID (under the app name) and client secret.
-`;
+`
 
 export const redditAuth = PieceAuth.OAuth2({
-  description: markdown,
-  authUrl: 'https://www.reddit.com/api/v1/authorize',
-  tokenUrl: 'https://www.reddit.com/api/v1/access_token',
-  required: true,
-  scope: ['identity', 'read', 'submit', 'edit', 'history', 'flair'],
-  authorizationMethod: OAuth2AuthorizationMethod.HEADER,
-  extra: {
-    grantType: OAuth2GrantType.AUTHORIZATION_CODE,
-    responseType: 'code'
-  }
-});
+    description: markdown,
+    authUrl: 'https://www.reddit.com/api/v1/authorize',
+    tokenUrl: 'https://www.reddit.com/api/v1/access_token',
+    required: true,
+    scope: ['identity', 'read', 'submit', 'edit', 'history', 'flair'],
+    authorizationMethod: OAuth2AuthorizationMethod.HEADER,
+    extra: {
+        grantType: OAuth2GrantType.AUTHORIZATION_CODE,
+        responseType: 'code',
+    },
+})

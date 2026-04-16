@@ -31,5 +31,4 @@ export class AddAgentsEnabledToPlatformPlan1751309258332 implements MigrationInt
             ALTER TABLE "platform_plan" DROP COLUMN "agentsEnabled"
         `)
     }
-
 }

@@ -6,9 +6,12 @@ export class StoreTriggerEventsInFileSqlite1731247180217 implements MigrationInt
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'up',
+        )
         await queryRunner.query(`
             DROP INDEX "idx_trigger_event_flow_id"
         `)
@@ -40,9 +43,12 @@ export class StoreTriggerEventsInFileSqlite1731247180217 implements MigrationInt
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'down')
+        log.info(
+            {
+                name: this.name,
+            },
+            'down',
+        )
         await queryRunner.query(`
             DROP INDEX "idx_trigger_event_flow_id"
         `)
@@ -70,5 +76,4 @@ export class StoreTriggerEventsInFileSqlite1731247180217 implements MigrationInt
             CREATE INDEX "idx_trigger_event_flow_id" ON "trigger_event" ("flowId")
         `)
     }
-
 }

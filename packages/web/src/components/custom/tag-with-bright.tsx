@@ -1,4 +1,4 @@
-import { LineChart, Clock } from 'lucide-react';
+import { Clock, LineChart } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 

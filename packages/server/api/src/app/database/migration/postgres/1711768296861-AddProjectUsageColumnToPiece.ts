@@ -15,5 +15,4 @@ export class AddProjectUsageColumnToPiece1711768296861 implements MigrationInter
             ALTER TABLE "piece_metadata" DROP COLUMN "projectUsage"
         `)
     }
-
 }

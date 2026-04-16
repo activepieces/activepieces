@@ -43,10 +43,30 @@ export const pinoLogging = {
             },
         })
     },
-    createRunContextLog: ({ log, runId, webhookId, flowId, flowVersionId }: { log: FastifyBaseLogger, runId: string, webhookId: string | undefined, flowId: string, flowVersionId: string }) => {
+    createRunContextLog: ({
+        log,
+        runId,
+        webhookId,
+        flowId,
+        flowVersionId,
+    }: {
+        log: FastifyBaseLogger
+        runId: string
+        webhookId: string | undefined
+        flowId: string
+        flowVersionId: string
+    }) => {
         return log.child({ runId, webhookId, flowId, flowVersionId })
     },
-    createWebhookContextLog: ({ log, webhookId, flowId }: { log: FastifyBaseLogger, webhookId: string, flowId: string }) => {
+    createWebhookContextLog: ({
+        log,
+        webhookId,
+        flowId,
+    }: {
+        log: FastifyBaseLogger
+        webhookId: string
+        flowId: string
+    }) => {
         return log.child({ webhookId, flowId })
     },
 }

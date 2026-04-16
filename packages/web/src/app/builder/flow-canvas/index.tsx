@@ -1,23 +1,23 @@
 import {
   FlowActionType,
-  flowStructureUtil,
   FlowTriggerType,
   FlowVersion,
+  flowStructureUtil,
   isNil,
   Note,
   Step,
 } from '@activepieces/shared';
 import {
-  ReactFlow,
   Background,
-  SelectionMode,
-  OnSelectionChangeParams,
-  useStoreApi,
-  PanOnScrollMode,
-  useKeyPress,
   BackgroundVariant,
-  getNodesBounds,
   CoordinateExtent,
+  getNodesBounds,
+  OnSelectionChangeParams,
+  PanOnScrollMode,
+  ReactFlow,
+  SelectionMode,
+  useKeyPress,
+  useStoreApi,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';

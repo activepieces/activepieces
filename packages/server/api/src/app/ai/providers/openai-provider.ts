@@ -1,11 +1,20 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderModel, AIProviderModelType, OpenAIProviderAuthConfig, OpenAIProviderConfig } from '@activepieces/shared'
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import {
+    AIProviderModel,
+    AIProviderModelType,
+    OpenAIProviderAuthConfig,
+    OpenAIProviderConfig,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
 
 export const openaiProvider: AIProviderStrategy<OpenAIProviderAuthConfig, OpenAIProviderConfig> = {
     name: 'OpenAI',
-    async validateConnection(authConfig: OpenAIProviderAuthConfig, config: OpenAIProviderConfig, _log: FastifyBaseLogger): Promise<void> {
+    async validateConnection(
+        authConfig: OpenAIProviderAuthConfig,
+        config: OpenAIProviderConfig,
+        _log: FastifyBaseLogger,
+    ): Promise<void> {
         await openaiProvider.listModels(authConfig, config)
     },
     async listModels(authConfig: OpenAIProviderAuthConfig, _config: OpenAIProviderConfig): Promise<AIProviderModel[]> {
@@ -13,18 +22,14 @@ export const openaiProvider: AIProviderStrategy<OpenAIProviderAuthConfig, OpenAI
             url: 'https://api.openai.com/v1/models',
             method: HttpMethod.GET,
             headers: {
-                'Authorization': `Bearer ${authConfig.apiKey}`,
+                Authorization: `Bearer ${authConfig.apiKey}`,
                 'Content-Type': 'application/json',
             },
         })
 
         const { data } = res.body
 
-        const openaiImageModels = [
-            'gpt-image-1',
-            'dall-e-3',
-            'dall-e-2',
-        ]
+        const openaiImageModels = ['gpt-image-1', 'dall-e-3', 'dall-e-2']
 
         return data.map((model: OpenAIModel) => ({
             id: model.id,

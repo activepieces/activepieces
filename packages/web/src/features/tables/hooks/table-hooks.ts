@@ -1,8 +1,8 @@
 import {
   FieldType,
   SharedTemplate,
-  TableTemplate,
   Table,
+  TableTemplate,
   UncategorizedFolderId,
 } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -46,8 +46,8 @@ export const tableHooks = {
           limit: limit
             ? limit
             : searchParams.get('limit')
-            ? parseInt(searchParams.get('limit')!)
-            : undefined,
+              ? parseInt(searchParams.get('limit')!)
+              : undefined,
           name: searchParams.get('name') ?? undefined,
         }),
       meta: { showErrorDialog: true, loadSubsetOptions: {} },

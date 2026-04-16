@@ -1,20 +1,20 @@
-import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { PieceCategory } from '@activepieces/shared';
-import { downloadView } from './lib/actions/download-view';
-import { runExtractRefreshTask } from './lib/actions/run-extract-refresh-task';
-import { refreshWorkbook } from './lib/actions/refresh-workbook';
-import { findView } from './lib/actions/find-view';
-import { findWorkbook } from './lib/actions/find-workbook';
-import { workbookEventTrigger } from './lib/triggers/workbook-events';
-import { workbookRefreshEventTrigger } from './lib/triggers/workbook-refresh-events';
-import { datasourceEventTrigger } from './lib/triggers/datasource-events';
-import { datasourceRefreshEventTrigger } from './lib/triggers/datasource-refresh-events';
-import { userDeletedTrigger } from './lib/triggers/user-deleted';
-import { viewDeletedTrigger } from './lib/triggers/view-deleted';
-import { labelEventTrigger } from './lib/triggers/label-events';
-import { newJobTrigger } from './lib/triggers/new-job';
-import { listExtractRefreshTasksTrigger } from './lib/triggers/list-extract-refresh-tasks';
-import { tableauAuth } from './lib/auth';
+import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { downloadView } from './lib/actions/download-view'
+import { findView } from './lib/actions/find-view'
+import { findWorkbook } from './lib/actions/find-workbook'
+import { refreshWorkbook } from './lib/actions/refresh-workbook'
+import { runExtractRefreshTask } from './lib/actions/run-extract-refresh-task'
+import { tableauAuth } from './lib/auth'
+import { datasourceEventTrigger } from './lib/triggers/datasource-events'
+import { datasourceRefreshEventTrigger } from './lib/triggers/datasource-refresh-events'
+import { labelEventTrigger } from './lib/triggers/label-events'
+import { listExtractRefreshTasksTrigger } from './lib/triggers/list-extract-refresh-tasks'
+import { newJobTrigger } from './lib/triggers/new-job'
+import { userDeletedTrigger } from './lib/triggers/user-deleted'
+import { viewDeletedTrigger } from './lib/triggers/view-deleted'
+import { workbookEventTrigger } from './lib/triggers/workbook-events'
+import { workbookRefreshEventTrigger } from './lib/triggers/workbook-refresh-events'
 
 const markdown = `
 ## Tableau Authentication Setup
@@ -41,27 +41,26 @@ Choose **either** Username/Password **or** Personal Access Token:
 - Enter the token name and secret
 
 **Security Note:** Personal Access Tokens are recommended for production use as they provide better security and can be revoked individually.
-`;
+`
 
 export const tableau = createPiece({
-  displayName: "Tableau",
-  description: "Business intelligence and analytics platform for data visualization",
-  auth: tableauAuth,
-  minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://cdn.activepieces.com/pieces/tableau.png",
-  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
-  authors: ["onyedikachi-david"],
-  actions: [downloadView, runExtractRefreshTask, refreshWorkbook, findView, findWorkbook],
-  triggers: [
-    workbookEventTrigger,
-    workbookRefreshEventTrigger,
-    datasourceEventTrigger,
-    datasourceRefreshEventTrigger,
-    userDeletedTrigger,
-    viewDeletedTrigger,
-    labelEventTrigger,
-    newJobTrigger,
-    listExtractRefreshTasksTrigger,
-  ],
-});
-    
+    displayName: 'Tableau',
+    description: 'Business intelligence and analytics platform for data visualization',
+    auth: tableauAuth,
+    minimumSupportedRelease: '0.36.1',
+    logoUrl: 'https://cdn.activepieces.com/pieces/tableau.png',
+    categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+    authors: ['onyedikachi-david'],
+    actions: [downloadView, runExtractRefreshTask, refreshWorkbook, findView, findWorkbook],
+    triggers: [
+        workbookEventTrigger,
+        workbookRefreshEventTrigger,
+        datasourceEventTrigger,
+        datasourceRefreshEventTrigger,
+        userDeletedTrigger,
+        viewDeletedTrigger,
+        labelEventTrigger,
+        newJobTrigger,
+        listExtractRefreshTasksTrigger,
+    ],
+})

@@ -8,11 +8,7 @@ import { isolateProcess } from '../sandbox/isolate'
 import { createSandbox } from '../sandbox/sandbox'
 import { Sandbox, SandboxMount } from '../sandbox/types'
 
-export function createSandboxForJob(params: {
-    log: Logger
-    apiClient: WorkerToApiContract
-    boxId: number
-}): Sandbox {
+export function createSandboxForJob(params: { log: Logger; apiClient: WorkerToApiContract; boxId: number }): Sandbox {
     const { log, apiClient, boxId } = params
     const settings = workerSettings.getSettings()
     const sandboxId = nanoid()

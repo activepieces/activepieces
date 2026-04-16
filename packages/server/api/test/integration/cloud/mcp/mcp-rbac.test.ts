@@ -1,18 +1,12 @@
-import { beforeAll, afterAll, describe, it, expect } from 'vitest'
+import { apId, DefaultProjectRole, McpServer, McpServerStatus, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
-import {
-    apId,
-    DefaultProjectRole,
-    McpServer,
-    McpServerStatus,
-    Permission,
-} from '@activepieces/shared'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { createMemberContext, createTestContext } from '../../../helpers/test-context'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { resolvePermissionChecker } from '../../../../src/app/mcp/mcp-service'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apSetupGuideTool } from '../../../../src/app/mcp/tools/ap-setup-guide'
-import { resolvePermissionChecker } from '../../../../src/app/mcp/mcp-service'
+import { createMemberContext, createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
 let mockLog: FastifyBaseLogger
@@ -38,8 +32,8 @@ function makeMcp(projectId: string): McpServer {
     }
 }
 
-function text(result: { content: Array<{ type: 'text', text: string }> }): string {
-    return result.content.map(c => c.text).join('\n')
+function text(result: { content: Array<{ type: 'text'; text: string }> }): string {
+    return result.content.map((c) => c.text).join('\n')
 }
 
 describe('MCP Tool RBAC', () => {
@@ -49,9 +43,17 @@ describe('MCP Tool RBAC', () => {
             const memberCtx = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.EDITOR })
             const mcp = makeMcp(ctx.project.id)
 
-            const checker = await resolvePermissionChecker({ userId: memberCtx.user.id, projectId: ctx.project.id, log: mockLog })
+            const checker = await resolvePermissionChecker({
+                userId: memberCtx.user.id,
+                projectId: ctx.project.id,
+                log: mockLog,
+            })
             const tool = apCreateFlowTool(mcp, mockLog)
-            const execute = checker.wrapExecute({ execute: tool.execute, permission: tool.permission, toolTitle: tool.title })
+            const execute = checker.wrapExecute({
+                execute: tool.execute,
+                permission: tool.permission,
+                toolTitle: tool.title,
+            })
             const result = await execute({ flowName: 'Editor Flow' })
 
             expect(text(result)).toContain('✅')
@@ -62,7 +64,11 @@ describe('MCP Tool RBAC', () => {
             const ctx = await createTestContext(app)
             const memberCtx = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.VIEWER })
 
-            const checker = await resolvePermissionChecker({ userId: memberCtx.user.id, projectId: ctx.project.id, log: mockLog })
+            const checker = await resolvePermissionChecker({
+                userId: memberCtx.user.id,
+                projectId: ctx.project.id,
+                log: mockLog,
+            })
             const error = checker.check(Permission.WRITE_FLOW, 'ap_create_flow')
 
             expect(error).not.toBeNull()
@@ -76,9 +82,17 @@ describe('MCP Tool RBAC', () => {
             const memberCtx = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.VIEWER })
             const mcp = makeMcp(ctx.project.id)
 
-            const checker = await resolvePermissionChecker({ userId: memberCtx.user.id, projectId: ctx.project.id, log: mockLog })
+            const checker = await resolvePermissionChecker({
+                userId: memberCtx.user.id,
+                projectId: ctx.project.id,
+                log: mockLog,
+            })
             const tool = apListFlowsTool(mcp, mockLog)
-            const execute = checker.wrapExecute({ execute: tool.execute, permission: tool.permission, toolTitle: tool.title })
+            const execute = checker.wrapExecute({
+                execute: tool.execute,
+                permission: tool.permission,
+                toolTitle: tool.title,
+            })
             const result = await execute({})
 
             expect(text(result)).toContain('✅')
@@ -88,7 +102,11 @@ describe('MCP Tool RBAC', () => {
             const ctx = await createTestContext(app)
             const memberCtx = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.VIEWER })
 
-            const checker = await resolvePermissionChecker({ userId: memberCtx.user.id, projectId: ctx.project.id, log: mockLog })
+            const checker = await resolvePermissionChecker({
+                userId: memberCtx.user.id,
+                projectId: ctx.project.id,
+                log: mockLog,
+            })
             const error = checker.check(Permission.UPDATE_FLOW_STATUS, 'ap_lock_and_publish')
 
             expect(error).not.toBeNull()
@@ -101,15 +119,22 @@ describe('MCP Tool RBAC', () => {
             const memberCtx = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.VIEWER })
             const mcp = makeMcp(ctx.project.id)
 
-            const checker = await resolvePermissionChecker({ userId: memberCtx.user.id, projectId: ctx.project.id, log: mockLog })
+            const checker = await resolvePermissionChecker({
+                userId: memberCtx.user.id,
+                projectId: ctx.project.id,
+                log: mockLog,
+            })
             const tool = apSetupGuideTool(mcp, mockLog)
 
             const error = checker.check(tool.permission, tool.title)
             expect(error).toBeNull()
 
-            const execute = checker.wrapExecute({ execute: tool.execute, permission: tool.permission, toolTitle: tool.title })
+            const execute = checker.wrapExecute({
+                execute: tool.execute,
+                permission: tool.permission,
+                toolTitle: tool.title,
+            })
             expect(execute).toBe(tool.execute)
         })
     })
-
 })

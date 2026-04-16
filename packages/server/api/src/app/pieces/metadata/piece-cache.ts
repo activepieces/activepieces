@@ -1,14 +1,20 @@
 import { pieceTranslation } from '@activepieces/pieces-framework'
 import { ApEnvironment, isNil, LocalesEnum, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { lru, LRU } from 'tiny-lru'
+import { LRU, lru } from 'tiny-lru'
 import { In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
 import { AppSystemProp, apVersionUtil } from '../../helper/system/system-props'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
-import { filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled } from './utils'
+import {
+    filterPieceBasedOnType,
+    isNewerVersion,
+    isSupportedRelease,
+    lastVersionOfEachPiece,
+    loadDevPiecesIfEnabled,
+} from './utils'
 
 const repo = repoFactory(PieceMetadataEntity)
 
@@ -26,14 +32,18 @@ export enum PieceMetadataRefreshType {
 }
 
 export type PieceMetadataRefreshMessage =
-    | { type: PieceMetadataRefreshType.CREATE, piece: PieceMetadataSchema }
-    | { type: PieceMetadataRefreshType.DELETE, pieces: { name: string, version: string }[] }
-    | { type: PieceMetadataRefreshType.UPDATE_USAGE, piece: { name: string, version: string, platformId?: string, projectUsage: number } }
+    | { type: PieceMetadataRefreshType.CREATE; piece: PieceMetadataSchema }
+    | { type: PieceMetadataRefreshType.DELETE; pieces: { name: string; version: string }[] }
+    | {
+          type: PieceMetadataRefreshType.UPDATE_USAGE
+          piece: { name: string; version: string; platformId?: string; projectUsage: number }
+      }
     | { type: PieceMetadataRefreshType.BULK_SYNC }
 
 const CACHE_KEY = {
     list: (locale: LocalesEnum): string => `list:${locale}`,
-    piece: (name: string, version: string, platformId: string | undefined): string => `piece:${name}:${version}:${platformId ?? 'OFFICIAL'}`,
+    piece: (name: string, version: string, platformId: string | undefined): string =>
+        `piece:${name}:${version}:${platformId ?? 'OFFICIAL'}`,
     registry: (): string => 'registry',
 }
 
@@ -78,7 +88,7 @@ export const pieceCache = (log: FastifyBaseLogger) => {
             const { pieceName, version, platformId } = params
 
             const devPieces = await loadDevPiecesIfEnabled(log)
-            const devPiece = devPieces.find(p => p.name === pieceName && p.version === version)
+            const devPiece = devPieces.find((p) => p.name === pieceName && p.version === version)
             if (!isNil(devPiece)) {
                 return devPiece
             }
@@ -156,22 +166,26 @@ function pickLatestVersionIds(pieces: PieceKey[]): string[] {
             latest.set(key, piece)
         }
     }
-    return Array.from(latest.values()).map(p => p.id)
+    return Array.from(latest.values()).map((p) => p.id)
 }
 
 async function fetchRegistryFromDB(): Promise<PieceRegistryEntry[]> {
     return repo()
         .createQueryBuilder('pm')
-        .select(['pm."name"', 'pm."version"', 'pm."platformId"', 'pm."pieceType"', 'pm."minimumSupportedRelease"', 'pm."maximumSupportedRelease"'])
+        .select([
+            'pm."name"',
+            'pm."version"',
+            'pm."platformId"',
+            'pm."pieceType"',
+            'pm."minimumSupportedRelease"',
+            'pm."maximumSupportedRelease"',
+        ])
         .getRawMany<PieceRegistryEntry>()
 }
 
 const inFlightQueries = new Map<string, Promise<unknown>>()
 
-async function getCachedOrFetch<T>(
-    cacheKey: string,
-    fetchFn: () => Promise<T>,
-): Promise<T> {
+async function getCachedOrFetch<T>(cacheKey: string, fetchFn: () => Promise<T>): Promise<T> {
     if (isTestingEnvironment) {
         return fetchFn()
     }
@@ -191,8 +205,7 @@ async function getCachedOrFetch<T>(
             const result = await fetchFn()
             cache.set(cacheKey, result)
             return result
-        }
-        finally {
+        } finally {
             inFlightQueries.delete(cacheKey)
         }
     })()
@@ -205,7 +218,10 @@ async function getCachedOrFetch<T>(
 function handleRefreshMessage(message: PieceMetadataRefreshMessage): void {
     switch (message.type) {
         case PieceMetadataRefreshType.CREATE:
-            cache.set(CACHE_KEY.piece(message.piece.name, message.piece.version, message.piece.platformId), message.piece)
+            cache.set(
+                CACHE_KEY.piece(message.piece.name, message.piece.version, message.piece.platformId),
+                message.piece,
+            )
             invalidateAggregateCaches()
             break
         case PieceMetadataRefreshType.DELETE:

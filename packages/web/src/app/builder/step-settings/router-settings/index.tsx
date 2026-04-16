@@ -2,8 +2,8 @@ import {
   FlowActionType,
   FlowOperationRequest,
   FlowOperationType,
-  flowStructureUtil,
   FlowVersion,
+  flowStructureUtil,
   isNil,
   RouterAction,
   RouterExecutionType,
@@ -18,10 +18,10 @@ import { FormField, FormItem } from '../../../../components/ui/form';
 import { Label } from '../../../../components/ui/label';
 import {
   Select,
-  SelectValue,
-  SelectTrigger,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '../../../../components/ui/select';
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasUtils } from '../../flow-canvas/utils/flow-canvas-utils';

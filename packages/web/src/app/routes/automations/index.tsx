@@ -19,15 +19,15 @@ import { useAutomationsDialogs } from '@/features/automations/hooks/use-automati
 import { useAutomationsFilters } from '@/features/automations/hooks/use-automations-filters';
 import { useAutomationsMutations } from '@/features/automations/hooks/use-automations-mutations';
 import {
-  useAutomationsSelection,
   hasMovableOrExportableItems,
+  useAutomationsSelection,
 } from '@/features/automations/hooks/use-automations-selection';
 import { usePinnedItems } from '@/features/automations/hooks/use-pinned-items';
 import { TreeItem } from '@/features/automations/lib/types';
 import { appConnectionsQueries } from '@/features/connections';
 import { projectMembersHooks } from '@/features/members';
 import { piecesHooks } from '@/features/pieces';
-import { projectCollectionUtils, getProjectName } from '@/features/projects';
+import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -136,7 +136,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
           status?: 'ENABLED' | 'DISABLED';
         } | null;
         const folderName = item.folderId
-          ? folders.find((f) => f.id === item.folderId)?.displayName ?? null
+          ? (folders.find((f) => f.id === item.folderId)?.displayName ?? null)
           : null;
         recordAccess({
           id: `flow-${item.id}`,
@@ -157,7 +157,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
           `/tables/${item.id}`,
         );
         const folderName = item.folderId
-          ? folders.find((f) => f.id === item.folderId)?.displayName ?? null
+          ? (folders.find((f) => f.id === item.folderId)?.displayName ?? null)
           : null;
         recordAccess({
           id: `table-${item.id}`,

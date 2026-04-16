@@ -22,10 +22,7 @@ const communityPiecesController: FastifyPluginAsyncZod = async (app) => {
         },
         async (req, res): Promise<PieceMetadataModel> => {
             const platformId = req.principal.platform.id
-            const pieceMetadata = await pieceInstallService(req.log).installPiece(
-                platformId,
-                req.body,
-            )
+            const pieceMetadata = await pieceInstallService(req.log).installPiece(platformId, req.body)
             return res.code(StatusCodes.CREATED).send(pieceMetadata)
         },
     )

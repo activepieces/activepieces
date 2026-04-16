@@ -5,7 +5,7 @@ import {
 import { isNil, OAuth2GrantType, PieceScope } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package, Hash, GitBranch, Puzzle } from 'lucide-react';
+import { CheckIcon, GitBranch, Hash, Package, Puzzle } from 'lucide-react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -211,6 +211,7 @@ const PlatformPiecesPage = () => {
 };
 
 PlatformPiecesPage.displayName = 'PlatformPiecesPage';
+
 export { PlatformPiecesPage };
 
 function shouldShowOauth2SettingForPiece(piece: PieceMetadataModelSummary) {

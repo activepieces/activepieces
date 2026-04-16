@@ -32,5 +32,5 @@ function Label({
   );
 }
 
-export { Label, RequiredFieldAsterisk };
 export type { LabelProps };
+export { Label, RequiredFieldAsterisk };

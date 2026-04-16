@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+// biome-ignore lint/suspicious/noConsole: required
 import semver from 'semver'
 import { DataSource } from 'typeorm'
 import { Migration } from './migration'
@@ -63,8 +63,8 @@ export function identifyCandidatesByManifest(
     targetMigrationNames: string[],
 ): Migration[] {
     const targetSet = new Set(targetMigrationNames)
-    const instances = migrationClasses.map(M => new M())
-    const candidates = instances.filter(m => m.name && !targetSet.has(m.name))
+    const instances = migrationClasses.map((M) => new M())
+    const candidates = instances.filter((m) => m.name && !targetSet.has(m.name))
     return candidates.reverse()
 }
 
@@ -103,18 +103,12 @@ async function executeRollback(params: {
     console.log(`\nRollback complete. Reverted ${candidates.length} migration(s).`)
 }
 
-export async function verifyDatabaseState(
-    dataSource: DataSource,
-    candidates: Migration[],
-): Promise<void> {
-    const executedMigrations = await dataSource.query(
-        'SELECT "name" FROM "migrations" ORDER BY "id" DESC LIMIT $1',
-        [candidates.length],
-    )
+export async function verifyDatabaseState(dataSource: DataSource, candidates: Migration[]): Promise<void> {
+    const executedMigrations = await dataSource.query('SELECT "name" FROM "migrations" ORDER BY "id" DESC LIMIT $1', [
+        candidates.length,
+    ])
 
-    const executedNames: string[] = executedMigrations.map(
-        (row: { name: string }) => row.name,
-    )
+    const executedNames: string[] = executedMigrations.map((row: { name: string }) => row.name)
 
     for (let i = 0; i < candidates.length; i++) {
         const candidateName = candidates[i].name
@@ -122,9 +116,9 @@ export async function verifyDatabaseState(
 
         if (candidateName !== executedName) {
             throw new Error(
-                `Migration order mismatch: expected "${candidateName}" at position ${i + 1} from the top, `
-                + `but found "${executedName}" in the database. `
-                + 'The database state does not match the expected migration history. Aborting rollback.',
+                `Migration order mismatch: expected "${candidateName}" at position ${i + 1} from the top, ` +
+                    `but found "${executedName}" in the database. ` +
+                    'The database state does not match the expected migration history. Aborting rollback.',
             )
         }
     }

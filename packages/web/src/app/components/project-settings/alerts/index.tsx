@@ -18,7 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { alertQueries, alertMutations } from '@/features/alerts';
+import { alertMutations, alertQueries } from '@/features/alerts';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';

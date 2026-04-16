@@ -39,5 +39,4 @@ export class AddMcpsEnabled1751989232042 implements MigrationInterface {
             ADD "alertsEnabled" boolean NOT NULL
         `)
     }
-
 }

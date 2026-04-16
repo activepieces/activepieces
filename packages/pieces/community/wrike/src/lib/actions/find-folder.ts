@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { wrikeAuth } from '../common/auth';
-import { wrikeCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { wrikeAuth } from '../common/auth'
+import { wrikeCommon } from '../common/client'
 
 export const findFolder = createAction({
     name: 'find_folder',
@@ -11,7 +11,8 @@ export const findFolder = createAction({
     props: {
         folderId: Property.ShortText({
             displayName: 'Folder ID',
-            description: 'The ID of the folder/project to retrieve. If provided, other search criteria will be ignored.',
+            description:
+                'The ID of the folder/project to retrieve. If provided, other search criteria will be ignored.',
             required: false,
         }),
         title: Property.ShortText({
@@ -65,31 +66,31 @@ export const findFolder = createAction({
         }),
     },
     async run(context) {
-        const props = context.propsValue as any;
-        const { folderId, title, parentIds, project, pageSize, authors, owners } = props;
+        const props = context.propsValue as any
+        const { folderId, title, parentIds, project, pageSize, authors, owners } = props
 
         if (folderId) {
             const response = await wrikeCommon.apiCall({
                 auth: context.auth,
                 method: HttpMethod.GET,
                 resourceUri: `/folders/${folderId}`,
-            });
-            return response.body;
+            })
+            return response.body
         }
 
-        const queryParams: Record<string, string> = {};
+        const queryParams: Record<string, string> = {}
 
-        if (title) queryParams['title'] = title;
+        if (title) queryParams['title'] = title
         if (parentIds && parentIds.length > 0) {
-            queryParams['parentIds'] = parentIds.map((parent: any) => parent.folderId).join(',');
+            queryParams['parentIds'] = parentIds.map((parent: any) => parent.folderId).join(',')
         }
-        if (project !== undefined) queryParams['project'] = project.toString();
-        if (pageSize) queryParams['pageSize'] = pageSize.toString();
+        if (project !== undefined) queryParams['project'] = project.toString()
+        if (pageSize) queryParams['pageSize'] = pageSize.toString()
         if (authors && authors.length > 0) {
-            queryParams['authors'] = authors.map((author: any) => author.userId).join(',');
+            queryParams['authors'] = authors.map((author: any) => author.userId).join(',')
         }
         if (owners && owners.length > 0) {
-            queryParams['owners'] = owners.map((owner: any) => owner.userId).join(',');
+            queryParams['owners'] = owners.map((owner: any) => owner.userId).join(',')
         }
 
         const response = await wrikeCommon.apiCall({
@@ -97,8 +98,8 @@ export const findFolder = createAction({
             method: HttpMethod.GET,
             resourceUri: '/folders',
             queryParams,
-        });
+        })
 
-        return response.body;
+        return response.body
     },
-});
+})

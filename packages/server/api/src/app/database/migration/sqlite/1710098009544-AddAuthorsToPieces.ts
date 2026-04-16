@@ -4,7 +4,6 @@ export class AddAuthorsToPieces1710098009544 implements MigrationInterface {
     name = 'AddAuthorsToPieces1710098009544'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-
         await queryRunner.query(`
             DROP INDEX "idx_piece_metadata_name_project_id_version"
         `)
@@ -91,7 +90,6 @@ export class AddAuthorsToPieces1710098009544 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-
         await queryRunner.query(`
         DROP INDEX "idx_piece_metadata_name_project_id_version"
     `)
@@ -176,5 +174,4 @@ export class AddAuthorsToPieces1710098009544 implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
     }
-
 }

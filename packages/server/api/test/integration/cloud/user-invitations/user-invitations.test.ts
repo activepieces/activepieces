@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     ApiKeyResponseWithValue,
     DefaultProjectRole,
@@ -25,6 +24,7 @@ import {
     mockAndSaveBasicSetupWithApiKey,
     mockBasicUser,
 } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -398,7 +398,13 @@ describe('User Invitation API', () => {
     })
 })
 
-async function createBasicEnvironment({ platform, project }: { platform?: Partial<Platform>, project?: Partial<Project> }): Promise<{
+async function createBasicEnvironment({
+    platform,
+    project,
+}: {
+    platform?: Partial<Platform>
+    project?: Partial<Project>
+}): Promise<{
     mockOwner: User
     mockPlatform: Platform
     mockProject: Project

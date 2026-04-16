@@ -1,31 +1,25 @@
 export type GlideTable = {
-  id: string;
-  name: string;
-};
-
-export interface GlideRow {
-  [key: string]: GlideRowValue;
+    id: string
+    name: string
 }
 
-export type GlideRowValue =
-  | string
-  | number
-  | boolean
-  | null
-  | GlideRow
-  | GlideRowValue[];
+export interface GlideRow {
+    [key: string]: GlideRowValue
+}
+
+export type GlideRowValue = string | number | boolean | null | GlideRow | GlideRowValue[]
 
 export type GlideListTablesResponse = {
-  data: GlideTable[];
-};
+    data: GlideTable[]
+}
 
 export type GlideGetRowsResponse = {
-  data: GlideRow[];
-  continuation?: string;
-};
+    data: GlideRow[]
+    continuation?: string
+}
 
 export type GlideAddRowsResponse = {
-  data: {
-    rowIDs: string[];
-  };
-};
+    data: {
+        rowIDs: string[]
+    }
+}

@@ -19,11 +19,9 @@ export const ApiKeyResponseWithValue = ApiKey.omit({ hashedValue: true }).extend
 
 export type ApiKeyResponseWithValue = z.infer<typeof ApiKeyResponseWithValue>
 
-
 export const ApiKeyResponseWithoutValue = ApiKey.omit({ hashedValue: true })
 
 export type ApiKeyResponseWithoutValue = z.infer<typeof ApiKeyResponseWithoutValue>
-
 
 export const CreateApiKeyRequest = z.object({
     displayName: z.string(),

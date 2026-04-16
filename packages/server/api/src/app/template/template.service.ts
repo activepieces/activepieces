@@ -1,11 +1,25 @@
-import { ActivepiecesError, apId, CreateTemplateRequestBody, ErrorCode, FlowVersionTemplate, isNil, ListTemplatesRequestQuery, SeekPage, spreadIfDefined, Template, TemplateStatus, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    apId,
+    CreateTemplateRequestBody,
+    ErrorCode,
+    FlowVersionTemplate,
+    isNil,
+    ListTemplatesRequestQuery,
+    SeekPage,
+    spreadIfDefined,
+    Template,
+    TemplateStatus,
+    TemplateType,
+    UpdateTemplateRequestBody,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, ArrayOverlap, Equal, IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformTemplateService } from '../ee/template/platform-template.service'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
-import { templateValidator } from './template-validator'
 import { TemplateEntity } from './template.entity'
+import { templateValidator } from './template-validator'
 
 const templateRepo = repoFactory<Template>(TemplateEntity)
 
@@ -61,7 +75,19 @@ export const templateService = (log: FastifyBaseLogger) => ({
                 return templateRepo().save(newTemplate)
             }
             case TemplateType.CUSTOM: {
-                return platformTemplateService().create({ platformId, name, summary, description, pieces, tags: newTags, blogUrl, metadata, author, categories, flows })
+                return platformTemplateService().create({
+                    platformId,
+                    name,
+                    summary,
+                    description,
+                    pieces,
+                    tags: newTags,
+                    blogUrl,
+                    metadata,
+                    author,
+                    categories,
+                    flows,
+                })
             }
         }
     },
@@ -143,13 +169,11 @@ export const templateService = (log: FastifyBaseLogger) => ({
                 })
         }
         commonFilters.status = Equal(TemplateStatus.PUBLISHED)
-        const queryBuilder = templateRepo()
-            .createQueryBuilder('template')
-            .where(commonFilters)
+        const queryBuilder = templateRepo().createQueryBuilder('template').where(commonFilters)
 
         if (tags && tags.length > 0) {
             queryBuilder.andWhere(
-                '(SELECT array_agg(tag->>\'title\') FROM jsonb_array_elements(template.tags) tag) @> :tags::text[]',
+                "(SELECT array_agg(tag->>'title') FROM jsonb_array_elements(template.tags) tag) @> :tags::text[]",
                 { tags },
             )
         }

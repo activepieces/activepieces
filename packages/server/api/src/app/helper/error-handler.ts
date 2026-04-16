@@ -3,7 +3,6 @@ import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { exceptionHandler } from './exception-handler'
 
-
 export const errorHandler = async (
     error: FastifyError,
     request: FastifyRequest,
@@ -44,24 +43,17 @@ export const errorHandler = async (
             [ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS]: StatusCodes.UNPROCESSABLE_ENTITY,
             [ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION]: StatusCodes.GONE,
         }
-        const statusCode =
-      statusCodeMap[error.error.code] ?? StatusCodes.BAD_REQUEST
+        const statusCode = statusCodeMap[error.error.code] ?? StatusCodes.BAD_REQUEST
 
         await reply.status(statusCode).send({
             code: error.error.code,
             params: error.error.params,
         })
-    }
-    else {
+    } else {
         request.log.error({ err: error }, '[errorHandler]')
-        if (
-            !error.statusCode ||
-      error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR.valueOf()
-        ) {
+        if (!error.statusCode || error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR.valueOf()) {
             exceptionHandler.handle(error, request.log)
         }
-        await reply
-            .status(error.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR)
-            .send(error)
+        await reply.status(error.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR).send(error)
     }
 }

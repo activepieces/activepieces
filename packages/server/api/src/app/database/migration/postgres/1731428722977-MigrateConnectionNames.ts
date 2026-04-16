@@ -7,9 +7,12 @@ export class MigrateConnectionNames1731428722977 implements MigrationInterface {
     name = 'MigrateConnectionNames1731428722977'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'up',
+        )
         await queryRunner.query(`
             ALTER TABLE "app_connection" DROP CONSTRAINT "fk_app_connection_app_project_id"
         `)
@@ -93,9 +96,12 @@ export class MigrateConnectionNames1731428722977 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'down')
+        log.info(
+            {
+                name: this.name,
+            },
+            'down',
+        )
         await queryRunner.query(`
             DROP INDEX "idx_app_connection_platform_id"
         `)
@@ -141,5 +147,4 @@ export class MigrateConnectionNames1731428722977 implements MigrationInterface {
             ADD CONSTRAINT "fk_app_connection_app_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
     }
-
 }

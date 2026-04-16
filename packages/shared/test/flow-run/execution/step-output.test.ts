@@ -1,4 +1,9 @@
-import { GenericStepOutput, LoopStepOutput, RouterStepOutput, StepOutputStatus } from '../../../src/lib/automation/flow-run/execution/step-output'
+import {
+    GenericStepOutput,
+    LoopStepOutput,
+    RouterStepOutput,
+    StepOutputStatus,
+} from '../../../src/lib/automation/flow-run/execution/step-output'
 import { FlowActionType } from '../../../src/lib/automation/flows/actions/action'
 
 describe('GenericStepOutput', () => {

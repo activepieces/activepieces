@@ -1,10 +1,5 @@
-import {
-    FlowActionType,
-    flowStructureUtil,
-    FlowVersion,
-} from '@activepieces/shared'
+import { FlowActionType, FlowVersion, flowStructureUtil } from '@activepieces/shared'
 import { Migration } from '.'
-
 
 export const migrateV10AiPiecesProviderId: Migration = {
     targetSchemaVersion: '10',
@@ -13,7 +8,10 @@ export const migrateV10AiPiecesProviderId: Migration = {
             if (step.type !== FlowActionType.PIECE) {
                 return step
             }
-            if (step.settings.pieceName !== '@activepieces/piece-ai' || !['0.0.1', '0.0.2'].includes(step.settings.pieceVersion)) {
+            if (
+                step.settings.pieceName !== '@activepieces/piece-ai' ||
+                !['0.0.1', '0.0.2'].includes(step.settings.pieceVersion)
+            ) {
                 return step
             }
 
@@ -36,5 +34,3 @@ export const migrateV10AiPiecesProviderId: Migration = {
         }
     },
 }
-
-

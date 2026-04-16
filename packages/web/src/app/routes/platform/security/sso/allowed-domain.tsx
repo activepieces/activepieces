@@ -7,7 +7,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 

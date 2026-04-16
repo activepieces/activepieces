@@ -1,19 +1,15 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
 
-import { respondIoAuth } from '../common/auth';
+import { respondIoAuth } from '../common/auth'
 
 export const conversationClosedTrigger = createTrigger({
-  name: 'conversation_closed',
-  displayName: 'Conversation Closed',
-  description: 'Triggers when a conversation is closed.',
-  auth: respondIoAuth,
-  props: {
-    webhookInstructions: Property.MarkDown({
-      value: `
+    name: 'conversation_closed',
+    displayName: 'Conversation Closed',
+    description: 'Triggers when a conversation is closed.',
+    auth: respondIoAuth,
+    props: {
+        webhookInstructions: Property.MarkDown({
+            value: `
 			To use this trigger, you need to manually set up a webhook in your Respond.io account:
 
 			1. Login to your Respond.io account.
@@ -26,18 +22,18 @@ export const conversationClosedTrigger = createTrigger({
 			5. Select **conversation.closed** from the event types.
 			6. Click Save to create the webhook.
 			`,
-    }),
-  },
-  type: TriggerStrategy.WEBHOOK,
-  sampleData: undefined,
-  async onEnable(context) {
-    // No need to register webhooks programmatically as user will do it manually
-  },
-  async onDisable(context) {
-    // No need to unregister webhooks as user will do it manually
-  },
+        }),
+    },
+    type: TriggerStrategy.WEBHOOK,
+    sampleData: undefined,
+    async onEnable(context) {
+        // No need to register webhooks programmatically as user will do it manually
+    },
+    async onDisable(context) {
+        // No need to unregister webhooks as user will do it manually
+    },
 
-  async run(context) {
-    return [context.payload.body];
-  },
-});
+    async run(context) {
+        return [context.payload.body]
+    },
+})

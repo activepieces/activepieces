@@ -1,17 +1,17 @@
 import {
-  AIProviderName,
   AIProviderModelType,
+  AIProviderName,
   CreateAIProviderRequest,
   ProviderModelConfig,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
-  Plus,
-  Pencil,
-  Trash2,
-  ImageIcon,
-  TextIcon,
   AlertCircle,
+  ImageIcon,
+  Pencil,
+  Plus,
+  TextIcon,
+  Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
 import { UseFormReturn, useFieldArray } from 'react-hook-form';

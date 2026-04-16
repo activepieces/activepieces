@@ -1,8 +1,8 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const luxuryPresenceAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: `Generating and Managing API Keys
+    displayName: 'API Key',
+    description: `Generating and Managing API Keys
 
 API Keys can be generated via the dashboard located here, or by following these steps:
 
@@ -15,5 +15,5 @@ API Keys can be generated via the dashboard located here, or by following these 
 
 You must have the role of admin in your account to be able to manage API Keys.
 `,
-  required: true,
-});
+    required: true,
+})

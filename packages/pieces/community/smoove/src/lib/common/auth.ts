@@ -1,6 +1,6 @@
-import { PieceAuth, Property } from "@activepieces/pieces-framework";
-import { makeRequest } from "./client";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { HttpMethod } from '@activepieces/pieces-common'
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
+import { makeRequest } from './client'
 
 export const smooveAuth = PieceAuth.SecretText({
     displayName: 'smoove API Key',
@@ -8,23 +8,20 @@ export const smooveAuth = PieceAuth.SecretText({
     validate: async ({ auth }) => {
         if (auth) {
             try {
-                await makeRequest(auth as string, HttpMethod.GET, '/Lists', {});
+                await makeRequest(auth as string, HttpMethod.GET, '/Lists', {})
                 return {
                     valid: true,
                 }
             } catch (error) {
                 return {
                     valid: false,
-                    error: 'Invalid Api Key'
+                    error: 'Invalid Api Key',
                 }
             }
-
         }
         return {
             valid: false,
-            error: 'Invalid Api Key'
+            error: 'Invalid Api Key',
         }
-
     },
-
 })

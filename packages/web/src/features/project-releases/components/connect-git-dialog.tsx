@@ -1,9 +1,9 @@
 import {
+  ApErrorParams,
   ConfigureRepoRequest,
+  ErrorCode,
   GitBranchType,
   GitRepo,
-  ApErrorParams,
-  ErrorCode,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -204,4 +204,5 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
 };
 
 ConnectGitDialog.displayName = 'ConnectGitDialog';
+
 export { ConnectGitDialog };

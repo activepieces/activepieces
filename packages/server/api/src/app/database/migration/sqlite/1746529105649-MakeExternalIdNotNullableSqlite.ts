@@ -260,5 +260,4 @@ export class MakeExternalIdNotNullableSqlite1746529105649 implements MigrationIn
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
         `)
     }
-
 }

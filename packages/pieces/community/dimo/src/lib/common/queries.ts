@@ -1,12 +1,12 @@
 export const IdentityQueries = {
-	generalInfo: `
+    generalInfo: `
         {
           vehicles(first: 10) {
             totalCount
           }
         }
     `,
-	getDeveloperLicenseInfo: `
+    getDeveloperLicenseInfo: `
         {
           developerLicense(by: { tokenId: <devLicenseTokenId> }) {
             owner
@@ -23,7 +23,7 @@ export const IdentityQueries = {
           }
         }
     `,
-	getVehicleByDevLicense: `
+    getVehicleByDevLicense: `
         {
           vehicles(filterBy: { privileged: "<devLicense0x>" }, first: 100) {
             nodes {
@@ -38,14 +38,14 @@ export const IdentityQueries = {
           }
         }
     `,
-	getTotalVehicleCountForOwner: `
+    getTotalVehicleCountForOwner: `
         {
           vehicles(filterBy: { owner: "<ownerAddress>" }, first: 100) {
             totalCount
           }
         }
     `,
-	getVehicleMMYByOwner: `
+    getVehicleMMYByOwner: `
         {
           vehicles(filterBy: { owner: "<ownerAddress>" }, first: 100) {
             nodes {
@@ -59,7 +59,7 @@ export const IdentityQueries = {
           }
         }
     `,
-	getVehicleMMYByTokenId: `
+    getVehicleMMYByTokenId: `
         {
           vehicle(tokenId: <vehicleTokenId>) {
             owner
@@ -71,7 +71,7 @@ export const IdentityQueries = {
           }
         }
     `,
-	getSacdForVehicle: `
+    getSacdForVehicle: `
         {
           vehicle(tokenId: <vehicleTokenId>) {
             sacds(first: 10) {
@@ -86,14 +86,14 @@ export const IdentityQueries = {
           }
         }
     `,
-	getRewardsByOwner: `
+    getRewardsByOwner: `
         {
           rewards(user: "<ownerAddress>") {
             totalTokens
           }
         }
     `,
-	getRewardHistoryByOwner: `
+    getRewardHistoryByOwner: `
         {
           vehicles(filterBy: { owner: "<ownerAddress>" }, first: 10) {
             nodes {
@@ -117,7 +117,7 @@ export const IdentityQueries = {
           }
         }
     `,
-	getDeviceDefinitionByTokenId: `
+    getDeviceDefinitionByTokenId: `
         {
           vehicle(tokenId: <vehicleTokenId>) {
             definition {
@@ -126,7 +126,7 @@ export const IdentityQueries = {
           }
         }
     `,
-	getDeviceDefinitionByDefinitionId: `
+    getDeviceDefinitionByDefinitionId: `
         {
           deviceDefinition(by: { id: "<deviceDefinitionId>" }) {
             year
@@ -138,7 +138,7 @@ export const IdentityQueries = {
           }
         }
     `,
-	getOwnerVehicles: `
+    getOwnerVehicles: `
         {
           vehicles(filterBy: { owner: "<ownerAddress>" }, first: 100) {
             nodes {
@@ -154,7 +154,7 @@ export const IdentityQueries = {
           }
         }
     `,
-	getDeveloperSharedVehiclesFromOwner: `
+    getDeveloperSharedVehiclesFromOwner: `
         {
           vehicles(filterBy: { privileged: "<devLicense0x>", owner: "<ownerAddress>" }, first: 100) {
             totalCount
@@ -172,7 +172,7 @@ export const IdentityQueries = {
           }
         }
     `,
-	getDCNsByOwner: `
+    getDCNsByOwner: `
         {
           vehicles(filterBy: { owner: "<ownerAddress>" }, first: 100) {
             nodes {
@@ -187,15 +187,15 @@ export const IdentityQueries = {
           }
         }
     `,
-};
+}
 
 export const TelemetryQueries = {
-	avaiableSignals: `
+    avaiableSignals: `
     query {
       availableSignals(tokenId: <tokenId>)
     }
   `,
-	signals: `
+    signals: `
     query {
       signals(
         tokenId: <tokenId>,
@@ -212,7 +212,7 @@ export const TelemetryQueries = {
       }
     }
   `,
-	getDailyAvgSpeedOfVehicle: `
+    getDailyAvgSpeedOfVehicle: `
     query {
       signals(
         tokenId: <tokenId>,
@@ -224,7 +224,7 @@ export const TelemetryQueries = {
       }
     }
   `,
-  getEvents: `
+    getEvents: `
     query {
       events(
         tokenId: <tokenId>,
@@ -236,7 +236,7 @@ export const TelemetryQueries = {
       }
     }
   `,
-	getMaxSpeedOfVehicle: `
+    getMaxSpeedOfVehicle: `
     query {
       signals(
         tokenId: <tokenId>,
@@ -248,11 +248,11 @@ export const TelemetryQueries = {
       }
     }
   `,
-	getVinVcLatest: `
+    getVinVcLatest: `
     query {
       vinVCLatest(tokenId: <tokenId>) {
         vin
       }
     }
   `,
-};
+}

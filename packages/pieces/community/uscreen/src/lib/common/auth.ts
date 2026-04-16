@@ -1,8 +1,6 @@
-
-
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { uscreenPublisherApiUrl } from './client';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
+import { uscreenPublisherApiUrl } from './client'
 
 export const uscreenAuth = PieceAuth.SecretText({
     displayName: 'API Key',
@@ -19,17 +17,17 @@ export const uscreenAuth = PieceAuth.SecretText({
                 url: `${uscreenPublisherApiUrl}/offers`,
                 headers: {
                     'X-Store-Token': auth,
-                    'Accept': 'application/json'
-                }
-            });
+                    Accept: 'application/json',
+                },
+            })
             return {
                 valid: true,
-            };
+            }
         } catch (e) {
             return {
                 valid: false,
                 error: 'Invalid API key or insufficient permissions.',
-            };
+            }
         }
     },
-});
+})

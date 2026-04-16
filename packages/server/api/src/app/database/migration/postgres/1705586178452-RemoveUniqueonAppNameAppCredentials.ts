@@ -2,8 +2,7 @@ import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
-export class RemoveUniqueonAppNameAppCredentials1705586178452
-implements MigrationInterface {
+export class RemoveUniqueonAppNameAppCredentials1705586178452 implements MigrationInterface {
     name = 'RemoveUniqueonAppNameAppCredentials1705586178452'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

@@ -22,14 +22,16 @@ export enum FlowOperationStatus {
 
 export const flowExecutionStateKey = (flowId: FlowId) => `flow-execution-state:${flowId}`
 
-export type FlowExecutionState = {
-    exists: false
-} | {
-    exists: true
-    handshakeConfiguration: WebhookHandshakeConfiguration | undefined
-    flow: Flow
-    platformId: string
-}
+export type FlowExecutionState =
+    | {
+          exists: false
+      }
+    | {
+          exists: true
+          handshakeConfiguration: WebhookHandshakeConfiguration | undefined
+          flow: Flow
+          platformId: string
+      }
 export const Flow = z.object({
     ...BaseModelSchema,
     projectId: z.string(),
@@ -52,7 +54,6 @@ export const PopulatedFlow = Flow.extend({
 })
 
 export type PopulatedFlow = z.infer<typeof PopulatedFlow>
-
 
 export const PopulatedTriggerSource = TriggerSource.extend({
     flow: Flow,

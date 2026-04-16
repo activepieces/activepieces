@@ -1,5 +1,10 @@
 import { executionJournal } from '../../../src/lib/automation/flow-run/execution/execution-journal'
-import { GenericStepOutput, LoopStepOutput, StepOutput, StepOutputStatus } from '../../../src/lib/automation/flow-run/execution/step-output'
+import {
+    GenericStepOutput,
+    LoopStepOutput,
+    StepOutput,
+    StepOutputStatus,
+} from '../../../src/lib/automation/flow-run/execution/step-output'
 import { FlowActionType } from '../../../src/lib/automation/flows/actions/action'
 
 function createCodeStep(status: StepOutputStatus = StepOutputStatus.SUCCEEDED): StepOutput {
@@ -43,13 +48,15 @@ describe('executionJournal.getPathToStep', () => {
                                 output: {
                                     item: 'item1',
                                     index: 0,
-                                    iterations: [{
-                                        step5: GenericStepOutput.create({
-                                            type: FlowActionType.CODE,
-                                            status: StepOutputStatus.SUCCEEDED,
-                                            input: {},
-                                        }),
-                                    }],
+                                    iterations: [
+                                        {
+                                            step5: GenericStepOutput.create({
+                                                type: FlowActionType.CODE,
+                                                status: StepOutputStatus.SUCCEEDED,
+                                                input: {},
+                                            }),
+                                        },
+                                    ],
                                 },
                             }),
                         },
@@ -66,13 +73,15 @@ describe('executionJournal.getPathToStep', () => {
                                 output: {
                                     item: 'item1',
                                     index: 0,
-                                    iterations: [{
-                                        step5: GenericStepOutput.create({
-                                            type: FlowActionType.CODE,
-                                            status: StepOutputStatus.SUCCEEDED,
-                                            input: {},
-                                        }),
-                                    }],
+                                    iterations: [
+                                        {
+                                            step5: GenericStepOutput.create({
+                                                type: FlowActionType.CODE,
+                                                status: StepOutputStatus.SUCCEEDED,
+                                                input: {},
+                                            }),
+                                        },
+                                    ],
                                 },
                             }),
                         },
@@ -81,17 +90,23 @@ describe('executionJournal.getPathToStep', () => {
             }),
         }
 
-        const step3 = executionJournal.getPathToStep(steps, 'step3', { 'step2': 0 })
+        const step3 = executionJournal.getPathToStep(steps, 'step3', { step2: 0 })
         expect(step3).toEqual([['step2', 0]])
 
-        const step4 = executionJournal.getPathToStep(steps, 'step4', { 'step2': 1 })
+        const step4 = executionJournal.getPathToStep(steps, 'step4', { step2: 1 })
         expect(step4).toEqual([['step2', 1]])
 
-        const step5_0 = executionJournal.getPathToStep(steps, 'step5', { 'step2': 0, 'step4': 0 })
-        expect(step5_0).toEqual([['step2', 0], ['step4', 0]])
+        const step5_0 = executionJournal.getPathToStep(steps, 'step5', { step2: 0, step4: 0 })
+        expect(step5_0).toEqual([
+            ['step2', 0],
+            ['step4', 0],
+        ])
 
-        const step5_1 = executionJournal.getPathToStep(steps, 'step5', { 'step2': 1, 'step4': 0 })
-        expect(step5_1).toEqual([['step2', 1], ['step4', 0]])
+        const step5_1 = executionJournal.getPathToStep(steps, 'step5', { step2: 1, step4: 0 })
+        expect(step5_1).toEqual([
+            ['step2', 1],
+            ['step4', 0],
+        ])
     })
 })
 
@@ -114,12 +129,16 @@ describe('executionJournal.getStateAtPath', () => {
 
     it('should throw when step is not found in path', () => {
         const steps: Record<string, StepOutput> = {}
-        expect(() => executionJournal.getStateAtPath({ path: [['missing', 0]], steps })).toThrow('Step missing not found')
+        expect(() => executionJournal.getStateAtPath({ path: [['missing', 0]], steps })).toThrow(
+            'Step missing not found',
+        )
     })
 
     it('should throw when step is not a loop', () => {
         const steps: Record<string, StepOutput> = { step1: createCodeStep() }
-        expect(() => executionJournal.getStateAtPath({ path: [['step1', 0]], steps })).toThrow('is not a loop on items step')
+        expect(() => executionJournal.getStateAtPath({ path: [['step1', 0]], steps })).toThrow(
+            'is not a loop on items step',
+        )
     })
 
     it('should throw when iteration is not found', () => {
@@ -147,7 +166,9 @@ describe('executionJournal.getOrCreateStateAtPath', () => {
 
     it('should throw for non-loop type mismatch', () => {
         const steps: Record<string, StepOutput> = { step1: createCodeStep() }
-        expect(() => executionJournal.getOrCreateStateAtPath({ path: [['step1', 0]], steps })).toThrow('is not a loop on items step')
+        expect(() => executionJournal.getOrCreateStateAtPath({ path: [['step1', 0]], steps })).toThrow(
+            'is not a loop on items step',
+        )
     })
 })
 
@@ -203,9 +224,7 @@ describe('executionJournal.findLastStepWithStatus', () => {
     })
 
     it('should recurse into loop iterations', () => {
-        const loop = createLoopWithIterations([
-            { inner: createCodeStep(StepOutputStatus.FAILED) },
-        ])
+        const loop = createLoopWithIterations([{ inner: createCodeStep(StepOutputStatus.FAILED) }])
         const steps: Record<string, StepOutput> = { loop }
         expect(executionJournal.findLastStepWithStatus(steps, StepOutputStatus.FAILED)).toBe('inner')
     })

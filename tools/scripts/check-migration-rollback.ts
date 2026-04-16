@@ -10,10 +10,9 @@ const MIGRATION_DIRS = [
 
 function getChangedMigrationFiles(): string[] {
     const baseBranch = process.env.GITHUB_BASE_REF ?? 'main'
-    const diffOutput = execSync(
-        `git diff --name-only --diff-filter=A origin/${baseBranch}...HEAD`,
-        { encoding: 'utf-8' },
-    ).trim()
+    const diffOutput = execSync(`git diff --name-only --diff-filter=A origin/${baseBranch}...HEAD`, {
+        encoding: 'utf-8',
+    }).trim()
 
     if (!diffOutput) {
         return []
@@ -21,9 +20,7 @@ function getChangedMigrationFiles(): string[] {
 
     return diffOutput
         .split('\n')
-        .filter((file) =>
-            MIGRATION_DIRS.some((dir) => file.startsWith(dir)) && file.endsWith('.ts'),
-        )
+        .filter((file) => MIGRATION_DIRS.some((dir) => file.startsWith(dir)) && file.endsWith('.ts'))
 }
 
 async function checkMigrationFile(filePath: string): Promise<string[]> {
@@ -46,7 +43,7 @@ async function checkMigrationFile(filePath: string): Promise<string[]> {
     }
 
     if (!instance.release || !semver.valid(instance.release)) {
-        errors.push("Missing or invalid \"release\" property (must be valid semver, e.g. release = '0.78.0')")
+        errors.push('Missing or invalid "release" property (must be valid semver, e.g. release = \'0.78.0\')')
     }
 
     if (instance.breaking !== true) {
@@ -79,8 +76,7 @@ async function main(): Promise<void> {
                 console.error(`   - ${error}`)
             }
             console.error()
-        }
-        else {
+        } else {
             console.log(`✅ ${file}`)
         }
     }

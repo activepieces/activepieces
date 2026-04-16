@@ -14,35 +14,26 @@ export class ChangeExternalIdsForTables1747346473001 implements MigrationInterfa
         const flowVersionIds = await queryRunner.query(
             'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@activepieces/piece-tables%\'',
         )
-        log.info(
-            'ChangeExternalIdsForTables1747346473001: found ' +
-        flowVersionIds.length +
-        ' versions',
-        )
+        log.info('ChangeExternalIdsForTables1747346473001: found ' + flowVersionIds.length + ' versions')
         let updatedFlows = 0
         for (const { id } of flowVersionIds) {
             // Fetch FlowVersion record by ID
-            const flowVersion = await queryRunner.query(
-                'SELECT * FROM flow_version WHERE id = $1',
-                [id],
-            )
+            const flowVersion = await queryRunner.query('SELECT * FROM flow_version WHERE id = $1', [id])
             if (flowVersion.length > 0) {
-                const trigger = typeof flowVersion[0].trigger === 'string' ? JSON.parse(flowVersion[0].trigger) : flowVersion[0].trigger
-                const updated = traverseAndUpdateSubFlow(
-                    updateVersionOfTablesStep,
-                    trigger,
-                )
+                const trigger =
+                    typeof flowVersion[0].trigger === 'string'
+                        ? JSON.parse(flowVersion[0].trigger)
+                        : flowVersion[0].trigger
+                const updated = traverseAndUpdateSubFlow(updateVersionOfTablesStep, trigger)
                 if (updated) {
-                    await queryRunner.connection.getRepository('flow_version').update(flowVersion[0].id, { trigger: updated })
+                    await queryRunner.connection
+                        .getRepository('flow_version')
+                        .update(flowVersion[0].id, { trigger: updated })
                 }
             }
             updatedFlows++
             if (updatedFlows % 100 === 0) {
-                log.info(
-                    'ChangeExternalIdsForTables1747346473001: ' +
-            updatedFlows +
-            ' flows updated',
-                )
+                log.info('ChangeExternalIdsForTables1747346473001: ' + updatedFlows + ' flows updated')
             }
         }
 
@@ -53,47 +44,34 @@ export class ChangeExternalIdsForTables1747346473001 implements MigrationInterfa
         const flowVersionIds = await queryRunner.query(
             'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@activepieces/piece-tables%\'',
         )
-        log.info(
-            'ChangeExternalIdsForTables1747346473001 down: found ' +
-        flowVersionIds.length +
-        ' versions',
-        )
+        log.info('ChangeExternalIdsForTables1747346473001 down: found ' + flowVersionIds.length + ' versions')
         let updatedFlows = 0
         for (const { id } of flowVersionIds) {
             // Fetch FlowVersion record by ID
-            const flowVersion = await queryRunner.query(
-                'SELECT * FROM flow_version WHERE id = $1',
-                [id],
-            )
+            const flowVersion = await queryRunner.query('SELECT * FROM flow_version WHERE id = $1', [id])
             if (flowVersion.length > 0) {
-                const trigger = typeof flowVersion[0].trigger === 'string' ? JSON.parse(flowVersion[0].trigger) : flowVersion[0].trigger
-                const updated = traverseAndUpdateSubFlow(
-                    downgradeVersionOfTablesStep,
-                    trigger,
-                )
+                const trigger =
+                    typeof flowVersion[0].trigger === 'string'
+                        ? JSON.parse(flowVersion[0].trigger)
+                        : flowVersion[0].trigger
+                const updated = traverseAndUpdateSubFlow(downgradeVersionOfTablesStep, trigger)
                 if (updated) {
-                    await queryRunner.connection.getRepository('flow_version').update(flowVersion[0].id, { trigger: updated })
+                    await queryRunner.connection
+                        .getRepository('flow_version')
+                        .update(flowVersion[0].id, { trigger: updated })
                 }
             }
             updatedFlows++
             if (updatedFlows % 100 === 0) {
-                log.info(
-                    'ChangeExternalIdsForTables1747346473001 down: ' +
-            updatedFlows +
-            ' flows updated',
-                )
+                log.info('ChangeExternalIdsForTables1747346473001 down: ' + updatedFlows + ' flows updated')
             }
         }
 
         log.info('ChangeExternalIdsForTables1747346473001: down')
     }
-
 }
 
-const traverseAndUpdateSubFlow = (
-    updater: (s: Step) => Step,
-    root: Step | undefined,
-): Step | undefined => {
+const traverseAndUpdateSubFlow = (updater: (s: Step) => Step, root: Step | undefined): Step | undefined => {
     if (!root) {
         return undefined
     }
@@ -107,8 +85,7 @@ const traverseAndUpdateSubFlow = (
                 if (branch) {
                     const branchUpdated = traverseAndUpdateSubFlow(updater, branch)
                     updatedChildren.push(branchUpdated ?? null)
-                }
-                else {
+                } else {
                     updatedChildren.push(null)
                 }
             }
@@ -116,8 +93,9 @@ const traverseAndUpdateSubFlow = (
             break
         }
         case 'LOOP_ON_ITEMS':
-            clonedRoot.firstLoopAction = clonedRoot.firstLoopAction ?
-                traverseAndUpdateSubFlow(updater, clonedRoot.firstLoopAction) : undefined
+            clonedRoot.firstLoopAction = clonedRoot.firstLoopAction
+                ? traverseAndUpdateSubFlow(updater, clonedRoot.firstLoopAction)
+                : undefined
             break
         case 'PIECE':
         case 'PIECE_TRIGGER':
@@ -126,43 +104,37 @@ const traverseAndUpdateSubFlow = (
             break
     }
 
-    clonedRoot.nextAction = clonedRoot.nextAction ?
-        traverseAndUpdateSubFlow(updater, clonedRoot.nextAction) : undefined
+    clonedRoot.nextAction = clonedRoot.nextAction ? traverseAndUpdateSubFlow(updater, clonedRoot.nextAction) : undefined
 
     return clonedRoot
 }
 
-const updateVersionOfTablesStep = (
-    step: Step,
-): Step => {
-    if ((step.type === 'PIECE' || step.type === 'PIECE_TRIGGER') && (step as PieceStep).settings.pieceName === '@activepieces/piece-tables') {
-        (step as PieceStep).settings.pieceVersion = '0.1.0'
+const updateVersionOfTablesStep = (step: Step): Step => {
+    if (
+        (step.type === 'PIECE' || step.type === 'PIECE_TRIGGER') &&
+        (step as PieceStep).settings.pieceName === '@activepieces/piece-tables'
+    ) {
+        ;(step as PieceStep).settings.pieceVersion = '0.1.0'
     }
     return step
 }
 
-const downgradeVersionOfTablesStep = (
-    step: Step,
-): Step => {
-    if ((step.type === 'PIECE' || step.type === 'PIECE_TRIGGER') && (step as PieceStep).settings.pieceName === '@activepieces/piece-tables') {
-        (step as PieceStep).settings.pieceVersion = '0.0.6'
+const downgradeVersionOfTablesStep = (step: Step): Step => {
+    if (
+        (step.type === 'PIECE' || step.type === 'PIECE_TRIGGER') &&
+        (step as PieceStep).settings.pieceName === '@activepieces/piece-tables'
+    ) {
+        ;(step as PieceStep).settings.pieceVersion = '0.0.6'
     }
     return step
 }
 
-type StepType =
-    | 'CODE'
-    | 'EMPTY'
-    | 'LOOP_ON_ITEMS'
-    | 'PIECE'
-    | 'PIECE_TRIGGER'
-    | 'ROUTER'
+type StepType = 'CODE' | 'EMPTY' | 'LOOP_ON_ITEMS' | 'PIECE' | 'PIECE_TRIGGER' | 'ROUTER'
 
 type BaseStep<T extends StepType> = {
     type: T
     nextAction?: Step
 }
-
 
 type RouterStep = BaseStep<'ROUTER'> & {
     children: (Step | null)[]

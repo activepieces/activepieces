@@ -8,46 +8,38 @@ const log = system.globalLogger()
 export class ChangeVariableSyntax1683898241599 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         log.info('ChangeVariableSyntax1683898241599, started')
-        const flowVersions = await queryRunner.query(
-            `SELECT * FROM ${FLOW_VERSION_TABLE}`,
-        )
+        const flowVersions = await queryRunner.query(`SELECT * FROM ${FLOW_VERSION_TABLE}`)
         let count = 0
         for (const flowVersion of flowVersions) {
             const step = flowVersion.trigger
             const update = updateStep(step, true)
             if (update) {
                 count++
-                await queryRunner.query(
-                    `UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`,
-                    [flowVersion.trigger, flowVersion.id],
-                )
+                await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [
+                    flowVersion.trigger,
+                    flowVersion.id,
+                ])
             }
         }
-        log.info(
-            `ChangeVariableSyntax1683898241599, updated ${count} flow versions`,
-        )
+        log.info(`ChangeVariableSyntax1683898241599, updated ${count} flow versions`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         log.info('ChangeVariableSyntax1683898241599 down, started')
-        const flowVersions = await queryRunner.query(
-            `SELECT * FROM ${FLOW_VERSION_TABLE}`,
-        )
+        const flowVersions = await queryRunner.query(`SELECT * FROM ${FLOW_VERSION_TABLE}`)
         let count = 0
         for (const flowVersion of flowVersions) {
             const step = flowVersion.trigger
             const update = updateStep(step, false)
             if (update) {
                 count++
-                await queryRunner.query(
-                    `UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`,
-                    [flowVersion.trigger, flowVersion.id],
-                )
+                await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [
+                    flowVersion.trigger,
+                    flowVersion.id,
+                ])
             }
         }
-        log.info(
-            `ChangeVariableSyntax1683898241599, down ${count} flow versions`,
-        )
+        log.info(`ChangeVariableSyntax1683898241599, down ${count} flow versions`)
     }
 }
 
@@ -95,20 +87,15 @@ function traverse(input: unknown, forward: boolean): unknown {
         if (forward) {
             // Replace anything ${var.asd } to {{ var.asd }}
             return input.replace(/\$\{([^}]+)\}/g, '{{$1}}')
-        }
-        else {
+        } else {
             // Revert above change
             return input.replace(/\{\{([^}]+)\}\}/g, '${$1}')
         }
-    }
-    else if (Array.isArray(input)) {
+    } else if (Array.isArray(input)) {
         return input.map((item) => traverse(item, forward))
-    }
-    else if (typeof input === 'object') {
+    } else if (typeof input === 'object') {
         const result: Record<string, unknown> = {}
-        for (const [key, value] of Object.entries(
-            input as Record<string, unknown>,
-        )) {
+        for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
             result[key] = traverse(value, forward)
         }
         return result

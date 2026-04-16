@@ -1,18 +1,18 @@
 import { AgentTool, isNil, mcpToolNameUtils } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft } from 'lucide-react';
-import { useMemo, useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useDebounce } from 'use-debounce';
 
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogClose,
 } from '@/components/ui/dialog';
 import {
   Tooltip,
@@ -25,8 +25,8 @@ import {
   usePieceToolsDialogStore,
 } from '@/features/agents';
 import {
-  stepsHooks,
   PieceStepMetadataWithSuggestions,
+  stepsHooks,
 } from '@/features/pieces';
 
 import { PredefinedInputsForm } from './predefined-inputs-form';

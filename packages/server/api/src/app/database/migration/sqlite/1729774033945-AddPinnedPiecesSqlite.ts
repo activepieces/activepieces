@@ -289,5 +289,4 @@ export class AddPinnedPiecesSqlite1729774033945 implements MigrationInterface {
             DROP TABLE "temporary_platform"
         `)
     }
-
 }

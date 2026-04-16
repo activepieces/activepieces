@@ -319,5 +319,4 @@ export class AddPremiumPiecesColumnSqlite1717443603235 implements MigrationInter
             DROP TABLE "temporary_platform"
         `)
     }
-
 }

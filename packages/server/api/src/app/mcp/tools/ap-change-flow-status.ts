@@ -25,7 +25,9 @@ export const apChangeFlowStatusTool = (mcp: McpServer, log: FastifyBaseLogger): 
         description: 'Enable or disable a published flow.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
-            status: z.enum([FlowStatus.ENABLED, FlowStatus.DISABLED]).describe('The new status: ENABLED to activate the flow, DISABLED to pause it'),
+            status: z
+                .enum([FlowStatus.ENABLED, FlowStatus.DISABLED])
+                .describe('The new status: ENABLED to activate the flow, DISABLED to pause it'),
         },
         annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -41,10 +43,12 @@ export const apChangeFlowStatusTool = (mcp: McpServer, log: FastifyBaseLogger): 
 
             if (status === FlowStatus.ENABLED && isNil(flow.publishedVersionId)) {
                 return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Flow "${flow.version.displayName}" has no published version. Use ap_lock_and_publish first.`,
-                    }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `❌ Flow "${flow.version.displayName}" has no published version. Use ap_lock_and_publish first.`,
+                        },
+                    ],
                 }
             }
 
@@ -65,8 +69,7 @@ export const apChangeFlowStatusTool = (mcp: McpServer, log: FastifyBaseLogger): 
                 return {
                     content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" ${action} successfully.` }],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 return mcpUtils.mcpToolError('Status change failed', err)
             }
         },

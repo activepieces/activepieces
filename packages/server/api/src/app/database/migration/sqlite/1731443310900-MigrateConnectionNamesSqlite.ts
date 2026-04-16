@@ -6,9 +6,12 @@ export class MigrateConnectionNamesSqlite1731443310900 implements MigrationInter
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'up',
+        )
         await queryRunner.query(`
             DROP INDEX "idx_app_connection_project_id_and_name"
         `)
@@ -87,9 +90,12 @@ export class MigrateConnectionNamesSqlite1731443310900 implements MigrationInter
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'down')
+        log.info(
+            {
+                name: this.name,
+            },
+            'down',
+        )
         await queryRunner.query(`
             DROP INDEX "idx_app_connection_platform_id"
         `)
@@ -157,5 +163,4 @@ export class MigrateConnectionNamesSqlite1731443310900 implements MigrationInter
             CREATE UNIQUE INDEX "idx_app_connection_project_id_and_name" ON "app_connection" ("projectId", "name")
         `)
     }
-
 }

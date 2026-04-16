@@ -14,5 +14,4 @@ export class AddRunFlowVersionIdForForeignKeySqlite1760346793809 implements Migr
             DROP INDEX "idx_run_flow_version_id"
         `)
     }
-
 }

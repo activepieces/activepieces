@@ -108,5 +108,4 @@ export class AddMcpServerSqlite1764524983756 implements MigrationInterface {
             DROP TABLE "mcp_server"
         `)
     }
-
 }

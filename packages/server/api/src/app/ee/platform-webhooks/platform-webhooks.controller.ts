@@ -1,4 +1,12 @@
-import { CreatePlatformEventDestinationRequestBody, EventDestination, ListPlatformEventDestinationsRequestBody, PrincipalType, SeekPage, TestPlatformEventDestinationRequestBody, UpdatePlatformEventDestinationRequestBody } from '@activepieces/shared'
+import {
+    CreatePlatformEventDestinationRequestBody,
+    EventDestination,
+    ListPlatformEventDestinationsRequestBody,
+    PrincipalType,
+    SeekPage,
+    TestPlatformEventDestinationRequestBody,
+    UpdatePlatformEventDestinationRequestBody,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -97,4 +105,3 @@ export const TestPlatformEventDestinationRequest = {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
-

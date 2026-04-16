@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const createReceivablesInvoice = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -113,7 +113,7 @@ export const createReceivablesInvoice = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
+        const client = makeClient(context.auth.props)
         const {
             businessUnit,
             transactionType,
@@ -134,32 +134,32 @@ export const createReceivablesInvoice = createAction({
             shipToCustomerName,
             legalEntityIdentifier,
             crossReference,
-        } = context.propsValue;
+        } = context.propsValue
 
         const payload: Record<string, unknown> = {
             BusinessUnit: businessUnit,
             TransactionType: transactionType,
             BillToCustomerNumber: billToCustomerNumber,
-        };
+        }
 
-        if (transactionSource) payload['TransactionSource'] = transactionSource;
-        if (transactionNumber) payload['TransactionNumber'] = transactionNumber;
-        if (transactionDate) payload['TransactionDate'] = transactionDate;
-        if (accountingDate) payload['AccountingDate'] = accountingDate;
-        if (billToCustomerName) payload['BillToCustomerName'] = billToCustomerName;
-        if (billToSite) payload['BillToSite'] = billToSite;
-        if (invoiceCurrencyCode) payload['InvoiceCurrencyCode'] = invoiceCurrencyCode;
-        if (paymentTerms) payload['PaymentTerms'] = paymentTerms;
-        if (dueDate) payload['DueDate'] = dueDate;
-        if (purchaseOrder) payload['PurchaseOrder'] = purchaseOrder;
-        if (comments) payload['Comments'] = comments;
-        if (invoiceStatus) payload['InvoiceStatus'] = invoiceStatus;
-        if (shipToCustomerNumber) payload['ShipToCustomerNumber'] = shipToCustomerNumber;
-        if (shipToCustomerName) payload['ShipToCustomerName'] = shipToCustomerName;
-        if (legalEntityIdentifier) payload['LegalEntityIdentifier'] = legalEntityIdentifier;
-        if (crossReference) payload['CrossReference'] = crossReference;
+        if (transactionSource) payload['TransactionSource'] = transactionSource
+        if (transactionNumber) payload['TransactionNumber'] = transactionNumber
+        if (transactionDate) payload['TransactionDate'] = transactionDate
+        if (accountingDate) payload['AccountingDate'] = accountingDate
+        if (billToCustomerName) payload['BillToCustomerName'] = billToCustomerName
+        if (billToSite) payload['BillToSite'] = billToSite
+        if (invoiceCurrencyCode) payload['InvoiceCurrencyCode'] = invoiceCurrencyCode
+        if (paymentTerms) payload['PaymentTerms'] = paymentTerms
+        if (dueDate) payload['DueDate'] = dueDate
+        if (purchaseOrder) payload['PurchaseOrder'] = purchaseOrder
+        if (comments) payload['Comments'] = comments
+        if (invoiceStatus) payload['InvoiceStatus'] = invoiceStatus
+        if (shipToCustomerNumber) payload['ShipToCustomerNumber'] = shipToCustomerNumber
+        if (shipToCustomerName) payload['ShipToCustomerName'] = shipToCustomerName
+        if (legalEntityIdentifier) payload['LegalEntityIdentifier'] = legalEntityIdentifier
+        if (crossReference) payload['CrossReference'] = crossReference
 
-        const response = await client.createRecord('/receivablesInvoices', payload);
-        return response;
+        const response = await client.createRecord('/receivablesInvoices', payload)
+        return response
     },
-});
+})

@@ -88,9 +88,9 @@ function TabsContent({
 
 export {
   Tabs,
+  TabsContent,
   TabsList,
   TabsTrigger,
-  TabsContent,
   tabsListVariants,
   tabsTriggerVariants,
 };

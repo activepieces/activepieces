@@ -6,14 +6,14 @@ import {
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
-  CheckIcon,
-  Trash,
-  Globe,
-  Search,
   Activity,
+  CheckIcon,
   Clock,
   FolderOpen,
+  Globe,
   Puzzle,
+  Search,
+  Trash,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -43,10 +43,10 @@ import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
+  appConnectionUtils,
   EditGlobalConnectionDialog,
   globalConnectionsMutations,
   globalConnectionsQueries,
-  appConnectionUtils,
 } from '@/features/connections';
 import { PieceIconWithPieceName } from '@/features/pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';

@@ -1,9 +1,9 @@
-import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { MEMPOOL_API_BASE_URL } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework'
+import { MEMPOOL_API_BASE_URL } from '../../common'
 
 export const getAddressTransactionsMempool = createAction({
- auth:PieceAuth.None(),
+    auth: PieceAuth.None(),
     name: 'get_address_transactions_mempool',
     displayName: 'Get Address Transactions (Mempool)',
     description: 'Returns unconfirmed transactions (up to 50)',
@@ -12,14 +12,14 @@ export const getAddressTransactionsMempool = createAction({
         address: Property.ShortText({
             displayName: 'Address',
             description: 'The Bitcoin address to look up mempool transactions for',
-            required: true
-        })
+            required: true,
+        }),
     },
     async run({ propsValue }) {
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${MEMPOOL_API_BASE_URL}/api/address/${propsValue.address}/txs/mempool`,
-        });
-        return response.body;
+        })
+        return response.body
     },
-});
+})

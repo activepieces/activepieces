@@ -1,12 +1,13 @@
-import { ApId,
-    apId,
+import {
+    ApId,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
     ApplicationEventName,
+    apId,
     ListGlobalConnectionsRequestQuery,
     PrincipalType,
-    SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    SeekPage,
     UpdateGlobalConnectionValueRequestBody,
     UpsertGlobalConnectionRequestBody,
 } from '@activepieces/shared'
@@ -20,7 +21,10 @@ import { securityHelper } from '../../helper/security-helper'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
 export const globalConnectionModule: FastifyPluginAsyncZod = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.globalConnectionsEnabled))
+    app.addHook(
+        'preHandler',
+        platformMustHaveFeatureEnabled((platform) => platform.plan.globalConnectionsEnabled),
+    )
     await app.register(globalConnectionController, { prefix: '/v1/global-connections' })
 }
 
@@ -45,9 +49,7 @@ const globalConnectionController: FastifyPluginAsyncZod = async (app) => {
                 connection: appConnection,
             },
         })
-        await reply
-            .status(StatusCodes.CREATED)
-            .send(appConnection)
+        await reply.status(StatusCodes.CREATED).send(appConnection)
     })
 
     app.post('/:id', UpdateGlobalConnectionRequest, async (request) => {
@@ -64,26 +66,29 @@ const globalConnectionController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
-    app.get('/', ListGlobalConnectionsRequest, async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
-        const { displayName, pieceName, status, cursor, limit } = request.query
+    app.get(
+        '/',
+        ListGlobalConnectionsRequest,
+        async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
+            const { displayName, pieceName, status, cursor, limit } = request.query
 
-        const appConnections = await appConnectionService(request.log).list({
-            pieceName,
-            displayName,
-            status,
-            platformId: request.principal.platform.id,
-            projectId: null,
-            scope: AppConnectionScope.PLATFORM,
-            cursorRequest: cursor ?? null,
-            limit: limit ?? DEFAULT_PAGE_SIZE,
-            externalIds: undefined,
-        })
+            const appConnections = await appConnectionService(request.log).list({
+                pieceName,
+                displayName,
+                status,
+                platformId: request.principal.platform.id,
+                projectId: null,
+                scope: AppConnectionScope.PLATFORM,
+                cursorRequest: cursor ?? null,
+                limit: limit ?? DEFAULT_PAGE_SIZE,
+                externalIds: undefined,
+            })
 
-        return {
-            ...appConnections,
-            data: appConnections.data.map(appConnectionService(request.log).removeSensitiveData),
-        }
-    },
+            return {
+                ...appConnections,
+                data: appConnections.data.map(appConnectionService(request.log).removeSensitiveData),
+            }
+        },
     )
 
     app.delete('/:id', DeleteGlobalConnectionRequest, async (request, reply): Promise<void> => {

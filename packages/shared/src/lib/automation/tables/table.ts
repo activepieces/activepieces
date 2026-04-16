@@ -24,7 +24,6 @@ export const Table = z.object({
 
 export type Table = z.infer<typeof Table>
 
-
 export const PopulatedTable = Table.extend({
     fields: z.array(Field),
 })

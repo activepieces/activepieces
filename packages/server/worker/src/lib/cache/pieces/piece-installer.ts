@@ -25,7 +25,8 @@ const tracer = trace.getTracer('piece-installer')
 
 const usedPiecesMemoryCache: Record<string, boolean> = {}
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
-const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
+const piecePath = (rootWorkspace: string, piece: PiecePackage) =>
+    join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
 export const pieceInstaller = (log: Logger, apiClient: WorkerToApiContract) => ({
     async install({ pieces, includeFilters }: InstallParams): Promise<void> {
@@ -52,19 +53,28 @@ function getCustomPiecesPath(platformId: string): string {
     }
 }
 
-async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: Logger, apiClient: WorkerToApiContract): Promise<void> {
+async function installPieces(
+    rootWorkspace: string,
+    pieces: PiecePackage[],
+    includeFilters: boolean,
+    log: Logger,
+    apiClient: WorkerToApiContract,
+): Promise<void> {
     const devPieces = workerSettings.getSettings().DEV_PIECES
-    const nonDevPieces = pieces.filter(piece => !devPieces.includes(getPieceNameFromAlias(piece.pieceName)))
+    const nonDevPieces = pieces.filter((piece) => !devPieces.includes(getPieceNameFromAlias(piece.pieceName)))
     const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, nonDevPieces)
 
     if (isEmpty(piecesToInstall)) {
         log.debug({ rootWorkspace }, '[pieceInstaller] No new pieces to install (already installed)')
         return
     }
-    log.info({
-        rootWorkspace,
-        piecesToInstall: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
-    }, '[pieceInstaller] Installing pieces in workspace')
+    log.info(
+        {
+            rootWorkspace,
+            piecesToInstall: piecesToInstall.map((piece) => `${piece.pieceName}-${piece.pieceVersion}`),
+        },
+        '[pieceInstaller] Installing pieces in workspace',
+    )
 
     await memoryLock.runExclusive({
         key: `install-pieces-${rootWorkspace}`,
@@ -74,10 +84,13 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                 log.info({ rootWorkspace }, '[pieceInstaller] No new pieces to install in lock (already installed)')
                 return
             }
-            log.info({
-                rootWorkspace,
-                pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
-            }, '[pieceInstaller] acquired lock and starting to install pieces')
+            log.info(
+                {
+                    rootWorkspace,
+                    pieces: piecesToInstall.map((piece) => `${piece.pieceName}-${piece.pieceVersion}`),
+                },
+                '[pieceInstaller] acquired lock and starting to install pieces',
+            )
 
             await createRootPackageJson({
                 path: rootWorkspace,
@@ -85,57 +98,74 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
 
             await savePackageArchivesToDiskIfNotCached(rootWorkspace, piecesToInstall, apiClient)
 
-            await Promise.all(piecesToInstall.map(piece => createPiecePackageJson({
-                rootWorkspace,
-                piecePackage: piece,
-            })))
+            await Promise.all(
+                piecesToInstall.map((piece) =>
+                    createPiecePackageJson({
+                        rootWorkspace,
+                        piecePackage: piece,
+                    }),
+                ),
+            )
 
             await tracer.startActiveSpan('pieceInstaller.bunInstall', async (span) => {
                 try {
                     span.setAttribute('pieces.count', piecesToInstall.length)
                     span.setAttribute('pieces.rootWorkspace', rootWorkspace)
 
-                    const { error: batchError } = await tryCatch(async () => bunRunner(log).install({
-                        path: rootWorkspace,
-                        filtersPath: includeFilters ? piecesToInstall.map(relativePiecePath) : [],
-                    }))
+                    const { error: batchError } = await tryCatch(async () =>
+                        bunRunner(log).install({
+                            path: rootWorkspace,
+                            filtersPath: includeFilters ? piecesToInstall.map(relativePiecePath) : [],
+                        }),
+                    )
 
                     if (isNil(batchError)) {
                         await markPiecesAsUsed(rootWorkspace, piecesToInstall)
-                        log.info({
-                            rootWorkspace,
-                            piecesCount: piecesToInstall.length,
-                        }, '[pieceInstaller] Installed registry pieces using bun')
+                        log.info(
+                            {
+                                rootWorkspace,
+                                piecesCount: piecesToInstall.length,
+                            },
+                            '[pieceInstaller] Installed registry pieces using bun',
+                        )
                         return
                     }
 
                     span.recordException(batchError instanceof Error ? batchError : new Error(String(batchError)))
 
                     if (piecesToInstall.length === 1) {
-                        log.error({ rootWorkspace, error: batchError }, '[pieceInstaller] Piece installation failed, rolling back')
+                        log.error(
+                            { rootWorkspace, error: batchError },
+                            '[pieceInstaller] Piece installation failed, rolling back',
+                        )
                         await rollbackInstallation(rootWorkspace, piecesToInstall)
                         throw batchError
                     }
 
-                    log.warn({
-                        rootWorkspace,
-                        pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
-                        error: batchError,
-                    }, '[pieceInstaller] Batch install failed, retrying pieces individually')
+                    log.warn(
+                        {
+                            rootWorkspace,
+                            pieces: piecesToInstall.map((piece) => `${piece.pieceName}-${piece.pieceVersion}`),
+                            error: batchError,
+                        },
+                        '[pieceInstaller] Batch install failed, retrying pieces individually',
+                    )
 
                     const failedPieces = await tryInstallPiecesIndividually(rootWorkspace, piecesToInstall, log)
 
                     if (failedPieces.length > 0) {
-                        const names = failedPieces.map(p => `${p.pieceName}@${p.pieceVersion}`).join(', ')
+                        const names = failedPieces.map((p) => `${p.pieceName}@${p.pieceVersion}`).join(', ')
                         throw new Error(`[pieceInstaller] Failed to install: ${names}`)
                     }
 
-                    log.info({
-                        rootWorkspace,
-                        piecesCount: piecesToInstall.length,
-                    }, '[pieceInstaller] Installed registry pieces using bun (individual fallback)')
-                }
-                finally {
+                    log.info(
+                        {
+                            rootWorkspace,
+                            piecesCount: piecesToInstall.length,
+                        },
+                        '[pieceInstaller] Installed registry pieces using bun (individual fallback)',
+                    )
+                } finally {
                     span.end()
                 }
             })
@@ -144,10 +174,14 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
 }
 
 async function rollbackInstallation(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
-    await Promise.all(pieces.map(piece => rm(path.resolve(rootWorkspace, relativePiecePath(piece)), {
-        recursive: true,
-        force: true,
-    })))
+    await Promise.all(
+        pieces.map((piece) =>
+            rm(path.resolve(rootWorkspace, relativePiecePath(piece)), {
+                recursive: true,
+                force: true,
+            }),
+        ),
+    )
 }
 
 async function tryInstallPiecesIndividually(
@@ -164,14 +198,16 @@ async function tryInstallPiecesIndividually(
             }),
         )
         if (error) {
-            log.error({
-                piece: `${piece.pieceName}@${piece.pieceVersion}`,
-                error,
-            }, '[pieceInstaller] Individual piece installation failed, rolling back')
+            log.error(
+                {
+                    piece: `${piece.pieceName}@${piece.pieceVersion}`,
+                    error,
+                },
+                '[pieceInstaller] Individual piece installation failed, rolling back',
+            )
             await rollbackInstallation(rootWorkspace, [piece])
             failures.push(piece)
-        }
-        else {
+        } else {
             await markPiecesAsUsed(rootWorkspace, [piece])
         }
     }
@@ -218,33 +254,48 @@ async function savePackageArchivesToDiskIfNotCached(
 async function createRootPackageJson({ path }: { path: string }): Promise<void> {
     const packageJsonPath = join(path, 'package.json')
     await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
-    await writeFileAtomic(packageJsonPath, JSON.stringify({
-        'name': 'fast-workspace',
-        'version': '1.0.0',
-        'workspaces': [
-            'pieces/**',
-        ],
-    }, null, 2), 'utf8')
+    await writeFileAtomic(
+        packageJsonPath,
+        JSON.stringify(
+            {
+                name: 'fast-workspace',
+                version: '1.0.0',
+                workspaces: ['pieces/**'],
+            },
+            null,
+            2,
+        ),
+        'utf8',
+    )
 }
 
-async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
+async function createPiecePackageJson({
+    rootWorkspace,
+    piecePackage,
+}: {
     rootWorkspace: string
     piecePackage: PiecePackage
 }): Promise<void> {
     const packageJsonPath = join(piecePath(rootWorkspace, piecePackage), 'package.json')
 
     const packageJson = {
-        'name': `${piecePackage.pieceName}-${piecePackage.pieceVersion}`,
-        'version': `${piecePackage.pieceVersion}`,
-        'dependencies': {
-            [piecePackage.pieceName]: piecePackage.packageType === PackageType.REGISTRY ? piecePackage.pieceVersion : getPackageArchivePathForPiece(rootWorkspace, piecePackage),
+        name: `${piecePackage.pieceName}-${piecePackage.pieceVersion}`,
+        version: `${piecePackage.pieceVersion}`,
+        dependencies: {
+            [piecePackage.pieceName]:
+                piecePackage.packageType === PackageType.REGISTRY
+                    ? piecePackage.pieceVersion
+                    : getPackageArchivePathForPiece(rootWorkspace, piecePackage),
         },
     }
     await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
     await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')
 }
 
-async function partitionPiecesToInstall(rootWorkspace: string, pieces: PiecePackage[]): Promise<PieceInstallationResult> {
+async function partitionPiecesToInstall(
+    rootWorkspace: string,
+    pieces: PiecePackage[],
+): Promise<PieceInstallationResult> {
     const piecesWithCheck = await Promise.all(
         pieces.map(async (piece) => {
             const installed = await pieceCheckIfAlreadyInstalled(rootWorkspace, piece)
@@ -281,10 +332,7 @@ async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): 
     const writeToDiskJobs = pieces.map(async (piece) => {
         const pieceFolder = piecePath(rootWorkspace, piece)
         await fileSystemUtils.threadSafeMkdir(pieceFolder)
-        await writeFileAtomic(
-            join(pieceFolder, 'ready'),
-            'true',
-        )
+        await writeFileAtomic(join(pieceFolder, 'ready'), 'true')
     })
     await Promise.all(writeToDiskJobs)
 }

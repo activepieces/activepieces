@@ -48,8 +48,8 @@ const DataSelectorNodeContent = ({
     node.data.type === 'value'
       ? flowStructureUtil.getStep(node.data.propertyPath, flowVersion.trigger)
       : node.data.type === 'test'
-      ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
-      : undefined;
+        ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
+        : undefined;
   const stepMetadata = step
     ? stepsHooks.useStepMetadata({ step }).stepMetadata
     : undefined;
@@ -138,4 +138,5 @@ const DataSelectorNodeContent = ({
   );
 };
 DataSelectorNodeContent.displayName = 'DataSelectorNodeContent';
+
 export { DataSelectorNodeContent };

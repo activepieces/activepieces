@@ -1,4 +1,16 @@
-import { ActivepiecesError, ErrorCode, FlowOperationRequest, flowOperations, FlowOperationType, flowPieceUtil, FlowVersion, FlowVersionState, FlowVersionTemplate, PlatformId, sanitizeObjectForPostgresql } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    ErrorCode,
+    FlowOperationRequest,
+    FlowOperationType,
+    FlowVersion,
+    FlowVersionState,
+    FlowVersionTemplate,
+    flowOperations,
+    flowPieceUtil,
+    PlatformId,
+    sanitizeObjectForPostgresql,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowVersionValidationUtil } from '../flows/flow-version/flow-version-validator-util'
 
@@ -33,30 +45,34 @@ export const templateValidator = {
                 },
             })
         }
-        
-        await Promise.all(flows.map(async (flow) => {
-            const minimalFlowVersion = createMinimalFlowVersion(flow)
-            
-            const importRequest = {
-                displayName: flow.displayName,
-                trigger: flow.trigger,
-                schemaVersion: flow.schemaVersion,
-            }
 
-            const importOperation: FlowOperationRequest = { 
-                type: FlowOperationType.IMPORT_FLOW, 
-                request: importRequest, 
-            }
+        await Promise.all(
+            flows.map(async (flow) => {
+                const minimalFlowVersion = createMinimalFlowVersion(flow)
 
-            const validator = flowVersionValidationUtil(log)
+                const importRequest = {
+                    displayName: flow.displayName,
+                    trigger: flow.trigger,
+                    schemaVersion: flow.schemaVersion,
+                }
 
-            await validator.prepareRequest({ platformId, request: importOperation, userId: null })
-            
-            flowOperations.apply(minimalFlowVersion, importOperation)
-        }))
+                const importOperation: FlowOperationRequest = {
+                    type: FlowOperationType.IMPORT_FLOW,
+                    request: importRequest,
+                }
+
+                const validator = flowVersionValidationUtil(log)
+
+                await validator.prepareRequest({ platformId, request: importOperation, userId: null })
+
+                flowOperations.apply(minimalFlowVersion, importOperation)
+            }),
+        )
 
         const sanitizedFlows = flows.map((flow) => sanitizeObjectForPostgresql(flow))
-        const pieces = Array.from(new Set(sanitizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat()))
+        const pieces = Array.from(
+            new Set(sanitizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat()),
+        )
 
         return {
             flows: sanitizedFlows,

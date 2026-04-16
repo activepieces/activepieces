@@ -27,8 +27,8 @@ import { appConnectionsApi } from '../api/app-connections';
 import { globalConnectionsApi } from '../api/global-connections';
 import {
   ConnectionNameAlreadyExists,
-  NoProjectSelected,
   isConnectionNameUnique,
+  NoProjectSelected,
 } from '../utils/utils';
 
 type UseReplaceConnectionsProps = {

@@ -16,25 +16,15 @@ export const platformPieceModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
 }
 
-const platformPieceController: FastifyPluginCallbackZod = (
-    app,
-    _opts,
-    done,
-) => {
-
+const platformPieceController: FastifyPluginCallbackZod = (app, _opts, done) => {
     app.post('/', installPieceParams, async (req, reply) => {
         const platformId = req.principal.platform.id
         assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
-        await pieceInstallService(req.log).installPiece(
-            platformId,
-            req.body,
-        )
+        await pieceInstallService(req.log).installPiece(platformId, req.body)
         await reply.status(StatusCodes.CREATED).send({})
-    },
-    )
+    })
     done()
 }
-
 
 const installPieceParams = {
     config: {
@@ -52,10 +42,7 @@ const installPieceParams = {
     },
 }
 
-function assertOneOfTheseScope(
-    scope: PieceScope,
-    allowedScopes: PieceScope[],
-): void {
+function assertOneOfTheseScope(scope: PieceScope, allowedScopes: PieceScope[]): void {
     if (!allowedScopes.includes(scope)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,

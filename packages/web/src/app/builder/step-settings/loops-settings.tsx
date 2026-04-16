@@ -40,4 +40,5 @@ const LoopsSettings = React.memo(({ readonly }: LoopsSettingsProps) => {
 });
 
 LoopsSettings.displayName = 'LoopsSettings';
+
 export { LoopsSettings };

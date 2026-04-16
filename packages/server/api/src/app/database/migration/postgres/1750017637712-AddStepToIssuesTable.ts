@@ -64,5 +64,4 @@ export class AddStepToIssuesTable1750017637712 implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_issue_flow_id" ON "issue" ("flowId")
         `)
     }
-
 }

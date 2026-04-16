@@ -11,15 +11,12 @@ type BulkSideEffectParams = {
     agentUpdate?: boolean
 }
 
-  type EventTypeWithAutomation = {
-      eventType: TableWebhookEventType
-      automationTrigger?: TableAutomationTrigger
-  }
+type EventTypeWithAutomation = {
+    eventType: TableWebhookEventType
+    automationTrigger?: TableAutomationTrigger
+}
 
-const EVENT_TYPE_MAP: Record<
-'created' | 'updated' | 'deleted',
-EventTypeWithAutomation
-> = {
+const EVENT_TYPE_MAP: Record<'created' | 'updated' | 'deleted', EventTypeWithAutomation> = {
     created: {
         eventType: TableWebhookEventType.RECORD_CREATED,
         automationTrigger: TableAutomationTrigger.ON_NEW_RECORD,
@@ -33,12 +30,8 @@ EventTypeWithAutomation
     },
 }
 
-
 export const recordSideEffects = (_log: FastifyBaseLogger) => ({
-    async handleRecordsEvent(
-        params: BulkSideEffectParams,
-        eventKey: keyof typeof EVENT_TYPE_MAP,
-    ) {
+    async handleRecordsEvent(params: BulkSideEffectParams, eventKey: keyof typeof EVENT_TYPE_MAP) {
         const { projectId, tableId, records, logger, authorization } = params
         const { eventType } = EVENT_TYPE_MAP[eventKey]
 

@@ -1,5 +1,5 @@
 export const mondayGraphQLMutations = {
-  createItem: `
+    createItem: `
   mutation createItem(
     $itemName: String!
     $boardId: ID!
@@ -17,7 +17,7 @@ export const mondayGraphQLMutations = {
       id
     }
   }`,
-  updateItem: `
+    updateItem: `
   mutation updateItem($itemId: ID!, $boardId: ID!, $columnValues: JSON!) {
     change_multiple_column_values(
       item_id: $itemId
@@ -28,7 +28,7 @@ export const mondayGraphQLMutations = {
       name
     }
   }`,
-  createWebhook: `
+    createWebhook: `
   mutation createWebhook(
     $boardId: ID!
     $url: String!
@@ -45,14 +45,14 @@ export const mondayGraphQLMutations = {
       board_id
     }
   }`,
-  deleteWebhook: `
+    deleteWebhook: `
   mutation deleteWebhook($webhookId: ID!) {
     delete_webhook(id: $webhookId) {
       id
       board_id
     }
   }`,
-  createColumn: `
+    createColumn: `
   mutation createColumn(
     $boardId: ID!
     $columnTitle: String!
@@ -66,16 +66,16 @@ export const mondayGraphQLMutations = {
       id
     }
   }`,
-  createGroup: `
+    createGroup: `
   mutation createGroup($boardId: ID!, $groupName: String!) {
     create_group(board_id: $boardId, group_name: $groupName) {
       id
     }
   }`,
-  createUpdate: `
+    createUpdate: `
   mutation createUpdate($itemId: ID!, $body: String!) {
     create_update(item_id: $itemId, body: $body) {
       id
     }
   }`,
-};
+}

@@ -11,9 +11,12 @@ export const Record = z.object({
 export type Record = z.infer<typeof Record>
 
 export const PopulatedRecord = Record.extend({
-    cells: z.record(z.string(), Cell.pick({ updated: true, created: true, value: true }).extend({
-        fieldName: z.string(),
-    })),
+    cells: z.record(
+        z.string(),
+        Cell.pick({ updated: true, created: true, value: true }).extend({
+            fieldName: z.string(),
+        }),
+    ),
 })
 
 export type PopulatedRecord = z.infer<typeof PopulatedRecord>

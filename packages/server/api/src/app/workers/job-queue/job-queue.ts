@@ -1,5 +1,19 @@
 import { apDayjsDuration, memoryLock } from '@activepieces/server-utils'
-import { ApId, EventDestinationJobData, ExecuteFlowJobData, getDefaultJobPriority, isNil, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import {
+    ApId,
+    EventDestinationJobData,
+    ExecuteFlowJobData,
+    getDefaultJobPriority,
+    isNil,
+    JOB_PRIORITY,
+    JobData,
+    PollingJobData,
+    RenewWebhookJobData,
+    ScheduleOptions,
+    UserInteractionJobData,
+    WebhookJobData,
+    WorkerJobType,
+} from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -10,7 +24,10 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { getWorkerGroupQueueName, QueueName } from '../job'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
-const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
+const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(
+    system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS),
+    'day',
+).asSeconds()
 const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT)
 const CHILD_RUNS_KEY = (parentRunId: ApId) => `child_runs:${parentRunId}`
 
@@ -23,11 +40,16 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
     },
     async promoteChildRuns(jobId: string): Promise<void> {
         const redisConnection = await redisConnections.useExisting()
-        const childRunData = (await redisConnection.smembers(CHILD_RUNS_KEY(jobId))).map(childRunData => JSON.parse(childRunData) as ChildRunData)
-        log.info({
-            jobId,
-            childRunData,
-        }, '[jobQueue#promoteChildRuns] Promoting child runs')
+        const childRunData = (await redisConnection.smembers(CHILD_RUNS_KEY(jobId))).map(
+            (childRunData) => JSON.parse(childRunData) as ChildRunData,
+        )
+        log.info(
+            {
+                jobId,
+                childRunData,
+            },
+            '[jobQueue#promoteChildRuns] Promoting child runs',
+        )
         for (const { jobId, platformId } of childRunData) {
             const queueName = await getQueueName(platformId, log)
             const queue = await ensureQueueExists({ log, queueName })
@@ -47,16 +69,20 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
 
         switch (type) {
             case JobType.REPEATING: {
-                await queue.upsertJobScheduler(data.flowVersionId, {
-                    pattern: params.scheduleOptions.cronExpression,
-                    tz: params.scheduleOptions.timezone,
-                }, {
-                    name: data.flowVersionId,
-                    data,
-                    opts: {
-                        priority: JOB_PRIORITY[getDefaultJobPriority(data)],
+                await queue.upsertJobScheduler(
+                    data.flowVersionId,
+                    {
+                        pattern: params.scheduleOptions.cronExpression,
+                        tz: params.scheduleOptions.timezone,
                     },
-                })
+                    {
+                        name: data.flowVersionId,
+                        data,
+                        opts: {
+                            priority: JOB_PRIORITY[getDefaultJobPriority(data)],
+                        },
+                    },
+                )
                 return null
             }
             case JobType.ONE_TIME: {
@@ -74,43 +100,52 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
                     delay: !isNil(dependOnJobId) ? apDayjsDuration(1, 'year').asMilliseconds() : params.delay,
                     jobId: params.id,
                     removeOnFail: data.jobType === WorkerJobType.EVENT_DESTINATION,
-                    ...isUserInteractionJob(data.jobType) ? {
-                        attempts: 1,
-                        removeOnComplete: { age: 300 },
-                    } : {},
+                    ...(isUserInteractionJob(data.jobType)
+                        ? {
+                              attempts: 1,
+                              removeOnComplete: { age: 300 },
+                          }
+                        : {}),
                 })
             }
         }
     },
 
     async removeRepeatingJob({ flowVersionId }: { flowVersionId: ApId }): Promise<void> {
-        const allQueues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
+        const allQueues = [...dedicatedWorkersQueues.values()].filter((queue) => !isNil(queue))
 
-        await Promise.allSettled(
-            allQueues.map(queue => queue.removeJobScheduler(flowVersionId)),
+        await Promise.allSettled(allQueues.map((queue) => queue.removeJobScheduler(flowVersionId)))
+
+        log.info(
+            {
+                flowVersionId,
+            },
+            '[jobQueue#removeRepeatingJob] removed jobs from all queues',
         )
-
-        log.info({
-            flowVersionId,
-        }, '[jobQueue#removeRepeatingJob] removed jobs from all queues')
     },
 
-    async removeOneTimeJob({ jobId, platformId }: { jobId: ApId, platformId: string | null }): Promise<void> {
+    async removeOneTimeJob({ jobId, platformId }: { jobId: ApId; platformId: string | null }): Promise<void> {
         const queueName = await getQueueName(platformId, log)
         const queue = await ensureQueueExists({ log, queueName })
         const job = await queue.getJob(jobId)
         if (!isNil(job)) {
             await job.remove()
-            log.info({
-                jobId,
-                queueName,
-            }, '[jobQueue#removeOneTimeJob] removed job from queue')
+            log.info(
+                {
+                    jobId,
+                    queueName,
+                },
+                '[jobQueue#removeOneTimeJob] removed job from queue',
+            )
             return
         }
-        log.info({
-            jobId,
-            queueName,
-        }, '[jobQueue#removeOneTimeJob] job not found in queue')
+        log.info(
+            {
+                jobId,
+                queueName,
+            },
+            '[jobQueue#removeOneTimeJob] job not found in queue',
+        )
     },
 
     async getOrCreateQueue({ queueName }: { queueName: string }): Promise<Queue> {
@@ -118,7 +153,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
     },
 
     getAllQueues(): Queue[] {
-        const queues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
+        const queues = [...dedicatedWorkersQueues.values()].filter((queue) => !isNil(queue))
         return queues
     },
 
@@ -131,14 +166,12 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
     },
     async close(): Promise<void> {
         log.info('[jobQueue#close] Closing job queue')
-        const allQueues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
-        await Promise.allSettled(
-            allQueues.map(queue => queue.close()),
-        )
+        const allQueues = [...dedicatedWorkersQueues.values()].filter((queue) => !isNil(queue))
+        await Promise.allSettled(allQueues.map((queue) => queue.close()))
     },
 })
 
-async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, queueName: string }): Promise<Queue> {
+async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger; queueName: string }): Promise<Queue> {
     const existingQueue = dedicatedWorkersQueues.get(queueName)
     if (!isNil(existingQueue)) {
         return existingQueue
@@ -174,9 +207,12 @@ async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, q
 
             dedicatedWorkersQueues.set(queueName, queue)
 
-            log.info({
-                queueName,
-            }, '[jobQueue#ensureQueueExists] Queue created')
+            log.info(
+                {
+                    queueName,
+                },
+                '[jobQueue#ensureQueueExists] Queue created',
+            )
             return queue
         },
     })
@@ -208,7 +244,6 @@ async function getQueueName(platformId: string | null, log: FastifyBaseLogger): 
     return getWorkerGroupQueueName(groupId)
 }
 
-
 type ChildRunData = {
     jobId: ApId
     platformId: string
@@ -229,6 +264,11 @@ type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> 
 type RepeatingJobAddParams = BaseAddParams<PollingJobData | RenewWebhookJobData, JobType.REPEATING> & {
     scheduleOptions: ScheduleOptions
 }
-type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | UserInteractionJobData | EventDestinationJobData, JobType.ONE_TIME>
+type OneTimeJobAddParams = BaseAddParams<
+    ExecuteFlowJobData | WebhookJobData | UserInteractionJobData | EventDestinationJobData,
+    JobType.ONE_TIME
+>
 
-export type AddJobParams<type extends JobType> = type extends JobType.REPEATING ? RepeatingJobAddParams : OneTimeJobAddParams
+export type AddJobParams<type extends JobType> = type extends JobType.REPEATING
+    ? RepeatingJobAddParams
+    : OneTimeJobAddParams

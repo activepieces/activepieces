@@ -1,4 +1,4 @@
-import { apId, ApplicationEvent, BADGES, isNil, WebsocketClientEvent } from '@activepieces/shared'
+import { ApplicationEvent, apId, BADGES, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -13,14 +13,9 @@ import { flowRunsBadgesCheck } from './checks/flow-runs-badges'
 
 export const userBadgeRepo = repoFactory(UserBadgeEntity)
 
-const userEventsChecks: BadgeCheck[] = [
-    flowsBadgesCheck,
-    flowContentBadgesCheck,
-]
+const userEventsChecks: BadgeCheck[] = [flowsBadgesCheck, flowContentBadgesCheck]
 
-const workerEventsChecks: BadgeCheck[] = [
-    flowRunsBadgesCheck,
-]
+const workerEventsChecks: BadgeCheck[] = [flowRunsBadgesCheck]
 
 async function processBadgeChecks(
     checks: BadgeCheck[],
@@ -28,7 +23,7 @@ async function processBadgeChecks(
     log: FastifyBaseLogger,
 ): Promise<void> {
     const userId = event.userId
-    const checkResults = await Promise.all(checks.map(badgeCheck => badgeCheck.eval(event)))
+    const checkResults = await Promise.all(checks.map((badgeCheck) => badgeCheck.eval(event)))
 
     const badgesByUser = new Map<string, (keyof typeof BADGES)[]>()
     for (const result of checkResults) {
@@ -44,7 +39,9 @@ async function processBadgeChecks(
             userId,
             name: In(badgesToAward),
         })
-        const newBadges = badgesToAward.filter(badge => !existingBadges.some(existingBadge => existingBadge.name === badge))
+        const newBadges = badgesToAward.filter(
+            (badge) => !existingBadges.some((existingBadge) => existingBadge.name === badge),
+        )
         for (const badgeName of newBadges) {
             await userBadgeRepo().upsert(
                 {
@@ -84,4 +81,3 @@ export const userBadgeService = (log: FastifyBaseLogger) => ({
         })
     },
 })
-

@@ -18,5 +18,4 @@ export class AddOutdatedToReport1767994436597 implements MigrationInterface {
             ALTER TABLE "platform_analytics_report" DROP COLUMN "outdated"
         `)
     }
-
 }

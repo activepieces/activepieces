@@ -8,7 +8,11 @@ import { formatPopulatedRecord, resolveFieldNamesForTable } from './table-utils'
 const updateRecordInput = z.object({
     tableId: z.string().describe('The table ID'),
     recordId: z.string().describe('The record ID to update. Use ap_find_records to find it.'),
-    fields: z.record(z.string(), z.string()).describe('Object mapping field names to new values. Only specified fields are updated. Example: {"Name": "Bob", "Age": "25"}'),
+    fields: z
+        .record(z.string(), z.string())
+        .describe(
+            'Object mapping field names to new values. Only specified fields are updated. Example: {"Name": "Bob", "Age": "25"}',
+        ),
 })
 
 export const apUpdateRecordTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -44,13 +48,14 @@ export const apUpdateRecordTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                 })
 
                 return {
-                    content: [{
-                        type: 'text',
-                        text: `✅ Record updated:\n${formatPopulatedRecord(updated)}`,
-                    }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `✅ Record updated:\n${formatPopulatedRecord(updated)}`,
+                        },
+                    ],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_update_record failed')
                 return mcpUtils.mcpToolError('Failed to update record', err)
             }

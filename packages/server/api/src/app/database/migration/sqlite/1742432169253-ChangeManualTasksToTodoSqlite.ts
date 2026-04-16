@@ -108,7 +108,7 @@ export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInte
         await queryRunner.query(`
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
         `)
-        
+
         // Drop manual_tasks table
         await queryRunner.query(`
             DROP TABLE IF EXISTS "manual_task"
@@ -116,8 +116,6 @@ export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInte
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-
-        
         await queryRunner.query(`
             DROP INDEX "idx_todo_platform_id"
         `)
@@ -204,5 +202,4 @@ export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInte
             DROP TABLE "todo"
         `)
     }
-
 }

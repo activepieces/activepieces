@@ -1,7 +1,7 @@
 import {
-  UpdateActiveFlowsAddonParams,
-  CreateSubscriptionParams,
   CreateAICreditCheckoutSessionParamsSchema,
+  CreateSubscriptionParams,
+  UpdateActiveFlowsAddonParams,
   UpdateAICreditsAutoTopUpParamsSchema,
 } from '@activepieces/shared';
 import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
@@ -47,9 +47,8 @@ export const billingMutations = {
   useCreateSubscription: (setIsOpen?: (isOpen: boolean) => void) => {
     return useMutation({
       mutationFn: async (params: CreateSubscriptionParams) => {
-        const checkoutSessionURl = await platformBillingApi.createSubscription(
-          params,
-        );
+        const checkoutSessionURl =
+          await platformBillingApi.createSubscription(params);
         window.open(checkoutSessionURl, '_blank');
       },
       onSuccess: () => {
@@ -84,9 +83,8 @@ export const billingMutations = {
   useUpdateAutoTopUp: (queryClient: QueryClient) => {
     return useMutation({
       mutationFn: async (params: UpdateAICreditsAutoTopUpParamsSchema) => {
-        const { stripeCheckoutUrl } = await platformBillingApi.updateAutoTopUp(
-          params,
-        );
+        const { stripeCheckoutUrl } =
+          await platformBillingApi.updateAutoTopUp(params);
         if (stripeCheckoutUrl) {
           window.open(stripeCheckoutUrl, '_blank');
         }

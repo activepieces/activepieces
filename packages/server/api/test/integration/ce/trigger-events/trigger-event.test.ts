@@ -1,11 +1,8 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    FlowStatus,
-    PopulatedFlow,
-} from '@activepieces/shared'
+import { FlowStatus, PopulatedFlow } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -22,10 +19,14 @@ describe('Trigger Events API', () => {
         it('should save a trigger event', async () => {
             const ctx = await createTestContext(app!)
 
-            const flowResponse = await ctx.post('/v1/flows', {
-                displayName: 'trigger event test flow',
-                projectId: ctx.project.id,
-            }, { query: { projectId: ctx.project.id } })
+            const flowResponse = await ctx.post(
+                '/v1/flows',
+                {
+                    displayName: 'trigger event test flow',
+                    projectId: ctx.project.id,
+                },
+                { query: { projectId: ctx.project.id } },
+            )
             const flow: PopulatedFlow = flowResponse?.json()
 
             const response = await ctx.post('/v1/trigger-events', {
@@ -45,10 +46,14 @@ describe('Trigger Events API', () => {
         it('should list trigger events', async () => {
             const ctx = await createTestContext(app!)
 
-            const flowResponse = await ctx.post('/v1/flows', {
-                displayName: 'list trigger events flow',
-                projectId: ctx.project.id,
-            }, { query: { projectId: ctx.project.id } })
+            const flowResponse = await ctx.post(
+                '/v1/flows',
+                {
+                    displayName: 'list trigger events flow',
+                    projectId: ctx.project.id,
+                },
+                { query: { projectId: ctx.project.id } },
+            )
             const flow: PopulatedFlow = flowResponse?.json()
 
             await ctx.post('/v1/trigger-events', {
@@ -75,10 +80,14 @@ describe('Trigger Events API', () => {
         it('should return empty for flow with no events', async () => {
             const ctx = await createTestContext(app!)
 
-            const flowResponse = await ctx.post('/v1/flows', {
-                displayName: 'empty trigger events flow',
-                projectId: ctx.project.id,
-            }, { query: { projectId: ctx.project.id } })
+            const flowResponse = await ctx.post(
+                '/v1/flows',
+                {
+                    displayName: 'empty trigger events flow',
+                    projectId: ctx.project.id,
+                },
+                { query: { projectId: ctx.project.id } },
+            )
             const flow: PopulatedFlow = flowResponse?.json()
 
             const response = await ctx.get('/v1/trigger-events', {
@@ -94,10 +103,14 @@ describe('Trigger Events API', () => {
         it('should respect limit parameter', async () => {
             const ctx = await createTestContext(app!)
 
-            const flowResponse = await ctx.post('/v1/flows', {
-                displayName: 'paginate trigger events flow',
-                projectId: ctx.project.id,
-            }, { query: { projectId: ctx.project.id } })
+            const flowResponse = await ctx.post(
+                '/v1/flows',
+                {
+                    displayName: 'paginate trigger events flow',
+                    projectId: ctx.project.id,
+                },
+                { query: { projectId: ctx.project.id } },
+            )
             const flow: PopulatedFlow = flowResponse?.json()
 
             await ctx.post('/v1/trigger-events', { projectId: ctx.project.id, flowId: flow.id, mockData: { n: 1 } })
@@ -121,10 +134,14 @@ describe('Trigger Events API', () => {
             const ctx1 = await createTestContext(app!)
             const ctx2 = await createTestContext(app!)
 
-            const flowResponse = await ctx1.post('/v1/flows', {
-                displayName: 'cross project flow',
-                projectId: ctx1.project.id,
-            }, { query: { projectId: ctx1.project.id } })
+            const flowResponse = await ctx1.post(
+                '/v1/flows',
+                {
+                    displayName: 'cross project flow',
+                    projectId: ctx1.project.id,
+                },
+                { query: { projectId: ctx1.project.id } },
+            )
             const flow: PopulatedFlow = flowResponse?.json()
 
             const response = await ctx2.post('/v1/trigger-events', {

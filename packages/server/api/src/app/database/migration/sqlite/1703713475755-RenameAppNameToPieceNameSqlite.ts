@@ -1,15 +1,17 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 
-export class RenameAppNameToPieceNameSqlite1703713475755
-implements MigrationInterface {
+export class RenameAppNameToPieceNameSqlite1703713475755 implements MigrationInterface {
     name = 'RenameAppNameToPieceNameSqlite1703713475755'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'up',
+        )
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)

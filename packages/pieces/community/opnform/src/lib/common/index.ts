@@ -1,39 +1,30 @@
-import {
-    Property,
-    DropdownOption,
-    AppConnectionValueForAuthProperty,
-} from '@activepieces/pieces-framework';
-import {
-    HttpRequest,
-    HttpMethod,
-    AuthenticationType,
-    httpClient,
-} from '@activepieces/pieces-common';
-import { opnformAuth } from '../auth';
-import { CreateIntegrationResponse } from './types';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { AppConnectionValueForAuthProperty, DropdownOption, Property } from '@activepieces/pieces-framework'
+import { opnformAuth } from '../auth'
+import { CreateIntegrationResponse } from './types'
 
-export const API_URL_DEFAULT = 'https://api.opnform.com';
+export const API_URL_DEFAULT = 'https://api.opnform.com'
 
 type WorkspaceListResponse = {
-    id: string;
-    name: string;
-}[];
+    id: string
+    name: string
+}[]
 
 type FormListResponse = {
     meta: {
-        current_page: number;
-        from: number;
-        last_page: number;
-        per_page: number;
-        to: number;
-        total: number;
-    };
+        current_page: number
+        from: number
+        last_page: number
+        per_page: number
+        to: number
+        total: number
+    }
     data: {
-        id: string;
-        title: string;
-        slug?: string;
-    }[];
-};
+        id: string
+        title: string
+        slug?: string
+    }[]
+}
 
 export const workspaceIdProp = Property.Dropdown<string, true, typeof opnformAuth>({
     displayName: 'Workspace',
@@ -47,11 +38,11 @@ export const workspaceIdProp = Property.Dropdown<string, true, typeof opnformAut
                 disabled: true,
                 placeholder: 'Connect Opnform account',
                 options: [],
-            };
+            }
         }
 
-        const accessToken = auth.props.apiKey;
-        const options: DropdownOption<string>[] = [];
+        const accessToken = auth.props.apiKey
+        const options: DropdownOption<string>[] = []
 
         const request: HttpRequest = {
             method: HttpMethod.GET,
@@ -60,21 +51,21 @@ export const workspaceIdProp = Property.Dropdown<string, true, typeof opnformAut
                 type: AuthenticationType.BEARER_TOKEN,
                 token: accessToken,
             },
-        };
+        }
 
-        const response = await httpClient.sendRequest<WorkspaceListResponse>(request);
+        const response = await httpClient.sendRequest<WorkspaceListResponse>(request)
 
         for (const workspace of response.body) {
-            options.push({ label: workspace.name, value: workspace.id });
+            options.push({ label: workspace.name, value: workspace.id })
         }
 
         return {
             disabled: false,
             placeholder: 'Select workspace',
             options,
-        };
+        }
     },
-});
+})
 
 export const formIdProp = Property.Dropdown<string, true, typeof opnformAuth>({
     displayName: 'Form',
@@ -88,7 +79,7 @@ export const formIdProp = Property.Dropdown<string, true, typeof opnformAuth>({
                 disabled: true,
                 placeholder: 'Connect Opnform account',
                 options: [],
-            };
+            }
         }
 
         if (!workspaceId) {
@@ -96,14 +87,14 @@ export const formIdProp = Property.Dropdown<string, true, typeof opnformAuth>({
                 disabled: true,
                 placeholder: 'Select workspace',
                 options: [],
-            };
+            }
         }
 
-        const accessToken = auth.props.apiKey;
+        const accessToken = auth.props.apiKey
 
-        const options: DropdownOption<string>[] = [];
-        let hasMore = true;
-        let page = 1;
+        const options: DropdownOption<string>[] = []
+        let hasMore = true
+        let page = 1
 
         do {
             const request: HttpRequest = {
@@ -116,32 +107,30 @@ export const formIdProp = Property.Dropdown<string, true, typeof opnformAuth>({
                 queryParams: {
                     page: page.toString(),
                 },
-            };
-
-            const response = await httpClient.sendRequest<FormListResponse>(request);
-
-            for (const form of response.body.data) {
-                options.push({ label: form.title, value: form.id });
             }
 
-            hasMore =
-                response.body.meta != undefined &&
-                response.body.meta.current_page < response.body.meta.last_page;
+            const response = await httpClient.sendRequest<FormListResponse>(request)
 
-            page++;
-        } while (hasMore);
+            for (const form of response.body.data) {
+                options.push({ label: form.title, value: form.id })
+            }
+
+            hasMore = response.body.meta != undefined && response.body.meta.current_page < response.body.meta.last_page
+
+            page++
+        } while (hasMore)
 
         return {
             disabled: false,
             placeholder: 'Select form',
             options,
-        };
+        }
     },
-});
+})
 
 export const opnformCommon = {
     getBaseUrl: (auth: AppConnectionValueForAuthProperty<typeof opnformAuth>) => {
-        return auth.props.baseApiUrl || API_URL_DEFAULT;
+        return auth.props.baseApiUrl || API_URL_DEFAULT
     },
     validateAuth: async (auth: AppConnectionValueForAuthProperty<typeof opnformAuth>) => {
         const response = await httpClient.sendRequest({
@@ -151,8 +140,8 @@ export const opnformCommon = {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: auth.props.apiKey,
             },
-        });
-        return response.status === 200;
+        })
+        return response.status === 200
     },
     checkExistsIntegration: async (
         auth: AppConnectionValueForAuthProperty<typeof opnformAuth>,
@@ -167,13 +156,12 @@ export const opnformCommon = {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: auth.props.apiKey,
             },
-        });
+        })
         const integration = allIntegrations.body.find(
             (integration: any) =>
-                integration.integration_id === 'activepieces' &&
-                integration.data?.provider_url === flowUrl,
-        );
-        return integration || null;
+                integration.integration_id === 'activepieces' && integration.data?.provider_url === flowUrl,
+        )
+        return integration || null
     },
     createIntegration: async (
         auth: AppConnectionValueForAuthProperty<typeof opnformAuth>,
@@ -200,11 +188,11 @@ export const opnformCommon = {
                 token: auth.props.apiKey,
             },
             queryParams: {},
-        };
+        }
 
-        const response = await httpClient.sendRequest<CreateIntegrationResponse>(request);
+        const response = await httpClient.sendRequest<CreateIntegrationResponse>(request)
 
-        return response.body.form_integration.id || null;
+        return response.body.form_integration.id || null
     },
     createOrUpdateIntegration: async (
         auth: AppConnectionValueForAuthProperty<typeof opnformAuth>,
@@ -213,23 +201,19 @@ export const opnformCommon = {
         flowUrl: string,
     ) => {
         // Check if the integration already exists
-        const existingIntegration = await opnformCommon.checkExistsIntegration(
-            auth,
-            formId,
-            flowUrl,
-        );
+        const existingIntegration = await opnformCommon.checkExistsIntegration(auth, formId, flowUrl)
 
         if (existingIntegration) {
             // If webhook URL matches, return existing ID
             if (existingIntegration.data?.webhook_url === webhookUrl) {
-                return existingIntegration.id;
+                return existingIntegration.id
             }
             // If webhook URL differs (test -> production), delete and recreate
-            await opnformCommon.deleteIntegration(auth, formId, existingIntegration.id);
+            await opnformCommon.deleteIntegration(auth, formId, existingIntegration.id)
         }
 
         // Create new integration (or recreate after deletion)
-        return await opnformCommon.createIntegration(auth, formId, webhookUrl, flowUrl);
+        return await opnformCommon.createIntegration(auth, formId, webhookUrl, flowUrl)
     },
     deleteIntegration: async (
         auth: AppConnectionValueForAuthProperty<typeof opnformAuth>,
@@ -238,9 +222,7 @@ export const opnformCommon = {
     ) => {
         const request: HttpRequest = {
             method: HttpMethod.DELETE,
-            url: `${opnformCommon.getBaseUrl(
-                auth,
-            )}/open/forms/${formId}/integrations/${integrationId}`,
+            url: `${opnformCommon.getBaseUrl(auth)}/open/forms/${formId}/integrations/${integrationId}`,
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -248,7 +230,7 @@ export const opnformCommon = {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: auth.props.apiKey,
             },
-        };
-        return await httpClient.sendRequest(request);
+        }
+        return await httpClient.sendRequest(request)
     },
-};
+}

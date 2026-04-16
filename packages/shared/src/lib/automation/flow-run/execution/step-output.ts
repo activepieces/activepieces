@@ -87,13 +87,12 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
 export type BaseStepOutput = GenericStepOutput<FlowActionType | FlowTriggerType, unknown>
 
 export type StepOutput =
-  | GenericStepOutput<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>
-  | GenericStepOutput<FlowActionType.ROUTER, unknown>
-  | GenericStepOutput<
-  | Exclude<FlowActionType, FlowActionType.LOOP_ON_ITEMS | FlowActionType.ROUTER>
-  | FlowTriggerType,
-  unknown
-  >
+    | GenericStepOutput<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>
+    | GenericStepOutput<FlowActionType.ROUTER, unknown>
+    | GenericStepOutput<
+          Exclude<FlowActionType, FlowActionType.LOOP_ON_ITEMS | FlowActionType.ROUTER> | FlowTriggerType,
+          unknown
+      >
 
 type BranchResult = {
     branchName: string
@@ -105,10 +104,7 @@ type RouterStepResult = {
     branches: BranchResult[]
 }
 
-export class RouterStepOutput extends GenericStepOutput<
-FlowActionType.ROUTER,
-RouterStepResult
-> {
+export class RouterStepOutput extends GenericStepOutput<FlowActionType.ROUTER, RouterStepResult> {
     static init({ input }: { input: unknown }): RouterStepOutput {
         return new RouterStepOutput({
             type: FlowActionType.ROUTER,
@@ -124,13 +120,8 @@ export type LoopStepResult = {
     iterations: Record<string, StepOutput>[]
 }
 
-export class LoopStepOutput extends GenericStepOutput<
-FlowActionType.LOOP_ON_ITEMS,
-LoopStepResult
-> {
-    constructor(
-        step: BaseStepOutputParams<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>,
-    ) {
+export class LoopStepOutput extends GenericStepOutput<FlowActionType.LOOP_ON_ITEMS, LoopStepResult> {
+    constructor(step: BaseStepOutputParams<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>) {
         super(step)
         this.output = step.output ?? {
             item: undefined,
@@ -161,13 +152,7 @@ LoopStepResult
         return !isNil(this.output?.iterations[iteration])
     }
 
-    setItemAndIndex({
-        item,
-        index,
-    }: {
-        item: unknown
-        index: number
-    }): LoopStepOutput {
+    setItemAndIndex({ item, index }: { item: unknown; index: number }): LoopStepOutput {
         return new LoopStepOutput({
             ...this,
             output: {

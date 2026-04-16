@@ -1,9 +1,4 @@
-import {
-    ActivepiecesError,
-    assertNotEqual,
-    ErrorCode,
-    isNil,
-} from '@activepieces/shared'
+import { ActivepiecesError, assertNotEqual, ErrorCode, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import jwksClient from 'jwks-rsa'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
@@ -22,27 +17,16 @@ export const googleAuthnProvider = (log: FastifyBaseLogger) => ({
         const { clientId, platformId } = params
         const loginUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
         loginUrl.searchParams.set('client_id', clientId)
-        loginUrl.searchParams.set(
-            'redirect_uri',
-            await federatedAuthnService(log).getThirdPartyRedirectUrl(platformId),
-        )
+        loginUrl.searchParams.set('redirect_uri', await federatedAuthnService(log).getThirdPartyRedirectUrl(platformId))
         loginUrl.searchParams.set('scope', 'email profile')
         loginUrl.searchParams.set('response_type', 'code')
 
         return loginUrl.href
     },
 
-    async authenticate(
-        params: AuthenticateParams,
-    ): Promise<FebderatedAuthnIdToken> {
+    async authenticate(params: AuthenticateParams): Promise<FebderatedAuthnIdToken> {
         const { clientId, clientSecret, authorizationCode, platformId } = params
-        const idToken = await exchangeCodeForIdToken(
-            log,
-            platformId,
-            clientId,
-            clientSecret,
-            authorizationCode,
-        )
+        const idToken = await exchangeCodeForIdToken(log, platformId, clientId, clientSecret, authorizationCode)
         return verifyIdToken(clientId, idToken)
     },
 })
@@ -68,20 +52,20 @@ const exchangeCodeForIdToken = async (
         }),
     })
 
-    const responseBody = await response.json() as { id_token?: string }
+    const responseBody = (await response.json()) as { id_token?: string }
     if (isNil(responseBody.id_token)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.INVALID_CREDENTIALS,
-            params: null,
-        }, 'Google OAuth token exchange failed: no id_token returned')
+        throw new ActivepiecesError(
+            {
+                code: ErrorCode.INVALID_CREDENTIALS,
+                params: null,
+            },
+            'Google OAuth token exchange failed: no id_token returned',
+        )
     }
     return responseBody.id_token
 }
 
-const verifyIdToken = async (
-    clientId: string,
-    idToken: string,
-): Promise<FebderatedAuthnIdToken> => {
+const verifyIdToken = async (clientId: string, idToken: string): Promise<FebderatedAuthnIdToken> => {
     const { header } = jwtUtils.decode({ jwt: idToken })
     const signingKey = await keyLoader.getSigningKey(header.kid)
     const publicKey = signingKey.getPublicKey()

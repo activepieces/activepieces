@@ -1,4 +1,15 @@
-import { ActivepiecesError, apId, assertNotNullOrUndefined, CreateFieldRequest, ErrorCode, Field, FieldState, FieldType, isNil, UpdateFieldRequest } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    apId,
+    assertNotNullOrUndefined,
+    CreateFieldRequest,
+    ErrorCode,
+    Field,
+    FieldState,
+    FieldType,
+    isNil,
+    UpdateFieldRequest,
+} from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { system } from '../../helper/system/system'
@@ -110,12 +121,15 @@ export const fieldService = {
     },
 
     async update({ id, projectId, request }: UpdateParams): Promise<Field> {
-        await fieldRepo().update({
-            id,
-            projectId,
-        }, {
-            name: request.name,
-        })
+        await fieldRepo().update(
+            {
+                id,
+                projectId,
+            },
+            {
+                name: request.name,
+            },
+        )
         return this.getById({ id, projectId })
     },
 
@@ -129,7 +143,8 @@ export const fieldService = {
         if (countRes + 1 > system.getNumberOrThrow(AppSystemProp.MAX_FIELDS_PER_TABLE)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
-                params: { message: `Max fields per table reached: ${system.getNumberOrThrow(AppSystemProp.MAX_FIELDS_PER_TABLE)}`,
+                params: {
+                    message: `Max fields per table reached: ${system.getNumberOrThrow(AppSystemProp.MAX_FIELDS_PER_TABLE)}`,
                 },
             })
         }

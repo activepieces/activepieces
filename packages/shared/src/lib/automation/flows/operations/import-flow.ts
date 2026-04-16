@@ -3,7 +3,14 @@ import { FlowAction, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 import { flowStructureUtil } from '../util/flow-structure-util'
-import { AddNoteRequest, DeleteNoteRequest, FlowOperationRequest, FlowOperationType, ImportFlowRequest, StepLocationRelativeToParent } from './index'
+import {
+    AddNoteRequest,
+    DeleteNoteRequest,
+    FlowOperationRequest,
+    FlowOperationType,
+    ImportFlowRequest,
+    StepLocationRelativeToParent,
+} from './index'
 
 function createDeleteActionOperation(actionName: string): FlowOperationRequest {
     return {
@@ -86,19 +93,18 @@ function _getImportOperationsForSteps(step: FlowAction | FlowTrigger | undefined
     return steps
 }
 
-function _getImportOperationsForNotes(flowVersion: FlowVersion, request: ImportFlowRequest): FlowOperationRequest[] { 
-
-    const deleteOperations: DeleteNoteRequest[] = flowVersion.notes.map(note => ({
+function _getImportOperationsForNotes(flowVersion: FlowVersion, request: ImportFlowRequest): FlowOperationRequest[] {
+    const deleteOperations: DeleteNoteRequest[] = flowVersion.notes.map((note) => ({
         id: note.id,
     }))
-    const addOperations: AddNoteRequest[] = (request.notes || []).map(note => (note))
+    const addOperations: AddNoteRequest[] = (request.notes || []).map((note) => note)
 
     const operations: FlowOperationRequest[] = [
-        ...deleteOperations.map(operation => ({
+        ...deleteOperations.map((operation) => ({
             type: FlowOperationType.DELETE_NOTE as const,
             request: operation,
         })),
-        ...addOperations.map(operation => ({
+        ...addOperations.map((operation) => ({
             type: FlowOperationType.ADD_NOTE as const,
             request: operation,
         })),
@@ -132,12 +138,10 @@ function removeAnySubsequentAction(action: FlowAction): FlowAction {
 function _importFlow(flowVersion: FlowVersion, request: ImportFlowRequest): FlowOperationRequest[] {
     const existingActions = flowStructureUtil.getAllNextActionsWithoutChildren(flowVersion.trigger)
 
-    const deleteOperations = existingActions.map(action =>
-        createDeleteActionOperation(action.name),
-    )
+    const deleteOperations = existingActions.map((action) => createDeleteActionOperation(action.name))
 
     const importOperations = _getImportOperationsForSteps(request.trigger)
- 
+
     return [
         createChangeNameOperation(request.displayName),
         ...deleteOperations,
@@ -147,4 +151,4 @@ function _importFlow(flowVersion: FlowVersion, request: ImportFlowRequest): Flow
     ]
 }
 
-export { _importFlow, _getImportOperationsForSteps as _getImportOperations }
+export { _getImportOperationsForSteps as _getImportOperations, _importFlow }

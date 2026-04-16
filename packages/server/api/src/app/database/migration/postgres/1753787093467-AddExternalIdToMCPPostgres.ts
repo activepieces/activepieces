@@ -35,5 +35,4 @@ export class AddExternalIdToMCPPostgres1753787093467 implements MigrationInterfa
             CREATE INDEX "mcp_project_id" ON "mcp" ("projectId")
         `)
     }
-
 }

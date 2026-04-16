@@ -1,23 +1,14 @@
 import { TriggerBase } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
-    ErrorCode,
-    FlowTriggerType,
-    FlowVersion,
-    isNil,
-    ProjectId,
-} from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlowTriggerType, FlowVersion, isNil, ProjectId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 
 export const triggerUtils = (log: FastifyBaseLogger) => ({
     async getPieceTriggerOrThrow({ flowVersion, projectId }: GetPieceTriggerOrThrowParams): Promise<TriggerBase> {
-
         const pieceTrigger = await this.getPieceTrigger({
             flowVersion,
             projectId,
-
         })
         if (isNil(pieceTrigger)) {
             throw new ActivepiecesError({
@@ -51,7 +42,12 @@ export const triggerUtils = (log: FastifyBaseLogger) => ({
             projectId,
         })
     },
-    async getPieceTriggerByName({ pieceName, pieceVersion, triggerName, projectId }: GetPieceTriggerByNameParams): Promise<TriggerBase | null> {
+    async getPieceTriggerByName({
+        pieceName,
+        pieceVersion,
+        triggerName,
+        projectId,
+    }: GetPieceTriggerByNameParams): Promise<TriggerBase | null> {
         const platformId = await projectService(log).getPlatformId(projectId)
         const piece = await pieceMetadataService(log).get({
             platformId,

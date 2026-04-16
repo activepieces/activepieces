@@ -1,5 +1,16 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
-import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
+import {
+    AgentPieceTool,
+    ExecuteToolOperation,
+    ExecuteToolResponse,
+    ExecutionToolStatus,
+    FieldControlMode,
+    FlowActionType,
+    isNil,
+    PieceAction,
+    PropertyExecutionType,
+    StepOutputStatus,
+} from '@activepieces/shared'
 import { generateText, JSONParseError, LanguageModel, NoObjectGeneratedError, Output, Tool, zodSchema } from 'ai'
 import dayjs from 'dayjs'
 import { z } from 'zod'
@@ -12,31 +23,33 @@ import { tsort } from './tsort'
 
 export const agentTools = {
     async tools({ engineConstants, tools, model }: ConstructToolParams): Promise<Record<string, Tool>> {
-        const piecesTools = await Promise.all(tools.map(async (tool) => {
-            const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
-                pieceName: tool.pieceMetadata.pieceName,
-                pieceVersion: tool.pieceMetadata.pieceVersion,
-                actionName: tool.pieceMetadata.actionName,
-                devPieces: EngineConstants.DEV_PIECES,
-            })
-            return {
-                name: tool.toolName,
-                description: pieceAction.description,
-                inputSchema: z.object({
-                    instruction: z.string().describe('The instruction to the tool'),
-                }),
-                execute: async ({ instruction }: { instruction: string }) =>
-                    execute({
-                        ...engineConstants,
-                        instruction,
-                        pieceName: tool.pieceMetadata.pieceName,
-                        pieceVersion: tool.pieceMetadata.pieceVersion,
-                        actionName: tool.pieceMetadata.actionName,
-                        predefinedInput: tool.pieceMetadata.predefinedInput,
-                        model,
+        const piecesTools = await Promise.all(
+            tools.map(async (tool) => {
+                const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
+                    pieceName: tool.pieceMetadata.pieceName,
+                    pieceVersion: tool.pieceMetadata.pieceVersion,
+                    actionName: tool.pieceMetadata.actionName,
+                    devPieces: EngineConstants.DEV_PIECES,
+                })
+                return {
+                    name: tool.toolName,
+                    description: pieceAction.description,
+                    inputSchema: z.object({
+                        instruction: z.string().describe('The instruction to the tool'),
                     }),
-            }
-        }))
+                    execute: async ({ instruction }: { instruction: string }) =>
+                        execute({
+                            ...engineConstants,
+                            instruction,
+                            pieceName: tool.pieceMetadata.pieceName,
+                            pieceVersion: tool.pieceMetadata.pieceVersion,
+                            actionName: tool.pieceMetadata.actionName,
+                            predefinedInput: tool.pieceMetadata.predefinedInput,
+                            model,
+                        }),
+                }
+            }),
+        )
 
         return {
             ...Object.fromEntries(piecesTools.map((tool) => [tool.name, tool])),
@@ -63,8 +76,7 @@ async function resolveProperties(
     for (const [propertyName, field] of Object.entries(predefinedInputsFields)) {
         if (field.mode === FieldControlMode.CHOOSE_YOURSELF) {
             result[propertyName] = field.value
-        }
-        else if (field.mode === FieldControlMode.LEAVE_EMPTY) {
+        } else if (field.mode === FieldControlMode.LEAVE_EMPTY) {
             result[propertyName] = undefined
         }
     }
@@ -87,20 +99,10 @@ async function resolveProperties(
                 continue
             }
 
-            const propertySchema = await propertyToSchema(
-                property,
-                propertyFromAction,
-                operation,
-                result,
-            )
+            const propertySchema = await propertyToSchema(property, propertyFromAction, operation, result)
             propertyToFill[property] = propertySchema
 
-            const propertyDetail = await buildPropertyDetail(
-                property,
-                propertyFromAction,
-                operation,
-                result,
-            )
+            const propertyDetail = await buildPropertyDetail(property, propertyFromAction, operation, result)
             if (!isNil(propertyDetail)) {
                 propertyDetails.push(propertyDetail)
             }
@@ -109,23 +111,21 @@ async function resolveProperties(
         if (Object.keys(propertyToFill).length === 0) continue
 
         const schemaObject = zodSchema(z.object(propertyToFill).strict())
-        const extractionPrompt = constructExtractionPrompt(
-            instruction,
-            propertyToFill,
-            propertyDetails,
-            result,
-        )
+        const extractionPrompt = constructExtractionPrompt(instruction, propertyToFill, propertyDetails, result)
 
         const { output } = await generateText({
             model,
             prompt: extractionPrompt,
             output: Output.object({
                 schema: schemaObject,
-
             }),
-            
-        }).catch(error => {
-            if (NoObjectGeneratedError.isInstance(error) && JSONParseError.isInstance(error.cause) && error.text?.startsWith('```json') && error.text?.endsWith('```')) {
+        }).catch((error) => {
+            if (
+                NoObjectGeneratedError.isInstance(error) &&
+                JSONParseError.isInstance(error.cause) &&
+                error.text?.startsWith('```json') &&
+                error.text?.endsWith('```')
+            ) {
                 return {
                     output: JSON.parse(error.text.replace('```json', '').replace('```', '')),
                 }
@@ -137,7 +137,6 @@ async function resolveProperties(
             ...result,
             ...(output as Record<string, unknown>),
         }
-
     }
     return result
 }
@@ -151,8 +150,14 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
             devPieces: EngineConstants.DEV_PIECES,
         })
         const depthToPropertyMap = tsort.sortPropertiesByDependencies(pieceAction.props)
-        const resolvedInput = await resolveProperties(depthToPropertyMap, operation.instruction, pieceAction, operation.model, operation)
-        
+        const resolvedInput = await resolveProperties(
+            depthToPropertyMap,
+            operation.instruction,
+            pieceAction,
+            operation.model,
+            operation,
+        )
+
         const step: PieceAction = {
             name: operation.actionName,
             displayName: operation.actionName,
@@ -163,10 +168,15 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
                 actionName: operation.actionName,
                 pieceName: operation.pieceName,
                 pieceVersion: operation.pieceVersion,
-                propertySettings: Object.fromEntries(Object.entries(resolvedInput).map(([key]) => [key, {
-                    type: PropertyExecutionType.MANUAL,
-                    schema: undefined,
-                }])),
+                propertySettings: Object.fromEntries(
+                    Object.entries(resolvedInput).map(([key]) => [
+                        key,
+                        {
+                            type: PropertyExecutionType.MANUAL,
+                            schema: undefined,
+                        },
+                    ]),
+                ),
             },
             valid: true,
         }
@@ -176,7 +186,7 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
             constants: EngineConstants.fromExecuteActionInput(operation),
         })
         const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
-        
+
         return {
             status: status === StepOutputStatus.FAILED ? ExecutionToolStatus.FAILED : ExecutionToolStatus.SUCCESS,
             output: stepOutput,
@@ -186,8 +196,7 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
             },
             errorMessage,
         }
-    }
-    catch (error) {
+    } catch (error) {
         return {
             status: ExecutionToolStatus.FAILED,
             output: undefined,
@@ -205,13 +214,10 @@ const constructExtractionPrompt = (
 ): string => {
     const propertyNames = Object.keys(propertyToFill).join('", "')
 
-    const existingValuesContext = Object.keys(existingValues).length > 0
-        ? buildExistingValuesSection(existingValues)
-        : ''
+    const existingValuesContext =
+        Object.keys(existingValues).length > 0 ? buildExistingValuesSection(existingValues) : ''
 
-    const propertyDetailsSection = propertyDetails.length > 0
-        ? buildPropertyDetailsSection(propertyDetails)
-        : ''
+    const propertyDetailsSection = propertyDetails.length > 0 ? buildPropertyDetailsSection(propertyDetails) : ''
 
     return `
 You are an expert at understanding API schemas and filling out properties based on user instructions.
@@ -246,7 +252,12 @@ type ExecuteToolOperationWithModel = ExecuteToolOperation & {
     model: LanguageModel
 }
 
-async function propertyToSchema(propertyName: string, property: PieceProperty, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
+async function propertyToSchema(
+    propertyName: string,
+    property: PieceProperty,
+    operation: ExecuteToolOperation,
+    resolvedInput: Record<string, unknown>,
+): Promise<z.ZodTypeAny> {
     let schema: z.ZodTypeAny
 
     switch (property.type) {
@@ -274,8 +285,7 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
         case PropertyType.ARRAY: {
             if (property.properties) {
                 schema = z.array(await buildObjectSchemaFromProperties(property.properties, operation, resolvedInput))
-            }
-            else {
+            } else {
                 schema = z.array(z.union([z.string(), z.number(), z.boolean(), z.object({}).loose()]))
             }
             break
@@ -308,11 +318,15 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
     return property.required ? schema : schema.nullable()
 }
 
-async function buildObjectSchemaFromProperties(properties: Record<string, PieceProperty>, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
+async function buildObjectSchemaFromProperties(
+    properties: Record<string, PieceProperty>,
+    operation: ExecuteToolOperation,
+    resolvedInput: Record<string, unknown>,
+): Promise<z.ZodTypeAny> {
     const entries = Object.entries(properties)
-    const schemas = await Promise.all(entries.map(([key, value]) =>
-        propertyToSchema(key, value, operation, resolvedInput),
-    ))
+    const schemas = await Promise.all(
+        entries.map(([key, value]) => propertyToSchema(key, value, operation, resolvedInput)),
+    )
     const schemaMap: Record<string, z.ZodTypeAny> = {}
     for (let i = 0; i < entries.length; i++) {
         schemaMap[entries[i][0]] = schemas[i]
@@ -320,15 +334,19 @@ async function buildObjectSchemaFromProperties(properties: Record<string, PieceP
     return z.object(schemaMap).loose()
 }
 
-async function buildDynamicSchema(propertyName: string, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
-    const response = await pieceHelper.executeProps({
+async function buildDynamicSchema(
+    propertyName: string,
+    operation: ExecuteToolOperation,
+    resolvedInput: Record<string, unknown>,
+): Promise<z.ZodTypeAny> {
+    const response = (await pieceHelper.executeProps({
         ...operation,
         propertyName,
         actionOrTriggerName: operation.actionName,
         input: resolvedInput,
         sampleData: {},
         searchValue: undefined,
-    }) as unknown as ExecutePropsResult<PropertyType.DYNAMIC>
+    })) as unknown as ExecutePropsResult<PropertyType.DYNAMIC>
     return buildObjectSchemaFromProperties(response.options, operation, resolvedInput)
 }
 
@@ -340,7 +358,12 @@ type PropertyDetail = {
     defaultValue?: unknown
 }
 
-async function buildPropertyDetail(propertyName: string, property: PieceProperty, operation: ExecuteToolOperation, input: Record<string, unknown>): Promise<PropertyDetail | null> {
+async function buildPropertyDetail(
+    propertyName: string,
+    property: PieceProperty,
+    operation: ExecuteToolOperation,
+    input: Record<string, unknown>,
+): Promise<PropertyDetail | null> {
     const baseDetail: PropertyDetail = {
         name: propertyName,
         type: property.type,
@@ -364,20 +387,25 @@ async function buildPropertyDetail(propertyName: string, property: PieceProperty
     return baseDetail
 }
 
-async function loadOptions(propertyName: string, property: PieceProperty, operation: ExecuteToolOperation, input: Record<string, unknown>): Promise<DropdownOption<unknown>[]> {
+async function loadOptions(
+    propertyName: string,
+    property: PieceProperty,
+    operation: ExecuteToolOperation,
+    input: Record<string, unknown>,
+): Promise<DropdownOption<unknown>[]> {
     if (property.type === PropertyType.STATIC_DROPDOWN || property.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN) {
         const staticProperty = property as { options: { options: DropdownOption<unknown>[] } }
         return staticProperty.options.options
     }
-    
-    const response = await pieceHelper.executeProps({
+
+    const response = (await pieceHelper.executeProps({
         ...operation,
         propertyName,
         actionOrTriggerName: operation.actionName,
         input,
         sampleData: {},
         searchValue: undefined,
-    }) as unknown as ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN>
+    })) as unknown as ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN>
     const options = response.options
     return options.options
 }
@@ -390,16 +418,18 @@ ${JSON.stringify(existingValues, null, 2)}
 }
 
 function buildPropertyDetailsSection(propertyDetails: PropertyDetail[]): string {
-    const sections = propertyDetails.map(detail => {
-        let content = `- Name: ${detail.name}\n  Type: ${detail.type}`
-        if (detail.description) {
-            content += `\n  Description: ${detail.description}`
-        }
-        if (detail.options && detail.options.length > 0) {
-            content += `\n  Options: ${JSON.stringify(detail.options, null, 2)}`
-        }
-        return content
-    }).join('\n\n')
+    const sections = propertyDetails
+        .map((detail) => {
+            let content = `- Name: ${detail.name}\n  Type: ${detail.type}`
+            if (detail.description) {
+                content += `\n  Description: ${detail.description}`
+            }
+            if (detail.options && detail.options.length > 0) {
+                content += `\n  Options: ${JSON.stringify(detail.options, null, 2)}`
+            }
+            return content
+        })
+        .join('\n\n')
 
     return `
 **PROPERTY DETAILS**:

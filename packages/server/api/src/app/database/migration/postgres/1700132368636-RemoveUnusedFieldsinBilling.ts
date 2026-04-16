@@ -2,8 +2,7 @@ import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
-export class RemoveUnusedFieldsinBilling1700132368636
-implements MigrationInterface {
+export class RemoveUnusedFieldsinBilling1700132368636 implements MigrationInterface {
     name = 'RemoveUnusedFieldsinBilling1700132368636'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

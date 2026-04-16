@@ -1,7 +1,7 @@
-import { Property, createAction } from "@activepieces/pieces-framework";
-import { googleDriveAuth, createGoogleClient } from '../auth';
-import { google } from 'googleapis';
-import { common } from "../common";
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { google } from 'googleapis'
+import { createGoogleClient, googleDriveAuth } from '../auth'
+import { common } from '../common'
 
 export const addPermission = createAction({
     auth: googleDriveAuth,
@@ -19,35 +19,35 @@ export const addPermission = createAction({
             description: 'The email address of the user to update permissions for',
             required: true,
         }),
-        permission_name : Property.StaticDropdown({
+        permission_name: Property.StaticDropdown({
             displayName: 'Role',
-            description: 'The role to grant to user. See more at: https://developers.google.com/drive/api/guides/ref-roles',
+            description:
+                'The role to grant to user. See more at: https://developers.google.com/drive/api/guides/ref-roles',
             required: true,
             options: {
-            options: [
-                {
-                    label: 'Organizer',
-                    value: 'organizer',
-                },
-                {
-                    label: 'File Organizer',
-                    value: 'fileOrganizer',
-                },
-                {
-                    label: 'Writer',
-                    value: 'writer',
-                },
-                {
-                    label: 'Commenter',
-                    value: 'commenter',
-                },
-                {
-                    label: 'Reader',
-                    value: 'reader',
-                },
-
-            ]
-            }
+                options: [
+                    {
+                        label: 'Organizer',
+                        value: 'organizer',
+                    },
+                    {
+                        label: 'File Organizer',
+                        value: 'fileOrganizer',
+                    },
+                    {
+                        label: 'Writer',
+                        value: 'writer',
+                    },
+                    {
+                        label: 'Commenter',
+                        value: 'commenter',
+                    },
+                    {
+                        label: 'Reader',
+                        value: 'reader',
+                    },
+                ],
+            },
         }),
         include_team_drives: common.properties.include_team_drives,
         send_invitation_email: Property.Checkbox({
@@ -55,24 +55,24 @@ export const addPermission = createAction({
             description: 'Send an email to the user to notify them of the new permissions',
             required: true,
         }),
-       },
+    },
 
     async run(context) {
-        const {fileId, user_email, permission_name, send_invitation_email,include_team_drives} = context.propsValue;
+        const { fileId, user_email, permission_name, send_invitation_email, include_team_drives } = context.propsValue
 
-        const authClient = await createGoogleClient(context.auth);
+        const authClient = await createGoogleClient(context.auth)
 
-        const drive = google.drive({ version: 'v3', auth: authClient });
+        const drive = google.drive({ version: 'v3', auth: authClient })
 
-        const permission = { 'type': 'user', 'role': permission_name, 'emailAddress': user_email };
+        const permission = { type: 'user', role: permission_name, emailAddress: user_email }
 
         const result = await drive.permissions.create({
             requestBody: permission,
             fileId: fileId,
             sendNotificationEmail: send_invitation_email,
             supportsAllDrives: include_team_drives,
-        });
+        })
 
-        return result.data;
-    }
-});
+        return result.data
+    },
+})

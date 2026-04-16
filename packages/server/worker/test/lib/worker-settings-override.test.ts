@@ -1,12 +1,8 @@
 import { createServer } from 'node:http'
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
+import type { WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { createRpcServer, ExecutionMode, WebsocketServerEvent } from '@activepieces/shared'
 import { Server as IOServer } from 'socket.io'
-import {
-    createRpcServer,
-    ExecutionMode,
-    WebsocketServerEvent,
-} from '@activepieces/shared'
-import type { WorkerToApiContract, WorkerSettingsResponse } from '@activepieces/shared'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockWorkerSettingsSet = vi.fn()
 

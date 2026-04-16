@@ -8,7 +8,6 @@ export enum SampleDataFileType {
 
 export const DATA_TYPE_KEY_IN_FILE_METADATA = 'dataType'
 
-
 export enum SampleDataDataType {
     JSON = 'JSON',
     STRING = 'STRING',
@@ -52,13 +51,11 @@ export type StepRunResponse = z.infer<typeof StepRunResponse>
 
 export const StepExecutionPath = z.array(z.tuple([z.string(), z.number()]))
 export type StepExecutionPath = z.infer<typeof StepExecutionPath>
-export const SampleDataSetting = z.object(
-    {
-        sampleDataFileId: z.string().optional(),
-        sampleDataInputFileId: z.string().optional(),
-        lastTestDate: z.string().optional(),
-    },
-)
+export const SampleDataSetting = z.object({
+    sampleDataFileId: z.string().optional(),
+    sampleDataInputFileId: z.string().optional(),
+    lastTestDate: z.string().optional(),
+})
 
 export type SampleDataSettings = z.infer<typeof SampleDataSetting>
 
@@ -69,4 +66,3 @@ export const DEFAULT_SAMPLE_DATA_SETTINGS: SampleDataSettings = {
 
 export const SaveSampleDataResponse = File.pick({ id: true, size: true, type: true })
 export type SaveSampleDataResponse = z.infer<typeof SaveSampleDataResponse>
-

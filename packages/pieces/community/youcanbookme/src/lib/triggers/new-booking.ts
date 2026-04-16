@@ -1,17 +1,13 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  Property,
-} from '@activepieces/pieces-framework';
-import { youcanbookmeAuth } from '../common/auth';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { youcanbookmeAuth } from '../common/auth'
 export const newBooking = createTrigger({
-  auth: youcanbookmeAuth,
-  name: 'newBooking',
-  displayName: 'New Booking',
-  description: 'Trigger when a new booking is made',
-  props: {
-    webhook_setup: Property.MarkDown({
-      value: `
+    auth: youcanbookmeAuth,
+    name: 'newBooking',
+    displayName: 'New Booking',
+    description: 'Trigger when a new booking is made',
+    props: {
+        webhook_setup: Property.MarkDown({
+            value: `
 ## Setting up a Webhook
 
 1. Select the booking page you want to add a webhook to and click **Edit Settings**
@@ -29,23 +25,23 @@ export const newBooking = createTrigger({
 9. Add payload (optional)
 10. Click **Save changes**
             `,
-    }),
-  },
-  sampleData: {
-    startsAt: '2025-12-17',
-    endsAt: '08:30',
-    timeZone: 'UTC',
-    firstName: 'sa',
-    email: 'test@test.com',
-  },
-  type: TriggerStrategy.WEBHOOK,
-  async onEnable(context) {
-    // implement webhook creation logic
-  },
-  async onDisable(context) {
-    // implement webhook deletion logic
-  },
-  async run(context) {
-    return [context.payload.body];
-  },
-});
+        }),
+    },
+    sampleData: {
+        startsAt: '2025-12-17',
+        endsAt: '08:30',
+        timeZone: 'UTC',
+        firstName: 'sa',
+        email: 'test@test.com',
+    },
+    type: TriggerStrategy.WEBHOOK,
+    async onEnable(context) {
+        // implement webhook creation logic
+    },
+    async onDisable(context) {
+        // implement webhook deletion logic
+    },
+    async run(context) {
+        return [context.payload.body]
+    },
+})

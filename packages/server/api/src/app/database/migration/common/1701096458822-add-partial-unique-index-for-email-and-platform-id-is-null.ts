@@ -3,8 +3,7 @@ import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 
-export class AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822
-implements MigrationInterface {
+export class AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 implements MigrationInterface {
     name = 'AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
@@ -13,9 +12,7 @@ implements MigrationInterface {
             ON "user"("email") WHERE "platformId" IS NULL
         `)
 
-        log.info(
-            'AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 up',
-        )
+        log.info('AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -23,8 +20,6 @@ implements MigrationInterface {
             DROP INDEX "user_partial_unique_email_platform_id_is_null"
         `)
 
-        log.info(
-            'AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 down',
-        )
+        log.info('AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 down')
     }
 }

@@ -3,7 +3,6 @@ import { flowStructureUtil } from '../util/flow-structure-util'
 import { _getImportOperations } from './import-flow'
 import { FlowOperationRequest, FlowOperationType, MoveActionRequest } from './index'
 
-
 export function _moveAction(flowVersion: FlowVersion, request: MoveActionRequest): FlowOperationRequest[] {
     const sourceStep = flowStructureUtil.getActionOrThrow(request.name, flowVersion.trigger)
     flowStructureUtil.getStepOrThrow(request.newParentStep, flowVersion.trigger)
@@ -31,8 +30,5 @@ export function _moveAction(flowVersion: FlowVersion, request: MoveActionRequest
         },
         ..._getImportOperations(sourceStepWithoutNextAction),
     ]
-    return [
-        ...deleteOperations,
-        ...addOperations,
-    ]
+    return [...deleteOperations, ...addOperations]
 }

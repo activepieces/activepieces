@@ -1,7 +1,7 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { altTextAiAuth } from "../common/auth";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { BASE_URL } from "../common/constants";
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { altTextAiAuth } from '../common/auth'
+import { BASE_URL } from '../common/constants'
 
 export const generateAltTextAction = createAction({
     name: 'generate-alt-text',
@@ -11,43 +11,43 @@ export const generateAltTextAction = createAction({
     props: {
         image: Property.File({
             displayName: 'Image',
-            required: true
+            required: true,
         }),
         keywords: Property.Array({
             displayName: 'Keywords',
             required: false,
-            description: 'keywords / phrases to be considered when generating the alt text.'
+            description: 'keywords / phrases to be considered when generating the alt text.',
         }),
         negativeKeywords: Property.Array({
             displayName: 'Negative Keywords',
             required: false,
-            description: 'negative keywords / phrases to be removed from any generated alt text.'
+            description: 'negative keywords / phrases to be removed from any generated alt text.',
         }),
         keywordSource: Property.LongText({
             displayName: 'Keyword Source',
             required: false,
-            description: 'Text to use as the source of keywords for the alt text.'
-        })
+            description: 'Text to use as the source of keywords for the alt text.',
+        }),
     },
     async run(context) {
-        const { image, keywords, keywordSource, negativeKeywords } = context.propsValue;
+        const { image, keywords, keywordSource, negativeKeywords } = context.propsValue
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
             url: BASE_URL + '/images',
             headers: {
-                'X-API-Key': context.auth.secret_text
+                'X-API-Key': context.auth.secret_text,
             },
             body: {
                 image: {
-                    raw: image.base64
+                    raw: image.base64,
                 },
                 keywords,
                 keyword_source: keywordSource,
-                negative_keywords: negativeKeywords
-            }
+                negative_keywords: negativeKeywords,
+            },
         })
 
-        return response.body;
-    }
+        return response.body
+    },
 })

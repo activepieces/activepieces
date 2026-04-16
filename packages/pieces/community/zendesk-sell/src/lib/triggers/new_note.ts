@@ -1,46 +1,46 @@
+import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common'
 import {
+    AppConnectionValueForAuthProperty,
     createTrigger,
-    TriggerStrategy,
     PiecePropValueSchema,
-    AppConnectionValueForAuthProperty
-} from '@activepieces/pieces-framework';
-import { HttpMethod, DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { zendeskSellAuth } from '../common/auth';
-import { callZendeskApi } from '../common/client';
+    TriggerStrategy,
+} from '@activepieces/pieces-framework'
+import { zendeskSellAuth } from '../common/auth'
+import { callZendeskApi } from '../common/client'
 
 interface ZendeskNoteItem {
-    data: ZendeskNote;
-    meta: { type: string };
+    data: ZendeskNote
+    meta: { type: string }
 }
 interface ZendeskNote {
-    id: number;
-    creator_id: number;
-    resource_type: string;
-    resource_id: number;
-    content: string;
-    created_at: string;
+    id: number
+    creator_id: number
+    resource_type: string
+    resource_id: number
+    content: string
+    created_at: string
 }
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof zendeskSellAuth>, Record<string, never>> = {
-	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, lastFetchEpochMS }) {
-		const response = await callZendeskApi<{ items: ZendeskNoteItem[] }>(
-			HttpMethod.GET,
-			'v2/notes',
-			auth,
-			undefined,
-			{
-				sort_by: 'created_at:desc',
-				per_page: lastFetchEpochMS === 0 ? '10' : '100',
-			}
-		);
+    strategy: DedupeStrategy.TIMEBASED,
+    async items({ auth, lastFetchEpochMS }) {
+        const response = await callZendeskApi<{ items: ZendeskNoteItem[] }>(
+            HttpMethod.GET,
+            'v2/notes',
+            auth,
+            undefined,
+            {
+                sort_by: 'created_at:desc',
+                per_page: lastFetchEpochMS === 0 ? '10' : '100',
+            },
+        )
 
-		return response.body.items.map((item) => ({
-			epochMilliSeconds: new Date(item.data.created_at).getTime(),
-			data: item.data,
-		}));
-	},
-};
+        return response.body.items.map((item) => ({
+            epochMilliSeconds: new Date(item.data.created_at).getTime(),
+            data: item.data,
+        }))
+    },
+}
 
 export const newNote = createTrigger({
     auth: zendeskSellAuth,
@@ -49,19 +49,19 @@ export const newNote = createTrigger({
     description: 'Fires when a new note is added to a record (lead, contact, deal) (polls for new records).',
     props: {},
     sampleData: {
-        "id": 1,
-        "creator_id": 1,
-        "resource_type": "lead",
-        "resource_id": 1,
-        "content": "Highly important.",
-        "is_important": true,
-        "created_at": "2014-08-27T16:32:56Z",
-        "updated_at": "2014-08-27T17:32:56Z"
+        id: 1,
+        creator_id: 1,
+        resource_type: 'lead',
+        resource_id: 1,
+        content: 'Highly important.',
+        is_important: true,
+        created_at: '2014-08-27T16:32:56Z',
+        updated_at: '2014-08-27T17:32:56Z',
     },
     type: TriggerStrategy.POLLING,
 
     async test(context) {
-        return await pollingHelper.test(polling, context);
+        return await pollingHelper.test(polling, context)
     },
 
     async onEnable(context) {
@@ -69,7 +69,7 @@ export const newNote = createTrigger({
             auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
-        });
+        })
     },
 
     async onDisable(context) {
@@ -77,10 +77,10 @@ export const newNote = createTrigger({
             auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
-        });
+        })
     },
 
     async run(context) {
-        return await pollingHelper.poll(polling, context);
+        return await pollingHelper.poll(polling, context)
     },
-});
+})

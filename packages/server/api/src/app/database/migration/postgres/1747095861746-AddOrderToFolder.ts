@@ -15,5 +15,4 @@ export class AddOrderToFolder1747095861746 implements MigrationInterface {
             ALTER TABLE "folder" DROP COLUMN "displayOrder"
         `)
     }
-
 }

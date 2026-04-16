@@ -1,77 +1,74 @@
-import { Property } from "@activepieces/pieces-framework";
-import { HttpMethod } from "@activepieces/pieces-common";
-import { makeRequest } from "./client";
-import { murfAuth } from "./auth";
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property } from '@activepieces/pieces-framework'
+import { murfAuth } from './auth'
+import { makeRequest } from './client'
 
 // Helper to fetch voices
 const getVoices = async (apiKey: string) => {
-    return await makeRequest(apiKey, HttpMethod.GET, "/speech/voices");
-};
+    return await makeRequest(apiKey, HttpMethod.GET, '/speech/voices')
+}
 
 // Helper to build unique language list
 const getLanguages = async (apiKey: string) => {
-    const voices = await getVoices(apiKey);
-    const languageMap = new Map<string, string>();
+    const voices = await getVoices(apiKey)
+    const languageMap = new Map<string, string>()
 
     voices.forEach((voice: any) => {
         if (voice.supportedLocales) {
             Object.keys(voice.supportedLocales).forEach((localeCode) => {
                 if (!languageMap.has(localeCode)) {
-                    languageMap.set(
-                        localeCode,
-                        voice.supportedLocales[localeCode].detail || localeCode
-                    );
+                    languageMap.set(localeCode, voice.supportedLocales[localeCode].detail || localeCode)
                 }
-            });
+            })
         }
-    });
+    })
 
-    return Array.from(languageMap, ([value, label]) => ({ label, value }));
-};
+    return Array.from(languageMap, ([value, label]) => ({ label, value }))
+}
 
 export const murfCommon = {
     language: Property.Dropdown({
-  auth: murfAuth,
-        displayName: "Language",
-        description: "Select your preferred language for the translated output.",
+        auth: murfAuth,
+        displayName: 'Language',
+        description: 'Select your preferred language for the translated output.',
         required: true,
         refreshers: [],
         options: async ({ auth }) => {
             if (!auth) {
                 return {
                     disabled: true,
-                    placeholder: "Please connect your Murf account first.",
+                    placeholder: 'Please connect your Murf account first.',
                     options: [],
-                };
+                }
             }
 
-            const langs = await getLanguages(auth.secret_text);
+            const langs = await getLanguages(auth.secret_text)
             return {
                 disabled: false,
                 options: langs,
-            };
+            }
         },
     }),
 
     voiceId: Property.Dropdown({
-  auth: murfAuth,
-        displayName: "Voice",
-        description: "Choose a voice for converting text into speech",
+        auth: murfAuth,
+        displayName: 'Voice',
+        description: 'Choose a voice for converting text into speech',
         required: true,
-        refreshers: ["language"],
+        refreshers: ['language'],
         options: async ({ auth, language }) => {
-            if (!auth|| !language) {
+            if (!auth || !language) {
                 return {
                     disabled: true,
-                    placeholder: "Please select a language and connect your Murf account first.",
+                    placeholder: 'Please select a language and connect your Murf account first.',
                     options: [],
-                };
+                }
             }
 
-            const voices = await getVoices(auth.secret_text);
+            const voices = await getVoices(auth.secret_text)
             const filtered = voices.filter((v: any) =>
-                Object.keys(v.supportedLocales || {}).includes(language as string)
-            );
+                Object.keys(v.supportedLocales || {}).includes(language as string),
+            )
 
             return {
                 disabled: false,
@@ -79,43 +76,41 @@ export const murfCommon = {
                     label: `${v.displayName} (${v.gender}, ${v.locale})`,
                     value: v.voiceId,
                 })),
-            };
+            }
         },
     }),
     sourceLocale: Property.Dropdown({
-  auth: murfAuth,
-        displayName: "Source Locale",
-        description: "Select the source locale for input text.",
+        auth: murfAuth,
+        displayName: 'Source Locale',
+        description: 'Select the source locale for input text.',
         required: false,
         refreshers: [],
         options: async ({ auth }) => {
             if (!auth) {
                 return {
                     disabled: true,
-                    placeholder: "Please connect your Murf account first.",
+                    placeholder: 'Please connect your Murf account first.',
                     options: [],
-                };
+                }
             }
 
-            const voices = await getVoices(auth.secret_text);
+            const voices = await getVoices(auth.secret_text)
 
-            const localeMap = new Map<string, string>();
+            const localeMap = new Map<string, string>()
             voices.forEach((voice: any) => {
                 if (voice.supportedLocales) {
                     Object.entries(voice.supportedLocales).forEach(([localeCode, localeData]: any) => {
                         if (!localeMap.has(localeCode)) {
-                            localeMap.set(localeCode, localeData.detail);
+                            localeMap.set(localeCode, localeData.detail)
                         }
-                    });
+                    })
                 }
-            });
+            })
 
             return {
                 disabled: false,
                 options: Array.from(localeMap, ([value, label]) => ({ value, label })),
-            };
+            }
         },
     }),
-
-};
-
+}

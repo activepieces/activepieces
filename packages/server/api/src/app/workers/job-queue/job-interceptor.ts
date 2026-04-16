@@ -10,10 +10,15 @@ export enum InterceptorVerdict {
 
 export type InterceptorResult =
     | { verdict: InterceptorVerdict.ALLOW }
-    | { verdict: InterceptorVerdict.REJECT, delayInMs: number, priority?: number }
+    | { verdict: InterceptorVerdict.REJECT; delayInMs: number; priority?: number }
     | { verdict: InterceptorVerdict.DISCARD }
 
 export type JobInterceptor = {
-    preDispatch(params: { jobId: string, jobData: JobData, job: Job, log: FastifyBaseLogger }): Promise<InterceptorResult>
-    onJobFinished(params: { jobId: string, jobData: JobData, failed: boolean, log: FastifyBaseLogger }): Promise<void>
+    preDispatch(params: {
+        jobId: string
+        jobData: JobData
+        job: Job
+        log: FastifyBaseLogger
+    }): Promise<InterceptorResult>
+    onJobFinished(params: { jobId: string; jobData: JobData; failed: boolean; log: FastifyBaseLogger }): Promise<void>
 }

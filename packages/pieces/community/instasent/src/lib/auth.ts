@@ -1,6 +1,6 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { BASE_URL } from './common/constants';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
+import { BASE_URL } from './common/constants'
 
 const authDescriptionMarkdown = `
 ## Obtain your auth data
@@ -8,10 +8,10 @@ const authDescriptionMarkdown = `
 2. Access to your project
 3. Create an Activepieces data source
 4. Copy the auth parameters and paste them in the fields below
-`;
+`
 
-function getBaseUrl(auth: { projectId: string, datasourceId: string }) {
-    return `${BASE_URL}/project/${auth.projectId}/datasource/${auth.datasourceId}`;
+function getBaseUrl(auth: { projectId: string; datasourceId: string }) {
+    return `${BASE_URL}/project/${auth.projectId}/datasource/${auth.datasourceId}`
 }
 
 export const instasentAuth = PieceAuth.CustomAuth({
@@ -31,41 +31,41 @@ export const instasentAuth = PieceAuth.CustomAuth({
             displayName: 'API Key',
             description: 'Your Instasent API Bearer Token',
             required: true,
-        })
+        }),
     },
     validate: async ({ auth }) => {
-        const authData = auth;
+        const authData = auth
 
         try {
-            const baseUrl = getBaseUrl(authData);
+            const baseUrl = getBaseUrl(authData)
             const response = await httpClient.sendRequest({
                 method: HttpMethod.GET,
                 url: `${baseUrl}/stream`,
                 headers: {
-                    'Authorization': `Bearer ${auth.apiKey}`
-                }
-            });
+                    Authorization: `Bearer ${auth.apiKey}`,
+                },
+            })
 
-            const data = response.body;
+            const data = response.body
             if (!data.organization || !data.stream || !data.datasource || !data.project) {
                 return {
                     valid: false,
-                    error: 'Invalid API response structure'
-                };
+                    error: 'Invalid API response structure',
+                }
             }
 
             return {
-                valid: true
-            };
+                valid: true,
+            }
         } catch (error: unknown) {
-            const err = error as Record<string, unknown>;
-            const response = err['response'] as Record<string, unknown> | undefined;
-            const data = response?.['data'] as Record<string, string> | undefined;
+            const err = error as Record<string, unknown>
+            const response = err['response'] as Record<string, unknown> | undefined
+            const data = response?.['data'] as Record<string, string> | undefined
             return {
                 valid: false,
-                error: data?.['message'] || 'Invalid credentials or connection error'
-            };
+                error: data?.['message'] || 'Invalid credentials or connection error',
+            }
         }
     },
-    required: true
-});
+    required: true,
+})

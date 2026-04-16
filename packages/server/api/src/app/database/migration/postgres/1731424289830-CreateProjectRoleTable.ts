@@ -32,7 +32,6 @@ enum Permission {
     WRITE_PROJECT = 'WRITE_PROJECT',
 }
 
-
 const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
     [ProjectMemberRole.ADMIN]: [
         Permission.READ_APP_CONNECTION,
@@ -90,16 +89,18 @@ const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
     ],
 }
 
-
 const log = system.globalLogger()
 
 export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
     name = 'CreateProjectRoleTable1731424289830'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'Creating project role table')
+        log.info(
+            {
+                name: this.name,
+            },
+            'Creating project role table',
+        )
         await queryRunner.query(`
             CREATE TABLE "project_role" (
                 "id" character varying(21) NOT NULL,
@@ -115,22 +116,46 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
 
         await queryRunner.query(
             'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
-            ['aJVBSSJ3YqZ7r1laFjM0a', ProjectMemberRole.VIEWER, rolePermissions[ProjectMemberRole.VIEWER], null, RoleType.DEFAULT],
+            [
+                'aJVBSSJ3YqZ7r1laFjM0a',
+                ProjectMemberRole.VIEWER,
+                rolePermissions[ProjectMemberRole.VIEWER],
+                null,
+                RoleType.DEFAULT,
+            ],
         )
 
         await queryRunner.query(
             'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
-            ['sjWe85TwaFYxyhn2AgOha', ProjectMemberRole.EDITOR, rolePermissions[ProjectMemberRole.EDITOR], null, RoleType.DEFAULT],
+            [
+                'sjWe85TwaFYxyhn2AgOha',
+                ProjectMemberRole.EDITOR,
+                rolePermissions[ProjectMemberRole.EDITOR],
+                null,
+                RoleType.DEFAULT,
+            ],
         )
 
         await queryRunner.query(
             'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
-            ['461ueYHzMykyk5dIL8HzQ', ProjectMemberRole.ADMIN, rolePermissions[ProjectMemberRole.ADMIN], null, RoleType.DEFAULT],
+            [
+                '461ueYHzMykyk5dIL8HzQ',
+                ProjectMemberRole.ADMIN,
+                rolePermissions[ProjectMemberRole.ADMIN],
+                null,
+                RoleType.DEFAULT,
+            ],
         )
 
         await queryRunner.query(
             'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
-            ['3Wl9IAw5aM0HLafHgMYkb', ProjectMemberRole.OPERATOR, rolePermissions[ProjectMemberRole.OPERATOR], null, RoleType.DEFAULT],
+            [
+                '3Wl9IAw5aM0HLafHgMYkb',
+                ProjectMemberRole.OPERATOR,
+                rolePermissions[ProjectMemberRole.OPERATOR],
+                null,
+                RoleType.DEFAULT,
+            ],
         )
 
         const projectMemberExists = await queryRunner.hasTable('project_member')
@@ -151,17 +176,16 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
         `)
 
             for (const projectMember of projectMembers) {
-                const projectRoleIdResult = await queryRunner.query(
-                    'SELECT id FROM project_role WHERE name = $1',
-                    [projectMember.role],
-                )
+                const projectRoleIdResult = await queryRunner.query('SELECT id FROM project_role WHERE name = $1', [
+                    projectMember.role,
+                ])
 
                 const projectRoleId = projectRoleIdResult[0]?.id
 
-                await queryRunner.query(
-                    'UPDATE "project_member" SET "projectRoleId" = $1 WHERE id = $2',
-                    [projectRoleId, projectMember.id],
-                )
+                await queryRunner.query('UPDATE "project_member" SET "projectRoleId" = $1 WHERE id = $2', [
+                    projectRoleId,
+                    projectMember.id,
+                ])
             }
 
             await queryRunner.query(`
@@ -187,29 +211,30 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
         `)
 
         for (const userInvitation of userInvitations) {
-            const projectRoleIdResult = await queryRunner.query(
-                'SELECT id FROM project_role WHERE name = $1',
-                [userInvitation.projectRole],
-            )
+            const projectRoleIdResult = await queryRunner.query('SELECT id FROM project_role WHERE name = $1', [
+                userInvitation.projectRole,
+            ])
 
             const projectRoleId = projectRoleIdResult[0]?.id
 
-            await queryRunner.query(
-                'UPDATE "user_invitation" SET "projectRoleId" = $1 WHERE id = $2',
-                [projectRoleId, userInvitation.id],
-            )
+            await queryRunner.query('UPDATE "user_invitation" SET "projectRoleId" = $1 WHERE id = $2', [
+                projectRoleId,
+                userInvitation.id,
+            ])
         }
 
         await queryRunner.query(`
             ALTER TABLE "user_invitation" DROP COLUMN "projectRole"
         `)
-
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'down')
+        log.info(
+            {
+                name: this.name,
+            },
+            'down',
+        )
         // Re-add the "projectRole" column to "user_invitation"
         await queryRunner.query(`
             ALTER TABLE "user_invitation" ADD COLUMN "projectRole" character varying
@@ -221,17 +246,16 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
         `)
 
         for (const userInvitation of userInvitations) {
-            const projectRoleNameResult = await queryRunner.query(
-                'SELECT name FROM project_role WHERE id = $1',
-                [userInvitation.projectRoleId],
-            )
+            const projectRoleNameResult = await queryRunner.query('SELECT name FROM project_role WHERE id = $1', [
+                userInvitation.projectRoleId,
+            ])
 
             const projectRoleName = projectRoleNameResult[0]?.name
 
-            await queryRunner.query(
-                'UPDATE "user_invitation" SET "projectRole" = $1 WHERE id = $2',
-                [projectRoleName, userInvitation.id],
-            )
+            await queryRunner.query('UPDATE "user_invitation" SET "projectRole" = $1 WHERE id = $2', [
+                projectRoleName,
+                userInvitation.id,
+            ])
         }
 
         // Drop the foreign key and column "projectRoleId" from "user_invitation"
@@ -256,17 +280,16 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
         `)
 
             for (const projectMember of projectMembers) {
-                const projectRoleNameResult = await queryRunner.query(
-                    'SELECT name FROM project_role WHERE id = $1',
-                    [projectMember.projectRoleId],
-                )
+                const projectRoleNameResult = await queryRunner.query('SELECT name FROM project_role WHERE id = $1', [
+                    projectMember.projectRoleId,
+                ])
 
                 const projectRoleName = projectRoleNameResult[0]?.name
 
-                await queryRunner.query(
-                    'UPDATE "project_member" SET "role" = $1 WHERE id = $2',
-                    [projectRoleName, projectMember.id],
-                )
+                await queryRunner.query('UPDATE "project_member" SET "role" = $1 WHERE id = $2', [
+                    projectRoleName,
+                    projectMember.id,
+                ])
             }
 
             // Drop the foreign key and column "projectRoleId" from "project_member"
@@ -284,5 +307,4 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
             DROP TABLE "project_role"
         `)
     }
-
 }

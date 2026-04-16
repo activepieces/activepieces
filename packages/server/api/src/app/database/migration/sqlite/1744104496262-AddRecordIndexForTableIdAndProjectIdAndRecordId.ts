@@ -14,5 +14,4 @@ export class AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262 implem
             DROP INDEX "idx_record_table_id_project_id_record_id"
         `)
     }
-
 }

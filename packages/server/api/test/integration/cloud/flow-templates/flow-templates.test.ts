@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     apId,
     CreateTemplateRequestBody,
@@ -11,13 +10,9 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
-import {
-    CLOUD_PLATFORM_ID,
-    createMockTemplate,
-    mockAndSaveBasicSetup,
-    mockBasicUser,
-} from '../../../helpers/mocks'
+import { CLOUD_PLATFORM_ID, createMockTemplate, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -32,8 +27,10 @@ describe('Templates', () => {
     describe('List Templates', () => {
         it('should list platform templates only', async () => {
             // arrange
-            const { mockPlatform, mockUser, mockPlatformTemplate } =
-                await createMockPlatformTemplate({ platformId: apId(), plan: { manageTemplatesEnabled: true } })
+            const { mockPlatform, mockUser, mockPlatformTemplate } = await createMockPlatformTemplate({
+                platformId: apId(),
+                plan: { manageTemplatesEnabled: true },
+            })
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -115,8 +112,9 @@ describe('Templates', () => {
     describe('Delete Template', () => {
         it('should not be able delete platform template as member', async () => {
             // arrange
-            const { mockUser, mockPlatform, mockPlatformTemplate } =
-                await createMockPlatformTemplate({ platformId: apId() })
+            const { mockUser, mockPlatform, mockPlatformTemplate } = await createMockPlatformTemplate({
+                platformId: apId(),
+            })
             const testToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
@@ -137,8 +135,9 @@ describe('Templates', () => {
 
         it('should be able delete platform template as owner', async () => {
             // arrange
-            const { mockPlatform, mockOwner, mockPlatformTemplate } =
-                await createMockPlatformTemplate({ platformId: apId() })
+            const { mockPlatform, mockOwner, mockPlatformTemplate } = await createMockPlatformTemplate({
+                platformId: apId(),
+            })
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -204,8 +203,9 @@ describe('Templates', () => {
             // arrange
             const { mockPlatformTemplate } = await createMockPlatformTemplate({ platformId: apId() })
 
-            const { mockOwner: otherOwner, mockPlatform: otherPlatform } =
-                await createMockPlatformTemplate({ platformId: apId() })
+            const { mockOwner: otherOwner, mockPlatform: otherPlatform } = await createMockPlatformTemplate({
+                platformId: apId(),
+            })
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -261,8 +261,9 @@ describe('Templates', () => {
             // arrange
             const { mockPlatformTemplate } = await createMockPlatformTemplate({ platformId: apId() })
 
-            const { mockOwner: otherOwner, mockPlatform: otherPlatform } =
-                await createMockPlatformTemplate({ platformId: apId() })
+            const { mockOwner: otherOwner, mockPlatform: otherPlatform } = await createMockPlatformTemplate({
+                platformId: apId(),
+            })
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -287,8 +288,9 @@ describe('Templates', () => {
 
         it('should update own custom template as platform owner', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockPlatformTemplate } =
-                await createMockPlatformTemplate({ platformId: apId() })
+            const { mockOwner, mockPlatform, mockPlatformTemplate } = await createMockPlatformTemplate({
+                platformId: apId(),
+            })
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -314,7 +316,15 @@ describe('Templates', () => {
     })
 })
 
-async function createMockPlatformTemplate({ platformId, plan, type }: { platformId: string, plan?: Partial<PlatformPlan>, type?: TemplateType }) {
+async function createMockPlatformTemplate({
+    platformId,
+    plan,
+    type,
+}: {
+    platformId: string
+    plan?: Partial<PlatformPlan>
+    type?: TemplateType
+}) {
     const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
         platform: {
             id: platformId,

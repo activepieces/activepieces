@@ -198,5 +198,4 @@ export class TableWebhooksIsArraySqlite1741668828922 implements MigrationInterfa
             CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
         `)
     }
-
 }

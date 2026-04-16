@@ -42,4 +42,5 @@ const ReleaseCard = () => {
 };
 
 ReleaseCard.displayName = 'ReleaseCard';
+
 export { ReleaseCard };

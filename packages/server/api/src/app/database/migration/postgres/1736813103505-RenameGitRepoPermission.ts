@@ -1,4 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+
 const mapToNewPermission = (permission: string) => {
     if (permission === 'READ_GIT_REPO') {
         return 'READ_PROJECT_RELEASE'
@@ -11,7 +12,7 @@ const mapToNewPermission = (permission: string) => {
 
 const mapToOldPermission = (permission: string) => {
     if (permission === 'READ_PROJECT_RELEASE') {
-        return 'READ_GIT_REPO' 
+        return 'READ_GIT_REPO'
     }
     if (permission === 'WRITE_PROJECT_RELEASE') {
         return 'WRITE_GIT_REPO'
@@ -24,10 +25,13 @@ export class RenameGitRepoPermission1736813103505 implements MigrationInterface 
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const allProjectRoles = await queryRunner.query('SELECT * FROM "project_role"')
-        
+
         for (const projectRole of allProjectRoles) {
             const newPermissions = projectRole.permissions.map((permission: string) => mapToNewPermission(permission))
-            await queryRunner.query('UPDATE "project_role" SET "permissions" = $1 WHERE "id" = $2', [newPermissions, projectRole.id])
+            await queryRunner.query('UPDATE "project_role" SET "permissions" = $1 WHERE "id" = $2', [
+                newPermissions,
+                projectRole.id,
+            ])
         }
     }
 
@@ -35,7 +39,10 @@ export class RenameGitRepoPermission1736813103505 implements MigrationInterface 
         const allProjectRoles = await queryRunner.query('SELECT * FROM "project_role"')
         for (const projectRole of allProjectRoles) {
             const newPermissions = projectRole.permissions.map((permission: string) => mapToOldPermission(permission))
-            await queryRunner.query('UPDATE "project_role" SET "permissions" = $1 WHERE "id" = $2', [newPermissions, projectRole.id])
+            await queryRunner.query('UPDATE "project_role" SET "permissions" = $1 WHERE "id" = $2', [
+                newPermissions,
+                projectRole.id,
+            ])
         }
     }
 }

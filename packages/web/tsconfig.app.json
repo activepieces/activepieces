@@ -2,31 +2,16 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "types": [
-      "node",
-      "vite/client"
-    ],
+    "types": ["node", "vite/client"],
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@activepieces/shared": [
-        "../../packages/shared/src"
-      ],
-      "@activepieces/pieces-framework": [
-        "../../packages/pieces/framework/src"
-      ],
-      "@activepieces/pieces-common": [
-        "../../packages/pieces/common/src"
-      ],
-      "ee-embed-sdk": [
-        "../../packages/ee/embed-sdk/src"
-      ],
-      "@activepieces/piece-ai": [
-        "../../packages/pieces/community/ai/src"
-      ]
+      "@/*": ["./src/*"],
+      "@activepieces/shared": ["../../packages/shared/src"],
+      "@activepieces/pieces-framework": ["../../packages/pieces/framework/src"],
+      "@activepieces/pieces-common": ["../../packages/pieces/common/src"],
+      "ee-embed-sdk": ["../../packages/ee/embed-sdk/src"],
+      "@activepieces/piece-ai": ["../../packages/pieces/community/ai/src"]
     }
   },
   "exclude": [
@@ -39,5 +24,12 @@
     "src/**/*.spec.jsx",
     "src/**/*.test.jsx"
   ],
-  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx", "i18next-parser.config.js", "src/app/builder/builder-flow-status-section/index.tsx"]
+  "include": [
+    "src/**/*.js",
+    "src/**/*.jsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "i18next-parser.config.js",
+    "src/app/builder/builder-flow-status-section/index.tsx"
+  ]
 }

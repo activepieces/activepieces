@@ -45,5 +45,4 @@ export class AddExternalIdToAgentId1753641361099 implements MigrationInterface {
             ALTER TABLE "flow_version" DROP COLUMN "agentIds"
         `)
     }
-
 }

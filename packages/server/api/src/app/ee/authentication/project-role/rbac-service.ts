@@ -19,8 +19,11 @@ import { projectMemberService } from '../../projects/project-members/project-mem
 import { projectRoleService } from '../../projects/project-role/project-role.service'
 
 export const rbacService = (log: FastifyBaseLogger) => ({
-    async assertPrinicpalAccessToProject({ principal, permission, projectId }: AssertRoleHasPermissionParams): Promise<void> {
-
+    async assertPrinicpalAccessToProject({
+        principal,
+        permission,
+        projectId,
+    }: AssertRoleHasPermissionParams): Promise<void> {
         switch (principal.type) {
             case PrincipalType.UNKNOWN:
             case PrincipalType.WORKER:
@@ -73,7 +76,11 @@ export const rbacService = (log: FastifyBaseLogger) => ({
             }
         }
     },
-    async assertUserHasPermissionToFlow({ principal, operationType, projectId }: AssertUserHasPermissionToFlowParams): Promise<void> {
+    async assertUserHasPermissionToFlow({
+        principal,
+        operationType,
+        projectId,
+    }: AssertUserHasPermissionToFlowParams): Promise<void> {
         const edition = system.getEdition()
         if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
             return
@@ -82,10 +89,14 @@ export const rbacService = (log: FastifyBaseLogger) => ({
         switch (operationType) {
             case FlowOperationType.LOCK_AND_PUBLISH:
             case FlowOperationType.CHANGE_STATUS: {
-                await this.assertPrinicpalAccessToProject({ principal, permission: Permission.UPDATE_FLOW_STATUS, projectId })
+                await this.assertPrinicpalAccessToProject({
+                    principal,
+                    permission: Permission.UPDATE_FLOW_STATUS,
+                    projectId,
+                })
                 break
             }
-            case FlowOperationType.UPDATE_MINUTES_SAVED: 
+            case FlowOperationType.UPDATE_MINUTES_SAVED:
             case FlowOperationType.SAVE_SAMPLE_DATA:
             case FlowOperationType.ADD_ACTION:
             case FlowOperationType.UPDATE_ACTION:
@@ -104,7 +115,7 @@ export const rbacService = (log: FastifyBaseLogger) => ({
             case FlowOperationType.UPDATE_METADATA:
             case FlowOperationType.UPDATE_OWNER:
             case FlowOperationType.SET_SKIP_ACTION:
-            case FlowOperationType.MOVE_BRANCH: 
+            case FlowOperationType.MOVE_BRANCH:
             case FlowOperationType.ADD_NOTE:
             case FlowOperationType.UPDATE_NOTE:
             case FlowOperationType.DELETE_NOTE:
@@ -116,7 +127,11 @@ export const rbacService = (log: FastifyBaseLogger) => ({
     },
 })
 
-const getPrincipalRoleOrThrow = async ({ principal, projectId, log }: GetPrincipalRoleOrThrowParams): Promise<ProjectRole> => {
+const getPrincipalRoleOrThrow = async ({
+    principal,
+    projectId,
+    log,
+}: GetPrincipalRoleOrThrowParams): Promise<ProjectRole> => {
     const { id: userId } = principal
 
     const projectRole = await projectMemberService(log).getRole({
@@ -154,7 +169,12 @@ const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs
     return principalRole.permissions?.includes(routePermission)
 }
 
-const throwPermissionDenied = ({ principal, projectId, projectRole, permission }: ThrowPermissionDeniedParams): never => {
+const throwPermissionDenied = ({
+    principal,
+    projectId,
+    projectRole,
+    permission,
+}: ThrowPermissionDeniedParams): never => {
     throw new ActivepiecesError({
         code: ErrorCode.PERMISSION_DENIED,
         params: {

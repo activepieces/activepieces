@@ -24,12 +24,20 @@ import { mcpUtils, PropSummary } from './mcp-utils'
 export const apGetPiecePropsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_get_piece_props',
-        description: 'Get the input property schema for a piece action or trigger. Returns field names, types, required/optional, defaults, and options. Pass auth to resolve dynamic dropdowns and dynamic property sub-fields (e.g. Custom API Call url/body fields).',
+        description:
+            'Get the input property schema for a piece action or trigger. Returns field names, types, required/optional, defaults, and options. Pass auth to resolve dynamic dropdowns and dynamic property sub-fields (e.g. Custom API Call url/body fields).',
         inputSchema: getPiecePropsInput.shape,
         annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
-                const { pieceName, actionOrTriggerName, type, auth, flowId, input: providedInput } = getPiecePropsInput.parse(args)
+                const {
+                    pieceName,
+                    actionOrTriggerName,
+                    type,
+                    auth,
+                    flowId,
+                    input: providedInput,
+                } = getPiecePropsInput.parse(args)
 
                 const lookup = await mcpUtils.lookupPieceComponent({
                     pieceName,
@@ -49,7 +57,11 @@ export const apGetPiecePropsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
 
                 let authHint: AuthHint | undefined
                 if (requiresAuth && !auth) {
-                    authHint = await discoverAvailableConnections({ pieceName: normalized, projectId: mcp.projectId, log })
+                    authHint = await discoverAvailableConnections({
+                        pieceName: normalized,
+                        projectId: mcp.projectId,
+                        log,
+                    })
                 }
 
                 await resolvePropertyOptions({
@@ -76,17 +88,32 @@ export const apGetPiecePropsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                 }
 
                 return {
-                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":\n${JSON.stringify(result, null, 2)}` }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":\n${JSON.stringify(result, null, 2)}`,
+                        },
+                    ],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 return mcpUtils.mcpToolError('Failed to get piece props', err)
             }
         },
     }
 }
 
-async function resolvePropertyOptions({ props, componentProps, pieceName, pieceVersion, actionOrTriggerName, auth, flowId, providedInput, projectId, log }: ResolvePropertyOptionsParams): Promise<void> {
+async function resolvePropertyOptions({
+    props,
+    componentProps,
+    pieceName,
+    pieceVersion,
+    actionOrTriggerName,
+    auth,
+    flowId,
+    providedInput,
+    projectId,
+    log,
+}: ResolvePropertyOptionsParams): Promise<void> {
     const resolvableProps = mcpUtils.findResolvableProps({ props, componentProps, auth, providedInput })
     if (resolvableProps.length === 0) {
         return
@@ -110,48 +137,60 @@ async function resolvePropertyOptions({ props, componentProps, pieceName, pieceV
         ...(auth ? { auth: `{{connections['${auth}']}}` } : {}),
     }
 
-    await Promise.all(resolvableProps.map(async (prop) => {
-        try {
-            const result = await withTimeout({
-                promise: userInteractionWatcher.submitAndWaitForResponse<EngineResponse<{
-                    options: Array<{ label: string, value: unknown }> | PiecePropertyMap
-                    disabled?: boolean
-                }>>({
-                    jobType: WorkerJobType.EXECUTE_PROPERTY,
-                    platformId: project.platformId,
-                    projectId,
-                    flowVersion,
-                    propertyName: prop.name,
-                    actionOrTriggerName,
-                    input,
-                    sampleData,
-                    searchValue: undefined,
-                    piece: piecePackage,
-                }, log),
-                ms: PROPERTY_TIMEOUT_MS,
-            })
+    await Promise.all(
+        resolvableProps.map(async (prop) => {
+            try {
+                const result = await withTimeout({
+                    promise: userInteractionWatcher.submitAndWaitForResponse<
+                        EngineResponse<{
+                            options: Array<{ label: string; value: unknown }> | PiecePropertyMap
+                            disabled?: boolean
+                        }>
+                    >(
+                        {
+                            jobType: WorkerJobType.EXECUTE_PROPERTY,
+                            platformId: project.platformId,
+                            projectId,
+                            flowVersion,
+                            propertyName: prop.name,
+                            actionOrTriggerName,
+                            input,
+                            sampleData,
+                            searchValue: undefined,
+                            piece: piecePackage,
+                        },
+                        log,
+                    ),
+                    ms: PROPERTY_TIMEOUT_MS,
+                })
 
-            if (result.status !== EngineResponseStatus.OK || isNil(result.response?.options)) {
-                return
-            }
+                if (result.status !== EngineResponseStatus.OK || isNil(result.response?.options)) {
+                    return
+                }
 
-            const { options } = result.response
-            if (prop.type === PropertyType.DYNAMIC && isObject(options) && !Array.isArray(options)) {
-                prop.dynamicFields = mcpUtils.buildPropSummaries(options)
-                prop.note = undefined
+                const { options } = result.response
+                if (prop.type === PropertyType.DYNAMIC && isObject(options) && !Array.isArray(options)) {
+                    prop.dynamicFields = mcpUtils.buildPropSummaries(options)
+                    prop.note = undefined
+                } else if (Array.isArray(options)) {
+                    prop.options = options.map((o: { label: string; value: unknown }) => ({
+                        label: o.label,
+                        value: o.value,
+                    }))
+                    prop.note = undefined
+                }
+            } catch (err) {
+                log.debug({ err, propertyName: prop.name }, 'Failed to resolve property, keeping placeholder note')
             }
-            else if (Array.isArray(options)) {
-                prop.options = options.map((o: { label: string, value: unknown }) => ({ label: o.label, value: o.value }))
-                prop.note = undefined
-            }
-        }
-        catch (err) {
-            log.debug({ err, propertyName: prop.name }, 'Failed to resolve property, keeping placeholder note')
-        }
-    }))
+        }),
+    )
 }
 
-async function discoverAvailableConnections({ pieceName, projectId, log }: {
+async function discoverAvailableConnections({
+    pieceName,
+    projectId,
+    log,
+}: {
     pieceName: string
     projectId: string
     log: FastifyBaseLogger
@@ -169,20 +208,18 @@ async function discoverAvailableConnections({ pieceName, projectId, log }: {
             limit: 10,
             externalIds: undefined,
         })
-        const active = connections.data
-            .map(c => ({ externalId: c.externalId, displayName: c.displayName }))
+        const active = connections.data.map((c) => ({ externalId: c.externalId, displayName: c.displayName }))
         if (active.length > 0) {
             return { message: 'Pass one as the auth param.', connections: active }
         }
         return { message: 'No connections found. Set up in UI or use ap_setup_guide.', connections: [] }
-    }
-    catch (err) {
+    } catch (err) {
         log.debug({ err, pieceName }, 'Failed to discover connections')
         return { message: 'Use ap_list_connections to find connections.', connections: [] }
     }
 }
 
-function withTimeout<T>({ promise, ms }: { promise: Promise<T>, ms: number }): Promise<T> {
+function withTimeout<T>({ promise, ms }: { promise: Promise<T>; ms: number }): Promise<T> {
     let timer: ReturnType<typeof setTimeout>
     return Promise.race([
         promise.finally(() => clearTimeout(timer)),
@@ -193,12 +230,31 @@ function withTimeout<T>({ promise, ms }: { promise: Promise<T>, ms: number }): P
 }
 
 const getPiecePropsInput = z.object({
-    pieceName: z.string().describe('The piece name (e.g. "@activepieces/piece-slack"). Use ap_list_pieces to get valid values.'),
-    actionOrTriggerName: z.string().describe('The action or trigger name (e.g. "send_channel_message"). Use ap_list_pieces with includeActions=true or includeTriggers=true to get valid values.'),
+    pieceName: z
+        .string()
+        .describe('The piece name (e.g. "@activepieces/piece-slack"). Use ap_list_pieces to get valid values.'),
+    actionOrTriggerName: z
+        .string()
+        .describe(
+            'The action or trigger name (e.g. "send_channel_message"). Use ap_list_pieces with includeActions=true or includeTriggers=true to get valid values.',
+        ),
     type: z.enum(['action', 'trigger']).describe('Whether to look up an action or a trigger.'),
-    auth: z.string().optional().describe('Connection externalId from ap_list_connections. When provided, dynamic dropdowns and dynamic property sub-fields are resolved via your account.'),
-    flowId: z.string().optional().describe('Flow ID for resolving dependent dropdowns that need step context. Optional — most dropdowns work without it.'),
-    input: z.record(z.string(), z.unknown()).optional().describe('Known input values to resolve dependent dynamic properties.'),
+    auth: z
+        .string()
+        .optional()
+        .describe(
+            'Connection externalId from ap_list_connections. When provided, dynamic dropdowns and dynamic property sub-fields are resolved via your account.',
+        ),
+    flowId: z
+        .string()
+        .optional()
+        .describe(
+            'Flow ID for resolving dependent dropdowns that need step context. Optional — most dropdowns work without it.',
+        ),
+    input: z
+        .record(z.string(), z.unknown())
+        .optional()
+        .describe('Known input values to resolve dependent dynamic properties.'),
 })
 
 const PROPERTY_TIMEOUT_MS = 15_000
@@ -218,5 +274,5 @@ type ResolvePropertyOptionsParams = {
 
 type AuthHint = {
     message: string
-    connections: Array<{ externalId: string, displayName: string }>
+    connections: Array<{ externalId: string; displayName: string }>
 }

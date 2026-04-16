@@ -63,7 +63,6 @@ export const UserWithMetaInformation = z.object({
 
 export type UserWithMetaInformation = z.infer<typeof UserWithMetaInformation>
 
-
 export const UserWithBadges = z.object({
     ...UserWithMetaInformation.shape,
     badges: z.array(UserBadge.pick({ name: true, created: true })),
@@ -73,12 +72,7 @@ export type UserWithBadges = z.infer<typeof UserWithBadges>
 
 export const AP_MAXIMUM_PROFILE_PICTURE_SIZE = 5 * 1024 * 1024 // 5 MB
 
-export const PROFILE_PICTURE_ALLOWED_TYPES = [
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-]
+export const PROFILE_PICTURE_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
 export const UpdateMeRequestBody = z.object({
     profilePicture: z.any().optional(),

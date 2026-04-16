@@ -13,8 +13,6 @@ export class AddScheduleOptions1687384796637 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(
-            'ALTER TABLE "flow_instance" DROP COLUMN "schedule"',
-        )
+        await queryRunner.query('ALTER TABLE "flow_instance" DROP COLUMN "schedule"')
     }
 }

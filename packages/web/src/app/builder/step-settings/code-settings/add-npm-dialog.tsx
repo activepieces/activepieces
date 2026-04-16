@@ -132,4 +132,5 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
 };
 
 AddNpmDialog.displayName = 'AddNpmDialog';
+
 export { AddNpmDialog };

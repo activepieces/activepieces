@@ -25,5 +25,4 @@ export class AddAiProviderSqlite1726446345221 implements MigrationInterface {
         await queryRunner.query('DROP INDEX "idx_ai_provider_platform_id_provider"')
         await queryRunner.query('DROP TABLE "ai_provider"')
     }
-
 }

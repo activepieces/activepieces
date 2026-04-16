@@ -1,21 +1,23 @@
-import { Property } from "@activepieces/pieces-framework"
-import { isNil } from "@activepieces/shared"
+import { Property } from '@activepieces/pieces-framework'
+import { isNil } from '@activepieces/shared'
 
 type ErrorInfo = {
-    value: unknown | null,
+    value: unknown | null
     location: number
 }
 
-type Response = {
-    hasError: true,
-    error: {
-        message: string,
-        errors: ErrorInfo[]
-    }
-} | {
-    hasError: false,
-    values: number[]
-}
+type Response =
+    | {
+          hasError: true
+          error: {
+              message: string
+              errors: ErrorInfo[]
+          }
+      }
+    | {
+          hasError: false
+          values: number[]
+      }
 
 export const common = {
     note: Property.MarkDown({
@@ -24,7 +26,7 @@ export const common = {
     validateArray: function (values: unknown[]): Response {
         const newValues = values.map((value, index) => checkValueIsNumber(value, index))
         const isAllNumbers = newValues.every((value) => value.error === null)
-        if(isAllNumbers) {
+        if (isAllNumbers) {
             return {
                 hasError: false,
                 values: newValues.map((value) => value.value as number),
@@ -34,30 +36,30 @@ export const common = {
             hasError: true,
             error: {
                 message: 'The following values are not numbers',
-                errors: newValues.filter((value) => !isNil(value)).map((value) => value.error as ErrorInfo)
-            }
+                errors: newValues.filter((value) => !isNil(value)).map((value) => value.error as ErrorInfo),
+            },
         }
-    }
+    },
 }
 
 type ValueInfo = {
-    error: ErrorInfo | null,
+    error: ErrorInfo | null
     value: number | null
 }
 
 export const checkValueIsNumber = function (value: unknown, location: number): ValueInfo {
-    const parsedValue = Number(value);
+    const parsedValue = Number(value)
     if (!Number.isNaN(parsedValue)) {
         return {
             error: null,
-            value: Number(value)
+            value: Number(value),
         }
     }
     return {
         error: {
             value: value,
-            location: location
+            location: location,
         },
-        value: -1
+        value: -1,
     }
 }

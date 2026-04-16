@@ -19,7 +19,7 @@ function isTableChanged(stateOne: TableState, stateTwo: TableState): boolean {
 function findTablesToUpdate(currentState: ProjectState, newState: ProjectState): TableOperation[] {
     if (!currentState.tables || !newState.tables) return []
     const operations: TableOperation[] = []
-    currentState.tables.forEach(table => {
+    currentState.tables.forEach((table) => {
         const newTable = newState.tables?.find((t) => t.externalId === table.externalId)
         if (!isNil(newTable) && isTableChanged(newTable, table)) {
             operations.push({
@@ -35,7 +35,7 @@ function findTablesToUpdate(currentState: ProjectState, newState: ProjectState):
 function findTablesToCreate(currentState: ProjectState, newState: ProjectState): TableOperation[] {
     if (!newState.tables) return []
     const operations: TableOperation[] = []
-    newState.tables.forEach(table => {
+    newState.tables.forEach((table) => {
         const exists = currentState.tables?.find((t) => t.externalId === table.externalId)
         if (isNil(exists)) {
             operations.push({
@@ -50,7 +50,7 @@ function findTablesToCreate(currentState: ProjectState, newState: ProjectState):
 function findTablesToDelete(currentState: ProjectState, newState: ProjectState): TableOperation[] {
     if (!currentState.tables) return []
     const operations: TableOperation[] = []
-    currentState.tables.forEach(table => {
+    currentState.tables.forEach((table) => {
         const exists = newState.tables?.find((t) => t.externalId === table.externalId)
         if (isNil(exists)) {
             operations.push({
@@ -65,4 +65,4 @@ function findTablesToDelete(currentState: ProjectState, newState: ProjectState):
 type DiffParams = {
     currentState: ProjectState
     newState: ProjectState
-} 
+}

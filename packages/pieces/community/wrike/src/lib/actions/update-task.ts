@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { wrikeAuth } from '../common/auth';
-import { wrikeCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { wrikeAuth } from '../common/auth'
+import { wrikeCommon } from '../common/client'
 
 export const updateTask = createAction({
     name: 'update_task',
@@ -95,33 +95,44 @@ export const updateTask = createAction({
         }),
     },
     async run(context) {
-        const props = context.propsValue as any;
-        const { taskId, title, description, status, importance, assignees, start_date, due_date, duration, customFields } = props;
+        const props = context.propsValue as any
+        const {
+            taskId,
+            title,
+            description,
+            status,
+            importance,
+            assignees,
+            start_date,
+            due_date,
+            duration,
+            customFields,
+        } = props
 
-        const taskData: Record<string, any> = {};
+        const taskData: Record<string, any> = {}
 
-        if (title) taskData['title'] = title;
-        if (description !== undefined) taskData['description'] = description;
-        if (status) taskData['status'] = status;
-        if (importance) taskData['importance'] = importance;
+        if (title) taskData['title'] = title
+        if (description !== undefined) taskData['description'] = description
+        if (status) taskData['status'] = status
+        if (importance) taskData['importance'] = importance
 
         if (assignees && assignees.length > 0) {
-            taskData['responsibles'] = assignees.map((assignee: any) => assignee.userId);
+            taskData['responsibles'] = assignees.map((assignee: any) => assignee.userId)
         }
 
-        const dates: Record<string, any> = {};
-        if (start_date) dates['start'] = start_date;
-        if (due_date) dates['due'] = due_date;
-        if (duration) dates['duration'] = duration;
+        const dates: Record<string, any> = {}
+        if (start_date) dates['start'] = start_date
+        if (due_date) dates['due'] = due_date
+        if (duration) dates['duration'] = duration
         if (Object.keys(dates).length > 0) {
-            taskData['dates'] = dates;
+            taskData['dates'] = dates
         }
 
         if (customFields && customFields.length > 0) {
             taskData['customFields'] = customFields.map((field: any) => ({
                 id: field.fieldId,
                 value: field.value,
-            }));
+            }))
         }
 
         const response = await wrikeCommon.apiCall({
@@ -129,8 +140,8 @@ export const updateTask = createAction({
             method: HttpMethod.PUT,
             resourceUri: `/tasks/${taskId}`,
             body: taskData,
-        });
+        })
 
-        return response.body;
+        return response.body
     },
-});
+})

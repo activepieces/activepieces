@@ -1,4 +1,4 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
 
 const markdown = `
 To Obtain a Phone Number ID and a Permanent System User Access Token, follow these steps:
@@ -12,21 +12,21 @@ To Obtain a Phone Number ID and a Permanent System User Access Token, follow the
 7. Login to your [Meta Business Manager](https://business.facebook.com/).
 8. Click on Settings.
 9. Create a new System User with access over the app and copy the access token.
-`;
+`
 
 export const whatsappAuth = PieceAuth.CustomAuth({
-	required: true,
-	description: markdown,
-	props: {
-		access_token: PieceAuth.SecretText({
-			displayName: 'System User Access Token',
-			description: 'The system user access token of your WhatsApp business account.',
-			required: true,
-		}),
-		businessAccountId: Property.ShortText({
-			displayName: 'Business Account ID',
-			description: 'The business account ID of your WhatsApp business account.',
-			required: true,
-		}),
-	},
-});
+    required: true,
+    description: markdown,
+    props: {
+        access_token: PieceAuth.SecretText({
+            displayName: 'System User Access Token',
+            description: 'The system user access token of your WhatsApp business account.',
+            required: true,
+        }),
+        businessAccountId: Property.ShortText({
+            displayName: 'Business Account ID',
+            description: 'The business account ID of your WhatsApp business account.',
+            required: true,
+        }),
+    },
+})

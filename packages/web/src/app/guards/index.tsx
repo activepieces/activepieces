@@ -1,7 +1,7 @@
 import {
-  RouterProvider,
   createBrowserRouter,
   createMemoryRouter,
+  RouterProvider,
 } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';

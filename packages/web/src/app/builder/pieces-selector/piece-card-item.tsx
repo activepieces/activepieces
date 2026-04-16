@@ -2,10 +2,10 @@ import { useRef } from 'react';
 
 import { CardListItem } from '@/components/custom/card-list';
 import {
+  PIECE_SELECTOR_ELEMENTS_HEIGHTS,
   PieceIcon,
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
-  PIECE_SELECTOR_ELEMENTS_HEIGHTS,
 } from '@/features/pieces';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { wait } from '@/lib/dom-utils';
@@ -101,4 +101,5 @@ const PieceCardListItem = ({
 };
 
 PieceCardListItem.displayName = 'PieceCardListItem';
+
 export { PieceCardListItem };

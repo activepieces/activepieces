@@ -1,15 +1,15 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { HttpMethod } from "@activepieces/pieces-common";
-import { createHash } from "crypto";
-import { emailOctopusAuth } from "../common/auth";
-import { EmailOctopusClient } from "../common/client";
-import { emailOctopusProps } from "../common/props";
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { createHash } from 'crypto'
+import { emailOctopusAuth } from '../common/auth'
+import { EmailOctopusClient } from '../common/client'
+import { emailOctopusProps } from '../common/props'
 
 export const updateContactEmail = createAction({
     auth: emailOctopusAuth,
     name: 'update_contact_email',
     displayName: "Update Contact's Email Address",
-    description: "Change the email address of a contact in a list.",
+    description: 'Change the email address of a contact in a list.',
     props: {
         list_id: emailOctopusProps.listId(),
         current_email_address: Property.ShortText({
@@ -19,29 +19,21 @@ export const updateContactEmail = createAction({
         }),
         new_email_address: Property.ShortText({
             displayName: 'New Email Address',
-            description: "The new email address for the contact.",
+            description: 'The new email address for the contact.',
             required: true,
         }),
     },
 
     async run(context) {
-        const { list_id, current_email_address, new_email_address } = context.propsValue;
-        const client = new EmailOctopusClient(context.auth.secret_text);
+        const { list_id, current_email_address, new_email_address } = context.propsValue
+        const client = new EmailOctopusClient(context.auth.secret_text)
 
-        
-        const contactId = createHash('md5')
-            .update(current_email_address.toLowerCase())
-            .digest('hex');
+        const contactId = createHash('md5').update(current_email_address.toLowerCase()).digest('hex')
 
         const body = {
             email_address: new_email_address,
-        };
+        }
 
-        
-        return await client.makeRequest(
-            HttpMethod.PUT,
-            `/lists/${list_id}/contacts/${contactId}`,
-            body
-        );
+        return await client.makeRequest(HttpMethod.PUT, `/lists/${list_id}/contacts/${contactId}`, body)
     },
-});
+})

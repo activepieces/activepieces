@@ -1,9 +1,9 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { API_BASE_URL } from './common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
+import { API_BASE_URL } from './common'
 
 export const cambaiAuth = PieceAuth.SecretText({
-    displayName: "API Key",
+    displayName: 'API Key',
     description: `
     To get your API key, please follow these steps:
     1. Log in to your [CAMB.AI Studio](https://camb.ai/studio/) account.
@@ -19,16 +19,16 @@ export const cambaiAuth = PieceAuth.SecretText({
                 url: `${API_BASE_URL}/source-languages`,
                 headers: {
                     'x-api-key': auth,
-                }
-            });
+                },
+            })
             return {
                 valid: true,
-            };
+            }
         } catch (e) {
             return {
                 valid: false,
                 error: 'Invalid API Key.',
-            };
+            }
         }
-    }
-});
+    },
+})

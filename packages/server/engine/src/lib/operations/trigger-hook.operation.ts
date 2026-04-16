@@ -1,4 +1,3 @@
-import { inspect } from 'util'
 import {
     EngineResponse,
     EngineResponseStatus,
@@ -6,13 +5,15 @@ import {
     ExecuteTriggerResponse,
     TriggerHookType,
 } from '@activepieces/shared'
+import { inspect } from 'util'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { triggerHelper } from '../helper/trigger-helper'
 import { utils } from '../utils'
 
-
 export const triggerHookOperation = {
-    execute: async (operation: ExecuteTriggerOperation<TriggerHookType>): Promise<EngineResponse<ExecuteTriggerResponse<TriggerHookType>>> => {
+    execute: async (
+        operation: ExecuteTriggerOperation<TriggerHookType>,
+    ): Promise<EngineResponse<ExecuteTriggerResponse<TriggerHookType>>> => {
         const input = operation as ExecuteTriggerOperation<TriggerHookType>
         const { data: output, error } = await utils.tryCatchAndThrowOnEngineError(() =>
             triggerHelper.executeTrigger({

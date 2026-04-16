@@ -32,13 +32,9 @@ export const alertsController: FastifyPluginAsyncZod = async (app) => {
 
 const ListAlertsRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            Permission.READ_ALERT,
-            {
-                type: ProjectResourceType.QUERY,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER], Permission.READ_ALERT, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         querystring: ListAlertsParams,
@@ -47,13 +43,9 @@ const ListAlertsRequest = {
 
 const CreateAlertRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            Permission.WRITE_ALERT,
-            {
-                type: ProjectResourceType.BODY,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER], Permission.WRITE_ALERT, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         body: CreateAlertParams,
@@ -62,14 +54,10 @@ const CreateAlertRequest = {
 
 const DeleteAlertRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            Permission.WRITE_ALERT,
-            {
-                type: ProjectResourceType.TABLE,
-                tableName: AlertEntity,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER], Permission.WRITE_ALERT, {
+            type: ProjectResourceType.TABLE,
+            tableName: AlertEntity,
+        }),
     },
     schema: {
         params: z.object({

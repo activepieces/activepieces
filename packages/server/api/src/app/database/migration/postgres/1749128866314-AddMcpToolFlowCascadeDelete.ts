@@ -22,5 +22,4 @@ export class AddMcpToolFlowCascadeDelete1749128866314 implements MigrationInterf
             ADD CONSTRAINT "FK_3f26c7b876fba48b9e90efb3d79" FOREIGN KEY ("flowId") REFERENCES "flow"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
     }
-
 }

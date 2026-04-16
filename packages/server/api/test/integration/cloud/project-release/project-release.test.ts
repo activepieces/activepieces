@@ -1,9 +1,4 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    apId,
-    CreateProjectReleaseRequestBody,
-    ProjectReleaseType,
-} from '@activepieces/shared'
+import { apId, CreateProjectReleaseRequestBody, ProjectReleaseType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -16,6 +11,7 @@ import {
     mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -72,10 +68,14 @@ describe('Project Release API', () => {
             await db.save('project', mockSourceProject)
 
             // Create a flow in the source project
-            await sourceCtx.post('/v1/flows', {
-                displayName: 'Source Flow',
-                projectId: mockSourceProject.id,
-            }, { query: { projectId: mockSourceProject.id } })
+            await sourceCtx.post(
+                '/v1/flows',
+                {
+                    displayName: 'Source Flow',
+                    projectId: mockSourceProject.id,
+                },
+                { query: { projectId: mockSourceProject.id } },
+            )
 
             const response = await sourceCtx.post('/v1/project-releases', {
                 name: 'Test Release',

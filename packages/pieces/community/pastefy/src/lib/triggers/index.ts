@@ -1,3 +1,3 @@
-import pasteChanged from './paste-changed';
+import pasteChanged from './paste-changed'
 
-export default [pasteChanged];
+export default [pasteChanged]

@@ -1,7 +1,18 @@
 import { z } from 'zod'
 import { Nullable } from '../../../core/common'
 import { Metadata } from '../../../core/common/metadata'
-import { BranchCondition, CodeActionSchema, CodeActionSettings, FlowActionType, LoopOnItemsActionSchema, LoopOnItemsActionSettings, PieceActionSchema, PieceActionSettings, RouterActionSchema, RouterActionSettings } from '../actions/action'
+import {
+    BranchCondition,
+    CodeActionSchema,
+    CodeActionSettings,
+    FlowActionType,
+    LoopOnItemsActionSchema,
+    LoopOnItemsActionSettings,
+    PieceActionSchema,
+    PieceActionSettings,
+    RouterActionSchema,
+    RouterActionSettings,
+} from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { Note } from '../note'
@@ -91,7 +102,6 @@ export const UpdateSampleDataInfoRequest = z.object({
 })
 export type UpdateSampleDataInfoRequest = z.infer<typeof UpdateSampleDataInfoRequest>
 
-
 export const DuplicateBranchRequest = z.object({
     branchIndex: z.number(),
     stepName: z.string(),
@@ -139,7 +149,6 @@ export const ChangeNameRequest = z.object({
 
 export type ChangeNameRequest = z.infer<typeof ChangeNameRequest>
 
-
 export const DeleteActionRequest = z.object({
     names: z.array(z.string()),
 })
@@ -147,13 +156,19 @@ export const DeleteActionRequest = z.object({
 export type DeleteActionRequest = z.infer<typeof DeleteActionRequest>
 
 export const UpdateActionRequest = z.union([
-    CodeActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: CodeActionSettings.omit({ sampleData: true }) })),
-    LoopOnItemsActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: LoopOnItemsActionSettings.omit({ sampleData: true }) })),
-    PieceActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: PieceActionSettings.omit({ sampleData: true }) })),
-    RouterActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: RouterActionSettings.omit({ sampleData: true }) })),
+    CodeActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(
+        z.object({ settings: CodeActionSettings.omit({ sampleData: true }) }),
+    ),
+    LoopOnItemsActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(
+        z.object({ settings: LoopOnItemsActionSettings.omit({ sampleData: true }) }),
+    ),
+    PieceActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(
+        z.object({ settings: PieceActionSettings.omit({ sampleData: true }) }),
+    ),
+    RouterActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(
+        z.object({ settings: RouterActionSettings.omit({ sampleData: true }) }),
+    ),
 ])
-
-
 
 export type UpdateActionRequest = z.infer<typeof UpdateActionRequest>
 
@@ -181,7 +196,9 @@ export type AddActionRequest = z.infer<typeof AddActionRequest>
 
 export const UpdateTriggerRequest = z.union([
     EmptyTrigger.omit({ lastUpdatedDate: true }),
-    PieceTrigger.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: PieceTriggerSettings.omit({ sampleData: true }) })),
+    PieceTrigger.omit({ lastUpdatedDate: true, settings: true }).and(
+        z.object({ settings: PieceTriggerSettings.omit({ sampleData: true }) }),
+    ),
 ])
 export type UpdateTriggerRequest = z.infer<typeof UpdateTriggerRequest>
 
@@ -193,9 +210,7 @@ export type UpdateFlowStatusRequest = z.infer<typeof UpdateFlowStatusRequest>
 export const ChangePublishedVersionIdRequest = z.object({
     status: z.nativeEnum(FlowStatus).optional(),
 })
-export type ChangePublishedVersionIdRequest = z.infer<
-    typeof ChangePublishedVersionIdRequest
->
+export type ChangePublishedVersionIdRequest = z.infer<typeof ChangePublishedVersionIdRequest>
 
 export const UpdateMetadataRequest = z.object({
     metadata: Nullable(Metadata),
@@ -213,78 +228,114 @@ export const UpdateOwnerRequest = z.object({
 export type UpdateOwnerRequest = z.infer<typeof UpdateOwnerRequest>
 
 export const FlowOperationRequest = z.union([
-    z.object({
-        type: z.literal(FlowOperationType.MOVE_ACTION),
-        request: MoveActionRequest,
-    }).describe('Move Action'),
-    z.object({
-        type: z.literal(FlowOperationType.CHANGE_STATUS),
-        request: UpdateFlowStatusRequest,
-    }).describe('Change Status'),
-    z.object({
-        type: z.literal(FlowOperationType.LOCK_AND_PUBLISH),
-        request: ChangePublishedVersionIdRequest,
-    }).describe('Lock and Publish'),
-    z.object({
-        type: z.literal(FlowOperationType.USE_AS_DRAFT),
-        request: UseAsDraftRequest,
-    }).describe('Copy as Draft'),
-    z.object({
-        type: z.literal(FlowOperationType.LOCK_FLOW),
-        request: LockFlowRequest,
-    }).describe('Lock Flow'),
-    z.object({
-        type: z.literal(FlowOperationType.IMPORT_FLOW),
-        request: ImportFlowRequest,
-    }).describe('Import Flow'),
-    z.object({
-        type: z.literal(FlowOperationType.CHANGE_NAME),
-        request: ChangeNameRequest,
-    }).describe('Change Name'),
-    z.object({
-        type: z.literal(FlowOperationType.DELETE_ACTION),
-        request: DeleteActionRequest,
-    }).describe('Delete Action'),
-    z.object({
-        type: z.literal(FlowOperationType.UPDATE_ACTION),
-        request: UpdateActionRequest,
-    }).describe('Update Action'),
-    z.object({
-        type: z.literal(FlowOperationType.ADD_ACTION),
-        request: AddActionRequest,
-    }).describe('Add Action'),
-    z.object({
-        type: z.literal(FlowOperationType.UPDATE_TRIGGER),
-        request: UpdateTriggerRequest,
-    }).describe('Update Trigger'),
-    z.object({
-        type: z.literal(FlowOperationType.CHANGE_FOLDER),
-        request: ChangeFolderRequest,
-    }).describe('Change Folder'),
-    z.object({
-        type: z.literal(FlowOperationType.DUPLICATE_ACTION),
-        request: DuplicateStepRequest,
-    }).describe('Duplicate Action'),
-    z.object({
-        type: z.literal(FlowOperationType.DELETE_BRANCH),
-        request: DeleteBranchRequest,
-    }).describe('Delete Branch'),
-    z.object({
-        type: z.literal(FlowOperationType.ADD_BRANCH),
-        request: AddBranchRequest,
-    }).describe('Add Branch'),
-    z.object({
-        type: z.literal(FlowOperationType.DUPLICATE_BRANCH),
-        request: DuplicateBranchRequest,
-    }).describe('Duplicate Branch'),
-    z.object({
-        type: z.literal(FlowOperationType.SET_SKIP_ACTION),
-        request: SkipActionRequest,
-    }).describe('Skip Action'),
-    z.object({
-        type: z.literal(FlowOperationType.UPDATE_METADATA),
-        request: UpdateMetadataRequest,
-    }).describe('Update Metadata'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.MOVE_ACTION),
+            request: MoveActionRequest,
+        })
+        .describe('Move Action'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.CHANGE_STATUS),
+            request: UpdateFlowStatusRequest,
+        })
+        .describe('Change Status'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.LOCK_AND_PUBLISH),
+            request: ChangePublishedVersionIdRequest,
+        })
+        .describe('Lock and Publish'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.USE_AS_DRAFT),
+            request: UseAsDraftRequest,
+        })
+        .describe('Copy as Draft'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.LOCK_FLOW),
+            request: LockFlowRequest,
+        })
+        .describe('Lock Flow'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.IMPORT_FLOW),
+            request: ImportFlowRequest,
+        })
+        .describe('Import Flow'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.CHANGE_NAME),
+            request: ChangeNameRequest,
+        })
+        .describe('Change Name'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.DELETE_ACTION),
+            request: DeleteActionRequest,
+        })
+        .describe('Delete Action'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.UPDATE_ACTION),
+            request: UpdateActionRequest,
+        })
+        .describe('Update Action'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.ADD_ACTION),
+            request: AddActionRequest,
+        })
+        .describe('Add Action'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.UPDATE_TRIGGER),
+            request: UpdateTriggerRequest,
+        })
+        .describe('Update Trigger'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.CHANGE_FOLDER),
+            request: ChangeFolderRequest,
+        })
+        .describe('Change Folder'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.DUPLICATE_ACTION),
+            request: DuplicateStepRequest,
+        })
+        .describe('Duplicate Action'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.DELETE_BRANCH),
+            request: DeleteBranchRequest,
+        })
+        .describe('Delete Branch'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.ADD_BRANCH),
+            request: AddBranchRequest,
+        })
+        .describe('Add Branch'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.DUPLICATE_BRANCH),
+            request: DuplicateBranchRequest,
+        })
+        .describe('Duplicate Branch'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.SET_SKIP_ACTION),
+            request: SkipActionRequest,
+        })
+        .describe('Skip Action'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.UPDATE_METADATA),
+            request: UpdateMetadataRequest,
+        })
+        .describe('Update Metadata'),
     z.object({
         type: z.literal(FlowOperationType.MOVE_BRANCH),
         request: MoveBranchRequest,
@@ -293,33 +344,43 @@ export const FlowOperationRequest = z.union([
         type: z.literal(FlowOperationType.SAVE_SAMPLE_DATA),
         request: SaveSampleDataRequest,
     }),
-    z.object({
-        type: z.literal(FlowOperationType.UPDATE_MINUTES_SAVED),
-        request: UpdateMinutesSavedRequest,
-    }).describe('Update Minutes Saved'),
-    z.object({
-        type: z.literal(FlowOperationType.UPDATE_OWNER),
-        request: UpdateOwnerRequest,
-    }).describe('Update Owner'),
-    z.object({
-        type: z.literal(FlowOperationType.UPDATE_NOTE),
-        request: UpdateNoteRequest,
-    }).describe('Update Note'),
-    z.object({
-        type: z.literal(FlowOperationType.DELETE_NOTE),
-        request: DeleteNoteRequest,
-    }).describe('Delete Note'),
-    z.object({
-        type: z.literal(FlowOperationType.ADD_NOTE),
-        request: AddNoteRequest,
-    }).describe('Add Note'),
-    z.object({
-        type: z.literal(FlowOperationType.UPDATE_SAMPLE_DATA_INFO),
-        request: UpdateSampleDataInfoRequest,
-    }).describe('Update Sample Data Info'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.UPDATE_MINUTES_SAVED),
+            request: UpdateMinutesSavedRequest,
+        })
+        .describe('Update Minutes Saved'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.UPDATE_OWNER),
+            request: UpdateOwnerRequest,
+        })
+        .describe('Update Owner'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.UPDATE_NOTE),
+            request: UpdateNoteRequest,
+        })
+        .describe('Update Note'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.DELETE_NOTE),
+            request: DeleteNoteRequest,
+        })
+        .describe('Delete Note'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.ADD_NOTE),
+            request: AddNoteRequest,
+        })
+        .describe('Add Note'),
+    z
+        .object({
+            type: z.literal(FlowOperationType.UPDATE_SAMPLE_DATA_INFO),
+            request: UpdateSampleDataInfoRequest,
+        })
+        .describe('Update Sample Data Info'),
 ])
-
-
 
 export type FlowOperationRequest = z.infer<typeof FlowOperationRequest>
 
@@ -340,7 +401,11 @@ export const flowOperations = {
                 clonedVersion.displayName = operation.request.displayName
                 break
             case FlowOperationType.DUPLICATE_BRANCH: {
-                const operations = _duplicateBranch(operation.request.stepName, operation.request.branchIndex, clonedVersion)
+                const operations = _duplicateBranch(
+                    operation.request.stepName,
+                    operation.request.branchIndex,
+                    clonedVersion,
+                )
                 operations.forEach((operation) => {
                     clonedVersion = flowOperations.apply(clonedVersion, operation)
                 })
@@ -358,7 +423,9 @@ export const flowOperations = {
                 break
             case FlowOperationType.ADD_ACTION: {
                 if (operation.request.action.type === FlowActionType.PIECE) {
-                    operation.request.action.settings.pieceVersion = flowPieceUtil.getExactVersion(operation.request.action.settings.pieceVersion)
+                    operation.request.action.settings.pieceVersion = flowPieceUtil.getExactVersion(
+                        operation.request.action.settings.pieceVersion,
+                    )
                 }
                 clonedVersion = _addAction(clonedVersion, operation.request)
                 break
@@ -369,7 +436,9 @@ export const flowOperations = {
             }
             case FlowOperationType.UPDATE_TRIGGER: {
                 if (operation.request.type === FlowTriggerType.PIECE) {
-                    operation.request.settings.pieceVersion = flowPieceUtil.getExactVersion(operation.request.settings.pieceVersion)
+                    operation.request.settings.pieceVersion = flowPieceUtil.getExactVersion(
+                        operation.request.settings.pieceVersion,
+                    )
                 }
                 clonedVersion = _updateTrigger(clonedVersion, operation.request)
                 break
@@ -384,7 +453,9 @@ export const flowOperations = {
             }
             case FlowOperationType.UPDATE_ACTION: {
                 if (operation.request.type === FlowActionType.PIECE) {
-                    operation.request.settings.pieceVersion = flowPieceUtil.getExactVersion(operation.request.settings.pieceVersion)
+                    operation.request.settings.pieceVersion = flowPieceUtil.getExactVersion(
+                        operation.request.settings.pieceVersion,
+                    )
                 }
                 clonedVersion = _updateAction(clonedVersion, operation.request)
                 break

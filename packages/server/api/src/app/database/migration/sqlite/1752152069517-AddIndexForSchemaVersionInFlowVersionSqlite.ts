@@ -14,5 +14,4 @@ export class AddIndexForSchemaVersionInFlowVersionSqlite1752152069517 implements
             DROP INDEX "idx_flow_version_schema_version"
         `)
     }
-
 }

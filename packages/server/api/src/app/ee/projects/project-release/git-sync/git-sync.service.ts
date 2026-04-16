@@ -4,23 +4,23 @@ import {
     apId,
     ConfigureRepoRequest,
     ErrorCode,
-
     GitBranchType,
     GitPushOperationType,
     GitRepo,
     isNil,
     ProjectState,
     PushGitRepoRequest,
-    SeekPage } from '@activepieces/shared'
+    SeekPage,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../../core/db/repo-factory'
 import { paginationHelper } from '../../../../helper/pagination/pagination-utils'
 import { system } from '../../../../helper/system/system'
 import { projectStateService } from '../project-state/project-state.service'
 import { gitHelper } from './git-helper'
+import { GitRepoEntity } from './git-sync.entity'
 import { gitSyncHandler } from './git-sync-handler'
 import { gitSyncHelper } from './git-sync-helper'
-import { GitRepoEntity } from './git-sync.entity'
 
 const repo = repoFactory(GitRepoEntity)
 
@@ -73,7 +73,21 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         const repos = await repo().findBy({ projectId })
         return paginationHelper.createPage<GitRepo>(repos, null)
     },
-    async onDeleted({ type, externalId, userId, projectId, platformId, log }: { type: GitPushOperationType, externalId: string, userId: string, projectId: string, platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    async onDeleted({
+        type,
+        externalId,
+        userId,
+        projectId,
+        platformId,
+        log,
+    }: {
+        type: GitPushOperationType
+        externalId: string
+        userId: string
+        projectId: string
+        platformId: string
+        log: FastifyBaseLogger
+    }): Promise<void> {
         const edition = system.getEdition()
         if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
             return
@@ -121,7 +135,6 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         }
     },
     async push({ id, platformId, userId, request, log }: PushParams): Promise<void> {
-
         switch (request.type) {
             case GitPushOperationType.PUSH_EVERYTHING: {
                 const gitRepo = await gitRepoService(log).getOrThrow({ id })
@@ -130,14 +143,18 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                 if (!isNil(projectState.flows)) {
                     operations.push({
                         type: GitPushOperationType.PUSH_FLOW,
-                        commitMessage: request.commitMessage ?? `chore: push all flows ${projectState.flows.map((flow) => flow.version.displayName).join(', ')}`,
+                        commitMessage:
+                            request.commitMessage ??
+                            `chore: push all flows ${projectState.flows.map((flow) => flow.version.displayName).join(', ')}`,
                         externalFlowIds: projectState.flows.map((flow) => flow.externalId),
                     })
                 }
                 if (!isNil(projectState.tables)) {
                     operations.push({
                         type: GitPushOperationType.PUSH_TABLE,
-                        commitMessage: request.commitMessage ?? `chore: push all tables ${projectState.tables.map((table) => table.name).join(', ')}`,
+                        commitMessage:
+                            request.commitMessage ??
+                            `chore: push all tables ${projectState.tables.map((table) => table.name).join(', ')}`,
                         externalTableIds: projectState.tables.map((table) => table.externalId),
                     })
                 }
@@ -189,7 +206,11 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         }
     },
     async getState({ gitRepo, userId, log }: PullGitRepoRequest): Promise<ProjectState> {
-        const { flowFolderPath, connectionsFolderPath, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(log, gitRepo, userId)
+        const { flowFolderPath, connectionsFolderPath, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(
+            log,
+            gitRepo,
+            userId,
+        )
         return gitSyncHelper(log).getStateFromGit({
             flowPath: flowFolderPath,
             connectionsFolderPath,

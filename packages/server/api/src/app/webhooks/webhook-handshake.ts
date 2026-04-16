@@ -1,4 +1,18 @@
-import { EngineResponse, EngineResponseStatus, ExecuteTriggerResponse, FlowId, FlowVersionId, isNil, ProjectId, TriggerHookType, TriggerPayload, TriggerSource, WebhookHandshakeConfiguration, WebhookHandshakeStrategy, WorkerJobType } from '@activepieces/shared'
+import {
+    EngineResponse,
+    EngineResponseStatus,
+    ExecuteTriggerResponse,
+    FlowId,
+    FlowVersionId,
+    isNil,
+    ProjectId,
+    TriggerHookType,
+    TriggerPayload,
+    TriggerSource,
+    WebhookHandshakeConfiguration,
+    WebhookHandshakeStrategy,
+    WorkerJobType,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { projectService } from '../project/project-service'
 import { triggerUtils } from '../trigger/trigger-source/trigger-utils'
@@ -14,25 +28,38 @@ export const webhookHandshake = {
 
         const platformId = await projectService(logger).getPlatformId(params.projectId)
 
-        const engineHelperResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.HANDSHAKE>>>({
-            jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
-            hookType: TriggerHookType.HANDSHAKE,
-            flowId: params.flowId,
-            flowVersionId: params.flowVersionId,
-            projectId: params.projectId,
-            test: false,
-            platformId,
-            triggerPayload: payload,
-        }, logger)
+        const engineHelperResponse = await userInteractionWatcher.submitAndWaitForResponse<
+            EngineResponse<ExecuteTriggerResponse<TriggerHookType.HANDSHAKE>>
+        >(
+            {
+                jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
+                hookType: TriggerHookType.HANDSHAKE,
+                flowId: params.flowId,
+                flowVersionId: params.flowVersionId,
+                projectId: params.projectId,
+                test: false,
+                platformId,
+                triggerPayload: payload,
+            },
+            logger,
+        )
 
         if (engineHelperResponse.status !== EngineResponseStatus.OK) {
             return null
         }
         return engineHelperResponse.response?.response ?? null
     },
-    async getWebhookHandshakeConfiguration(params: GetWebhookHandshakeConfigurationParams): Promise<WebhookHandshakeConfiguration | null> {
+    async getWebhookHandshakeConfiguration(
+        params: GetWebhookHandshakeConfigurationParams,
+    ): Promise<WebhookHandshakeConfiguration | null> {
         const { triggerSource, logger } = params
-        if (isNil(triggerSource) || isNil(triggerSource.pieceName) || isNil(triggerSource.pieceVersion) || isNil(triggerSource.triggerName) || isNil(triggerSource.projectId)) {
+        if (
+            isNil(triggerSource) ||
+            isNil(triggerSource.pieceName) ||
+            isNil(triggerSource.pieceVersion) ||
+            isNil(triggerSource.triggerName) ||
+            isNil(triggerSource.projectId)
+        ) {
             return null
         }
         const pieceTrigger = await triggerUtils(logger).getPieceTriggerByName({
@@ -51,7 +78,11 @@ export const webhookHandshake = {
 export function isHandshakeRequest(params: IsHandshakeRequestParams): boolean {
     const { payload, handshakeConfiguration } = params
 
-    if (isNil(handshakeConfiguration) || isNil(handshakeConfiguration.strategy) || isNil(handshakeConfiguration.paramName)) {
+    if (
+        isNil(handshakeConfiguration) ||
+        isNil(handshakeConfiguration.strategy) ||
+        isNil(handshakeConfiguration.paramName)
+    ) {
         return false
     }
 
@@ -65,9 +96,7 @@ export function isHandshakeRequest(params: IsHandshakeRequestParams): boolean {
             return paramName in payload.queryParams
 
         case WebhookHandshakeStrategy.BODY_PARAM_PRESENT:
-            return typeof payload.body === 'object' &&
-                payload.body !== null &&
-                paramName in payload.body
+            return typeof payload.body === 'object' && payload.body !== null && paramName in payload.body
 
         default:
             return false

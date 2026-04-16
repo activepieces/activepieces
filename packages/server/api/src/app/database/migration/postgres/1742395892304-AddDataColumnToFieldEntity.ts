@@ -15,5 +15,4 @@ export class AddDataColumnToFieldEntity1742395892304 implements MigrationInterfa
             ALTER TABLE "field" DROP COLUMN "data"
         `)
     }
-
 }

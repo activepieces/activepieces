@@ -1,8 +1,8 @@
 import {
   FlowOperationType,
+  isNil,
   PopulatedFlow,
   Table,
-  isNil,
   UncategorizedFolderId,
 } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
@@ -223,7 +223,7 @@ export function useAutomationsMutations(deps: MutationDeps) {
       }
 
       if (tableIds.length > 0) {
-        const tables = tableIds.map((id) => ({ id } as Table));
+        const tables = tableIds.map((id) => ({ id }) as Table);
         Promise.all(tables.map((tbl) => tablesApi.export(tbl.id)))
           .then((exported) => {
             tablesUtils.exportTables(exported);

@@ -1,9 +1,9 @@
-import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { MEMPOOL_API_BASE_URL } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework'
+import { MEMPOOL_API_BASE_URL } from '../../common'
 
 export const getBlockTransactionId = createAction({
- auth:PieceAuth.None(),
+    auth: PieceAuth.None(),
     name: 'get_block_transaction_id',
     displayName: 'Get Block Transaction ID',
     description: 'Returns the transaction at specified index within the block',
@@ -12,19 +12,19 @@ export const getBlockTransactionId = createAction({
         hash: Property.ShortText({
             displayName: 'Block Hash',
             description: 'The hash of the block',
-            required: true
+            required: true,
         }),
         index: Property.Number({
             displayName: 'Transaction Index',
             description: 'The index of the transaction within the block',
-            required: true
-        })
+            required: true,
+        }),
     },
     async run({ propsValue }) {
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${MEMPOOL_API_BASE_URL}/api/block/${propsValue.hash}/txid/${propsValue.index}`,
-        });
-        return response.body;
+        })
+        return response.body
     },
-});
+})

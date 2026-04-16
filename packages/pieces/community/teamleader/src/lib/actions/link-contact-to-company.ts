@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { teamleaderAuth } from '../common/auth';
-import { teamleaderCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { teamleaderAuth } from '../common/auth'
+import { teamleaderCommon } from '../common/client'
 
 export const linkContactToCompany = createAction({
     name: 'link_contact_to_company',
@@ -10,116 +10,118 @@ export const linkContactToCompany = createAction({
     auth: teamleaderAuth,
     props: {
         contact_id: Property.Dropdown({
-          auth:teamleaderAuth,
+            auth: teamleaderAuth,
             displayName: 'Contact',
             description: 'Select the contact to link',
             required: true,
             refreshers: [],
             options: async ({ auth }) => {
-                if (!auth) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please authenticate first'
-                };
+                if (!auth)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please authenticate first',
+                    }
 
                 try {
                     const response = await teamleaderCommon.apiCall({
                         auth,
                         method: HttpMethod.POST,
                         resourceUri: '/contacts.list',
-                        body: {}
-                    });
+                        body: {},
+                    })
 
                     return {
                         disabled: false,
                         options: response.body.data.map((contact: any) => ({
                             label: `${contact.first_name} ${contact.last_name || ''}`.trim(),
-                            value: contact.id
-                        }))
-                    };
+                            value: contact.id,
+                        })),
+                    }
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading contacts'
-                    };
+                        placeholder: 'Error loading contacts',
+                    }
                 }
-            }
+            },
         }),
         company_id: Property.Dropdown({
-          auth:teamleaderAuth,
+            auth: teamleaderAuth,
             displayName: 'Company',
             description: 'Select the company to link to',
             required: true,
             refreshers: [],
             options: async ({ auth }) => {
-                if (!auth) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please authenticate first'
-                };
+                if (!auth)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please authenticate first',
+                    }
 
                 try {
                     const response = await teamleaderCommon.apiCall({
                         auth,
                         method: HttpMethod.POST,
                         resourceUri: '/companies.list',
-                        body: {}
-                    });
+                        body: {},
+                    })
 
                     return {
                         disabled: false,
                         options: response.body.data.map((company: any) => ({
                             label: company.name,
-                            value: company.id
-                        }))
-                    };
+                            value: company.id,
+                        })),
+                    }
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading companies'
-                    };
+                        placeholder: 'Error loading companies',
+                    }
                 }
-            }
+            },
         }),
         position: Property.ShortText({
             displayName: 'Position',
             description: 'Job title or role (e.g., CEO, Manager)',
-            required: false
+            required: false,
         }),
         decision_maker: Property.Checkbox({
             displayName: 'Decision Maker',
             description: 'Is this contact a decision maker?',
-            required: false
-        })
+            required: false,
+        }),
     },
     async run(context) {
         const linkData: Record<string, any> = {
             id: context.propsValue.contact_id,
             company_id: context.propsValue.company_id,
-        };
+        }
 
         if (context.propsValue.position) {
-            linkData['position'] = context.propsValue.position;
+            linkData['position'] = context.propsValue.position
         }
 
         if (context.propsValue.decision_maker !== undefined) {
-            linkData['decision_maker'] = context.propsValue.decision_maker;
+            linkData['decision_maker'] = context.propsValue.decision_maker
         }
 
         await teamleaderCommon.apiCall({
             auth: context.auth,
             method: HttpMethod.POST,
             resourceUri: '/contacts.linkToCompany',
-            body: linkData
-        });
+            body: linkData,
+        })
 
         return {
             success: true,
             message: 'Contact linked to company successfully',
             contact_id: context.propsValue.contact_id,
-            company_id: context.propsValue.company_id
-        };
+            company_id: context.propsValue.company_id,
+        }
     },
-});
+})

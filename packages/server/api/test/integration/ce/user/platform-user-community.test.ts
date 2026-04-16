@@ -1,17 +1,9 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    apId,
-    PlatformRole,
-    PrincipalType,
-    UserStatus,
-} from '@activepieces/shared'
+import { apId, PlatformRole, PrincipalType, UserStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
-import {
-    mockAndSaveBasicSetup,
-    mockBasicUser,
-} from '../../../helpers/mocks'
+import { mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -62,7 +54,6 @@ describe('User API', () => {
         it('Requires principal to be platform owner', async () => {
             // arrange
             const { mockPlatform } = await mockAndSaveBasicSetup()
-
 
             const { mockUser: normalUser } = await mockBasicUser({
                 user: {
@@ -135,7 +126,7 @@ describe('User API', () => {
             expect(responseJson.status).toBe(UserStatus.INACTIVE)
         })
 
-        it('Fails if user doesn\'t exist', async () => {
+        it("Fails if user doesn't exist", async () => {
             const { mockPlatform } = await mockAndSaveBasicSetup()
 
             const { mockUser } = await mockBasicUser({

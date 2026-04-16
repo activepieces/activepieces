@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const deleteInvoice = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -15,10 +15,10 @@ export const deleteInvoice = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
-        const { invoiceId } = context.propsValue;
+        const client = makeClient(context.auth.props)
+        const { invoiceId } = context.propsValue
 
-        await client.deleteRecord(`/invoices/${invoiceId}`);
-        return { success: true, message: `Invoice ${invoiceId} deleted successfully.` };
+        await client.deleteRecord(`/invoices/${invoiceId}`)
+        return { success: true, message: `Invoice ${invoiceId} deleted successfully.` }
     },
-});
+})

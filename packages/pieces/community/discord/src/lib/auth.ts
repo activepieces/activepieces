@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 const markdown = `
 To obtain a token, follow these steps:
@@ -6,10 +6,10 @@ To obtain a token, follow these steps:
 2. Click on Application (or create one if you don't have one)
 3. Click on Bot
 4. Copy the token
-`;
+`
 
 export const discordAuth = PieceAuth.SecretText({
-  displayName: 'Bot Token',
-  description: markdown,
-  required: true,
-});
+    displayName: 'Bot Token',
+    description: markdown,
+    required: true,
+})

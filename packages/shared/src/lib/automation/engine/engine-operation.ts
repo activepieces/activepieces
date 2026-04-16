@@ -34,7 +34,6 @@ export type EngineOperation =
     | ExecuteExtractPieceMetadataOperation
     | ExecuteValidateAuthOperation
 
-
 export const EngineStdout = z.object({
     message: z.string(),
 })
@@ -43,10 +42,8 @@ export const EngineStderr = z.object({
     message: z.string(),
 })
 
-
 export type EngineStdout = z.infer<typeof EngineStdout>
 export type EngineStderr = z.infer<typeof EngineStderr>
-
 
 export type BaseEngineOperation = {
     projectId: ProjectId
@@ -64,7 +61,10 @@ export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'
 
 export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }
 
-export type ExecuteExtractPieceMetadataOperation = ExecuteExtractPieceMetadata & { timeoutInSeconds: number, platformId: PlatformId }
+export type ExecuteExtractPieceMetadataOperation = ExecuteExtractPieceMetadata & {
+    timeoutInSeconds: number
+    platformId: PlatformId
+}
 
 export type ExecuteToolOperation = BaseEngineOperation & {
     actionName: string
@@ -116,7 +116,6 @@ export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
 
-
 export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOperation & {
     hookType: HT
     test: boolean
@@ -126,7 +125,6 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
     appWebhookUrl?: string
     webhookSecret?: string | Record<string, string>
 }
-
 
 export const TriggerPayload = z.object({
     body: z.unknown(),
@@ -164,7 +162,6 @@ export type AppEventListener = {
     identifierValue: string
 }
 
-
 type ExecuteTestOrRunTriggerResponse = {
     message?: string
     output: unknown[]
@@ -192,12 +189,17 @@ export const EngineHttpResponse = z.object({
 
 export type EngineHttpResponse = z.infer<typeof EngineHttpResponse>
 
-export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
-    H extends TriggerHookType.HANDSHAKE ? ExecuteHandshakeTriggerResponse :
-        H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
-            H extends TriggerHookType.RENEW ? Record<string, never> :
-                H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
-                    ExecuteOnEnableTriggerResponse
+export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN
+    ? ExecuteTestOrRunTriggerResponse
+    : H extends TriggerHookType.HANDSHAKE
+      ? ExecuteHandshakeTriggerResponse
+      : H extends TriggerHookType.TEST
+        ? ExecuteTestOrRunTriggerResponse
+        : H extends TriggerHookType.RENEW
+          ? Record<string, never>
+          : H extends TriggerHookType.ON_DISABLE
+            ? Record<string, never>
+            : ExecuteOnEnableTriggerResponse
 
 export type ExecuteToolResponse = {
     status: ExecutionToolStatus
@@ -206,9 +208,7 @@ export type ExecuteToolResponse = {
     errorMessage?: unknown
 }
 
-export function normalizeToolOutputToExecuteResponse(
-    raw: unknown,
-): ExecuteToolResponse {
+export function normalizeToolOutputToExecuteResponse(raw: unknown): ExecuteToolResponse {
     if (raw === null || typeof raw !== 'object') {
         return {
             status: ExecutionToolStatus.FAILED,
@@ -218,10 +218,7 @@ export function normalizeToolOutputToExecuteResponse(
         }
     }
     const o = raw as Record<string, unknown>
-    if (
-        o['status'] === ExecutionToolStatus.SUCCESS ||
-        o['status'] === ExecutionToolStatus.FAILED
-    ) {
+    if (o['status'] === ExecutionToolStatus.SUCCESS || o['status'] === ExecutionToolStatus.FAILED) {
         return {
             status: o['status'] as ExecutionToolStatus,
             output: o['output'],
@@ -232,15 +229,8 @@ export function normalizeToolOutputToExecuteResponse(
     const isError = o['isError'] === true
     let output: unknown = o['structuredContent']
     if (output === undefined && Array.isArray(o['content'])) {
-        const parts = (o['content'] as { text?: string }[])
-            .map((c) => c?.text)
-            .filter(Boolean)
-        output =
-            parts.length === 1
-                ? parts[0]
-                : parts.length
-                    ? { text: parts.join('') }
-                    : o['content']
+        const parts = (o['content'] as { text?: string }[]).map((c) => c?.text).filter(Boolean)
+        output = parts.length === 1 ? parts[0] : parts.length ? { text: parts.join('') } : o['content']
     }
     if (output === undefined) {
         output = o
@@ -250,9 +240,9 @@ export function normalizeToolOutputToExecuteResponse(
         output,
         resolvedInput: {},
         errorMessage: isError
-            ? ((o['content'] as { text?: string }[])?.[0]?.text as string) ??
+            ? (((o['content'] as { text?: string }[])?.[0]?.text as string) ??
               (o['message'] as string) ??
-              'Tool failed'
+              'Tool failed')
             : undefined,
     }
 }
@@ -276,7 +266,6 @@ type InvalidExecuteValidateAuthResponseOutput = BaseExecuteValidateAuthResponseO
 export type ExecuteValidateAuthResponse =
     | ValidExecuteValidateAuthResponseOutput
     | InvalidExecuteValidateAuthResponseOutput
-
 
 export type EngineResponse<T = unknown> = {
     status: EngineResponseStatus

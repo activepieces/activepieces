@@ -56,5 +56,4 @@ export class RevertTodoActivties1751217652277 implements MigrationInterface {
             ADD CONSTRAINT "FK_e536f48cd7c23bce4e3958de2d6" FOREIGN KEY ("agentId") REFERENCES "agent"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
     }
-
 }

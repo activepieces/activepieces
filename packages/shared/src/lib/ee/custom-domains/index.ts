@@ -15,7 +15,6 @@ export const CustomDomain = z.object({
 
 export type CustomDomain = z.infer<typeof CustomDomain>
 
-
 export const AddDomainRequest = z.object({
     domain: z.string().regex(/^(?!.*\.example\.com$)(?!.*\.example\.net$).*/),
 })

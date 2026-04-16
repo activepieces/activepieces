@@ -1,8 +1,8 @@
-import { Property, createAction } from "@activepieces/pieces-framework";
-import { BASE_URL } from "../common";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { circleAuth } from "../common/auth";
-import { CommunityMemberDetails } from "../common/types";
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { BASE_URL } from '../common'
+import { circleAuth } from '../common/auth'
+import { CommunityMemberDetails } from '../common/types'
 
 export const findMemberByEmail = createAction({
     auth: circleAuth,
@@ -17,10 +17,10 @@ export const findMemberByEmail = createAction({
         }),
     },
     async run(context) {
-        const { email } = context.propsValue;
+        const { email } = context.propsValue
 
         if (email === undefined) {
-            throw new Error("Email is undefined, but it is a required field.");
+            throw new Error('Email is undefined, but it is a required field.')
         }
 
         const response = await httpClient.sendRequest<CommunityMemberDetails>({
@@ -30,11 +30,11 @@ export const findMemberByEmail = createAction({
                 email: email,
             },
             headers: {
-                "Authorization": `Bearer ${context.auth.secret_text}`,
-                "Content-Type": "application/json"
+                Authorization: `Bearer ${context.auth.secret_text}`,
+                'Content-Type': 'application/json',
             },
-        });
+        })
 
-        return response.body;
-    }
-});
+        return response.body
+    },
+})

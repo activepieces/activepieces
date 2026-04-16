@@ -1,5 +1,17 @@
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { ApEdition, ExecuteFlowJobData, isNil, JOB_PRIORITY, JobData, PlanName, PlatformId, RATE_LIMIT_PRIORITY, RunEnvironment, tryCatch, WorkerJobType } from '@activepieces/shared'
+import {
+    ApEdition,
+    ExecuteFlowJobData,
+    isNil,
+    JOB_PRIORITY,
+    JobData,
+    PlanName,
+    PlatformId,
+    RATE_LIMIT_PRIORITY,
+    RunEnvironment,
+    tryCatch,
+    WorkerJobType,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { getConcurrencyPoolSetKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
 import { distributedStore, redisConnections } from '../../../database/redis-connections'
@@ -35,7 +47,6 @@ function shouldContinue(jobData: JobData): jobData is ExecuteFlowJobData {
     return true
 }
 
-
 async function getMaxConcurrentJobsForPlatformPlan({ platformId }: { platformId: PlatformId }): Promise<number> {
     if (system.getEdition() !== ApEdition.CLOUD) {
         return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
@@ -48,7 +59,15 @@ async function getMaxConcurrentJobsForPlatformPlan({ platformId }: { platformId:
     return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
 }
 
-async function getMaxConcurrentJobs({ poolId, platformId, log }: { poolId: string | null, platformId: PlatformId, log: FastifyBaseLogger }): Promise<number> {
+async function getMaxConcurrentJobs({
+    poolId,
+    platformId,
+    log,
+}: {
+    poolId: string | null
+    platformId: PlatformId
+    log: FastifyBaseLogger
+}): Promise<number> {
     if (!isNil(poolId)) {
         const { data: value, error } = await tryCatch(() => concurrencyPoolService(log).getPoolLimit(poolId))
         if (error === null && !isNil(value)) {
@@ -58,8 +77,21 @@ async function getMaxConcurrentJobs({ poolId, platformId, log }: { poolId: strin
     return getMaxConcurrentJobsForPlatformPlan({ platformId })
 }
 
-async function tryAcquireSlot({ jobId, jobData, log }: { jobId: string, jobData: ExecuteFlowJobData, log: FastifyBaseLogger }): Promise<boolean> {
-    const flowTimeoutInMilliseconds = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS), 'seconds').add(1, 'minute').asMilliseconds()
+async function tryAcquireSlot({
+    jobId,
+    jobData,
+    log,
+}: {
+    jobId: string
+    jobData: ExecuteFlowJobData
+    log: FastifyBaseLogger
+}): Promise<boolean> {
+    const flowTimeoutInMilliseconds = apDayjsDuration(
+        system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
+        'seconds',
+    )
+        .add(1, 'minute')
+        .asMilliseconds()
     const { data: poolId } = await tryCatch(() => concurrencyPoolService(log).getProjectPoolId(jobData.projectId))
     const effectivePoolId = poolId ?? jobData.projectId
     const maxConcurrentJobs = await getMaxConcurrentJobs({
@@ -72,7 +104,7 @@ async function tryAcquireSlot({ jobId, jobData, log }: { jobId: string, jobData:
     const member = `${jobData.projectId}:${jobId}`
     const redisConnection = await redisConnections.useExisting()
 
-    const result = await redisConnection.eval(
+    const result = (await redisConnection.eval(
         `
 local setKey = KEYS[1]
 local currentTime = tonumber(ARGV[1])
@@ -103,12 +135,20 @@ return 0
         flowTimeoutInMilliseconds.toString(),
         maxConcurrentJobs.toString(),
         member,
-    ) as number
+    )) as number
 
     return result === 0
 }
 
-async function releaseSlot({ jobId, jobData, log }: { jobId: string, jobData: ExecuteFlowJobData, log: FastifyBaseLogger }): Promise<void> {
+async function releaseSlot({
+    jobId,
+    jobData,
+    log,
+}: {
+    jobId: string
+    jobData: ExecuteFlowJobData
+    log: FastifyBaseLogger
+}): Promise<void> {
     const { data: poolId } = await tryCatch(() => concurrencyPoolService(log).getProjectPoolId(jobData.projectId))
     const effectivePoolId = poolId ?? jobData.projectId
     const setKey = getConcurrencyPoolSetKey(effectivePoolId)

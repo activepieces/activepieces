@@ -35,7 +35,7 @@ export const platformOAuth2Service = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        const oauth2Auth = Array.isArray(auth) ? auth.find(auth => auth.type === PropertyType.OAUTH2) : auth
+        const oauth2Auth = Array.isArray(auth) ? auth.find((auth) => auth.type === PropertyType.OAUTH2) : auth
         if (isNil(oauth2Auth) || oauth2Auth.type !== PropertyType.OAUTH2) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,

@@ -1,7 +1,7 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { jiraCloudAuth } from "../../auth";
-import { jiraApiCall } from "../common";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { jiraCloudAuth } from '../../auth'
+import { jiraApiCall } from '../common'
 
 export const getIssueAttachmentAction = createAction({
     auth: jiraCloudAuth,
@@ -11,20 +11,20 @@ export const getIssueAttachmentAction = createAction({
     props: {
         attachmentId: Property.ShortText({
             displayName: 'Attachment ID',
-            required: true
-        })
+            required: true,
+        }),
     },
     async run(context) {
-        const { attachmentId } = context.propsValue;
+        const { attachmentId } = context.propsValue
 
         // https://community.developer.atlassian.com/t/download-attachment-from-rest-api/40860/2
-        const attachmentResponse = await jiraApiCall<{ filename: string, content: string }>({
+        const attachmentResponse = await jiraApiCall<{ filename: string; content: string }>({
             method: HttpMethod.GET,
             resourceUri: `/attachment/${attachmentId}`,
             auth: context.auth,
         })
 
-        const { filename, content } = attachmentResponse;
+        const { filename, content } = attachmentResponse
 
         const response = await httpClient.sendRequest({
             url: content,
@@ -42,8 +42,8 @@ export const getIssueAttachmentAction = createAction({
             ...attachmentResponse,
             file: await context.files.write({
                 fileName: filename,
-                data: Buffer.from(response.body)
-            })
+                data: Buffer.from(response.body),
+            }),
         }
-    }
+    },
 })

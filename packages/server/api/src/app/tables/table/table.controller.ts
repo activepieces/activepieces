@@ -1,4 +1,19 @@
-import { ApId, CountTablesRequest, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, GitPushOperationType, ListTablesRequest, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate, Table, UpdateTableRequest } from '@activepieces/shared'
+import {
+    ApId,
+    CountTablesRequest,
+    CreateTableRequest,
+    CreateTableWebhookRequest,
+    ExportTableResponse,
+    GitPushOperationType,
+    ListTablesRequest,
+    Permission,
+    PrincipalType,
+    SERVICE_KEY_SECURITY_OPENAPI,
+    SeekPage,
+    SharedTemplate,
+    Table,
+    UpdateTableRequest,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -6,15 +21,14 @@ import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { userService } from '../../user/user-service'
-import { recordSideEffects } from '../record/record-side-effects'
 import { recordService } from '../record/record.service'
+import { recordSideEffects } from '../record/record-side-effects'
 import { TableEntity } from './table.entity'
 import { tableService } from './table.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
 export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
-
     fastify.post('/', CreateRequest, async (request) => {
         return tableService.create({
             projectId: request.projectId,
@@ -28,7 +42,6 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
             id: request.params.id,
             request: request.body,
         })
-
     })
 
     fastify.get('/', GetTablesRequest, async (request) => {
@@ -43,7 +56,10 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
     })
 
     fastify.get('/:id/template', GetTableTemplateRequestOptions, async (request) => {
-        const userMetadata = request.principal.type === PrincipalType.USER ? await userService(request.log).getMetaInformation({ id: request.principal.id }) : null
+        const userMetadata =
+            request.principal.type === PrincipalType.USER
+                ? await userService(request.log).getMetaInformation({ id: request.principal.id })
+                : null
         return tableService.getTemplate({
             tableId: request.params.id,
             userMetadata,
@@ -115,21 +131,28 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
             projectId: request.projectId,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
-        await recordSideEffects(fastify.log).handleRecordsEvent({
-            tableId: request.params.id,
-            projectId: request.projectId,
-            records: deletedRecords,
-            logger: request.log,
-            authorization: request.headers.authorization as string,
-        }, 'deleted')
+        await recordSideEffects(fastify.log).handleRecordsEvent(
+            {
+                tableId: request.params.id,
+                projectId: request.projectId,
+                records: deletedRecords,
+                logger: request.log,
+                authorization: request.headers.authorization as string,
+            },
+            'deleted',
+        )
     })
 }
 
 const CreateRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
-            type: ProjectResourceType.BODY,
-        }),
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE],
+            Permission.WRITE_TABLE,
+            {
+                type: ProjectResourceType.BODY,
+            },
+        ),
     },
     schema: {
         body: CreateTableRequest,
@@ -141,9 +164,13 @@ const CreateRequest = {
 
 const GetTablesRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.READ_TABLE, {
-            type: ProjectResourceType.QUERY,
-        }),
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE],
+            Permission.READ_TABLE,
+            {
+                type: ProjectResourceType.QUERY,
+            },
+        ),
     },
     schema: {
         tags: ['tables'],
@@ -175,10 +202,14 @@ const CountTablesRequestOptions = {
 
 const DeleteRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
-            type: ProjectResourceType.TABLE,
-            tableName: TableEntity,
-        }),
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE],
+            Permission.WRITE_TABLE,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: TableEntity,
+            },
+        ),
     },
 
     schema: {
@@ -196,10 +227,14 @@ const DeleteRequest = {
 
 const GetTableByIdRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.READ_TABLE, {
-            type: ProjectResourceType.TABLE,
-            tableName: TableEntity,
-        }),
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE],
+            Permission.READ_TABLE,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: TableEntity,
+            },
+        ),
     },
     schema: {
         tags: ['tables'],
@@ -216,10 +251,14 @@ const GetTableByIdRequest = {
 
 const ExportTableRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.READ_TABLE, {
-            type: ProjectResourceType.TABLE,
-            tableName: TableEntity,
-        }),
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE],
+            Permission.READ_TABLE,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: TableEntity,
+            },
+        ),
     },
     schema: {
         tags: ['tables'],
@@ -236,10 +275,14 @@ const ExportTableRequest = {
 
 const CreateTableWebhook = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
-            type: ProjectResourceType.TABLE,
-            tableName: TableEntity,
-        }),
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE],
+            Permission.WRITE_TABLE,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: TableEntity,
+            },
+        ),
     },
     schema: {
         tags: ['tables'],
@@ -254,10 +297,14 @@ const CreateTableWebhook = {
 
 const DeleteTableWebhook = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
-            type: ProjectResourceType.TABLE,
-            tableName: TableEntity,
-        }),
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE],
+            Permission.WRITE_TABLE,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: TableEntity,
+            },
+        ),
     },
     schema: {
         tags: ['tables'],
@@ -272,10 +319,14 @@ const DeleteTableWebhook = {
 
 const UpdateRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
-            type: ProjectResourceType.TABLE,
-            tableName: TableEntity,
-        }),
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE],
+            Permission.WRITE_TABLE,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: TableEntity,
+            },
+        ),
     },
     schema: {
         tags: ['tables'],
@@ -290,10 +341,14 @@ const UpdateRequest = {
 
 const ClearTableRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
-            type: ProjectResourceType.TABLE,
-            tableName: TableEntity,
-        }),
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE],
+            Permission.WRITE_TABLE,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: TableEntity,
+            },
+        ),
     },
     schema: {
         tags: ['tables'],
@@ -311,11 +366,13 @@ const ClearTableRequest = {
 const GetTableTemplateRequestOptions = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], 
-            Permission.READ_TABLE, {
+            [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE],
+            Permission.READ_TABLE,
+            {
                 type: ProjectResourceType.TABLE,
                 tableName: TableEntity,
-            }),
+            },
+        ),
     },
     schema: {
         tags: ['tables'],

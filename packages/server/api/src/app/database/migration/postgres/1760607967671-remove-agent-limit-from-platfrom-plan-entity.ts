@@ -23,5 +23,4 @@ export class RemoveAgentLimitFromPlatfromPlanEntity1760607967671 implements Migr
             ADD "agentsLimit" integer
         `)
     }
-
 }

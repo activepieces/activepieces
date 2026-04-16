@@ -7,12 +7,10 @@ import {
   DateTimePickerWithRange,
   PresetKey,
 } from '@/components/custom/date-time-picker-range';
-
+import { CURSOR_QUERY_PARAM } from '.';
 import { DataTableInputCheckbox } from './data-table-checkbox-filter';
 import { DataTableInputPopover } from './data-table-input-popover';
 import { DataTableSelectPopover } from './data-table-select-popover';
-
-import { CURSOR_QUERY_PARAM } from '.';
 
 type DropdownFilterProps = {
   type: 'select';

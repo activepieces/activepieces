@@ -12,6 +12,6 @@
  * recipient resolution logic.
  */
 export enum ChatType {
-  CONTACT = 'contact',
-  GROUP = 'group',
+    CONTACT = 'contact',
+    GROUP = 'group',
 }

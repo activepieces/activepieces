@@ -5,7 +5,7 @@ export class StepExecutionPath {
         this.path = [...path]
     }
 
-    loopIteration({ loopName, iteration }: { loopName: string, iteration: number }): StepExecutionPath {
+    loopIteration({ loopName, iteration }: { loopName: string; iteration: number }): StepExecutionPath {
         return new StepExecutionPath([...this.path, [loopName, iteration]])
     }
 

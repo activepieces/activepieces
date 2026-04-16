@@ -1,6 +1,14 @@
-import { inspect } from 'util'
-import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
+import {
+    ApEdition,
+    ApEnvironment,
+    DefaultProjectRole,
+    ExecutionMode,
+    FileLocation,
+    isNil,
+    PieceSyncMode,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { inspect } from 'util'
 import { DatabaseType } from '../database/database-type'
 import { RedisType } from '../database/redis/types'
 import { s3Helper } from '../file/s3-helper'
@@ -8,7 +16,6 @@ import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
 import { system } from './system/system'
 import { AppSystemProp, ContainerType, SystemProp } from './system/system-props'
-
 
 function enumValidator<T extends string>(enumValues: T[]) {
     return (value: string) => {
@@ -36,8 +43,7 @@ function urlValidator(value: string) {
     try {
         new URL(value)
         return true
-    }
-    catch {
+    } catch {
         return 'Value must be a valid URL'
     }
 }
@@ -130,7 +136,8 @@ const systemPropValidators: {
     [AppSystemProp.SMTP_HOST]: stringValidator,
     [AppSystemProp.SMTP_PASSWORD]: stringValidator,
     [AppSystemProp.SMTP_PORT]: numberValidator,
-    [AppSystemProp.SMTP_SENDER_EMAIL]: (value: string) => value.includes('@') ? true : 'Value must be a valid email address',
+    [AppSystemProp.SMTP_SENDER_EMAIL]: (value: string) =>
+        value.includes('@') ? true : 'Value must be a valid email address',
     [AppSystemProp.SMTP_SENDER_NAME]: stringValidator,
     [AppSystemProp.SMTP_USERNAME]: stringValidator,
     [AppSystemProp.TELEMETRY_ENABLED]: booleanValidator,
@@ -192,8 +199,6 @@ const systemPropValidators: {
     [AppSystemProp.PAGE_ONCALL_WEBHOOK]: urlValidator,
 }
 
-
-
 const validateSystemPropTypes = () => {
     const systemProperties: SystemProp[] = [...Object.values(AppSystemProp), ...Object.values(AppSystemProp)]
     const errors: {
@@ -214,73 +219,92 @@ const validateSystemPropTypes = () => {
 }
 
 export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise<void> => {
-
     const environment = system.get(AppSystemProp.ENVIRONMENT)
     const fileStorageLocation = process.env.AP_FILE_STORAGE_LOCATION
-    
+
     if (environment !== ApEnvironment.TESTING && fileStorageLocation === FileLocation.S3) {
         try {
             await s3Helper(log).validateS3Configuration()
-        }
-        catch (error: unknown) {
-            throw new Error(JSON.stringify({
-                error: inspect(error),
-                message: 'S3 validation failed. Check your configuration and credentials.',
-                docUrl: 'https://www.activepieces.com/docs/install/configuration/overview#configure-s3-optional',
-            }))
+        } catch (error: unknown) {
+            throw new Error(
+                JSON.stringify({
+                    error: inspect(error),
+                    message: 'S3 validation failed. Check your configuration and credentials.',
+                    docUrl: 'https://www.activepieces.com/docs/install/configuration/overview#configure-s3-optional',
+                }),
+            )
         }
     }
 
     const errors = validateSystemPropTypes()
     if (Object.keys(errors).length > 0) {
-        log.warn({
-            errors,
-        }, '[validateEnvPropsOnStartup]')
+        log.warn(
+            {
+                errors,
+            },
+            '[validateEnvPropsOnStartup]',
+        )
     }
 
     const codeSandboxType = process.env.AP_CODE_SANDBOX_TYPE
     if (!isNil(codeSandboxType)) {
-        throw new Error(JSON.stringify({
-            message: 'AP_CODE_SANDBOX_TYPE is deprecated, please use AP_EXECUTION_MODE instead',
-            docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
-        }))
+        throw new Error(
+            JSON.stringify({
+                message: 'AP_CODE_SANDBOX_TYPE is deprecated, please use AP_EXECUTION_MODE instead',
+                docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
+            }),
+        )
     }
     const encryptionKey = await encryptUtils.getEncryptionKey()
     const isValidHexKey = encryptionKey && /^[A-Za-z0-9]{32}$/.test(encryptionKey)
     if (!isValidHexKey) {
-        throw new Error(JSON.stringify({
-            message: 'AP_ENCRYPTION_KEY is missing or invalid. It must be a 32-character hexadecimal string (representing 16 bytes). You can generate one using the command: `openssl rand -hex 16`',
-            docUrl: 'https://www.activepieces.com/docs/install/configuration/environment-variables',
-        }))
+        throw new Error(
+            JSON.stringify({
+                message:
+                    'AP_ENCRYPTION_KEY is missing or invalid. It must be a 32-character hexadecimal string (representing 16 bytes). You can generate one using the command: `openssl rand -hex 16`',
+                docUrl: 'https://www.activepieces.com/docs/install/configuration/environment-variables',
+            }),
+        )
     }
     const isApp = system.isApp()
     if (isApp) {
         const rentionPeriod = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
         const maximumPausedFlowTimeout = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
         if (maximumPausedFlowTimeout > rentionPeriod) {
-            throw new Error(JSON.stringify({
-                message: 'AP_PAUSED_FLOW_TIMEOUT_DAYS can not exceed AP_EXECUTION_DATA_RETENTION_DAYS',
-            }))
+            throw new Error(
+                JSON.stringify({
+                    message: 'AP_PAUSED_FLOW_TIMEOUT_DAYS can not exceed AP_EXECUTION_DATA_RETENTION_DAYS',
+                }),
+            )
         }
     }
 
     const jwtSecret = await jwtUtils.getJwtSecret()
     if (isNil(jwtSecret)) {
-        throw new Error(JSON.stringify({
-            message: 'AP_JWT_SECRET is undefined, please define it in the environment variables',
-            docUrl: 'https://www.activepieces.com/docs/install/configuration/environment-variables',
-        }))
+        throw new Error(
+            JSON.stringify({
+                message: 'AP_JWT_SECRET is undefined, please define it in the environment variables',
+                docUrl: 'https://www.activepieces.com/docs/install/configuration/environment-variables',
+            }),
+        )
     }
 
     const edition = system.getEdition()
     if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition) && environment === ApEnvironment.PRODUCTION) {
         const executionMode = system.getOrThrow<ExecutionMode>(AppSystemProp.EXECUTION_MODE)
-        if (![ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.SANDBOX_CODE_AND_PROCESS].includes(executionMode)) {
-            throw new Error(JSON.stringify({
-                message: `Execution mode ${executionMode} is no longer supported in this edition, check the documentation for recent changes`,
-                docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
-            }))
+        if (
+            ![
+                ExecutionMode.SANDBOX_PROCESS,
+                ExecutionMode.SANDBOX_CODE_ONLY,
+                ExecutionMode.SANDBOX_CODE_AND_PROCESS,
+            ].includes(executionMode)
+        ) {
+            throw new Error(
+                JSON.stringify({
+                    message: `Execution mode ${executionMode} is no longer supported in this edition, check the documentation for recent changes`,
+                    docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
+                }),
+            )
         }
     }
-
 }

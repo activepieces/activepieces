@@ -13,9 +13,7 @@ export class FlowRunPauseMetadata1683552928243 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(
-            'ALTER TABLE "flow_run" DROP COLUMN "pauseMetadata"',
-        )
+        await queryRunner.query('ALTER TABLE "flow_run" DROP COLUMN "pauseMetadata"')
 
         log.info('[FlowRunPauseMetadata1683552928243] down')
     }

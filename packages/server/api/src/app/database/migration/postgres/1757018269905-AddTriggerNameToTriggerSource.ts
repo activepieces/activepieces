@@ -29,5 +29,4 @@ export class AddTriggerNameToTriggerSource1757018269905 implements MigrationInte
             ALTER TABLE "trigger_source" DROP COLUMN "triggerName"
         `)
     }
-
 }

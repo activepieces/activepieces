@@ -16,7 +16,10 @@ type InputKeyEntry = {
 }
 
 export const loggingUtils = {
-    trimExecutionInput(steps: Record<string, StepOutput>, maxSize: number = MAX_SIZE_FOR_ALL_ENTRIES): Record<string, StepOutput> {
+    trimExecutionInput(
+        steps: Record<string, StepOutput>,
+        maxSize: number = MAX_SIZE_FOR_ALL_ENTRIES,
+    ): Record<string, StepOutput> {
         const totalJsonSize = getTotalStepsSize(steps)
 
         if (!jsonExceedMaxSize(totalJsonSize, maxSize)) {
@@ -64,10 +67,7 @@ function getTotalStepsSize(steps: Record<string, StepOutput>): number {
     return utils.sizeof(steps)
 }
 
-function traverseStepsAndCollectKeys(
-    steps: Record<string, StepOutput>,
-    entries: InputKeyEntry[],
-): void {
+function traverseStepsAndCollectKeys(steps: Record<string, StepOutput>, entries: InputKeyEntry[]): void {
     for (const [stepName, step] of Object.entries(steps)) {
         if (step?.input) {
             const input = step.input as Record<string, unknown>
@@ -93,9 +93,7 @@ function traverseStepsAndCollectKeys(
     }
 }
 
-function removeKeysFromSteps(
-    keysToRemove: Set<InputKeyEntry>,
-): void {
+function removeKeysFromSteps(keysToRemove: Set<InputKeyEntry>): void {
     for (const entry of keysToRemove) {
         if (entry.step?.input) {
             const input = entry.step.input as Record<string, unknown>

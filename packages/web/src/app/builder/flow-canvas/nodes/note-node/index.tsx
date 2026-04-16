@@ -215,7 +215,9 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
     </div>
   );
 };
+
 export { ApNoteCanvasNode, NoteContent };
+
 type NoteContentProps = {
   note: Note;
   isDragging: boolean;

@@ -115,5 +115,4 @@ export class AddLastChangelogDismissedSQLITE1744053922591 implements MigrationIn
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "identityId")
         `)
     }
-
 }

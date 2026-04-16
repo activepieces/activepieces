@@ -1,36 +1,36 @@
-import { medullarAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { medullarCommon, getUser } from '../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { medullarAuth } from '../auth'
+import { getUser, medullarCommon } from '../common'
 
 export const createSpace = createAction({
-  auth: medullarAuth,
-  name: 'createSpace',
-  displayName: 'Create new Space',
-  description: 'Create a new Space.',
-  props: {
-    space_name: Property.ShortText({
-      displayName: 'Space Name',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const userData = await getUser(context.auth);
+    auth: medullarAuth,
+    name: 'createSpace',
+    displayName: 'Create new Space',
+    description: 'Create a new Space.',
+    props: {
+        space_name: Property.ShortText({
+            displayName: 'Space Name',
+            required: true,
+        }),
+    },
+    async run(context) {
+        const userData = await getUser(context.auth)
 
-    const spaceResponse = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${medullarCommon.aiUrl}/spaces/`,
-      body: {
-        name: context.propsValue['space_name'],
-        company: {
-          uuid: userData.company.uuid,
-        },
-      },
-      headers: {
-        Authorization: `Bearer ${context.auth.secret_text}`,
-      },
-    });
+        const spaceResponse = await httpClient.sendRequest({
+            method: HttpMethod.POST,
+            url: `${medullarCommon.aiUrl}/spaces/`,
+            body: {
+                name: context.propsValue['space_name'],
+                company: {
+                    uuid: userData.company.uuid,
+                },
+            },
+            headers: {
+                Authorization: `Bearer ${context.auth.secret_text}`,
+            },
+        })
 
-    return spaceResponse.body;
-  },
-});
+        return spaceResponse.body
+    },
+})

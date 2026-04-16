@@ -5,9 +5,7 @@ function generateColorVariations(defaultColor: string) {
 
     const darkColor = defaultColorObj.clone().darken(2)
     const baseLight = tinycolor('#ffffff')
-    const lightColor = tinycolor
-        .mix(baseLight, defaultColorObj.toHex(), 12)
-        .toHexString()
+    const lightColor = tinycolor.mix(baseLight, defaultColorObj.toHex(), 12).toHexString()
     const mediumColor = defaultColorObj.clone().lighten(26)
 
     return {

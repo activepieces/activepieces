@@ -30,4 +30,5 @@ const CopyTextTooltip = ({
 };
 
 CopyTextTooltip.displayName = 'CopyTextTooltip';
+
 export { CopyTextTooltip };

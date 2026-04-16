@@ -25,9 +25,12 @@ export class SplitUpPieceMetadataIntoTools1752004202722 implements MigrationInte
     name = 'SplitUpPieceMetadataIntoTools1752004202722'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        system.globalLogger().info({
-            name: this.name,
-        }, 'Starting migration')
+        system.globalLogger().info(
+            {
+                name: this.name,
+            },
+            'Starting migration',
+        )
         const mcpTools = await queryRunner.query(`
             SELECT * FROM "mcp_tool" WHERE "pieceMetadata" IS NOT NULL
         `)
@@ -49,9 +52,10 @@ export class SplitUpPieceMetadataIntoTools1752004202722 implements MigrationInte
 
         for (const mcpTool of mcpTools) {
             const { pieceMetadata: pieceMetadataString, ...rest } = mcpTool
-            const pieceMetadata = typeof pieceMetadataString === 'string'
-                ? JSON.parse(pieceMetadataString) as OldMcpPieceToolData
-                : pieceMetadataString as OldMcpPieceToolData
+            const pieceMetadata =
+                typeof pieceMetadataString === 'string'
+                    ? (JSON.parse(pieceMetadataString) as OldMcpPieceToolData)
+                    : (pieceMetadataString as OldMcpPieceToolData)
 
             const { actionNames, ...restPieceMetadata } = pieceMetadata
 
@@ -67,24 +71,39 @@ export class SplitUpPieceMetadataIntoTools1752004202722 implements MigrationInte
                     },
                 }
                 const toolId = apId()
-                await queryRunner.query(`
+                await queryRunner.query(
+                    `
                     INSERT INTO "mcp_tool" 
                     ("id", "mcpId", "type", "pieceMetadata", "flowId", "created", "updated")
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
-                `, [toolId, tool.mcpId, McpToolType.PIECE, JSON.stringify(tool.pieceMetadata), tool.flowId, tool.created, tool.updated])
-
+                `,
+                    [
+                        toolId,
+                        tool.mcpId,
+                        McpToolType.PIECE,
+                        JSON.stringify(tool.pieceMetadata),
+                        tool.flowId,
+                        tool.created,
+                        tool.updated,
+                    ],
+                )
             }
-            await queryRunner.query(`
+            await queryRunner.query(
+                `
                 DELETE FROM "mcp_tool" WHERE "id" = $1
-            `, [mcpTool.id])
+            `,
+                [mcpTool.id],
+            )
         }
-        system.globalLogger().info({
-            name: this.name,
-        }, 'finished')
+        system.globalLogger().info(
+            {
+                name: this.name,
+            },
+            'finished',
+        )
     }
 
     public async down(_queryRunner: QueryRunner): Promise<void> {
         // no down
     }
-
 }

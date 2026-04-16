@@ -6,9 +6,12 @@ export class AddProjectRelationInUserInvitationSqlite1732791068873 implements Mi
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'up',
+        )
         await queryRunner.query(`
             DELETE FROM "user_invitation" 
             WHERE "projectId" IS NOT NULL 
@@ -125,9 +128,12 @@ export class AddProjectRelationInUserInvitationSqlite1732791068873 implements Mi
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'down')
+        log.info(
+            {
+                name: this.name,
+            },
+            'down',
+        )
         await queryRunner.query(`
             DROP INDEX "idx_user_invitation_email_platform_project"
         `)
@@ -234,5 +240,4 @@ export class AddProjectRelationInUserInvitationSqlite1732791068873 implements Mi
             CREATE UNIQUE INDEX "idx_user_invitation_email_platform_project" ON "user_invitation" ("email", "platformId", "projectId")
         `)
     }
-
 }

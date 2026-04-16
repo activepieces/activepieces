@@ -1,7 +1,7 @@
 import {
+  ArraySubProps,
   OAuth2Props,
   PiecePropertyMap,
-  ArraySubProps,
 } from '@activepieces/pieces-framework';
 import {
   isNil,
@@ -15,8 +15,8 @@ import { FormField } from '@/components/ui/form';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 
 import {
-  selectGenericFormComponentForProperty,
   SelectGenericFormComponentForPropertyParams,
+  selectGenericFormComponentForProperty,
 } from './properties-utils';
 
 export const GenericPropertiesForm = React.memo(

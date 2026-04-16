@@ -24,6 +24,7 @@ const StatusIconWithText = React.memo(
 );
 
 StatusIconWithText.displayName = 'StatusIconWithText';
+
 export { StatusIconWithText };
 
 type StatusVariant = 'success' | 'error' | 'default' | 'secondary';

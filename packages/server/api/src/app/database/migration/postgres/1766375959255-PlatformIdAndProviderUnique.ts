@@ -14,5 +14,4 @@ export class PlatformIdAndProviderUnique1766375959255 implements MigrationInterf
             DROP INDEX "idx_ai_provider_platform_id_provider"
         `)
     }
-
 }

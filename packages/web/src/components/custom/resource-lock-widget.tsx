@@ -32,6 +32,7 @@ function ResourceLockWidget({
 }
 
 ResourceLockWidget.displayName = 'ResourceLockWidget';
+
 export { ResourceLockWidget };
 
 type ResourceLockWidgetProps = {

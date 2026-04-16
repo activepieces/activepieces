@@ -12,7 +12,6 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { scimGroupService } from './scim-group-service'
 
 export const scimGroupController: FastifyPluginAsyncZod = async (app) => {
-
     app.get('/', ListGroupsRequest, async (request, reply) => {
         const platformId = request.principal.platform.id
         const result = await scimGroupService(request.log).list({

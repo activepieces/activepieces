@@ -1,5 +1,4 @@
-export const getTranscript = 
-`
+export const getTranscript = `
 	query Transcript($transcriptId: String!) 
     {
 		transcript(id: $transcriptId) 
@@ -70,8 +69,7 @@ export const getTranscript =
 	}
 `
 
-export const getUser = 
-`
+export const getUser = `
 query User($userId: String!) 
 {
     user(id: $userId) 

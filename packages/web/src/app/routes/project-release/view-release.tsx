@@ -3,8 +3,8 @@ import { formatDistance } from 'date-fns';
 import { t } from 'i18next';
 import {
   ChevronRight,
-  GitBranch,
   FolderOpenDot,
+  GitBranch,
   RotateCcw,
 } from 'lucide-react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';

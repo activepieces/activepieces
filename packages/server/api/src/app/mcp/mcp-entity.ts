@@ -2,7 +2,7 @@ import { McpServer, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
-type McpServerWithSchema = McpServer & {  
+type McpServerWithSchema = McpServer & {
     project: Project
 }
 
@@ -43,6 +43,4 @@ export const McpServerEntity = new EntitySchema<McpServerWithSchema>({
             },
         },
     },
-    
 })
-

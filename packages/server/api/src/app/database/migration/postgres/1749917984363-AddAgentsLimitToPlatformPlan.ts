@@ -23,5 +23,4 @@ export class AddAgentsLimitToPlatformPlan1749917984363 implements MigrationInter
             ALTER TABLE "platform_plan" DROP COLUMN "agentsLimit"
         `)
     }
-
 }

@@ -1,7 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddPlatformIdToUserSqlite1700147448410
-implements MigrationInterface {
+export class AddPlatformIdToUserSqlite1700147448410 implements MigrationInterface {
     name = 'AddPlatformIdToUserSqlite1700147448410'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

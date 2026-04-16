@@ -50,4 +50,4 @@ function ResizableHandle({
   );
 }
 
-export { ResizablePanelGroup, ResizablePanel, ResizableHandle };
+export { ResizableHandle, ResizablePanel, ResizablePanelGroup };

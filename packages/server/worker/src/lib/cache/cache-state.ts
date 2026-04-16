@@ -1,24 +1,18 @@
 import { readFile } from 'node:fs/promises'
-import { join } from 'path'
 import { fileSystemUtils, memoryLock } from '@activepieces/server-utils'
 import { isNil } from '@activepieces/shared'
+import { join } from 'path'
 import writeFileAtomic from 'write-file-atomic'
 
 type CacheMap = Record<string, string>
 
-const cachePath = (folderPath: string): string =>
-    join(folderPath, 'cache.json')
+const cachePath = (folderPath: string): string => join(folderPath, 'cache.json')
 const cached: Record<string, CacheMap | null> = {}
 export const NO_SAVE_GUARD = (_: string): boolean => false
 
 export const cacheState = (folderPath: string) => {
     return {
-        async getOrSetCache({
-            cacheMiss,
-            key,
-            installFn,
-            skipSave,
-        }: CacheStateParams): Promise<CacheResult> {
+        async getOrSetCache({ cacheMiss, key, installFn, skipSave }: CacheStateParams): Promise<CacheResult> {
             const cache = await readCacheFromMemory(folderPath)
             const value = cache[key] as string | null
             if (!isNil(value) && !cacheMiss(value)) {
@@ -43,10 +37,7 @@ export const cacheState = (folderPath: string) => {
                             state: value,
                         }
                     }
-                    const freshCache = await cacheState(folderPath).saveCache(
-                        key,
-                        value,
-                    )
+                    const freshCache = await cacheState(folderPath).saveCache(key, value)
                     cached[folderPath] = freshCache
                     return {
                         cacheHit: false,

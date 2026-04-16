@@ -39,4 +39,5 @@ const BranchConditionToolbar = (props: BranchConditionToolbarProps) => {
 };
 
 BranchConditionToolbar.displayName = 'BranchConditionToolbar';
+
 export { BranchConditionToolbar };

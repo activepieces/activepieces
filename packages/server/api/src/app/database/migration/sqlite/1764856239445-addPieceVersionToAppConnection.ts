@@ -4,7 +4,6 @@ export class AddPieceVersionToAppConnection1764856239445 implements MigrationInt
     name = 'AddPieceVersionToAppConnection1764856239445'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-    
         await queryRunner.query(`
             CREATE TABLE "temporary_app_connection" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -80,7 +79,6 @@ export class AddPieceVersionToAppConnection1764856239445 implements MigrationInt
             ALTER TABLE "temporary_app_connection"
                 RENAME TO "app_connection"
         `)
-
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -145,5 +143,4 @@ export class AddPieceVersionToAppConnection1764856239445 implements MigrationInt
             DROP TABLE "temporary_app_connection"
         `)
     }
-
 }

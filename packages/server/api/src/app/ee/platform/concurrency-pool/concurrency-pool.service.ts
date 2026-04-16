@@ -12,7 +12,6 @@ const NO_POOL_SENTINEL = 'none'
 const UNLIMITED_CONCURRENT_JOBS = 1_000_000
 
 export const concurrencyPoolService = (log: FastifyBaseLogger) => ({
-
     async upsertPool({ platformId, key, maxConcurrentJobs }: UpsertPoolParams): Promise<{ poolId: string }> {
         return distributedLock(log).runExclusive({
             key: `concurrency_pool_upsert:${platformId}:${key}`,
@@ -22,11 +21,18 @@ export const concurrencyPoolService = (log: FastifyBaseLogger) => ({
                     where: { platformId, key },
                 })
                 if (!isNil(existing)) {
-                    await concurrencyPoolRepo().update({ id: existing.id }, {
-                        maxConcurrentJobs: maxConcurrentJobs ?? existing.maxConcurrentJobs,
-                    })
+                    await concurrencyPoolRepo().update(
+                        { id: existing.id },
+                        {
+                            maxConcurrentJobs: maxConcurrentJobs ?? existing.maxConcurrentJobs,
+                        },
+                    )
                     if (!isNil(maxConcurrentJobs)) {
-                        await distributedStore.put(getConcurrencyPoolLimitKey(existing.id), maxConcurrentJobs, CACHE_TTL_SECONDS)
+                        await distributedStore.put(
+                            getConcurrencyPoolLimitKey(existing.id),
+                            maxConcurrentJobs,
+                            CACHE_TTL_SECONDS,
+                        )
                     }
                     return { poolId: existing.id }
                 }
@@ -64,11 +70,10 @@ export const concurrencyPoolService = (log: FastifyBaseLogger) => ({
         return poolId
     },
 
-    async assignProject({ projectId, poolId }: { projectId: string, poolId: string | null }): Promise<void> {
+    async assignProject({ projectId, poolId }: { projectId: string; poolId: string | null }): Promise<void> {
         if (!isNil(poolId)) {
             await distributedStore.put(getProjectConcurrencyPoolKey(projectId), poolId, CACHE_TTL_SECONDS)
-        }
-        else {
+        } else {
             await distributedStore.delete(getProjectConcurrencyPoolKey(projectId))
         }
     },
@@ -89,4 +94,4 @@ export const concurrencyPoolService = (log: FastifyBaseLogger) => ({
     },
 })
 
-type UpsertPoolParams = { platformId: string, key: string, maxConcurrentJobs?: number }
+type UpsertPoolParams = { platformId: string; key: string; maxConcurrentJobs?: number }

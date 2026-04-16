@@ -1,12 +1,12 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
 
 export type ZendeskSellAuth = {
-    email: string;
-    api_token: string;
+    email: string
+    api_token: string
 }
 
-const ZENDESK_SELL_API_URL = 'https://api.getbase.com';
+const ZENDESK_SELL_API_URL = 'https://api.getbase.com'
 
 export const zendeskSellAuth = PieceAuth.CustomAuth({
     description: `
@@ -29,27 +29,27 @@ export const zendeskSellAuth = PieceAuth.CustomAuth({
             displayName: 'API Token',
             description: 'Your Zendesk Sell API Token.',
             required: true,
-        })
+        }),
     },
     validate: async ({ auth }) => {
         try {
             await httpClient.sendRequest({
                 method: HttpMethod.GET,
-                url: `${ZENDESK_SELL_API_URL}/v2/users/self`, 
+                url: `${ZENDESK_SELL_API_URL}/v2/users/self`,
                 authentication: {
                     type: AuthenticationType.BASIC,
                     username: `${auth.email}/token`,
                     password: auth.api_token,
                 },
-            });
+            })
             return {
                 valid: true,
-            };
+            }
         } catch (e) {
             return {
                 valid: false,
                 error: 'Invalid API token or email.',
-            };
+            }
         }
     },
-});
+})

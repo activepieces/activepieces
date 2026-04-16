@@ -29,5 +29,4 @@ export class AddWorkerMachine1720101280025 implements MigrationInterface {
             DROP TABLE "worker_machine"
         `)
     }
-
 }

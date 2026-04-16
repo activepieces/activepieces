@@ -1,16 +1,11 @@
-import {
-    apId,
-    ApplicationEventName,
-    EventDestinationScope,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { ApplicationEventName, apId, EventDestinationScope, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { createTestContext } from '../../../helpers/test-context'
-import { createMockEventDestination } from '../../../helpers/mocks'
-import { db } from '../../../helpers/db'
 import { eventDestinationService } from '../../../../src/app/event-destinations/event-destinations.service'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
+import { db } from '../../../helpers/db'
+import { createMockEventDestination } from '../../../helpers/mocks'
+import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
 
@@ -55,7 +50,10 @@ describe('Event Destination Trigger', () => {
             platformId: ctx.platform.id,
             event: {
                 action: ApplicationEventName.FLOW_CREATED,
-                data: { flow: { id: apId(), created: new Date().toISOString(), updated: new Date().toISOString() }, project: { displayName: 'Test' } },
+                data: {
+                    flow: { id: apId(), created: new Date().toISOString(), updated: new Date().toISOString() },
+                    project: { displayName: 'Test' },
+                },
             },
         })
 
@@ -83,7 +81,10 @@ describe('Event Destination Trigger', () => {
             platformId: ctx.platform.id,
             event: {
                 action: ApplicationEventName.FLOW_DELETED,
-                data: { flow: { id: apId(), created: new Date().toISOString(), updated: new Date().toISOString() }, project: { displayName: 'Test' } },
+                data: {
+                    flow: { id: apId(), created: new Date().toISOString(), updated: new Date().toISOString() },
+                    project: { displayName: 'Test' },
+                },
             },
         })
 
@@ -104,7 +105,10 @@ describe('Event Destination Trigger', () => {
             platformId: ctx2.platform.id,
             event: {
                 action: ApplicationEventName.FLOW_CREATED,
-                data: { flow: { id: apId(), created: new Date().toISOString(), updated: new Date().toISOString() }, project: { displayName: 'Test' } },
+                data: {
+                    flow: { id: apId(), created: new Date().toISOString(), updated: new Date().toISOString() },
+                    project: { displayName: 'Test' },
+                },
             },
         })
 
@@ -131,12 +135,17 @@ describe('Event Destination Trigger', () => {
             platformId: ctx.platform.id,
             event: {
                 action: ApplicationEventName.FLOW_CREATED,
-                data: { flow: { id: apId(), created: new Date().toISOString(), updated: new Date().toISOString() }, project: { displayName: 'Test' } },
+                data: {
+                    flow: { id: apId(), created: new Date().toISOString(), updated: new Date().toISOString() },
+                    project: { displayName: 'Test' },
+                },
             },
         })
 
         expect(addSpy).toHaveBeenCalledTimes(2)
-        const urls = addSpy.mock.calls.map((call: unknown[]) => (call[0] as Record<string, Record<string, string>>).data.webhookUrl)
+        const urls = addSpy.mock.calls.map(
+            (call: unknown[]) => (call[0] as Record<string, Record<string, string>>).data.webhookUrl,
+        )
         expect(urls).toContain('https://example.com/hook1')
         expect(urls).toContain('https://example.com/hook2')
     })
@@ -154,7 +163,10 @@ describe('Event Destination Trigger', () => {
             platformId: ctx.platform.id,
             event: {
                 action: ApplicationEventName.FLOW_DELETED,
-                data: { flow: { id: apId(), created: new Date().toISOString(), updated: new Date().toISOString() }, project: { displayName: 'Test' } },
+                data: {
+                    flow: { id: apId(), created: new Date().toISOString(), updated: new Date().toISOString() },
+                    project: { displayName: 'Test' },
+                },
             },
         })
 

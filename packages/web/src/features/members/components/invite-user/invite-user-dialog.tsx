@@ -9,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -27,7 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -139,8 +139,8 @@ export const InviteUserDialog = ({
       type: isPlatformPage
         ? InvitationType.PLATFORM
         : platform.plan.projectRolesEnabled && project.type === ProjectType.TEAM
-        ? InvitationType.PROJECT
-        : InvitationType.PLATFORM,
+          ? InvitationType.PROJECT
+          : InvitationType.PLATFORM,
       platformRole: PlatformRole.MEMBER,
       projectRole: undefined,
     },
@@ -227,8 +227,8 @@ export const InviteUserDialog = ({
                 {invitationLink
                   ? t('Invitation Link')
                   : isPlatformPage
-                  ? t('Invite to Your Platform')
-                  : t('Add Members')}
+                    ? t('Invite to Your Platform')
+                    : t('Add Members')}
               </DialogTitle>
               <DialogDescription>
                 {invitationLink ? (

@@ -16,7 +16,6 @@ export const FormInput = z.object({
 
 export type FormInput = z.infer<typeof FormInput>
 
-
 export const FormProps = z.object({
     inputs: z.array(FormInput),
     waitForResponse: z.boolean(),

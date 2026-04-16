@@ -1,2 +1,2 @@
-export { makeClient, type DigitalPilotClient } from './client';
-export { tagIdProp, listIdProp } from './props';
+export { type DigitalPilotClient, makeClient } from './client'
+export { listIdProp, tagIdProp } from './props'

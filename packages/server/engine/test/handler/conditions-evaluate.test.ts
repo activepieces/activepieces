@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// biome-ignore lint/suspicious/noExplicitAny: legacy code
 import { BranchCondition, BranchOperator } from '@activepieces/shared'
 import { evaluateConditions } from '../../src/lib/handler/router-executor'
 
@@ -181,10 +181,7 @@ describe('Branch evaluateConditions', () => {
     })
 
     describe('LIST_IS_EMPTY', () => {
-        test.each([
-            [],
-            '[]',
-        ])('should return true when list is empty %p', (input: any) => {
+        test.each([[], '[]'])('should return true when list is empty %p', (input: any) => {
             const condition: BranchCondition = {
                 firstValue: input,
                 operator: BranchOperator.LIST_IS_EMPTY,
@@ -193,10 +190,7 @@ describe('Branch evaluateConditions', () => {
             expect(evaluateConditions([[condition]])).toEqual(true)
         })
 
-        test.each([
-            [1],
-            '[1]',
-        ])('should return false when list is not empty %p', (input: any) => {
+        test.each([[1], '[1]'])('should return false when list is not empty %p', (input: any) => {
             const condition: BranchCondition = {
                 firstValue: input,
                 operator: BranchOperator.LIST_IS_EMPTY,
@@ -221,10 +215,7 @@ describe('Branch evaluateConditions', () => {
     })
 
     describe('LIST_IS_NOT_EMPTY', () => {
-        test.each([
-            [1],
-            '[1]',
-        ])('should return true when list is not empty %p', (input: any) => {
+        test.each([[1], '[1]'])('should return true when list is not empty %p', (input: any) => {
             const condition: BranchCondition = {
                 firstValue: input,
                 operator: BranchOperator.LIST_IS_NOT_EMPTY,
@@ -233,10 +224,7 @@ describe('Branch evaluateConditions', () => {
             expect(evaluateConditions([[condition]])).toEqual(true)
         })
 
-        test.each([
-            [],
-            '[]',
-        ])('should return false when list is empty %p', (input: any) => {
+        test.each([[], '[]'])('should return false when list is empty %p', (input: any) => {
             const condition: BranchCondition = {
                 firstValue: input,
                 operator: BranchOperator.LIST_IS_NOT_EMPTY,
@@ -273,7 +261,12 @@ describe('Branch evaluateConditions', () => {
             { expected: true, list: [true, false, true], value: true, caseSensitive: false },
             { expected: true, list: ['true', 'false', 'true'], value: true, caseSensitive: false },
             { expected: true, list: ['true', 'false', 'true'], value: 'true', caseSensitive: false },
-        ])('should return $expected for list $list containing $value (case sensitive: $caseSensitive)', ({ expected, list, value, caseSensitive }) => {
+        ])('should return $expected for list $list containing $value (case sensitive: $caseSensitive)', ({
+            expected,
+            list,
+            value,
+            caseSensitive,
+        }) => {
             const condition: BranchCondition = {
                 firstValue: list as any,
                 secondValue: value as any,
@@ -298,7 +291,12 @@ describe('Branch evaluateConditions', () => {
             { expected: false, list: [true, false, true], value: false, caseSensitive: false },
             { expected: false, list: ['true', 'false', 'true'], value: false, caseSensitive: false },
             { expected: false, list: ['true', 'false', 'true'], value: 'false', caseSensitive: false },
-        ])('should return $expected for list $list not containing $value (case sensitive: $caseSensitive)', ({ expected, list, value, caseSensitive }) => {
+        ])('should return $expected for list $list not containing $value (case sensitive: $caseSensitive)', ({
+            expected,
+            list,
+            value,
+            caseSensitive,
+        }) => {
             const condition: BranchCondition = {
                 firstValue: list as any,
                 secondValue: value as any,

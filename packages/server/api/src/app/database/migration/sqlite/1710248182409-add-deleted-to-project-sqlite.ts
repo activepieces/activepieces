@@ -125,5 +125,4 @@ export class AddDeletedToProjectSqlite1710248182409 implements MigrationInterfac
 
         log.info('[AddDeletedToProjectSqlite1710248182409#down]')
     }
-
 }

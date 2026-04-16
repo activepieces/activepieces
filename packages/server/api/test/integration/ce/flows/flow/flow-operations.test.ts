@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import {
     FlowActionType,
     FlowOperationType,
@@ -13,6 +12,7 @@ import {
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../../helpers/db'
+import { describeWithAuth } from '../../../../helpers/describe-with-auth'
 import {
     createMockFlow,
     createMockFlowVersion,
@@ -20,7 +20,7 @@ import {
     createMockPieceMetadata,
 } from '../../../../helpers/mocks'
 import { createTestContext } from '../../../../helpers/test-context'
-import { describeWithAuth } from '../../../../helpers/describe-with-auth'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -33,34 +33,38 @@ afterAll(async () => {
 })
 
 describe('Flow Operations API', () => {
-    describeWithAuth('GET /v1/flows/:id', () => app!, (setup) => {
-        it('should get a flow by id', async () => {
-            const ctx = await setup()
+    describeWithAuth(
+        'GET /v1/flows/:id',
+        () => app!,
+        (setup) => {
+            it('should get a flow by id', async () => {
+                const ctx = await setup()
 
-            const mockFlow = createMockFlow({ projectId: ctx.project.id })
-            await db.save('flow', mockFlow)
+                const mockFlow = createMockFlow({ projectId: ctx.project.id })
+                await db.save('flow', mockFlow)
 
-            const mockFlowVersion = createMockFlowVersion({ flowId: mockFlow.id })
-            await db.save('flow_version', mockFlowVersion)
+                const mockFlowVersion = createMockFlowVersion({ flowId: mockFlow.id })
+                await db.save('flow_version', mockFlowVersion)
 
-            const response = await ctx.get(`/v1/flows/${mockFlow.id}`)
+                const response = await ctx.get(`/v1/flows/${mockFlow.id}`)
 
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const body = response?.json()
-            expect(body.id).toBe(mockFlow.id)
-            expect(body.projectId).toBe(ctx.project.id)
-            expect(body.version).toBeDefined()
-            expect(body.version.id).toBe(mockFlowVersion.id)
-        })
+                expect(response?.statusCode).toBe(StatusCodes.OK)
+                const body = response?.json()
+                expect(body.id).toBe(mockFlow.id)
+                expect(body.projectId).toBe(ctx.project.id)
+                expect(body.version).toBeDefined()
+                expect(body.version.id).toBe(mockFlowVersion.id)
+            })
 
-        it('should return 404 for non-existent flow', async () => {
-            const ctx = await setup()
+            it('should return 404 for non-existent flow', async () => {
+                const ctx = await setup()
 
-            const response = await ctx.get('/v1/flows/nonExistentId12345678')
+                const response = await ctx.get('/v1/flows/nonExistentId12345678')
 
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
-        })
-    })
+                expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            })
+        },
+    )
 
     describe('GET /v1/flows/:id (Cross-project)', () => {
         it('should deny access for flow in another project', async () => {
@@ -79,57 +83,65 @@ describe('Flow Operations API', () => {
         })
     })
 
-    describeWithAuth('GET /v1/flows/count', () => app!, (setup) => {
-        it('should count flows in project', async () => {
-            const ctx = await setup()
+    describeWithAuth(
+        'GET /v1/flows/count',
+        () => app!,
+        (setup) => {
+            it('should count flows in project', async () => {
+                const ctx = await setup()
 
-            const mockFlow1 = createMockFlow({ projectId: ctx.project.id })
-            const mockFlow2 = createMockFlow({ projectId: ctx.project.id })
-            await db.save('flow', [mockFlow1, mockFlow2])
+                const mockFlow1 = createMockFlow({ projectId: ctx.project.id })
+                const mockFlow2 = createMockFlow({ projectId: ctx.project.id })
+                await db.save('flow', [mockFlow1, mockFlow2])
 
-            const mockFlowVersion1 = createMockFlowVersion({ flowId: mockFlow1.id })
-            const mockFlowVersion2 = createMockFlowVersion({ flowId: mockFlow2.id })
-            await db.save('flow_version', [mockFlowVersion1, mockFlowVersion2])
+                const mockFlowVersion1 = createMockFlowVersion({ flowId: mockFlow1.id })
+                const mockFlowVersion2 = createMockFlowVersion({ flowId: mockFlow2.id })
+                await db.save('flow_version', [mockFlowVersion1, mockFlowVersion2])
 
-            const response = await ctx.get('/v1/flows/count', {
-                projectId: ctx.project.id,
+                const response = await ctx.get('/v1/flows/count', {
+                    projectId: ctx.project.id,
+                })
+
+                expect(response?.statusCode).toBe(StatusCodes.OK)
+                const body = response?.json()
+                expect(body).toBe(2)
+            })
+        },
+    )
+
+    describeWithAuth(
+        'DELETE /v1/flows/:id',
+        () => app!,
+        (setup) => {
+            it('should delete a flow', async () => {
+                const ctx = await setup()
+
+                const mockFlow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
+                await db.save('flow', mockFlow)
+
+                const mockFlowVersion = createMockFlowVersion({ flowId: mockFlow.id })
+                await db.save('flow_version', mockFlowVersion)
+
+                const response = await ctx.delete(`/v1/flows/${mockFlow.id}`)
+
+                expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+
+                // Verify the flow no longer appears in list
+                const listResponse = await ctx.get('/v1/flows', { projectId: ctx.project.id })
+                const flows = listResponse?.json().data ?? []
+                const flowIds = flows.map((f: Record<string, string>) => f.id)
+                expect(flowIds).not.toContain(mockFlow.id)
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const body = response?.json()
-            expect(body).toBe(2)
-        })
-    })
+            it('should return 404 when deleting non-existent flow', async () => {
+                const ctx = await setup()
 
-    describeWithAuth('DELETE /v1/flows/:id', () => app!, (setup) => {
-        it('should delete a flow', async () => {
-            const ctx = await setup()
+                const response = await ctx.delete('/v1/flows/nonExistentId12345678')
 
-            const mockFlow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
-            await db.save('flow', mockFlow)
-
-            const mockFlowVersion = createMockFlowVersion({ flowId: mockFlow.id })
-            await db.save('flow_version', mockFlowVersion)
-
-            const response = await ctx.delete(`/v1/flows/${mockFlow.id}`)
-
-            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-
-            // Verify the flow no longer appears in list
-            const listResponse = await ctx.get('/v1/flows', { projectId: ctx.project.id })
-            const flows = listResponse?.json().data ?? []
-            const flowIds = flows.map((f: Record<string, string>) => f.id)
-            expect(flowIds).not.toContain(mockFlow.id)
-        })
-
-        it('should return 404 when deleting non-existent flow', async () => {
-            const ctx = await setup()
-
-            const response = await ctx.delete('/v1/flows/nonExistentId12345678')
-
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
-        })
-    })
+                expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            })
+        },
+    )
 
     describe('DELETE /v1/flows/:id (Cross-project)', () => {
         it('should deny deleting flow from another project', async () => {
@@ -148,28 +160,36 @@ describe('Flow Operations API', () => {
         })
     })
 
-    describeWithAuth('POST /v1/flows/:id CHANGE_NAME', () => app!, (setup) => {
-        it('should rename a flow', async () => {
-            const ctx = await setup()
+    describeWithAuth(
+        'POST /v1/flows/:id CHANGE_NAME',
+        () => app!,
+        (setup) => {
+            it('should rename a flow', async () => {
+                const ctx = await setup()
 
-            const createResponse = await ctx.post('/v1/flows', {
-                displayName: 'Original Name',
-                projectId: ctx.project.id,
-            }, { query: { projectId: ctx.project.id } })
+                const createResponse = await ctx.post(
+                    '/v1/flows',
+                    {
+                        displayName: 'Original Name',
+                        projectId: ctx.project.id,
+                    },
+                    { query: { projectId: ctx.project.id } },
+                )
 
-            expect(createResponse?.statusCode).toBe(StatusCodes.CREATED)
-            const flow: PopulatedFlow = createResponse?.json()
+                expect(createResponse?.statusCode).toBe(StatusCodes.CREATED)
+                const flow: PopulatedFlow = createResponse?.json()
 
-            const response = await ctx.post(`/v1/flows/${flow.id}`, {
-                type: FlowOperationType.CHANGE_NAME,
-                request: { displayName: 'New Name' },
+                const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                    type: FlowOperationType.CHANGE_NAME,
+                    request: { displayName: 'New Name' },
+                })
+
+                expect(response?.statusCode).toBe(StatusCodes.OK)
+                const body = response?.json()
+                expect(body.version.displayName).toBe('New Name')
             })
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const body = response?.json()
-            expect(body.version.displayName).toBe('New Name')
-        })
-    })
+        },
+    )
 
     describe('POST /v1/flows/:id CHANGE_FOLDER', () => {
         it('should move flow to folder', async () => {
@@ -178,10 +198,14 @@ describe('Flow Operations API', () => {
             const mockFolder = createMockFolder({ projectId: ctx.project.id })
             await db.save('folder', mockFolder)
 
-            const createResponse = await ctx.post('/v1/flows', {
-                displayName: 'test flow',
-                projectId: ctx.project.id,
-            }, { query: { projectId: ctx.project.id } })
+            const createResponse = await ctx.post(
+                '/v1/flows',
+                {
+                    displayName: 'test flow',
+                    projectId: ctx.project.id,
+                },
+                { query: { projectId: ctx.project.id } },
+            )
 
             const flow: PopulatedFlow = createResponse?.json()
 
@@ -201,11 +225,15 @@ describe('Flow Operations API', () => {
             const mockFolder = createMockFolder({ projectId: ctx.project.id })
             await db.save('folder', mockFolder)
 
-            const createResponse = await ctx.post('/v1/flows', {
-                displayName: 'test flow',
-                projectId: ctx.project.id,
-                folderId: mockFolder.id,
-            }, { query: { projectId: ctx.project.id } })
+            const createResponse = await ctx.post(
+                '/v1/flows',
+                {
+                    displayName: 'test flow',
+                    projectId: ctx.project.id,
+                    folderId: mockFolder.id,
+                },
+                { query: { projectId: ctx.project.id } },
+            )
 
             const flow: PopulatedFlow = createResponse?.json()
 
@@ -232,10 +260,14 @@ describe('Flow Operations API', () => {
             })
             await db.save('piece_metadata', mockPiece)
 
-            const createResponse = await ctx.post('/v1/flows', {
-                displayName: 'test flow',
-                projectId: ctx.project.id,
-            }, { query: { projectId: ctx.project.id } })
+            const createResponse = await ctx.post(
+                '/v1/flows',
+                {
+                    displayName: 'test flow',
+                    projectId: ctx.project.id,
+                },
+                { query: { projectId: ctx.project.id } },
+            )
 
             const flow: PopulatedFlow = createResponse?.json()
 
@@ -262,54 +294,66 @@ describe('Flow Operations API', () => {
         })
     })
 
-    describeWithAuth('POST /v1/flows/:id ADD_ACTION', () => app!, (setup) => {
-        it('should add code action after trigger', async () => {
-            const ctx = await setup()
+    describeWithAuth(
+        'POST /v1/flows/:id ADD_ACTION',
+        () => app!,
+        (setup) => {
+            it('should add code action after trigger', async () => {
+                const ctx = await setup()
 
-            const createResponse = await ctx.post('/v1/flows', {
-                displayName: 'test flow',
-                projectId: ctx.project.id,
-            }, { query: { projectId: ctx.project.id } })
-
-            const flow: PopulatedFlow = createResponse?.json()
-
-            const response = await ctx.post(`/v1/flows/${flow.id}`, {
-                type: FlowOperationType.ADD_ACTION,
-                request: {
-                    parentStep: 'trigger',
-                    action: {
-                        type: FlowActionType.CODE,
-                        displayName: 'Code Step',
-                        name: 'step_1',
-                        settings: {
-                            input: {},
-                            sourceCode: {
-                                code: 'export const code = async () => { return true; }',
-                                packageJson: '{}',
-                            },
-                        },
-                        valid: true,
-                        skip: false,
+                const createResponse = await ctx.post(
+                    '/v1/flows',
+                    {
+                        displayName: 'test flow',
+                        projectId: ctx.project.id,
                     },
-                },
-            })
+                    { query: { projectId: ctx.project.id } },
+                )
 
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const body = response?.json()
-            expect(body.version.trigger.nextAction).toBeDefined()
-            expect(body.version.trigger.nextAction.type).toBe(FlowActionType.CODE)
-            expect(body.version.trigger.nextAction.displayName).toBe('Code Step')
-        })
-    })
+                const flow: PopulatedFlow = createResponse?.json()
+
+                const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                    type: FlowOperationType.ADD_ACTION,
+                    request: {
+                        parentStep: 'trigger',
+                        action: {
+                            type: FlowActionType.CODE,
+                            displayName: 'Code Step',
+                            name: 'step_1',
+                            settings: {
+                                input: {},
+                                sourceCode: {
+                                    code: 'export const code = async () => { return true; }',
+                                    packageJson: '{}',
+                                },
+                            },
+                            valid: true,
+                            skip: false,
+                        },
+                    },
+                })
+
+                expect(response?.statusCode).toBe(StatusCodes.OK)
+                const body = response?.json()
+                expect(body.version.trigger.nextAction).toBeDefined()
+                expect(body.version.trigger.nextAction.type).toBe(FlowActionType.CODE)
+                expect(body.version.trigger.nextAction.displayName).toBe('Code Step')
+            })
+        },
+    )
 
     describe('POST /v1/flows/:id UPDATE_ACTION', () => {
         it('should update action settings', async () => {
             const ctx = await createTestContext(app!)
 
-            const createResponse = await ctx.post('/v1/flows', {
-                displayName: 'test flow',
-                projectId: ctx.project.id,
-            }, { query: { projectId: ctx.project.id } })
+            const createResponse = await ctx.post(
+                '/v1/flows',
+                {
+                    displayName: 'test flow',
+                    projectId: ctx.project.id,
+                },
+                { query: { projectId: ctx.project.id } },
+            )
             const flow: PopulatedFlow = createResponse?.json()
 
             await ctx.post(`/v1/flows/${flow.id}`, {
@@ -359,10 +403,14 @@ describe('Flow Operations API', () => {
         it('should preserve settings.input for CODE action', async () => {
             const ctx = await createTestContext(app!)
 
-            const createResponse = await ctx.post('/v1/flows', {
-                displayName: 'test flow',
-                projectId: ctx.project.id,
-            }, { query: { projectId: ctx.project.id } })
+            const createResponse = await ctx.post(
+                '/v1/flows',
+                {
+                    displayName: 'test flow',
+                    projectId: ctx.project.id,
+                },
+                { query: { projectId: ctx.project.id } },
+            )
             const flow: PopulatedFlow = createResponse?.json()
 
             await ctx.post(`/v1/flows/${flow.id}`, {
@@ -421,10 +469,14 @@ describe('Flow Operations API', () => {
             })
             await db.save('piece_metadata', mockPiece)
 
-            const createResponse = await ctx.post('/v1/flows', {
-                displayName: 'test flow',
-                projectId: ctx.project.id,
-            }, { query: { projectId: ctx.project.id } })
+            const createResponse = await ctx.post(
+                '/v1/flows',
+                {
+                    displayName: 'test flow',
+                    projectId: ctx.project.id,
+                },
+                { query: { projectId: ctx.project.id } },
+            )
             const flow: PopulatedFlow = createResponse?.json()
 
             await ctx.post(`/v1/flows/${flow.id}`, {
@@ -477,10 +529,14 @@ describe('Flow Operations API', () => {
         it('should delete action by name', async () => {
             const ctx = await createTestContext(app!)
 
-            const createResponse = await ctx.post('/v1/flows', {
-                displayName: 'test flow',
-                projectId: ctx.project.id,
-            }, { query: { projectId: ctx.project.id } })
+            const createResponse = await ctx.post(
+                '/v1/flows',
+                {
+                    displayName: 'test flow',
+                    projectId: ctx.project.id,
+                },
+                { query: { projectId: ctx.project.id } },
+            )
             const flow: PopulatedFlow = createResponse?.json()
 
             await ctx.post(`/v1/flows/${flow.id}`, {
@@ -519,10 +575,14 @@ describe('Flow Operations API', () => {
         it('should duplicate an action', async () => {
             const ctx = await createTestContext(app!)
 
-            const createResponse = await ctx.post('/v1/flows', {
-                displayName: 'test flow',
-                projectId: ctx.project.id,
-            }, { query: { projectId: ctx.project.id } })
+            const createResponse = await ctx.post(
+                '/v1/flows',
+                {
+                    displayName: 'test flow',
+                    projectId: ctx.project.id,
+                },
+                { query: { projectId: ctx.project.id } },
+            )
             const flow: PopulatedFlow = createResponse?.json()
 
             await ctx.post(`/v1/flows/${flow.id}`, {
@@ -562,10 +622,14 @@ describe('Flow Operations API', () => {
         it('should move action to different position', async () => {
             const ctx = await createTestContext(app!)
 
-            const createResponse = await ctx.post('/v1/flows', {
-                displayName: 'test flow',
-                projectId: ctx.project.id,
-            }, { query: { projectId: ctx.project.id } })
+            const createResponse = await ctx.post(
+                '/v1/flows',
+                {
+                    displayName: 'test flow',
+                    projectId: ctx.project.id,
+                },
+                { query: { projectId: ctx.project.id } },
+            )
             const flow: PopulatedFlow = createResponse?.json()
 
             await ctx.post(`/v1/flows/${flow.id}`, {
@@ -630,10 +694,14 @@ describe('Flow Operations API', () => {
         it('should import flow definition', async () => {
             const ctx = await createTestContext(app!)
 
-            const createResponse = await ctx.post('/v1/flows', {
-                displayName: 'test flow',
-                projectId: ctx.project.id,
-            }, { query: { projectId: ctx.project.id } })
+            const createResponse = await ctx.post(
+                '/v1/flows',
+                {
+                    displayName: 'test flow',
+                    projectId: ctx.project.id,
+                },
+                { query: { projectId: ctx.project.id } },
+            )
             const flow: PopulatedFlow = createResponse?.json()
 
             const response = await ctx.post(`/v1/flows/${flow.id}`, {

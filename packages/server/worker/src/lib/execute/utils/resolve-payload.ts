@@ -1,6 +1,10 @@
 import { JobPayload, WorkerToApiContract } from '@activepieces/shared'
 
-export async function resolvePayload(payload: JobPayload, projectId: string, apiClient: WorkerToApiContract): Promise<unknown> {
+export async function resolvePayload(
+    payload: JobPayload,
+    projectId: string,
+    apiClient: WorkerToApiContract,
+): Promise<unknown> {
     if (payload.type === 'inline') {
         return payload.value
     }

@@ -9,25 +9,19 @@ import { mcpServerService } from '../mcp-service'
 import { mcpOAuthTokenService } from './token/mcp-oauth-token.service'
 
 export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
+    app.addContentTypeParser('application/json', { parseAs: 'string' }, (_req, body: string, done) => {
+        if (body == null || body.trim() === '') {
+            return done(null, {})
+        }
 
-    app.addContentTypeParser(
-        'application/json',
-        { parseAs: 'string' },
-        (_req, body: string, done) => {
-            if (body == null || body.trim() === '') {
-                return done(null, {})
-            }
-
-            try {
-                done(null, JSON.parse(body))
-            }
-            catch (err) {
-                const error: Error & { statusCode?: number } = err instanceof Error ? err : new Error('JSON parsing failed')
-                error.statusCode = 400
-                done(error, undefined)
-            }
-        },
-    )
+        try {
+            done(null, JSON.parse(body))
+        } catch (err) {
+            const error: Error & { statusCode?: number } = err instanceof Error ? err : new Error('JSON parsing failed')
+            error.statusCode = 400
+            done(error, undefined)
+        }
+    })
 
     app.get('/', McpEndpointConfig, async (_req, reply) => {
         return reply.status(405).send({
@@ -55,19 +49,21 @@ export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
             })
         }
 
-        rejectedPromiseHandler(telemetry(req.log).trackProject(identity.projectId, {
-            name: TelemetryEventName.MCP_SERVER_CONNECTED,
-            payload: {
-                projectId: identity.projectId,
-                userId: identity.userId,
-            },
-        }), req.log)
+        rejectedPromiseHandler(
+            telemetry(req.log).trackProject(identity.projectId, {
+                name: TelemetryEventName.MCP_SERVER_CONNECTED,
+                payload: {
+                    projectId: identity.projectId,
+                    userId: identity.userId,
+                },
+            }),
+            req.log,
+        )
 
         let mcp: PopulatedMcpServer
         try {
             mcp = await mcpServerService(req.log).getPopulatedByProjectId(identity.projectId)
-        }
-        catch (err) {
+        } catch (err) {
             req.log.debug({ err }, 'Failed to resolve MCP server for project')
             return reply.status(401).send({
                 error: 'unauthorized',
@@ -95,8 +91,7 @@ async function resolveIdentity(token: string, log: FastifyBaseLogger): Promise<R
         try {
             const payload = await mcpOAuthTokenService.verifyAccessToken(token)
             return { projectId: payload.projectId, userId: payload.sub }
-        }
-        catch (e) {
+        } catch (e) {
             log.debug({ err: e }, 'JWT verification failed')
             return null
         }

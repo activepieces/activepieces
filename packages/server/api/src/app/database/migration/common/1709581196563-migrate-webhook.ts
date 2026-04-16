@@ -22,19 +22,19 @@ export class MigrateWebhook1709581196563 implements MigrationInterface {
                 step.type = 'PIECE_TRIGGER'
                 step.settings = {
                     input: {},
-                    'inputUiInfo': step.settings.inputUiInfo,
+                    inputUiInfo: step.settings.inputUiInfo,
                     triggerName: 'catch_request',
                     pieceName: '@activepieces/piece-webhook',
                     pieceVersion: '0.0.1',
-                    'pieceType': 'OFFICIAL',
-                    'packageType': 'REGISTRY',
+                    pieceType: 'OFFICIAL',
+                    packageType: 'REGISTRY',
                 }
                 count++
                 const result = isString ? JSON.stringify(step) : step
-                await queryRunner.query(
-                    `UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`,
-                    [result, flowVersion.id],
-                )
+                await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [
+                    result,
+                    flowVersion.id,
+                ])
             }
         }
         log.info({ count }, '[migrateWebhook1709581196563#up] Migrated flows')
@@ -55,14 +55,14 @@ export class MigrateWebhook1709581196563 implements MigrationInterface {
                 if (step.settings.pieceName === '@activepieces/piece-webhook') {
                     step.type = 'WEBHOOK'
                     step.settings = {
-                        'inputUiInfo': step.settings.inputUiInfo,
+                        inputUiInfo: step.settings.inputUiInfo,
                     }
                     count++
                     const result = isString ? JSON.stringify(step) : step
-                    await queryRunner.query(
-                        `UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`,
-                        [result, flowVersion.id],
-                    )
+                    await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [
+                        result,
+                        flowVersion.id,
+                    ])
                 }
             }
         }
@@ -70,12 +70,10 @@ export class MigrateWebhook1709581196563 implements MigrationInterface {
     }
 }
 
-
 const parseJson = (json: string) => {
     try {
         return JSON.parse(json)
-    }
-    catch (e) {
+    } catch (e) {
         return json
     }
 }

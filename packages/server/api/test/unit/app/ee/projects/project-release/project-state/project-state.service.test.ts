@@ -27,7 +27,9 @@ describe('ProjectStateService', () => {
             const flow = flowGenerator.simpleActionAndTrigger()
             const flowWithoutOperationStatus = { ...flow } as Partial<PopulatedFlow>
             delete flowWithoutOperationStatus.operationStatus
-            const flowState = await projectStateService(logger).getFlowState(flowWithoutOperationStatus as PopulatedFlow)
+            const flowState = await projectStateService(logger).getFlowState(
+                flowWithoutOperationStatus as PopulatedFlow,
+            )
             expect(flowState.operationStatus).toBe(FlowOperationStatus.NONE)
         })
     })
@@ -42,5 +44,4 @@ describe('ProjectStateService', () => {
             expect(tableState).not.toHaveProperty('extraProperty')
         })
     })
-
 })

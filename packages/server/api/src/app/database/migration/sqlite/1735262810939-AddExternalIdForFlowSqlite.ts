@@ -542,5 +542,4 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
             DROP TABLE "temporary_platform"
         `)
     }
-
 }

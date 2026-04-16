@@ -1,9 +1,9 @@
-import { AgentToolType, AIProviderName } from '@activepieces/shared';
 import type {
   AgentKnowledgeBaseTool,
   AgentPieceTool,
   AgentTool,
 } from '@activepieces/shared';
+import { AgentToolType, AIProviderName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import { ControllerRenderProps } from 'react-hook-form';
@@ -13,10 +13,10 @@ import { Button } from '@/components/ui/button';
 import {
   AddToolDropdown,
   AgentFlowToolComponent,
-  AgentMcpToolComponent,
-  AgentPieceToolComponent,
   AgentFlowToolDialog,
   AgentMcpDialog,
+  AgentMcpToolComponent,
+  AgentPieceToolComponent,
   KnowledgeBaseSection,
 } from '@/features/agents';
 

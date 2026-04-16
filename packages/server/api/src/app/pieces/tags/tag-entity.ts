@@ -1,8 +1,6 @@
 import { Platform, Tag } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import {
-    BaseColumnSchemaPart,
-} from '../../database/database-common'
+import { BaseColumnSchemaPart } from '../../database/database-common'
 
 export type TagEntitySchema = Tag & {
     platform: Platform
@@ -17,7 +15,7 @@ export const TagEntity = new EntitySchema<TagEntitySchema>({
         name: {
             type: String,
         },
-    },    
+    },
     uniques: [
         {
             columns: ['platformId', 'name'],

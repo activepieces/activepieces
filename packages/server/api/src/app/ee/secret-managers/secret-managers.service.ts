@@ -1,15 +1,35 @@
-import { ActivepiecesError, apId, ConnectSecretManagerRequest, ErrorCode, isNil, isObject, isString, SecretManagerConfig, SecretManagerConnectionScope, SecretManagerConnectionWithStatus, SecretManagerFieldsSeparator, SecretManagerProviderId, SeekPage } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    apId,
+    ConnectSecretManagerRequest,
+    ErrorCode,
+    isNil,
+    isObject,
+    isString,
+    SecretManagerConfig,
+    SecretManagerConnectionScope,
+    SecretManagerConnectionWithStatus,
+    SecretManagerFieldsSeparator,
+    SecretManagerProviderId,
+    SeekPage,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
+import { SecretManagerEntity } from './secret-manager.entity'
 import { secretManagerCache } from './secret-manager-cache'
 import { secretManagerProvider } from './secret-manager-providers/secret-manager-providers'
-import { SecretManagerEntity } from './secret-manager.entity'
 
 const secretManagerRepository = repoFactory(SecretManagerEntity)
 
 export const secretManagersService = (log: FastifyBaseLogger) => ({
-    list: async ({ platformId, projectId }: { platformId: string, projectId?: string }): Promise<SeekPage<SecretManagerConnectionWithStatus>> => {
+    list: async ({
+        platformId,
+        projectId,
+    }: {
+        platformId: string
+        projectId?: string
+    }): Promise<SeekPage<SecretManagerConnectionWithStatus>> => {
         const qb = secretManagerRepository()
             .createQueryBuilder('sm')
             .where('sm.platformId = :platformId', { platformId })
@@ -27,20 +47,28 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
 
         const filtered = await qb.getMany()
 
-        const data: SecretManagerConnectionWithStatus[] = await Promise.all(filtered.map(async (connection) => {
-            const decryptedConfig = connection.auth
-                ? await encryptUtils.decryptObject<SecretManagerConfig>(connection.auth)
-                : undefined
-            const connected = await checkConnection(log, decryptedConfig, platformId, connection.id, connection.providerId)
+        const data: SecretManagerConnectionWithStatus[] = await Promise.all(
+            filtered.map(async (connection) => {
+                const decryptedConfig = connection.auth
+                    ? await encryptUtils.decryptObject<SecretManagerConfig>(connection.auth)
+                    : undefined
+                const connected = await checkConnection(
+                    log,
+                    decryptedConfig,
+                    platformId,
+                    connection.id,
+                    connection.providerId,
+                )
 
-            const { auth: _auth, scope, projectIds, ...rest } = connection
-            const connectionStatus = { configured: !isNil(connection.auth), connected }
+                const { auth: _auth, scope, projectIds, ...rest } = connection
+                const connectionStatus = { configured: !isNil(connection.auth), connected }
 
-            if (scope === SecretManagerConnectionScope.PROJECT) {
-                return { ...rest, scope, projectIds: projectIds ?? [], connection: connectionStatus }
-            }
-            return { ...rest, scope, connection: connectionStatus }
-        }))
+                if (scope === SecretManagerConnectionScope.PROJECT) {
+                    return { ...rest, scope, projectIds: projectIds ?? [], connection: connectionStatus }
+                }
+                return { ...rest, scope, connection: connectionStatus }
+            }),
+        )
 
         return {
             data,
@@ -49,7 +77,9 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    create: async (request: ConnectSecretManagerRequest & { platformId: string }): Promise<SecretManagerConnectionWithStatus> => {
+    create: async (
+        request: ConnectSecretManagerRequest & { platformId: string },
+    ): Promise<SecretManagerConnectionWithStatus> => {
         const provider = secretManagerProvider(log, request.providerId)
         await provider.connect(request.config)
         const encryptedConfig = await encryptUtils.encryptObject(request.config)
@@ -66,35 +96,56 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         await secretManagerCache.invalidateConnectionEntries({ platformId: request.platformId })
         const { auth: _auth, scope, projectIds, ...savedRest } = saved
         if (scope === SecretManagerConnectionScope.PROJECT) {
-            return { ...savedRest, scope, projectIds: projectIds ?? [], connection: { configured: true, connected: true } }
+            return {
+                ...savedRest,
+                scope,
+                projectIds: projectIds ?? [],
+                connection: { configured: true, connected: true },
+            }
         }
         return { ...savedRest, scope, connection: { configured: true, connected: true } }
     },
 
-    update: async ({ id, platformId, request }: { id: string, platformId: string, request: ConnectSecretManagerRequest }): Promise<SecretManagerConnectionWithStatus> => {
+    update: async ({
+        id,
+        platformId,
+        request,
+    }: {
+        id: string
+        platformId: string
+        request: ConnectSecretManagerRequest
+    }): Promise<SecretManagerConnectionWithStatus> => {
         const existing = await secretManagerRepository().findOneOrFail({
             where: { id, platformId },
         })
         const provider = secretManagerProvider(log, request.providerId)
         await provider.connect(request.config)
         const encryptedConfig = await encryptUtils.encryptObject(request.config)
-        await secretManagerRepository().update({ id, platformId }, {
-            providerId: request.providerId,
-            name: request.name,
-            scope: request.scope,
-            projectIds: request.scope === SecretManagerConnectionScope.PROJECT ? request.projectIds : undefined,
-            auth: encryptedConfig,
-        })
+        await secretManagerRepository().update(
+            { id, platformId },
+            {
+                providerId: request.providerId,
+                name: request.name,
+                scope: request.scope,
+                projectIds: request.scope === SecretManagerConnectionScope.PROJECT ? request.projectIds : undefined,
+                auth: encryptedConfig,
+            },
+        )
         await secretManagerCache.invalidateConnectionEntries({ platformId, connectionId: existing.id })
         const updated = await secretManagerRepository().findOneOrFail({ where: { id, platformId } })
         const { auth: _auth, scope, projectIds, ...updatedRest } = updated
         if (scope === SecretManagerConnectionScope.PROJECT) {
-            return { ...updatedRest, scope, projectIds: projectIds ?? [], connection: { configured: true, connected: true } }
+            return {
+                ...updatedRest,
+                scope,
+                projectIds: projectIds ?? [],
+                connection: { configured: true, connected: true },
+            }
         }
         return { ...updatedRest, scope, connection: { configured: true, connected: true } }
     },
 
-    delete: async ({ id, platformId }: { id: string, platformId: string }): Promise<void> => {
+    delete: async ({ id, platformId }: { id: string; platformId: string }): Promise<void> => {
         const connection = await secretManagerRepository().findOneOrFail({
             where: { id, platformId },
         })
@@ -104,7 +155,17 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         await secretManagerCache.invalidateConnectionEntries({ platformId, connectionId: id })
     },
 
-    getSecret: async ({ connectionId, path, platformId, projectIds }: { connectionId: string, path: string, platformId: string, projectIds?: string[] }): Promise<string> => {
+    getSecret: async ({
+        connectionId,
+        path,
+        platformId,
+        projectIds,
+    }: {
+        connectionId: string
+        path: string
+        platformId: string
+        projectIds?: string[]
+    }): Promise<string> => {
         const qb = secretManagerRepository()
             .createQueryBuilder('sm')
             .where('sm.id = :connectionId', { connectionId })
@@ -152,17 +213,36 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         return secret
     },
 
-    async resolveString({ key, platformId, projectIds, throwOnFailure = true }: { key: string, platformId: string, projectIds?: string[], throwOnFailure?: boolean }): Promise<string> {
+    async resolveString({
+        key,
+        platformId,
+        projectIds,
+        throwOnFailure = true,
+    }: {
+        key: string
+        platformId: string
+        projectIds?: string[]
+        throwOnFailure?: boolean
+    }): Promise<string> {
         try {
             const { connectionId, path } = extractConnectionIdAndPath(key)
             return await this.getSecret({ connectionId, path, platformId, projectIds })
-        }
-        catch (error) {
+        } catch (error) {
             return handleResolveError({ error, throwOnFailure, originalValue: key })
         }
     },
 
-    async resolveObject<T extends Record<string, unknown>>({ value, platformId, projectIds, throwOnFailure = true }: { value: T, platformId: string, projectIds?: string[], throwOnFailure?: boolean }): Promise<T> {
+    async resolveObject<T extends Record<string, unknown>>({
+        value,
+        platformId,
+        projectIds,
+        throwOnFailure = true,
+    }: {
+        value: T
+        platformId: string
+        projectIds?: string[]
+        throwOnFailure?: boolean
+    }): Promise<T> {
         const entries = await Promise.all(
             Object.entries(value).map(async ([field, fieldValue]) => [
                 field,
@@ -172,7 +252,17 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         return Object.fromEntries(entries) as T
     },
 
-    async resolveUnknownValue({ value, platformId, projectIds, throwOnFailure }: { value: unknown, platformId: string, projectIds?: string[], throwOnFailure: boolean }): Promise<unknown> {
+    async resolveUnknownValue({
+        value,
+        platformId,
+        projectIds,
+        throwOnFailure,
+    }: {
+        value: unknown
+        platformId: string
+        projectIds?: string[]
+        throwOnFailure: boolean
+    }): Promise<unknown> {
         if (isObject(value)) {
             return this.resolveObject({
                 value,
@@ -184,8 +274,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         if (isString(value)) {
             try {
                 return await this.resolveString({ key: value, platformId, projectIds, throwOnFailure })
-            }
-            catch (error) {
+            } catch (error) {
                 return handleResolveError({ error, throwOnFailure, originalValue: value })
             }
         }
@@ -193,7 +282,13 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function checkConnection(log: FastifyBaseLogger, config: SecretManagerConfig | undefined, platformId: string, connectionId: string, providerId: SecretManagerProviderId): Promise<boolean> {
+async function checkConnection(
+    log: FastifyBaseLogger,
+    config: SecretManagerConfig | undefined,
+    platformId: string,
+    connectionId: string,
+    providerId: SecretManagerProviderId,
+): Promise<boolean> {
     if (isNil(config)) {
         return false
     }
@@ -201,7 +296,7 @@ async function checkConnection(log: FastifyBaseLogger, config: SecretManagerConf
     if (cached !== undefined) {
         return cached
     }
- 
+
     const provider = secretManagerProvider(log, providerId)
     const connected = Boolean(await provider.checkConnection(config).catch(() => false))
     if (connected) {
@@ -210,9 +305,15 @@ async function checkConnection(log: FastifyBaseLogger, config: SecretManagerConf
     return connected
 }
 
-function handleResolveError<T>({ error, throwOnFailure, originalValue }: { error: unknown, throwOnFailure: boolean, originalValue: T }): T {
-    
-    
+function handleResolveError<T>({
+    error,
+    throwOnFailure,
+    originalValue,
+}: {
+    error: unknown
+    throwOnFailure: boolean
+    originalValue: T
+}): T {
     if (!throwOnFailure) {
         return originalValue
     }
@@ -242,7 +343,7 @@ const trimKeyBraces = (key: string): string => {
     return trimmedKey.substring(2, trimmedKey.length - 2)
 }
 
-const extractConnectionIdAndPath = (key: string): { connectionId: string, path: string } => {
+const extractConnectionIdAndPath = (key: string): { connectionId: string; path: string } => {
     const keyWithoutBraces = trimKeyBraces(key)
     const firstSepIdx = keyWithoutBraces.indexOf(SecretManagerFieldsSeparator)
     if (firstSepIdx === -1) {

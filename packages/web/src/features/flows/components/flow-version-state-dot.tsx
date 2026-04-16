@@ -55,4 +55,5 @@ const FlowVersionStateDot = React.memo((state: FlowVersionStateProps) => {
 });
 
 FlowVersionStateDot.displayName = 'FlowVersionStateDot';
+
 export { FlowVersionStateDot };

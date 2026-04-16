@@ -1,8 +1,8 @@
 import {
   AppConnectionWithoutSensitiveData,
   Permission,
-  UpdateProjectPlatformRequest,
   PlatformRole,
+  UpdateProjectPlatformRequest,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -14,17 +14,17 @@ import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogFooter,
   DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import {
   Form,
+  FormDescription,
   FormField,
   FormItem,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

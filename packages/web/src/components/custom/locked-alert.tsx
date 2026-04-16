@@ -1,6 +1,6 @@
 import { Lock } from 'lucide-react';
 
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface LockedAlertProps {
   title: string;

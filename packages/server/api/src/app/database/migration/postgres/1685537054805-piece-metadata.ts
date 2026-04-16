@@ -44,12 +44,9 @@ export class PieceMetadata1685537054805 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         if (databaseType !== DatabaseType.PGLITE) {
-            await queryRunner.query(
-                'CREATE COLLATION en_natural (LOCALE = \'en-US-u-kn-true\', PROVIDER = \'icu\')',
-            )
+            await queryRunner.query("CREATE COLLATION en_natural (LOCALE = 'en-US-u-kn-true', PROVIDER = 'icu')")
             await queryRunner.query(tableWithCollation)
-        }
-        else {
+        } else {
             await queryRunner.query(tableWithoutCollation)
         }
         await queryRunner.query(

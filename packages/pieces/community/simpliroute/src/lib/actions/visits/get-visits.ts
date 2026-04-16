@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../auth';
-import { API_BASE_URL, commonHeaders } from '../../common/constants';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { simplirouteAuth } from '../../auth'
+import { API_BASE_URL, commonHeaders } from '../../common/constants'
 
 export const get_visits = createAction({
     name: 'get_visits',
@@ -9,29 +9,29 @@ export const get_visits = createAction({
     displayName: 'Get Visits',
     description: 'Retrieve all registered visits. Can be filtered by planned visit date.',
     props: {
-        planned_date: Property.ShortText({ 
-            displayName: 'planned_date', 
-            description: 'Filter visits by planned date (YYYY-MM-DD format).', 
-            required: true 
+        planned_date: Property.ShortText({
+            displayName: 'planned_date',
+            description: 'Filter visits by planned date (YYYY-MM-DD format).',
+            required: true,
         }),
     },
     async run(context) {
-        let queryString = '';
+        let queryString = ''
         if (context.propsValue.planned_date) {
-            queryString += (queryString ? '&' : '?') + 'planned_date=' + context.propsValue.planned_date;
+            queryString += (queryString ? '&' : '?') + 'planned_date=' + context.propsValue.planned_date
         }
-        const url = `${API_BASE_URL}/v1/routes/visits/${queryString}`;
+        const url = `${API_BASE_URL}/v1/routes/visits/${queryString}`
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth.secret_text}`
-            }
-        });
+                Authorization: `Token ${context.auth.secret_text}`,
+            },
+        })
         return {
             status: response.status,
-            data: response.body
-        };
+            data: response.body,
+        }
     },
-});
+})

@@ -2,8 +2,8 @@ import {
     DATA_TYPE_KEY_IN_FILE_METADATA,
     FileCompression,
     FileType,
-    flowStructureUtil,
     FlowVersion,
+    flowStructureUtil,
     PropertyExecutionType,
     SampleDataDataType,
 } from '@activepieces/shared'
@@ -22,7 +22,9 @@ export const migratePropertySettingsV6: Migration = {
             const sampleDataInputFileId = inputUiInfo?.sampleDataInputFileId
             const lastTestDate = inputUiInfo?.lastTestDate
             const schema = step.settings?.schema
-            const customLogoUrl = inputUiInfo?.customizedInputs?.logoUrl ?? (('customLogoUrl' in step && step.customLogoUrl) ? step.customLogoUrl : undefined)
+            const customLogoUrl =
+                inputUiInfo?.customizedInputs?.logoUrl ??
+                ('customLogoUrl' in step && step.customLogoUrl ? step.customLogoUrl : undefined)
             const customizedInputs = inputUiInfo?.customizedInputs ?? {}
             return {
                 ...step,
@@ -34,10 +36,17 @@ export const migratePropertySettingsV6: Migration = {
                         sampleDataInputFileId,
                         lastTestDate,
                     },
-                    propertySettings: Object.fromEntries(Object.entries(input).map(([key]) => [key, {
-                        type: customizedInputs?.[key] ? PropertyExecutionType.DYNAMIC : PropertyExecutionType.MANUAL,
-                        schema: schema?.[key] ?? undefined,
-                    }])),
+                    propertySettings: Object.fromEntries(
+                        Object.entries(input).map(([key]) => [
+                            key,
+                            {
+                                type: customizedInputs?.[key]
+                                    ? PropertyExecutionType.DYNAMIC
+                                    : PropertyExecutionType.MANUAL,
+                                schema: schema?.[key] ?? undefined,
+                            },
+                        ]),
+                    ),
                     inputUiInfo: undefined,
                 },
             }
@@ -67,13 +76,10 @@ async function uploadPendingSampleData(
         if (currentSelectedData === undefined || currentSelectedData === null) {
             continue
         }
-        const outputJson = typeof currentSelectedData === 'string'
-            ? currentSelectedData
-            : JSON.stringify(currentSelectedData)
+        const outputJson =
+            typeof currentSelectedData === 'string' ? currentSelectedData : JSON.stringify(currentSelectedData)
         const outputBuffer = Buffer.from(outputJson, 'utf-8')
-        const dataType = typeof currentSelectedData === 'string'
-            ? SampleDataDataType.STRING
-            : SampleDataDataType.JSON
+        const dataType = typeof currentSelectedData === 'string' ? SampleDataDataType.STRING : SampleDataDataType.JSON
 
         const file = await fileService(context.log).save({
             projectId: context.projectId,

@@ -6,7 +6,7 @@ import {
   WorkerMachineWithStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Server, Clock, Cpu, MemoryStick, HardDrive, Zap } from 'lucide-react';
+import { Clock, Cpu, HardDrive, MemoryStick, Server, Zap } from 'lucide-react';
 import prettyBytes from 'pretty-bytes';
 import React from 'react';
 
@@ -136,8 +136,8 @@ function StatBar({ label, value, detail }: StatBarProps) {
     value > 95
       ? 'bg-destructive'
       : value > 80
-      ? 'bg-warning'
-      : 'bg-emerald-500';
+        ? 'bg-warning'
+        : 'bg-emerald-500';
 
   return (
     <div className="flex items-center gap-2">

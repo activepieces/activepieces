@@ -23,5 +23,4 @@ export class RemoveEligibleForTrial1761588441492 implements MigrationInterface {
             ADD "eligibleForTrial" character varying
         `)
     }
-
 }

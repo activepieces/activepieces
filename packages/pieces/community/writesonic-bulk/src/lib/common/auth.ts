@@ -1,8 +1,8 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const writesonicBulkAuth = PieceAuth.SecretText({
-  displayName: 'Writesonic Bulk API Key',
-  description: `
+    displayName: 'Writesonic Bulk API Key',
+    description: `
 To get your API Key:
 
 1. Go to [app.writesonic.com](https://app.writesonic.com/)
@@ -13,5 +13,5 @@ To get your API Key:
 6. Click on "Reveal API Key"
 7. Copy and save your API key securely (never commit to public repositories)
 `,
-  required: true,
-});
+    required: true,
+})

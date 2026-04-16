@@ -8,10 +8,18 @@ import { UserIdentityEntity } from './user-identity-entity'
 export const userIdentityRepository = repoFactory(UserIdentityEntity)
 
 export const userIdentityService = (log: FastifyBaseLogger) => ({
-    async create(params: Pick<UserIdentity, 'email' | 'password' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'provider' | 'verified'> & { imageUrl?: string }): Promise<UserIdentity> {
-        log.info({
-            email: params.email,
-        }, 'Creating user identity')
+    async create(
+        params: Pick<
+            UserIdentity,
+            'email' | 'password' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'provider' | 'verified'
+        > & { imageUrl?: string },
+    ): Promise<UserIdentity> {
+        log.info(
+            {
+                email: params.email,
+            },
+            'Creating user identity',
+        )
 
         const cleanedEmail = params.email.toLowerCase().trim()
         const hashedPassword = await passwordHasher.hash(params.password)
@@ -77,7 +85,9 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         const userIdentity = await userIdentityRepository().findOneByOrFail({ id: params.id })
         return userIdentity
     },
-    async getBasicInformation(id: string): Promise<Pick<UserIdentity, 'email' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'imageUrl'>> {
+    async getBasicInformation(
+        id: string,
+    ): Promise<Pick<UserIdentity, 'email' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'imageUrl'>> {
         const user = await userIdentityRepository().findOneByOrFail({ id })
         return {
             email: user.email,
@@ -117,7 +127,6 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         })
     },
 })
-
 
 async function getIdentityByEmail(email: string): Promise<UserIdentity | null> {
     const cleanedEmail = email.toLowerCase().trim()

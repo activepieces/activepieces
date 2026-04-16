@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
-import { Period, display12HourValue, setDateByType } from './time-picker-utils';
+import { display12HourValue, Period, setDateByType } from './time-picker-utils';
 
 export interface PeriodSelectorProps {
   period: Period;

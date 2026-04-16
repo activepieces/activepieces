@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
-import { callSalesforceApi, salesforcesCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { callSalesforceApi, salesforcesCommon } from '../common'
 
 export const updateContact = createAction({
     auth: salesforceAuth,
@@ -34,20 +34,11 @@ export const updateContact = createAction({
         other_fields: Property.Json({
             displayName: 'Other Fields (Advanced)',
             description: 'Enter any additional fields to update as a JSON object.',
-            required: false
-        })
+            required: false,
+        }),
     },
     async run(context) {
-        const {
-            contact_id,
-            FirstName,
-            LastName,
-            AccountId,
-            Email,
-            Phone,
-            Title,
-            other_fields
-        } = context.propsValue;
+        const { contact_id, FirstName, LastName, AccountId, Email, Phone, Title, other_fields } = context.propsValue
 
         const rawBody = {
             FirstName,
@@ -57,29 +48,31 @@ export const updateContact = createAction({
             Phone,
             Title,
             ...(other_fields || {}),
-        };
+        }
 
-        const cleanedBody = Object.entries(rawBody).reduce((acc, [key, value]) => {
-            if (value !== undefined) {
-                acc[key] = value;
-            }
-            return acc;
-        }, {} as Record<string, unknown>);
-
+        const cleanedBody = Object.entries(rawBody).reduce(
+            (acc, [key, value]) => {
+                if (value !== undefined) {
+                    acc[key] = value
+                }
+                return acc
+            },
+            {} as Record<string, unknown>,
+        )
 
         if (Object.keys(cleanedBody).length === 0) {
-            return { success: true, message: "No fields provided to update." };
+            return { success: true, message: 'No fields provided to update.' }
         }
 
         await callSalesforceApi(
             HttpMethod.PATCH,
             context.auth,
             `/services/data/v56.0/sobjects/Contact/${contact_id}`,
-            cleanedBody
-        );
+            cleanedBody,
+        )
 
         return {
             success: true,
-        };
+        }
     },
-});
+})

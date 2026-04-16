@@ -4,7 +4,6 @@ export class AddUserInvitation1717960689650 implements MigrationInterface {
     name = 'AddUserInvitation1717960689650'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        
         await queryRunner.query(`
             CREATE TABLE "user_invitation" (
                 "id" character varying(21) NOT NULL,
@@ -23,7 +22,6 @@ export class AddUserInvitation1717960689650 implements MigrationInterface {
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_invitation_email_platform_project" ON "user_invitation" ("email", "platformId", "projectId")
         `)
-   
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -31,5 +29,4 @@ export class AddUserInvitation1717960689650 implements MigrationInterface {
             DROP TABLE "user_invitation"
         `)
     }
-
 }

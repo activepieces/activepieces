@@ -1,7 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class CreateWebhookSimulationSchema1680698259291
-implements MigrationInterface {
+export class CreateWebhookSimulationSchema1680698259291 implements MigrationInterface {
     name = 'CreateWebhookSimulationSchema1680698259291'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
@@ -14,9 +13,7 @@ implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(
-            'DROP INDEX "idx_webhook_simulation_flow_id"',
-        )
+        await queryRunner.query('DROP INDEX "idx_webhook_simulation_flow_id"')
         await queryRunner.query('DROP TABLE "webhook_simulation"')
     }
 }

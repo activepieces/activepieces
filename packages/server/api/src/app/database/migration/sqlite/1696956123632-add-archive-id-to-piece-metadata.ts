@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
+
 const log = system.globalLogger()
 
-export class AddArchiveIdToPieceMetadata1696956123632
-implements MigrationInterface {
+export class AddArchiveIdToPieceMetadata1696956123632 implements MigrationInterface {
     name = 'AddArchiveIdToPieceMetadata1696956123632'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
@@ -157,9 +157,12 @@ implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
 
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'up',
+        )
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -310,8 +313,11 @@ implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
 
-        log.info({
-            name: this.name,
-        }, 'down')
+        log.info(
+            {
+                name: this.name,
+            },
+            'down',
+        )
     }
 }

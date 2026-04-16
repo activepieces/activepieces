@@ -115,5 +115,4 @@ export class DeleteLastChangelogDismissedAtSqlite1762018344394 implements Migrat
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
     }
-
 }

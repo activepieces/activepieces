@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { AlertCircle, RefreshCw, Home } from 'lucide-react';
+import { AlertCircle, Home, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 

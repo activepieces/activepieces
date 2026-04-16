@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sapAribaAuth } from '../auth';
-import { sapAribaCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { sapAribaAuth } from '../auth'
+import { sapAribaCommon } from '../common'
 
 export const getActiveCatalogs = createAction({
     auth: sapAribaAuth,
@@ -43,23 +43,23 @@ export const getActiveCatalogs = createAction({
         }),
     },
     async run(context) {
-        const { realm, date, supplierdomain, subscriptionName, showAll, showAdditionalFields } = context.propsValue;
+        const { realm, date, supplierdomain, subscriptionName, showAll, showAdditionalFields } = context.propsValue
 
         const queryParams: Record<string, string> = {
             date,
-        };
+        }
 
         if (supplierdomain) {
-            queryParams['supplierdomain'] = supplierdomain;
+            queryParams['supplierdomain'] = supplierdomain
         }
         if (subscriptionName) {
-            queryParams['subscriptionName'] = subscriptionName;
+            queryParams['subscriptionName'] = subscriptionName
         }
         if (showAll !== undefined) {
-            queryParams['showAll'] = showAll.toString();
+            queryParams['showAll'] = showAll.toString()
         }
         if (showAdditionalFields !== undefined) {
-            queryParams['showAdditionalFields'] = showAdditionalFields.toString();
+            queryParams['showAdditionalFields'] = showAdditionalFields.toString()
         }
 
         const response = await sapAribaCommon.makeRequest(
@@ -68,9 +68,9 @@ export const getActiveCatalogs = createAction({
             '/catalogs',
             queryParams,
             undefined,
-            { realm }
-        );
+            { realm },
+        )
 
-        return response;
+        return response
     },
-});
+})

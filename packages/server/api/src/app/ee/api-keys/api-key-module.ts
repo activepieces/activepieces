@@ -1,7 +1,12 @@
 import {
     ApId,
     ApiKeyResponseWithoutValue,
-    ApiKeyResponseWithValue, assertNotNullOrUndefined, CreateApiKeyRequest, PrincipalType, SeekPage } from '@activepieces/shared'
+    ApiKeyResponseWithValue,
+    assertNotNullOrUndefined,
+    CreateApiKeyRequest,
+    PrincipalType,
+    SeekPage,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -10,7 +15,10 @@ import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorizati
 import { apiKeyService } from './api-key-service'
 
 export const apiKeyModule: FastifyPluginAsyncZod = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.apiKeysEnabled))
+    app.addHook(
+        'preHandler',
+        platformMustHaveFeatureEnabled((platform) => platform.plan.apiKeysEnabled),
+    )
     await app.register(apiKeyController, { prefix: '/v1/api-keys' })
 }
 

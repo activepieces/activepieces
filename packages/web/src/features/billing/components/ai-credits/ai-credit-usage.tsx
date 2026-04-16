@@ -6,16 +6,16 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Sparkles, Settings } from 'lucide-react';
+import { Settings, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
 import {
   Item,
-  ItemMedia,
-  ItemContent,
-  ItemTitle,
-  ItemDescription,
   ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
 } from '@/components/custom/item';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';

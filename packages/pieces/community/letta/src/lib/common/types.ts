@@ -1,27 +1,25 @@
-export type { ClientOptions } from '@letta-ai/letta-client';
+export type { ClientOptions } from '@letta-ai/letta-client'
 
 export type {
-  AgentState,
-  AgentListParams,
-} from '@letta-ai/letta-client/resources/agents/agents';
+    AgentListParams,
+    AgentState,
+} from '@letta-ai/letta-client/resources/agents/agents'
+export type {
+    LettaResponse,
+    Message,
+    MessageCreateParamsNonStreaming,
+    MessageListParams,
+    ToolCallMessage,
+} from '@letta-ai/letta-client/resources/agents/messages'
 
 export type {
-  AgentCreateParams,
-  AgentCreateResponse,
-} from '@letta-ai/letta-client/resources/templates/agents';
-
+    Identity,
+    IdentityCreateParams,
+    IdentityListParams,
+    IdentityProperty,
+    IdentityType,
+} from '@letta-ai/letta-client/resources/identities/identities'
 export type {
-  Identity,
-  IdentityCreateParams,
-  IdentityListParams,
-  IdentityProperty,
-  IdentityType,
-} from '@letta-ai/letta-client/resources/identities/identities';
-
-export type {
-  Message,
-  MessageCreateParamsNonStreaming,
-  MessageListParams,
-  ToolCallMessage,
-  LettaResponse,
-} from '@letta-ai/letta-client/resources/agents/messages';
+    AgentCreateParams,
+    AgentCreateResponse,
+} from '@letta-ai/letta-client/resources/templates/agents'

@@ -46,7 +46,6 @@ export const createPGliteDataSource = (): DataSource => {
                     if (val === false || val === 'false' || val === 0) return 'FALSE'
                     return String(val)
                 },
-
             },
             parsers: {
                 [types.BYTEA]: (val: unknown): Buffer => {
@@ -73,4 +72,3 @@ export const createPGliteDataSource = (): DataSource => {
         ...commonProperties,
     })
 }
-

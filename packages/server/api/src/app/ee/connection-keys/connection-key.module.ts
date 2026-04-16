@@ -4,7 +4,9 @@ import {
     GetOrDeleteConnectionFromTokenRequest,
     ListConnectionKeysRequest,
     PrincipalType,
-    UpsertConnectionFromToken, UpsertSigningKeyConnection } from '@activepieces/shared'
+    UpsertConnectionFromToken,
+    UpsertSigningKeyConnection,
+} from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -34,9 +36,7 @@ const connectionKeyController: FastifyPluginAsyncZod = async (fastify) => {
             },
         },
         async (request) => {
-            const appConnection = await connectionKeyService(request.log).getConnection(
-                request.query,
-            )
+            const appConnection = await connectionKeyService(request.log).getConnection(request.query)
             const platformId = await projectService(request.log).getPlatformId(request.query.projectId)
             if (appConnection !== null) {
                 await appConnectionService(request.log).delete({
@@ -90,18 +90,12 @@ const connectionKeyController: FastifyPluginAsyncZod = async (fastify) => {
                 querystring: ListConnectionKeysRequest,
             },
             config: {
-                security: securityAccess.project(
-                    [PrincipalType.USER, PrincipalType.SERVICE],
-                    undefined,
-                    {
-                        type: ProjectResourceType.QUERY,
-                    },
-                ),
+                security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], undefined, {
+                    type: ProjectResourceType.QUERY,
+                }),
             },
         },
-        async (
-            request,
-        ) => {
+        async (request) => {
             return connectionKeyService(request.log).list(
                 request.projectId,
                 request.query.cursor ?? null,
@@ -117,18 +111,12 @@ const connectionKeyController: FastifyPluginAsyncZod = async (fastify) => {
                 body: UpsertSigningKeyConnection,
             },
             config: {
-                security: securityAccess.project(
-                    [PrincipalType.USER, PrincipalType.SERVICE],
-                    undefined,
-                    {
-                        type: ProjectResourceType.BODY,
-                    },
-                ),
+                security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], undefined, {
+                    type: ProjectResourceType.BODY,
+                }),
             },
         },
-        async (
-            request,
-        ) => {
+        async (request) => {
             return connectionKeyService(request.log).upsert({
                 projectId: request.projectId,
                 request: request.body,

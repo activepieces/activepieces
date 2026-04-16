@@ -10,36 +10,46 @@ export class RemoveOperatorRole1769613456917 implements MigrationInterface {
     name = 'RemoveOperatorRole1769613456917'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        const usedRole = await queryRunner.query(`
+        const usedRole = await queryRunner.query(
+            `
             SELECT pm."platformId"
             FROM "project_member" pm
             WHERE pm."projectRoleId" = $1
             LIMIT 1
-        `, [OPERATOR_ROLE_ID])
+        `,
+            [OPERATOR_ROLE_ID],
+        )
 
         if (usedRole.length > 0 && edition === ApEdition.ENTERPRISE) {
             const platformId = usedRole[0].platformId
-            await queryRunner.query(`
+            await queryRunner.query(
+                `
                 UPDATE "project_role"
                 SET "type" = 'CUSTOM', "platformId" = $1
                 WHERE "id" = $2
-            `, [platformId, OPERATOR_ROLE_ID])
-        }
-        else {
-            await queryRunner.query(`
+            `,
+                [platformId, OPERATOR_ROLE_ID],
+            )
+        } else {
+            await queryRunner.query(
+                `
                 UPDATE "project_member"
                 SET "projectRoleId" = 'aJVBSSJ3YqZ7r1laFjM0a'
                 WHERE "projectRoleId" = $1
-            `, [OPERATOR_ROLE_ID])
-            await queryRunner.query(`
+            `,
+                [OPERATOR_ROLE_ID],
+            )
+            await queryRunner.query(
+                `
                 DELETE FROM "project_role"
                 WHERE "id" = $1
-            `, [OPERATOR_ROLE_ID])
+            `,
+                [OPERATOR_ROLE_ID],
+            )
         }
     }
 
     public async down(_queryRunner: QueryRunner): Promise<void> {
         // Do nothing
     }
-
 }

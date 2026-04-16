@@ -1,11 +1,4 @@
-import {
-    ActivepiecesError,
-    ErrorCode,
-    File,
-    FileLocation,
-    FileType,
-    StepFileUpsertRequest,
-} from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, File, FileLocation, FileType, StepFileUpsertRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -27,20 +20,14 @@ export const stepFileController: FastifyPluginAsyncZod = async (app) => {
 
         if (useS3SignedUrls && file.location === FileLocation.S3) {
             const url = await s3Helper(request.log).getS3SignedUrl(file.s3Key!, file.fileName ?? 'unknown')
-            return reply
-                .status(StatusCodes.TEMPORARY_REDIRECT)
-                .header('Location', url)
-                .send()
+            return reply.status(StatusCodes.TEMPORARY_REDIRECT).header('Location', url).send()
         }
         const { data } = await fileService(request.log).getDataOrThrow({
             fileId: file.id,
             type: FileType.FLOW_STEP_FILE,
         })
         return reply
-            .header(
-                'Content-Disposition',
-                `attachment; filename="${encodeURI(file.fileName ?? '')}"`,
-            )
+            .header('Content-Disposition', `attachment; filename="${encodeURI(file.fileName ?? '')}"`)
             .type('application/octet-stream')
             .status(StatusCodes.OK)
             .send(data)
@@ -74,8 +61,7 @@ async function getFileByToken(token: string, log: FastifyBaseLogger): Promise<Om
             fileId: decodedToken.fileId,
             type: FileType.FLOW_STEP_FILE,
         })
-    }
-    catch (e) {
+    } catch (e) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_BEARER_TOKEN,
             params: {
@@ -123,4 +109,3 @@ const UpsertStepFileRequest = {
         body: StepFileUpsertRequest,
     },
 }
-

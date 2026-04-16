@@ -1,16 +1,9 @@
 {
-  "extends": [
-    "../../.eslintrc.base.json"
-  ],
-  "ignorePatterns": [
-    "!**/*"
-  ],
+  "extends": ["../../.eslintrc.base.json"],
+  "ignorePatterns": ["!**/*"],
   "overrides": [
     {
-      "files": [
-        "**/*.ts",
-        "**/*.tsx"
-      ],
+      "files": ["**/*.ts", "**/*.tsx"],
       "parser": "@typescript-eslint/parser",
       "settings": {
         "react": {
@@ -19,19 +12,8 @@
         "import/resolver": {
           "typescript": {},
           "alias": {
-            "map": [
-              [
-                "@",
-                "./src"
-              ]
-            ],
-            "extensions": [
-              ".ts",
-              ".tsx",
-              ".js",
-              ".jsx",
-              ".json"
-            ]
+            "map": [["@", "./src"]],
+            "extensions": [".ts", ".tsx", ".js", ".jsx", ".json"]
           }
         }
       },
@@ -48,8 +30,6 @@
         "plugin:@typescript-eslint/recommended",
         "plugin:react/recommended",
         "plugin:react-hooks/recommended",
-        //"plugin:jsx-a11y/recommended",
-        "plugin:prettier/recommended",
         "plugin:testing-library/react",
         "plugin:jest-dom/recommended",
         "plugin:vitest/legacy-recommended"
@@ -61,9 +41,6 @@
           "error",
           {
             "zones": [
-              // Previous restrictions...
-              // enforce unidirectional codebase:
-              // e.g. src/app can import from src/features but not the other way around
               {
                 "target": "./src/features",
                 "from": "./src/app"
@@ -76,108 +53,32 @@
                   "./src/types",
                   "./src/utils"
                 ],
-                "from": [
-                  "./src/features",
-                  "./src/app"
-                ]
+                "from": ["./src/features", "./src/app"]
               }
             ]
           }
         ],
         "import/no-cycle": "off",
-        "linebreak-style": [
-          "error",
-          "unix"
-        ],
         "react/prop-types": "error",
-        "import/order": [
-          "error",
-          {
-            "groups": [
-              "builtin",
-              "external",
-              "internal",
-              "parent",
-              "sibling",
-              "index",
-              "object"
-            ],
-            "newlines-between": "always",
-            "alphabetize": {
-              "order": "asc",
-              "caseInsensitive": true
-            }
-          }
-        ],
+        "import/order": "off",
         "import/default": "off",
         "import/no-named-as-default-member": "off",
         "import/no-named-as-default": "off",
         "react/react-in-jsx-scope": "off",
         "jsx-a11y/anchor-is-valid": "off",
-        "unused-imports/no-unused-imports": "error",
-        "@typescript-eslint/no-unused-vars": [
-          "error",
-          {
-            "varsIgnorePattern": "^_",
-            "argsIgnorePattern": "^_"
-          }
-        ],
-        "@typescript-eslint/explicit-function-return-type": [
-          "off"
-        ],
-        "@typescript-eslint/explicit-module-boundary-types": [
-          "off"
-        ],
-        "@typescript-eslint/no-empty-function": [
-          "off"
-        ],
-        "@typescript-eslint/no-explicit-any": [
-          "off"
-        ],
-        "@typescript-eslint/indent": "off",
-        "prettier/prettier": [
-          "error",
-          {
-            "singleQuote": true,
-            "trailingComma": "all",
-            "printWidth": 80,
-            "tabWidth": 2,
-            "useTabs": false,
-            "jsxBracketSameLine": false
-          }
-        ]
+        "@typescript-eslint/explicit-function-return-type": ["off"],
+        "@typescript-eslint/explicit-module-boundary-types": ["off"],
+        "@typescript-eslint/no-empty-function": ["off"],
+        "@typescript-eslint/no-explicit-any": ["off"],
+        "@typescript-eslint/no-unused-vars": "off",
+        "no-unused-vars": "off"
       }
     },
     {
-      "files": [
-        "./src/components/**/*.{ts,tsx}"
-      ],
+      "files": ["./src/components/**/*.{ts,tsx}"],
       "rules": {
         "react/prop-types": "off"
       }
-    },
-    {
-      "files": [
-        "*.ts",
-        "*.tsx",
-        "*.js",
-        "*.jsx"
-      ],
-      "rules": {}
-    },
-    {
-      "files": [
-        "*.ts",
-        "*.tsx"
-      ],
-      "rules": {}
-    },
-    {
-      "files": [
-        "*.js",
-        "*.jsx"
-      ],
-      "rules": {}
     }
   ]
 }

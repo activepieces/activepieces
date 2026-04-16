@@ -177,5 +177,4 @@ export class AddExternalIdForTablesAndFieldsSQLITE1746367601605 implements Migra
             CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
         `)
     }
-
 }

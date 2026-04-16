@@ -1,13 +1,10 @@
-import { MarkdownVariant } from '@activepieces/shared';
-import { hubspotAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-    getDefaultPropertiesForObject,
-    standardObjectPropertiesDropdown,
-} from '../common/props';
-import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
-import { Client } from '@hubspot/api-client';
-import { FilterOperatorEnum } from '../common/types';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { MarkdownVariant } from '@activepieces/shared'
+import { Client } from '@hubspot/api-client'
+import { hubspotAuth } from '../auth'
+import { MAX_SEARCH_PAGE_SIZE, OBJECT_TYPE } from '../common/constants'
+import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props'
+import { FilterOperatorEnum } from '../common/types'
 
 export const findCompanyAction = createAction({
     auth: hubspotAuth,
@@ -61,8 +58,8 @@ export const findCompanyAction = createAction({
             firstSearchPropertyValue,
             secondSearchPropertyName,
             secondSearchPropertyValue,
-        } = context.propsValue;
-        const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? [];
+        } = context.propsValue
+        const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? []
 
         const filters = [
             {
@@ -70,25 +67,25 @@ export const findCompanyAction = createAction({
                 operator: FilterOperatorEnum.Eq,
                 value: firstSearchPropertyValue,
             },
-        ];
+        ]
 
         if (secondSearchPropertyName && secondSearchPropertyValue) {
             filters.push({
                 propertyName: secondSearchPropertyName as string,
                 operator: FilterOperatorEnum.Eq,
                 value: secondSearchPropertyValue,
-            });
+            })
         }
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: context.auth.access_token })
 
-        const defaultCompanyProperties = getDefaultPropertiesForObject(OBJECT_TYPE.COMPANY);
+        const defaultCompanyProperties = getDefaultPropertiesForObject(OBJECT_TYPE.COMPANY)
 
         const response = await client.crm.companies.searchApi.doSearch({
             limit: MAX_SEARCH_PAGE_SIZE,
             properties: [...defaultCompanyProperties, ...additionalPropertiesToRetrieve],
             filterGroups: [{ filters }],
-        });
-        return response;
+        })
+        return response
     },
-});
+})

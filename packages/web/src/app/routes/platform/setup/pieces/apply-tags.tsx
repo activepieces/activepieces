@@ -1,7 +1,7 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { t } from 'i18next';
 import { Trash2 } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CreateTagDialog } from '@/app/routes/platform/setup/pieces/create-tag-dialog';
@@ -23,8 +23,8 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
-  piecesTagQueries,
   piecesTagMutations,
+  piecesTagQueries,
 } from '@/features/platform-admin';
 
 type ApplyTagsProps = {
@@ -202,4 +202,5 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
 };
 
 ApplyTags.displayName = 'ApplyTags';
+
 export { ApplyTags };

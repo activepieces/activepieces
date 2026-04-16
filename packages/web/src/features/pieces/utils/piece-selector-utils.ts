@@ -4,27 +4,27 @@ import {
   piecePropertiesUtils,
 } from '@activepieces/pieces-framework';
 import {
-  FlowAction,
-  FlowActionType,
+  AUTHENTICATION_PROPERTY_NAME,
+  BranchExecutionType,
   BranchOperator,
   CodeAction,
+  DEFAULT_SAMPLE_DATA_SETTINGS,
+  deepMergeAndCast,
+  FlowAction,
+  FlowActionType,
+  FlowOperationType,
+  FlowTrigger,
+  FlowTriggerType,
+  FlowVersion,
+  flowStructureUtil,
+  isManualPieceTrigger,
+  isNil,
   PieceAction,
   PieceTrigger,
-  FlowTrigger,
-  deepMergeAndCast,
-  BranchExecutionType,
-  RouterExecutionType,
-  isNil,
-  flowStructureUtil,
-  StepSettings,
-  RouterActionSettingsWithValidation,
-  FlowTriggerType,
   PropertyExecutionType,
-  DEFAULT_SAMPLE_DATA_SETTINGS,
-  FlowVersion,
-  FlowOperationType,
-  isManualPieceTrigger,
-  AUTHENTICATION_PROPERTY_NAME,
+  RouterActionSettingsWithValidation,
+  RouterExecutionType,
+  StepSettings,
 } from '@activepieces/shared';
 import { useRef } from 'react';
 
@@ -36,6 +36,7 @@ import {
 } from '@/features/pieces/types';
 
 import { formUtils } from './form-utils';
+
 const defaultCode = `export const code = async (inputs) => {
   return true;
 };`;

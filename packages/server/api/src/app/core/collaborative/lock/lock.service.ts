@@ -48,9 +48,11 @@ export const lockService = (log: FastifyBaseLogger) => ({
                 log.debug({ resourceId, userId }, '[Lock] Lock released')
                 return true
             }
-            log.debug({ resourceId, userId, lockedByUserId: lock.userId }, '[Lock] Cannot release lock held by another user')
-        }
-        else {
+            log.debug(
+                { resourceId, userId, lockedByUserId: lock.userId },
+                '[Lock] Cannot release lock held by another user',
+            )
+        } else {
             log.debug({ resourceId, userId }, '[Lock] No lock found to release')
         }
         return false

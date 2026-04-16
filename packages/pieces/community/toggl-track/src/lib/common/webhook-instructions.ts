@@ -1,10 +1,10 @@
 export function generateTogglWebhookInstructions(
-  eventName: string,
-  triggerName: string,
-  description: string,
-  eventDetails: string
+    eventName: string,
+    triggerName: string,
+    description: string,
+    eventDetails: string,
 ): string {
-  return `
+    return `
 ## Setup Instructions
 
 **IMPORTANT: Publish Your Flow First**
@@ -55,35 +55,35 @@ ${eventDetails}
 - If events aren't received, verify you selected "${eventName}" event
 
 **Note:** This trigger uses manual webhook setup as recommended by Toggl Track. **Validation happens automatically** when you click "Test" or when Toggl sends the first ping. The webhook will be managed through your Toggl Track dashboard, not programmatically through ActivePieces.
-  `;
+  `
 }
 
 export const TOGGL_WEBHOOK_EVENTS = {
-  CLIENT_CREATED: 'Client created',
-  CLIENT_UPDATED: 'Client updated',
-  CLIENT_DELETED: 'Client deleted',
-  PROJECT_CREATED: 'Project created',
-  PROJECT_UPDATED: 'Project updated',
-  PROJECT_DELETED: 'Project deleted',
-  TAG_CREATED: 'Tag created',
-  TAG_UPDATED: 'Tag updated',
-  TAG_DELETED: 'Tag deleted',
-  TASK_CREATED: 'Task created',
-  TASK_UPDATED: 'Task updated',
-  TASK_DELETED: 'Task deleted',
-  TIME_ENTRY_CREATED: 'Time entry created',
-  TIME_ENTRY_UPDATED: 'Time entry updated',
-  TIME_ENTRY_DELETED: 'Time entry deleted',
-  WORKSPACE_CREATED: 'Workspace created',
-  WORKSPACE_UPDATED: 'Workspace updated',
-  WORKSPACE_DELETED: 'Workspace deleted',
-  WORKSPACE_USER_CREATED: 'Workspace user created',
-  WORKSPACE_USER_UPDATED: 'Workspace user updated',
-  WORKSPACE_USER_DELETED: 'Workspace user deleted',
-  PROJECT_GROUP_CREATED: 'Project group created',
-  PROJECT_GROUP_UPDATED: 'Project group updated',
-  PROJECT_GROUP_DELETED: 'Project group deleted',
-  PROJECT_USER_CREATED: 'Project user created',
-  PROJECT_USER_UPDATED: 'Project user updated',
-  PROJECT_USER_DELETED: 'Project user deleted',
-} as const;
+    CLIENT_CREATED: 'Client created',
+    CLIENT_UPDATED: 'Client updated',
+    CLIENT_DELETED: 'Client deleted',
+    PROJECT_CREATED: 'Project created',
+    PROJECT_UPDATED: 'Project updated',
+    PROJECT_DELETED: 'Project deleted',
+    TAG_CREATED: 'Tag created',
+    TAG_UPDATED: 'Tag updated',
+    TAG_DELETED: 'Tag deleted',
+    TASK_CREATED: 'Task created',
+    TASK_UPDATED: 'Task updated',
+    TASK_DELETED: 'Task deleted',
+    TIME_ENTRY_CREATED: 'Time entry created',
+    TIME_ENTRY_UPDATED: 'Time entry updated',
+    TIME_ENTRY_DELETED: 'Time entry deleted',
+    WORKSPACE_CREATED: 'Workspace created',
+    WORKSPACE_UPDATED: 'Workspace updated',
+    WORKSPACE_DELETED: 'Workspace deleted',
+    WORKSPACE_USER_CREATED: 'Workspace user created',
+    WORKSPACE_USER_UPDATED: 'Workspace user updated',
+    WORKSPACE_USER_DELETED: 'Workspace user deleted',
+    PROJECT_GROUP_CREATED: 'Project group created',
+    PROJECT_GROUP_UPDATED: 'Project group updated',
+    PROJECT_GROUP_DELETED: 'Project group deleted',
+    PROJECT_USER_CREATED: 'Project user created',
+    PROJECT_USER_UPDATED: 'Project user updated',
+    PROJECT_USER_DELETED: 'Project user deleted',
+} as const

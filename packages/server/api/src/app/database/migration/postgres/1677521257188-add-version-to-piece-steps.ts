@@ -25,10 +25,10 @@ export class addVersionToPieceSteps1677521257188 implements MigrationInterface {
             }
 
             if (update) {
-                await queryRunner.query(
-                    `UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`,
-                    [flowVersion.trigger, flowVersion.id],
-                )
+                await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [
+                    flowVersion.trigger,
+                    flowVersion.id,
+                ])
             }
         }
 
@@ -54,10 +54,10 @@ export class addVersionToPieceSteps1677521257188 implements MigrationInterface {
             }
 
             if (update) {
-                await queryRunner.query(
-                    `UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`,
-                    [flowVersion.trigger, flowVersion.id],
-                )
+                await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [
+                    flowVersion.trigger,
+                    flowVersion.id,
+                ])
             }
         }
 

@@ -67,4 +67,5 @@ const BasicAuthConnectionSettings = React.memo(
 );
 
 BasicAuthConnectionSettings.displayName = 'BasicAuthConnectionSettings';
+
 export { BasicAuthConnectionSettings };

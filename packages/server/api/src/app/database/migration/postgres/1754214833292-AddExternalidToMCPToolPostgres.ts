@@ -23,5 +23,4 @@ export class AddExternalidToMCPToolPostgres1754214833292 implements MigrationInt
             ALTER TABLE "mcp_tool" DROP COLUMN "externalId"
         `)
     }
-
 }

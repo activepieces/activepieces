@@ -25,8 +25,7 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
                     "archivedAt"
                 )
             `)
-        }
-        else {
+        } else {
             await queryRunner.query(`
                 CREATE INDEX IF NOT EXISTS "idx_run_project_id_environment_flow_id_status_created_archived_at" ON "flow_run" (
                     "projectId",
@@ -49,8 +48,7 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
                     "archivedAt"
                 )
             `)
-        }
-        else {
+        } else {
             await queryRunner.query(`
                 CREATE INDEX IF NOT EXISTS "idx_run_project_id_environment_status_created_archived_at" ON "flow_run" (
                     "projectId",
@@ -71,8 +69,7 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
                     "archivedAt"
                 )
             `)
-        }
-        else {
+        } else {
             await queryRunner.query(`
                 CREATE INDEX IF NOT EXISTS "idx_run_project_id_environment_created_archived_at" ON "flow_run" (
                     "projectId",
@@ -93,8 +90,7 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
                     "archivedAt"
                 )
             `)
-        }
-        else {
+        } else {
             await queryRunner.query(`
                 CREATE INDEX IF NOT EXISTS "idx_run_project_id_environment_flow_id_created_archived_at" ON "flow_run" (
                     "projectId",
@@ -170,8 +166,7 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
             await queryRunner.query(`
                 CREATE INDEX CONCURRENTLY "idx_run_project_id_environment_created_desc" ON "flow_run" ("created", "projectId", "environment")
             `)
-        }
-        else {
+        } else {
             await queryRunner.query(`
                 CREATE INDEX "idx_run_project_id_flow_id_environment_status_created_desc" ON "flow_run" (
                     "created",
@@ -192,5 +187,4 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
             `)
         }
     }
-
 }

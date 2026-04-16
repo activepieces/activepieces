@@ -4,7 +4,6 @@ export class RevertDescriptionTodoNaming1750389164014 implements MigrationInterf
     name = 'RevertDescriptionTodoNaming1750389164014'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        
         await queryRunner.query(`
             ALTER TABLE "todo"
                 RENAME COLUMN "content" TO "description"
@@ -17,5 +16,4 @@ export class RevertDescriptionTodoNaming1750389164014 implements MigrationInterf
                 RENAME COLUMN "description" TO "content"
         `)
     }
-
 }

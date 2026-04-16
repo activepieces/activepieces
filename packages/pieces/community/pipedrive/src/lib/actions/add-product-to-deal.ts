@@ -1,14 +1,14 @@
-import { pipedriveAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { dealIdProp, productIdProp } from '../common/props';
-import { pipedriveApiCall } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { pipedriveAuth } from '../auth'
+import { pipedriveApiCall } from '../common'
+import { dealIdProp, productIdProp } from '../common/props'
 
 export const addProductToDealAction = createAction({
     auth: pipedriveAuth,
     name: 'add-product-to-deal',
     displayName: 'Add Product to Deal',
-    description: 'Adds a product to a deal.', 
+    description: 'Adds a product to a deal.',
     props: {
         dealId: dealIdProp(true),
         productId: productIdProp(true),
@@ -88,26 +88,26 @@ export const addProductToDealAction = createAction({
             enableProduct,
             taxPercentage,
             taxMethod,
-        } = context.propsValue;
+        } = context.propsValue
 
         const response = await pipedriveApiCall({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.POST,
-            resourceUri: `/v2/deals/${dealId}/products`, 
+            resourceUri: `/v2/deals/${dealId}/products`,
             body: {
                 product_id: productId,
                 item_price: price,
                 quantity,
                 discount_type: discountType,
                 discount,
-                comments: comments ?? '', 
-                is_enabled: enableProduct, 
+                comments: comments ?? '',
+                is_enabled: enableProduct,
                 tax: taxPercentage,
                 tax_method: taxMethod,
             },
-        });
+        })
 
-        return response;
+        return response
     },
-});
+})

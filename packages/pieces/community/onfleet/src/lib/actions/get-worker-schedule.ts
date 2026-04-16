@@ -1,22 +1,19 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
-import { common } from '../common';
-
-import Onfleet from '@onfleet/node-onfleet';
+import { createAction } from '@activepieces/pieces-framework'
+import Onfleet from '@onfleet/node-onfleet'
+import { onfleetAuth } from '../..'
+import { common } from '../common'
 
 export const getWorkerSchedule = createAction({
-  auth: onfleetAuth,
-  name: 'get_worker_schedule',
-  displayName: 'Get Worker Schedule',
-  description: "Get an existing worker's schedule",
-  props: {
-    worker: common.worker,
-  },
-  async run(context) {
-    const onfleetApi = new Onfleet(context.auth.secret_text);
+    auth: onfleetAuth,
+    name: 'get_worker_schedule',
+    displayName: 'Get Worker Schedule',
+    description: "Get an existing worker's schedule",
+    props: {
+        worker: common.worker,
+    },
+    async run(context) {
+        const onfleetApi = new Onfleet(context.auth.secret_text)
 
-    return await onfleetApi.workers.getSchedule(
-      context.propsValue.worker as string
-    );
-  },
-});
+        return await onfleetApi.workers.getSchedule(context.propsValue.worker as string)
+    },
+})

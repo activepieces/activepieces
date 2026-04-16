@@ -1,22 +1,10 @@
-
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { ActivepiecesError, apId, ErrorCode, PlatformRole, Principal, PrincipalType } from '@activepieces/shared'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { AuthorizationRouteSecurity } from '../../../../src/app/core/security/authorization/authorization'
 import { AuthorizationType, RouteKind } from '../../../../src/app/core/security/authorization/common'
-import {
-    ActivepiecesError,
-    apId,
-    ErrorCode,
-    PlatformRole,
-    Principal,
-    PrincipalType,
-} from '@activepieces/shared'
-import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { authorizeOrThrow } from '../../../../src/app/core/security/v2/authz/authorize'
-import {
-    mockAndSaveBasicSetup,
-    mockAndSaveBasicSetupWithApiKey,
-    mockBasicUser,
-} from '../../../helpers/mocks'
+import { mockAndSaveBasicSetup, mockAndSaveBasicSetupWithApiKey, mockBasicUser } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -30,12 +18,9 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-
-
 describe('authorizeOrThrow - Basic', () => {
     describe('PUBLIC routes', () => {
         it('should allow any principal for public routes', async () => {
-            
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.PUBLIC,
             }
@@ -50,7 +35,6 @@ describe('authorizeOrThrow - Basic', () => {
 
     describe('PLATFORM authorization', () => {
         it('should allow USER principal when allowed', async () => {
-            
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
@@ -59,7 +43,6 @@ describe('authorizeOrThrow - Basic', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -74,7 +57,6 @@ describe('authorizeOrThrow - Basic', () => {
         })
 
         it('should allow SERVICE principal when allowed', async () => {
-            
             const { mockPlatform, mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
 
             const principal: Principal = {
@@ -83,7 +65,6 @@ describe('authorizeOrThrow - Basic', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -98,7 +79,6 @@ describe('authorizeOrThrow - Basic', () => {
         })
 
         it('should reject principal not in allowedPrincipals', async () => {
-            
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
@@ -107,7 +87,6 @@ describe('authorizeOrThrow - Basic', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -129,7 +108,6 @@ describe('authorizeOrThrow - Basic', () => {
         })
 
         it('should allow platform admin when adminOnly is true', async () => {
-            
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
@@ -138,7 +116,6 @@ describe('authorizeOrThrow - Basic', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -153,7 +130,6 @@ describe('authorizeOrThrow - Basic', () => {
         })
 
         it('should reject non-admin user when adminOnly is true', async () => {
-            
             const { mockPlatform } = await mockAndSaveBasicSetup()
             const { mockUser: nonAdminUser } = await mockBasicUser({
                 user: {
@@ -168,7 +144,6 @@ describe('authorizeOrThrow - Basic', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -190,7 +165,6 @@ describe('authorizeOrThrow - Basic', () => {
         })
 
         it('should allow SERVICE principal when adminOnly is true', async () => {
-            
             const { mockPlatform, mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
 
             const principal: Principal = {
@@ -199,7 +173,6 @@ describe('authorizeOrThrow - Basic', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -216,7 +189,6 @@ describe('authorizeOrThrow - Basic', () => {
 
     describe('WORKER authorization', () => {
         it('should allow WORKER principal', async () => {
-            
             const principal: Principal = {
                 id: apId(),
                 type: PrincipalType.WORKER,
@@ -233,7 +205,6 @@ describe('authorizeOrThrow - Basic', () => {
         })
 
         it('should reject non-WORKER principal for WORKER routes', async () => {
-            
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
@@ -242,7 +213,6 @@ describe('authorizeOrThrow - Basic', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -265,7 +235,6 @@ describe('authorizeOrThrow - Basic', () => {
 
     describe('ENGINE authorization', () => {
         it('should allow ENGINE principal', async () => {
-            
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
@@ -288,7 +257,6 @@ describe('authorizeOrThrow - Basic', () => {
         })
 
         it('should reject non-ENGINE principal for ENGINE routes', async () => {
-            
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
@@ -297,7 +265,6 @@ describe('authorizeOrThrow - Basic', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -320,7 +287,6 @@ describe('authorizeOrThrow - Basic', () => {
 
     describe('NONE authorization', () => {
         it('should allow any authenticated principal', async () => {
-            
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
@@ -329,7 +295,6 @@ describe('authorizeOrThrow - Basic', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -343,7 +308,6 @@ describe('authorizeOrThrow - Basic', () => {
         })
 
         it('should allow UNKNOWN principal for NONE authorization', async () => {
-            
             const principal: Principal = {
                 id: apId(),
                 type: PrincipalType.UNKNOWN,
@@ -362,7 +326,6 @@ describe('authorizeOrThrow - Basic', () => {
 
     describe('UNSCOPED authorization', () => {
         it('should allow USER principal when in allowedPrincipals', async () => {
-            
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
@@ -371,7 +334,6 @@ describe('authorizeOrThrow - Basic', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -385,7 +347,6 @@ describe('authorizeOrThrow - Basic', () => {
         })
 
         it('should allow SERVICE principal when in allowedPrincipals', async () => {
-            
             const { mockPlatform, mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
 
             const principal: Principal = {
@@ -394,7 +355,6 @@ describe('authorizeOrThrow - Basic', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -408,7 +368,6 @@ describe('authorizeOrThrow - Basic', () => {
         })
 
         it('should allow UNKNOWN principal when in allowedPrincipals', async () => {
-            
             const principal: Principal = {
                 id: apId(),
                 type: PrincipalType.UNKNOWN,
@@ -425,7 +384,6 @@ describe('authorizeOrThrow - Basic', () => {
         })
 
         it('should reject principal not in allowedPrincipals', async () => {
-            
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
@@ -434,7 +392,6 @@ describe('authorizeOrThrow - Basic', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -455,7 +412,6 @@ describe('authorizeOrThrow - Basic', () => {
         })
 
         it('should allow multiple principal types', async () => {
-            
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
             const enginePrincipal: Principal = {

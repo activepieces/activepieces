@@ -1,16 +1,12 @@
-import { HttpError } from '@activepieces/pieces-common';
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import FormData from 'form-data';
-import { sendEmail } from './lib/actions/send-email';
-import { sendFromTemplate } from './lib/actions/send-from-template';
-import { checkEmail, sendFormData } from './lib/common/send-utils';
-import { verifyEmail } from './lib/actions/verify-email';
-import { mailerooAuth } from './lib/auth';
+import { HttpError } from '@activepieces/pieces-common'
+import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import FormData from 'form-data'
+import { sendEmail } from './lib/actions/send-email'
+import { sendFromTemplate } from './lib/actions/send-from-template'
+import { verifyEmail } from './lib/actions/verify-email'
+import { mailerooAuth } from './lib/auth'
+import { checkEmail, sendFormData } from './lib/common/send-utils'
 
 const markdown = `
 For Sending API key, follow these steps:
@@ -23,20 +19,16 @@ For Sending API key, follow these steps:
 For Verification API key, follow these steps:
 1. Navigate to [Verification API](https://app.maileroo.com/verifications).
 2. Copy the key under the **Verification API** section.
-`;
+`
 
 export const maileroo = createPiece({
-  displayName: 'Maileroo',
-  auth: mailerooAuth,
-  minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/maileroo.png',
-  categories: [
-    PieceCategory.MARKETING,
-    PieceCategory.BUSINESS_INTELLIGENCE,
-    PieceCategory.COMMUNICATION,
-  ],
-  description: 'Email Delivery Service with Real-Time Analytics and Reporting',
-  authors: ['codegino'],
-  actions: [sendEmail, sendFromTemplate, verifyEmail],
-  triggers: [],
-});
+    displayName: 'Maileroo',
+    auth: mailerooAuth,
+    minimumSupportedRelease: '0.30.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/maileroo.png',
+    categories: [PieceCategory.MARKETING, PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.COMMUNICATION],
+    description: 'Email Delivery Service with Real-Time Analytics and Reporting',
+    authors: ['codegino'],
+    actions: [sendEmail, sendFromTemplate, verifyEmail],
+    triggers: [],
+})

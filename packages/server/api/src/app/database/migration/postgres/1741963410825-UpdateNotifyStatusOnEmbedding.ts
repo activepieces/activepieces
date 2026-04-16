@@ -16,11 +16,9 @@ export class UpdateNotifyStatusOnEmbedding1741963410825 implements MigrationInte
                 SELECT "id" FROM "platform" WHERE "embeddingEnabled" = true
             )
         `)
-
     }
 
     public async down(_queryRunner: QueryRunner): Promise<void> {
-        // 
+        //
     }
-
 }

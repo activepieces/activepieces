@@ -1,9 +1,7 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     ApEdition,
     CustomDomain,
     DefaultProjectRole,
-
     InvitationStatus,
     InvitationType,
     OtpType,
@@ -14,7 +12,8 @@ import {
     ProjectRole,
     ProjectType,
     User,
-    UserStatus } from '@activepieces/shared'
+    UserStatus,
+} from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
@@ -23,8 +22,8 @@ import { Mock } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
 import { system } from '../../../../src/app/helper/system/system'
-import { db } from '../../../helpers/db'
 import { decodeToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     CLOUD_PLATFORM_ID,
     createMockCustomDomain,
@@ -35,10 +34,8 @@ import {
     mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
-import {
-    createMockSignInRequest,
-    createMockSignUpRequest,
-} from '../../../helpers/mocks/authn'
+import { createMockSignInRequest, createMockSignUpRequest } from '../../../helpers/mocks/authn'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -78,16 +75,15 @@ describe('Authentication API', () => {
     describe('Sign up Endpoint', () => {
         it('Add new user if the domain is allowed', async () => {
             // arrange
-            const { mockPlatform, mockUser, mockCustomDomain } =
-                await createMockPlatformAndDomain({
-                    platform: {
-                        id: CLOUD_PLATFORM_ID,
-                        emailAuthEnabled: true,
-                    },
-                    plan: {
-                        ssoEnabled: false,
-                    },
-                })
+            const { mockPlatform, mockUser, mockCustomDomain } = await createMockPlatformAndDomain({
+                platform: {
+                    id: CLOUD_PLATFORM_ID,
+                    emailAuthEnabled: true,
+                },
+                plan: {
+                    ssoEnabled: false,
+                },
+            })
             const mockSignUpRequest = createMockSignUpRequest()
             await db.update('platform', mockPlatform.id, {
                 enforceAllowedAuthDomains: true,
@@ -125,19 +121,17 @@ describe('Authentication API', () => {
         })
         it('Fails If the domain is not allowed', async () => {
             // arrange
-            const { mockCustomDomain } =
-                await createMockPlatformAndDomain({
-                    platform: {
-                        emailAuthEnabled: true,
-                        enforceAllowedAuthDomains: true,
+            const { mockCustomDomain } = await createMockPlatformAndDomain({
+                platform: {
+                    emailAuthEnabled: true,
+                    enforceAllowedAuthDomains: true,
 
-                        allowedAuthDomains: [],
-
-                    },
-                    plan: {
-                        ssoEnabled: true,
-                    },
-                })
+                    allowedAuthDomains: [],
+                },
+                plan: {
+                    ssoEnabled: true,
+                },
+            })
             const mockSignUpRequest = createMockSignUpRequest()
 
             // act
@@ -174,8 +168,7 @@ describe('Authentication API', () => {
                 method: 'POST',
                 url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
-                headers: {
-                },
+                headers: {},
             })
 
             const responseBody = response?.json()
@@ -189,8 +182,7 @@ describe('Authentication API', () => {
                         email: mockSignUpRequest.email.toLocaleLowerCase().trim(),
                     },
                 })
-            }
-            else {
+            } else {
                 expect(responseBody?.code).toBe('INVITATION_ONLY_SIGN_UP')
             }
         })
@@ -210,14 +202,12 @@ describe('Authentication API', () => {
                 },
             })
 
-
             // act
             const response = await app?.inject({
                 method: 'POST',
                 url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
-                headers: {
-                },
+                headers: {},
             })
             const responseBody = response?.json()
 
@@ -240,8 +230,7 @@ describe('Authentication API', () => {
                         email: mockSignUpRequest.email.trim().toLocaleLowerCase(),
                     }),
                 })
-            }
-            else {
+            } else {
                 expect(responseBody?.code).toBe('INVITATION_ONLY_SIGN_UP')
             }
         })
@@ -252,8 +241,7 @@ describe('Authentication API', () => {
                 mockPlatform,
                 mockCustomDomain,
             } = await createMockPlatformAndDomain({
-                platform: {
-                },
+                platform: {},
                 plan: {
                     ssoEnabled: false,
                     projectRolesEnabled: true,
@@ -266,7 +254,9 @@ describe('Authentication API', () => {
             })
             await db.save('project', mockProject)
 
-            const editorRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.EDITOR })
+            const editorRole = await db.findOneByOrFail<ProjectRole>('project_role', {
+                name: DefaultProjectRole.EDITOR,
+            })
 
             const mockedUpEmail = faker.internet.email()
             const mockUserInvitation = createMockUserInvitation({
@@ -280,7 +270,6 @@ describe('Authentication API', () => {
             })
 
             await db.save('user_invitation', mockUserInvitation)
-
 
             const mockSignUpRequest = createMockSignUpRequest({
                 email: mockedUpEmail,
@@ -297,15 +286,21 @@ describe('Authentication API', () => {
 
             const responseBody = response?.json()
 
-            const projects = await databaseConnection().getRepository('project').find({ where: { ownerId: responseBody?.id } })
+            const projects = await databaseConnection()
+                .getRepository('project')
+                .find({ where: { ownerId: responseBody?.id } })
             expect(projects.length).toBe(1)
             expect(projects[0].type).toBe(ProjectType.PERSONAL)
 
-            const teamProject = await databaseConnection().getRepository('project').findOne({ where: { displayName: mockProject.displayName } })
+            const teamProject = await databaseConnection()
+                .getRepository('project')
+                .findOne({ where: { displayName: mockProject.displayName } })
             expect(teamProject).toBeDefined()
 
-            const projectMember = await databaseConnection().getRepository('project_member').findOne({ where: { projectId: teamProject?.id, userId: responseBody?.id } })
-            
+            const projectMember = await databaseConnection()
+                .getRepository('project_member')
+                .findOne({ where: { projectId: teamProject?.id, userId: responseBody?.id } })
+
             expect(projectMember).toBeDefined()
             expect(projectMember?.userId).toBe(responseBody?.id)
             expect(projectMember?.projectId).toBe(teamProject?.id)
@@ -351,7 +346,6 @@ describe('Authentication API', () => {
 
             expect(responseBody?.code).toBe('INVITATION_ONLY_SIGN_UP')
         })
-
     })
 
     describe('Sign in Endpoint', () => {
@@ -435,7 +429,6 @@ describe('Authentication API', () => {
                 },
             })
 
-
             const mockSignInRequest = createMockSignInRequest({
                 email: mockUserIdentity.email,
                 password: rawPassword,
@@ -514,7 +507,6 @@ describe('Authentication API', () => {
             expect(responseBody?.token).toBeDefined()
         })
 
-
         it('Signs in platform users', async () => {
             // arrange
             const mockEmail = faker.internet.email()
@@ -585,7 +577,6 @@ describe('Authentication API', () => {
         it('Fails to sign in platform users if no project exists', async () => {
             // arrange
 
-
             const { mockPlatform, mockCustomDomain } = await createMockPlatformAndDomain({
                 platform: {
                     emailAuthEnabled: true,
@@ -610,7 +601,6 @@ describe('Authentication API', () => {
                 },
             })
 
-
             const mockSignInRequest = createMockSignInRequest({
                 email: mockUserIdentityEmail,
                 password: mockPassword,
@@ -634,7 +624,7 @@ describe('Authentication API', () => {
             expect(responseBody?.code).toBe('INVITATION_ONLY_SIGN_UP')
         })
 
-        it('Fails if password doesn\'t match', async () => {
+        it("Fails if password doesn't match", async () => {
             // arrange
             const mockEmail = faker.internet.email()
             const mockPassword = 'password'
@@ -738,11 +728,18 @@ describe('Authentication API', () => {
             // is not found via Host header resolution. In cloud edition, it returns UNAUTHORIZED.
             expect([StatusCodes.UNAUTHORIZED, StatusCodes.FORBIDDEN]).toContain(response?.statusCode)
         })
-
     })
 })
 
-async function createMockPlatformAndDomain({ platform, domain, plan }: { platform: Partial<Platform>, domain?: Partial<CustomDomain>, plan?: Partial<PlatformPlan> }): Promise<{
+async function createMockPlatformAndDomain({
+    platform,
+    domain,
+    plan,
+}: {
+    platform: Partial<Platform>
+    domain?: Partial<CustomDomain>
+    plan?: Partial<PlatformPlan>
+}): Promise<{
     mockUser: User
     mockPlatform: Platform
     mockCustomDomain: CustomDomain

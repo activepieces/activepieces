@@ -23,5 +23,4 @@ export class AddAnalyticsToPlatform1725113652923 implements MigrationInterface {
             ALTER TABLE "platform" DROP COLUMN "analyticsEnabled"
         `)
     }
-
 }

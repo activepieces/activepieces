@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const wrikeAuth = PieceAuth.OAuth2({
     description: `
@@ -15,5 +15,5 @@ export const wrikeAuth = PieceAuth.OAuth2({
     authUrl: 'https://login.wrike.com/oauth2/authorize/v4',
     tokenUrl: 'https://login.wrike.com/oauth2/token',
     required: true,
-    scope: []
-});
+    scope: [],
+})

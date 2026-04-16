@@ -175,5 +175,4 @@ export class DeleteHandshakeFromTriggerSourceSqlite1758108281602 implements Migr
             CREATE INDEX "idx_trigger_project_id" ON "trigger_source" ("projectId")
         `)
     }
-
 }

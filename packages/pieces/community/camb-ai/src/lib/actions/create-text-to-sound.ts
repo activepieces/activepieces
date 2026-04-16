@@ -1,8 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { cambaiAuth } from '../auth';
-import { API_BASE_URL, MAX_POLLING_ATTEMPTS, POLLING_INTERVAL_MS } from '../common';
-import { listFoldersDropdown } from '../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { cambaiAuth } from '../auth'
+import { API_BASE_URL, listFoldersDropdown, MAX_POLLING_ATTEMPTS, POLLING_INTERVAL_MS } from '../common'
 
 export const createTextToSound = createAction({
     auth: cambaiAuth,
@@ -12,7 +11,8 @@ export const createTextToSound = createAction({
     props: {
         prompt: Property.LongText({
             displayName: 'Prompt',
-            description: 'A clear, descriptive explanation of the desired audio effect. Concise prompts yield more accurate results.',
+            description:
+                'A clear, descriptive explanation of the desired audio effect. Concise prompts yield more accurate results.',
             required: true,
         }),
         duration: Property.Number({
@@ -27,76 +27,71 @@ export const createTextToSound = createAction({
         }),
         project_description: Property.LongText({
             displayName: 'Project Description',
-            description: 'Provide details about your project\'s goals and specifications for documentation purposes.',
+            description: "Provide details about your project's goals and specifications for documentation purposes.",
             required: false,
         }),
         folder_id: listFoldersDropdown,
     },
     async run(context) {
-        const { auth } = context;
-        const { prompt, duration, project_name, project_description, folder_id } = context.propsValue;
+        const { auth } = context
+        const { prompt, duration, project_name, project_description, folder_id } = context.propsValue
 
-        const payload: Record<string, unknown> = { prompt };
-        if (duration) payload['duration'] = duration;
-        if (project_name) payload['project_name'] = project_name;
-        if (project_description) payload['project_description'] = project_description;
-        if (folder_id) payload['folder_id'] = folder_id;
-
+        const payload: Record<string, unknown> = { prompt }
+        if (duration) payload['duration'] = duration
+        if (project_name) payload['project_name'] = project_name
+        if (project_description) payload['project_description'] = project_description
+        if (folder_id) payload['folder_id'] = folder_id
 
         const initialResponse = await httpClient.sendRequest<{ task_id: string }>({
             method: HttpMethod.POST,
             url: `${API_BASE_URL}/text-to-sound`,
             headers: {
                 'x-api-key': auth.secret_text,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
             body: payload,
-        });
+        })
 
-        const taskId = initialResponse.body.task_id;
-        let attempts = 0;
-        let run_id: string | null = null;
+        const taskId = initialResponse.body.task_id
+        let attempts = 0
+        let run_id: string | null = null
         while (attempts < MAX_POLLING_ATTEMPTS) {
             const statusResponse = await httpClient.sendRequest<{
-                status: string, run_id?: string
+                status: string
+                run_id?: string
             }>({
                 method: HttpMethod.GET,
                 url: `${API_BASE_URL}/text-to-sound/${taskId}`,
                 headers: {
                     'x-api-key': auth.secret_text,
                 },
-            });
+            })
 
-            const status = statusResponse.body.status;
+            const status = statusResponse.body.status
 
             if (status === 'SUCCESS') {
-
-                run_id = statusResponse.body.run_id ?? null;
-                break;
+                run_id = statusResponse.body.run_id ?? null
+                break
             }
 
             if (status === 'FAILED') {
-
-                throw new Error(`Sound generation task failed: ${JSON.stringify(statusResponse.body)}`);
+                throw new Error(`Sound generation task failed: ${JSON.stringify(statusResponse.body)}`)
             }
 
-
-            await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
-            attempts++;
+            await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL_MS))
+            attempts++
         }
 
-
         if (!run_id) {
-            throw new Error("Sound generation task timed out or failed to return a run_id.");
+            throw new Error('Sound generation task timed out or failed to return a run_id.')
         }
         const audioResponse = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${API_BASE_URL}/text-to-sound-result/${run_id}`,
             headers: { 'x-api-key': auth.secret_text },
             responseType: 'arraybuffer',
-        });
+        })
 
-        return { audio: audioResponse.body };
-
+        return { audio: audioResponse.body }
     },
-});
+})

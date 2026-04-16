@@ -1,9 +1,4 @@
-import {
-    AgentPieceProps,
-    FlowActionType,
-    flowStructureUtil,
-    FlowVersion,
-} from '@activepieces/shared'
+import { AgentPieceProps, FlowActionType, FlowVersion, flowStructureUtil } from '@activepieces/shared'
 import { Migration } from '.'
 
 export const migrateV15AgentProviderModel: Migration = {

@@ -1,8 +1,8 @@
 import { z } from 'zod'
 import { PlatformRole, UserStatus } from './user'
 
-export * from './user'
 export * from './badges'
+export * from './user'
 
 export const UpdateUserRequestBody = z.object({
     status: z.nativeEnum(UserStatus).optional(),
@@ -11,7 +11,6 @@ export const UpdateUserRequestBody = z.object({
 })
 
 export type UpdateUserRequestBody = z.infer<typeof UpdateUserRequestBody>
-
 
 export const ListUsersRequestBody = z.object({
     cursor: z.string().optional(),

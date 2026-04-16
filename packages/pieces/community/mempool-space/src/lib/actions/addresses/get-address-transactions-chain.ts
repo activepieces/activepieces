@@ -1,9 +1,9 @@
-import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { MEMPOOL_API_BASE_URL } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework'
+import { MEMPOOL_API_BASE_URL } from '../../common'
 
 export const getAddressTransactionsChain = createAction({
- auth:PieceAuth.None(),
+    auth: PieceAuth.None(),
     name: 'get_address_transactions_chain',
     displayName: 'Get Address Transactions (Chain)',
     description: 'Returns confirmed transaction history (25 transactions per page)',
@@ -12,25 +12,25 @@ export const getAddressTransactionsChain = createAction({
         address: Property.ShortText({
             displayName: 'Address',
             description: 'The Bitcoin address to look up transactions for',
-            required: true
+            required: true,
         }),
         last_txid: Property.ShortText({
             displayName: 'Last Transaction ID',
             description: 'Optional: Last transaction ID for pagination',
-            required: false
-        })
+            required: false,
+        }),
     },
     async run({ propsValue }) {
-        const queryParams: Record<string, string> = {};
+        const queryParams: Record<string, string> = {}
         if (propsValue.last_txid) {
-            queryParams['last_txid'] = propsValue.last_txid;
+            queryParams['last_txid'] = propsValue.last_txid
         }
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${MEMPOOL_API_BASE_URL}/api/address/${propsValue.address}/txs/chain`,
-            queryParams
-        });
-        return response.body;
+            queryParams,
+        })
+        return response.body
     },
-});
+})

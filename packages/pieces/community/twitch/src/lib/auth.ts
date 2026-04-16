@@ -1,7 +1,7 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const twitchAuth = PieceAuth.OAuth2({
-  description: `
+    description: `
 To get your credentials, follow these steps:
 
 1. **Register Your App**
@@ -23,8 +23,8 @@ To get your credentials, follow these steps:
 For more details, visit the [Twitch Authentication Documentation](https://dev.twitch.tv/docs/authentication/register-app/)
   `,
 
-  authUrl: 'https://id.twitch.tv/oauth2/authorize',
-  tokenUrl: 'https://id.twitch.tv/oauth2/token',
-  required: true,
-  scope: [],
-});
+    authUrl: 'https://id.twitch.tv/oauth2/authorize',
+    tokenUrl: 'https://id.twitch.tv/oauth2/token',
+    required: true,
+    scope: [],
+})

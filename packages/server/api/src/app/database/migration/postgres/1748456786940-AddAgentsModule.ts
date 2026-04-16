@@ -78,5 +78,4 @@ export class AddAgentsModule1748456786940 implements MigrationInterface {
             DROP TABLE "agent"
         `)
     }
-
 }

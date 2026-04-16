@@ -30,8 +30,7 @@ export const presenceModule: FastifyPluginAsyncZod = async (app) => {
                 registerPresenceDisconnectHandler({ socket, userId: principal.id, projectId, app })
 
                 callback?.({ users })
-            }
-            catch (error) {
+            } catch (error) {
                 app.log.error({ err: error }, '[JOIN_PRESENCE] Failed to join presence')
                 callback?.({ users: [] })
             }
@@ -51,8 +50,7 @@ export const presenceModule: FastifyPluginAsyncZod = async (app) => {
                     resourceId: data.resourceId,
                     users,
                 })
-            }
-            catch (error) {
+            } catch (error) {
                 app.log.error({ err: error }, '[LEAVE_PRESENCE] Failed to leave presence')
             }
         }
@@ -81,7 +79,7 @@ function registerPresenceDisconnectHandler({ socket, userId, projectId, app }: R
 }
 
 type RegisterDisconnectHandlerParams = {
-    socket: { data: Record<string, unknown>, once: (event: string, handler: () => void) => void, id: string }
+    socket: { data: Record<string, unknown>; once: (event: string, handler: () => void) => void; id: string }
     userId: string
     projectId: string
     app: FastifyInstance

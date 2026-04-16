@@ -5,10 +5,10 @@ import { Pencil, Trash } from 'lucide-react';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import {
   Item,
-  ItemContent,
-  ItemTitle,
-  ItemDescription,
   ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemTitle,
 } from '@/components/custom/item';
 import { ItemMediaImage } from '@/components/custom/item-media-image';
 import { Button } from '@/components/ui/button';
@@ -91,4 +91,5 @@ const AIProviderCard = ({
 };
 
 AIProviderCard.displayName = 'AIProviderCard';
+
 export { AIProviderCard };

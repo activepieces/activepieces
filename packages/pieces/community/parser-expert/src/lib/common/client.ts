@@ -1,45 +1,44 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
 
 export const parserExpertCommon = {
-  baseUrl: 'https://api.parser.expert',
+    baseUrl: 'https://api.parser.expert',
 
-  async apiCall<T>({
-    method,
-    url,
-    auth,
-    body,
-    headers,
-    queryParams,
-  }: {
-    method: HttpMethod;
-    url: string;
-    auth: string;
-    body?: any;
-    headers?: Record<string, string>;
-    queryParams?: Record<string, string>;
-  }): Promise<T> {
-    let fullUrl = `${this.baseUrl}${url}`;
-    
-    if (queryParams && Object.keys(queryParams).length > 0) {
-      const params = new URLSearchParams(queryParams);
-      fullUrl += `?${params.toString()}`;
-    }
+    async apiCall<T>({
+        method,
+        url,
+        auth,
+        body,
+        headers,
+        queryParams,
+    }: {
+        method: HttpMethod
+        url: string
+        auth: string
+        body?: any
+        headers?: Record<string, string>
+        queryParams?: Record<string, string>
+    }): Promise<T> {
+        let fullUrl = `${this.baseUrl}${url}`
 
-    const response = await httpClient.sendRequest<T>({
-      method,
-      url: fullUrl,
-      headers: {
-        'X-API-Key': auth,
-        ...headers,
-      },
-      body,
-    });
+        if (queryParams && Object.keys(queryParams).length > 0) {
+            const params = new URLSearchParams(queryParams)
+            fullUrl += `?${params.toString()}`
+        }
 
-    if (response.status >= 400) {
-      throw new Error(`Parser Expert API error: ${response.status} ${JSON.stringify(response.body)}`);
-    }
+        const response = await httpClient.sendRequest<T>({
+            method,
+            url: fullUrl,
+            headers: {
+                'X-API-Key': auth,
+                ...headers,
+            },
+            body,
+        })
 
-    return response.body;
-  },
-};
+        if (response.status >= 400) {
+            throw new Error(`Parser Expert API error: ${response.status} ${JSON.stringify(response.body)}`)
+        }
 
+        return response.body
+    },
+}

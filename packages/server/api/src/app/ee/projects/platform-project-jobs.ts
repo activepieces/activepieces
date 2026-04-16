@@ -4,10 +4,10 @@ import { ArrayContains } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
-import { flowExecutionCache } from '../../flows/flow/flow-execution-cache'
-import { flowSideEffects } from '../../flows/flow/flow-service-side-effects'
 import { batchDeleteByFlowId } from '../../flows/flow/flow.jobs'
 import { flowRepo } from '../../flows/flow/flow.repo'
+import { flowExecutionCache } from '../../flows/flow/flow-execution-cache'
+import { flowSideEffects } from '../../flows/flow/flow-service-side-effects'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { ProjectEntity } from '../../project/project-entity'
@@ -40,7 +40,7 @@ export const platformProjectBackgroundJobs = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const flowIds = allFlows.map(flow => flow.id)
+        const flowIds = allFlows.map((flow) => flow.id)
 
         for (const flowId of flowIds) {
             await batchDeleteByFlowId(flowId)

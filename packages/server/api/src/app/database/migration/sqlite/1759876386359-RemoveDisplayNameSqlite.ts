@@ -534,5 +534,4 @@ export class RemoveDisplayNameSqlite1759876386359 implements MigrationInterface 
             CREATE INDEX "idx_run_flow_id" ON "flow_run" ("flowId")
         `)
     }
-
 }

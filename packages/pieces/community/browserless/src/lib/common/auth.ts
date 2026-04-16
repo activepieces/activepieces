@@ -1,4 +1,4 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
 
 export const browserlessAuth = PieceAuth.CustomAuth({
     description: `
@@ -30,22 +30,22 @@ export const browserlessAuth = PieceAuth.CustomAuth({
                 options: [
                     {
                         label: 'US West (San Francisco)',
-                        value: 'https://production-sfo.browserless.io'
+                        value: 'https://production-sfo.browserless.io',
                     },
                     {
                         label: 'Europe UK (London)',
-                        value: 'https://production-lon.browserless.io'
+                        value: 'https://production-lon.browserless.io',
                     },
                     {
                         label: 'Europe (Amsterdam)',
-                        value: 'https://production-ams.browserless.io'
+                        value: 'https://production-ams.browserless.io',
                     },
                     {
                         label: 'Custom Endpoint',
-                        value: 'custom'
-                    }
-                ]
-            }
+                        value: 'custom',
+                    },
+                ],
+            },
         }),
         customBaseUrl: Property.ShortText({
             displayName: 'Custom Base URL',
@@ -54,4 +54,4 @@ export const browserlessAuth = PieceAuth.CustomAuth({
         }),
     },
     required: true,
-});
+})

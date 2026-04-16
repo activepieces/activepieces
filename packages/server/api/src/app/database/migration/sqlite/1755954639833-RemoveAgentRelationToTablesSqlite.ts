@@ -207,5 +207,4 @@ export class RemoveAgentRelationToTablesSqlite1755954639833 implements Migration
             CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
         `)
     }
-
 }

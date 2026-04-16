@@ -1,7 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class RenameAppNameToPieceName1703711596105
-implements MigrationInterface {
+export class RenameAppNameToPieceName1703711596105 implements MigrationInterface {
     name = 'RenameAppNameToPieceName1703711596105'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

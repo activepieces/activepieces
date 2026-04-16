@@ -1,10 +1,10 @@
-import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
-import { baseUrl } from './common';
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { textcortexAuth } from './auth';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework'
+import { textcortexAuth } from './auth'
+import { baseUrl } from './common'
 
 export interface TextCortexAuth {
-    auth: string;
+    auth: string
 }
 
 export const textcortexCommon = {
@@ -15,18 +15,18 @@ export const textcortexCommon = {
         body,
         headers = {},
     }: {
-        auth: AppConnectionValueForAuthProperty<typeof textcortexAuth>;
-        method: HttpMethod;
-        resourceUri: string;
-        body?: any;
-        headers?: Record<string, string>;
+        auth: AppConnectionValueForAuthProperty<typeof textcortexAuth>
+        method: HttpMethod
+        resourceUri: string
+        body?: any
+        headers?: Record<string, string>
     }) {
-        const url = `${baseUrl}${resourceUri}`;
+        const url = `${baseUrl}${resourceUri}`
 
         const requestHeaders = {
             'Content-Type': 'application/json',
             ...headers,
-        };
+        }
 
         const requestConfig = {
             method,
@@ -37,8 +37,8 @@ export const textcortexCommon = {
                 token: auth.secret_text,
             } as const,
             body,
-        };
+        }
 
-        return await httpClient.sendRequest(requestConfig);
+        return await httpClient.sendRequest(requestConfig)
     },
-};
+}

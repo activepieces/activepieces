@@ -25,8 +25,8 @@ vi.mock('check-disk-space', () => ({
     default: vi.fn(),
 }))
 
-import fs from 'fs'
 import checkDiskSpace from 'check-disk-space'
+import fs from 'fs'
 import si from 'systeminformation'
 import { fileSystemUtils } from '../src/file-system-utils'
 
@@ -60,7 +60,7 @@ beforeEach(() => {
 describe('getContainerMemoryUsage', () => {
     it('should return cgroup v2 values when limit is valid', async () => {
         const totalBytes = 1024 * 1024 * 512 // 512 MiB
-        const usedBytes = 1024 * 1024 * 256  // 256 MiB
+        const usedBytes = 1024 * 1024 * 256 // 256 MiB
         mockCgroupFiles({
             '/sys/fs/cgroup/memory.max': String(totalBytes),
             '/sys/fs/cgroup/memory.current': String(usedBytes),

@@ -38,7 +38,10 @@ export const secretManagersController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.delete('/cache', ClearSecretManagerCache, async (request, reply) => {
-        await secretManagerCache.invalidateConnectionEntries({ platformId: request.principal.platform.id, connectionId: request.query.connectionId })
+        await secretManagerCache.invalidateConnectionEntries({
+            platformId: request.principal.platform.id,
+            connectionId: request.query.connectionId,
+        })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
 }

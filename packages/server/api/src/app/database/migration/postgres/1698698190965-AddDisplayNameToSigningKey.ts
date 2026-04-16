@@ -2,8 +2,7 @@ import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
-export class AddDisplayNameToSigningKey1698698190965
-implements MigrationInterface {
+export class AddDisplayNameToSigningKey1698698190965 implements MigrationInterface {
     name = 'AddDisplayNameToSigningKey1698698190965'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

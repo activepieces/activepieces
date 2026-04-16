@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
-import { useState, forwardRef } from 'react';
+import { forwardRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 

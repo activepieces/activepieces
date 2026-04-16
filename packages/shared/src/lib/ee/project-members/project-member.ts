@@ -7,13 +7,15 @@ import { ProjectRole } from '../../management/project-role/project-role'
 
 export type ProjectMemberId = string
 
-export const ProjectMember = z.object({
-    ...BaseModelSchema,
-    platformId: ApId,
-    userId: ApId,
-    projectId: z.string(),
-    projectRoleId: ApId,
-}).describe('Project member is which user is assigned to a project.')
+export const ProjectMember = z
+    .object({
+        ...BaseModelSchema,
+        platformId: ApId,
+        userId: ApId,
+        projectId: z.string(),
+        projectRoleId: ApId,
+    })
+    .describe('Project member is which user is assigned to a project.')
 
 export type ProjectMember = z.infer<typeof ProjectMember>
 

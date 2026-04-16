@@ -1,14 +1,14 @@
 import {
   isNil,
-  PROJECT_COLOR_PALETTE,
   PlatformRole,
+  PROJECT_COLOR_PALETTE,
   ProjectType,
   TeamProjectsLimit,
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Search, Plus } from 'lucide-react';
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { Plus, Search } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
@@ -30,11 +30,11 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
+  SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuItem,
   SidebarSeparator,
   useSidebar,
-  SidebarGroupLabel,
-  SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
 import {
   Tooltip,
@@ -42,7 +42,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
-import { projectCollectionUtils, getProjectName } from '@/features/projects';
+import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -61,7 +61,9 @@ import { SidebarUser } from '../sidebar-user';
 
 export function ProjectDashboardSidebar({
   className,
-}: { className?: string } = {}) {
+}: {
+  className?: string;
+} = {}) {
   const { data: projects } = projectCollectionUtils.useAll();
   const { embedState } = useEmbedding();
   const { state } = useSidebar();

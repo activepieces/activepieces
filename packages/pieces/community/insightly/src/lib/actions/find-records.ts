@@ -1,19 +1,17 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-    HttpMethod
-} from '@activepieces/pieces-common';
-import { insightlyAuth, makeInsightlyRequest } from '../common/common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { insightlyAuth, makeInsightlyRequest } from '../common/common'
 import {
     contactFields,
+    eventFields,
     leadFields,
     opportunityFields,
     organisationFields,
-    projectFields,
-    taskFields,
-    eventFields,
     productFields,
+    projectFields,
     quotationFields,
-} from '../common/props';
+    taskFields,
+} from '../common/props'
 
 export const findRecords = createAction({
     auth: insightlyAuth,
@@ -25,7 +23,7 @@ export const findRecords = createAction({
             displayName: 'Pod',
             description: 'Your Insightly pod (e.g., "na1", "eu1").',
             required: true,
-            defaultValue: 'na1'
+            defaultValue: 'na1',
         }),
         objectName: Property.StaticDropdown({
             displayName: 'Object Type',
@@ -41,9 +39,9 @@ export const findRecords = createAction({
                     { label: 'Task', value: 'Tasks' },
                     { label: 'Event', value: 'Events' },
                     { label: 'Product', value: 'Products' },
-                    { label: 'Quote', value: 'Quotations' }
-                ]
-            }
+                    { label: 'Quote', value: 'Quotations' },
+                ],
+            },
         }),
         fieldName: Property.Dropdown({
             auth: insightlyAuth,
@@ -56,50 +54,68 @@ export const findRecords = createAction({
                     return {
                         disabled: true,
                         placeholder: 'Select an object type first',
-                        options: []
-                    };
+                        options: [],
+                    }
                 }
-                let fields: any = {};
+                let fields: any = {}
                 switch (objectName as string) {
-                    case 'Contacts': fields = contactFields; break;
-                    case 'Leads': fields = leadFields; break;
-                    case 'Opportunities': fields = opportunityFields; break;
-                    case 'Organisations': fields = organisationFields; break;
-                    case 'Projects': fields = projectFields; break;
-                    case 'Tasks': fields = taskFields; break;
-                    case 'Events': fields = eventFields; break;
-                    case 'Products': fields = productFields; break;
-                    case 'Quotations': fields = quotationFields; break;
+                    case 'Contacts':
+                        fields = contactFields
+                        break
+                    case 'Leads':
+                        fields = leadFields
+                        break
+                    case 'Opportunities':
+                        fields = opportunityFields
+                        break
+                    case 'Organisations':
+                        fields = organisationFields
+                        break
+                    case 'Projects':
+                        fields = projectFields
+                        break
+                    case 'Tasks':
+                        fields = taskFields
+                        break
+                    case 'Events':
+                        fields = eventFields
+                        break
+                    case 'Products':
+                        fields = productFields
+                        break
+                    case 'Quotations':
+                        fields = quotationFields
+                        break
                 }
                 return {
-                    options: Object.keys(fields).map(key => ({
+                    options: Object.keys(fields).map((key) => ({
                         label: fields[key].displayName,
-                        value: key
-                    }))
-                };
-            }
+                        value: key,
+                    })),
+                }
+            },
         }),
         fieldValue: Property.ShortText({
             displayName: 'Field Value',
             description: 'The value to search for',
-            required: true
+            required: true,
         }),
         top: Property.Number({
             displayName: 'Limit',
             description: 'Maximum number of records to return',
-            required: false
-        })
+            required: false,
+        }),
     },
     async run(context) {
-        const { pod, objectName, fieldName, fieldValue, top } = context.propsValue;
+        const { pod, objectName, fieldName, fieldValue, top } = context.propsValue
 
         const queryParams = new URLSearchParams({
             field_name: fieldName as string,
             field_value: fieldValue as string,
-        });
+        })
 
         if (top) {
-            queryParams.append('top', top.toString());
+            queryParams.append('top', top.toString())
         }
 
         try {
@@ -107,12 +123,12 @@ export const findRecords = createAction({
                 context.auth,
                 `/${objectName}/Search?${queryParams.toString()}`,
                 pod as string,
-                HttpMethod.GET
-            );
+                HttpMethod.GET,
+            )
 
-            return response.body;
+            return response.body
         } catch (error: any) {
-            throw new Error(`Failed to find records: ${error.message}`);
+            throw new Error(`Failed to find records: ${error.message}`)
         }
-    }
-});
+    },
+})

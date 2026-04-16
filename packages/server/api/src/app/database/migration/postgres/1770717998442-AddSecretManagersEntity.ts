@@ -36,5 +36,4 @@ export class AddSecretManagersEntity1770717998442 implements MigrationInterface 
             DROP TABLE "secret_manager"
         `)
     }
-
 }

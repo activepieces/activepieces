@@ -7,7 +7,6 @@ import { jwtUtils } from '../../../helper/jwt-utils'
 import { mcpOAuthCodeService } from './mcp-oauth-code.service'
 
 export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
-
     app.post('/v1/mcp-oauth/approve', ApproveRequest, async (req, reply) => {
         const { authRequestId, projectId } = req.body
         const userId = req.principal.id
@@ -20,13 +19,16 @@ export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
                 jwt: authRequestId,
                 key,
             })
-        }
-        catch {
-            return reply.status(400).send({ error: 'invalid_request', error_description: 'Invalid or expired authorization request' })
+        } catch {
+            return reply
+                .status(400)
+                .send({ error: 'invalid_request', error_description: 'Invalid or expired authorization request' })
         }
 
         if (authRequest.type !== 'mcp_auth_request') {
-            return reply.status(400).send({ error: 'invalid_request', error_description: 'Invalid authorization request type' })
+            return reply
+                .status(400)
+                .send({ error: 'invalid_request', error_description: 'Invalid authorization request type' })
         }
 
         const code = await mcpOAuthCodeService.create({
@@ -53,11 +55,9 @@ export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
 
 const ApproveRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            Permission.WRITE_MCP,
-            { type: ProjectResourceType.BODY },
-        ),
+        security: securityAccess.project([PrincipalType.USER], Permission.WRITE_MCP, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         tags: ['mcp-oauth'],

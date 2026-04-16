@@ -3,7 +3,9 @@ import { FastifyBaseLogger } from 'fastify'
 import { apAxios } from '../../../helper/ap-axios'
 import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
 
-export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.HASHICORP> => ({
+export const hashicorpProvider = (
+    log: FastifyBaseLogger,
+): SecretManagerProvider<SecretManagerProviderId.HASHICORP> => ({
     checkConnection: async (config) => {
         const url = removeEndingSlash(config.url)
         const response = await vaultApi({
@@ -28,7 +30,11 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
             namespace: config.namespace,
         }).catch((error) => {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-            throwConnectionError({ error: `Permission denied. make sure the app role policies has the necessary permissions ${errorMessage}`, provider: SecretManagerProviderId.HASHICORP, log })
+            throwConnectionError({
+                error: `Permission denied. make sure the app role policies has the necessary permissions ${errorMessage}`,
+                provider: SecretManagerProviderId.HASHICORP,
+                log,
+            })
         })
         return token
     },
@@ -43,7 +49,7 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
         const pathParts = request.path.split('/')
         const mountPath = pathParts.slice(0, -1).join('/')
         const secretKey = pathParts.slice(-1)[0]
-        const token = await hashicorpProvider(log).checkConnection(config) as string
+        const token = (await hashicorpProvider(log).checkConnection(config)) as string
         const configUrl = removeEndingSlash(config.url)
         const requestUrl = `${configUrl}/v1/${mountPath}`
         const response = await vaultApi({
@@ -52,11 +58,23 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
             method: 'GET',
             namespace: config.namespace,
         }).catch((error) => {
-            throwGetSecretError({ error, path: request.path, provider: SecretManagerProviderId.HASHICORP, request: { ...request, url: requestUrl }, log })
+            throwGetSecretError({
+                error,
+                path: request.path,
+                provider: SecretManagerProviderId.HASHICORP,
+                request: { ...request, url: requestUrl },
+                log,
+            })
         })
         const data = response.data?.data?.data
         if (!data || !data[secretKey]) {
-            throwGetSecretError({ error: 'No secret found at requested path', path: request.path, provider: SecretManagerProviderId.HASHICORP, request, log })
+            throwGetSecretError({
+                error: 'No secret found at requested path',
+                path: request.path,
+                provider: SecretManagerProviderId.HASHICORP,
+                request,
+                log,
+            })
         }
         return data[secretKey]
     },
@@ -65,7 +83,7 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
 export async function validatePathFormat(key: string) {
     const path = removeEndingSlash(key)
     const pathParts = path.split('/')
-    if (pathParts.length < 3 ) {
+    if (pathParts.length < 3) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: {

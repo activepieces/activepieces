@@ -1,9 +1,9 @@
 import {
+  ExecutePropsResult,
+  InputPropertyMap,
   PieceMetadataModel,
   PieceMetadataModelSummary,
   PropertyType,
-  ExecutePropsResult,
-  InputPropertyMap,
 } from '@activepieces/pieces-framework';
 import {
   AddPieceRequestBody,

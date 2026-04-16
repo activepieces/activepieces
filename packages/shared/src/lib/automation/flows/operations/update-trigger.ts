@@ -7,8 +7,12 @@ import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { UpdateTriggerRequest } from '.'
 
-
-function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: FlowAction | undefined, existingSampleData: SampleDataSettings | undefined): FlowTrigger {
+function createTrigger(
+    name: string,
+    request: UpdateTriggerRequest,
+    nextAction: FlowAction | undefined,
+    existingSampleData: SampleDataSettings | undefined,
+): FlowTrigger {
     const baseProperties = {
         displayName: request.displayName,
         name,

@@ -1,12 +1,6 @@
-import {
-    CustomDomain,
-    CustomDomainStatus,
-    Platform } from '@activepieces/shared'
+import { CustomDomain, CustomDomainStatus, Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import {
-    ApIdSchema,
-    BaseColumnSchemaPart,
-} from '../../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 type CustomDomainSchema = CustomDomain & {
     platform?: Platform

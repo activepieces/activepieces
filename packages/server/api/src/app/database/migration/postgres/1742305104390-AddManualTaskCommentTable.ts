@@ -56,5 +56,4 @@ export class AddManualTaskCommentTable1742305104390 implements MigrationInterfac
             DROP TABLE "manual_task_comment"
         `)
     }
-
 }

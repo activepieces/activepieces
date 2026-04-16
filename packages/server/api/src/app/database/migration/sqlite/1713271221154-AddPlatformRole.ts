@@ -128,7 +128,7 @@ export class AddPlatformRole1713271221154 implements MigrationInterface {
             'MEMBER'
             FROM "user"
         `)
-        
+
         await queryRunner.query(`
             DROP TABLE "user"
         `)
@@ -291,5 +291,4 @@ export class AddPlatformRole1713271221154 implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
     }
-
 }

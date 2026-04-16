@@ -128,4 +128,5 @@ const NewConnectionDialog = React.memo(
 );
 
 NewConnectionDialog.displayName = 'NewConnectionDialog';
+
 export { NewConnectionDialog };

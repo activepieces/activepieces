@@ -1,16 +1,16 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
 
 export interface CashgramAuthCredentials {
-  clientId: string;
-  clientSecret: string;
+    clientId: string
+    clientSecret: string
 }
 
 export interface CashgramTokenResponse {
-  success: boolean;
-  token?: string;
-  error?: any;
-  message?: string;
+    success: boolean
+    token?: string
+    error?: any
+    message?: string
 }
 
 /**
@@ -19,96 +19,97 @@ export interface CashgramTokenResponse {
  * This implementation uses crypto to generate the proper x-cf-signature.
  */
 export async function generateCashgramToken(
-  credentials: CashgramAuthCredentials,
-  environment: 'sandbox' | 'production'
+    credentials: CashgramAuthCredentials,
+    environment: 'sandbox' | 'production',
 ): Promise<CashgramTokenResponse> {
-  try {
-    const baseUrl = environment === 'production'
-      ? 'https://payout-api.cashfree.com/payout/v1/authorize'
-      : 'https://payout-gamma.cashfree.com/payout/v1/authorize';
+    try {
+        const baseUrl =
+            environment === 'production'
+                ? 'https://payout-api.cashfree.com/payout/v1/authorize'
+                : 'https://payout-gamma.cashfree.com/payout/v1/authorize'
 
-    const headers = {
-      'x-client-id': credentials.clientId,
-      'x-client-secret': credentials.clientSecret,
-      'Content-Type': 'application/json',
-    };
+        const headers = {
+            'x-client-id': credentials.clientId,
+            'x-client-secret': credentials.clientSecret,
+            'Content-Type': 'application/json',
+        }
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: baseUrl,
-      headers: headers,
-      body: {},
-    });
-    
-    if (response.status === 200 && response.body?.data?.token) {
-      return {
-        success: true,
-        token: response.body.data.token,
-        message: 'Bearer token generated successfully',
-      };
-    } else {
-      return {
-        success: false,
-        error: response.body,
-        message: `Failed to generate bearer token. Status: ${response.status}. Response: ${JSON.stringify(response.body)}`,
-      };
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.POST,
+            url: baseUrl,
+            headers: headers,
+            body: {},
+        })
+
+        if (response.status === 200 && response.body?.data?.token) {
+            return {
+                success: true,
+                token: response.body.data.token,
+                message: 'Bearer token generated successfully',
+            }
+        } else {
+            return {
+                success: false,
+                error: response.body,
+                message: `Failed to generate bearer token. Status: ${response.status}. Response: ${JSON.stringify(response.body)}`,
+            }
+        }
+    } catch (error) {
+        console.error('Error generating Cashgram token:', error)
+        return {
+            success: false,
+            error: error,
+            message: 'An error occurred while generating the bearer token',
+        }
     }
-  } catch (error) {
-    console.error('Error generating Cashgram token:', error);
-    return {
-      success: false,
-      error: error,
-      message: 'An error occurred while generating the bearer token',
-    };
-  }
 }
 
 /**
  * Validate authentication credentials based on auth type
  */
-export function validateAuthCredentials(authType: string, credentials: {
-  clientId?: string;
-  clientSecret?: string;
-}): {
-  isValid: boolean;
-  error?: string;
+export function validateAuthCredentials(
+    authType: string,
+    credentials: {
+        clientId?: string
+        clientSecret?: string
+    },
+): {
+    isValid: boolean
+    error?: string
 } {
-  if (authType === 'client_credentials') {
-    if (!credentials.clientId || (credentials.clientId).trim().length === 0) {
-      return {
-        isValid: false,
-        error: 'Client ID is required for Client Credentials authentication',
-      };
+    if (authType === 'client_credentials') {
+        if (!credentials.clientId || credentials.clientId.trim().length === 0) {
+            return {
+                isValid: false,
+                error: 'Client ID is required for Client Credentials authentication',
+            }
+        }
+
+        if (!credentials.clientSecret || credentials.clientSecret.trim().length === 0) {
+            return {
+                isValid: false,
+                error: 'Client Secret is required for Client Credentials authentication',
+            }
+        }
+    } else if (authType === 'client_credentials_with_public_key') {
+        if (!credentials.clientId || credentials.clientId.trim().length === 0) {
+            return {
+                isValid: false,
+                error: 'Client ID is required for Client Credentials + Public Key authentication',
+            }
+        }
+
+        if (!credentials.clientSecret || credentials.clientSecret.trim().length === 0) {
+            return {
+                isValid: false,
+                error: 'Client Secret is required for Client Credentials + Public Key authentication',
+            }
+        }
     }
 
-    if (!credentials.clientSecret || (credentials.clientSecret).trim().length === 0) {
-      return {
-        isValid: false,
-        error: 'Client Secret is required for Client Credentials authentication',
-      };
+    return {
+        isValid: true,
     }
-  } else if (authType === 'client_credentials_with_public_key') {
-    if (!credentials.clientId || (credentials.clientId).trim().length === 0) {
-      return {
-        isValid: false,
-        error: 'Client ID is required for Client Credentials + Public Key authentication',
-      };
-    }
-
-    if (!credentials.clientSecret || (credentials.clientSecret).trim().length === 0) {
-      return {
-        isValid: false,
-        error: 'Client Secret is required for Client Credentials + Public Key authentication',
-      };
-    }
-
-
-
-  }
-
-  return {
-    isValid: true,
-  };
 }
 
 /**
@@ -116,14 +117,14 @@ export function validateAuthCredentials(authType: string, credentials: {
  * @deprecated Use validateAuthCredentials instead
  */
 export function validateCashgramCredentials(credentials: CashgramAuthCredentials): {
-  isValid: boolean;
-  error?: string;
+    isValid: boolean
+    error?: string
 } {
-  return validateAuthCredentials('client_credentials_with_public_key', credentials);
+    return validateAuthCredentials('client_credentials_with_public_key', credentials)
 }
 
 export const cashfreePaymentsAuth = PieceAuth.CustomAuth({
-  description: `Connect your Cashfree account
+    description: `Connect your Cashfree account
 
 This connector requires Cashfree API credentials (Client ID and Client Secret). Important: each Cashfree product is a separate product and requires its own credentials. For example, the Payments API and the Payouts API each need their own Client ID / Client Secret pairs.
 
@@ -145,17 +146,17 @@ How to generate API keys:
 6. Click **Download API Keys** to save the keys locally. Keep these secret — do not share them.
 
 `,
-  props: {
-    clientId: Property.ShortText({
-      displayName: 'Cashfree Client ID',
-      description: 'Your Cashfree Client ID',
-      required: false,
-    }),
-    clientSecret: Property.ShortText({
-      displayName: 'Cashfree Client Secret',
-      description: 'Your Cashfree Client Secret',
-      required: false,
-    })
-  },  
-  required: true,
-});
+    props: {
+        clientId: Property.ShortText({
+            displayName: 'Cashfree Client ID',
+            description: 'Your Cashfree Client ID',
+            required: false,
+        }),
+        clientSecret: Property.ShortText({
+            displayName: 'Cashfree Client Secret',
+            description: 'Your Cashfree Client Secret',
+            required: false,
+        }),
+    },
+    required: true,
+})

@@ -48,5 +48,4 @@ export class AddPlatformIdToAiUsage1750526457504 implements MigrationInterface {
             CREATE INDEX "idx_ai_usage_project_created" ON "ai_usage" ("created", "projectId")
         `)
     }
-
 }

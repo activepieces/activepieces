@@ -1,18 +1,14 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { missiveAuth } from '../common/auth';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { missiveAuth } from '../common/auth'
 
 export const newContactBook = createTrigger({
-  name: 'new_contact_book',
-  displayName: 'New Contact Book',
-  description: 'Triggers when new contact books are created',
-  auth: missiveAuth,
-  props: {
-    setupInstructions: Property.MarkDown({
-      value: `
+    name: 'new_contact_book',
+    displayName: 'New Contact Book',
+    description: 'Triggers when new contact books are created',
+    auth: missiveAuth,
+    props: {
+        setupInstructions: Property.MarkDown({
+            value: `
 ## Setup Instructions
 
 To use this trigger, you need to manually create a webhook rule in your Missive account:
@@ -56,48 +52,48 @@ Configure filters like:
 - Create corresponding contact lists in external CRM systems
 - Track contact book creation for audit and compliance
       `,
-    }),
-  },
-  type: TriggerStrategy.WEBHOOK,
-  sampleData: {
-    rule: {
-      id: "45408b30-aa3a-45n1-bh67-0a0cb8da9080",
-      description: "New contact book webhook",
-      type: "new_contact_book"
+        }),
     },
-    contact_book: {
-      id: "book_12345678-abcd-1234-5678-1234567890ab",
-      name: "Sales Prospects 2024",
-      description: "Potential customers for Q1 2024 campaign",
-      created_at: "2023-07-27T10:00:00+00:00",
-      modified_at: 1556200645,
-      organization: {
-        id: "org_12345678-abcd-1234-5678-1234567890ab",
-        name: "Your Organization"
-      },
-      owner: {
-        id: "user_12345678-abcd-1234-5678-1234567890ab",
-        name: "Book Creator",
-        email: "creator@company.com"
-      },
-      permissions: {
-        public: false,
-        team_access: true,
-        organization_access: false
-      },
-      contact_count: 0
-    }
-  },
+    type: TriggerStrategy.WEBHOOK,
+    sampleData: {
+        rule: {
+            id: '45408b30-aa3a-45n1-bh67-0a0cb8da9080',
+            description: 'New contact book webhook',
+            type: 'new_contact_book',
+        },
+        contact_book: {
+            id: 'book_12345678-abcd-1234-5678-1234567890ab',
+            name: 'Sales Prospects 2024',
+            description: 'Potential customers for Q1 2024 campaign',
+            created_at: '2023-07-27T10:00:00+00:00',
+            modified_at: 1556200645,
+            organization: {
+                id: 'org_12345678-abcd-1234-5678-1234567890ab',
+                name: 'Your Organization',
+            },
+            owner: {
+                id: 'user_12345678-abcd-1234-5678-1234567890ab',
+                name: 'Book Creator',
+                email: 'creator@company.com',
+            },
+            permissions: {
+                public: false,
+                team_access: true,
+                organization_access: false,
+            },
+            contact_count: 0,
+        },
+    },
 
-  async onEnable(context) {
-    // Manual setup - no programmatic registration needed
-  },
+    async onEnable(context) {
+        // Manual setup - no programmatic registration needed
+    },
 
-  async onDisable(context) {
-    // Manual setup - users manage rules in Missive UI
-  },
+    async onDisable(context) {
+        // Manual setup - users manage rules in Missive UI
+    },
 
-  async run(context) {
-    return [context.payload.body];
-  },
-});
+    async run(context) {
+        return [context.payload.body]
+    },
+})

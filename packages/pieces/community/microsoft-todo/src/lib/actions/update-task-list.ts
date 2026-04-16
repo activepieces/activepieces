@@ -1,7 +1,7 @@
-import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getTaskListsDropdown, createTodoClient } from '../common';
-import { microsoftToDoAuth } from '../auth';
-import { TodoTaskList } from '@microsoft/microsoft-graph-types';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
+import { TodoTaskList } from '@microsoft/microsoft-graph-types'
+import { microsoftToDoAuth } from '../auth'
+import { createTodoClient, getTaskListsDropdown } from '../common'
 
 export const updateTaskListAction = createAction({
     auth: microsoftToDoAuth,
@@ -10,21 +10,21 @@ export const updateTaskListAction = createAction({
     description: 'Updates an existing task list.',
     props: {
         task_list_id: Property.Dropdown({
-   auth: microsoftToDoAuth,
+            auth: microsoftToDoAuth,
             displayName: 'Task List',
             description: 'The task list to update.',
             required: true,
             refreshers: [],
             options: async ({ auth }) => {
-                const authValue = auth as OAuth2PropertyValue;
+                const authValue = auth as OAuth2PropertyValue
                 if (!authValue?.access_token) {
                     return {
                         disabled: true,
                         placeholder: 'Connect your account first',
                         options: [],
-                    };
+                    }
                 }
-                return await getTaskListsDropdown(authValue);
+                return await getTaskListsDropdown(authValue)
             },
         }),
         displayName: Property.ShortText({
@@ -34,31 +34,29 @@ export const updateTaskListAction = createAction({
         }),
     },
     async run(context) {
-        const { auth, propsValue } = context;
-        const { task_list_id, displayName } = propsValue;
+        const { auth, propsValue } = context
+        const { task_list_id, displayName } = propsValue
 
         if (!task_list_id) {
-            throw new Error('Task List ID is required');
+            throw new Error('Task List ID is required')
         }
 
         if (!displayName || displayName.trim().length === 0) {
-            throw new Error('New Name cannot be empty. Please provide a valid name for the task list.');
+            throw new Error('New Name cannot be empty. Please provide a valid name for the task list.')
         }
 
-        const client = createTodoClient(auth);
+        const client = createTodoClient(auth)
 
         try {
             const taskListBody: Partial<TodoTaskList> = {
                 displayName: displayName.trim(),
-            };
+            }
 
-            const response = await client
-                .api(`/me/todo/lists/${task_list_id}`)
-                .update(taskListBody);
+            const response = await client.api(`/me/todo/lists/${task_list_id}`).update(taskListBody)
 
-            return response as TodoTaskList;
+            return response as TodoTaskList
         } catch (error: any) {
-            throw new Error(`Failed to update task list: ${error?.message || error}`);
+            throw new Error(`Failed to update task list: ${error?.message || error}`)
         }
     },
-});
+})

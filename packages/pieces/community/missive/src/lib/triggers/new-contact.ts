@@ -1,18 +1,14 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { missiveAuth } from '../common/auth';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { missiveAuth } from '../common/auth'
 
 export const newContact = createTrigger({
-  name: 'new_contact',
-  displayName: 'New Contact',
-  description: 'Triggers when new contacts are added to contact books',
-  auth: missiveAuth,
-  props: {
-    setupInstructions: Property.MarkDown({
-      value: `
+    name: 'new_contact',
+    displayName: 'New Contact',
+    description: 'Triggers when new contacts are added to contact books',
+    auth: missiveAuth,
+    props: {
+        setupInstructions: Property.MarkDown({
+            value: `
 ## Setup Instructions
 
 To use this trigger, you need to manually create a webhook rule in your Missive account:
@@ -59,67 +55,67 @@ Configure filters like:
 - Alert sales team when new prospects are added
 - Backup contact data to external systems
       `,
-    }),
-  },
-  type: TriggerStrategy.WEBHOOK,
-  sampleData: {
-    rule: {
-      id: "45408b30-aa3a-45n1-bh67-0a0cb8da9080",
-      description: "New contact webhook",
-      type: "new_contact"
+        }),
     },
-    contact: {
-      id: "contact_12345678-abcd-1234-5678-1234567890ab",
-      first_name: "John",
-      last_name: "Doe",
-      middle_name: "Michael",
-      starred: false,
-      contact_book: "487bc080-6631-4edc-830e-1d114eef4ab0",
-      created_at: "2023-07-27T10:00:00+00:00",
-      modified_at: 1556200645,
-      infos: [
-        {
-          kind: "email",
-          label: "work",
-          value: "john.doe@company.com"
+    type: TriggerStrategy.WEBHOOK,
+    sampleData: {
+        rule: {
+            id: '45408b30-aa3a-45n1-bh67-0a0cb8da9080',
+            description: 'New contact webhook',
+            type: 'new_contact',
         },
-        {
-          kind: "phone_number",
-          label: "mobile",
-          value: "+1-555-123-4567"
-        }
-      ],
-      memberships: [
-        {
-          title: "Sales Manager",
-          location: "New York",
-          group: {
-            kind: "organization",
-            name: "ABC Corporation"
-          }
-        }
-      ],
-      organization: {
-        id: "org_12345678-abcd-1234-5678-1234567890ab",
-        name: "Your Organization"
-      },
-      owner: {
-        id: "user_12345678-abcd-1234-5678-1234567890ab",
-        name: "Contact Owner",
-        email: "owner@company.com"
-      }
-    }
-  },
+        contact: {
+            id: 'contact_12345678-abcd-1234-5678-1234567890ab',
+            first_name: 'John',
+            last_name: 'Doe',
+            middle_name: 'Michael',
+            starred: false,
+            contact_book: '487bc080-6631-4edc-830e-1d114eef4ab0',
+            created_at: '2023-07-27T10:00:00+00:00',
+            modified_at: 1556200645,
+            infos: [
+                {
+                    kind: 'email',
+                    label: 'work',
+                    value: 'john.doe@company.com',
+                },
+                {
+                    kind: 'phone_number',
+                    label: 'mobile',
+                    value: '+1-555-123-4567',
+                },
+            ],
+            memberships: [
+                {
+                    title: 'Sales Manager',
+                    location: 'New York',
+                    group: {
+                        kind: 'organization',
+                        name: 'ABC Corporation',
+                    },
+                },
+            ],
+            organization: {
+                id: 'org_12345678-abcd-1234-5678-1234567890ab',
+                name: 'Your Organization',
+            },
+            owner: {
+                id: 'user_12345678-abcd-1234-5678-1234567890ab',
+                name: 'Contact Owner',
+                email: 'owner@company.com',
+            },
+        },
+    },
 
-  async onEnable(context) {
-    // Manual setup - no programmatic registration needed
-  },
+    async onEnable(context) {
+        // Manual setup - no programmatic registration needed
+    },
 
-  async onDisable(context) {
-    // Manual setup - users manage rules in Missive UI
-  },
+    async onDisable(context) {
+        // Manual setup - users manage rules in Missive UI
+    },
 
-  async run(context) {
-    return [context.payload.body];
-  },
-});
+    async run(context) {
+        return [context.payload.body]
+    },
+})

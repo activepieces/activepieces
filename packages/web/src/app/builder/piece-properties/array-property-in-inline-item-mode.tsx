@@ -75,6 +75,7 @@ const ArrayPiecePropertyInInlineItemMode = React.memo(
 
 ArrayPiecePropertyInInlineItemMode.displayName =
   'ArrayPiecePropertyInInlineItemMode';
+
 export { ArrayPiecePropertyInInlineItemMode };
 
 /**

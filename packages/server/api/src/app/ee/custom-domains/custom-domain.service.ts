@@ -2,7 +2,13 @@ import {
     ActivepiecesError,
     ApEdition,
     apId,
-    CustomDomain, CustomDomainStatus, ErrorCode, isNil, ListCustomDomainsRequest, SeekPage } from '@activepieces/shared'
+    CustomDomain,
+    CustomDomainStatus,
+    ErrorCode,
+    isNil,
+    ListCustomDomainsRequest,
+    SeekPage,
+} from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -12,7 +18,7 @@ import { CustomDomainEntity } from './custom-domain.entity'
 const customDomainRepo = repoFactory<CustomDomain>(CustomDomainEntity)
 
 export const customDomainService = {
-    async delete(request: { id: string, platformId: string }): Promise<void> {
+    async delete(request: { id: string; platformId: string }): Promise<void> {
         await customDomainRepo().delete({
             id: request.id,
             platformId: request.platformId,
@@ -34,17 +40,13 @@ export const customDomainService = {
         }
         return customDomain
     },
-    async getOneByDomain(request: {
-        domain: string
-    }): Promise<CustomDomain | null> {
+    async getOneByDomain(request: { domain: string }): Promise<CustomDomain | null> {
         return customDomainRepo().findOneBy({
             domain: request.domain,
             status: CustomDomainStatus.ACTIVE,
         })
     },
-    async getOneByPlatform(request: {
-        platformId: string | null
-    }): Promise<CustomDomain | null> {
+    async getOneByPlatform(request: { platformId: string | null }): Promise<CustomDomain | null> {
         if (isNil(request.platformId)) {
             return null
         }
@@ -52,22 +54,18 @@ export const customDomainService = {
             platformId: request.platformId,
         })
     },
-    async verifyDomain(request: {
-        platformId: string
-        id: string
-    }): Promise<void> {
-        await customDomainRepo().update({
-            platformId: request.platformId,
-            id: request.id,
-        }, {
-            status: CustomDomainStatus.ACTIVE,
-        })
-
+    async verifyDomain(request: { platformId: string; id: string }): Promise<void> {
+        await customDomainRepo().update(
+            {
+                platformId: request.platformId,
+                id: request.id,
+            },
+            {
+                status: CustomDomainStatus.ACTIVE,
+            },
+        )
     },
-    async create(request: {
-        domain: string
-        platformId: string
-    }): Promise<CustomDomain> {
+    async create(request: { domain: string; platformId: string }): Promise<CustomDomain> {
         const isCloudEdition = system.getEdition() === ApEdition.CLOUD
         return customDomainRepo().save({
             id: apId(),
@@ -75,7 +73,6 @@ export const customDomainService = {
             platformId: request.platformId,
             status: isCloudEdition ? CustomDomainStatus.PENDING : CustomDomainStatus.ACTIVE,
         })
-
     },
     async getPlatformUrlFromEmail(userEmail: string): Promise<string | null> {
         const rootDomain = userEmail.split('@')[1]
@@ -84,15 +81,14 @@ export const customDomainService = {
                 status: CustomDomainStatus.ACTIVE,
             },
         })
-        return allDomains.find(cd => {
-            const domainOrSubdomain = cd.domain
-            return domainOrSubdomain.endsWith(`.${rootDomain}`)
-        })?.domain ?? null
+        return (
+            allDomains.find((cd) => {
+                const domainOrSubdomain = cd.domain
+                return domainOrSubdomain.endsWith(`.${rootDomain}`)
+            })?.domain ?? null
+        )
     },
-    async list({
-        request,
-        platformId,
-    }: ListParams): Promise<SeekPage<CustomDomain>> {
+    async list({ request, platformId }: ListParams): Promise<SeekPage<CustomDomain>> {
         const decodedCursor = paginationHelper.decodeCursor(request.cursor ?? null)
         const paginator = buildPaginator({
             entity: CustomDomainEntity,
@@ -103,11 +99,9 @@ export const customDomainService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = customDomainRepo()
-            .createQueryBuilder('custom_domain')
-            .where({
-                platformId,
-            })
+        const queryBuilder = customDomainRepo().createQueryBuilder('custom_domain').where({
+            platformId,
+        })
         const { data, cursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<CustomDomain>(data, cursor)
     },

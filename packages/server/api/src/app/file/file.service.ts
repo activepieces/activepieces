@@ -19,16 +19,39 @@ import { repoFactory } from '../core/db/repo-factory'
 import { exceptionHandler } from '../helper/exception-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
-import { fileCompressor } from './file-compressor'
 import { FileEntity } from './file.entity'
+import { fileCompressor } from './file-compressor'
 import { s3Helper } from './s3-helper'
 
-const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/tiff', 'image/bmp', 'image/ico', 'image/avif', 'image/apng']
+const IMAGE_MIME_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/svg+xml',
+    'image/tiff',
+    'image/bmp',
+    'image/ico',
+    'image/avif',
+    'image/apng',
+]
 
 export const fileRepo = repoFactory<File>(FileEntity)
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
-type BaseFile = Pick<File, 'id' | 'projectId' | 'platformId' | 'type' | 'fileName' | 'compression' | 'size' | 'metadata' | 'created' | 'updated'>
+type BaseFile = Pick<
+    File,
+    | 'id'
+    | 'projectId'
+    | 'platformId'
+    | 'type'
+    | 'fileName'
+    | 'compression'
+    | 'size'
+    | 'metadata'
+    | 'created'
+    | 'updated'
+>
 
 const saveFileToDb = async (baseFile: BaseFile, data: SaveParams['data']) => {
     assertNotNullOrUndefined(data, 'data is required')
@@ -59,7 +82,12 @@ export const fileService = (log: FastifyBaseLogger) => ({
             }
             case FileLocation.S3: {
                 try {
-                    const s3Key = await s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
+                    const s3Key = await s3Helper(log).constructS3Key(
+                        params.platformId,
+                        params.projectId,
+                        params.type,
+                        baseFile.id,
+                    )
                     if (!isNil(params.data)) {
                         await s3Helper(log).uploadFile(s3Key, params.data)
                     }
@@ -69,8 +97,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
                         s3Key,
                     })
                     return savedFile
-                }
-                catch (error) {
+                } catch (error) {
                     exceptionHandler.handle(error, log)
                     return saveFileToDb(baseFile, params.data)
                 }
@@ -110,14 +137,15 @@ export const fileService = (log: FastifyBaseLogger) => ({
     async getDataOrUndefined({ projectId, fileId, type }: GetOneParams): Promise<GetDataResponse | undefined> {
         try {
             return await this.getDataOrThrow({ projectId, fileId, type })
-        }
-        catch (error) {
-            log.error({
-                error,
-            }, '[FileService#getData] error')
+        } catch (error) {
+            log.error(
+                {
+                    error,
+                },
+                '[FileService#getData] error',
+            )
             return undefined
         }
-
     },
     async getDataOrThrow({ projectId, fileId, type }: GetOneParams): Promise<GetDataResponse> {
         const file = await fileRepo().findOneBy({
@@ -145,7 +173,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
             fileName: file.fileName ?? undefined,
         }
     },
-    async delete(params: { projectId: ProjectId, fileId: FileId }): Promise<void> {
+    async delete(params: { projectId: ProjectId; fileId: FileId }): Promise<void> {
         const file = await fileRepo().findOneBy({
             id: params.fileId,
             projectId: params.projectId,
@@ -173,33 +201,39 @@ export const fileService = (log: FastifyBaseLogger) => ({
                 take: maximumFilesToDeletePerIteration,
             })
 
-            const s3Keys = staleFiles.filter(f => !isNil(f.s3Key)).map(f => f.s3Key!)
+            const s3Keys = staleFiles.filter((f) => !isNil(f.s3Key)).map((f) => f.s3Key!)
             await s3Helper(log).deleteFiles(s3Keys)
 
             const result = await fileRepo().delete({
                 type: In(types),
                 created: LessThanOrEqual(retentionDateBoundary),
-                id: In(staleFiles.map(file => file.id)),
+                id: In(staleFiles.map((file) => file.id)),
             })
             affected = result.affected || 0
             totalAffected += affected
-            log.info({
-                counts: affected,
-                types,
-            }, '[FileService#deleteStaleBulk] iteration completed')
+            log.info(
+                {
+                    counts: affected,
+                    types,
+                },
+                '[FileService#deleteStaleBulk] iteration completed',
+            )
         }
-        log.info({
-            totalAffected,
-            types,
-        }, '[FileService#deleteStaleBulk] completed')
+        log.info(
+            {
+                totalAffected,
+                types,
+            },
+            '[FileService#deleteStaleBulk] completed',
+        )
     },
     async uploadPublicAsset(params: UploadPublicAssetParams): Promise<string | undefined> {
         const { file, type, platformId, allowedMimeTypes = IMAGE_MIME_TYPES, maxFileSizeInBytes, metadata } = params
-        
+
         if (isNil(file)) {
             return undefined
         }
-        
+
         if (!isMultipartFile(file)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,

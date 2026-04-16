@@ -1,24 +1,24 @@
-import { hubspotAuth } from '../auth';
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { workflowIdDropdown } from "../common/props";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { hubspotAuth } from '../auth'
+import { workflowIdDropdown } from '../common/props'
 
 export const addContactToWorkflowAction = createAction({
-    auth:hubspotAuth,
-    name:'add-contact-to-workflow',
-    displayName:'Add Contact to Workflow',
-    description:'Adds a contact to a specified workflow in your HubSpot account.',
-    props:{
-        workflowId : workflowIdDropdown,
-        email:Property.ShortText({
-            displayName:"Contact's Email",
-            description:'The email of the contact to add to the workflow.',
-            required:true
+    auth: hubspotAuth,
+    name: 'add-contact-to-workflow',
+    displayName: 'Add Contact to Workflow',
+    description: 'Adds a contact to a specified workflow in your HubSpot account.',
+    props: {
+        workflowId: workflowIdDropdown,
+        email: Property.ShortText({
+            displayName: "Contact's Email",
+            description: 'The email of the contact to add to the workflow.',
+            required: true,
         }),
     },
     async run(context) {
-        const contactEmail = context.propsValue.email;
-        const workflowId = context.propsValue.workflowId;
+        const contactEmail = context.propsValue.email
+        const workflowId = context.propsValue.workflowId
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
@@ -29,6 +29,6 @@ export const addContactToWorkflowAction = createAction({
             },
         })
 
-        return response;
+        return response
     },
 })

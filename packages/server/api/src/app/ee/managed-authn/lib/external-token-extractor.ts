@@ -1,4 +1,13 @@
-import { ActivepiecesError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType, PlatformId, SigningKey, SigningKeyId } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    DefaultProjectRole,
+    ErrorCode,
+    isNil,
+    PiecesFilterType,
+    PlatformId,
+    SigningKey,
+    SigningKeyId,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
@@ -52,15 +61,13 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
                     concurrencyPoolKey: payload.concurrencyPoolKey,
                     concurrencyPoolLimit: payload.concurrencyPoolLimit,
                 }
-            }
-            catch (error) {
+            } catch (error) {
                 log.error({ err: error }, '[externalTokenExtractor#extract] Failed to extract external token')
 
                 throw new ActivepiecesError({
                     code: ErrorCode.INVALID_BEARER_TOKEN,
                     params: {
-                        message:
-                            error instanceof Error ? error.message : 'error decoding token',
+                        message: error instanceof Error ? error.message : 'error decoding token',
                     },
                 })
             }
@@ -68,9 +75,7 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
     }
 }
 
-const getSigningKey = async ({
-    signingKeyId,
-}: GetSigningKeyParams): Promise<SigningKey> => {
+const getSigningKey = async ({ signingKeyId }: GetSigningKeyParams): Promise<SigningKey> => {
     const signingKey = await signingKeyService.get({
         id: signingKeyId,
     })
@@ -128,10 +133,12 @@ function externalTokenPayload() {
     })
     const v2 = v1.extend({
         role: z.nativeEnum(DefaultProjectRole).optional(),
-        pieces: z.object({
-            filterType: z.nativeEnum(PiecesFilterType),
-            tags: z.array(z.string()).optional(),
-        }).optional(),
+        pieces: z
+            .object({
+                filterType: z.nativeEnum(PiecesFilterType),
+                tags: z.array(z.string()).optional(),
+            })
+            .optional(),
         concurrencyPoolKey: z.string().optional(),
         concurrencyPoolLimit: z.number().int().positive().optional(),
     })

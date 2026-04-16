@@ -1,12 +1,9 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { db } from '../../../helpers/db'
-import {
-    createMockSignInRequest,
-    createMockSignUpRequest,
-} from '../../../helpers/mocks/authn'
+import { createMockSignInRequest, createMockSignUpRequest } from '../../../helpers/mocks/authn'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -128,7 +125,7 @@ describe('Authentication API', () => {
             expect(responseBody?.token).toBeDefined()
         })
 
-        it('Fails if password doesn\'t match', async () => {
+        it("Fails if password doesn't match", async () => {
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()
 

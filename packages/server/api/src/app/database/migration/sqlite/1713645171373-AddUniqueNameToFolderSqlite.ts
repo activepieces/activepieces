@@ -6,9 +6,12 @@ export class AddUniqueNameToFolderSqlite1713645171373 implements MigrationInterf
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'Up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'Up',
+        )
         await queryRunner.query(`
             DELETE FROM "folder"
             WHERE ("projectId", LOWER("displayName")) IN (
@@ -34,5 +37,4 @@ export class AddUniqueNameToFolderSqlite1713645171373 implements MigrationInterf
             CREATE INDEX "idx_folder_project_id" ON "folder" ("projectId")
         `)
     }
-
 }

@@ -33,8 +33,7 @@ export class AddIndexOnTriggerRun1757557714045 implements MigrationInterface {
                 ALTER TABLE "trigger_run"
                 ADD CONSTRAINT "fk_trigger_run_payload_file_id" FOREIGN KEY ("payloadFileId") REFERENCES "file"("id") ON DELETE CASCADE ON UPDATE NO ACTION NOT VALID;
             `)
-        }
-        else {
+        } else {
             await queryRunner.query(`
                 ALTER TABLE "trigger_run"
                 ADD CONSTRAINT "fk_trigger_run_payload_file_id" FOREIGN KEY ("payloadFileId") REFERENCES "file"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -46,8 +45,7 @@ export class AddIndexOnTriggerRun1757557714045 implements MigrationInterface {
                 CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_trigger_run_trigger_source_id" 
                 ON "trigger_run" ("triggerSourceId");
             `)
-        }
-        else {
+        } else {
             await queryRunner.query(`
                 CREATE INDEX IF NOT EXISTS "idx_trigger_run_trigger_source_id" 
                 ON "trigger_run" ("triggerSourceId");
@@ -59,8 +57,7 @@ export class AddIndexOnTriggerRun1757557714045 implements MigrationInterface {
                 CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_trigger_run_payload_file_id" 
                 ON "trigger_run" ("payloadFileId");
             `)
-        }
-        else {
+        } else {
             await queryRunner.query(`
                 CREATE INDEX IF NOT EXISTS "idx_trigger_run_payload_file_id" 
                 ON "trigger_run" ("payloadFileId");
@@ -97,5 +94,4 @@ export class AddIndexOnTriggerRun1757557714045 implements MigrationInterface {
             DROP INDEX "idx_trigger_run_payload_file_id"
         `)
     }
-
 }

@@ -1,4 +1,5 @@
-import { ApId,
+import {
+    ApId,
     AppConnectionOwners,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
@@ -10,8 +11,8 @@ import { ApId,
     Permission,
     PrincipalType,
     ReplaceAppConnectionsRequestBody,
-    SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    SeekPage,
     UpdateConnectionValueRequestBody,
     UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
@@ -22,9 +23,9 @@ import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { applicationEvents } from '../helper/application-events'
 import { securityHelper } from '../helper/security-helper'
+import { AppConnectionEntity } from './app-connection.entity'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 import { oauth2Util } from './app-connection-service/oauth2/oauth2-util'
-import { AppConnectionEntity } from './app-connection.entity'
 
 export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, done) => {
     app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
@@ -47,9 +48,7 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
                 connection: appConnection,
             },
         })
-        await reply
-            .status(StatusCodes.CREATED)
-            .send(appConnection)
+        await reply.status(StatusCodes.CREATED).send(appConnection)
     })
 
     app.post('/:id', UpdateConnectionValueRequest, async (request) => {
@@ -87,8 +86,7 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
             data: appConnections.data.map(appConnectionService(request.log).removeSensitiveData),
         }
         return appConnectionsWithoutSensitiveData
-    },
-    )
+    })
     app.get('/owners', ListAppConnectionOwnersRequest, async (request): Promise<SeekPage<AppConnectionOwners>> => {
         const owners = await appConnectionService(request.log).getOwners({
             projectId: request.projectId,
@@ -99,8 +97,7 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
             next: null,
             previous: null,
         }
-    },
-    )
+    })
 
     app.post('/replace', ReplaceAppConnectionsRequest, async (request, reply) => {
         const { sourceAppConnectionId, targetAppConnectionId } = request.body
@@ -150,16 +147,11 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
 
 const DEFAULT_PAGE_SIZE = 10
 
-
 const UpsertAppConnectionRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE],
-            Permission.WRITE_APP_CONNECTION,
-            {
-                type: ProjectResourceType.BODY,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_APP_CONNECTION, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         tags: ['app-connections'],
@@ -174,14 +166,10 @@ const UpsertAppConnectionRequest = {
 
 const UpdateConnectionValueRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE],
-            Permission.WRITE_APP_CONNECTION,
-            {
-                type: ProjectResourceType.TABLE,
-                tableName: AppConnectionEntity,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_APP_CONNECTION, {
+            type: ProjectResourceType.TABLE,
+            tableName: AppConnectionEntity,
+        }),
     },
     schema: {
         tags: ['app-connections'],
@@ -196,13 +184,9 @@ const UpdateConnectionValueRequest = {
 
 const ReplaceAppConnectionsRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE],
-            Permission.WRITE_APP_CONNECTION,
-            {
-                type: ProjectResourceType.BODY,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_APP_CONNECTION, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         tags: ['app-connections'],
@@ -217,13 +201,9 @@ const ReplaceAppConnectionsRequest = {
 
 const ListAppConnectionsRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE],
-            Permission.READ_APP_CONNECTION,
-            {
-                type: ProjectResourceType.QUERY,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_APP_CONNECTION, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         tags: ['app-connections'],
@@ -237,13 +217,9 @@ const ListAppConnectionsRequest = {
 }
 const ListAppConnectionOwnersRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE],
-            Permission.READ_APP_CONNECTION,
-            {
-                type: ProjectResourceType.QUERY,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_APP_CONNECTION, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         querystring: ListAppConnectionOwnersRequestQuery,
@@ -258,14 +234,10 @@ const ListAppConnectionOwnersRequest = {
 
 const DeleteAppConnectionRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE],
-            Permission.WRITE_APP_CONNECTION,
-            {
-                type: ProjectResourceType.TABLE,
-                tableName: AppConnectionEntity,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_APP_CONNECTION, {
+            type: ProjectResourceType.TABLE,
+            tableName: AppConnectionEntity,
+        }),
     },
     schema: {
         tags: ['app-connections'],
@@ -282,9 +254,7 @@ const DeleteAppConnectionRequest = {
 
 const GetOAuth2AuthorizationUrlRequest = {
     config: {
-        security: securityAccess.publicPlatform(
-            [PrincipalType.USER],
-        ),
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
         tags: ['app-connections'],

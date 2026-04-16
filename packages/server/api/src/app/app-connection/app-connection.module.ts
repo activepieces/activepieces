@@ -1,7 +1,7 @@
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
-import { appConnectionWorkerController } from './app-connection-worker-controller'
 import { appConnectionController } from './app-connection.controller'
+import { appConnectionWorkerController } from './app-connection-worker-controller'
 
 export const appConnectionModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)

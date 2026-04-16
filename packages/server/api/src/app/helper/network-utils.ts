@@ -1,11 +1,10 @@
 import dns from 'node:dns/promises'
-import os from 'os'
 import { isNil } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
+import os from 'os'
 
 const GOOGLE_DNS = '216.239.32.10'
 const PUBLIC_IP_ADDRESS_QUERY = 'o-o.myaddr.l.google.com'
-
 
 type IpMetadata = {
     ip: string
@@ -43,8 +42,7 @@ const getPublicIp = async (): Promise<IpMetadata> => {
         }
 
         return ipMetadata
-    }
-    catch (error) {
+    } catch (error) {
         const localIp = getLocalIp()
         if (localIp) {
             ipMetadata = {
@@ -63,7 +61,6 @@ const extractClientRealIp = (request: FastifyRequest, clientIpHeader: string | u
     return request.headers[clientIpHeader] as string
 }
 
-
 export const networkUtils = {
     extractClientRealIp,
     getPublicIp,
@@ -81,5 +78,3 @@ function cleanLeadingSlash(url: string): string {
 function cleanTrailingSlash(url: string): string {
     return url.endsWith('/') ? url.slice(0, -1) : url
 }
-
-

@@ -210,5 +210,4 @@ export class AddMcpToolFlowCascadeDeleteSqlite1749129178686 implements Migration
             CREATE INDEX "idx_mcp_tool_flow_id" ON "mcp_tool" ("flowId")
         `)
     }
-
 }

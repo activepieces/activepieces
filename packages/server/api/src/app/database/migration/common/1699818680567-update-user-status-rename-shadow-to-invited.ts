@@ -3,8 +3,7 @@ import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 
-export class UpdateUserStatusRenameShadowToInvited1699818680567
-implements MigrationInterface {
+export class UpdateUserStatusRenameShadowToInvited1699818680567 implements MigrationInterface {
     name = 'UpdateUserStatusRenameShadowToInvited1699818680567'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

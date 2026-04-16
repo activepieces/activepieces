@@ -15,4 +15,5 @@ const StepOutputSkeleton = ({ className }: { className?: string }) => {
 };
 
 StepOutputSkeleton.displayName = 'StepOutputSkeleton';
+
 export { StepOutputSkeleton };

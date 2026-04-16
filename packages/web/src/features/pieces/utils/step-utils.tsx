@@ -6,14 +6,14 @@ import {
 import {
   FlowAction,
   FlowActionType,
+  FlowTrigger,
+  FlowTriggerType,
   flowStructureUtil,
   LocalesEnum,
-  spreadIfDefined,
   Step,
-  FlowTriggerType,
-  FlowTrigger,
   StepOutput,
   StepRunResponse,
+  spreadIfDefined,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 

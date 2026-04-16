@@ -23,5 +23,4 @@ export class ReplaceTasksLimitWithIncludedTasks1750720173459 implements Migratio
             ADD "tasksLimit" integer
         `)
     }
-
 }

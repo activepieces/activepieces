@@ -1,8 +1,8 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { uscreenAuth } from "../common/auth";
-import { uscreenProps } from "../common/props";
-import { UscreenClient } from "../common/client";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { uscreenAuth } from '../common/auth'
+import { UscreenClient } from '../common/client'
+import { uscreenProps } from '../common/props'
 
 export const assignUserAccess = createAction({
     auth: uscreenAuth,
@@ -16,7 +16,8 @@ export const assignUserAccess = createAction({
         product_id: uscreenProps.productId(),
         perform_action_at: Property.ShortText({
             displayName: 'Schedule Access (Optional)',
-            description: 'Schedule a time for the action to be performed (ISO 8601 format, e.g., 2024-07-05T13:47:52Z). Leave blank to assign immediately.',
+            description:
+                'Schedule a time for the action to be performed (ISO 8601 format, e.g., 2024-07-05T13:47:52Z). Leave blank to assign immediately.',
             required: false,
         }),
         with_manual_billing: Property.Checkbox({
@@ -28,24 +29,20 @@ export const assignUserAccess = createAction({
     },
 
     async run(context) {
-        const { customer_id, product_id, productType, perform_action_at, with_manual_billing } = context.propsValue;
-        const client = new UscreenClient(context.auth.secret_text);
+        const { customer_id, product_id, productType, perform_action_at, with_manual_billing } = context.propsValue
+        const client = new UscreenClient(context.auth.secret_text)
 
         const body: Record<string, unknown> = {
             product_id: product_id,
             product_type: productType,
-        };
+        }
 
         if (productType === 'offer' && with_manual_billing) {
-            body['with_manual_billing'] = true;
+            body['with_manual_billing'] = true
         } else if (perform_action_at) {
-            body['perform_action_at'] = perform_action_at;
+            body['perform_action_at'] = perform_action_at
         }
- 
-        return await client.makeRequest(
-            HttpMethod.POST,
-            `/customers/${customer_id}/accesses`,
-            body
-        );
+
+        return await client.makeRequest(HttpMethod.POST, `/customers/${customer_id}/accesses`, body)
     },
-});
+})

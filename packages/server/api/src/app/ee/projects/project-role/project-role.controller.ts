@@ -1,4 +1,15 @@
-import { ApId, ApplicationEventName, CreateProjectRoleRequestBody, ListProjectMembersForProjectRoleRequestQuery, PrincipalType, ProjectMemberWithUser, ProjectRole, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRoleRequestBody } from '@activepieces/shared'
+import {
+    ApId,
+    ApplicationEventName,
+    CreateProjectRoleRequestBody,
+    ListProjectMembersForProjectRoleRequestQuery,
+    PrincipalType,
+    ProjectMemberWithUser,
+    ProjectRole,
+    SERVICE_KEY_SECURITY_OPENAPI,
+    SeekPage,
+    UpdateProjectRoleRequestBody,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -11,7 +22,6 @@ import { projectRoleService } from './project-role.service'
 const DEFAULT_LIMIT_SIZE = 10
 
 export const projectRoleController: FastifyPluginAsyncZod = async (app) => {
-    
     app.get('/:id', GetProjectRoleRequest, async (req) => {
         return projectRoleService.getOneOrThrowById({
             id: req.params.id,
@@ -65,7 +75,7 @@ export const projectRoleController: FastifyPluginAsyncZod = async (app) => {
 
     app.delete('/:name', DeleteProjectRoleRequest, async (req, reply) => {
         await platformMustHaveFeatureEnabled((platform) => platform.plan.customRolesEnabled).call(app, req, reply)
-        
+
         const projectRole = await projectRoleService.getOneOrThrow({
             name: req.params.name,
             platformId: req.principal.platform.id,
@@ -118,7 +128,7 @@ const CreateProjectRoleRequest = {
 }
 
 const UpdateProjectRoleRequest = {
-    config: {   
+    config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {

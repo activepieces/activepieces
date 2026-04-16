@@ -5,8 +5,10 @@ import { TransportProvider } from './transport-provider'
 export const betterstackTransport: TransportProvider = {
     name: 'betterstack',
     isConfigured() {
-        return !!environmentVariables.getEnvironment(AppSystemProp.BETTERSTACK_TOKEN)
-            && !!environmentVariables.getEnvironment(AppSystemProp.BETTERSTACK_HOST)
+        return (
+            !!environmentVariables.getEnvironment(AppSystemProp.BETTERSTACK_TOKEN) &&
+            !!environmentVariables.getEnvironment(AppSystemProp.BETTERSTACK_HOST)
+        )
     },
     createLogger(level: Level, targets: TransportTargetOptions[]) {
         const token = environmentVariables.getEnvironmentOrThrow(AppSystemProp.BETTERSTACK_TOKEN)

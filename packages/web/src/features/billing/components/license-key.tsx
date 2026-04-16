@@ -1,18 +1,18 @@
 import { isNil, PlatformWithoutSensitiveData } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Shield, AlertTriangle, Check, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Check, ExternalLink, Shield } from 'lucide-react';
 import { useState } from 'react';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import {
   Item,
-  ItemMedia,
-  ItemContent,
-  ItemTitle,
-  ItemDescription,
   ItemActions,
+  ItemContent,
+  ItemDescription,
   ItemFooter,
+  ItemMedia,
+  ItemTitle,
 } from '@/components/custom/item';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { ArrowUpIcon } from '@/components/icons/arrow-up';

@@ -15,5 +15,4 @@ export class AddFolderColumnToTable1769638834372 implements MigrationInterface {
             ALTER TABLE "table" DROP COLUMN "folderId"
         `)
     }
-
 }

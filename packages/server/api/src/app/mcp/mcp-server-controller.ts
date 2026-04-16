@@ -1,4 +1,15 @@
-import { AgentMcpTool, ApId, buildAuthHeaders, isNil, McpAuthConfig, McpProtocol, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
+import {
+    AgentMcpTool,
+    ApId,
+    buildAuthHeaders,
+    isNil,
+    McpAuthConfig,
+    McpProtocol,
+    Permission,
+    PrincipalType,
+    SERVICE_KEY_SECURITY_OPENAPI,
+    UpdateMcpServerRequest,
+} from '@activepieces/shared'
 import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -8,7 +19,6 @@ import { securityAccess } from '../core/security/authorization/fastify-security'
 import { mcpServerService } from './mcp-service'
 
 export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
-
     app.get('/', GetMcpRequest, async (req) => {
         return mcpServerService(req.log).getPopulatedByProjectId(req.projectId)
     })
@@ -42,12 +52,10 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
             })
             const mcpTools = await mcpClient.tools()
 
-            return { toolNames: Object.keys(mcpTools).map(toolName => toolName), error: null }
-        }
-        catch (error) {
+            return { toolNames: Object.keys(mcpTools).map((toolName) => toolName), error: null }
+        } catch (error) {
             return { toolNames: null, error: `Error connecting to mcp server ${tool.toolName}, Error: ${error}` }
-        }
-        finally {
+        } finally {
             if (!isNil(mcpClient)) {
                 await mcpClient.close()
             }
@@ -55,11 +63,7 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-function createTransportConfig(
-    protocol: McpProtocol,
-    serverUrl: string,
-    headers: Record<string, string> = {},
-) {
+function createTransportConfig(protocol: McpProtocol, serverUrl: string, headers: Record<string, string> = {}) {
     const url = new URL(serverUrl)
 
     switch (protocol) {
@@ -91,13 +95,9 @@ function createTransportConfig(
 
 export const UpdateMcpRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            Permission.WRITE_MCP,
-            {
-                type: ProjectResourceType.PARAM,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER], Permission.WRITE_MCP, {
+            type: ProjectResourceType.PARAM,
+        }),
     },
     schema: {
         tags: ['mcp'],
@@ -112,13 +112,9 @@ export const UpdateMcpRequest = {
 
 export const AddMcpServerToolRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            Permission.WRITE_FLOW,
-            {
-                type: ProjectResourceType.PARAM,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER], Permission.WRITE_FLOW, {
+            type: ProjectResourceType.PARAM,
+        }),
     },
     schema: {
         tags: ['agent'],
@@ -136,13 +132,9 @@ export const AddMcpServerToolRequest = {
 
 const GetMcpRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            Permission.READ_MCP,
-            {
-                type: ProjectResourceType.PARAM,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER], Permission.READ_MCP, {
+            type: ProjectResourceType.PARAM,
+        }),
     },
     schema: {
         tags: ['mcp'],
@@ -156,13 +148,9 @@ const GetMcpRequest = {
 
 const RotateTokenRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            Permission.WRITE_MCP,
-            {
-                type: ProjectResourceType.PARAM,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER], Permission.WRITE_MCP, {
+            type: ProjectResourceType.PARAM,
+        }),
     },
     schema: {
         tags: ['mcp'],

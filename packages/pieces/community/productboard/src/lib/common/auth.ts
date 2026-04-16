@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const productboardAuth = PieceAuth.SecretText({
     displayName: 'API Key',
@@ -11,4 +11,4 @@ To obtain your API Key:
 4. Generate a new API Key
 5. Copy the Key and paste it here`,
     required: true,
-});
+})

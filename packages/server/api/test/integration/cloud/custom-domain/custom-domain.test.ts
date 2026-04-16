@@ -1,15 +1,12 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { AddDomainRequest, ApEdition, CustomDomainStatus, PlatformRole, PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../../../src/app/helper/system/system'
-import { db } from '../../../helpers/db'
 import { generateMockToken } from '../../../helpers/auth'
-import {
-    createMockCustomDomain,
-    mockAndSaveBasicSetup,
-    mockBasicUser } from '../../../helpers/mocks'
+import { db } from '../../../helpers/db'
+import { createMockCustomDomain, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -28,7 +25,7 @@ describe('Custom Domain API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
 
@@ -49,7 +46,8 @@ describe('Custom Domain API', () => {
             const responseBody = response?.json()
 
             expect(responseBody.domain).toBe(request.domain)
-            const expectedStatus = system.getEdition() === ApEdition.CLOUD ? CustomDomainStatus.PENDING : CustomDomainStatus.ACTIVE
+            const expectedStatus =
+                system.getEdition() === ApEdition.CLOUD ? CustomDomainStatus.PENDING : CustomDomainStatus.ACTIVE
             expect(responseBody.status).toBe(expectedStatus)
         })
 
@@ -67,7 +65,7 @@ describe('Custom Domain API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: nonOwnerUser.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
 
@@ -92,7 +90,7 @@ describe('Custom Domain API', () => {
         it('should list custom domains', async () => {
             // arrange
             const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
-            const {  mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup()
+            const { mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup()
 
             const testToken1 = await generateMockToken({
                 type: PrincipalType.USER,

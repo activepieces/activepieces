@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const createInvoice = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -100,7 +100,7 @@ export const createInvoice = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
+        const client = makeClient(context.auth.props)
         const {
             invoiceNumber,
             businessUnit,
@@ -118,7 +118,7 @@ export const createInvoice = createAction({
             invoiceGroup,
             invoiceType,
             requester,
-        } = context.propsValue;
+        } = context.propsValue
 
         const payload: Record<string, unknown> = {
             InvoiceNumber: invoiceNumber,
@@ -132,15 +132,15 @@ export const createInvoice = createAction({
             AccountingDate: accountingDate,
             TermsDate: termsDate,
             PaymentMethodCode: paymentMethodCode,
-        };
+        }
 
-        if (paymentTerms) payload['PaymentTerms'] = paymentTerms;
-        if (description) payload['Description'] = description;
-        if (invoiceGroup) payload['InvoiceGroup'] = invoiceGroup;
-        if (invoiceType) payload['InvoiceType'] = invoiceType;
-        if (requester) payload['Requester'] = requester;
+        if (paymentTerms) payload['PaymentTerms'] = paymentTerms
+        if (description) payload['Description'] = description
+        if (invoiceGroup) payload['InvoiceGroup'] = invoiceGroup
+        if (invoiceType) payload['InvoiceType'] = invoiceType
+        if (requester) payload['Requester'] = requester
 
-        const response = await client.createRecord('/invoices', payload);
-        return response;
+        const response = await client.createRecord('/invoices', payload)
+        return response
     },
-});
+})

@@ -1,4 +1,4 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
 
 const authDesc = `
 Connect to your Oracle Fusion Cloud ERP instance using Basic Authentication.
@@ -9,7 +9,7 @@ Connect to your Oracle Fusion Cloud ERP instance using Basic Authentication.
 - **Password**: Your Oracle Cloud password
 
 Contact your Oracle administrator if you need REST API access enabled.
-`;
+`
 
 export const oracleFusionCloudErpAuth = PieceAuth.CustomAuth({
     description: authDesc,
@@ -31,4 +31,4 @@ export const oracleFusionCloudErpAuth = PieceAuth.CustomAuth({
             required: true,
         }),
     },
-});
+})

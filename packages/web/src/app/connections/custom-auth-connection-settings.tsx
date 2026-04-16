@@ -22,4 +22,5 @@ const CustomAuthConnectionSettings = React.memo(
 );
 
 CustomAuthConnectionSettings.displayName = 'CustomAuthConnectionSettings';
+
 export { CustomAuthConnectionSettings };

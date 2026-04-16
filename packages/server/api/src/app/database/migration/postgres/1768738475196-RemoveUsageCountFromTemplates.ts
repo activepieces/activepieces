@@ -15,5 +15,4 @@ export class RemoveUsageCountFromTemplates1768738475196 implements MigrationInte
             ADD "usageCount" integer NOT NULL DEFAULT 0
         `)
     }
-
 }

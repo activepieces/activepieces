@@ -59,5 +59,4 @@ export class AddAgentIdToTable1753315220453 implements MigrationInterface {
             ALTER TABLE "table" DROP COLUMN "agentId"
         `)
     }
-
 }

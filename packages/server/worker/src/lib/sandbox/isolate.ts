@@ -17,7 +17,12 @@ const getIsolateExecutableName = (): string => {
 const isolateBinaryPath = path.resolve(process.cwd(), 'packages/server/api/src/assets', getIsolateExecutableName())
 const etcDir = path.resolve(process.cwd(), 'packages/server/api/src/assets/etc')
 
-export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDirectory: string, boxId: number): SandboxProcessMaker {
+export function isolateProcess(
+    log: SandboxLogger,
+    enginePath: string,
+    _codeDirectory: string,
+    boxId: number,
+): SandboxProcessMaker {
     return {
         create: async (params: CreateSandboxProcessParams) => {
             const { sandboxId, mounts, env } = params
@@ -38,8 +43,7 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 SANDBOX_ID: sandboxId,
             }
 
-            const envArgs = Object.entries(sandboxEnv)
-                .map(([key, value]) => `--env=${key}=${value}`)
+            const envArgs = Object.entries(sandboxEnv).map(([key, value]) => `--env=${key}=${value}`)
 
             const dirArgs = mounts.map((m) => {
                 const suffix = m.optional ? ':maybe' : ''

@@ -1,5 +1,5 @@
-import { PieceAuth } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const qwilrAuth = PieceAuth.SecretText({
     displayName: 'API Key',

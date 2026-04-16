@@ -22,13 +22,13 @@ import {
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import {
-  PiecesSearchInput,
+  PieceSearchProvider,
+  PieceSelectorOperation,
   PieceSelectorTabs,
   PieceSelectorTabsProvider,
   PieceSelectorTabType,
-  PieceSelectorOperation,
+  PiecesSearchInput,
   pieceSelectorUtils,
-  PieceSearchProvider,
   usePieceSearchContext,
 } from '@/features/pieces';
 import { aiProviderQueries } from '@/features/platform-admin';

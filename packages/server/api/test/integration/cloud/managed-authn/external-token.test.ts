@@ -1,8 +1,7 @@
-import { Redis } from 'ioredis'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { apId, DefaultProjectRole, PiecesFilterType, PieceType, ProjectRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { Redis } from 'ioredis'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { getProjectConcurrencyPoolKey } from '../../../../src/app/database/redis/keys'
 import { distributedStore, redisConnections } from '../../../../src/app/database/redis-connections'
@@ -17,6 +16,7 @@ import {
     mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 async function deleteKeysByPattern(redis: Redis, pattern: string): Promise<void> {
     const stream = redis.scanStream({ match: pattern, count: 100 })
@@ -77,9 +77,7 @@ describe('Managed Authentication API', () => {
             expect(responseBody?.password).toBeUndefined()
             expect(responseBody?.status).toBe('ACTIVE')
             expect(responseBody?.verified).toBe(true)
-            expect(responseBody?.externalId).toBe(
-                mockExternalTokenPayload.externalUserId,
-            )
+            expect(responseBody?.externalId).toBe(mockExternalTokenPayload.externalUserId)
             expect(responseBody?.platformId).toBe(mockPlatform.id)
             expect(responseBody?.projectId).toHaveLength(21)
             expect(responseBody?.token).toBeDefined()
@@ -94,11 +92,10 @@ describe('Managed Authentication API', () => {
             })
             await db.save('signing_key', mockSigningKey)
 
-            const { mockExternalToken, mockExternalTokenPayload } =
-                generateMockExternalToken({
-                    platformId: mockPlatform.id,
-                    signingKeyId: mockSigningKey.id,
-                })
+            const { mockExternalToken, mockExternalTokenPayload } = generateMockExternalToken({
+                platformId: mockPlatform.id,
+                signingKeyId: mockSigningKey.id,
+            })
 
             // act
             const response = await app?.inject({
@@ -115,17 +112,13 @@ describe('Managed Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
             const generatedProject = await db.findOneBy('project', {
-                    id: responseBody?.projectId,
-                })
+                id: responseBody?.projectId,
+            })
 
-            expect(generatedProject?.displayName).toBe(
-                mockExternalTokenPayload.externalProjectId,
-            )
+            expect(generatedProject?.displayName).toBe(mockExternalTokenPayload.externalProjectId)
             expect(generatedProject?.ownerId).toBe(mockPlatform.ownerId)
             expect(generatedProject?.platformId).toBe(mockPlatform.id)
-            expect(generatedProject?.externalId).toBe(
-                mockExternalTokenPayload.externalProjectId,
-            )
+            expect(generatedProject?.externalId).toBe(mockExternalTokenPayload.externalProjectId)
         })
 
         it('Sync Pieces when exchanging external token', async () => {
@@ -147,7 +140,6 @@ describe('Managed Authentication API', () => {
 
             await db.save('tag', mockTag)
 
-
             const mockPieceTag = createMockPieceTag({
                 platformId: mockPlatform.id,
                 tagId: mockTag.id,
@@ -155,7 +147,6 @@ describe('Managed Authentication API', () => {
             })
 
             await db.save('piece_tag', mockPieceTag)
-
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
@@ -200,8 +191,9 @@ describe('Managed Authentication API', () => {
             })
             await db.save('signing_key', mockSigningKey)
 
-
-            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.VIEWER })
+            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', {
+                name: DefaultProjectRole.VIEWER,
+            })
 
             const { mockExternalToken } = generateMockExternalToken({
                 platformId: mockPlatform.id,
@@ -224,9 +216,9 @@ describe('Managed Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
             const generatedProjectMember = await db.findOneBy('project_member', {
-                    projectId: responseBody?.projectId,
-                    userId: responseBody?.id,
-                })
+                projectId: responseBody?.projectId,
+                userId: responseBody?.id,
+            })
 
             expect(generatedProjectMember?.projectId).toBe(responseBody?.projectId)
             expect(generatedProjectMember?.userId).toBe(responseBody?.id)
@@ -342,9 +334,7 @@ describe('Managed Authentication API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
-            expect(responseBody?.params?.message).toBe(
-                `signing key not found signingKeyId=${nonExistentSigningKeyId}`,
-            )
+            expect(responseBody?.params?.message).toBe(`signing key not found signingKeyId=${nonExistentSigningKeyId}`)
         })
     })
 
@@ -375,17 +365,24 @@ describe('Managed Authentication API', () => {
             const responseBody = response?.json()
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const pool = await databaseConnection()
+            const pool = (await databaseConnection()
                 .getRepository('concurrency_pool')
-                .findOneBy({ platformId: mockPlatform.id, key: 'my-pool' }) as { id: string, maxConcurrentJobs: number } | null
+                .findOneBy({ platformId: mockPlatform.id, key: 'my-pool' })) as {
+                id: string
+                maxConcurrentJobs: number
+            } | null
 
             expect(pool).not.toBeNull()
             expect(pool!.maxConcurrentJobs).toBe(10)
 
-            const project = await db.findOneByOrFail<{ poolId: string | null }>('project', { id: responseBody?.projectId })
+            const project = await db.findOneByOrFail<{ poolId: string | null }>('project', {
+                id: responseBody?.projectId,
+            })
             expect(project.poolId).toBe(pool!.id)
 
-            const cachedPoolId = await distributedStore.get<string>(getProjectConcurrencyPoolKey(responseBody?.projectId))
+            const cachedPoolId = await distributedStore.get<string>(
+                getProjectConcurrencyPoolKey(responseBody?.projectId),
+            )
             expect(cachedPoolId).toBe(pool!.id)
         })
 
@@ -414,13 +411,18 @@ describe('Managed Authentication API', () => {
             const responseBody = response?.json()
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const pool = await databaseConnection()
+            const pool = (await databaseConnection()
                 .getRepository('concurrency_pool')
-                .findOneBy({ platformId: mockPlatform.id, key: 'no-limit-pool' }) as { id: string, maxConcurrentJobs: number } | null
+                .findOneBy({ platformId: mockPlatform.id, key: 'no-limit-pool' })) as {
+                id: string
+                maxConcurrentJobs: number
+            } | null
 
             expect(pool).toBeNull()
 
-            const project = await db.findOneByOrFail<{ poolId: string | null }>('project', { id: responseBody?.projectId })
+            const project = await db.findOneByOrFail<{ poolId: string | null }>('project', {
+                id: responseBody?.projectId,
+            })
             expect(project.poolId).toBeNull()
         })
 
@@ -501,7 +503,9 @@ describe('Managed Authentication API', () => {
             const responseBody = response?.json()
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const project = await db.findOneByOrFail<{ poolId: string | null }>('project', { id: responseBody?.projectId })
+            const project = await db.findOneByOrFail<{ poolId: string | null }>('project', {
+                id: responseBody?.projectId,
+            })
             expect(project.poolId).toBeNull()
         })
     })

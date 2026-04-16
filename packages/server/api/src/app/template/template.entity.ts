@@ -1,8 +1,6 @@
 import { Platform, Template } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import {
-    BaseColumnSchemaPart,
-} from '../database/database-common'
+import { BaseColumnSchemaPart } from '../database/database-common'
 
 type TemplateSchema = Template & {
     platform: Platform

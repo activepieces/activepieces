@@ -1,7 +1,4 @@
-import {
-    FlowVersion,
-    isNil,
-} from '@activepieces/shared'
+import { FlowVersion, isNil } from '@activepieces/shared'
 import { Migration } from '.'
 
 export const migrateV13AddNotes: Migration = {
@@ -14,4 +11,3 @@ export const migrateV13AddNotes: Migration = {
         }
     },
 }
-

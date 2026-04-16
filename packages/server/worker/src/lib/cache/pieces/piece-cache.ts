@@ -1,6 +1,13 @@
-import path from 'path'
-import { ApEnvironment, EXACT_VERSION_REGEX, PackageType, PiecePackage, PieceType, WorkerToApiContract } from '@activepieces/shared'
+import {
+    ApEnvironment,
+    EXACT_VERSION_REGEX,
+    PackageType,
+    PiecePackage,
+    PieceType,
+    WorkerToApiContract,
+} from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
+import path from 'path'
 import { Logger } from 'pino'
 import { workerSettings } from '../../config/worker-settings'
 import { getGlobalCachePiecesPath } from '../cache-paths'
@@ -40,8 +47,7 @@ export const pieceCache = (log: Logger, apiClient: WorkerToApiContract) => ({
                         const piecePackage = await getPiecePackage({ pieceName, pieceVersion, platformId }, apiClient)
                         log.info({ pieceName, pieceVersion, platformId }, 'Cached piece')
                         return JSON.stringify(piecePackage)
-                    }
-                    finally {
+                    } finally {
                         span.end()
                     }
                 })
@@ -54,11 +60,11 @@ export const pieceCache = (log: Logger, apiClient: WorkerToApiContract) => ({
 })
 
 async function getPiecePackage(query: PieceCacheKey, apiClient: WorkerToApiContract): Promise<PiecePackage> {
-    const pieceMetadata = await apiClient.getPiece({
+    const pieceMetadata = (await apiClient.getPiece({
         name: query.pieceName,
         version: query.pieceVersion,
         platformId: query.platformId,
-    }) as { packageType: PackageType, name: string, version: string, pieceType: PieceType, archiveId?: string } | null
+    })) as { packageType: PackageType; name: string; version: string; pieceType: PieceType; archiveId?: string } | null
 
     if (!pieceMetadata) {
         throw new PieceNotFoundError(query.pieceName, query.pieceVersion)

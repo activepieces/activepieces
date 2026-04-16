@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { zendeskSellAuth, ZendeskSellAuth } from '../common/auth';
-import { callZendeskApi } from '../common/client';
-import { zendeskSellCommon } from '../common/props'; 
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { ZendeskSellAuth, zendeskSellAuth } from '../common/auth'
+import { callZendeskApi } from '../common/client'
+import { zendeskSellCommon } from '../common/props'
 
 export const createContact = createAction({
     auth: zendeskSellAuth,
@@ -48,68 +48,67 @@ export const createContact = createAction({
         tags: zendeskSellCommon.tags('contact'),
         address: Property.Json({
             displayName: 'Address',
-            description: 'An object containing address details (e.g., {"line1": "2726 Smith Street", "city": "Hyannis", "country": "US"}).',
+            description:
+                'An object containing address details (e.g., {"line1": "2726 Smith Street", "city": "Hyannis", "country": "US"}).',
             required: false,
             defaultValue: {
-                "line1": "",
-                "city": "",
-                "postal_code": "",
-                "state": "",
-                "country": ""
-            }
+                line1: '',
+                city: '',
+                postal_code: '',
+                state: '',
+                country: '',
+            },
         }),
         custom_fields: Property.Json({
             displayName: 'Custom Fields',
-            description: 'A key-value object for any custom fields (e.g., {"referral_website": "http://www.example.com"}).',
+            description:
+                'A key-value object for any custom fields (e.g., {"referral_website": "http://www.example.com"}).',
             required: false,
-            defaultValue: {}
+            defaultValue: {},
         }),
         other_fields: Property.Json({
             displayName: 'Other Fields',
-            description: 'Enter additional fields as a JSON object (e.g., {"title": "CEO", "website": "http://example.com"}).',
+            description:
+                'Enter additional fields as a JSON object (e.g., {"title": "CEO", "website": "http://example.com"}).',
             required: false,
-            defaultValue: {}
-        })
+            defaultValue: {},
+        }),
     },
     async run(context) {
-        const { auth, propsValue } = context;
-        const { is_organization, name, last_name, other_fields, ...otherProps } = propsValue;
+        const { auth, propsValue } = context
+        const { is_organization, name, last_name, other_fields, ...otherProps } = propsValue
 
-       
         if (is_organization && !name) {
-            throw new Error('Organization Name is required when "Is Organization" is checked.');
+            throw new Error('Organization Name is required when "Is Organization" is checked.')
         }
         if (!is_organization && !last_name) {
-            throw new Error('Last Name is required for an individual contact.');
+            throw new Error('Last Name is required for an individual contact.')
         }
 
         const rawBody: Record<string, unknown> = {
             is_organization,
             ...otherProps,
             ...(other_fields || {}),
-        };
-
-        if (is_organization) {
-            rawBody['name'] = name;
-        } else {
-            rawBody['last_name'] = last_name;
         }
 
-        
-        const cleanedBody = Object.entries(rawBody).reduce((acc, [key, value]) => {
-            if (value !== undefined && value !== null && value !== '') {
-                acc[key] = value;
-            }
-            return acc;
-        }, {} as Record<string, unknown>);
+        if (is_organization) {
+            rawBody['name'] = name
+        } else {
+            rawBody['last_name'] = last_name
+        }
 
-        const response = await callZendeskApi(
-            HttpMethod.POST,
-            'v2/contacts',
-            auth, 
-            { data: cleanedBody } 
-        );
+        const cleanedBody = Object.entries(rawBody).reduce(
+            (acc, [key, value]) => {
+                if (value !== undefined && value !== null && value !== '') {
+                    acc[key] = value
+                }
+                return acc
+            },
+            {} as Record<string, unknown>,
+        )
 
-        return response.body;
+        const response = await callZendeskApi(HttpMethod.POST, 'v2/contacts', auth, { data: cleanedBody })
+
+        return response.body
     },
-});
+})

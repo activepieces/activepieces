@@ -10,10 +10,10 @@ const RETRY_CONFIG = {
 export function createFileUploader({ stepName, flowId, engineToken, apiUrl }: CreateFileUploaderParams): FilesService {
     const maxFileSizeMb = Number(process.env.AP_MAX_FILE_SIZE_MB)
     const fileStorageLocation = process.env.AP_FILE_STORAGE_LOCATION as FileLocation
-    const useSignedUrl = (process.env.AP_S3_USE_SIGNED_URLS === 'true') && fileStorageLocation === FileLocation.S3
+    const useSignedUrl = process.env.AP_S3_USE_SIGNED_URLS === 'true' && fileStorageLocation === FileLocation.S3
 
     return {
-        write: async ({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> => {
+        write: async ({ fileName, data }: { fileName: string; data: Buffer }): Promise<string> => {
             if (!Buffer.isBuffer(data)) {
                 throw new Error(
                     `Expected file data to be a Buffer, but received ${typeof data === 'object' ? Object.prototype.toString.call(data) : typeof data}`,
@@ -44,7 +44,19 @@ function validateFileSize(data: Buffer, maxFileSizeMb: number): void {
     }
 }
 
-function createFormData({ fileName, data, stepName, flowId, useSignedUrl }: { fileName: string, data: Buffer, stepName: string, flowId: string, useSignedUrl: boolean }): FormData {
+function createFormData({
+    fileName,
+    data,
+    stepName,
+    flowId,
+    useSignedUrl,
+}: {
+    fileName: string
+    data: Buffer
+    stepName: string
+    flowId: string
+    useSignedUrl: boolean
+}): FormData {
     const formData = new FormData()
     formData.append('stepName', stepName)
     formData.append('flowId', flowId)
@@ -58,7 +70,15 @@ function createFormData({ fileName, data, stepName, flowId, useSignedUrl }: { fi
     return formData
 }
 
-async function uploadFileMetadata({ formData, engineToken, apiUrl }: { formData: FormData, engineToken: string, apiUrl: string }): Promise<StepFileUpsertResponse> {
+async function uploadFileMetadata({
+    formData,
+    engineToken,
+    apiUrl,
+}: {
+    formData: FormData
+    engineToken: string
+    apiUrl: string
+}): Promise<StepFileUpsertResponse> {
     const fetchWithRetry = fetchRetry(global.fetch)
     const response = await fetchWithRetry(apiUrl + 'v1/step-files', {
         method: 'POST',
@@ -77,10 +97,10 @@ async function uploadFileMetadata({ formData, engineToken, apiUrl }: { formData:
         })
     }
 
-    return await response.json() as StepFileUpsertResponse
+    return (await response.json()) as StepFileUpsertResponse
 }
 
-async function uploadFileContent({ url, data }: { url: string, data: Buffer }): Promise<void> {
+async function uploadFileContent({ url, data }: { url: string; data: Buffer }): Promise<void> {
     const fetchWithRetry = fetchRetry(global.fetch)
     const uploadResponse = await fetchWithRetry(url, {
         method: 'PUT',
@@ -99,4 +119,4 @@ async function uploadFileContent({ url, data }: { url: string, data: Buffer }): 
     }
 }
 
-type CreateFileUploaderParams = { apiUrl: string, stepName: string, flowId: string, engineToken: string }
+type CreateFileUploaderParams = { apiUrl: string; stepName: string; flowId: string; engineToken: string }

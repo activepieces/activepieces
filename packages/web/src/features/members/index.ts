@@ -10,6 +10,6 @@ export {
   projectMembersMutations,
 } from './hooks/project-members-hooks';
 export {
-  userInvitationsHooks,
   userInvitationMutations,
+  userInvitationsHooks,
 } from './hooks/user-invitations-hooks';

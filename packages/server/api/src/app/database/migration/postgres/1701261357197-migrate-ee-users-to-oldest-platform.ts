@@ -2,8 +2,7 @@ import { ApEdition, isNil } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
-export class MigrateEeUsersToOldestPlatform1701261357197
-implements MigrationInterface {
+export class MigrateEeUsersToOldestPlatform1701261357197 implements MigrationInterface {
     name = 'MigrateEeUsersToOldestPlatform1701261357197'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

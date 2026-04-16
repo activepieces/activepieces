@@ -1,6 +1,6 @@
-import { docsCommon } from '../common';
-import { googleDocsAuth, getAccessToken } from '../auth';
-import { Property, createAction } from "@activepieces/pieces-framework";
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { getAccessToken, googleDocsAuth } from '../auth'
+import { docsCommon } from '../common'
 
 export const appendText = createAction({
     auth: googleDocsAuth,
@@ -8,22 +8,22 @@ export const appendText = createAction({
     description: 'Appends text to google docs',
     displayName: 'Append text to google docs',
     props: {
-      text: Property.LongText({
-        displayName: 'Text to append',
-        description: 'The text to append to the document',
-        required: true,
-      }),
-      documentId: Property.ShortText({
-        displayName: 'Document ID',
-        description: 'The ID of the document to append text to',
-        required: true,
-      })
+        text: Property.LongText({
+            displayName: 'Text to append',
+            description: 'The text to append to the document',
+            required: true,
+        }),
+        documentId: Property.ShortText({
+            displayName: 'Document ID',
+            description: 'The ID of the document to append text to',
+            required: true,
+        }),
     },
     async run(context) {
-      return await docsCommon.writeToDocument(
-        context.propsValue.documentId,
-        context.propsValue.text,
-        await getAccessToken(context.auth)
-      );
+        return await docsCommon.writeToDocument(
+            context.propsValue.documentId,
+            context.propsValue.text,
+            await getAccessToken(context.auth),
+        )
     },
-  });
+})

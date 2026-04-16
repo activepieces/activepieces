@@ -1,11 +1,11 @@
+import { randomUUID } from 'node:crypto'
 import { access, mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { randomUUID } from 'node:crypto'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { PackageType, PieceType } from '@activepieces/shared'
 import type { OfficialPiecePackage } from '@activepieces/shared'
+import { PackageType, PieceType } from '@activepieces/shared'
 import type { Logger } from 'pino'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Module-level variable updated per test so the vi.mock factory can reference it
 let testWorkspace = ''
@@ -53,7 +53,10 @@ function readyFilePath(piece: OfficialPiecePackage): string {
 }
 
 async function pathExists(p: string): Promise<boolean> {
-    return access(p).then(() => true, () => false)
+    return access(p).then(
+        () => true,
+        () => false,
+    )
 }
 
 const fakeLog = {
@@ -99,11 +102,11 @@ describe('pieceInstaller', () => {
         const installer = pieceInstaller(fakeLog, fakeApiClient)
 
         mockInstall
-            .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // batch attempt
-            .mockResolvedValueOnce({ output: '' })                           // good individual
-            .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // bad individual
+            .mockRejectedValueOnce(new Error('workspace:* resolve error')) // batch attempt
+            .mockResolvedValueOnce({ output: '' }) // good individual
+            .mockRejectedValueOnce(new Error('workspace:* resolve error')) // bad individual
 
-        const error = await installer.install({ pieces: [good, bad], includeFilters: false }).catch(e => e as Error)
+        const error = await installer.install({ pieces: [good, bad], includeFilters: false }).catch((e) => e as Error)
 
         expect(error).toBeInstanceOf(Error)
         expect(error.message).toContain('@activepieces/piece-bad@1.0.0')
@@ -120,11 +123,13 @@ describe('pieceInstaller', () => {
         const installer = pieceInstaller(fakeLog, fakeApiClient)
 
         mockInstall
-            .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // batch
-            .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // piece-x individual
-            .mockRejectedValueOnce(new Error('workspace:* resolve error'))  // piece-y individual
+            .mockRejectedValueOnce(new Error('workspace:* resolve error')) // batch
+            .mockRejectedValueOnce(new Error('workspace:* resolve error')) // piece-x individual
+            .mockRejectedValueOnce(new Error('workspace:* resolve error')) // piece-y individual
 
-        const error = await installer.install({ pieces: [piece1, piece2], includeFilters: false }).catch(e => e as Error)
+        const error = await installer
+            .install({ pieces: [piece1, piece2], includeFilters: false })
+            .catch((e) => e as Error)
 
         expect(error).toBeInstanceOf(Error)
         expect(error.message).toContain('@activepieces/piece-x@1.0.0')

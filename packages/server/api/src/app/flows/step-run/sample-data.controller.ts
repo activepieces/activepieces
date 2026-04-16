@@ -1,4 +1,9 @@
-import { CreateStepRunRequestBody, GetSampleDataRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import {
+    CreateStepRunRequestBody,
+    GetSampleDataRequest,
+    PrincipalType,
+    SERVICE_KEY_SECURITY_OPENAPI,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
@@ -7,7 +12,6 @@ import { flowRunService } from '../flow-run/flow-run-service'
 import { sampleDataService } from './sample-data.service'
 
 export const sampleDataController: FastifyPluginAsyncZod = async (fastify) => {
-
     fastify.post('/test-step', TestSampleDataRequestBody, async (request) => {
         return flowRunService(request.log).test({
             projectId: request.projectId,
@@ -35,11 +39,9 @@ export const sampleDataController: FastifyPluginAsyncZod = async (fastify) => {
 
 const GetSampleDataRequestParams = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            undefined, {
-                type: ProjectResourceType.QUERY,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], undefined, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         tags: ['sample-data'],
@@ -50,11 +52,9 @@ const GetSampleDataRequestParams = {
 
 const TestSampleDataRequestBody = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            undefined, {
-                type: ProjectResourceType.BODY,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], undefined, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         tags: ['sample-data'],

@@ -1,11 +1,24 @@
-import { BranchExecutionType, FlowAction, FlowActionType, flowStructureUtil, FlowVersion, RouterAction, RouterExecutionType } from '@activepieces/shared'
+import {
+    BranchExecutionType,
+    FlowAction,
+    FlowActionType,
+    FlowVersion,
+    flowStructureUtil,
+    RouterAction,
+    RouterExecutionType,
+} from '@activepieces/shared'
 import { Migration } from '.'
 
 export const migrateBranchToRouter: Migration = {
     targetSchemaVersion: undefined,
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
-            const unschemedStep = step as unknown as { type: string, settings: { conditions: unknown[] }, onSuccessAction: FlowAction | null, onFailureAction: FlowAction | null }
+            const unschemedStep = step as unknown as {
+                type: string
+                settings: { conditions: unknown[] }
+                onSuccessAction: FlowAction | null
+                onFailureAction: FlowAction | null
+            }
             if (unschemedStep.type === 'BRANCH') {
                 //lastUpdatedDate is not present in this migration, so we need to omit it
                 const routerAction: Omit<RouterAction, 'lastUpdatedDate'> = {
@@ -34,7 +47,7 @@ export const migrateBranchToRouter: Migration = {
                     },
                     nextAction: step.nextAction,
                     children: [unschemedStep.onSuccessAction ?? null, unschemedStep.onFailureAction ?? null],
-                } 
+                }
                 return routerAction as RouterAction
             }
             return step

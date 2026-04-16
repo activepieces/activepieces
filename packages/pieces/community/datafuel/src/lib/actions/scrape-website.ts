@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { dataFuelAuth } from '../common/auth';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { BASE_URL } from '../common/constants';
-import { CrawlWebsiteResponse, ListScrapesResponse } from '../common/types';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { dataFuelAuth } from '../common/auth'
+import { BASE_URL } from '../common/constants'
+import { CrawlWebsiteResponse, ListScrapesResponse } from '../common/types'
 
 export const scrapeWebsiteAction = createAction({
     name: 'scrape-website',
@@ -26,7 +26,7 @@ export const scrapeWebsiteAction = createAction({
         }),
     },
     async run(context) {
-        const { url, prompt, jsonSchema } = context.propsValue;
+        const { url, prompt, jsonSchema } = context.propsValue
 
         const response = await httpClient.sendRequest<CrawlWebsiteResponse>({
             method: HttpMethod.POST,
@@ -40,14 +40,14 @@ export const scrapeWebsiteAction = createAction({
                 ai_prompt: prompt,
                 json_schema: jsonSchema,
             },
-        });
+        })
 
-        const jobId = response.body.job_id;
-        let status = 'pending';
-        const timeoutAt = Date.now() + 5 * 60 * 1000;
+        const jobId = response.body.job_id
+        let status = 'pending'
+        const timeoutAt = Date.now() + 5 * 60 * 1000
 
         while (status !== 'finished' && Date.now() < timeoutAt) {
-            await new Promise((resolve) => setTimeout(resolve, 5000)); // wait 5 seconds
+            await new Promise((resolve) => setTimeout(resolve, 5000)) // wait 5 seconds
 
             const pollResponse = await httpClient.sendRequest<Array<ListScrapesResponse>>({
                 method: HttpMethod.GET,
@@ -59,12 +59,12 @@ export const scrapeWebsiteAction = createAction({
                 queryParams: {
                     job_id: jobId,
                 },
-            });
+            })
 
-            status = pollResponse.body[0].job_status;
+            status = pollResponse.body[0].job_status
 
-            if (status === 'finished') return pollResponse.body;
+            if (status === 'finished') return pollResponse.body
         }
-        throw new Error('Crawl Job timed out or failed.');
+        throw new Error('Crawl Job timed out or failed.')
     },
-});
+})

@@ -1,20 +1,10 @@
 {
-  "extends": ["../../.eslintrc.json"],
-  "ignorePatterns": ["!**/*"],
-  "overrides": [
-    {
-      "files": ["*.ts", "*.tsx"],
-      "plugins": ["unused-imports"],
-      "rules": {
-        "unused-imports/no-unused-imports": "error",
-        "@typescript-eslint/no-unused-vars": [
-          "error",
-          {
-            "varsIgnorePattern": "^_",
-            "argsIgnorePattern": "^_"
-          }
-        ]
-      }
-    }
-  ]
+    "extends": ["../../.eslintrc.json"],
+    "ignorePatterns": ["!**/*"],
+    "overrides": [
+        {
+            "files": ["*.ts", "*.tsx"],
+            "rules": {}
+        }
+    ]
 }

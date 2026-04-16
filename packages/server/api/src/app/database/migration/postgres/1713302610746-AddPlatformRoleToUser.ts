@@ -62,7 +62,10 @@ export class AddPlatformRoleToUser1713302610746 implements MigrationInterface {
         const adminUserIdsSet = new Set(adminUserIds.map((u: { id: string }) => u.id))
         const ownerIdsSet = new Set(ownerIds.map((p: { ownerId: string }) => p.ownerId))
 
-        if (adminUserIdsSet.size !== ownerIdsSet.size || !Array.from(adminUserIdsSet).every(id => ownerIdsSet.has(id))) {
+        if (
+            adminUserIdsSet.size !== ownerIdsSet.size ||
+            !Array.from(adminUserIdsSet).every((id) => ownerIdsSet.has(id))
+        ) {
             throw new Error('Admin user IDs and owner IDs do not match')
         }
     }
@@ -97,5 +100,4 @@ export class AddPlatformRoleToUser1713302610746 implements MigrationInterface {
             ADD "imageUrl" character varying
         `)
     }
-
 }

@@ -1,8 +1,14 @@
-import fs from 'fs/promises'
 import { inspect } from 'node:util'
-import path from 'path'
-import { ConnectionsManager, ContextVersion, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
+import {
+    ConnectionsManager,
+    ContextVersion,
+    PauseHookParams,
+    RespondHookParams,
+    StopHookParams,
+} from '@activepieces/pieces-framework'
 import { ExecutionError, ExecutionErrorType, Result, tryCatch } from '@activepieces/shared'
+import fs from 'fs/promises'
+import path from 'path'
 import { createConnectionResolver } from './piece-context/connection-resolver'
 
 export type FileEntry = {
@@ -44,20 +50,22 @@ export const utils = {
     },
     formatExecutionError(value: ExecutionError): string {
         try {
-            return JSON.stringify({
-                ...value,
-                ...JSON.parse(value.message),
-            }, null, 2)
-        }
-        catch (e) {
+            return JSON.stringify(
+                {
+                    ...value,
+                    ...JSON.parse(value.message),
+                },
+                null,
+                2,
+            )
+        } catch (e) {
             return inspect(value)
         }
     },
     formatError(value: Error): string {
         try {
             return JSON.stringify(JSON.parse(value.message), null, 2)
-        }
-        catch (e) {
+        } catch (e) {
             return inspect(value)
         }
     },
@@ -65,15 +73,19 @@ export const utils = {
         try {
             await fs.access(filePath)
             return true
-        }
-        catch {
+        } catch {
             return false
         }
     },
     createConnectionManager(params: CreateConnectionManagerParams): ConnectionsManager {
         return {
             get: async (key: string) => {
-                const connection = await createConnectionResolver({ projectId: params.projectId, engineToken: params.engineToken, apiUrl: params.apiUrl, contextVersion: params.contextVersion }).obtain(key)
+                const connection = await createConnectionResolver({
+                    projectId: params.projectId,
+                    engineToken: params.engineToken,
+                    apiUrl: params.apiUrl,
+                    contextVersion: params.contextVersion,
+                }).obtain(key)
                 if (params.target === 'actions') {
                     params.hookResponse.tags.push(`connection:${key}`)
                 }
@@ -90,20 +102,39 @@ function isEngineError(error: unknown): error is ExecutionError {
     return error instanceof ExecutionError && error.type === ExecutionErrorType.ENGINE
 }
 
-export type HookResponse = {
-    type: 'paused'
-    tags: string[]
-    response: PauseHookParams
-} | {
-    type: 'stopped'
-    tags: string[]
-    response: StopHookParams
-} | {
-    type: 'respond'
-    tags: string[]
-    response: RespondHookParams
-} | {
-    type: 'none'
-    tags: string[]
-}
-type CreateConnectionManagerParams = { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' | 'properties', contextVersion: ContextVersion | undefined } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse, contextVersion: ContextVersion | undefined }
+export type HookResponse =
+    | {
+          type: 'paused'
+          tags: string[]
+          response: PauseHookParams
+      }
+    | {
+          type: 'stopped'
+          tags: string[]
+          response: StopHookParams
+      }
+    | {
+          type: 'respond'
+          tags: string[]
+          response: RespondHookParams
+      }
+    | {
+          type: 'none'
+          tags: string[]
+      }
+type CreateConnectionManagerParams =
+    | {
+          projectId: string
+          engineToken: string
+          apiUrl: string
+          target: 'triggers' | 'properties'
+          contextVersion: ContextVersion | undefined
+      }
+    | {
+          projectId: string
+          engineToken: string
+          apiUrl: string
+          target: 'actions'
+          hookResponse: HookResponse
+          contextVersion: ContextVersion | undefined
+      }

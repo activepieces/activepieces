@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { productboardAuth } from '../common/auth';
-import { productboardCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { productboardAuth } from '../common/auth'
+import { productboardCommon } from '../common/client'
 
 /**
  * Action to create a new note/feedback in Productboard.
@@ -24,12 +24,14 @@ export const createNote = createAction({
         }),
         user_email: Property.ShortText({
             displayName: 'User Email',
-            description: "Email address of a user to be attached to the note. This field can't be combined with `Company Domain`.",
+            description:
+                "Email address of a user to be attached to the note. This field can't be combined with `Company Domain`.",
             required: false,
         }),
         company_domain: Property.ShortText({
             displayName: 'Company Domain',
-            description: "Domain of a company the note should be linked to. This field can't be combined with `User Email`.",
+            description:
+                "Domain of a company the note should be linked to. This field can't be combined with `User Email`.",
             required: false,
         }),
         display_url: Property.ShortText({
@@ -60,43 +62,35 @@ export const createNote = createAction({
         }),
     },
     async run(context) {
-        const {
-            title,
-            content,
-            user_email,
-            company_domain,
-            display_url,
-            source_origin,
-            source_record_id,
-            tags,
-        } = context.propsValue;
+        const { title, content, user_email, company_domain, display_url, source_origin, source_record_id, tags } =
+            context.propsValue
 
         const noteBody: Record<string, any> = {
             title,
             content,
-        };
+        }
 
         if (user_email) {
-            noteBody['user'] = { email: user_email };
+            noteBody['user'] = { email: user_email }
         }
 
         if (company_domain) {
-            noteBody['company'] = { domain: company_domain };
+            noteBody['company'] = { domain: company_domain }
         }
 
         if (display_url) {
-            noteBody['display_url'] = display_url;
+            noteBody['display_url'] = display_url
         }
 
         if (source_origin && source_record_id) {
             noteBody['source'] = {
                 origin: source_origin,
                 record_id: source_record_id,
-            };
+            }
         }
 
         if (tags) {
-            noteBody['tags'] = (tags as { tag: string }[]).map((t) => t.tag);
+            noteBody['tags'] = (tags as { tag: string }[]).map((t) => t.tag)
         }
 
         const response = await productboardCommon.apiCall({
@@ -104,8 +98,8 @@ export const createNote = createAction({
             method: HttpMethod.POST,
             resourceUri: '/notes',
             body: noteBody,
-        });
+        })
 
-        return response.body;
+        return response.body
     },
-});
+})

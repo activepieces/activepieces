@@ -2,13 +2,13 @@ import {
     ActivepiecesError,
     apId,
     deleteProps,
-
     ErrorCode,
     isNil,
     ListOAuth2AppRequest,
     OAuthApp,
     SeekPage,
-    UpsertOAuth2AppRequest } from '@activepieces/shared'
+    UpsertOAuth2AppRequest,
+} from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -18,13 +18,7 @@ import { OAuthAppEntity, OAuthAppWithSecret } from './oauth-app.entity'
 const oauthRepo = repoFactory(OAuthAppEntity)
 
 export const oauthAppService = {
-    async upsert({
-        platformId,
-        request,
-    }: {
-        platformId: string
-        request: UpsertOAuth2AppRequest
-    }): Promise<OAuthApp> {
+    async upsert({ platformId, request }: { platformId: string; request: UpsertOAuth2AppRequest }): Promise<OAuthApp> {
         await oauthRepo().upsert(
             {
                 platformId,
@@ -81,13 +75,7 @@ export const oauthAppService = {
         )
         return paginationHelper.createPage<OAuthApp>(data, cursor)
     },
-    async delete({
-        platformId,
-        id,
-    }: {
-        platformId: string
-        id: string
-    }): Promise<void> {
+    async delete({ platformId, id }: { platformId: string; id: string }): Promise<void> {
         const oauthApp = await oauthRepo().findOneBy({ platformId, id })
         if (isNil(oauthApp)) {
             throw new ActivepiecesError({

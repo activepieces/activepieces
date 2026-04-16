@@ -56,7 +56,6 @@ export const communityTemplates = {
     },
 }
 
-
 function convertToQueryString(params: ListTemplatesRequestQuery): string {
     const searchParams = new URLSearchParams()
 
@@ -67,8 +66,7 @@ function convertToQueryString(params: ListTemplatesRequestQuery): string {
                     searchParams.append(key, typeof val === 'string' ? val : JSON.stringify(val))
                 }
             })
-        }
-        else if (!isNil(value)) {
+        } else if (!isNil(value)) {
             searchParams.set(key, value.toString())
         }
     })

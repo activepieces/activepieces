@@ -9,6 +9,7 @@ import { jwtDecode } from 'jwt-decode';
 import { authenticationApi } from '@/api/authentication-api';
 
 import { ApStorage } from './ap-browser-storage';
+
 const tokenKey = 'token';
 const projectIdKey = 'projectId';
 export const authenticationSession = {

@@ -212,5 +212,4 @@ export class MakeStepNameOptionalSqlite1750025280435 implements MigrationInterfa
             CREATE UNIQUE INDEX "idx_issue_flowId_stepName" ON "issue" ("flowId", "stepName")
         `)
     }
-
 }

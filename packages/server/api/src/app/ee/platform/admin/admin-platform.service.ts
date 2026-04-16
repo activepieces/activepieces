@@ -22,18 +22,14 @@ import { licenseKeysService } from '../../license-keys/license-keys-service'
 import { openRouterApi } from '../platform-plan/openrouter/openrouter-api'
 
 export const adminPlatformService = (log: FastifyBaseLogger) => ({
-
-
-    retryRuns: async ({
-        createdAfter,
-        createdBefore,
-        runIds,
-    }: AdminRetryRunsRequestBody): Promise<void> => {
+    retryRuns: async ({ createdAfter, createdBefore, runIds }: AdminRetryRunsRequestBody): Promise<void> => {
         const strategy = FlowRetryStrategy.FROM_FAILED_STEP
 
-        let query = flowRunRepo().createQueryBuilder('flow_run').where({
-            status: In([FlowRunStatus.INTERNAL_ERROR]),
-        })
+        let query = flowRunRepo()
+            .createQueryBuilder('flow_run')
+            .where({
+                status: In([FlowRunStatus.INTERNAL_ERROR]),
+            })
         if (!isNil(runIds)) {
             query = query.andWhere({
                 id: In(runIds),
@@ -55,11 +51,14 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
         })
 
         const flowRuns = await query.getMany()
-        const flowRunsByProject = flowRuns.reduce((acc, flowRun) => {
-            acc[flowRun.projectId] = acc[flowRun.projectId] || []
-            acc[flowRun.projectId].push(flowRun)
-            return acc
-        }, {} as Record<ProjectId, FlowRun[]>)
+        const flowRunsByProject = flowRuns.reduce(
+            (acc, flowRun) => {
+                acc[flowRun.projectId] = acc[flowRun.projectId] || []
+                acc[flowRun.projectId].push(flowRun)
+                return acc
+            },
+            {} as Record<ProjectId, FlowRun[]>,
+        )
         for (const projectId in flowRunsByProject) {
             const flowRuns = flowRunsByProject[projectId]
             await flowRunService(log).bulkRetry({
@@ -87,13 +86,16 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
         if (!platform) {
             throw new Error('Platform not found for owner')
         }
-        const key = await licenseKeysService(log).verifyKeyOrReturnNull({ platformId: platform.id, license: licenseKey })
+        const key = await licenseKeysService(log).verifyKeyOrReturnNull({
+            platformId: platform.id,
+            license: licenseKey,
+        })
         if (!key) {
             throw new Error('Invalid or expired license key')
         }
         await licenseKeysService(log).applyLimits(platform.id, key)
     },
-    async increaseAiCredits({  amountInUsd, platformId }: IncreaseAICreditsForPlatformRequestBody): Promise<void> {
+    async increaseAiCredits({ amountInUsd, platformId }: IncreaseAICreditsForPlatformRequestBody): Promise<void> {
         const { apiKeyHash } = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
         const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
 
@@ -102,5 +104,4 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
             limit: key.limit! + amountInUsd,
         })
     },
-
 })

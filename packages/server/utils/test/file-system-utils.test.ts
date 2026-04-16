@@ -1,6 +1,6 @@
-import { mkdtemp, writeFile, rm } from 'node:fs/promises'
-import { join } from 'node:path'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { fileSystemUtils } from '../src/file-system-utils'
 
 let tempDir: string

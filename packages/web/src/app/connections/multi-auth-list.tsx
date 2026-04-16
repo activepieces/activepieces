@@ -1,9 +1,9 @@
 import {
+  DEFAULT_CONNECTION_DISPLAY_NAME,
   OAuth2Property,
+  OAuth2Props,
   PieceAuthProperty,
   PropertyType,
-  DEFAULT_CONNECTION_DISPLAY_NAME,
-  OAuth2Props,
 } from '@activepieces/pieces-framework';
 import {
   AppConnectionType,
@@ -26,8 +26,8 @@ import {
 } from '@/components/ui/dialog';
 import {
   OAuth2App,
-  PiecesOAuth2AppsMap,
   oauth2Utils,
+  PiecesOAuth2AppsMap,
 } from '@/features/connections';
 import { formatUtils } from '@/lib/format-utils';
 

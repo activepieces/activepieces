@@ -113,5 +113,4 @@ export class AddExternalidToMCPToolSQLite1754220095236 implements MigrationInter
             CREATE INDEX "idx_mcp_tool_mcp_id" ON "mcp_tool" ("mcpId")
         `)
     }
-
 }

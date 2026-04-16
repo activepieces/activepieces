@@ -3,9 +3,16 @@ import { FlowActionType } from '../../flows/actions/action'
 import { BaseStepOutput, LoopStepOutput, StepOutput, StepOutputStatus } from './step-output'
 
 export const executionJournal = {
-  
-    upsertStep({ stepName, stepOutput, path, steps, createLoopIterationIfNotExists }: UpsertStepParams): Record<string, StepOutput> {
-        const target: Record<string, BaseStepOutput> = createLoopIterationIfNotExists ? this.getOrCreateStateAtPath({ path, steps }) : this.getStateAtPath({ path, steps })
+    upsertStep({
+        stepName,
+        stepOutput,
+        path,
+        steps,
+        createLoopIterationIfNotExists,
+    }: UpsertStepParams): Record<string, StepOutput> {
+        const target: Record<string, BaseStepOutput> = createLoopIterationIfNotExists
+            ? this.getOrCreateStateAtPath({ path, steps })
+            : this.getStateAtPath({ path, steps })
         target[stepName] = stepOutput
         return steps
     },
@@ -16,7 +23,7 @@ export const executionJournal = {
 
     getStateAtPath({ path, steps }: GetStateAtPathParams): Record<string, StepOutput> {
         let target = steps
-    
+
         for (const [parentStepName, iteration] of path) {
             const step = target[parentStepName]
             if (!step) {
@@ -41,10 +48,10 @@ export const executionJournal = {
      */
     getOrCreateStateAtPath({ path, steps }: GetStateAtPathParams): Record<string, StepOutput> {
         let target = steps
-    
+
         for (const [parentStepName, iteration] of path) {
             let step = target[parentStepName]
-            if (!step ) {
+            if (!step) {
                 step = LoopStepOutput.init({ input: null })
             }
             if (step.type !== FlowActionType.LOOP_ON_ITEMS) {
@@ -52,10 +59,10 @@ export const executionJournal = {
             }
             let loopStepOutput = step as LoopStepOutput
             let iterationOutput = loopStepOutput.output?.iterations[iteration]
-            if (!iterationOutput ) {
+            if (!iterationOutput) {
                 loopStepOutput = loopStepOutput.setItemAndIndex({ item: undefined, index: iteration }).addIteration()
                 iterationOutput = loopStepOutput.output?.iterations[iteration] ?? {}
-            } 
+            }
             target[parentStepName] = loopStepOutput
             target = iterationOutput
         }
@@ -65,7 +72,7 @@ export const executionJournal = {
     findLastStepWithStatus(steps: Record<string, StepOutput>, status: StepOutputStatus | undefined): string | null {
         let lastStepWithStatus: string | null = null
         Object.entries(steps).forEach(([stepName, step]) => {
-            if ( step.type === FlowActionType.LOOP_ON_ITEMS && step.output ) {
+            if (step.type === FlowActionType.LOOP_ON_ITEMS && step.output) {
                 const iterations = step.output.iterations
                 iterations.forEach((iteration) => {
                     const lastOneInIteration = this.findLastStepWithStatus(iteration, status)
@@ -77,7 +84,7 @@ export const executionJournal = {
             if (isNil(status)) {
                 lastStepWithStatus = stepName
                 return
-            } 
+            }
             if (step.status === status) {
                 lastStepWithStatus = stepName
                 return
@@ -90,19 +97,22 @@ export const executionJournal = {
         let result: Record<string, LoopStepOutput> = {}
         Object.entries(steps).forEach(([stepName, step]) => {
             if (step.type === FlowActionType.LOOP_ON_ITEMS) {
-                const iterationsResult = step.output?.iterations.reduce((acc, iteration) => {
-                    return {
-                        ...acc,
-                        ...this.getLoopSteps(iteration),
-                    }
-                }, {} as Record<string, LoopStepOutput>)
+                const iterationsResult = step.output?.iterations.reduce(
+                    (acc, iteration) => {
+                        return {
+                            ...acc,
+                            ...this.getLoopSteps(iteration),
+                        }
+                    },
+                    {} as Record<string, LoopStepOutput>,
+                )
                 if (isNil(iterationsResult)) {
                     result[stepName] = step as LoopStepOutput
                     return
                 }
                 result = {
                     ...result,
-                    ...iterationsResult as Record<string, LoopStepOutput>,
+                    ...(iterationsResult as Record<string, LoopStepOutput>),
                     [stepName]: step as LoopStepOutput,
                 }
             }
@@ -128,8 +138,6 @@ export const executionJournal = {
         loopsIndexes: Record<string, number>,
         currentPath: readonly [string, number][] = [],
     ): readonly [string, number][] | undefined {
-
-
         for (const [currentStepName, step] of Object.entries(steps)) {
             if (currentStepName === stepName) {
                 return currentPath
@@ -139,7 +147,10 @@ export const executionJournal = {
             if (!step.output?.iterations) continue
 
             for (const iteration of step.output.iterations) {
-                const nestedPath = this.getPathToStep(iteration, stepName, loopsIndexes, [...currentPath, [currentStepName, loopsIndexes[currentStepName]]])
+                const nestedPath = this.getPathToStep(iteration, stepName, loopsIndexes, [
+                    ...currentPath,
+                    [currentStepName, loopsIndexes[currentStepName]],
+                ])
                 if (nestedPath) return nestedPath
             }
         }

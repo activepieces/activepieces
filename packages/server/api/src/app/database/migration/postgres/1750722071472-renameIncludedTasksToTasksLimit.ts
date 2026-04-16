@@ -33,5 +33,4 @@ export class RenameIncludedTasksToTasksLimit1750722071472 implements MigrationIn
                 RENAME COLUMN "tasksLimit" TO "includedTasks"
         `)
     }
-
 }

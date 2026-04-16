@@ -15,7 +15,6 @@ export class RemoveTasksAndTasksLimit1761570485475 implements MigrationInterface
             await queryRunner.query(`
             ALTER TABLE "project_plan" DROP COLUMN "tasks"
         `)
-
         }
 
         const hasPlatformAnalyticsReport = await queryRunner.hasTable('platform_analytics_report')
@@ -34,7 +33,6 @@ export class RemoveTasksAndTasksLimit1761570485475 implements MigrationInterface
             ALTER TABLE "platform_plan"
             ALTER COLUMN "stripeBillingCycle" DROP DEFAULT
         `)
-
         }
         await queryRunner.query(`
             ALTER TABLE "flow"
@@ -61,7 +59,6 @@ export class RemoveTasksAndTasksLimit1761570485475 implements MigrationInterface
         }
         const hasProjectPlan = await queryRunner.hasTable('project_plan')
         if (hasProjectPlan) {
-
             await queryRunner.query(`
             ALTER TABLE "project_plan"
             ADD "tasks" integer
@@ -83,5 +80,4 @@ export class RemoveTasksAndTasksLimit1761570485475 implements MigrationInterface
             ADD CONSTRAINT "fk_flow_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE RESTRICT ON UPDATE NO ACTION
         `)
     }
-
 }

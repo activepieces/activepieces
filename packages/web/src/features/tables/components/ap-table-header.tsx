@@ -2,14 +2,14 @@ import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ChevronDown,
+  Download,
+  Edit2,
+  FileJson,
+  Import,
+  Lock,
   RefreshCw,
   Trash2,
-  Download,
   UploadCloud,
-  Edit2,
-  Import,
-  FileJson,
-  Lock,
 } from 'lucide-react';
 import { useState } from 'react';
 

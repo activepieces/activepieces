@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
-import { LockIcon, MailIcon, Earth } from 'lucide-react';
+import { Earth, LockIcon, MailIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CenteredPage } from '@/app/components/centered-page';
@@ -10,11 +10,11 @@ import { NewOAuth2Dialog } from '@/app/routes/platform/security/sso/oauth2-dialo
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
 import {
   Item,
-  ItemMedia,
-  ItemContent,
-  ItemTitle,
-  ItemDescription,
   ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
 } from '@/components/custom/item';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -150,4 +150,5 @@ const SSOPage = () => {
 };
 
 SSOPage.displayName = 'SSOPage';
+
 export { SSOPage };

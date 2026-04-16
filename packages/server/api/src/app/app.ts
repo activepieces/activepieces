@@ -1,14 +1,41 @@
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuthenticationEvent, ConnectionEvent, Flow, FlowCreatedEvent, FlowDeletedEvent, FlowRun, FlowRunEvent, FlowUpdatedEvent, Folder, FolderEvent, GitRepoWithoutSensitiveData, isNil, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
+import {
+    ApEdition,
+    ApEnvironment,
+    AppConnectionWithoutSensitiveData,
+    ApplicationEventName,
+    AuthenticationEvent,
+    ConnectionEvent,
+    Flow,
+    FlowCreatedEvent,
+    FlowDeletedEvent,
+    FlowRun,
+    FlowRunEvent,
+    FlowUpdatedEvent,
+    Folder,
+    FolderEvent,
+    GitRepoWithoutSensitiveData,
+    isNil,
+    ProjectMember,
+    ProjectRelease,
+    ProjectReleaseEvent,
+    ProjectRoleEvent,
+    ProjectWithLimits,
+    SigningKeyEvent,
+    SignUpEvent,
+    Template,
+    UserInvitation,
+    UserWithMetaInformation,
+} from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
-import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
+import { aiProviderService } from './ai/ai-provider-service'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
-import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
+import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { authenticationModule } from './authentication/authentication.module'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
@@ -57,8 +84,8 @@ import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
 import { flowBackgroundJobs } from './flows/flow/flow.jobs'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
-import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
+import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { folderModule } from './flows/folder/folder.module'
 import { exceptionHandler } from './helper/exception-handler'
 import { openapiModule } from './helper/openapi/openapi.module'
@@ -77,8 +104,8 @@ import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { tagsModule } from './pieces/tags/tags-module'
-import { platformBackgroundJobs } from './platform/platform-jobs'
 import { platformModule } from './platform/platform.module'
+import { platformBackgroundJobs } from './platform/platform-jobs'
 import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
@@ -95,12 +122,15 @@ import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
+    app.addContentTypeParser(
+        'application/octet-stream',
+        { parseAs: 'buffer' },
+        async (_request: FastifyRequest, payload: unknown) => {
+            return payload as Buffer
+        },
+    )
 
-    app.addContentTypeParser('application/octet-stream', { parseAs: 'buffer' }, async (_request: FastifyRequest, payload: unknown) => {
-        return payload as Buffer
-    })
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: legacy code
     await app.register(swagger as any, {
         hideUntagged: true,
         openapi: {
@@ -137,9 +167,9 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     [ApplicationEventName.SIGNING_KEY_CREATED]: SigningKeyEvent,
                     [ApplicationEventName.PROJECT_ROLE_CREATED]: ProjectRoleEvent,
                     [ApplicationEventName.PROJECT_RELEASE_CREATED]: ProjectReleaseEvent,
-                    'template': Template,
-                    'folder': Folder,
-                    'user': UserWithMetaInformation,
+                    template: Template,
+                    folder: Folder,
+                    user: UserWithMetaInformation,
                     'user-invitation': UserInvitation,
                     'project-member': ProjectMember,
                     project: ProjectWithLimits,
@@ -150,7 +180,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     'git-repo': GitRepoWithoutSensitiveData,
                     'project-release': ProjectRelease,
                     'global-connection': AppConnectionWithoutSensitiveData,
-
                 },
             },
             info: {
@@ -163,7 +192,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             },
         },
     })
-
 
     await app.register(rateLimitModule)
     app.addHook('onResponse', async (request, reply) => {
@@ -187,7 +215,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     app.addHook('preHandler', authenticationMiddleware)
     app.addHook('preHandler', authorizationMiddleware)
     app.addHook('preHandler', rbacMiddleware)
-    
+
     const canaryAppUrl = system.get(AppSystemProp.CANARY_APP_URL)
     if (!isNil(canaryAppUrl)) {
         await app.register(replyFrom, { base: canaryAppUrl })
@@ -229,37 +257,37 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(templateModule)
     await app.register(userBadgeModule)
     await app.register(platformAnalyticsModule)
-    systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
-    systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
-
-    app.get(
-        '/redirect',
-        async (
-            request: FastifyRequest<{ Querystring: { code: string } }>,
-            reply,
-        ) => {
-            const params = {
-                code: request.query.code,
-            }
-            if (!params.code) {
-                return reply.send('The code is missing in url')
-            }
-            else {
-                return reply
-                    .type('text/html')
-                    .send(
-                        `<script>if(window.opener){window.opener.postMessage({ 'code': ${JSON.stringify(params.code)} },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`,
-                    )
-            }
-        },
+    systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) =>
+        flowBackgroundJobs(app.log).deleteFlowHandler(data),
     )
+    systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) =>
+        platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data),
+    )
+
+    app.get('/redirect', async (request: FastifyRequest<{ Querystring: { code: string } }>, reply) => {
+        const params = {
+            code: request.query.code,
+        }
+        if (!params.code) {
+            return reply.send('The code is missing in url')
+        } else {
+            return reply
+                .type('text/html')
+                .send(
+                    `<script>if(window.opener){window.opener.postMessage({ 'code': ${JSON.stringify(params.code)} },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`,
+                )
+        }
+    })
 
     await validateEnvPropsOnStartup(app.log)
 
     const edition = system.getEdition()
-    app.log.info({
-        edition,
-    }, 'Activepieces Edition')
+    app.log.info(
+        {
+            edition,
+        },
+        'Activepieces Edition',
+    )
     switch (edition) {
         case ApEdition.CLOUD:
             await app.register(adminPlatformModule)
@@ -293,7 +321,9 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
-            systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformBackgroundJobs(app.log).hardDeletePlatformHandler(data))
+            systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) =>
+                platformBackgroundJobs(app.log).hardDeletePlatformHandler(data),
+            )
             break
         case ApEdition.ENTERPRISE:
             await platformAiCreditsService(app.log).init()
@@ -341,8 +371,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     return app
 }
 
-
-
 export async function getAdapter() {
     const redisConnectionInstance = await redisConnections.useExisting()
     const sub = redisConnectionInstance.duplicate()
@@ -352,9 +380,7 @@ export async function getAdapter() {
     })
 }
 
-
 export async function appPostBoot(app: FastifyInstance): Promise<void> {
-
     app.log.info(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
     /\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
@@ -371,12 +397,8 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     await migrateQueuesAndRunConsumers(app)
     app.log.info('Queues migrated and consumers run')
     if (environment === ApEnvironment.DEVELOPMENT) {
-        app.log.warn(
-            `[WARNING]: The application is running in ${environment} mode.`,
-        )
-        app.log.warn(
-            `[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`,
-        )
+        app.log.warn(`[WARNING]: The application is running in ${environment} mode.`)
+        app.log.warn(`[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`)
     }
     void startDevPieceWatcher(app)
 }

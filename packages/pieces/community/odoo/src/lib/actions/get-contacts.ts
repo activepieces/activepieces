@@ -1,6 +1,6 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import Odoo from "../../commom/index";
-import { odooAuth } from '../auth';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import Odoo from '../../commom/index'
+import { odooAuth } from '../auth'
 
 export default createAction({
     name: 'get_contacts', // Must be a unique across the piece, this shouldn't be changed.
@@ -11,24 +11,24 @@ export default createAction({
         // Properties to ask from the user, in this ask we will take number of
         type: Property.StaticDropdown({
             displayName: 'Type',
-            description: "Select which contact type to get",
+            description: 'Select which contact type to get',
             required: true,
             options: {
                 options: [
                     {
-                        label: "Contact",
+                        label: 'Contact',
                         value: false,
                     },
                     {
-                        label: "Company",
+                        label: 'Company',
                         value: true,
                     },
                 ],
-            }
+            },
         }),
         name: Property.ShortText({
             displayName: 'Contact Name',
-            description: "Would you like to search any specific name?",
+            description: 'Would you like to search any specific name?',
             required: false,
         }),
     },
@@ -42,15 +42,16 @@ export default createAction({
         })
 
         try {
-            await odoo.connect();
+            await odoo.connect()
 
             if (context.propsValue['name'])
-                return await odoo.getContact({ name: context.propsValue['name'], isCompany: context.propsValue['type'] })
-            else
-                return await odoo.getAllContacts({ isCompany: context.propsValue['type'] })
+                return await odoo.getContact({
+                    name: context.propsValue['name'],
+                    isCompany: context.propsValue['type'],
+                })
+            else return await odoo.getAllContacts({ isCompany: context.propsValue['type'] })
         } catch (err) {
             return err
         }
-    }
-});
-
+    },
+})

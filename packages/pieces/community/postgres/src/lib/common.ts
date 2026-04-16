@@ -1,8 +1,13 @@
-import { AppConnectionValueForAuthProperty,  } from "@activepieces/pieces-framework";
-import { postgresAuth } from "..";
-import { Client } from "pg";
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework'
+import { Client } from 'pg'
+import { postgresAuth } from '..'
 
-export const pgClient = async (auth: AppConnectionValueForAuthProperty<typeof postgresAuth>, query_timeout = 30000, application_name: string | undefined = undefined , connectionTimeoutMillis = 30000) => {
+export const pgClient = async (
+    auth: AppConnectionValueForAuthProperty<typeof postgresAuth>,
+    query_timeout = 30000,
+    application_name: string | undefined = undefined,
+    connectionTimeoutMillis = 30000,
+) => {
     const {
         host,
         user,
@@ -12,12 +17,12 @@ export const pgClient = async (auth: AppConnectionValueForAuthProperty<typeof po
         enable_ssl,
         reject_unauthorized: rejectUnauthorized,
         certificate,
-    } = auth.props;
+    } = auth.props
 
     const sslConf = {
         rejectUnauthorized: rejectUnauthorized,
         ca: certificate && certificate.length > 0 ? certificate : undefined,
-    };
+    }
     const client = new Client({
         host,
         port: Number(port),
@@ -29,8 +34,8 @@ export const pgClient = async (auth: AppConnectionValueForAuthProperty<typeof po
         statement_timeout: Number(query_timeout),
         application_name,
         connectionTimeoutMillis: Number(connectionTimeoutMillis),
-    });
-    await client.connect();
+    })
+    await client.connect()
 
-    return client;
+    return client
 }

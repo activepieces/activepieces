@@ -1,15 +1,14 @@
-import crypto from 'crypto'
 import {
     ActivepiecesError,
-    apId,
     AppConnectionScope,
     AppConnectionType,
     AppConnectionWithoutSensitiveData,
     AppCredentialType,
+    apId,
     ConnectionKey,
     ConnectionKeyId,
-
-    Cursor, ErrorCode,
+    Cursor,
+    ErrorCode,
     GetOrDeleteConnectionFromTokenRequest,
     isNil,
     ProjectId,
@@ -17,7 +16,9 @@ import {
     UpsertApiKeyConnectionFromToken,
     UpsertConnectionFromToken,
     UpsertOAuth2ConnectionFromToken,
-    UpsertSigningKeyConnection } from '@activepieces/shared'
+    UpsertSigningKeyConnection,
+} from '@activepieces/shared'
+import crypto from 'crypto'
 import { FastifyBaseLogger } from 'fastify'
 import jsonwebtoken from 'jsonwebtoken'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
@@ -56,12 +57,8 @@ export const connectionKeyService = (log: FastifyBaseLogger) => ({
         })
         return isNil(connection) ? null : appConnectionService(log).removeSensitiveData(connection)
     },
-    async createConnection(
-        request: UpsertConnectionFromToken,
-    ): Promise<AppConnectionWithoutSensitiveData> {
-        const appCredential = await appCredentialService.getOneOrThrow(
-            request.appCredentialId,
-        )
+    async createConnection(request: UpsertConnectionFromToken): Promise<AppConnectionWithoutSensitiveData> {
+        const appCredential = await appCredentialService.getOneOrThrow(request.appCredentialId)
         const projectId = appCredential.projectId
         const project = await projectService(log).getOneOrThrow(projectId)
 
@@ -157,11 +154,7 @@ export const connectionKeyService = (log: FastifyBaseLogger) => ({
             },
         }
     },
-    async list(
-        projectId: ProjectId,
-        cursorRequest: Cursor | null,
-        limit: number,
-    ): Promise<SeekPage<ConnectionKey>> {
+    async list(projectId: ProjectId, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<ConnectionKey>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest ?? null)
         const paginator = buildPaginator({
             entity: ConnectionKeyEntity,
@@ -172,9 +165,7 @@ export const connectionKeyService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = connectionKeyRepo()
-            .createQueryBuilder('connection_key')
-            .where({ projectId })
+        const queryBuilder = connectionKeyRepo().createQueryBuilder('connection_key').where({ projectId })
         const { data, cursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<ConnectionKey>(data, cursor)
     },
@@ -185,20 +176,14 @@ export const connectionKeyService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function getConnectioName(request: {
-    projectId: string
-    token: string
-}): Promise<string | null> {
+async function getConnectioName(request: { projectId: string; token: string }): Promise<string | null> {
     const connectionKeys = await connectionKeyRepo().findBy({
         projectId: request.projectId,
     })
     let connectionName: string | null = null
     for (let i = 0; i < connectionKeys.length; ++i) {
         const currentKey = connectionKeys[i]
-        const decodedTokenSub = decodeTokenOrNull(
-            request.token,
-            currentKey.settings.publicKey,
-        )?.sub
+        const decodedTokenSub = decodeTokenOrNull(request.token, currentKey.settings.publicKey)?.sub
         if (decodedTokenSub !== null && decodedTokenSub !== undefined) {
             connectionName = decodedTokenSub as string
             break
@@ -210,8 +195,7 @@ async function getConnectioName(request: {
 function decodeTokenOrNull(token: string, publicKey: string) {
     try {
         return jsonwebtoken.verify(token, publicKey!)
-    }
-    catch (e) {
+    } catch (e) {
         return null
     }
 }

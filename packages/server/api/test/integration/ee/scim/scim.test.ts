@@ -6,10 +6,7 @@ import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
-import {
-    createMockApiKey,
-    mockAndSaveBasicSetup,
-} from '../../../helpers/mocks'
+import { createMockApiKey, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -73,11 +70,7 @@ function mockIdpUser(overrides?: {
     }
 }
 
-function mockIdpGroup(overrides?: {
-    externalId?: string
-    displayName?: string
-    members?: { value: string }[]
-}) {
+function mockIdpGroup(overrides?: { externalId?: string; displayName?: string; members?: { value: string }[] }) {
     return {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:Group'],
         externalId: overrides?.externalId ?? `idp-group-${apId()}`,
@@ -89,9 +82,7 @@ function mockIdpGroup(overrides?: {
 // ==================== SCIM User Tests ====================
 
 describe('SCIM 2.0 API', () => {
-
     describe('SCIM User Provisioning', () => {
-
         it('should create a user from IdP', async () => {
             const { bearerToken } = await setupScimPlatform()
             const idpUser = mockIdpUser()
@@ -393,7 +384,6 @@ describe('SCIM 2.0 API', () => {
     // ==================== SCIM Group Tests ====================
 
     describe('SCIM Group Provisioning (Groups as Projects)', () => {
-
         it('should create a group as a TEAM project', async () => {
             const { bearerToken } = await setupScimPlatform()
             const idpGroup = mockIdpGroup()
@@ -415,9 +405,7 @@ describe('SCIM 2.0 API', () => {
             expect(body.members).toEqual([])
 
             // Verify it's a TEAM project in the database
-            const project = await databaseConnection()
-                .getRepository('project')
-                .findOneBy({ id: body.id })
+            const project = await databaseConnection().getRepository('project').findOneBy({ id: body.id })
             expect(project?.type).toBe(ProjectType.TEAM)
             expect(project?.externalId).toBe(idpGroup.externalId)
         })
@@ -447,10 +435,7 @@ describe('SCIM 2.0 API', () => {
 
             // Create group with both users as members
             const idpGroup = mockIdpGroup({
-                members: [
-                    { value: user1Id },
-                    { value: user2Id },
-                ],
+                members: [{ value: user1Id }, { value: user2Id }],
             })
 
             const response = await app?.inject({
@@ -463,9 +448,7 @@ describe('SCIM 2.0 API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const body = response?.json()
             expect(body.members).toHaveLength(2)
-            expect(body.members.map((m: { value: string }) => m.value).sort()).toEqual(
-                [user1Id, user2Id].sort(),
-            )
+            expect(body.members.map((m: { value: string }) => m.value).sort()).toEqual([user1Id, user2Id].sort())
         })
 
         it('should get a group by ID', async () => {
@@ -720,7 +703,6 @@ describe('SCIM 2.0 API', () => {
     // ==================== SCIM Discovery Tests ====================
 
     describe('SCIM Discovery Endpoints', () => {
-
         it('should return ServiceProviderConfig', async () => {
             const { bearerToken } = await setupScimPlatform()
 
@@ -774,7 +756,6 @@ describe('SCIM 2.0 API', () => {
     // ==================== Full IdP Lifecycle Tests ====================
 
     describe('Full IdP Lifecycle Simulation', () => {
-
         it('should handle a complete Okta-style provisioning flow', async () => {
             const { bearerToken } = await setupScimPlatform()
 
@@ -814,10 +795,7 @@ describe('SCIM 2.0 API', () => {
             const engineeringGroup = mockIdpGroup({
                 externalId: 'okta-eng-group',
                 displayName: 'Engineering',
-                members: [
-                    { value: aliceId },
-                    { value: bobId },
-                ],
+                members: [{ value: aliceId }, { value: bobId }],
             })
 
             const groupResponse = await app?.inject({
@@ -898,9 +876,24 @@ describe('SCIM 2.0 API', () => {
             const user2 = mockIdpUser({ externalId: 'azure-user-2' })
             const user3 = mockIdpUser({ externalId: 'azure-user-3' })
 
-            const u1Res = await app?.inject({ method: 'POST', url: '/api/v1/scim/v2/Users', headers: { authorization: bearerToken }, body: user1 })
-            const u2Res = await app?.inject({ method: 'POST', url: '/api/v1/scim/v2/Users', headers: { authorization: bearerToken }, body: user2 })
-            const u3Res = await app?.inject({ method: 'POST', url: '/api/v1/scim/v2/Users', headers: { authorization: bearerToken }, body: user3 })
+            const u1Res = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/scim/v2/Users',
+                headers: { authorization: bearerToken },
+                body: user1,
+            })
+            const u2Res = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/scim/v2/Users',
+                headers: { authorization: bearerToken },
+                body: user2,
+            })
+            const u3Res = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/scim/v2/Users',
+                headers: { authorization: bearerToken },
+                body: user3,
+            })
 
             const u1Id = u1Res?.json().id
             const u2Id = u2Res?.json().id
@@ -911,7 +904,12 @@ describe('SCIM 2.0 API', () => {
                 displayName: 'Sales Team',
                 members: [{ value: u1Id }, { value: u2Id }],
             })
-            const gRes = await app?.inject({ method: 'POST', url: '/api/v1/scim/v2/Groups', headers: { authorization: bearerToken }, body: group })
+            const gRes = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/scim/v2/Groups',
+                headers: { authorization: bearerToken },
+                body: group,
+            })
             const groupId = gRes?.json().id
 
             // Azure AD does a full PUT to replace membership: now user2 and user3
@@ -928,7 +926,10 @@ describe('SCIM 2.0 API', () => {
             })
 
             expect(putResponse?.statusCode).toBe(StatusCodes.OK)
-            const members = putResponse?.json().members.map((m: { value: string }) => m.value).sort()
+            const members = putResponse
+                ?.json()
+                .members.map((m: { value: string }) => m.value)
+                .sort()
             expect(members).toEqual([u2Id, u3Id].sort())
         })
     })

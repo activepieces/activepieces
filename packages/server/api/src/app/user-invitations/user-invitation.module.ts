@@ -10,9 +10,9 @@ import {
     Principal,
     PrincipalType,
     ProjectRole,
+    SERVICE_KEY_SECURITY_OPENAPI,
     SeekPage,
     SendUserInvitationRequest,
-    SERVICE_KEY_SECURITY_OPENAPI,
     UserInvitation,
     UserInvitationWithLink,
 } from '@activepieces/shared'
@@ -24,7 +24,11 @@ import { z } from 'zod'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled, projectMustBeTeamType } from '../ee/authentication/ee-authorization'
+import {
+    platformMustBeOwnedByCurrentUser,
+    platformMustHaveFeatureEnabled,
+    projectMustBeTeamType,
+} from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { projectService } from '../project/project-service'
@@ -36,19 +40,27 @@ export const invitationModule: FastifyPluginAsyncZod = async (app) => {
 }
 
 const invitationController: FastifyPluginAsyncZod = async (app) => {
-
     app.post('/', UpsertUserInvitationRequestParams, async (request, reply) => {
         const { email, type } = request.body
         switch (type) {
             case InvitationType.PROJECT:
                 await projectMustBeTeamType.call(app, request, reply)
-                await assertPrincipalHasPermissionToProject(app, request, reply, request.principal, request.body.projectId, Permission.WRITE_INVITATION)
+                await assertPrincipalHasPermissionToProject(
+                    app,
+                    request,
+                    reply,
+                    request.principal,
+                    request.body.projectId,
+                    Permission.WRITE_INVITATION,
+                )
                 break
             case InvitationType.PLATFORM:
                 await platformMustBeOwnedByCurrentUser.call(app, request, reply)
                 break
         }
-        const status = await shouldAutoAcceptInvitation(request.principal, request.body, request.log) ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING
+        const status = (await shouldAutoAcceptInvitation(request.principal, request.body, request.log))
+            ? InvitationStatus.ACCEPTED
+            : InvitationStatus.PENDING
         const projectRole = await getProjectRoleAndAssertIfFound(request.principal.platform.id, request.body)
         const platformId = request.principal.platform.id
 
@@ -58,7 +70,7 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             platformId,
             platformRole: type === InvitationType.PROJECT ? null : request.body.platformRole,
             projectId: type === InvitationType.PLATFORM ? null : request.body.projectId,
-            projectRoleId: type === InvitationType.PLATFORM ? null : projectRole?.id ?? null,
+            projectRoleId: type === InvitationType.PLATFORM ? null : (projectRole?.id ?? null),
             invitationExpirySeconds: dayjs.duration(7, 'days').asSeconds(),
             status,
         })
@@ -82,7 +94,9 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/accept', AcceptUserInvitationRequestParams, async (request, reply) => {
-        const invitation = await userInvitationsService(request.log).getOneByInvitationTokenOrThrow(request.body.invitationToken)
+        const invitation = await userInvitationsService(request.log).getOneByInvitationTokenOrThrow(
+            request.body.invitationToken,
+        )
         await userInvitationsService(request.log).accept({
             invitationId: invitation.id,
             platformId: invitation.platformId,
@@ -98,7 +112,14 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
         switch (invitation.type) {
             case InvitationType.PROJECT: {
                 assertNotNullOrUndefined(invitation.projectId, 'projectId')
-                await assertPrincipalHasPermissionToProject(app, request, reply, request.principal, invitation.projectId, Permission.WRITE_INVITATION)
+                await assertPrincipalHasPermissionToProject(
+                    app,
+                    request,
+                    reply,
+                    request.principal,
+                    invitation.projectId,
+                    Permission.WRITE_INVITATION,
+                )
                 break
             }
             case InvitationType.PLATFORM:
@@ -113,8 +134,10 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-
-const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendUserInvitationRequest): Promise<ProjectRole | null> => {
+const getProjectRoleAndAssertIfFound = async (
+    platformId: string,
+    request: SendUserInvitationRequest,
+): Promise<ProjectRole | null> => {
     const { type } = request
     if (type === InvitationType.PLATFORM) {
         return null
@@ -138,34 +161,49 @@ async function getProjectIdAndAssertPermission<R extends Principal>(
         if (isNil(requestQuery.projectId)) {
             return null
         }
-        await assertPrincipalHasPermissionToProject(app, request, reply, principal, requestQuery.projectId, Permission.READ_INVITATION)
+        await assertPrincipalHasPermissionToProject(
+            app,
+            request,
+            reply,
+            principal,
+            requestQuery.projectId,
+            Permission.READ_INVITATION,
+        )
         return requestQuery.projectId
     }
     return requestQuery.projectId ?? null
 }
 
-async function shouldAutoAcceptInvitation(principal: Principal, request: SendUserInvitationRequest, log: FastifyBaseLogger): Promise<boolean> {
+async function shouldAutoAcceptInvitation(
+    principal: Principal,
+    request: SendUserInvitationRequest,
+    log: FastifyBaseLogger,
+): Promise<boolean> {
     if (principal.type === PrincipalType.SERVICE) {
         return true
     }
-    
+
     if (request.type === InvitationType.PLATFORM) {
         return false
     }
-    
+
     const identity = await userIdentityService(log).getIdentityByEmail(request.email)
     if (isNil(identity)) {
         return false
     }
-    
+
     const user = await userService(log).getOneByIdentityIdOnly({ identityId: identity.id })
     return !isNil(user)
 }
 
 async function assertPrincipalHasPermissionToProject<R extends Principal & { platform: { id: string } }>(
     fastify: FastifyInstance,
-    request: FastifyRequest, reply: FastifyReply, principal: R,
-    projectId: string, permission: Permission): Promise<void> {
+    request: FastifyRequest,
+    reply: FastifyReply,
+    principal: R,
+    projectId: string,
+    permission: Permission,
+): Promise<void> {
     const project = await projectService(request.log).getOneOrThrow(projectId)
     if (isNil(project) || project.platformId !== principal.platform.id) {
         throw new ActivepiecesError({
@@ -178,7 +216,6 @@ async function assertPrincipalHasPermissionToProject<R extends Principal & { pla
     await platformMustHaveFeatureEnabled((platform) => platform.plan.projectRolesEnabled).call(fastify, request, reply)
     await assertRoleHasPermission(request.principal, projectId, permission, request.log)
 }
-
 
 const ListUserInvitationsRequestParams = {
     config: {
@@ -232,7 +269,8 @@ const UpsertUserInvitationRequestParams = {
     },
     schema: {
         body: SendUserInvitationRequest,
-        description: 'Send a user invitation to a user. If the user already has an invitation, the invitation will be updated.',
+        description:
+            'Send a user invitation to a user. If the user already has an invitation, the invitation will be updated.',
         tags: ['user-invitations'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {

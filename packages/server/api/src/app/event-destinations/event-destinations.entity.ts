@@ -68,4 +68,3 @@ export const EventDestinationEntity = new EntitySchema<EventDestinationSchema>({
         },
     },
 })
-

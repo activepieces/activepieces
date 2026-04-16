@@ -1,8 +1,8 @@
 import {
   BranchOperator,
-  textConditions,
-  singleValueConditions,
   RouterAction,
+  singleValueConditions,
+  textConditions,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
@@ -219,4 +219,5 @@ const BranchSingleCondition = ({
 };
 
 BranchSingleCondition.displayName = 'BranchSingleCondition';
+
 export { BranchSingleCondition };

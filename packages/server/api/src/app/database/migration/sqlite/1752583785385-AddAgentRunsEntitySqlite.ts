@@ -133,5 +133,4 @@ export class AddAgentRunsEntitySqlite1752583785385 implements MigrationInterface
             DROP TABLE "agent_run"
         `)
     }
-
 }

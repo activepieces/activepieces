@@ -19,15 +19,9 @@ export class AddFileToPostgres1693004806926 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(
-            'ALTER TABLE "step_file" DROP CONSTRAINT "fk_step_file_flow_id"',
-        )
-        await queryRunner.query(
-            'ALTER TABLE "step_file" DROP CONSTRAINT "fk_step_file_project_id"',
-        )
-        await queryRunner.query(
-            'DROP INDEX "step_file_project_id_flow_id_step_name_name"',
-        )
+        await queryRunner.query('ALTER TABLE "step_file" DROP CONSTRAINT "fk_step_file_flow_id"')
+        await queryRunner.query('ALTER TABLE "step_file" DROP CONSTRAINT "fk_step_file_project_id"')
+        await queryRunner.query('DROP INDEX "step_file_project_id_flow_id_step_name_name"')
         await queryRunner.query('DROP TABLE "step_file"')
     }
 }

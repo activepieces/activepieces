@@ -15,4 +15,5 @@ const FlagGuard = ({ children, flag }: FlagGuardProps) => {
 };
 
 FlagGuard.displayName = 'FlagGuard';
+
 export { FlagGuard };

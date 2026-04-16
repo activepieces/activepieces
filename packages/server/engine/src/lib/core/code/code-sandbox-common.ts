@@ -43,5 +43,4 @@ type RunScriptParams = {
      */
     // eslint-disable-next-line @typescript-eslint/ban-types
     functions: Record<string, Function>
-
 }

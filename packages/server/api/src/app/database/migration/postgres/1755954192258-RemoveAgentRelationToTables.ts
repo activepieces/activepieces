@@ -29,5 +29,4 @@ export class RemoveAgentRelationToTables1755954192258 implements MigrationInterf
             ADD CONSTRAINT "fk_table_agent_id" FOREIGN KEY ("agentId") REFERENCES "agent"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
     }
-
 }

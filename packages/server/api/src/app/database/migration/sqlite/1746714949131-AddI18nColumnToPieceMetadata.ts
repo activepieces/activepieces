@@ -185,5 +185,4 @@ export class AddI18nColumnToPieceMetadata1746714949131 implements MigrationInter
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
     }
-
 }

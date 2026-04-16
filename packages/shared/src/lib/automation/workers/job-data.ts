@@ -1,4 +1,3 @@
-
 import { z } from 'zod'
 import { isNil } from '../../core/common'
 import { ProgressUpdateType, TriggerHookType, TriggerPayload } from '../engine'
@@ -22,7 +21,6 @@ export const RefJobPayload = z.object({
 
 export const JobPayload = z.discriminatedUnion('type', [InlineJobPayload, RefJobPayload])
 
-
 export const JOB_PRIORITY = {
     critical: 1,
     high: 2,
@@ -37,7 +35,10 @@ const ASYNC_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'medium'
 const SYNC_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'high'
 export const RATE_LIMIT_PRIORITY: keyof typeof JOB_PRIORITY = 'lowest'
 
-function getExecuteFlowPriority(environment: RunEnvironment, synchronousHandlerId: string | undefined | null): keyof typeof JOB_PRIORITY {
+function getExecuteFlowPriority(
+    environment: RunEnvironment,
+    synchronousHandlerId: string | undefined | null,
+): keyof typeof JOB_PRIORITY {
     switch (environment) {
         case RunEnvironment.TESTING:
             return TESTING_EXECUTE_FLOW_PRIORITY
@@ -63,7 +64,6 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
             return 'critical'
     }
 }
-
 
 export enum WorkerJobType {
     RENEW_WEBHOOK = 'RENEW_WEBHOOK',
@@ -162,7 +162,6 @@ export const ExecuteValidateAuthJobData = z.object({
 })
 export type ExecuteValidateAuthJobData = z.infer<typeof ExecuteValidateAuthJobData>
 
-
 export const ExecuteTriggerHookJobData = z.object({
     jobType: z.literal(WorkerJobType.EXECUTE_TRIGGER_HOOK),
     platformId: z.string(),
@@ -220,7 +219,9 @@ export const UserInteractionJobDataWithoutWatchingInformation = z.union([
     ExecutePropertyJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecuteExtractPieceMetadataJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
 ])
-export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof UserInteractionJobDataWithoutWatchingInformation>
+export type UserInteractionJobDataWithoutWatchingInformation = z.infer<
+    typeof UserInteractionJobDataWithoutWatchingInformation
+>
 
 export const EventDestinationJobData = z.object({
     schemaVersion: z.number(),

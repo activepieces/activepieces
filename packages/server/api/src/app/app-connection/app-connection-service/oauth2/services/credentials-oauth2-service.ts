@@ -1,5 +1,6 @@
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import { ActivepiecesError,
+import {
+    ActivepiecesError,
     AppConnectionType,
     BaseOAuth2ConnectionValue,
     ErrorCode,
@@ -12,18 +13,11 @@ import { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { secretManagersService } from '../../../../ee/secret-managers/secret-managers.service'
 import { apAxios } from '../../../../helper/ap-axios'
-import {
-    ClaimOAuth2Request,
-    OAuth2Service,
-    RefreshOAuth2Request,
-} from '../oauth2-service'
+import { ClaimOAuth2Request, OAuth2Service, RefreshOAuth2Request } from '../oauth2-service'
 import { oauth2Util } from '../oauth2-util'
 
-
 export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<OAuth2ConnectionValueWithApp> => ({
-    async claim({
-        request,
-    }: ClaimOAuth2Request): Promise<OAuth2ConnectionValueWithApp> {
+    async claim({ request }: ClaimOAuth2Request): Promise<OAuth2ConnectionValueWithApp> {
         try {
             const grantType = request.grantType ?? OAuth2GrantType.AUTHORIZATION_CODE
             const body: Record<string, unknown> = {
@@ -49,13 +43,12 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
             if (request.codeVerifier) {
                 body.code_verifier = request.codeVerifier
             }
-           
+
             const headers: Record<string, string> = {
                 'content-type': 'application/x-www-form-urlencoded',
                 accept: 'application/json',
             }
-            const authorizationMethod =
-                request.authorizationMethod || OAuth2AuthorizationMethod.BODY
+            const authorizationMethod = request.authorizationMethod || OAuth2AuthorizationMethod.BODY
             switch (authorizationMethod) {
                 case OAuth2AuthorizationMethod.BODY:
                     body.client_id = request.clientId
@@ -69,7 +62,9 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 default:
                     throw new Error(`Unknown authorization method: ${authorizationMethod}`)
             }
-            const urlSearchParams = new URLSearchParams(Object.fromEntries(Object.entries(body).map(([key, value]) => [key, String(value)])))
+            const urlSearchParams = new URLSearchParams(
+                Object.fromEntries(Object.entries(body).map(([key, value]) => [key, String(value)])),
+            )
             const response = (
                 await apAxios.post(request.tokenUrl, urlSearchParams, {
                     headers,
@@ -86,8 +81,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 props: request.props,
                 authorization_method: authorizationMethod,
             }
-        }
-        catch (e: unknown) {
+        } catch (e: unknown) {
             if (e instanceof AxiosError) {
                 log.error('Axios Error:')
                 log.error(e.response?.data)
@@ -95,8 +89,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                     clientId: request.clientId,
                     tokenUrl: request.tokenUrl,
                 })
-            }
-            else {
+            } else {
                 log.error('Unknown Error:')
                 log.error(e)
             }
@@ -126,8 +119,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
             smService.resolveString({ key: appConnection.client_id, ...resolveParams }),
             smService.resolveString({ key: appConnection.client_secret, ...resolveParams }),
         ])
-        const grantType =
-            appConnection.grant_type ?? OAuth2GrantType.AUTHORIZATION_CODE   
+        const grantType = appConnection.grant_type ?? OAuth2GrantType.AUTHORIZATION_CODE
         const body: Record<string, string> = {}
         switch (grantType) {
             case OAuth2GrantType.AUTHORIZATION_CODE: {
@@ -155,17 +147,14 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
             'content-type': 'application/x-www-form-urlencoded',
             accept: 'application/json',
         }
-        const authorizationMethod =
-            appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
+        const authorizationMethod = appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
         switch (authorizationMethod) {
             case OAuth2AuthorizationMethod.BODY:
                 body.client_id = client_id
                 body.client_secret = client_secret
                 break
             case OAuth2AuthorizationMethod.HEADER:
-                headers.authorization = `Basic ${Buffer.from(
-                    `${client_id}:${client_secret}`,
-                ).toString('base64')}`
+                headers.authorization = `Basic ${Buffer.from(`${client_id}:${client_secret}`).toString('base64')}`
                 break
             default:
                 throw new Error(`Unknown authorization method: ${authorizationMethod}`)
@@ -176,10 +165,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 timeout: 20000,
             })
         ).data
-        const mergedObject = mergeNonNull(
-            appConnection,
-            oauth2Util(log).formatOAuth2Response({ ...response }),
-        )
+        const mergedObject = mergeNonNull(appConnection, oauth2Util(log).formatOAuth2Response({ ...response }))
         return {
             ...mergedObject,
             props: appConnection.props,
@@ -196,10 +182,9 @@ function mergeNonNull(
     appConnection: OAuth2ConnectionValueWithApp,
     oAuth2Response: BaseOAuth2ConnectionValue,
 ): OAuth2ConnectionValueWithApp {
-    const formattedOAuth2Response: Partial<BaseOAuth2ConnectionValue> =
-        Object.fromEntries(
-            Object.entries(oAuth2Response).filter(([, value]) => !isNil(value)),
-        )
+    const formattedOAuth2Response: Partial<BaseOAuth2ConnectionValue> = Object.fromEntries(
+        Object.entries(oAuth2Response).filter(([, value]) => !isNil(value)),
+    )
 
     return {
         ...appConnection,

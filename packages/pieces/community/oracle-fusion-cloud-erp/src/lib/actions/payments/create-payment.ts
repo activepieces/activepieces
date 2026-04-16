@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const createPayment = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -106,7 +106,7 @@ export const createPayment = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
+        const client = makeClient(context.auth.props)
         const {
             businessUnit,
             paymentNumber,
@@ -127,7 +127,7 @@ export const createPayment = createAction({
             state,
             country,
             zip,
-        } = context.propsValue;
+        } = context.propsValue
 
         const payload: Record<string, unknown> = {
             BusinessUnit: businessUnit,
@@ -135,24 +135,24 @@ export const createPayment = createAction({
             PaymentDate: paymentDate,
             PaymentCurrency: paymentCurrency,
             PaymentMethodCode: paymentMethodCode,
-        };
+        }
 
-        if (payee) payload['Payee'] = payee;
-        if (payeeSite) payload['PayeeSite'] = payeeSite;
-        if (paymentProcessProfile) payload['PaymentProcessProfile'] = paymentProcessProfile;
-        if (paymentDocument) payload['PaymentDocument'] = paymentDocument;
-        if (paymentDescription) payload['PaymentDescription'] = paymentDescription;
-        if (disbursementBankAccountName) payload['DisbursementBankAccountName'] = disbursementBankAccountName;
-        if (remitToAccountNumber) payload['RemitToAccountNumber'] = remitToAccountNumber;
-        if (conversionRateType) payload['ConversionRateType'] = conversionRateType;
-        if (conversionRate) payload['ConversionRate'] = conversionRate;
-        if (addressLine1) payload['AddressLine1'] = addressLine1;
-        if (city) payload['City'] = city;
-        if (state) payload['State'] = state;
-        if (country) payload['Country'] = country;
-        if (zip) payload['Zip'] = zip;
+        if (payee) payload['Payee'] = payee
+        if (payeeSite) payload['PayeeSite'] = payeeSite
+        if (paymentProcessProfile) payload['PaymentProcessProfile'] = paymentProcessProfile
+        if (paymentDocument) payload['PaymentDocument'] = paymentDocument
+        if (paymentDescription) payload['PaymentDescription'] = paymentDescription
+        if (disbursementBankAccountName) payload['DisbursementBankAccountName'] = disbursementBankAccountName
+        if (remitToAccountNumber) payload['RemitToAccountNumber'] = remitToAccountNumber
+        if (conversionRateType) payload['ConversionRateType'] = conversionRateType
+        if (conversionRate) payload['ConversionRate'] = conversionRate
+        if (addressLine1) payload['AddressLine1'] = addressLine1
+        if (city) payload['City'] = city
+        if (state) payload['State'] = state
+        if (country) payload['Country'] = country
+        if (zip) payload['Zip'] = zip
 
-        const response = await client.createRecord('/payablesPayments', payload);
-        return response;
+        const response = await client.createRecord('/payablesPayments', payload)
+        return response
     },
-});
+})

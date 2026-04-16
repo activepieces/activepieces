@@ -1,28 +1,24 @@
-import { googleSlidesAuth } from '../auth';
-import { createAction, DynamicPropsValue, Property } from "@activepieces/pieces-framework";
-import { getSlide, PageElement, batchUpdate, TableCell, TextElement } from '../commons/common';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework'
+import { google } from 'googleapis'
+import { OAuth2Client } from 'googleapis-common'
+import { googleSlidesAuth } from '../auth'
+import { batchUpdate, getSlide, PageElement, TableCell, TextElement } from '../commons/common'
 
 function extractPlaceholders(content: string, fields: Record<string, any>, placeholder_format: string) {
-    const regex = placeholder_format === '[[]]' 
-        ? /\[\[([^\]]+)\]\]/g 
-        : /\{\{([^}]+)\}\}/g;
-        
-    const matches = content.match(regex);
+    const regex = placeholder_format === '[[]]' ? /\[\[([^\]]+)\]\]/g : /\{\{([^}]+)\}\}/g
+
+    const matches = content.match(regex)
     if (matches) {
         matches.forEach((match: string) => {
-            const matchValue = placeholder_format === '[[]]'
-                ? match.replace(/[[\]]/g, '')
-                : match.replace(/[{}]/g, '');
-                
-            const varName = matchValue.trim();
+            const matchValue = placeholder_format === '[[]]' ? match.replace(/[[\]]/g, '') : match.replace(/[{}]/g, '')
+
+            const varName = matchValue.trim()
             fields[matchValue] = Property.ShortText({
-                displayName: varName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                displayName: varName.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
                 description: `Value for "${placeholder_format === '[[]]' ? `[[${varName}]]` : `{{${varName}}}`}"`,
                 required: false,
-            });
-        });
+            })
+        })
     }
 }
 
@@ -46,22 +42,23 @@ export const generateFromTemplate = createAction({
                 disabled: false,
                 options: [
                     { label: 'Curly Braces {{}}', value: '{{}}' },
-                    { label: 'Square Brackets [[]]', value: '[[]]' }
+                    { label: 'Square Brackets [[]]', value: '[[]]' },
                 ],
-              },
+            },
         }),
         table_data: Property.DynamicProperties({
             auth: googleSlidesAuth,
             displayName: 'Table Data',
             required: true,
             refreshers: ['template_presentation_id', 'placeholder_format'],
-            props: async ({auth, template_presentation_id, placeholder_format}) => {
-                if (!template_presentation_id || !auth)
-                    return {};
-        
-                const presentation = await getSlide(auth["access_token"] as unknown as string, template_presentation_id as unknown as string);
-                if (!presentation)
-                    return {}
+            props: async ({ auth, template_presentation_id, placeholder_format }) => {
+                if (!template_presentation_id || !auth) return {}
+
+                const presentation = await getSlide(
+                    auth['access_token'] as unknown as string,
+                    template_presentation_id as unknown as string,
+                )
+                if (!presentation) return {}
 
                 const fields = {
                     title: Property.ShortText({
@@ -69,96 +66,91 @@ export const generateFromTemplate = createAction({
                         description: 'Title of the new presentation',
                         defaultValue: `Copy of: ${presentation.title}`,
                         required: true,
-                    })
-                } as DynamicPropsValue;
-        
-                presentation.slides?.forEach(slide => {
+                    }),
+                } as DynamicPropsValue
+
+                presentation.slides?.forEach((slide) => {
                     slide.pageElements?.forEach((element: PageElement) => {
                         if (element.shape?.text?.textElements) {
-                            element.shape.text.textElements.forEach(textElement => {
-                                const content = textElement?.textRun?.content;
+                            element.shape.text.textElements.forEach((textElement) => {
+                                const content = textElement?.textRun?.content
                                 if (content) {
-                                    extractPlaceholders(content, fields, placeholder_format as unknown as string);
+                                    extractPlaceholders(content, fields, placeholder_format as unknown as string)
                                 }
-                            });
+                            })
                         }
-                        
+
                         if (element.table) {
-                            element.table.tableRows?.forEach(row => {
+                            element.table.tableRows?.forEach((row) => {
                                 row.tableCells?.forEach((cell: TableCell) => {
                                     if (cell.text?.textElements) {
                                         cell.text.textElements.forEach((textElement: TextElement) => {
-                                            const content = textElement?.textRun?.content;
+                                            const content = textElement?.textRun?.content
                                             if (content) {
-                                                extractPlaceholders(content, fields, placeholder_format as unknown as string);
+                                                extractPlaceholders(
+                                                    content,
+                                                    fields,
+                                                    placeholder_format as unknown as string,
+                                                )
                                             }
-                                        });
+                                        })
                                     }
-                                });
-                            });
+                                })
+                            })
                         }
-                    });
-                });
-        
-                return fields;
-            }
-        })
+                    })
+                })
+
+                return fields
+            },
+        }),
     },
     async run(context) {
-        const { access_token } = context.auth;
-        const { template_presentation_id, placeholder_format, table_data } = context.propsValue;
+        const { access_token } = context.auth
+        const { template_presentation_id, placeholder_format, table_data } = context.propsValue
 
         try {
-            const authClient = new OAuth2Client();
-            authClient.setCredentials({ access_token: access_token });
-            
-            const drive = google.drive({ version: 'v3', auth: authClient });
-                
+            const authClient = new OAuth2Client()
+            authClient.setCredentials({ access_token: access_token })
+
+            const drive = google.drive({ version: 'v3', auth: authClient })
+
             const copyResponse = await drive.files.copy({
                 fileId: template_presentation_id as string,
                 requestBody: {
-                    name: table_data["title"] || "New Presentation"
+                    name: table_data['title'] || 'New Presentation',
                 },
-                supportsAllDrives: true
-            });
-            
-            const newPresentationId = copyResponse.data.id;
-            if (!newPresentationId)
-                return
+                supportsAllDrives: true,
+            })
 
-            const requests = Object.entries(table_data)
-                .map(([key, value]): { replaceAllText: unknown } => {
-                    const placeholder = placeholder_format === '[[]]' 
-                        ? `[[${key}]]` 
-                        : `{{${key}}}`;
+            const newPresentationId = copyResponse.data.id
+            if (!newPresentationId) return
 
-                    return {
-                        replaceAllText: {
-                            containsText: {
-                                text: placeholder,
-                                matchCase: true
-                            },
-                            replaceText: value as string
-                        }
-                    };
-                });
-    
-            
+            const requests = Object.entries(table_data).map(([key, value]): { replaceAllText: unknown } => {
+                const placeholder = placeholder_format === '[[]]' ? `[[${key}]]` : `{{${key}}}`
+
+                return {
+                    replaceAllText: {
+                        containsText: {
+                            text: placeholder,
+                            matchCase: true,
+                        },
+                        replaceText: value as string,
+                    },
+                }
+            })
+
             if (requests.length > 0) {
-                await batchUpdate(
-                    access_token,
-                    newPresentationId,
-                    requests
-                );
+                await batchUpdate(access_token, newPresentationId, requests)
             }
-    
+
             return {
                 presentationId: newPresentationId,
-                presentationUrl: `https://docs.google.com/presentation/d/${newPresentationId}/edit`
-            };
+                presentationUrl: `https://docs.google.com/presentation/d/${newPresentationId}/edit`,
+            }
         } catch (error) {
-            console.error('Error creating presentation:', error);
-            throw error;
+            console.error('Error creating presentation:', error)
+            throw error
         }
-    }
-});
+    },
+})

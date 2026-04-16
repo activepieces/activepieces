@@ -1,4 +1,4 @@
-import z from 'zod';
+import z from 'zod'
 
 export const createCampaign = {
     campaignname: z.string(),
@@ -66,7 +66,22 @@ export const findContact = {
 
 export const findCampaign = {
     campaignName: z.string(),
-    status: z.enum(['all', 'all campaigns', 'drafts', 'scheduled', 'inprogress', 'sent', 'stopped', 'canceled', 'tobereviewed', 'reviewed', 'paused', 'intesting']).optional(),
+    status: z
+        .enum([
+            'all',
+            'all campaigns',
+            'drafts',
+            'scheduled',
+            'inprogress',
+            'sent',
+            'stopped',
+            'canceled',
+            'tobereviewed',
+            'reviewed',
+            'paused',
+            'intesting',
+        ])
+        .optional(),
     sort: z.enum(['asc', 'desc']).optional(),
     fromindex: z.number().min(1).optional(),
     range: z.number().min(1).optional(),

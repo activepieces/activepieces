@@ -4,12 +4,12 @@ import {
     FlowAction,
     FlowActionType,
     FlowOperationRequest,
-    flowOperations,
     FlowOperationType,
     FlowTrigger,
     FlowTriggerType,
     FlowVersion,
     FlowVersionState,
+    flowOperations,
     PropertyExecutionType,
     RouterExecutionType,
     StepLocationRelativeToParent,
@@ -36,7 +36,7 @@ const flowVersionWithBranching: FlowVersion = {
             pieceName: 'schedule',
             pieceVersion: '0.0.2',
             propertySettings: {
-                'cronExpression': {
+                cronExpression: {
                     type: PropertyExecutionType.MANUAL,
                 },
             },
@@ -77,7 +77,7 @@ const flowVersionWithBranching: FlowVersion = {
                     pieceVersion: '0.2.6',
                     actionName: 'get',
                     propertySettings: {
-                        'key': {
+                        key: {
                             type: PropertyExecutionType.MANUAL,
                         },
                     },
@@ -112,10 +112,10 @@ const flowVersionWithBranching: FlowVersion = {
                         pieceVersion: '0.2.1',
                         actionName: 'send_message_webhook',
                         propertySettings: {
-                            'content': {
+                            content: {
                                 type: PropertyExecutionType.MANUAL,
                             },
-                            'webhook_url': {
+                            webhook_url: {
                                 type: PropertyExecutionType.MANUAL,
                             },
                         },
@@ -166,7 +166,7 @@ const emptyScheduleFlowVersion: FlowVersion = {
             pieceName: 'schedule',
             pieceVersion: '0.0.2',
             propertySettings: {
-                'cronExpression': {
+                cronExpression: {
                     type: PropertyExecutionType.MANUAL,
                 },
             },
@@ -219,7 +219,7 @@ describe('Flow Helper', () => {
                     pieceName: 'schedule',
                     pieceVersion: '0.0.2',
                     propertySettings: {
-                        'cronExpression': {
+                        cronExpression: {
                             type: PropertyExecutionType.MANUAL,
                         },
                     },
@@ -238,7 +238,7 @@ describe('Flow Helper', () => {
                         pieceVersion: '0.2.6',
                         actionName: 'get',
                         propertySettings: {
-                            'key': {
+                            key: {
                                 type: PropertyExecutionType.MANUAL,
                             },
                         },
@@ -252,7 +252,6 @@ describe('Flow Helper', () => {
         }
         expect(result).toEqual(expectedFlowVersion)
     })
-
 
     it('should add loop step with actions', () => {
         const addBranchRequest: FlowOperationRequest = {
@@ -302,7 +301,7 @@ describe('Flow Helper', () => {
                 pieceName: 'schedule',
                 pieceVersion: '0.0.2',
                 propertySettings: {
-                    'cronExpression': {
+                    cronExpression: {
                         type: PropertyExecutionType.MANUAL,
                     },
                 },
@@ -377,10 +376,10 @@ test('Duplicate Flow With Loops using Import', () => {
                 pieceName: 'github',
                 pieceVersion: '0.1.3',
                 propertySettings: {
-                    'repository': {
+                    repository: {
                         type: PropertyExecutionType.MANUAL,
                     },
-                    'authentication': {
+                    authentication: {
                         type: PropertyExecutionType.MANUAL,
                     },
                 },

@@ -1,6 +1,6 @@
-import { SimplybookAuth, makeJsonRpcCall } from './auth';
+import { makeJsonRpcCall, SimplybookAuth } from './auth'
 
-export type WebhookNotificationType = 'create' | 'cancel' | 'new_client' | 'change' | 'create_invoice';
+export type WebhookNotificationType = 'create' | 'cancel' | 'new_client' | 'change' | 'create_invoice'
 
 /**
  * Subscribe to webhook notifications
@@ -10,13 +10,13 @@ export type WebhookNotificationType = 'create' | 'cancel' | 'new_client' | 'chan
  * @returns Boolean indicating success
  */
 export async function subscribeWebhook(
-  auth: SimplybookAuth,
-  url: string,
-  notificationType: WebhookNotificationType
+    auth: SimplybookAuth,
+    url: string,
+    notificationType: WebhookNotificationType,
 ): Promise<boolean> {
-  const params = [url, notificationType];
-  const result = await makeJsonRpcCall<boolean>(auth, 'pluginZapierSubscribe', params);
-  return result;
+    const params = [url, notificationType]
+    const result = await makeJsonRpcCall<boolean>(auth, 'pluginZapierSubscribe', params)
+    return result
 }
 
 /**
@@ -25,11 +25,8 @@ export async function subscribeWebhook(
  * @param type - Notification type
  * @returns Last update datetime string
  */
-export async function getLastNotificationUpdate(
-  auth: SimplybookAuth,
-  type: WebhookNotificationType
-): Promise<string> {
-  const params = [type];
-  const result = await makeJsonRpcCall<string>(auth, 'getLastNotificationUpdate', params);
-  return result;
+export async function getLastNotificationUpdate(auth: SimplybookAuth, type: WebhookNotificationType): Promise<string> {
+    const params = [type]
+    const result = await makeJsonRpcCall<string>(auth, 'getLastNotificationUpdate', params)
+    return result
 }

@@ -1,42 +1,42 @@
-import { microsoftSharePointAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
-import { microsoftSharePointCommon } from '../common';
-import { Client } from '@microsoft/microsoft-graph-client';
-import { List } from '@microsoft/microsoft-graph-types';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { Client } from '@microsoft/microsoft-graph-client'
+import { List } from '@microsoft/microsoft-graph-types'
+import { microsoftSharePointAuth } from '../auth'
+import { microsoftSharePointCommon } from '../common'
+import { getGraphBaseUrl } from '../common/microsoft-cloud'
 
 export const createListAction = createAction({
-  auth: microsoftSharePointAuth,
-  name: 'microsoft_sharepoint_create_list',
-  displayName: 'Create List',
-  description: 'Creates a new list.',
-  props: {
-    siteId: microsoftSharePointCommon.siteId,
-    displayName: Property.ShortText({
-      displayName: 'List Name',
-      required: true,
-    }),
-    description: Property.ShortText({
-      displayName: 'List Description',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const { siteId, displayName, description } = context.propsValue;
+    auth: microsoftSharePointAuth,
+    name: 'microsoft_sharepoint_create_list',
+    displayName: 'Create List',
+    description: 'Creates a new list.',
+    props: {
+        siteId: microsoftSharePointCommon.siteId,
+        displayName: Property.ShortText({
+            displayName: 'List Name',
+            required: true,
+        }),
+        description: Property.ShortText({
+            displayName: 'List Description',
+            required: true,
+        }),
+    },
+    async run(context) {
+        const { siteId, displayName, description } = context.propsValue
 
-    const cloud = context.auth.props?.['cloud'] as string | undefined;
-    const client = Client.initWithMiddleware({
-      authProvider: {
-        getAccessToken: () => Promise.resolve(context.auth.access_token),
-      },
-      baseUrl: getGraphBaseUrl(cloud),
-    });
+        const cloud = context.auth.props?.['cloud'] as string | undefined
+        const client = Client.initWithMiddleware({
+            authProvider: {
+                getAccessToken: () => Promise.resolve(context.auth.access_token),
+            },
+            baseUrl: getGraphBaseUrl(cloud),
+        })
 
-    const listInput: List = {
-      displayName,
-      description,
-    };
+        const listInput: List = {
+            displayName,
+            description,
+        }
 
-    return await client.api(`/sites/${siteId}/lists`).post(listInput);
-  },
-});
+        return await client.api(`/sites/${siteId}/lists`).post(listInput)
+    },
+})

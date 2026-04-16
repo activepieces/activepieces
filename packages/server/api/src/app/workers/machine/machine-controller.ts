@@ -1,4 +1,10 @@
-import { createRpcServer, PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerToApiContract } from '@activepieces/shared'
+import {
+    createRpcServer,
+    PrincipalType,
+    WebsocketServerEvent,
+    WorkerMachineHealthcheckRequest,
+    WorkerToApiContract,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
@@ -8,9 +14,13 @@ import { createHandlers } from '../rpc/worker-rpc-service'
 import { machineService } from './machine-service'
 
 export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
-
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.FETCH_WORKER_SETTINGS, (socket) => {
-        return async (request: WorkerMachineHealthcheckRequest, _principal, _projectId, callback?: (data: unknown) => void) => {
+        return async (
+            request: WorkerMachineHealthcheckRequest,
+            _principal,
+            _projectId,
+            callback?: (data: unknown) => void,
+        ) => {
             const rawWorkerGroupId = socket.handshake.auth?.workerGroupId
             const workerGroupId = typeof rawWorkerGroupId === 'string' ? rawWorkerGroupId : undefined
             const response = await machineService(app.log).onConnection(request, workerGroupId)
@@ -36,13 +46,16 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
         const counts = await Promise.all(
             allQueues.map(async (queue) => {
                 const jobCounts = await queue.getJobCounts('waiting', 'active', 'prioritized')
-                return { name: queue.name, waiting: jobCounts.waiting + jobCounts.prioritized, active: jobCounts.active }
+                return {
+                    name: queue.name,
+                    waiting: jobCounts.waiting + jobCounts.prioritized,
+                    active: jobCounts.active,
+                }
             }),
         )
         return { queues: counts }
     })
 }
-
 
 const ListWorkersParams = {
     config: {
@@ -57,11 +70,13 @@ const QueueMetricsParams = {
     schema: {
         response: {
             200: z.object({
-                queues: z.array(z.object({
-                    name: z.string(),
-                    waiting: z.number(),
-                    active: z.number(),
-                })),
+                queues: z.array(
+                    z.object({
+                        name: z.string(),
+                        waiting: z.number(),
+                        active: z.number(),
+                    }),
+                ),
             }),
         },
     },

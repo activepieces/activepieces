@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const deleteJournalBatch = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -15,10 +15,10 @@ export const deleteJournalBatch = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
-        const { jeBatchId } = context.propsValue;
+        const client = makeClient(context.auth.props)
+        const { jeBatchId } = context.propsValue
 
-        await client.deleteRecord(`/journalBatches/${jeBatchId}`);
-        return { success: true, message: `Journal batch ${jeBatchId} deleted successfully.` };
+        await client.deleteRecord(`/journalBatches/${jeBatchId}`)
+        return { success: true, message: `Journal batch ${jeBatchId} deleted successfully.` }
     },
-});
+})

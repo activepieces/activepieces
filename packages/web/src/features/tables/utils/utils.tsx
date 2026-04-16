@@ -1,6 +1,6 @@
 import { ExportTableResponse, FieldType } from '@activepieces/shared';
 import JSZip from 'jszip';
-import { Type, Calendar, Hash, ChevronDownCircle } from 'lucide-react';
+import { Calendar, ChevronDownCircle, Hash, Type } from 'lucide-react';
 import { createContext, ReactNode } from 'react';
 
 import { downloadFile } from '@/lib/dom-utils';

@@ -1,23 +1,23 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { lightfunnelsAuth } from '../auth';
-import { lightfunnelsCommon } from '../common/index';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { lightfunnelsAuth } from '../auth'
+import { lightfunnelsCommon } from '../common/index'
 
 export const getOrder = createAction({
-  auth: lightfunnelsAuth,
-  name: 'get_order',
-  displayName: 'Get Order',
-  description: 'Retrieve a specific order by ID',
-  props: {
-    orderId: Property.ShortText({
-      displayName: 'Order ID',
-      description: 'The ID of the order to retrieve',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const { orderId } = context.propsValue;
+    auth: lightfunnelsAuth,
+    name: 'get_order',
+    displayName: 'Get Order',
+    description: 'Retrieve a specific order by ID',
+    props: {
+        orderId: Property.ShortText({
+            displayName: 'Order ID',
+            description: 'The ID of the order to retrieve',
+            required: true,
+        }),
+    },
+    async run(context) {
+        const { orderId } = context.propsValue
 
-    const graphqlQuery = `
+        const graphqlQuery = `
       query viewOrderQuery($id: ID!) {
         order: node(id: $id) {
           __typename
@@ -150,14 +150,10 @@ export const getOrder = createAction({
           }
         }
       }
-    `;
+    `
 
-    const response = await lightfunnelsCommon.makeGraphQLRequest(
-      context.auth,
-      graphqlQuery,
-      { id: orderId }
-    );
+        const response = await lightfunnelsCommon.makeGraphQLRequest(context.auth, graphqlQuery, { id: orderId })
 
-    return response.data.order;
-  },
-});
+        return response.data.order
+    },
+})

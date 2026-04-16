@@ -1,18 +1,24 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { apAxios } from '../../../../src/app/helper/ap-axios'
+import {
+    AppConnectionScope,
+    AppConnectionType,
+    ErrorCode,
+    PrincipalType,
+    SecretManagerConnectionScope,
+    SecretManagerFieldsSeparator,
+    SecretManagerProviderId,
+    UpsertGlobalConnectionRequestBody,
+} from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { validatePathFormat } from 'packages/server/api/src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider'
 import { MockInstance } from 'vitest'
 import { appConnectionService } from '../../../../src/app/app-connection/app-connection-service/app-connection-service'
 import { secretManagersService } from '../../../../src/app/ee/secret-managers/secret-managers.service'
+import { apAxios } from '../../../../src/app/helper/ap-axios'
 import { generateMockToken } from '../../../helpers/auth'
 import { mockAndSaveBasicSetup, mockPieceMetadata } from '../../../helpers/mocks'
-import {
-    hashicorpMock,
-    mockVaultConfig,
-} from './hashicorp-mock'
-import { AppConnectionScope, AppConnectionType, ErrorCode, PrincipalType, SecretManagerConnectionScope, SecretManagerFieldsSeparator, SecretManagerProviderId, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
-import { validatePathFormat } from 'packages/server/api/src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { hashicorpMock, mockVaultConfig } from './hashicorp-mock'
 
 let app: FastifyInstance | null = null
 let axiosRequestSpy: MockInstance
@@ -54,7 +60,6 @@ async function createHashicorpConnection(app: FastifyInstance, testToken: string
 }
 
 describe('Secret Managers API', () => {
-
     describe('List Secret Manager Connections', () => {
         it('should return empty list when no connections configured', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
@@ -441,18 +446,14 @@ describe('Secret Managers API', () => {
             await validatePathFormat(`hashicorp${SecretManagerFieldsSeparator}secret/data/keys/my-key`)
         })
         it('should throw error for path with less than 3 parts', async () => {
-            await expect(
-                validatePathFormat('secret/key'),
-            ).rejects.toMatchObject({
+            await expect(validatePathFormat('secret/key')).rejects.toMatchObject({
                 error: expect.objectContaining({
                     code: ErrorCode.VALIDATION,
                 }),
             })
         })
         it('should throw error for key without colon separator', async () => {
-            await expect(
-                validatePathFormat('hashicorp'),
-            ).rejects.toMatchObject({
+            await expect(validatePathFormat('hashicorp')).rejects.toMatchObject({
                 error: expect.objectContaining({
                     code: ErrorCode.VALIDATION,
                 }),

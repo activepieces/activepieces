@@ -23,10 +23,10 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
                     pieceVersion: '0.0.2',
                 }
                 count++
-                await queryRunner.query(
-                    `UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`,
-                    [flowVersion.trigger, flowVersion.id],
-                )
+                await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [
+                    flowVersion.trigger,
+                    flowVersion.id,
+                ])
             }
         }
         log.info({ count }, '[migrateSchedule1679014156667#up] finished flows')
@@ -47,10 +47,10 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
                         cronExpression: step.settings.input.cronExpression,
                     }
                     count++
-                    await queryRunner.query(
-                        `UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`,
-                        [flowVersion.trigger, flowVersion.id],
-                    )
+                    await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [
+                        flowVersion.trigger,
+                        flowVersion.id,
+                    ])
                 }
             }
         }

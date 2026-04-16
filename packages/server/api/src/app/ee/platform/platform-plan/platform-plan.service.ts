@@ -1,5 +1,25 @@
 import { apDayjs } from '@activepieces/server-utils'
-import { ActivepiecesError, AiCreditsAutoTopUpState, ApEdition, ApEnvironment, apId, ErrorCode, FlowStatus, isCloudPlanButNotEnterprise, isNil, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PlatformUsageMetric, PRICE_ID_MAP, PRICE_NAMES, STANDARD_CLOUD_PLAN, UserWithMetaInformation } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    AiCreditsAutoTopUpState,
+    ApEdition,
+    ApEnvironment,
+    apId,
+    ErrorCode,
+    FlowStatus,
+    isCloudPlanButNotEnterprise,
+    isNil,
+    OPEN_SOURCE_PLAN,
+    PlatformPlan,
+    PlatformPlanLimits,
+    PlatformPlanWithOnlyLimits,
+    PlatformUsage,
+    PlatformUsageMetric,
+    PRICE_ID_MAP,
+    PRICE_NAMES,
+    STANDARD_CLOUD_PLAN,
+    UserWithMetaInformation,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { getPlatformPlanNameKey } from '../../../database/redis/keys'
@@ -25,7 +45,6 @@ const stripeSecretKey = system.get(AppSystemProp.STRIPE_SECRET_KEY)
 export const ACTIVE_FLOW_PRICE_ID = getPriceIdFor(PRICE_NAMES.ACTIVE_FLOWS)
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
-
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
         const platformPlan = await platformPlanRepo().findOneBy({ platformId })
         if (!isNil(platformPlan)) return platformPlan
@@ -42,7 +61,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async getBillingDates(platformPlan: PlatformPlan): Promise<{ startDate: number, endDate: number }> {
+    async getBillingDates(platformPlan: PlatformPlan): Promise<{ startDate: number; endDate: number }> {
         const { stripeSubscriptionStartDate: startDate, stripeSubscriptionEndDate: endDate } = platformPlan
 
         if (isNil(startDate) || isNil(endDate)) {
@@ -82,8 +101,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             })
 
             return upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
-        }
-        catch {
+        } catch {
             return 0
         }
     },
@@ -174,15 +192,16 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
     return savedPlatformPlan
 }
 
-async function createInitialCustomer(user: UserWithMetaInformation, platformId: string, log: FastifyBaseLogger): Promise<string | undefined> {
+async function createInitialCustomer(
+    user: UserWithMetaInformation,
+    platformId: string,
+    log: FastifyBaseLogger,
+): Promise<string | undefined> {
     const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
     if (edition !== ApEdition.CLOUD || environment === ApEnvironment.TESTING) {
         return undefined
     }
-    const stripeCustomerId = await stripeHelper(log).createCustomer(
-        user,
-        platformId,
-    )
+    const stripeCustomerId = await stripeHelper(log).createCustomer(user, platformId)
     return stripeCustomerId
 }
 

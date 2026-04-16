@@ -1,9 +1,4 @@
-import {
-  createTrigger,
-  PieceAuth,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
+import { createTrigger, PieceAuth, Property, TriggerStrategy } from '@activepieces/pieces-framework'
 
 const markdown = `
 - Go to the "Plugins" section.
@@ -16,27 +11,27 @@ const markdown = `
   \`\`\`
 
 - Keep the other settings unchanged (default).
-`;
+`
 
 export const gravityFormsNewSubmission = createTrigger({
-  name: 'new-submission',
-  displayName: 'New Submission',
-  auth: PieceAuth.None(),
-  description: 'Triggers when form receives a new submission',
-  props: {
-    md: Property.MarkDown({
-      value: markdown,
-    }),
-  },
-  type: TriggerStrategy.WEBHOOK,
-  sampleData: {},
-  async onEnable(context) {
-    // Empty
-  },
-  async onDisable(context) {
-    // Empty
-  },
-  async run(context) {
-    return [context.payload];
-  },
-});
+    name: 'new-submission',
+    displayName: 'New Submission',
+    auth: PieceAuth.None(),
+    description: 'Triggers when form receives a new submission',
+    props: {
+        md: Property.MarkDown({
+            value: markdown,
+        }),
+    },
+    type: TriggerStrategy.WEBHOOK,
+    sampleData: {},
+    async onEnable(context) {
+        // Empty
+    },
+    async onDisable(context) {
+        // Empty
+    },
+    async run(context) {
+        return [context.payload]
+    },
+})

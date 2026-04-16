@@ -1,21 +1,21 @@
 import {
+  Permission,
   ProjectRelease,
   ProjectReleaseType,
-  Permission,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
   ChevronDown,
-  Undo2,
-  GitBranch,
-  RotateCcw,
-  FolderOpenDot,
-  Package,
-  Tag,
   Clock,
-  User,
   Database,
+  FolderOpenDot,
+  GitBranch,
+  Package,
+  RotateCcw,
+  Tag,
+  Undo2,
+  User,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -239,4 +239,5 @@ const ProjectReleasesPage = () => {
 };
 
 ProjectReleasesPage.displayName = 'ProjectReleasesPage';
+
 export { ProjectReleasesPage };

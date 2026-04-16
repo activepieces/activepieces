@@ -62,5 +62,4 @@ export class FieldAndRecordAndCellProjectId1734969829406 implements MigrationInt
             CREATE INDEX "idx_field_table_id_name" ON "field" ("name", "tableId")
         `)
     }
-
 }

@@ -60,7 +60,6 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_user_identity_email" ON "user_identity" ("email")
         `)
 
-
         // Migrate user data to user_identity
         // Get all users, ensuring only one row per email
         const users = await queryRunner.query(`
@@ -81,11 +80,19 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
         for (let batchIndex = 0; batchIndex < userBatches.length; batchIndex++) {
             const batchOfUsers = userBatches[batchIndex]
 
-
             // Prepare the values for all users in the batch
             const values = batchOfUsers.map((user: Record<string, unknown>) => [
-                apId(), (user.email as string).trim().toLowerCase(), user.password, user.trackEvents, user.newsLetter,
-                user.verified, user.firstName, user.lastName, user.tokenVersion, 'EMAIL', user.created,
+                apId(),
+                (user.email as string).trim().toLowerCase(),
+                user.password,
+                user.trackEvents,
+                user.newsLetter,
+                user.verified,
+                user.firstName,
+                user.lastName,
+                user.tokenVersion,
+                'EMAIL',
+                user.created,
             ])
 
             // Create the insert query for the whole batch
@@ -109,7 +116,6 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
                 message: `Processed ${total} users`,
             })
         }
-
 
         await queryRunner.query(`
             ALTER TABLE "user"
@@ -155,7 +161,6 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "user" DROP COLUMN "tokenVersion"
         `)
-
 
         // Create new indexes
         await queryRunner.query(`

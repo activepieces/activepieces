@@ -1,4 +1,4 @@
-import { FlowActionType, flowStructureUtil, FlowVersion, PropertyExecutionType } from '@activepieces/shared'
+import { FlowActionType, FlowVersion, flowStructureUtil, PropertyExecutionType } from '@activepieces/shared'
 import semver from 'semver'
 import { Migration } from '.'
 
@@ -22,15 +22,18 @@ export const migrateHttpToWebhookV5: Migration = {
                 // Check the scehma for each action in the http piece
                 const isGreaterThanOrEqual050 = semver.gte(pieceVersionWithoutTildaOrPlus, '0.5.0')
 
-                if (httpInput['body'] && typeof httpInput['body'] === 'object' && 'data' in httpInput['body'] && isGreaterThanOrEqual050) {
+                if (
+                    httpInput['body'] &&
+                    typeof httpInput['body'] === 'object' &&
+                    'data' in httpInput['body'] &&
+                    isGreaterThanOrEqual050
+                ) {
                     fields['body'] = (httpInput['body'] as Record<string, unknown>)['data']
                 }
 
                 if (httpInput['body'] && typeof httpInput['body'] === 'object' && !isGreaterThanOrEqual050) {
-                    fields['body'] = (httpInput['body'] as Record<string, unknown>)
+                    fields['body'] = httpInput['body'] as Record<string, unknown>
                 }
-           
-
 
                 if (httpInput['status'] !== undefined) {
                     fields['status'] = httpInput['status']
@@ -38,13 +41,13 @@ export const migrateHttpToWebhookV5: Migration = {
                 if (httpInput['headers']) {
                     fields['headers'] = httpInput['headers']
                 }
-                
+
                 const webhookInput = {
                     respond: 'stop',
                     responseType: httpInput['body_type'] || 'json',
                     fields,
                 }
-                
+
                 return {
                     ...step,
                     settings: {
@@ -55,15 +58,15 @@ export const migrateHttpToWebhookV5: Migration = {
                         input: webhookInput,
                         propertySettings: {
                             ...step.settings.propertySettings,
-                            'respond': {
+                            respond: {
                                 type: PropertyExecutionType.MANUAL,
                                 schema: undefined,
                             },
-                            'responseType': {
+                            responseType: {
                                 type: PropertyExecutionType.MANUAL,
                                 schema: undefined,
                             },
-                            'fields': {
+                            fields: {
                                 type: PropertyExecutionType.MANUAL,
                                 schema: undefined,
                             },
@@ -73,7 +76,7 @@ export const migrateHttpToWebhookV5: Migration = {
             }
             return step
         })
-        
+
         return {
             ...newVersion,
             schemaVersion: '6',

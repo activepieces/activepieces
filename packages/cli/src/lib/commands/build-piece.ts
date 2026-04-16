@@ -1,12 +1,12 @@
-import { Command } from "commander";
-import { buildPiece, findPiece } from '../utils/piece-utils';
-import chalk from "chalk";
-import inquirer from "inquirer";
+import chalk from 'chalk'
+import { Command } from 'commander'
+import inquirer from 'inquirer'
+import { buildPiece, findPiece } from '../utils/piece-utils'
 
 async function buildPieces(pieceName: string) {
-    const pieceFolder = await findPiece(pieceName);
-    const { outputFolder } = await buildPiece(pieceFolder);
-    console.info(chalk.green(`Piece '${pieceName}' built and packed successfully at ${outputFolder}.`));
+    const pieceFolder = await findPiece(pieceName)
+    const { outputFolder } = await buildPiece(pieceFolder)
+    console.info(chalk.green(`Piece '${pieceName}' built and packed successfully at ${outputFolder}.`))
 }
 
 export const buildPieceCommand = new Command('build')
@@ -14,7 +14,7 @@ export const buildPieceCommand = new Command('build')
     .argument('[name]', 'name of the piece to build')
     .option('--name <pieceName>', 'name of the piece to build')
     .action(async (positionalName, options) => {
-        const pieceName = positionalName ?? options.name;
+        const pieceName = positionalName ?? options.name
         const questions = [
             {
                 type: 'input',
@@ -23,9 +23,9 @@ export const buildPieceCommand = new Command('build')
                 placeholder: 'google-drive',
                 when() {
                     return !pieceName
-                }
+                },
             },
-        ];
-        const answers = await inquirer.prompt(questions);
-        await buildPieces(pieceName ?? answers.name);
-    });
+        ]
+        const answers = await inquirer.prompt(questions)
+        await buildPieces(pieceName ?? answers.name)
+    })

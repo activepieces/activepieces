@@ -15,12 +15,17 @@ export class MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000 implem
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query('ALTER TABLE "platform_plan" ADD "workerGroupId" varchar NULL')
         await queryRunner.query('UPDATE "platform_plan" SET "workerGroupId" = \'canary\' WHERE "canary" = true')
-        await queryRunner.query('UPDATE "platform_plan" SET "workerGroupId" = "platformId" WHERE "dedicatedWorkers" IS NOT NULL AND "canary" = false')
+        await queryRunner.query(
+            'UPDATE "platform_plan" SET "workerGroupId" = "platformId" WHERE "dedicatedWorkers" IS NOT NULL AND "canary" = false',
+        )
         if (isPGlite) {
-            await queryRunner.query('CREATE INDEX IF NOT EXISTS "idx_platform_plan_worker_group_id" ON "platform_plan" ("workerGroupId") WHERE "workerGroupId" IS NOT NULL')
-        }
-        else {
-            await queryRunner.query('CREATE INDEX IF NOT EXISTS "idx_platform_plan_worker_group_id" ON "platform_plan" ("workerGroupId") WHERE "workerGroupId" IS NOT NULL')
+            await queryRunner.query(
+                'CREATE INDEX IF NOT EXISTS "idx_platform_plan_worker_group_id" ON "platform_plan" ("workerGroupId") WHERE "workerGroupId" IS NOT NULL',
+            )
+        } else {
+            await queryRunner.query(
+                'CREATE INDEX IF NOT EXISTS "idx_platform_plan_worker_group_id" ON "platform_plan" ("workerGroupId") WHERE "workerGroupId" IS NOT NULL',
+            )
         }
     }
 

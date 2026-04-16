@@ -1,15 +1,25 @@
-import { ActivepiecesError, apId, ApId, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    ApId,
+    apId,
+    CreateProjectRoleRequestBody,
+    ErrorCode,
+    isNil,
+    PlatformId,
+    ProjectRole,
+    RoleType,
+    SeekPage,
+    spreadIfDefined,
+} from '@activepieces/shared'
 import { Brackets, Equal } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { ProjectRoleEntity } from './project-role.entity'
 
-
 export const projectRoleRepo = repoFactory(ProjectRoleEntity)
 export const projectMemberRepo = repoFactory(ProjectMemberEntity)
 
 export const projectRoleService = {
-
     async getOneOrThrowById({ id }: GetOneIdParams): Promise<ProjectRole> {
         const projectRole = await projectRoleRepo().findOneBy({ id })
         if (isNil(projectRole)) {
@@ -22,9 +32,10 @@ export const projectRoleService = {
     },
 
     async getOne({ name, platformId }: GetOneByNameParams): Promise<ProjectRole | null> {
-        return projectRoleRepo().createQueryBuilder('projectRole')
+        return projectRoleRepo()
+            .createQueryBuilder('projectRole')
             .where('LOWER(projectRole.name) = LOWER(:name)', { name })
-            .andWhere(new Brackets(qb => qb.where({ platformId }).orWhere({ type: RoleType.DEFAULT })))
+            .andWhere(new Brackets((qb) => qb.where({ platformId }).orWhere({ type: RoleType.DEFAULT })))
             .getOne()
     },
     async getOneOrThrow({ name, platformId }: GetOneByNameParams): Promise<ProjectRole> {
@@ -32,7 +43,11 @@ export const projectRoleService = {
         if (isNil(projectRole)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'project_role', entityId: name, message: 'Project Role by name and platformId not found' },
+                params: {
+                    entityType: 'project_role',
+                    entityId: name,
+                    message: 'Project Role by name and platformId not found',
+                },
             })
         }
         return projectRole
@@ -53,15 +68,17 @@ export const projectRoleService = {
         })
 
         return {
-            data: await Promise.all(projectRoles.map(async (projectRole) => {
-                return {
-                    ...projectRole,
-                    userCount: await projectMemberRepo().countBy({
-                        platformId,
-                        projectRoleId: projectRole.id,
-                    }),
-                }
-            })),
+            data: await Promise.all(
+                projectRoles.map(async (projectRole) => {
+                    return {
+                        ...projectRole,
+                        userCount: await projectMemberRepo().countBy({
+                            platformId,
+                            projectRoleId: projectRole.id,
+                        }),
+                    }
+                }),
+            ),
             next: null,
             previous: null,
         }
@@ -75,7 +92,11 @@ export const projectRoleService = {
         if (projectRoleExists) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'project_role', entityId: params.name, message: 'Project Role name already exists' },
+                params: {
+                    entityType: 'project_role',
+                    entityId: params.name,
+                    message: 'Project Role name already exists',
+                },
             })
         }
 
@@ -87,13 +108,16 @@ export const projectRoleService = {
     },
 
     async update(params: UpdateParams): Promise<ProjectRole> {
-        await projectRoleRepo().update({
-            id: params.id,
-            platformId: params.platformId,
-        }, {
-            ...spreadIfDefined('name', params.name),
-            ...spreadIfDefined('permissions', params.permissions),
-        })
+        await projectRoleRepo().update(
+            {
+                id: params.id,
+                platformId: params.platformId,
+            },
+            {
+                ...spreadIfDefined('name', params.name),
+                ...spreadIfDefined('permissions', params.permissions),
+            },
+        )
         return projectRoleRepo().findOneByOrFail({ id: params.id, platformId: params.platformId })
     },
 

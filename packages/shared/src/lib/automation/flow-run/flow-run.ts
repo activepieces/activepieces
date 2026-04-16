@@ -34,9 +34,11 @@ export const FlowRun = z.object({
     triggeredBy: z.string().optional(),
     tags: z.array(z.string()).optional(),
     flowVersionId: z.string(),
-    flowVersion: z.object({
-        displayName: z.string().optional(),
-    }).optional(),
+    flowVersion: z
+        .object({
+            displayName: z.string().optional(),
+        })
+        .optional(),
     logsFileId: Nullable(z.string()),
     status: z.nativeEnum(FlowRunStatus),
     startTime: z.string().optional(),
@@ -46,10 +48,12 @@ export const FlowRun = z.object({
     // The steps data may be missing if the flow has not started yet,
     // or if the run is older than AP_EXECUTION_DATA_RETENTION_DAYS and its execution data has been purged.
     steps: Nullable(z.record(z.string(), z.unknown())),
-    failedStep: z.object({
-        name: z.string(),
-        displayName: z.string(),
-    }).optional(),
+    failedStep: z
+        .object({
+            name: z.string(),
+            displayName: z.string(),
+        })
+        .optional(),
     stepNameToTest: z.string().optional(),
     archivedAt: Nullable(z.string()),
     stepsCount: z.number().optional(),
@@ -65,5 +69,5 @@ export type FailedStep = z.infer<typeof FailedStep>
 export type FlowRun = z.infer<typeof FlowRun> & ExecutionState
 
 export type FlowRunWithRetryError = FlowRun & {
-    error?: { errorCode: ErrorCode, errorMessage: string }
+    error?: { errorCode: ErrorCode; errorMessage: string }
 }

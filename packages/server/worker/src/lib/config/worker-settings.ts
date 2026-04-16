@@ -3,7 +3,7 @@ import { assertNotNullOrUndefined, WorkerSettingsResponse } from '@activepieces/
 let settings: WorkerSettingsResponse | undefined
 let settingsResolver: (() => void) | null = null
 const settingsReady = new Promise<void>((resolve) => {
-    settingsResolver = resolve 
+    settingsResolver = resolve
 })
 
 export const workerSettings = {
@@ -13,7 +13,10 @@ export const workerSettings = {
     },
 
     getSettings(): WorkerSettingsResponse {
-        assertNotNullOrUndefined(settings, 'Worker settings are not initialized. Settings are fetched on socket connect.')
+        assertNotNullOrUndefined(
+            settings,
+            'Worker settings are not initialized. Settings are fetched on socket connect.',
+        )
         return settings
     },
 

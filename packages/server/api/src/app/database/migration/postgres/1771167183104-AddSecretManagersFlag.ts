@@ -23,5 +23,4 @@ export class AddSecretManagersFlag1771167183104 implements MigrationInterface {
             ALTER TABLE "platform_plan" DROP COLUMN "secretManagersEnabled"
         `)
     }
-
 }

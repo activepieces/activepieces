@@ -12,7 +12,11 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 redirectUrl,
             }
         },
-        async acs(platformId: string, samlProvider: SAMLAuthnProviderConfig, idpLoginResponse: IdpLoginResponse): Promise<AuthenticationResponse> {
+        async acs(
+            platformId: string,
+            samlProvider: SAMLAuthnProviderConfig,
+            idpLoginResponse: IdpLoginResponse,
+        ): Promise<AuthenticationResponse> {
             const client = await createSamlClient(platformId, samlProvider)
             const attributes = await client.parseAndValidateLoginResponse(idpLoginResponse)
             return authenticationService(log).federatedAuthn({

@@ -413,5 +413,4 @@ export class AddIndexOnTriggerRunSqlite1757560231246 implements MigrationInterfa
             CREATE UNIQUE INDEX "idx_trigger_run_job_id" ON "trigger_run" ("jobId")
         `)
     }
-
 }

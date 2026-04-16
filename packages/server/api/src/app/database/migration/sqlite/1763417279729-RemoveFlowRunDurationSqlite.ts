@@ -286,5 +286,4 @@ export class RemoveFlowRunDurationSqlite1763417279729 implements MigrationInterf
             )
         `)
     }
-
 }

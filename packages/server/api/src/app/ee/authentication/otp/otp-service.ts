@@ -1,8 +1,4 @@
-import {
-    apId,
-    OtpModel,
-    OtpState,
-    OtpType, PlatformId } from '@activepieces/shared'
+import { apId, OtpModel, OtpState, OtpType, PlatformId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
@@ -16,11 +12,7 @@ const TEN_MINUTES = 10 * 60 * 1000
 const repo = repoFactory(OtpEntity)
 
 export const otpService = (log: FastifyBaseLogger) => ({
-    async createAndSend({
-        platformId,
-        email,
-        type,
-    }: CreateParams): Promise<void> {
+    async createAndSend({ platformId, email, type }: CreateParams): Promise<void> {
         const userIdentity = await userIdentityService(log).getIdentityByEmail(email)
         if (!userIdentity) {
             return

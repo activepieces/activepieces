@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const stopPayment = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -25,17 +25,17 @@ export const stopPayment = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
-        const { checkId, stopReason, stopReference } = context.propsValue;
+        const client = makeClient(context.auth.props)
+        const { checkId, stopReason, stopReference } = context.propsValue
 
         const payload: Record<string, unknown> = {
             CheckId: checkId,
-        };
+        }
 
-        if (stopReason) payload['StopReason'] = stopReason;
-        if (stopReference) payload['StopReference'] = stopReference;
+        if (stopReason) payload['StopReason'] = stopReason
+        if (stopReference) payload['StopReference'] = stopReference
 
-        const response = await client.executeAction('/payablesPayments/action/initiateStopPayment', payload);
-        return response;
+        const response = await client.executeAction('/payablesPayments/action/initiateStopPayment', payload)
+        return response
     },
-});
+})

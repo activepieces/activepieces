@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 const markdownDescription = `
 To get your CustomGPT API Key:
@@ -10,10 +10,10 @@ To get your CustomGPT API Key:
 5. Copy your API key and paste it below
 
 For more details, visit the [API Keys and Authentication guide](https://docs.customgpt.ai/reference/api-keys-and-authentication).
-`;
+`
 
 export const customgptAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: markdownDescription,
-});
+    displayName: 'API Key',
+    required: true,
+    description: markdownDescription,
+})

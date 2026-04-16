@@ -3,15 +3,15 @@ import {
   FlowActionType,
   FlowOperationType,
   FlowRun,
-  flowStructureUtil,
-  FlowVersion,
-  isNil,
-  LoopOnItemsAction,
-  RouterAction,
-  StepLocationRelativeToParent,
   FlowTrigger,
   FlowTriggerType,
+  FlowVersion,
+  flowStructureUtil,
+  isNil,
+  LoopOnItemsAction,
   Note,
+  RouterAction,
+  StepLocationRelativeToParent,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
@@ -125,38 +125,37 @@ const createStepGraph: (
   };
 };
 
-const buildFlowGraph: (
-  step: FlowAction | FlowTrigger | undefined,
-) => ApGraph = (step) => {
-  if (isNil(step)) {
-    return {
-      nodes: [],
-      edges: [],
-    };
-  }
+const buildFlowGraph: (step: FlowAction | FlowTrigger | undefined) => ApGraph =
+  (step) => {
+    if (isNil(step)) {
+      return {
+        nodes: [],
+        edges: [],
+      };
+    }
 
-  const graph: ApGraph = createStepGraph(
-    step,
-    flowCanvasConsts.AP_NODE_SIZE.STEP.height +
-      flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS,
-  );
-  const childGraph =
-    step.type === FlowActionType.LOOP_ON_ITEMS
-      ? buildLoopChildGraph(step)
-      : step.type === FlowActionType.ROUTER
-      ? buildRouterChildGraph(step)
-      : null;
+    const graph: ApGraph = createStepGraph(
+      step,
+      flowCanvasConsts.AP_NODE_SIZE.STEP.height +
+        flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS,
+    );
+    const childGraph =
+      step.type === FlowActionType.LOOP_ON_ITEMS
+        ? buildLoopChildGraph(step)
+        : step.type === FlowActionType.ROUTER
+          ? buildRouterChildGraph(step)
+          : null;
 
-  const graphWithChild = childGraph ? mergeGraph(graph, childGraph) : graph;
-  const nextStepGraph = buildFlowGraph(step.nextAction);
-  return mergeGraph(
-    graphWithChild,
-    offsetGraph(nextStepGraph, {
-      x: 0,
-      y: calculateGraphBoundingBox(graphWithChild).height,
-    }),
-  );
-};
+    const graphWithChild = childGraph ? mergeGraph(graph, childGraph) : graph;
+    const nextStepGraph = buildFlowGraph(step.nextAction);
+    return mergeGraph(
+      graphWithChild,
+      offsetGraph(nextStepGraph, {
+        x: 0,
+        y: calculateGraphBoundingBox(graphWithChild).height,
+      }),
+    );
+  };
 
 function offsetGraph(
   graph: ApGraph,

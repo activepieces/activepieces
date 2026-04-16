@@ -1,6 +1,6 @@
 import {
-  FlowProjectOperationType,
   FlowProjectOperation,
+  FlowProjectOperationType,
 } from '@activepieces/shared';
 import { PencilIcon, Plus, TrashIcon } from 'lucide-react';
 import React from 'react';

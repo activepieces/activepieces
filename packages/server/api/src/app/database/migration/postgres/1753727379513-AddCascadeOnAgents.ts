@@ -45,5 +45,4 @@ export class AddCascadeOnAgents1753727379513 implements MigrationInterface {
             ADD CONSTRAINT "FK_bb2611fd1fdb5469f50c00eaf31" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
     }
-
 }

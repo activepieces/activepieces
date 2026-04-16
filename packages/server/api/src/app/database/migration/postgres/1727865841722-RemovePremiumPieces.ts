@@ -15,5 +15,4 @@ export class RemovePremiumPieces1727865841722 implements MigrationInterface {
             ADD "premiumPieces" character varying array NOT NULL
         `)
     }
-
 }

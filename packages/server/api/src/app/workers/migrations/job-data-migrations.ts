@@ -50,11 +50,14 @@ function createMigrations(log: FastifyBaseLogger): JobMigration[] {
 export const jobMigrations = (log: FastifyBaseLogger) => ({
     apply: async (job: Record<string, unknown>): Promise<JobData> => {
         let jobData = job as JobData
-        log.info({
-            schemaVersion: jobData.schemaVersion,
-            jobType: jobData.jobType,
-            projectId: jobData.projectId,
-        }, '[jobMigrations] Apply migration for job')
+        log.info(
+            {
+                schemaVersion: jobData.schemaVersion,
+                jobType: jobData.jobType,
+                projectId: jobData.projectId,
+            },
+            '[jobMigrations] Apply migration for job',
+        )
         const migrations = createMigrations(log)
         for (const migration of migrations) {
             const schemaVersion = getSchemaVersion(jobData)
@@ -69,7 +72,6 @@ export const jobMigrations = (log: FastifyBaseLogger) => ({
 function getSchemaVersion(job: JobData): number {
     return 'schemaVersion' in job ? job.schemaVersion : 0
 }
-
 
 type JobMigration = {
     runAtSchemaVersion: number

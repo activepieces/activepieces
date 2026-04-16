@@ -2,12 +2,13 @@ import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
 
 import { CardListItem } from '@/components/custom/card-list';
 import {
+  PIECE_SELECTOR_ELEMENTS_HEIGHTS,
   PieceIcon,
   PieceSelectorItem,
   StepMetadataWithSuggestions,
-  PIECE_SELECTOR_ELEMENTS_HEIGHTS,
 } from '@/features/pieces';
 import { cn } from '@/lib/utils';
+
 type GenericActionOrTriggerItemProps = {
   item: PieceSelectorItem;
   hidePieceIconAndDescription: boolean;

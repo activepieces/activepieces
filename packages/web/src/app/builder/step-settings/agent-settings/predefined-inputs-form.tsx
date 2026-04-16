@@ -136,7 +136,7 @@ export const PredefinedInputsForm = () => {
       mode: newMode,
       value:
         newMode === FieldControlMode.CHOOSE_YOURSELF
-          ? prevField?.value ?? form.getValues(propertyName)
+          ? (prevField?.value ?? form.getValues(propertyName))
           : undefined,
     };
     setPredefinedInputs({

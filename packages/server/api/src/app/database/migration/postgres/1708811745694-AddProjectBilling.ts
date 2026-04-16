@@ -47,5 +47,4 @@ export class AddProjectBilling1708811745694 implements MigrationInterface {
             DROP TABLE "project_billing"
         `)
     }
-
 }

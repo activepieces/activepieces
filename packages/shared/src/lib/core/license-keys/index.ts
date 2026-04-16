@@ -36,15 +36,24 @@ export const LicenseKeyEntity = z.object({
     aiProvidersEnabled: z.boolean(),
 })
 
-
-export const CreateTrialLicenseKeyRequestBody = z.object({
-    email: z.string(),
-    companyName: z.string(),
-    goal: z.string(),
-    keyType: z.string().optional(),
-}).merge(LicenseKeyEntity.omit({ id: true, email: true, expiresAt: true, activatedAt: true, key: true, createdAt: true }))
+export const CreateTrialLicenseKeyRequestBody = z
+    .object({
+        email: z.string(),
+        companyName: z.string(),
+        goal: z.string(),
+        keyType: z.string().optional(),
+    })
+    .merge(
+        LicenseKeyEntity.omit({
+            id: true,
+            email: true,
+            expiresAt: true,
+            activatedAt: true,
+            key: true,
+            createdAt: true,
+        }),
+    )
 
 export type CreateTrialLicenseKeyRequestBody = z.infer<typeof CreateTrialLicenseKeyRequestBody>
-
 
 export type LicenseKeyEntity = z.infer<typeof LicenseKeyEntity>

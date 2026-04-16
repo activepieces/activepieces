@@ -364,5 +364,4 @@ export class AddExternalAgentIdSqlite1753643287673 implements MigrationInterface
             CREATE INDEX "idx_flow_version_flow_id_created_desc" ON "flow_version" ("flowId", "created")
         `)
     }
-
 }

@@ -1,7 +1,7 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { everhourAuth } from '../auth';
-import { everhourApiCall } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { everhourAuth } from '../auth'
+import { everhourApiCall } from '../common/client'
 
 export const createTaskAction = createAction({
     auth: everhourAuth,
@@ -21,7 +21,7 @@ export const createTaskAction = createAction({
         }),
     },
     async run(context) {
-        const { projectId, name } = context.propsValue;
+        const { projectId, name } = context.propsValue
 
         const response = await everhourApiCall({
             apiKey: context.auth.secret_text,
@@ -30,8 +30,8 @@ export const createTaskAction = createAction({
             body: {
                 name,
             },
-        });
+        })
 
-        return response;
+        return response
     },
-});
+})

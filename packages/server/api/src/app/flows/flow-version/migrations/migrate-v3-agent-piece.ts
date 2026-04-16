@@ -1,6 +1,6 @@
 import { FlowVersion } from '@activepieces/shared'
-import { flowMigrationUtil } from './flow-migration-util'
 import { Migration } from '.'
+import { flowMigrationUtil } from './flow-migration-util'
 
 export const migrateAgentPieceV3: Migration = {
     targetSchemaVersion: '3',
@@ -11,4 +11,4 @@ export const migrateAgentPieceV3: Migration = {
             schemaVersion: '4',
         }
     },
-} 
+}

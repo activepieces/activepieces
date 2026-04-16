@@ -31,37 +31,40 @@ type ArrayField = {
 };
 
 const getDefaultValuesForInputs = (arrayProperties: ArraySubProps<boolean>) => {
-  return Object.entries(arrayProperties).reduce((acc, [key, value]) => {
-    switch (value.type) {
-      case PropertyType.LONG_TEXT:
-      case PropertyType.SHORT_TEXT:
-      case PropertyType.NUMBER:
-      case PropertyType.JSON:
-      case PropertyType.COLOR:
-        return {
-          ...acc,
-          [key]: '',
-        };
-      case PropertyType.CHECKBOX:
-        return {
-          ...acc,
-          [key]: false,
-        };
-      case PropertyType.STATIC_DROPDOWN:
-      case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-      case PropertyType.MULTI_SELECT_DROPDOWN:
-      case PropertyType.DATE_TIME:
-        return {
-          ...acc,
-          [key]: null,
-        };
-      case PropertyType.FILE:
-        return {
-          ...acc,
-          [key]: null,
-        };
-    }
-  }, {} as Record<string, unknown>);
+  return Object.entries(arrayProperties).reduce(
+    (acc, [key, value]) => {
+      switch (value.type) {
+        case PropertyType.LONG_TEXT:
+        case PropertyType.SHORT_TEXT:
+        case PropertyType.NUMBER:
+        case PropertyType.JSON:
+        case PropertyType.COLOR:
+          return {
+            ...acc,
+            [key]: '',
+          };
+        case PropertyType.CHECKBOX:
+          return {
+            ...acc,
+            [key]: false,
+          };
+        case PropertyType.STATIC_DROPDOWN:
+        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
+        case PropertyType.MULTI_SELECT_DROPDOWN:
+        case PropertyType.DATE_TIME:
+          return {
+            ...acc,
+            [key]: null,
+          };
+        case PropertyType.FILE:
+          return {
+            ...acc,
+            [key]: null,
+          };
+      }
+    },
+    {} as Record<string, unknown>,
+  );
 };
 const ArrayPieceProperty = React.memo(
   ({
@@ -216,4 +219,5 @@ const ArrayPieceProperty = React.memo(
 );
 
 ArrayPieceProperty.displayName = 'ArrayPieceProperty';
+
 export { ArrayPieceProperty };

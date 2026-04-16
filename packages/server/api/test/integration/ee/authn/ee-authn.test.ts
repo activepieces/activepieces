@@ -1,14 +1,10 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import {
-    createMockCustomDomain,
-    mockAndSaveBasicSetup,
-} from '../../../../test/helpers/mocks'
+import { createMockCustomDomain, mockAndSaveBasicSetup } from '../../../../test/helpers/mocks'
 import { db } from '../../../helpers/db'
 import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
-
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -55,7 +51,7 @@ describe('Authentication API', () => {
     })
 
     it('should fail signup on custom domain when no project exists', async () => {
-    // arrange
+        // arrange
 
         const { mockPlatform } = await mockAndSaveBasicSetup({
             platform: {

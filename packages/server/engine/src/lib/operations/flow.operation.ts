@@ -33,9 +33,10 @@ export const flowOperation = {
             engineConstants: constants,
             flowExecutorContext: output,
         })
-        const status = output.verdict.status === FlowRunStatus.LOG_SIZE_EXCEEDED
-            ? EngineResponseStatus.LOG_SIZE_EXCEEDED
-            : EngineResponseStatus.OK
+        const status =
+            output.verdict.status === FlowRunStatus.LOG_SIZE_EXCEEDED
+                ? EngineResponseStatus.LOG_SIZE_EXCEEDED
+                : EngineResponseStatus.OK
         return {
             status,
             response: undefined,
@@ -71,18 +72,27 @@ const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): P
     })
 }
 
-async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
+async function getFlowExecutionState(
+    input: ExecuteFlowOperation,
+    flowContext: FlowExecutorContext,
+): Promise<FlowExecutorContext> {
     switch (input.executionType) {
         case ExecutionType.BEGIN: {
             if (Object.keys(input.executionState.steps).length > 0) {
-                throw new EngineGenericError('InvalidBeginStateError', 'BEGIN operation received with non-empty execution state')
+                throw new EngineGenericError(
+                    'InvalidBeginStateError',
+                    'BEGIN operation received with non-empty execution state',
+                )
             }
             const newPayload = await runOrReturnPayload(input)
-            flowContext = flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
-                type: input.flowVersion.trigger.type,
-                status: StepOutputStatus.SUCCEEDED,
-                input: {},
-            }).setOutput(newPayload))
+            flowContext = flowContext.upsertStep(
+                input.flowVersion.trigger.name,
+                GenericStepOutput.create({
+                    type: input.flowVersion.trigger.type,
+                    status: StepOutputStatus.SUCCEEDED,
+                    input: {},
+                }).setOutput(newPayload),
+            )
             break
         }
         case ExecutionType.RESUME: {
@@ -106,7 +116,7 @@ async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<Tri
     if (!input.executeTrigger) {
         return input.triggerPayload as TriggerPayload
     }
-    const newPayload = await triggerHelper.executeTrigger({
+    const newPayload = (await triggerHelper.executeTrigger({
         params: {
             ...input,
             hookType: TriggerHookType.RUN,
@@ -115,10 +125,9 @@ async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<Tri
             triggerPayload: input.triggerPayload as TriggerPayload,
         },
         constants: EngineConstants.fromExecuteFlowInput(input),
-    }) as ExecuteTriggerResponse<TriggerHookType.RUN>
+    })) as ExecuteTriggerResponse<TriggerHookType.RUN>
     return newPayload.output[0] as TriggerPayload
 }
-
 
 async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Promise<StepOutput | null> {
     if (![StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(stepOutput.status)) {

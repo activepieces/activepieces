@@ -1,7 +1,7 @@
-import { InterceptorVerdict } from '../../../../../src/app/workers/job-queue/job-interceptor'
-import { Job, Worker as BullMQWorker } from 'bullmq'
+import { Worker as BullMQWorker, Job } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { InterceptorVerdict } from '../../../../../src/app/workers/job-queue/job-interceptor'
 
 const mockGenerateEngineToken = vi.fn().mockResolvedValue('engine-token')
 
@@ -84,9 +84,7 @@ describe('tryDequeue', () => {
         const jobA = createMockJob('job-a')
         const jobB = createMockJob('job-b')
 
-        vi.mocked(mockWorker.getNextJob)
-            .mockResolvedValueOnce(jobA)
-            .mockResolvedValueOnce(jobB)
+        vi.mocked(mockWorker.getNextJob).mockResolvedValueOnce(jobA).mockResolvedValueOnce(jobB)
 
         mockPreDispatch
             .mockResolvedValueOnce({ verdict: InterceptorVerdict.REJECT, delayInMs: 5000 })
@@ -108,8 +106,7 @@ describe('tryDequeue', () => {
             .mockResolvedValueOnce(job)
             .mockResolvedValueOnce(undefined as unknown as Job)
 
-        mockPreDispatch
-            .mockResolvedValueOnce({ verdict: InterceptorVerdict.REJECT, delayInMs: 5000 })
+        mockPreDispatch.mockResolvedValueOnce({ verdict: InterceptorVerdict.REJECT, delayInMs: 5000 })
 
         const result = await tryDequeue(mockWorker, 'test-queue', mockLog)
 
@@ -127,8 +124,7 @@ describe('tryDequeue', () => {
         }
         getNextJobMock.mockResolvedValueOnce(undefined as unknown as Job)
 
-        mockPreDispatch
-            .mockResolvedValue({ verdict: InterceptorVerdict.REJECT, delayInMs: 5000 })
+        mockPreDispatch.mockResolvedValue({ verdict: InterceptorVerdict.REJECT, delayInMs: 5000 })
 
         const result = await tryDequeue(mockWorker, 'test-queue', mockLog)
 
@@ -143,9 +139,7 @@ describe('tryDequeue', () => {
         const jobA = createMockJob('job-a')
         const jobB = createMockJob('job-b')
 
-        vi.mocked(mockWorker.getNextJob)
-            .mockResolvedValueOnce(jobA)
-            .mockResolvedValueOnce(jobB)
+        vi.mocked(mockWorker.getNextJob).mockResolvedValueOnce(jobA).mockResolvedValueOnce(jobB)
 
         mockPreDispatch
             .mockResolvedValueOnce({ verdict: InterceptorVerdict.REJECT, delayInMs: 3000, priority: 10 })

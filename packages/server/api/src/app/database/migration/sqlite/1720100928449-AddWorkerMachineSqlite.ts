@@ -90,5 +90,4 @@ export class AddWorkerMachineSqlite1720100928449 implements MigrationInterface {
             DROP TABLE "worker_machine"
         `)
     }
-
 }

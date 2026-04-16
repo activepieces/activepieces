@@ -41,5 +41,4 @@ export class RemoveUniqueOnFlow1750093037011 implements MigrationInterface {
             ADD CONSTRAINT "fk_issue_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
     }
-
 }

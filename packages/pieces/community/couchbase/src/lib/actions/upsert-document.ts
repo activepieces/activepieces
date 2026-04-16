@@ -1,72 +1,67 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { couchbaseAuth } from '../..';
+import { createAction } from '@activepieces/pieces-framework'
+import { DurabilityLevel, UpsertOptions } from 'couchbase'
+import { randomUUID } from 'crypto'
+import { couchbaseAuth } from '../..'
 import {
-  couchbaseCommonProps,
-  createCouchbaseClient,
-  getCollection,
-  closeCluster,
-  formatMutationResult,
-  CouchbaseAuthValue,
-} from '../common';
-import { randomUUID } from 'crypto';
-import { UpsertOptions, DurabilityLevel } from 'couchbase';
+    CouchbaseAuthValue,
+    closeCluster,
+    couchbaseCommonProps,
+    createCouchbaseClient,
+    formatMutationResult,
+    getCollection,
+} from '../common'
 
 export default createAction({
-  auth: couchbaseAuth,
-  name: 'upsert_document',
-  displayName: 'Upsert Document',
-  description: 'Create or update a document. Creates if it doesn\'t exist, updates if it does.',
-  props: {
-    bucket: couchbaseCommonProps.bucket,
-    scope: couchbaseCommonProps.scope,
-    collection: couchbaseCommonProps.collection,
-    documentId: couchbaseCommonProps.documentIdOptional,
-    document: couchbaseCommonProps.document,
-    expiry: couchbaseCommonProps.expiry,
-    durabilityLevel: couchbaseCommonProps.durabilityLevel,
-    timeout: couchbaseCommonProps.timeout,
-  },
-  async run(context) {
-    const auth = (context.auth as { props: CouchbaseAuthValue }).props;
-    const { bucket, scope, collection, documentId, document, expiry, durabilityLevel, timeout } = context.propsValue;
+    auth: couchbaseAuth,
+    name: 'upsert_document',
+    displayName: 'Upsert Document',
+    description: "Create or update a document. Creates if it doesn't exist, updates if it does.",
+    props: {
+        bucket: couchbaseCommonProps.bucket,
+        scope: couchbaseCommonProps.scope,
+        collection: couchbaseCommonProps.collection,
+        documentId: couchbaseCommonProps.documentIdOptional,
+        document: couchbaseCommonProps.document,
+        expiry: couchbaseCommonProps.expiry,
+        durabilityLevel: couchbaseCommonProps.durabilityLevel,
+        timeout: couchbaseCommonProps.timeout,
+    },
+    async run(context) {
+        const auth = (context.auth as { props: CouchbaseAuthValue }).props
+        const { bucket, scope, collection, documentId, document, expiry, durabilityLevel, timeout } = context.propsValue
 
-    if (!bucket) {
-      throw new Error('Bucket is required');
-    }
+        if (!bucket) {
+            throw new Error('Bucket is required')
+        }
 
-    if (!document) {
-      throw new Error('Document is required');
-    }
+        if (!document) {
+            throw new Error('Document is required')
+        }
 
-    const docId = documentId || randomUUID();
-    const cluster = await createCouchbaseClient(auth);
+        const docId = documentId || randomUUID()
+        const cluster = await createCouchbaseClient(auth)
 
-    try {
-      const coll = getCollection(
-        cluster,
-        bucket,
-        scope || undefined,
-        collection || undefined
-      );
+        try {
+            const coll = getCollection(cluster, bucket, scope || undefined, collection || undefined)
 
-      const options: UpsertOptions = {};
+            const options: UpsertOptions = {}
 
-      if (expiry && expiry > 0) {
-        options.expiry = expiry;
-      }
+            if (expiry && expiry > 0) {
+                options.expiry = expiry
+            }
 
-      if (durabilityLevel !== undefined && durabilityLevel !== null) {
-        options.durabilityLevel = durabilityLevel as DurabilityLevel;
-      }
+            if (durabilityLevel !== undefined && durabilityLevel !== null) {
+                options.durabilityLevel = durabilityLevel as DurabilityLevel
+            }
 
-      if (timeout && timeout > 0) {
-        options.timeout = timeout;
-      }
+            if (timeout && timeout > 0) {
+                options.timeout = timeout
+            }
 
-      const result = await coll.upsert(docId, document, options);
-      return formatMutationResult(result, docId);
-    } finally {
-      await closeCluster(cluster);
-    }
-  },
-});
+            const result = await coll.upsert(docId, document, options)
+            return formatMutationResult(result, docId)
+        } finally {
+            await closeCluster(cluster)
+        }
+    },
+})

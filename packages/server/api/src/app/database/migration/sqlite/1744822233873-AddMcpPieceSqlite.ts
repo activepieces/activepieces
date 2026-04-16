@@ -5,8 +5,6 @@ export class AddMcpPieceSqlite1744822233873 implements MigrationInterface {
     name = 'AddMcpPieceSqlite1744822233873'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-
-
         // Drop the old index
         await queryRunner.query(`
             DROP INDEX IF EXISTS "idx_app_connection_mcp_id"
@@ -58,11 +56,12 @@ export class AddMcpPieceSqlite1744822233873 implements MigrationInterface {
                 WHERE rn = 1
             )
         `)
-        
+
         // Insert mcp_piece entries for each connection
         for (const connection of connections) {
             const pieceId = apId()
-            await queryRunner.query(`
+            await queryRunner.query(
+                `
                 INSERT INTO "mcp_piece" (
                     "id",
                     "created",
@@ -72,7 +71,17 @@ export class AddMcpPieceSqlite1744822233873 implements MigrationInterface {
                     "connectionId",
                     "status"
                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            `, [pieceId, connection.created, connection.updated, connection.pieceName, connection.mcpId, connection.id, 'ENABLED'])
+            `,
+                [
+                    pieceId,
+                    connection.created,
+                    connection.updated,
+                    connection.pieceName,
+                    connection.mcpId,
+                    connection.id,
+                    'ENABLED',
+                ],
+            )
         }
 
         // Drop mcpId column from app_connection by recreating the table without it

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { teamleaderAuth } from '../common/auth';
-import { teamleaderCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { teamleaderAuth } from '../common/auth'
+import { teamleaderCommon } from '../common/client'
 
 export const updateCompany = createAction({
     name: 'update_company',
@@ -10,41 +10,42 @@ export const updateCompany = createAction({
     auth: teamleaderAuth,
     props: {
         company_id: Property.Dropdown({
-          auth:teamleaderAuth,
+            auth: teamleaderAuth,
             displayName: 'Company',
             description: 'Select the company to update',
             required: true,
             refreshers: [],
             options: async ({ auth }) => {
-                if (!auth) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please authenticate first'
-                };
+                if (!auth)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please authenticate first',
+                    }
 
                 try {
                     const response = await teamleaderCommon.apiCall({
                         auth,
                         method: HttpMethod.POST,
                         resourceUri: '/companies.list',
-                        body: {}
-                    });
+                        body: {},
+                    })
 
                     return {
                         disabled: false,
                         options: response.body.data.map((company: any) => ({
                             label: company.name,
-                            value: company.id
-                        }))
-                    };
+                            value: company.id,
+                        })),
+                    }
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading companies'
-                    };
+                        placeholder: 'Error loading companies',
+                    }
                 }
-            }
+            },
         }),
         name: Property.ShortText({
             displayName: 'Company Name',
@@ -57,23 +58,25 @@ export const updateCompany = createAction({
             required: false,
         }),
         business_type_id: Property.Dropdown({
-          auth:teamleaderAuth,
+            auth: teamleaderAuth,
             displayName: 'Business Type',
             description: 'Legal structure of the company',
             required: false,
             refreshers: ['country_for_business_type'],
             options: async ({ auth, country_for_business_type }) => {
-                if (!auth) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please authenticate first'
-                };
+                if (!auth)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please authenticate first',
+                    }
 
-                if (!country_for_business_type) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please select a country first'
-                };
+                if (!country_for_business_type)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please select a country first',
+                    }
 
                 try {
                     const response = await teamleaderCommon.apiCall({
@@ -81,25 +84,25 @@ export const updateCompany = createAction({
                         method: HttpMethod.POST,
                         resourceUri: '/businessTypes.list',
                         body: {
-                            country: country_for_business_type
-                        }
-                    });
+                            country: country_for_business_type,
+                        },
+                    })
 
                     return {
                         disabled: false,
                         options: response.body.data.map((businessType: any) => ({
                             label: businessType.name,
-                            value: businessType.id
-                        }))
-                    };
+                            value: businessType.id,
+                        })),
+                    }
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading business types'
-                    };
+                        placeholder: 'Error loading business types',
+                    }
                 }
-            }
+            },
         }),
         vat_number: Property.ShortText({
             displayName: 'VAT Number',
@@ -122,15 +125,15 @@ export const updateCompany = createAction({
                     options: {
                         options: [
                             { label: 'Primary', value: 'primary' },
-                            { label: 'Invoicing', value: 'invoicing' }
-                        ]
-                    }
+                            { label: 'Invoicing', value: 'invoicing' },
+                        ],
+                    },
                 }),
                 email: Property.ShortText({
                     displayName: 'Email Address',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         telephones: Property.Array({
             displayName: 'Phone Numbers',
@@ -143,15 +146,15 @@ export const updateCompany = createAction({
                     options: {
                         options: [
                             { label: 'Phone', value: 'phone' },
-                            { label: 'Fax', value: 'fax' }
-                        ]
-                    }
+                            { label: 'Fax', value: 'fax' },
+                        ],
+                    },
                 }),
                 number: Property.ShortText({
                     displayName: 'Phone Number',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         website: Property.ShortText({
             displayName: 'Website',
@@ -171,9 +174,9 @@ export const updateCompany = createAction({
                             { label: 'Primary', value: 'primary' },
                             { label: 'Invoicing', value: 'invoicing' },
                             { label: 'Delivery', value: 'delivery' },
-                            { label: 'Visiting', value: 'visiting' }
-                        ]
-                    }
+                            { label: 'Visiting', value: 'visiting' },
+                        ],
+                    },
                 }),
                 line_1: Property.ShortText({
                     displayName: 'Address Line 1',
@@ -201,8 +204,8 @@ export const updateCompany = createAction({
                     displayName: 'Addressee',
                     description: 'Name/company for this address',
                     required: false,
-                })
-            }
+                }),
+            },
         }),
         iban: Property.ShortText({
             displayName: 'IBAN',
@@ -237,8 +240,8 @@ export const updateCompany = createAction({
                 tag: Property.ShortText({
                     displayName: 'Tag',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         custom_fields: Property.Array({
             displayName: 'Custom Fields',
@@ -254,8 +257,8 @@ export const updateCompany = createAction({
                     displayName: 'Value',
                     description: 'Field value (string, number, or boolean)',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         marketing_mails_consent: Property.Checkbox({
             displayName: 'Marketing Consent',
@@ -290,46 +293,49 @@ export const updateCompany = createAction({
                     { label: 'Peruvian Sol (PEN)', value: 'PEN' },
                     { label: 'Moroccan Dirham (MAD)', value: 'MAD' },
                     { label: 'Icelandic Krona (ISK)', value: 'ISK' },
-                    { label: 'Bosnia and Herzegovina Mark (BAM)', value: 'BAM' }
-                ]
-            }
+                    { label: 'Bosnia and Herzegovina Mark (BAM)', value: 'BAM' },
+                ],
+            },
         }),
     },
     async run(context) {
         const updateData: Record<string, any> = {
             id: context.propsValue.company_id,
-        };
+        }
 
         // Add basic string fields that are provided
-        if (context.propsValue.name !== undefined) updateData['name'] = context.propsValue.name;
-        if (context.propsValue.business_type_id !== undefined) updateData['business_type_id'] = context.propsValue.business_type_id;
-        if (context.propsValue.vat_number !== undefined) updateData['vat_number'] = context.propsValue.vat_number;
+        if (context.propsValue.name !== undefined) updateData['name'] = context.propsValue.name
+        if (context.propsValue.business_type_id !== undefined)
+            updateData['business_type_id'] = context.propsValue.business_type_id
+        if (context.propsValue.vat_number !== undefined) updateData['vat_number'] = context.propsValue.vat_number
         if (context.propsValue.national_identification_number !== undefined) {
-            updateData['national_identification_number'] = context.propsValue.national_identification_number;
+            updateData['national_identification_number'] = context.propsValue.national_identification_number
         }
-        if (context.propsValue.website !== undefined) updateData['website'] = context.propsValue.website;
-        if (context.propsValue.iban !== undefined) updateData['iban'] = context.propsValue.iban;
-        if (context.propsValue.bic !== undefined) updateData['bic'] = context.propsValue.bic;
-        if (context.propsValue.language !== undefined) updateData['language'] = context.propsValue.language;
-        if (context.propsValue.responsible_user_id !== undefined) updateData['responsible_user_id'] = context.propsValue.responsible_user_id;
-        if (context.propsValue.remarks !== undefined) updateData['remarks'] = context.propsValue.remarks;
+        if (context.propsValue.website !== undefined) updateData['website'] = context.propsValue.website
+        if (context.propsValue.iban !== undefined) updateData['iban'] = context.propsValue.iban
+        if (context.propsValue.bic !== undefined) updateData['bic'] = context.propsValue.bic
+        if (context.propsValue.language !== undefined) updateData['language'] = context.propsValue.language
+        if (context.propsValue.responsible_user_id !== undefined)
+            updateData['responsible_user_id'] = context.propsValue.responsible_user_id
+        if (context.propsValue.remarks !== undefined) updateData['remarks'] = context.propsValue.remarks
         if (context.propsValue.marketing_mails_consent !== undefined) {
-            updateData['marketing_mails_consent'] = context.propsValue.marketing_mails_consent;
+            updateData['marketing_mails_consent'] = context.propsValue.marketing_mails_consent
         }
-        if (context.propsValue.preferred_currency !== undefined) updateData['preferred_currency'] = context.propsValue.preferred_currency;
+        if (context.propsValue.preferred_currency !== undefined)
+            updateData['preferred_currency'] = context.propsValue.preferred_currency
 
         if (context.propsValue.emails !== undefined) {
             updateData['emails'] = context.propsValue.emails.map((emailObj: any) => ({
                 type: emailObj.type,
-                email: emailObj.email
-            }));
+                email: emailObj.email,
+            }))
         }
 
         if (context.propsValue.telephones !== undefined) {
             updateData['telephones'] = context.propsValue.telephones.map((phoneObj: any) => ({
                 type: phoneObj.type,
-                number: phoneObj.number
-            }));
+                number: phoneObj.number,
+            }))
         }
 
         if (context.propsValue.addresses !== undefined) {
@@ -341,33 +347,33 @@ export const updateCompany = createAction({
                     city: addressObj.city || null,
                     country: addressObj.country,
                     ...(addressObj.area_level_two_id && { area_level_two_id: addressObj.area_level_two_id }),
-                    ...(addressObj.addressee && { addressee: addressObj.addressee })
-                }
-            }));
+                    ...(addressObj.addressee && { addressee: addressObj.addressee }),
+                },
+            }))
         }
 
         if (context.propsValue.tags !== undefined) {
-            updateData['tags'] = context.propsValue.tags.map((tagObj: any) => tagObj.tag);
+            updateData['tags'] = context.propsValue.tags.map((tagObj: any) => tagObj.tag)
         }
 
         if (context.propsValue.custom_fields !== undefined) {
             updateData['custom_fields'] = context.propsValue.custom_fields.map((fieldObj: any) => ({
                 id: fieldObj.id,
-                value: fieldObj.value
-            }));
+                value: fieldObj.value,
+            }))
         }
 
         await teamleaderCommon.apiCall({
             auth: context.auth,
             method: HttpMethod.POST,
             resourceUri: '/companies.update',
-            body: updateData
-        });
+            body: updateData,
+        })
 
         return {
             success: true,
             message: 'Company updated successfully',
-            company_id: context.propsValue.company_id
-        };
+            company_id: context.propsValue.company_id,
+        }
     },
-});
+})

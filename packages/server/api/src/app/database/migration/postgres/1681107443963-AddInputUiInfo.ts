@@ -22,9 +22,7 @@ export class AddInputUiInfo1681107443963 implements MigrationInterface {
         log.info('AddInputUiInfo1681107443963, started')
 
         let count = 0
-        const flowVersions = await queryRunner.query(
-            `SELECT * FROM ${FLOW_VERSION_TABLE}`,
-        )
+        const flowVersions = await queryRunner.query(`SELECT * FROM ${FLOW_VERSION_TABLE}`)
 
         for (const flowVersion of flowVersions) {
             const steps = getAllSteps(flowVersion as FlowVersion)
@@ -39,10 +37,10 @@ export class AddInputUiInfo1681107443963 implements MigrationInterface {
             }
             if (changed) {
                 count++
-                await queryRunner.query(
-                    `UPDATE ${FLOW_VERSION_TABLE} SET flow_version = $1 WHERE id = $2`,
-                    [flowVersion, flowVersion.id],
-                )
+                await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET flow_version = $1 WHERE id = $2`, [
+                    flowVersion,
+                    flowVersion.id,
+                ])
             }
         }
         log.info({ count }, '[AddInputUiInfo1681107443963#up] finished flows')

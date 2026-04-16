@@ -1,6 +1,6 @@
 import * as fs from 'fs'
-import { identifyCandidatesByManifest } from '../../packages/server/api/src/app/database/rollback-migrations'
 import { getMigrations } from '../../packages/server/api/src/app/database/postgres-connection'
+import { identifyCandidatesByManifest } from '../../packages/server/api/src/app/database/rollback-migrations'
 
 function main(): void {
     const manifestArg = process.argv[2]
@@ -18,8 +18,7 @@ function main(): void {
             throw new Error('Must be a JSON array')
         }
         targetMigrationNames = parsed.filter((n): n is string => typeof n === 'string')
-    }
-    catch (e) {
+    } catch (e) {
         console.error(`Invalid manifest JSON: ${e instanceof Error ? e.message : String(e)}`)
         process.exit(1)
     }
@@ -32,7 +31,10 @@ function main(): void {
     if (outputFile) {
         fs.appendFileSync(outputFile, `migration_count=${candidates.length}\n`)
         fs.appendFileSync(outputFile, `has_breaking=${breakingMigrations.length > 0}\n`)
-        fs.appendFileSync(outputFile, `breaking_names=${breakingMigrations.map((m) => m.name ?? 'unknown').join(', ')}\n`)
+        fs.appendFileSync(
+            outputFile,
+            `breaking_names=${breakingMigrations.map((m) => m.name ?? 'unknown').join(', ')}\n`,
+        )
     }
 
     if (candidates.length === 0) {

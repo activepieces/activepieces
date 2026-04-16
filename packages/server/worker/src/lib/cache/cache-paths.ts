@@ -45,8 +45,7 @@ export async function deleteStaleCache(): Promise<void> {
                 await rm(path.join(cacheDir, entry.name), { recursive: true })
             }
         }
-    }
-    catch (error) {
+    } catch (error) {
         logger.error({ err: error }, 'Failed to delete stale cache')
     }
 }

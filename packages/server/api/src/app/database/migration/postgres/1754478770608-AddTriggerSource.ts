@@ -144,5 +144,4 @@ export class AddTriggerSource1754478770608 implements MigrationInterface {
             DROP TABLE "trigger_source"
         `)
     }
-
 }

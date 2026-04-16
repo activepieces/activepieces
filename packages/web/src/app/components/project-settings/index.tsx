@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -28,7 +28,7 @@ import { ProjectAvatar } from '../project-avatar';
 
 import { AlertsSettings } from './alerts';
 import { EnvironmentSettings } from './environment';
-import { GeneralSettings, FormValues } from './general';
+import { FormValues, GeneralSettings } from './general';
 import { McpServerSettings } from './mcp-server';
 import { MembersSettings } from './members';
 import { PiecesSettings } from './pieces';

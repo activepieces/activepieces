@@ -436,5 +436,4 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
             CREATE INDEX "idx_issue_project_id_flow_id" ON "issue" ("projectId", "flowId")
         `)
     }
-
 }

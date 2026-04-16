@@ -1,8 +1,16 @@
 import { EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout } from './engine-operation'
-import { SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from './requests'
+import {
+    SendFlowResponseRequest,
+    UpdateRunProgressRequest,
+    UpdateStepProgressRequest,
+    UploadRunLogsRequest,
+} from './requests'
 
 export type EngineContract = {
-    executeOperation(input: { operationType: EngineOperationType, operation: EngineOperation }): Promise<EngineResponse<unknown>>
+    executeOperation(input: {
+        operationType: EngineOperationType
+        operation: EngineOperation
+    }): Promise<EngineResponse<unknown>>
 }
 
 export type WorkerContract = {

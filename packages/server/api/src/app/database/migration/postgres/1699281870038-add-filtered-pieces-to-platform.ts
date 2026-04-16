@@ -2,8 +2,7 @@ import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
-export class AddFilteredPiecesToPlatform1699281870038
-implements MigrationInterface {
+export class AddFilteredPiecesToPlatform1699281870038 implements MigrationInterface {
     name = 'AddFilteredPiecesToPlatform1699281870038'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

@@ -1,58 +1,62 @@
-
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { smooveAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
+import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common'
+import {
+    AppConnectionValueForAuthProperty,
+    createTrigger,
+    PiecePropValueSchema,
+    Property,
+    TriggerStrategy,
+} from '@activepieces/pieces-framework'
+import { smooveAuth } from '../common/auth'
+import { makeRequest } from '../common/client'
 
 interface LandingPageData {
-    formId: number;
-    formTitle: string;
-    formType: string;
-    [key: string]: any;
+    formId: number
+    formTitle: string
+    formType: string
+    [key: string]: any
 }
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof smooveAuth>, { formType?: string }> = {
     strategy: DedupeStrategy.LAST_ITEM,
     items: async ({ auth, propsValue }) => {
         try {
-            let endpoint = '/LandingPages';
-            const { formType } = propsValue;
-            
+            let endpoint = '/LandingPages'
+            const { formType } = propsValue
+
             if (formType && formType !== 'All') {
-                endpoint += `?type=${encodeURIComponent(formType)}`;
+                endpoint += `?type=${encodeURIComponent(formType)}`
             }
 
-            const response = await makeRequest(auth.secret_text, HttpMethod.GET, endpoint);
-            
+            const response = await makeRequest(auth.secret_text, HttpMethod.GET, endpoint)
+
             if (!response) {
-                return [];
+                return []
             }
-            
-            const items: LandingPageData[] = Array.isArray(response) ? response : [response];
+
+            const items: LandingPageData[] = Array.isArray(response) ? response : [response]
 
             const validItems = items
-                .filter(item => item.formId && item.formTitle)
-                .sort((a, b) => (b.formId || 0) - (a.formId || 0));
+                .filter((item) => item.formId && item.formTitle)
+                .sort((a, b) => (b.formId || 0) - (a.formId || 0))
 
-            return validItems.map(item => {
-                const { formId, formTitle, formType, ...otherFields } = item;
+            return validItems.map((item) => {
+                const { formId, formTitle, formType, ...otherFields } = item
                 return {
                     id: formId.toString(),
                     data: {
                         formId,
                         formTitle,
                         formType: formType || 'Unknown',
-                        ...otherFields
+                        ...otherFields,
                     },
-                };
-            });
-            
+                }
+            })
         } catch (error: any) {
-            console.error('Error fetching landing pages:', error);
-            return [];
+            console.error('Error fetching landing pages:', error)
+            return []
         }
-    }
-};
+    },
+}
 
 export const newFormCreated = createTrigger({
     auth: smooveAuth,
@@ -72,55 +76,55 @@ export const newFormCreated = createTrigger({
                     { label: 'Facebook Form', value: 'Facebook' },
                     { label: 'Mobile Form', value: 'Mobile' },
                     { label: 'Embed Form', value: 'Embed' },
-                    { label: 'Popup Form', value: 'Popup' }
-                ]
-            }
-        })
+                    { label: 'Popup Form', value: 'Popup' },
+                ],
+            },
+        }),
     },
     sampleData: {
-        "formId": 581014,
-        "formTitle": "Contact Us Landing Page",
-        "formType": "LandingPage",
-        "dateCreated": "2025-01-22T10:30:00Z",
-        "isActive": true,
-        "url": "https://example.smoove.io/landing/contact-us",
-        "description": "Main contact form for lead generation",
-        "fields": [
+        formId: 581014,
+        formTitle: 'Contact Us Landing Page',
+        formType: 'LandingPage',
+        dateCreated: '2025-01-22T10:30:00Z',
+        isActive: true,
+        url: 'https://example.smoove.io/landing/contact-us',
+        description: 'Main contact form for lead generation',
+        fields: [
             {
-                "name": "email",
-                "type": "email",
-                "required": true
+                name: 'email',
+                type: 'email',
+                required: true,
             },
             {
-                "name": "firstName", 
-                "type": "text",
-                "required": true
+                name: 'firstName',
+                type: 'text',
+                required: true,
             },
             {
-                "name": "phone",
-                "type": "tel",
-                "required": false
-            }
-        ]
+                name: 'phone',
+                type: 'tel',
+                required: false,
+            },
+        ],
     },
     type: TriggerStrategy.POLLING,
-    
+
     async test(context) {
-        const results = await pollingHelper.test(polling, context);
-        return results;
+        const results = await pollingHelper.test(polling, context)
+        return results
     },
-    
+
     async onEnable(context) {
-        const { store, auth, propsValue } = context;
-        await pollingHelper.onEnable(polling, { store, auth, propsValue });
+        const { store, auth, propsValue } = context
+        await pollingHelper.onEnable(polling, { store, auth, propsValue })
     },
-    
+
     async onDisable(context) {
-        const { store, auth, propsValue } = context;
-        await pollingHelper.onDisable(polling, { store, auth, propsValue });
+        const { store, auth, propsValue } = context
+        await pollingHelper.onDisable(polling, { store, auth, propsValue })
     },
-    
+
     async run(context) {
-        return await pollingHelper.poll(polling, context);
+        return await pollingHelper.poll(polling, context)
     },
-});
+})

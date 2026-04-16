@@ -1,7 +1,7 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { emailOctopusAuth } from "../common/auth";
-import { emailOctopusProps } from "../common/props";
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { emailOctopusAuth } from '../common/auth'
+import { emailOctopusProps } from '../common/props'
 
 export const addOrUpdateContact = createAction({
     auth: emailOctopusAuth,
@@ -15,7 +15,7 @@ export const addOrUpdateContact = createAction({
             description: "The contact's email address.",
             required: true,
         }),
-        fields: emailOctopusProps.fields(), 
+        fields: emailOctopusProps.fields(),
         tags: Property.Array({
             displayName: 'Tags',
             description: 'Tags to associate with the contact. Existing tags will not be removed.',
@@ -36,24 +36,22 @@ export const addOrUpdateContact = createAction({
     },
 
     async run(context) {
-        const { list_id, email_address, fields, tags, status } = context.propsValue;
-        
+        const { list_id, email_address, fields, tags, status } = context.propsValue
+
         const body: Record<string, unknown> = {
             email_address: email_address,
-        };
+        }
 
         if (fields) {
             body['fields'] = Object.fromEntries(
-                Object.entries(fields).filter(([, value]) => value !== null && value !== undefined && value !== '')
-            );
+                Object.entries(fields).filter(([, value]) => value !== null && value !== undefined && value !== ''),
+            )
         }
         if (status) {
-            body['status'] = status;
+            body['status'] = status
         }
         if (tags && (tags as string[]).length > 0) {
-            body['tags'] = Object.fromEntries(
-                (tags as string[]).map(tag => [tag, true])
-            );
+            body['tags'] = Object.fromEntries((tags as string[]).map((tag) => [tag, true]))
         }
 
         const response = await httpClient.sendRequest({
@@ -64,8 +62,8 @@ export const addOrUpdateContact = createAction({
                 type: AuthenticationType.BEARER_TOKEN,
                 token: context.auth.secret_text,
             },
-        });
+        })
 
-        return response.body;
+        return response.body
     },
-});
+})

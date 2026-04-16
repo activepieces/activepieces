@@ -8,11 +8,18 @@ import { fieldTypeSchema, formatFieldInfo } from './table-utils'
 
 const createTableInput = z.object({
     name: z.string().describe('The name of the table'),
-    fields: z.array(z.object({
-        name: z.string().describe('Field name'),
-        type: fieldTypeSchema.describe('Field type'),
-        options: z.array(z.string()).optional().describe('Dropdown options (required when type is STATIC_DROPDOWN)'),
-    })).describe('Fields to create. Max 100 fields per table.'),
+    fields: z
+        .array(
+            z.object({
+                name: z.string().describe('Field name'),
+                type: fieldTypeSchema.describe('Field type'),
+                options: z
+                    .array(z.string())
+                    .optional()
+                    .describe('Dropdown options (required when type is STATIC_DROPDOWN)'),
+            }),
+        )
+        .describe('Fields to create. Max 100 fields per table.'),
 })
 
 export const apCreateTableTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -28,17 +35,25 @@ export const apCreateTableTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
 
                 for (const field of fields) {
                     if (field.type === FieldType.STATIC_DROPDOWN && (!field.options || field.options.length === 0)) {
-                        return { content: [{ type: 'text', text: `❌ Field "${field.name}" is STATIC_DROPDOWN but no options provided.` }] }
+                        return {
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: `❌ Field "${field.name}" is STATIC_DROPDOWN but no options provided.`,
+                                },
+                            ],
+                        }
                     }
                 }
 
-                const fieldStates = fields.map(f => ({
+                const fieldStates = fields.map((f) => ({
                     name: f.name,
                     type: f.type,
                     externalId: apId(),
-                    data: f.type === FieldType.STATIC_DROPDOWN
-                        ? { options: (f.options ?? []).map(v => ({ value: v })) }
-                        : null,
+                    data:
+                        f.type === FieldType.STATIC_DROPDOWN
+                            ? { options: (f.options ?? []).map((v) => ({ value: v })) }
+                            : null,
                 }))
 
                 const table = await tableService.create({
@@ -55,15 +70,16 @@ export const apCreateTableTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
                     tableId: table.id,
                 })
 
-                const fieldLines = createdFields.map(f => `  - ${formatFieldInfo(f)}`).join('\n')
+                const fieldLines = createdFields.map((f) => `  - ${formatFieldInfo(f)}`).join('\n')
                 return {
-                    content: [{
-                        type: 'text',
-                        text: `✅ Table "${name}" created (id: ${table.id})\nFields:\n${fieldLines}`,
-                    }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `✅ Table "${name}" created (id: ${table.id})\nFields:\n${fieldLines}`,
+                        },
+                    ],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_create_table failed')
                 return mcpUtils.mcpToolError('Failed to create table', err)
             }

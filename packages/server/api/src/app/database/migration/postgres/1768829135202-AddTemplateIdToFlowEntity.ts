@@ -15,5 +15,4 @@ export class AddTemplateIdToFlowEntity1768829135202 implements MigrationInterfac
             ALTER TABLE "flow" DROP COLUMN "templateId"
         `)
     }
-
 }

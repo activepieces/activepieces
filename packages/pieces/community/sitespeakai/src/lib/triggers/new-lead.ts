@@ -1,9 +1,15 @@
-import { createTrigger, TriggerStrategy, StaticPropsValue, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
-import dayjs from 'dayjs';
-import { makeRequest } from '../common/client';
-import { SiteSpeakAuth } from '../common/auth';
-import { chatbotIdDropdown } from '../common/dropdown';
+import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common'
+import {
+    AppConnectionValueForAuthProperty,
+    createTrigger,
+    StaticPropsValue,
+    TriggerStrategy,
+} from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { SiteSpeakAuth } from '../common/auth'
+import { makeRequest } from '../common/client'
+import { chatbotIdDropdown } from '../common/dropdown'
+
 const props = {
     chatbotId: chatbotIdDropdown,
 }
@@ -11,7 +17,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof SiteSpeakAuth>, 
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue }) => {
         if (!propsValue.chatbotId) {
-            return [];
+            return []
         }
         const response = await makeRequest(
             auth.secret_text,
@@ -20,19 +26,19 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof SiteSpeakAuth>, 
             undefined,
             {
                 Accept: 'application/json',
-            }
-        );
-        console.log(response);
-        const leads = response || [];
+            },
+        )
+        console.log(response)
+        const leads = response || []
 
         return leads
             .filter((lead: any) => lead.email)
             .map((lead: any) => ({
                 epochMilliSeconds: dayjs(lead.created_at).valueOf(),
                 data: lead,
-            }));
+            }))
     },
-};
+}
 
 export const newLead = createTrigger({
     auth: SiteSpeakAuth,
@@ -55,20 +61,20 @@ export const newLead = createTrigger({
     type: TriggerStrategy.POLLING,
 
     async test(context) {
-        return await pollingHelper.test(polling, context);
+        return await pollingHelper.test(polling, context)
     },
 
     async onEnable(context) {
-        const { store, auth, propsValue } = context;
-        await pollingHelper.onEnable(polling, { store, auth, propsValue });
+        const { store, auth, propsValue } = context
+        await pollingHelper.onEnable(polling, { store, auth, propsValue })
     },
 
     async onDisable(context) {
-        const { store, auth, propsValue } = context;
-        await pollingHelper.onDisable(polling, { store, auth, propsValue });
+        const { store, auth, propsValue } = context
+        await pollingHelper.onDisable(polling, { store, auth, propsValue })
     },
 
     async run(context) {
-        return await pollingHelper.poll(polling, context);
+        return await pollingHelper.poll(polling, context)
     },
-});
+})

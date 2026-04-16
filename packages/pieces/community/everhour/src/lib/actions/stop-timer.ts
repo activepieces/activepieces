@@ -1,7 +1,7 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction } from '@activepieces/pieces-framework';
-import { everhourAuth } from '../auth';
-import { everhourApiCall } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { everhourAuth } from '../auth'
+import { everhourApiCall } from '../common/client'
 
 export const stopTimerAction = createAction({
     auth: everhourAuth,
@@ -14,8 +14,8 @@ export const stopTimerAction = createAction({
             apiKey: context.auth.secret_text,
             method: HttpMethod.DELETE,
             resourceUri: `/timers/current`,
-        });
+        })
 
-        return response;
+        return response
     },
-});
+})

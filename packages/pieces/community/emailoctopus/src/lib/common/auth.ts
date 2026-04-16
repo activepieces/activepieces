@@ -1,8 +1,8 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 // The base URL for the EmailOctopus API
-const emailOctopusApiUrl = 'https://api.emailoctopus.com';
+const emailOctopusApiUrl = 'https://api.emailoctopus.com'
 
 export const emailOctopusAuth = PieceAuth.SecretText({
     displayName: 'API Key',
@@ -23,15 +23,15 @@ export const emailOctopusAuth = PieceAuth.SecretText({
                     type: AuthenticationType.BEARER_TOKEN,
                     token: auth,
                 },
-            });
+            })
             return {
                 valid: true,
-            };
+            }
         } catch (e) {
             return {
                 valid: false,
                 error: 'Invalid API key.',
-            };
+            }
         }
     },
-});
+})

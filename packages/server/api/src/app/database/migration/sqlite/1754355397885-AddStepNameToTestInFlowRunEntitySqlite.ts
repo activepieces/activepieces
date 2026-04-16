@@ -271,5 +271,4 @@ export class AddStepNameToTestInFlowRunEntitySqlite1754355397885 implements Migr
             CREATE INDEX "idx_run_parent_run_id" ON "flow_run" ("parentRunId")
         `)
     }
-
 }

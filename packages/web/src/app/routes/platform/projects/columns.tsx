@@ -1,20 +1,20 @@
 import {
   isNil,
   PlatformWithoutSensitiveData,
-  ProjectWithLimits,
   ProjectType,
+  ProjectWithLimits,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
-  Lock,
-  User,
-  Tag,
-  Users,
-  Workflow,
   Clock,
   Hash,
   Link2,
+  Lock,
+  Tag,
+  User,
+  Users,
+  Workflow,
 } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';

@@ -104,5 +104,4 @@ export class FixFlowRunIndexes1764871079154 implements MigrationInterface {
             )
         `)
     }
-
 }

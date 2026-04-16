@@ -1,27 +1,27 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { hunterApiCall } from '../common';
-import { hunterAuth } from '../auth';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { hunterAuth } from '../auth'
+import { hunterApiCall } from '../common'
 import {
+    companyIndustryProp,
+    companyLeadProp,
+    companySizeProp,
+    confidenceScoreProp,
+    countryCodeProp,
+    customAttributesProp,
     emailProp,
     firstNameProp,
     lastNameProp,
-    positionProp,
-    companyLeadProp,
-    companyIndustryProp,
-    companySizeProp,
-    confidenceScoreProp,
-    websiteProp,
-    countryCodeProp,
-    linkedinUrlProp,
-    phoneNumberProp,
-    twitterProp,
-    notesProp,
-    sourceProp,
     leadsListDropdownProp,
     leadsListIdsProp,
-    customAttributesProp,
-} from '../common/props';
+    linkedinUrlProp,
+    notesProp,
+    phoneNumberProp,
+    positionProp,
+    sourceProp,
+    twitterProp,
+    websiteProp,
+} from '../common/props'
 
 export const createLeadAction = createAction({
     auth: hunterAuth,
@@ -49,19 +49,16 @@ export const createLeadAction = createAction({
         custom_attributes: customAttributesProp,
     },
     async run(context) {
-        const props = context.propsValue;
+        const props = context.propsValue
 
-        const body: Record<string, unknown> = {};
+        const body: Record<string, unknown> = {}
         for (const [key, val] of Object.entries(props)) {
             if (
                 val !== undefined &&
                 val !== null &&
-                !(
-                    (Array.isArray(val) && val.length === 0) ||
-                    (typeof val === 'string' && val === '')
-                )
+                !((Array.isArray(val) && val.length === 0) || (typeof val === 'string' && val === ''))
             ) {
-                body[key] = val;
+                body[key] = val
             }
         }
 
@@ -70,8 +67,8 @@ export const createLeadAction = createAction({
             endpoint: '/leads',
             method: HttpMethod.POST,
             body,
-        })) as { data: any };
+        })) as { data: any }
 
-        return { lead: resp.data };
+        return { lead: resp.data }
     },
-});
+})

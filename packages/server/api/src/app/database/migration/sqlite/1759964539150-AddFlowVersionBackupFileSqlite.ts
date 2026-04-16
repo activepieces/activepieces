@@ -143,5 +143,4 @@ export class AddFlowVersionBackupFileSqlite1759964539150 implements MigrationInt
             CREATE INDEX "idx_flow_version_schema_version" ON "flow_version" ("schemaVersion")
         `)
     }
-
 }

@@ -6,10 +6,7 @@ export type BaseModel<T> = {
     updated: string
 }
 
-export const DateOrString = z.preprocess(
-    (val) => (val instanceof Date ? val.toISOString() : val),
-    z.string(),
-)
+export const DateOrString = z.preprocess((val) => (val instanceof Date ? val.toISOString() : val), z.string())
 
 export const BaseModelSchema = {
     id: z.string(),
@@ -25,7 +22,7 @@ export function NullableEnum<T extends Record<string, string | number>>(enumObj:
 }
 
 export const OptionalBooleanFromQuery = z.preprocess(
-    (val) => val === 'true' || val === true ? true : val === 'false' || val === false ? false : undefined,
+    (val) => (val === 'true' || val === true ? true : val === 'false' || val === false ? false : undefined),
     z.boolean().optional(),
 )
 

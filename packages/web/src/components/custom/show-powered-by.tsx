@@ -42,4 +42,5 @@ const ShowPoweredBy = ({ show, position = 'sticky' }: ShowPoweredByProps) => {
 };
 
 ShowPoweredBy.displayName = 'ShowPoweredBy';
+
 export { ShowPoweredBy };

@@ -1,25 +1,22 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { checkEmail } from '../common/send-utils';
-import { mailerooAuth } from '../auth';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { mailerooAuth } from '../auth'
+import { checkEmail } from '../common/send-utils'
 
 export const verifyEmail = createAction({
-  auth: mailerooAuth,
-  name: 'verifyEmail',
-  displayName: 'Verify Email',
-  description: 'Verifies an email address.',
-  props: {
-    content: Property.ShortText({
-      displayName: 'Email',
-      description: 'Email to verify',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const result = await checkEmail(
-      context.propsValue.content,
-      context.auth.props.apiKey
-    );
+    auth: mailerooAuth,
+    name: 'verifyEmail',
+    displayName: 'Verify Email',
+    description: 'Verifies an email address.',
+    props: {
+        content: Property.ShortText({
+            displayName: 'Email',
+            description: 'Email to verify',
+            required: true,
+        }),
+    },
+    async run(context) {
+        const result = await checkEmail(context.propsValue.content, context.auth.props.apiKey)
 
-    return result.body;
-  },
-});
+        return result.body
+    },
+})

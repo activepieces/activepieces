@@ -1,5 +1,5 @@
-import { randomBytes } from 'crypto'
 import { apId, McpOAuthAuthorizationCode } from '@activepieces/shared'
+import { randomBytes } from 'crypto'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { McpOAuthAuthorizationCodeEntity } from './mcp-oauth-code.entity'
 
@@ -36,10 +36,14 @@ export const mcpOAuthCodeService = {
     },
 
     async consume(code: string, clientId: string, redirectUri: string): Promise<McpOAuthAuthorizationCode | null> {
-        const updateResult = await repo().createQueryBuilder()
+        const updateResult = await repo()
+            .createQueryBuilder()
             .update()
             .set({ used: true })
-            .where('"code" = :code AND "used" = false AND "expiresAt" > NOW() AND "clientId" = :clientId AND "redirectUri" = :redirectUri', { code, clientId, redirectUri })
+            .where(
+                '"code" = :code AND "used" = false AND "expiresAt" > NOW() AND "clientId" = :clientId AND "redirectUri" = :redirectUri',
+                { code, clientId, redirectUri },
+            )
             .execute()
 
         if (updateResult.affected === 0) {

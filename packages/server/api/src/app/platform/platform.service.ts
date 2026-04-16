@@ -1,4 +1,5 @@
-import { ActivepiecesError,
+import {
+    ActivepiecesError,
     ApEdition,
     apId,
     ErrorCode,
@@ -30,33 +31,34 @@ import { PlatformEntity } from './platform.entity'
 export const platformRepo = repoFactory<Platform>(PlatformEntity)
 
 export const platformService = (log: FastifyBaseLogger) => ({
-    async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
+    async listPlatformsForIdentityWithAtleastProject(
+        params: ListPlatformsForIdentityParams,
+    ): Promise<PlatformWithoutSensitiveData[]> {
         const users = await userService(log).getByIdentityId({ identityId: params.identityId })
 
-        const platformsWithProjects = await Promise.all(users.map(async (user) => {
-            if (isNil(user.platformId) || user.status === UserStatus.INACTIVE) {
-                return null
-            }
-            const hasProjects = await projectService(log).userHasProjects({
-                platformId: user.platformId,
-                userId: user.id,
-                isPrivileged: userService(log).isUserPrivileged(user),
-            })
-            return hasProjects ? user.platformId : null
-        }))
+        const platformsWithProjects = await Promise.all(
+            users.map(async (user) => {
+                if (isNil(user.platformId) || user.status === UserStatus.INACTIVE) {
+                    return null
+                }
+                const hasProjects = await projectService(log).userHasProjects({
+                    platformId: user.platformId,
+                    userId: user.id,
+                    isPrivileged: userService(log).isUserPrivileged(user),
+                })
+                return hasProjects ? user.platformId : null
+            }),
+        )
 
-        const platforms = await Promise.all(platformsWithProjects.filter((platformId) => !isNil(platformId)).map((platformId) => this.getOneWithPlanOrThrow(platformId)))
+        const platforms = await Promise.all(
+            platformsWithProjects
+                .filter((platformId) => !isNil(platformId))
+                .map((platformId) => this.getOneWithPlanOrThrow(platformId)),
+        )
         return platforms
     },
     async create(params: AddParams): Promise<Platform> {
-        const {
-            ownerId,
-            name,
-            primaryColor,
-            logoIconUrl,
-            fullLogoUrl,
-            favIconUrl,
-        } = params
+        const { ownerId, name, primaryColor, logoIconUrl, fullLogoUrl, favIconUrl } = params
 
         const newPlatform: NewPlatform = {
             id: apId(),
@@ -114,10 +116,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
-            ...spreadIfDefined(
-                'enforceAllowedAuthDomains',
-                params.enforceAllowedAuthDomains,
-            ),
+            ...spreadIfDefined('enforceAllowedAuthDomains', params.enforceAllowedAuthDomains),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
         }
@@ -173,10 +172,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
     },
     async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
         const platform = await this.getOneOrThrow(id)
-        const [usage, plan] = await Promise.all([
-            getUsage(log, platform),
-            getPlan(log, platform),
-        ])
+        const [usage, plan] = await Promise.all([getUsage(log, platform), getPlan(log, platform)])
         return {
             ...platform,
             federatedAuthProviders: stripSensitiveData(platform.federatedAuthProviders),

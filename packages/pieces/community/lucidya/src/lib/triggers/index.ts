@@ -1,1 +1,1 @@
-export * from './new-alert';
+export * from './new-alert'

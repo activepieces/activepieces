@@ -170,4 +170,5 @@ const ApBigAddButtonCanvasNode = React.memo(
 );
 
 ApBigAddButtonCanvasNode.displayName = 'ApBigAddButtonCanvasNode';
+
 export { ApBigAddButtonCanvasNode };

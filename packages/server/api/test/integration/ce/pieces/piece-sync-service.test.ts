@@ -1,13 +1,9 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    PackageType,
-    PieceType,
-} from '@activepieces/shared'
+import { PackageType, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
 import { db } from '../../../helpers/db'
-
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -72,22 +68,24 @@ describe('Piece Metadata Create', () => {
             publishCacheRefresh: false,
         })
 
-        await expect(service.create({
-            pieceMetadata: {
-                name: 'piece-dup',
-                displayName: 'Piece Dup',
-                version: '1.0.0',
-                minimumSupportedRelease: '0.0.0',
-                maximumSupportedRelease: '9.9.9',
-                actions: {},
-                triggers: {},
-                authors: [],
-                logoUrl: 'https://example.com/logo.png',
-            },
-            packageType: PackageType.REGISTRY,
-            pieceType: PieceType.OFFICIAL,
-            publishCacheRefresh: false,
-        })).rejects.toThrow()
+        await expect(
+            service.create({
+                pieceMetadata: {
+                    name: 'piece-dup',
+                    displayName: 'Piece Dup',
+                    version: '1.0.0',
+                    minimumSupportedRelease: '0.0.0',
+                    maximumSupportedRelease: '9.9.9',
+                    actions: {},
+                    triggers: {},
+                    authors: [],
+                    logoUrl: 'https://example.com/logo.png',
+                },
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+                publishCacheRefresh: false,
+            }),
+        ).rejects.toThrow()
     })
 
     it('should bulk delete pieces', async () => {

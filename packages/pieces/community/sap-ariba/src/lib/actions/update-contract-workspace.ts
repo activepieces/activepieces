@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sapAribaAuth } from '../auth';
-import { sapAribaCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { sapAribaAuth } from '../auth'
+import { sapAribaCommon } from '../common'
 
 export const updateContractWorkspace = createAction({
     auth: sapAribaAuth,
@@ -97,37 +97,37 @@ export const updateContractWorkspace = createAction({
             contractCurrency,
             amendmentReason,
             additionalFields,
-        } = context.propsValue;
+        } = context.propsValue
 
         const queryParams: Record<string, string> = {
             realm,
             user,
             passwordAdapter,
-        };
+        }
 
         if (silentUpdate) {
-            queryParams['silentUpdate'] = silentUpdate;
+            queryParams['silentUpdate'] = silentUpdate
         }
 
         const body: Record<string, unknown> = {
             contractId,
-        };
+        }
 
-        if (title) body['title'] = title;
-        if (description) body['description'] = description;
-        if (effectiveDate) body['effectiveDate'] = effectiveDate;
-        if (expirationDate) body['expirationDate'] = expirationDate;
-        if (amendmentReason) body['amendmentReason'] = amendmentReason;
+        if (title) body['title'] = title
+        if (description) body['description'] = description
+        if (effectiveDate) body['effectiveDate'] = effectiveDate
+        if (expirationDate) body['expirationDate'] = expirationDate
+        if (amendmentReason) body['amendmentReason'] = amendmentReason
 
         if (contractAmount && contractCurrency) {
             body['contractAmount'] = {
                 amount: contractAmount,
                 currency: contractCurrency,
-            };
+            }
         }
 
         if (additionalFields && typeof additionalFields === 'object') {
-            Object.assign(body, additionalFields);
+            Object.assign(body, additionalFields)
         }
 
         const response = await sapAribaCommon.makeRequest(
@@ -135,9 +135,9 @@ export const updateContractWorkspace = createAction({
             HttpMethod.PATCH,
             '/contractWorkspaces',
             queryParams,
-            body
-        );
+            body,
+        )
 
-        return response;
+        return response
     },
-});
+})

@@ -1,4 +1,13 @@
-import { assertNotNullOrUndefined, DeleteTagRequest, ListTagsRequest, PrincipalType, SeekPage, SetPieceTagsRequest, Tag, UpsertTagRequest } from '@activepieces/shared'
+import {
+    assertNotNullOrUndefined,
+    DeleteTagRequest,
+    ListTagsRequest,
+    PrincipalType,
+    SeekPage,
+    SetPieceTagsRequest,
+    Tag,
+    UpsertTagRequest,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -6,24 +15,19 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { pieceTagService } from './pieces/piece-tag.service'
 import { tagService } from './tag-service'
 
-
 export const tagsModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(tagsController, { prefix: '/v1/tags' })
 }
 
-
 const tagsController: FastifyPluginAsyncZod = async (fastify) => {
-
-    fastify.get('/', ListTagsParams,
-        async (request) => {
-            const platformId = request.principal.platform.id
-            assertNotNullOrUndefined(platformId, 'platformId')
-            return tagService.list({
-                platformId,
-                request: request.query,
-            })
-        },
-    )
+    fastify.get('/', ListTagsParams, async (request) => {
+        const platformId = request.principal.platform.id
+        assertNotNullOrUndefined(platformId, 'platformId')
+        return tagService.list({
+            platformId,
+            request: request.query,
+        })
+    })
 
     fastify.post('/', UpsertTagParams, async (req, reply) => {
         const platformId = req.principal.platform.id
@@ -33,7 +37,7 @@ const tagsController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.post('/pieces', setPiecesTagsParams, async (req, reply) => {
         const platformId = req.principal.platform.id
-        const pieces = req.body.piecesName.map(pieceName => pieceTagService.set(platformId, pieceName, req.body.tags))
+        const pieces = req.body.piecesName.map((pieceName) => pieceTagService.set(platformId, pieceName, req.body.tags))
         await Promise.all(pieces)
         await reply.status(StatusCodes.CREATED).send({})
     })
@@ -43,7 +47,6 @@ const tagsController: FastifyPluginAsyncZod = async (fastify) => {
         await tagService.delete(platformId, req.params.id)
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
-
 }
 
 const UpsertTagParams = {

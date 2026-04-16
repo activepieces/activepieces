@@ -22,5 +22,4 @@ export class AddCreatedByUserIdInTodo1748565250553 implements MigrationInterface
             ALTER TABLE "todo" DROP COLUMN "createdByUserId"
         `)
     }
-
 }

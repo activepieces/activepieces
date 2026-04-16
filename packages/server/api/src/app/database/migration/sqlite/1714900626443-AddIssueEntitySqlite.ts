@@ -449,5 +449,4 @@ export class AddIssueEntitySqlite1714900626443 implements MigrationInterface {
             DROP TABLE "issue"
         `)
     }
-
 }

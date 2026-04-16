@@ -9,14 +9,14 @@ import { CardListItemSkeleton } from '@/components/custom/card-list';
 import { Separator } from '@/components/ui/separator';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import {
-  piecesHooks,
-  PieceSelectorTabType,
-  usePieceSelectorTabs,
-  PieceSelectorOperation,
-  StepMetadataWithSuggestions,
   CategorizedStepMetadataWithSuggestions,
   PIECE_SELECTOR_ELEMENTS_HEIGHTS,
+  PieceSelectorOperation,
+  PieceSelectorTabType,
   pieceSelectorUtils,
+  piecesHooks,
+  StepMetadataWithSuggestions,
+  usePieceSelectorTabs,
 } from '@/features/pieces';
 import { useIsMobile } from '@/hooks/use-mobile';
 

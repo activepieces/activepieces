@@ -2,14 +2,14 @@ import { FlowRun, FlowRunStatus, isNil, SeekPage } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
+  Activity,
+  AlertTriangle,
   Archive,
   ChevronDown,
-  Hourglass,
-  Workflow,
-  Activity,
   Clock,
+  Hourglass,
   Timer,
-  AlertTriangle,
+  Workflow,
 } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 

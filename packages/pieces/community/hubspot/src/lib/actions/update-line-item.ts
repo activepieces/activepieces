@@ -1,15 +1,14 @@
-import { hubspotAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { MarkdownVariant } from '@activepieces/shared'
+import { Client } from '@hubspot/api-client'
+import { hubspotAuth } from '../auth'
+import { OBJECT_TYPE } from '../common/constants'
 import {
     getDefaultPropertiesForObject,
     productDropdown,
     standardObjectDynamicProperties,
     standardObjectPropertiesDropdown,
-} from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
-import { MarkdownVariant } from '@activepieces/shared';
-
-import { Client } from '@hubspot/api-client';
+} from '../common/props'
 
 export const updateLineItemAction = createAction({
     auth: hubspotAuth,
@@ -43,42 +42,41 @@ export const updateLineItemAction = createAction({
         }),
     },
     async run(context) {
-        const lineItemId = context.propsValue.lineItemId;
-        const productId = context.propsValue.productId;
-        const objectProperties = context.propsValue.objectProperties ?? {};
-        const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? [];
+        const lineItemId = context.propsValue.lineItemId
+        const productId = context.propsValue.productId
+        const objectProperties = context.propsValue.objectProperties ?? {}
+        const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? []
 
         const lineItemProperties: Record<string, string> = {
             hs_product_id: productId!,
-        };
+        }
 
-        if(productId)
-        {
-            lineItemProperties['hs_product_id'] = productId;
+        if (productId) {
+            lineItemProperties['hs_product_id'] = productId
         }
 
         // Add additional properties to the lineItemProperties object
         Object.entries(objectProperties).forEach(([key, value]) => {
-            if ((Array.isArray(value) && value.length === 0)) {
-                return;  
+            if (Array.isArray(value) && value.length === 0) {
+                return
             }
             // Format values if they are arrays
-            lineItemProperties[key] = Array.isArray(value) ? value.join(';') : value;
-        });
+            lineItemProperties[key] = Array.isArray(value) ? value.join(';') : value
+        })
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: context.auth.access_token })
 
         const createdLineItem = await client.crm.lineItems.basicApi.update(lineItemId, {
             properties: lineItemProperties,
-        });
+        })
         // Retrieve default properties for the line item and merge with additional properties to retrieve
-        const defaultlineItemProperties = getDefaultPropertiesForObject(OBJECT_TYPE.LINE_ITEM);
+        const defaultlineItemProperties = getDefaultPropertiesForObject(OBJECT_TYPE.LINE_ITEM)
 
         const lineItemDetails = await client.crm.lineItems.basicApi.getById(createdLineItem.id, [
             ...defaultlineItemProperties,
             ...additionalPropertiesToRetrieve,
-        ]);
+        ])
 
-        return lineItemDetails;
+        return lineItemDetails
     },
-});
+})

@@ -43,9 +43,9 @@ export enum FileCompression {
 
 export const CONTENT_ENCODING_ZSTD = 'zstd'
 
-const ZSTD_MAGIC = 0xFD2FB528
-const ZSTD_SKIPPABLE_START = 0x184D2A50
-const ZSTD_SKIPPABLE_END = 0x184D2A5F
+const ZSTD_MAGIC = 0xfd2fb528
+const ZSTD_SKIPPABLE_START = 0x184d2a50
+const ZSTD_SKIPPABLE_END = 0x184d2a5f
 
 // @TODO: remove after 30 days
 export const isZstdCompressed = (data: Buffer | Uint8Array): boolean => {

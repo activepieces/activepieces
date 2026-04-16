@@ -4,13 +4,7 @@ import { StatusCodes } from 'http-status-codes'
 import { createMemberContext, createTestContext, TestContext } from './test-context'
 
 export function describeRolePermissions(config: RolePermissionConfig): void {
-    const {
-        app,
-        request,
-        allowedRoles,
-        forbiddenRoles,
-        beforeEach: beforeEachFn,
-    } = config
+    const { app, request, allowedRoles, forbiddenRoles, beforeEach: beforeEachFn } = config
 
     if (allowedRoles.length > 0) {
         it.each(allowedRoles)('Succeeds if user role is %s', async (role) => {

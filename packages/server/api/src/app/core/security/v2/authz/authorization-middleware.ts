@@ -5,7 +5,6 @@ import { AuthorizationType, ProjectResourceType, RouteKind } from '../../authori
 import { authorizeOrThrow } from './authorize'
 import { projectIdExtractor } from './projectIdExtractor'
 
-
 export const authorizationMiddleware = async (request: FastifyRequest): Promise<void> => {
     const security = request.routeOptions.config?.security
     const securityAccessRequest = await convertToSecurityAccessRequest(request)
@@ -16,7 +15,11 @@ export const authorizationMiddleware = async (request: FastifyRequest): Promise<
     if (bullmqRoute) {
         return
     }
-    if (!isNil(security) && security.kind === RouteKind.AUTHENTICATED && security.authorization.type === AuthorizationType.PROJECT) {
+    if (
+        !isNil(security) &&
+        security.kind === RouteKind.AUTHENTICATED &&
+        security.authorization.type === AuthorizationType.PROJECT
+    ) {
         // @ts-expect-error: explicit override for Fastify typing assignment
         request.projectId = securityAccessRequest.authorization.projectId
     }
@@ -79,7 +82,10 @@ export async function getProjectIdFromRequest(request: FastifyRequest): Promise<
     if (security.kind === RouteKind.PUBLIC) {
         return undefined
     }
-    if (security.authorization.type !== AuthorizationType.PROJECT && security.authorization.type !== AuthorizationType.PLATFORM) {
+    if (
+        security.authorization.type !== AuthorizationType.PROJECT &&
+        security.authorization.type !== AuthorizationType.PLATFORM
+    ) {
         return undefined
     }
     const projectResource = security.authorization.projectResource

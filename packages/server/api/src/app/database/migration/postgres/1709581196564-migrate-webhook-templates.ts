@@ -24,22 +24,22 @@ export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
                 step.type = 'PIECE_TRIGGER'
                 step.settings = {
                     input: {},
-                    'inputUiInfo': step.settings.inputUiInfo,
+                    inputUiInfo: step.settings.inputUiInfo,
                     triggerName: 'catch_request',
                     pieceName: '@activepieces/piece-webhook',
                     pieceVersion: '~0.0.1',
-                    'pieceType': 'OFFICIAL',
-                    'packageType': 'REGISTRY',
+                    pieceType: 'OFFICIAL',
+                    packageType: 'REGISTRY',
                 }
                 count++
                 const endResult = {
                     ...flowVersion.template,
                     trigger: step,
                 }
-                await queryRunner.query(
-                    'UPDATE flow_template SET template = $1 WHERE id = $2',
-                    [endResult, flowVersion.id],
-                )
+                await queryRunner.query('UPDATE flow_template SET template = $1 WHERE id = $2', [
+                    endResult,
+                    flowVersion.id,
+                ])
             }
         }
         log.info({ count }, '[MigrateWebhookTemplate1709581196564#up] finished flows')
@@ -62,17 +62,17 @@ export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
                 if (step.settings.pieceName === '@activepieces/piece-webhook') {
                     step.type = 'WEBHOOK'
                     step.settings = {
-                        'inputUiInfo': step.settings.inputUiInfo,
+                        inputUiInfo: step.settings.inputUiInfo,
                     }
                     count++
                     const endResult = {
                         ...flowVersion.template,
                         trigger: step,
                     }
-                    await queryRunner.query(
-                        'UPDATE flow_template SET template = $1 WHERE id = $2',
-                        [endResult, flowVersion.id],
-                    )
+                    await queryRunner.query('UPDATE flow_template SET template = $1 WHERE id = $2', [
+                        endResult,
+                        flowVersion.id,
+                    ])
                 }
             }
         }

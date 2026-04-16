@@ -3,12 +3,12 @@ import { FastifyInstance } from 'fastify'
 import { distributedStore } from '../../../../../src/app/database/redis-connections'
 import { pubsub } from '../../../../../src/app/helper/pubsub'
 import { engineResponseWatcher } from '../../../../../src/app/workers/engine-response-watcher'
-import { redisMetadataKey, RunsMetadataUpsertData } from '../../../../../src/app/workers/job'
+import { RunsMetadataUpsertData, redisMetadataKey } from '../../../../../src/app/workers/job'
 import { createHandlers } from '../../../../../src/app/workers/rpc/worker-rpc-service'
+import { db } from '../../../../helpers/db'
+import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
-import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
-import { db } from '../../../../helpers/db'
 
 let app: FastifyInstance
 let ctx: TestContext
@@ -25,10 +25,7 @@ beforeEach(async () => {
     ctx = await createTestContext(app)
 })
 
-async function createPausedFlowRun(params: {
-    projectId: string
-    pauseRequestId: string
-}) {
+async function createPausedFlowRun(params: { projectId: string; pauseRequestId: string }) {
     const flow = createMockFlow({ projectId: params.projectId })
     await db.save('flow', flow)
 
@@ -205,13 +202,17 @@ describe('Resume flow run', () => {
         })
 
         // Verify the run was force-flushed to DB with pauseMetadata
-        const dbRun = await db.findOneBy<{ id: string, status: string, pauseMetadata: unknown }>('flow_run', { id: runId })
+        const dbRun = await db.findOneBy<{ id: string; status: string; pauseMetadata: unknown }>('flow_run', {
+            id: runId,
+        })
         expect(dbRun).not.toBeNull()
         expect(dbRun!.status).toBe(FlowRunStatus.PAUSED)
-        expect(dbRun!.pauseMetadata).toEqual(expect.objectContaining({
-            type: PauseType.WEBHOOK,
-            requestId,
-        }))
+        expect(dbRun!.pauseMetadata).toEqual(
+            expect.objectContaining({
+                type: PauseType.WEBHOOK,
+                requestId,
+            }),
+        )
 
         // Verify resume endpoint works with the persisted pauseMetadata
         const response = await app.inject({
@@ -243,10 +244,13 @@ describe('Resume flow run', () => {
 
         // Small delay to let the handler register its listener before we publish
         await new Promise((resolve) => setTimeout(resolve, 500))
-        await pubsub.publish(`engine-run:sync:${engineResponseWatcher(app.log).getServerId()}`, JSON.stringify({
-            requestId,
-            response: { status: 200, body: { ok: true }, headers: {} },
-        }))
+        await pubsub.publish(
+            `engine-run:sync:${engineResponseWatcher(app.log).getServerId()}`,
+            JSON.stringify({
+                requestId,
+                response: { status: 200, body: { ok: true }, headers: {} },
+            }),
+        )
 
         const response = await responsePromise
         expect(response.statusCode).toBe(200)

@@ -1,39 +1,39 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common';
-import { formIdDropdown, submissionIdDropdown } from '../common/props';
-import { filloutFormsAuth } from '../auth';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { filloutFormsAuth } from '../auth'
+import { makeRequest } from '../common'
+import { formIdDropdown, submissionIdDropdown } from '../common/props'
 
 export const getSingleResponse = createAction({
-	auth: filloutFormsAuth,
-	name: 'getSingleResponse',
-	displayName: 'Get Single Response',
-	description: 'Retrieves a specific submission from a form.',
-	props: {
-		formId: formIdDropdown,
-		submissionId: submissionIdDropdown,
-		includeEditLink: Property.Checkbox({
-			displayName: 'Include Edit Link',
-			required: false,
-			description: 'Include a link to edit the submission.',
-		}),
-	},
-	async run(context) {
-		const apiKey = context.auth.secret_text;
+    auth: filloutFormsAuth,
+    name: 'getSingleResponse',
+    displayName: 'Get Single Response',
+    description: 'Retrieves a specific submission from a form.',
+    props: {
+        formId: formIdDropdown,
+        submissionId: submissionIdDropdown,
+        includeEditLink: Property.Checkbox({
+            displayName: 'Include Edit Link',
+            required: false,
+            description: 'Include a link to edit the submission.',
+        }),
+    },
+    async run(context) {
+        const apiKey = context.auth.secret_text
 
-		const { formId, submissionId } = context.propsValue;
+        const { formId, submissionId } = context.propsValue
 
-		const queryParams: Record<string, any> = {};
-		if (context.propsValue['includeEditLink'] !== undefined) {
-			queryParams['includeEditLink'] = context.propsValue['includeEditLink'];
-		}
+        const queryParams: Record<string, any> = {}
+        if (context.propsValue['includeEditLink'] !== undefined) {
+            queryParams['includeEditLink'] = context.propsValue['includeEditLink']
+        }
 
-		const response = await makeRequest(
-			apiKey,
-			HttpMethod.GET,
-			`/forms/${formId}/submissions/${submissionId}`,
-			queryParams,
-		);
-		return response;
-	},
-});
+        const response = await makeRequest(
+            apiKey,
+            HttpMethod.GET,
+            `/forms/${formId}/submissions/${submissionId}`,
+            queryParams,
+        )
+        return response
+    },
+})

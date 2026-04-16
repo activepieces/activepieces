@@ -1,7 +1,7 @@
 import { apDayjs } from '@activepieces/server-utils'
 import {
-    apId,
     AppConnectionScope,
+    apId,
     Cursor,
     isNil,
     Metadata,
@@ -15,7 +15,8 @@ import {
     spreadIfDefined,
     TeamProjectsLimit,
     UpdateProjectPlatformRequest,
-    UserId } from '@activepieces/shared'
+    UserId,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
@@ -35,6 +36,7 @@ import { platformPlanService } from '../platform/platform-plan/platform-plan.ser
 import { projectMemberService } from './project-members/project-member.service'
 import { ProjectPlanEntity } from './project-plan/project-plan.entity'
 import { projectLimitsService } from './project-plan/project-plan.service'
+
 const projectRepo = repoFactory(ProjectEntity)
 const projectPlanRepo = repoFactory(ProjectPlanEntity)
 
@@ -64,9 +66,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             deleted: IsNull(),
         }
 
-        const queryBuilder = projectRepo()
-            .createQueryBuilder('project')
-            .where(filters)
+        const queryBuilder = projectRepo().createQueryBuilder('project').where(filters)
 
         await applyProjectsAccessFilters(queryBuilder, { platformId, userId, isPrivileged })
 
@@ -90,14 +90,17 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 entityManager,
             })
 
-            await projectPlanRepo(entityManager).upsert({
-                id: apId(),
-                projectId: savedProject.id,
-                pieces: [],
-                piecesFilterType: PiecesFilterType.NONE,
-                locked: false,
-                name: 'platform',
-            }, ['projectId'])
+            await projectPlanRepo(entityManager).upsert(
+                {
+                    id: apId(),
+                    projectId: savedProject.id,
+                    pieces: [],
+                    piecesFilterType: PiecesFilterType.NONE,
+                    locked: false,
+                    name: 'platform',
+                },
+                ['projectId'],
+            )
 
             if (platformPlan.globalConnectionsEnabled) {
                 const connectionExternalIds = params.globalConnectionExternalIds ?? []
@@ -125,22 +128,23 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
 
         return this.getWithPlanAndUsageOrThrow(project.id)
     },
-    async update({
-        projectId,
-        request,
-    }: UpdateParams): Promise<ProjectWithLimits> {
+    async update({ projectId, request }: UpdateParams): Promise<ProjectWithLimits> {
         const project = await projectService(log).getOneOrThrow(projectId)
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
         const { globalConnectionExternalIds, maxConcurrentJobs, ...rest } = request
         let resolvedPoolId: string | null | undefined
         await transaction(async (entityManager) => {
             resolvedPoolId = await resolvePoolId({ platformId: project.platformId, projectId, maxConcurrentJobs, log })
-            await projectService(log).update(projectId, {
-                type: project.type,
-                ...rest,
-                ...(resolvedPoolId !== undefined ? { poolId: resolvedPoolId } : {}),
-                ...(maxConcurrentJobs !== undefined ? { maxConcurrentJobs } : {}),
-            }, entityManager)
+            await projectService(log).update(
+                projectId,
+                {
+                    type: project.type,
+                    ...rest,
+                    ...(resolvedPoolId !== undefined ? { poolId: resolvedPoolId } : {}),
+                    ...(maxConcurrentJobs !== undefined ? { maxConcurrentJobs } : {}),
+                },
+                entityManager,
+            )
             if (platformPlan.globalConnectionsEnabled && globalConnectionExternalIds) {
                 const projectGlobalConnections = await appConnectionsRepo(entityManager).find({
                     where: {
@@ -148,11 +152,20 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                         scope: AppConnectionScope.PLATFORM,
                     },
                 })
-                const existingGlobalConnectionExternalIds = projectGlobalConnections.map(connection => connection.externalId)
-                const globalConnectionsToAddProjectTo = globalConnectionExternalIds.filter(externalId => !existingGlobalConnectionExternalIds.includes(externalId)) ?? []
-                const globalConnectionsToRemoveProjectFrom = existingGlobalConnectionExternalIds.filter(externalId => !globalConnectionExternalIds?.includes(externalId)) ?? []
+                const existingGlobalConnectionExternalIds = projectGlobalConnections.map(
+                    (connection) => connection.externalId,
+                )
+                const globalConnectionsToAddProjectTo =
+                    globalConnectionExternalIds.filter(
+                        (externalId) => !existingGlobalConnectionExternalIds.includes(externalId),
+                    ) ?? []
+                const globalConnectionsToRemoveProjectFrom =
+                    existingGlobalConnectionExternalIds.filter(
+                        (externalId) => !globalConnectionExternalIds?.includes(externalId),
+                    ) ?? []
                 if (globalConnectionsToAddProjectTo.length > 0) {
-                    await appConnectionsRepo(entityManager).createQueryBuilder()
+                    await appConnectionsRepo(entityManager)
+                        .createQueryBuilder()
                         .update()
                         .set({
                             projectIds: () => 'array_append("projectIds", :projectId)',
@@ -167,7 +180,8 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                         .execute()
                 }
                 if (globalConnectionsToRemoveProjectFrom.length > 0) {
-                    await appConnectionsRepo(entityManager).createQueryBuilder()
+                    await appConnectionsRepo(entityManager)
+                        .createQueryBuilder()
                         .update()
                         .set({
                             projectIds: () => 'array_remove("projectIds", :projectId)',
@@ -201,9 +215,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         }
         return this.getWithPlanAndUsageOrThrow(projectId)
     },
-    async getWithPlanAndUsageOrThrow(
-        projectId: string,
-    ): Promise<ProjectWithLimits> {
+    async getWithPlanAndUsageOrThrow(projectId: string): Promise<ProjectWithLimits> {
         const project = await projectRepo().findOneByOrFail({
             id: projectId,
         })
@@ -247,14 +259,11 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function enrichProjects(
-    projects: Project[],
-    log: FastifyBaseLogger,
-): Promise<ProjectWithLimits[]> {
+async function enrichProjects(projects: Project[], log: FastifyBaseLogger): Promise<ProjectWithLimits[]> {
     if (projects.length === 0) return []
-    
-    const projectIds = projects.map(p => p.id)
-    
+
+    const projectIds = projects.map((p) => p.id)
+
     const [totalUsersMap, activeUsersMap, totalFlowsMap, activeFlowsMap, plansMap] = await Promise.all([
         projectMemberService(log).countTotalUsersByProjects(projectIds),
         projectMemberService(log).countActiveUsersByProjects(projectIds),
@@ -263,7 +272,7 @@ async function enrichProjects(
         projectLimitsService(log).getOrCreateDefaultPlansForProjects(projectIds),
     ])
 
-    return projects.map(project => {
+    return projects.map((project) => {
         return {
             ...project,
             plan: plansMap.get(project.id)!,
@@ -277,7 +286,12 @@ async function enrichProjects(
     })
 }
 
-async function resolvePoolId({ platformId, projectId, maxConcurrentJobs, log }: ResolvePoolIdParams): Promise<string | null | undefined> {
+async function resolvePoolId({
+    platformId,
+    projectId,
+    maxConcurrentJobs,
+    log,
+}: ResolvePoolIdParams): Promise<string | null | undefined> {
     if (typeof maxConcurrentJobs === 'number') {
         const { poolId } = await concurrencyPoolService(log).upsertPool({
             platformId,

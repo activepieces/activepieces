@@ -1,4 +1,10 @@
-import { AIProviderModel, AIProviderName, CreateAIProviderRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
+import {
+    AIProviderModel,
+    AIProviderName,
+    CreateAIProviderRequest,
+    PrincipalType,
+    UpdateAIProviderRequest,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'

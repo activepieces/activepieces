@@ -36,5 +36,4 @@ export class AddAiProviderTable1726445983043 implements MigrationInterface {
             DROP TABLE "ai_provider"
         `)
     }
-
 }

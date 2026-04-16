@@ -330,5 +330,4 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
             DROP TABLE "table"
         `)
     }
-
 }

@@ -1,8 +1,7 @@
-import fs from 'fs'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import fs from 'fs'
 import Redis, { RedisOptions } from 'ioredis'
 import { RedisConnectionSettings } from './types'
-
 
 export async function createDefaultRedisConnection(settings: RedisConnectionSettings): Promise<Redis> {
     const config: Partial<RedisOptions> = {
@@ -44,15 +43,15 @@ function createStandaloneRedisConnection(settings: RedisConnectionSettings, conf
         password,
         db,
         retryStrategy: (times) => Math.min(times * 50, 2000),
-        tls: useSsl ? {
-            ca: readCAFile(sslCaFile),
-        } : undefined,
+        tls: useSsl
+            ? {
+                  ca: readCAFile(sslCaFile),
+              }
+            : undefined,
     })
-
 
     return client
 }
-
 
 function readCAFile(file: string | undefined): string | undefined {
     if (isNil(file)) {

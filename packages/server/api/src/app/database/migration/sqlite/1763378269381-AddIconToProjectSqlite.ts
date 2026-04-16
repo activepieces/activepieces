@@ -14,7 +14,7 @@ enum ColorName {
     LAVENDER = 'LAVENDER',
     DEEP_ORANGE = 'DEEP_ORANGE',
 }
-  
+
 const colors = Object.values(ColorName)
 
 export class AddIconToProjectSqlite1763378269381 implements MigrationInterface {
@@ -53,7 +53,8 @@ export class AddIconToProjectSqlite1763378269381 implements MigrationInterface {
         for (const project of projects) {
             const randomIndex = Math.floor(Math.random() * 1000) % colors.length
             const randomColor = colors[randomIndex]
-            await queryRunner.query(`
+            await queryRunner.query(
+                `
                 INSERT INTO "temporary_project"(
                     "id",
                     "created",
@@ -68,20 +69,22 @@ export class AddIconToProjectSqlite1763378269381 implements MigrationInterface {
                     "maxConcurrentJobs",
                     "icon"
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `, [
-                project.id,
-                project.created,
-                project.updated,
-                project.ownerId,
-                project.displayName,
-                project.platformId,
-                project.externalId,
-                project.deleted,
-                project.releasesEnabled,
-                project.metadata,
-                project.maxConcurrentJobs,
-                JSON.stringify({ color: randomColor }),
-            ])
+            `,
+                [
+                    project.id,
+                    project.created,
+                    project.updated,
+                    project.ownerId,
+                    project.displayName,
+                    project.platformId,
+                    project.externalId,
+                    project.deleted,
+                    project.releasesEnabled,
+                    project.metadata,
+                    project.maxConcurrentJobs,
+                    JSON.stringify({ color: randomColor }),
+                ],
+            )
         }
 
         await queryRunner.query(`
@@ -166,5 +169,4 @@ export class AddIconToProjectSqlite1763378269381 implements MigrationInterface {
             WHERE "deleted" IS NULL
         `)
     }
-
 }

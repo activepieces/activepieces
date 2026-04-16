@@ -17,5 +17,4 @@ export class LogFileRelationWithFlowRun1725639666232 implements MigrationInterfa
             ALTER TABLE "flow_run" DROP CONSTRAINT "fk_flow_run_logs_file_id"
         `)
     }
-
 }

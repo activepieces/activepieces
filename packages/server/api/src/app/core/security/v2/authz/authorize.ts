@@ -5,7 +5,11 @@ import { userService } from '../../../../user/user-service'
 import { AuthorizationRouteSecurity, ProjectAuthorizationConfig } from '../../authorization/authorization'
 import { AuthorizationType, RouteKind } from '../../authorization/common'
 
-export const authorizeOrThrow = async (principal: Principal, security: AuthorizationRouteSecurity, log: FastifyBaseLogger): Promise<void> => {
+export const authorizeOrThrow = async (
+    principal: Principal,
+    security: AuthorizationRouteSecurity,
+    log: FastifyBaseLogger,
+): Promise<void> => {
     if (security.kind === RouteKind.PUBLIC) {
         return
     }
@@ -28,7 +32,6 @@ export const authorizeOrThrow = async (principal: Principal, security: Authoriza
     }
 }
 
-
 async function assertPlatformIsOwnedByCurrentPrincipal(principal: Principal, log: FastifyBaseLogger): Promise<void> {
     if (principal.type === PrincipalType.SERVICE) {
         return
@@ -44,8 +47,11 @@ async function assertPlatformIsOwnedByCurrentPrincipal(principal: Principal, log
     }
 }
 
-
-async function assertAccessToProject(principal: Principal, projectSecurity: ProjectAuthorizationConfig, log: FastifyBaseLogger): Promise<void> {
+async function assertAccessToProject(
+    principal: Principal,
+    projectSecurity: ProjectAuthorizationConfig,
+    log: FastifyBaseLogger,
+): Promise<void> {
     if (isNil(projectSecurity.projectId)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
@@ -54,11 +60,17 @@ async function assertAccessToProject(principal: Principal, projectSecurity: Proj
             },
         })
     }
-    await rbacService(log).assertPrinicpalAccessToProject({ principal, permission: projectSecurity.permission, projectId: projectSecurity.projectId })
+    await rbacService(log).assertPrinicpalAccessToProject({
+        principal,
+        permission: projectSecurity.permission,
+        projectId: projectSecurity.projectId,
+    })
 }
 
-
-async function assertPrinicpalIsOneOf< T extends readonly PrincipalType[]>(allowedPrincipals: T, currentPrincipal: PrincipalType): Promise<void> {
+async function assertPrinicpalIsOneOf<T extends readonly PrincipalType[]>(
+    allowedPrincipals: T,
+    currentPrincipal: PrincipalType,
+): Promise<void> {
     if (!allowedPrincipals.includes(currentPrincipal)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,

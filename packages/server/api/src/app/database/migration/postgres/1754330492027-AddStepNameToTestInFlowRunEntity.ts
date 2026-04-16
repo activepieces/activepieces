@@ -15,5 +15,4 @@ export class AddStepNameToTestInFlowRunEntity1754330492027 implements MigrationI
             ALTER TABLE "flow_run" DROP COLUMN "stepNameToTest"
         `)
     }
-
 }

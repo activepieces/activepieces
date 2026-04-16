@@ -1,15 +1,11 @@
-import {
-    PieceAuthProperty,
-    piecePropertiesUtils,
-    PiecePropertyMap,
-} from '@activepieces/pieces-framework'
+import { PieceAuthProperty, PiecePropertyMap, piecePropertiesUtils } from '@activepieces/pieces-framework'
 import {
     CodeActionSettings,
     FlowActionType,
     FlowOperationRequest,
     FlowOperationType,
-    flowPieceUtil,
     FlowTriggerType,
+    flowPieceUtil,
     isNil,
     LoopOnItemsActionSettings,
     PieceActionSettings,
@@ -23,16 +19,22 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 
-const loopSettingsValidator = LoopOnItemsActionSettings.and(z.object({
-    items: z.string().min(1),
-}))
+const loopSettingsValidator = LoopOnItemsActionSettings.and(
+    z.object({
+        items: z.string().min(1),
+    }),
+)
 const routerSettingsValidator = RouterActionSettingsWithValidation
-const codeSettingsValidator = CodeActionSettings.and(z.object({
-    sourceCode: SourceCode.and(z.object({
-        code: z.string().min(1),
-        packageJson: z.string().min(1),
-    })),
-}))
+const codeSettingsValidator = CodeActionSettings.and(
+    z.object({
+        sourceCode: SourceCode.and(
+            z.object({
+                code: z.string().min(1),
+                packageJson: z.string().min(1),
+            }),
+        ),
+    }),
+)
 
 type ValidationResult = {
     valid: boolean
@@ -52,10 +54,14 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         ).success
                         break
                     case FlowActionType.PIECE: {
-                        clonedRequest.request.action.settings.pieceVersion = flowPieceUtil.getExactVersion(clonedRequest.request.action.settings.pieceVersion)
-                        const result = await validateAction(
-                            { settings: clonedRequest.request.action.settings, platformId, log },
+                        clonedRequest.request.action.settings.pieceVersion = flowPieceUtil.getExactVersion(
+                            clonedRequest.request.action.settings.pieceVersion,
                         )
+                        const result = await validateAction({
+                            settings: clonedRequest.request.action.settings,
+                            platformId,
+                            log,
+                        })
                         clonedRequest.request.action.valid = result.valid
                         if (!isNil(result.cleanInput)) {
                             clonedRequest.request.action.settings.input = result.cleanInput
@@ -82,10 +88,14 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         ).success
                         break
                     case FlowActionType.PIECE: {
-                        clonedRequest.request.settings.pieceVersion = flowPieceUtil.getExactVersion(clonedRequest.request.settings.pieceVersion)
-                        const result = await validateAction(
-                            { settings: clonedRequest.request.settings, platformId, log },
+                        clonedRequest.request.settings.pieceVersion = flowPieceUtil.getExactVersion(
+                            clonedRequest.request.settings.pieceVersion,
                         )
+                        const result = await validateAction({
+                            settings: clonedRequest.request.settings,
+                            platformId,
+                            log,
+                        })
                         clonedRequest.request.valid = result.valid
                         if (!isNil(result.cleanInput)) {
                             clonedRequest.request.settings.input = result.cleanInput
@@ -110,10 +120,14 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         clonedRequest.request.valid = false
                         break
                     case FlowTriggerType.PIECE: {
-                        clonedRequest.request.settings.pieceVersion = flowPieceUtil.getExactVersion(clonedRequest.request.settings.pieceVersion)
-                        const result = await validateTrigger(
-                            { settings: clonedRequest.request.settings, platformId, log },
+                        clonedRequest.request.settings.pieceVersion = flowPieceUtil.getExactVersion(
+                            clonedRequest.request.settings.pieceVersion,
                         )
+                        const result = await validateTrigger({
+                            settings: clonedRequest.request.settings,
+                            platformId,
+                            log,
+                        })
                         clonedRequest.request.valid = result.valid
                         if (result.valid && result.cleanInput) {
                             clonedRequest.request.settings.input = result.cleanInput
@@ -122,10 +136,10 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                     }
                 }
                 break
-            case FlowOperationType.IMPORT_FLOW:{
+            case FlowOperationType.IMPORT_FLOW: {
                 const notes = clonedRequest.request.notes
                 if (!isNil(notes)) {
-                    clonedRequest.request.notes = notes.map(note => ({
+                    clonedRequest.request.notes = notes.map((note) => ({
                         ...note,
                         ownerId: userId,
                     }))
@@ -205,15 +219,12 @@ function validateProps(
 ): ValidationResult {
     const propsSchema = piecePropertiesUtils.buildSchema(props, auth, requireAuth)
     const schemaKeys = Object.keys((propsSchema as z.ZodObject<z.ZodRawShape>).shape)
-    const cleanInput = !isNil(input) ? Object.fromEntries(
-        schemaKeys.map(key => [key, input?.[key]]),
-    ) : undefined
+    const cleanInput = !isNil(input) ? Object.fromEntries(schemaKeys.map((key) => [key, input?.[key]])) : undefined
     return {
         valid: propsSchema.safeParse(cleanInput).success,
         cleanInput,
     }
 }
-
 
 type PrepareRequestParams = {
     platformId?: PlatformId

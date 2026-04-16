@@ -1,11 +1,11 @@
 import {
   FlowAction,
   FlowActionType,
-  isNil,
   FlowTrigger,
   FlowTriggerType,
-  flowStructureUtil,
   flowPieceUtil,
+  flowStructureUtil,
+  isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeftIcon, ChevronRightIcon, Info } from 'lucide-react';
@@ -21,9 +21,9 @@ import {
 } from '@/components/ui/tooltip';
 import {
   PieceIcon,
-  stepsHooks,
   PieceStepMetadata,
   StepMetadataWithActionOrTriggerOrAgentDisplayName,
+  stepsHooks,
 } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -99,6 +99,7 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
 };
 
 export { StepInfo };
+
 const PreviousOrNextButton = ({ isNext }: { isNext: boolean }) => {
   const [selectedStep, setSelectedStep, flowVersion] = useBuilderStateContext(
     (state) => [state.selectedStep, state.selectStepByName, state.flowVersion],

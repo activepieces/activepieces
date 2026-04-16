@@ -7,8 +7,8 @@ import { toast } from 'sonner';
 import { Button, ButtonProps } from '@/components/ui/button';
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from '@/components/ui/tooltip';
 
 interface CopyButtonProps extends ButtonProps {

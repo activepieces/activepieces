@@ -3,11 +3,11 @@ import {
     ListProjectMembersRequestQuery,
     Permission,
     PrincipalType,
-
     ProjectMemberWithUser,
-    SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-    UpdateProjectMemberRoleRequestBody } from '@activepieces/shared'
+    SeekPage,
+    UpdateProjectMemberRoleRequestBody,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -18,12 +18,9 @@ import { projectMemberService } from './project-member.service'
 
 const DEFAULT_LIMIT_SIZE = 10
 
-export const projectMemberController: FastifyPluginAsyncZod = async (
-    app,
-) => {
-
+export const projectMemberController: FastifyPluginAsyncZod = async (app) => {
     app.get('/role', GetCurrentProjectMemberRoleRequest, async (request) => {
-        return  projectMemberService(request.log).getRole({
+        return projectMemberService(request.log).getRole({
             projectId: request.projectId,
             userId: request.principal.id,
         })
@@ -31,15 +28,13 @@ export const projectMemberController: FastifyPluginAsyncZod = async (
 
     app.get('/', ListProjectMembersRequestQueryOptions, async (request) => {
         return projectMemberService(request.log).list({
-            platformId: request.principal.platform.id,  
+            platformId: request.principal.platform.id,
             projectId: request.projectId,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
             projectRoleId: request.query.projectRoleId ?? undefined,
         })
     })
-
-
 
     app.post('/:id', UpdateProjectMemberRoleRequest, async (req) => {
         return projectMemberService(req.log).update({
@@ -50,25 +45,17 @@ export const projectMemberController: FastifyPluginAsyncZod = async (
         })
     })
 
-
     app.delete('/:id', DeleteProjectMemberRequest, async (request, reply) => {
-        await projectMemberService(request.log).delete(
-            request.projectId,
-            request.params.id,
-        )
+        await projectMemberService(request.log).delete(request.projectId, request.params.id)
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
 }
 
 const GetCurrentProjectMemberRoleRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            undefined,
-            {
-                type: ProjectResourceType.QUERY,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         querystring: GetCurrentProjectMemberRoleQuery,
@@ -77,14 +64,10 @@ const GetCurrentProjectMemberRoleRequest = {
 
 const UpdateProjectMemberRoleRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE],
-            Permission.WRITE_PROJECT_MEMBER,
-            {
-                type: ProjectResourceType.TABLE,
-                tableName: ProjectMemberEntity,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_PROJECT_MEMBER, {
+            type: ProjectResourceType.TABLE,
+            tableName: ProjectMemberEntity,
+        }),
     },
     schema: {
         params: z.object({
@@ -99,13 +82,9 @@ const UpdateProjectMemberRoleRequest = {
 
 const ListProjectMembersRequestQueryOptions = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE],
-            Permission.READ_PROJECT_MEMBER,
-            {
-                type: ProjectResourceType.QUERY,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_PROJECT_MEMBER, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         tags: ['project-members'],
@@ -119,14 +98,10 @@ const ListProjectMembersRequestQueryOptions = {
 
 const DeleteProjectMemberRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE],
-            Permission.WRITE_PROJECT_MEMBER,
-            {
-                type: ProjectResourceType.TABLE,
-                tableName: ProjectMemberEntity,
-            },
-        ),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_PROJECT_MEMBER, {
+            type: ProjectResourceType.TABLE,
+            tableName: ProjectMemberEntity,
+        }),
     },
     schema: {
         tags: ['project-members'],

@@ -1,32 +1,36 @@
-import { Command } from "commander";
-import { publishPieceFromFolder, findPiece, assertPieceExists } from '../utils/piece-utils';
-import chalk from "chalk";
-import inquirer from 'inquirer';
-import * as dotenv from 'dotenv';
+import chalk from 'chalk'
+import { Command } from 'commander'
+import * as dotenv from 'dotenv'
+import inquirer from 'inquirer'
+import { assertPieceExists, findPiece, publishPieceFromFolder } from '../utils/piece-utils'
 
-dotenv.config({path: 'packages/server/api/.env'});
+dotenv.config({ path: 'packages/server/api/.env' })
 
-async function publishPiece(
-    {apiUrl, apiKey, pieceName, failOnError}:
-    {apiUrl: string,
-    apiKey: string,
-    pieceName: string,
-    failOnError: boolean,}
-) {
-    const pieceFolder = await findPiece(pieceName);
+async function publishPiece({
+    apiUrl,
+    apiKey,
+    pieceName,
+    failOnError,
+}: {
+    apiUrl: string
+    apiKey: string
+    pieceName: string
+    failOnError: boolean
+}) {
+    const pieceFolder = await findPiece(pieceName)
     assertPieceExists(pieceFolder)
     await publishPieceFromFolder({
         pieceFolder,
         apiUrl,
         apiKey,
-        failOnError
-    });
+        failOnError,
+    })
 }
 
 function assertNullOrUndefinedOrEmpty(value: any, message: string) {
     if (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) {
-        console.error(chalk.red(message));
-        process.exit(1);
+        console.error(chalk.red(message))
+        process.exit(1)
     }
 }
 
@@ -52,30 +56,32 @@ export const publishPieceCommand = new Command('publish')
                 name: 'apiKeySource',
                 message: 'Select the API Key source',
                 choices: ['Env Variable (AP_API_KEY)', 'Manually'],
-                default: 'Env Variable (AP_API_KEY)'
-            }
+                default: 'Env Variable (AP_API_KEY)',
+            },
         ]
 
-        const answers = await inquirer.prompt(questions);
+        const answers = await inquirer.prompt(questions)
         if (answers.apiKeySource === 'Manually') {
-            const apiKeyAnswers = await inquirer.prompt([{
-                type: 'input',
-                name: 'apiKey',
-                message: 'Enter the API Key',
-            }]);
-            answers.apiKey = apiKeyAnswers.apiKey;
+            const apiKeyAnswers = await inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'apiKey',
+                    message: 'Enter the API Key',
+                },
+            ])
+            answers.apiKey = apiKeyAnswers.apiKey
         }
-        const apiKey = answers.apiKeySource === 'Env Variable (AP_API_KEY)' ? process.env.AP_API_KEY : answers.apiKey;
-        assertNullOrUndefinedOrEmpty(answers.name, 'Piece name is required');
-        assertNullOrUndefinedOrEmpty(answers.apiUrl, 'API URL is required');
-        assertNullOrUndefinedOrEmpty(apiKey, 'API Key is required');
-        const apiUrlWithoutTrailSlash = answers.apiUrl.replace(/\/$/, '');
-        const { failOnError } = command;
+        const apiKey = answers.apiKeySource === 'Env Variable (AP_API_KEY)' ? process.env.AP_API_KEY : answers.apiKey
+        assertNullOrUndefinedOrEmpty(answers.name, 'Piece name is required')
+        assertNullOrUndefinedOrEmpty(answers.apiUrl, 'API URL is required')
+        assertNullOrUndefinedOrEmpty(apiKey, 'API Key is required')
+        const apiUrlWithoutTrailSlash = answers.apiUrl.replace(/\/$/, '')
+        const { failOnError } = command
 
         await publishPiece({
             apiUrl: apiUrlWithoutTrailSlash,
             apiKey,
             pieceName: answers.name,
-            failOnError
-        });
-    });
+            failOnError,
+        })
+    })

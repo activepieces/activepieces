@@ -1,4 +1,4 @@
-import { StaticPropsValue } from '@activepieces/pieces-framework';
-import { oracleDbAuth } from '../common/auth';
+import { StaticPropsValue } from '@activepieces/pieces-framework'
+import { oracleDbAuth } from '../common/auth'
 
-export type OracleDbAuth = StaticPropsValue<(typeof oracleDbAuth)['props']>;
+export type OracleDbAuth = StaticPropsValue<(typeof oracleDbAuth)['props']>

@@ -4,8 +4,8 @@ import { t } from 'i18next';
 import { CenteredPage } from '@/app/components/centered-page';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import {
-  aiProviderQueries,
   aiProviderMutations,
+  aiProviderQueries,
 } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';

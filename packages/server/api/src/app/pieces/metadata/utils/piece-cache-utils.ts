@@ -41,18 +41,23 @@ export async function loadDevPiecesIfEnabled(log: FastifyBaseLogger): Promise<Pi
     const piecesNames = devPiecesConfig.split(',')
     const pieces = await filePiecesUtils(log).loadDistPiecesMetadata(piecesNames)
 
-    return pieces.map((p): PieceMetadataSchema => ({
-        id: apId(),
-        ...p,
-        projectUsage: 0,
-        pieceType: PieceType.OFFICIAL,
-        packageType: PackageType.REGISTRY,
-        created: new Date().toISOString(),
-        updated: new Date().toISOString(),
-    }))
+    return pieces.map(
+        (p): PieceMetadataSchema => ({
+            id: apId(),
+            ...p,
+            projectUsage: 0,
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+        }),
+    )
 }
 
-export function filterPieceBasedOnType(platformId: string | undefined, piece: PieceMetadataSchema | PieceRegistryEntry): boolean {
+export function filterPieceBasedOnType(
+    platformId: string | undefined,
+    piece: PieceMetadataSchema | PieceRegistryEntry,
+): boolean {
     return isOfficialPiece(piece) || isCustomPiece(platformId, piece)
 }
 
@@ -60,21 +65,35 @@ export function isOfficialPiece(piece: PieceMetadataSchema | PieceRegistryEntry)
     return piece.pieceType === PieceType.OFFICIAL && isNil(piece.platformId)
 }
 
-export function isCustomPiece(platformId: string | undefined, piece: PieceMetadataSchema | PieceRegistryEntry): boolean {
+export function isCustomPiece(
+    platformId: string | undefined,
+    piece: PieceMetadataSchema | PieceRegistryEntry,
+): boolean {
     if (isNil(platformId)) {
         return false
     }
     return piece.platformId === platformId && piece.pieceType === PieceType.CUSTOM
 }
 
-export function isSupportedRelease(release: string | undefined, piece: { minimumSupportedRelease?: string, maximumSupportedRelease?: string }): boolean {
+export function isSupportedRelease(
+    release: string | undefined,
+    piece: { minimumSupportedRelease?: string; maximumSupportedRelease?: string },
+): boolean {
     if (isNil(release) || !semVer.valid(release)) {
         return true
     }
-    if (!isNil(piece.maximumSupportedRelease) && semVer.valid(piece.maximumSupportedRelease) && semVer.compare(release, piece.maximumSupportedRelease) === 1) {
+    if (
+        !isNil(piece.maximumSupportedRelease) &&
+        semVer.valid(piece.maximumSupportedRelease) &&
+        semVer.compare(release, piece.maximumSupportedRelease) === 1
+    ) {
         return false
     }
-    if (!isNil(piece.minimumSupportedRelease) && semVer.valid(piece.minimumSupportedRelease) && semVer.compare(release, piece.minimumSupportedRelease) === -1) {
+    if (
+        !isNil(piece.minimumSupportedRelease) &&
+        semVer.valid(piece.minimumSupportedRelease) &&
+        semVer.compare(release, piece.minimumSupportedRelease) === -1
+    ) {
         return false
     }
     return true

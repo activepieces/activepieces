@@ -43,10 +43,12 @@ export const LockResourceRequest = z.object({
 
 export const LockResourceResponse = z.object({
     acquired: z.boolean(),
-    lock: z.object({
-        userId: z.string(),
-        userDisplayName: z.string(),
-    }).nullable(),
+    lock: z
+        .object({
+            userId: z.string(),
+            userDisplayName: z.string(),
+        })
+        .nullable(),
 })
 
 export const ResourceLockedEvent = z.object({

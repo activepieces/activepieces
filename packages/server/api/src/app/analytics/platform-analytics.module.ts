@@ -1,4 +1,11 @@
-import { ActivepiecesError, AnalyticsReportRequest, ErrorCode, LeaderboardRequest, PrincipalType, UserIdentityProvider } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    AnalyticsReportRequest,
+    ErrorCode,
+    LeaderboardRequest,
+    PrincipalType,
+    UserIdentityProvider,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
@@ -9,13 +16,15 @@ import { piecesAnalyticsService } from './pieces-analytics.service'
 import { platformAnalyticsReportService } from './platform-analytics-report.service'
 
 export const platformAnalyticsModule: FastifyPluginAsyncZod = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.analyticsEnabled))
+    app.addHook(
+        'preHandler',
+        platformMustHaveFeatureEnabled((platform) => platform.plan.analyticsEnabled),
+    )
     await piecesAnalyticsService(app.log).init()
     await app.register(platformAnalyticsController, { prefix: '/v1/analytics' })
 }
 
 const platformAnalyticsController: FastifyPluginAsyncZod = async (app) => {
-
     app.get('/', PlatformAnalyticsRequest, async (request) => {
         const { platform, id } = request.principal
         await assertUserIsNotEmbedded(id, request.log)
@@ -48,7 +57,6 @@ const platformAnalyticsController: FastifyPluginAsyncZod = async (app) => {
         await assertUserIsNotEmbedded(id, request.log)
         await platformAnalyticsReportService(request.log).markAsOutdated(platform.id)
     })
-
 }
 
 async function assertUserIsNotEmbedded(userId: string, log: FastifyBaseLogger): Promise<void> {

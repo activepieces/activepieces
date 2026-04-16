@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const getJournalBatch = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -29,15 +29,15 @@ export const getJournalBatch = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
-        const { jeBatchId, expand } = context.propsValue;
+        const client = makeClient(context.auth.props)
+        const { jeBatchId, expand } = context.propsValue
 
-        const queryParams: Record<string, string> = {};
+        const queryParams: Record<string, string> = {}
         if (expand && expand.length > 0) {
-            queryParams['expand'] = expand.join(',');
+            queryParams['expand'] = expand.join(',')
         }
 
-        const response = await client.searchRecords(`/journalBatches/${jeBatchId}`, queryParams);
-        return response;
+        const response = await client.searchRecords(`/journalBatches/${jeBatchId}`, queryParams)
+        return response
     },
-});
+})

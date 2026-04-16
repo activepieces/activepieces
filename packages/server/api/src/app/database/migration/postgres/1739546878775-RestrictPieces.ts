@@ -22,5 +22,4 @@ export class RestrictPieces1739546878775 implements MigrationInterface {
             ADD CONSTRAINT "fk_piece_metadata_file" FOREIGN KEY ("archiveId") REFERENCES "file"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
     }
-
 }

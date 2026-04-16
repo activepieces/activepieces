@@ -2,8 +2,7 @@ import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
-export class ModifyProjectMembersAndRemoveUserId1701647565290
-implements MigrationInterface {
+export class ModifyProjectMembersAndRemoveUserId1701647565290 implements MigrationInterface {
     name = 'ModifyProjectMembersAndRemoveUserId1701647565290'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

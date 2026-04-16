@@ -21,7 +21,6 @@ export class AddIconToProject1763377380235 implements MigrationInterface {
     name = 'AddIconToProject1763377380235'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-      
         await queryRunner.query(`
             ALTER TABLE "project"
             ADD "icon" jsonb
@@ -32,12 +31,14 @@ export class AddIconToProject1763377380235 implements MigrationInterface {
         `)
 
         if (projects.length > 0) {
-            const valuesClause = projects.map((project: { id: string }) => {
-                const randomIndex = Math.floor(Math.random() * 1000) % colors.length
-                const randomColor = colors[randomIndex]
-                const iconJson = JSON.stringify({ color: randomColor })
-                return `('${project.id}', '${iconJson}')`
-            }).join(', ')
+            const valuesClause = projects
+                .map((project: { id: string }) => {
+                    const randomIndex = Math.floor(Math.random() * 1000) % colors.length
+                    const randomColor = colors[randomIndex]
+                    const iconJson = JSON.stringify({ color: randomColor })
+                    return `('${project.id}', '${iconJson}')`
+                })
+                .join(', ')
 
             await queryRunner.query(`
                 UPDATE "project"
@@ -58,5 +59,4 @@ export class AddIconToProject1763377380235 implements MigrationInterface {
             ALTER TABLE "project" DROP COLUMN "icon"
         `)
     }
-
 }

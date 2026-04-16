@@ -24,13 +24,11 @@ export class CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669 imp
                 ON DELETE CASCADE ON UPDATE NO ACTION
         `)
 
-
         await queryRunner.query(`
             ALTER TABLE "app_credential"
             ADD CONSTRAINT "FK_d82bfb4c7432a69dc2419083a0e" FOREIGN KEY ("projectId") REFERENCES "project"("id")
                 ON DELETE CASCADE ON UPDATE NO ACTION
         `)
-
 
         log.info('[cascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669#up]')
     }

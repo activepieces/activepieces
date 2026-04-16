@@ -4,4 +4,3 @@ import { usersController } from './users-controller'
 export const userModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(usersController, { prefix: '/v1/users' })
 }
-

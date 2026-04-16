@@ -396,4 +396,3 @@ type MigrationConfig = {
     migrationsTransactionMode?: 'all' | 'none' | 'each'
     migrations?: (new () => MigrationInterface)[]
 }
-

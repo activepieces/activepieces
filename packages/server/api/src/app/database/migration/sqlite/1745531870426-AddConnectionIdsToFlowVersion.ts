@@ -386,5 +386,4 @@ export class AddConnectionIdsToFlowVersion1745531870426 implements MigrationInte
             CREATE UNIQUE INDEX "idx_mcp_piece_mcp_id_piece_name" ON "mcp_piece" ("mcpId", "pieceName")
         `)
     }
-
 }

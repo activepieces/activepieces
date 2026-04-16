@@ -1,7 +1,7 @@
 import {
+  LockResourceResponse,
   ResourceLockedEvent,
   ResourceUnlockedEvent,
-  LockResourceResponse,
   WebsocketClientEvent,
   WebsocketServerEvent,
 } from '@activepieces/shared';

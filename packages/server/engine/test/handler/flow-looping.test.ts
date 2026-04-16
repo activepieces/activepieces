@@ -1,16 +1,14 @@
 import { FlowAction, FlowRunStatus, LoopStepOutput } from '@activepieces/shared'
-import {  FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
+import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildCodeAction, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
 
-
 describe('flow with looping', () => {
-
     it('should execute iterations', async () => {
         const codeAction = buildCodeAction({
             name: 'echo_step',
             input: {
-                'index': '{{loop.index}}',
+                index: '{{loop.index}}',
             },
         })
         const result = await flowExecutor.execute({
@@ -34,7 +32,7 @@ describe('flow with looping', () => {
         const generateArray = buildCodeAction({
             name: 'echo_step',
             input: {
-                'array': '{{ [4,5,6] }}',
+                array: '{{ [4,5,6] }}',
             },
             nextAction: buildSimpleLoopAction({
                 name: 'loop',
@@ -60,7 +58,9 @@ describe('flow with looping', () => {
 
     it('should skip loop', async () => {
         const result = await flowExecutor.execute({
-            action: buildSimpleLoopAction({ name: 'loop', loopItems: '{{ [4,5,6] }}', skip: true }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            action: buildSimpleLoopAction({ name: 'loop', loopItems: '{{ [4,5,6] }}', skip: true }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
         })
         expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
         expect(result.steps.loop).toBeUndefined()
@@ -74,18 +74,19 @@ describe('flow with looping', () => {
                     name: 'echo_step',
                     skip: false,
                     input: {
-                        'key': '{{ 1 + 2 }}',
+                        key: '{{ 1 + 2 }}',
                     },
                 }),
                 nextAction: undefined,
             },
         }
         const result = await flowExecutor.execute({
-            action: flow, executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            action: flow,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
         })
         expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
         expect(result.steps.loop).toBeUndefined()
-        expect(result.steps.echo_step.output).toEqual({ 'key': 3 })
+        expect(result.steps.echo_step.output).toEqual({ key: 3 })
     })
-
 })

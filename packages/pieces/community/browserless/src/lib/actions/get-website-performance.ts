@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { browserlessAuth } from '../common/auth';
-import { browserlessCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { browserlessAuth } from '../common/auth'
+import { browserlessCommon } from '../common/client'
 
 export const getWebsitePerformance = createAction({
     name: 'get_website_performance',
@@ -16,7 +16,8 @@ export const getWebsitePerformance = createAction({
         }),
         categories: Property.Array({
             displayName: 'Performance Categories',
-            description: 'Select which performance categories to analyze (performance, accessibility, best-practices, seo, pwa)',
+            description:
+                'Select which performance categories to analyze (performance, accessibility, best-practices, seo, pwa)',
             required: false,
             properties: {
                 category: Property.StaticDropdown({
@@ -28,11 +29,11 @@ export const getWebsitePerformance = createAction({
                             { label: 'Accessibility', value: 'accessibility' },
                             { label: 'Best Practices', value: 'best-practices' },
                             { label: 'SEO', value: 'seo' },
-                            { label: 'PWA', value: 'pwa' }
-                        ]
-                    }
-                })
-            }
+                            { label: 'PWA', value: 'pwa' },
+                        ],
+                    },
+                }),
+            },
         }),
         device: Property.StaticDropdown({
             displayName: 'Device Type',
@@ -42,9 +43,9 @@ export const getWebsitePerformance = createAction({
             options: {
                 options: [
                     { label: 'Desktop', value: 'desktop' },
-                    { label: 'Mobile', value: 'mobile' }
-                ]
-            }
+                    { label: 'Mobile', value: 'mobile' },
+                ],
+            },
         }),
         throttling: Property.StaticDropdown({
             displayName: 'Network Throttling',
@@ -56,9 +57,9 @@ export const getWebsitePerformance = createAction({
                     { label: 'No Throttling', value: 'none' },
                     { label: 'Slow 4G', value: 'mobileSlow4G' },
                     { label: 'Regular 4G', value: 'mobileRegular4G' },
-                    { label: 'Fast 4G', value: 'mobileFast4G' }
-                ]
-            }
+                    { label: 'Fast 4G', value: 'mobileFast4G' },
+                ],
+            },
         }),
         onlyCategories: Property.Checkbox({
             displayName: 'Only Category Scores',
@@ -95,9 +96,9 @@ export const getWebsitePerformance = createAction({
             options: {
                 options: [
                     { label: 'Screen', value: 'screen' },
-                    { label: 'Print', value: 'print' }
-                ]
-            }
+                    { label: 'Print', value: 'print' },
+                ],
+            },
         }),
         budgets: Property.Array({
             displayName: 'Performance Budgets',
@@ -117,16 +118,16 @@ export const getWebsitePerformance = createAction({
                             { label: 'Media', value: 'media' },
                             { label: 'Font', value: 'font' },
                             { label: 'Other', value: 'other' },
-                            { label: 'Third-party', value: 'third-party' }
-                        ]
-                    }
+                            { label: 'Third-party', value: 'third-party' },
+                        ],
+                    },
                 }),
                 budget: Property.Number({
                     displayName: 'Budget Size (KB)',
                     description: 'Maximum allowed size in kilobytes',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         stealth: Property.Checkbox({
             displayName: 'Stealth Mode',
@@ -144,83 +145,91 @@ export const getWebsitePerformance = createAction({
     async run(context) {
         const requestBody: any = {
             url: context.propsValue.url,
-        };
+        }
 
         const lighthouseConfig: any = {
             extends: 'lighthouse:default',
-            settings: {}
-        };
+            settings: {},
+        }
 
         if (context.propsValue.categories && context.propsValue.categories.length > 0) {
-            lighthouseConfig.settings.onlyCategories = context.propsValue.categories.map((cat: any) => cat.category);
+            lighthouseConfig.settings.onlyCategories = context.propsValue.categories.map((cat: any) => cat.category)
         }
 
         if (context.propsValue.locale) {
-            lighthouseConfig.settings.locale = context.propsValue.locale;
+            lighthouseConfig.settings.locale = context.propsValue.locale
         }
 
         if (context.propsValue.device) {
-            lighthouseConfig.settings.formFactor = context.propsValue.device;
+            lighthouseConfig.settings.formFactor = context.propsValue.device
         }
 
         if (context.propsValue.throttling && context.propsValue.throttling !== 'none') {
-            lighthouseConfig.settings.throttling = { rttMs: 150, throughputKbps: 1638.4, cpuSlowdownMultiplier: 4 };
+            lighthouseConfig.settings.throttling = { rttMs: 150, throughputKbps: 1638.4, cpuSlowdownMultiplier: 4 }
 
             switch (context.propsValue.throttling) {
                 case 'mobileSlow4G':
-                    lighthouseConfig.settings.throttling = { rttMs: 150, throughputKbps: 1638.4, cpuSlowdownMultiplier: 4 };
-                    break;
+                    lighthouseConfig.settings.throttling = {
+                        rttMs: 150,
+                        throughputKbps: 1638.4,
+                        cpuSlowdownMultiplier: 4,
+                    }
+                    break
                 case 'mobileRegular4G':
-                    lighthouseConfig.settings.throttling = { rttMs: 100, throughputKbps: 2048, cpuSlowdownMultiplier: 3 };
-                    break;
+                    lighthouseConfig.settings.throttling = {
+                        rttMs: 100,
+                        throughputKbps: 2048,
+                        cpuSlowdownMultiplier: 3,
+                    }
+                    break
                 case 'mobileFast4G':
-                    lighthouseConfig.settings.throttling = { rttMs: 50, throughputKbps: 4096, cpuSlowdownMultiplier: 2 };
-                    break;
+                    lighthouseConfig.settings.throttling = { rttMs: 50, throughputKbps: 4096, cpuSlowdownMultiplier: 2 }
+                    break
             }
         }
 
         if (context.propsValue.userAgent) {
-            lighthouseConfig.settings.userAgent = context.propsValue.userAgent;
+            lighthouseConfig.settings.userAgent = context.propsValue.userAgent
         }
 
         if (context.propsValue.timeout) {
-            lighthouseConfig.settings.timeout = context.propsValue.timeout;
+            lighthouseConfig.settings.timeout = context.propsValue.timeout
         }
 
         if (context.propsValue.waitForSelector) {
-            lighthouseConfig.settings.waitForSelector = context.propsValue.waitForSelector;
+            lighthouseConfig.settings.waitForSelector = context.propsValue.waitForSelector
         }
 
         if (context.propsValue.emulateMediaType) {
-            lighthouseConfig.settings.emulatedFormFactor = context.propsValue.emulateMediaType;
+            lighthouseConfig.settings.emulatedFormFactor = context.propsValue.emulateMediaType
         }
 
         if (context.propsValue.onlyCategories && !lighthouseConfig.settings.onlyCategories) {
-            lighthouseConfig.settings.onlyCategories = ['performance', 'accessibility', 'best-practices', 'seo', 'pwa'];
+            lighthouseConfig.settings.onlyCategories = ['performance', 'accessibility', 'best-practices', 'seo', 'pwa']
         }
 
-        requestBody.config = lighthouseConfig;
+        requestBody.config = lighthouseConfig
 
         if (context.propsValue.budgets && context.propsValue.budgets.length > 0) {
             requestBody.budgets = context.propsValue.budgets.map((budget: any) => ({
                 resourceType: budget.resourceType,
-                budget: budget.budget * 1024
-            }));
+                budget: budget.budget * 1024,
+            }))
         }
 
-        let resourceUri = '/performance';
-        const queryParams: string[] = [];
+        let resourceUri = '/performance'
+        const queryParams: string[] = []
 
         if (context.propsValue.stealth) {
-            queryParams.push('stealth=true');
+            queryParams.push('stealth=true')
         }
 
         if (context.propsValue.blockAds) {
-            queryParams.push('blockAds=true');
+            queryParams.push('blockAds=true')
         }
 
         if (queryParams.length > 0) {
-            resourceUri += `?${queryParams.join('&')}`;
+            resourceUri += `?${queryParams.join('&')}`
         }
 
         const response = await browserlessCommon.apiCall({
@@ -228,81 +237,95 @@ export const getWebsitePerformance = createAction({
             method: HttpMethod.POST,
             resourceUri,
             body: requestBody,
-        });
+        })
 
-        const performanceData = response.body;
-        
+        const performanceData = response.body
+
         const summary: any = {
             url: context.propsValue.url,
             formFactor: context.propsValue.device || 'desktop',
             timestamp: new Date().toISOString(),
-        };
+        }
 
         if (performanceData.lhr && performanceData.lhr.categories) {
-            const categories = performanceData.lhr.categories;
+            const categories = performanceData.lhr.categories
             summary.scores = {
                 performance: categories.performance?.score ? Math.round(categories.performance.score * 100) : null,
-                accessibility: categories.accessibility?.score ? Math.round(categories.accessibility.score * 100) : null,
-                bestPractices: categories['best-practices']?.score ? Math.round(categories['best-practices'].score * 100) : null,
+                accessibility: categories.accessibility?.score
+                    ? Math.round(categories.accessibility.score * 100)
+                    : null,
+                bestPractices: categories['best-practices']?.score
+                    ? Math.round(categories['best-practices'].score * 100)
+                    : null,
                 seo: categories.seo?.score ? Math.round(categories.seo.score * 100) : null,
                 pwa: categories.pwa?.score ? Math.round(categories.pwa.score * 100) : null,
-            };
+            }
         }
 
         if (performanceData.lhr && performanceData.lhr.audits) {
-            const audits = performanceData.lhr.audits;
+            const audits = performanceData.lhr.audits
             summary.metrics = {
                 firstContentfulPaint: {
                     value: audits['first-contentful-paint']?.displayValue || null,
-                    score: audits['first-contentful-paint']?.score ? Math.round(audits['first-contentful-paint'].score * 100) : null
+                    score: audits['first-contentful-paint']?.score
+                        ? Math.round(audits['first-contentful-paint'].score * 100)
+                        : null,
                 },
                 largestContentfulPaint: {
                     value: audits['largest-contentful-paint']?.displayValue || null,
-                    score: audits['largest-contentful-paint']?.score ? Math.round(audits['largest-contentful-paint'].score * 100) : null
+                    score: audits['largest-contentful-paint']?.score
+                        ? Math.round(audits['largest-contentful-paint'].score * 100)
+                        : null,
                 },
                 firstMeaningfulPaint: {
                     value: audits['first-meaningful-paint']?.displayValue || null,
-                    score: audits['first-meaningful-paint']?.score ? Math.round(audits['first-meaningful-paint'].score * 100) : null
+                    score: audits['first-meaningful-paint']?.score
+                        ? Math.round(audits['first-meaningful-paint'].score * 100)
+                        : null,
                 },
                 speedIndex: {
                     value: audits['speed-index']?.displayValue || null,
-                    score: audits['speed-index']?.score ? Math.round(audits['speed-index'].score * 100) : null
+                    score: audits['speed-index']?.score ? Math.round(audits['speed-index'].score * 100) : null,
                 },
                 timeToInteractive: {
                     value: audits['interactive']?.displayValue || null,
-                    score: audits['interactive']?.score ? Math.round(audits['interactive'].score * 100) : null
+                    score: audits['interactive']?.score ? Math.round(audits['interactive'].score * 100) : null,
                 },
                 totalBlockingTime: {
                     value: audits['total-blocking-time']?.displayValue || null,
-                    score: audits['total-blocking-time']?.score ? Math.round(audits['total-blocking-time'].score * 100) : null
+                    score: audits['total-blocking-time']?.score
+                        ? Math.round(audits['total-blocking-time'].score * 100)
+                        : null,
                 },
                 cumulativeLayoutShift: {
                     value: audits['cumulative-layout-shift']?.displayValue || null,
-                    score: audits['cumulative-layout-shift']?.score ? Math.round(audits['cumulative-layout-shift'].score * 100) : null
+                    score: audits['cumulative-layout-shift']?.score
+                        ? Math.round(audits['cumulative-layout-shift'].score * 100)
+                        : null,
                 },
-            };
+            }
 
-            summary.opportunities = [];
+            summary.opportunities = []
             if (audits['unused-css-rules']?.details?.items?.length > 0) {
                 summary.opportunities.push({
                     type: 'unused-css',
                     title: 'Remove unused CSS',
-                    potentialSavings: audits['unused-css-rules'].displayValue || 'Unknown'
-                });
+                    potentialSavings: audits['unused-css-rules'].displayValue || 'Unknown',
+                })
             }
             if (audits['unused-javascript']?.details?.items?.length > 0) {
                 summary.opportunities.push({
                     type: 'unused-javascript',
                     title: 'Remove unused JavaScript',
-                    potentialSavings: audits['unused-javascript'].displayValue || 'Unknown'
-                });
+                    potentialSavings: audits['unused-javascript'].displayValue || 'Unknown',
+                })
             }
             if (audits['render-blocking-resources']?.details?.items?.length > 0) {
                 summary.opportunities.push({
                     type: 'render-blocking',
                     title: 'Eliminate render-blocking resources',
-                    potentialSavings: audits['render-blocking-resources'].displayValue || 'Unknown'
-                });
+                    potentialSavings: audits['render-blocking-resources'].displayValue || 'Unknown',
+                })
             }
         }
 
@@ -313,7 +336,7 @@ export const getWebsitePerformance = createAction({
             metadata: {
                 analysisTime: response.headers?.['x-response-time'] || 'unknown',
                 lighthouseVersion: performanceData.lhr?.lighthouseVersion || 'unknown',
-            }
-        };
+            },
+        }
     },
-});
+})

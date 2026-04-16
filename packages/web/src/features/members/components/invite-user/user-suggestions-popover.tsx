@@ -3,8 +3,8 @@ import { t } from 'i18next';
 import { Command, CommandGroup, CommandList } from '@/components/ui/command';
 import {
   Popover,
-  PopoverContent,
   PopoverAnchor,
+  PopoverContent,
 } from '@/components/ui/popover';
 
 import { SuggestedUserItem } from './suggested-user-item';

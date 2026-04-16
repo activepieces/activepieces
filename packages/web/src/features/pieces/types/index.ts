@@ -7,10 +7,10 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   FlowActionType,
+  FlowOperationType,
+  FlowTriggerType,
   PackageType,
   PieceType,
-  FlowTriggerType,
-  FlowOperationType,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
 

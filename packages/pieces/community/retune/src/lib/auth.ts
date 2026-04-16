@@ -1,5 +1,5 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
 
 const markdownDescription = `
 Follow these instructions to get your re:tune chat ID and API Key:
@@ -10,45 +10,45 @@ Follow these instructions to get your re:tune chat ID and API Key:
 e.g from this: https://retune.so/chat/acewocwe-123123-123123-123123/ your chat ID is "acewocwe-123123-123123-123123"
 4. To get the API key, go to https://retune.so/settings
 5. Scroll to the bottom to find "Re:tune API Keys" and copy your key below
-`;
+`
 
 export const retuneAuth = PieceAuth.CustomAuth({
-  description: markdownDescription,
-  required: true,
-  props: {
-    // There is no way to programmatically get the user's chatbots, so we have this
-    chatId: Property.ShortText({
-      displayName: 'Chat ID',
-      description: 'The ID of the chat you want to use.',
-      required: true,
-    }),
-    apiKey: PieceAuth.SecretText({
-      displayName: 'API Key',
-      description: 'Your re:tune API key.',
-      required: true,
-    }),
-  },
+    description: markdownDescription,
+    required: true,
+    props: {
+        // There is no way to programmatically get the user's chatbots, so we have this
+        chatId: Property.ShortText({
+            displayName: 'Chat ID',
+            description: 'The ID of the chat you want to use.',
+            required: true,
+        }),
+        apiKey: PieceAuth.SecretText({
+            displayName: 'API Key',
+            description: 'Your re:tune API key.',
+            required: true,
+        }),
+    },
 
-  validate: async (auth) => {
-    try {
-      await httpClient.sendRequest<{
-        data: { id: string }[];
-      }>({
-        url: `https://retune.so/api/chat/${auth.auth.chatId}/threads`,
-        method: HttpMethod.POST,
-        headers: {
-          'X-Workspace-API-Key': auth.auth.apiKey,
-        },
-        body: {},
-      });
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid API key',
-      };
-    }
-  },
-});
+    validate: async (auth) => {
+        try {
+            await httpClient.sendRequest<{
+                data: { id: string }[]
+            }>({
+                url: `https://retune.so/api/chat/${auth.auth.chatId}/threads`,
+                method: HttpMethod.POST,
+                headers: {
+                    'X-Workspace-API-Key': auth.auth.apiKey,
+                },
+                body: {},
+            })
+            return {
+                valid: true,
+            }
+        } catch (e) {
+            return {
+                valid: false,
+                error: 'Invalid API key',
+            }
+        }
+    },
+})

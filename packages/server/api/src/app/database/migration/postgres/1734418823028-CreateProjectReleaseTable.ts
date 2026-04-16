@@ -61,5 +61,4 @@ export class CreateProjectReleaseTable1734418823028 implements MigrationInterfac
             DROP TABLE "project_release"
         `)
     }
-
 }

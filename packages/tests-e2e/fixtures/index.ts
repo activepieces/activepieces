@@ -1,63 +1,59 @@
-import { test as base } from '@playwright/test';
-import {
-  AuthenticationPage,
-  AutomationsPage,
-  BuilderPage,
-} from '../pages';
-import { signUp, AuthenticationResponse } from './users';
-import { DEFAULT_EMAIL, DEFAULT_PASSWORD } from '../global-setup';
+import { test as base } from '@playwright/test'
+import { DEFAULT_EMAIL, DEFAULT_PASSWORD } from '../global-setup'
+import { AuthenticationPage, AutomationsPage, BuilderPage } from '../pages'
+import { AuthenticationResponse, signUp } from './users'
 
 type CustomFixtures = {
-  authenticationPage: AuthenticationPage;
-  automationsPage: AutomationsPage;
-  builderPage: BuilderPage;
-  authenticatedPage: AuthenticationPage;
-  users: {
-    apiSignUp: () => Promise<AuthenticationResponse>;
-  }
-};
+    authenticationPage: AuthenticationPage
+    automationsPage: AutomationsPage
+    builderPage: BuilderPage
+    authenticatedPage: AuthenticationPage
+    users: {
+        apiSignUp: () => Promise<AuthenticationResponse>
+    }
+}
 
 export const test = base.extend<CustomFixtures>({
-  // Override page fixture to automatically authenticate before each test
-  page: async ({ page }, use) => {
-    const authPage = new AuthenticationPage(page);
-    
-    if (process.env.E2E_EMAIL && process.env.E2E_PASSWORD) {
-      await authPage.signIn({
-        email: process.env.E2E_EMAIL,
-        password: process.env.E2E_PASSWORD,
-      });
-    } else {
-      await authPage.signIn({
-        email: DEFAULT_EMAIL,
-        password: DEFAULT_PASSWORD,
-      });
-    }
-    
-    await use(page);
-  },
+    // Override page fixture to automatically authenticate before each test
+    page: async ({ page }, use) => {
+        const authPage = new AuthenticationPage(page)
 
-  authenticationPage: async ({ page }, use) => {
-    await use(new AuthenticationPage(page));
-  },
+        if (process.env.E2E_EMAIL && process.env.E2E_PASSWORD) {
+            await authPage.signIn({
+                email: process.env.E2E_EMAIL,
+                password: process.env.E2E_PASSWORD,
+            })
+        } else {
+            await authPage.signIn({
+                email: DEFAULT_EMAIL,
+                password: DEFAULT_PASSWORD,
+            })
+        }
 
-  automationsPage: async ({ page }, use) => {
-    await use(new AutomationsPage(page));
-  },
+        await use(page)
+    },
 
-  builderPage: async ({ page }, use) => {
-    await use(new BuilderPage(page));
-  },
+    authenticationPage: async ({ page }, use) => {
+        await use(new AuthenticationPage(page))
+    },
 
-  authenticatedPage: async ({ page }, use) => {
-    await use(new AuthenticationPage(page));
-  },
+    automationsPage: async ({ page }, use) => {
+        await use(new AutomationsPage(page))
+    },
 
-  users: async ({ request, page }, use) => {
-    await use({
-      apiSignUp: async () => await signUp(request, page),
-    });
-  },
-});
+    builderPage: async ({ page }, use) => {
+        await use(new BuilderPage(page))
+    },
 
-export { expect } from '@playwright/test';
+    authenticatedPage: async ({ page }, use) => {
+        await use(new AuthenticationPage(page))
+    },
+
+    users: async ({ request, page }, use) => {
+        await use({
+            apiSignUp: async () => await signUp(request, page),
+        })
+    },
+})
+
+export { expect } from '@playwright/test'

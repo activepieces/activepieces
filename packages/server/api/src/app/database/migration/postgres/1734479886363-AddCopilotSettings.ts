@@ -15,5 +15,4 @@ export class AddCopilotSettings1734479886363 implements MigrationInterface {
             ALTER TABLE "platform" DROP COLUMN "copilotSettings"
         `)
     }
-
 }

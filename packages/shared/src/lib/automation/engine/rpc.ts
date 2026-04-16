@@ -1,19 +1,16 @@
 const RPC_EVENT = 'rpc'
 const NOTIFY_EVENT = 'rpc-notify'
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: legacy code
 type Contract = Record<string, (input: any) => any>
 
 type RpcSocket = {
     emit(event: string, ...args: unknown[]): unknown
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: legacy code
     on(event: string, listener: (...args: any[]) => void): unknown
     timeout(ms: number): { emitWithAck(event: string, ...args: unknown[]): Promise<unknown> }
 }
 
-export function createRpcClient<T extends Contract>(
-    socket: RpcSocket,
-    timeoutMs: number,
-): T {
+export function createRpcClient<T extends Contract>(socket: RpcSocket, timeoutMs: number): T {
     return new Proxy({} as T, {
         get(_target, method: string) {
             return async (payload: unknown) => {
@@ -23,8 +20,7 @@ export function createRpcClient<T extends Contract>(
                         throw new Error(`RPC [${method}] handler threw: ${result.__rpcError}`)
                     }
                     return result
-                }
-                catch (error) {
+                } catch (error) {
                     if (error instanceof Error && error.message.startsWith('RPC [')) {
                         throw error
                     }
@@ -36,25 +32,19 @@ export function createRpcClient<T extends Contract>(
     })
 }
 
-export function createRpcServer<T extends Contract>(
-    socket: RpcSocket,
-    handlers: T,
-): void {
-    socket.on(RPC_EVENT, async (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
+export function createRpcServer<T extends Contract>(socket: RpcSocket, handlers: T): void {
+    socket.on(RPC_EVENT, async (msg: { method: string; payload: unknown }, ack: (result: unknown) => void) => {
         const handler = handlers[msg.method as keyof T]
         try {
             const result = await handler(msg.payload)
             ack(result)
-        }
-        catch (error) {
+        } catch (error) {
             ack({ __rpcError: error instanceof Error ? error.message : String(error) })
         }
     })
 }
 
-export function createNotifyClient<T extends Contract>(
-    socket: RpcSocket,
-): T {
+export function createNotifyClient<T extends Contract>(socket: RpcSocket): T {
     return new Proxy({} as T, {
         get(_target, method: string) {
             return (payload: unknown) => {
@@ -64,11 +54,8 @@ export function createNotifyClient<T extends Contract>(
     })
 }
 
-export function createNotifyServer<T extends Contract>(
-    socket: RpcSocket,
-    handlers: T,
-): void {
-    socket.on(NOTIFY_EVENT, (msg: { method: string, payload: unknown }) => {
+export function createNotifyServer<T extends Contract>(socket: RpcSocket, handlers: T): void {
+    socket.on(NOTIFY_EVENT, (msg: { method: string; payload: unknown }) => {
         const handler = handlers[msg.method as keyof T]
         handler(msg.payload)
     })

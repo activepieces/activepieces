@@ -29,5 +29,3 @@ export enum AppCredentialType {
     OAUTH2 = 'OAUTH2',
     API_KEY = 'API_KEY',
 }
-
-

@@ -1,4 +1,4 @@
-import { AgentOutputFieldType, AgentOutputField } from '@activepieces/shared';
+import { AgentOutputField, AgentOutputFieldType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { X } from 'lucide-react';
 import { ControllerRenderProps } from 'react-hook-form';

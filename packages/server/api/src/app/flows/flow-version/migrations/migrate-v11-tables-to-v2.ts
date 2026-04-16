@@ -1,11 +1,4 @@
-import {
-    Field,
-    FlowActionType,
-    flowStructureUtil,
-    FlowVersion,
-    isNil,
-    Step,
-} from '@activepieces/shared'
+import { Field, FlowActionType, FlowVersion, flowStructureUtil, isNil, Step } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { FieldEntity } from '../../../tables/field/field.entity'
@@ -20,7 +13,11 @@ function collectFieldIdsFromFlow(flowVersion: FlowVersion) {
     const fieldIds: string[] = []
 
     flowStructureUtil.getAllSteps(flowVersion.trigger).forEach((step) => {
-        if (step.type !== FlowActionType.PIECE || step.settings.pieceName !== TABLES_PIECE_NAME || !step.settings.pieceVersion.includes('0.1.')) {
+        if (
+            step.type !== FlowActionType.PIECE ||
+            step.settings.pieceName !== TABLES_PIECE_NAME ||
+            !step.settings.pieceVersion.includes('0.1.')
+        ) {
             return
         }
         const actionName = step.settings.actionName as string | undefined
@@ -30,7 +27,8 @@ function collectFieldIdsFromFlow(flowVersion: FlowVersion) {
 
         const input = step.settings?.input as Record<string, unknown>
         const values = input?.values as Record<string, unknown> | undefined
-        const fieldsValues = actionName === 'tables-create-records' ? values?.values as Record<string, unknown>[] | undefined : values
+        const fieldsValues =
+            actionName === 'tables-create-records' ? (values?.values as Record<string, unknown>[] | undefined) : values
         if (!fieldsValues) {
             return
         }
@@ -40,8 +38,7 @@ function collectFieldIdsFromFlow(flowVersion: FlowVersion) {
                     fieldIds.push(fieldId)
                 }
             }
-        }
-        else {
+        } else {
             for (const fieldId of Object.keys(fieldsValues)) {
                 fieldIds.push(fieldId)
             }
@@ -69,10 +66,14 @@ export const migrateV11TablesToV2: Migration = {
                 return step
             }
             const actionName = step.settings.actionName as string | undefined
-            const justUpgradePiece = !isOldTablesStep(step) || isNil(actionName) || !TARGET_ACTIONS.includes(actionName as string)
+            const justUpgradePiece =
+                !isOldTablesStep(step) || isNil(actionName) || !TARGET_ACTIONS.includes(actionName as string)
             const input = step.settings?.input as Record<string, unknown>
             const values = input?.values as Record<string, unknown> | undefined
-            const fieldsValue = actionName === 'tables-create-records' ? values?.values as Record<string, unknown> | undefined : values
+            const fieldsValue =
+                actionName === 'tables-create-records'
+                    ? (values?.values as Record<string, unknown> | undefined)
+                    : values
             if (justUpgradePiece || !fieldsValue) {
                 return {
                     ...step,
@@ -103,9 +104,12 @@ export const migrateV11TablesToV2: Migration = {
     },
 }
 
-
 function isTablesStep(step: Step): boolean {
-    return step.type === FlowActionType.PIECE && step.settings.pieceName === TABLES_PIECE_NAME && (step.settings.pieceVersion.includes('0.1.') || step.settings.pieceVersion.includes('0.2.'))
+    return (
+        step.type === FlowActionType.PIECE &&
+        step.settings.pieceName === TABLES_PIECE_NAME &&
+        (step.settings.pieceVersion.includes('0.1.') || step.settings.pieceVersion.includes('0.2.'))
+    )
 }
 
 function isOldTablesStep(step: Step): boolean {

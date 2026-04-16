@@ -197,5 +197,4 @@ export class AddManualTaskTable1742304913465 implements MigrationInterface {
             DROP TABLE "manual_task"
         `)
     }
-
 }

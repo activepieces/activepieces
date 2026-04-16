@@ -1,48 +1,48 @@
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
 import {
-  AgentOutputField,
-  AgentOutputFieldType,
-  isNil,
-  TASK_COMPLETION_TOOL_NAME,
-  SeekPage,
-  PopulatedFlow,
-  McpTrigger,
-  ExecuteToolResponse,
-  ExecutionToolStatus,
-  McpProperty,
-  McpPropertyType,
-  AgentFlowTool,
-  mcpToolNameUtils,
-  RAW_PAYLOAD_HEADER,
-} from '@activepieces/shared';
-import { z, ZodObject } from 'zod';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { Tool } from 'ai';
+    AgentFlowTool,
+    AgentOutputField,
+    AgentOutputFieldType,
+    ExecuteToolResponse,
+    ExecutionToolStatus,
+    isNil,
+    McpProperty,
+    McpPropertyType,
+    McpTrigger,
+    mcpToolNameUtils,
+    PopulatedFlow,
+    RAW_PAYLOAD_HEADER,
+    SeekPage,
+    TASK_COMPLETION_TOOL_NAME,
+} from '@activepieces/shared'
+import { Tool } from 'ai'
+import { ZodObject, z } from 'zod'
 
 export const agentUtils = {
-  isTaskCompletionToolCall: (toolName: string) => toolName === TASK_COMPLETION_TOOL_NAME,
-  structuredOutputSchema(outputFields: AgentOutputField[]): ZodObject | undefined {
-    const shape: Record<string, z.ZodType> = {};
+    isTaskCompletionToolCall: (toolName: string) => toolName === TASK_COMPLETION_TOOL_NAME,
+    structuredOutputSchema(outputFields: AgentOutputField[]): ZodObject | undefined {
+        const shape: Record<string, z.ZodType> = {}
 
-    for (const field of outputFields) {
-      switch (field.type) {
-        case AgentOutputFieldType.TEXT:
-          shape[field.displayName] = z.string();
-          break;
-        case AgentOutputFieldType.NUMBER:
-          shape[field.displayName] = z.number();
-          break;
-        case AgentOutputFieldType.BOOLEAN:
-          shape[field.displayName] = z.boolean();
-          break;
-        default:
-          shape[field.displayName] = z.any();
-      }
-    }
-    return Object.keys(shape).length > 0 ? z.object(shape) : undefined;
-  },
-  getPrompts(userPrompt: string, options?: { hasKnowledgeBaseTools?: boolean }) {
-    return {
-       prompt: `
+        for (const field of outputFields) {
+            switch (field.type) {
+                case AgentOutputFieldType.TEXT:
+                    shape[field.displayName] = z.string()
+                    break
+                case AgentOutputFieldType.NUMBER:
+                    shape[field.displayName] = z.number()
+                    break
+                case AgentOutputFieldType.BOOLEAN:
+                    shape[field.displayName] = z.boolean()
+                    break
+                default:
+                    shape[field.displayName] = z.any()
+            }
+        }
+        return Object.keys(shape).length > 0 ? z.object(shape) : undefined
+    },
+    getPrompts(userPrompt: string, options?: { hasKnowledgeBaseTools?: boolean }) {
+        return {
+            prompt: `
         ${userPrompt}
         <important_note>
         As your FINAL ACTION, you must call the \`${TASK_COMPLETION_TOOL_NAME}\` tool to indicate if the task is complete or not.
@@ -50,7 +50,7 @@ export const agentUtils = {
         If you do not make this final call, your work will be considered unsuccessful.
         </important_note>
       `,
-      system: `
+            system: `
         You are a helpful, proactive AI assistant designed to assist users efficiently and accurately.
         Today's date is ${new Date().toISOString().split('T')[0]}.
 
@@ -85,147 +85,153 @@ export const agentUtils = {
         **Final Response and Completion**:
         - Once the goal is achieved or unachievable, summarize findings clearly in a final response if needed, then call the \`${TASK_COMPLETION_TOOL_NAME}\` tool as your last action.
         - Do not call the completion tool prematurely—ensure all reasonable steps are taken.
-        ${options?.hasKnowledgeBaseTools ? `
+        ${
+            options?.hasKnowledgeBaseTools
+                ? `
         **Knowledge Base Guidelines**:
         - ALWAYS search the knowledge base before answering any question. Do not answer from your own knowledge — use the search tool first.
         - You may refine your search query ONCE if initial results aren't relevant. If the second search returns similar results, stop searching — the information is not in the knowledge base. Do not keep retrying with different phrasings.
         - If the knowledge base does not contain the answer, say so clearly and move on.
         - Cite the source document or table when presenting information from the knowledge base.
-        ` : ''}
-      `.trim(),
-    }
-  },
-  async constructFlowsTools(params: ConstructFlowsToolsParams): Promise<Record<string, Tool>> {
-    const flowTools = params.tools
-    const flowExternalIds = flowTools.map((tool) => tool.externalFlowId)
-    const flows = await params.fetchFlows({ externalIds: flowExternalIds })
-
-    const flowsByExternalId = new Map(flows.data.map(f => [f.externalId, f]));
-    const flowToolsWithPopulatedFlows = flowTools.map((tool) => {
-      const populatedFlow = flowsByExternalId.get(tool.externalFlowId);
-      return !isNil(populatedFlow) ? { ...tool, flow: populatedFlow } : undefined
-    }).filter(tool => !isNil(tool));
-
-    const flowsToolsList = await Promise.all(flowToolsWithPopulatedFlows.map(async (tool) => {
-      const triggerSettings = tool.flow.version.trigger.settings as McpTrigger
-      const toolDescription = triggerSettings.input?.toolDescription
-      const returnsResponse = triggerSettings.input?.returnsResponse
-
-      const inputSchema = Object.fromEntries(
-        triggerSettings.input?.inputSchema.map(prop => [
-          fixProperty(prop.name),
-          mcpPropertyToSchema(prop),
-        ]),
-      )
-      const sanitizedName = mcpToolNameUtils.createToolName(tool.toolName)
-      return {
-        name: sanitizedName,
-        description: toolDescription,
-        inputSchema: z.object(inputSchema),
-        execute: async (inputs: unknown) => {
-          return callMcpFlowTool({
-            flowId: tool.flow.id,
-            publicUrl: params.publicUrl,
-            token: params.token,
-            async: !returnsResponse,
-            inputs,
-          })
+        `
+                : ''
         }
-      }
-    }))
+      `.trim(),
+        }
+    },
+    async constructFlowsTools(params: ConstructFlowsToolsParams): Promise<Record<string, Tool>> {
+        const flowTools = params.tools
+        const flowExternalIds = flowTools.map((tool) => tool.externalFlowId)
+        const flows = await params.fetchFlows({ externalIds: flowExternalIds })
 
-    return {
-      ...Object.fromEntries(flowsToolsList.map((tool) => [tool.name, tool])),
-    }
-  }
+        const flowsByExternalId = new Map(flows.data.map((f) => [f.externalId, f]))
+        const flowToolsWithPopulatedFlows = flowTools
+            .map((tool) => {
+                const populatedFlow = flowsByExternalId.get(tool.externalFlowId)
+                return !isNil(populatedFlow) ? { ...tool, flow: populatedFlow } : undefined
+            })
+            .filter((tool) => !isNil(tool))
 
+        const flowsToolsList = await Promise.all(
+            flowToolsWithPopulatedFlows.map(async (tool) => {
+                const triggerSettings = tool.flow.version.trigger.settings as McpTrigger
+                const toolDescription = triggerSettings.input?.toolDescription
+                const returnsResponse = triggerSettings.input?.returnsResponse
+
+                const inputSchema = Object.fromEntries(
+                    triggerSettings.input?.inputSchema.map((prop) => [
+                        fixProperty(prop.name),
+                        mcpPropertyToSchema(prop),
+                    ]),
+                )
+                const sanitizedName = mcpToolNameUtils.createToolName(tool.toolName)
+                return {
+                    name: sanitizedName,
+                    description: toolDescription,
+                    inputSchema: z.object(inputSchema),
+                    execute: async (inputs: unknown) => {
+                        return callMcpFlowTool({
+                            flowId: tool.flow.id,
+                            publicUrl: params.publicUrl,
+                            token: params.token,
+                            async: !returnsResponse,
+                            inputs,
+                        })
+                    },
+                }
+            }),
+        )
+
+        return {
+            ...Object.fromEntries(flowsToolsList.map((tool) => [tool.name, tool])),
+        }
+    },
 }
 
 function isOkSuccess(status: number) {
-  return Math.floor(status / 100) === 2
+    return Math.floor(status / 100) === 2
 }
 
 async function callMcpFlowTool(params: CallMcpFlowToolParams): Promise<ExecuteToolResponse> {
-  const syncSuffix = params.async ? '' : '/sync';
-  const url = `${params.publicUrl}v1/webhooks/${params.flowId}${syncSuffix}`;
+    const syncSuffix = params.async ? '' : '/sync'
+    const url = `${params.publicUrl}v1/webhooks/${params.flowId}${syncSuffix}`
 
-  try {
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url,
-      headers: {
-        [RAW_PAYLOAD_HEADER]: 'true',
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: params.token,
-      },
-      body: params.inputs,
-    });
+    try {
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.POST,
+            url,
+            headers: {
+                [RAW_PAYLOAD_HEADER]: 'true',
+            },
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: params.token,
+            },
+            body: params.inputs,
+        })
 
-    return {
-      status: isOkSuccess(response.status) ? ExecutionToolStatus.SUCCESS : ExecutionToolStatus.FAILED,
-      output: response.body,
-      resolvedInput: {},
-      errorMessage: !isOkSuccess(response.status) ? 'Error' : undefined,
+        return {
+            status: isOkSuccess(response.status) ? ExecutionToolStatus.SUCCESS : ExecutionToolStatus.FAILED,
+            output: response.body,
+            resolvedInput: {},
+            errorMessage: !isOkSuccess(response.status) ? 'Error' : undefined,
+        }
+    } catch (error) {
+        return {
+            status: ExecutionToolStatus.FAILED,
+            output: undefined,
+            resolvedInput: {},
+            errorMessage: error instanceof Error ? error.message : 'Error executing flow tool',
+        }
     }
-  }
-  catch (error) {
-    return {
-      status: ExecutionToolStatus.FAILED,
-      output: undefined,
-      resolvedInput: {},
-      errorMessage: error instanceof Error ? error.message : 'Error executing flow tool',
-    }
-  }
 }
 
 function fixProperty(schemaName: string) {
-  return schemaName.replace(/[\s/@-]+/g, '_')
+    return schemaName.replace(/[\s/@-]+/g, '_')
 }
 
 function mcpPropertyToSchema(property: McpProperty): z.ZodTypeAny {
-  let schema: z.ZodTypeAny
+    let schema: z.ZodTypeAny
 
-  switch (property.type) {
-    case McpPropertyType.TEXT:
-    case McpPropertyType.DATE:
-      schema = z.string()
-      break
-    case McpPropertyType.NUMBER:
-      schema = z.number()
-      break
-    case McpPropertyType.BOOLEAN:
-      schema = z.boolean()
-      break
-    case McpPropertyType.ARRAY:
-      schema = z.array(z.string())
-      break
-    case McpPropertyType.OBJECT:
-      schema = z.record(z.string(), z.string())
-      break
-    default:
-      schema = z.unknown()
-  }
+    switch (property.type) {
+        case McpPropertyType.TEXT:
+        case McpPropertyType.DATE:
+            schema = z.string()
+            break
+        case McpPropertyType.NUMBER:
+            schema = z.number()
+            break
+        case McpPropertyType.BOOLEAN:
+            schema = z.boolean()
+            break
+        case McpPropertyType.ARRAY:
+            schema = z.array(z.string())
+            break
+        case McpPropertyType.OBJECT:
+            schema = z.record(z.string(), z.string())
+            break
+        default:
+            schema = z.unknown()
+    }
 
-  if (property.description) {
-    schema = schema.describe(property.description)
-  }
+    if (property.description) {
+        schema = schema.describe(property.description)
+    }
 
-  return property.required ? schema : schema.nullish()
+    return property.required ? schema : schema.nullish()
 }
 
 type ConstructFlowsToolsParams = {
-  tools: AgentFlowTool[]
-  fetchFlows: (params: { externalIds: string[] }) => Promise<SeekPage<PopulatedFlow>>
-  publicUrl: string;
-  token: string
+    tools: AgentFlowTool[]
+    fetchFlows: (params: { externalIds: string[] }) => Promise<SeekPage<PopulatedFlow>>
+    publicUrl: string
+    token: string
 }
 
 type CallMcpFlowToolParams = {
-  flowId: string;
-  token: string;
-  publicUrl: string;
-  async: boolean;
-  inputs: unknown;
+    flowId: string
+    token: string
+    publicUrl: string
+    async: boolean
+    inputs: unknown
 }

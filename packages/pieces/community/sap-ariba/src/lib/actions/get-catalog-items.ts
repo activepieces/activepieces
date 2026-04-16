@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sapAribaAuth } from '../auth';
-import { sapAribaCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { sapAribaAuth } from '../auth'
+import { sapAribaCommon } from '../common'
 
 export const getCatalogItems = createAction({
     auth: sapAribaAuth,
@@ -49,18 +49,18 @@ export const getCatalogItems = createAction({
         }),
     },
     async run(context) {
-        const { realm, catalogName, supplierId, select, rsqlfilter, offset, limit } = context.propsValue;
+        const { realm, catalogName, supplierId, select, rsqlfilter, offset, limit } = context.propsValue
 
         const queryParams: Record<string, string> = {
             select,
             offset: offset.toString(),
-        };
+        }
 
         if (rsqlfilter) {
-            queryParams['rsqlfilter'] = rsqlfilter;
+            queryParams['rsqlfilter'] = rsqlfilter
         }
         if (limit) {
-            queryParams['limit'] = limit.toString();
+            queryParams['limit'] = limit.toString()
         }
 
         const response = await sapAribaCommon.makeRequest(
@@ -69,9 +69,9 @@ export const getCatalogItems = createAction({
             `/catalogname/${encodeURIComponent(catalogName)}/supplierid/${encodeURIComponent(supplierId)}/items`,
             queryParams,
             undefined,
-            { realm }
-        );
+            { realm },
+        )
 
-        return response;
+        return response
     },
-});
+})

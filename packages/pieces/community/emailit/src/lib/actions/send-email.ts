@@ -1,5 +1,5 @@
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
 import { createAction, Property } from '@activepieces/pieces-framework'
-import { HttpMethod, AuthenticationType, httpClient } from '@activepieces/pieces-common'
 import { emailitAuth } from '../auth'
 
 export const sendEmailAction = createAction({
@@ -15,7 +15,8 @@ export const sendEmailAction = createAction({
         }),
         from_name: Property.ShortText({
             displayName: 'Sender Name',
-            description: 'Name recipients will see in their inbox, e.g. "Acme Support". If left blank, only the email address is shown.',
+            description:
+                'Name recipients will see in their inbox, e.g. "Acme Support". If left blank, only the email address is shown.',
             required: false,
         }),
         from_email: Property.ShortText({
@@ -57,8 +58,7 @@ export const sendEmailAction = createAction({
         }),
         content: Property.LongText({
             displayName: 'Email Body',
-            description:
-                'The message body. Use Plain Text for simple messages or HTML for rich formatting.',
+            description: 'The message body. Use Plain Text for simple messages or HTML for rich formatting.',
             required: true,
         }),
         headers: Property.Object({
@@ -68,18 +68,8 @@ export const sendEmailAction = createAction({
         }),
     },
     async run(context) {
-        const {
-            to,
-            from_name,
-            from_email,
-            cc,
-            bcc,
-            reply_to,
-            subject,
-            content_type,
-            content,
-            headers,
-        } = context.propsValue
+        const { to, from_name, from_email, cc, bcc, reply_to, subject, content_type, content, headers } =
+            context.propsValue
 
         const requestBody: Record<string, unknown> = {
             from: from_name ? `${from_name} <${from_email}>` : from_email,

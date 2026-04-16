@@ -4,8 +4,8 @@ import {
     ApMultipartFile,
     FileType,
     isNil,
-    PrincipalType,
     PROFILE_PICTURE_ALLOWED_TYPES,
+    PrincipalType,
     UpdateMeResponse,
     UserWithBadges,
 } from '@activepieces/shared'
@@ -55,7 +55,6 @@ export const usersController: FastifyPluginAsyncZod = async (app) => {
 
         return { success: true }
     })
-
 }
 
 const GetUserByIdRequest = {

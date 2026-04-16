@@ -1,10 +1,9 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { apId, DefaultProjectRole, PrincipalType } from '@activepieces/shared'
+import { apId, DefaultProjectRole, PlatformRole, PrincipalType, ProjectRole } from '@activepieces/shared'
 import { FastifyInstance, LightMyRequestResponse } from 'fastify'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { createMockProjectMember, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
-import { ProjectRole, PlatformRole } from '@activepieces/shared'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -105,7 +104,12 @@ describe('Store-entries API', () => {
     })
 })
 
-function makePostRequest(testToken: string, key: string, value: string, projectId?: string): Promise<LightMyRequestResponse> | undefined {
+function makePostRequest(
+    testToken: string,
+    key: string,
+    value: string,
+    projectId?: string,
+): Promise<LightMyRequestResponse> | undefined {
     return app?.inject({
         method: 'POST',
         url: '/api/v1/store-entries/',

@@ -5,30 +5,14 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@activepieces/shared": [
-        "../../packages/shared/src"
-      ],
-      "@activepieces/pieces-framework": [
-        "../../packages/pieces/framework/src"
-      ],
-      "@activepieces/pieces-common": [
-        "../../packages/pieces/common/src"
-      ],
-      "ee-embed-sdk": [
-        "../../packages/ee/embed-sdk/src"
-      ],
-      "@activepieces/piece-ai": [
-        "../../packages/pieces/community/ai/src"
-      ]
+      "@/*": ["./src/*"],
+      "@activepieces/shared": ["../../packages/shared/src"],
+      "@activepieces/pieces-framework": ["../../packages/pieces/framework/src"],
+      "@activepieces/pieces-common": ["../../packages/pieces/common/src"],
+      "ee-embed-sdk": ["../../packages/ee/embed-sdk/src"],
+      "@activepieces/piece-ai": ["../../packages/pieces/community/ai/src"]
     },
-    "types": [
-      "vite/client",
-      "vitest/globals",
-      "node"
-    ]
+    "types": ["vite/client", "vitest/globals", "node"]
   },
   "include": [
     "vitest.config.ts",

@@ -21,7 +21,7 @@ import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { membersTableColumns, MemberRowData } from './columns';
+import { MemberRowData, membersTableColumns } from './columns';
 
 export const MembersSettings = () => {
   const {

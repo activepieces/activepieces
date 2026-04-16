@@ -1,4 +1,6 @@
-import { ActivepiecesError, AddSigningKeyRequestBody,
+import {
+    ActivepiecesError,
+    AddSigningKeyRequestBody,
     ApId,
     ApplicationEventName,
     assertNotNullOrUndefined,

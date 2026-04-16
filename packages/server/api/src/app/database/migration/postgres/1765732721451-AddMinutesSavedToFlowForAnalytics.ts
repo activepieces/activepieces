@@ -60,7 +60,6 @@ export class AddMinutesSavedToFlowForAnalytics1765732721451 implements Migration
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report" DROP COLUMN "outdated"
         `)
@@ -86,5 +85,4 @@ export class AddMinutesSavedToFlowForAnalytics1765732721451 implements Migration
             ADD "activeProjects" integer NOT NULL
         `)
     }
-
 }

@@ -1,8 +1,7 @@
-import { googleSheetsAuth } from '../common/common';
-import { createAction } from '@activepieces/pieces-framework';
-import { includeTeamDrivesProp, sheetIdProp, spreadsheetIdProp } from '../common/props';
-import { google } from 'googleapis';
-import { createGoogleClient } from '../common/common';
+import { createAction } from '@activepieces/pieces-framework'
+import { google } from 'googleapis'
+import { createGoogleClient, googleSheetsAuth } from '../common/common'
+import { includeTeamDrivesProp, sheetIdProp, spreadsheetIdProp } from '../common/props'
 
 export const deleteWorksheetAction = createAction({
     auth: googleSheetsAuth,
@@ -15,22 +14,22 @@ export const deleteWorksheetAction = createAction({
         sheetId: sheetIdProp('Worksheet', 'The ID of the worksheet to delete.'),
     },
     async run(context) {
-        const authClient = await createGoogleClient(context.auth);
-        const sheets = google.sheets({ version: 'v4', auth: authClient });
+        const authClient = await createGoogleClient(context.auth)
+        const sheets = google.sheets({ version: 'v4', auth: authClient })
 
         const response = await sheets.spreadsheets.batchUpdate({
             spreadsheetId: context.propsValue.spreadsheetId,
             requestBody: {
-                requests:[
+                requests: [
                     {
-                       deleteSheet:{
-                        sheetId:context.propsValue.sheetId
-                       }
-                    }
-                ]
+                        deleteSheet: {
+                            sheetId: context.propsValue.sheetId,
+                        },
+                    },
+                ],
             },
-        });
+        })
 
-        return response.data;
+        return response.data
     },
-});
+})

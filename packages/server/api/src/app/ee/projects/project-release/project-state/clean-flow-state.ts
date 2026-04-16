@@ -1,4 +1,12 @@
-import { FlowAction, FlowActionType, FlowState, FlowTrigger, FlowTriggerType, FlowVersion, isNil } from '@activepieces/shared'
+import {
+    FlowAction,
+    FlowActionType,
+    FlowState,
+    FlowTrigger,
+    FlowTriggerType,
+    FlowVersion,
+    isNil,
+} from '@activepieces/shared'
 
 function cleanFlowState(flowState: FlowState): FlowState {
     return {
@@ -73,13 +81,19 @@ function cleanAction(action: FlowAction): FlowAction {
             return { ...commonProps, type: action.type, settings: action.settings, nextAction }
         case FlowActionType.LOOP_ON_ITEMS:
             return {
-                ...commonProps, type: action.type, settings: action.settings, nextAction,
+                ...commonProps,
+                type: action.type,
+                settings: action.settings,
+                nextAction,
                 firstLoopAction: isNil(action.firstLoopAction) ? undefined : cleanAction(action.firstLoopAction),
             }
         case FlowActionType.ROUTER:
             return {
-                ...commonProps, type: action.type, settings: action.settings, nextAction,
-                children: action.children.map((child) => isNil(child) ? null : cleanAction(child)),
+                ...commonProps,
+                type: action.type,
+                settings: action.settings,
+                nextAction,
+                children: action.children.map((child) => (isNil(child) ? null : cleanAction(child))),
             }
     }
 }

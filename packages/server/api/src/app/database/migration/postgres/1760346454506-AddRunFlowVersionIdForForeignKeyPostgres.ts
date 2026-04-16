@@ -17,8 +17,7 @@ export class AddRunFlowVersionIdForForeignKeyPostgres1760346454506 implements Mi
             await queryRunner.query(`
                 CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_flow_version_id" ON "flow_run" ("flowVersionId")
             `)
-        }
-        else {
+        } else {
             await queryRunner.query(`
                 CREATE INDEX IF NOT EXISTS "idx_run_flow_version_id" ON "flow_run" ("flowVersionId")
             `)
@@ -30,5 +29,4 @@ export class AddRunFlowVersionIdForForeignKeyPostgres1760346454506 implements Mi
             DROP INDEX IF EXISTS "idx_run_flow_version_id"
         `)
     }
-
 }

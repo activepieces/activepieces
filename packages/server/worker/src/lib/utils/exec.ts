@@ -1,5 +1,5 @@
-import { exec as execCallback, spawn } from 'node:child_process'
 import type { SpawnOptions } from 'node:child_process'
+import { exec as execCallback, spawn } from 'node:child_process'
 import { promisify } from 'node:util'
 import treeKill from 'tree-kill'
 
@@ -12,7 +12,6 @@ export async function spawnWithKill({
     printOutput,
     timeoutMs,
 }: SpawnWithKillParams): Promise<CommandOutput> {
-
     return new Promise((resolve, reject) => {
         // When explicit args are provided, skip shell splitting and disable shell
         // to prevent command injection via user-controlled path components.
@@ -28,14 +27,14 @@ export async function spawnWithKill({
         let stderr = ''
 
         if (cp.stdout) {
-            cp.stdout.on('data', data => {
+            cp.stdout.on('data', (data) => {
                 if (printOutput) process.stdout.write(data)
                 stdout += data
             })
         }
 
         if (cp.stderr) {
-            cp.stderr.on('data', data => {
+            cp.stderr.on('data', (data) => {
                 if (printOutput) process.stderr.write(data)
                 stderr += data
             })
@@ -62,15 +61,11 @@ export async function spawnWithKill({
 
         if (timeoutMs && timeoutMs > 0) {
             timeoutHandler = setTimeout(() => {
-                finish(
-                    new Error(
-                        `Timeout after ${timeoutMs}ms\nstdout: ${stdout}\nstderr: ${stderr}`,
-                    ),
-                )
+                finish(new Error(`Timeout after ${timeoutMs}ms\nstdout: ${stdout}\nstderr: ${stderr}`))
             }, timeoutMs)
         }
 
-        cp.on('error', err => finish(err))
+        cp.on('error', (err) => finish(err))
         cp.on('close', (code, signal) => {
             if (code !== 0) {
                 return finish(
@@ -83,7 +78,6 @@ export async function spawnWithKill({
         })
     })
 }
-
 
 type SpawnWithKillParams = {
     cmd: string

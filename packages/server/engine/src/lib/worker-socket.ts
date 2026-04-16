@@ -45,7 +45,7 @@ export const workerSocket = {
         const originalError = console.error
         console.error = function (...args): void {
             let sanitizedArgs = [...args]
-            if (typeof args[0] === 'string' && ERROR_MESSAGES_TO_REDACT.some(m => args[0].includes(m))) {
+            if (typeof args[0] === 'string' && ERROR_MESSAGES_TO_REDACT.some((m) => args[0].includes(m))) {
                 sanitizedArgs = [sanitizedArgs[0], 'REDACTED']
             }
             notifyClient?.stderr({ message: sanitizedArgs.join(' ') + '\n' })
@@ -58,8 +58,7 @@ export const workerSocket = {
                 try {
                     const response = await execute(operationType, operation)
                     return JSON.parse(JSON.stringify(response)) as EngineResponse<unknown>
-                }
-                finally {
+                } finally {
                     await runProgressService.shutdown()
                 }
             },

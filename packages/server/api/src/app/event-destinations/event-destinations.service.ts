@@ -1,12 +1,23 @@
 import {
     ActivepiecesError,
-    apId,
     ApplicationEvent,
     ApplicationEventName,
+    apId,
     assertNotNullOrUndefined,
     CreatePlatformEventDestinationRequestBody,
     Cursor,
-    ErrorCode, EventDestination, EventDestinationScope, FlowCreatedEvent, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProjectId, SeekPage, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
+    ErrorCode,
+    EventDestination,
+    EventDestinationScope,
+    FlowCreatedEvent,
+    isNil,
+    LATEST_JOB_DATA_SCHEMA_VERSION,
+    PlatformId,
+    ProjectId,
+    SeekPage,
+    UpdatePlatformEventDestinationRequestBody,
+    WorkerJobType,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, FindOptionsWhere } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -15,17 +26,12 @@ import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
-import { jobQueue, JobType } from '../workers/job-queue/job-queue'
-import {
-    EventDestinationEntity,
-    EventDestinationSchema,
-} from './event-destinations.entity'
+import { JobType, jobQueue } from '../workers/job-queue/job-queue'
+import { EventDestinationEntity, EventDestinationSchema } from './event-destinations.entity'
 
-const eventDestinationRepo = repoFactory<EventDestinationSchema>(
-    EventDestinationEntity,
-)
+const eventDestinationRepo = repoFactory<EventDestinationSchema>(EventDestinationEntity)
 
-const PROJECT_SCOPE_EVENTS = [ ApplicationEventName.FLOW_RUN_FINISHED ]
+const PROJECT_SCOPE_EVENTS = [ApplicationEventName.FLOW_RUN_FINISHED]
 
 export const eventDestinationService = (log: FastifyBaseLogger) => ({
     setup(): void {
@@ -73,11 +79,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             platformId,
         })
     },
-    list: async ({
-        platformId,
-        cursorRequest,
-        limit,
-    }: ListParams): Promise<SeekPage<EventDestination>> => {
+    list: async ({ platformId, cursorRequest, limit }: ListParams): Promise<SeekPage<EventDestination>> => {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: EventDestinationEntity,
@@ -88,22 +90,22 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             },
         })
 
-        const queryBuilder = eventDestinationRepo()
-            .createQueryBuilder('event_destination')
-            .where({
-                platformId,
-            })
+        const queryBuilder = eventDestinationRepo().createQueryBuilder('event_destination').where({
+            platformId,
+        })
 
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
         return paginationHelper.createPage<EventDestination>(data, cursor)
     },
     trigger: async ({ platformId, projectId, event }: TriggerParams): Promise<void> => {
-        const conditions: FindOptionsWhere<EventDestinationSchema>[] = [{
-            platformId,
-            events: ArrayContains([event.action]),
-            scope: EventDestinationScope.PLATFORM,
-        }]
+        const conditions: FindOptionsWhere<EventDestinationSchema>[] = [
+            {
+                platformId,
+                events: ArrayContains([event.action]),
+                scope: EventDestinationScope.PLATFORM,
+            },
+        ]
         const broadcastToProject = !isNil(projectId) && PROJECT_SCOPE_EVENTS.includes(event.action)
         if (broadcastToProject) {
             conditions.push({
@@ -113,21 +115,23 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             })
         }
         const destinations = await eventDestinationRepo().findBy(conditions)
-        await Promise.all(destinations.map(destination =>
-            jobQueue(log).add({
-                type: JobType.ONE_TIME,
-                id: apId(),
-                data: {
-                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                    platformId,
-                    projectId,
-                    webhookId: destination.id,
-                    webhookUrl: destination.url,
-                    payload: event.data,
-                    jobType: WorkerJobType.EVENT_DESTINATION,
-                },
-            }),
-        ))
+        await Promise.all(
+            destinations.map((destination) =>
+                jobQueue(log).add({
+                    type: JobType.ONE_TIME,
+                    id: apId(),
+                    data: {
+                        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                        platformId,
+                        projectId,
+                        webhookId: destination.id,
+                        webhookUrl: destination.url,
+                        payload: event.data,
+                        jobType: WorkerJobType.EVENT_DESTINATION,
+                    },
+                }),
+            ),
+        )
     },
     test: async ({ platformId, projectId, url }: TestParams): Promise<void> => {
         assertUrlIsExternal(url)
@@ -180,7 +184,6 @@ const assertUrlIsExternal = (url: string) => {
     }
 }
 
-
 type DeleteParams = {
     id: string
     platformId: string
@@ -209,4 +212,3 @@ type TestParams = {
     projectId?: ProjectId
     url: string
 }
-

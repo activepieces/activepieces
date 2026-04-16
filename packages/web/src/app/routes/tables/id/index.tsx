@@ -1,6 +1,6 @@
 import { ApFlagId, Permission } from '@activepieces/shared';
 import { nanoid } from 'nanoid';
-import { useRef, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import DataGrid, { DataGridHandle } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useNavigate } from 'react-router-dom';
@@ -9,12 +9,12 @@ import { useTheme } from '@/components/providers/theme-provider';
 import {
   ApTableFooter,
   ApTableHeader,
-  useTableState,
-  useTableColumns,
   mapRecordsToRows,
-  Row,
   ROW_HEIGHT_MAP,
+  Row,
   RowHeight,
+  useTableColumns,
+  useTableState,
 } from '@/features/tables';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';

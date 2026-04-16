@@ -40,7 +40,6 @@ export const domainHelper = {
     },
 }
 
-
 function cleanLeadingSlash(path: string) {
     return path.startsWith('/') ? path.slice(1) : path
 }

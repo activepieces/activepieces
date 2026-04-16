@@ -1,24 +1,24 @@
 import {
   ApplicationEvent,
   ApplicationEventName,
-  summarizeApplicationEvent,
   isNil,
+  summarizeApplicationEvent,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   CheckIcon,
+  Clock,
   Eye,
+  FileText,
   Folder,
   History,
   Key,
   Link2,
   Logs,
+  User,
   Users,
   Wand,
   Workflow,
-  FileText,
-  User,
-  Clock,
 } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { Link } from 'react-router-dom';

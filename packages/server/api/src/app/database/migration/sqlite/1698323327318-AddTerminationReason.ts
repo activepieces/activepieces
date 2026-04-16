@@ -1,16 +1,10 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddTerminationReasonSqlite1698323327318
-implements MigrationInterface {
+export class AddTerminationReasonSqlite1698323327318 implements MigrationInterface {
     name = 'AddTerminationReasonSqlite1698323327318'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (
-            await migrationRan(
-                'AddTerminationReasonSqlite31698323327318',
-                queryRunner,
-            )
-        ) {
+        if (await migrationRan('AddTerminationReasonSqlite31698323327318', queryRunner)) {
             return
         }
         await queryRunner.query(`
@@ -218,13 +212,7 @@ implements MigrationInterface {
     }
 }
 
-async function migrationRan(
-    migration: string,
-    queryRunner: QueryRunner,
-): Promise<boolean> {
-    const result = await queryRunner.query(
-        'SELECT * from migrations where name = ?',
-        [migration],
-    )
+async function migrationRan(migration: string, queryRunner: QueryRunner): Promise<boolean> {
+    const result = await queryRunner.query('SELECT * from migrations where name = ?', [migration])
     return result.length > 0
 }

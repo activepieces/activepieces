@@ -7,7 +7,6 @@ const log = system.globalLogger()
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 const isPGlite = databaseType === DatabaseType.PGLITE
 
-
 export class AddLogsFileIdIndex1725699690971 implements MigrationInterface {
     name = 'AddLogsFileIdIndex1725699690971'
     transaction = false
@@ -20,8 +19,7 @@ export class AddLogsFileIdIndex1725699690971 implements MigrationInterface {
             await queryRunner.query(`
                 CREATE INDEX CONCURRENTLY "idx_file_project_id" ON "file" ("projectId")
             `)
-        }
-        else {
+        } else {
             await queryRunner.query(`
                 CREATE INDEX "idx_file_project_id" ON "file" ("projectId")
             `)
@@ -32,8 +30,7 @@ export class AddLogsFileIdIndex1725699690971 implements MigrationInterface {
             await queryRunner.query(`
                 CREATE INDEX CONCURRENTLY "idx_file_type_created_desc" ON "file" ("type", "created")
             `)
-        }
-        else {
+        } else {
             await queryRunner.query(`
                 CREATE INDEX "idx_file_type_created_desc" ON "file" ("type", "created")
             `)
@@ -44,8 +41,7 @@ export class AddLogsFileIdIndex1725699690971 implements MigrationInterface {
             await queryRunner.query(`
                 CREATE INDEX CONCURRENTLY "idx_run_logs_file_id" ON "flow_run" ("logsFileId")
             `)
-        }
-        else {
+        } else {
             await queryRunner.query(`
                 CREATE INDEX "idx_run_logs_file_id" ON "flow_run" ("logsFileId")
             `)
@@ -66,8 +62,7 @@ export class AddLogsFileIdIndex1725699690971 implements MigrationInterface {
             await queryRunner.query(`
                 DROP INDEX CONCURRENTLY "idx_file_project_id"
             `)
-        }
-        else {
+        } else {
             await queryRunner.query(`
                 DROP INDEX "idx_run_logs_file_id"
             `)
@@ -80,5 +75,4 @@ export class AddLogsFileIdIndex1725699690971 implements MigrationInterface {
         }
         log.info('[addLogsFileIdIndex1725699690971#down]')
     }
-
 }

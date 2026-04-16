@@ -1,9 +1,9 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { HttpMethod } from "@activepieces/pieces-common";
-import { createHash } from "crypto";
-import { emailOctopusAuth } from "../common/auth";
-import { EmailOctopusClient } from "../common/client";
-import { emailOctopusProps } from "../common/props";
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { createHash } from 'crypto'
+import { emailOctopusAuth } from '../common/auth'
+import { EmailOctopusClient } from '../common/client'
+import { emailOctopusProps } from '../common/props'
 
 export const unsubscribeContact = createAction({
     auth: emailOctopusAuth,
@@ -14,29 +14,21 @@ export const unsubscribeContact = createAction({
         list_id: emailOctopusProps.listId(),
         email_address: Property.ShortText({
             displayName: 'Email Address',
-            description: "The email address of the contact to unsubscribe.",
+            description: 'The email address of the contact to unsubscribe.',
             required: true,
         }),
     },
 
     async run(context) {
-        const { list_id, email_address } = context.propsValue;
-        const client = new EmailOctopusClient(context.auth.secret_text);
+        const { list_id, email_address } = context.propsValue
+        const client = new EmailOctopusClient(context.auth.secret_text)
 
-        
-        const contactId = createHash('md5')
-            .update(email_address.toLowerCase())
-            .digest('hex');
+        const contactId = createHash('md5').update(email_address.toLowerCase()).digest('hex')
 
         const body = {
             status: 'unsubscribed',
-        };
+        }
 
-        
-        return await client.makeRequest(
-            HttpMethod.PUT,
-            `/lists/${list_id}/contacts/${contactId}`,
-            body
-        );
+        return await client.makeRequest(HttpMethod.PUT, `/lists/${list_id}/contacts/${contactId}`, body)
     },
-});
+})

@@ -1,12 +1,13 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const updateReceivablesInvoice = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'update_receivables_invoice',
     displayName: 'Update Receivables Invoice',
-    description: 'Updates an existing receivables invoice. Note: Only InvoiceStatus, PaymentTerms, and TransactionDate can be updated.',
+    description:
+        'Updates an existing receivables invoice. Note: Only InvoiceStatus, PaymentTerms, and TransactionDate can be updated.',
     props: {
         customerTransactionId: Property.ShortText({
             displayName: 'Customer Transaction ID',
@@ -37,20 +38,22 @@ export const updateReceivablesInvoice = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
-        const { customerTransactionId, invoiceStatus, paymentTerms, transactionDate } = context.propsValue;
+        const client = makeClient(context.auth.props)
+        const { customerTransactionId, invoiceStatus, paymentTerms, transactionDate } = context.propsValue
 
-        const payload: Record<string, unknown> = {};
+        const payload: Record<string, unknown> = {}
 
-        if (invoiceStatus) payload['InvoiceStatus'] = invoiceStatus;
-        if (paymentTerms) payload['PaymentTerms'] = paymentTerms;
-        if (transactionDate) payload['TransactionDate'] = transactionDate;
+        if (invoiceStatus) payload['InvoiceStatus'] = invoiceStatus
+        if (paymentTerms) payload['PaymentTerms'] = paymentTerms
+        if (transactionDate) payload['TransactionDate'] = transactionDate
 
         if (Object.keys(payload).length === 0) {
-            throw new Error('At least one field (InvoiceStatus, PaymentTerms, or TransactionDate) must be provided to update.');
+            throw new Error(
+                'At least one field (InvoiceStatus, PaymentTerms, or TransactionDate) must be provided to update.',
+            )
         }
 
-        const response = await client.updateRecord(`/receivablesInvoices/${customerTransactionId}`, payload);
-        return response;
+        const response = await client.updateRecord(`/receivablesInvoices/${customerTransactionId}`, payload)
+        return response
     },
-});
+})

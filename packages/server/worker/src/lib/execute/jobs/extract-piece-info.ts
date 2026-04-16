@@ -1,8 +1,4 @@
-import {
-    EngineOperationType,
-    ExecuteExtractPieceMetadataJobData,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { EngineOperationType, ExecuteExtractPieceMetadataJobData, WorkerJobType } from '@activepieces/shared'
 import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
@@ -42,12 +38,10 @@ export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData,
                 errorMessage: result.error,
                 logs: result.logs,
             }
-        }
-        catch (e) {
+        } catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
             throw e
-        }
-        finally {
+        } finally {
             await ctx.sandboxManager.release(ctx.log)
         }
     },

@@ -123,5 +123,4 @@ export class AddPlatformForeignKeyToProjectSqlite1709566629593 implements Migrat
 
         log.info('[AddPlatformForeignKeyToProjectSqlite1709566629593#down]')
     }
-
 }

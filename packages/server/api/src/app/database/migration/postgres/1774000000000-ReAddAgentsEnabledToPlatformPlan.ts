@@ -23,5 +23,4 @@ export class ReAddAgentsEnabledToPlatformPlan1774000000000 implements MigrationI
             ALTER TABLE "platform_plan" DROP COLUMN "agentsEnabled"
         `)
     }
-
 }

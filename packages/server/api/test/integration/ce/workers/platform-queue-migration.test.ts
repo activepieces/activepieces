@@ -1,9 +1,9 @@
 import { apId, FlowTriggerType, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { getWorkerGroupQueueName } from '../../../../src/app/workers/job'
 import { jobQueue } from '../../../../src/app/workers/job-queue/job-queue'
 import { platformQueueMigrationService } from '../../../../src/app/workers/platform-queue-migration.service'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
 
@@ -178,8 +178,12 @@ describe('platformQueueMigrationService', () => {
 
         const jobIdA = apId()
         const jobIdB = apId()
-        await fromQueue.add(jobIdA, buildPollingJobData({ platformId: platformA, flowVersionId: apId() }), { jobId: jobIdA })
-        await fromQueue.add(jobIdB, buildPollingJobData({ platformId: platformB, flowVersionId: apId() }), { jobId: jobIdB })
+        await fromQueue.add(jobIdA, buildPollingJobData({ platformId: platformA, flowVersionId: apId() }), {
+            jobId: jobIdA,
+        })
+        await fromQueue.add(jobIdB, buildPollingJobData({ platformId: platformB, flowVersionId: apId() }), {
+            jobId: jobIdB,
+        })
 
         await platformQueueMigrationService(app.log).migrateJobs({ fromQueueName, toQueueName, platformId: platformA })
 
@@ -203,7 +207,12 @@ describe('platformQueueMigrationService', () => {
                 )
             }
 
-            await platformQueueMigrationService(app.log).migrateJobs({ fromQueueName, toQueueName, platformId, batchSize: 2 })
+            await platformQueueMigrationService(app.log).migrateJobs({
+                fromQueueName,
+                toQueueName,
+                platformId,
+                batchSize: 2,
+            })
 
             expect(await fromQueue.getJobSchedulersCount()).toBe(0)
             expect(await toQueue.getJobSchedulersCount()).toBe(total)
@@ -218,18 +227,31 @@ describe('platformQueueMigrationService', () => {
             // Interleave platformA and platformB schedulers to exercise multi-batch offset tracking
             for (let i = 0; i < 3; i++) {
                 const idA = apId()
-                await fromQueue.upsertJobScheduler(idA, { pattern: '*/5 * * * *', tz: 'UTC' }, { name: idA, data: buildPollingJobData({ platformId: platformA, flowVersionId: idA }) })
+                await fromQueue.upsertJobScheduler(
+                    idA,
+                    { pattern: '*/5 * * * *', tz: 'UTC' },
+                    { name: idA, data: buildPollingJobData({ platformId: platformA, flowVersionId: idA }) },
+                )
                 const idB = apId()
-                await fromQueue.upsertJobScheduler(idB, { pattern: '*/10 * * * *', tz: 'UTC' }, { name: idB, data: buildPollingJobData({ platformId: platformB, flowVersionId: idB }) })
+                await fromQueue.upsertJobScheduler(
+                    idB,
+                    { pattern: '*/10 * * * *', tz: 'UTC' },
+                    { name: idB, data: buildPollingJobData({ platformId: platformB, flowVersionId: idB }) },
+                )
             }
 
-            await platformQueueMigrationService(app.log).migrateJobs({ fromQueueName, toQueueName, platformId: platformA, batchSize: 2 })
+            await platformQueueMigrationService(app.log).migrateJobs({
+                fromQueueName,
+                toQueueName,
+                platformId: platformA,
+                batchSize: 2,
+            })
 
             expect(await fromQueue.getJobSchedulersCount()).toBe(3)
             expect(await toQueue.getJobSchedulersCount()).toBe(3)
 
             const remaining = await fromQueue.getJobSchedulers(0, -1)
-            expect(remaining.every(s => s.template?.data?.platformId === platformB)).toBe(true)
+            expect(remaining.every((s) => s.template?.data?.platformId === platformB)).toBe(true)
         })
 
         it('migrates all regular jobs when count exceeds batchSize', async () => {
@@ -243,7 +265,12 @@ describe('platformQueueMigrationService', () => {
                 await fromQueue.add(jobId, buildPollingJobData({ platformId, flowVersionId: apId() }), { jobId })
             }
 
-            await platformQueueMigrationService(app.log).migrateJobs({ fromQueueName, toQueueName, platformId, batchSize: 2 })
+            await platformQueueMigrationService(app.log).migrateJobs({
+                fromQueueName,
+                toQueueName,
+                platformId,
+                batchSize: 2,
+            })
 
             expect(await fromQueue.getWaitingCount()).toBe(0)
             expect(await toQueue.getWaitingCount()).toBe(total)
@@ -251,7 +278,7 @@ describe('platformQueueMigrationService', () => {
     })
 })
 
-function buildPollingJobData({ platformId, flowVersionId }: { platformId: string, flowVersionId: string }) {
+function buildPollingJobData({ platformId, flowVersionId }: { platformId: string; flowVersionId: string }) {
     return {
         projectId: apId(),
         platformId,

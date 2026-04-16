@@ -14,7 +14,7 @@ export enum SystemJobName {
     HARD_DELETE_PLATFORM = 'hard-delete-platform',
 }
 
-type DeleteFlowDurableSystemJobData =  {
+type DeleteFlowDurableSystemJobData = {
     flow: Flow
     preDeleteDone: boolean
 }
@@ -48,7 +48,9 @@ type SystemJobDataMap = {
     [SystemJobName.HARD_DELETE_PLATFORM]: HardDeletePlatformSystemJobData
 }
 
-export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
+export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName
+    ? SystemJobDataMap[T]
+    : never
 
 export type SystemJobDefinition<T extends SystemJobName> = {
     name: T

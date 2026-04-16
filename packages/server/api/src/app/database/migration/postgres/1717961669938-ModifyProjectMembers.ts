@@ -10,7 +10,7 @@ export class ModifyProjectMembers1717961669938 implements MigrationInterface {
         if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
             return
         }
-        const projectMembers = await queryRunner.query('SELECT * FROM project_member WHERE status = \'ACTIVE\'')
+        const projectMembers = await queryRunner.query("SELECT * FROM project_member WHERE status = 'ACTIVE'")
         await queryRunner.query('TRUNCATE TABLE project_member CASCADE')
         await queryRunner.query(`
             DROP INDEX "idx_project_member_project_id_email_platform_id"
@@ -43,7 +43,9 @@ export class ModifyProjectMembers1717961669938 implements MigrationInterface {
             if (projectMember.role === 'EXTERNAL_CUSTOMER') {
                 projectMember.role = 'OPERATOR'
             }
-            const user = await queryRunner.query(`SELECT * FROM "user" WHERE email = '${projectMember.email}' AND "platformId" = '${projectMember.platformId}'`)
+            const user = await queryRunner.query(
+                `SELECT * FROM "user" WHERE email = '${projectMember.email}' AND "platformId" = '${projectMember.platformId}'`,
+            )
             if (user.length === 0) {
                 // Skip if user not found
                 continue
@@ -97,5 +99,4 @@ export class ModifyProjectMembers1717961669938 implements MigrationInterface {
         `)
         }
     }
-
 }

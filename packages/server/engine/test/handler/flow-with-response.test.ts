@@ -4,17 +4,16 @@ import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildPieceAction, generateMockEngineConstants } from './test-helper'
 
 describe('flow with response', () => {
-
     it('should execute return response successfully', async () => {
         const input = {
             responseType: 'json',
             fields: {
                 status: 200,
                 headers: {
-                    'random': 'header',
+                    random: 'header',
                 },
                 body: {
-                    'hello': 'world',
+                    hello: 'world',
                 },
             },
             respond: 'stop',
@@ -22,10 +21,10 @@ describe('flow with response', () => {
         const response = {
             status: 200,
             headers: {
-                'random': 'header',
+                random: 'header',
             },
             body: {
-                'hello': 'world',
+                hello: 'world',
             },
         }
 
@@ -35,7 +34,9 @@ describe('flow with response', () => {
                 pieceName: '@activepieces/piece-webhook',
                 actionName: 'return_response',
                 input,
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
         })
         expect(result.verdict).toStrictEqual({
             status: FlowRunStatus.SUCCEEDED,
@@ -43,5 +44,4 @@ describe('flow with response', () => {
         })
         expect(result.steps.http.output).toEqual(response)
     })
-
 })

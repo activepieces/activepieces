@@ -26,8 +26,8 @@ import {
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import {
-  signingKeyApi,
   NewSigningKeyDialog,
+  signingKeyApi,
   signingKeyQueries,
 } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -157,4 +157,5 @@ const SigningKeysPage = () => {
 };
 
 SigningKeysPage.displayName = 'SigningKeysPage';
+
 export { SigningKeysPage };

@@ -1,7 +1,7 @@
-import fs from 'fs'
-import os from 'os'
 import { MachineInformation, tryCatch } from '@activepieces/shared'
 import checkDiskSpace from 'check-disk-space'
+import fs from 'fs'
+import os from 'os'
 import si from 'systeminformation'
 import { fileSystemUtils } from './file-system-utils'
 
@@ -12,14 +12,14 @@ let prevTimestamp = Date.now()
 
 async function readCgroupFile(path: string): Promise<string | null> {
     const { data, error } = await tryCatch(async () => {
-        if (!await fileSystemUtils.fileExists(path)) return null
+        if (!(await fileSystemUtils.fileExists(path))) return null
         return (await fs.promises.readFile(path, 'utf8')).trim()
     })
     if (error) return null
     return data
 }
 
-async function getCgroupMemory(): Promise<{ totalRamInBytes: number, ramUsage: number } | null> {
+async function getCgroupMemory(): Promise<{ totalRamInBytes: number; ramUsage: number } | null> {
     const paths = [
         { limit: '/sys/fs/cgroup/memory.max', usage: '/sys/fs/cgroup/memory.current' },
         { limit: '/sys/fs/cgroup/memory/memory.limit_in_bytes', usage: '/sys/fs/cgroup/memory/memory.usage_in_bytes' },
@@ -31,7 +31,13 @@ async function getCgroupMemory(): Promise<{ totalRamInBytes: number, ramUsage: n
         if (!usageStr) continue
         const totalRamInBytes = parseInt(limitStr)
         const usedBytes = parseInt(usageStr)
-        if (isNaN(totalRamInBytes) || isNaN(usedBytes) || totalRamInBytes <= 0 || totalRamInBytes > MAX_REASONABLE_MEMORY_BYTES) continue
+        if (
+            isNaN(totalRamInBytes) ||
+            isNaN(usedBytes) ||
+            totalRamInBytes <= 0 ||
+            totalRamInBytes > MAX_REASONABLE_MEMORY_BYTES
+        )
+            continue
         return {
             totalRamInBytes,
             ramUsage: (usedBytes / totalRamInBytes) * 100,

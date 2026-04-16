@@ -1,10 +1,9 @@
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
 import { apDayjs } from '@activepieces/server-utils'
 import {
-    AiCreditsAutoTopUpState,
     AIProvider,
     AIProviderName,
-    apId,
+    AiCreditsAutoTopUpState,
     ApiKey,
     AppConnection,
     AppConnectionScope,
@@ -12,6 +11,7 @@ import {
     AppConnectionType,
     ApplicationEvent,
     ApplicationEventName,
+    apId,
     assertNotNullOrUndefined,
     Cell,
     ColorName,
@@ -70,7 +70,8 @@ import {
     UserIdentity,
     UserIdentityProvider,
     UserInvitation,
-    UserStatus } from '@activepieces/shared'
+    UserStatus,
+} from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'
@@ -97,9 +98,7 @@ export const createMockUserIdentity = (userIdentity?: Partial<UserIdentity>): Us
         firstName: userIdentity?.firstName ?? faker.person.firstName(),
         lastName: userIdentity?.lastName ?? faker.person.lastName(),
         tokenVersion: userIdentity?.tokenVersion ?? undefined,
-        password: userIdentity?.password
-            ? bcrypt.hashSync(userIdentity.password, 10)
-            : faker.internet.password(),
+        password: userIdentity?.password ? bcrypt.hashSync(userIdentity.password, 10) : faker.internet.password(),
         trackEvents: userIdentity?.trackEvents ?? faker.datatype.boolean(),
         newsLetter: userIdentity?.newsLetter ?? faker.datatype.boolean(),
         verified: userIdentity?.verified ?? faker.datatype.boolean(),
@@ -120,9 +119,7 @@ export const createMockUser = (user?: Partial<User>): User => {
     }
 }
 
-export const createMockOAuthApp = async (
-    oAuthApp?: Partial<OAuthApp>,
-): Promise<OAuthAppWithEncryptedSecret> => {
+export const createMockOAuthApp = async (oAuthApp?: Partial<OAuthApp>): Promise<OAuthAppWithEncryptedSecret> => {
     return {
         id: oAuthApp?.id ?? apId(),
         created: oAuthApp?.created ?? faker.date.recent().toISOString(),
@@ -134,9 +131,7 @@ export const createMockOAuthApp = async (
     }
 }
 
-export const createMockTemplate = (
-    template?: Partial<Template>,
-): Template => {
+export const createMockTemplate = (template?: Partial<Template>): Template => {
     return {
         id: template?.id ?? apId(),
         created: template?.created ?? faker.date.recent().toISOString(),
@@ -256,7 +251,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         plan: platformPlan?.plan,
         secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
         scimEnabled: platformPlan?.scimEnabled ?? false,
-        canary: platformPlan?.canary ?? false
+        canary: platformPlan?.canary ?? false,
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
@@ -276,9 +271,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         pinnedPieces: platform?.pinnedPieces ?? [],
         favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
         filteredPieceNames: platform?.filteredPieceNames ?? [],
-        filteredPieceBehavior:
-            platform?.filteredPieceBehavior ??
-            faker.helpers.enumValue(FilteredPieceBehavior),
+        filteredPieceBehavior: platform?.filteredPieceBehavior ?? faker.helpers.enumValue(FilteredPieceBehavior),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
     }
 }
@@ -359,10 +352,7 @@ export const createMockApiKey = (
     }
 }
 
-
-export const createMockSigningKey = (
-    signingKey?: Partial<SigningKey>,
-): SigningKey => {
+export const createMockSigningKey = (signingKey?: Partial<SigningKey>): SigningKey => {
     return {
         id: signingKey?.id ?? apId(),
         created: signingKey?.created ?? faker.date.recent().toISOString(),
@@ -374,7 +364,6 @@ export const createMockSigningKey = (
     }
 }
 
-
 export const createMockTag = (tag?: Partial<Omit<TagEntitySchema, 'platform'>>): Omit<TagEntitySchema, 'platform'> => {
     return {
         id: tag?.id ?? apId(),
@@ -385,8 +374,9 @@ export const createMockTag = (tag?: Partial<Omit<TagEntitySchema, 'platform'>>):
     }
 }
 
-
-export const createMockPieceTag = (request: Partial<Omit<PieceTagSchema, 'platform' | 'tag'>>): Omit<PieceTagSchema, 'platform' | 'tag'> => {
+export const createMockPieceTag = (
+    request: Partial<Omit<PieceTagSchema, 'platform' | 'tag'>>,
+): Omit<PieceTagSchema, 'platform' | 'tag'> => {
     return {
         id: request.id ?? apId(),
         created: request.created ?? faker.date.recent().toISOString(),
@@ -419,8 +409,7 @@ export const createMockPieceMetadata = (
         actions: pieceMetadata?.actions ?? {},
         triggers: pieceMetadata?.triggers ?? {},
         pieceType: pieceMetadata?.pieceType ?? faker.helpers.enumValue(PieceType),
-        packageType:
-            pieceMetadata?.packageType ?? faker.helpers.enumValue(PackageType),
+        packageType: pieceMetadata?.packageType ?? faker.helpers.enumValue(PackageType),
         archiveId: pieceMetadata?.archiveId,
         categories: pieceMetadata?.categories ?? [],
         contextInfo: pieceMetadata?.contextInfo ?? { version: LATEST_CONTEXT_VERSION },
@@ -441,9 +430,7 @@ export const createAuditEvent = (auditEvent: Partial<ApplicationEvent>) => {
     }
 }
 
-export const createMockCustomDomain = (
-    customDomain?: Partial<CustomDomain>,
-): CustomDomain => {
+export const createMockCustomDomain = (customDomain?: Partial<CustomDomain>): CustomDomain => {
     return {
         id: customDomain?.id ?? apId(),
         created: customDomain?.created ?? faker.date.recent().toISOString(),
@@ -462,14 +449,10 @@ export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
         id: otp?.id ?? apId(),
         created: otp?.created ?? faker.date.recent().toISOString(),
         updated:
-            otp?.updated ??
-            faker.date
-                .between({ from: twentyMinutesAgo.toDate(), to: now.toDate() })
-                .toISOString(),
+            otp?.updated ?? faker.date.between({ from: twentyMinutesAgo.toDate(), to: now.toDate() }).toISOString(),
         type: otp?.type ?? faker.helpers.enumValue(OtpType),
         identityId: otp?.identityId ?? apId(),
-        value:
-            otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
+        value: otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
         state: otp?.state ?? faker.helpers.enumValue(OtpState),
     }
 }
@@ -491,8 +474,7 @@ export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
         status: flowRun?.status ?? faker.helpers.enumValue(FlowRunStatus),
         startTime: flowRun?.startTime ?? faker.date.recent().toISOString(),
         finishTime: flowRun?.finishTime ?? faker.date.recent().toISOString(),
-        environment:
-            flowRun?.environment ?? faker.helpers.enumValue(RunEnvironment),
+        environment: flowRun?.environment ?? faker.helpers.enumValue(RunEnvironment),
     }
 }
 
@@ -510,9 +492,7 @@ export const createMockFlow = (flow?: Partial<Flow>): Flow => {
     }
 }
 
-export const createMockFlowVersion = (
-    flowVersion?: Partial<FlowVersion>,
-): FlowVersion => {
+export const createMockFlowVersion = (flowVersion?: Partial<FlowVersion>): FlowVersion => {
     const emptyTrigger = {
         type: FlowTriggerType.EMPTY,
         name: 'trigger',
@@ -538,7 +518,10 @@ export const createMockFlowVersion = (
     }
 }
 
-export const createMockConnection = (connection: Partial<AppConnection>, ownerId: string): AppConnection<AppConnectionType.SECRET_TEXT> => {
+export const createMockConnection = (
+    connection: Partial<AppConnection>,
+    ownerId: string,
+): AppConnection<AppConnectionType.SECRET_TEXT> => {
     return {
         id: connection?.id ?? apId(),
         created: connection?.created ?? faker.date.recent().toISOString(),
@@ -574,7 +557,7 @@ export const createMockTable = ({ projectId }: { projectId: string }): Table => 
     }
 }
 
-export const createMockField = ({ tableId, projectId }: { tableId: string, projectId: string }): Field => {
+export const createMockField = ({ tableId, projectId }: { tableId: string; projectId: string }): Field => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -589,7 +572,7 @@ export const createMockField = ({ tableId, projectId }: { tableId: string, proje
         type: FieldType.STATIC_DROPDOWN,
     }
 }
-export const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: string }): Record => {
+export const createMockRecord = ({ tableId, projectId }: { tableId: string; projectId: string }): Record => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -599,7 +582,15 @@ export const createMockRecord = ({ tableId, projectId }: { tableId: string, proj
     }
 }
 
-export const createMockCell = ({ recordId, fieldId, projectId }: { recordId: string, fieldId: string, projectId: string }): Cell => {
+export const createMockCell = ({
+    recordId,
+    fieldId,
+    projectId,
+}: {
+    recordId: string
+    fieldId: string
+    projectId: string
+}): Cell => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -611,7 +602,6 @@ export const createMockCell = ({ recordId, fieldId, projectId }: { recordId: str
     }
 }
 
-
 type Solution = {
     table: Table
     connection: AppConnection<AppConnectionType.SECRET_TEXT>
@@ -621,7 +611,15 @@ type Solution = {
     cell: Cell
 }
 
-export const createMockSolutionAndSave = async ({ projectId, platformId, userId }: { projectId: string, platformId: string, userId: string }): Promise<Solution> => {
+export const createMockSolutionAndSave = async ({
+    projectId,
+    platformId,
+    userId,
+}: {
+    projectId: string
+    platformId: string
+    userId: string
+}): Promise<Solution> => {
     const table = createMockTable({ projectId })
     const field = createMockField({ tableId: table.id, projectId })
     const record = createMockRecord({ tableId: table.id, projectId })
@@ -643,14 +641,31 @@ export const createMockSolutionAndSave = async ({ projectId, platformId, userId 
 
 export const checkIfSolutionExistsInDb = async (solution: Solution): Promise<boolean> => {
     const table = await databaseConnection().getRepository('table').findOneBy({ id: solution.table.id })
-    const connection = await databaseConnection().getRepository('app_connection').findOneBy({ id: solution.connection.id })
+    const connection = await databaseConnection()
+        .getRepository('app_connection')
+        .findOneBy({ id: solution.connection.id })
     const flow = await databaseConnection().getRepository('flow').findOneBy({ id: solution.flow.id })
     const flowRun = await databaseConnection().getRepository('flow_run').findOneBy({ id: solution.flowRun.id })
-    const flowVersion = await databaseConnection().getRepository('flow_version').findOneBy({ id: solution.flowVersion.id })
+    const flowVersion = await databaseConnection()
+        .getRepository('flow_version')
+        .findOneBy({ id: solution.flowVersion.id })
     const cell = await databaseConnection().getRepository('cell').findOneBy({ id: solution.cell.id })
-    return table !== null && connection !== null && flow !== null && flowRun !== null && flowVersion !== null && cell !== null
+    return (
+        table !== null &&
+        connection !== null &&
+        flow !== null &&
+        flowRun !== null &&
+        flowVersion !== null &&
+        cell !== null
+    )
 }
-export const mockBasicUser = async ({ userIdentity, user }: { userIdentity?: Partial<UserIdentity>, user?: Partial<User> }) => {
+export const mockBasicUser = async ({
+    userIdentity,
+    user,
+}: {
+    userIdentity?: Partial<UserIdentity>
+    user?: Partial<User>
+}) => {
     const mockUserIdentity = createMockUserIdentity({
         verified: true,
         ...userIdentity,
@@ -721,7 +736,9 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
 }
 
 type MockBasicSetupWithApiKey = MockBasicSetup & { mockApiKey: ApiKey & { value: string } }
-export const mockAndSaveBasicSetupWithApiKey = async (params?: MockBasicSetupParams): Promise<MockBasicSetupWithApiKey> => {
+export const mockAndSaveBasicSetupWithApiKey = async (
+    params?: MockBasicSetupParams,
+): Promise<MockBasicSetupWithApiKey> => {
     const basicSetup = await mockAndSaveBasicSetup(params)
 
     const mockApiKey = createMockApiKey({
@@ -775,7 +792,9 @@ export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease
     }
 }
 
-export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const createMockAIProvider = async (
+    aiProvider?: Partial<AIProvider>,
+): Promise<Omit<AIProviderSchema, 'platform'>> => {
     return {
         id: aiProvider?.id ?? apId(),
         created: aiProvider?.created ?? faker.date.recent().toISOString(),
@@ -788,10 +807,11 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         }),
         config: aiProvider?.config ?? {},
     }
-    
 }
 
-export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const mockAndSaveAIProvider = async (
+    params?: Partial<AIProvider>,
+): Promise<Omit<AIProviderSchema, 'platform'>> => {
     const mockAIProvider = await createMockAIProvider(params)
     await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
     return mockAIProvider
@@ -819,15 +839,17 @@ export const createMockFolder = (folder?: Partial<Folder>): Folder => {
     }
 }
 
-export const createMockEventDestination = (eventDestination?: Partial<{
-    id: string
-    created: string
-    updated: string
-    platformId: string
-    events: ApplicationEventName[]
-    url: string
-    scope: EventDestinationScope
-}>): {
+export const createMockEventDestination = (
+    eventDestination?: Partial<{
+        id: string
+        created: string
+        updated: string
+        platformId: string
+        events: ApplicationEventName[]
+        url: string
+        scope: EventDestinationScope
+    }>,
+): {
     id: string
     created: string
     updated: string
@@ -857,7 +879,6 @@ type CreateMockPlatformWithOwnerReturn = {
     mockOwner: User
     mockUserIdentity: UserIdentity
 }
-
 
 type MockBasicSetup = {
     mockOwner: User

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { AxiosError, AxiosHeaders } from 'axios';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('i18next', () => ({
   default: { language: 'en' },

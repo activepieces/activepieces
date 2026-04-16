@@ -1,6 +1,6 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { fellowAuth, getBaseUrl } from "../common/auth";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { fellowAuth, getBaseUrl } from '../common/auth'
 
 export const getNoteAction = createAction({
     name: 'get-note',
@@ -10,22 +10,21 @@ export const getNoteAction = createAction({
     props: {
         noteId: Property.ShortText({
             displayName: 'Note ID',
-            required: true
-        })
+            required: true,
+        }),
     },
     async run(context) {
-        const { subdomain, apiKey } = context.auth.props;
-        const { noteId } = context.propsValue;
+        const { subdomain, apiKey } = context.auth.props
+        const { noteId } = context.propsValue
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: getBaseUrl(subdomain) + `/note/${noteId}`,
             headers: {
-                'X-API-KEY': apiKey
-            }
+                'X-API-KEY': apiKey,
+            },
         })
 
-        return response.body;
-
-    }
+        return response.body
+    },
 })

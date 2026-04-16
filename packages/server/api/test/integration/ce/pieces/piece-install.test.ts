@@ -1,13 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    DefaultProjectRole,
-    EngineResponseStatus,
-    PackageType,
-    PieceScope,
-    PieceType,
-} from '@activepieces/shared'
+import { DefaultProjectRole, EngineResponseStatus, PackageType, PieceScope, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { MockInstance } from 'vitest'
@@ -15,13 +8,12 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
 import { userInteractionWatcher } from '../../../../src/app/workers/user-interaction-watcher'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 const PIECE_NAME = 'testing-before-new-ci-discord'
 const PIECE_VERSION = '0.4.4'
 
-const tgzBuffer = readFileSync(
-    join(__dirname, '../../../../src/assets/private-piece-test.tgz'),
-)
+const tgzBuffer = readFileSync(join(__dirname, '../../../../src/assets/private-piece-test.tgz'))
 
 const mockPieceMetadata = {
     name: PIECE_NAME,
@@ -70,11 +62,7 @@ describe('POST /v1/pieces — private piece installation', () => {
         const ctx = await createTestContext(app!)
 
         const formData = new FormData()
-        formData.append(
-            'pieceArchive',
-            new Blob([tgzBuffer], { type: 'application/gzip' }),
-            'private-piece-test.tgz',
-        )
+        formData.append('pieceArchive', new Blob([tgzBuffer], { type: 'application/gzip' }), 'private-piece-test.tgz')
         formData.append('pieceName', PIECE_NAME)
         formData.append('pieceVersion', PIECE_VERSION)
         formData.append('packageType', PackageType.ARCHIVE)
@@ -105,11 +93,7 @@ describe('POST /v1/pieces — private piece installation', () => {
         const memberCtx = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.EDITOR })
 
         const formData = new FormData()
-        formData.append(
-            'pieceArchive',
-            new Blob([tgzBuffer], { type: 'application/gzip' }),
-            'private-piece-test.tgz',
-        )
+        formData.append('pieceArchive', new Blob([tgzBuffer], { type: 'application/gzip' }), 'private-piece-test.tgz')
         formData.append('pieceName', PIECE_NAME)
         formData.append('pieceVersion', PIECE_VERSION)
         formData.append('packageType', PackageType.ARCHIVE)

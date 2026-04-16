@@ -1,6 +1,5 @@
 import './instrumentation'
 
-
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
@@ -20,8 +19,7 @@ const start = async (app: FastifyInstance): Promise<void> => {
         if (system.isApp()) {
             await appPostBoot(app)
         }
-    }
-    catch (err) {
+    } catch (err) {
         app.log.error({ err }, 'Failed to start server')
         process.exit(1)
     }
@@ -30,7 +28,6 @@ const start = async (app: FastifyInstance): Promise<void> => {
 // This might be needed as it can be called twice
 let shuttingDown = false
 
-
 const stop = async (app: FastifyInstance): Promise<void> => {
     if (shuttingDown) return
     shuttingDown = true
@@ -38,8 +35,7 @@ const stop = async (app: FastifyInstance): Promise<void> => {
     try {
         await app.close()
         process.exit(0)
-    }
-    catch (err) {
+    } catch (err) {
         app.log.error({ err }, 'Error stopping server')
         process.exit(1)
     }
@@ -51,7 +47,6 @@ function setupTimeZone(): void {
     // https://stackoverflow.com/questions/68240368/typeorm-find-methods-returns-wrong-timestamp-time
     process.env.TZ = 'UTC'
 }
-
 
 const main = async (): Promise<void> => {
     setupTimeZone()
@@ -79,4 +74,3 @@ main().catch((e) => {
     system.globalLogger().error({ err: e }, '[main#start] Failed to start server')
     process.exit(1)
 })
-

@@ -26,12 +26,8 @@ export class ProjectMemberRelations1694381968985 implements MigrationInterface {
         if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
             return
         }
-        await queryRunner.query(
-            'ALTER TABLE "project_member" DROP CONSTRAINT "fk_project_member_project_id"',
-        )
-        await queryRunner.query(
-            'ALTER TABLE "project_member" DROP CONSTRAINT "fk_project_member_user_id"',
-        )
+        await queryRunner.query('ALTER TABLE "project_member" DROP CONSTRAINT "fk_project_member_project_id"')
+        await queryRunner.query('ALTER TABLE "project_member" DROP CONSTRAINT "fk_project_member_user_id"')
 
         logger.info('ProjectMemberRelations1694381968985 down')
     }

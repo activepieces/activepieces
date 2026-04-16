@@ -1,4 +1,5 @@
-import { ApplicationEventName,
+import {
+    ApplicationEventName,
     CreateFolderRequest,
     DeleteFolderRequest,
     ListFolderRequest,
@@ -37,86 +38,64 @@ const folderController: FastifyPluginAsyncZod = async (fastify) => {
             },
         })
         return createdFolder
-    },
-    )
+    })
 
-    fastify.post(
-        '/:id',
-        UpdateFolderParams,
-        async (request) => {
-            const updatedFlow = await folderService(request.log).update({
-                projectId: request.projectId,
-                folderId: request.params.id,
-                request: request.body,
-            })
+    fastify.post('/:id', UpdateFolderParams, async (request) => {
+        const updatedFlow = await folderService(request.log).update({
+            projectId: request.projectId,
+            folderId: request.params.id,
+            request: request.body,
+        })
 
-            applicationEvents(request.log).sendUserEvent(request, {
-                action: ApplicationEventName.FOLDER_UPDATED,
-                data: {
-                    folder: updatedFlow,
-                },
-            })
+        applicationEvents(request.log).sendUserEvent(request, {
+            action: ApplicationEventName.FOLDER_UPDATED,
+            data: {
+                folder: updatedFlow,
+            },
+        })
 
-            return updatedFlow
-        },
-    )
+        return updatedFlow
+    })
 
-    fastify.get(
-        '/:id',
-        GetFolderParams,
-        async (
-            request,
-        ) => {
-            return folderService(request.log).getOneOrThrow({
-                projectId: request.projectId,
-                folderId: request.params.id,
-            })
-        },
-    )
+    fastify.get('/:id', GetFolderParams, async (request) => {
+        return folderService(request.log).getOneOrThrow({
+            projectId: request.projectId,
+            folderId: request.params.id,
+        })
+    })
 
-    fastify.get(
-        '/',
-        ListFoldersParams,
-        async (request) => {
-            return folderService(request.log).list({
-                projectId: request.projectId,
-                cursorRequest: request.query.cursor ?? null,
-                limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
-            })
-        },
-    )
+    fastify.get('/', ListFoldersParams, async (request) => {
+        return folderService(request.log).list({
+            projectId: request.projectId,
+            cursorRequest: request.query.cursor ?? null,
+            limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
+        })
+    })
 
-    fastify.delete(
-        '/:id',
-        DeleteFolderParams,
-        async (request, reply) => {
-            const folder = await folderService(request.log).getOneOrThrow({
-                projectId: request.projectId,
-                folderId: request.params.id,
-            })
-            applicationEvents(request.log).sendUserEvent(request, {
-                action: ApplicationEventName.FOLDER_DELETED,
-                data: {
-                    folder,
-                },
-            })
-            await folderService(request.log).delete({
-                projectId: request.projectId,
-                folderId: request.params.id,
-            })
-            return reply.status(StatusCodes.OK).send()
-        },
-    )
+    fastify.delete('/:id', DeleteFolderParams, async (request, reply) => {
+        const folder = await folderService(request.log).getOneOrThrow({
+            projectId: request.projectId,
+            folderId: request.params.id,
+        })
+        applicationEvents(request.log).sendUserEvent(request, {
+            action: ApplicationEventName.FOLDER_DELETED,
+            data: {
+                folder,
+            },
+        })
+        await folderService(request.log).delete({
+            projectId: request.projectId,
+            folderId: request.params.id,
+        })
+        return reply.status(StatusCodes.OK).send()
+    })
 }
-
 
 const CreateFolderParams = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.WRITE_FLOW, {
-                type: ProjectResourceType.BODY,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_FLOW, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         tags: ['folders'],
@@ -128,12 +107,10 @@ const CreateFolderParams = {
 
 const UpdateFolderParams = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.WRITE_FLOW, {
-                type: ProjectResourceType.TABLE,
-                tableName: FolderEntity,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_FLOW, {
+            type: ProjectResourceType.TABLE,
+            tableName: FolderEntity,
+        }),
     },
     schema: {
         tags: ['folders'],
@@ -148,12 +125,10 @@ const UpdateFolderParams = {
 
 const GetFolderParams = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.READ_FLOW, {
-                type: ProjectResourceType.TABLE,
-                tableName: FolderEntity,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_FLOW, {
+            type: ProjectResourceType.TABLE,
+            tableName: FolderEntity,
+        }),
     },
     schema: {
         tags: ['folders'],
@@ -167,11 +142,9 @@ const GetFolderParams = {
 
 const ListFoldersParams = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.READ_FLOW, {
-                type: ProjectResourceType.QUERY,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_FLOW, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         tags: ['folders'],
@@ -183,12 +156,10 @@ const ListFoldersParams = {
 
 const DeleteFolderParams = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.WRITE_FLOW, {
-                type: ProjectResourceType.TABLE,
-                tableName: FolderEntity,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_FLOW, {
+            type: ProjectResourceType.TABLE,
+            tableName: FolderEntity,
+        }),
     },
     schema: {
         params: DeleteFolderRequest,

@@ -1,4 +1,4 @@
-import { PieceAuth } from "@activepieces/pieces-framework";
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const formStackAuth = PieceAuth.OAuth2({
     description: 'Connect your Formstack account',
@@ -6,5 +6,4 @@ export const formStackAuth = PieceAuth.OAuth2({
     tokenUrl: 'https://www.formstack.com/api/v2/oauth2/token',
     required: true,
     scope: [],
-});
-
+})

@@ -280,5 +280,4 @@ export class AddCascadeOnAgentsSqlite1753727589109 implements MigrationInterface
             CREATE UNIQUE INDEX "idx_agent_projectId_externalId" ON "agent" ("projectId", "externalId")
         `)
     }
-
 }

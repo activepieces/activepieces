@@ -1,8 +1,8 @@
 import {
+  assertNotNullOrUndefined,
   GitBranchType,
   GitPushOperationType,
   PushEverythingGitRepoRequest,
-  assertNotNullOrUndefined,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -16,10 +16,10 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -142,4 +142,5 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
 };
 
 PushEverythingDialog.displayName = 'PushEverythingDialog';
+
 export { PushEverythingDialog };

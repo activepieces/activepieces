@@ -1,160 +1,160 @@
-import { OAuth2PropertyValue, DropdownOption } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from './microsoft-cloud';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
-import { TodoTaskList, TodoTask } from '@microsoft/microsoft-graph-types';
+import { DropdownOption, OAuth2PropertyValue } from '@activepieces/pieces-framework'
+import { Client, PageCollection } from '@microsoft/microsoft-graph-client'
+import { TodoTask, TodoTaskList } from '@microsoft/microsoft-graph-types'
+import { getGraphBaseUrl } from './microsoft-cloud'
 
 export async function getTaskListsDropdown(auth: OAuth2PropertyValue): Promise<{
-	disabled: boolean;
-	options: DropdownOption<string>[];
-	placeholder?: string;
+    disabled: boolean
+    options: DropdownOption<string>[]
+    placeholder?: string
 }> {
-	if (!auth || !auth.access_token) {
-		return {
-			disabled: true,
-			options: [],
-			placeholder: 'Connect your account first',
-		};
-	}
+    if (!auth || !auth.access_token) {
+        return {
+            disabled: true,
+            options: [],
+            placeholder: 'Connect your account first',
+        }
+    }
 
-	try {
-		const client = createTodoClient(auth);
+    try {
+        const client = createTodoClient(auth)
 
-		const options: DropdownOption<string>[] = [];
-		let response: PageCollection = await client.api(`/me/todo/lists`).get();
+        const options: DropdownOption<string>[] = []
+        let response: PageCollection = await client.api(`/me/todo/lists`).get()
 
-		while (response.value.length > 0) {
-			for (const list of response.value as TodoTaskList[]) {
-				options.push({ label: list.displayName!, value: list.id! });
-			}
-			if (response['@odata.nextLink']) {
-				response = await client.api(response['@odata.nextLink']).get();
-			} else {
-				break;
-			}
-		}
+        while (response.value.length > 0) {
+            for (const list of response.value as TodoTaskList[]) {
+                options.push({ label: list.displayName!, value: list.id! })
+            }
+            if (response['@odata.nextLink']) {
+                response = await client.api(response['@odata.nextLink']).get()
+            } else {
+                break
+            }
+        }
 
-		return {
-			disabled: false,
-			options: options,
-		};
-	} catch (error) {
-		return {
-			disabled: true,
-			options: [],
-			placeholder: 'An unexpected error occurred while fetching task lists.',
-		};
-	}
+        return {
+            disabled: false,
+            options: options,
+        }
+    } catch (error) {
+        return {
+            disabled: true,
+            options: [],
+            placeholder: 'An unexpected error occurred while fetching task lists.',
+        }
+    }
 }
 
 export async function getTasksInListDropdown(
-	auth: OAuth2PropertyValue,
-	taskListId: string,
+    auth: OAuth2PropertyValue,
+    taskListId: string,
 ): Promise<{
-	disabled: boolean;
-	options: DropdownOption<string>[];
-	placeholder?: string;
+    disabled: boolean
+    options: DropdownOption<string>[]
+    placeholder?: string
 }> {
-	if (!auth || !auth.access_token) {
-		return { disabled: true, options: [], placeholder: 'Connect your account first' };
-	}
-	if (!taskListId) {
-		return { disabled: true, options: [], placeholder: 'Task List ID is required' };
-	}
+    if (!auth || !auth.access_token) {
+        return { disabled: true, options: [], placeholder: 'Connect your account first' }
+    }
+    if (!taskListId) {
+        return { disabled: true, options: [], placeholder: 'Task List ID is required' }
+    }
 
-	try {
-		const client = createTodoClient(auth);
+    try {
+        const client = createTodoClient(auth)
 
-		const options: DropdownOption<string>[] = [];
+        const options: DropdownOption<string>[] = []
 
-		let response: PageCollection = await client.api(`/me/todo/lists/${taskListId}/tasks`).get();
-		while (response.value.length > 0) {
-			for (const task of response.value as TodoTask[]) {
-				if (task.id && task.title) {
-					options.push({ label: task.title, value: task.id });
-				}
-			}
-			if (response['@odata.nextLink']) {
-				response = await client.api(response['@odata.nextLink']).get();
-			} else {
-				break;
-			}
-		}
+        let response: PageCollection = await client.api(`/me/todo/lists/${taskListId}/tasks`).get()
+        while (response.value.length > 0) {
+            for (const task of response.value as TodoTask[]) {
+                if (task.id && task.title) {
+                    options.push({ label: task.title, value: task.id })
+                }
+            }
+            if (response['@odata.nextLink']) {
+                response = await client.api(response['@odata.nextLink']).get()
+            } else {
+                break
+            }
+        }
 
-		return { disabled: false, options: options };
-	} catch (error) {
-		return { disabled: true, options: [], placeholder: 'Error fetching tasks.' };
-	}
+        return { disabled: false, options: options }
+    } catch (error) {
+        return { disabled: true, options: [], placeholder: 'Error fetching tasks.' }
+    }
 }
 
 export async function getIncompleteTasksInListDropdown(
-	auth: OAuth2PropertyValue,
-	taskListId: string,
+    auth: OAuth2PropertyValue,
+    taskListId: string,
 ): Promise<{
-	disabled: boolean;
-	options: DropdownOption<string>[];
-	placeholder?: string;
+    disabled: boolean
+    options: DropdownOption<string>[]
+    placeholder?: string
 }> {
-	if (!auth || !auth.access_token) {
-		return { disabled: true, options: [], placeholder: 'Connect your account first' };
-	}
-	if (!taskListId) {
-		return { disabled: true, options: [], placeholder: 'Task List ID is required' };
-	}
+    if (!auth || !auth.access_token) {
+        return { disabled: true, options: [], placeholder: 'Connect your account first' }
+    }
+    if (!taskListId) {
+        return { disabled: true, options: [], placeholder: 'Task List ID is required' }
+    }
 
-	try {
-		const client = createTodoClient(auth);
+    try {
+        const client = createTodoClient(auth)
 
-		const options: DropdownOption<string>[] = [];
+        const options: DropdownOption<string>[] = []
 
-		let response: PageCollection = await client
-			.api(`/me/todo/lists/${taskListId}/tasks`)
-			.filter("status ne 'completed'")
-			.get();
+        let response: PageCollection = await client
+            .api(`/me/todo/lists/${taskListId}/tasks`)
+            .filter("status ne 'completed'")
+            .get()
 
-		while (response.value.length > 0) {
-			for (const task of response.value as TodoTask[]) {
-				if (task.id && task.title) {
-					options.push({ label: task.title, value: task.id });
-				}
-			}
-			if (response['@odata.nextLink']) {
-				response = await client.api(response['@odata.nextLink']).get();
-			} else {
-				break;
-			}
-		}
+        while (response.value.length > 0) {
+            for (const task of response.value as TodoTask[]) {
+                if (task.id && task.title) {
+                    options.push({ label: task.title, value: task.id })
+                }
+            }
+            if (response['@odata.nextLink']) {
+                response = await client.api(response['@odata.nextLink']).get()
+            } else {
+                break
+            }
+        }
 
-		if (options.length === 0) {
-			return {
-				disabled: true,
-				options: [],
-				placeholder: 'No incomplete tasks found in this list',
-			};
-		}
+        if (options.length === 0) {
+            return {
+                disabled: true,
+                options: [],
+                placeholder: 'No incomplete tasks found in this list',
+            }
+        }
 
-		return { disabled: false, options: options };
-	} catch (error) {
-		return { disabled: true, options: [], placeholder: 'Error fetching tasks.' };
-	}
+        return { disabled: false, options: options }
+    } catch (error) {
+        return { disabled: true, options: [], placeholder: 'Error fetching tasks.' }
+    }
 }
 
 function createTodoClient(auth: OAuth2PropertyValue): Client {
-	const cloud = auth.props?.['cloud'] as string | undefined;
-	const baseUrl = getGraphBaseUrl(cloud);
-	const host = new URL(baseUrl).hostname;
-	return Client.initWithMiddleware({
-		authProvider: {
-			getAccessToken: () => Promise.resolve(auth.access_token),
-		},
-		baseUrl,
-		customHosts: new Set([host]),
-	});
+    const cloud = auth.props?.['cloud'] as string | undefined
+    const baseUrl = getGraphBaseUrl(cloud)
+    const host = new URL(baseUrl).hostname
+    return Client.initWithMiddleware({
+        authProvider: {
+            getAccessToken: () => Promise.resolve(auth.access_token),
+        },
+        baseUrl,
+        customHosts: new Set([host]),
+    })
 }
 
-export { createTodoClient };
+export { createTodoClient }
 
 export const microsoftTodoCommon = {
-	getTaskListsDropdown,
-	getTasksInListDropdown,
-	getIncompleteTasksInListDropdown,
-};
+    getTaskListsDropdown,
+    getTasksInListDropdown,
+    getIncompleteTasksInListDropdown,
+}

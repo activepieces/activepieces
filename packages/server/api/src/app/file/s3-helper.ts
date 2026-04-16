@@ -1,4 +1,3 @@
-import { Readable } from 'stream'
 import { apId, FileType, isNil, ProjectId } from '@activepieces/shared'
 import { DeleteObjectsCommand, GetObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
@@ -6,24 +5,28 @@ import { NodeHttpHandler } from '@smithy/node-http-handler'
 import contentDisposition from 'content-disposition'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { Readable } from 'stream'
 import { exceptionHandler } from '../helper/exception-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { fileRepo } from './file.service'
 
 export const s3Helper = (log: FastifyBaseLogger) => ({
-    async constructS3Key(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): Promise<string> {
+    async constructS3Key(
+        platformId: string | undefined,
+        projectId: ProjectId | undefined,
+        type: FileType,
+        fileId: string,
+    ): Promise<string> {
         const existingFile = await fileRepo().findOneBy({ id: fileId })
         if (!isNil(existingFile?.s3Key)) {
             return existingFile.s3Key
         }
         if (!isNil(platformId)) {
             return `platform/${platformId}/${type}/${fileId}`
-        }
-        else if (!isNil(projectId)) {
+        } else if (!isNil(projectId)) {
             return `project/${projectId}/${type}/${fileId}`
-        }
-        else {
+        } else {
             throw new Error('Either platformId or projectId must be provided')
         }
     },
@@ -31,9 +34,12 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         if (!Buffer.isBuffer(data)) {
             throw new Error(`Expected Buffer for S3 upload, received ${typeof data}`)
         }
-        log.info({
-            s3Key,
-        }, 'uploading file to s3')
+        log.info(
+            {
+                s3Key,
+            },
+            'uploading file to s3',
+        )
         try {
             await getS3Client().putObject({
                 Bucket: getS3BucketName(),
@@ -41,15 +47,20 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
                 Body: Readable.from(data),
                 ContentLength: data.length,
             })
-            log.info({
-                s3Key,
-            }, 'file uploaded to s3')
-        }
-        catch (error) {
-            log.error({
-                s3Key,
-                error,
-            }, 'failed to upload file to s3')
+            log.info(
+                {
+                    s3Key,
+                },
+                'file uploaded to s3',
+            )
+        } catch (error) {
+            log.error(
+                {
+                    s3Key,
+                    error,
+                },
+                'failed to upload file to s3',
+            )
             exceptionHandler.handle(error, log)
             throw error
         }
@@ -97,18 +108,19 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
 
         try {
             for (const chunk of chunks) {
-                const deleteObjects = chunk.map(Key => ({ Key }))
-                await getS3Client().send(new DeleteObjectsCommand({
-                    Bucket: getS3BucketName(),
-                    Delete: {
-                        Objects: deleteObjects,
-                        Quiet: true,
-                    },
-                }))
+                const deleteObjects = chunk.map((Key) => ({ Key }))
+                await getS3Client().send(
+                    new DeleteObjectsCommand({
+                        Bucket: getS3BucketName(),
+                        Delete: {
+                            Objects: deleteObjects,
+                            Quiet: true,
+                        },
+                    }),
+                )
                 log.info({ count: chunk.length }, 'files deleted from s3')
             }
-        }
-        catch (error) {
+        } catch (error) {
             log.error({ error, count: s3Keys.length }, 'failed to delete files from s3')
             exceptionHandler.handle(error, log)
             throw error
@@ -134,12 +146,13 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             Bucket: bucketName,
             Key: testKey,
         })
-
     },
 })
 
-
-const chunkArray = (array: string[], chunkSize: number) => Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, i) => array.slice(i * chunkSize, (i + 1) * chunkSize))
+const chunkArray = (array: string[], chunkSize: number) =>
+    Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, i) =>
+        array.slice(i * chunkSize, (i + 1) * chunkSize),
+    )
 
 let cachedS3Client: S3 | null = null
 

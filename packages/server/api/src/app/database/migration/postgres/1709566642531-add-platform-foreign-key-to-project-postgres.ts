@@ -31,5 +31,4 @@ export class AddPlatformForeignKeyToProjectPostgres1709566642531 implements Migr
 
         log.info('[addPlatformForeignKeyToProjectPostgres1709566642531#down]')
     }
-
 }

@@ -1,9 +1,4 @@
-import {
-    AgentPieceProps,
-    FlowActionType,
-    flowStructureUtil,
-    FlowVersion,
-} from '@activepieces/shared'
+import { AgentPieceProps, FlowActionType, FlowVersion, flowStructureUtil } from '@activepieces/shared'
 import { Migration } from '.'
 
 export const migrateV14AgentProviderModel: Migration = {
@@ -17,7 +12,7 @@ export const migrateV14AgentProviderModel: Migration = {
                 if (actionName === 'run_agent') {
                     const provider = input['provider'] as string
                     const model = input['model'] as string
-                    
+
                     return {
                         ...step,
                         settings: {

@@ -1,4 +1,13 @@
-import { assertNotNullOrUndefined, CreateAICreditCheckoutSessionParamsSchema, CreateCheckoutSessionParamsSchema, PlatformBillingInformation, PrincipalType, STANDARD_CLOUD_PLAN, UpdateActiveFlowsAddonParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
+import {
+    assertNotNullOrUndefined,
+    CreateAICreditCheckoutSessionParamsSchema,
+    CreateCheckoutSessionParamsSchema,
+    PlatformBillingInformation,
+    PrincipalType,
+    STANDARD_CLOUD_PLAN,
+    UpdateActiveFlowsAddonParamsSchema,
+    UpdateAICreditsAutoTopUpParamsSchema,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -9,7 +18,6 @@ import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
 
 export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => {
-
     fastify.get('/info', InfoRequest, async (request) => {
         const platform = await platformService(request.log).getOneOrThrow(request.principal.platform.id)
         const [platformPlan, usage] = await Promise.all([
@@ -20,7 +28,9 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
         const { stripeSubscriptionCancelDate: cancelDate } = platformPlan
         const { endDate: nextBillingDate } = await platformPlanService(request.log).getBillingDates(platformPlan)
 
-        const nextBillingAmount = await platformPlanService(request.log).getNextBillingAmount({ subscriptionId: platformPlan.stripeSubscriptionId })
+        const nextBillingAmount = await platformPlanService(request.log).getNextBillingAmount({
+            subscriptionId: platformPlan.stripeSubscriptionId,
+        })
 
         const response: PlatformBillingInformation = {
             plan: platformPlan,
@@ -32,16 +42,22 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
         return response
     })
 
-    fastify.post('/portal', {
-        config: {
-            security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    fastify.post(
+        '/portal',
+        {
+            config: {
+                security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+            },
         },
-    }, async (request) => {
-        return stripeHelper(request.log).createPortalSessionUrl(request.principal.platform.id)
-    })
+        async (request) => {
+            return stripeHelper(request.log).createPortalSessionUrl(request.principal.platform.id)
+        },
+    )
 
     fastify.post('/create-checkout-session', CreateCheckoutSessionRequest, async (request) => {
-        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(
+            request.log,
+        ).getOrCreateForPlatform(request.principal.platform.id)
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
         const { newActiveFlowsLimit } = request.body
@@ -57,13 +73,15 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
     })
 
     fastify.post('/update-active-flows-addon', UpdateActiveFlowsAddonRequest, async (request) => {
-        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(
+            request.log,
+        ).getOrCreateForPlatform(request.principal.platform.id)
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
         const { newActiveFlowsLimit } = request.body
 
         const baseActiveFlowsLimit = STANDARD_CLOUD_PLAN.activeFlowsLimit ?? 0
-        const currentActiveFlowsLimit =  platformPlan.activeFlowsLimit ?? 0
+        const currentActiveFlowsLimit = platformPlan.activeFlowsLimit ?? 0
         const extraActiveFlows = Math.max(0, newActiveFlowsLimit - baseActiveFlowsLimit)
         const isFreeDowngrade = newActiveFlowsLimit === baseActiveFlowsLimit
 
@@ -73,14 +91,17 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
         return stripeHelper(request.log).handleSubscriptionUpdate({
             subscriptionId: platformPlan.stripeSubscriptionId,
             extraActiveFlows,
-            isUpgrade, 
+            isUpgrade,
             isFreeDowngrade,
         })
     })
 
     // AI Credits
     fastify.post('/ai-credits/create-checkout-session', CreateAICreditCheckoutSessionRequest, async (request) => {
-        return platformAiCreditsService(request.log).initializeStripeAiCreditsPayment(request.principal.platform.id, request.body)
+        return platformAiCreditsService(request.log).initializeStripeAiCreditsPayment(
+            request.principal.platform.id,
+            request.body,
+        )
     })
     fastify.post('/ai-credits/auto-topup', UpdateAICreditsAutoTopUpRequest, async (request) => {
         return platformAiCreditsService(request.log).updateAutoTopUp(request.principal.platform.id, request.body)

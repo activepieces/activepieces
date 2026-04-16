@@ -1,8 +1,8 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { productboardAuth } from './auth';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework'
+import { productboardAuth } from './auth'
 
-const PRODUCTBOARD_API_BASE_URL = 'https://api.productboard.com';
+const PRODUCTBOARD_API_BASE_URL = 'https://api.productboard.com'
 
 export const productboardCommon = {
     baseUrl: PRODUCTBOARD_API_BASE_URL,
@@ -14,11 +14,11 @@ export const productboardCommon = {
         body = undefined,
         queryParams = undefined,
     }: {
-        auth: AppConnectionValueForAuthProperty<typeof productboardAuth>;
-        method: HttpMethod;
-        resourceUri: string;
-        body?: any;
-        queryParams?: Record<string, string>;
+        auth: AppConnectionValueForAuthProperty<typeof productboardAuth>
+        method: HttpMethod
+        resourceUri: string
+        body?: any
+        queryParams?: Record<string, string>
     }) {
         return await httpClient.sendRequest({
             method: method,
@@ -26,10 +26,10 @@ export const productboardCommon = {
             body,
             queryParams,
             headers: {
-                'Authorization': `Bearer ${auth.secret_text}`,
+                Authorization: `Bearer ${auth.secret_text}`,
                 'X-Version': '1',
                 'Content-Type': 'application/json',
-            }
-        });
-    }
-};
+            },
+        })
+    },
+}

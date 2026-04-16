@@ -143,7 +143,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         return kbFileRepo().save(kbFile)
     },
 
-    async deleteFile(params: { projectId: string, id: string }): Promise<void> {
+    async deleteFile(params: { projectId: string; id: string }): Promise<void> {
         const kbFile = await kbFileRepo().findOneBy({
             id: params.id,
             projectId: params.projectId,
@@ -161,7 +161,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async getFileOrThrow(params: { projectId: string, id: string }): Promise<KnowledgeBaseFile> {
+    async getFileOrThrow(params: { projectId: string; id: string }): Promise<KnowledgeBaseFile> {
         const file = await kbFileRepo().findOneBy({
             id: params.id,
             projectId: params.projectId,
@@ -178,11 +178,13 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         return file
     },
 
-    async getChunkCount(params: { projectId: string, knowledgeBaseFileId: string }): Promise<number> {
-        return kbChunkRepo().count({ where: { projectId: params.projectId, knowledgeBaseFileId: params.knowledgeBaseFileId } })
+    async getChunkCount(params: { projectId: string; knowledgeBaseFileId: string }): Promise<number> {
+        return kbChunkRepo().count({
+            where: { projectId: params.projectId, knowledgeBaseFileId: params.knowledgeBaseFileId },
+        })
     },
 
-    async extractChunks(params: { projectId: string, knowledgeBaseFileId: string }): Promise<string[]> {
+    async extractChunks(params: { projectId: string; knowledgeBaseFileId: string }): Promise<string[]> {
         const kbFile = await kbFileRepo().findOneBy({
             id: params.knowledgeBaseFileId,
             projectId: params.projectId,
@@ -253,18 +255,18 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             where: {
                 projectId: params.projectId,
                 knowledgeBaseFileId: params.knowledgeBaseFileId,
-                ...params.embedded === false ? { embedding: IsNull() } : {},
-                ...params.embedded === true ? { embedding: Not(IsNull()) } : {},
+                ...(params.embedded === false ? { embedding: IsNull() } : {}),
+                ...(params.embedded === true ? { embedding: Not(IsNull()) } : {}),
             },
             select: ['id', 'content', 'chunkIndex'],
             order: { chunkIndex: 'ASC' },
         })
     },
 
-    async getFilesByIds(params: { projectId: string, ids: string[] }): Promise<KnowledgeBaseFile[]> {
+    async getFilesByIds(params: { projectId: string; ids: string[] }): Promise<KnowledgeBaseFile[]> {
         if (params.ids.length === 0) return []
         return kbFileRepo().find({
-            where: params.ids.map(id => ({
+            where: params.ids.map((id) => ({
                 id,
                 projectId: params.projectId,
             })),

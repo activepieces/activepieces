@@ -89,4 +89,5 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   );
 });
 CodeSettings.displayName = 'CodeSettings';
+
 export { CodeSettings };

@@ -15,5 +15,4 @@ export class DropProjectIdFromPieceMetadata1764866386989 implements MigrationInt
             ADD "projectId" character varying(21)
         `)
     }
-
 }

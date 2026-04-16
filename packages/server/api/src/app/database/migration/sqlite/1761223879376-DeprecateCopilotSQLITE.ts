@@ -395,5 +395,4 @@ export class DeprecateCopilotSQLITE1761223879376 implements MigrationInterface {
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
         `)
     }
-
 }

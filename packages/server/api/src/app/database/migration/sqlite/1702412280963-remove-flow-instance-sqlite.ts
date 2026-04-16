@@ -3,14 +3,16 @@ import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 
-export class RemoveFlowInstanceSqlite1702412280963
-implements MigrationInterface {
+export class RemoveFlowInstanceSqlite1702412280963 implements MigrationInterface {
     name = 'RemoveFlowInstanceSqlite1702412280963'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'up',
+        )
         await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
         `)
@@ -141,8 +143,11 @@ implements MigrationInterface {
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
         `)
 
-        log.info({
-            name: this.name,
-        }, 'down')
+        log.info(
+            {
+                name: this.name,
+            },
+            'down',
+        )
     }
 }

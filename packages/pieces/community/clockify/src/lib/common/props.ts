@@ -1,209 +1,209 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { Property } from '@activepieces/pieces-framework';
-import { clockifyApiCall } from './client';
-import { clockifyAuth } from '../auth';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property } from '@activepieces/pieces-framework'
+import { clockifyAuth } from '../auth'
+import { clockifyApiCall } from './client'
 
 interface DropdownParams {
-	displayName: string;
-	description?: string;
-	required: boolean;
+    displayName: string
+    description?: string
+    required: boolean
 }
 
 export const workspaceId = (params: DropdownParams) =>
-	Property.Dropdown({
-		auth: clockifyAuth,
-		displayName: params.displayName,
-		description: params.description,
-		required: params.required,
-		refreshers: [],
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account first.',
-				};
-			}
+    Property.Dropdown({
+        auth: clockifyAuth,
+        displayName: params.displayName,
+        description: params.description,
+        required: params.required,
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (!auth) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please connect your account first.',
+                }
+            }
 
-			const response = await clockifyApiCall<{ id: string; name: string }[]>({
-				apiKey: auth.secret_text,
-				method: HttpMethod.GET,
-				resourceUri: '/workspaces',
-			});
+            const response = await clockifyApiCall<{ id: string; name: string }[]>({
+                apiKey: auth.secret_text,
+                method: HttpMethod.GET,
+                resourceUri: '/workspaces',
+            })
 
-			return {
-				disabled: false,
-				options: response.map((workspace) => ({
-					label: workspace.name,
-					value: workspace.id,
-				})),
-			};
-		},
-	});
+            return {
+                disabled: false,
+                options: response.map((workspace) => ({
+                    label: workspace.name,
+                    value: workspace.id,
+                })),
+            }
+        },
+    })
 
 export const projectId = (params: DropdownParams) =>
-	Property.Dropdown({
-		auth: clockifyAuth,
-		displayName: params.displayName,
-		description: params.description,
-		required: params.required,
-		refreshers: ['workspaceId'],
-		options: async ({ auth, workspaceId }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account first.',
-				};
-			}
+    Property.Dropdown({
+        auth: clockifyAuth,
+        displayName: params.displayName,
+        description: params.description,
+        required: params.required,
+        refreshers: ['workspaceId'],
+        options: async ({ auth, workspaceId }) => {
+            if (!auth) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please connect your account first.',
+                }
+            }
 
-			if (!workspaceId) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please select workspace first.',
-				};
-			}
+            if (!workspaceId) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please select workspace first.',
+                }
+            }
 
-			const response = await clockifyApiCall<{ id: string; name: string }[]>({
-				apiKey: auth.secret_text,
-				method: HttpMethod.GET,
-				resourceUri: `/workspaces/${workspaceId}/projects`,
-			});
+            const response = await clockifyApiCall<{ id: string; name: string }[]>({
+                apiKey: auth.secret_text,
+                method: HttpMethod.GET,
+                resourceUri: `/workspaces/${workspaceId}/projects`,
+            })
 
-			return {
-				disabled: false,
-				options: response.map((project) => ({
-					label: project.name,
-					value: project.id,
-				})),
-			};
-		},
-	});
+            return {
+                disabled: false,
+                options: response.map((project) => ({
+                    label: project.name,
+                    value: project.id,
+                })),
+            }
+        },
+    })
 
 export const assigneeIds = (params: DropdownParams) =>
-	Property.MultiSelectDropdown({
-		auth: clockifyAuth,
-		displayName: params.displayName,
-		description: params.description,
-		required: params.required,
-		refreshers: ['workspaceId'],
-		options: async ({ auth, workspaceId }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account first.',
-				};
-			}
+    Property.MultiSelectDropdown({
+        auth: clockifyAuth,
+        displayName: params.displayName,
+        description: params.description,
+        required: params.required,
+        refreshers: ['workspaceId'],
+        options: async ({ auth, workspaceId }) => {
+            if (!auth) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please connect your account first.',
+                }
+            }
 
-			if (!workspaceId) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please select workspace first.',
-				};
-			}
+            if (!workspaceId) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please select workspace first.',
+                }
+            }
 
-			const response = await clockifyApiCall<{ id: string; email: string }[]>({
-				apiKey: auth.secret_text,
-				method: HttpMethod.GET,
-				resourceUri: `/workspaces/${workspaceId}/users`,
-			});
+            const response = await clockifyApiCall<{ id: string; email: string }[]>({
+                apiKey: auth.secret_text,
+                method: HttpMethod.GET,
+                resourceUri: `/workspaces/${workspaceId}/users`,
+            })
 
-			return {
-				disabled: false,
-				options: response.map((user) => ({
-					label: user.email,
-					value: user.id,
-				})),
-			};
-		},
-	});
+            return {
+                disabled: false,
+                options: response.map((user) => ({
+                    label: user.email,
+                    value: user.id,
+                })),
+            }
+        },
+    })
 
 export const taskId = (params: DropdownParams) =>
-	Property.Dropdown({
-		auth: clockifyAuth,
-		displayName: params.displayName,
-		description: params.description,
-		required: params.required,
-		refreshers: ['workspaceId', 'projectId'],
-		options: async ({ auth, workspaceId, projectId }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account first.',
-				};
-			}
+    Property.Dropdown({
+        auth: clockifyAuth,
+        displayName: params.displayName,
+        description: params.description,
+        required: params.required,
+        refreshers: ['workspaceId', 'projectId'],
+        options: async ({ auth, workspaceId, projectId }) => {
+            if (!auth) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please connect your account first.',
+                }
+            }
 
-			if (!workspaceId) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please select workspace first.',
-				};
-			}
+            if (!workspaceId) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please select workspace first.',
+                }
+            }
 
-			if (!projectId) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please select project first.',
-				};
-			}
+            if (!projectId) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please select project first.',
+                }
+            }
 
-			const response = await clockifyApiCall<{ id: string; name: string }[]>({
-				apiKey: auth.secret_text,
-				method: HttpMethod.GET,
-				resourceUri: `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
-			});
+            const response = await clockifyApiCall<{ id: string; name: string }[]>({
+                apiKey: auth.secret_text,
+                method: HttpMethod.GET,
+                resourceUri: `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
+            })
 
-			return {
-				disabled: false,
-				options: response.map((task) => ({
-					label: task.name,
-					value: task.id,
-				})),
-			};
-		},
-	});
+            return {
+                disabled: false,
+                options: response.map((task) => ({
+                    label: task.name,
+                    value: task.id,
+                })),
+            }
+        },
+    })
 
 export const tagIds = (params: DropdownParams) =>
-	Property.MultiSelectDropdown({
-		auth: clockifyAuth,
-		displayName: params.displayName,
-		description: params.description,
-		required: params.required,
-		refreshers: ['workspaceId'],
-		options: async ({ auth, workspaceId }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account first.',
-				};
-			}
+    Property.MultiSelectDropdown({
+        auth: clockifyAuth,
+        displayName: params.displayName,
+        description: params.description,
+        required: params.required,
+        refreshers: ['workspaceId'],
+        options: async ({ auth, workspaceId }) => {
+            if (!auth) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please connect your account first.',
+                }
+            }
 
-			if (!workspaceId) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please select workspace first.',
-				};
-			}
-			const response = await clockifyApiCall<{ id: string; name: string }[]>({
-				apiKey: auth.secret_text,
-				method: HttpMethod.GET,
-				resourceUri: `/workspaces/${workspaceId}/tags`,
-			});
+            if (!workspaceId) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please select workspace first.',
+                }
+            }
+            const response = await clockifyApiCall<{ id: string; name: string }[]>({
+                apiKey: auth.secret_text,
+                method: HttpMethod.GET,
+                resourceUri: `/workspaces/${workspaceId}/tags`,
+            })
 
-			return {
-				disabled: false,
-				options: response.map((tag) => ({
-					label: tag.name,
-					value: tag.id,
-				})),
-			};
-		},
-	});
+            return {
+                disabled: false,
+                options: response.map((tag) => ({
+                    label: tag.name,
+                    value: tag.id,
+                })),
+            }
+        },
+    })

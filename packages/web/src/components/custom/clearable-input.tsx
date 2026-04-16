@@ -39,5 +39,5 @@ type ClearableInputProps = InputProps & {
   showClear?: boolean;
 };
 
-export { ClearableInput };
 export type { ClearableInputProps };
+export { ClearableInput };

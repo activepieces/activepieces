@@ -2,8 +2,8 @@ import { Template, TemplateType } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { FileText, Pencil, Trash, Tag, Clock, Puzzle } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { Clock, FileText, Pencil, Puzzle, Tag, Trash } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -11,9 +11,9 @@ import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import {
+  BulkAction,
   DataTable,
   RowDataWithActions,
-  BulkAction,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';

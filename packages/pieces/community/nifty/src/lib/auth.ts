@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 const mddescription = `
 # How to add a new connection
@@ -10,12 +10,12 @@ const mddescription = `
 6. copy the redirect url from the piece and fill the url field ( without https:// )
 7. check out Milestones , Subtasks , Projects , Statuses , Tasks and Portfolios
 8. copy the client id and client secret and paste them in the piece
-`;
+`
 
 export const niftyAuth = PieceAuth.OAuth2({
-  authUrl: 'https://nifty.pm/authorize',
-  tokenUrl: 'https://openapi.niftypm.com/oauth/token',
-  required: true,
-  description: mddescription,
-  scope: ['task', 'project', 'subtask', 'milestone', 'subteam'],
-});
+    authUrl: 'https://nifty.pm/authorize',
+    tokenUrl: 'https://openapi.niftypm.com/oauth/token',
+    required: true,
+    description: mddescription,
+    scope: ['task', 'project', 'subtask', 'milestone', 'subteam'],
+})

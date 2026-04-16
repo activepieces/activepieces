@@ -1,6 +1,6 @@
 import { ChildProcess } from 'child_process'
 import path from 'path'
-import { describe, it, expect, afterEach } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { simpleProcess } from '../../../src/lib/sandbox/fork'
 
 const fixturePath = path.resolve(__dirname, '../../fixtures/echo-env.js')
@@ -8,8 +8,11 @@ const children: ChildProcess[] = []
 
 afterEach(() => {
     for (const child of children) {
-        try { child.kill('SIGKILL') }
-        catch { /* already dead */ }
+        try {
+            child.kill('SIGKILL')
+        } catch {
+            /* already dead */
+        }
     }
     children.length = 0
 })
@@ -31,7 +34,7 @@ describe('simpleProcess', () => {
         })
         children.push(child)
 
-        const msg = await new Promise<{ env: Record<string, string>, execArgv: string[] }>((resolve, reject) => {
+        const msg = await new Promise<{ env: Record<string, string>; execArgv: string[] }>((resolve, reject) => {
             child.on('message', (m) => resolve(m as any))
             child.on('error', reject)
             setTimeout(() => reject(new Error('timeout waiting for child message')), 5000)
@@ -62,7 +65,7 @@ describe('simpleProcess', () => {
         })
         children.push(child)
 
-        const msg = await new Promise<{ env: Record<string, string>, execArgv: string[] }>((resolve, reject) => {
+        const msg = await new Promise<{ env: Record<string, string>; execArgv: string[] }>((resolve, reject) => {
             child.on('message', (m) => resolve(m as any))
             child.on('error', reject)
             setTimeout(() => reject(new Error('timeout waiting for child message')), 5000)

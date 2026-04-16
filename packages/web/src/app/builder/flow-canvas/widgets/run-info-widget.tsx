@@ -138,6 +138,7 @@ const RunInfoWidget = () => {
   );
 };
 RunInfoWidget.displayName = 'RunInfoWidget';
+
 export { RunInfoWidget };
 
 const DateSection = ({

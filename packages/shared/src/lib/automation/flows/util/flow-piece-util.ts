@@ -10,7 +10,8 @@ export const flowPieceUtil = {
         return pieceVersion
     },
     getUsedPieces(trigger: FlowTrigger): string[] {
-        return flowStructureUtil.getAllSteps(trigger)
+        return flowStructureUtil
+            .getAllSteps(trigger)
             .filter((step) => step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE)
             .map((step) => step.settings.pieceName)
     },

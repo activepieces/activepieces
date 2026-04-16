@@ -1,15 +1,15 @@
 import { cryptoUtils } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
-    apId,
-
     ApiKey,
     ApiKeyResponseWithValue,
+    apId,
     assertNotNullOrUndefined,
     ErrorCode,
     isNil,
+    SeekPage,
     secureApId,
-    SeekPage } from '@activepieces/shared'
+} from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ApiKeyEntity } from './api-key-entity'
 
@@ -17,10 +17,7 @@ const API_KEY_TOKEN_LENGTH = 64
 const repo = repoFactory<ApiKey>(ApiKeyEntity)
 
 export const apiKeyService = {
-    async add({
-        platformId,
-        displayName,
-    }: AddParams): Promise<ApiKeyResponseWithValue> {
+    async add({ platformId, displayName }: AddParams): Promise<ApiKeyResponseWithValue> {
         const generatedApiKey = generateApiKey()
         const savedApiKey = await repo().save({
             id: apId(),

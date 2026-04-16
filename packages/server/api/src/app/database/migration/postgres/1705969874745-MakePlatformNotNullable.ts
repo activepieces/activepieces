@@ -51,5 +51,4 @@ export class MakePlatformNotNullable1705969874745 implements MigrationInterface 
             ADD "type" character varying NOT NULL DEFAULT 'STANDALONE'
         `)
     }
-
 }

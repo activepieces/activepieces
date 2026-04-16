@@ -3,8 +3,8 @@ import {
   AgentPieceTool,
   AgentToolType,
   isNil,
-  PredefinedInputsStructure,
   mcpToolNameUtils,
+  PredefinedInputsStructure,
 } from '@activepieces/shared';
 import { create } from 'zustand';
 

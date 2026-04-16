@@ -1,7 +1,7 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { leexiAuth } from "../common/auth";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { BASE_URL } from "../common/constants";
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { leexiAuth } from '../common/auth'
+import { BASE_URL } from '../common/constants'
 
 export const getCallAction = createAction({
     name: 'get-call',
@@ -11,11 +11,11 @@ export const getCallAction = createAction({
     props: {
         callId: Property.ShortText({
             displayName: 'Call ID',
-            required: true
-        })
+            required: true,
+        }),
     },
     async run(context) {
-        const { callId } = context.propsValue;
+        const { callId } = context.propsValue
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
@@ -23,10 +23,10 @@ export const getCallAction = createAction({
             authentication: {
                 type: AuthenticationType.BASIC,
                 username: context.auth.username,
-                password: context.auth.password
-            }
+                password: context.auth.password,
+            },
         })
 
-        return response.body;
-    }
+        return response.body
+    },
 })

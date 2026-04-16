@@ -1,7 +1,3 @@
-
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { AuthorizationRouteSecurity } from '../../../../src/app/core/security/authorization/authorization'
-import { AuthorizationType, RouteKind } from '../../../../src/app/core/security/authorization/common'
 import {
     ActivepiecesError,
     apId,
@@ -11,9 +7,12 @@ import {
     PlatformRole,
     Principal,
     PrincipalType,
+    ProjectRole,
     RoleType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { AuthorizationRouteSecurity } from '../../../../src/app/core/security/authorization/authorization'
+import { AuthorizationType, RouteKind } from '../../../../src/app/core/security/authorization/common'
 import { authorizeOrThrow } from '../../../../src/app/core/security/v2/authz/authorize'
 import { db } from '../../../helpers/db'
 import {
@@ -23,7 +22,7 @@ import {
     mockAndSaveBasicSetupWithApiKey,
     mockBasicUser,
 } from '../../../helpers/mocks'
-import { ProjectRole } from '@activepieces/shared'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -37,15 +36,14 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-
-
 describe('authorizeOrThrow - Project', () => {
     describe('PROJECT authorization', () => {
         it('should allow USER with project access', async () => {
-
             const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
-            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
+            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', {
+                name: DefaultProjectRole.ADMIN,
+            })
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockOwner.id,
@@ -74,7 +72,6 @@ describe('authorizeOrThrow - Project', () => {
         })
 
         it('should reject when projectId is nil', async () => {
-
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
@@ -103,7 +100,6 @@ describe('authorizeOrThrow - Project', () => {
         })
 
         it('should allow SERVICE principal with access to project platform', async () => {
-
             const { mockPlatform, mockProject, mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
 
             const principal: Principal = {
@@ -125,7 +121,6 @@ describe('authorizeOrThrow - Project', () => {
         })
 
         it('should reject SERVICE principal accessing project from different platform', async () => {
-
             const { mockApiKey, mockPlatform } = await mockAndSaveBasicSetupWithApiKey()
             const { mockProject: otherProject } = await mockAndSaveBasicSetup()
 
@@ -155,7 +150,6 @@ describe('authorizeOrThrow - Project', () => {
         })
 
         it('should reject principal not in allowedPrincipals for PROJECT', async () => {
-
             const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
@@ -184,7 +178,6 @@ describe('authorizeOrThrow - Project', () => {
         })
 
         it('should allow ENGINE principal accessing its own project', async () => {
-
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
@@ -207,7 +200,6 @@ describe('authorizeOrThrow - Project', () => {
         })
 
         it('should reject ENGINE principal accessing different project', async () => {
-
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
             const { mockProject: otherProject } = await mockAndSaveBasicSetup()
 
@@ -240,7 +232,6 @@ describe('authorizeOrThrow - Project', () => {
 
     describe('RBAC permission checks', () => {
         it('should reject user without required permission', async () => {
-
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
                 user: {
@@ -249,7 +240,9 @@ describe('authorizeOrThrow - Project', () => {
                 },
             })
 
-            const viewerRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.VIEWER })
+            const viewerRole = await db.findOneByOrFail<ProjectRole>('project_role', {
+                name: DefaultProjectRole.VIEWER,
+            })
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
@@ -287,7 +280,6 @@ describe('authorizeOrThrow - Project', () => {
         })
 
         it('should reject user with no role in project', async () => {
-
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
                 user: {
@@ -322,7 +314,6 @@ describe('authorizeOrThrow - Project', () => {
         })
 
         it('should allow user with custom role having required permission', async () => {
-
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
                 user: {

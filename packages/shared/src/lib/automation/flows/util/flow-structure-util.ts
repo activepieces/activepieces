@@ -1,9 +1,16 @@
 import { isNil } from '../../../core/common'
 import { ActivepiecesError, ErrorCode } from '../../../core/common/activepieces-error'
-import { BranchCondition, BranchExecutionType, emptyCondition, FlowAction, FlowActionType, LoopOnItemsAction, RouterAction } from '../actions/action'
+import {
+    BranchCondition,
+    BranchExecutionType,
+    emptyCondition,
+    FlowAction,
+    FlowActionType,
+    LoopOnItemsAction,
+    RouterAction,
+} from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
-
 
 export const AI_PIECE_NAME = '@activepieces/piece-ai'
 
@@ -69,19 +76,13 @@ function getStepOrThrow(name: string, flowRoot: Step): Step {
     return step
 }
 
-function transferStep<T extends Step>(
-    step: Step,
-    transferFunction: (step: T) => T,
-): Step {
+function transferStep<T extends Step>(step: Step, transferFunction: (step: T) => T): Step {
     const updatedStep = transferFunction(step as T)
     switch (updatedStep.type) {
         case FlowActionType.LOOP_ON_ITEMS: {
             const { firstLoopAction } = updatedStep
             if (firstLoopAction) {
-                updatedStep.firstLoopAction = transferStep(
-                    firstLoopAction,
-                    transferFunction,
-                ) as FlowAction
+                updatedStep.firstLoopAction = transferStep(firstLoopAction, transferFunction) as FlowAction
             }
             break
         }
@@ -99,25 +100,15 @@ function transferStep<T extends Step>(
     }
 
     if (updatedStep.nextAction) {
-        updatedStep.nextAction = transferStep(
-            updatedStep.nextAction,
-            transferFunction,
-        ) as FlowAction
+        updatedStep.nextAction = transferStep(updatedStep.nextAction, transferFunction) as FlowAction
     }
 
     return updatedStep
 }
 
-
-function transferFlow<T extends Step>(
-    flowVersion: FlowVersion,
-    transferFunction: (step: T) => T,
-): FlowVersion {
+function transferFlow<T extends Step>(flowVersion: FlowVersion, transferFunction: (step: T) => T): FlowVersion {
     const clonedFlow = JSON.parse(JSON.stringify(flowVersion))
-    clonedFlow.trigger = transferStep(
-        clonedFlow.trigger,
-        transferFunction,
-    ) as FlowTrigger
+    clonedFlow.trigger = transferStep(clonedFlow.trigger, transferFunction) as FlowTrigger
     return clonedFlow
 }
 
@@ -129,7 +120,6 @@ function getAllSteps(step: Step): Step[] {
     })
     return steps
 }
-
 
 const createBranch = (branchName: string, conditions: BranchCondition[][] | undefined) => {
     return {
@@ -151,7 +141,6 @@ function findPathToStep(trigger: FlowTrigger, targetStepName: string): StepWithI
         })
         .filter((step) => step.name !== targetStepName)
 }
-
 
 function getAllChildSteps(action: LoopOnItemsAction | RouterAction): Step[] {
     return getAllSteps({
@@ -195,7 +184,6 @@ const findUnusedName = (source: FlowTrigger | string[]) => {
     return name
 }
 
-
 function getAllNextActionsWithoutChildren(start: Step): Step[] {
     const actions: Step[] = []
     let currentAction = start.nextAction
@@ -208,13 +196,12 @@ function getAllNextActionsWithoutChildren(start: Step): Step[] {
     return actions
 }
 
-
 function extractConnectionIdsFromAuth(auth: string): string[] {
     const match = auth.match(/{{connections\['([^']*(?:'\s*,\s*'[^']*)*)'\]}}/)
     if (!match || !match[1]) {
         return []
     }
-    return match[1].split(/'\s*,\s*'/).map(id => id.trim())
+    return match[1].split(/'\s*,\s*'/).map((id) => id.trim())
 }
 
 function extractAgentIds(flowVersion: FlowVersion): string[] {
@@ -225,13 +212,14 @@ function extractAgentIds(flowVersion: FlowVersion): string[] {
         return null
     }
 
-    return flowStructureUtil.getAllSteps(flowVersion.trigger).map(step => getExternalAgentId(step)).filter(step => step !== null && step !== '')
+    return flowStructureUtil
+        .getAllSteps(flowVersion.trigger)
+        .map((step) => getExternalAgentId(step))
+        .filter((step) => step !== null && step !== '')
 }
 
 function isAgentPiece(action: Step) {
-    return (
-        action.type === FlowActionType.PIECE && action.settings.pieceName === AI_PIECE_NAME
-    )
+    return action.type === FlowActionType.PIECE && action.settings.pieceName === AI_PIECE_NAME
 }
 
 function extractConnectionIds(flowVersion: FlowVersion): string[] {
@@ -241,11 +229,7 @@ function extractConnectionIds(flowVersion: FlowVersion): string[] {
 
     const stepAuthIds = flowStructureUtil
         .getAllSteps(flowVersion.trigger)
-        .flatMap(step =>
-            step.settings?.input?.auth
-                ? extractConnectionIdsFromAuth(step.settings.input.auth)
-                : [],
-        )
+        .flatMap((step) => (step.settings?.input?.auth ? extractConnectionIdsFromAuth(step.settings.input.auth) : []))
 
     return Array.from(new Set([...triggerAuthIds, ...stepAuthIds]))
 }

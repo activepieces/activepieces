@@ -70,13 +70,16 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         log.info({ jobName: job.name }, '[systemJob#upsertJob] Upserting job')
         const existingJob = await getJobByNameAndJobId(job.name, job.jobId)
 
-        const patternChanged = !isNil(existingJob) && schedule.type === 'repeated' ? schedule.cron !== existingJob.opts.repeat?.pattern : false
+        const patternChanged =
+            !isNil(existingJob) && schedule.type === 'repeated'
+                ? schedule.cron !== existingJob.opts.repeat?.pattern
+                : false
 
         if (patternChanged && !isNil(existingJob) && !isNil(existingJob.opts.repeat) && !isNil(existingJob.name)) {
             log.info({ jobName: job.name }, '[systemJob#upsertJob] Pattern changed, removing job from queue')
             await systemJobsQueue.removeRepeatable(existingJob.name as SystemJobName, existingJob.opts.repeat)
         }
-        if (!isNil(existingJob) && await existingJob.isFailed()) {
+        if (!isNil(existingJob) && (await existingJob.isFailed())) {
             log.info({ jobName: job.name }, '[systemJob#upsertJob] Retrying failed job')
             await existingJob.retry()
         }
@@ -89,7 +92,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
     },
 
     async getJob<T extends SystemJobName>(jobId: string) {
-        return await systemJobsQueue.getJob(jobId) as Job<SystemJobData<T>> | undefined
+        return (await systemJobsQueue.getJob(jobId)) as Job<SystemJobData<T>> | undefined
     },
 
     async close(): Promise<void> {
@@ -97,10 +100,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             return
         }
 
-        await Promise.all([
-            systemJobsQueue.close(),
-            systemJobWorker?.close(),
-        ])
+        await Promise.all([systemJobsQueue.close(), systemJobWorker?.close()])
     },
 })
 
@@ -117,27 +117,45 @@ async function removeDeprecatedJobs(): Promise<void> {
     ]
     const allSystemJobs = await systemJobsQueue.getJobSchedulers()
     const knownJobNames = Object.values(SystemJobName) as string[]
-    const deprecatedSchedulers = allSystemJobs.filter(f => !isNil(f) && !isNil(f.id) && !isNil(f.name) && (deprecatedJobs.includes(f.name) || deprecatedJobs.some(d => f.name.startsWith(d))))
-    const legacySchedulers = allSystemJobs.filter(f =>
-        knownJobNames.includes(f.name) && f.key.includes('::'),
+    const deprecatedSchedulers = allSystemJobs.filter(
+        (f) =>
+            !isNil(f) &&
+            !isNil(f.id) &&
+            !isNil(f.name) &&
+            (deprecatedJobs.includes(f.name) || deprecatedJobs.some((d) => f.name.startsWith(d))),
     )
+    const legacySchedulers = allSystemJobs.filter((f) => knownJobNames.includes(f.name) && f.key.includes('::'))
     await Promise.all(
-        [...deprecatedSchedulers, ...legacySchedulers].map(job =>
+        [...deprecatedSchedulers, ...legacySchedulers].map((job) =>
             systemJobsQueue.removeJobScheduler(job.id ?? job.key),
         ),
     )
 
     const oneTimeJobs = await systemJobsQueue.getJobs()
-    const deprecatedOneTimeJobs = oneTimeJobs.filter(f => !isNil(f) && !isNil(f.id) && !isNil(f.name) && (deprecatedJobs.includes(f.name) || deprecatedJobs.some(d => f.name.startsWith(d))))
+    const deprecatedOneTimeJobs = oneTimeJobs.filter(
+        (f) =>
+            !isNil(f) &&
+            !isNil(f.id) &&
+            !isNil(f.name) &&
+            (deprecatedJobs.includes(f.name) || deprecatedJobs.some((d) => f.name.startsWith(d))),
+    )
     await Promise.all(
-        deprecatedOneTimeJobs.map(job => {
+        deprecatedOneTimeJobs.map((job) => {
             assertNotNullOrUndefined(job.id, 'Job id is required')
             return job.remove()
         }),
     )
 }
 
-const configureJobOptions = ({ schedule, jobId, customConfig }: { schedule: JobSchedule, jobId: string, customConfig?: JobsOptions }): JobsOptions => {
+const configureJobOptions = ({
+    schedule,
+    jobId,
+    customConfig,
+}: {
+    schedule: JobSchedule
+    jobId: string
+    customConfig?: JobsOptions
+}): JobsOptions => {
     const config: JobsOptions = customConfig ?? {}
 
     switch (schedule.type) {

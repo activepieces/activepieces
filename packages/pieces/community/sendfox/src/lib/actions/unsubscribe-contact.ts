@@ -1,28 +1,28 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { sendfoxAuth } from '../auth';
-import { callsendfoxApi } from '../../common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { callsendfoxApi } from '../../common'
+import { sendfoxAuth } from '../auth'
 
 export const unsubscribe = createAction({
-  name: 'unsubscribe',
-  auth: sendfoxAuth,
-  displayName: 'Unsubscribe Contact',
-  description: 'Unsubscribe a contact',
-  props: {
-    email: Property.ShortText({
-      displayName: 'Email',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const authentication = context.auth;
-    const accessToken = authentication.secret_text;
-    const email = context.propsValue.email;
-    const response = (
-      await callsendfoxApi(HttpMethod.PATCH, 'unsubscribe', accessToken, {
-        email: email,
-      })
-    ).body;
-    return [response];
-  },
-});
+    name: 'unsubscribe',
+    auth: sendfoxAuth,
+    displayName: 'Unsubscribe Contact',
+    description: 'Unsubscribe a contact',
+    props: {
+        email: Property.ShortText({
+            displayName: 'Email',
+            required: true,
+        }),
+    },
+    async run(context) {
+        const authentication = context.auth
+        const accessToken = authentication.secret_text
+        const email = context.propsValue.email
+        const response = (
+            await callsendfoxApi(HttpMethod.PATCH, 'unsubscribe', accessToken, {
+                email: email,
+            })
+        ).body
+        return [response]
+    },
+})

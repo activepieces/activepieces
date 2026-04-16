@@ -5,7 +5,6 @@ import { system } from '../../../../../../../../src/app/helper/system/system'
 import { tableGenerator } from '../../../../../../../helpers/table-generator'
 
 describe('Table Diff Service', () => {
-
     it('should return the table to delete', async () => {
         const tableTwo = tableGenerator.simpleTable({})
         const diff = await projectDiffService.diff({
@@ -199,15 +198,11 @@ describe('Table Diff Service', () => {
                     ...dropdownField,
                     data: {
                         ...dropdownField.data,
-                        options: [
-                            ...dropdownField.data!.options,
-                            { value: 'Pending' },
-                        ],
+                        options: [...dropdownField.data!.options, { value: 'Pending' }],
                     },
                 },
             ],
         }
-
 
         const diff = await projectDiffService.diff({
             currentState: {
@@ -311,4 +306,4 @@ describe('Table Diff Service', () => {
         expect(diff1.tables.length).toBe(0)
         expect(diff2.tables.length).toBe(0)
     })
-}) 
+})

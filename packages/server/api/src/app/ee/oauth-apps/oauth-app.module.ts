@@ -2,7 +2,10 @@ import {
     assertNotNullOrUndefined,
     ListOAuth2AppRequest,
     OAuthApp,
-    PrincipalType, SeekPage, UpsertOAuth2AppRequest } from '@activepieces/shared'
+    PrincipalType,
+    SeekPage,
+    UpsertOAuth2AppRequest,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'

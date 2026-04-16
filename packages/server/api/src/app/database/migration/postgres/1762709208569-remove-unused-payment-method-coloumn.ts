@@ -23,5 +23,4 @@ export class RemoveUnusedPaymentMethodColoumn1762709208569 implements MigrationI
             ADD "stripePaymentMethod" character varying
         `)
     }
-
 }

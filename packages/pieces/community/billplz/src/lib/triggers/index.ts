@@ -1,1 +1,1 @@
-export * from './get-collections.trigger';
+export * from './get-collections.trigger'

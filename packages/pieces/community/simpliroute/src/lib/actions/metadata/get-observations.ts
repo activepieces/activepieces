@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../auth';
-import { API_BASE_URL, commonHeaders } from '../../common/constants';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { simplirouteAuth } from '../../auth'
+import { API_BASE_URL, commonHeaders } from '../../common/constants'
 
 export const get_observations = createAction({
     name: 'get_observations',
@@ -10,18 +10,18 @@ export const get_observations = createAction({
     description: 'Retrieve the list of observations available in the account.',
     props: {},
     async run(context) {
-        const url = `${API_BASE_URL}/v1/routes/observations/`;
+        const url = `${API_BASE_URL}/v1/routes/observations/`
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth.secret_text}`
-            }
-        });
+                Authorization: `Token ${context.auth.secret_text}`,
+            },
+        })
         return {
             status: response.status,
-            data: response.body
-        };
+            data: response.body,
+        }
     },
-});
+})

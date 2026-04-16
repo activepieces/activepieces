@@ -9,8 +9,13 @@ const VARIABLE_PATTERN = /\{\{(.*?)\}\}/g
 const CONNECTIONS = 'connections'
 const FLATTEN_NESTED_KEYS_PATTERN = /\{\{\s*flattenNestedKeys(.*?)\}\}/g
 
-
-export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion, stepNames }: PropsResolverParams) => {
+export const createPropsResolver = ({
+    engineToken,
+    projectId,
+    apiUrl,
+    contextVersion,
+    stepNames,
+}: PropsResolverParams) => {
     return {
         resolve: async <T = unknown>(params: ResolveInputParams): Promise<ResolveResult<T>> => {
             const { unresolvedInput, executionState } = params
@@ -28,22 +33,22 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 apiUrl,
                 currentState,
             }
-            const resolvedInput = await applyFunctionToValues<T>(
-                unresolvedInput,
-                (token) => resolveInputAsync({
+            const resolvedInput = await applyFunctionToValues<T>(unresolvedInput, (token) =>
+                resolveInputAsync({
                     ...resolveOptions,
                     input: token,
                     censoredInput: false,
                     contextVersion,
-                }))
-            const censoredInput = await applyFunctionToValues<T>(
-                unresolvedInput,
-                (token) => resolveInputAsync({
+                }),
+            )
+            const censoredInput = await applyFunctionToValues<T>(unresolvedInput, (token) =>
+                resolveInputAsync({
                     ...resolveOptions,
                     input: token,
                     censoredInput: true,
                     contextVersion,
-                }))
+                }),
+            )
             return {
                 resolvedInput,
                 censoredInput,
@@ -52,8 +57,13 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
     }
 }
 
-const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeedResolving: string[],
-    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput'>,
+const mergeFlattenedKeysArraysIntoOneArray = async (
+    token: string,
+    partsThatNeedResolving: string[],
+    resolveOptions: Pick<
+        ResolveInputInternalParams,
+        'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput'
+    >,
     contextVersion: ContextVersion | undefined,
 ) => {
     const resolvedValues: Record<string, unknown> = {}
@@ -92,14 +102,15 @@ function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<st
     return referencedSteps
 }
 
-/** 
+/**
  * input: `Hello {{firstName}} {{lastName}}`
  * tokenThatNeedResolving: [`{{firstName}}`, `{{lastName}}`]
  */
 async function resolveInputAsync(params: ResolveInputInternalParams): Promise<unknown> {
     const { input, currentState, engineToken, projectId, apiUrl, censoredInput } = params
     const tokensThatNeedResolving = input.match(VARIABLE_PATTERN)
-    const inputContainsOnlyOneTokenToResolve = tokensThatNeedResolving !== null && tokensThatNeedResolving.length === 1 && tokensThatNeedResolving[0] === input
+    const inputContainsOnlyOneTokenToResolve =
+        tokensThatNeedResolving !== null && tokensThatNeedResolving.length === 1 && tokensThatNeedResolving[0] === input
     const resolveOptions = {
         engineToken,
         projectId,
@@ -119,7 +130,12 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
     }
     const inputIncludesFlattenNestedKeysTokens = input.match(FLATTEN_NESTED_KEYS_PATTERN)
     if (!isNil(inputIncludesFlattenNestedKeysTokens) && !isNil(tokensThatNeedResolving)) {
-        return mergeFlattenedKeysArraysIntoOneArray(input, tokensThatNeedResolving, resolveOptions, params.contextVersion)
+        return mergeFlattenedKeysArraysIntoOneArray(
+            input,
+            tokensThatNeedResolving,
+            resolveOptions,
+            params.contextVersion,
+        )
     }
 
     return stringReplaceAsync(input, VARIABLE_PATTERN, async (_fullMatch, variableName) => {
@@ -150,7 +166,12 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
     if (censoredInput) {
         return '**REDACTED**'
     }
-    const connection = await createConnectionResolver({ engineToken, projectId, apiUrl, contextVersion: params.contextVersion }).obtain(connectionName)
+    const connection = await createConnectionResolver({
+        engineToken,
+        projectId,
+        apiUrl,
+        contextVersion: params.contextVersion,
+    }).obtain(connectionName)
     const pathAfterConnectionName = parsePathAfterConnectionName(variableName, connectionName)
     if (isNil(pathAfterConnectionName) || pathAfterConnectionName.length === 0) {
         return connection
@@ -192,8 +213,12 @@ function parseSquareBracketConnectionPath(variableName: string): string | null {
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-async function evalInScope(js: string, contextAsScope: Record<string, unknown>, functions: Record<string, Function>): Promise<unknown> {
-    const { data: result, error: resultError } = await utils.tryCatchAndThrowOnEngineError((async () => {
+async function evalInScope(
+    js: string,
+    contextAsScope: Record<string, unknown>,
+    functions: Record<string, Function>,
+): Promise<unknown> {
+    const { data: result, error: resultError } = await utils.tryCatchAndThrowOnEngineError(async () => {
         const codeSandbox = await initCodeSandbox()
 
         const result = await codeSandbox.runScript({
@@ -202,7 +227,7 @@ async function evalInScope(js: string, contextAsScope: Record<string, unknown>, 
             functions,
         })
         return result ?? ''
-    }))
+    })
 
     if (resultError) {
         console.warn('[evalInScope] Error evaluating variable', resultError)
@@ -218,11 +243,9 @@ function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
                 return flattenNestedKeys(value, pathToMatch.slice(1))
             }
         }
-    }
-    else if (Array.isArray(data)) {
+    } else if (Array.isArray(data)) {
         return data.flatMap((d) => flattenNestedKeys(d, pathToMatch))
-    }
-    else if (pathToMatch.length === 0) {
+    } else if (pathToMatch.length === 0) {
         return [data]
     }
     return []
@@ -258,8 +281,12 @@ type ResolveResult<T = unknown> = {
     censoredInput: unknown
 }
 
-async function stringReplaceAsync(str: string, regex: RegExp, replacer: (...args: string[]) => Promise<string>): Promise<string> {
-    const matches: { match: string, groups: string[], index: number }[] = []
+async function stringReplaceAsync(
+    str: string,
+    regex: RegExp,
+    replacer: (...args: string[]) => Promise<string>,
+): Promise<string> {
+    const matches: { match: string; groups: string[]; index: number }[] = []
     str.replace(regex, (match, ...args) => {
         const groups = args.slice(0, -2) as string[]
         const index = args[args.length - 2] as unknown as number

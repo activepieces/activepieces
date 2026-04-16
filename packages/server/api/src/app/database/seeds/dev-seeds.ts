@@ -12,7 +12,7 @@ const log = system.globalLogger()
 const currentEnvIsNotDev = (): boolean => {
     const env = system.get(AppSystemProp.ENVIRONMENT)
     const edition = system.get(AppSystemProp.EDITION)
-    return env !== ApEnvironment.DEVELOPMENT  || edition === ApEdition.ENTERPRISE
+    return env !== ApEnvironment.DEVELOPMENT || edition === ApEdition.ENTERPRISE
 }
 
 const devDataAlreadySeeded = async (): Promise<boolean> => {
@@ -33,7 +33,6 @@ const setDevDataSeededFlag = async (): Promise<void> => {
 const seedDevUser = async (): Promise<void> => {
     const DEV_EMAIL = 'dev@ap.com'
     const DEV_PASSWORD = '12345678'
-
 
     await authenticationService(log).signUp({
         email: DEV_EMAIL,

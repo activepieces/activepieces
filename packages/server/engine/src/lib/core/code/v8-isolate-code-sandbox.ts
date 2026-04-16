@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// biome-ignore lint/suspicious/noExplicitAny: legacy code
 import { readFile } from 'node:fs/promises'
 import { CodeSandbox } from '../../core/code/code-sandbox-common'
 
 const ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES = 128
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: legacy code
 // Check this https://github.com/laverdet/isolated-vm/issues/258#issuecomment-2134341086
 let ivmCache: any
 const getIvm = () => {
@@ -37,8 +37,7 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
                 isolateContext,
                 code: wrapCjsModule(source),
             })
-        }
-        finally {
+        } finally {
             isolate.dispose()
         }
     },
@@ -54,7 +53,9 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
                 codeContext: JSON.parse(JSON.stringify(scriptContext)),
             })
 
-            const serializedFunctions = Object.entries(functions).map(([key, value]) => `const ${key} = ${value.toString()};`).join('\n')
+            const serializedFunctions = Object.entries(functions)
+                .map(([key, value]) => `const ${key} = ${value.toString()};`)
+                .join('\n')
             const scriptWithFunctions = `${serializedFunctions}\n${script}`
 
             return await executeIsolate({
@@ -62,8 +63,7 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
                 isolateContext,
                 code: scriptWithFunctions,
             })
-        }
-        finally {
+        } finally {
             isolate.dispose()
         }
     },

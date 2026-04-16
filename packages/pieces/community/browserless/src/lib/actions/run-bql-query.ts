@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { browserlessAuth } from '../common/auth';
-import { browserlessCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { browserlessAuth } from '../common/auth'
+import { browserlessCommon } from '../common/client'
 
 export const runBqlQuery = createAction({
     name: 'run_bql_query',
@@ -11,7 +11,8 @@ export const runBqlQuery = createAction({
     props: {
         query: Property.LongText({
             displayName: 'BQL Query',
-            description: 'GraphQL-based BQL query for browser automation. Example: mutation { goto(url: "https://example.com") { status } }',
+            description:
+                'GraphQL-based BQL query for browser automation. Example: mutation { goto(url: "https://example.com") { status } }',
             required: true,
         }),
         variables: Property.Object({
@@ -56,9 +57,9 @@ export const runBqlQuery = createAction({
             options: {
                 options: [
                     { label: 'Residential', value: 'residential' },
-                    { label: 'None', value: 'none' }
-                ]
-            }
+                    { label: 'None', value: 'none' },
+                ],
+            },
         }),
         proxyCountry: Property.ShortText({
             displayName: 'Proxy Country',
@@ -161,106 +162,108 @@ export const runBqlQuery = createAction({
                         options: [
                             { label: 'Strict', value: 'Strict' },
                             { label: 'Lax', value: 'Lax' },
-                            { label: 'None', value: 'None' }
-                        ]
-                    }
+                            { label: 'None', value: 'None' },
+                        ],
+                    },
                 }),
                 expires: Property.Number({
                     displayName: 'Expires',
                     description: 'Expiration date as timestamp (session cookie if not set)',
                     required: false,
                 }),
-            }
+            },
         }),
     },
     async run(context) {
         const requestBody: any = {
             query: context.propsValue.query,
-        };
+        }
 
         if (context.propsValue.variables) {
-            requestBody.variables = context.propsValue.variables;
+            requestBody.variables = context.propsValue.variables
         }
 
         if (context.propsValue.operationName) {
-            requestBody.operationName = context.propsValue.operationName;
+            requestBody.operationName = context.propsValue.operationName
         }
 
-        let resourceUri = '/chromium/bql';
+        let resourceUri = '/chromium/bql'
 
-        const queryParams: string[] = [];
+        const queryParams: string[] = []
 
         if (context.propsValue.timeout) {
-            queryParams.push(`timeout=${context.propsValue.timeout}`);
+            queryParams.push(`timeout=${context.propsValue.timeout}`)
         }
 
         if (context.propsValue.stealth !== undefined) {
-            queryParams.push(`stealth=${context.propsValue.stealth}`);
+            queryParams.push(`stealth=${context.propsValue.stealth}`)
         }
 
         if (context.propsValue.headless !== undefined) {
-            queryParams.push(`headless=${context.propsValue.headless}`);
+            queryParams.push(`headless=${context.propsValue.headless}`)
         }
 
         if (context.propsValue.humanlike) {
-            queryParams.push(`humanlike=true`);
+            queryParams.push(`humanlike=true`)
         }
 
         if (context.propsValue.proxy && context.propsValue.proxy !== 'none') {
-            queryParams.push(`proxy=${context.propsValue.proxy}`);
+            queryParams.push(`proxy=${context.propsValue.proxy}`)
             if (context.propsValue.proxyCountry) {
-                queryParams.push(`proxyCountry=${context.propsValue.proxyCountry}`);
+                queryParams.push(`proxyCountry=${context.propsValue.proxyCountry}`)
             }
             if (context.propsValue.proxySticky) {
-                queryParams.push(`proxySticky=true`);
+                queryParams.push(`proxySticky=true`)
             }
         }
 
         if (context.propsValue.blockAds) {
-            queryParams.push(`blockAds=true`);
+            queryParams.push(`blockAds=true`)
         }
 
         if (context.propsValue.blockConsentModals) {
-            queryParams.push(`blockConsentModals=true`);
+            queryParams.push(`blockConsentModals=true`)
         }
 
         if (context.propsValue.record) {
-            queryParams.push(`record=true`);
+            queryParams.push(`record=true`)
         }
 
         if (context.propsValue.slowMo) {
-            queryParams.push(`slowMo=${context.propsValue.slowMo}`);
+            queryParams.push(`slowMo=${context.propsValue.slowMo}`)
         }
 
         if (context.propsValue.ignoreHTTPSErrors) {
-            queryParams.push(`ignoreHTTPSErrors=true`);
+            queryParams.push(`ignoreHTTPSErrors=true`)
         }
 
         if (context.propsValue.userAgent) {
-            queryParams.push(`userAgent=${encodeURIComponent(context.propsValue.userAgent)}`);
+            queryParams.push(`userAgent=${encodeURIComponent(context.propsValue.userAgent)}`)
         }
 
         if (context.propsValue.viewportWidth && context.propsValue.viewportHeight) {
-            queryParams.push(`viewport=${context.propsValue.viewportWidth}x${context.propsValue.viewportHeight}`);
+            queryParams.push(`viewport=${context.propsValue.viewportWidth}x${context.propsValue.viewportHeight}`)
         }
 
         if (context.propsValue.cookies && context.propsValue.cookies.length > 0) {
-            const cookiesJson = JSON.stringify(context.propsValue.cookies.map((cookie: any) => ({
-                name: cookie.name,
-                value: cookie.value,
-                ...(cookie.url && { url: cookie.url }),
-                ...(cookie.domain && { domain: cookie.domain }),
-                ...(cookie.path && { path: cookie.path }),
-                ...(cookie.secure !== undefined && { secure: cookie.secure }),
-                ...(cookie.httpOnly !== undefined && { httpOnly: cookie.httpOnly }),
-                ...(cookie.sameSite && { sameSite: cookie.sameSite }),
-                ...(cookie.expires !== undefined && { expires: cookie.expires })
-            })));
-            queryParams.push(`cookies=${encodeURIComponent(cookiesJson)}`);
+            const cookiesJson = JSON.stringify(
+                context.propsValue.cookies.map((cookie: any) => ({
+                    name: cookie.name,
+                    value: cookie.value,
+                    ...(cookie.url && { url: cookie.url }),
+                    ...(cookie.domain && { domain: cookie.domain }),
+                    ...(cookie.path && { path: cookie.path }),
+                    ...(cookie.secure !== undefined && { secure: cookie.secure }),
+                    ...(cookie.httpOnly !== undefined && { httpOnly: cookie.httpOnly }),
+                    ...(cookie.sameSite && { sameSite: cookie.sameSite }),
+                    ...(cookie.expires !== undefined && { expires: cookie.expires }),
+                })),
+            )
+            queryParams.push(`cookies=${encodeURIComponent(cookiesJson)}`)
         }
 
         if (queryParams.length > 0) {
-            resourceUri += `?${queryParams.join('&')}`;
+            resourceUri += `?${queryParams.join('&')}`
         }
 
         const response = await browserlessCommon.apiCall({
@@ -268,13 +271,13 @@ export const runBqlQuery = createAction({
             method: HttpMethod.POST,
             resourceUri,
             body: requestBody,
-        });
+        })
 
-        let parsedResult;
+        let parsedResult
         try {
-            parsedResult = typeof response.body === 'string' ? JSON.parse(response.body) : response.body;
+            parsedResult = typeof response.body === 'string' ? JSON.parse(response.body) : response.body
         } catch (error) {
-            parsedResult = response.body;
+            parsedResult = response.body
         }
 
         return {
@@ -287,7 +290,7 @@ export const runBqlQuery = createAction({
                 executionTime: response.headers?.['x-response-time'] || 'unknown',
                 timestamp: new Date().toISOString(),
                 stealth: context.propsValue.stealth || false,
-            }
-        };
+            },
+        }
     },
-});
+})

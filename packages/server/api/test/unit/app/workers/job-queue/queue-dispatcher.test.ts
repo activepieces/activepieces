@@ -2,7 +2,12 @@ import { ConsumeJobRequest } from '@activepieces/shared'
 import { Worker as BullMQWorker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createQueueDispatcher, ERROR_RETRY_DELAY_MS, QueueDispatcher, WAITER_TIMEOUT_MS } from '../../../../../src/app/workers/job-queue/queue-dispatcher'
+import {
+    createQueueDispatcher,
+    ERROR_RETRY_DELAY_MS,
+    QueueDispatcher,
+    WAITER_TIMEOUT_MS,
+} from '../../../../../src/app/workers/job-queue/queue-dispatcher'
 
 const mockLog: FastifyBaseLogger = {
     debug: vi.fn(),

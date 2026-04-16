@@ -475,9 +475,7 @@ export class AddTriggerSqlite1754477404726 implements MigrationInterface {
             DROP TABLE "trigger_source"
         `)
     }
-
 }
-
 
 export async function insertScheduleFromFlowsMigration(queryRunner: QueryRunner, log: FastifyBaseLogger) {
     const flowIds: { id: string }[] = await queryRunner.query(`
@@ -505,7 +503,7 @@ async function migrateSingleFlow(queryRunner: QueryRunner, flowId: string) {
 
     // Use parameterized queries for both sqlite and postgres
     // For sqlite, use '?', for postgres, use '$1', '$2', etc.
-    const param = (i: number) => dbType === 'postgres' ? `$${i}` : '?'
+    const param = (i: number) => (dbType === 'postgres' ? `$${i}` : '?')
 
     // Fetch flow
     const flowQuery = `SELECT * FROM "flow" WHERE "id" = ${param(1)}`
@@ -528,12 +526,10 @@ async function migrateSingleFlow(queryRunner: QueryRunner, flowId: string) {
     if (typeof flowVersionRow.trigger === 'string') {
         try {
             trigger = JSON.parse(flowVersionRow.trigger)
-        }
-        catch (e) {
+        } catch (e) {
             throw new Error(`Failed to parse trigger JSON for flowVersion ${flowVersionRow.id}`)
         }
-    }
-    else {
+    } else {
         trigger = flowVersionRow.trigger
     }
 
@@ -568,8 +564,7 @@ async function migrateSingleFlow(queryRunner: QueryRunner, flowId: string) {
             pieceVersion,
             false,
         ]
-    }
-    else {
+    } else {
         // sqlite
         insertQuery = `
             INSERT INTO "trigger_source" (

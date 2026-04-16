@@ -1,7 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-
-import { saleorAuth } from '../..';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { saleorAuth } from '../..'
 
 export const saleorRawGraphqlQuery = createAction({
     name: 'rawGraphqlQuery',
@@ -10,11 +9,11 @@ export const saleorRawGraphqlQuery = createAction({
     auth: saleorAuth,
     props: {
         query: Property.LongText({ displayName: 'Query', required: true }),
-            variables: Property.Object({ displayName: 'Parameters', required: false }),
+        variables: Property.Object({ displayName: 'Parameters', required: false }),
     },
-    async run({auth, propsValue}) {
-        const { query, variables } = propsValue;
-        const { token, apiUrl } = auth.props;
+    async run({ auth, propsValue }) {
+        const { query, variables } = propsValue
+        const { token, apiUrl } = auth.props
 
         const response = await httpClient.sendRequest({
             url: apiUrl,
@@ -27,8 +26,8 @@ export const saleorRawGraphqlQuery = createAction({
                 type: AuthenticationType.BEARER_TOKEN,
                 token: token,
             },
-        });
+        })
 
-        return response;
+        return response
     },
-});
+})

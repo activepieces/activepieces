@@ -1,5 +1,5 @@
-import { PieceAuth } from "@activepieces/pieces-framework";
-import { HttpError, HttpMethod, httpClient } from "@activepieces/pieces-common";
+import { HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 const markdownDescription = `
 Follow these steps to get your Gamma API Key:
@@ -11,40 +11,40 @@ Follow these steps to get your Gamma API Key:
 5.  Copy the key (it starts with \`sk-gamma-\`) and paste it below.
 
 **Direct Link to API Settings:** [**https://gamma.app/settings/api**](https://gamma.app/settings/api)
-`;
+`
 
 export const gammaAuth = PieceAuth.CustomAuth({
-  description: markdownDescription,
-  required: true,
-  props: {
-    apiKey: PieceAuth.SecretText({
-      displayName: "API Key",
-      description: "Paste your API key here.",
-      required: true,
-    }),
-  },
-  async validate(auth) { 
-    const apiKey = auth.auth.apiKey; 
-    
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: 'https://public-api.gamma.app/v0.2/generations/1', 
-        headers: {
-          'X-API-KEY': apiKey, 
-        },
-      });
-      return { valid: true };
-    } catch (e) {
-      if (e instanceof HttpError) {
-        if (e.response.status === 404) {
-          return { valid: true };
+    description: markdownDescription,
+    required: true,
+    props: {
+        apiKey: PieceAuth.SecretText({
+            displayName: 'API Key',
+            description: 'Paste your API key here.',
+            required: true,
+        }),
+    },
+    async validate(auth) {
+        const apiKey = auth.auth.apiKey
+
+        try {
+            await httpClient.sendRequest({
+                method: HttpMethod.GET,
+                url: 'https://public-api.gamma.app/v0.2/generations/1',
+                headers: {
+                    'X-API-KEY': apiKey,
+                },
+            })
+            return { valid: true }
+        } catch (e) {
+            if (e instanceof HttpError) {
+                if (e.response.status === 404) {
+                    return { valid: true }
+                }
+                if (e.response.status === 401) {
+                    return { valid: false, error: 'Invalid API Key' }
+                }
+            }
+            return { valid: false, error: 'Failed to connect to Gamma API' }
         }
-        if (e.response.status === 401) {
-          return { valid: false, error: 'Invalid API Key' };
-        }
-      }
-      return { valid: false, error: 'Failed to connect to Gamma API' };
-    }
-  },
-});
+    },
+})

@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
-import { callSalesforceApi, salesforcesCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { callSalesforceApi, salesforcesCommon } from '../common'
 
 export const findChildRecords = createAction({
     auth: salesforceAuth,
@@ -14,15 +14,15 @@ export const findChildRecords = createAction({
         child_relationship: salesforcesCommon.childRelationship,
     },
     async run(context) {
-        const { parent_id, child_relationship } = context.propsValue;
+        const { parent_id, child_relationship } = context.propsValue
 
         const response = await callSalesforceApi(
             HttpMethod.GET,
             context.auth,
             `/services/data/v56.0/ui-api/records/${parent_id}/child-relationships/${child_relationship}`,
-            undefined
-        );
+            undefined,
+        )
 
-        return response.body;
+        return response.body
     },
-});
+})

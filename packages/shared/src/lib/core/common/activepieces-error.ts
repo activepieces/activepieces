@@ -9,7 +9,10 @@ import type { ApId } from './id-generator'
 import type { Permission } from './security'
 
 export class ActivepiecesError extends Error {
-    constructor(public error: ApErrorParams, message?: string) {
+    constructor(
+        public error: ApErrorParams,
+        message?: string,
+    ) {
         super(error.code + (message ? `: ${message}` : ''))
     }
 
@@ -95,397 +98,486 @@ export type ApErrorParams =
     | ExecutionStateMissingParams
     | GenericErrorParams
 
-export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
-    flowId: FlowId
-    message?: string
-    pieceName: string
-    pieceVersion: string
-}>
+export type TriggerExecutionFailedParams = BaseErrorParams<
+    ErrorCode.TRIGGER_EXECUTION_FAILED,
+    {
+        flowId: FlowId
+        message?: string
+        pieceName: string
+        pieceVersion: string
+    }
+>
 
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
 }
 
-export type SandboxMemoryIssueParams = BaseErrorParams<ErrorCode.SANDBOX_MEMORY_ISSUE, {
-    standardOutput: string
-    standardError: string
-}>
-
-export type SandboxExecutionTimeoutParams = BaseErrorParams<ErrorCode.SANDBOX_EXECUTION_TIMEOUT, {
-    standardOutput: string
-    standardError: string
-}>
-
-export type SandboxInternalErrorParams = BaseErrorParams<ErrorCode.SANDBOX_INTERNAL_ERROR, {
-    standardOutput: string
-    standardError: string
-    reason: string
-}>
-
-export type InvitationOnlySignUpParams = BaseErrorParams<
-ErrorCode.INVITATION_ONLY_SIGN_UP,
-{
-    message?: string
-}
+export type SandboxMemoryIssueParams = BaseErrorParams<
+    ErrorCode.SANDBOX_MEMORY_ISSUE,
+    {
+        standardOutput: string
+        standardError: string
+    }
 >
 
-export type InvalidClaimParams = BaseErrorParams<ErrorCode.INVALID_CLAIM, { redirectUrl: string, tokenUrl: string, clientId: string, message: string }>
+export type SandboxExecutionTimeoutParams = BaseErrorParams<
+    ErrorCode.SANDBOX_EXECUTION_TIMEOUT,
+    {
+        standardOutput: string
+        standardError: string
+    }
+>
+
+export type SandboxInternalErrorParams = BaseErrorParams<
+    ErrorCode.SANDBOX_INTERNAL_ERROR,
+    {
+        standardOutput: string
+        standardError: string
+        reason: string
+    }
+>
+
+export type InvitationOnlySignUpParams = BaseErrorParams<
+    ErrorCode.INVITATION_ONLY_SIGN_UP,
+    {
+        message?: string
+    }
+>
+
+export type InvalidClaimParams = BaseErrorParams<
+    ErrorCode.INVALID_CLAIM,
+    { redirectUrl: string; tokenUrl: string; clientId: string; message: string }
+>
 export type InvalidCloudClaimParams = BaseErrorParams<ErrorCode.INVALID_CLOUD_CLAIM, { pieceName: string }>
 
-export type InvalidBearerTokenParams = BaseErrorParams<ErrorCode.INVALID_BEARER_TOKEN, {
-    message?: string
-}>
+export type InvalidBearerTokenParams = BaseErrorParams<
+    ErrorCode.INVALID_BEARER_TOKEN,
+    {
+        message?: string
+    }
+>
 
-export type SessionExpiredParams = BaseErrorParams<ErrorCode.SESSION_EXPIRED, {
-    message?: string
-}>
+export type SessionExpiredParams = BaseErrorParams<
+    ErrorCode.SESSION_EXPIRED,
+    {
+        message?: string
+    }
+>
 
 export type NoChatResponseParams = BaseErrorParams<ErrorCode.NO_CHAT_RESPONSE, Record<string, never>>
 
 export type EmailAuthIsDisabledParams = BaseErrorParams<ErrorCode.EMAIL_AUTH_DISABLED, Record<string, never>>
 
 export type AuthorizationErrorParams = BaseErrorParams<
-ErrorCode.AUTHORIZATION,
-Record<string, string> &
-{
-    message?: string
-}
+    ErrorCode.AUTHORIZATION,
+    Record<string, string> & {
+        message?: string
+    }
 >
 
-export type AICreditLimitExceededParams = BaseErrorParams<ErrorCode.AI_CREDIT_LIMIT_EXCEEDED, {
-    usage: number
-    limit: number
-}> 
+export type AICreditLimitExceededParams = BaseErrorParams<
+    ErrorCode.AI_CREDIT_LIMIT_EXCEEDED,
+    {
+        usage: number
+        limit: number
+    }
+>
 
 export type PermissionDeniedErrorParams = BaseErrorParams<
-ErrorCode.PERMISSION_DENIED,
-{
-    userId: UserId
-    projectId: ProjectId
-    projectRole: ProjectRole | null
-    permission: Permission | undefined
-}
+    ErrorCode.PERMISSION_DENIED,
+    {
+        userId: UserId
+        projectId: ProjectId
+        projectRole: ProjectRole | null
+        permission: Permission | undefined
+    }
 >
 
 export type SystemInvalidErrorParams = BaseErrorParams<
-ErrorCode.SYSTEM_PROP_INVALID,
-{
-    prop: string
-}
+    ErrorCode.SYSTEM_PROP_INVALID,
+    {
+        prop: string
+    }
 >
 
 export type FlowRunRetryOutsideRetentionErrorParams = BaseErrorParams<
-ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION,
-{
-    flowRunId: FlowRunId
-    failedJobRetentionDays: number
-}
+    ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION,
+    {
+        flowRunId: FlowRunId
+        failedJobRetentionDays: number
+    }
 >
 
-export type InvalidCredentialsErrorParams = BaseErrorParams<
-ErrorCode.INVALID_CREDENTIALS,
-null
->
+export type InvalidCredentialsErrorParams = BaseErrorParams<ErrorCode.INVALID_CREDENTIALS, null>
 
 export type DomainIsNotAllowedErrorParams = BaseErrorParams<
-ErrorCode.DOMAIN_NOT_ALLOWED,
-{
-    domain: string
-}
+    ErrorCode.DOMAIN_NOT_ALLOWED,
+    {
+        domain: string
+    }
 >
 
 export type EmailIsNotVerifiedErrorParams = BaseErrorParams<
-ErrorCode.EMAIL_IS_NOT_VERIFIED,
-{
-    email: string
-}
+    ErrorCode.EMAIL_IS_NOT_VERIFIED,
+    {
+        email: string
+    }
 >
 
 export type UserIsInActiveErrorParams = BaseErrorParams<
-ErrorCode.USER_IS_INACTIVE,
-{
-    email: string
-}
+    ErrorCode.USER_IS_INACTIVE,
+    {
+        email: string
+    }
 >
 
 export type ExistingUserErrorParams = BaseErrorParams<
-ErrorCode.EXISTING_USER,
-{
-    email: string
-    platformId: string | null
-}
+    ErrorCode.EXISTING_USER,
+    {
+        email: string
+        platformId: string | null
+    }
 >
 
 export type TriggerFailedErrorParams = BaseErrorParams<
-ErrorCode.TRIGGER_FAILED,
-{
-    pieceName: string
-    pieceVersion: string
-    triggerName: string
-    error: string | undefined
-}
+    ErrorCode.TRIGGER_FAILED,
+    {
+        pieceName: string
+        pieceVersion: string
+        triggerName: string
+        error: string | undefined
+    }
 >
 
-
 export type JobRemovalFailureErrorParams = BaseErrorParams<
-ErrorCode.JOB_REMOVAL_FAILURE,
-{
-    flowVersionId: ApId
-}
+    ErrorCode.JOB_REMOVAL_FAILURE,
+    {
+        flowVersionId: ApId
+    }
 >
 
 export type SystemPropNotDefinedErrorParams = BaseErrorParams<
-ErrorCode.SYSTEM_PROP_NOT_DEFINED,
-{
-    prop: string
-}
+    ErrorCode.SYSTEM_PROP_NOT_DEFINED,
+    {
+        prop: string
+    }
 >
 
-export type OpenAiFailedErrorParams = BaseErrorParams<
-ErrorCode.OPEN_AI_FAILED,
-Record<string, never>
->
+export type OpenAiFailedErrorParams = BaseErrorParams<ErrorCode.OPEN_AI_FAILED, Record<string, never>>
 
 export type FlowOperationErrorParams = BaseErrorParams<
-ErrorCode.FLOW_OPERATION_INVALID,
-{
-    message: string
-}
+    ErrorCode.FLOW_OPERATION_INVALID,
+    {
+        message: string
+    }
 >
 
 export type FlowOperationInProgressErrorParams = BaseErrorParams<
-ErrorCode.FLOW_OPERATION_IN_PROGRESS, {
-    message: string
-}>
+    ErrorCode.FLOW_OPERATION_IN_PROGRESS,
+    {
+        message: string
+    }
+>
 
 export type InvalidJwtTokenErrorParams = BaseErrorParams<
-ErrorCode.INVALID_OR_EXPIRED_JWT_TOKEN,
-{
-    token: string
-}
+    ErrorCode.INVALID_OR_EXPIRED_JWT_TOKEN,
+    {
+        token: string
+    }
 >
 
 export type TestTriggerFailedErrorParams = BaseErrorParams<
-ErrorCode.TEST_TRIGGER_FAILED,
-{
-    message: string
-}
+    ErrorCode.TEST_TRIGGER_FAILED,
+    {
+        message: string
+    }
 >
 
 export type EntityNotFoundErrorParams = BaseErrorParams<
-ErrorCode.ENTITY_NOT_FOUND,
-{
-    message?: string
-    entityType?: string
-    entityId?: string
-    extra?: Record<string, unknown>
-}
+    ErrorCode.ENTITY_NOT_FOUND,
+    {
+        message?: string
+        entityType?: string
+        entityId?: string
+        extra?: Record<string, unknown>
+    }
 >
 
 export type InvalidCustomDomainErrorParams = BaseErrorParams<
-ErrorCode.INVALID_CUSTOM_DOMAIN,
-{
-    message: string
-}
+    ErrorCode.INVALID_CUSTOM_DOMAIN,
+    {
+        message: string
+    }
 >
 
-export type PieceSyncNotSupportedErrorParams = BaseErrorParams<ErrorCode.PIECE_SYNC_NOT_SUPPORTED, {
-    release: string
-    message: string
-}>
+export type PieceSyncNotSupportedErrorParams = BaseErrorParams<
+    ErrorCode.PIECE_SYNC_NOT_SUPPORTED,
+    {
+        release: string
+        message: string
+    }
+>
 
 export type ValidationErrorParams = BaseErrorParams<
-ErrorCode.VALIDATION,
-{
-    message: string
-}
+    ErrorCode.VALIDATION,
+    {
+        message: string
+    }
 >
 
 export type TriggerUpdateStatusErrorParams = BaseErrorParams<
-ErrorCode.TRIGGER_UPDATE_STATUS,
-{
-    flowId?: FlowId
-    flowVersionId?: FlowVersionId
-    message?: string
-    standardOutput?: string
-    standardError?: string
-}
+    ErrorCode.TRIGGER_UPDATE_STATUS,
+    {
+        flowId?: FlowId
+        flowVersionId?: FlowVersionId
+        message?: string
+        standardOutput?: string
+        standardError?: string
+    }
 >
 
-export type PauseMetadataMissingErrorParams = BaseErrorParams<
-ErrorCode.PAUSE_METADATA_MISSING,
-Record<string, never>
->
+export type PauseMetadataMissingErrorParams = BaseErrorParams<ErrorCode.PAUSE_METADATA_MISSING, Record<string, never>>
 
-export type InvalidApiKeyParams = BaseErrorParams<
-ErrorCode.INVALID_API_KEY,
-Record<string, never>
->
+export type InvalidApiKeyParams = BaseErrorParams<ErrorCode.INVALID_API_KEY, Record<string, never>>
 
 export type EngineOperationFailureParams = BaseErrorParams<
-ErrorCode.ENGINE_OPERATION_FAILURE,
-{
-    message: string
-    context?: unknown
-}
+    ErrorCode.ENGINE_OPERATION_FAILURE,
+    {
+        message: string
+        context?: unknown
+    }
 >
 
 export type InvalidAppConnectionParams = BaseErrorParams<
-ErrorCode.INVALID_APP_CONNECTION,
-{
-    error: string
-}
+    ErrorCode.INVALID_APP_CONNECTION,
+    {
+        error: string
+    }
 >
 
 export type QuotaExceededParams = BaseErrorParams<
-ErrorCode.QUOTA_EXCEEDED,
-{
-    metric: PlatformUsageMetric
-}
+    ErrorCode.QUOTA_EXCEEDED,
+    {
+        metric: PlatformUsageMetric
+    }
 >
 
 export type ErrorUpdatingSubscriptionParams = BaseErrorParams<
-ErrorCode.ERROR_UPDATING_SUBSCRIPTION,
-{
-    message: string
-}>
-
-export type AIProviderModelNotSupportedParams = BaseErrorParams<ErrorCode.AI_MODEL_NOT_SUPPORTED, {
-    provider: string
-    model: string
-}>
-
-export type AIProviderNotSupportedParams = BaseErrorParams<ErrorCode.AI_PROVIDER_NOT_SUPPORTED, {
-    provider: string
-}>
-
-export type AIRequestNotSupportedParams = BaseErrorParams<ErrorCode.AI_REQUEST_NOT_SUPPORTED, {
-    message: string
-}>
-
-export type FeatureDisabledErrorParams = BaseErrorParams<
-ErrorCode.FEATURE_DISABLED,
-{
-    message: string
-}>
-
-export type SignUpDisabledParams = BaseErrorParams<
-ErrorCode.SIGN_UP_DISABLED,
-Record<string, never>
+    ErrorCode.ERROR_UPDATING_SUBSCRIPTION,
+    {
+        message: string
+    }
 >
 
+export type AIProviderModelNotSupportedParams = BaseErrorParams<
+    ErrorCode.AI_MODEL_NOT_SUPPORTED,
+    {
+        provider: string
+        model: string
+    }
+>
+
+export type AIProviderNotSupportedParams = BaseErrorParams<
+    ErrorCode.AI_PROVIDER_NOT_SUPPORTED,
+    {
+        provider: string
+    }
+>
+
+export type AIRequestNotSupportedParams = BaseErrorParams<
+    ErrorCode.AI_REQUEST_NOT_SUPPORTED,
+    {
+        message: string
+    }
+>
+
+export type FeatureDisabledErrorParams = BaseErrorParams<
+    ErrorCode.FEATURE_DISABLED,
+    {
+        message: string
+    }
+>
+
+export type SignUpDisabledParams = BaseErrorParams<ErrorCode.SIGN_UP_DISABLED, Record<string, never>>
+
 export type AuthenticationParams = BaseErrorParams<
-ErrorCode.AUTHENTICATION,
-{
-    message: string
-}>
+    ErrorCode.AUTHENTICATION,
+    {
+        message: string
+    }
+>
 
 export type InvalidSAMLResponseParams = BaseErrorParams<
-ErrorCode.INVALID_SAML_RESPONSE,
-{
-    message: string
-}>
+    ErrorCode.INVALID_SAML_RESPONSE,
+    {
+        message: string
+    }
+>
 
 export type ExistingAlertChannelErrorParams = BaseErrorParams<
-ErrorCode.EXISTING_ALERT_CHANNEL,
-{
-    email: string
-}>
+    ErrorCode.EXISTING_ALERT_CHANNEL,
+    {
+        email: string
+    }
+>
 
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
 
-export type InvalidLicenseKeyParams = BaseErrorParams<ErrorCode.INVALID_LICENSE_KEY, {
-    key: string
-}>  
+export type InvalidLicenseKeyParams = BaseErrorParams<
+    ErrorCode.INVALID_LICENSE_KEY,
+    {
+        key: string
+    }
+>
 
-export type EmailAlreadyHasActivationKey = BaseErrorParams<ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY, {
-    email: string
-}>
+export type EmailAlreadyHasActivationKey = BaseErrorParams<
+    ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY,
+    {
+        email: string
+    }
+>
 
-export type InvalidSmtpCredentialsErrorParams = BaseErrorParams<ErrorCode.INVALID_SMTP_CREDENTIALS, {
-    message: string
-}>  
+export type InvalidSmtpCredentialsErrorParams = BaseErrorParams<
+    ErrorCode.INVALID_SMTP_CREDENTIALS,
+    {
+        message: string
+    }
+>
 
-export type InvalidGitCredentialsParams = BaseErrorParams<ErrorCode.INVALID_GIT_CREDENTIALS, {
-    message: string
-}>
+export type InvalidGitCredentialsParams = BaseErrorParams<
+    ErrorCode.INVALID_GIT_CREDENTIALS,
+    {
+        message: string
+    }
+>
 
-export type InvalidReleaseTypeParams = BaseErrorParams<ErrorCode.INVALID_RELEASE_TYPE, {
-    message: string
-}>
+export type InvalidReleaseTypeParams = BaseErrorParams<
+    ErrorCode.INVALID_RELEASE_TYPE,
+    {
+        message: string
+    }
+>
 
-export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS, {
-    externalId: string
-}>
+export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<
+    ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS,
+    {
+        externalId: string
+    }
+>
 
-export type McpPieceRequiresConnectionParams = BaseErrorParams<ErrorCode.MCP_PIECE_REQUIRES_CONNECTION, {
-    pieceName: string
-}>
+export type McpPieceRequiresConnectionParams = BaseErrorParams<
+    ErrorCode.MCP_PIECE_REQUIRES_CONNECTION,
+    {
+        pieceName: string
+    }
+>
 
-export type McpPieceConnectionMismatchParams = BaseErrorParams<ErrorCode.MCP_PIECE_CONNECTION_MISMATCH, {
-    pieceName: string
-    connectionPieceName: string
-    connectionId: string
-}>
+export type McpPieceConnectionMismatchParams = BaseErrorParams<
+    ErrorCode.MCP_PIECE_CONNECTION_MISMATCH,
+    {
+        pieceName: string
+        connectionPieceName: string
+        connectionId: string
+    }
+>
 
-export type SubflowFailedParams = BaseErrorParams<ErrorCode.SUBFLOW_FAILED, {
-    message: string
-}>
+export type SubflowFailedParams = BaseErrorParams<
+    ErrorCode.SUBFLOW_FAILED,
+    {
+        message: string
+    }
+>
 
-export type MachineNotAvailableParams = BaseErrorParams<ErrorCode.MACHINE_NOT_AVAILABLE, {
-    resourceType: string
-}>
+export type MachineNotAvailableParams = BaseErrorParams<
+    ErrorCode.MACHINE_NOT_AVAILABLE,
+    {
+        resourceType: string
+    }
+>
 
-export type MachineNotConnectedParams = BaseErrorParams<ErrorCode.MACHINE_NOT_CONNECTED, {
-    message: string
-}>
-export type DoesNotMeetBusinessRequirementsParams = BaseErrorParams<ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS, {
-    message: string
-}>
+export type MachineNotConnectedParams = BaseErrorParams<
+    ErrorCode.MACHINE_NOT_CONNECTED,
+    {
+        message: string
+    }
+>
+export type DoesNotMeetBusinessRequirementsParams = BaseErrorParams<
+    ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS,
+    {
+        message: string
+    }
+>
 
-export type SandboxLogSizeExceededParams = BaseErrorParams<ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED, {
-    standardOutput: string
-    standardError: string
-}>
+export type SandboxLogSizeExceededParams = BaseErrorParams<
+    ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED,
+    {
+        standardOutput: string
+        standardError: string
+    }
+>
 
-export type SecretManagerConnectionFailedParams = BaseErrorParams<ErrorCode.SECRET_MANAGER_CONNECTION_FAILED, {
-    message: string
-    provider: string
-}>
+export type SecretManagerConnectionFailedParams = BaseErrorParams<
+    ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
+    {
+        message: string
+        provider: string
+    }
+>
 
-export type SecretManagerGetSecretFailedParams = BaseErrorParams<ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED, {
-    message: string
-    provider: string
-    request: Record<string, unknown>
-}>
+export type SecretManagerGetSecretFailedParams = BaseErrorParams<
+    ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
+    {
+        message: string
+        provider: string
+        request: Record<string, unknown>
+    }
+>
 
-export type SecretManagerKeyNotSecretParams = BaseErrorParams<ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET, {
-    message: string
-}>
+export type SecretManagerKeyNotSecretParams = BaseErrorParams<
+    ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET,
+    {
+        message: string
+    }
+>
 
-export type InvalidAIProviderCredentialsParams = BaseErrorParams<ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS, {
-    provider: string
-    message: string
-    httpErrorResponse: string
-}>
+export type InvalidAIProviderCredentialsParams = BaseErrorParams<
+    ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS,
+    {
+        provider: string
+        message: string
+        httpErrorResponse: string
+    }
+>
 
-export type FlowMigrationFailedParams = BaseErrorParams<ErrorCode.FLOW_MIGRATION_FAILED, {
-    flowVersionId: string
-    message: string
-}>
+export type FlowMigrationFailedParams = BaseErrorParams<
+    ErrorCode.FLOW_MIGRATION_FAILED,
+    {
+        flowVersionId: string
+        message: string
+    }
+>
 
-export type ResumeLogsFileMissingParams = BaseErrorParams<ErrorCode.RESUME_LOGS_FILE_MISSING, {
-    runId: string
-}>
+export type ResumeLogsFileMissingParams = BaseErrorParams<
+    ErrorCode.RESUME_LOGS_FILE_MISSING,
+    {
+        runId: string
+    }
+>
 
-export type ExecutionStateMissingParams = BaseErrorParams<ErrorCode.EXECUTION_STATE_MISSING, {
-    logsFileId: string
-}>
+export type ExecutionStateMissingParams = BaseErrorParams<
+    ErrorCode.EXECUTION_STATE_MISSING,
+    {
+        logsFileId: string
+    }
+>
 
-export type GenericErrorParams = BaseErrorParams<ErrorCode.GENERIC_ERROR, {
-    message: string
-}>
+export type GenericErrorParams = BaseErrorParams<
+    ErrorCode.GENERIC_ERROR,
+    {
+        message: string
+    }
+>
 
 export enum ErrorCode {
     INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
@@ -560,4 +652,3 @@ export enum ErrorCode {
     EXECUTION_STATE_MISSING = 'EXECUTION_STATE_MISSING',
     GENERIC_ERROR = 'GENERIC_ERROR',
 }
-

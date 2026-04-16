@@ -1,7 +1,7 @@
 import {
+  assertNotNullOrUndefined,
   FlowAction,
   FlowTrigger,
-  assertNotNullOrUndefined,
   isNil,
 } from '@activepieces/shared';
 import { MentionNodeAttrs } from '@tiptap/extension-mention';

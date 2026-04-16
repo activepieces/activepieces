@@ -1,19 +1,19 @@
-import { CartloomAuthType } from './auth';
-import { getProducts } from './api';
+import { getProducts } from './api'
+import { CartloomAuthType } from './auth'
 
 export async function buildProductsDropdown(auth: CartloomAuthType) {
-  if (!auth) {
+    if (!auth) {
+        return {
+            options: [],
+            disabled: true,
+            placeholder: 'Please authenticate first',
+        }
+    }
+    const response = await getProducts(auth)
+    const options = response.data.map((product) => {
+        return { label: product.name, value: product.pid }
+    })
     return {
-      options: [],
-      disabled: true,
-      placeholder: 'Please authenticate first',
-    };
-  }
-  const response = await getProducts(auth);
-  const options = response.data.map((product) => {
-    return { label: product.name, value: product.pid };
-  });
-  return {
-    options: options,
-  };
+        options: options,
+    }
 }

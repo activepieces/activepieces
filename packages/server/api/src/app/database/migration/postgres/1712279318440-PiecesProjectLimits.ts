@@ -12,9 +12,12 @@ export class PiecesProjectLimits1712279318440 implements MigrationInterface {
         if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
             return
         }
-        log.info({
-            name: 'PiecesProjectLimits1712279318440' },
-        'up')
+        log.info(
+            {
+                name: 'PiecesProjectLimits1712279318440',
+            },
+            'up',
+        )
         await queryRunner.query(`
             ALTER TABLE "project_plan" RENAME COLUMN "flowPlanName" TO "name"
         `)
@@ -44,7 +47,6 @@ export class PiecesProjectLimits1712279318440 implements MigrationInterface {
             ALTER COLUMN "pieces" SET NOT NULL;
         `)
 
-
         await queryRunner.query(`
             ALTER TABLE "project_plan"
             ADD "piecesFilterType" character varying
@@ -57,7 +59,6 @@ export class PiecesProjectLimits1712279318440 implements MigrationInterface {
             ALTER TABLE "project_plan"
             ALTER COLUMN "piecesFilterType" SET NOT NULL
         `)
-
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -94,5 +95,4 @@ export class PiecesProjectLimits1712279318440 implements MigrationInterface {
             ADD "stripeCustomerId" character varying
         `)
     }
-
 }

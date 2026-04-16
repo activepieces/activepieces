@@ -2,7 +2,7 @@ import { apId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pubsub } from '../helper/pubsub'
 
-type EngineResponseWithId<T> = { requestId: string, response: T }
+type EngineResponseWithId<T> = { requestId: string; response: T }
 
 const listeners = new Map<string, (flowResponse: EngineResponseWithId<unknown>) => void>()
 const SERVER_ID = apId()
@@ -14,25 +14,24 @@ export const engineResponseWatcher = (log: FastifyBaseLogger) => ({
 
     async init(): Promise<void> {
         log.info('[engineResponseWatcher#init] Initializing engine run watcher')
-        await pubsub.subscribe(
-            `engine-run:sync:${SERVER_ID}`,
-            (message: string) => {
-                const parsedMessage: EngineResponseWithId<unknown> = JSON.parse(message)
-                const listener = listeners.get(parsedMessage.requestId)
-                
-                if (listener) {
-                    listener(parsedMessage)
-                }
-                
-                log.info(
-                    { requestId: parsedMessage.requestId }, 
-                    '[engineWatcher#init]',
-                )
-            },
-        )
+        await pubsub.subscribe(`engine-run:sync:${SERVER_ID}`, (message: string) => {
+            const parsedMessage: EngineResponseWithId<unknown> = JSON.parse(message)
+            const listener = listeners.get(parsedMessage.requestId)
+
+            if (listener) {
+                listener(parsedMessage)
+            }
+
+            log.info({ requestId: parsedMessage.requestId }, '[engineWatcher#init]')
+        })
     },
 
-    async oneTimeListener<T>(requestId: string, timeoutRequest: boolean, timeoutMs: number | undefined, defaultResponse: T | undefined): Promise<T> {
+    async oneTimeListener<T>(
+        requestId: string,
+        timeoutRequest: boolean,
+        timeoutMs: number | undefined,
+        defaultResponse: T | undefined,
+    ): Promise<T> {
         log.info('[engineWatcher#listen]')
 
         return new Promise<T>((resolve) => {
@@ -60,10 +59,7 @@ export const engineResponseWatcher = (log: FastifyBaseLogger) => ({
     },
 
     async publish(webserverId: string, requestId: string, response: unknown): Promise<void> {
-        await pubsub.publish(
-            `engine-run:sync:${webserverId}`,
-            JSON.stringify({ requestId, response }),
-        )
+        await pubsub.publish(`engine-run:sync:${webserverId}`, JSON.stringify({ requestId, response }))
     },
 
     async shutdown(): Promise<void> {

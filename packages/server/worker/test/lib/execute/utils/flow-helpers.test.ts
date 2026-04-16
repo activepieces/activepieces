@@ -1,14 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import {
-    FlowActionType,
-    FlowTriggerType,
-    FlowVersionState,
-    PackageType,
-    PieceType,
-} from '@activepieces/shared'
 import type { FlowVersion } from '@activepieces/shared'
-import { extractPiecePackages, extractCodeArtifacts, provisionFlowPieces } from '../../../../src/lib/execute/utils/flow-helpers'
+import { FlowActionType, FlowTriggerType, FlowVersionState, PackageType, PieceType } from '@activepieces/shared'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { PieceNotFoundError } from '../../../../src/lib/cache/pieces/piece-cache'
+import {
+    extractCodeArtifacts,
+    extractPiecePackages,
+    provisionFlowPieces,
+} from '../../../../src/lib/execute/utils/flow-helpers'
 
 const mockGetPiece = vi.fn()
 const mockProvision = vi.fn()
@@ -94,7 +92,7 @@ const mockPlatformId = 'platform-1'
 describe('extractPiecePackages', () => {
     beforeEach(() => {
         mockGetPiece.mockReset()
-        mockGetPiece.mockImplementation(({ pieceName, pieceVersion }: { pieceName: string, pieceVersion: string }) => ({
+        mockGetPiece.mockImplementation(({ pieceName, pieceVersion }: { pieceName: string; pieceVersion: string }) => ({
             pieceName,
             pieceVersion,
             packageType: PackageType.REGISTRY,
@@ -110,8 +108,18 @@ describe('extractPiecePackages', () => {
         const packages = await extractPiecePackages(fv, mockPlatformId, mockLog, mockApiClient)
         expect(packages).toHaveLength(2)
         expect(packages).toEqual([
-            { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', packageType: PackageType.REGISTRY, pieceType: PieceType.OFFICIAL },
-            { pieceName: '@activepieces/piece-slack', pieceVersion: '0.2.0', packageType: PackageType.REGISTRY, pieceType: PieceType.OFFICIAL },
+            {
+                pieceName: '@activepieces/piece-gmail',
+                pieceVersion: '0.1.0',
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            },
+            {
+                pieceName: '@activepieces/piece-slack',
+                pieceVersion: '0.2.0',
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            },
         ])
     })
 
@@ -201,7 +209,7 @@ describe('provisionFlowPieces', () => {
         mockProvision.mockReset()
         mockDisableFlow.mockReset()
         mockWarn.mockReset()
-        mockGetPiece.mockImplementation(({ pieceName, pieceVersion }: { pieceName: string, pieceVersion: string }) => ({
+        mockGetPiece.mockImplementation(({ pieceName, pieceVersion }: { pieceName: string; pieceVersion: string }) => ({
             pieceName,
             pieceVersion,
             packageType: PackageType.REGISTRY,
@@ -254,14 +262,16 @@ describe('provisionFlowPieces', () => {
             ...pieceTrigger,
             nextAction: { ...pieceAction },
         })
-        await expect(provisionFlowPieces({
-            flowVersion: fv,
-            platformId: mockPlatformId,
-            flowId: 'flow-1',
-            projectId: 'project-1',
-            log: logWithWarn,
-            apiClient: apiClientWithDisable,
-        })).rejects.toThrow('Failed to provision piece')
+        await expect(
+            provisionFlowPieces({
+                flowVersion: fv,
+                platformId: mockPlatformId,
+                flowId: 'flow-1',
+                projectId: 'project-1',
+                log: logWithWarn,
+                apiClient: apiClientWithDisable,
+            }),
+        ).rejects.toThrow('Failed to provision piece')
         expect(mockDisableFlow).not.toHaveBeenCalled()
     })
 

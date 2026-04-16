@@ -1,38 +1,33 @@
-import { clarifaiAuth } from '../auth';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import {
-  CommonClarifaiProps,
-  callClarifaiWorkflow,
-  cleanPostWorkflowResultsResponse,
-  fileToInput,
-} from '../common';
-import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb'
+import { clarifaiAuth } from '../auth'
+import { CommonClarifaiProps, callClarifaiWorkflow, cleanPostWorkflowResultsResponse, fileToInput } from '../common'
 
 export const workflowPredictAction = createAction({
-  auth: clarifaiAuth,
-  name: 'workflow_predict',
-  description: 'Call a Clarifai workflow',
-  displayName: 'Run Workflow',
-  props: {
-    workflowUrl: CommonClarifaiProps.workflowUrl,
-    file: Property.File({
-      description:
-        'URL or base64 bytes of the incoming image/video/text/audio to run through the workflow. Note: must be appropriate first step of the workflow to handle that data type.',
-      displayName: 'Input URL or bytes',
-      required: true,
-    }),
-  },    
-  async run(ctx) {
-    const { auth } = ctx;
-    const { workflowUrl, file } = ctx.propsValue;
+    auth: clarifaiAuth,
+    name: 'workflow_predict',
+    description: 'Call a Clarifai workflow',
+    displayName: 'Run Workflow',
+    props: {
+        workflowUrl: CommonClarifaiProps.workflowUrl,
+        file: Property.File({
+            description:
+                'URL or base64 bytes of the incoming image/video/text/audio to run through the workflow. Note: must be appropriate first step of the workflow to handle that data type.',
+            displayName: 'Input URL or bytes',
+            required: true,
+        }),
+    },
+    async run(ctx) {
+        const { auth } = ctx
+        const { workflowUrl, file } = ctx.propsValue
 
-    const input = fileToInput(file);
+        const input = fileToInput(file)
 
-    const outputs = await callClarifaiWorkflow({
-      auth: auth.secret_text,
-      workflowUrl,
-      input,
-    });
-    return cleanPostWorkflowResultsResponse(outputs);
-  },
-});
+        const outputs = await callClarifaiWorkflow({
+            auth: auth.secret_text,
+            workflowUrl,
+            input,
+        })
+        return cleanPostWorkflowResultsResponse(outputs)
+    },
+})

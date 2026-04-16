@@ -15,5 +15,4 @@ export class AddHandshakeConfigurationToFlow1746848208563 implements MigrationIn
             ALTER TABLE "flow" DROP COLUMN "handshakeConfiguration"
         `)
     }
-
 }

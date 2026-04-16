@@ -1,94 +1,87 @@
-import { microsoftTeamsAuth } from '../auth';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import {
-	createTrigger,
-	AppConnectionValueForAuthProperty,
-	TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
-import { createGraphClient } from '../common/graph';
-import { PageCollection } from '@microsoft/microsoft-graph-client';
-import { Chat, ChatType } from '@microsoft/microsoft-graph-types';
-import dayjs from 'dayjs';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common'
+import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework'
+import { isNil } from '@activepieces/shared'
+import { PageCollection } from '@microsoft/microsoft-graph-client'
+import { Chat, ChatType } from '@microsoft/microsoft-graph-types'
+import dayjs from 'dayjs'
+import { microsoftTeamsAuth } from '../auth'
+import { createGraphClient } from '../common/graph'
 
 type Props = {
-	chatType?: ChatType;
-};
+    chatType?: ChatType
+}
 
 export const newChatTrigger = createTrigger({
-	auth: microsoftTeamsAuth,
-	name: 'new-chat',
-	displayName: 'New Chat',
-	description: 'Triggers when a new chat is created.',
-	props: {},
-	type: TriggerStrategy.POLLING,
-	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue as Props,
-		});
-	},
-	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue as Props,
-		});
-	},
-	async test(context) {
-		return await pollingHelper.test(polling, context as any);
-	},
-	async run(context) {
-		return await pollingHelper.poll(polling, context as any);
-	},
-	sampleData: {
-		id: '19:example_chat_id@unq.gbl.spaces',
-		createdDateTime: '2025-05-21T12:40:13.175Z',
-		lastUpdatedDateTime: '2025-05-21T12:40:13.175Z',
-		chatType: 'oneOnOne',
-		webUrl: '',
-		isHiddenForAllMembers: false,
-	},
-});
+    auth: microsoftTeamsAuth,
+    name: 'new-chat',
+    displayName: 'New Chat',
+    description: 'Triggers when a new chat is created.',
+    props: {},
+    type: TriggerStrategy.POLLING,
+    async onEnable(context) {
+        await pollingHelper.onEnable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue as Props,
+        })
+    },
+    async onDisable(context) {
+        await pollingHelper.onDisable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue as Props,
+        })
+    },
+    async test(context) {
+        return await pollingHelper.test(polling, context as any)
+    },
+    async run(context) {
+        return await pollingHelper.poll(polling, context as any)
+    },
+    sampleData: {
+        id: '19:example_chat_id@unq.gbl.spaces',
+        createdDateTime: '2025-05-21T12:40:13.175Z',
+        lastUpdatedDateTime: '2025-05-21T12:40:13.175Z',
+        chatType: 'oneOnOne',
+        webUrl: '',
+        isHiddenForAllMembers: false,
+    },
+})
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAuth>, Props> = {
-	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, lastFetchEpochMS }) {
-		const cloud = auth.props?.['cloud'] as string | undefined;
-		const client = createGraphClient(auth.access_token, cloud);
-		const lastFetchDate = dayjs(lastFetchEpochMS).toISOString();
+    strategy: DedupeStrategy.TIMEBASED,
+    async items({ auth, lastFetchEpochMS }) {
+        const cloud = auth.props?.['cloud'] as string | undefined
+        const client = createGraphClient(auth.access_token, cloud)
+        const lastFetchDate = dayjs(lastFetchEpochMS).toISOString()
 
-		const chats: Chat[] = [];
-		const filter =
-			lastFetchEpochMS === 0
-				? '$top=10'
-				: `$filter=createdDateTime gt ${lastFetchDate}`;
+        const chats: Chat[] = []
+        const filter = lastFetchEpochMS === 0 ? '$top=10' : `$filter=createdDateTime gt ${lastFetchDate}`
 
-		let response: PageCollection = await client.api(`/chats?${filter}`).get();
+        let response: PageCollection = await client.api(`/chats?${filter}`).get()
 
-		console.log('RESPONE');
-		console.log(JSON.stringify(response))
+        console.log('RESPONE')
+        console.log(JSON.stringify(response))
 
-		while (response.value && response.value.length > 0) {
-			for (const channel of response.value as Chat[]) {
-				if (isNil(channel.createdDateTime)) {
-					continue;
-				}
-				chats.push(channel);
-			}
-			if (lastFetchEpochMS !== 0 && response['@odata.nextLink']) {
-				response = await client.api(response['@odata.nextLink']).get();
-			} else {
-				break;
-			}
-		}
+        while (response.value && response.value.length > 0) {
+            for (const channel of response.value as Chat[]) {
+                if (isNil(channel.createdDateTime)) {
+                    continue
+                }
+                chats.push(channel)
+            }
+            if (lastFetchEpochMS !== 0 && response['@odata.nextLink']) {
+                response = await client.api(response['@odata.nextLink']).get()
+            } else {
+                break
+            }
+        }
 
-		return chats.map((chat: Chat) => {
-			return {
-				epochMilliSeconds: dayjs(chat.createdDateTime!).valueOf(),
-				data: chat,
-			};
-		});
-	},
-};
+        return chats.map((chat: Chat) => {
+            return {
+                epochMilliSeconds: dayjs(chat.createdDateTime!).valueOf(),
+                data: chat,
+            }
+        })
+    },
+}

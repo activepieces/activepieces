@@ -1,20 +1,14 @@
-import {
-    httpClient,
-    HttpMessageBody,
-    HttpMethod,
-    HttpRequest,
-    QueryParams,
-} from '@activepieces/pieces-common';
+import { HttpMessageBody, HttpMethod, HttpRequest, httpClient, QueryParams } from '@activepieces/pieces-common'
 
 export type EverhourApiCallParams = {
-    apiKey: string;
-    method: HttpMethod;
-    resourceUri: string;
-    query?: Record<string, string | number | undefined>;
-    body?: unknown;
-};
+    apiKey: string
+    method: HttpMethod
+    resourceUri: string
+    query?: Record<string, string | number | undefined>
+    body?: unknown
+}
 
-export const BASE_URL = 'https://api.everhour.com';
+export const BASE_URL = 'https://api.everhour.com'
 
 export async function everhourApiCall<T extends HttpMessageBody>({
     apiKey,
@@ -23,12 +17,12 @@ export async function everhourApiCall<T extends HttpMessageBody>({
     query,
     body,
 }: EverhourApiCallParams): Promise<T> {
-    const qs: QueryParams = {};
+    const qs: QueryParams = {}
 
     if (query) {
         for (const [key, value] of Object.entries(query)) {
             if (value !== null && value !== undefined) {
-                qs[key] = String(value);
+                qs[key] = String(value)
             }
         }
     }
@@ -42,8 +36,8 @@ export async function everhourApiCall<T extends HttpMessageBody>({
         },
         queryParams: qs,
         body,
-    };
+    }
 
-    const response = await httpClient.sendRequest<T>(request);
-    return response.body;
+    const response = await httpClient.sendRequest<T>(request)
+    return response.body
 }

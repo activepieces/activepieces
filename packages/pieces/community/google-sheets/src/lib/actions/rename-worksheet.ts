@@ -1,8 +1,7 @@
-import { googleSheetsAuth } from '../common/common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { includeTeamDrivesProp, sheetIdProp, spreadsheetIdProp } from '../common/props';
-import { google } from 'googleapis';
-import { createGoogleClient } from '../common/common';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { google } from 'googleapis'
+import { createGoogleClient, googleSheetsAuth } from '../common/common'
+import { includeTeamDrivesProp, sheetIdProp, spreadsheetIdProp } from '../common/props'
 
 export const renameWorksheetAction = createAction({
     auth: googleSheetsAuth,
@@ -13,32 +12,32 @@ export const renameWorksheetAction = createAction({
         includeTeamDrives: includeTeamDrivesProp(),
         spreadsheetId: spreadsheetIdProp('Spreadsheet', 'The ID of the spreadsheet to use.'),
         sheetId: sheetIdProp('Worksheet', 'The ID of the worksheet to rename.'),
-        newName:Property.ShortText({
-            displayName:'New Sheet Name',
-            required:true
-        })
+        newName: Property.ShortText({
+            displayName: 'New Sheet Name',
+            required: true,
+        }),
     },
     async run(context) {
-        const authClient = await createGoogleClient(context.auth);
-        const sheets = google.sheets({ version: 'v4', auth: authClient });
+        const authClient = await createGoogleClient(context.auth)
+        const sheets = google.sheets({ version: 'v4', auth: authClient })
 
         const response = await sheets.spreadsheets.batchUpdate({
             spreadsheetId: context.propsValue.spreadsheetId,
             requestBody: {
-                requests:[
+                requests: [
                     {
-                        updateSheetProperties:{
-                            properties:{
-                                sheetId:context.propsValue.sheetId,
-                                title:context.propsValue.newName,
+                        updateSheetProperties: {
+                            properties: {
+                                sheetId: context.propsValue.sheetId,
+                                title: context.propsValue.newName,
                             },
-                            fields:'title'
-                        }
-                    }
-                ]
+                            fields: 'title',
+                        },
+                    },
+                ],
             },
-        });
+        })
 
-        return response.data;
+        return response.data
     },
-});
+})

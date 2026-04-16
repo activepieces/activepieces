@@ -111,7 +111,7 @@ export class AddMcpToolEntity1748352614033 implements MigrationInterface {
             ALTER TABLE "mcp_tool"
             ADD CONSTRAINT "FK_3f26c7b876fba48b9e90efb3d79" FOREIGN KEY ("flowId") REFERENCES "flow"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
-        
+
         const mcps = await queryRunner.query(`
             SELECT * FROM "mcp"
         `)
@@ -119,11 +119,18 @@ export class AddMcpToolEntity1748352614033 implements MigrationInterface {
         const allPieceVersions = await queryRunner.query('SELECT name, version, actions, "logoUrl" FROM piece_metadata')
 
         // Create a map of piece names to their latest versions
-        const pieceNameToLatestVersion = new Map<string, { version: string, actions: Record<string, ActionBase>, logoUrl: string }>()
+        const pieceNameToLatestVersion = new Map<
+            string,
+            { version: string; actions: Record<string, ActionBase>; logoUrl: string }
+        >()
         for (const piece of allPieceVersions) {
             const currentLatest = pieceNameToLatestVersion.get(piece.name)
             if (!currentLatest || gt(piece.version, currentLatest.version)) {
-                pieceNameToLatestVersion.set(piece.name, { version: piece.version, actions: piece.actions, logoUrl: piece.logoUrl })
+                pieceNameToLatestVersion.set(piece.name, {
+                    version: piece.version,
+                    actions: piece.actions,
+                    logoUrl: piece.logoUrl,
+                })
             }
         }
 
@@ -164,53 +171,69 @@ export class AddMcpToolEntity1748352614033 implements MigrationInterface {
             CREATE UNIQUE INDEX "mcp_project_id" ON "mcp" ("projectId")
         `)
     }
-
 }
 
-
-async function AddMcpPieceTools(queryRunner: QueryRunner, mcpId: string, pieceNameToLatestVersion: Map<string, { version: string, actions: Record<string, ActionBase>, logoUrl: string }>) {
-    const pieces = await queryRunner.query(`
+async function AddMcpPieceTools(
+    queryRunner: QueryRunner,
+    mcpId: string,
+    pieceNameToLatestVersion: Map<string, { version: string; actions: Record<string, ActionBase>; logoUrl: string }>,
+) {
+    const pieces = await queryRunner.query(
+        `
         SELECT * FROM "mcp_piece" WHERE "mcpId" = $1
-    `, [mcpId])
+    `,
+        [mcpId],
+    )
 
     totalPieces += pieces.length
     log.info({ count: pieces.length, mcpId }, '[AddMcpPieceTools] Adding MCP piece tools')
 
-    await Promise.all(pieces.map(async (piece: McpPieceWithConnection) => {
-        const pieceMetadataInfo = pieceNameToLatestVersion.get(piece.pieceName)
+    await Promise.all(
+        pieces.map(async (piece: McpPieceWithConnection) => {
+            const pieceMetadataInfo = pieceNameToLatestVersion.get(piece.pieceName)
 
-        assertNotNullOrUndefined(pieceMetadataInfo, `Piece metadata not found for piece ${piece.pieceName}`)
+            assertNotNullOrUndefined(pieceMetadataInfo, `Piece metadata not found for piece ${piece.pieceName}`)
 
-        let connectionExternalId: string | undefined
-        if (!isNil(piece.connectionId)) {
-            const connection = await queryRunner.query(`
+            let connectionExternalId: string | undefined
+            if (!isNil(piece.connectionId)) {
+                const connection = await queryRunner.query(
+                    `
                 SELECT "externalId" FROM "app_connection" WHERE "id" = $1
-            `, [piece.connectionId])
+            `,
+                    [piece.connectionId],
+                )
 
-            assertNotNullOrUndefined(connection[0].externalId, `Connection external id not found for piece ${piece.pieceName} with connection id ${piece.connectionId}`)
-            connectionExternalId = connection[0].externalId
-        }
+                assertNotNullOrUndefined(
+                    connection[0].externalId,
+                    `Connection external id not found for piece ${piece.pieceName} with connection id ${piece.connectionId}`,
+                )
+                connectionExternalId = connection[0].externalId
+            }
 
-        const pieceMetadata: McpPieceToolData = {
-            pieceName: piece.pieceName,
-            pieceVersion: pieceMetadataInfo.version,
-            actionNames: Array.from(Object.keys(pieceMetadataInfo.actions)),
-            logoUrl: pieceMetadataInfo.logoUrl,
-            connectionExternalId,   
-        }
+            const pieceMetadata: McpPieceToolData = {
+                pieceName: piece.pieceName,
+                pieceVersion: pieceMetadataInfo.version,
+                actionNames: Array.from(Object.keys(pieceMetadataInfo.actions)),
+                logoUrl: pieceMetadataInfo.logoUrl,
+                connectionExternalId,
+            }
 
-        const mcpTool: McpTool = {
-            id: apId(),
-            mcpId,
-            type: McpToolType.PIECE,
-            pieceMetadata,
-            flowId: undefined,
-            created: new Date().toISOString(),
-            updated: new Date().toISOString(),
-        }
+            const mcpTool: McpTool = {
+                id: apId(),
+                mcpId,
+                type: McpToolType.PIECE,
+                pieceMetadata,
+                flowId: undefined,
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+            }
 
-        await queryRunner.query(`
+            await queryRunner.query(
+                `
             INSERT INTO "mcp_tool" ("id", "mcpId", "type", "pieceMetadata", "created", "updated") VALUES ($1, $2, $3, $4, $5, $6)
-        `, [mcpTool.id, mcpTool.mcpId, mcpTool.type, mcpTool.pieceMetadata, mcpTool.created, mcpTool.updated])
-    }))
+        `,
+                [mcpTool.id, mcpTool.mcpId, mcpTool.type, mcpTool.pieceMetadata, mcpTool.created, mcpTool.updated],
+            )
+        }),
+    )
 }

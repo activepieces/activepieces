@@ -1,5 +1,5 @@
 export const mondayGraphQLQueries = {
-  listWorkspaces: `
+    listWorkspaces: `
     query listWorkspaces($limit: Int)
     {
         workspaces(limit: $limit)
@@ -8,7 +8,7 @@ export const mondayGraphQLQueries = {
             name
         }
     }`,
-  listWorkspaceBoards: `
+    listWorkspaceBoards: `
     query listWorkspaceBoards($workspaceId: ID)
     {
         boards(workspace_ids: [$workspaceId], order_by: created_at)
@@ -18,7 +18,7 @@ export const mondayGraphQLQueries = {
             type
         }
     }`,
-  listBoardGroups: `
+    listBoardGroups: `
     query listGroups($boardId: ID!)
     {
         boards(ids: [$boardId])
@@ -29,7 +29,7 @@ export const mondayGraphQLQueries = {
             }
         }
     }`,
-  listBoardColumns: `
+    listBoardColumns: `
     query listBoardColumns($boardId: ID!)
     {
         boards(ids: [$boardId])
@@ -43,7 +43,7 @@ export const mondayGraphQLQueries = {
             }
         }
     }`,
-  listBoardItems: `
+    listBoardItems: `
     query listBoardItems($boardId: ID!)
     {
         boards(ids: [$boardId])
@@ -57,7 +57,7 @@ export const mondayGraphQLQueries = {
             }
         }
     }`,
-  listUsers: `
+    listUsers: `
     query listUsers
     {
         users(newest_first: true)
@@ -67,7 +67,7 @@ export const mondayGraphQLQueries = {
             email
         }
     }`,
-  getItemColumnValues: `
+    getItemColumnValues: `
   query getItemColumnValues($boardId: ID!,$itemId: ID!,$columnIds: [String!])
   {
     boards(ids: [$boardId])
@@ -111,7 +111,7 @@ export const mondayGraphQLQueries = {
       }
     }
   }`,
-  getBoardItemValues: `
+    getBoardItemValues: `
   query getItemColumnValues($boardId: ID!,$columnIds: [String!])
   {
     boards(ids: [$boardId])
@@ -155,4 +155,4 @@ export const mondayGraphQLQueries = {
       }
     }
   }`,
-};
+}

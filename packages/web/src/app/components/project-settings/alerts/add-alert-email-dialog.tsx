@@ -16,13 +16,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { alertMutations } from '@/features/alerts';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -122,4 +122,5 @@ const AddAlertEmailDialog = React.memo(() => {
   );
 });
 AddAlertEmailDialog.displayName = 'AddAlertEmailDialog';
+
 export { AddAlertEmailDialog };

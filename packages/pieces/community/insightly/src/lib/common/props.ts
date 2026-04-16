@@ -1,137 +1,136 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework'
 
 // Helper function to create a common set of fields
 const NameFields = {
-  SALUTATION: Property.ShortText({
-    displayName: 'Salutation',
-    required: false,
-  }),
-  FIRST_NAME: Property.ShortText({
-    displayName: 'First Name',
-    required: false,
-  }),
-  LAST_NAME: Property.ShortText({
-    displayName: 'Last Name',
-    required: false,
-  }),
-  TITLE: Property.ShortText({
-    displayName: 'Title',
-    required: false,
-  }),
-};
+    SALUTATION: Property.ShortText({
+        displayName: 'Salutation',
+        required: false,
+    }),
+    FIRST_NAME: Property.ShortText({
+        displayName: 'First Name',
+        required: false,
+    }),
+    LAST_NAME: Property.ShortText({
+        displayName: 'Last Name',
+        required: false,
+    }),
+    TITLE: Property.ShortText({
+        displayName: 'Title',
+        required: false,
+    }),
+}
 
 const ContactInfoFields = {
-  PHONE: Property.ShortText({
-    displayName: 'Phone',
-    required: false,
-  }),
-  PHONE_HOME: Property.ShortText({
-    displayName: 'Home Phone',
-    required: false,
-  }),
-  PHONE_MOBILE: Property.ShortText({
-    displayName: 'Mobile Phone',
-    required: false,
-  }),
-  PHONE_OTHER: Property.ShortText({
-    displayName: 'Other Phone',
-    required: false,
-  }),
-  PHONE_ASSISTANT: Property.ShortText({
-    displayName: 'Assistant Phone',
-    required: false,
-  }),
-  PHONE_FAX: Property.ShortText({
-    displayName: 'Fax',
-    required: false,
-  }),
-  EMAIL_ADDRESS: Property.ShortText({
-    displayName: 'Email Address',
-    required: false,
-  }),
-};
+    PHONE: Property.ShortText({
+        displayName: 'Phone',
+        required: false,
+    }),
+    PHONE_HOME: Property.ShortText({
+        displayName: 'Home Phone',
+        required: false,
+    }),
+    PHONE_MOBILE: Property.ShortText({
+        displayName: 'Mobile Phone',
+        required: false,
+    }),
+    PHONE_OTHER: Property.ShortText({
+        displayName: 'Other Phone',
+        required: false,
+    }),
+    PHONE_ASSISTANT: Property.ShortText({
+        displayName: 'Assistant Phone',
+        required: false,
+    }),
+    PHONE_FAX: Property.ShortText({
+        displayName: 'Fax',
+        required: false,
+    }),
+    EMAIL_ADDRESS: Property.ShortText({
+        displayName: 'Email Address',
+        required: false,
+    }),
+}
 
 const AddressFields = (type: 'Mail' | 'Other') => ({
-  [`ADDRESS_${type.toUpperCase()}_STREET`]: Property.ShortText({
-    displayName: `${type} Street`,
-    required: false,
-  }),
-  [`ADDRESS_${type.toUpperCase()}_CITY`]: Property.ShortText({
-    displayName: `${type} City`,
-    required: false,
-  }),
-  [`ADDRESS_${type.toUpperCase()}_STATE`]: Property.ShortText({
-    displayName: `${type} State`,
-    required: false,
-  }),
-  [`ADDRESS_${type.toUpperCase()}_POSTCODE`]: Property.ShortText({
-    displayName: `${type} Postcode`,
-    required: false,
-  }),
-  [`ADDRESS_${type.toUpperCase()}_COUNTRY`]: Property.ShortText({
-    displayName: `${type} Country`,
-    required: false,
-  }),
-});
-
+    [`ADDRESS_${type.toUpperCase()}_STREET`]: Property.ShortText({
+        displayName: `${type} Street`,
+        required: false,
+    }),
+    [`ADDRESS_${type.toUpperCase()}_CITY`]: Property.ShortText({
+        displayName: `${type} City`,
+        required: false,
+    }),
+    [`ADDRESS_${type.toUpperCase()}_STATE`]: Property.ShortText({
+        displayName: `${type} State`,
+        required: false,
+    }),
+    [`ADDRESS_${type.toUpperCase()}_POSTCODE`]: Property.ShortText({
+        displayName: `${type} Postcode`,
+        required: false,
+    }),
+    [`ADDRESS_${type.toUpperCase()}_COUNTRY`]: Property.ShortText({
+        displayName: `${type} Country`,
+        required: false,
+    }),
+})
 
 export const contactFields = {
-  ...NameFields,
-  ...ContactInfoFields,
-  ...AddressFields('Mail'),
-  ...AddressFields('Other'),
-  BACKGROUND: Property.LongText({
-    displayName: 'Background',
-    required: false,
-  }),
-  OWNER_USER_ID: Property.Number({
-    displayName: 'Owner User ID',
-    required: false,
-  }),
-  SOCIAL_LINKEDIN: Property.ShortText({
-    displayName: 'LinkedIn',
-    required: false,
-  }),
-  SOCIAL_FACEBOOK: Property.ShortText({
-    displayName: 'Facebook',
-    required: false,
-  }),
-  SOCIAL_TWITTER: Property.ShortText({
-    displayName: 'Twitter',
-    required: false,
-  }),
-  DATE_OF_BIRTH: Property.ShortText({
-    displayName: 'Date of Birth',
-    description: 'Format: YYYY-MM-DD',
-    required: false,
-  }),
-  ASSISTANT_NAME: Property.ShortText({
-    displayName: 'Assistant Name',
-    required: false,
-  }),
-  ORGANISATION_ID: Property.Number({
-    displayName: 'Organization ID',
-    required: false,
-  }),
-  EMAIL_OPTED_OUT: Property.Checkbox({
-    displayName: 'Email Opted Out',
-    required: false,
-  }),
-};
+    ...NameFields,
+    ...ContactInfoFields,
+    ...AddressFields('Mail'),
+    ...AddressFields('Other'),
+    BACKGROUND: Property.LongText({
+        displayName: 'Background',
+        required: false,
+    }),
+    OWNER_USER_ID: Property.Number({
+        displayName: 'Owner User ID',
+        required: false,
+    }),
+    SOCIAL_LINKEDIN: Property.ShortText({
+        displayName: 'LinkedIn',
+        required: false,
+    }),
+    SOCIAL_FACEBOOK: Property.ShortText({
+        displayName: 'Facebook',
+        required: false,
+    }),
+    SOCIAL_TWITTER: Property.ShortText({
+        displayName: 'Twitter',
+        required: false,
+    }),
+    DATE_OF_BIRTH: Property.ShortText({
+        displayName: 'Date of Birth',
+        description: 'Format: YYYY-MM-DD',
+        required: false,
+    }),
+    ASSISTANT_NAME: Property.ShortText({
+        displayName: 'Assistant Name',
+        required: false,
+    }),
+    ORGANISATION_ID: Property.Number({
+        displayName: 'Organization ID',
+        required: false,
+    }),
+    EMAIL_OPTED_OUT: Property.Checkbox({
+        displayName: 'Email Opted Out',
+        required: false,
+    }),
+}
 
 export const leadFields = {
     ...NameFields,
     LEAD_SOURCE_ID: Property.Number({
-      displayName: 'Lead Source ID',
-      required: true,
+        displayName: 'Lead Source ID',
+        required: true,
     }),
     LEAD_STATUS_ID: Property.Number({
-      displayName: 'Lead Status ID',
-      required: true,
+        displayName: 'Lead Status ID',
+        required: true,
     }),
     EMAIL: Property.ShortText({
-      displayName: 'Email',
-      required: false,
+        displayName: 'Email',
+        required: false,
     }),
     EMPLOYEE_COUNT: Property.Number({
         displayName: 'Employee Count',
@@ -201,7 +200,7 @@ export const leadFields = {
         displayName: 'Email Opted Out',
         required: false,
     }),
-};
+}
 
 // TODO: Define fields when API documentation is available
 export const opportunityFields = {
@@ -223,8 +222,8 @@ export const opportunityFields = {
                 { label: 'Abandoned', value: 'Abandoned' },
                 { label: 'Lost', value: 'Lost' },
                 { label: 'Won', value: 'Won' },
-            ]
-        }
+            ],
+        },
     }),
     RESPONSIBLE_USER_ID: Property.Number({
         displayName: 'Responsible User ID',
@@ -282,7 +281,7 @@ export const opportunityFields = {
         displayName: 'Pricebook ID',
         required: false,
     }),
-};
+}
 export const organisationFields = {
     ORGANISATION_NAME: Property.ShortText({
         displayName: 'Organisation Name',
@@ -360,7 +359,7 @@ export const organisationFields = {
         displayName: 'Owner User ID',
         required: false,
     }),
-};
+}
 export const projectFields = {
     PROJECT_NAME: Property.ShortText({
         displayName: 'Project Name',
@@ -376,8 +375,8 @@ export const projectFields = {
                 { label: 'On Hold', value: 'ON HOLD' },
                 { label: 'Completed', value: 'COMPLETED' },
                 { label: 'Cancelled', value: 'CANCELLED' },
-            ]
-        }
+            ],
+        },
     }),
     PROJECT_DETAILS: Property.LongText({
         displayName: 'Project Details',
@@ -417,7 +416,7 @@ export const projectFields = {
         displayName: 'Responsible User ID',
         required: false,
     }),
-};
+}
 export const taskFields = {
     TITLE: Property.ShortText({
         displayName: 'Title',
@@ -433,8 +432,8 @@ export const taskFields = {
                 { label: 'Waiting', value: 'WAITING' },
                 { label: 'Completed', value: 'COMPLETED' },
                 { label: 'Deferred', value: 'DEFERRED' },
-            ]
-        }
+            ],
+        },
     }),
     DETAILS: Property.LongText({
         displayName: 'Details',
@@ -487,7 +486,7 @@ export const taskFields = {
         displayName: 'Milestone ID',
         required: false,
     }),
-};
+}
 export const eventFields = {
     TITLE: Property.ShortText({
         displayName: 'Title',
@@ -519,7 +518,7 @@ export const eventFields = {
         displayName: 'Owner User ID',
         required: false,
     }),
-};
+}
 export const noteFields = {
     TITLE: Property.ShortText({
         displayName: 'Title',
@@ -529,7 +528,7 @@ export const noteFields = {
         displayName: 'Body',
         required: false,
     }),
-};
+}
 export const productFields = {
     PRODUCT_NAME: Property.ShortText({
         displayName: 'Product Name',
@@ -572,7 +571,7 @@ export const productFields = {
         description: '3-letter currency code (e.g., USD)',
         required: false,
     }),
-};
+}
 export const quotationFields = {
     QUOTATION_NAME: Property.ShortText({
         displayName: 'Quotation Name',
@@ -593,8 +592,8 @@ export const quotationFields = {
                 { label: 'Sent', value: 'Sent' },
                 { label: 'Accepted', value: 'Accepted' },
                 { label: 'Declined', value: 'Declined' },
-            ]
-        }
+            ],
+        },
     }),
     QUOTATION_DESCRIPTION: Property.LongText({
         displayName: 'Description',
@@ -685,5 +684,4 @@ export const quotationFields = {
         displayName: 'Shipping Country',
         required: false,
     }),
-};
-
+}

@@ -1,12 +1,12 @@
 import {
   ApSubscriptionStatus,
-  PRICE_PER_EXTRA_ACTIVE_FLOWS,
   PlatformPlan,
+  PRICE_PER_EXTRA_ACTIVE_FLOWS,
 } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Zap, Info, Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Info, Loader2, Zap } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -138,8 +138,8 @@ export function PurchaseExtraFlowsDialog() {
               isUpgrade
                 ? 'bg-primary/5 border-primary/30'
                 : isDowngrade
-                ? 'bg-amber-50 border-amber-200'
-                : 'bg-muted/40 border-border',
+                  ? 'bg-amber-50 border-amber-200'
+                  : 'bg-muted/40 border-border',
             )}
           >
             {isUpgrade && (
@@ -282,10 +282,10 @@ export function PurchaseExtraFlowsDialog() {
             {isLoading
               ? t('Processing...')
               : isUpgrade
-              ? t('Purchase +{difference} flows', { difference })
-              : isDowngrade
-              ? t('Confirm Downgrade')
-              : t('No Changes')}
+                ? t('Purchase +{difference} flows', { difference })
+                : isDowngrade
+                  ? t('Confirm Downgrade')
+                  : t('No Changes')}
           </Button>
         </DialogFooter>
       </DialogContent>

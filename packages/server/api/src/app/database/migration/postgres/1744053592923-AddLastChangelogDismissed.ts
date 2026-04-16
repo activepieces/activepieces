@@ -15,5 +15,4 @@ export class AddLastChangelogDismissed1744053592923 implements MigrationInterfac
             ALTER TABLE "user" DROP COLUMN "lastChangelogDismissed"
         `)
     }
-
 }

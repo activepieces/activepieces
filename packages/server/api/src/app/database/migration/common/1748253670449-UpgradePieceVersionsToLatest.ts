@@ -15,12 +15,12 @@ export class UpgradePieceVersionsToLatest1748253670449 implements MigrationInter
             log.info('ChangeExternalIdsForTables1747346473000: migration already ran')
             return
         }
-        
+
         const flowVersionIds = await queryRunner.query(
             'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@activepieces/piece-tables%\'',
         )
         const allPieceVersions = await queryRunner.query('SELECT name, version FROM piece_metadata')
-        
+
         // Create a map of piece names to their latest versions
         const pieceNameToLatestVersion = new Map<string, string>()
         for (const piece of allPieceVersions) {
@@ -30,36 +30,30 @@ export class UpgradePieceVersionsToLatest1748253670449 implements MigrationInter
             }
         }
 
-        log.info(
-            'UpgradePieceVersionsToLatest1748253670449: found ' +
-        flowVersionIds.length +
-        ' versions',
-        )
+        log.info('UpgradePieceVersionsToLatest1748253670449: found ' + flowVersionIds.length + ' versions')
 
         let updatedFlows = 0
         for (const { id } of flowVersionIds) {
             // Fetch FlowVersion record by ID
-            const flowVersion = await queryRunner.query(
-                'SELECT * FROM flow_version WHERE id = $1',
-                [id],
-            )
+            const flowVersion = await queryRunner.query('SELECT * FROM flow_version WHERE id = $1', [id])
             if (flowVersion.length > 0) {
-                const trigger = typeof flowVersion[0].trigger === 'string' ? JSON.parse(flowVersion[0].trigger) : flowVersion[0].trigger
+                const trigger =
+                    typeof flowVersion[0].trigger === 'string'
+                        ? JSON.parse(flowVersion[0].trigger)
+                        : flowVersion[0].trigger
                 const updated = traverseAndUpdateSubFlow(
                     (step) => updateVersionOfPieceStep(step, pieceNameToLatestVersion),
                     trigger,
                 )
                 if (updated) {
-                    await queryRunner.connection.getRepository('flow_version').update(flowVersion[0].id, { trigger: updated })
+                    await queryRunner.connection
+                        .getRepository('flow_version')
+                        .update(flowVersion[0].id, { trigger: updated })
                 }
             }
             updatedFlows++
             if (updatedFlows % 100 === 0) {
-                log.info(
-                    'UpgradePieceVersionsToLatest1748253670449: ' +
-            updatedFlows +
-            ' flows updated',
-                )
+                log.info('UpgradePieceVersionsToLatest1748253670449: ' + updatedFlows + ' flows updated')
             }
         }
 
@@ -71,10 +65,7 @@ export class UpgradePieceVersionsToLatest1748253670449 implements MigrationInter
     }
 }
 
-const traverseAndUpdateSubFlow = (
-    updater: (s: Step) => Step,
-    root: Step | undefined,
-): Step | undefined => {
+const traverseAndUpdateSubFlow = (updater: (s: Step) => Step, root: Step | undefined): Step | undefined => {
     if (!root) {
         return undefined
     }
@@ -88,8 +79,7 @@ const traverseAndUpdateSubFlow = (
                 if (branch) {
                     const branchUpdated = traverseAndUpdateSubFlow(updater, branch)
                     updatedChildren.push(branchUpdated ?? null)
-                }
-                else {
+                } else {
                     updatedChildren.push(null)
                 }
             }
@@ -97,8 +87,9 @@ const traverseAndUpdateSubFlow = (
             break
         }
         case 'LOOP_ON_ITEMS':
-            clonedRoot.firstLoopAction = clonedRoot.firstLoopAction ?
-                traverseAndUpdateSubFlow(updater, clonedRoot.firstLoopAction) : undefined
+            clonedRoot.firstLoopAction = clonedRoot.firstLoopAction
+                ? traverseAndUpdateSubFlow(updater, clonedRoot.firstLoopAction)
+                : undefined
             break
         case 'PIECE':
         case 'PIECE_TRIGGER':
@@ -107,36 +98,25 @@ const traverseAndUpdateSubFlow = (
             break
     }
 
-    clonedRoot.nextAction = clonedRoot.nextAction ?
-        traverseAndUpdateSubFlow(updater, clonedRoot.nextAction) : undefined
+    clonedRoot.nextAction = clonedRoot.nextAction ? traverseAndUpdateSubFlow(updater, clonedRoot.nextAction) : undefined
 
     return clonedRoot
 }
 
-const updateVersionOfPieceStep = (
-    step: Step,
-    pieceNameToLatestVersion: Map<string, string>,
-): Step => {    
+const updateVersionOfPieceStep = (step: Step, pieceNameToLatestVersion: Map<string, string>): Step => {
     if (step.type === 'PIECE' || step.type === 'PIECE_TRIGGER') {
         const pieceStep = step as PieceStep
         const latestVersion = pieceNameToLatestVersion.get(pieceStep.settings.pieceName as string)
         if (latestVersion) {
             pieceStep.settings.pieceVersion = latestVersion
-        }
-        else {
+        } else {
             throw new Error(`Piece ${pieceStep.settings.pieceName} not found`)
         }
     }
     return step
 }
 
-type StepType =
-    | 'CODE'
-    | 'EMPTY'
-    | 'LOOP_ON_ITEMS'
-    | 'PIECE'
-    | 'PIECE_TRIGGER'
-    | 'ROUTER'
+type StepType = 'CODE' | 'EMPTY' | 'LOOP_ON_ITEMS' | 'PIECE' | 'PIECE_TRIGGER' | 'ROUTER'
 
 type BaseStep<T extends StepType> = {
     type: T

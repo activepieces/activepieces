@@ -1,4 +1,18 @@
-import { AnalyticsFlowReportItem, AnalyticsRunsUsageItem, AnalyticsTimePeriod, apId, FlowStatus, FlowVersionState, isNil, PlatformAnalyticsReport, PlatformId, ProjectLeaderboardItem, RunEnvironment, UserLeaderboardItem, UserWithMetaInformation } from '@activepieces/shared'
+import {
+    AnalyticsFlowReportItem,
+    AnalyticsRunsUsageItem,
+    AnalyticsTimePeriod,
+    apId,
+    FlowStatus,
+    FlowVersionState,
+    isNil,
+    PlatformAnalyticsReport,
+    PlatformId,
+    ProjectLeaderboardItem,
+    RunEnvironment,
+    UserLeaderboardItem,
+    UserWithMetaInformation,
+} from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
@@ -23,7 +37,11 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
                 const cachedAt = dayjs().toISOString()
                 const users = await listUsers(platformId)
                 const flows = await listFlows(platformId, log)
-                const runs = await listRuns(flows.map((flow) => flow.projectId), currentReport?.cachedAt ?? null, cachedAt)
+                const runs = await listRuns(
+                    flows.map((flow) => flow.projectId),
+                    currentReport?.cachedAt ?? null,
+                    cachedAt,
+                )
 
                 return platformAnalyticsReportRepo().save({
                     id: currentReport?.id ?? apId(),
@@ -42,17 +60,23 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
     markAsOutdated: async (platformId: PlatformId) => {
         return platformAnalyticsReportRepo().update({ platformId }, { outdated: true })
     },
-    getOrGenerateReport: async (platformId: PlatformId, timePeriod?: AnalyticsTimePeriod): Promise<PlatformAnalyticsReport> => {
+    getOrGenerateReport: async (
+        platformId: PlatformId,
+        timePeriod?: AnalyticsTimePeriod,
+    ): Promise<PlatformAnalyticsReport> => {
         let report = await platformAnalyticsReportRepo().findOneBy({ platformId })
         if (isNil(report) || report.outdated || dayjs().diff(dayjs(report.cachedAt), 'minute') >= 5) {
             report = await platformAnalyticsReportService(log).refreshReport(platformId)
         }
         return filterReportByTimePeriod(report, timePeriod)
     },
-    getProjectLeaderboard: async (platformId: PlatformId, timePeriod: AnalyticsTimePeriod): Promise<ProjectLeaderboardItem[]> => {
+    getProjectLeaderboard: async (
+        platformId: PlatformId,
+        timePeriod: AnalyticsTimePeriod,
+    ): Promise<ProjectLeaderboardItem[]> => {
         const report = await platformAnalyticsReportService(log).getOrGenerateReport(platformId)
         const projects = await listProjects(platformId)
-        
+
         return projects.map((project) => {
             const projectFlows = report.flows.filter((flow) => flow.projectId === project.id)
             const flowIds = projectFlows.map((flow) => flow.flowId)
@@ -66,10 +90,13 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
             }
         })
     },
-    getUserLeaderboard: async (platformId: PlatformId, timePeriod: AnalyticsTimePeriod): Promise<UserLeaderboardItem[]> => {
+    getUserLeaderboard: async (
+        platformId: PlatformId,
+        timePeriod: AnalyticsTimePeriod,
+    ): Promise<UserLeaderboardItem[]> => {
         const report = await platformAnalyticsReportService(log).getOrGenerateReport(platformId)
         const users = report.users ?? []
-        
+
         return users.map((user) => {
             const flowsOfUser = report.flows.filter((flow) => flow.ownerId === user.id)
             const flowIds = flowsOfUser.map((flow) => flow.flowId)
@@ -84,20 +111,23 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
     },
 })
 
-
-
-async function listRuns(projectIds: string[], afterDate: string | null, currentDate: string): Promise<AnalyticsRunsUsageItem[]> {
+async function listRuns(
+    projectIds: string[],
+    afterDate: string | null,
+    currentDate: string,
+): Promise<AnalyticsRunsUsageItem[]> {
     if (projectIds.length === 0) {
         return []
     }
-    let query = flowRunRepo().createQueryBuilder('flow_run')
+    let query = flowRunRepo()
+        .createQueryBuilder('flow_run')
         .select('flow_run.flowId', 'flowId')
-        .addSelect('DATE_TRUNC(\'day\', flow_run.created)', 'day')
+        .addSelect("DATE_TRUNC('day', flow_run.created)", 'day')
         .addSelect('COUNT(*)', 'runs')
         .where('flow_run.projectId IN (:...projectIds)', { projectIds })
         .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
         .groupBy('flow_run.flowId')
-        .addGroupBy('DATE_TRUNC(\'day\', flow_run.created)')
+        .addGroupBy("DATE_TRUNC('day', flow_run.created)")
 
     if (!isNil(afterDate)) {
         query = query.andWhere('flow_run.created > :afterDate', {
@@ -120,13 +150,12 @@ async function listRuns(projectIds: string[], afterDate: string | null, currentD
 }
 
 function mergeRuns(existing: AnalyticsRunsUsageItem[], incoming: AnalyticsRunsUsageItem[]): AnalyticsRunsUsageItem[] {
-    const map = new Map(existing.map(run => [`${run.flowId}-${run.day}`, { ...run }]))
+    const map = new Map(existing.map((run) => [`${run.flowId}-${run.day}`, { ...run }]))
     for (const run of incoming) {
         const key = `${run.flowId}-${run.day}`
         if (map.has(key)) {
             map.get(key)!.runs += run.runs
-        }
-        else {
+        } else {
             map.set(key, { ...run })
         }
     }
@@ -141,7 +170,7 @@ async function listFlows(platformId: PlatformId, log: FastifyBaseLogger): Promis
         status: [FlowStatus.ENABLED],
     })
     const projects = await listProjects(platformId)
-        
+
     return data.map((flow) => {
         return {
             flowId: flow.id,
@@ -179,7 +208,7 @@ async function listUsers(platformId: PlatformId): Promise<UserWithMetaInformatio
     })
 }
 
-async function listProjects(platformId: PlatformId): Promise<{ id: string, displayName: string }[]> {
+async function listProjects(platformId: PlatformId): Promise<{ id: string; displayName: string }[]> {
     const projects = await projectRepo().find({
         where: {
             platformId,
@@ -194,16 +223,16 @@ async function listProjects(platformId: PlatformId): Promise<{ id: string, displ
 }
 
 function filterReportByTimePeriod(
-    report: PlatformAnalyticsReport, 
-    timePeriod?: AnalyticsTimePeriod, 
+    report: PlatformAnalyticsReport,
+    timePeriod?: AnalyticsTimePeriod,
 ): PlatformAnalyticsReport {
     if (!timePeriod) {
         return report
     }
-    
+
     const dateRange = getDateRange(timePeriod)
     const runs = report.runs.filter((run) => dayjs(run.day).isAfter(dayjs(dateRange)))
-    
+
     return {
         ...report,
         runs,
@@ -228,8 +257,14 @@ function getDateRange(timePeriod: AnalyticsTimePeriod): string {
     }
 }
 
-function calculateTimeSaved(flowIds: string[], report: PlatformAnalyticsReport, timePeriod: AnalyticsTimePeriod): number | null {
-    const flowsWithTimeSaved = report.flows.filter((flow) => flowIds.includes(flow.flowId) && flow.timeSavedPerRun !== null)
+function calculateTimeSaved(
+    flowIds: string[],
+    report: PlatformAnalyticsReport,
+    timePeriod: AnalyticsTimePeriod,
+): number | null {
+    const flowsWithTimeSaved = report.flows.filter(
+        (flow) => flowIds.includes(flow.flowId) && flow.timeSavedPerRun !== null,
+    )
     if (flowsWithTimeSaved.length === 0) {
         return null
     }

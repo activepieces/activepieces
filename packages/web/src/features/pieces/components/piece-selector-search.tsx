@@ -60,4 +60,5 @@ const PiecesSearchInput = ({
   );
 };
 PiecesSearchInput.displayName = 'PiecesSearchInput';
+
 export { PiecesSearchInput };

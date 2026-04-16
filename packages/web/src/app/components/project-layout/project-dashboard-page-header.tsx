@@ -7,7 +7,7 @@ import {
   UserStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { UsersRound, Lock } from 'lucide-react';
+import { Lock, UsersRound } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 

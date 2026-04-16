@@ -53,9 +53,12 @@ export class AddProjectType1763644863137 implements MigrationInterface {
                 SET "type" = '${ProjectType.PERSONAL}'
             `)
             excludedUsers = rows.map((row: { ownerId: string }) => row.ownerId) as string[]
-            system.globalLogger().info({
-                excludedUsers: excludedUsers.length,
-            }, 'AddProjectType1763644863137 up')
+            system.globalLogger().info(
+                {
+                    excludedUsers: excludedUsers.length,
+                },
+                'AddProjectType1763644863137 up',
+            )
         }
 
         if (users.length > 0) {
@@ -74,7 +77,7 @@ export class AddProjectType1763644863137 implements MigrationInterface {
                     const created = new Date().toISOString()
                     const updated = new Date().toISOString()
                     const ownerId = user.id
-                    const displayName = user.firstName + '\'s Project'
+                    const displayName = user.firstName + "'s Project"
                     const type = ProjectType.PERSONAL
                     const platformId = user.platformId
                     const icon = JSON.stringify({ color: randomColor })
@@ -94,11 +97,14 @@ export class AddProjectType1763644863137 implements MigrationInterface {
                         params,
                     )
                     totalCreated += values.length
-                    system.globalLogger().info({
-                        projectsCreated: totalCreated,
-                        batchSize: values.length,
-                        batchStart: i,
-                    }, 'AddProjectType1763644863137 up BATCH')
+                    system.globalLogger().info(
+                        {
+                            projectsCreated: totalCreated,
+                            batchSize: values.length,
+                            batchStart: i,
+                        },
+                        'AddProjectType1763644863137 up BATCH',
+                    )
                 }
             }
         }

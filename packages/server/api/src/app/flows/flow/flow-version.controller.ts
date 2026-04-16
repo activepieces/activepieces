@@ -11,7 +11,6 @@ import { flowService } from './flow.service'
 const DEFAULT_PAGE_SIZE = 10
 
 export const flowVersionController: FastifyPluginAsyncZod = async (fastify) => {
-
     fastify.get('/:flowId/versions', ListVersionParams, async (request) => {
         const flow = await flowService(request.log).getOneOrThrow({
             id: request.params.flowId,
@@ -22,8 +21,7 @@ export const flowVersionController: FastifyPluginAsyncZod = async (fastify) => {
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             cursorRequest: request.query.cursor ?? null,
         })
-    },
-    )
+    })
 }
 
 const ListVersionParams = {

@@ -234,5 +234,4 @@ export class AddConnectionOwnerSqlite1730121414658 implements MigrationInterface
             CREATE UNIQUE INDEX "idx_app_connection_project_id_and_name" ON "app_connection" ("projectId", "name")
         `)
     }
-
 }

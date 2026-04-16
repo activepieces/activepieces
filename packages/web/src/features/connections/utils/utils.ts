@@ -7,14 +7,14 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
+  AppConnectionStatus,
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
-  UpsertAppConnectionRequestBody,
+  apId,
   assertNotNullOrUndefined,
   isNil,
-  apId,
-  AppConnectionStatus,
   OAuth2GrantType,
+  UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { CheckIcon, UnplugIcon, XIcon } from 'lucide-react';

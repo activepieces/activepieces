@@ -45,4 +45,5 @@ const SecretTextConnectionSettings = React.memo(
 );
 
 SecretTextConnectionSettings.displayName = 'SecretTextConnectionSettings';
+
 export { SecretTextConnectionSettings };

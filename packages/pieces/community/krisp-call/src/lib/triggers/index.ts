@@ -1,6 +1,6 @@
-import { krispcallAuth } from '../auth';
-import { HttpMethod, httpClient } from "@activepieces/pieces-common";
-import { TriggerStrategy, createTrigger } from "@activepieces/pieces-framework"
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework'
+import { krispcallAuth } from '../auth'
 
 export const triggers = [
     {
@@ -22,11 +22,11 @@ export const triggers = [
         description: 'Trigger when a new MMS/SMS is received.',
         action: 'new_sms_or_mms',
         sampleData: {
-            "id": "YiW2nyxqtJPYqkRKbrcJQ7",
-            "from_number": "+16466813538",
-            "to_number": "+12517327005",
-            "content": "Last testing",
-            "media_link": "https://api.twilio.com/2010-04-01/Accounts/LINK/Media/SOMETHING"
+            id: 'YiW2nyxqtJPYqkRKbrcJQ7',
+            from_number: '+16466813538',
+            to_number: '+12517327005',
+            content: 'Last testing',
+            media_link: 'https://api.twilio.com/2010-04-01/Accounts/LINK/Media/SOMETHING',
         },
     },
     {
@@ -50,12 +50,12 @@ export const triggers = [
         action: 'new_call_log',
         sampleData: {
             id: '101',
-            callFrom: "+11234567890",
-            callTo: "+11234567891",
-            direction: "Outgoing",
-            duration : "0hr 01min 30sec",
-            outcome:"Completed",
-            callRecording: "http://example.com/recording.mp3",
+            callFrom: '+11234567890',
+            callTo: '+11234567891',
+            direction: 'Outgoing',
+            duration: '0hr 01min 30sec',
+            outcome: 'Completed',
+            callRecording: 'http://example.com/recording.mp3',
         },
     },
     {
@@ -64,14 +64,14 @@ export const triggers = [
         description: 'Trigger when a new MMS/SMS is sent.',
         action: 'outbound_sms_or_mms',
         sampleData: {
-            "id": "YiW2nyxqtJPYqkRKbrcJQ7",
-            "from_number": "+16466813538",
-            "to_number": "+12517327005",
-            "content": "Last testing",
-            "media_link": "https://api.twilio.com/2010-04-01/Accounts/LINK/Media/SOMETHING"
+            id: 'YiW2nyxqtJPYqkRKbrcJQ7',
+            from_number: '+16466813538',
+            to_number: '+12517327005',
+            content: 'Last testing',
+            media_link: 'https://api.twilio.com/2010-04-01/Accounts/LINK/Media/SOMETHING',
         },
     },
-].map(trigger => {
+].map((trigger) => {
     return createTrigger({
         name: trigger.name,
         displayName: trigger.displayName,
@@ -91,11 +91,11 @@ export const triggers = [
                 headers: {
                     'X-API-KEY': context.auth.props.apiKey,
                 },
-            });
-            await context.store.put('_webhook_id', response.body.id);
+            })
+            await context.store.put('_webhook_id', response.body.id)
         },
         async onDisable(context) {
-            const webhookId = await context.store.get<string>('_webhook_id');
+            const webhookId = await context.store.get<string>('_webhook_id')
             await httpClient.sendRequest({
                 method: HttpMethod.DELETE,
                 url: 'https://app.krispcall.com/api/v3/platform/activepiece/unsubscribe',
@@ -105,10 +105,10 @@ export const triggers = [
                 headers: {
                     'X-API-KEY': context.auth.props.apiKey,
                 },
-            });
+            })
         },
         async run(context) {
-            return [context.payload.body];
+            return [context.payload.body]
         },
     })
 })

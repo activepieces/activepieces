@@ -66,65 +66,75 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
         }
     })
 
-    app.post('/', {
-        ...CreateParams,
-        preValidation: async (request) => {
-            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
-            request.body.flows = migratedFlows
+    app.post(
+        '/',
+        {
+            ...CreateParams,
+            preValidation: async (request) => {
+                const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
+                request.body.flows = migratedFlows
+            },
         },
-    }, async (request, reply) => {
-        const { type } = request.body
-        let platformId: string | undefined
+        async (request, reply) => {
+            const { type } = request.body
+            let platformId: string | undefined
 
-        switch (type) {
-            case TemplateType.CUSTOM: {
-                await platformMustBeOwnedByCurrentUser.call(app, request, reply)
-                platformId = request.principal.platform.id
+            switch (type) {
+                case TemplateType.CUSTOM:
+                    {
+                        await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                        platformId = request.principal.platform.id
+                    }
+                    break
+                case TemplateType.SHARED:
+                    break
+                case TemplateType.OFFICIAL: {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: {
+                            message: 'Official templates are not supported to being created',
+                        },
+                    })
+                }
             }
-                break
-            case TemplateType.SHARED:
-                break
-            case TemplateType.OFFICIAL: {
-                throw new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
-                    params: {
-                        message: 'Official templates are not supported to being created',
-                    },
-                })
-            }
-        }
-        const result = await templateService(app.log).create({ platformId, params: request.body })
-        return reply.status(StatusCodes.CREATED).send(result)
-    })
-
-    app.post('/:id', { ...UpdateParams,
-        preValidation: async (request) => {
-            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
-            request.body.flows = migratedFlows
+            const result = await templateService(app.log).create({ platformId, params: request.body })
+            return reply.status(StatusCodes.CREATED).send(result)
         },
-    }, async (request, reply) => {
-        const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
+    )
 
-        switch (template.type) {
-            case TemplateType.OFFICIAL:
-            case TemplateType.SHARED:
-                throw new ActivepiecesError({
-                    code: ErrorCode.AUTHORIZATION,
-                    params: { message: 'Cannot update official or shared templates' },
-                })
-            case TemplateType.CUSTOM: {
-                await platformMustBeOwnedByCurrentUser.call(app, request, reply)
-                assertTemplateBelongsToPlatform({
-                    templatePlatformId: template.platformId,
-                    principalPlatformId: request.principal.platform.id,
-                })
-                break
+    app.post(
+        '/:id',
+        {
+            ...UpdateParams,
+            preValidation: async (request) => {
+                const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
+                request.body.flows = migratedFlows
+            },
+        },
+        async (request, reply) => {
+            const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
+
+            switch (template.type) {
+                case TemplateType.OFFICIAL:
+                case TemplateType.SHARED:
+                    throw new ActivepiecesError({
+                        code: ErrorCode.AUTHORIZATION,
+                        params: { message: 'Cannot update official or shared templates' },
+                    })
+                case TemplateType.CUSTOM: {
+                    await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                    assertTemplateBelongsToPlatform({
+                        templatePlatformId: template.platformId,
+                        principalPlatformId: request.principal.platform.id,
+                    })
+                    break
+                }
             }
-        }
 
-        const result = await templateService(app.log).update({ id: request.params.id, params: request.body })
-        return reply.status(StatusCodes.OK).send(result)
-    })
+            const result = await templateService(app.log).update({ id: request.params.id, params: request.body })
+            return reply.status(StatusCodes.OK).send(result)
+        },
+    )
 
     app.delete('/:id', DeleteParams, async (request, reply) => {
         const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
@@ -151,7 +161,6 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
-    
 }
 
 const GetIdParams = z.object({
@@ -231,7 +240,10 @@ const UpdateParams = {
     },
 }
 
-function assertTemplateBelongsToPlatform({ templatePlatformId, principalPlatformId }: {
+function assertTemplateBelongsToPlatform({
+    templatePlatformId,
+    principalPlatformId,
+}: {
     templatePlatformId: string | null | undefined
     principalPlatformId: string
 }): void {
@@ -267,10 +279,13 @@ async function loadCustomTemplatesOrReturnEmpty(
     query: ListTemplatesRequestQuery,
     principal: Principal,
 ): Promise<Template[]> {
-    if ((!isNil(query.type) && query.type !== TemplateType.CUSTOM)) {
+    if (!isNil(query.type) && query.type !== TemplateType.CUSTOM) {
         return []
     }
-    const platformId = principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER ? null : principal.platform.id
+    const platformId =
+        principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER
+            ? null
+            : principal.platform.id
     if (isNil(platformId)) {
         return []
     }

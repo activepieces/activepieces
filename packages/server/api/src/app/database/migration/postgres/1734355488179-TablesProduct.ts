@@ -108,5 +108,4 @@ export class TablesProduct1734355488179 implements MigrationInterface {
             DROP TABLE "table"
         `)
     }
-
 }

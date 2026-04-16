@@ -27,7 +27,7 @@ import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { getWorkerGroupQueueName, QueueName, redisMetadataKey, RunsMetadataUpsertData } from '../job'
+import { getWorkerGroupQueueName, QueueName, RunsMetadataUpsertData, redisMetadataKey } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
@@ -43,9 +43,11 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
             const pollQueueName = getPollQueueName(workerGroupId)
             const job = await jobBroker(log).poll(pollQueueName)
             if (job) {
-                log.info({ workerId: input.workerId, jobId: job.jobId, jobType: job.jobData.jobType }, '[workerRpc#poll] Returning job to worker')
-            }
-            else {
+                log.info(
+                    { workerId: input.workerId, jobId: job.jobId, jobType: job.jobData.jobType },
+                    '[workerRpc#poll] Returning job to worker',
+                )
+            } else {
                 log.debug({ workerId: input.workerId }, '[workerRpc#poll] No job available, returning null')
             }
             return job
@@ -104,11 +106,10 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
                 const isTerminalStatus = isFlowRunStateTerminal({
                     status: input.status,
                     ignoreInternalError: false,
-                })   
+                })
                 if (!isTerminalStatus) {
                     websocketService.to(input.projectId).emit(WebsocketClientEvent.TEST_STEP_PROGRESS, stepData)
-                }
-                else {
+                } else {
                     websocketService.to(input.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, stepData)
                 }
             }
@@ -126,7 +127,16 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         },
 
         async submitPayloads(input) {
-            const { flowVersionId, projectId, payloads, httpRequestId, progressUpdateType, environment, parentRunId, failParentOnFailure } = input
+            const {
+                flowVersionId,
+                projectId,
+                payloads,
+                httpRequestId,
+                progressUpdateType,
+                environment,
+                parentRunId,
+                failParentOnFailure,
+            } = input
 
             const flowVersion = await flowVersionService(log).getOne(flowVersionId)
             if (!flowVersion) {
@@ -161,11 +171,14 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
         async savePayloads(input) {
             const { flowId, projectId, payloads } = input
             const savePayloads = payloads.map((payload) =>
-                rejectedPromiseHandler(triggerEventService(log).saveEvent({
-                    flowId,
-                    payload,
-                    projectId,
-                }), log),
+                rejectedPromiseHandler(
+                    triggerEventService(log).saveEvent({
+                        flowId,
+                        payload,
+                        projectId,
+                    }),
+                    log,
+                ),
             )
             rejectedPromiseHandler(Promise.all(savePayloads), log)
             if (payloads.length > 0) {
@@ -227,7 +240,7 @@ export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): 
 
         async markPieceAsUsed(input) {
             const redisKey = `usedPieces:${workerGroupId ?? 'shared'}`
-            const existing = await distributedStore.get<PiecePackage[]>(redisKey) ?? []
+            const existing = (await distributedStore.get<PiecePackage[]>(redisKey)) ?? []
             const existingKeys = new Set(existing.map((p) => `${p.pieceName}@${p.pieceVersion}`))
             const newPieces = input.pieces.filter((p) => !existingKeys.has(`${p.pieceName}@${p.pieceVersion}`))
             if (newPieces.length > 0) {

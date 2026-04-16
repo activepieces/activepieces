@@ -14,5 +14,4 @@ export class AddIndexToIssues1756775080449 implements MigrationInterface {
             DROP INDEX "idx_issue_projectId_status_updated"
         `)
     }
-
 }

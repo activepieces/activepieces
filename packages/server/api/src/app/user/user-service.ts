@@ -33,7 +33,6 @@ import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { UserEntity, UserSchema } from './user-entity'
 
-
 export const userRepo = repoFactory(UserEntity)
 
 export const userService = (log: FastifyBaseLogger) => ({
@@ -62,7 +61,7 @@ export const userService = (log: FastifyBaseLogger) => ({
             })
 
             await projectService(log).create({
-                displayName: identity.firstName + '\'s Project',
+                displayName: identity.firstName + "'s Project",
                 ownerId: newUser.id,
                 platformId,
                 type: ProjectType.PERSONAL,
@@ -98,21 +97,31 @@ export const userService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        await userRepo().update({
-            id,
-            platformId,
-        }, {
-            ...spreadIfDefined('status', status),
-            ...spreadIfDefined('platformRole', platformRole),
-            ...spreadIfDefined('externalId', externalId),
-        })
+        await userRepo().update(
+            {
+                id,
+                platformId,
+            },
+            {
+                ...spreadIfDefined('status', status),
+                ...spreadIfDefined('platformRole', platformRole),
+                ...spreadIfDefined('externalId', externalId),
+            },
+        )
 
         return this.getMetaInformation({ id })
     },
     async getUsersByIdentityId({ identityId }: GetUsersByIdentityIdParams): Promise<Pick<User, 'id' | 'platformId'>[]> {
-        return userRepo().find({ where: { identityId } }).then((users) => users.map((user) => ({ id: user.id, platformId: user.platformId })))
+        return userRepo()
+            .find({ where: { identityId } })
+            .then((users) => users.map((user) => ({ id: user.id, platformId: user.platformId })))
     },
-    async list({ platformId, externalId, cursorRequest, limit }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
+    async list({
+        platformId,
+        externalId,
+        cursorRequest,
+        limit,
+    }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: UserEntity,
@@ -122,10 +131,14 @@ export const userService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const { data, cursor } = await paginator.paginate(userRepo().createQueryBuilder('user').where({
-            platformId,
-            ...spreadIfDefined('externalId', externalId),
-        }))
+        const { data, cursor } = await paginator.paginate(
+            userRepo()
+                .createQueryBuilder('user')
+                .where({
+                    platformId,
+                    ...spreadIfDefined('externalId', externalId),
+                }),
+        )
 
         const usersWithMetaInformation = await Promise.all(data.map(this.getMetaInformation))
         return paginationHelper.createPage<UserWithMetaInformation>(usersWithMetaInformation, cursor)
@@ -198,7 +211,9 @@ export const userService = (log: FastifyBaseLogger) => ({
     },
     async listProjectUsers({ platformId, projectId }: ListUsersForProjectParams): Promise<UserWithMetaInformation[]> {
         const users = await getUsersForProject(platformId, projectId)
-        const usersWithMetaInformation = await userRepo().find({ where: { platformId, id: In(users) }, relations: { identity: true } }).then((users) => users.map(this.getMetaInformation))
+        const usersWithMetaInformation = await userRepo()
+            .find({ where: { platformId, id: In(users) }, relations: { identity: true } })
+            .then((users) => users.map(this.getMetaInformation))
         return Promise.all(usersWithMetaInformation)
     },
     async getByPlatformAndExternalId({
@@ -229,10 +244,7 @@ export const userService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async addOwnerToPlatform({
-        id,
-        platformId,
-    }: UpdatePlatformIdParams): Promise<void> {
+    async addOwnerToPlatform({ id, platformId }: UpdatePlatformIdParams): Promise<void> {
         await userRepo().update(id, {
             updated: dayjs().toISOString(),
             platformRole: PlatformRole.ADMIN,
@@ -245,14 +257,17 @@ export const userService = (log: FastifyBaseLogger) => ({
     },
 })
 
-
 async function getUsersForProject(platformId: PlatformId, projectId: string): Promise<UserId[]> {
-    const platformAdmins = await userRepo().find({ where: { platformId, platformRole: PlatformRole.ADMIN } }).then((users) => users.map((user) => user.id))
+    const platformAdmins = await userRepo()
+        .find({ where: { platformId, platformRole: PlatformRole.ADMIN } })
+        .then((users) => users.map((user) => user.id))
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
         return platformAdmins
     }
-    const projectMembers = await projectMemberRepo().find({ where: { projectId, platformId } }).then((members) => members.map((member) => member.userId))
+    const projectMembers = await projectMemberRepo()
+        .find({ where: { projectId, platformId } })
+        .then((members) => members.map((member) => member.userId))
     return [...platformAdmins, ...projectMembers]
 }
 
@@ -274,7 +289,6 @@ type DeleteParams = {
     platformId: PlatformId
 }
 
-
 type ListParams = {
     platformId: PlatformId
     externalId?: string
@@ -289,7 +303,6 @@ type GetOneByIdentityIdOnlyParams = {
 type GetByIdentityId = {
     identityId: string
 }
-
 
 type GetOneByIdentityIdParams = {
     identityId: string

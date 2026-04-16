@@ -1,7 +1,7 @@
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { MailCheck, MailX } from 'lucide-react';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { FullLogo } from '@/components/custom/full-logo';

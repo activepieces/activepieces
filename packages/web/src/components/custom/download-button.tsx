@@ -4,7 +4,7 @@ import React from 'react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
 
-import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 interface DownloadButtonProps extends ButtonProps {
   fileName: string;

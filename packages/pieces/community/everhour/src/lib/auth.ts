@@ -1,6 +1,6 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { everhourApiCall } from './common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
+import { everhourApiCall } from './common/client'
 
 export const everhourAuth = PieceAuth.SecretText({
     displayName: 'API Key',
@@ -12,13 +12,13 @@ export const everhourAuth = PieceAuth.SecretText({
                 apiKey: auth,
                 method: HttpMethod.GET,
                 resourceUri: '/users/me',
-            });
-            return { valid: true };
+            })
+            return { valid: true }
         } catch {
             return {
                 valid: false,
                 error: 'Invalid API Key.',
-            };
+            }
         }
     },
-});
+})

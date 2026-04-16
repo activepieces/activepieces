@@ -23,7 +23,6 @@ enum TemplateCategory {
 const ColorHex = z.string().regex(/^#[0-9A-Fa-f]{6}$/)
 type ColorHex = z.infer<typeof ColorHex>
 
-
 const TemplateTag = z.object({
     title: z.string(),
     color: ColorHex,
@@ -37,15 +36,17 @@ enum TemplateType {
     CUSTOM = 'CUSTOM',
 }
 
-type FlowVersionTemplate = Omit<FlowVersion, 'id' | 'created' | 'updated' | 'flowId' | 'state' | 'updatedBy' | 'agentIds' | 'connectionIds' | 'backupFiles'>
-
+type FlowVersionTemplate = Omit<
+    FlowVersion,
+    'id' | 'created' | 'updated' | 'flowId' | 'state' | 'updatedBy' | 'agentIds' | 'connectionIds' | 'backupFiles'
+>
 
 export class CreateTemplateTable1764777773932 implements MigrationInterface {
     name = 'CreateTemplateTable1764777773932'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         logger.info('Running migration CreateTemplateTable1764777773932')
-        
+
         await queryRunner.query(`
             CREATE TABLE "template" (
                 "id" character varying(21) NOT NULL,
@@ -88,14 +89,14 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
         const flowTemplates = await queryRunner.query(`
             SELECT * FROM "flow_template"
         `)
-        
+
         if (flowTemplates.length === 0) {
             logger.info('No flow templates to migrate')
             return
         }
 
         const templateValues: unknown[][] = []
-        
+
         for (const flowTemplate of flowTemplates) {
             const id = apId()
             const name = flowTemplate.name
@@ -113,9 +114,14 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
             const author = flowTemplate.platformId === cloudPlatformId ? 'Activepieces Team' : 'Platform Admin'
             const categories: TemplateCategory[] = []
             const pieces = flowTemplate.pieces
-            const type = flowTemplate.platformId === cloudPlatformId ? TemplateType.OFFICIAL : isNil(flowTemplate.projectId) ? TemplateType.CUSTOM : TemplateType.SHARED
+            const type =
+                flowTemplate.platformId === cloudPlatformId
+                    ? TemplateType.OFFICIAL
+                    : isNil(flowTemplate.projectId)
+                      ? TemplateType.CUSTOM
+                      : TemplateType.SHARED
             const platformId = flowTemplate.platformId
-            
+
             templateValues.push([
                 id,
                 name,
@@ -134,23 +140,27 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
             ])
         }
 
-        const valuesPlaceholders = templateValues.map((_, index) => {
-            const offset = index * 14
-            return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}, $${offset + 14})`
-        }).join(', ')
+        const valuesPlaceholders = templateValues
+            .map((_, index) => {
+                const offset = index * 14
+                return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}, $${offset + 14})`
+            })
+            .join(', ')
 
         const flattenedValues = templateValues.flat()
 
-        await queryRunner.query(`
+        await queryRunner.query(
+            `
             INSERT INTO "template" ("id", "name", "summary", "description", "flows", "tags", "blogUrl", "metadata", "usageCount", "author", "categories", "pieces", "type", "platformId") 
             VALUES ${valuesPlaceholders}
-        `, flattenedValues)
-        
+        `,
+            flattenedValues,
+        )
+
         logger.info({ migratedCount: flowTemplates.length }, 'Finished migration CreateTemplateTable1764777773932')
     }
 
     public async down(_queryRunner: QueryRunner): Promise<void> {
         // No thing to do here
     }
-
 }

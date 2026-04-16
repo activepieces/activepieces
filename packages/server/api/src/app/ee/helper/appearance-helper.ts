@@ -14,7 +14,7 @@ const getPlatformByIdOrFallback = async (platformId: string | null, log: Fastify
 }
 
 export const appearanceHelper = {
-    async getTheme({ platformId, log }: { platformId: string | null, log: FastifyBaseLogger }) {
+    async getTheme({ platformId, log }: { platformId: string | null; log: FastifyBaseLogger }) {
         return getPlatformByIdOrFallback(platformId, log)
     },
 }

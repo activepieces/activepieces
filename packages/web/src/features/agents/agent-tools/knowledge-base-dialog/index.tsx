@@ -173,8 +173,8 @@ function KnowledgeBaseDialogContent({
   const dialogTitle = editingKbTool
     ? t('Edit Knowledge Source')
     : sourceType === KnowledgeBaseSourceType.FILE
-    ? t('Add File Source')
-    : t('Add Table Source');
+      ? t('Add File Source')
+      : t('Add Table Source');
 
   return (
     <DialogContent className="sm:max-w-md gap-3">

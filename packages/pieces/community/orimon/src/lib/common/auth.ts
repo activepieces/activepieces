@@ -1,8 +1,8 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const orimonAuth = PieceAuth.SecretText({
-  displayName: 'Orimon API Key',
-  description: `
+    displayName: 'Orimon API Key',
+    description: `
 To get your Orimon API Key:
 
 1. **Login to your Orimon Dashboard**
@@ -14,6 +14,5 @@ To get your Orimon API Key:
 
 For more details, visit: [Orimon Developer API Docs](https://orimon.gitbook.io/docs/developer-api/getting-started-with-apis)
   `,
-  required: true,
-  
-});
+    required: true,
+})

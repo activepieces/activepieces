@@ -20,14 +20,18 @@ const manageNotesInput = z.object({
     noteId: z.string().optional(),
     content: z.string().optional(),
     color: z.enum(Object.values(NoteColorVariant) as [NoteColorVariant, ...NoteColorVariant[]]).optional(),
-    position: z.object({
-        x: z.number(),
-        y: z.number(),
-    }).optional(),
-    size: z.object({
-        width: z.number(),
-        height: z.number(),
-    }).optional(),
+    position: z
+        .object({
+            x: z.number(),
+            y: z.number(),
+        })
+        .optional(),
+    size: z
+        .object({
+            width: z.number(),
+            height: z.number(),
+        })
+        .optional(),
 })
 
 export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -37,18 +41,32 @@ export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
         description: 'Add, update, or delete canvas notes on a flow. Notes are visual annotations on the flow canvas.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
-            operation: z.enum(['ADD', 'UPDATE', 'DELETE']).describe('Operation to perform: ADD a new note, UPDATE an existing note, or DELETE a note'),
+            operation: z
+                .enum(['ADD', 'UPDATE', 'DELETE'])
+                .describe('Operation to perform: ADD a new note, UPDATE an existing note, or DELETE a note'),
             noteId: z.string().optional().describe('The note ID (required for UPDATE and DELETE)'),
-            content: z.string().optional().describe('The text content of the note (required for ADD, optional for UPDATE)'),
-            color: z.enum(Object.values(NoteColorVariant) as [NoteColorVariant, ...NoteColorVariant[]]).optional().describe('Note color variant (orange, red, green, blue, purple, yellow). Default: yellow'),
-            position: z.object({
-                x: z.number(),
-                y: z.number(),
-            }).optional().describe('Position on the canvas (required for ADD, optional for UPDATE)'),
-            size: z.object({
-                width: z.number(),
-                height: z.number(),
-            }).optional().describe('Size of the note (optional, defaults to 200x200)'),
+            content: z
+                .string()
+                .optional()
+                .describe('The text content of the note (required for ADD, optional for UPDATE)'),
+            color: z
+                .enum(Object.values(NoteColorVariant) as [NoteColorVariant, ...NoteColorVariant[]])
+                .optional()
+                .describe('Note color variant (orange, red, green, blue, purple, yellow). Default: yellow'),
+            position: z
+                .object({
+                    x: z.number(),
+                    y: z.number(),
+                })
+                .optional()
+                .describe('Position on the canvas (required for ADD, optional for UPDATE)'),
+            size: z
+                .object({
+                    width: z.number(),
+                    height: z.number(),
+                })
+                .optional()
+                .describe('Size of the note (optional, defaults to 200x200)'),
         },
         // destructiveHint is false because ADD and UPDATE are the common paths;
         // DELETE is possible but clients shouldn't over-restrict the whole tool.
@@ -136,8 +154,7 @@ export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
                     DELETE: '✅ Note deleted successfully.',
                 }
                 return { content: [{ type: 'text', text: messages[op] }] }
-            }
-            catch (err) {
+            } catch (err) {
                 return mcpUtils.mcpToolError('Note operation failed', err)
             }
         },

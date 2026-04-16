@@ -7,11 +7,7 @@ import { pieceSorting } from './piece-sorting'
 
 export const pieceListUtils = (log: FastifyBaseLogger) => ({
     async filterPieces(params: FilterPiecesParams): Promise<PieceMetadataSchema[]> {
-        const sortedPieces = pieceSorting.sortAndOrder(
-            params.sortBy,
-            params.orderBy,
-            params.pieces,
-        )
+        const sortedPieces = pieceSorting.sortAndOrder(params.sortBy, params.orderBy, params.pieces)
 
         const userBasedPieces = pieceSearching.search({
             categories: params.categories,

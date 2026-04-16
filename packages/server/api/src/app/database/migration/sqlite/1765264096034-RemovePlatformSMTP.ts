@@ -163,5 +163,4 @@ export class RemovePlatformSMTP1765264096034 implements MigrationInterface {
             DROP TABLE "temporary_platform"
         `)
     }
-
 }

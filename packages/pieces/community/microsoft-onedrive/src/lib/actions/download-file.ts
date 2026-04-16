@@ -1,69 +1,59 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { oneDriveAuth } from '../auth';
-import { oneDriveCommon } from '../common/common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oneDriveAuth } from '../auth'
+import { oneDriveCommon } from '../common/common'
 
 export const downloadFile = createAction({
-  auth: oneDriveAuth,
-  name: 'download_file',
-  description: 'Download a file from your Microsoft OneDrive',
-  displayName: 'Download file',
-  props: {
-    fileId: Property.ShortText({
-      displayName: 'File ID',
-      description: 'The ID of the file to download',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const fileId = context.propsValue.fileId;
-    const cloud = context.auth.props?.['cloud'] as string | undefined;
-    const baseUrl = oneDriveCommon.getBaseUrl(cloud);
+    auth: oneDriveAuth,
+    name: 'download_file',
+    description: 'Download a file from your Microsoft OneDrive',
+    displayName: 'Download file',
+    props: {
+        fileId: Property.ShortText({
+            displayName: 'File ID',
+            description: 'The ID of the file to download',
+            required: true,
+        }),
+    },
+    async run(context) {
+        const fileId = context.propsValue.fileId
+        const cloud = context.auth.props?.['cloud'] as string | undefined
+        const baseUrl = oneDriveCommon.getBaseUrl(cloud)
 
-    const fileDetails = await httpClient.sendRequest<{name:string}>({
-      method:HttpMethod.GET,
-      url:`${baseUrl}/items/${fileId}?$select=name`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
-      },
-    })
+        const fileDetails = await httpClient.sendRequest<{ name: string }>({
+            method: HttpMethod.GET,
+            url: `${baseUrl}/items/${fileId}?$select=name`,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: context.auth.access_token,
+            },
+        })
 
-    const result = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${baseUrl}/items/${fileId}/content`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
-      },
-      responseType:'arraybuffer'
-    });
+        const result = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: `${baseUrl}/items/${fileId}/content`,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: context.auth.access_token,
+            },
+            responseType: 'arraybuffer',
+        })
 
-    const desiredHeaders = [
-      'content-length',
-      'content-type',
-      'content-location',
-      'expires',
-    ];
-    const filteredHeaders: any = {};
+        const desiredHeaders = ['content-length', 'content-type', 'content-location', 'expires']
+        const filteredHeaders: any = {}
 
-    if (result.headers) {
-      for (const key of desiredHeaders) {
-        filteredHeaders[key] = result.headers[key];
-      }
-    }
+        if (result.headers) {
+            for (const key of desiredHeaders) {
+                filteredHeaders[key] = result.headers[key]
+            }
+        }
 
-    return {
-      ...filteredHeaders,
-      data:await context.files.write({
-        fileName: fileDetails.body.name,
-        data: Buffer.from(result.body),
-      })
-
-    }
-  },
-});
+        return {
+            ...filteredHeaders,
+            data: await context.files.write({
+                fileName: fileDetails.body.name,
+                data: Buffer.from(result.body),
+            }),
+        }
+    },
+})

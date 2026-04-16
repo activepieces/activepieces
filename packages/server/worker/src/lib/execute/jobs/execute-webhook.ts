@@ -4,9 +4,9 @@ import {
     ExecuteTriggerResponse,
     FlowVersion,
     isNil,
-    parseToJsonIfPossible,
     PieceTrigger,
     ProgressUpdateType,
+    parseToJsonIfPossible,
     TriggerHookType,
     TriggerPayload,
     tryCatch,
@@ -21,13 +21,19 @@ import { resolvePayload } from '../utils/resolve-payload'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
 import { getAppWebhookUrl, getWebhookUrl } from '../utils/webhook-url'
 
-function getAppWebhookDetails(flowVersion: FlowVersion, publicApiUrl: string, appWebhookSecretsJson: string): { appWebhookUrl?: string, webhookSecret?: string | Record<string, string> } {
+function getAppWebhookDetails(
+    flowVersion: FlowVersion,
+    publicApiUrl: string,
+    appWebhookSecretsJson: string,
+): { appWebhookUrl?: string; webhookSecret?: string | Record<string, string> } {
     const trigger = flowVersion.trigger as PieceTrigger
     const pieceName = trigger?.settings?.pieceName
     if (isNil(pieceName)) {
         return {}
     }
-    const secrets = parseToJsonIfPossible(appWebhookSecretsJson) as Record<string, { webhookSecret: string | Record<string, string> }> | undefined
+    const secrets = parseToJsonIfPossible(appWebhookSecretsJson) as
+        | Record<string, { webhookSecret: string | Record<string, string> }>
+        | undefined
     const webhookSecret = secrets?.[pieceName]?.webhookSecret
     const pieceUrlName = pieceName.replace('@activepieces/piece-', '')
     return {
@@ -43,15 +49,28 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
         const resolvedPayload = await resolvePayload(data.payload, data.projectId, ctx.apiClient)
 
-        const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionIdToRun })
+        const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({
+            flowVersionId: data.flowVersionIdToRun,
+        })
         if (isNil(flowVersion)) {
             ctx.log.info({ flowVersionId: data.flowVersionIdToRun }, 'Flow version not found for webhook, skipping')
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
-        const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
+        const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(
+            flowVersion,
+            ctx.publicApiUrl,
+            settings.APP_WEBHOOK_SECRETS,
+        )
 
-        const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
+        const provisioned = await provisionFlowPieces({
+            flowVersion,
+            platformId: data.platformId,
+            flowId: data.flowId,
+            projectId: data.projectId,
+            log: ctx.log,
+            apiClient: ctx.apiClient,
+        })
         if (!provisioned) {
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }

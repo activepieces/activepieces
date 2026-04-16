@@ -1,19 +1,13 @@
-import {
-    DedupeStrategy,
-    HttpMethod,
-    Polling,
-    pollingHelper,
-} from '@activepieces/pieces-common';
+import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common'
 import {
     AppConnectionValueForAuthProperty,
+    createTrigger,
     OAuth2PropertyValue,
     TriggerStrategy,
-    createTrigger,
-} from '@activepieces/pieces-framework';
-import { querySalesforceApi } from '../common';
-
-import dayjs from 'dayjs';
-import { salesforceAuth } from '../..';
+} from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { salesforceAuth } from '../..'
+import { querySalesforceApi } from '../common'
 
 export const newContact = createTrigger({
     auth: salesforceAuth,
@@ -22,30 +16,30 @@ export const newContact = createTrigger({
     description: 'Fires when a new Contact record is created in Salesforce.',
     props: {},
     sampleData: {
-        "Id": "0037Q000005x4aXUAQ",
-        "AccountId": "0017Q00000qM8c9QAC",
-        "Name": "Jane Doe",
-        "CreatedDate": "2025-10-10T12:00:00.000Z",
+        Id: '0037Q000005x4aXUAQ',
+        AccountId: '0017Q00000qM8c9QAC',
+        Name: 'Jane Doe',
+        CreatedDate: '2025-10-10T12:00:00.000Z',
     },
     type: TriggerStrategy.POLLING,
     async test(ctx) {
-        return await pollingHelper.test(polling, ctx);
+        return await pollingHelper.test(polling, ctx)
     },
     async onEnable(ctx) {
-        await pollingHelper.onEnable(polling, ctx);
+        await pollingHelper.onEnable(polling, ctx)
     },
     async onDisable(ctx) {
-        await pollingHelper.onDisable(polling, ctx);
+        await pollingHelper.onDisable(polling, ctx)
     },
     async run(ctx) {
-        return await pollingHelper.poll(polling, ctx);
+        return await pollingHelper.poll(polling, ctx)
     },
-});
+})
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof salesforceAuth>, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, lastFetchEpochMS }) => {
-        const isoDate = dayjs(lastFetchEpochMS).toISOString();
+        const isoDate = dayjs(lastFetchEpochMS).toISOString()
 
         const query = `
             SELECT FIELDS(ALL)
@@ -53,19 +47,15 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof salesforceAuth>,
             WHERE CreatedDate > ${isoDate}
             ORDER BY CreatedDate ASC
             LIMIT 200
-        `;
+        `
 
-        const response = await querySalesforceApi<{ records: { CreatedDate: string }[] }>(
-            HttpMethod.GET,
-            auth,
-            query
-        );
+        const response = await querySalesforceApi<{ records: { CreatedDate: string }[] }>(HttpMethod.GET, auth, query)
 
-        const records = response.body?.['records'] || [];
+        const records = response.body?.['records'] || []
 
         return records.map((record: { CreatedDate: string }) => ({
             epochMilliSeconds: dayjs(record.CreatedDate).valueOf(),
             data: record,
-        }));
+        }))
     },
-};
+}

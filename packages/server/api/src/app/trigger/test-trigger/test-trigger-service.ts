@@ -1,10 +1,4 @@
-import {
-    FlowId,
-    FlowVersionId,
-    isNil,
-    ProjectId,
-    TriggerTestStrategy,
-} from '@activepieces/shared'
+import { FlowId, FlowVersionId, isNil, ProjectId, TriggerTestStrategy } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedLock } from '../../database/redis-connections'
 import { flowService } from '../../flows/flow/flow.service'
@@ -35,9 +29,12 @@ export const testTriggerService = (log: FastifyBaseLogger) => {
                                 flowId: executeParams.flowId,
                                 simulate: true,
                             })
-                            log.info({
-                                exists,
-                            }, '[testTriggerService#test] Trigger source exists')
+                            log.info(
+                                {
+                                    exists,
+                                },
+                                '[testTriggerService#test] Trigger source exists',
+                            )
                             if (exists) {
                                 await triggerSourceService(log).disable({
                                     flowId: executeParams.flowId,
@@ -89,7 +86,6 @@ export const testTriggerService = (log: FastifyBaseLogger) => {
         },
     }
 }
-
 
 type TestParams = {
     flowId: FlowId

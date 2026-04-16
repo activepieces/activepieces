@@ -9,8 +9,8 @@ export { PieceSelectorTabs } from './components/piece-selector-tabs';
 export { piecesHooks, piecesMutations } from './hooks/pieces-hooks';
 export { stepsHooks } from './hooks/steps-hooks';
 export {
-  usePieceSearchContext,
   PieceSearchProvider,
+  usePieceSearchContext,
 } from './stores/piece-search-context';
 export {
   PieceSelectorTabsProvider,
@@ -18,17 +18,17 @@ export {
   usePieceSelectorTabs,
 } from './stores/piece-selector-tabs-provider';
 export type {
+  CategorizedStepMetadataWithSuggestions,
+  HandleSelectActionOrTrigger,
   PieceSelectorItem,
   PieceSelectorOperation,
-  PieceStepMetadataWithSuggestions,
-  StepMetadata,
-  StepMetadataWithSuggestions,
   PieceSelectorPieceItem,
-  HandleSelectActionOrTrigger,
   PieceStepMetadata,
+  PieceStepMetadataWithSuggestions,
   PrimitiveStepMetadata,
+  StepMetadata,
   StepMetadataWithActionOrTriggerOrAgentDisplayName,
-  CategorizedStepMetadataWithSuggestions,
+  StepMetadataWithSuggestions,
 } from './types';
 export { formUtils } from './utils/form-utils';
 export {

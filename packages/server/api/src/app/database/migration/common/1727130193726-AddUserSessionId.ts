@@ -15,5 +15,4 @@ export class AddUserSessionId1727130193726 implements MigrationInterface {
             ALTER TABLE "user" DROP COLUMN "tokenVersion"
         `)
     }
-
 }

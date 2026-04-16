@@ -1,13 +1,13 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
 
-export const BASE_URL = `https://api.videoask.com`;
+export const BASE_URL = `https://api.videoask.com`
 
 export async function makeRequest(
     organizationId: string,
     access_token: string,
     method: HttpMethod,
     path: string,
-    body?: unknown
+    body?: unknown,
 ) {
     try {
         const response = await httpClient.sendRequest({
@@ -19,9 +19,9 @@ export async function makeRequest(
                 'organization-id': organizationId,
             },
             body,
-        });
-        return response.body;
+        })
+        return response.body
     } catch (error: any) {
-        throw new Error(`Unexpected error: ${error.message || String(error)}`);
+        throw new Error(`Unexpected error: ${error.message || String(error)}`)
     }
 }

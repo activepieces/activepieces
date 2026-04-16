@@ -1,30 +1,28 @@
-import { Property } from "@activepieces/pieces-framework";
-import { HttpMethod, httpClient } from "@activepieces/pieces-common";
-import { cambaiAuth } from '../auth';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property } from '@activepieces/pieces-framework'
+import { cambaiAuth } from '../auth'
 
-
-export const API_BASE_URL = "https://client.camb.ai/apis";
-export const POLLING_INTERVAL_MS = 5000;
-export const LONG_POLLING_INTERVAL_MS = 10000;
-export const MAX_POLLING_ATTEMPTS = 10;
-export const LONG_MAX_POLLING_ATTEMPTS = 120;
+export const API_BASE_URL = 'https://client.camb.ai/apis'
+export const POLLING_INTERVAL_MS = 5000
+export const LONG_POLLING_INTERVAL_MS = 10000
+export const MAX_POLLING_ATTEMPTS = 10
+export const LONG_MAX_POLLING_ATTEMPTS = 120
 
 type Voice = {
-    id: number;
-    voice_name: string;
-};
+    id: number
+    voice_name: string
+}
 
 type Folder = {
-    folder_id: number;
-    folder_name: string;
-};
+    folder_id: number
+    folder_name: string
+}
 
 type Language = {
-    id: number;
-    language: string;
-    short_name: string;
-};
-
+    id: number
+    language: string
+    short_name: string
+}
 
 export const listVoicesDropdown = Property.Dropdown({
     auth: cambaiAuth,
@@ -38,7 +36,7 @@ export const listVoicesDropdown = Property.Dropdown({
                 disabled: true,
                 options: [],
                 placeholder: 'Please authenticate first',
-            };
+            }
         }
         const response = await httpClient.sendRequest<Voice[]>({
             method: HttpMethod.GET,
@@ -46,18 +44,17 @@ export const listVoicesDropdown = Property.Dropdown({
             headers: {
                 'x-api-key': auth.secret_text,
             },
-        });
-        const voices = response.body ?? [];
+        })
+        const voices = response.body ?? []
         return {
             disabled: false,
             options: voices.map((voice) => ({
                 label: voice.voice_name,
                 value: voice.id,
             })),
-        };
+        }
     },
-});
-
+})
 
 export const listSourceLanguagesDropdown = Property.Dropdown({
     auth: cambaiAuth,
@@ -71,7 +68,7 @@ export const listSourceLanguagesDropdown = Property.Dropdown({
                 disabled: true,
                 options: [],
                 placeholder: 'Please authenticate first',
-            };
+            }
         }
         const response = await httpClient.sendRequest<Language[]>({
             method: HttpMethod.GET,
@@ -79,18 +76,17 @@ export const listSourceLanguagesDropdown = Property.Dropdown({
             headers: {
                 'x-api-key': auth.secret_text,
             },
-        });
-        const languages = response.body ?? [];
+        })
+        const languages = response.body ?? []
         return {
             disabled: false,
             options: languages.map((lang) => ({
                 label: `${lang.language} (${lang.short_name})`,
                 value: lang.id,
             })),
-        };
+        }
     },
-});
-
+})
 
 export const listTargetLanguagesDropdown = Property.Dropdown({
     displayName: 'Target Language',
@@ -102,9 +98,9 @@ export const listTargetLanguagesDropdown = Property.Dropdown({
         if (!auth) {
             return {
                 disabled: true,
-                options: [],        
+                options: [],
                 placeholder: 'Please authenticate first',
-            };
+            }
         }
         const response = await httpClient.sendRequest<Language[]>({
             method: HttpMethod.GET,
@@ -112,17 +108,17 @@ export const listTargetLanguagesDropdown = Property.Dropdown({
             headers: {
                 'x-api-key': auth.secret_text,
             },
-        });
-        const languages = response.body ?? [];
+        })
+        const languages = response.body ?? []
         return {
             disabled: false,
             options: languages.map((lang) => ({
                 label: `${lang.language} (${lang.short_name})`,
                 value: lang.id,
             })),
-        };
+        }
     },
-});
+})
 
 export const listFoldersDropdown = Property.Dropdown({
     displayName: 'Folder',
@@ -136,30 +132,30 @@ export const listFoldersDropdown = Property.Dropdown({
                 disabled: true,
                 options: [],
                 placeholder: 'Please authenticate first',
-            };
+            }
         }
         try {
             const response = await httpClient.sendRequest<Folder[]>({
                 method: HttpMethod.GET,
-                url: `${API_BASE_URL}/folders`, 
+                url: `${API_BASE_URL}/folders`,
                 headers: {
                     'x-api-key': auth.secret_text,
                 },
-            });
-            const folders = response.body ?? [];
+            })
+            const folders = response.body ?? []
             return {
                 disabled: false,
                 options: folders.map((folder) => ({
                     label: folder.folder_name,
                     value: folder.folder_id,
                 })),
-            };
+            }
         } catch (error) {
             return {
                 disabled: true,
                 options: [],
-                placeholder: "Could not load folders."
+                placeholder: 'Could not load folders.',
             }
         }
     },
-});
+})

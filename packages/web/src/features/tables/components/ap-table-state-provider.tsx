@@ -1,4 +1,4 @@
-import { Field, Table, PopulatedRecord, isNil } from '@activepieces/shared';
+import { Field, isNil, PopulatedRecord, Table } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { FileX } from 'lucide-react';
@@ -9,9 +9,9 @@ import { useStore } from 'zustand';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { buttonVariants } from '@/components/ui/button';
 import {
-  TableState,
   ApTableStore,
   createApTableStore,
+  TableState,
 } from '@/features/tables/stores/store/ap-tables-client-state';
 import { cn } from '@/lib/utils';
 

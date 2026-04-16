@@ -39,5 +39,4 @@ export class AddTrialFlagInPlatform1751394161203 implements MigrationInterface {
             ALTER TABLE "platform_plan" DROP COLUMN "eligibleForTrial"
         `)
     }
-
 }

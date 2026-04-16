@@ -18,7 +18,6 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
     public async up(queryRunner: QueryRunner): Promise<void> {
         log.info('AIProviderRedactorPostgres1748871900624 up: started')
 
-
         const aiProviders = await queryRunner.query(`
             SELECT id, config, provider FROM "ai_provider"
         `)
@@ -29,17 +28,19 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
 
                 let apiKey = ''
                 const providerType = provider.provider.toLowerCase()
-                
+
                 if (providerType === 'anthropic') {
                     apiKey = decryptedConfig.defaultHeaders['x-api-key'] || ''
-                }
-                else if (providerType === 'openai' || providerType === 'replicate') {
+                } else if (providerType === 'openai' || providerType === 'replicate') {
                     const authHeader = decryptedConfig.defaultHeaders['Authorization'] || ''
                     apiKey = authHeader.replace(/^Bearer\s+/i, '')
                 }
 
                 if (apiKey === '') {
-                    log.error({ providerId: provider.id }, '[AIProviderRedactorPostgres1748871900624#up] No API key found for AI provider')
+                    log.error(
+                        { providerId: provider.id },
+                        '[AIProviderRedactorPostgres1748871900624#up] No API key found for AI provider',
+                    )
                     continue
                 }
 
@@ -48,16 +49,21 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
                 }
 
                 const encryptedNewConfig = encryptUtils.encryptObject(newConfig)
-                
-                await queryRunner.query(`
+
+                await queryRunner.query(
+                    `
                     UPDATE "ai_provider" SET config = $1 WHERE id = $2
-                `, [encryptedNewConfig, provider.id])
-            }
-            catch (error) {
-                log.error({ 
-                    error,
-                    providerId: provider.id,
-                }, 'Failed to transform config for provider')
+                `,
+                    [encryptedNewConfig, provider.id],
+                )
+            } catch (error) {
+                log.error(
+                    {
+                        error,
+                        providerId: provider.id,
+                    },
+                    'Failed to transform config for provider',
+                )
                 throw error
             }
         }
@@ -88,7 +94,6 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
     public async down(queryRunner: QueryRunner): Promise<void> {
         log.info('AIProviderRedactorPostgres1748871900624 down: started')
 
-
         const aiProviders = await queryRunner.query(`
             SELECT id, config, provider FROM "ai_provider"
         `)
@@ -96,17 +101,15 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
         for (const provider of aiProviders) {
             try {
                 const decryptedConfig: NewAiProviderConfig = await encryptUtils.decryptObject(provider.config)
-                
+
                 const defaultHeaders: Record<string, string> = {}
                 const providerType = provider.provider.toLowerCase()
-                
+
                 if (providerType === 'anthropic') {
                     defaultHeaders['x-api-key'] = decryptedConfig.apiKey
-                }
-                else if (providerType === 'openai' || providerType === 'replicate') {
+                } else if (providerType === 'openai' || providerType === 'replicate') {
                     defaultHeaders['Authorization'] = `Bearer ${decryptedConfig.apiKey}`
-                }
-                else {
+                } else {
                     defaultHeaders['Authorization'] = decryptedConfig.apiKey
                 }
 
@@ -115,20 +118,28 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
                 }
 
                 const encryptedOldConfig = encryptUtils.encryptObject(oldConfig)
-                
-                await queryRunner.query(`
+
+                await queryRunner.query(
+                    `
                     UPDATE "ai_provider" SET config = $1 WHERE id = $2
-                `, [encryptedOldConfig, provider.id])
-            }
-            catch (error) {
-                log.error({ 
-                    error,
-                    providerId: provider.id,
-                }, 'Failed to reverse transform config for provider')
+                `,
+                    [encryptedOldConfig, provider.id],
+                )
+            } catch (error) {
+                log.error(
+                    {
+                        error,
+                        providerId: provider.id,
+                    },
+                    'Failed to reverse transform config for provider',
+                )
                 const fallbackConfig = encryptUtils.encryptObject({ defaultHeaders: {} })
-                await queryRunner.query(`
+                await queryRunner.query(
+                    `
                     UPDATE "ai_provider" SET config = $1 WHERE id = $2
-                `, [fallbackConfig, provider.id])
+                `,
+                    [fallbackConfig, provider.id],
+                )
             }
         }
 

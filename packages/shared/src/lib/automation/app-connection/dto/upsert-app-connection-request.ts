@@ -12,7 +12,6 @@ const commonAuthProps = {
     pieceVersion: z.string().optional(),
 }
 
-
 export const BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE = 'both_client_credentials_and_authorization_code'
 
 export enum OAuth2GrantType {
@@ -21,22 +20,26 @@ export enum OAuth2GrantType {
 }
 
 const propsSchema = z.record(z.string(), z.unknown())
-export const UpsertCustomAuthRequest = z.object({
-    ...commonAuthProps,
-    type: z.literal(AppConnectionType.CUSTOM_AUTH),
-    value: z.object({
+export const UpsertCustomAuthRequest = z
+    .object({
+        ...commonAuthProps,
         type: z.literal(AppConnectionType.CUSTOM_AUTH),
-        props: propsSchema,
-    }),
-}).describe('Custom Auth')
+        value: z.object({
+            type: z.literal(AppConnectionType.CUSTOM_AUTH),
+            props: propsSchema,
+        }),
+    })
+    .describe('Custom Auth')
 
-export const UpsertNoAuthRequest = z.object({
-    ...commonAuthProps,
-    type: z.literal(AppConnectionType.NO_AUTH),
-    value: z.object({
+export const UpsertNoAuthRequest = z
+    .object({
+        ...commonAuthProps,
         type: z.literal(AppConnectionType.NO_AUTH),
-    }),
-}).describe('No Auth')
+        value: z.object({
+            type: z.literal(AppConnectionType.NO_AUTH),
+        }),
+    })
+    .describe('No Auth')
 
 const commonOAuth2ValueProps = {
     client_id: z.string().min(1),
@@ -45,61 +48,70 @@ const commonOAuth2ValueProps = {
     scope: z.string(),
     authorization_method: z.nativeEnum(OAuth2AuthorizationMethod).optional(),
 }
-export const UpsertPlatformOAuth2Request = z.object({
-    ...commonAuthProps,
-    type: z.literal(AppConnectionType.PLATFORM_OAUTH2),
-    value: z.object({
-        ...commonOAuth2ValueProps,
-        props: propsSchema.optional(),
+export const UpsertPlatformOAuth2Request = z
+    .object({
+        ...commonAuthProps,
         type: z.literal(AppConnectionType.PLATFORM_OAUTH2),
-        redirect_url: z.string().min(1),
-    }),
-}).describe('Platform OAuth2')
+        value: z.object({
+            ...commonOAuth2ValueProps,
+            props: propsSchema.optional(),
+            type: z.literal(AppConnectionType.PLATFORM_OAUTH2),
+            redirect_url: z.string().min(1),
+        }),
+    })
+    .describe('Platform OAuth2')
 
-
-export const UpsertCloudOAuth2Request = z.object({
-    ...commonAuthProps,
-    type: z.literal(AppConnectionType.CLOUD_OAUTH2),
-    value: z.object({
-        ...commonOAuth2ValueProps,
-        props: propsSchema.optional(),
-        scope: z.string(),
+export const UpsertCloudOAuth2Request = z
+    .object({
+        ...commonAuthProps,
         type: z.literal(AppConnectionType.CLOUD_OAUTH2),
-    }),
-}).describe('Cloud OAuth2')
+        value: z.object({
+            ...commonOAuth2ValueProps,
+            props: propsSchema.optional(),
+            scope: z.string(),
+            type: z.literal(AppConnectionType.CLOUD_OAUTH2),
+        }),
+    })
+    .describe('Cloud OAuth2')
 
-export const UpsertSecretTextRequest = z.object({
-    ...commonAuthProps,
-    type: z.literal(AppConnectionType.SECRET_TEXT),
-    value: z.object({
+export const UpsertSecretTextRequest = z
+    .object({
+        ...commonAuthProps,
         type: z.literal(AppConnectionType.SECRET_TEXT),
-        secret_text: z.string().min(1),
-    }),
-}).describe('Secret Text')
+        value: z.object({
+            type: z.literal(AppConnectionType.SECRET_TEXT),
+            secret_text: z.string().min(1),
+        }),
+    })
+    .describe('Secret Text')
 
-export const UpsertOAuth2Request = z.object({
-    ...commonAuthProps,
-    type: z.literal(AppConnectionType.OAUTH2),
-    value: z.object({
-        ...commonOAuth2ValueProps,
-        client_secret: z.string().min(1),
-        grant_type: z.nativeEnum(OAuth2GrantType).optional(),
-        props: z.record(z.string(), z.any()).optional(),
-        authorization_method: z.nativeEnum(OAuth2AuthorizationMethod).optional(),
-        redirect_url: z.string().min(1),
+export const UpsertOAuth2Request = z
+    .object({
+        ...commonAuthProps,
         type: z.literal(AppConnectionType.OAUTH2),
-    }),
-}).describe('OAuth2')
+        value: z.object({
+            ...commonOAuth2ValueProps,
+            client_secret: z.string().min(1),
+            grant_type: z.nativeEnum(OAuth2GrantType).optional(),
+            props: z.record(z.string(), z.any()).optional(),
+            authorization_method: z.nativeEnum(OAuth2AuthorizationMethod).optional(),
+            redirect_url: z.string().min(1),
+            type: z.literal(AppConnectionType.OAUTH2),
+        }),
+    })
+    .describe('OAuth2')
 
-export const UpsertBasicAuthRequest = z.object({
-    ...commonAuthProps,
-    type: z.literal(AppConnectionType.BASIC_AUTH),
-    value: z.object({
-        username: z.string().min(1),
-        password: z.string().min(1),
+export const UpsertBasicAuthRequest = z
+    .object({
+        ...commonAuthProps,
         type: z.literal(AppConnectionType.BASIC_AUTH),
-    }),
-}).describe('Basic Auth')
+        value: z.object({
+            username: z.string().min(1),
+            password: z.string().min(1),
+            type: z.literal(AppConnectionType.BASIC_AUTH),
+        }),
+    })
+    .describe('Basic Auth')
 
 export const UpsertAppConnectionRequestBody = z.union([
     UpsertSecretTextRequest,
@@ -119,7 +131,6 @@ export type UpsertBasicAuthRequest = z.infer<typeof UpsertBasicAuthRequest>
 export type UpsertCustomAuthRequest = z.infer<typeof UpsertCustomAuthRequest>
 export type UpsertNoAuthRequest = z.infer<typeof UpsertNoAuthRequest>
 export type UpsertAppConnectionRequestBody = z.infer<typeof UpsertAppConnectionRequestBody>
-
 
 export const UpdateConnectionValueRequestBody = z.object({
     displayName: z.string().min(1),
@@ -142,16 +153,15 @@ const GlobalConnectionExtras = z.object({
     metadata: Metadata.optional(),
     preSelectForNewProjects: z.boolean().optional(),
 })
-export const UpsertGlobalConnectionRequestBody =
-    z.union([
-        UpsertSecretTextRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
-        UpsertOAuth2Request.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
-        UpsertCloudOAuth2Request.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
-        UpsertPlatformOAuth2Request.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
-        UpsertBasicAuthRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
-        UpsertCustomAuthRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
-        UpsertNoAuthRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
-    ])
+export const UpsertGlobalConnectionRequestBody = z.union([
+    UpsertSecretTextRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
+    UpsertOAuth2Request.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
+    UpsertCloudOAuth2Request.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
+    UpsertPlatformOAuth2Request.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
+    UpsertBasicAuthRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
+    UpsertCustomAuthRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
+    UpsertNoAuthRequest.omit({ projectId: true, externalId: true }).merge(GlobalConnectionExtras),
+])
 export type UpsertGlobalConnectionRequestBody = z.infer<typeof UpsertGlobalConnectionRequestBody>
 
 export const GetOAuth2AuthorizationUrlRequestBody = z.object({

@@ -615,5 +615,4 @@ export class RemovePremiumPiecesSqlite1727865697005 implements MigrationInterfac
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
     }
-
 }

@@ -1,4 +1,4 @@
-import {  DiffState, FlowProjectOperationType, ProjectState, TableOperationType } from '@activepieces/shared'
+import { DiffState, FlowProjectOperationType, ProjectState, TableOperationType } from '@activepieces/shared'
 import { connectionDiffService } from './diff/connection-diff.service'
 import { flowDiffService } from './diff/flow-diff.service'
 import { tableDiffService } from './diff/table-diff.service'
@@ -16,16 +16,16 @@ export const projectDiffService = {
     },
     async filterFlows(selectedFlowsIds: string[], diffs: DiffState): Promise<DiffState> {
         return {
-            flows: diffs.flows.filter(operation => selectedFlowsIds.includes(operation.flowState.id)),
+            flows: diffs.flows.filter((operation) => selectedFlowsIds.includes(operation.flowState.id)),
             connections: diffs.connections,
             tables: diffs.tables,
         }
     },
     async filterDeleteOperation(diffs: DiffState): Promise<DiffState> {
         return {
-            flows: diffs.flows.filter(f =>![FlowProjectOperationType.DELETE_FLOW].includes(f.type)),
+            flows: diffs.flows.filter((f) => ![FlowProjectOperationType.DELETE_FLOW].includes(f.type)),
             connections: diffs.connections,
-            tables: diffs.tables.filter(t =>![TableOperationType.DELETE_TABLE].includes(t.type)),
+            tables: diffs.tables.filter((t) => ![TableOperationType.DELETE_TABLE].includes(t.type)),
         }
     },
 }
@@ -34,4 +34,3 @@ type DiffParams = {
     currentState: ProjectState
     newState: ProjectState
 }
-

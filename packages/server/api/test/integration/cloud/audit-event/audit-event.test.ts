@@ -1,14 +1,11 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
-import {
-    createAuditEvent,
-    mockBasicUser,
-} from '../../../helpers/mocks'
+import { createAuditEvent, mockBasicUser } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -29,7 +26,6 @@ describe('Audit Event API', () => {
                 },
             })
             const ctxTwo = await createTestContext(app!)
-
 
             const mockAuditEvents1 = [
                 createAuditEvent({

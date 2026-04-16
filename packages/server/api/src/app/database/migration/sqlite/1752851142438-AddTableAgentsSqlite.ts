@@ -415,5 +415,4 @@ export class AddTableAgentsSqlite1752851142438 implements MigrationInterface {
             CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
         `)
     }
-
 }

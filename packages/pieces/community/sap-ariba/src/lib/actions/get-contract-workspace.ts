@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sapAribaAuth } from '../auth';
-import { sapAribaCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { sapAribaAuth } from '../auth'
+import { sapAribaCommon } from '../common'
 
 export const getContractWorkspace = createAction({
     auth: sapAribaAuth,
@@ -36,25 +36,25 @@ export const getContractWorkspace = createAction({
         }),
     },
     async run(context) {
-        const { realm, user, passwordAdapter, contractId, expand } = context.propsValue;
+        const { realm, user, passwordAdapter, contractId, expand } = context.propsValue
 
         const queryParams: Record<string, string> = {
             realm,
             user,
             passwordAdapter,
-        };
+        }
 
         if (expand) {
-            queryParams['$expand'] = expand;
+            queryParams['$expand'] = expand
         }
 
         const response = await sapAribaCommon.makeRequest(
             context.auth,
             HttpMethod.GET,
             `/contractWorkspaces/${encodeURIComponent(contractId)}`,
-            queryParams
-        );
+            queryParams,
+        )
 
-        return response;
+        return response
     },
-});
+})

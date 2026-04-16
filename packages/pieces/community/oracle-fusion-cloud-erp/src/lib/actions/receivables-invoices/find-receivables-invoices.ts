@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const findReceivablesInvoices = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -54,26 +54,34 @@ export const findReceivablesInvoices = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
-        const { transactionNumber, billToCustomerNumber, invoiceStatus, billingDateFrom, billingDateTo, limit, offset } = context.propsValue;
+        const client = makeClient(context.auth.props)
+        const {
+            transactionNumber,
+            billToCustomerNumber,
+            invoiceStatus,
+            billingDateFrom,
+            billingDateTo,
+            limit,
+            offset,
+        } = context.propsValue
 
         const queryParams: Record<string, string | number> = {
             limit: Math.min(limit || 25, 500),
             offset: offset || 0,
-        };
-
-        const filters: string[] = [];
-        if (transactionNumber) filters.push(`TransactionNumber="${transactionNumber}"`);
-        if (billToCustomerNumber) filters.push(`BillToCustomerNumber="${billToCustomerNumber}"`);
-        if (invoiceStatus) filters.push(`InvoiceStatus="${invoiceStatus}"`);
-        if (billingDateFrom) filters.push(`BillingDate>="${billingDateFrom}"`);
-        if (billingDateTo) filters.push(`BillingDate<="${billingDateTo}"`);
-
-        if (filters.length > 0) {
-            queryParams['q'] = filters.join(' AND ');
         }
 
-        const response = await client.searchRecords('/receivablesInvoices', queryParams);
-        return response;
+        const filters: string[] = []
+        if (transactionNumber) filters.push(`TransactionNumber="${transactionNumber}"`)
+        if (billToCustomerNumber) filters.push(`BillToCustomerNumber="${billToCustomerNumber}"`)
+        if (invoiceStatus) filters.push(`InvoiceStatus="${invoiceStatus}"`)
+        if (billingDateFrom) filters.push(`BillingDate>="${billingDateFrom}"`)
+        if (billingDateTo) filters.push(`BillingDate<="${billingDateTo}"`)
+
+        if (filters.length > 0) {
+            queryParams['q'] = filters.join(' AND ')
+        }
+
+        const response = await client.searchRecords('/receivablesInvoices', queryParams)
+        return response
     },
-});
+})

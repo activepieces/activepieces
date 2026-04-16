@@ -15,14 +15,8 @@ export type PaginationOptions<Entity> = {
     query?: PagingQuery
 }
 
-export function buildPaginator<Entity extends ObjectLiteral>(
-    options: PaginationOptions<Entity>,
-): Paginator<Entity> {
-    const {
-        entity,
-        query = {},
-        alias = entity.options.name.toLowerCase(),
-    } = options
+export function buildPaginator<Entity extends ObjectLiteral>(options: PaginationOptions<Entity>): Paginator<Entity> {
+    const { entity, query = {}, alias = entity.options.name.toLowerCase() } = options
 
     const paginator = new Paginator<Entity>(entity)
 
@@ -43,15 +37,13 @@ export function buildPaginator<Entity extends ObjectLiteral>(
     if (query.orderBy) {
         if (Array.isArray(query.orderBy)) {
             paginator.setCompositeOrderBy(query.orderBy)
-        }
-        else {
+        } else {
             paginator.setOrderBy(query.orderBy)
             if (query.order) {
                 paginator.setOrder(query.order as Order)
             }
         }
-    }
-    else if (query.order) {
+    } else if (query.order) {
         paginator.setOrder(query.order as Order)
     }
 

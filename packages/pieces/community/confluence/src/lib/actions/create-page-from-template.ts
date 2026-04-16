@@ -1,62 +1,62 @@
-import { confluenceAuth } from '../auth';
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { folderIdProp, spaceIdProp, templateIdProp, templateVariablesProp } from "../common/props";
-import { confluenceApiCall } from "../common";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { confluenceAuth } from '../auth'
+import { confluenceApiCall } from '../common'
+import { folderIdProp, spaceIdProp, templateIdProp, templateVariablesProp } from '../common/props'
 
 export const createPageFromTemplateAction = createAction({
-    auth:confluenceAuth,
-    name:'create-page-from-template',
-    displayName:'Create Page from Template',
-    description:'Creates a new page from a template with the given title and variables.',
-    props:{
-        spaceId:spaceIdProp,
-        templateId:templateIdProp,
-        folderId:folderIdProp,
-        title:Property.ShortText({
-            displayName:'Title',
-            required:true,
+    auth: confluenceAuth,
+    name: 'create-page-from-template',
+    displayName: 'Create Page from Template',
+    description: 'Creates a new page from a template with the given title and variables.',
+    props: {
+        spaceId: spaceIdProp,
+        templateId: templateIdProp,
+        folderId: folderIdProp,
+        title: Property.ShortText({
+            displayName: 'Title',
+            required: true,
         }),
-        status:Property.StaticDropdown({
-            displayName:'Status',
-            required:true,
-            defaultValue:'draft',
-            options:{
-                disabled:false,
-                options:[
+        status: Property.StaticDropdown({
+            displayName: 'Status',
+            required: true,
+            defaultValue: 'draft',
+            options: {
+                disabled: false,
+                options: [
                     {
-                        label:'Published ',
-                        value:'current'
+                        label: 'Published ',
+                        value: 'current',
                     },
                     {
-                        label:'Draft',
-                        value:'draft'
-                    }
-                ]
-            }
+                        label: 'Draft',
+                        value: 'draft',
+                    },
+                ],
+            },
         }),
-        templateVariables:templateVariablesProp,
+        templateVariables: templateVariablesProp,
     },
-    async run(context){
-        const {spaceId,templateId,title,status,folderId} = context.propsValue;
-        const variables = context.propsValue.templateVariables ??{};
+    async run(context) {
+        const { spaceId, templateId, title, status, folderId } = context.propsValue
+        const variables = context.propsValue.templateVariables ?? {}
 
         const template = await confluenceApiCall<{ body: { storage: { value: string } } }>({
-                    domain: context.auth.props.confluenceDomain,
-                    username: context.auth.props.username,
-                    password: context.auth.props.password,
-                    method: HttpMethod.GET,
-                    version: 'v1',
-                    resourceUri: `/template/${templateId}`,
-                });
-        
-        const body = template.body.storage.value;
+            domain: context.auth.props.confluenceDomain,
+            username: context.auth.props.username,
+            password: context.auth.props.password,
+            method: HttpMethod.GET,
+            version: 'v1',
+            resourceUri: `/template/${templateId}`,
+        })
 
-        let content = body.replace(/<at:declarations>[\s\S]*?<\/at:declarations>/, "").trim();
+        const body = template.body.storage.value
+
+        let content = body.replace(/<at:declarations>[\s\S]*?<\/at:declarations>/, '').trim()
         Object.entries(variables).forEach(([key, value]) => {
-            const varRegex = new RegExp(`<at:var at:name=(['"])${key}\\1\\s*\\/?>`, "g");
-            content = content.replace(varRegex, value);
-          });
+            const varRegex = new RegExp(`<at:var at:name=(['"])${key}\\1\\s*\\/?>`, 'g')
+            content = content.replace(varRegex, value)
+        })
 
         const response = await confluenceApiCall({
             domain: context.auth.props.confluenceDomain,
@@ -66,17 +66,17 @@ export const createPageFromTemplateAction = createAction({
             version: 'v2',
             resourceUri: '/pages',
             body: {
-                spaceId:spaceId,
+                spaceId: spaceId,
                 title,
-                parentId:folderId,
+                parentId: folderId,
                 status,
-                body:{
-                    representation:'storage',
-                    value:content,
-                }
-            }
+                body: {
+                    representation: 'storage',
+                    value: content,
+                },
+            },
         })
 
-        return response;
-    }
+        return response
+    },
 })

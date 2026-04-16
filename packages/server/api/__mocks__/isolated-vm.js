@@ -1,1 +1,1 @@
-module.exports = {};  // You can export a mock implementation if needed
+module.exports = {} // You can export a mock implementation if needed

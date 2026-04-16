@@ -1,10 +1,10 @@
-import { PieceAuth } from "@activepieces/pieces-framework";
-import { makeRequest } from "./client";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { HttpMethod } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
+import { makeRequest } from './client'
 
 export const AgentXAuth = PieceAuth.SecretText({
-  displayName: 'AgentX API Key',
-  description: `**Enter your AgentX API Key**
+    displayName: 'AgentX API Key',
+    description: `**Enter your AgentX API Key**
 ---
 ### How to obtain your API key
 1. Visit [AgentX](https://www.agentx.so/) and log in.
@@ -13,24 +13,24 @@ export const AgentXAuth = PieceAuth.SecretText({
 4. Paste it here.
 
 `,
-  required: true,
-  validate: async ({ auth }) => {
-    if (auth) {
-      try {
-        await makeRequest(auth as string, HttpMethod.GET, "/agents");
+    required: true,
+    validate: async ({ auth }) => {
+        if (auth) {
+            try {
+                await makeRequest(auth as string, HttpMethod.GET, '/agents')
+                return {
+                    valid: true,
+                }
+            } catch (error) {
+                return {
+                    valid: false,
+                    error: 'Invalid API Key or authentication failed.',
+                }
+            }
+        }
         return {
-          valid: true,
-        };
-      } catch (error) {
-        return {
-          valid: false,
-          error: "Invalid API Key or authentication failed.",
-        };
-      }
-    }
-    return {
-      valid: false,
-      error: "API Key is required.",
-    };
-  },
-});
+            valid: false,
+            error: 'API Key is required.',
+        }
+    },
+})

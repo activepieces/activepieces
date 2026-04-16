@@ -1,7 +1,7 @@
 import { MarkdownVariant } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, Copy, Info, AlertTriangle, Lightbulb } from 'lucide-react';
+import { AlertTriangle, Check, Copy, Info, Lightbulb } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import breaks from 'remark-breaks';
@@ -213,4 +213,5 @@ const ApMarkdown = React.memo(
 );
 
 ApMarkdown.displayName = 'ApMarkdown';
+
 export { ApMarkdown };

@@ -1,10 +1,8 @@
-
 import { ActivepiecesError, ErrorCode, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import * as validator from '@authenio/samlify-node-xmllint'
 import * as saml from 'samlify'
 import { z } from 'zod'
 import { domainHelper } from '../../custom-domains/domain-helper'
-
 
 const samlResponseValidator = z.object({
     email: z.string(),
@@ -22,10 +20,7 @@ class SamlClient {
     ) {}
 
     getLoginUrl(): string {
-        const loginRequest = this.sp.createLoginRequest(
-            this.idp,
-            SamlClient.LOGIN_REQUEST_BINDING,
-        )
+        const loginRequest = this.sp.createLoginRequest(this.idp, SamlClient.LOGIN_REQUEST_BINDING)
 
         return loginRequest.context
     }
@@ -44,7 +39,6 @@ class SamlClient {
                 params: {
                     message: 'Invalid SAML response, It should contain these firstName, lastName, email fields.',
                 },
-            
             })
         }
         return atts
@@ -53,7 +47,10 @@ class SamlClient {
 
 const instanceCache = new Map<string, SamlClient>()
 
-export const createSamlClient = async (platformId: string, samlProvider: SAMLAuthnProviderConfig): Promise<SamlClient> => {
+export const createSamlClient = async (
+    platformId: string,
+    samlProvider: SAMLAuthnProviderConfig,
+): Promise<SamlClient> => {
     const cached = instanceCache.get(platformId)
     if (cached) {
         return cached
@@ -89,10 +86,12 @@ const createSp = async (platformId: string, privateKey: string): Promise<saml.Se
         wantLogoutRequestSigned: true,
         privateKey,
         isAssertionEncrypted: true,
-        assertionConsumerService: [{
-            Binding: saml.Constants.namespace.binding.post,
-            Location: acsUrl,
-        }],
+        assertionConsumerService: [
+            {
+                Binding: saml.Constants.namespace.binding.post,
+                Location: acsUrl,
+            },
+        ],
         signatureConfig: {},
     })
 }

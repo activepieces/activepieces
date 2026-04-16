@@ -19,23 +19,29 @@ const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
 
 const STEP_REFERENCE_HINT = 'Use {{stepName.field}} to reference prior steps (no .output. in path).'
 
-function mcpToolError(prefix: string, err: unknown): { content: [{ type: 'text', text: string }] } {
+function mcpToolError(prefix: string, err: unknown): { content: [{ type: 'text'; text: string }] } {
     const message = err instanceof Error ? err.message : String(err)
     return { content: [{ type: 'text', text: `❌ ${prefix}: ${message}` }] }
 }
 
-function formatOptionsHint(options: Array<{ label: string, value: unknown }> | undefined): string {
+function formatOptionsHint(options: Array<{ label: string; value: unknown }> | undefined): string {
     if (!options || options.length === 0) {
         return ''
     }
-    const values = options.map(o => String(o.value))
+    const values = options.map((o) => String(o.value))
     if (values.length > 10) {
         return ` — options: ${values.slice(0, 10).join(', ')}... (${values.length} total)`
     }
     return ` — options: ${values.join(', ')}`
 }
 
-function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentType }: DiagnosePiecePropsParams): DiagnosisResult {
+function diagnosePieceProps({
+    props,
+    input,
+    pieceAuth,
+    requireAuth,
+    componentType,
+}: DiagnosePiecePropsParams): DiagnosisResult {
     const missing: string[] = []
     const uiRequired: string[] = []
     const allProps: string[] = []
@@ -49,11 +55,12 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
             if (value === undefined || value === null || value === '') {
                 if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
                     uiRequired.push(`${propName} (${prop.displayName})`)
-                }
-                else {
-                    const hint = (prop.type === PropertyType.STATIC_DROPDOWN || prop.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN)
-                        ? formatOptionsHint(prop.options?.options)
-                        : ''
+                } else {
+                    const hint =
+                        prop.type === PropertyType.STATIC_DROPDOWN ||
+                        prop.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN
+                            ? formatOptionsHint(prop.options?.options)
+                            : ''
                     missing.push(`${propName} (${prop.type}${hint})`)
                 }
             }
@@ -68,7 +75,9 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
         parts.push(`Missing required inputs: ${missing.join(', ')}.`)
     }
     if (uiRequired.length > 0) {
-        parts.push(`These inputs require selection from your account and must be configured in the Activepieces UI: ${uiRequired.join(', ')}.`)
+        parts.push(
+            `These inputs require selection from your account and must be configured in the Activepieces UI: ${uiRequired.join(', ')}.`,
+        )
     }
     if (allProps.length > 0) {
         parts.push(`Expected inputs: ${allProps.join(', ')}.`)
@@ -95,11 +104,20 @@ function buildPropSummaries(props: PiecePropertyMap): PropSummary[] {
             if (prop.defaultValue !== undefined) {
                 summary.defaultValue = prop.defaultValue
             }
-            if ((prop.type === PropertyType.STATIC_DROPDOWN || prop.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN) && 'options' in prop && prop.options?.options) {
-                summary.options = prop.options.options.map((o: { label: string, value: unknown }) => ({ label: o.label, value: o.value }))
+            if (
+                (prop.type === PropertyType.STATIC_DROPDOWN ||
+                    prop.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN) &&
+                'options' in prop &&
+                prop.options?.options
+            ) {
+                summary.options = prop.options.options.map((o: { label: string; value: unknown }) => ({
+                    label: o.label,
+                    value: o.value,
+                }))
             }
             if (prop.type === PropertyType.DROPDOWN || prop.type === PropertyType.MULTI_SELECT_DROPDOWN) {
-                summary.note = 'Dynamic dropdown — options load from your account via API. Configure in the Activepieces UI, or provide a known value.'
+                summary.note =
+                    'Dynamic dropdown — options load from your account via API. Configure in the Activepieces UI, or provide a known value.'
             }
             if (prop.type === PropertyType.DYNAMIC) {
                 summary.note = 'DYNAMIC — call ap_get_piece_props with auth+input to resolve sub-fields.'
@@ -120,43 +138,78 @@ function normalizePieceName(pieceName: string | undefined): string | undefined {
     return `@activepieces/piece-${normalized}`
 }
 
-async function lookupPieceComponent({ pieceName, componentName, componentType, projectId, log }: LookupPieceComponentParams): Promise<LookupPieceComponentResult> {
+async function lookupPieceComponent({
+    pieceName,
+    componentName,
+    componentType,
+    projectId,
+    log,
+}: LookupPieceComponentParams): Promise<LookupPieceComponentResult> {
     const normalized = normalizePieceName(pieceName)
     if (isNil(normalized)) {
         return { error: mcpToolError('Validation failed', new Error('pieceName is required')) }
     }
     const piece = await pieceMetadataService(log).get({ name: normalized, projectId })
     if (isNil(piece)) {
-        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_list_pieces to get valid piece names.` }] } }
+        return {
+            error: {
+                content: [
+                    {
+                        type: 'text',
+                        text: `❌ Piece "${normalized}" not found. Use ap_list_pieces to get valid piece names.`,
+                    },
+                ],
+            },
+        }
     }
     const componentMap = componentType === 'action' ? piece.actions : piece.triggers
     const label = componentType === 'action' ? 'Action' : 'Trigger'
     const component = componentMap[componentName]
     if (isNil(component)) {
-        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}". Available: ${Object.keys(componentMap).join(', ')}` }] } }
+        return {
+            error: {
+                content: [
+                    {
+                        type: 'text',
+                        text: `❌ ${label} "${componentName}" not found in "${normalized}". Available: ${Object.keys(componentMap).join(', ')}`,
+                    },
+                ],
+            },
+        }
     }
     return { piece, component, pieceName: normalized }
 }
 
 function findResolvableProps({ props, componentProps, auth, providedInput }: FindResolvablePropsParams): PropSummary[] {
-    return props.filter(prop => {
+    return props.filter((prop) => {
         const propDef = componentProps[prop.name]
         if (isNil(propDef) || !RESOLVABLE_PROP_TYPES.has(prop.type) || !('refreshers' in propDef)) {
             return false
         }
         const refreshers = (propDef as { refreshers: string[] }).refreshers
-        return refreshers.every(r => r === 'auth' ? !!auth : providedInput[r] !== undefined)
+        return refreshers.every((r) => (r === 'auth' ? !!auth : providedInput[r] !== undefined))
     })
 }
 
-function validateAuth(auth: string | undefined): { content: [{ type: 'text', text: string }] } | null {
+function validateAuth(auth: string | undefined): { content: [{ type: 'text'; text: string }] } | null {
     if (auth !== undefined && /['{}\[\]]/.test(auth)) {
-        return { content: [{ type: 'text', text: '❌ auth must be a plain externalId with no special characters. Use the exact value from ap_list_connections.' }] }
+        return {
+            content: [
+                {
+                    type: 'text',
+                    text: '❌ auth must be a plain externalId with no special characters. Use the exact value from ap_list_connections.',
+                },
+            ],
+        }
     }
     return null
 }
 
-async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }: {
+async function fillDefaultsForMissingOptionalProps({
+    settings,
+    platformId,
+    log,
+}: {
     settings: Record<string, unknown>
     platformId: string
     log: FastifyBaseLogger
@@ -177,22 +230,32 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
         for (const [propName, prop] of Object.entries(action.props)) {
             if (prop.type === PropertyType.ARRAY && !prop.required) {
                 defaults[propName] = []
-            }
-            else if (prop.type === PropertyType.DYNAMIC && !prop.required) {
+            } else if (prop.type === PropertyType.DYNAMIC && !prop.required) {
                 defaults[propName] = {}
-            }
-            else if (prop.type === PropertyType.CHECKBOX && !prop.required) {
+            } else if (prop.type === PropertyType.CHECKBOX && !prop.required) {
                 defaults[propName] = prop.defaultValue ?? false
             }
         }
-        settings.input = { ...defaults, ...(typeof settings.input === 'object' && settings.input !== null ? settings.input : {}) }
-    }
-    catch (err) {
+        settings.input = {
+            ...defaults,
+            ...(typeof settings.input === 'object' && settings.input !== null ? settings.input : {}),
+        }
+    } catch (err) {
         log.warn({ err, pieceName, actionName }, 'fillDefaultsForMissingOptionalProps: failed, skipping defaults')
     }
 }
 
-export const mcpUtils = { mcpToolError, diagnosePieceProps, buildPropSummaries, normalizePieceName, lookupPieceComponent, findResolvableProps, validateAuth, fillDefaultsForMissingOptionalProps, STEP_REFERENCE_HINT }
+export const mcpUtils = {
+    mcpToolError,
+    diagnosePieceProps,
+    buildPropSummaries,
+    normalizePieceName,
+    lookupPieceComponent,
+    findResolvableProps,
+    validateAuth,
+    fillDefaultsForMissingOptionalProps,
+    STEP_REFERENCE_HINT,
+}
 
 export type { PropSummary }
 
@@ -225,7 +288,7 @@ type PropSummary = {
     displayName: string
     description?: string
     defaultValue?: unknown
-    options?: Array<{ label: string, value: unknown }>
+    options?: Array<{ label: string; value: unknown }>
     dynamicFields?: PropSummary[]
     note?: string
 }
@@ -239,5 +302,16 @@ type LookupPieceComponentParams = {
 }
 
 type LookupPieceComponentResult =
-    | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string }, pieceName: string, error?: never }
-    | { error: { content: [{ type: 'text', text: string }] }, piece?: never, component?: never, pieceName?: never }
+    | {
+          piece: PieceMetadataModel
+          component: {
+              props: PiecePropertyMap
+              requireAuth: boolean
+              name: string
+              displayName: string
+              description: string
+          }
+          pieceName: string
+          error?: never
+      }
+    | { error: { content: [{ type: 'text'; text: string }] }; piece?: never; component?: never; pieceName?: never }

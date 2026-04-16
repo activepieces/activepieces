@@ -1,9 +1,8 @@
 import {
     ActivepiecesError,
     ApEdition,
-    apId,
-
     ApId,
+    apId,
     Cursor,
     DefaultProjectRole,
     ErrorCode,
@@ -17,7 +16,8 @@ import {
     ProjectRole,
     SeekPage,
     UserId,
-    UserStatus } from '@activepieces/shared'
+    UserStatus,
+} from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal } from 'typeorm'
@@ -29,17 +29,12 @@ import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { projectRoleService } from '../project-role/project-role.service'
-import {
-    ProjectMemberEntity,
-} from './project-member.entity'
+import { ProjectMemberEntity } from './project-member.entity'
+
 const repo = repoFactory(ProjectMemberEntity)
 
 export const projectMemberService = (log: FastifyBaseLogger) => ({
-    async upsert({
-        userId,
-        projectId,
-        projectRoleName,
-    }: UpsertParams): Promise<ProjectMember> {
+    async upsert({ userId, projectId, projectRoleName }: UpsertParams): Promise<ProjectMember> {
         const { platformId } = await projectService(log).getOneOrThrow(projectId)
         const existingProjectMember = await repo().findOneBy({
             projectId,
@@ -62,11 +57,7 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             projectRoleId: projectRole.id,
         }
 
-        await repo().upsert(projectMember, [
-            'projectId',
-            'userId',
-            'platformId',
-        ])
+        await repo().upsert(projectMember, ['projectId', 'userId', 'platformId'])
 
         return repo().findOneOrFail({
             where: {
@@ -74,15 +65,13 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async list(
-        {
-            platformId,
-            projectId,
-            cursorRequest,
-            limit,
-            projectRoleId,
-        }: ListParams,
-    ): Promise<SeekPage<ProjectMemberWithUser>> {
+    async list({
+        platformId,
+        projectId,
+        cursorRequest,
+        limit,
+        projectRoleId,
+    }: ListParams): Promise<SeekPage<ProjectMemberWithUser>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: ProjectMemberEntity,
@@ -93,9 +82,7 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = repo()
-            .createQueryBuilder('project_member')
-            .where({ platformId })
+        const queryBuilder = repo().createQueryBuilder('project_member').where({ platformId })
 
         if (projectId) {
             queryBuilder.andWhere({ projectId })
@@ -123,13 +110,7 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         const filteredEnrichedData = enrichedData.filter((member) => !isNil(member))
         return paginationHelper.createPage<ProjectMemberWithUser>(filteredEnrichedData, cursor)
     },
-    async getRole({
-        userId,
-        projectId,
-    }: {
-        projectId: ProjectId
-        userId: UserId
-    }): Promise<ProjectRole | null> {
+    async getRole({ userId, projectId }: { projectId: ProjectId; userId: UserId }): Promise<ProjectRole | null> {
         const project = await projectService(log).getOneOrThrow(projectId)
         const user = await userService(log).getOneOrFail({
             id: userId,
@@ -170,9 +151,9 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         })
 
         if (
-            isNil(projectMember)
-            || projectMember.projectId !== params.projectId
-            || projectMember.platformId !== params.platformId
+            isNil(projectMember) ||
+            projectMember.projectId !== params.projectId ||
+            projectMember.platformId !== params.platformId
         ) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -180,22 +161,22 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        await repo().update({
-            id: params.id,
-            projectId: params.projectId,
-        }, {
-            projectRoleId: projectRole.id,
-        })
+        await repo().update(
+            {
+                id: params.id,
+                projectId: params.projectId,
+            },
+            {
+                projectRoleId: projectRole.id,
+            },
+        )
         return {
             ...projectMember,
             projectRoleId: projectRole.id,
             updated: dayjs().toISOString(),
         }
     },
-    async getIdsOfProjects({
-        userId,
-        platformId,
-    }: GetIdsOfProjectsParams): Promise<string[]> {
+    async getIdsOfProjects({ userId, platformId }: GetIdsOfProjectsParams): Promise<string[]> {
         const edition = system.getEdition()
         if (edition === ApEdition.COMMUNITY) {
             return []
@@ -206,15 +187,12 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         })
         return members.map((member) => member.projectId)
     },
-    async delete(
-        projectId: ProjectId,
-        invitationId: ProjectMemberId,
-    ): Promise<void> {
+    async delete(projectId: ProjectId, invitationId: ProjectMemberId): Promise<void> {
         await repo().delete({ projectId, id: invitationId })
     },
     async countTotalUsersByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
         if (projectIds.length === 0) return new Map()
-        
+
         const result = await repo()
             .createQueryBuilder('project_member')
             .select('project_member.projectId', 'projectId')
@@ -222,12 +200,12 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             .where('project_member.projectId IN (:...projectIds)', { projectIds })
             .groupBy('project_member.projectId')
             .getRawMany()
-        
-        return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
+
+        return new Map(result.map((r) => [r.projectId, parseInt(r.count)]))
     },
     async countActiveUsersByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
         if (projectIds.length === 0) return new Map()
-        
+
         const result = await repo()
             .createQueryBuilder('project_member')
             .select('project_member.projectId', 'projectId')
@@ -237,8 +215,8 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             .andWhere('user.status = :activeStatus', { activeStatus: UserStatus.ACTIVE })
             .groupBy('project_member.projectId')
             .getRawMany()
-        
-        return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
+
+        return new Map(result.map((r) => [r.projectId, parseInt(r.count)]))
     },
 })
 
@@ -263,7 +241,6 @@ type UpsertParams = {
 
 type NewProjectMember = Omit<ProjectMember, 'created' | 'projectRole'>
 
-
 type UpdateMemberRole = {
     id: ApId
     projectId: ProjectId
@@ -274,7 +251,7 @@ type UpdateMemberRole = {
 async function enrichProjectMemberWithUser(
     projectMember: ProjectMember,
     log: FastifyBaseLogger,
-): Promise<ProjectMemberWithUser | null> {  
+): Promise<ProjectMemberWithUser | null> {
     const isProjectSoftDeleted = await projectService(log).exists({
         projectId: projectMember.projectId,
         isSoftDeleted: true,

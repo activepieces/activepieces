@@ -4,7 +4,6 @@ import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { AddBranchRequest } from '.'
 
-
 function _addBranch(flowVersion: FlowVersion, request: AddBranchRequest): FlowVersion {
     return flowStructureUtil.transferFlow(flowVersion, (parentStep) => {
         if (parentStep.name !== request.stepName || parentStep.type !== FlowActionType.ROUTER) {
@@ -15,12 +14,15 @@ function _addBranch(flowVersion: FlowVersion, request: AddBranchRequest): FlowVe
             ...routerAction,
             settings: {
                 ...routerAction.settings,
-                branches: insertAt(routerAction.settings.branches, request.branchIndex, flowStructureUtil.createBranch(request.branchName, request.conditions)),
+                branches: insertAt(
+                    routerAction.settings.branches,
+                    request.branchIndex,
+                    flowStructureUtil.createBranch(request.branchName, request.conditions),
+                ),
             },
             children: insertAt(routerAction.children, request.branchIndex, null),
         }
     })
 }
-
 
 export { _addBranch }

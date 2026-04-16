@@ -50,10 +50,7 @@ describe('Webhook XML parser configuration', () => {
 
     it('should not expand custom DOCTYPE entities', () => {
         const parser = makeParser()
-        const xml = [
-            '<!DOCTYPE x [<!ENTITY custom "EVIL">]>',
-            '<root>&custom;</root>',
-        ].join('\n')
+        const xml = ['<!DOCTYPE x [<!ENTITY custom "EVIL">]>', '<root>&custom;</root>'].join('\n')
 
         const result = parser.parse(xml)
         expect(JSON.stringify(result)).not.toContain('EVIL')

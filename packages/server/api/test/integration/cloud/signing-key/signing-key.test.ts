@@ -1,15 +1,11 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
-import {
-    createMockSigningKey,
-    mockAndSaveBasicSetup,
-    mockBasicUser,
-} from '../../../helpers/mocks'
+import { createMockSigningKey, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -31,7 +27,7 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -105,7 +101,7 @@ describe('Signing Key API', () => {
         it('Finds a Signing Key by id', async () => {
             // arrange
             const { mockOwner, mockPlatform } = await setupEnabledPlatform()
-            
+
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })

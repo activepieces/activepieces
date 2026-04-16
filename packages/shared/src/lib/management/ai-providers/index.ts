@@ -12,7 +12,6 @@ export enum AIProviderName {
     CUSTOM = 'custom',
 }
 
-
 export enum AIProviderModelType {
     IMAGE = 'image',
     TEXT = 'text',
@@ -69,7 +68,6 @@ export const OpenAICompatibleProviderConfig = z.object({
     defaultHeaders: z.record(z.string(), z.string()).optional(),
 })
 export type OpenAICompatibleProviderConfig = z.infer<typeof OpenAICompatibleProviderConfig>
-
 
 export const CloudflareGatewayProviderConfig = z.object({
     accountId: z.string(),
@@ -169,11 +167,13 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
     }),
 ])
 
-export const AIProvider = z.object({
-    ...BaseModelSchema,
-    displayName: z.string().min(1),
-    platformId: z.string(),
-}).and(ProviderConfigUnion)
+export const AIProvider = z
+    .object({
+        ...BaseModelSchema,
+        displayName: z.string().min(1),
+        platformId: z.string(),
+    })
+    .and(ProviderConfigUnion)
 
 export type AIProvider = z.infer<typeof AIProvider>
 
@@ -195,14 +195,12 @@ export type AIProviderModel = z.infer<typeof AIProviderModel>
 export const CreateAIProviderRequest = ProviderConfigUnion
 export type CreateAIProviderRequest = z.infer<typeof CreateAIProviderRequest>
 
-
 export const UpdateAIProviderRequest = z.object({
     displayName: z.string().min(1),
     config: AIProviderConfig.optional(),
     auth: AIProviderAuthConfig.optional(),
 })
 export type UpdateAIProviderRequest = z.infer<typeof UpdateAIProviderRequest>
-
 
 export const GetProviderConfigResponse = z.object({
     provider: z.nativeEnum(AIProviderName),
@@ -211,7 +209,6 @@ export const GetProviderConfigResponse = z.object({
     platformId: z.string(),
 })
 export type GetProviderConfigResponse = z.infer<typeof GetProviderConfigResponse>
-
 
 export const AIErrorResponse = z.object({
     error: z.object({
@@ -227,19 +224,22 @@ export type AIErrorResponse = z.infer<typeof AIErrorResponse>
  * @param modelId - The model ID to split.
  * @returns An object containing the provider and model.
  */
-export function splitCloudflareGatewayModelId(modelId: string): {
-    provider: 'google-vertex-ai'
-    publisher: string
-    model: string
-} | {
-    provider: string
-    model: string
-    publisher: undefined
-} | {
-    provider: undefined
-    model: string
-    publisher: undefined
-} {
+export function splitCloudflareGatewayModelId(modelId: string):
+    | {
+          provider: 'google-vertex-ai'
+          publisher: string
+          model: string
+      }
+    | {
+          provider: string
+          model: string
+          publisher: undefined
+      }
+    | {
+          provider: undefined
+          model: string
+          publisher: undefined
+      } {
     const slashIndex = modelId.indexOf('/')
     if (slashIndex === -1) {
         //console.error(`Invalid model ID "${modelId}": expected format "provider/model"`)

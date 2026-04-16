@@ -1,32 +1,32 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
-import { hunterApiCall } from '../common';
-import { hunterAuth } from '../auth';
+import { HttpMethod, QueryParams } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { hunterAuth } from '../auth'
+import { hunterApiCall } from '../common'
 import {
-    leadsListDropdownProp,
+    companyFilterProp,
+    companySizeFilterProp,
+    countryCodeFilterProp,
+    customAttributesFilterProp,
     emailFilterProp,
     firstNameFilterProp,
-    lastNameFilterProp,
-    positionFilterProp,
-    companyFilterProp,
     industryFilterProp,
-    websiteFilterProp,
-    countryCodeFilterProp,
-    companySizeFilterProp,
-    sourceFilterProp,
-    twitterFilterProp,
-    linkedinUrlFilterProp,
-    phoneNumberFilterProp,
-    syncStatusProp,
-    sendingStatusProp,
-    verificationStatusProp,
     dateFilterProp as lastActivityAtProp,
     dateFilterProp as lastContactedAtProp,
-    customAttributesFilterProp,
-    queryProp,
+    lastNameFilterProp,
+    leadsListDropdownProp,
     limitProp,
+    linkedinUrlFilterProp,
     offsetProp,
-} from '../common/props';
+    phoneNumberFilterProp,
+    positionFilterProp,
+    queryProp,
+    sendingStatusProp,
+    sourceFilterProp,
+    syncStatusProp,
+    twitterFilterProp,
+    verificationStatusProp,
+    websiteFilterProp,
+} from '../common/props'
 
 export const searchLeadsAction = createAction({
     auth: hunterAuth,
@@ -59,33 +59,45 @@ export const searchLeadsAction = createAction({
         offset: offsetProp,
     },
     async run(context) {
-        const pv = context.propsValue;
-        const q: QueryParams = {};
+        const pv = context.propsValue
+        const q: QueryParams = {}
 
-        if (pv.limit !== undefined) q['limit'] = String(pv.limit);
-        if (pv.offset !== undefined) q['offset'] = String(pv.offset);
+        if (pv.limit !== undefined) q['limit'] = String(pv.limit)
+        if (pv.offset !== undefined) q['offset'] = String(pv.offset)
 
-        [
-            'email', 'first_name', 'last_name', 'position', 'company',
-            'industry', 'website', 'country_code', 'company_size', 'source',
-            'twitter', 'linkedin_url', 'phone_number', 'sync_status', 'query'
+        ;[
+            'email',
+            'first_name',
+            'last_name',
+            'position',
+            'company',
+            'industry',
+            'website',
+            'country_code',
+            'company_size',
+            'source',
+            'twitter',
+            'linkedin_url',
+            'phone_number',
+            'sync_status',
+            'query',
         ].forEach((key) => {
-            if ((pv as any)[key]) q[key] = (pv as any)[key] as string;
-        });
+            if ((pv as any)[key]) q[key] = (pv as any)[key] as string
+        })
 
-        if (pv.sending_status?.length) q['sending_status[]'] = pv.sending_status.join(',');
-        if (pv.verification_status?.length) q['verification_status[]'] = pv.verification_status.join(',');
+        if (pv.sending_status?.length) q['sending_status[]'] = pv.sending_status.join(',')
+        if (pv.verification_status?.length) q['verification_status[]'] = pv.verification_status.join(',')
 
-        if (pv.last_activity_at) q['last_activity_at'] = pv.last_activity_at;
-        if (pv.last_contacted_at) q['last_contacted_at'] = pv.last_contacted_at;
+        if (pv.last_activity_at) q['last_activity_at'] = pv.last_activity_at
+        if (pv.last_contacted_at) q['last_contacted_at'] = pv.last_contacted_at
 
-        if (pv.leads_list_id !== undefined) q['leads_list_id'] = String(pv.leads_list_id);
+        if (pv.leads_list_id !== undefined) q['leads_list_id'] = String(pv.leads_list_id)
 
         if (pv.custom_attributes) {
-            const ca = pv.custom_attributes as Record<string, string>;
+            const ca = pv.custom_attributes as Record<string, string>
             Object.entries(ca).forEach(([slug, val]) => {
-                q[`custom_attributes[${slug}]`] = val;
-            });
+                q[`custom_attributes[${slug}]`] = val
+            })
         }
 
         const resp = (await hunterApiCall({
@@ -94,9 +106,9 @@ export const searchLeadsAction = createAction({
             method: HttpMethod.GET,
             qparams: q,
         })) as {
-            data: { leads: Array<any> };
-            meta: { count: number; total: number; params: { limit: number; offset: number } };
-        };
+            data: { leads: Array<any> }
+            meta: { count: number; total: number; params: { limit: number; offset: number } }
+        }
 
         return {
             leads: resp.data.leads,
@@ -104,6 +116,6 @@ export const searchLeadsAction = createAction({
             total: resp.meta.total,
             limit: resp.meta.params.limit,
             offset: resp.meta.params.offset,
-        };
+        }
     },
-});
+})

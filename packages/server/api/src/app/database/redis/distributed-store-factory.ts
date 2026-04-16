@@ -7,8 +7,7 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         const redisClient = await getRedisClient()
         if (ttlInSeconds) {
             await redisClient.setex(key, ttlInSeconds, serializedValue)
-        }
-        else {
+        } else {
             await redisClient.set(key, serializedValue)
         }
     },
@@ -40,7 +39,7 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         return value === '1'
     },
 
-    async putBooleanBatch(keyValuePairs: Array<{ key: string, value: boolean }>): Promise<void> {
+    async putBooleanBatch(keyValuePairs: Array<{ key: string; value: boolean }>): Promise<void> {
         if (keyValuePairs.length === 0) return
 
         const redisClient = await getRedisClient()
@@ -65,8 +64,7 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
             }
             try {
                 result[field] = JSON.parse(value)
-            }
-            catch (error) {
+            } catch (error) {
                 result[field] = value
             }
         }

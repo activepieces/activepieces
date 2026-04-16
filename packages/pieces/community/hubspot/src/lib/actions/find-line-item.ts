@@ -1,10 +1,10 @@
-import { MarkdownVariant } from '@activepieces/shared';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { Client } from '@hubspot/api-client';
-import { hubspotAuth } from '../auth';
-import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
-import { FilterOperatorEnum } from '../common/types';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { MarkdownVariant } from '@activepieces/shared'
+import { Client } from '@hubspot/api-client'
+import { hubspotAuth } from '../auth'
+import { MAX_SEARCH_PAGE_SIZE, OBJECT_TYPE } from '../common/constants'
+import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props'
+import { FilterOperatorEnum } from '../common/types'
 
 export const findLineItemAction = createAction({
     auth: hubspotAuth,
@@ -58,9 +58,9 @@ export const findLineItemAction = createAction({
             firstSearchPropertyValue,
             secondSearchPropertyName,
             secondSearchPropertyValue,
-        } = context.propsValue;
+        } = context.propsValue
 
-        const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? [];
+        const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? []
 
         const filters = [
             {
@@ -68,26 +68,26 @@ export const findLineItemAction = createAction({
                 operator: FilterOperatorEnum.Eq,
                 value: firstSearchPropertyValue,
             },
-        ];
+        ]
 
         if (secondSearchPropertyName && secondSearchPropertyValue) {
             filters.push({
                 propertyName: secondSearchPropertyName as string,
                 operator: FilterOperatorEnum.Eq,
                 value: secondSearchPropertyValue,
-            });
+            })
         }
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: context.auth.access_token })
 
-        const defaultLineItemProperties = getDefaultPropertiesForObject(OBJECT_TYPE.LINE_ITEM);
+        const defaultLineItemProperties = getDefaultPropertiesForObject(OBJECT_TYPE.LINE_ITEM)
 
         const response = client.crm.lineItems.searchApi.doSearch({
             limit: MAX_SEARCH_PAGE_SIZE,
             properties: [...defaultLineItemProperties, ...additionalPropertiesToRetrieve],
             filterGroups: [{ filters }],
-        });
+        })
 
-        return response;
+        return response
     },
-});
+})

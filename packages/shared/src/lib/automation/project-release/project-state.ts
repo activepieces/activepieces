@@ -32,11 +32,15 @@ export type ConnectionState = z.infer<typeof ConnectionState>
 export const FieldState = z.object({
     name: z.string(),
     type: z.string(),
-    data: Nullable(z.object({
-        options: z.array(z.object({
-            value: z.string(),
-        })),
-    })),
+    data: Nullable(
+        z.object({
+            options: z.array(
+                z.object({
+                    value: z.string(),
+                }),
+            ),
+        }),
+    ),
     externalId: z.string(),
 })
 export type FieldState = z.infer<typeof FieldState>
@@ -113,7 +117,6 @@ export const DiffState = z.object({
 })
 export type DiffState = z.infer<typeof DiffState>
 
-
 export const FlowSyncError = z.object({
     flowId: z.string(),
     message: z.string(),
@@ -156,4 +159,3 @@ export const ProjectSyncPlan = z.object({
     errors: z.array(FlowSyncError),
 })
 export type ProjectSyncPlan = z.infer<typeof ProjectSyncPlan>
-

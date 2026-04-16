@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     DefaultProjectRole,
     Permission,
@@ -22,6 +21,7 @@ import {
 } from '../../../helpers/mocks'
 import { describeRolePermissions } from '../../../helpers/permission-test'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -175,7 +175,9 @@ describe('Project Member API', () => {
             it('should return project members', async () => {
                 const { mockApiKey, mockProject, mockMember, mockPlatform } = await createBasicEnvironment()
 
-                const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.VIEWER })
+                const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', {
+                    name: DefaultProjectRole.VIEWER,
+                })
 
                 const mockProjectMember = createMockProjectMember({
                     projectId: mockProject.id,
@@ -202,7 +204,9 @@ describe('Project Member API', () => {
                     plan: { projectRolesEnabled: true, auditLogEnabled: false },
                 })
 
-                const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.VIEWER })
+                const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', {
+                    name: DefaultProjectRole.VIEWER,
+                })
 
                 const mockProjectMember = createMockProjectMember({
                     projectId: mockProject2.id,
@@ -244,7 +248,9 @@ describe('Project Member API', () => {
                 },
             })
 
-            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
+            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', {
+                name: DefaultProjectRole.ADMIN,
+            })
 
             const mockProjectMember = createMockProjectMember({
                 projectId: ctx.project.id,
@@ -295,7 +301,9 @@ describe('Project Member API', () => {
         it('Delete project member from api', async () => {
             const { mockApiKey, mockProject, mockMember } = await createBasicEnvironment()
 
-            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
+            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', {
+                name: DefaultProjectRole.ADMIN,
+            })
 
             const mockProjectMember = createMockProjectMember({
                 projectId: mockProject.id,
@@ -318,7 +326,9 @@ describe('Project Member API', () => {
                 plan: { projectRolesEnabled: true, auditLogEnabled: false },
             })
 
-            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
+            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', {
+                name: DefaultProjectRole.ADMIN,
+            })
 
             const mockProjectMember = createMockProjectMember({
                 projectId: mockProject2.id,

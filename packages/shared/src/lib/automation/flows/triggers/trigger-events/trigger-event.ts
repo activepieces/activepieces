@@ -12,7 +12,6 @@ export const TriggerEvent = z.object({
 })
 export type TriggerEvent = z.infer<typeof TriggerEvent> & BaseModel<TriggerEventId>
 
-
 export const TriggerEventWithPayload = TriggerEvent.extend({
     payload: z.unknown(),
 })

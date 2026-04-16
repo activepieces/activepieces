@@ -43,20 +43,11 @@ const INVALID_ARTIFACT_TEMPLATE = `
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
 export const codeBuilder = (log: Logger) => ({
-    getCodesFolder({
-        codesFolderPath,
-        flowVersionId,
-    }: {
-        codesFolderPath: string
-        flowVersionId: string
-    }): string {
+    getCodesFolder({ codesFolderPath, flowVersionId }: { codesFolderPath: string; flowVersionId: string }): string {
         return path.join(codesFolderPath, flowVersionId)
     },
 
-    async processCodeStep({
-        artifact,
-        codesFolderPath,
-    }: ProcessCodeStepParams): Promise<void> {
+    async processCodeStep({ artifact, codesFolderPath }: ProcessCodeStepParams): Promise<void> {
         const { sourceCode, flowVersionId, name } = artifact
         const flowVersionPath = path.join(codesFolderPath, flowVersionId)
         const codePath = path.join(flowVersionPath, name)
@@ -82,13 +73,15 @@ export const codeBuilder = (log: Logger) => ({
                 await tracer.startActiveSpan('codeBuilder.installDependencies', async (depSpan) => {
                     try {
                         depSpan.setAttribute('code.path', codePath)
-                        await installDependencies({
-                            path: codePath,
-                            packageJson: getPackageJson(packageJson),
-                        }, log)
+                        await installDependencies(
+                            {
+                                path: codePath,
+                                packageJson: getPackageJson(packageJson),
+                            },
+                            log,
+                        )
                         log.info({ path: codePath }, 'Installed dependencies')
-                    }
-                    finally {
+                    } finally {
                         depSpan.end()
                     }
                 })
@@ -96,20 +89,23 @@ export const codeBuilder = (log: Logger) => ({
                 await tracer.startActiveSpan('codeBuilder.compileCode', async (compileSpan) => {
                     try {
                         compileSpan.setAttribute('code.path', codePath)
-                        const { error } = await tryCatch(() => compileCode({
-                            path: codePath,
-                            code,
-                        }, log))
+                        const { error } = await tryCatch(() =>
+                            compileCode(
+                                {
+                                    path: codePath,
+                                    code,
+                                },
+                                log,
+                            ),
+                        )
                         if (error) {
                             log.info({ codePath, error }, 'Compilation error')
                             compileSpan.recordException(error instanceof Error ? error : new Error(String(error)))
                             await handleCompilationError({ codePath, error })
-                        }
-                        else {
+                        } else {
                             log.info({ codePath }, 'Compilation success')
                         }
-                    }
-                    finally {
+                    } finally {
                         compileSpan.end()
                     }
                 })
@@ -175,16 +171,12 @@ async function compileCode({ path, code }: CompileCodeParams, log: Logger): Prom
 }
 
 async function handleCompilationError({ codePath, error }: HandleCompilationErrorParams): Promise<void> {
-    const errorHasStdout =
-        typeof error === 'object' && error && 'stdout' in error
+    const errorHasStdout = typeof error === 'object' && error && 'stdout' in error
     const stdoutError = errorHasStdout ? error.stdout : undefined
     const genericError = `${error ?? 'error compiling'}`
     const errorMessage = `Compilation Error ${stdoutError ?? genericError}`
 
-    const invalidArtifactContent = INVALID_ARTIFACT_TEMPLATE.replace(
-        INVALID_ARTIFACT_ERROR_PLACEHOLDER,
-        errorMessage,
-    )
+    const invalidArtifactContent = INVALID_ARTIFACT_TEMPLATE.replace(INVALID_ARTIFACT_ERROR_PLACEHOLDER, errorMessage)
 
     await fs.writeFile(`${codePath}/index.js`, invalidArtifactContent, 'utf8')
 }

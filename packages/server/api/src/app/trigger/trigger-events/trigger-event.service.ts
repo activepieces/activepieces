@@ -34,11 +34,7 @@ import { TriggerEventEntity } from './trigger-event.entity'
 export const triggerEventRepo = repoFactory(TriggerEventEntity)
 
 export const triggerEventService = (log: FastifyBaseLogger) => ({
-    async saveEvent({
-        projectId,
-        flowId,
-        payload,
-    }: SaveEventParams): Promise<TriggerEventWithPayload> {
+    async saveEvent({ projectId, flowId, payload }: SaveEventParams): Promise<TriggerEventWithPayload> {
         const flow = await flowService(log).getOnePopulatedOrThrow({
             id: flowId,
             projectId,
@@ -68,25 +64,26 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async test({
-        projectId,
-        flow,
-    }: TestParams): Promise<SeekPage<TriggerEventWithPayload>> {
+    async test({ projectId, flow }: TestParams): Promise<SeekPage<TriggerEventWithPayload>> {
         const trigger = flow.version.trigger
         const platformId = await projectService(log).getPlatformId(projectId)
         const emptyPage = paginationHelper.createPage<TriggerEventWithPayload>([], null)
         switch (trigger.type) {
             case FlowTriggerType.PIECE: {
-
-                const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.TEST>>>({
-                    hookType: TriggerHookType.TEST,
-                    flowId: flow.id,
-                    flowVersionId: flow.version.id,
-                    test: true,
-                    projectId,
-                    jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
-                    platformId,
-                }, log)
+                const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<
+                    EngineResponse<ExecuteTriggerResponse<TriggerHookType.TEST>>
+                >(
+                    {
+                        hookType: TriggerHookType.TEST,
+                        flowId: flow.id,
+                        flowVersionId: flow.version.id,
+                        test: true,
+                        projectId,
+                        jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
+                        platformId,
+                    },
+                    log,
+                )
                 await triggerEventRepo().delete({
                     projectId,
                     flowId: flow.id,
@@ -120,12 +117,7 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async list({
-        projectId,
-        flow,
-        cursor,
-        limit,
-    }: ListParams): Promise<SeekPage<TriggerEventWithPayload>> {
+    async list({ projectId, flow, cursor, limit }: ListParams): Promise<SeekPage<TriggerEventWithPayload>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const sourceName = getSourceName(flow.version.trigger)
         const flowId = flow.id
@@ -144,16 +136,18 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
             sourceName,
         })
         const { data, cursor: newCursor } = await paginator.paginate(query)
-        const dataWithPayload = await Promise.all(data.map(async (triggerEvent) => {
-            const fileData = await fileService(log).getDataOrThrow({
-                fileId: triggerEvent.fileId,
-            })
-            const decodedPayload = JSON.parse(fileData.data.toString())
-            return {
-                ...triggerEvent,
-                payload: decodedPayload,
-            }
-        }))
+        const dataWithPayload = await Promise.all(
+            data.map(async (triggerEvent) => {
+                const fileData = await fileService(log).getDataOrThrow({
+                    fileId: triggerEvent.fileId,
+                })
+                const decodedPayload = JSON.parse(fileData.data.toString())
+                return {
+                    ...triggerEvent,
+                    payload: decodedPayload,
+                }
+            }),
+        )
         return paginationHelper.createPage<TriggerEventWithPayload>(dataWithPayload, newCursor)
     },
 })
@@ -163,9 +157,7 @@ function getSourceName(trigger: FlowTrigger): string {
         case FlowTriggerType.PIECE: {
             const pieceTrigger = trigger as PieceTrigger
             const pieceName = pieceTrigger.settings.pieceName
-            const pieceVersion = getPieceMajorAndMinorVersion(
-                pieceTrigger.settings.pieceVersion,
-            )
+            const pieceVersion = getPieceMajorAndMinorVersion(pieceTrigger.settings.pieceVersion)
             const triggerName = pieceTrigger.settings.triggerName
             return `${pieceName}@${pieceVersion}:${triggerName}`
         }

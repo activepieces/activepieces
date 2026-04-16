@@ -1,8 +1,8 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const apolloAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: `
+    displayName: 'API Key',
+    description: `
 To create your Apollo API key:
 
 1. Go to **Settings** > **[Integrations](https://app.apollo.io/#/settings/integrations)** in Apollo
@@ -15,5 +15,5 @@ To create your Apollo API key:
 
 [Learn more about creating API keys](https://docs.apollo.io/docs/create-api-key)
   `,
-  required: true,
-});
+    required: true,
+})

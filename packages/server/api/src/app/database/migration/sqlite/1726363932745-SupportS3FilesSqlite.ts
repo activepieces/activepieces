@@ -201,5 +201,4 @@ export class SupportS3FilesSqlite1726363932745 implements MigrationInterface {
             CREATE INDEX "idx_file_type_created_desc" ON "file" ("type", "created")
         `)
     }
-
 }

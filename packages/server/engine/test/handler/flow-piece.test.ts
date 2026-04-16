@@ -5,7 +5,6 @@ import { pieceExecutor } from '../../src/lib/handler/piece-executor'
 import { buildPieceAction, generateMockEngineConstants } from './test-helper'
 
 describe('pieceExecutor', () => {
-
     it('should execute data mapper successfully', async () => {
         const result = await pieceExecutor.handle({
             action: buildPieceAction({
@@ -14,15 +13,17 @@ describe('pieceExecutor', () => {
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
-                        'key': '{{ 1 + 2 }}',
+                        key: '{{ 1 + 2 }}',
                     },
                 },
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
         })
         expect(result.verdict).toStrictEqual({
             status: FlowRunStatus.RUNNING,
         })
-        expect(result.steps.data_mapper.output).toEqual({ 'key': 3 })
+        expect(result.steps.data_mapper.output).toEqual({ key: 3 })
     })
 
     it('should execute fail gracefully when pieces fail', async () => {
@@ -32,14 +33,16 @@ describe('pieceExecutor', () => {
                 pieceName: '@activepieces/piece-http',
                 actionName: 'send_request',
                 input: {
-                    'url': 'https://cloud.activepieces.com/api/v1/asd',
-                    'method': 'GET',
-                    'headers': {},
-                    'body_type': 'none',
-                    'body': {},
-                    'queryParams': {},
+                    url: 'https://cloud.activepieces.com/api/v1/asd',
+                    method: 'GET',
+                    headers: {},
+                    body_type: 'none',
+                    body: {},
+                    queryParams: {},
                 },
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
         })
 
         const expectedError = {
@@ -73,7 +76,9 @@ describe('pieceExecutor', () => {
                 skip: true,
                 pieceName: '@activepieces/piece-data-mapper',
                 actionName: 'advanced_mapping',
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
         })
         expect(result.verdict).toStrictEqual({
             status: FlowRunStatus.RUNNING,
@@ -86,7 +91,7 @@ describe('pieceExecutor', () => {
                 name: 'data_mapper',
                 input: {
                     mapping: {
-                        'key': '{{ 1 + 2 }}',
+                        key: '{{ 1 + 2 }}',
                     },
                 },
                 skip: false,
@@ -105,12 +110,14 @@ describe('pieceExecutor', () => {
             },
         }
         const result = await flowExecutor.execute({
-            action: flow, executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            action: flow,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
         })
         expect(result.verdict).toStrictEqual({
             status: FlowRunStatus.RUNNING,
         })
-        expect(result.steps.data_mapper.output).toEqual({ 'key': 3 })
+        expect(result.steps.data_mapper.output).toEqual({ key: 3 })
         expect(result.steps.send_http).toBeUndefined()
     })
 })

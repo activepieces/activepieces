@@ -1,19 +1,19 @@
 import {
-  isNil,
-  isObject,
   FlowAction,
   FlowActionType,
   FlowTrigger,
   FlowTriggerType,
+  isNil,
+  isObject,
 } from '@activepieces/shared';
 
 import { pieceSelectorUtils } from '@/features/pieces';
 
 import {
-  DataSelectorTreeNode,
   DataSelectorTestNodeData,
-  DataSelectorTreeNodeDataUnion,
+  DataSelectorTreeNode,
   DataSelectorTreeNodeData,
+  DataSelectorTreeNodeDataUnion,
 } from './type';
 
 type PathSegment = string | number;

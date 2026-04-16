@@ -1,9 +1,4 @@
-import {
-    AppConnectionStatus,
-    McpServer,
-    McpToolDefinition,
-    Permission,
-} from '@activepieces/shared'
+import { AppConnectionStatus, McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
@@ -60,15 +55,19 @@ export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): M
                     limit: 200,
                     externalIds: undefined,
                 })
-                const lines = connections.data.map(c => `- externalId: ${c.externalId} | displayName: "${c.displayName}" | piece: ${c.pieceName} | status: ${c.status} | scope: ${c.scope}`)
+                const lines = connections.data.map(
+                    (c) =>
+                        `- externalId: ${c.externalId} | displayName: "${c.displayName}" | piece: ${c.pieceName} | status: ${c.status} | scope: ${c.scope}`,
+                )
                 return {
-                    content: [{
-                        type: 'text',
-                        text: `✅ Listed ${lines.length} connection(s):\n${lines.join('\n')}`,
-                    }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `✅ Listed ${lines.length} connection(s):\n${lines.join('\n')}`,
+                        },
+                    ],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 return mcpUtils.mcpToolError('Failed to list connections', err)
             }
         },

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplirouteAuth } from '../../auth';
-import { API_BASE_URL, commonHeaders } from '../../common/constants';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { simplirouteAuth } from '../../auth'
+import { API_BASE_URL, commonHeaders } from '../../common/constants'
 
 export const get_plan_vehicles = createAction({
     name: 'get_plan_vehicles',
@@ -9,21 +9,25 @@ export const get_plan_vehicles = createAction({
     displayName: 'Get vehicles with routes on date',
     description: 'Returns the vehicles that have planned routes on the indicated date.',
     props: {
-        planned_date: Property.ShortText({ displayName: 'planned_date', description: 'Planned date (YYYY-MM-DD).', required: true }),
+        planned_date: Property.ShortText({
+            displayName: 'planned_date',
+            description: 'Planned date (YYYY-MM-DD).',
+            required: true,
+        }),
     },
     async run(context) {
-        const url = `${API_BASE_URL}/v1/plans/${context.propsValue.planned_date}/vehicles/`;
+        const url = `${API_BASE_URL}/v1/plans/${context.propsValue.planned_date}/vehicles/`
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth.secret_text}`
-            }
-        });
+                Authorization: `Token ${context.auth.secret_text}`,
+            },
+        })
         return {
             status: response.status,
-            data: response.body
-        };
+            data: response.body,
+        }
     },
-});
+})

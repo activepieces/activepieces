@@ -1,5 +1,6 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
+
 describe('Property Validation', () => {
     describe('required properties', () => {
         it('should validate required string property', async () => {
@@ -107,7 +108,9 @@ describe('Property Validation', () => {
                 {},
             )
             expect(invalidErrors).toEqual({
-                date: ['Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: not a date'],
+                date: [
+                    'Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: not a date',
+                ],
             })
         })
 

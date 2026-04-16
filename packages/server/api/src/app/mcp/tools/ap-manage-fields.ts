@@ -7,8 +7,13 @@ import { fieldTypeSchema, formatFieldInfo } from './table-utils'
 
 const manageFieldsInput = z.object({
     tableId: z.string().describe('The table ID'),
-    operation: z.enum(['ADD', 'UPDATE', 'DELETE']).describe('ADD a new field, UPDATE (rename) an existing field, or DELETE a field'),
-    fieldId: z.string().optional().describe('The field ID (required for UPDATE and DELETE). Use ap_list_tables to find it.'),
+    operation: z
+        .enum(['ADD', 'UPDATE', 'DELETE'])
+        .describe('ADD a new field, UPDATE (rename) an existing field, or DELETE a field'),
+    fieldId: z
+        .string()
+        .optional()
+        .describe('The field ID (required for UPDATE and DELETE). Use ap_list_tables to find it.'),
     name: z.string().optional().describe('Field name (required for ADD and UPDATE)'),
     type: fieldTypeSchema.optional().describe('Field type (required for ADD only)'),
     options: z.array(z.string()).optional().describe('Dropdown options (required for ADD with STATIC_DROPDOWN type)'),
@@ -34,12 +39,15 @@ export const apManageFieldsTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                             return { content: [{ type: 'text', text: '❌ type is required for ADD operation' }] }
                         }
                         if (type === FieldType.STATIC_DROPDOWN && (isNil(options) || options.length === 0)) {
-                            return { content: [{ type: 'text', text: '❌ options are required for STATIC_DROPDOWN type' }] }
+                            return {
+                                content: [{ type: 'text', text: '❌ options are required for STATIC_DROPDOWN type' }],
+                            }
                         }
 
-                        const request = type === FieldType.STATIC_DROPDOWN
-                            ? { name, type, tableId, data: { options: (options ?? []).map(v => ({ value: v })) } }
-                            : { name, type, tableId }
+                        const request =
+                            type === FieldType.STATIC_DROPDOWN
+                                ? { name, type, tableId, data: { options: (options ?? []).map((v) => ({ value: v })) } }
+                                : { name, type, tableId }
 
                         const field = await fieldService.create({
                             projectId: mcp.projectId,
@@ -56,7 +64,14 @@ export const apManageFieldsTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                         }
                         const existing = await fieldService.getById({ id: fieldId, projectId: mcp.projectId })
                         if (existing.tableId !== tableId) {
-                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${tableId})` }] }
+                            return {
+                                content: [
+                                    {
+                                        type: 'text',
+                                        text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${tableId})`,
+                                    },
+                                ],
+                            }
                         }
                         const field = await fieldService.update({
                             id: fieldId,
@@ -71,17 +86,25 @@ export const apManageFieldsTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                         }
                         const toDelete = await fieldService.getById({ id: fieldId, projectId: mcp.projectId })
                         if (toDelete.tableId !== tableId) {
-                            return { content: [{ type: 'text', text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${tableId})` }] }
+                            return {
+                                content: [
+                                    {
+                                        type: 'text',
+                                        text: `❌ Field (id: ${fieldId}) does not belong to table (id: ${tableId})`,
+                                    },
+                                ],
+                            }
                         }
                         await fieldService.delete({
                             id: fieldId,
                             projectId: mcp.projectId,
                         })
-                        return { content: [{ type: 'text', text: `✅ Field "${toDelete.name}" deleted successfully.` }] }
+                        return {
+                            content: [{ type: 'text', text: `✅ Field "${toDelete.name}" deleted successfully.` }],
+                        }
                     }
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_manage_fields failed')
                 return mcpUtils.mcpToolError('Field operation failed', err)
             }

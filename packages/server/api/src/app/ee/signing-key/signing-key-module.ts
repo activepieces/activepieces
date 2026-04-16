@@ -3,6 +3,9 @@ import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorizati
 import { signingKeyController } from './signing-key-controller'
 
 export const signingKeyModule: FastifyPluginAsyncZod = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.embeddingEnabled))
+    app.addHook(
+        'preHandler',
+        platformMustHaveFeatureEnabled((platform) => platform.plan.embeddingEnabled),
+    )
     await app.register(signingKeyController, { prefix: '/v1/signing-keys' })
 }

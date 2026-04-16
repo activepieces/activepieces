@@ -1,14 +1,14 @@
-export { uploadFile } from './files';
+export { customApiCall } from './custom-api-call'
+export { uploadFile } from './files'
+export { getLemurResponse, lemurTask, purgeLemurRequestData } from './lemur'
 export {
-  transcribe,
-  getTranscript,
-  getSentences,
-  getParagraphs,
-  getSubtitles,
-  getRedactedAudio,
-  wordSearch,
-  listTranscripts,
-  deleteTranscript,
-} from './transcripts';
-export { lemurTask, getLemurResponse, purgeLemurRequestData } from './lemur';
-export { customApiCall } from './custom-api-call';
+    deleteTranscript,
+    getParagraphs,
+    getRedactedAudio,
+    getSentences,
+    getSubtitles,
+    getTranscript,
+    listTranscripts,
+    transcribe,
+    wordSearch,
+} from './transcripts'

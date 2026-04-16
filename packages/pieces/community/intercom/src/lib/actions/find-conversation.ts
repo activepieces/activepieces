@@ -1,7 +1,7 @@
-import { intercomAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { intercomClient, Operator } from '../common';
-import dayjs from 'dayjs';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { intercomAuth } from '../auth'
+import { intercomClient, Operator } from '../common'
 
 export const findConversationAction = createAction({
     auth: intercomAuth,
@@ -62,13 +62,11 @@ export const findConversationAction = createAction({
         }),
     },
     async run(context) {
-        const { searchField, matchType, searchTerm, status, updateAfter, updateBefore } =
-            context.propsValue;
+        const { searchField, matchType, searchTerm, status, updateAfter, updateBefore } = context.propsValue
 
-        const operator = matchType === 'contains' ? '~' : matchType === 'starts_with' ? '^' : '=';
+        const operator = matchType === 'contains' ? '~' : matchType === 'starts_with' ? '^' : '='
 
-
-        const client = intercomClient(context.auth);
+        const client = intercomClient(context.auth)
 
         const filter = [
             {
@@ -76,39 +74,39 @@ export const findConversationAction = createAction({
                 operator: operator as Operator,
                 value: searchTerm,
             },
-        ];
+        ]
         if (status) {
             filter.push({
                 field: 'state',
-                operator: "=",
+                operator: '=',
                 value: status,
-            });
+            })
         }
         if (updateAfter) {
             filter.push({
                 field: 'updated_at',
                 operator: '>',
                 value: dayjs(updateAfter).unix().toString(),
-            });
+            })
         }
         if (updateBefore) {
             filter.push({
                 field: 'updated_at',
-                operator: "<",
+                operator: '<',
                 value: dayjs(updateBefore).unix().toString(),
-            });
+            })
         }
 
         const response = await client.conversations.search({
             query: {
-				operator: 'AND',
-				value: filter,
-			},
-        });
+                operator: 'AND',
+                value: filter,
+            },
+        })
 
         return {
             found: response.data.length > 0,
             conversation: response.data.length > 0 ? response.data[0] : {},
-        };
+        }
     },
-});
+})

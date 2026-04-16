@@ -30,5 +30,4 @@ export class AddTemplateStatus1765894492098 implements MigrationInterface {
             ALTER TABLE "template" DROP COLUMN "status"
         `)
     }
-
 }

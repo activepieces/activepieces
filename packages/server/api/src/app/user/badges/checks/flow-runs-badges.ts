@@ -1,4 +1,13 @@
-import { ApplicationEvent, ApplicationEventName, BADGES, FlowRunEvent, FlowRunStatus, isFailedState, isNil, RunEnvironment } from '@activepieces/shared'
+import {
+    ApplicationEvent,
+    ApplicationEventName,
+    BADGES,
+    FlowRunEvent,
+    FlowRunStatus,
+    isFailedState,
+    isNil,
+    RunEnvironment,
+} from '@activepieces/shared'
 import { BadgeCheck, BadgeCheckResult } from '../badge-check'
 
 export const flowRunsBadgesCheck: BadgeCheck = {
@@ -9,7 +18,10 @@ export const flowRunsBadgesCheck: BadgeCheck = {
             return { userId: null, badges }
         }
         const flowRunEvent = event as FlowRunEvent
-        if (flowRunEvent.data.flowRun.environment !== RunEnvironment.TESTING || !isNil(flowRunEvent.data.flowRun.stepNameToTest)) {
+        if (
+            flowRunEvent.data.flowRun.environment !== RunEnvironment.TESTING ||
+            !isNil(flowRunEvent.data.flowRun.stepNameToTest)
+        ) {
             return { userId: null, badges }
         }
         const triggeredBy = flowRunEvent.data.flowRun.triggeredBy
@@ -29,4 +41,3 @@ export const flowRunsBadgesCheck: BadgeCheck = {
         return { userId: triggeredBy, badges }
     },
 }
-

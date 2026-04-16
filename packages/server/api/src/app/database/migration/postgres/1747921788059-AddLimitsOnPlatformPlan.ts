@@ -59,5 +59,4 @@ export class AddLimitsOnPlatformPlan1747921788059 implements MigrationInterface 
                 RENAME COLUMN "aiCredits" TO "aiTokens"
         `)
     }
-
 }

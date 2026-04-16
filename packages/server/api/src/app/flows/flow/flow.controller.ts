@@ -1,11 +1,13 @@
-import { ApId, ApplicationEventName,
+import {
+    ApId,
+    ApplicationEventName,
     CountFlowsRequest,
     CreateFlowRequest,
     FlowOperationRequest,
     FlowOperationType,
     FlowStatus,
-    flowStructureUtil,
     FlowTrigger,
+    flowStructureUtil,
     GetFlowQueryParamsRequest,
     GetFlowTemplateRequestQuery,
     GitPushOperationType,
@@ -14,8 +16,8 @@ import { ApId, ApplicationEventName,
     PlatformUsageMetric,
     PopulatedFlow,
     PrincipalType,
-    SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    SeekPage,
     SharedTemplate,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -56,76 +58,85 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.CREATED).send(newFlow)
     })
 
-    app.post('/:id', {
-        config: {
-            security: securityAccess.project(
-                [PrincipalType.USER, PrincipalType.SERVICE], 
-                Permission.UPDATE_FLOW_STATUS, {
-                    type: ProjectResourceType.TABLE,
-                    tableName: FlowEntity,
-                }),
-        },
-        schema: {
-            tags: ['flows'],
-            description: 'Apply an operation to a flow',
-            security: [SERVICE_KEY_SECURITY_OPENAPI],
-            body: FlowOperationRequest,
-            params: z.object({
-                id: ApId,
-            }),
-        },
-        preValidation: async (request) => {
-            if (request.body?.type === FlowOperationType.IMPORT_FLOW) {
-                const migratedFlowTemplate = await migrateFlowVersionTemplate({
-                    displayName: request.body.request.displayName,
-                    trigger: request.body.request.trigger,
-                    //because the target for the first migraiton is undefined not null
-                    schemaVersion: request.body.request.schemaVersion ?? undefined,
-                    notes: request.body.request.notes ?? [],
-                    valid: false,
-                })
-                request.body.request = {
-                    ...request.body.request,
-                    displayName: migratedFlowTemplate.displayName,
-                    trigger: migratedFlowTemplate.trigger,
-                    schemaVersion: migratedFlowTemplate.schemaVersion,
-                    notes: migratedFlowTemplate.notes,
-                }
-            }
-        },
-    }, async (request) => {
-        const userId = await authenticationUtils(request.log).extractUserIdFromRequest(request)
-        await assertUserHasPermissionToFlow(request.principal, request.projectId, request.body.type, request.log)
-
-        const flow = await flowService(request.log).getOnePopulatedOrThrow({
-            id: request.params.id,
-            projectId: request.projectId,
-        })
-
-        const turnOnFlow = request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED
-        const publishDisabledFlow = request.body.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.DISABLED
-        if (turnOnFlow || publishDisabledFlow) {
-            await platformPlanService(request.log).checkActiveFlowsExceededLimit(
-                request.principal.platform.id,
-                PlatformUsageMetric.ACTIVE_FLOWS,
-            )
-        }
-        const updatedFlow = await flowService(request.log).update({
-            id: request.params.id,
-            userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
-            platformId: request.principal.platform.id,
-            projectId: request.projectId,
-            operation: cleanOperation(request.body),
-        })
-        applicationEvents(request.log).sendUserEvent(request, {
-            action: ApplicationEventName.FLOW_UPDATED,
-            data: {
-                request: request.body,
-                flowVersion: flow.version,
+    app.post(
+        '/:id',
+        {
+            config: {
+                security: securityAccess.project(
+                    [PrincipalType.USER, PrincipalType.SERVICE],
+                    Permission.UPDATE_FLOW_STATUS,
+                    {
+                        type: ProjectResourceType.TABLE,
+                        tableName: FlowEntity,
+                    },
+                ),
             },
-        })
-        return updatedFlow
-    })
+            schema: {
+                tags: ['flows'],
+                description: 'Apply an operation to a flow',
+                security: [SERVICE_KEY_SECURITY_OPENAPI],
+                body: FlowOperationRequest,
+                params: z.object({
+                    id: ApId,
+                }),
+            },
+            preValidation: async (request) => {
+                if (request.body?.type === FlowOperationType.IMPORT_FLOW) {
+                    const migratedFlowTemplate = await migrateFlowVersionTemplate({
+                        displayName: request.body.request.displayName,
+                        trigger: request.body.request.trigger,
+                        //because the target for the first migraiton is undefined not null
+                        schemaVersion: request.body.request.schemaVersion ?? undefined,
+                        notes: request.body.request.notes ?? [],
+                        valid: false,
+                    })
+                    request.body.request = {
+                        ...request.body.request,
+                        displayName: migratedFlowTemplate.displayName,
+                        trigger: migratedFlowTemplate.trigger,
+                        schemaVersion: migratedFlowTemplate.schemaVersion,
+                        notes: migratedFlowTemplate.notes,
+                    }
+                }
+            },
+        },
+        async (request) => {
+            const userId = await authenticationUtils(request.log).extractUserIdFromRequest(request)
+            await assertUserHasPermissionToFlow(request.principal, request.projectId, request.body.type, request.log)
+
+            const flow = await flowService(request.log).getOnePopulatedOrThrow({
+                id: request.params.id,
+                projectId: request.projectId,
+            })
+
+            const turnOnFlow =
+                request.body.type === FlowOperationType.CHANGE_STATUS &&
+                request.body.request.status === FlowStatus.ENABLED
+            const publishDisabledFlow =
+                request.body.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.DISABLED
+            if (turnOnFlow || publishDisabledFlow) {
+                await platformPlanService(request.log).checkActiveFlowsExceededLimit(
+                    request.principal.platform.id,
+                    PlatformUsageMetric.ACTIVE_FLOWS,
+                )
+            }
+            const updatedFlow = await flowService(request.log).update({
+                id: request.params.id,
+                userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
+                platformId: request.principal.platform.id,
+                projectId: request.projectId,
+                operation: cleanOperation(request.body),
+            })
+            applicationEvents(request.log).sendUserEvent(request, {
+                action: ApplicationEventName.FLOW_UPDATED,
+                data: {
+                    request: request.body,
+                    flowVersion: flow.version,
+                },
+            })
+            return updatedFlow
+        },
+    )
 
     app.get('/', ListFlowsRequestOptions, async (request) => {
         return flowService(request.log).list({
@@ -150,7 +161,10 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get('/:id/template', GetFlowTemplateRequestOptions, async (request) => {
-        const userMetadata = request.principal.type === PrincipalType.USER ? await userService(request.log).getMetaInformation({ id: request.principal.id }) : null
+        const userMetadata =
+            request.principal.type === PrincipalType.USER
+                ? await userService(request.log).getMetaInformation({ id: request.principal.id })
+                : null
         return flowService(request.log).getTemplate({
             flowId: request.params.id,
             userMetadata,
@@ -225,11 +239,9 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
 
 const CreateFlowRequestOptions = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.WRITE_FLOW, {
-                type: ProjectResourceType.BODY,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_FLOW, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         tags: ['flows'],
@@ -242,14 +254,11 @@ const CreateFlowRequestOptions = {
     },
 }
 
-
 const ListFlowsRequestOptions = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.READ_FLOW, {
-                type: ProjectResourceType.QUERY,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_FLOW, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         tags: ['flows'],
@@ -264,11 +273,9 @@ const ListFlowsRequestOptions = {
 
 const CountFlowsRequestOptions = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.READ_FLOW, {
-                type: ProjectResourceType.QUERY,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_FLOW, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         querystring: CountFlowsRequest,
@@ -277,12 +284,10 @@ const CountFlowsRequestOptions = {
 
 const GetFlowTemplateRequestOptions = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.READ_FLOW, {
-                type: ProjectResourceType.TABLE,
-                tableName: FlowEntity,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_FLOW, {
+            type: ProjectResourceType.TABLE,
+            tableName: FlowEntity,
+        }),
     },
     schema: {
         tags: ['flows'],
@@ -300,12 +305,10 @@ const GetFlowTemplateRequestOptions = {
 
 const GetFlowRequestOptions = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.READ_FLOW, {
-                type: ProjectResourceType.TABLE,
-                tableName: FlowEntity,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_FLOW, {
+            type: ProjectResourceType.TABLE,
+            tableName: FlowEntity,
+        }),
     },
     schema: {
         tags: ['flows'],
@@ -323,12 +326,10 @@ const GetFlowRequestOptions = {
 
 const DeleteFlowRequestOptions = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            Permission.WRITE_FLOW, {
-                type: ProjectResourceType.TABLE,
-                tableName: FlowEntity,
-            }),
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_FLOW, {
+            type: ProjectResourceType.TABLE,
+            tableName: FlowEntity,
+        }),
     },
     schema: {
         tags: ['flows'],
@@ -342,5 +343,3 @@ const DeleteFlowRequestOptions = {
         },
     },
 }
-
-

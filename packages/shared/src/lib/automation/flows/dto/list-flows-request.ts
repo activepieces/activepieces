@@ -30,4 +30,6 @@ export const ListFlowVersionRequest = z.object({
     cursor: z.string().optional(),
 })
 
-export type ListFlowVersionRequest = Omit<z.infer<typeof ListFlowVersionRequest>, 'cursor'> & { cursor: Cursor | undefined }
+export type ListFlowVersionRequest = Omit<z.infer<typeof ListFlowVersionRequest>, 'cursor'> & {
+    cursor: Cursor | undefined
+}

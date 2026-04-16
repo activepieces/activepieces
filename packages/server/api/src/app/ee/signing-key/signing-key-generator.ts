@@ -1,7 +1,4 @@
-import {
-    generateKeyPair as generateKeyPairCallback,
-    RSAKeyPairOptions,
-} from 'node:crypto'
+import { generateKeyPair as generateKeyPairCallback, RSAKeyPairOptions } from 'node:crypto'
 import { promisify } from 'node:util'
 import { KeyAlgorithm } from '@activepieces/shared'
 

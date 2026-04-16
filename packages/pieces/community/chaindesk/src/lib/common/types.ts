@@ -1,4 +1,4 @@
 export type ListAgentsResponse = {
-    id:string,
-    name:string
+    id: string
+    name: string
 }

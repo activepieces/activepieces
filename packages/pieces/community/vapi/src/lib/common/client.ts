@@ -1,5 +1,5 @@
-import { VapiClient } from '@vapi-ai/server-sdk';
+import { VapiClient } from '@vapi-ai/server-sdk'
 
 export function createVapiClient(apiKey: string): VapiClient {
-  return new VapiClient({ token: apiKey });
+    return new VapiClient({ token: apiKey })
 }

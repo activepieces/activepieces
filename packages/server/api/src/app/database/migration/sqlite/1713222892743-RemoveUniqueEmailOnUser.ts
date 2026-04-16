@@ -565,5 +565,4 @@ export class RemoveUniqueEmailOnUser1713222892743 implements MigrationInterface 
             CREATE INDEX "idx_flow_version_flow_id" ON "flow_version" ("flowId")
         `)
     }
-
 }

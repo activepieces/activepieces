@@ -123,5 +123,4 @@ export class RegenerateIssuesTable1750391974657 implements MigrationInterface {
             DROP TABLE "issue"
         `)
     }
-
 }

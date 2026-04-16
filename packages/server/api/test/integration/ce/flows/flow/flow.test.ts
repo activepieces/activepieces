@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import {
     FlowOperationType,
@@ -18,12 +17,9 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../../helpers/auth'
 import { db } from '../../../../helpers/db'
-import {
-    createMockFlow,
-    createMockFlowVersion,
-    createMockPieceMetadata,
-} from '../../../../helpers/mocks'
+import { createMockFlow, createMockFlowVersion, createMockPieceMetadata } from '../../../../helpers/mocks'
 import { createTestContext } from '../../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -40,11 +36,15 @@ describe('Flow API', () => {
         it('Adds an empty flow', async () => {
             const ctx = await createTestContext(app!)
 
-            const response = await ctx.post('/v1/flows', {
-                displayName: 'test flow',
-                projectId: ctx.project.id,
-                metadata: { foo: 'bar' },
-            }, { query: { projectId: ctx.project.id } })
+            const response = await ctx.post(
+                '/v1/flows',
+                {
+                    displayName: 'test flow',
+                    projectId: ctx.project.id,
+                    metadata: { foo: 'bar' },
+                },
+                { query: { projectId: ctx.project.id } },
+            )
 
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()

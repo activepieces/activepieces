@@ -109,5 +109,5 @@ type SwitchProps = React.ComponentProps<typeof SwitchPrimitive.Root> & {
   color?: 'default' | 'secondary';
 };
 
-export { Switch };
 export type { SwitchProps };
+export { Switch };

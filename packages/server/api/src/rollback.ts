@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+// biome-ignore lint/suspicious/noConsole: required
 import { databaseConnection } from './app/database/database-connection'
 import { rollbackToManifest, rollbackToVersion } from './app/database/rollback-migrations'
 
@@ -7,8 +7,8 @@ function setupTimeZone(): void {
 }
 
 type ParsedArgs =
-    | { mode: 'version', targetVersion: string, force: boolean }
-    | { mode: 'manifest', targetMigrationNames: string[], force: boolean }
+    | { mode: 'version'; targetVersion: string; force: boolean }
+    | { mode: 'manifest'; targetMigrationNames: string[]; force: boolean }
 
 function parseArgs(): ParsedArgs {
     const args = process.argv.slice(2)
@@ -20,12 +20,10 @@ function parseArgs(): ParsedArgs {
         if (args[i] === '--to' && args[i + 1]) {
             targetVersion = args[i + 1]
             i++
-        }
-        else if (args[i] === '--manifest' && args[i + 1]) {
+        } else if (args[i] === '--manifest' && args[i + 1]) {
             manifestJson = args[i + 1]
             i++
-        }
-        else if (args[i] === '--force') {
+        } else if (args[i] === '--force') {
             force = true
         }
     }
@@ -34,11 +32,10 @@ function parseArgs(): ParsedArgs {
         let targetMigrationNames: string[]
         try {
             targetMigrationNames = JSON.parse(manifestJson)
-            if (!Array.isArray(targetMigrationNames) || !targetMigrationNames.every(n => typeof n === 'string')) {
+            if (!Array.isArray(targetMigrationNames) || !targetMigrationNames.every((n) => typeof n === 'string')) {
                 throw new Error('Manifest must be a JSON array of strings')
             }
-        }
-        catch (e) {
+        } catch (e) {
             console.error(`Invalid --manifest JSON: ${e instanceof Error ? e.message : String(e)}`)
             process.exit(1)
         }
@@ -64,14 +61,15 @@ async function main(): Promise<void> {
     await dataSource.initialize()
 
     if (parsed.mode === 'manifest') {
-        console.log(`Rolling back migrations not present in manifest (${parsed.targetMigrationNames.length} entries)...`)
+        console.log(
+            `Rolling back migrations not present in manifest (${parsed.targetMigrationNames.length} entries)...`,
+        )
         await rollbackToManifest({
             dataSource,
             targetMigrationNames: parsed.targetMigrationNames,
             force: parsed.force,
         })
-    }
-    else {
+    } else {
         console.log(`Rolling back migrations to version ${parsed.targetVersion}...`)
         await rollbackToVersion({
             dataSource,

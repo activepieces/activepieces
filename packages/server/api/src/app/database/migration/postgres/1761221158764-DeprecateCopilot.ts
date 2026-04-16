@@ -15,5 +15,4 @@ export class DeprecateCopilot1761221158764 implements MigrationInterface {
             ADD "copilotSettings" jsonb
         `)
     }
-
 }

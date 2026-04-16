@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sapAribaAuth } from '../auth';
-import { sapAribaCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { sapAribaAuth } from '../auth'
+import { sapAribaCommon } from '../common'
 
 export const listPurchaseOrders = createAction({
     auth: sapAribaAuth,
@@ -78,39 +78,40 @@ export const listPurchaseOrders = createAction({
         }),
     },
     async run(context) {
-        const { buyerANID, supplierANID, documentNumber, orderStatus, routingStatus, startDate, endDate, top, skip } = context.propsValue;
+        const { buyerANID, supplierANID, documentNumber, orderStatus, routingStatus, startDate, endDate, top, skip } =
+            context.propsValue
 
-        const filters: string[] = [];
+        const filters: string[] = []
 
         if (supplierANID) {
-            filters.push(`supplierANID eq '${supplierANID}'`);
+            filters.push(`supplierANID eq '${supplierANID}'`)
         }
         if (documentNumber) {
-            filters.push(`documentNumber eq '${documentNumber}'`);
+            filters.push(`documentNumber eq '${documentNumber}'`)
         }
         if (orderStatus) {
-            filters.push(`orderStatus eq '${orderStatus}'`);
+            filters.push(`orderStatus eq '${orderStatus}'`)
         }
         if (routingStatus) {
-            filters.push(`routingStatus eq '${routingStatus}'`);
+            filters.push(`routingStatus eq '${routingStatus}'`)
         }
         if (startDate) {
-            filters.push(`startDate eq '${startDate}'`);
+            filters.push(`startDate eq '${startDate}'`)
         }
         if (endDate) {
-            filters.push(`endDate eq '${endDate}'`);
+            filters.push(`endDate eq '${endDate}'`)
         }
 
-        const queryParams: Record<string, string> = {};
+        const queryParams: Record<string, string> = {}
 
         if (filters.length > 0) {
-            queryParams['$filter'] = filters.join(' and ');
+            queryParams['$filter'] = filters.join(' and ')
         }
         if (top) {
-            queryParams['$top'] = top.toString();
+            queryParams['$top'] = top.toString()
         }
         if (skip) {
-            queryParams['$skip'] = skip.toString();
+            queryParams['$skip'] = skip.toString()
         }
 
         const response = await sapAribaCommon.makeRequest(
@@ -119,10 +120,9 @@ export const listPurchaseOrders = createAction({
             '/orders',
             queryParams,
             undefined,
-            { 'X-ARIBA-NETWORK-ID': buyerANID }
-        );
+            { 'X-ARIBA-NETWORK-ID': buyerANID },
+        )
 
-        return response;
+        return response
     },
-});
-
+})

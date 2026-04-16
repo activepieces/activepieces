@@ -32,8 +32,7 @@ export const presenceService = (_log: FastifyBaseLogger) => ({
             const parsed: PresenceEntry = JSON.parse(raw)
             if (now - parsed.lastSeen > PRESENCE_TTL_SECONDS * 1000) {
                 staleUserIds.push(userId)
-            }
-            else {
+            } else {
                 activeUsers.push({
                     userId: parsed.userId,
                     userDisplayName: parsed.userDisplayName,

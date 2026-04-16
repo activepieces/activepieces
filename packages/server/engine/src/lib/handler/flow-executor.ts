@@ -1,5 +1,16 @@
 import { performance } from 'node:perf_hooks'
-import { EngineGenericError, ExecuteFlowOperation, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
+import {
+    EngineGenericError,
+    ExecuteFlowOperation,
+    ExecutionType,
+    FlowAction,
+    FlowActionType,
+    FlowRunStatus,
+    FlowTrigger,
+    GenericStepOutput,
+    isNil,
+    StepOutputStatus,
+} from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { loggingUtils } from '../helper/logging-utils'
 import { triggerHelper } from '../helper/trigger-helper'
@@ -29,22 +40,28 @@ export const flowExecutor = {
         if (isNil(executor)) {
             throw new EngineGenericError('ExecutorNotFoundError', `Executor not found for action type: ${type}`)
         }
-        
+
         return executor
     },
-    async executeFromTrigger({ executionState, constants, input }: {
+    async executeFromTrigger({
+        executionState,
+        constants,
+        input,
+    }: {
         executionState: FlowExecutorContext
         constants: EngineConstants
         input: ExecuteFlowOperation
     }): Promise<FlowExecutorContext> {
         const trigger = input.flowVersion.trigger
         if (input.executionType === ExecutionType.BEGIN) {
-            void runProgressService.backup({
-                engineConstants: constants,
-                flowExecutorContext: executionState,
-            }).catch((err) => {
-                console.error('[Progress] Initial payload upload failed', err)
-            })
+            void runProgressService
+                .backup({
+                    engineConstants: constants,
+                    flowExecutorContext: executionState,
+                })
+                .catch((err) => {
+                    console.error('[Progress] Initial payload upload failed', err)
+                })
             await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
             await runProgressService.sendUpdate({
                 engineConstants: constants,
@@ -63,7 +80,11 @@ export const flowExecutor = {
             constants,
         })
     },
-    async execute({ action, constants, executionState }: {
+    async execute({
+        action,
+        constants,
+        executionState,
+    }: {
         action: FlowAction | null | undefined
         executionState: FlowExecutorContext
         constants: EngineConstants
@@ -82,13 +103,15 @@ export const flowExecutor = {
             }
             const handler = this.getExecutorForAction(currentAction.type)
 
-            await runProgressService.sendUpdate({
-                engineConstants: constants,
-                flowExecutorContext: flowExecutionContext,
-                stepNameToUpdate: previousAction!.name,
-            }).catch(error => {
-                console.error('Error sending update:', error)
-            })
+            await runProgressService
+                .sendUpdate({
+                    engineConstants: constants,
+                    flowExecutorContext: flowExecutionContext,
+                    stepNameToUpdate: previousAction!.name,
+                })
+                .catch((error) => {
+                    console.error('Error sending update:', error)
+                })
 
             flowExecutionContext = await handler.handle({
                 action: currentAction,
@@ -98,23 +121,25 @@ export const flowExecutor = {
 
             flowExecutionContext = applyLogSizeLimitIfExceeded(flowExecutionContext, currentAction)
 
-            const shouldBreakExecution = flowExecutionContext.verdict.status !== FlowRunStatus.RUNNING || testSingleStepMode
+            const shouldBreakExecution =
+                flowExecutionContext.verdict.status !== FlowRunStatus.RUNNING || testSingleStepMode
             previousAction = currentAction
             currentAction = currentAction.nextAction
 
             if (shouldBreakExecution) {
                 break
             }
-
         }
 
-        await runProgressService.sendUpdate({
-            engineConstants: constants,
-            flowExecutorContext: flowExecutionContext,
-            stepNameToUpdate: previousAction?.name,
-        }).catch(error => {
-            console.error('Error sending update:', error)
-        })
+        await runProgressService
+            .sendUpdate({
+                engineConstants: constants,
+                flowExecutorContext: flowExecutionContext,
+                stepNameToUpdate: previousAction?.name,
+            })
+            .catch((error) => {
+                console.error('Error sending update:', error)
+            })
 
         const flowEndTime = performance.now()
         return flowExecutionContext.setDuration(flowEndTime - flowStartTime)
@@ -129,13 +154,17 @@ const applyLogSizeLimitIfExceeded = (
         return flowExecutionContext
     }
     return flowExecutionContext
-        .upsertStep(action.name, GenericStepOutput.create({
-            input: flowExecutionContext.getStepOutput(action.name)?.input,
-            type: action.type,
-            status: StepOutputStatus.FAILED,
-            output: undefined,
-        })
-            .setErrorMessage(`Flow run data size exceeded the maximum allowed size of ${loggingUtils.maxLogSizeMb} MB`))
+        .upsertStep(
+            action.name,
+            GenericStepOutput.create({
+                input: flowExecutionContext.getStepOutput(action.name)?.input,
+                type: action.type,
+                status: StepOutputStatus.FAILED,
+                output: undefined,
+            }).setErrorMessage(
+                `Flow run data size exceeded the maximum allowed size of ${loggingUtils.maxLogSizeMb} MB`,
+            ),
+        )
         .setVerdict({
             status: FlowRunStatus.LOG_SIZE_EXCEEDED,
             failedStep: {

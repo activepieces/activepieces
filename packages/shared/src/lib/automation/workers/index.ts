@@ -13,7 +13,6 @@ export enum WorkerMachineType {
     DEDICATED = 'DEDICATED',
 }
 
-
 export const MachineInformation = z.object({
     cpuUsagePercentage: z.number(),
     diskInfo: z.object({
@@ -65,7 +64,6 @@ export const ConsumeJobResponse = z.object({
     delayInSeconds: z.number().optional(),
     response: z.unknown().optional(),
 })
-
 
 export type ConsumeJobResponse = z.infer<typeof ConsumeJobResponse>
 

@@ -1,14 +1,26 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { supabaseAuth } from '../auth';
-import { createClient } from "@supabase/supabase-js";
-import { supabaseCommon } from "../common/props";
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { createClient } from '@supabase/supabase-js'
+import { supabaseAuth } from '../auth'
+import { supabaseCommon } from '../common/props'
 
-type FilterOperator = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike' | 'is' | 'in' | 'contains' | 'containedBy';
+type FilterOperator =
+    | 'eq'
+    | 'neq'
+    | 'gt'
+    | 'gte'
+    | 'lt'
+    | 'lte'
+    | 'like'
+    | 'ilike'
+    | 'is'
+    | 'in'
+    | 'contains'
+    | 'containedBy'
 
 interface Filter {
-    field: string;
-    operator: FilterOperator;
-    value: string | number | boolean | null;
+    field: string
+    operator: FilterOperator
+    value: string | number | boolean | null
 }
 
 export const searchRows = createAction({
@@ -51,15 +63,15 @@ export const searchRows = createAction({
                             { label: 'In', value: 'in' },
                             { label: 'Contains', value: 'contains' },
                             { label: 'Contained By', value: 'containedBy' },
-                        ]
-                    }
+                        ],
+                    },
                 }),
                 value: Property.ShortText({
                     displayName: 'Value',
                     description: 'Value to compare against',
                     required: true,
                 }),
-            }
+            },
         }),
         page: Property.Number({
             displayName: 'Page',
@@ -82,103 +94,118 @@ export const searchRows = createAction({
                     { label: 'Exact', value: 'exact' },
                     { label: 'Planned', value: 'planned' },
                     { label: 'Estimated', value: 'estimated' },
-                ]
-            }
+                ],
+            },
         }),
     },
     async run(context) {
-        const { table_name, columns, filters, page, pageSize, countOption } = context.propsValue;
-        const { url, apiKey } = context.auth.props;
+        const { table_name, columns, filters, page, pageSize, countOption } = context.propsValue
+        const { url, apiKey } = context.auth.props
 
-        const currentPage = Math.max(1, page || 1);
-        const currentPageSize = Math.min(1000, Math.max(1, pageSize || 20));
-        
+        const currentPage = Math.max(1, page || 1)
+        const currentPageSize = Math.min(1000, Math.max(1, pageSize || 20))
+
         if (columns && !/^[a-zA-Z0-9_,.\s\->"*]+$/.test(columns)) {
-            throw new Error('Invalid column specification. Only alphanumeric characters, underscores, commas, dots, arrows, quotes, and asterisks are allowed.');
+            throw new Error(
+                'Invalid column specification. Only alphanumeric characters, underscores, commas, dots, arrows, quotes, and asterisks are allowed.',
+            )
         }
 
-        const supabase = createClient(url, apiKey);
-        
-        let query = supabase.from(table_name as string).select(
-            columns || '*', 
-            { count: countOption as 'exact' | 'planned' | 'estimated' | undefined }
-        );
+        const supabase = createClient(url, apiKey)
+
+        let query = supabase
+            .from(table_name as string)
+            .select(columns || '*', { count: countOption as 'exact' | 'planned' | 'estimated' | undefined })
 
         if (filters && Array.isArray(filters) && filters.length > 0) {
             for (const filter of filters as Filter[]) {
                 if (!filter.field || !filter.operator) {
-                    throw new Error('Filter must have both field and operator specified');
+                    throw new Error('Filter must have both field and operator specified')
                 }
-                
+
                 if (!/^[a-zA-Z0-9_.\->"]+$/.test(filter.field)) {
-                    throw new Error(`Invalid field name: ${filter.field}. Only alphanumeric characters, underscores, dots, and arrows are allowed.`);
+                    throw new Error(
+                        `Invalid field name: ${filter.field}. Only alphanumeric characters, underscores, dots, and arrows are allowed.`,
+                    )
                 }
 
                 try {
                     switch (filter.operator) {
                         case 'eq':
-                            query = query.eq(filter.field, filter.value);
-                            break;
+                            query = query.eq(filter.field, filter.value)
+                            break
                         case 'neq':
-                            query = query.neq(filter.field, filter.value);
-                            break;
+                            query = query.neq(filter.field, filter.value)
+                            break
                         case 'gt':
-                            query = query.gt(filter.field, filter.value);
-                            break;
+                            query = query.gt(filter.field, filter.value)
+                            break
                         case 'gte':
-                            query = query.gte(filter.field, filter.value);
-                            break;
+                            query = query.gte(filter.field, filter.value)
+                            break
                         case 'lt':
-                            query = query.lt(filter.field, filter.value);
-                            break;
+                            query = query.lt(filter.field, filter.value)
+                            break
                         case 'lte':
-                            query = query.lte(filter.field, filter.value);
-                            break;
+                            query = query.lte(filter.field, filter.value)
+                            break
                         case 'like':
-                            query = query.like(filter.field, String(filter.value));
-                            break;
+                            query = query.like(filter.field, String(filter.value))
+                            break
                         case 'ilike':
-                            query = query.ilike(filter.field, String(filter.value));
-                            break;
+                            query = query.ilike(filter.field, String(filter.value))
+                            break
                         case 'is':
-                            query = query.is(filter.field, filter.value);
-                            break;
+                            query = query.is(filter.field, filter.value)
+                            break
                         case 'in': {
-                            const inValues = Array.isArray(filter.value) ? filter.value : String(filter.value).split(',');
-                            query = query.in(filter.field, inValues);
-                            break;
+                            const inValues = Array.isArray(filter.value)
+                                ? filter.value
+                                : String(filter.value).split(',')
+                            query = query.in(filter.field, inValues)
+                            break
                         }
                         case 'contains':
-                            if (typeof filter.value === 'string' || Array.isArray(filter.value) || (filter.value && typeof filter.value === 'object')) {
-                                query = query.contains(filter.field, filter.value);
+                            if (
+                                typeof filter.value === 'string' ||
+                                Array.isArray(filter.value) ||
+                                (filter.value && typeof filter.value === 'object')
+                            ) {
+                                query = query.contains(filter.field, filter.value)
                             } else {
-                                throw new Error('Contains operator requires string, array, or object value');
+                                throw new Error('Contains operator requires string, array, or object value')
                             }
-                            break;
+                            break
                         case 'containedBy':
-                            if (typeof filter.value === 'string' || Array.isArray(filter.value) || (filter.value && typeof filter.value === 'object')) {
-                                query = query.containedBy(filter.field, filter.value);
+                            if (
+                                typeof filter.value === 'string' ||
+                                Array.isArray(filter.value) ||
+                                (filter.value && typeof filter.value === 'object')
+                            ) {
+                                query = query.containedBy(filter.field, filter.value)
                             } else {
-                                throw new Error('ContainedBy operator requires string, array, or object value');
+                                throw new Error('ContainedBy operator requires string, array, or object value')
                             }
-                            break;
+                            break
                         default:
-                            throw new Error(`Unsupported filter operator: ${filter.operator}`);
+                            throw new Error(`Unsupported filter operator: ${filter.operator}`)
                     }
                 } catch (filterError) {
-                    throw new Error(`Failed to apply filter on field '${filter.field}' with operator '${filter.operator}': ${filterError instanceof Error ? filterError.message : 'Unknown error'}`);
+                    throw new Error(
+                        `Failed to apply filter on field '${filter.field}' with operator '${filter.operator}': ${filterError instanceof Error ? filterError.message : 'Unknown error'}`,
+                    )
                 }
             }
         }
 
-        const from = (currentPage - 1) * currentPageSize;
-        const to = from + currentPageSize - 1;
-        query = query.range(from, to);
+        const from = (currentPage - 1) * currentPageSize
+        const to = from + currentPageSize - 1
+        query = query.range(from, to)
 
-        const { data, error, count } = await query;
+        const { data, error, count } = await query
 
         if (error) {
-            throw new Error(`Database query failed: ${error.message}`);
+            throw new Error(`Database query failed: ${error.message}`)
         }
 
         return {
@@ -190,8 +217,8 @@ export const searchRows = createAction({
             range: {
                 from,
                 to,
-                returned: data?.length || 0
-            }
-        };
+                returned: data?.length || 0,
+            },
+        }
     },
-});
+})

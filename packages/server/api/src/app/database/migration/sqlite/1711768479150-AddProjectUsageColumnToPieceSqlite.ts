@@ -173,5 +173,4 @@ export class AddProjectUsageColumnToPieceSqlite1711768479150 implements Migratio
             DROP TABLE "temporary_piece_metadata"
         `)
     }
-
 }

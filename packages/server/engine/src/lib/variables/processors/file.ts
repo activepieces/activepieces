@@ -13,8 +13,7 @@ export const fileProcessor: ProcessorFn = async (_property, urlOrBase64) => {
             return file
         }
         return await handleUrlFile(urlOrBase64)
-    }
-    catch (e) {
+    } catch (e) {
         console.error(e)
         return null
     }
@@ -30,31 +29,30 @@ function handleBase64File(propertyValue: string): ApFile | null {
     }
     const base64 = matches[2]
     const extension = mime.extension(matches[1]) || 'bin'
-    return new ApFile(
-        `unknown.${extension}`,
-        Buffer.from(base64, 'base64'),
-        extension,
-    )
+    return new ApFile(`unknown.${extension}`, Buffer.from(base64, 'base64'), extension)
 }
 
 async function handleUrlFile(path: string): Promise<ApFile | null> {
     const fileResponse = await fetch(path)
 
-    const filename = getFileName(path, fileResponse.headers.get('content-disposition'), fileResponse.headers.get('content-type') ?? undefined) ?? 'unknown'
+    const filename =
+        getFileName(
+            path,
+            fileResponse.headers.get('content-disposition'),
+            fileResponse.headers.get('content-type') ?? undefined,
+        ) ?? 'unknown'
     const extension = filename.split('.').length > 1 ? filename.split('.').pop() : undefined
 
-    return new ApFile(
-        filename,
-        Buffer.from(await fileResponse.arrayBuffer()),
-        extension,
-    )
+    return new ApFile(filename, Buffer.from(await fileResponse.arrayBuffer()), extension)
 }
-
 
 function getFileName(path: string, disposition: string | null, mimeType: string | undefined): string | null {
     const url = new URL(path)
     if (isNil(disposition)) {
-        const fileNameFromUrl = url.pathname.includes('/') && url.pathname.split('/').pop()?.includes('.') ? url.pathname.split('/').pop() : null
+        const fileNameFromUrl =
+            url.pathname.includes('/') && url.pathname.split('/').pop()?.includes('.')
+                ? url.pathname.split('/').pop()
+                : null
         if (!isNil(fileNameFromUrl)) {
             return fileNameFromUrl
         }

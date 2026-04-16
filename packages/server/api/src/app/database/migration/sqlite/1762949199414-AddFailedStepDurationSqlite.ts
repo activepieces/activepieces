@@ -792,5 +792,4 @@ export class AddFailedStepDurationSqlite1762949199414 implements MigrationInterf
             CREATE INDEX "idx_flow_run_flow_failed_step" ON "flow_run" ("flowId", "failedStepName")
         `)
     }
-
 }

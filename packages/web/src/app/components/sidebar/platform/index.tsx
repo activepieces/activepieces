@@ -29,11 +29,11 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarMenu,
-  SidebarHeader,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
   SidebarSeparator,
 } from '@/components/ui/sidebar-shadcn';
 import { useAuthorization } from '@/hooks/authorization-hooks';

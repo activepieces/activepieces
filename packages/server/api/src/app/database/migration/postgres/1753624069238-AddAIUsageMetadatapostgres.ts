@@ -15,5 +15,4 @@ export class AddAIUsageMetadatapostgres1753624069238 implements MigrationInterfa
             ALTER TABLE "ai_usage" DROP COLUMN "metadata"
         `)
     }
-
 }

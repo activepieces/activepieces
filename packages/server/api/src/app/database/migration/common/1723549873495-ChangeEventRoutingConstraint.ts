@@ -31,5 +31,4 @@ export class ChangeEventRoutingConstraint1723549873495 implements MigrationInter
             )
         `)
     }
-
 }

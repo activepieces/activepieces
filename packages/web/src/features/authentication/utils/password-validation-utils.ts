@@ -60,4 +60,4 @@ const passwordValidation = {
     NUMBER_REGEX.test(value) || validationMessages.number,
 };
 
-export { passwordValidation, passwordRules };
+export { passwordRules, passwordValidation };

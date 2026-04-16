@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockFindOneBy = vi.fn()
 const mockRepoDelete = vi.fn()
@@ -47,8 +47,15 @@ vi.mock('../../../../src/app/file/file-compressor', () => ({
 import { fileService } from '../../../../src/app/file/file.service'
 
 const mockLog = {
-    info: vi.fn(), debug: vi.fn(), error: vi.fn(), warn: vi.fn(),
-    child: vi.fn(), fatal: vi.fn(), trace: vi.fn(), silent: vi.fn(), level: 'info',
+    info: vi.fn(),
+    debug: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    child: vi.fn(),
+    fatal: vi.fn(),
+    trace: vi.fn(),
+    silent: vi.fn(),
+    level: 'info',
 } as any
 
 describe('fileService.delete', () => {

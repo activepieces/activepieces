@@ -1,8 +1,8 @@
-import { Command } from 'commander';
-import chalk from 'chalk';
-import { prompt } from 'inquirer';
-import { nanoid } from 'nanoid';
-import jwtLibrary from 'jsonwebtoken';
+import chalk from 'chalk'
+import { Command } from 'commander'
+import { prompt } from 'inquirer'
+import jwtLibrary from 'jsonwebtoken'
+import { nanoid } from 'nanoid'
 
 const KEY_ID = '1'
 const ISSUER = 'activepieces'
@@ -18,20 +18,20 @@ export const generateWorkerTokenCommand = new Command('token')
                 message: 'Enter your JWT secret (should be the same as AP_JWT_SECRET used for the app server):',
                 validate: (input) => {
                     if (!input) {
-                        return 'JWT secret is required';
+                        return 'JWT secret is required'
                     }
-                    return true;
-                }
-            }
-        ]);
+                    return true
+                },
+            },
+        ])
 
         const payload = {
             id: nanoid(),
             type: 'WORKER',
-        };
+        }
 
         // 100 years in seconds
-        const expiresIn = 100 * 365 * 24 * 60 * 60;
+        const expiresIn = 100 * 365 * 24 * 60 * 60
 
         try {
             const token = jwtLibrary.sign(payload, answers.jwtSecret, {
@@ -39,12 +39,11 @@ export const generateWorkerTokenCommand = new Command('token')
                 keyid: KEY_ID,
                 algorithm: ALGORITHM,
                 issuer: ISSUER,
-            });
-            console.log(chalk.green('\nGenerated Worker Token, Please use it in AP_WORKER_TOKEN environment variable:'));
-            console.log(chalk.yellow(token));
-           
+            })
+            console.log(chalk.green('\nGenerated Worker Token, Please use it in AP_WORKER_TOKEN environment variable:'))
+            console.log(chalk.yellow(token))
         } catch (error) {
-            console.error(chalk.red('Failed to generate token:'), error);
-            process.exit(1);
+            console.error(chalk.red('Failed to generate token:'), error)
+            process.exit(1)
         }
-    }); 
+    })

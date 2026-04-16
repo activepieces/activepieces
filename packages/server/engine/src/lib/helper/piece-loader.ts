@@ -1,13 +1,20 @@
+import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
+import {
+    ActivepiecesError,
+    EngineGenericError,
+    ErrorCode,
+    extractPieceFromModule,
+    getPackageAliasForPiece,
+    getPieceNameFromAlias,
+    isNil,
+    trimVersionFromAlias,
+} from '@activepieces/shared'
 import fs from 'fs/promises'
 import path from 'path'
-import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
-import { ActivepiecesError, EngineGenericError, ErrorCode, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, isNil, trimVersionFromAlias } from '@activepieces/shared'
 import { utils } from '../utils'
 
 export const pieceLoader = {
-    loadPieceOrThrow: async (
-        { pieceName, pieceVersion, devPieces }: LoadPieceParams,
-    ): Promise<Piece> => {
+    loadPieceOrThrow: async ({ pieceName, pieceVersion, devPieces }: LoadPieceParams): Promise<Piece> => {
         const { data: piece, error: pieceError } = await utils.tryCatchAndThrowOnEngineError(async () => {
             const packageName = pieceLoader.getPackageAlias({
                 pieceName,
@@ -24,7 +31,10 @@ export const pieceLoader = {
             })
 
             if (isNil(piece)) {
-                throw new EngineGenericError('PieceNotFoundError', `Piece not found for piece: ${pieceName}, pieceVersion: ${pieceVersion}`)
+                throw new EngineGenericError(
+                    'PieceNotFoundError',
+                    `Piece not found for piece: ${pieceName}, pieceVersion: ${pieceVersion}`,
+                )
             }
             return piece
         })
@@ -34,13 +44,18 @@ export const pieceLoader = {
         return piece
     },
 
-    getPieceAndTriggerOrThrow: async (params: GetPieceAndTriggerParams): Promise<{ piece: Piece, pieceTrigger: Trigger }> => {
+    getPieceAndTriggerOrThrow: async (
+        params: GetPieceAndTriggerParams,
+    ): Promise<{ piece: Piece; pieceTrigger: Trigger }> => {
         const { pieceName, pieceVersion, triggerName, devPieces } = params
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, devPieces })
         const trigger = piece.getTrigger(triggerName)
 
         if (trigger === undefined) {
-            throw new EngineGenericError('TriggerNotFoundError', `Trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`)
+            throw new EngineGenericError(
+                'TriggerNotFoundError',
+                `Trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`,
+            )
         }
 
         return {
@@ -49,7 +64,9 @@ export const pieceLoader = {
         }
     },
 
-    getPieceAndActionOrThrow: async (params: GetPieceAndActionParams): Promise<{ piece: Piece, pieceAction: Action }> => {
+    getPieceAndActionOrThrow: async (
+        params: GetPieceAndActionParams,
+    ): Promise<{ piece: Piece; pieceAction: Action }> => {
         const { pieceName, pieceVersion, actionName, devPieces } = params
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, devPieces })
@@ -73,7 +90,13 @@ export const pieceLoader = {
         }
     },
 
-    getPropOrThrow: async ({ pieceName, pieceVersion, actionOrTriggerName, propertyName, devPieces }: GetPropParams) => {
+    getPropOrThrow: async ({
+        pieceName,
+        pieceVersion,
+        actionOrTriggerName,
+        propertyName,
+        devPieces,
+    }: GetPropParams) => {
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, devPieces })
 
         const actionOrTrigger = piece.getAction(actionOrTriggerName) ?? piece.getTrigger(actionOrTriggerName)
@@ -131,7 +154,7 @@ export const pieceLoader = {
 
 async function findInDistFolder(packageName: string): Promise<string | null> {
     const sourcePiecesPath = path.resolve('packages/pieces')
-    if (!await utils.folderExists(sourcePiecesPath)) {
+    if (!(await utils.folderExists(sourcePiecesPath))) {
         return null
     }
     const distPackageJsonPaths = await findDistPackageJsonFiles(sourcePiecesPath)
@@ -167,8 +190,7 @@ async function findDistPackageJsonFiles(dirPath: string): Promise<string[]> {
                 if (await utils.folderExists(pkgJson)) {
                     results.push(pkgJson)
                 }
-            }
-            else {
+            } else {
                 await scanDir(fullPath)
             }
         }
@@ -178,11 +200,16 @@ async function findDistPackageJsonFiles(dirPath: string): Promise<string[]> {
     return results
 }
 
-
 async function traverseAllParentFoldersToFindPiece(packageName: string): Promise<string | null> {
     const customPaths = (process.env.AP_CUSTOM_PIECES_PATHS ?? '').split(':').filter(Boolean)
     for (const customPath of customPaths) {
-        const piecePath = path.resolve(customPath, 'pieces', packageName, 'node_modules', trimVersionFromAlias(packageName))
+        const piecePath = path.resolve(
+            customPath,
+            'pieces',
+            packageName,
+            'node_modules',
+            trimVersionFromAlias(packageName),
+        )
         if (await utils.folderExists(piecePath)) {
             return path.join(piecePath, 'src', 'index.js')
         }
@@ -192,7 +219,13 @@ async function traverseAllParentFoldersToFindPiece(packageName: string): Promise
     let currentDir = __dirname
     const maxIterations = currentDir.split(path.sep).length
     for (let i = 0; i < maxIterations; i++) {
-        const piecePath = path.resolve(currentDir, 'pieces', packageName, 'node_modules', trimVersionFromAlias(packageName))
+        const piecePath = path.resolve(
+            currentDir,
+            'pieces',
+            packageName,
+            'node_modules',
+            trimVersionFromAlias(packageName),
+        )
 
         if (await utils.folderExists(piecePath)) {
             return path.join(piecePath, 'src', 'index.js')
@@ -245,4 +278,3 @@ type GetPackageAliasParams = {
     devPieces: string[]
     pieceVersion: string
 }
-

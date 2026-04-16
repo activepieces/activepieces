@@ -1,10 +1,9 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { autocallsAuth } from '../..';
-import { baseApiUrl } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { autocallsAuth, baseApiUrl } from '../..'
 
 export const phoneCallEnded = createTrigger({
-    auth:autocallsAuth,
+    auth: autocallsAuth,
     name: 'phoneCallEnded',
     displayName: 'Phone Call Ended',
     description: 'Triggers when a phone call ends, with extracted variables.',
@@ -21,31 +20,31 @@ export const phoneCallEnded = createTrigger({
                     method: HttpMethod.GET,
                     url: baseApiUrl + 'api/user/assistants',
                     headers: {
-                        Authorization: "Bearer " + auth?.secret_text,
+                        Authorization: 'Bearer ' + auth?.secret_text,
                     },
-                });
+                })
 
                 if (res.status !== 200) {
                     return {
                         disabled: true,
                         placeholder: 'Error fetching assistants',
                         options: [],
-                    };
+                    }
                 } else if (res.body.length === 0) {
                     return {
                         disabled: true,
                         placeholder: 'No assistants found. Create one first.',
                         options: [],
-                    };
+                    }
                 }
 
                 return {
-                    options: res.body.map((assistant: {id:number,name:string}) => ({
+                    options: res.body.map((assistant: { id: number; name: string }) => ({
                         value: assistant.id,
                         label: assistant.name,
                     })),
-                };
-            }
+                }
+            },
         }),
     },
     sampleData: {
@@ -55,33 +54,33 @@ export const phoneCallEnded = createTrigger({
         status: 'completed',
         extracted_variables: {
             status: false,
-            summary: 'Call ended without clear objective being met.'
+            summary: 'Call ended without clear objective being met.',
         },
         input_variables: {
-            customer_name: 'John'
+            customer_name: 'John',
         },
         transcript: [
             {
                 sender: 'bot',
                 timestamp: 1722347063.574402,
-                text: 'Hi! How are you, John?'
+                text: 'Hi! How are you, John?',
             },
             {
                 sender: 'human',
                 timestamp: 1722347068.886166,
-                text: 'Im fine. How about you?'
+                text: 'Im fine. How about you?',
             },
             {
                 sender: 'bot',
                 timestamp: 1722347069.76683,
-                text: 'Im doing well, thank you for asking.'
+                text: 'Im doing well, thank you for asking.',
             },
             {
                 sender: 'bot',
                 timestamp: 1722347071.577889,
-                text: 'How can I assist you today?'
+                text: 'How can I assist you today?',
             },
-        ]
+        ],
     },
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
@@ -93,9 +92,9 @@ export const phoneCallEnded = createTrigger({
                 webhook_url: context.webhookUrl,
             },
             headers: {
-                Authorization: "Bearer " + context.auth.secret_text,
+                Authorization: 'Bearer ' + context.auth.secret_text,
             },
-        });
+        })
     },
     async onDisable(context) {
         await httpClient.sendRequest({
@@ -105,11 +104,11 @@ export const phoneCallEnded = createTrigger({
                 assistant_id: context.propsValue['assistant'],
             },
             headers: {
-                Authorization: "Bearer " + context.auth.secret_text,
+                Authorization: 'Bearer ' + context.auth.secret_text,
             },
-        });
+        })
     },
     async run(context) {
         return [context.payload.body]
-    }
+    },
 })

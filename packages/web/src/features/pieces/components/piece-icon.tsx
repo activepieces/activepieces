@@ -1,4 +1,4 @@
-import { VariantProps, cva } from 'class-variance-authority';
+import { cva, VariantProps } from 'class-variance-authority';
 import React from 'react';
 
 import { ImageWithColorBackground } from '@/components/custom/image-with-color-background';
@@ -94,4 +94,5 @@ const PieceIcon = React.memo(
 );
 
 PieceIcon.displayName = 'PieceIcon';
+
 export { PieceIcon };

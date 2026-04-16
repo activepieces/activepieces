@@ -1,14 +1,13 @@
-import { hubspotAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { MarkdownVariant } from '@activepieces/shared'
+import { Client } from '@hubspot/api-client'
+import { hubspotAuth } from '../auth'
+import { OBJECT_TYPE } from '../common/constants'
 import {
     getDefaultPropertiesForObject,
     standardObjectDynamicProperties,
     standardObjectPropertiesDropdown,
-
-} from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
-import { MarkdownVariant } from '@activepieces/shared';
-import { Client } from '@hubspot/api-client';
+} from '../common/props'
 
 export const updateProductAction = createAction({
     auth: hubspotAuth,
@@ -16,12 +15,12 @@ export const updateProductAction = createAction({
     displayName: 'Update Product',
     description: 'Updates a product in Hubspot.',
     props: {
-        productId:Property.ShortText({
-            displayName:'Product ID',
-            description:'The ID of the product to update.',
-            required:true
+        productId: Property.ShortText({
+            displayName: 'Product ID',
+            description: 'The ID of the product to update.',
+            required: true,
         }),
-        objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.PRODUCT,[]),
+        objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.PRODUCT, []),
         markdown: Property.MarkDown({
             variant: MarkdownVariant.INFO,
             value: `### Properties to retrieve:
@@ -37,34 +36,34 @@ export const updateProductAction = createAction({
         }),
     },
     async run(context) {
-        const productId = context.propsValue.productId;
-        const objectProperties = context.propsValue.objectProperties ?? {};
-        const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? [];
+        const productId = context.propsValue.productId
+        const objectProperties = context.propsValue.objectProperties ?? {}
+        const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? []
 
-        const productProperties: Record<string, string> = {};
+        const productProperties: Record<string, string> = {}
 
         // Add additional properties to the productProperties object
         Object.entries(objectProperties).forEach(([key, value]) => {
-            if ((Array.isArray(value) && value.length === 0)) {
-                return;  
-			}
+            if (Array.isArray(value) && value.length === 0) {
+                return
+            }
             // Format values if they are arrays
-            productProperties[key] = Array.isArray(value) ? value.join(';') : value;
-        });
+            productProperties[key] = Array.isArray(value) ? value.join(';') : value
+        })
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: context.auth.access_token })
 
         const updatedProduct = await client.crm.products.basicApi.update(productId, {
             properties: productProperties,
-        });
+        })
         // Retrieve default properties for the product and merge with additional properties to retrieve
-        const defaultproductProperties = getDefaultPropertiesForObject(OBJECT_TYPE.PRODUCT);
+        const defaultproductProperties = getDefaultPropertiesForObject(OBJECT_TYPE.PRODUCT)
 
         const productDetails = await client.crm.products.basicApi.getById(updatedProduct.id, [
             ...defaultproductProperties,
             ...additionalPropertiesToRetrieve,
-        ]);
+        ])
 
-        return productDetails;
+        return productDetails
     },
-});
+})

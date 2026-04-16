@@ -1,4 +1,3 @@
-import { createHash } from 'crypto'
 import { cryptoUtils } from '@activepieces/server-utils'
 import {
     AuthenticationResponse,
@@ -12,6 +11,7 @@ import {
     UserIdentity,
     UserIdentityProvider,
 } from '@activepieces/shared'
+import { createHash } from 'crypto'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
@@ -25,17 +25,16 @@ import { projectLimitsService } from '../projects/project-plan/project-plan.serv
 import { externalTokenExtractor } from './lib/external-token-extractor'
 
 export const managedAuthnService = (log: FastifyBaseLogger) => ({
-    async externalToken({
-        externalAccessToken,
-    }: AuthenticateParams): Promise<AuthenticationResponse> {
-        const externalPrincipal = await externalTokenExtractor(log).extract(
-            externalAccessToken,
-        )
+    async externalToken({ externalAccessToken }: AuthenticateParams): Promise<AuthenticationResponse> {
+        const externalPrincipal = await externalTokenExtractor(log).extract(externalAccessToken)
 
-        const { project } = await getOrCreateProject({
-            platformId: externalPrincipal.platformId,
-            externalProjectId: externalPrincipal.externalProjectId,
-        }, log)
+        const { project } = await getOrCreateProject(
+            {
+                platformId: externalPrincipal.platformId,
+                externalProjectId: externalPrincipal.externalProjectId,
+            },
+            log,
+        )
 
         if (!isNil(externalPrincipal.projectDisplayName)) {
             await projectService(log).update(project.id, {
@@ -74,14 +73,17 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             id: user.identityId,
         })
 
-        const token = await accessTokenManager(log).generateToken({
-            id: user.id,
-            type: PrincipalType.USER,
-            platform: {
-                id: externalPrincipal.platformId,
+        const token = await accessTokenManager(log).generateToken(
+            {
+                id: user.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: externalPrincipal.platformId,
+                },
+                tokenVersion: identity.tokenVersion,
             },
-            tokenVersion: identity.tokenVersion,
-        }, 7 * 24 * 60 * 60)
+            7 * 24 * 60 * 60,
+        )
         return {
             id: user.id,
             platformRole: user.platformRole,
@@ -100,33 +102,38 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
     },
 })
 
-type UpdateProjectLimitsParams =
-    {
-        platformId: string
-        projectId: string
-        piecesTags: string[]
-        piecesFilterType: PiecesFilterType
-        log: FastifyBaseLogger
-    }
+type UpdateProjectLimitsParams = {
+    platformId: string
+    projectId: string
+    piecesTags: string[]
+    piecesFilterType: PiecesFilterType
+    log: FastifyBaseLogger
+}
 
-const updateProjectLimits = async ({ platformId, projectId, piecesTags, piecesFilterType, log }: UpdateProjectLimitsParams): Promise<void> => {
+const updateProjectLimits = async ({
+    platformId,
+    projectId,
+    piecesTags,
+    piecesFilterType,
+    log,
+}: UpdateProjectLimitsParams): Promise<void> => {
     const pieces = await getPiecesList({
         platformId,
         projectId,
         piecesTags,
         piecesFilterType,
     })
-    await projectLimitsService(log).upsert({
-        nickname: 'default-embeddings-limit',
-        pieces,
-        piecesFilterType,
-    }, projectId)
+    await projectLimitsService(log).upsert(
+        {
+            nickname: 'default-embeddings-limit',
+            pieces,
+            piecesFilterType,
+        },
+        projectId,
+    )
 }
 
-const getOrCreateUser = async (
-    params: GetOrCreateUserParams,
-    log: FastifyBaseLogger,
-): Promise<User> => {
+const getOrCreateUser = async (params: GetOrCreateUserParams, log: FastifyBaseLogger): Promise<User> => {
     const existingUser = await userService(log).getByPlatformAndExternalId({
         platformId: params.platformId,
         externalId: params.externalUserId,
@@ -166,10 +173,10 @@ const getOrCreateUserIdentity = async (
     })
     return identity
 }
-const getOrCreateProject = async ({
-    platformId,
-    externalProjectId,
-}: GetOrCreateProjectParams, log: FastifyBaseLogger): Promise<{ project: Project, isNewProject: boolean }> => {
+const getOrCreateProject = async (
+    { platformId, externalProjectId }: GetOrCreateProjectParams,
+    log: FastifyBaseLogger,
+): Promise<{ project: Project; isNewProject: boolean }> => {
     const existingProject = await projectService(log).getByPlatformIdAndExternalId({
         platformId,
         externalId: externalProjectId,
@@ -192,17 +199,10 @@ const getOrCreateProject = async ({
     return { project, isNewProject: true }
 }
 
-const getPiecesList = async ({
-    piecesFilterType,
-    piecesTags,
-    platformId,
-}: UpdateProjectLimits): Promise<string[]> => {
+const getPiecesList = async ({ piecesFilterType, piecesTags, platformId }: UpdateProjectLimits): Promise<string[]> => {
     switch (piecesFilterType) {
         case PiecesFilterType.ALLOWED: {
-            return pieceTagService.findByPlatformAndTags(
-                platformId,
-                piecesTags,
-            )
+            return pieceTagService.findByPlatformAndTags(platformId, piecesTags)
         }
         case PiecesFilterType.NONE: {
             return []
@@ -210,7 +210,7 @@ const getPiecesList = async ({
     }
 }
 
-function generateEmailHash(params: { platformId: string, externalUserId: string }): string {
+function generateEmailHash(params: { platformId: string; externalUserId: string }): string {
     const inputString = `managed_${params.platformId}_${params.externalUserId}`
     return cleanEmailOtherwiseCompareFails(createHash('sha256').update(inputString).digest('hex'))
 }

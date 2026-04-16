@@ -5,10 +5,7 @@ import { AppSystemProp } from './system/system-props'
 
 export const localFileStore = {
     async save(key: string, value: string): Promise<void> {
-        const settingsFilePath = path.join(
-            system.getOrThrow(AppSystemProp.CONFIG_PATH),
-            'settings.json',
-        )
+        const settingsFilePath = path.join(system.getOrThrow(AppSystemProp.CONFIG_PATH), 'settings.json')
         const settings = getSettingsFilePath()
         settings[key] = value
         const parentDir = path.dirname(settingsFilePath)
@@ -25,14 +22,10 @@ export const localFileStore = {
 }
 
 const getSettingsFilePath = () => {
-    const settingsFilePath = path.join(
-        system.getOrThrow(AppSystemProp.CONFIG_PATH),
-        'settings.json',
-    )
+    const settingsFilePath = path.join(system.getOrThrow(AppSystemProp.CONFIG_PATH), 'settings.json')
     try {
         return JSON.parse(fs.readFileSync(settingsFilePath, 'utf8'))
-    }
-    catch (error) {
+    } catch (error) {
         return {}
     }
 }

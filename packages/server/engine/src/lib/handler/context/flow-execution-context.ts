@@ -1,22 +1,42 @@
-import { assertEqual, BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import {
+    assertEqual,
+    BaseStepOutput,
+    EngineGenericError,
+    executionJournal,
+    FailedStep,
+    FlowActionType,
+    FlowRunStatus,
+    GenericStepOutput,
+    isNil,
+    LoopStepOutput,
+    LoopStepResult,
+    PauseMetadata,
+    PauseType,
+    RespondResponse,
+    StepOutput,
+    StepOutputStatus,
+} from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
 
-
-export type FlowVerdict = {
-    status: FlowRunStatus.PAUSED
-    pauseMetadata: PauseMetadata
-} | {
-    status: FlowRunStatus.SUCCEEDED
-    stopResponse: RespondResponse | undefined
-} | {
-    status: FlowRunStatus.FAILED | FlowRunStatus.LOG_SIZE_EXCEEDED
-    failedStep: FailedStep
-} | {
-    status: FlowRunStatus.RUNNING
-} 
+export type FlowVerdict =
+    | {
+          status: FlowRunStatus.PAUSED
+          pauseMetadata: PauseMetadata
+      }
+    | {
+          status: FlowRunStatus.SUCCEEDED
+          stopResponse: RespondResponse | undefined
+      }
+    | {
+          status: FlowRunStatus.FAILED | FlowRunStatus.LOG_SIZE_EXCEEDED
+          failedStep: FailedStep
+      }
+    | {
+          status: FlowRunStatus.RUNNING
+      }
 
 export class FlowExecutorContext {
     tags: readonly string[]
@@ -108,7 +128,6 @@ export class FlowExecutorContext {
         })
     }
 
-
     public addTags(tags: string[]): FlowExecutorContext {
         return new FlowExecutorContext({
             ...this,
@@ -119,7 +138,12 @@ export class FlowExecutorContext {
     }
 
     public upsertStep(stepName: string, stepOutput: BaseStepOutput): FlowExecutorContext {
-        const steps = executionJournal.upsertStep({ stepName, stepOutput, path: this.currentPath.path, steps: this.steps })
+        const steps = executionJournal.upsertStep({
+            stepName,
+            stepOutput,
+            path: this.currentPath.path,
+            steps: this.steps,
+        })
         const trimmedSteps = this.currentPath.path.length === 0 ? loggingUtils.trimExecutionInput(steps) : steps
         return new FlowExecutorContext({
             ...this,
@@ -158,13 +182,16 @@ export class FlowExecutorContext {
             stepsCount: this.stepsCount + 1,
         })
     }
-   
+
     public currentState(referencedStepNames?: string[]): Record<string, unknown> {
-        const referencedSteps = referencedStepNames 
-            ?  referencedStepNames.reduce((acc, stepName) => {
-                if (this.steps[stepName]) acc[stepName] = this.steps[stepName]
-                return acc
-            }, {} as Record<string, StepOutput>)
+        const referencedSteps = referencedStepNames
+            ? referencedStepNames.reduce(
+                  (acc, stepName) => {
+                      if (this.steps[stepName]) acc[stepName] = this.steps[stepName]
+                      return acc
+                  },
+                  {} as Record<string, StepOutput>,
+              )
             : this.steps
 
         let flattenedSteps: Record<string, unknown> = extractOutput(referencedSteps)
@@ -173,7 +200,10 @@ export class FlowExecutorContext {
         this.currentPath.path.forEach(([stepName, iteration]) => {
             const stepOutput = targetMap[stepName]
             if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
-                throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', '[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
+                throw new EngineGenericError(
+                    'NotInstanceOfLoopOnItemsStepOutputError',
+                    '[ExecutionState#getTargetMap] Not instance of Loop On Items step output',
+                )
             }
             targetMap = stepOutput.output.iterations[iteration]
             flattenedSteps = {
@@ -186,8 +216,11 @@ export class FlowExecutorContext {
 }
 
 function extractOutput(steps: Record<string, StepOutput>): Record<string, unknown> {
-    return Object.entries(steps).reduce((acc: Record<string, unknown>, [stepName, step]) => {
-        acc[stepName] = step.output
-        return acc
-    }, {} as Record<string, unknown>)
+    return Object.entries(steps).reduce(
+        (acc: Record<string, unknown>, [stepName, step]) => {
+            acc[stepName] = step.output
+            return acc
+        },
+        {} as Record<string, unknown>,
+    )
 }

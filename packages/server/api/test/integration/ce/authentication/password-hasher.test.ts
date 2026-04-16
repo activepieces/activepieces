@@ -34,20 +34,14 @@ describe('Password Hasher', () => {
     describe('compare', () => {
         it('should return true for identical bcrypt passwords', async () => {
             const hashedPassword = await bcrypt.hash(plainTextPassword, 10)
-            const result = await passwordHasher.compare(
-                plainTextPassword,
-                hashedPassword,
-            )
+            const result = await passwordHasher.compare(plainTextPassword, hashedPassword)
             expect(result).toBe(true)
         })
 
         it('should return false for different bcrypt passwords', async () => {
             const hashedPassword = await bcrypt.hash(plainTextPassword, 10)
             const differentPassword = 'differentPassword'
-            const result = await passwordHasher.compare(
-                differentPassword,
-                hashedPassword,
-            )
+            const result = await passwordHasher.compare(differentPassword, hashedPassword)
             expect(result).toBe(false)
         })
 
@@ -72,7 +66,7 @@ describe('Password Hasher', () => {
         const plainTextPassword = 'BusyBeaver$LOL99'
         const salt = 'sPtDhWcd1MfdAw=='
         const hashedPassword =
-      'iu1iqj6i6g9D7aBiE/Qdqv88GNnV/Ea67JK1kfLmzNgxsyCL8mhUxxI5VIHM9D+62xGHuZgjrfEBF+17wxyFIQ=='
+            'iu1iqj6i6g9D7aBiE/Qdqv88GNnV/Ea67JK1kfLmzNgxsyCL8mhUxxI5VIHM9D+62xGHuZgjrfEBF+17wxyFIQ=='
 
         it('should return true for identical scrypt passwords', async () => {
             const result = await passwordHasher.compare(

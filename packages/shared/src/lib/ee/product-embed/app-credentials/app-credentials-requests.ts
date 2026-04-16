@@ -8,7 +8,6 @@ export const ListAppCredentialsRequest = z.object({
     cursor: z.string().optional(),
 })
 
-
 export type ListAppCredentialsRequest = z.infer<typeof ListAppCredentialsRequest>
 
 export const UpsertApiKeyCredentialRequest = z.object({
@@ -19,7 +18,6 @@ export const UpsertApiKeyCredentialRequest = z.object({
         type: z.literal(AppCredentialType.API_KEY),
     }),
 })
-
 
 export const UpsertOAuth2CredentialRequest = z.object({
     id: z.string().optional(),

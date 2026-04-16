@@ -1,17 +1,16 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
-
-import Onfleet from '@onfleet/node-onfleet';
+import { createAction } from '@activepieces/pieces-framework'
+import Onfleet from '@onfleet/node-onfleet'
+import { onfleetAuth } from '../..'
 
 export const getHubs = createAction({
-  auth: onfleetAuth,
-  name: 'get_hubs',
-  displayName: 'Get Hubs',
-  description: 'Get many hubs',
-  props: {},
-  async run(context) {
-    const onfleetApi = new Onfleet(context.auth.secret_text);
+    auth: onfleetAuth,
+    name: 'get_hubs',
+    displayName: 'Get Hubs',
+    description: 'Get many hubs',
+    props: {},
+    async run(context) {
+        const onfleetApi = new Onfleet(context.auth.secret_text)
 
-    return await onfleetApi.hubs.get();
-  },
-});
+        return await onfleetApi.hubs.get()
+    },
+})

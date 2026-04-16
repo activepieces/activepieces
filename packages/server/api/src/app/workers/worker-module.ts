@@ -29,7 +29,6 @@ export const workerModule: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-
 // This should be called after the app is booted, to ensure no plugin timeout
 export const migrateQueuesAndRunConsumers = async (app: FastifyInstance) => {
     await queueMigration(app.log).run()

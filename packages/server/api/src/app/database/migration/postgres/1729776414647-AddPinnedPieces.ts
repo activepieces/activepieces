@@ -23,5 +23,4 @@ export class AddPinnedPieces1729776414647 implements MigrationInterface {
             ALTER TABLE "platform" DROP COLUMN "pinnedPieces"
         `)
     }
-
 }

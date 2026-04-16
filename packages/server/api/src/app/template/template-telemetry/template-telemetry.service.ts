@@ -29,13 +29,15 @@ export const templateTelemetryService = (log: FastifyBaseLogger) => ({
 
 async function sendToCloud(event: TemplateTelemetryEvent): Promise<void> {
     const url = `${CLOUD_TELEMETRY_URL}/event`
-    await tryCatch(() => fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(event),
-    }))
+    await tryCatch(() =>
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(event),
+        }),
+    )
 }
 
 async function sendToInternal(event: TemplateTelemetryEvent, log: FastifyBaseLogger): Promise<void> {
@@ -45,7 +47,7 @@ async function sendToInternal(event: TemplateTelemetryEvent, log: FastifyBaseLog
     }
 
     const { url, body } = getEventConfig(event)
-    
+
     await tryCatch(async () => {
         const response = await fetch(url, {
             method: 'POST',
@@ -59,7 +61,7 @@ async function sendToInternal(event: TemplateTelemetryEvent, log: FastifyBaseLog
     })
 }
 
-function getEventConfig(event: TemplateTelemetryEvent): { url: string, body?: Record<string, unknown> } {
+function getEventConfig(event: TemplateTelemetryEvent): { url: string; body?: Record<string, unknown> } {
     switch (event.eventType) {
         case TemplateTelemetryEventType.VIEW:
         case TemplateTelemetryEventType.INSTALL:

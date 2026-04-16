@@ -1,5 +1,4 @@
-import { PieceAuth } from "@activepieces/pieces-framework";
-
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 const authdec = `
 `

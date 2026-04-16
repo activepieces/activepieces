@@ -15,5 +15,4 @@ export class AddMaximumConcurrentJobsPerProject1761245180906 implements Migratio
             ALTER TABLE "project" DROP COLUMN "maxConcurrentJobs"
         `)
     }
-
 }

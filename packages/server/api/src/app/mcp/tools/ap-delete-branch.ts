@@ -27,8 +27,12 @@ export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
         description: 'Delete a branch from a router step. Cannot delete the fallback branch.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
-            routerStepName: z.string().describe('The name of the ROUTER step. Use ap_flow_structure to get valid values.'),
-            branchIndex: z.number().describe('The index of the branch to delete (0-based). Cannot delete the fallback/last branch.'),
+            routerStepName: z
+                .string()
+                .describe('The name of the ROUTER step. Use ap_flow_structure to get valid values.'),
+            branchIndex: z
+                .number()
+                .describe('The index of the branch to delete (0-based). Cannot delete the fallback/last branch.'),
         },
         annotations: { destructiveHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -45,28 +49,34 @@ export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
             const routerStep = flowStructureUtil.getStep(routerStepName, flow.version.trigger)
             if (isNil(routerStep) || routerStep.type !== FlowActionType.ROUTER) {
                 return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Step "${routerStepName}" is not a ROUTER step. Use ap_flow_structure to find router steps.`,
-                    }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `❌ Step "${routerStepName}" is not a ROUTER step. Use ap_flow_structure to find router steps.`,
+                        },
+                    ],
                 }
             }
 
             const branches = (routerStep as { settings: { branches: unknown[] } }).settings.branches
             if (branchIndex < 0 || branchIndex >= branches.length) {
                 return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ branchIndex ${branchIndex} is out of range. Valid indices are 0–${branches.length - 2} (the fallback branch at index ${branches.length - 1} cannot be deleted).`,
-                    }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `❌ branchIndex ${branchIndex} is out of range. Valid indices are 0–${branches.length - 2} (the fallback branch at index ${branches.length - 1} cannot be deleted).`,
+                        },
+                    ],
                 }
             }
             if (branchIndex >= branches.length - 1) {
                 return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Cannot delete branch at index ${branchIndex}: it is the fallback branch (index ${branches.length - 1}). Only non-fallback branches can be deleted.`,
-                    }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `❌ Cannot delete branch at index ${branchIndex}: it is the fallback branch (index ${branches.length - 1}). Only non-fallback branches can be deleted.`,
+                        },
+                    ],
                 }
             }
 
@@ -87,10 +97,14 @@ export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                     operation,
                 })
                 return {
-                    content: [{ type: 'text', text: `✅ Branch at index ${branchIndex} deleted from router "${routerStepName}".` }],
+                    content: [
+                        {
+                            type: 'text',
+                            text: `✅ Branch at index ${branchIndex} deleted from router "${routerStepName}".`,
+                        },
+                    ],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 return mcpUtils.mcpToolError('Delete branch failed', err)
             }
         },

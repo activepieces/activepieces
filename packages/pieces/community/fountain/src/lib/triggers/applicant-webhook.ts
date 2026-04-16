@@ -1,9 +1,5 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { MarkdownVariant } from '@activepieces/shared'
 
 const setupMarkdown = `
 ## Setup Instructions
@@ -21,64 +17,64 @@ const setupMarkdown = `
 \`\`\`text
 {{webhookUrl}}
 \`\`\`
-`;
+`
 
 export const fountainApplicantWebhook = createTrigger({
-  name: 'applicant_webhook',
-  displayName: 'Applicant Webhook',
-  description: 'Triggers when Fountain sends applicant webhook events',
-  props: {
-    setup: Property.MarkDown({
-      value: setupMarkdown,
-      variant: MarkdownVariant.INFO,
-    }),
-    verify_auth: Property.Checkbox({
-      displayName: 'Verify Authentication',
-      description: 'Verify the Authorization header matches the expected key',
-      required: false,
-      defaultValue: false,
-    }),
-    auth_key: Property.ShortText({
-      displayName: 'Authentication Key',
-      description: 'The authentication key set in Fountain webhook configuration',
-      required: false,
-    }),
-  },
-  sampleData: {
-    applicant: {
-      id: "12345",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      phone_number: "+1234567890",
-      created_at: "2024-01-15T10:30:00Z",
-      updated_at: "2024-01-15T10:30:00Z",
-      funnel: {
-        id: "67890",
-        title: "Software Engineer Position"
-      },
-      stage: {
-        id: "abc123",
-        title: "Interview Scheduled"
-      }
-    }
-  },
-  type: TriggerStrategy.WEBHOOK,
-  async onEnable() {
-    // No setup needed - webhook URL is provided for manual configuration in Fountain
-  },
-  async onDisable() {
-    // No cleanup needed
-  },
-  async run(context) {
-    const payload = context.payload.body;
+    name: 'applicant_webhook',
+    displayName: 'Applicant Webhook',
+    description: 'Triggers when Fountain sends applicant webhook events',
+    props: {
+        setup: Property.MarkDown({
+            value: setupMarkdown,
+            variant: MarkdownVariant.INFO,
+        }),
+        verify_auth: Property.Checkbox({
+            displayName: 'Verify Authentication',
+            description: 'Verify the Authorization header matches the expected key',
+            required: false,
+            defaultValue: false,
+        }),
+        auth_key: Property.ShortText({
+            displayName: 'Authentication Key',
+            description: 'The authentication key set in Fountain webhook configuration',
+            required: false,
+        }),
+    },
+    sampleData: {
+        applicant: {
+            id: '12345',
+            name: 'John Doe',
+            email: 'john.doe@example.com',
+            phone_number: '+1234567890',
+            created_at: '2024-01-15T10:30:00Z',
+            updated_at: '2024-01-15T10:30:00Z',
+            funnel: {
+                id: '67890',
+                title: 'Software Engineer Position',
+            },
+            stage: {
+                id: 'abc123',
+                title: 'Interview Scheduled',
+            },
+        },
+    },
+    type: TriggerStrategy.WEBHOOK,
+    async onEnable() {
+        // No setup needed - webhook URL is provided for manual configuration in Fountain
+    },
+    async onDisable() {
+        // No cleanup needed
+    },
+    async run(context) {
+        const payload = context.payload.body
 
-    if (context.propsValue.verify_auth && context.propsValue.auth_key) {
-      const authHeader = context.payload.headers['authorization'];
-      if (!authHeader || authHeader !== context.propsValue.auth_key) {
-        throw new Error('Authentication failed');
-      }
-    }
+        if (context.propsValue.verify_auth && context.propsValue.auth_key) {
+            const authHeader = context.payload.headers['authorization']
+            if (!authHeader || authHeader !== context.propsValue.auth_key) {
+                throw new Error('Authentication failed')
+            }
+        }
 
-    return [payload];
-  },
-});
+        return [payload]
+    },
+})

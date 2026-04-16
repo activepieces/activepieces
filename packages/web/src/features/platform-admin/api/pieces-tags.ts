@@ -1,9 +1,9 @@
 import {
-  UpsertTagRequest,
   ListTagsRequest,
   SeekPage,
   SetPieceTagsRequest,
   Tag,
+  UpsertTagRequest,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';

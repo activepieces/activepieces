@@ -15,19 +15,17 @@ export function stringifyNullOrUndefined(data: undefined | null): string {
     return 'null'
 }
 
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: legacy code
 export function setAtPath<T, K extends keyof any>(obj: T, path: K | K[], value: any): void {
-    const pathArray = Array.isArray(path) ? path : (path as string).match(/([^[.\]])+/g) as unknown as K[]
+    const pathArray = Array.isArray(path) ? path : ((path as string).match(/([^[.\]])+/g) as unknown as K[])
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: legacy code
     pathArray.reduce((acc: any, key: K, i: number) => {
         if (acc[key] === undefined) acc[key] = {}
         if (i === pathArray.length - 1) acc[key] = value
         return acc[key]
     }, obj)
 }
-
 
 export function insertAt<T>(array: T[], index: number, item: T): T[] {
     return [...array.slice(0, index), item, ...array.slice(index)]
@@ -48,28 +46,25 @@ export function debounce<T>(func: (...args: T[]) => void, wait: number): (key?: 
     }
 }
 
-
 type DeepPartial<T> = {
-    [P in keyof T]?: T[P] extends Record<string, unknown> ? DeepPartial<T[P]> : T[P];
+    [P in keyof T]?: T[P] extends Record<string, unknown> ? DeepPartial<T[P]> : T[P]
 }
 
 /**
  * This function also merges arrays, x = [1, 2], y = [3, 4], z = deepMergeAndCast(x, y) -> [1, 2, 3, 4]
-**/
+ **/
 export function deepMergeAndCast<T>(target: DeepPartial<T>, source: DeepPartial<T>): T {
     return deepmerge(target as Partial<T>, source as Partial<T>) as T
 }
 
-
 export function kebabCase(str: string): string {
     return str
         .replace(/([a-z])([A-Z])/g, '$1-$2') // Handle camelCase by adding hyphen between lowercase and uppercase letters
-        .replace(/\s+/g, '-')                // Replace spaces with hyphens
-        .replace(/_/g, '-')                  // Replace underscores with hyphens
-        .toLowerCase()                       // Convert to lowercase
-        .replace(/^-+|-+$/g, '')            // Remove leading and trailing hyphens
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/_/g, '-') // Replace underscores with hyphens
+        .toLowerCase() // Convert to lowercase
+        .replace(/^-+|-+$/g, '') // Remove leading and trailing hyphens
 }
-
 
 export function isEmpty<T>(value: T | null | undefined): boolean {
     if (value == null) {
@@ -92,27 +87,21 @@ export function startCase(str: string): string {
         .replace(/([a-z])([A-Z])/g, '$1 $2')
         .replace(/[_-]+/g, ' ')
         .replace(/\s+/g, ' ')
-        .replace(/^[a-z]/, match => match.toUpperCase())
-        .replace(/\b[a-z]/g, match => match.toUpperCase())
+        .replace(/^[a-z]/, (match) => match.toUpperCase())
+        .replace(/\b[a-z]/g, (match) => match.toUpperCase())
 }
 
 export function camelCase(str: string): string {
-    return str
-        .replace(/([-_][a-z])/g, group => group.toUpperCase()
-            .replace('-', '')
-            .replace('_', ''))
+    return str.replace(/([-_][a-z])/g, (group) => group.toUpperCase().replace('-', '').replace('_', ''))
 }
 
 export function parseToJsonIfPossible(str: unknown): unknown {
     try {
         return JSON.parse(str as string)
-    }
-    catch (e) {
+    } catch (e) {
         return str
     }
 }
-
-
 
 export function pickBy<T extends Record<string, unknown>>(
     object: T,
@@ -125,7 +114,6 @@ export function pickBy<T extends Record<string, unknown>>(
         return result
     }, {})
 }
-
 
 export function chunk<T>(records: T[], size: number) {
     const chunks: T[][] = []
@@ -141,8 +129,7 @@ export function partition<T>(array: T[], predicate: (item: T, index: number, arr
     array.forEach((item, idx) => {
         if (predicate(item, idx, array)) {
             truthy.push(item)
-        }
-        else {
+        } else {
             falsy.push(item)
         }
     })
@@ -150,7 +137,9 @@ export function partition<T>(array: T[], predicate: (item: T, index: number, arr
 }
 
 export function unique<T>(array: T[]): T[] {
-    return array.filter((item, index, self) => index === self.findIndex(other => JSON.stringify(other) === JSON.stringify(item)))
+    return array.filter(
+        (item, index, self) => index === self.findIndex((other) => JSON.stringify(other) === JSON.stringify(item)),
+    )
 }
 
 export function mapsAreSame<K, V>(a: Map<K, V>, b: Map<K, V>): boolean {
@@ -162,9 +151,7 @@ export function mapsAreSame<K, V>(a: Map<K, V>, b: Map<K, V>): boolean {
     return true
 }
 
-export function validateIndexBound({
-    index, limit,
-}: { index: number, limit: number }) {
+export function validateIndexBound({ index, limit }: { index: number; limit: number }) {
     if (index < 0) {
         return 0
     }
@@ -174,7 +161,7 @@ export function validateIndexBound({
     return index
 }
 
-export function isManualPieceTrigger({ pieceName, triggerName }: { pieceName: string, triggerName: string }) {
+export function isManualPieceTrigger({ pieceName, triggerName }: { pieceName: string; triggerName: string }) {
     return pieceName === '@activepieces/piece-manual-trigger' && triggerName === 'manual_trigger'
 }
 
@@ -214,7 +201,9 @@ function _isValidBase64String(str: string): boolean {
     }
     // Validate that '=' only appears at the end (padding), at most 2 chars
     const firstPaddingIndex = str.indexOf('=')
-    return firstPaddingIndex === -1 ||
+    return (
+        firstPaddingIndex === -1 ||
         firstPaddingIndex === len - 1 ||
         (firstPaddingIndex === len - 2 && str[len - 1] === '=')
+    )
 }

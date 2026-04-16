@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
-import { wrikeAuth } from '../common/auth';
-import { wrikeCommon } from '../common/client';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { wrikeAuth } from '../common/auth'
+import { wrikeCommon } from '../common/client'
 
 export const uploadAttachment = createAction({
     name: 'upload_attachment',
@@ -37,8 +37,8 @@ export const uploadAttachment = createAction({
         }),
     },
     async run(context) {
-        const props = context.propsValue as any;
-        const { entityType, entityId, file, fileName } = props;
+        const props = context.propsValue as any
+        const { entityType, entityId, file, fileName } = props
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
@@ -53,8 +53,8 @@ export const uploadAttachment = createAction({
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-File-Name': fileName || file.filename,
             },
-        });
+        })
 
-        return response.body;
+        return response.body
     },
-});
+})

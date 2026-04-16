@@ -13,9 +13,8 @@ import { secretManagersService } from '../ee/secret-managers/secret-managers.ser
 import { appConnectionService } from './app-connection-service/app-connection-service'
 
 export const appConnectionWorkerController: FastifyPluginAsyncZod = async (app) => {
-
     app.get('/:externalId', GetAppConnectionRequest, async (request): Promise<AppConnection> => {
-        const enginePrincipal = (request.principal as EnginePrincipal)
+        const enginePrincipal = request.principal as EnginePrincipal
         assertNotNullOrUndefined(enginePrincipal.projectId, 'projectId')
         const appConnection = await appConnectionService(request.log).getOne({
             projectId: enginePrincipal.projectId,
@@ -35,11 +34,14 @@ export const appConnectionWorkerController: FastifyPluginAsyncZod = async (app) 
 
         return {
             ...appConnection,
-            value: await secretManagersService(request.log).resolveObject({ value: appConnection.value, projectIds: [enginePrincipal.projectId], platformId: enginePrincipal.platform.id, throwOnFailure: false }),
+            value: await secretManagersService(request.log).resolveObject({
+                value: appConnection.value,
+                projectIds: [enginePrincipal.projectId],
+                platformId: enginePrincipal.platform.id,
+                throwOnFailure: false,
+            }),
         }
-    },
-    )
-
+    })
 }
 
 const GetAppConnectionRequest = {

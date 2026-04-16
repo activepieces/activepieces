@@ -23,5 +23,4 @@ export class RemoveUserSeatsLimitColumn1761762177701 implements MigrationInterfa
             ADD "userSeatsLimit" integer
         `)
     }
-
 }

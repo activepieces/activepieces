@@ -1,12 +1,12 @@
 import {
-  ProjectMemberWithUser,
   Permission,
+  ProjectMemberWithUser,
   UserInvitation,
   UserWithMetaInformation,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Info, Trash2, User, Shield, ChevronDown } from 'lucide-react';
+import { ChevronDown, Info, Shield, Trash2, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
@@ -24,9 +24,9 @@ import {
 } from '@/components/ui/tooltip';
 import {
   projectMembersApi,
-  userInvitationApi,
-  RoleSelector,
   projectMembersMutations,
+  RoleSelector,
+  userInvitationApi,
 } from '@/features/members';
 import { projectRoleQueries } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
@@ -97,8 +97,8 @@ const RoleCell = ({
     row.original.type === 'member'
       ? row.original.data.projectRole.name
       : row.original.type === 'platform-admin-operator'
-      ? formatUtils.convertEnumToHumanReadable(row.original.data.platformRole)
-      : row.original.data.projectRole?.name ?? '';
+        ? formatUtils.convertEnumToHumanReadable(row.original.data.platformRole)
+        : (row.original.data.projectRole?.name ?? '');
 
   if (isOwner || isPlatformAdminOrOperator) {
     return <span className="text-sm">{roleName}</span>;

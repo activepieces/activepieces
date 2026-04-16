@@ -2,8 +2,8 @@ import {
   ApErrorParams,
   ChatUIResponse,
   ErrorCode,
-  isNil,
   HumanInputFormResultTypes,
+  isNil,
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
@@ -14,10 +14,10 @@ import { ChatDrawerSource } from '@/app/builder/types';
 import { LoadingScreen } from '@/components/custom/loading-screen';
 import {
   ChatInput,
-  ChatMessage,
   ChatIntro,
-  ImageDialog,
+  ChatMessage,
   ChatMessageList,
+  ImageDialog,
   Messages,
 } from '@/features/chat';
 import { humanInputApi } from '@/features/forms';

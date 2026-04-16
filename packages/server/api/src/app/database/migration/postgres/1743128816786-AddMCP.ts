@@ -40,5 +40,4 @@ export class AddMCP1743128816786 implements MigrationInterface {
             DROP TABLE "mcp"
         `)
     }
-
 }

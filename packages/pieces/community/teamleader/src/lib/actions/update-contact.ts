@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { teamleaderAuth } from '../common/auth';
-import { teamleaderCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { teamleaderAuth } from '../common/auth'
+import { teamleaderCommon } from '../common/client'
 
 export const updateContact = createAction({
     name: 'update_contact',
@@ -10,41 +10,42 @@ export const updateContact = createAction({
     auth: teamleaderAuth,
     props: {
         contact_id: Property.Dropdown({
-          auth:teamleaderAuth,
+            auth: teamleaderAuth,
             displayName: 'Contact',
             description: 'Select the contact to update',
             required: true,
             refreshers: [],
             options: async ({ auth }) => {
-                if (!auth) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please authenticate first'
-                };
+                if (!auth)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please authenticate first',
+                    }
 
                 try {
                     const response = await teamleaderCommon.apiCall({
                         auth,
                         method: HttpMethod.POST,
                         resourceUri: '/contacts.list',
-                        body: {}
-                    });
+                        body: {},
+                    })
 
                     return {
                         disabled: false,
                         options: response.body.data.map((contact: any) => ({
                             label: `${contact.first_name} ${contact.last_name || ''}`.trim(),
-                            value: contact.id
-                        }))
-                    };
+                            value: contact.id,
+                        })),
+                    }
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading contacts'
-                    };
+                        placeholder: 'Error loading contacts',
+                    }
                 }
-            }
+            },
         }),
         first_name: Property.ShortText({
             displayName: 'First Name',
@@ -70,16 +71,14 @@ export const updateContact = createAction({
                     displayName: 'Type',
                     required: true,
                     options: {
-                        options: [
-                            { label: 'Primary', value: 'primary' }
-                        ]
-                    }
+                        options: [{ label: 'Primary', value: 'primary' }],
+                    },
                 }),
                 email: Property.ShortText({
                     displayName: 'Email Address',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         telephones: Property.Array({
             displayName: 'Phone Numbers',
@@ -93,15 +92,15 @@ export const updateContact = createAction({
                         options: [
                             { label: 'Phone', value: 'phone' },
                             { label: 'Mobile', value: 'mobile' },
-                            { label: 'Fax', value: 'fax' }
-                        ]
-                    }
+                            { label: 'Fax', value: 'fax' },
+                        ],
+                    },
                 }),
                 number: Property.ShortText({
                     displayName: 'Phone Number',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         website: Property.ShortText({
             displayName: 'Website',
@@ -121,9 +120,9 @@ export const updateContact = createAction({
                             { label: 'Primary', value: 'primary' },
                             { label: 'Invoicing', value: 'invoicing' },
                             { label: 'Delivery', value: 'delivery' },
-                            { label: 'Visiting', value: 'visiting' }
-                        ]
-                    }
+                            { label: 'Visiting', value: 'visiting' },
+                        ],
+                    },
                 }),
                 line_1: Property.ShortText({
                     displayName: 'Address Line 1',
@@ -151,8 +150,8 @@ export const updateContact = createAction({
                     displayName: 'Addressee',
                     description: 'Name/company for this address',
                     required: false,
-                })
-            }
+                }),
+            },
         }),
         language: Property.ShortText({
             displayName: 'Language',
@@ -206,8 +205,8 @@ export const updateContact = createAction({
                 tag: Property.ShortText({
                     displayName: 'Tag',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         custom_fields: Property.Array({
             displayName: 'Custom Fields',
@@ -223,8 +222,8 @@ export const updateContact = createAction({
                     displayName: 'Value',
                     description: 'Field value (string, number, or boolean)',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
         marketing_mails_consent: Property.Checkbox({
             displayName: 'Marketing Consent',
@@ -235,37 +234,37 @@ export const updateContact = createAction({
     async run(context) {
         const updateData: Record<string, any> = {
             id: context.propsValue.contact_id,
-        };
-
-        if (context.propsValue.first_name !== undefined) updateData['first_name'] = context.propsValue.first_name;
-        if (context.propsValue.last_name !== undefined) updateData['last_name'] = context.propsValue.last_name;
-        if (context.propsValue.salutation !== undefined) updateData['salutation'] = context.propsValue.salutation;
-        if (context.propsValue.website !== undefined) updateData['website'] = context.propsValue.website;
-        if (context.propsValue.language !== undefined) updateData['language'] = context.propsValue.language;
-        if (context.propsValue.gender !== undefined) updateData['gender'] = context.propsValue.gender;
-        if (context.propsValue.birthdate !== undefined) updateData['birthdate'] = context.propsValue.birthdate;
-        if (context.propsValue.iban !== undefined) updateData['iban'] = context.propsValue.iban;
-        if (context.propsValue.bic !== undefined) updateData['bic'] = context.propsValue.bic;
-        if (context.propsValue.national_identification_number !== undefined) {
-            updateData['national_identification_number'] = context.propsValue.national_identification_number;
         }
-        if (context.propsValue.remarks !== undefined) updateData['remarks'] = context.propsValue.remarks;
+
+        if (context.propsValue.first_name !== undefined) updateData['first_name'] = context.propsValue.first_name
+        if (context.propsValue.last_name !== undefined) updateData['last_name'] = context.propsValue.last_name
+        if (context.propsValue.salutation !== undefined) updateData['salutation'] = context.propsValue.salutation
+        if (context.propsValue.website !== undefined) updateData['website'] = context.propsValue.website
+        if (context.propsValue.language !== undefined) updateData['language'] = context.propsValue.language
+        if (context.propsValue.gender !== undefined) updateData['gender'] = context.propsValue.gender
+        if (context.propsValue.birthdate !== undefined) updateData['birthdate'] = context.propsValue.birthdate
+        if (context.propsValue.iban !== undefined) updateData['iban'] = context.propsValue.iban
+        if (context.propsValue.bic !== undefined) updateData['bic'] = context.propsValue.bic
+        if (context.propsValue.national_identification_number !== undefined) {
+            updateData['national_identification_number'] = context.propsValue.national_identification_number
+        }
+        if (context.propsValue.remarks !== undefined) updateData['remarks'] = context.propsValue.remarks
         if (context.propsValue.marketing_mails_consent !== undefined) {
-            updateData['marketing_mails_consent'] = context.propsValue.marketing_mails_consent;
+            updateData['marketing_mails_consent'] = context.propsValue.marketing_mails_consent
         }
 
         if (context.propsValue.emails !== undefined) {
             updateData['emails'] = context.propsValue.emails.map((emailObj: any) => ({
                 type: emailObj.type,
-                email: emailObj.email
-            }));
+                email: emailObj.email,
+            }))
         }
 
         if (context.propsValue.telephones !== undefined) {
             updateData['telephones'] = context.propsValue.telephones.map((phoneObj: any) => ({
                 type: phoneObj.type,
-                number: phoneObj.number
-            }));
+                number: phoneObj.number,
+            }))
         }
 
         if (context.propsValue.addresses !== undefined) {
@@ -277,33 +276,33 @@ export const updateContact = createAction({
                     city: addressObj.city || null,
                     country: addressObj.country,
                     ...(addressObj.area_level_two_id && { area_level_two_id: addressObj.area_level_two_id }),
-                    ...(addressObj.addressee && { addressee: addressObj.addressee })
-                }
-            }));
+                    ...(addressObj.addressee && { addressee: addressObj.addressee }),
+                },
+            }))
         }
 
         if (context.propsValue.tags !== undefined) {
-            updateData['tags'] = context.propsValue.tags.map((tagObj: any) => tagObj.tag);
+            updateData['tags'] = context.propsValue.tags.map((tagObj: any) => tagObj.tag)
         }
 
         if (context.propsValue.custom_fields !== undefined) {
             updateData['custom_fields'] = context.propsValue.custom_fields.map((fieldObj: any) => ({
                 id: fieldObj.id,
-                value: fieldObj.value
-            }));
+                value: fieldObj.value,
+            }))
         }
 
         await teamleaderCommon.apiCall({
             auth: context.auth,
             method: HttpMethod.POST,
             resourceUri: '/contacts.update',
-            body: updateData
-        });
+            body: updateData,
+        })
 
         return {
             success: true,
             message: 'Contact updated successfully',
-            contact_id: context.propsValue.contact_id
-        };
+            contact_id: context.propsValue.contact_id,
+        }
     },
-});
+})

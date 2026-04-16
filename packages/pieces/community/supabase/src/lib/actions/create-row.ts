@@ -1,7 +1,7 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { supabaseAuth } from '../auth';
-import { createClient } from "@supabase/supabase-js";
-import { supabaseCommon } from "../common/props";
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { createClient } from '@supabase/supabase-js'
+import { supabaseAuth } from '../auth'
+import { supabaseCommon } from '../common/props'
 
 export const createRow = createAction({
     name: 'create_row',
@@ -19,37 +19,33 @@ export const createRow = createAction({
         }),
     },
     async run(context) {
-        const { table_name, row_data, return_row } = context.propsValue;
-        const { url, apiKey } = context.auth.props;
+        const { table_name, row_data, return_row } = context.propsValue
+        const { url, apiKey } = context.auth.props
 
-        const supabase = createClient(url, apiKey);
-        
-        const baseQuery = supabase.from(table_name as string).insert(row_data);
-        
-        const { data, error } = return_row 
-            ? await baseQuery.select()
-            : await baseQuery;
+        const supabase = createClient(url, apiKey)
+
+        const baseQuery = supabase.from(table_name as string).insert(row_data)
+
+        const { data, error } = return_row ? await baseQuery.select() : await baseQuery
 
         if (error) {
-            let errorMessage = error.message || 'Unknown error occurred';
-            
+            let errorMessage = error.message || 'Unknown error occurred'
+
             if (error.code === '23505') {
-                errorMessage = `Duplicate value: ${error.message}`;
+                errorMessage = `Duplicate value: ${error.message}`
             } else if (error.code === '23503') {
-                errorMessage = `Foreign key constraint violation: ${error.message}`;
+                errorMessage = `Foreign key constraint violation: ${error.message}`
             } else if (error.code === '23502') {
-                errorMessage = `Required field missing: ${error.message}`;
+                errorMessage = `Required field missing: ${error.message}`
             } else if (error.code === '42703') {
-                errorMessage = `Column does not exist: ${error.message}`;
+                errorMessage = `Column does not exist: ${error.message}`
             } else if (error.code === '42P01') {
-                errorMessage = `Table does not exist: ${error.message}`;
+                errorMessage = `Table does not exist: ${error.message}`
             }
-            
-            throw new Error(errorMessage);
+
+            throw new Error(errorMessage)
         }
 
-
-
-        return data;
+        return data
     },
-});
+})

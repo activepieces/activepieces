@@ -2,8 +2,8 @@ import {
     BranchExecutionType,
     FlowActionType,
     FlowOperationType,
-    flowStructureUtil,
     FlowTriggerType,
+    flowStructureUtil,
     McpServer,
     McpToolDefinition,
     Permission,
@@ -47,17 +47,24 @@ export const apBuildFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
     return {
         title: 'ap_build_flow',
         permission: Permission.WRITE_FLOW,
-        description: 'Create a complete flow in one call: trigger + steps. Steps are added sequentially (trigger → step_1 → step_2 → ...). Use granular tools (ap_add_step, ap_update_step) to modify flows or add nested structures (loop contents, router branches).',
+        description:
+            'Create a complete flow in one call: trigger + steps. Steps are added sequentially (trigger → step_1 → step_2 → ...). Use granular tools (ap_add_step, ap_update_step) to modify flows or add nested structures (loop contents, router branches).',
         inputSchema: {
             flowName: z.string().describe('Name for the new flow'),
-            trigger: z.object({
-                pieceName: z.string().describe('Trigger piece name (e.g. "@activepieces/piece-webhook")'),
-                pieceVersion: z.string().describe('Piece version (e.g. "~0.1.32")'),
-                triggerName: z.string().describe('Trigger name (e.g. "catch_webhook")'),
-                input: z.record(z.string(), z.unknown()).optional().describe('Trigger input config'),
-                auth: z.string().optional().describe('Connection externalId for trigger auth'),
-            }).describe('Trigger configuration'),
-            steps: z.array(stepSpec).describe('Array of steps added sequentially after trigger. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems), ROUTER.'),
+            trigger: z
+                .object({
+                    pieceName: z.string().describe('Trigger piece name (e.g. "@activepieces/piece-webhook")'),
+                    pieceVersion: z.string().describe('Piece version (e.g. "~0.1.32")'),
+                    triggerName: z.string().describe('Trigger name (e.g. "catch_webhook")'),
+                    input: z.record(z.string(), z.unknown()).optional().describe('Trigger input config'),
+                    auth: z.string().optional().describe('Connection externalId for trigger auth'),
+                })
+                .describe('Trigger configuration'),
+            steps: z
+                .array(stepSpec)
+                .describe(
+                    'Array of steps added sequentially after trigger. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems), ROUTER.',
+                ),
         },
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
@@ -103,7 +110,10 @@ export const apBuildFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                     },
                 })
                 let currentFlow = await flowService(log).update({
-                    id: flowId, projectId, userId: null, platformId,
+                    id: flowId,
+                    projectId,
+                    userId: null,
+                    platformId,
                     operation: { type: FlowOperationType.UPDATE_TRIGGER, request: triggerPayload },
                 })
                 const skippedSteps: string[] = []
@@ -122,7 +132,10 @@ export const apBuildFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                     }
 
                     currentFlow = await flowService(log).update({
-                        id: flowId, projectId, userId: null, platformId,
+                        id: flowId,
+                        projectId,
+                        userId: null,
+                        platformId,
                         operation: {
                             type: FlowOperationType.ADD_ACTION,
                             request: {
@@ -135,27 +148,37 @@ export const apBuildFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                 }
 
                 const allSteps = flowStructureUtil.getAllSteps(currentFlow.version.trigger)
-                const validCount = allSteps.filter(s => s.valid).length
-                const invalidSteps = allSteps.filter(s => !s.valid).map(s => s.name)
+                const validCount = allSteps.filter((s) => s.valid).length
+                const invalidSteps = allSteps.filter((s) => !s.valid).map((s) => s.name)
                 const stepWord = allSteps.length === 1 ? 'step' : 'steps'
 
                 const skippedHint = skippedSteps.length > 0 ? ` Skipped: ${skippedSteps.join(', ')}.` : ''
                 if (invalidSteps.length === 0 && skippedSteps.length === 0) {
-                    return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord}, all valid.` }] }
+                    return {
+                        content: [
+                            {
+                                type: 'text',
+                                text: `✅ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord}, all valid.`,
+                            },
+                        ],
+                    }
                 }
-                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix.` }] }
-            }
-            catch (err) {
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: `⚠️ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix.`,
+                        },
+                    ],
+                }
+            } catch (err) {
                 return mcpUtils.mcpToolError('Failed to build flow', err)
             }
         },
     }
 }
 
-function buildSkeleton({ step, name }: {
-    step: z.infer<typeof stepSpec>
-    name: string
-}): Record<string, unknown> {
+function buildSkeleton({ step, name }: { step: z.infer<typeof stepSpec>; name: string }): Record<string, unknown> {
     const resolvedInput = {
         ...(step.input ?? {}),
         ...(step.auth ? { auth: `{{connections['${step.auth}']}}` } : {}),

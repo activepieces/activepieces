@@ -35,9 +35,7 @@ const AuthorizationHeaders = z.object({
 })
 type AuthorizationHeaders = z.infer<typeof AuthorizationHeaders>
 
-const appsumoController: FastifyPluginAsyncZod = async (
-    fastify: FastifyInstance,
-) => {
+const appsumoController: FastifyPluginAsyncZod = async (fastify: FastifyInstance) => {
     fastify.post(
         '/token',
         {
@@ -56,13 +54,12 @@ const appsumoController: FastifyPluginAsyncZod = async (
         ) => {
             if (
                 request.body.username === exchangeCredentialUsername &&
-        request.body.password === exchangeCredentialPassword
+                request.body.password === exchangeCredentialPassword
             ) {
                 return reply.status(StatusCodes.OK).send({
                     access: token,
                 })
-            }
-            else {
+            } else {
                 return reply.status(StatusCodes.UNAUTHORIZED).send()
             }
         },
@@ -88,8 +85,7 @@ const appsumoController: FastifyPluginAsyncZod = async (
         ) => {
             if (request.headers.authorization != `Bearer ${token}`) {
                 return reply.status(StatusCodes.UNAUTHORIZED).send()
-            }
-            else {
+            } else {
                 const { plan_id, action, uuid, activation_email } = request.body
                 await appsumoService(request.log).handleRequest({
                     plan_id,
@@ -101,8 +97,7 @@ const appsumoController: FastifyPluginAsyncZod = async (
                     case 'activate':
                         return reply.status(StatusCodes.CREATED).send({
                             redirect_url:
-                'https://cloud.activepieces.com/sign-up?email=' +
-                encodeURIComponent(activation_email),
+                                'https://cloud.activepieces.com/sign-up?email=' + encodeURIComponent(activation_email),
                             message: 'success',
                         })
                     default:

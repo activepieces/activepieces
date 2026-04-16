@@ -21,9 +21,7 @@ export class AddProjectMembers1689177797092 implements MigrationInterface {
         if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
             return
         }
-        await queryRunner.query(
-            'DROP INDEX "idx_project_member_project_id_user_id"',
-        )
+        await queryRunner.query('DROP INDEX "idx_project_member_project_id_user_id"')
         await queryRunner.query('DROP TABLE "project_member"')
     }
 }

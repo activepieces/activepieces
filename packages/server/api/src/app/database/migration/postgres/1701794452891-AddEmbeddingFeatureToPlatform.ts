@@ -2,8 +2,7 @@ import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
-export class AddEmbeddingFeatureToPlatform1701794452891
-implements MigrationInterface {
+export class AddEmbeddingFeatureToPlatform1701794452891 implements MigrationInterface {
     name = 'AddEmbeddingFeatureToPlatform1701794452891'
 
     public async up(queryRunner: QueryRunner): Promise<void> {

@@ -2,7 +2,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class RemoveAgentidFromMcpEntity1761428653922 implements MigrationInterface {
     name = 'RemoveAgentidFromMcpEntity1760452015042'
-    
+
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_mcp_run_project_id"

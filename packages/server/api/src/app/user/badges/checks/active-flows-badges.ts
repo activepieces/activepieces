@@ -1,4 +1,12 @@
-import { ApplicationEvent, ApplicationEventName, BADGES, FlowOperationType, FlowStatus, FlowUpdatedEvent, isNil } from '@activepieces/shared'
+import {
+    ApplicationEvent,
+    ApplicationEventName,
+    BADGES,
+    FlowOperationType,
+    FlowStatus,
+    FlowUpdatedEvent,
+    isNil,
+} from '@activepieces/shared'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { BadgeCheck, BadgeCheckResult } from '../badge-check'
 
@@ -9,7 +17,11 @@ export const flowsBadgesCheck: BadgeCheck = {
             return { userId: null, badges: [] }
         }
         const flowUpdatedEvent = event as FlowUpdatedEvent
-        if (![FlowOperationType.LOCK_AND_PUBLISH, FlowOperationType.CHANGE_STATUS].includes(flowUpdatedEvent.data.request.type)) {
+        if (
+            ![FlowOperationType.LOCK_AND_PUBLISH, FlowOperationType.CHANGE_STATUS].includes(
+                flowUpdatedEvent.data.request.type,
+            )
+        ) {
             return { userId: null, badges: [] }
         }
         const currentFlowId = flowUpdatedEvent.data.flowVersion.flowId
@@ -27,12 +39,13 @@ export const flowsBadgesCheck: BadgeCheck = {
                 status: FlowStatus.ENABLED,
             },
         })
-        const uniqueActiveFlows = new Set(activeFlows.map(flow => flow.id))
-        const turnTheFlowOn = flowUpdatedEvent.data.request.type === FlowOperationType.CHANGE_STATUS && flowUpdatedEvent.data.request.request.status === FlowStatus.ENABLED
-        if ((flowUpdatedEvent.data.request.type === FlowOperationType.LOCK_AND_PUBLISH || turnTheFlowOn)) {
+        const uniqueActiveFlows = new Set(activeFlows.map((flow) => flow.id))
+        const turnTheFlowOn =
+            flowUpdatedEvent.data.request.type === FlowOperationType.CHANGE_STATUS &&
+            flowUpdatedEvent.data.request.request.status === FlowStatus.ENABLED
+        if (flowUpdatedEvent.data.request.type === FlowOperationType.LOCK_AND_PUBLISH || turnTheFlowOn) {
             uniqueActiveFlows.add(currentFlowId)
-        }
-        else {
+        } else {
             uniqueActiveFlows.delete(currentFlowId)
         }
 
@@ -51,4 +64,3 @@ export const flowsBadgesCheck: BadgeCheck = {
         return { userId, badges }
     },
 }
-

@@ -16,12 +16,8 @@ export class Chatbot1694902537040 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(
-            'ALTER TABLE "chatbot" DROP CONSTRAINT "FK_13f7ad52cefa43433864732c384"',
-        )
-        await queryRunner.query(
-            'ALTER TABLE "chatbot" DROP CONSTRAINT "FK_d2f5f245c27541cd70f13f169eb"',
-        )
+        await queryRunner.query('ALTER TABLE "chatbot" DROP CONSTRAINT "FK_13f7ad52cefa43433864732c384"')
+        await queryRunner.query('ALTER TABLE "chatbot" DROP CONSTRAINT "FK_d2f5f245c27541cd70f13f169eb"')
         await queryRunner.query('DROP TABLE "chatbot"')
     }
 }

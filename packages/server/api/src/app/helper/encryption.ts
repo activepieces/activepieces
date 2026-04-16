@@ -1,12 +1,8 @@
-import * as crypto from 'crypto'
 import { randomBytes } from 'node:crypto'
-import { promisify } from 'util'
-
-import {
-    assertNotNullOrUndefined,
-    isNil,
-} from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
+import * as crypto from 'crypto'
+import { promisify } from 'util'
 import { z } from 'zod'
 import { RedisType } from '../database/redis/types'
 import { redisConnections } from '../database/redis-connections'
@@ -24,7 +20,6 @@ export const EncryptedObject = z.object({
 })
 export type EncryptedObject = z.infer<typeof EncryptedObject>
 const redisType = redisConnections.getRedisType()
-
 
 export const encryptUtils = {
     decryptString: async (encryptedObject: EncryptedObject): Promise<string> => {
@@ -73,7 +68,6 @@ export const encryptUtils = {
         return null
     },
 }
-
 
 function generateAndStoreSecret(): Promise<string> {
     return mutexLock.runExclusive(async () => {

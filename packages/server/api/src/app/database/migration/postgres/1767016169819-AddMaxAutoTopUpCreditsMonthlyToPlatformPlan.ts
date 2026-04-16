@@ -15,5 +15,4 @@ export class AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819 implements
             ALTER TABLE "platform_plan" DROP COLUMN "maxAutoTopUpCreditsMonthly"
         `)
     }
-
 }

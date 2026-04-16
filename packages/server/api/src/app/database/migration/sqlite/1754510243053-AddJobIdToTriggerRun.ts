@@ -159,5 +159,4 @@ export class AddJobIdToTriggerRun1754510243053 implements MigrationInterface {
             CREATE INDEX "idx_created_piece_name_platform_id" ON "trigger_run" ("created", "platformId", "pieceName")
         `)
     }
-
 }

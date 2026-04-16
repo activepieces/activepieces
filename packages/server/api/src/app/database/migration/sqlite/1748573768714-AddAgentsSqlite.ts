@@ -969,5 +969,4 @@ export class AddAgentsSqlite1748573768714 implements MigrationInterface {
             DROP TABLE "agent"
         `)
     }
-
 }

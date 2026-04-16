@@ -1,5 +1,5 @@
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { apId, ApId, FlowRunStatus, PauseMetadata, RunEnvironment } from '@activepieces/shared'
+import { ApId, apId, FlowRunStatus, PauseMetadata, RunEnvironment } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import Redis from 'ioredis'
@@ -68,10 +68,26 @@ export const runsMetadataQueueFactory = ({
 }
 
 const RUNS_METADATA_UPSERT_KEYS: (keyof RunsMetadataUpsertData)[] = [
-    'id', 'projectId', 'created', 'flowId', 'flowVersionId', 'environment',
-    'triggeredBy', 'startTime', 'finishTime', 'status', 'tags', 'pauseMetadata',
-    'failedStep', 'stepNameToTest', 'parentRunId', 'failParentOnFailure',
-    'logsFileId', 'updated', 'stepsCount', 'requestId',
+    'id',
+    'projectId',
+    'created',
+    'flowId',
+    'flowVersionId',
+    'environment',
+    'triggeredBy',
+    'startTime',
+    'finishTime',
+    'status',
+    'tags',
+    'pauseMetadata',
+    'failedStep',
+    'stepNameToTest',
+    'parentRunId',
+    'failParentOnFailure',
+    'logsFileId',
+    'updated',
+    'stepsCount',
+    'requestId',
 ]
 
 function stripToRunsMetadataUpsertData(params: RunsMetadataUpsertData): RunsMetadataUpsertData {
@@ -113,7 +129,7 @@ export type RunsMetadataUpsertData = {
     status?: FlowRunStatus
     tags?: string[]
     pauseMetadata?: PauseMetadata
-    failedStep?: { name: string, displayName: string }
+    failedStep?: { name: string; displayName: string }
     stepNameToTest?: string
     parentRunId?: string
     failParentOnFailure?: boolean

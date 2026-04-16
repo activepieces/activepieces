@@ -1,8 +1,6 @@
 import { Flag } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import {
-    BaseColumnSchemaPart,
-} from '../database/database-common'
+import { BaseColumnSchemaPart } from '../database/database-common'
 
 type FlagSchema = Flag
 

@@ -2,7 +2,7 @@ import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { PieceType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Package, Trash, Puzzle, Tag, Hash, GitBranch } from 'lucide-react';
+import { GitBranch, Hash, Package, Puzzle, Tag, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { RequestTrial } from '@/app/components/request-trial';
@@ -12,7 +12,7 @@ import { DataTableInputPopover } from '@/components/custom/data-table/data-table
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { LockedAlert } from '@/components/custom/locked-alert';
 import { Button } from '@/components/ui/button';
-import { piecesApi, PieceIcon, piecesHooks } from '@/features/pieces';
+import { PieceIcon, piecesApi, piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ManagePiecesDialog } from './manage-pieces-dialog';
@@ -169,4 +169,5 @@ const PiecesSettings = () => {
 };
 
 PiecesSettings.displayName = 'PiecesSettings';
+
 export { PiecesSettings };

@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/command';
 import { projectCollectionUtils } from '@/features/projects';
 
-import { recordAccess, type AccessedItemType } from './access-history';
+import { type AccessedItemType, recordAccess } from './access-history';
 import { SearchResultRow } from './search-result-item';
 import {
   type SearchResultItem,

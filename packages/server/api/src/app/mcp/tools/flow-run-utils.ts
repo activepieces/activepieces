@@ -1,4 +1,14 @@
-import { FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, isFlowRunStateTerminal, isNil, RunEnvironment, SampleDataFileType, StepOutputStatus } from '@activepieces/shared'
+import {
+    FlowOperationType,
+    FlowRun,
+    FlowRunStatus,
+    flowStructureUtil,
+    isFlowRunStateTerminal,
+    isNil,
+    RunEnvironment,
+    SampleDataFileType,
+    StepOutputStatus,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
@@ -8,34 +18,52 @@ import { projectService } from '../../project/project-service'
 const POLL_INTERVAL_MS = 2000
 const MAX_WAIT_MS = 120_000
 
-export async function executeFlowTest({ flowId, projectId, stepName, triggerTestData, log }: {
+export async function executeFlowTest({
+    flowId,
+    projectId,
+    stepName,
+    triggerTestData,
+    log,
+}: {
     flowId: string
     projectId: string
     stepName?: string
     triggerTestData?: Record<string, unknown>
     log: FastifyBaseLogger
-}): Promise<{ content: [{ type: 'text', text: string }] }> {
+}): Promise<{ content: [{ type: 'text'; text: string }] }> {
     let flow = await flowService(log).getOnePopulated({ id: flowId, projectId })
     if (isNil(flow)) {
         return { content: [{ type: 'text', text: '❌ Flow not found' }] }
     }
 
     if (!flow.version.trigger.valid) {
-        return { content: [{ type: 'text', text: '❌ Flow trigger is not configured. Use ap_update_trigger to set up the trigger before testing.' }] }
+        return {
+            content: [
+                {
+                    type: 'text',
+                    text: '❌ Flow trigger is not configured. Use ap_update_trigger to set up the trigger before testing.',
+                },
+            ],
+        }
     }
 
     let warning = ''
     if (stepName) {
         const step = flowStructureUtil.getStep(stepName, flow.version.trigger)
         if (isNil(step)) {
-            const allSteps = flowStructureUtil.getAllSteps(flow.version.trigger).map(s => s.name).join(', ')
-            return { content: [{ type: 'text', text: `❌ Step "${stepName}" not found. Available steps: ${allSteps}` }] }
+            const allSteps = flowStructureUtil
+                .getAllSteps(flow.version.trigger)
+                .map((s) => s.name)
+                .join(', ')
+            return {
+                content: [{ type: 'text', text: `❌ Step "${stepName}" not found. Available steps: ${allSteps}` }],
+            }
         }
-    }
-    else {
-        const invalidSteps = flowStructureUtil.getAllSteps(flow.version.trigger)
-            .filter(s => !s.valid && !flowStructureUtil.isTrigger(s.type))
-            .map(s => s.displayName)
+    } else {
+        const invalidSteps = flowStructureUtil
+            .getAllSteps(flow.version.trigger)
+            .filter((s) => !s.valid && !flowStructureUtil.isTrigger(s.type))
+            .map((s) => s.displayName)
         if (invalidSteps.length > 0) {
             warning = `⚠️ These steps are not fully configured: ${invalidSteps.join(', ')}. Results may be incomplete.\n\n`
         }
@@ -73,19 +101,23 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
 
     if (!isFlowRunStateTerminal({ status: completedRun.status, ignoreInternalError: false })) {
         return {
-            content: [{
-                type: 'text',
-                text: `⏳ Test still running after 120s. Run ID: ${completedRun.id} (status: ${completedRun.status}). Use ap_get_run to check results later.`,
-            }],
+            content: [
+                {
+                    type: 'text',
+                    text: `⏳ Test still running after 120s. Run ID: ${completedRun.id} (status: ${completedRun.status}). Use ap_get_run to check results later.`,
+                },
+            ],
         }
     }
 
     if (completedRun.status === FlowRunStatus.INTERNAL_ERROR && isNil(completedRun.steps)) {
         return {
-            content: [{
-                type: 'text',
-                text: '❌ Test failed with INTERNAL_ERROR (no step data). Check that all steps are properly configured using ap_flow_structure.',
-            }],
+            content: [
+                {
+                    type: 'text',
+                    text: '❌ Test failed with INTERNAL_ERROR (no step data). Check that all steps are properly configured using ap_flow_structure.',
+                },
+            ],
         }
     }
 
@@ -99,14 +131,16 @@ export async function pollForRunCompletion(log: FastifyBaseLogger, runId: string
         if (isFlowRunStateTerminal({ status: run.status, ignoreInternalError: false })) {
             return run
         }
-        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS))
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS))
     }
     return flowRunService(log).getOnePopulatedOrThrow({ id: runId, projectId })
 }
 
 export function formatRunResult(run: FlowRun): string {
     const lines: string[] = []
-    lines.push(`${statusIcon(run.status)} Run ${run.id} — ${run.status} (${formatDuration(run.startTime, run.finishTime)})`)
+    lines.push(
+        `${statusIcon(run.status)} Run ${run.id} — ${run.status} (${formatDuration(run.startTime, run.finishTime)})`,
+    )
     lines.push(`  Flow: ${run.flowId} | Environment: ${run.environment}`)
 
     if (run.failedStep) {
@@ -135,7 +169,8 @@ export function formatRunSummary(run: FlowRun): string {
 
 function statusIcon(status: FlowRunStatus): string {
     if (status === FlowRunStatus.SUCCEEDED) return '✅'
-    if (status === FlowRunStatus.RUNNING || status === FlowRunStatus.QUEUED || status === FlowRunStatus.PAUSED) return '⏳'
+    if (status === FlowRunStatus.RUNNING || status === FlowRunStatus.QUEUED || status === FlowRunStatus.PAUSED)
+        return '⏳'
     return '❌'
 }
 
@@ -151,9 +186,7 @@ function formatStepOutput(name: string, step: unknown): string {
 
     const { status, duration, output, errorMessage } = step as Record<string, unknown>
 
-    const icon = status === StepOutputStatus.SUCCEEDED ? '✅'
-        : status === StepOutputStatus.FAILED ? '❌'
-            : '⏳'
+    const icon = status === StepOutputStatus.SUCCEEDED ? '✅' : status === StepOutputStatus.FAILED ? '❌' : '⏳'
     const dur = typeof duration === 'number' ? ` (${(duration / 1000).toFixed(1)}s)` : ''
 
     const parts = [`  - ${icon} ${name}${dur}`]
@@ -161,8 +194,7 @@ function formatStepOutput(name: string, step: unknown): string {
     if (status === StepOutputStatus.FAILED && errorMessage !== undefined) {
         const errStr = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
         parts.push(`    Error: ${truncate(errStr, 300)}`)
-    }
-    else if (output !== undefined) {
+    } else if (output !== undefined) {
         const outStr = typeof output === 'string' ? output : JSON.stringify(output)
         parts.push(`    Output: ${truncate(outStr, 500)}`)
     }

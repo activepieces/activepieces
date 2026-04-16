@@ -1,9 +1,5 @@
-import {
-    createTrigger,
-    Property,
-    TriggerStrategy
-} from '@activepieces/pieces-framework';
-import { insightlyAuth } from '../common/common';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { insightlyAuth } from '../common/common'
 
 export const updatedRecord = createTrigger({
     auth: insightlyAuth,
@@ -24,9 +20,9 @@ export const updatedRecord = createTrigger({
                     { label: 'Organization', value: 'Organisations' },
                     { label: 'Project', value: 'Projects' },
                     { label: 'Task', value: 'Tasks' },
-                    { label: 'Event', value: 'Events' }
-                ]
-            }
+                    { label: 'Event', value: 'Events' },
+                ],
+            },
         }),
         webhookUrl: Property.MarkDown({
             value: `
@@ -50,13 +46,13 @@ export const updatedRecord = createTrigger({
         // Required for WEBHOOK triggers
     },
     async run(context) {
-        const payload = context.payload.body as { entity: Record<string, unknown> };
+        const payload = context.payload.body as { entity: Record<string, unknown> }
         if (payload && payload.entity) {
             // Optional: Add a check to ensure it's not a new record if needed
             // For now, we'll pass through any update event
-            return [payload.entity];
+            return [payload.entity]
         }
-        return [];
+        return []
     },
     async test(context) {
         return [
@@ -67,8 +63,8 @@ export const updatedRecord = createTrigger({
                 EMAIL_ADDRESS: 'john.doe.updated@example.com',
                 DATE_CREATED_UTC: '2025-10-03T23:29:42.815Z',
                 DATE_UPDATED_UTC: new Date().toISOString(),
-            }
-        ];
+            },
+        ]
     },
-    sampleData: {}
-});
+    sampleData: {},
+})

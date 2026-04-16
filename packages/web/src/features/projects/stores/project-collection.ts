@@ -1,12 +1,12 @@
 import {
   CreatePlatformProjectRequest,
-  ListProjectRequestForPlatformQueryParams,
-  UpdateProjectPlatformRequest,
   isNil,
+  ListProjectRequestForPlatformQueryParams,
   ProjectType,
   ProjectWithLimits,
   ProjectWithLimitsWithPlatform,
   SeekPage,
+  UpdateProjectPlatformRequest,
 } from '@activepieces/shared';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import {

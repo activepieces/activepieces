@@ -27,9 +27,9 @@ export const lokiTransport: TransportProvider = {
                             basicAuth:
                                 lokiUsername && lokiPassword
                                     ? {
-                                        username: lokiUsername,
-                                        password: lokiPassword,
-                                    }
+                                          username: lokiUsername,
+                                          password: lokiPassword,
+                                      }
                                     : undefined,
                         },
                     },

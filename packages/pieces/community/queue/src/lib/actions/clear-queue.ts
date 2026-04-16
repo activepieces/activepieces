@@ -1,10 +1,5 @@
-import {
-    Property,
-    StoreScope,
-    createAction,
-} from '@activepieces/pieces-framework';
-import { constructQueueName } from '../common';
-
+import { createAction, Property, StoreScope } from '@activepieces/pieces-framework'
+import { constructQueueName } from '../common'
 
 const notes = `**Note:**
 - This deletes all items inside the queue permanently.
@@ -21,20 +16,20 @@ export const clearQueue = createAction({
         queueName: Property.ShortText({
             displayName: 'Queue Name',
             required: true,
-        })
+        }),
     },
     async run(context) {
         const queueName = constructQueueName(context.propsValue.queueName, false)
         await context.store.delete(queueName, StoreScope.PROJECT)
         return {
-            success: true
+            success: true,
         }
     },
     async test(context) {
         const queueName = constructQueueName(context.propsValue.queueName, true)
         await context.store.delete(queueName, StoreScope.PROJECT)
         return {
-            success: true
+            success: true,
         }
-    }
-});
+    },
+})

@@ -3,6 +3,9 @@ import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorizati
 import { secretManagersController } from './secret-managers.controller'
 
 export const secretManagersModule: FastifyPluginAsyncZod = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.secretManagersEnabled))
+    app.addHook(
+        'preHandler',
+        platformMustHaveFeatureEnabled((platform) => platform.plan.secretManagersEnabled),
+    )
     await app.register(secretManagersController, { prefix: '/v1/secret-managers' })
 }

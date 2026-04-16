@@ -164,5 +164,4 @@ export class RenameApprovalUrlToResolveUrl1742991301509 implements MigrationInte
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
         `)
     }
-
 }

@@ -1,13 +1,7 @@
-import getAction from './get-user';
-import listAction from './list-users';
-import createAction from './create-user';
-import updateAction from './update-user';
-import deleteAction from './delete-user';
+import createAction from './create-user'
+import deleteAction from './delete-user'
+import getAction from './get-user'
+import listAction from './list-users'
+import updateAction from './update-user'
 
-export default [
-  getAction,
-  listAction,
-  createAction,
-  updateAction,
-  deleteAction,
-];
+export default [getAction, listAction, createAction, updateAction, deleteAction]

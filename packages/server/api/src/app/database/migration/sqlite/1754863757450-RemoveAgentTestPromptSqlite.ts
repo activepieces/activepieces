@@ -141,5 +141,4 @@ export class RemoveAgentTestPromptSqlite1754863757450 implements MigrationInterf
             CREATE UNIQUE INDEX "idx_agent_projectId_externalId" ON "agent" ("projectId", "externalId")
         `)
     }
-
 }

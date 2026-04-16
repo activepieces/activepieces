@@ -1,18 +1,35 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderModel, AIProviderModelType, CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig, isNil, splitCloudflareGatewayModelId } from '@activepieces/shared'
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import {
+    AIProviderModel,
+    AIProviderModelType,
+    CloudflareGatewayProviderAuthConfig,
+    CloudflareGatewayProviderConfig,
+    isNil,
+    splitCloudflareGatewayModelId,
+} from '@activepieces/shared'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { generateText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
-export const cloudflareGatewayProvider: AIProviderStrategy<CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig> = {
+export const cloudflareGatewayProvider: AIProviderStrategy<
+    CloudflareGatewayProviderAuthConfig,
+    CloudflareGatewayProviderConfig
+> = {
     name: 'Cloudflare Gateway',
-    async validateConnection(authConfig: CloudflareGatewayProviderAuthConfig, config: CloudflareGatewayProviderConfig, log: FastifyBaseLogger): Promise<void> {
-
-        const textModels = config.models.filter(m => m.modelType === AIProviderModelType.TEXT)
+    async validateConnection(
+        authConfig: CloudflareGatewayProviderAuthConfig,
+        config: CloudflareGatewayProviderConfig,
+        log: FastifyBaseLogger,
+    ): Promise<void> {
+        const textModels = config.models.filter((m) => m.modelType === AIProviderModelType.TEXT)
         const invalidModels: string[] = []
         for (const model of textModels) {
             try {
-                const { provider: providerPrefix, model: actualModelId, publisher } = splitCloudflareGatewayModelId(model.modelId)
+                const {
+                    provider: providerPrefix,
+                    model: actualModelId,
+                    publisher,
+                } = splitCloudflareGatewayModelId(model.modelId)
                 if (providerPrefix === 'google-vertex-ai') {
                     if (isNil(config.vertexProject) || isNil(config.vertexRegion)) {
                         throw new Error('Google Vertex ai project and region are required for Google Vertex AI models')
@@ -33,8 +50,7 @@ export const cloudflareGatewayProvider: AIProviderStrategy<CloudflareGatewayProv
                         messages: [{ role: 'user', content: 'Hi, reply only with "ok"' }],
                         maxOutputTokens: 1,
                     })
-                }
-                else {
+                } else {
                     await httpClient.sendRequest({
                         url: `https://gateway.ai.cloudflare.com/v1/${config.accountId}/${config.gatewayId}/compat/chat/completions`,
                         method: HttpMethod.POST,
@@ -48,15 +64,11 @@ export const cloudflareGatewayProvider: AIProviderStrategy<CloudflareGatewayProv
                         },
                     })
                 }
-            }
-            catch (error: unknown) {
+            } catch (error: unknown) {
                 log.error({ err: error }, '[cloudflareGatewayProvider#validateConnection] Failed to validate model')
                 invalidModels.push(model.modelId)
             }
         }
-               
-        
-       
 
         if (invalidModels.length > 0) {
             throw new Error(
@@ -64,8 +76,11 @@ export const cloudflareGatewayProvider: AIProviderStrategy<CloudflareGatewayProv
             )
         }
     },
-    async listModels(_: CloudflareGatewayProviderAuthConfig, config: CloudflareGatewayProviderConfig): Promise<AIProviderModel[]> {
-        return config.models.map(m => ({
+    async listModels(
+        _: CloudflareGatewayProviderAuthConfig,
+        config: CloudflareGatewayProviderConfig,
+    ): Promise<AIProviderModel[]> {
+        return config.models.map((m) => ({
             id: m.modelId,
             name: m.modelName,
             type: m.modelType,

@@ -1,10 +1,4 @@
-import {
-    Brackets,
-    EntitySchema,
-    ObjectLiteral,
-    SelectQueryBuilder,
-    WhereExpressionBuilder,
-} from 'typeorm'
+import { Brackets, EntitySchema, ObjectLiteral, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm'
 import { atob, btoa, decodeByType, encodeByType } from './pagination-utils'
 
 export enum Order {
@@ -85,10 +79,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
         this.compositeOrderBy = orderByConfig
     }
 
-    public async paginate<T = Entity>(
-        builder: SelectQueryBuilder<Entity>,
-    ): Promise<PagingResult<T>> {
-
+    public async paginate<T = Entity>(builder: SelectQueryBuilder<Entity>): Promise<PagingResult<T>> {
         const result = await this.appendPagingQuery(builder).getRawAndEntities()
 
         const mergedData = result.entities.map((entity, index) => {
@@ -100,7 +91,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
                     additionalColumns[key] = value
                 }
             }
-            
+
             return {
                 ...entity,
                 ...additionalColumns,
@@ -135,7 +126,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
         if (this.hasAfterCursor() || (hasMore && this.hasBeforeCursor())) {
             this.nextBeforeCursor = this.encode(mergedData[0] as unknown as Entity)
         }
-        
+
         return this.toPagingResult(mergedData)
     }
 
@@ -146,24 +137,19 @@ export default class Paginator<Entity extends ObjectLiteral> {
         }
     }
 
-    private appendPagingQuery(
-        builder: SelectQueryBuilder<Entity>,
-    ): SelectQueryBuilder<Entity> {
+    private appendPagingQuery(builder: SelectQueryBuilder<Entity>): SelectQueryBuilder<Entity> {
         const cursors: CursorParam = {}
         const clonedBuilder = new SelectQueryBuilder<Entity>(builder)
 
         if (!this.isUnlimited()) {
             if (this.hasAfterCursor()) {
                 Object.assign(cursors, this.decode(this.afterCursor!))
-            }
-            else if (this.hasBeforeCursor()) {
+            } else if (this.hasBeforeCursor()) {
                 Object.assign(cursors, this.decode(this.beforeCursor!))
             }
 
             if (Object.keys(cursors).length > 0) {
-                clonedBuilder.andWhere(
-                    new Brackets((where) => this.buildCursorQuery(where, cursors)),
-                )
+                clonedBuilder.andWhere(new Brackets((where) => this.buildCursorQuery(where, cursors)))
             }
 
             clonedBuilder.take(this.limit + 1)
@@ -175,10 +161,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
         return clonedBuilder
     }
 
-    private buildCursorQuery(
-        where: WhereExpressionBuilder,
-        cursors: CursorParam,
-    ): void {
+    private buildCursorQuery(where: WhereExpressionBuilder, cursors: CursorParam): void {
         if (this.compositeOrderBy) {
             this.buildCompositeCursorQuery(where, cursors)
             return
@@ -190,30 +173,31 @@ export default class Paginator<Entity extends ObjectLiteral> {
         where.orWhere(queryString, cursors)
     }
 
-    private buildCompositeCursorQuery(
-        where: WhereExpressionBuilder,
-        cursors: CursorParam,
-    ): void {
-        where.andWhere(new Brackets((qb) => {
-            for (let i = 0; i < this.compositeOrderBy!.length; i++) {
-                qb.orWhere(new Brackets((subQb) => {
-                    for (let j = 0; j < i; j++) {
-                        const config = this.compositeOrderBy![j]
-                        const paramKey = `cursor_eq_${j}_${i}`
-                        subQb.andWhere(`${this.alias}.${config.field} = :${paramKey}`, {
-                            [paramKey]: cursors[config.field],
-                        })
-                    }
+    private buildCompositeCursorQuery(where: WhereExpressionBuilder, cursors: CursorParam): void {
+        where.andWhere(
+            new Brackets((qb) => {
+                for (let i = 0; i < this.compositeOrderBy!.length; i++) {
+                    qb.orWhere(
+                        new Brackets((subQb) => {
+                            for (let j = 0; j < i; j++) {
+                                const config = this.compositeOrderBy![j]
+                                const paramKey = `cursor_eq_${j}_${i}`
+                                subQb.andWhere(`${this.alias}.${config.field} = :${paramKey}`, {
+                                    [paramKey]: cursors[config.field],
+                                })
+                            }
 
-                    const currentConfig = this.compositeOrderBy![i]
-                    const currentParamKey = `cursor_cmp_${i}`
-                    const operator = this.getOperatorForConfig(currentConfig)
-                    subQb.andWhere(`${this.alias}.${currentConfig.field} ${operator} :${currentParamKey}`, {
-                        [currentParamKey]: cursors[currentConfig.field],
-                    })
-                }))
-            }
-        }))
+                            const currentConfig = this.compositeOrderBy![i]
+                            const currentParamKey = `cursor_cmp_${i}`
+                            const operator = this.getOperatorForConfig(currentConfig)
+                            subQb.andWhere(`${this.alias}.${currentConfig.field} ${operator} :${currentParamKey}`, {
+                                [currentParamKey]: cursors[currentConfig.field],
+                            })
+                        }),
+                    )
+                }
+            }),
+        )
     }
 
     private getOperatorForConfig(config: OrderByConfig): string {
@@ -298,8 +282,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
         if (this.compositeOrderBy) {
             try {
                 return JSON.parse(atob(cursor))
-            }
-            catch {
+            } catch {
                 return {}
             }
         }

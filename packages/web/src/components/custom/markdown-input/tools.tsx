@@ -1,12 +1,12 @@
 import { Editor } from '@tiptap/react';
 import { t } from 'i18next';
 import {
+  ArrowDown,
+  BoldIcon,
   ImageIcon,
-  UnderlineIcon,
   ItalicIcon,
   Strikethrough,
-  BoldIcon,
-  ArrowDown,
+  UnderlineIcon,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 

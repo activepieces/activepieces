@@ -1,10 +1,4 @@
-import {
-    ActivepiecesError,
-    ErrorCode,
-    isNil,
-    isObject,
-    PrincipalType,
-} from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, isObject, PrincipalType } from '@activepieces/shared'
 import { preSerializationHookHandler } from 'fastify'
 
 export function extractResourceName(url: string): string | undefined {
@@ -20,12 +14,18 @@ export function extractResourceName(url: string): string | undefined {
  * the `projectId` property value does not match the principal's `projectId`.
  * Otherwise, does nothing.
  */
-export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<Payload | null> = (request, _response, payload, done) => {
+export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<Payload | null> = (
+    request,
+    _response,
+    payload,
+    done,
+) => {
     request.log.trace(
         { payload, principal: request.principal, route: request.routeOptions.config },
         'entitiesMustBeOwnedByCurrentProject',
     )
-    const principalProjectId = request.principal.type === PrincipalType.ENGINE ? request.principal.projectId : (request.projectId ?? undefined)
+    const principalProjectId =
+        request.principal.type === PrincipalType.ENGINE ? request.principal.projectId : (request.projectId ?? undefined)
 
     if (isObject(payload) && !isNil(principalProjectId)) {
         let verdict: AuthzVerdict = 'ALLOW'
@@ -34,8 +34,7 @@ export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<Pa
             if (payload.projectId !== principalProjectId) {
                 verdict = 'DENY'
             }
-        }
-        else if ('data' in payload && Array.isArray(payload.data)) {
+        } else if ('data' in payload && Array.isArray(payload.data)) {
             const someEntityNotOwnedByCurrentProject = payload.data.some((entity) => {
                 return 'projectId' in entity && entity.projectId !== principalProjectId
             })
@@ -46,10 +45,13 @@ export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<Pa
         }
 
         if (verdict === 'DENY') {
-            request.log.warn({
-                principalProjectId,
-                route: request.routeOptions.config,
-            }, 'Authorization denied: entity not owned by current project')
+            request.log.warn(
+                {
+                    principalProjectId,
+                    route: request.routeOptions.config,
+                },
+                'Authorization denied: entity not owned by current project',
+            )
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {

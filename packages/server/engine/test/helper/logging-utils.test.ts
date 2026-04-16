@@ -1,9 +1,4 @@
-import {
-    FlowActionType,
-    GenericStepOutput,
-    LoopStepOutput,
-    StepOutputStatus,
-} from '@activepieces/shared'
+import { FlowActionType, GenericStepOutput, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { loggingUtils } from '../../src/lib/helper/logging-utils'
 
 describe('Logging Utils', () => {
@@ -47,7 +42,7 @@ describe('Logging Utils', () => {
 
         // assert - at least some large keys should be truncated
         const input = result.step1.input as Record<string, unknown>
-        const truncatedCount = Object.values(input).filter(v => v === '(truncated)').length
+        const truncatedCount = Object.values(input).filter((v) => v === '(truncated)').length
         expect(truncatedCount).toEqual(2)
     })
 

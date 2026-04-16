@@ -1,5 +1,11 @@
 import { ProgressUpdateType } from '../engine/engine-operation'
-import { GetFlowVersionForWorkerRequest, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '../engine/requests'
+import {
+    GetFlowVersionForWorkerRequest,
+    SendFlowResponseRequest,
+    UpdateRunProgressRequest,
+    UpdateStepProgressRequest,
+    UploadRunLogsRequest,
+} from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { PiecePackage } from '../pieces/piece'
@@ -32,7 +38,7 @@ export type GetPieceRequest = {
 
 export type WorkerToApiContract = {
     poll(input: WorkerMachineHealthcheckRequest): Promise<ConsumeJobRequest | null>
-    completeJob(input: ConsumeJobResponse & { jobId: string, token: string, queueName: string }): Promise<void>
+    completeJob(input: ConsumeJobResponse & { jobId: string; token: string; queueName: string }): Promise<void>
     updateRunProgress(input: UpdateRunProgressRequest): Promise<void>
     uploadRunLog(input: UploadRunLogsRequest): Promise<void>
     sendFlowResponse(input: SendFlowResponseRequest): Promise<void>
@@ -42,8 +48,8 @@ export type WorkerToApiContract = {
     getFlowVersion(input: GetFlowVersionForWorkerRequest): Promise<FlowVersion | null>
     getPiece(input: GetPieceRequest): Promise<unknown>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
-    extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
-    getPayloadFile(input: { fileId: string, projectId: string }): Promise<Buffer>
+    extendLock(input: { jobId: string; token: string; queueName: string }): Promise<void>
+    getPayloadFile(input: { fileId: string; projectId: string }): Promise<Buffer>
     getUsedPieces(input: Record<string, never>): Promise<PiecePackage[]>
     markPieceAsUsed(input: { pieces: PiecePackage[] }): Promise<void>
     disableFlow(input: DisableFlowRequest): Promise<void>

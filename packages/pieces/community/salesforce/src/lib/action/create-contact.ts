@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
-import { callSalesforceApi, salesforcesCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { callSalesforceApi, salesforcesCommon } from '../common'
 
 export const createContact = createAction({
     auth: salesforceAuth,
@@ -33,20 +33,11 @@ export const createContact = createAction({
         other_fields: Property.Json({
             displayName: 'Other Fields',
             description: 'Enter additional fields as a JSON object.',
-            required: false
-        })
+            required: false,
+        }),
     },
     async run(context) {
-        const {
-            LastName,
-            FirstName,
-            AccountId,
-            Email,
-            Phone,
-            Title,
-            other_fields
-        } = context.propsValue;
-
+        const { LastName, FirstName, AccountId, Email, Phone, Title, other_fields } = context.propsValue
 
         const rawBody = {
             LastName,
@@ -56,22 +47,25 @@ export const createContact = createAction({
             Phone,
             Title,
             ...(other_fields || {}),
-        };
+        }
 
-        const cleanedBody = Object.entries(rawBody).reduce((acc, [key, value]) => {
-            if (value !== undefined && value !== null && value !== '') {
-                acc[key] = value;
-            }
-            return acc;
-        }, {} as Record<string, unknown>);
+        const cleanedBody = Object.entries(rawBody).reduce(
+            (acc, [key, value]) => {
+                if (value !== undefined && value !== null && value !== '') {
+                    acc[key] = value
+                }
+                return acc
+            },
+            {} as Record<string, unknown>,
+        )
 
         const response = await callSalesforceApi(
             HttpMethod.POST,
             context.auth,
             '/services/data/v56.0/sobjects/Contact',
-            cleanedBody
-        );
+            cleanedBody,
+        )
 
-        return response.body;
+        return response.body
     },
-});
+})

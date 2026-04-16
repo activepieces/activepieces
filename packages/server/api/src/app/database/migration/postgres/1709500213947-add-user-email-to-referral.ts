@@ -120,5 +120,4 @@ export class AddUserEmailToReferral1709500213947 implements MigrationInterface {
 
         log.info('[addUserEmailToReferral1709500213947#down]')
     }
-
 }

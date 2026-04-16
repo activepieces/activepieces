@@ -15,5 +15,4 @@ export class AddImageToUser1768502658760 implements MigrationInterface {
             ALTER TABLE "user_identity" DROP COLUMN "imageUrl"
         `)
     }
-
 }

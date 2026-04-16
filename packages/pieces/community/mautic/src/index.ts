@@ -1,21 +1,9 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  PiecePropValueSchema,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import {
-  createCompany,
-  createContact,
-  searchCompany,
-  searchContact,
-  updateCompany,
-  updateContact,
-} from './lib/actions';
-import { triggers } from './lib/triggers';
-import { mauticAuth } from './lib/auth';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { createPiece, PieceAuth, PiecePropValueSchema, Property } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { createCompany, createContact, searchCompany, searchContact, updateCompany, updateContact } from './lib/actions'
+import { mauticAuth } from './lib/auth'
+import { triggers } from './lib/triggers'
 
 const markdownDescription = `
 Follow these steps:
@@ -24,43 +12,41 @@ Follow these steps:
 
 2. **Enable Basic Authentication:** Log in to Mautic, go to **Settings** > **Configuration** > **API Settings**, and ensure that Basic Authentication is enabled.
 
-`;
+`
 
 export const mautic = createPiece({
-  displayName: 'Mautic',
-  description: 'Open-source marketing automation software',
+    displayName: 'Mautic',
+    description: 'Open-source marketing automation software',
 
-  minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/mautic.png',
-  authors: ["bibhuty-did-this","kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
-  categories: [PieceCategory.MARKETING],
-  auth: mauticAuth,
-  actions: [
-    createContact,
-    searchContact,
-    updateContact,
-    createCompany,
-    searchCompany,
-    updateCompany,
-    createCustomApiCallAction({
-      auth: mauticAuth,
-      baseUrl: (auth) => {
-        if (!auth) {
-          return '';
-        }
-        const { base_url } = auth.props;
-        return `${base_url.endsWith('/') ? base_url : base_url + '/'}api/`;
-      },
-      authMapping: async (auth) => {
-        const { username, password } = auth.props;
-        return {
-          Authorization:
-            'Basic ' +
-            Buffer.from(`${username}:${password}`).toString('base64'),
-          'Content-Type': 'application/json',
-        };
-      },
-    }),
-  ],
-  triggers,
-});
+    minimumSupportedRelease: '0.30.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/mautic.png',
+    authors: ['bibhuty-did-this', 'kanarelo', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
+    categories: [PieceCategory.MARKETING],
+    auth: mauticAuth,
+    actions: [
+        createContact,
+        searchContact,
+        updateContact,
+        createCompany,
+        searchCompany,
+        updateCompany,
+        createCustomApiCallAction({
+            auth: mauticAuth,
+            baseUrl: (auth) => {
+                if (!auth) {
+                    return ''
+                }
+                const { base_url } = auth.props
+                return `${base_url.endsWith('/') ? base_url : base_url + '/'}api/`
+            },
+            authMapping: async (auth) => {
+                const { username, password } = auth.props
+                return {
+                    Authorization: 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64'),
+                    'Content-Type': 'application/json',
+                }
+            },
+        }),
+    ],
+    triggers,
+})

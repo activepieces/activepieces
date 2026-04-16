@@ -51,4 +51,5 @@ const StepStatusIcon = React.memo(
   },
 );
 StepStatusIcon.displayName = 'StepStatusIcon';
+
 export { StepStatusIcon };

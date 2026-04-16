@@ -1,5 +1,11 @@
 import { StoreScope } from '@activepieces/pieces-framework'
-import { StorageError, StorageInvalidKeyError, StorageLimitError, STORE_KEY_MAX_LENGTH, STORE_VALUE_MAX_SIZE } from '@activepieces/shared'
+import {
+    STORE_KEY_MAX_LENGTH,
+    STORE_VALUE_MAX_SIZE,
+    StorageError,
+    StorageInvalidKeyError,
+    StorageLimitError,
+} from '@activepieces/shared'
 import { createContextStore } from '../../src/lib/piece-context/store'
 
 const STORE_PARAMS = {
@@ -10,7 +16,6 @@ const STORE_PARAMS = {
 }
 
 describe('store service', () => {
-
     beforeEach(() => {
         vi.restoreAllMocks()
     })
@@ -18,10 +23,12 @@ describe('store service', () => {
     describe('createContextStore get()', () => {
         it('returns value when store entry exists', async () => {
             const storeEntry = { key: 'test_flow_flow-123/myKey', value: { foo: 'bar' } }
-            vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
-                JSON.stringify(storeEntry),
-                { status: 200, headers: { 'Content-Type': 'application/json' } },
-            ))
+            vi.spyOn(global, 'fetch').mockResolvedValue(
+                new Response(JSON.stringify(storeEntry), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' },
+                }),
+            )
 
             const store = createContextStore(STORE_PARAMS)
             const result = await store.get('myKey')
@@ -60,10 +67,12 @@ describe('store service', () => {
     describe('createContextStore put()', () => {
         it('puts value and returns it', async () => {
             const storeEntry = { key: 'test_flow_flow-123/myKey', value: 'hello' }
-            vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
-                JSON.stringify(storeEntry),
-                { status: 200, headers: { 'Content-Type': 'application/json' } },
-            ))
+            vi.spyOn(global, 'fetch').mockResolvedValue(
+                new Response(JSON.stringify(storeEntry), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' },
+                }),
+            )
 
             const store = createContextStore(STORE_PARAMS)
             const result = await store.put('myKey', 'hello')
@@ -104,10 +113,12 @@ describe('store service', () => {
 
     describe('key scoping', () => {
         it('FLOW scope prefixes key with flow id', async () => {
-            const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
-                JSON.stringify({ key: 'k', value: null }),
-                { status: 200, headers: { 'Content-Type': 'application/json' } },
-            ))
+            const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
+                new Response(JSON.stringify({ key: 'k', value: null }), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' },
+                }),
+            )
 
             const store = createContextStore(STORE_PARAMS)
             await store.get('myKey', StoreScope.FLOW)
@@ -117,10 +128,12 @@ describe('store service', () => {
         })
 
         it('PROJECT scope prefixes key without flow id', async () => {
-            const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
-                JSON.stringify({ key: 'k', value: null }),
-                { status: 200, headers: { 'Content-Type': 'application/json' } },
-            ))
+            const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
+                new Response(JSON.stringify({ key: 'k', value: null }), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' },
+                }),
+            )
 
             const store = createContextStore(STORE_PARAMS)
             await store.get('myKey', StoreScope.PROJECT)
@@ -131,10 +144,12 @@ describe('store service', () => {
         })
 
         it('default scope is FLOW', async () => {
-            const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
-                JSON.stringify({ key: 'k', value: null }),
-                { status: 200, headers: { 'Content-Type': 'application/json' } },
-            ))
+            const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
+                new Response(JSON.stringify({ key: 'k', value: null }), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' },
+                }),
+            )
 
             const store = createContextStore(STORE_PARAMS)
             await store.get('myKey')

@@ -88,8 +88,8 @@ const AboveTriggerButton = ({
                   {shortCutIsEscape
                     ? 'Esc'
                     : isMacSystem
-                    ? '⌘ + D'
-                    : 'Ctrl + D'}
+                      ? '⌘ + D'
+                      : 'Ctrl + D'}
                 </span>
               )}
             </div>

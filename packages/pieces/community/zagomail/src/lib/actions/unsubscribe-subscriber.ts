@@ -1,29 +1,25 @@
-import { zagomailAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { zagoMailApiService } from '../common/request';
-import { listUId } from '../common/props';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { zagomailAuth } from '../auth'
+import { listUId } from '../common/props'
+import { zagoMailApiService } from '../common/request'
 
 export const unsubscribeSubscriber = createAction({
-  auth: zagomailAuth,
-  name: 'unsubscribeSubscriber',
-  displayName: 'Unsubscribe Subscriber',
-  description: 'Unsubscribes a subscriber.',
-  props: {
-    listUId: listUId,
-    subscriberUid: Property.ShortText({
-      displayName: 'Subscriber ID',
-      description: 'The ID of the subscriber you want to unsubscribe.',
-      required: true,
-    }),
-  },
-  async run({ propsValue, auth }) {
-    const listUId = propsValue.listUId;
-    const subsriberUid = propsValue.subscriberUid;
+    auth: zagomailAuth,
+    name: 'unsubscribeSubscriber',
+    displayName: 'Unsubscribe Subscriber',
+    description: 'Unsubscribes a subscriber.',
+    props: {
+        listUId: listUId,
+        subscriberUid: Property.ShortText({
+            displayName: 'Subscriber ID',
+            description: 'The ID of the subscriber you want to unsubscribe.',
+            required: true,
+        }),
+    },
+    async run({ propsValue, auth }) {
+        const listUId = propsValue.listUId
+        const subsriberUid = propsValue.subscriberUid
 
-    return await zagoMailApiService.unsubscribeSubscriber(
-      auth.secret_text,
-      listUId,
-      subsriberUid
-    );
-  },
-});
+        return await zagoMailApiService.unsubscribeSubscriber(auth.secret_text, listUId, subsriberUid)
+    },
+})

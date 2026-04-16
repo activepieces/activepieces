@@ -78,5 +78,4 @@ export class AddPlatformIdToAIUsageSqlite1751475726665 implements MigrationInter
             CREATE INDEX "idx_ai_usage_project_created" ON "ai_usage" ("projectId", "created")
         `)
     }
-
 }

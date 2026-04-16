@@ -37,7 +37,16 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
-        const { data: provisioned, error: provisionError } = await tryCatch(() => provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient }))
+        const { data: provisioned, error: provisionError } = await tryCatch(() =>
+            provisionFlowPieces({
+                flowVersion,
+                platformId: data.platformId,
+                flowId: data.flowId,
+                projectId: data.projectId,
+                log: ctx.log,
+                apiClient: ctx.apiClient,
+            }),
+        )
         if (provisionError) {
             await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
             throw provisionError
@@ -57,30 +66,38 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
 
             const resolvedPayload = await resolvePayload(data.payload, data.projectId, ctx.apiClient)
             const operation = await buildFlowOperation(ctx, data, resolvedPayload, flowVersion, timeoutInSeconds)
-            const result = await sandbox.execute(
-                EngineOperationType.EXECUTE_FLOW,
-                operation,
-                { timeoutInSeconds },
-            )
+            const result = await sandbox.execute(EngineOperationType.EXECUTE_FLOW, operation, { timeoutInSeconds })
 
             if (result.status === EngineResponseStatus.LOG_SIZE_EXCEEDED) {
                 await reportFlowStatus(ctx, data, FlowRunStatus.LOG_SIZE_EXCEEDED)
-                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.LOG_SIZE_EXCEEDED, logs: result.logs }
+                return {
+                    kind: JobResultKind.FIRE_AND_FORGET,
+                    status: EngineResponseStatus.LOG_SIZE_EXCEEDED,
+                    logs: result.logs,
+                }
             }
 
             if (result.status === EngineResponseStatus.INTERNAL_ERROR) {
                 await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
-                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR, logs: result.logs }
+                return {
+                    kind: JobResultKind.FIRE_AND_FORGET,
+                    status: EngineResponseStatus.INTERNAL_ERROR,
+                    logs: result.logs,
+                }
             }
 
             const delayInSeconds = result.delayInSeconds
             if (delayInSeconds && delayInSeconds > 0) {
-                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds, logs: result.logs }
+                return {
+                    kind: JobResultKind.FIRE_AND_FORGET,
+                    status: EngineResponseStatus.OK,
+                    delayInSeconds,
+                    logs: result.logs,
+                }
             }
 
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
-        }
-        catch (e) {
+        } catch (e) {
             await ctx.sandboxManager.invalidate(ctx.log)
             if (e instanceof ActivepiecesError) {
                 if (e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
@@ -98,8 +115,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             }
             await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
             throw e
-        }
-        finally {
+        } finally {
             await ctx.sandboxManager.release(ctx.log)
         }
     },
@@ -133,7 +149,10 @@ async function buildFlowOperation(
     if (data.executionType === ExecutionType.RESUME) {
         const executionState = await fetchExecutionState({ apiClient: ctx.apiClient, data })
         if (Object.keys(executionState.steps).length === 0) {
-            ctx.log.error({ runId: data.runId, executionType: data.executionType }, 'RESUME operation has empty execution state — this is a bug that would cause an infinite loop')
+            ctx.log.error(
+                { runId: data.runId, executionType: data.executionType },
+                'RESUME operation has empty execution state — this is a bug that would cause an infinite loop',
+            )
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
@@ -159,29 +178,37 @@ async function buildFlowOperation(
     }
 }
 
-async function fetchExecutionState({ apiClient, data }: { apiClient: WorkerToApiContract, data: ExecuteFlowJobData }): Promise<ExecutionState> {
+async function fetchExecutionState({
+    apiClient,
+    data,
+}: {
+    apiClient: WorkerToApiContract
+    data: ExecuteFlowJobData
+}): Promise<ExecutionState> {
     if (isNil(data.logsFileId)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.RESUME_LOGS_FILE_MISSING,
-            params: { runId: data.runId },
-        }, 'logsFileId is missing for RESUME operation')
+        throw new ActivepiecesError(
+            {
+                code: ErrorCode.RESUME_LOGS_FILE_MISSING,
+                params: { runId: data.runId },
+            },
+            'logsFileId is missing for RESUME operation',
+        )
     }
     const buffer = await apiClient.getPayloadFile({ fileId: data.logsFileId, projectId: data.projectId })
     const parsed = JSON.parse(buffer.toString('utf-8'))
     if (isNil(parsed.executionState)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.EXECUTION_STATE_MISSING,
-            params: { logsFileId: data.logsFileId },
-        }, 'executionState is missing in logs file')
+        throw new ActivepiecesError(
+            {
+                code: ErrorCode.EXECUTION_STATE_MISSING,
+                params: { logsFileId: data.logsFileId },
+            },
+            'executionState is missing in logs file',
+        )
     }
     return parsed.executionState
 }
 
-async function reportFlowStatus(
-    ctx: JobContext,
-    data: ExecuteFlowJobData,
-    status: FlowRunStatus,
-): Promise<void> {
+async function reportFlowStatus(ctx: JobContext, data: ExecuteFlowJobData, status: FlowRunStatus): Promise<void> {
     await ctx.apiClient.uploadRunLog({
         runId: data.runId,
         status,
@@ -193,11 +220,18 @@ async function reportFlowStatus(
     })
 
     if (status === FlowRunStatus.INTERNAL_ERROR && isDedicatedWorker()) {
-        onCallService(ctx.log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
-            code: ErrorCode.ENGINE_OPERATION_FAILURE,
-            message: `Flow run ${data.runId} ended with INTERNAL_ERROR`,
-            params: { runId: data.runId, flowId: data.flowId, projectId: data.projectId },
-        }).catch((e) => ctx.log.error({ runId: data.runId, error: inspect(e) }, 'Failed to send on-call page for INTERNAL_ERROR'))
+        onCallService(ctx.log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK)
+            .page({
+                code: ErrorCode.ENGINE_OPERATION_FAILURE,
+                message: `Flow run ${data.runId} ended with INTERNAL_ERROR`,
+                params: { runId: data.runId, flowId: data.flowId, projectId: data.projectId },
+            })
+            .catch((e) =>
+                ctx.log.error(
+                    { runId: data.runId, error: inspect(e) },
+                    'Failed to send on-call page for INTERNAL_ERROR',
+                ),
+            )
     }
 }
 

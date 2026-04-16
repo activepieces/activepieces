@@ -1,6 +1,6 @@
-import path from 'path'
 import { environmentMigrations } from '@activepieces/server-utils'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
+import path from 'path'
 
 export type SystemProp = AppSystemProp
 
@@ -177,8 +177,7 @@ export const apVersionUtil = {
             const data: PackageJson = await response.json()
             cachedVersion = data.version
             return data.version
-        }
-        catch (ex) {
+        } catch (ex) {
             return '0.0.0'
         }
     },

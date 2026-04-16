@@ -6,9 +6,12 @@ export class AddPlatformToProject1698078715730 implements MigrationInterface {
     name = 'AddPlatformToProject1698078715730'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'up',
+        )
         await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
         `)
@@ -53,9 +56,12 @@ export class AddPlatformToProject1698078715730 implements MigrationInterface {
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
 
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'up',
+        )
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -101,8 +107,11 @@ export class AddPlatformToProject1698078715730 implements MigrationInterface {
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
 
-        log.info({
-            name: this.name,
-        }, 'down')
+        log.info(
+            {
+                name: this.name,
+            },
+            'down',
+        )
     }
 }

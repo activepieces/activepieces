@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { missiveAuth } from '../common/auth';
-import { missiveCommon } from '../common/client';
-import { contactBookDropdown } from '../common/dynamic-dropdowns';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { missiveAuth } from '../common/auth'
+import { missiveCommon } from '../common/client'
+import { contactBookDropdown } from '../common/dynamic-dropdowns'
 
 export const findContact = createAction({
     name: 'find_contact',
@@ -13,11 +13,13 @@ export const findContact = createAction({
         contact_book: contactBookDropdown,
         search: Property.ShortText({
             displayName: 'Search Term',
-            description: 'Search across all contact information including name, email, phone, organization, custom fields, notes, etc. Leave empty to get all contacts.',
+            description:
+                'Search across all contact information including name, email, phone, organization, custom fields, notes, etc. Leave empty to get all contacts.',
             required: false,
         }),
         search_options: Property.DynamicProperties({
-    auth: missiveAuth,            displayName: 'Search & Filter Options',
+            auth: missiveAuth,
+            displayName: 'Search & Filter Options',
             description: 'Configure how to search and filter contacts',
             required: false,
             refreshers: [],
@@ -30,8 +32,8 @@ export const findContact = createAction({
                             required: false,
                             options: {
                                 disabled: true,
-                                options: [{ label: 'Please authenticate first', value: '' }]
-                            }
+                                options: [{ label: 'Please authenticate first', value: '' }],
+                            },
                         }),
                         limit: Property.Number({
                             displayName: 'Results Limit',
@@ -55,8 +57,8 @@ export const findContact = createAction({
                             description: 'Please authenticate first',
                             required: false,
                             defaultValue: false,
-                        })
-                    };
+                        }),
+                    }
                 }
 
                 return {
@@ -68,9 +70,9 @@ export const findContact = createAction({
                         options: {
                             options: [
                                 { label: 'Last Name (A-Z)', value: 'last_name' },
-                                { label: 'Last Modified (Newest First)', value: 'last_modified' }
-                            ]
-                        }
+                                { label: 'Last Modified (Newest First)', value: 'last_modified' },
+                            ],
+                        },
                     }),
                     limit: Property.Number({
                         displayName: 'Results Limit',
@@ -91,11 +93,12 @@ export const findContact = createAction({
                     }),
                     include_deleted: Property.Checkbox({
                         displayName: 'Include Deleted Contacts',
-                        description: 'Include deleted contacts when using "Modified Since" filter (only shows ID and deleted status)',
+                        description:
+                            'Include deleted contacts when using "Modified Since" filter (only shows ID and deleted status)',
                         required: false,
                         defaultValue: false,
-                    })
-                };
+                    }),
+                }
             },
         }),
         result_format: Property.StaticDropdown({
@@ -107,56 +110,52 @@ export const findContact = createAction({
                 options: [
                     { label: 'Full Contact Data', value: 'full' },
                     { label: 'Summary Only', value: 'summary' },
-                    { label: 'Count Only', value: 'count' }
-                ]
-            }
-        })
+                    { label: 'Count Only', value: 'count' },
+                ],
+            },
+        }),
     },
     async run(context) {
-        const propsValue = context.propsValue as any;
-        const { 
-            contact_book, 
-            search,
-            result_format
-        } = propsValue;
+        const propsValue = context.propsValue as any
+        const { contact_book, search, result_format } = propsValue
 
         if (!contact_book) {
-            throw new Error('Contact book is required to search for contacts');
+            throw new Error('Contact book is required to search for contacts')
         }
 
         // Build query parameters
         const queryParams: Record<string, string> = {
-            contact_book: contact_book
-        };
+            contact_book: contact_book,
+        }
 
         if (search && search.trim()) {
-            queryParams['search'] = search.trim();
+            queryParams['search'] = search.trim()
         }
 
         // Handle search options
-        const searchOptions = propsValue['search_options'] || {};
-        
+        const searchOptions = propsValue['search_options'] || {}
+
         if (searchOptions['order']) {
-            queryParams['order'] = searchOptions['order'];
+            queryParams['order'] = searchOptions['order']
         }
-        
+
         if (searchOptions['limit'] && searchOptions['limit'] > 0) {
-            const limit = Math.min(Math.max(1, parseInt(searchOptions['limit'])), 200);
-            queryParams['limit'] = limit.toString();
+            const limit = Math.min(Math.max(1, parseInt(searchOptions['limit'])), 200)
+            queryParams['limit'] = limit.toString()
         }
-        
+
         if (searchOptions['offset'] && searchOptions['offset'] >= 0) {
-            queryParams['offset'] = parseInt(searchOptions['offset']).toString();
+            queryParams['offset'] = parseInt(searchOptions['offset']).toString()
         }
-        
+
         if (searchOptions['modified_since']) {
-            const date = new Date(searchOptions['modified_since']);
-            const timestamp = Math.floor(date.getTime() / 1000);
-            queryParams['modified_since'] = timestamp.toString();
+            const date = new Date(searchOptions['modified_since'])
+            const timestamp = Math.floor(date.getTime() / 1000)
+            queryParams['modified_since'] = timestamp.toString()
         }
-        
+
         if (searchOptions['include_deleted']) {
-            queryParams['include_deleted'] = 'true';
+            queryParams['include_deleted'] = 'true'
         }
 
         // Make API call
@@ -165,9 +164,9 @@ export const findContact = createAction({
             method: HttpMethod.GET,
             resourceUri: '/contacts',
             queryParams,
-        });
+        })
 
-        const contacts = response.body?.contacts || [];
+        const contacts = response.body?.contacts || []
 
         // Format results based on user preference
         if (result_format === 'count') {
@@ -179,18 +178,18 @@ export const findContact = createAction({
                     order: searchOptions['order'] || 'last_name',
                     limit: queryParams['limit'] || '50',
                     modified_since: searchOptions['modified_since'] || null,
-                    include_deleted: searchOptions['include_deleted'] || false
-                }
-            };
+                    include_deleted: searchOptions['include_deleted'] || false,
+                },
+            }
         } else if (result_format === 'summary') {
             return {
                 total_found: contacts.length,
                 contacts: contacts.map((contact: any) => {
-                    const primaryEmail = contact.infos?.find((info: any) => info.kind === 'email')?.value;
-                    const primaryPhone = contact.infos?.find((info: any) => info.kind === 'phone_number')?.value;
-                    const primaryOrg = contact.memberships?.find((membership: any) => 
-                        membership.group?.kind === 'organization'
-                    )?.group?.name;
+                    const primaryEmail = contact.infos?.find((info: any) => info.kind === 'email')?.value
+                    const primaryPhone = contact.infos?.find((info: any) => info.kind === 'phone_number')?.value
+                    const primaryOrg = contact.memberships?.find(
+                        (membership: any) => membership.group?.kind === 'organization',
+                    )?.group?.name
 
                     return {
                         id: contact.id,
@@ -203,17 +202,17 @@ export const findContact = createAction({
                         starred: contact.starred || false,
                         deleted: contact.deleted || false,
                         modified_at: contact.modified_at,
-                        contact_book: contact.contact_book
-                    };
+                        contact_book: contact.contact_book,
+                    }
                 }),
                 search_info: {
                     search_term: search || 'all contacts',
                     contact_book_id: contact_book,
                     order: searchOptions['order'] || 'last_name',
                     limit: parseInt(queryParams['limit'] || '50'),
-                    offset: parseInt(queryParams['offset'] || '0')
-                }
-            };
+                    offset: parseInt(queryParams['offset'] || '0'),
+                },
+            }
         } else {
             // Full format - return complete API response with metadata
             return {
@@ -228,10 +227,10 @@ export const findContact = createAction({
                         limit: parseInt(queryParams['limit'] || '50'),
                         offset: parseInt(queryParams['offset'] || '0'),
                         modified_since: searchOptions['modified_since'] || null,
-                        include_deleted: searchOptions['include_deleted'] || false
-                    }
-                }
-            };
+                        include_deleted: searchOptions['include_deleted'] || false,
+                    },
+                },
+            }
         }
     },
-});
+})

@@ -20,20 +20,10 @@ export class ListFlowRunsIndices1683199709317 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(
-            'DROP INDEX "idx_run_project_id_flow_id_environment_status_created_desc"',
-        )
-        await queryRunner.query(
-            'DROP INDEX "idx_run_project_id_flow_id_environment_created_desc"',
-        )
-        await queryRunner.query(
-            'DROP INDEX "idx_run_project_id_environment_status_created_desc"',
-        )
-        await queryRunner.query(
-            'DROP INDEX "idx_run_project_id_environment_created_desc"',
-        )
-        await queryRunner.query(
-            'CREATE INDEX "idx_run_project_id" ON "flow_run" ("projectId") ',
-        )
+        await queryRunner.query('DROP INDEX "idx_run_project_id_flow_id_environment_status_created_desc"')
+        await queryRunner.query('DROP INDEX "idx_run_project_id_flow_id_environment_created_desc"')
+        await queryRunner.query('DROP INDEX "idx_run_project_id_environment_status_created_desc"')
+        await queryRunner.query('DROP INDEX "idx_run_project_id_environment_created_desc"')
+        await queryRunner.query('CREATE INDEX "idx_run_project_id" ON "flow_run" ("projectId") ')
     }
 }

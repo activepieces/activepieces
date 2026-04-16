@@ -10,10 +10,12 @@ export const UpdateProjectPlatformRequest = z.object({
     externalId: z.string().optional(),
     metadata: Metadata.optional(),
     icon: ProjectIcon.optional(),
-    plan: z.object({
-        pieces: z.array(z.string()).optional(),
-        piecesFilterType: z.nativeEnum(PiecesFilterType).optional(),
-    }).optional(),
+    plan: z
+        .object({
+            pieces: z.array(z.string()).optional(),
+            piecesFilterType: z.nativeEnum(PiecesFilterType).optional(),
+        })
+        .optional(),
     globalConnectionExternalIds: z.array(z.string()).optional(),
     maxConcurrentJobs: Nullable(z.number().int().positive()).optional(),
 })

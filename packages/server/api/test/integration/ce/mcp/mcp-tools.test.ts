@@ -1,5 +1,3 @@
-import { beforeAll, afterAll, describe, it, expect } from 'vitest'
-import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import {
     apId,
     FlowActionType,
@@ -9,26 +7,28 @@ import {
     PieceType,
     StepLocationRelativeToParent,
 } from '@activepieces/shared'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { createTestContext } from '../../../helpers/test-context'
-import { db } from '../../../helpers/db'
-import { createMockPieceMetadata } from '../../../helpers/mocks'
-import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { apAddBranchTool } from '../../../../src/app/mcp/tools/ap-add-branch'
+import { apAddStepTool } from '../../../../src/app/mcp/tools/ap-add-step'
 import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
-import { apFlowStructureTool } from '../../../../src/app/mcp/tools/ap-flow-structure'
-import { apListPiecesTool } from '../../../../src/app/mcp/tools/ap-list-pieces'
-import { apAddStepTool } from '../../../../src/app/mcp/tools/ap-add-step'
-import { apUpdateStepTool } from '../../../../src/app/mcp/tools/ap-update-step'
-import { apRenameFlowTool } from '../../../../src/app/mcp/tools/ap-rename-flow'
-import { apDeleteStepTool } from '../../../../src/app/mcp/tools/ap-delete-step'
-import { apLockAndPublishTool } from '../../../../src/app/mcp/tools/ap-lock-and-publish'
-import { apAddBranchTool } from '../../../../src/app/mcp/tools/ap-add-branch'
 import { apDeleteBranchTool } from '../../../../src/app/mcp/tools/ap-delete-branch'
+import { apDeleteStepTool } from '../../../../src/app/mcp/tools/ap-delete-step'
+import { apFlowStructureTool } from '../../../../src/app/mcp/tools/ap-flow-structure'
 import { apGetPiecePropsTool } from '../../../../src/app/mcp/tools/ap-get-piece-props'
-import { apValidateStepConfigTool } from '../../../../src/app/mcp/tools/ap-validate-step-config'
-import { apValidateFlowTool } from '../../../../src/app/mcp/tools/ap-validate-flow'
+import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
+import { apListPiecesTool } from '../../../../src/app/mcp/tools/ap-list-pieces'
+import { apLockAndPublishTool } from '../../../../src/app/mcp/tools/ap-lock-and-publish'
+import { apRenameFlowTool } from '../../../../src/app/mcp/tools/ap-rename-flow'
+import { apUpdateStepTool } from '../../../../src/app/mcp/tools/ap-update-step'
 import { apUpdateTriggerTool } from '../../../../src/app/mcp/tools/ap-update-trigger'
+import { apValidateFlowTool } from '../../../../src/app/mcp/tools/ap-validate-flow'
+import { apValidateStepConfigTool } from '../../../../src/app/mcp/tools/ap-validate-step-config'
+import { db } from '../../../helpers/db'
+import { createMockPieceMetadata } from '../../../helpers/mocks'
+import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
 let mockLog: FastifyBaseLogger
@@ -92,8 +92,23 @@ beforeAll(async () => {
                 description: 'Action with dynamic props',
                 requireAuth: false,
                 props: {
-                    mode: { type: 'STATIC_DROPDOWN', displayName: 'Mode', required: true, options: { options: [{ label: 'A', value: 'a' }, { label: 'B', value: 'b' }] } },
-                    dynamicField: { type: 'DYNAMIC', displayName: 'Dynamic Field', required: false, refreshers: ['mode'] },
+                    mode: {
+                        type: 'STATIC_DROPDOWN',
+                        displayName: 'Mode',
+                        required: true,
+                        options: {
+                            options: [
+                                { label: 'A', value: 'a' },
+                                { label: 'B', value: 'b' },
+                            ],
+                        },
+                    },
+                    dynamicField: {
+                        type: 'DYNAMIC',
+                        displayName: 'Dynamic Field',
+                        required: false,
+                        refreshers: ['mode'],
+                    },
                 },
             },
         },
@@ -118,8 +133,8 @@ function makeMcp(projectId: string): McpServer {
     }
 }
 
-function text(result: { content: Array<{ type: 'text', text: string }> }): string {
-    return result.content.map(c => c.text).join('\n')
+function text(result: { content: Array<{ type: 'text'; text: string }> }): string {
+    return result.content.map((c) => c.text).join('\n')
 }
 
 async function createFlowAndGetId(mcp: McpServer, flowName: string): Promise<string> {

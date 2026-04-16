@@ -1,18 +1,9 @@
-
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    PlatformRole,
-    PrincipalType,
-    UserStatus,
-} from '@activepieces/shared'
+import { PlatformRole, PrincipalType, UserStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
-import {
-    mockAndSaveBasicSetup,
-    mockAndSaveBasicSetupWithApiKey,
-    mockBasicUser,
-} from '../../../helpers/mocks'
+import { mockAndSaveBasicSetup, mockAndSaveBasicSetupWithApiKey, mockBasicUser } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -25,7 +16,6 @@ afterAll(async () => {
 })
 describe('Enterprise User API', () => {
     describe('List users endpoint', () => {
-
         it('Allows service accounts', async () => {
             // arrange
             const { mockOwner, mockPlatform, mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
@@ -50,11 +40,9 @@ describe('Enterprise User API', () => {
             expect(responseBody.data).toHaveLength(1)
             expect(responseBody.data[0].id).toBe(mockOwner.id)
         })
-
     })
 
     describe('Update user endpoint', () => {
-
         it('Failed if own other platform', async () => {
             // arrange
             const { mockPlatform } = await mockAndSaveBasicSetup()
@@ -70,7 +58,7 @@ describe('Enterprise User API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockOwner2.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform2.id,
                 },
@@ -105,7 +93,7 @@ describe('Enterprise User API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -156,12 +144,9 @@ describe('Enterprise User API', () => {
             expect(responseJson.password).toBeUndefined()
             expect(responseJson.status).toBe(UserStatus.ACTIVE)
         })
-
-
     })
 
     describe('Delete user endpoint', () => {
-
         it('Fails if user is not platform owner', async () => {
             // arrange
             const { mockPlatform } = await mockAndSaveBasicSetupWithApiKey()
@@ -175,7 +160,7 @@ describe('Enterprise User API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -207,7 +192,7 @@ describe('Enterprise User API', () => {
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
+
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -225,6 +210,5 @@ describe('Enterprise User API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
         })
-
     })
 })

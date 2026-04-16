@@ -62,5 +62,4 @@ export class CreateTableWebhooks1741669458075 implements MigrationInterface {
             CREATE INDEX "idx_table_project_id_name" ON "table" ("name", "projectId")
         `)
     }
-
 }

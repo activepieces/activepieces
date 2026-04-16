@@ -19,7 +19,6 @@ export const authenticateOrThrow = async (log: FastifyBaseLogger, rawToken: stri
     }
 }
 
-
 async function createPrincipalForApiKey(apiKeyValue: string): Promise<Principal> {
     const apiKey = await apiKeyService.getByValue(apiKeyValue)
     if (isNil(apiKey)) {
@@ -38,4 +37,3 @@ async function createPrincipalForApiKey(apiKeyValue: string): Promise<Principal>
         },
     }
 }
-

@@ -27,15 +27,9 @@ export class AddReferral1690459469381 implements MigrationInterface {
         if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
             return
         }
-        await queryRunner.query(
-            'ALTER TABLE "referal" DROP CONSTRAINT "fk_referral_referring_user_id"',
-        )
-        await queryRunner.query(
-            'ALTER TABLE "referal" DROP CONSTRAINT "fk_referral_referred_user_id"',
-        )
-        await queryRunner.query(
-            'DROP INDEX "idx_referral_referring_user_id"',
-        )
+        await queryRunner.query('ALTER TABLE "referal" DROP CONSTRAINT "fk_referral_referring_user_id"')
+        await queryRunner.query('ALTER TABLE "referal" DROP CONSTRAINT "fk_referral_referred_user_id"')
+        await queryRunner.query('DROP INDEX "idx_referral_referring_user_id"')
         await queryRunner.query('DROP TABLE "referal"')
     }
 }

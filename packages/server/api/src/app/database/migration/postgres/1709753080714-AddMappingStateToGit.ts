@@ -23,5 +23,4 @@ export class AddMappingStateToGit1709753080714 implements MigrationInterface {
             ALTER TABLE "git_repo" DROP COLUMN "mapping"
         `)
     }
-
 }

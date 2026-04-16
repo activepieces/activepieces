@@ -1,8 +1,8 @@
 import {
-  PieceCategory,
-  FlowTriggerType,
-  FlowActionType,
   AI_PIECE_NAME,
+  FlowActionType,
+  FlowTriggerType,
+  PieceCategory,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 

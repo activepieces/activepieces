@@ -11,14 +11,15 @@ async function buildClient(config: OnePasswordProviderConfig) {
     })
 }
 
-export const onePasswordProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.ONEPASSWORD> => ({
+export const onePasswordProvider = (
+    log: FastifyBaseLogger,
+): SecretManagerProvider<SecretManagerProviderId.ONEPASSWORD> => ({
     checkConnection: async (config) => {
         try {
             const client = await buildClient(config)
             await client.vaults.list()
             return true
-        }
-        catch (error: unknown) {
+        } catch (error: unknown) {
             throwConnectionError({ error, provider: SecretManagerProviderId.ONEPASSWORD, log })
         }
     },
@@ -33,10 +34,15 @@ export const onePasswordProvider = (log: FastifyBaseLogger): SecretManagerProvid
         try {
             const client = await buildClient(config)
             return await client.secrets.resolve(request.path)
-        }
-        catch (error: unknown) {
+        } catch (error: unknown) {
             if (error instanceof ActivepiecesError) throw error
-            throwGetSecretError({ error, path: request.path, provider: SecretManagerProviderId.ONEPASSWORD, request, log })
+            throwGetSecretError({
+                error,
+                path: request.path,
+                provider: SecretManagerProviderId.ONEPASSWORD,
+                request,
+                log,
+            })
         }
     },
 })

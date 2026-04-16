@@ -1,4 +1,3 @@
-import { inspect } from 'util'
 import {
     EngineOperation,
     EngineOperationType,
@@ -14,14 +13,17 @@ import {
     TriggerHookType,
     tryCatch,
 } from '@activepieces/shared'
+import { inspect } from 'util'
 import { authValidationOperation } from './auth-validation.operation'
 import { flowOperation } from './flow.operation'
 import { pieceMetadataOperation } from './piece-metadata.operation'
 import { propertyOperation } from './property.operation'
 import { triggerHookOperation } from './trigger-hook.operation'
 
-
-export async function execute(operationType: EngineOperationType, operation: EngineOperation): Promise<EngineResponse<unknown>> {
+export async function execute(
+    operationType: EngineOperationType,
+    operation: EngineOperation,
+): Promise<EngineResponse<unknown>> {
     const result = await tryCatch(async () => {
         switch (operationType) {
             case EngineOperationType.EXTRACT_PIECE_METADATA: {
@@ -40,7 +42,11 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                 return authValidationOperation.execute(operation as ExecuteValidateAuthOperation)
             }
             default: {
-                throw new ExecutionError('Unsupported operation type', `Unsupported operation type: ${operationType}`, ExecutionErrorType.ENGINE)
+                throw new ExecutionError(
+                    'Unsupported operation type',
+                    `Unsupported operation type: ${operationType}`,
+                    ExecutionErrorType.ENGINE,
+                )
             }
         }
     })

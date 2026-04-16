@@ -1,6 +1,6 @@
 import { CodeAction, FlowRunStatus, isNil, PieceAction } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
-import {  FlowExecutorContext } from '../handler/context/flow-execution-context'
+import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 
 export async function runWithExponentialBackoff<T extends CodeAction | PieceAction>(
     executionState: FlowExecutorContext,
@@ -17,8 +17,9 @@ export async function runWithExponentialBackoff<T extends CodeAction | PieceActi
         retryEnabled &&
         isNil(constants.stepNameToTest)
     ) {
-        const backoffTime = Math.pow(constants.retryConstants.retryExponential, attemptCount) * constants.retryConstants.retryInterval
-        await new Promise(resolve => setTimeout(resolve, backoffTime))
+        const backoffTime =
+            Math.pow(constants.retryConstants.retryExponential, attemptCount) * constants.retryConstants.retryInterval
+        await new Promise((resolve) => setTimeout(resolve, backoffTime))
         return runWithExponentialBackoff(executionState, action, constants, requestFunction, attemptCount + 1)
     }
 
@@ -37,13 +38,11 @@ export async function continueIfFailureHandler(
         continueOnFailure &&
         isNil(constants.stepNameToTest)
     ) {
-        return executionState
-            .setVerdict({ status: FlowRunStatus.RUNNING })
+        return executionState.setVerdict({ status: FlowRunStatus.RUNNING })
     }
 
     return executionState
 }
-
 
 const executionFailedWithRetryableError = (flowExecutorContext: FlowExecutorContext): boolean => {
     return flowExecutorContext.verdict.status === FlowRunStatus.FAILED
@@ -56,4 +55,3 @@ type Request<T extends CodeAction | PieceAction> = {
 }
 
 type RequestFunction<T extends CodeAction | PieceAction> = (request: Request<T>) => Promise<FlowExecutorContext>
-

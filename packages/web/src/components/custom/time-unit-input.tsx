@@ -6,11 +6,11 @@ import { cn } from '@/lib/utils';
 
 import { AutoComplete } from './autocomplete';
 import {
-  Period,
-  TimePickerType,
   getArrowByType,
   getDateByType,
+  Period,
   setDateByType,
+  TimePickerType,
 } from './time-picker-utils';
 
 export interface TimeUnitPickerInputProps

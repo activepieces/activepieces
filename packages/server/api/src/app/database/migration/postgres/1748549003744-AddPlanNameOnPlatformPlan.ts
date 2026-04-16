@@ -23,5 +23,4 @@ export class AddPlanNameOnPlatformPlan1748549003744 implements MigrationInterfac
             ALTER TABLE "platform_plan" DROP COLUMN "plan"
         `)
     }
-
 }

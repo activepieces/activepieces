@@ -1,6 +1,6 @@
 import * as fs from 'fs'
-import { getMigrations } from '../../packages/server/api/src/app/database/postgres-connection'
 import { Migration } from '../../packages/server/api/src/app/database/migration'
+import { getMigrations } from '../../packages/server/api/src/app/database/postgres-connection'
 
 function findMigrationsForRelease(releaseVersion: string): Migration[] {
     const migrationClasses = getMigrations()
@@ -22,7 +22,10 @@ function main(): void {
     if (outputFile) {
         fs.appendFileSync(outputFile, `migration_count=${migrations.length}\n`)
         fs.appendFileSync(outputFile, `has_breaking=${breakingMigrations.length > 0}\n`)
-        fs.appendFileSync(outputFile, `breaking_names=${breakingMigrations.map((m) => m.name ?? 'unknown').join(', ')}\n`)
+        fs.appendFileSync(
+            outputFile,
+            `breaking_names=${breakingMigrations.map((m) => m.name ?? 'unknown').join(', ')}\n`,
+        )
     }
 
     if (migrations.length === 0) {

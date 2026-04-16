@@ -1,9 +1,9 @@
-import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { MEMPOOL_API_BASE_URL } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework'
+import { MEMPOOL_API_BASE_URL } from '../../common'
 
 export const validateAddress = createAction({
- auth:PieceAuth.None(),
+    auth: PieceAuth.None(),
     name: 'validate_address',
     displayName: 'Validate Address',
     description: 'Validates a Bitcoin address',
@@ -12,14 +12,14 @@ export const validateAddress = createAction({
         address: Property.ShortText({
             displayName: 'Address',
             description: 'The Bitcoin address to validate',
-            required: true
-        })
+            required: true,
+        }),
     },
     async run({ propsValue }) {
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${MEMPOOL_API_BASE_URL}/api/v1/validate-address/${propsValue.address}`,
-        });
-        return response.body;
+        })
+        return response.body
     },
-});
+})

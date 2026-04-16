@@ -1,9 +1,9 @@
 import {
-  OtpType,
   ApEdition,
   ApFlagId,
   ErrorCode,
   isNil,
+  OtpType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useMemo, useRef, useState } from 'react';

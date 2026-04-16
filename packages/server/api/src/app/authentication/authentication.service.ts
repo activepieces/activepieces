@@ -1,5 +1,20 @@
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, OtpType, PlatformRole, PlatformWithoutSensitiveData, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    ApEdition,
+    ApFlagId,
+    AuthenticationResponse,
+    assertNotNullOrUndefined,
+    ErrorCode,
+    isNil,
+    OtpType,
+    PlatformRole,
+    PlatformWithoutSensitiveData,
+    ProjectType,
+    User,
+    UserIdentity,
+    UserIdentityProvider,
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
@@ -27,7 +42,10 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         if (isNil(params.platformId)) {
             const userIdentity = await userIdentityService(log).create({
                 ...params,
-                verified: params.provider === UserIdentityProvider.GOOGLE || params.provider === UserIdentityProvider.JWT || params.provider === UserIdentityProvider.SAML,
+                verified:
+                    params.provider === UserIdentityProvider.GOOGLE ||
+                    params.provider === UserIdentityProvider.JWT ||
+                    params.provider === UserIdentityProvider.SAML,
             })
             const response = await createUserAndPlatform(userIdentity, log)
             log.info({ email: params.email, provider: params.provider }, 'User signed up and platform created')
@@ -60,7 +78,9 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     },
     async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResponse> {
         const identity = await userIdentityService(log).verifyIdentityPassword(params)
-        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(identity.id, log) : params.predefinedPlatformId
+        const platformId = isNil(params.predefinedPlatformId)
+            ? await getPersonalPlatformIdForIdentity(identity.id, log)
+            : params.predefinedPlatformId
         if (isNil(platformId)) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHENTICATION,
@@ -90,7 +110,9 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         })
     },
     async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResponse> {
-        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForFederatedAuthn(params.email, log) : params.predefinedPlatformId
+        const platformId = isNil(params.predefinedPlatformId)
+            ? await getPersonalPlatformIdForFederatedAuthn(params.email, log)
+            : params.predefinedPlatformId
         const userIdentity = await userIdentityService(log).getIdentityByEmail(params.email)
 
         if (isNil(platformId)) {
@@ -139,7 +161,9 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         })
     },
     async switchPlatform(params: SwitchPlatformParams): Promise<AuthenticationResponse> {
-        const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId: params.identityId })
+        const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({
+            identityId: params.identityId,
+        })
         const platform = platforms.find((platform) => platform.id === params.platformId)
         await assertUserCanSwitchToPlatform(null, platform)
 
@@ -154,7 +178,10 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function assertUserCanSwitchToPlatform(currentPlatformId: string | null, platform: PlatformWithoutSensitiveData | undefined): Promise<void> {
+async function assertUserCanSwitchToPlatform(
+    currentPlatformId: string | null,
+    platform: PlatformWithoutSensitiveData | undefined,
+): Promise<void> {
     if (isNil(platform)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
@@ -175,7 +202,11 @@ async function assertUserCanSwitchToPlatform(currentPlatformId: string | null, p
     }
 }
 
-async function getUserForPlatform(identityId: string, platform: PlatformWithoutSensitiveData, log: FastifyBaseLogger): Promise<User> {
+async function getUserForPlatform(
+    identityId: string,
+    platform: PlatformWithoutSensitiveData,
+    log: FastifyBaseLogger,
+): Promise<User> {
     const user = await userService(log).getOneByIdentityAndPlatform({
         identityId,
         platformId: platform.id,
@@ -191,7 +222,10 @@ async function getUserForPlatform(identityId: string, platform: PlatformWithoutS
     return user
 }
 
-async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBaseLogger): Promise<AuthenticationResponse> {
+async function createUserAndPlatform(
+    userIdentity: UserIdentity,
+    log: FastifyBaseLogger,
+): Promise<AuthenticationResponse> {
     const user = await userService(log).create({
         identityId: userIdentity.id,
         platformRole: PlatformRole.ADMIN,
@@ -199,14 +233,14 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
     })
     const platform = await platformService(log).create({
         ownerId: user.id,
-        name: userIdentity.firstName + '\'s Platform',
+        name: userIdentity.firstName + "'s Platform",
     })
     await userService(log).addOwnerToPlatform({
         platformId: platform.id,
         id: user.id,
     })
     const defaultProject = await projectService(log).create({
-        displayName: userIdentity.firstName + '\'s Project',
+        displayName: userIdentity.firstName + "'s Project",
         ownerId: user.id,
         platformId: platform.id,
         type: ProjectType.PERSONAL,
@@ -263,8 +297,6 @@ async function getPersonalPlatformIdForIdentity(identityId: string, log: Fastify
     }
     return null
 }
-
-
 
 type FederatedAuthnParams = {
     email: string

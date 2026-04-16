@@ -144,6 +144,7 @@ const FlowVersionDetailsCard = React.memo(
 );
 
 FlowVersionDetailsCard.displayName = 'FlowVersionDetailsCard';
+
 export { FlowVersionDetailsCard };
 
 type FlowVersionDetailsCardProps = {

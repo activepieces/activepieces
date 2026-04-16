@@ -1,13 +1,46 @@
-import { ExecuteFlowJobData, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import {
+    ExecuteFlowJobData,
+    isNil,
+    LATEST_JOB_DATA_SCHEMA_VERSION,
+    WebhookJobData,
+    WorkerJobType,
+} from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
 import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { projectService } from '../../project/project-service'
-import { jobQueue, JobType } from '../job-queue/job-queue'
+import { JobType, jobQueue } from '../job-queue/job-queue'
 
-type LegacyOneTimeJobData = Pick<ExecuteFlowJobData, 'runId' | 'projectId' | 'flowVersionId' | 'environment' | 'synchronousHandlerId' | 'httpRequestId' | 'payload' | 'executeTrigger' | 'executionType' | 'progressUpdateType' | 'stepNameToTest' | 'sampleData'>
-type LegacyWebhookJobData = Pick<WebhookJobData, 'projectId' | 'schemaVersion' | 'requestId' | 'payload' | 'runEnvironment' | 'flowId' | 'saveSampleData' | 'flowVersionIdToRun' | 'execute' | 'parentRunId' | 'failParentOnFailure'>
+type LegacyOneTimeJobData = Pick<
+    ExecuteFlowJobData,
+    | 'runId'
+    | 'projectId'
+    | 'flowVersionId'
+    | 'environment'
+    | 'synchronousHandlerId'
+    | 'httpRequestId'
+    | 'payload'
+    | 'executeTrigger'
+    | 'executionType'
+    | 'progressUpdateType'
+    | 'stepNameToTest'
+    | 'sampleData'
+>
+type LegacyWebhookJobData = Pick<
+    WebhookJobData,
+    | 'projectId'
+    | 'schemaVersion'
+    | 'requestId'
+    | 'payload'
+    | 'runEnvironment'
+    | 'flowId'
+    | 'saveSampleData'
+    | 'flowVersionIdToRun'
+    | 'execute'
+    | 'parentRunId'
+    | 'failParentOnFailure'
+>
 const migratedKey = 'unified_queue_migrated'
 
 export const unifyOldQueuesIntoOne = (log: FastifyBaseLogger) => ({
@@ -19,7 +52,7 @@ export const unifyOldQueuesIntoOne = (log: FastifyBaseLogger) => ({
 
         const oneTimeJobsHadZero = await migrateOneTimeJobs(log)
         const webhookJobsHadZero = await migrateWebhookJobs(log)
-     
+
         await cleanQueue('usersInteractionJobs')
         await cleanQueue('agentsJobs')
         await cleanQueue('cleanupJobs')
@@ -49,9 +82,12 @@ async function migrateOneTimeJobs(log: FastifyBaseLogger): Promise<boolean> {
         const casedData = job.data
         migratedOneTimeJobs++
         if (migratedOneTimeJobs % 500 === 0) {
-            log.info({
-                migratedOneTimeJobs,
-            }, '[unifyOldQueuesIntoOne] Migrated one time jobs')
+            log.info(
+                {
+                    migratedOneTimeJobs,
+                },
+                '[unifyOldQueuesIntoOne] Migrated one time jobs',
+            )
         }
         const flowVersion = await flowVersionRepo().findOne({
             where: {
@@ -77,9 +113,12 @@ async function migrateOneTimeJobs(log: FastifyBaseLogger): Promise<boolean> {
         await job.remove()
     })
     if (migratedOneTimeJobs > 0) {
-        log.info({
-            migratedOneTimeJobs,
-        }, '[unifyOldQueuesIntoOne] Migrated one time jobs')
+        log.info(
+            {
+                migratedOneTimeJobs,
+            },
+            '[unifyOldQueuesIntoOne] Migrated one time jobs',
+        )
     }
     return hadZero
 }
@@ -90,9 +129,12 @@ async function migrateWebhookJobs(log: FastifyBaseLogger): Promise<boolean> {
         const casedData = job.data
         migratedWebhookJobs++
         if (migratedWebhookJobs % 500 === 0) {
-            log.info({
-                migratedWebhookJobs,
-            }, '[unifyOldQueuesIntoOne] Migrated webhook jobs')
+            log.info(
+                {
+                    migratedWebhookJobs,
+                },
+                '[unifyOldQueuesIntoOne] Migrated webhook jobs',
+            )
         }
         await jobQueue(log).add({
             id: job.id!,
@@ -106,9 +148,12 @@ async function migrateWebhookJobs(log: FastifyBaseLogger): Promise<boolean> {
         await job.remove()
     })
     if (migratedWebhookJobs > 0) {
-        log.info({
-            migratedWebhookJobs,
-        }, '[unifyOldQueuesIntoOne] Migrated webhook jobs')
+        log.info(
+            {
+                migratedWebhookJobs,
+            },
+            '[unifyOldQueuesIntoOne] Migrated webhook jobs',
+        )
     }
     return hadZero
 }
@@ -122,7 +167,7 @@ async function migrateQueue<T>(name: string, migrationFn: (job: Job<T>) => Promi
     const batchSize = 200
     for (let i = 0; i < waitingJobs.length; i += batchSize) {
         const batch = waitingJobs.slice(i, i + batchSize)
-        await Promise.all(batch.map(job => migrationFn(job)))
+        await Promise.all(batch.map((job) => migrationFn(job)))
     }
     await legacyQueue.close()
     return waitingJobs.length === 0

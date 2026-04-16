@@ -48,5 +48,4 @@ export class ChangeManualTasksCommentsToTodoComments1742433144687 implements Mig
             DROP TABLE "todo_comment"
         `)
     }
-
 }

@@ -6,12 +6,12 @@ import {
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
+  Activity,
+  Globe,
   KeyRound,
   Pencil,
   RefreshCcw,
   Trash,
-  Globe,
-  Activity,
   XIcon,
 } from 'lucide-react';
 

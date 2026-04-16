@@ -6,9 +6,12 @@ export class AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560 implement
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'up',
+        )
         await queryRunner.query(`
             CREATE TABLE "temporary_platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -161,9 +164,12 @@ export class AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560 implement
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'down')
+        log.info(
+            {
+                name: this.name,
+            },
+            'down',
+        )
         await queryRunner.query(`
             ALTER TABLE "platform"
                 RENAME TO "temporary_platform"
@@ -307,5 +313,4 @@ export class AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560 implement
             DROP TABLE "temporary_platform"
         `)
     }
-
 }

@@ -15,5 +15,4 @@ export class AddFlowOperationStatusField1764079041445 implements MigrationInterf
             ALTER TABLE "flow" DROP COLUMN "operationStatus"
         `)
     }
-
 }

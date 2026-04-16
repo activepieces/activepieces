@@ -1,33 +1,30 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { azureBlobStorageAuth } from '../auth';
-import { BlobServiceClient } from '@azure/storage-blob';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { BlobServiceClient } from '@azure/storage-blob'
+import { azureBlobStorageAuth } from '../auth'
 
 export const createContainer = createAction({
-  auth: azureBlobStorageAuth,
-  name: 'createContainer',
-  displayName: 'Create Container',
-  description: 'Creates a new container',
-  props: {
-    containerName: Property.ShortText({
-      displayName: 'Container Name',
-      description: 'The name for the newly created container',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const { containerName } = context.propsValue;
-    const auth = context.auth.props;
+    auth: azureBlobStorageAuth,
+    name: 'createContainer',
+    displayName: 'Create Container',
+    description: 'Creates a new container',
+    props: {
+        containerName: Property.ShortText({
+            displayName: 'Container Name',
+            description: 'The name for the newly created container',
+            required: true,
+        }),
+    },
+    async run(context) {
+        const { containerName } = context.propsValue
+        const auth = context.auth.props
 
-    const blobServiceClient = BlobServiceClient.fromConnectionString(
-      auth.connectionString
-    );
-    const { containerCreateResponse, containerClient } =
-      await blobServiceClient.createContainer(containerName);
+        const blobServiceClient = BlobServiceClient.fromConnectionString(auth.connectionString)
+        const { containerCreateResponse, containerClient } = await blobServiceClient.createContainer(containerName)
 
-    return {
-      ...containerCreateResponse,
-      containerName: containerClient.containerName,
-      accountName: containerClient.accountName,
-    };
-  },
-});
+        return {
+            ...containerCreateResponse,
+            containerName: containerClient.containerName,
+            accountName: containerClient.accountName,
+        }
+    },
+})

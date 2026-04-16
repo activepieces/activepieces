@@ -10,10 +10,7 @@ import { pieceInstaller } from './pieces/piece-installer'
 const tracer = trace.getTracer('provisioner')
 
 export const provisioner = (log: Logger, apiClient: WorkerToApiContract) => ({
-    async provision({
-        pieces,
-        codeSteps,
-    }: ProvisionParams): Promise<void> {
+    async provision({ pieces, codeSteps }: ProvisionParams): Promise<void> {
         await tracer.startActiveSpan('provisioner.provision', async (span) => {
             try {
                 const cachePathLatestVersion = getGlobalCachePathLatestVersion()
@@ -33,8 +30,7 @@ export const provisioner = (log: Logger, apiClient: WorkerToApiContract) => ({
                             })
                         }
                         log.info({ path: codeCachePath }, 'Installed code in sandbox')
-                    }
-                    finally {
+                    } finally {
                         codeSpan.end()
                     }
                 })
@@ -47,8 +43,7 @@ export const provisioner = (log: Logger, apiClient: WorkerToApiContract) => ({
                         })
                         engineSpan.setAttribute('engine.cacheHit', cacheHit)
                         log.info({ path: commonPath, cacheHit }, 'Installed engine in sandbox')
-                    }
-                    finally {
+                    } finally {
                         engineSpan.end()
                     }
                 })
@@ -63,19 +58,20 @@ export const provisioner = (log: Logger, apiClient: WorkerToApiContract) => ({
                                 includeFilters: true,
                             })
                             void tryCatch(() => apiClient.markPieceAsUsed({ pieces: uniquePieces }))
-                            log.info({
-                                pieces: uniquePieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
-                                path: commonPath,
-                            }, 'Installed pieces in sandbox')
-                        }
-                        finally {
+                            log.info(
+                                {
+                                    pieces: uniquePieces.map((p) => `${p.pieceName}@${p.pieceVersion}`),
+                                    path: commonPath,
+                                },
+                                'Installed pieces in sandbox',
+                            )
+                        } finally {
                             piecesSpan.end()
                         }
                     })
                 }
                 log.info('Sandbox installation complete')
-            }
-            finally {
+            } finally {
                 span.end()
             }
         })

@@ -1,5 +1,17 @@
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { BranchCondition, BranchExecutionType, BranchOperator, EngineGenericError, FlowRunStatus, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import {
+    BranchCondition,
+    BranchExecutionType,
+    BranchOperator,
+    EngineGenericError,
+    FlowRunStatus,
+    isNil,
+    RouterAction,
+    RouterActionSettings,
+    RouterExecutionType,
+    RouterStepOutput,
+    StepOutputStatus,
+} from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { utils } from '../utils'
 import { BaseExecutor } from './base-executor'
@@ -8,30 +20,52 @@ import { FlowExecutorContext } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
 
 export const routerExecuter: BaseExecutor<RouterAction> = {
-    async handle({
-        action,
-        executionState,
-        constants,
-    }) {
-        const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<RouterActionSettings>({
-            unresolvedInput: {
-                ...action.settings,
-            },
-            executionState,
-        })
+    async handle({ action, executionState, constants }) {
+        const { censoredInput, resolvedInput } = await constants
+            .getPropsResolver(LATEST_CONTEXT_VERSION)
+            .resolve<RouterActionSettings>({
+                unresolvedInput: {
+                    ...action.settings,
+                },
+                executionState,
+            })
 
         switch (resolvedInput.executionType) {
             case RouterExecutionType.EXECUTE_ALL_MATCH:
-                return handleRouterExecution({ action, executionState, constants, censoredInput, resolvedInput, routerExecutionType: RouterExecutionType.EXECUTE_ALL_MATCH })
+                return handleRouterExecution({
+                    action,
+                    executionState,
+                    constants,
+                    censoredInput,
+                    resolvedInput,
+                    routerExecutionType: RouterExecutionType.EXECUTE_ALL_MATCH,
+                })
             case RouterExecutionType.EXECUTE_FIRST_MATCH:
-                return handleRouterExecution({ action, executionState, constants, censoredInput, resolvedInput, routerExecutionType: RouterExecutionType.EXECUTE_FIRST_MATCH })
+                return handleRouterExecution({
+                    action,
+                    executionState,
+                    constants,
+                    censoredInput,
+                    resolvedInput,
+                    routerExecutionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+                })
             default:
-                throw new EngineGenericError('RouterExecutionTypeNotSupportedError', `Router execution type ${resolvedInput.executionType} is not supported`)
+                throw new EngineGenericError(
+                    'RouterExecutionTypeNotSupportedError',
+                    `Router execution type ${resolvedInput.executionType} is not supported`,
+                )
         }
     },
 }
 
-async function handleRouterExecution({ action, executionState, constants, censoredInput, resolvedInput, routerExecutionType }: {
+async function handleRouterExecution({
+    action,
+    executionState,
+    constants,
+    censoredInput,
+    resolvedInput,
+    routerExecutionType,
+}: {
     action: RouterAction
     executionState: FlowExecutorContext
     constants: EngineConstants
@@ -49,57 +83,67 @@ async function handleRouterExecution({ action, executionState, constants, censor
         if (branch.branchType === BranchExecutionType.CONDITION) {
             return evaluatedConditionsWithoutFallback[index]
         }
-        const fallback = evaluatedConditionsWithoutFallback.filter((_, i) => i !== index).every((condition) => !condition)
+        const fallback = evaluatedConditionsWithoutFallback
+            .filter((_, i) => i !== index)
+            .every((condition) => !condition)
         return fallback
     })
 
     const stepEndTime = performance.now()
     const routerOutput = RouterStepOutput.init({
         input: censoredInput,
-    }).setOutput({
-        branches: resolvedInput.branches.map((branch, index) => ({
-            branchName: branch.branchName,
-            branchIndex: index + 1,
-            evaluation: evaluatedConditions[index],
-        })),
-    }).setDuration(stepEndTime - stepStartTime)
+    })
+        .setOutput({
+            branches: resolvedInput.branches.map((branch, index) => ({
+                branchName: branch.branchName,
+                branchIndex: index + 1,
+                evaluation: evaluatedConditions[index],
+            })),
+        })
+        .setDuration(stepEndTime - stepStartTime)
     executionState = executionState.upsertStep(action.name, routerOutput)
 
-    const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError(async () => {
-        for (let i = 0; i < resolvedInput.branches.length; i++) {
-            if (!isNil(constants.stepNameToTest)) {
-                break
+    const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError(
+        async () => {
+            for (let i = 0; i < resolvedInput.branches.length; i++) {
+                if (!isNil(constants.stepNameToTest)) {
+                    break
+                }
+                const condition = routerOutput.output?.branches[i].evaluation
+                if (!condition) {
+                    continue
+                }
+
+                executionState = await flowExecutor.execute({
+                    action: action.children[i],
+                    executionState,
+                    constants,
+                })
+
+                const shouldBreakExecution =
+                    executionState.verdict.status !== FlowRunStatus.RUNNING ||
+                    routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH
+                if (shouldBreakExecution) {
+                    break
+                }
             }
-            const condition = routerOutput.output?.branches[i].evaluation
-            if (!condition) {
-                continue
-            }
-    
-            executionState = await flowExecutor.execute({
-                action: action.children[i],
-                executionState,
-                constants,
-            })
-    
-            const shouldBreakExecution = executionState.verdict.status !== FlowRunStatus.RUNNING || routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH
-            if (shouldBreakExecution) {
-                break
-            }
-        }
-        return executionState
-    })
+            return executionState
+        },
+    )
     if (executionStateError) {
         const failedStepOutput = routerOutput.setStatus(StepOutputStatus.FAILED)
-        return executionState.upsertStep(action.name, failedStepOutput).setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
-            name: action.name,
-            displayName: action.displayName,
-            message: utils.formatError(executionStateError),
-        } })
+        return executionState.upsertStep(action.name, failedStepOutput).setVerdict({
+            status: FlowRunStatus.FAILED,
+            failedStep: {
+                name: action.name,
+                displayName: action.displayName,
+                message: utils.formatError(executionStateError),
+            },
+        })
     }
 
     return executionStateResult
 }
-
 
 export function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
     let orOperator = false
@@ -109,76 +153,105 @@ export function evaluateConditions(conditionGroups: BranchCondition[][]): boolea
             const castedCondition = condition
 
             if (isNil(castedCondition.operator)) {
-                throw new EngineGenericError('OperatorNotSetError', 'The operator is required but found to be undefined')
+                throw new EngineGenericError(
+                    'OperatorNotSetError',
+                    'The operator is required but found to be undefined',
+                )
             }
 
             switch (castedCondition.operator) {
                 case BranchOperator.TEXT_CONTAINS: {
-                    const firstValueContains = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).includes(
-                        toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
-                    )
+                    const firstValueContains = toLowercaseIfCaseInsensitive(
+                        castedCondition.firstValue,
+                        castedCondition.caseSensitive,
+                    ).includes(toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive))
                     andGroup = andGroup && firstValueContains
                     break
                 }
                 case BranchOperator.TEXT_DOES_NOT_CONTAIN: {
-                    const firstValueDoesNotContain = !toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).includes(
-                        toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
-                    )
+                    const firstValueDoesNotContain = !toLowercaseIfCaseInsensitive(
+                        castedCondition.firstValue,
+                        castedCondition.caseSensitive,
+                    ).includes(toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive))
                     andGroup = andGroup && firstValueDoesNotContain
                     break
                 }
                 case BranchOperator.TEXT_EXACTLY_MATCHES: {
-                    const firstValueExactlyMatches = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive) ===
+                    const firstValueExactlyMatches =
+                        toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive) ===
                         toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive)
                     andGroup = andGroup && firstValueExactlyMatches
                     break
                 }
                 case BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH: {
-                    const firstValueDoesNotExactlyMatch = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive) !==
+                    const firstValueDoesNotExactlyMatch =
+                        toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive) !==
                         toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive)
                     andGroup = andGroup && firstValueDoesNotExactlyMatch
                     break
                 }
                 case BranchOperator.TEXT_STARTS_WITH: {
-                    const firstValueStartsWith = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).startsWith(
+                    const firstValueStartsWith = toLowercaseIfCaseInsensitive(
+                        castedCondition.firstValue,
+                        castedCondition.caseSensitive,
+                    ).startsWith(
                         toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
                     )
                     andGroup = andGroup && firstValueStartsWith
                     break
                 }
                 case BranchOperator.TEXT_ENDS_WITH: {
-                    const firstValueEndsWith = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).endsWith(
-                        toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
-                    )
+                    const firstValueEndsWith = toLowercaseIfCaseInsensitive(
+                        castedCondition.firstValue,
+                        castedCondition.caseSensitive,
+                    ).endsWith(toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive))
                     andGroup = andGroup && firstValueEndsWith
                     break
                 }
                 case BranchOperator.TEXT_DOES_NOT_START_WITH: {
-                    const firstValueDoesNotStartWith = !toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).startsWith(
+                    const firstValueDoesNotStartWith = !toLowercaseIfCaseInsensitive(
+                        castedCondition.firstValue,
+                        castedCondition.caseSensitive,
+                    ).startsWith(
                         toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
                     )
                     andGroup = andGroup && firstValueDoesNotStartWith
                     break
                 }
                 case BranchOperator.TEXT_DOES_NOT_END_WITH: {
-                    const firstValueDoesNotEndWith = !toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).endsWith(
-                        toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
-                    )
+                    const firstValueDoesNotEndWith = !toLowercaseIfCaseInsensitive(
+                        castedCondition.firstValue,
+                        castedCondition.caseSensitive,
+                    ).endsWith(toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive))
                     andGroup = andGroup && firstValueDoesNotEndWith
                     break
                 }
                 case BranchOperator.LIST_CONTAINS: {
                     const list = parseAndCoerceListAsArray(castedCondition.firstValue)
-                    andGroup = andGroup && list.some((item) =>
-                        toLowercaseIfCaseInsensitive(item, castedCondition.caseSensitive) === toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
-                    )
+                    andGroup =
+                        andGroup &&
+                        list.some(
+                            (item) =>
+                                toLowercaseIfCaseInsensitive(item, castedCondition.caseSensitive) ===
+                                toLowercaseIfCaseInsensitive(
+                                    castedCondition.secondValue,
+                                    castedCondition.caseSensitive,
+                                ),
+                        )
                     break
                 }
                 case BranchOperator.LIST_DOES_NOT_CONTAIN: {
                     const list = parseAndCoerceListAsArray(castedCondition.firstValue)
-                    andGroup = andGroup && !list.some((item) =>
-                        toLowercaseIfCaseInsensitive(item, castedCondition.caseSensitive) === toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
-                    )
+                    andGroup =
+                        andGroup &&
+                        !list.some(
+                            (item) =>
+                                toLowercaseIfCaseInsensitive(item, castedCondition.caseSensitive) ===
+                                toLowercaseIfCaseInsensitive(
+                                    castedCondition.secondValue,
+                                    castedCondition.caseSensitive,
+                                ),
+                        )
                     break
                 }
                 case BranchOperator.NUMBER_IS_GREATER_THAN: {
@@ -206,13 +279,25 @@ export function evaluateConditions(conditionGroups: BranchCondition[][]): boolea
                     andGroup = andGroup && !castedCondition.firstValue
                     break
                 case BranchOperator.DATE_IS_AFTER:
-                    andGroup = andGroup && isValidDate(castedCondition.firstValue) && isValidDate(castedCondition.secondValue) && dayjs(castedCondition.firstValue).isAfter(dayjs(castedCondition.secondValue))
+                    andGroup =
+                        andGroup &&
+                        isValidDate(castedCondition.firstValue) &&
+                        isValidDate(castedCondition.secondValue) &&
+                        dayjs(castedCondition.firstValue).isAfter(dayjs(castedCondition.secondValue))
                     break
                 case BranchOperator.DATE_IS_EQUAL:
-                    andGroup = andGroup && isValidDate(castedCondition.firstValue) && isValidDate(castedCondition.secondValue) && dayjs(castedCondition.firstValue).isSame(dayjs(castedCondition.secondValue))
+                    andGroup =
+                        andGroup &&
+                        isValidDate(castedCondition.firstValue) &&
+                        isValidDate(castedCondition.secondValue) &&
+                        dayjs(castedCondition.firstValue).isSame(dayjs(castedCondition.secondValue))
                     break
                 case BranchOperator.DATE_IS_BEFORE:
-                    andGroup = andGroup && isValidDate(castedCondition.firstValue) && isValidDate(castedCondition.secondValue) && dayjs(castedCondition.firstValue).isBefore(dayjs(castedCondition.secondValue))
+                    andGroup =
+                        andGroup &&
+                        isValidDate(castedCondition.firstValue) &&
+                        isValidDate(castedCondition.secondValue) &&
+                        dayjs(castedCondition.firstValue).isBefore(dayjs(castedCondition.secondValue))
                     break
                 case BranchOperator.LIST_IS_EMPTY: {
                     const list = parseListAsArray(castedCondition.firstValue)
@@ -225,10 +310,18 @@ export function evaluateConditions(conditionGroups: BranchCondition[][]): boolea
                     break
                 }
                 case BranchOperator.EXISTS:
-                    andGroup = andGroup && castedCondition.firstValue !== undefined && castedCondition.firstValue !== null && castedCondition.firstValue !== ''
+                    andGroup =
+                        andGroup &&
+                        castedCondition.firstValue !== undefined &&
+                        castedCondition.firstValue !== null &&
+                        castedCondition.firstValue !== ''
                     break
                 case BranchOperator.DOES_NOT_EXIST:
-                    andGroup = andGroup && (castedCondition.firstValue === undefined || castedCondition.firstValue === null || castedCondition.firstValue === '')
+                    andGroup =
+                        andGroup &&
+                        (castedCondition.firstValue === undefined ||
+                            castedCondition.firstValue === null ||
+                            castedCondition.firstValue === '')
                     break
             }
         }
@@ -255,8 +348,7 @@ function parseListAsArray(input: unknown): unknown[] | undefined {
         try {
             const parsed = JSON.parse(input)
             return Array.isArray(parsed) ? parsed : undefined
-        }
-        catch (e) {
+        } catch (e) {
             return undefined
         }
     }
@@ -268,8 +360,7 @@ function parseAndCoerceListAsArray(input: unknown): unknown[] {
         try {
             const parsed = JSON.parse(input)
             return Array.isArray(parsed) ? parsed : [parsed]
-        }
-        catch (e) {
+        } catch (e) {
             return [input]
         }
     }

@@ -1,46 +1,51 @@
-import { AppConnectionValueForAuthProperty, DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { tarventAuth } from '../auth';
-import { TarventClient } from './client';
+import {
+    AppConnectionValueForAuthProperty,
+    DynamicPropsValue,
+    PiecePropValueSchema,
+    Property,
+} from '@activepieces/pieces-framework'
+import { tarventAuth } from '../auth'
+import { TarventClient } from './client'
 
 export function makeClient(auth: AppConnectionValueForAuthProperty<typeof tarventAuth>) {
-    const client = new TarventClient(auth.props.accountId, auth.props.apiKey);
-    return client;
+    const client = new TarventClient(auth.props.accountId, auth.props.apiKey)
+    return client
 }
 
 export const tarventCommon = {
-    customEventId: (required = false, description = '') => Property.Dropdown({
-      auth: tarventAuth,
+    customEventId: (required = false, description = '') =>
+        Property.Dropdown({
+            auth: tarventAuth,
 
-  
-        displayName: 'Custom event',
-        description,
-        required,
-        refreshers: [],
-        options: async ({ auth }) => {
-            if (!auth) {
-                return {
-                    disabled: true,
-                    placeholder: 'Please connect your account first',
-                    options: [],
-                };
-            }
-            const client = makeClient(auth);
-            const res = await client.listCustomEvents();
-
-            return {
-                disabled: false,
-                options: res.data.customApiEvents.nodes.map((customApiEvents) => {
+            displayName: 'Custom event',
+            description,
+            required,
+            refreshers: [],
+            options: async ({ auth }) => {
+                if (!auth) {
                     return {
-                        label: customApiEvents.name,
-                        value: customApiEvents.key,
-                    };
-                }),
-            };
-        },
-    }),
+                        disabled: true,
+                        placeholder: 'Please connect your account first',
+                        options: [],
+                    }
+                }
+                const client = makeClient(auth)
+                const res = await client.listCustomEvents()
+
+                return {
+                    disabled: false,
+                    options: res.data.customApiEvents.nodes.map((customApiEvents) => {
+                        return {
+                            label: customApiEvents.name,
+                            value: customApiEvents.key,
+                        }
+                    }),
+                }
+            },
+        }),
     campaignId: (required = false, description = '', ignoreStatus = false, isEvent = false) =>
         Property.Dropdown({
-      auth: tarventAuth,
+            auth: tarventAuth,
 
             displayName: 'Campaign',
             description,
@@ -52,28 +57,29 @@ export const tarventCommon = {
                         disabled: true,
                         placeholder: 'Please connect your account first',
                         options: [],
-                    };
+                    }
                 }
-                const client = makeClient(auth);
-                const res = await client.listCampaigns(ignoreStatus, isEvent);
-                console.log(res);
+                const client = makeClient(auth)
+                const res = await client.listCampaigns(ignoreStatus, isEvent)
+                console.log(res)
                 return {
                     disabled: false,
                     options: res.data.campaigns.nodes.map((campaigns) => {
                         return {
                             label: campaigns.name,
                             value: campaigns.id,
-                        };
+                        }
                     }),
-                };
+                }
             },
         }),
     campaignLinkId: (required = false) =>
         Property.Dropdown({
-      auth: tarventAuth,
+            auth: tarventAuth,
 
             displayName: 'Campaign link',
-            description: 'Only used if campaign type is set to "Specific". If specified, the trigger will only fire if a contact clicks the selected link.',
+            description:
+                'Only used if campaign type is set to "Specific". If specified, the trigger will only fire if a contact clicks the selected link.',
             required,
             refreshers: ['campaignId'],
             options: async ({ auth, campaignId }) => {
@@ -82,10 +88,10 @@ export const tarventCommon = {
                         disabled: true,
                         placeholder: 'Please connect your account first',
                         options: [],
-                    };
+                    }
                 }
-                const client = makeClient(auth);
-                const res = await client.listCampaignLinks(campaignId as string);
+                const client = makeClient(auth)
+                const res = await client.listCampaignLinks(campaignId as string)
 
                 return {
                     disabled: false,
@@ -93,14 +99,14 @@ export const tarventCommon = {
                         return {
                             label: link.url,
                             value: link.id,
-                        };
+                        }
                     }),
-                };
+                }
             },
         }),
     journeyId: (required = false, description = '') =>
         Property.Dropdown({
-      auth: tarventAuth,
+            auth: tarventAuth,
 
             displayName: 'Journey',
             description,
@@ -112,10 +118,10 @@ export const tarventCommon = {
                         disabled: true,
                         placeholder: 'Please connect your account first',
                         options: [],
-                    };
+                    }
                 }
-                const client = makeClient(auth);
-                const res = await client.listJourneys();
+                const client = makeClient(auth)
+                const res = await client.listJourneys()
 
                 return {
                     disabled: false,
@@ -123,24 +129,24 @@ export const tarventCommon = {
                         return {
                             label: journey.name,
                             value: journey.id,
-                        };
+                        }
                     }),
-                };
+                }
             },
         }),
     campaignScope: Property.DynamicProperties({
-      auth: tarventAuth,
+        auth: tarventAuth,
         displayName: 'Campaign scope',
         refreshers: ['campaignType'],
         required: false,
         props: async ({ campaignType }) => {
-            const prop: DynamicPropsValue = {};
+            const prop: DynamicPropsValue = {}
 
-            if (campaignType as unknown === 'AnyX') {
+            if ((campaignType as unknown) === 'AnyX') {
                 prop['campaignRange'] = Property.Number({
                     displayName: 'Range',
                     required: true,
-                });
+                })
                 prop['campaignPeriod'] = Property.StaticDropdown({
                     displayName: 'Period',
                     description: '',
@@ -166,16 +172,16 @@ export const tarventCommon = {
                             },
                         ],
                     },
-                    defaultValue: 'd'
-                });
+                    defaultValue: 'd',
+                })
             }
 
-            return prop;
+            return prop
         },
     }),
     audienceId: (required = false, description = '') =>
         Property.Dropdown({
-      auth: tarventAuth,
+            auth: tarventAuth,
 
             displayName: 'Audience',
             description,
@@ -187,10 +193,10 @@ export const tarventCommon = {
                         disabled: true,
                         placeholder: 'Please connect your account first',
                         options: [],
-                    };
+                    }
                 }
-                const client = makeClient(auth);
-                const res = await client.listAudiences();
+                const client = makeClient(auth)
+                const res = await client.listAudiences()
 
                 return {
                     disabled: false,
@@ -198,14 +204,14 @@ export const tarventCommon = {
                         return {
                             label: audience.name,
                             value: audience.id,
-                        };
+                        }
                     }),
-                };
+                }
             },
         }),
     audienceGroupId: (required = false, description = '') =>
         Property.Dropdown({
-      auth: tarventAuth,
+            auth: tarventAuth,
 
             displayName: 'Audience group',
             description,
@@ -217,17 +223,17 @@ export const tarventCommon = {
                         disabled: true,
                         placeholder: 'Please connect your account first',
                         options: [],
-                    };
+                    }
                 }
                 if (!audienceId) {
                     return {
                         disabled: true,
                         placeholder: 'Please select an audience first',
                         options: [],
-                    };
+                    }
                 }
-                const client = makeClient(auth);
-                const res = await client.listAudienceGroups(audienceId as string);
+                const client = makeClient(auth)
+                const res = await client.listAudienceGroups(audienceId as string)
 
                 return {
                     disabled: false,
@@ -235,14 +241,14 @@ export const tarventCommon = {
                         return {
                             label: group.name,
                             value: group.id,
-                        };
+                        }
                     }),
-                };
+                }
             },
         }),
     audienceFormId: (required = false, description = '') =>
         Property.Dropdown({
-      auth: tarventAuth,
+            auth: tarventAuth,
 
             displayName: 'Audience form',
             description,
@@ -254,17 +260,17 @@ export const tarventCommon = {
                         disabled: true,
                         placeholder: 'Please connect your account first',
                         options: [],
-                    };
+                    }
                 }
                 if (!audienceId) {
                     return {
                         disabled: true,
                         placeholder: 'Please select an audience first',
                         options: [],
-                    };
+                    }
                 }
-                const client = makeClient(auth);
-                const res = await client.listAudienceForms(audienceId as string);
+                const client = makeClient(auth)
+                const res = await client.listAudienceForms(audienceId as string)
 
                 return {
                     disabled: false,
@@ -272,9 +278,9 @@ export const tarventCommon = {
                         return {
                             label: form.name,
                             value: form.id,
-                        };
+                        }
                     }),
-                };
+                }
             },
         }),
     audienceGroupIds: (required = false, description = '') =>
@@ -290,17 +296,17 @@ export const tarventCommon = {
                         disabled: true,
                         placeholder: 'Please connect your account first',
                         options: [],
-                    };
+                    }
                 }
                 if (!audienceId) {
                     return {
                         disabled: true,
                         placeholder: 'Please select an audience first',
                         options: [],
-                    };
+                    }
                 }
-                const client = makeClient(auth);
-                const res = await client.listAudienceGroups(audienceId as string);
+                const client = makeClient(auth)
+                const res = await client.listAudienceGroups(audienceId as string)
 
                 return {
                     disabled: false,
@@ -308,9 +314,9 @@ export const tarventCommon = {
                         return {
                             label: group.name,
                             value: group.id,
-                        };
+                        }
                     }),
-                };
+                }
             },
         }),
     audienceDataFields: Property.DynamicProperties({
@@ -319,13 +325,13 @@ export const tarventCommon = {
         refreshers: ['audienceId'],
         required: false,
         props: async ({ auth, audienceId }) => {
-            if (!auth) return {};
+            if (!auth) return {}
 
-            const client = makeClient(auth);
-            const res = await client.listAudienceDataFields(audienceId as unknown);
+            const client = makeClient(auth)
+            const res = await client.listAudienceDataFields(audienceId as unknown)
 
-            const fields: DynamicPropsValue = {};
-            const fieldsFromApi = res.data.audienceDataFields.nodes;
+            const fields: DynamicPropsValue = {}
+            const fieldsFromApi = res.data.audienceDataFields.nodes
 
             if (fieldsFromApi) {
                 fieldsFromApi.forEach((f) => {
@@ -335,41 +341,28 @@ export const tarventCommon = {
                                 fields[f.id] = Property.Number({
                                     displayName: f.labelText,
                                     required: f.required,
-                                    description: client.getHelpText(
-                                        f.labelText,
-                                        f.dataType,
-                                        f.defaultValue
-                                    ),
-                                });
-                                break;
+                                    description: client.getHelpText(f.labelText, f.dataType, f.defaultValue),
+                                })
+                                break
                             }
                             case 'DATE':
                             case 'DATE_TIME': {
                                 fields[f.id] = Property.DateTime({
                                     displayName: f.labelText,
                                     required: f.required,
-                                    description: client.getHelpText(
-                                        f.labelText,
-                                        f.dataType,
-                                        f.defaultValue
-                                    ),
-                                });
-                                break;
+                                    description: client.getHelpText(f.labelText, f.dataType, f.defaultValue),
+                                })
+                                break
                             }
                             default: {
                                 fields[f.id] = Property.ShortText({
                                     displayName: f.labelText,
                                     required: f.required,
-                                    description: client.getHelpText(
-                                        f.labelText,
-                                        f.dataType,
-                                        f.defaultValue
-                                    ),
-                                });
-                                break;
+                                    description: client.getHelpText(f.labelText, f.dataType, f.defaultValue),
+                                })
+                                break
                             }
                         }
-
                     }
                     if (f.isGdprField) {
                         fields[f.id] = {
@@ -379,13 +372,13 @@ export const tarventCommon = {
                                 f.labelText.replace('GDPR_', ''),
                                 f.dataType,
                                 f.defaultValue,
-                                true
+                                true,
                             ),
-                        };
+                        }
                     }
-                });
+                })
             }
-            return fields;
+            return fields
         },
     }),
 
@@ -453,7 +446,7 @@ export const tarventCommon = {
     }),
     tagId: (required = false, description = '') =>
         Property.Dropdown({
-      auth: tarventAuth,
+            auth: tarventAuth,
 
             displayName: 'Tags',
             description,
@@ -465,10 +458,10 @@ export const tarventCommon = {
                         disabled: true,
                         placeholder: 'Please connect your account first',
                         options: [],
-                    };
+                    }
                 }
-                const client = makeClient(auth);
-                const res = await client.listTags();
+                const client = makeClient(auth)
+                const res = await client.listTags()
 
                 console.log(res, searchField)
 
@@ -478,9 +471,9 @@ export const tarventCommon = {
                         return {
                             label: tag.name,
                             value: tag.name,
-                        };
+                        }
                     }),
-                };
+                }
             },
         }),
     tagIds: (required = false, description = '') =>
@@ -496,10 +489,10 @@ export const tarventCommon = {
                         disabled: true,
                         placeholder: 'Please connect your account first',
                         options: [],
-                    };
+                    }
                 }
-                const client = makeClient(auth);
-                const res = await client.listTags();
+                const client = makeClient(auth)
+                const res = await client.listTags()
 
                 return {
                     disabled: false,
@@ -507,14 +500,14 @@ export const tarventCommon = {
                         return {
                             label: tag.name,
                             value: tag.name,
-                        };
+                        }
                     }),
-                };
+                }
             },
         }),
     txGroupName: (required = false, description = '') =>
         Property.Dropdown({
-      auth: tarventAuth,
+            auth: tarventAuth,
 
             displayName: 'Transaction group name',
             description,
@@ -526,25 +519,27 @@ export const tarventCommon = {
                         disabled: true,
                         placeholder: 'Please connect your account first',
                         options: [],
-                    };
+                    }
                 }
-                const client = makeClient(auth);
-                const res = await client.listTxGroupNames();
-                console.log(res);
+                const client = makeClient(auth)
+                const res = await client.listTxGroupNames()
+                console.log(res)
                 return {
                     disabled: false,
-                    options: res.data.transactionGroupNames ? res.data.transactionGroupNames.map((name) => {
-                        return {
-                            label: name,
-                            value: name,
-                        };
-                    }) : [],
-                };
+                    options: res.data.transactionGroupNames
+                        ? res.data.transactionGroupNames.map((name) => {
+                              return {
+                                  label: name,
+                                  value: name,
+                              }
+                          })
+                        : [],
+                }
             },
         }),
     templateId: (required = false, description = '') =>
         Property.Dropdown({
-      auth: tarventAuth,
+            auth: tarventAuth,
 
             displayName: 'Template',
             description,
@@ -556,10 +551,10 @@ export const tarventCommon = {
                         disabled: true,
                         placeholder: 'Please connect your account first',
                         options: [],
-                    };
+                    }
                 }
-                const client = makeClient(auth);
-                const res = await client.listTemplates();
+                const client = makeClient(auth)
+                const res = await client.listTemplates()
 
                 return {
                     disabled: false,
@@ -567,16 +562,17 @@ export const tarventCommon = {
                         return {
                             label: template.name,
                             value: template.id,
-                        };
+                        }
                     }),
-                };
+                }
             },
         }),
     landingPageId: Property.Dropdown({
-      auth: tarventAuth,
+        auth: tarventAuth,
 
         displayName: 'Landing page',
-        description: 'If specified, the trigger will only fire if CTA (call-to-action) is performed on the selected landing page.',
+        description:
+            'If specified, the trigger will only fire if CTA (call-to-action) is performed on the selected landing page.',
         required: false,
         refreshers: [],
         options: async ({ auth }) => {
@@ -585,10 +581,10 @@ export const tarventCommon = {
                     disabled: true,
                     placeholder: 'Please connect your account first',
                     options: [],
-                };
+                }
             }
-            const client = makeClient(auth);
-            const res = await client.listLandingPages();
+            const client = makeClient(auth)
+            const res = await client.listLandingPages()
 
             return {
                 disabled: false,
@@ -596,13 +592,13 @@ export const tarventCommon = {
                     return {
                         label: lp.name,
                         value: lp.id,
-                    };
+                    }
                 }),
-            };
+            }
         },
     }),
     surveyId: Property.Dropdown({
-      auth: tarventAuth,
+        auth: tarventAuth,
 
         displayName: 'Survey',
         description: 'If specified, the trigger will only fire if the selected survey is submitted.',
@@ -614,10 +610,10 @@ export const tarventCommon = {
                     disabled: true,
                     placeholder: 'Please connect your account first',
                     options: [],
-                };
+                }
             }
-            const client = makeClient(auth);
-            const res = await client.listSurveys();
+            const client = makeClient(auth)
+            const res = await client.listSurveys()
 
             return {
                 disabled: false,
@@ -625,9 +621,9 @@ export const tarventCommon = {
                     return {
                         label: s.name,
                         value: s.id,
-                    };
+                    }
                 }),
-            };
+            }
         },
     }),
-};
+}

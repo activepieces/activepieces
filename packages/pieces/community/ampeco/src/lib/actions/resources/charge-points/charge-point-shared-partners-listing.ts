@@ -1,8 +1,14 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { ampecoAuth } from '../../../common/auth';
-import { handleApiError, makeAmpecoApiCall, paginate, prepareQueryParams, processPathParameters } from '../../../common/utils';
-import { ChargePointSharedPartnersListingResponse } from '../../../models/responses';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { ampecoAuth } from '../../../common/auth'
+import {
+    handleApiError,
+    makeAmpecoApiCall,
+    paginate,
+    prepareQueryParams,
+    processPathParameters,
+} from '../../../common/utils'
+import { ChargePointSharedPartnersListingResponse } from '../../../models/responses'
 
 /**
  * Generated from API version: 3.96.4
@@ -11,61 +17,62 @@ import { ChargePointSharedPartnersListingResponse } from '../../../models/respon
 // Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/shared-partners
 
 export const chargePointSharedPartnersListingAction = createAction({
-  auth: ampecoAuth,
-  name: 'chargePointSharedPartnersListing',
-  displayName: 'Resources - Charge Points - Charge Point Shared Partners Listing',
-  description: 'Get all Shared Partners of the Charge Point.',
-  props: {
-        
-  chargePoint: Property.Number({
-    displayName: 'Charge Point',
-    description: '',
-    required: true,
-  }),
-    per_page: Property.Number({
-      displayName: 'Per page',
-      description: 'When pagination is enabled: maximum total results across all pages. When pagination is disabled: number of results per API request (max 100).',
-      required: false,
-      defaultValue: 100,
-    }),
-    usePagination: Property.Checkbox({
-      displayName: 'Paginate Results',
-      description: 'Whether to automatically paginate to fetch all results',
-      required: false,
-      defaultValue: false,
-    }),
-  },
-  async run(context): Promise<ChargePointSharedPartnersListingResponse> {
-    try {
-      const url = processPathParameters('/public-api/resources/charge-points/v2.0/{chargePoint}/shared-partners', context.propsValue);
-      
-      const queryParams = prepareQueryParams(context.propsValue, ['per_page', 'cursor']);
-      
-      const body = undefined;
+    auth: ampecoAuth,
+    name: 'chargePointSharedPartnersListing',
+    displayName: 'Resources - Charge Points - Charge Point Shared Partners Listing',
+    description: 'Get all Shared Partners of the Charge Point.',
+    props: {
+        chargePoint: Property.Number({
+            displayName: 'Charge Point',
+            description: '',
+            required: true,
+        }),
+        per_page: Property.Number({
+            displayName: 'Per page',
+            description:
+                'When pagination is enabled: maximum total results across all pages. When pagination is disabled: number of results per API request (max 100).',
+            required: false,
+            defaultValue: 100,
+        }),
+        usePagination: Property.Checkbox({
+            displayName: 'Paginate Results',
+            description: 'Whether to automatically paginate to fetch all results',
+            required: false,
+            defaultValue: false,
+        }),
+    },
+    async run(context): Promise<ChargePointSharedPartnersListingResponse> {
+        try {
+            const url = processPathParameters(
+                '/public-api/resources/charge-points/v2.0/{chargePoint}/shared-partners',
+                context.propsValue,
+            )
 
-          if (context.propsValue.usePagination) {
-      return await paginate({
-        auth: context.auth,
-        method: 'GET',
-        path: url,
-        queryParams,
-        body,
-        perPage: context.propsValue.per_page ?? 100,
-        dataPath: 'data',
-      }) as ChargePointSharedPartnersListingResponse;
-    }
+            const queryParams = prepareQueryParams(context.propsValue, ['per_page', 'cursor'])
 
-      
-      return await makeAmpecoApiCall(
-        context.auth,
-        url,
-        HttpMethod.GET,
-        body,
-        queryParams
-      ) as ChargePointSharedPartnersListingResponse;
+            const body = undefined
 
-    } catch (error) {
-      handleApiError(error);
-    }
-  },
-});
+            if (context.propsValue.usePagination) {
+                return (await paginate({
+                    auth: context.auth,
+                    method: 'GET',
+                    path: url,
+                    queryParams,
+                    body,
+                    perPage: context.propsValue.per_page ?? 100,
+                    dataPath: 'data',
+                })) as ChargePointSharedPartnersListingResponse
+            }
+
+            return (await makeAmpecoApiCall(
+                context.auth,
+                url,
+                HttpMethod.GET,
+                body,
+                queryParams,
+            )) as ChargePointSharedPartnersListingResponse
+        } catch (error) {
+            handleApiError(error)
+        }
+    },
+})

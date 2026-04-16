@@ -407,5 +407,4 @@ export class RemoveUniqueOnFlowSqlite1750093133906 implements MigrationInterface
             CREATE UNIQUE INDEX "idx_issue_flowId_stepName" ON "issue" ("flowId", "stepName")
         `)
     }
-
 }

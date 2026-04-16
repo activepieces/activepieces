@@ -1,18 +1,16 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
-    apId,
     AppConnectionScope,
     AppConnectionType,
+    apId,
     PackageType,
     UpsertGlobalConnectionRequestBody,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
-import {
-    createMockPieceMetadata,
-} from '../../../helpers/mocks'
+import { createMockPieceMetadata } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -47,7 +45,7 @@ async function createGlobalConnection(
         projectIds: string[]
         displayName?: string
     },
-): Promise<{ id: string, externalId: string, projectIds: string[] }> {
+): Promise<{ id: string; externalId: string; projectIds: string[] }> {
     const body: UpsertGlobalConnectionRequestBody = {
         displayName: params.displayName ?? `conn-${apId()}`,
         pieceName: params.pieceName,
@@ -72,7 +70,9 @@ async function createGlobalConnection(
     return response!.json()
 }
 
-async function listGlobalConnections(token: string): Promise<{ data: { id: string, externalId: string, projectIds: string[] }[] }> {
+async function listGlobalConnections(
+    token: string,
+): Promise<{ data: { id: string; externalId: string; projectIds: string[] }[] }> {
     const response = await app?.inject({
         method: 'GET',
         url: '/api/v1/global-connections',
@@ -83,9 +83,7 @@ async function listGlobalConnections(token: string): Promise<{ data: { id: strin
 }
 
 describe('Platform Project Global Connections', () => {
-
     describe('Create Project with globalConnectionExternalIds', () => {
-
         it('assigns selected global connections to the new project', async () => {
             const { ctx, mockPieceMetadata } = await setupPlatformWithGlobalConnections()
 
@@ -173,7 +171,6 @@ describe('Platform Project Global Connections', () => {
     })
 
     describe('Update Project globalConnectionExternalIds', () => {
-
         it('adds global connections to a project', async () => {
             const { ctx, mockPieceMetadata } = await setupPlatformWithGlobalConnections()
 

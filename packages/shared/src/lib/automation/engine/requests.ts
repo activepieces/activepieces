@@ -6,8 +6,6 @@ import { FailedStep, FlowRun } from '../flow-run/flow-run'
 import { StepRunResponse } from '../flows/sample-data'
 import { ProgressUpdateType } from './engine-operation'
 
-
-
 export const UploadRunLogsRequest = z.object({
     runId: z.string(),
     tags: z.array(z.string()).optional(),
@@ -27,7 +25,6 @@ export const UploadRunLogsRequest = z.object({
 })
 
 export type UploadRunLogsRequest = z.infer<typeof UploadRunLogsRequest>
-
 
 export const UpdateStepProgressRequest = z.object({
     projectId: z.string(),

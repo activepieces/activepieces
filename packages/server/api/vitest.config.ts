@@ -6,23 +6,25 @@ const repoRoot = path.resolve(__dirname, '../../..')
 process.chdir(repoRoot)
 
 export default defineConfig({
-  test: {
-    globals: true,
-    environment: 'node',
-    testTimeout: 60000,
-    hookTimeout: 60000,
-    pool: 'forks',
-    setupFiles: [path.resolve(__dirname, 'vitest.setup.ts')],
-    include: [path.resolve(__dirname, 'test/**/*.test.ts')],
-  },
-  resolve: {
-    alias: {
-      'isolated-vm': path.resolve(__dirname, '__mocks__/isolated-vm.js'),
-      '@activepieces/shared': path.resolve(__dirname, '../../../packages/shared/src/index.ts'),
-      '@activepieces/pieces-framework': path.resolve(__dirname, '../../../packages/pieces/framework/src/index.ts'),
-      '@activepieces/pieces-common': path.resolve(__dirname, '../../../packages/pieces/common/src/index.ts'),
-      '@activepieces/server-utils': path.resolve(__dirname, '../../../packages/server/utils/src/index.ts'),
-
+    test: {
+        globals: true,
+        environment: 'node',
+        testTimeout: 60000,
+        hookTimeout: 60000,
+        pool: 'forks',
+        setupFiles: [path.resolve(__dirname, 'vitest.setup.ts')],
+        include: [path.resolve(__dirname, 'test/**/*.test.ts')],
     },
-  },
+    resolve: {
+        alias: {
+            'isolated-vm': path.resolve(__dirname, '__mocks__/isolated-vm.js'),
+            '@activepieces/shared': path.resolve(__dirname, '../../../packages/shared/src/index.ts'),
+            '@activepieces/pieces-framework': path.resolve(
+                __dirname,
+                '../../../packages/pieces/framework/src/index.ts',
+            ),
+            '@activepieces/pieces-common': path.resolve(__dirname, '../../../packages/pieces/common/src/index.ts'),
+            '@activepieces/server-utils': path.resolve(__dirname, '../../../packages/server/utils/src/index.ts'),
+        },
+    },
 })

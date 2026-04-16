@@ -1,9 +1,23 @@
-import { ApEdition, ExecutionType, JOB_PRIORITY, PlanName, ProgressUpdateType, RATE_LIMIT_PRIORITY, RunEnvironment, WorkerJobType } from '@activepieces/shared'
+import {
+    ApEdition,
+    ExecutionType,
+    JOB_PRIORITY,
+    PlanName,
+    ProgressUpdateType,
+    RATE_LIMIT_PRIORITY,
+    RunEnvironment,
+    WorkerJobType,
+} from '@activepieces/shared'
 import { Job } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { Redis } from 'ioredis'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getConcurrencyPoolLimitKey, getConcurrencyPoolSetKey, getPlatformPlanNameKey, getProjectConcurrencyPoolKey } from '../../../../../../src/app/database/redis/keys'
+import {
+    getConcurrencyPoolLimitKey,
+    getConcurrencyPoolSetKey,
+    getPlatformPlanNameKey,
+    getProjectConcurrencyPoolKey,
+} from '../../../../../../src/app/database/redis/keys'
 import { distributedStore, redisConnections } from '../../../../../../src/app/database/redis-connections'
 import { system } from '../../../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../../../src/app/helper/system/system-props'
@@ -198,11 +212,21 @@ describe('rateLimiterInterceptor', () => {
             })
             const jobData = createFlowJobData()
 
-            const r1 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-same', jobData, job: createMockJob(), log: mockLog })
+            const r1 = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-same',
+                jobData,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(r1.verdict).toBe(InterceptorVerdict.ALLOW)
 
             // Dispatch same jobId again — Lua dedup returns 0 (allowed) without adding duplicate
-            const r2 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-same', jobData, job: createMockJob(), log: mockLog })
+            const r2 = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-same',
+                jobData,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(r2.verdict).toBe(InterceptorVerdict.ALLOW)
 
             const redis = await redisConnections.useExisting()
@@ -220,14 +244,29 @@ describe('rateLimiterInterceptor', () => {
             const jobDataB = createFlowJobData({ projectId: 'proj-B' })
 
             // Fill project A
-            await rateLimiterInterceptor.preDispatch({ jobId: 'job-a', jobData: jobDataA, job: createMockJob(), log: mockLog })
+            await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-a',
+                jobData: jobDataA,
+                job: createMockJob(),
+                log: mockLog,
+            })
 
             // Project A is full
-            const rejectA = await rateLimiterInterceptor.preDispatch({ jobId: 'job-a2', jobData: jobDataA, job: createMockJob(), log: mockLog })
+            const rejectA = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-a2',
+                jobData: jobDataA,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(rejectA.verdict).toBe(InterceptorVerdict.REJECT)
 
             // Project B should still ALLOW
-            const allowB = await rateLimiterInterceptor.preDispatch({ jobId: 'job-b', jobData: jobDataB, job: createMockJob(), log: mockLog })
+            const allowB = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-b',
+                jobData: jobDataB,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(allowB.verdict).toBe(InterceptorVerdict.ALLOW)
         })
     })
@@ -337,7 +376,12 @@ describe('rateLimiterInterceptor', () => {
             await distributedStore.put(getConcurrencyPoolLimitKey(poolId), 1)
 
             await rateLimiterInterceptor.preDispatch({ jobId: 'job-1', jobData, job: createMockJob(), log: mockLog })
-            const result = await rateLimiterInterceptor.preDispatch({ jobId: 'job-2', jobData, job: createMockJob(), log: mockLog })
+            const result = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-2',
+                jobData,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(result.verdict).toBe(InterceptorVerdict.REJECT)
         })
 
@@ -356,12 +400,22 @@ describe('rateLimiterInterceptor', () => {
 
             // Fill 5 slots
             for (let i = 0; i < 5; i++) {
-                const r = await rateLimiterInterceptor.preDispatch({ jobId: `job-${i}`, jobData, job: createMockJob(), log: mockLog })
+                const r = await rateLimiterInterceptor.preDispatch({
+                    jobId: `job-${i}`,
+                    jobData,
+                    job: createMockJob(),
+                    log: mockLog,
+                })
                 expect(r.verdict).toBe(InterceptorVerdict.ALLOW)
             }
 
             // 6th should be rejected
-            const result = await rateLimiterInterceptor.preDispatch({ jobId: 'job-6', jobData, job: createMockJob(), log: mockLog })
+            const result = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-6',
+                jobData,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(result.verdict).toBe(InterceptorVerdict.REJECT)
         })
 
@@ -380,7 +434,12 @@ describe('rateLimiterInterceptor', () => {
 
             // Should use default (100), so 6 jobs should all pass
             for (let i = 0; i < 6; i++) {
-                const r = await rateLimiterInterceptor.preDispatch({ jobId: `job-${i}`, jobData, job: createMockJob(), log: mockLog })
+                const r = await rateLimiterInterceptor.preDispatch({
+                    jobId: `job-${i}`,
+                    jobData,
+                    job: createMockJob(),
+                    log: mockLog,
+                })
                 expect(r.verdict).toBe(InterceptorVerdict.ALLOW)
             }
         })
@@ -396,7 +455,12 @@ describe('rateLimiterInterceptor', () => {
             // No project override, no plan → uses default of 2
             await rateLimiterInterceptor.preDispatch({ jobId: 'job-1', jobData, job: createMockJob(), log: mockLog })
             await rateLimiterInterceptor.preDispatch({ jobId: 'job-2', jobData, job: createMockJob(), log: mockLog })
-            const result = await rateLimiterInterceptor.preDispatch({ jobId: 'job-3', jobData, job: createMockJob(), log: mockLog })
+            const result = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-3',
+                jobData,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(result.verdict).toBe(InterceptorVerdict.REJECT)
         })
     })
@@ -473,19 +537,39 @@ describe('rateLimiterInterceptor', () => {
             const jobDataB = createFlowJobData({ projectId: projectIdB })
 
             // proj-A takes slot 1
-            const r1 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-a1', jobData: jobDataA, job: createMockJob(), log: mockLog })
+            const r1 = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-a1',
+                jobData: jobDataA,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(r1.verdict).toBe(InterceptorVerdict.ALLOW)
 
             // proj-B takes slot 2
-            const r2 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-b1', jobData: jobDataB, job: createMockJob(), log: mockLog })
+            const r2 = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-b1',
+                jobData: jobDataB,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(r2.verdict).toBe(InterceptorVerdict.ALLOW)
 
             // Pool is full — proj-A new job should be rejected
-            const r3 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-a2', jobData: jobDataA, job: createMockJob(), log: mockLog })
+            const r3 = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-a2',
+                jobData: jobDataA,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(r3.verdict).toBe(InterceptorVerdict.REJECT)
 
             // Pool is full — proj-B new job should also be rejected
-            const r4 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-b2', jobData: jobDataB, job: createMockJob(), log: mockLog })
+            const r4 = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-b2',
+                jobData: jobDataB,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(r4.verdict).toBe(InterceptorVerdict.REJECT)
         })
 
@@ -501,14 +585,29 @@ describe('rateLimiterInterceptor', () => {
             const jobDataUnrelated = createFlowJobData({ projectId: projectIdUnrelated })
 
             // Fill the pool
-            await rateLimiterInterceptor.preDispatch({ jobId: 'job-a1', jobData: jobDataA, job: createMockJob(), log: mockLog })
+            await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-a1',
+                jobData: jobDataA,
+                job: createMockJob(),
+                log: mockLog,
+            })
 
             // Pool project is now at capacity
-            const rejectA = await rateLimiterInterceptor.preDispatch({ jobId: 'job-a2', jobData: jobDataA, job: createMockJob(), log: mockLog })
+            const rejectA = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-a2',
+                jobData: jobDataA,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(rejectA.verdict).toBe(InterceptorVerdict.REJECT)
 
             // Unrelated project (no pool) should still be allowed
-            const allowUnrelated = await rateLimiterInterceptor.preDispatch({ jobId: 'job-u1', jobData: jobDataUnrelated, job: createMockJob(), log: mockLog })
+            const allowUnrelated = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-u1',
+                jobData: jobDataUnrelated,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(allowUnrelated.verdict).toBe(InterceptorVerdict.ALLOW)
         })
 
@@ -521,11 +620,21 @@ describe('rateLimiterInterceptor', () => {
 
             const jobData = createFlowJobData({ projectId: projectIdA })
 
-            const r1 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-dup', jobData, job: createMockJob(), log: mockLog })
+            const r1 = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-dup',
+                jobData,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(r1.verdict).toBe(InterceptorVerdict.ALLOW)
 
             // Same jobId dispatched again — should not add a duplicate
-            const r2 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-dup', jobData, job: createMockJob(), log: mockLog })
+            const r2 = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-dup',
+                jobData,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(r2.verdict).toBe(InterceptorVerdict.ALLOW)
 
             const redis = await redisConnections.useExisting()
@@ -546,17 +655,32 @@ describe('rateLimiterInterceptor', () => {
             const jobDataB = createFlowJobData({ projectId: projectIdB })
 
             // proj-A fills the single slot
-            await rateLimiterInterceptor.preDispatch({ jobId: 'job-a1', jobData: jobDataA, job: createMockJob(), log: mockLog })
+            await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-a1',
+                jobData: jobDataA,
+                job: createMockJob(),
+                log: mockLog,
+            })
 
             // proj-B is blocked
-            const blocked = await rateLimiterInterceptor.preDispatch({ jobId: 'job-b1', jobData: jobDataB, job: createMockJob(), log: mockLog })
+            const blocked = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-b1',
+                jobData: jobDataB,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(blocked.verdict).toBe(InterceptorVerdict.REJECT)
 
             // proj-A finishes — releases the slot
             await rateLimiterInterceptor.onJobFinished({ jobId: 'job-a1', jobData: jobDataA, log: mockLog })
 
             // proj-B can now proceed
-            const allowed = await rateLimiterInterceptor.preDispatch({ jobId: 'job-b1', jobData: jobDataB, job: createMockJob(), log: mockLog })
+            const allowed = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-b1',
+                jobData: jobDataB,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(allowed.verdict).toBe(InterceptorVerdict.ALLOW)
         })
 
@@ -569,11 +693,21 @@ describe('rateLimiterInterceptor', () => {
             await distributedStore.put(getProjectConcurrencyPoolKey(projectId), poolId)
             await distributedStore.put(getConcurrencyPoolLimitKey(poolId), 1)
 
-            const r1 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-1', jobData, job: createMockJob(), log: mockLog })
+            const r1 = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-1',
+                jobData,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(r1.verdict).toBe(InterceptorVerdict.ALLOW)
 
             // Slot is taken — second job rejected
-            const r2 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-2', jobData, job: createMockJob(), log: mockLog })
+            const r2 = await rateLimiterInterceptor.preDispatch({
+                jobId: 'job-2',
+                jobData,
+                job: createMockJob(),
+                log: mockLog,
+            })
             expect(r2.verdict).toBe(InterceptorVerdict.REJECT)
 
             // Verify ZSET key is based on poolId, not projectId

@@ -1,54 +1,54 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { famulorAuth } from '../..';
-import { famulorCommon } from '../common';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { famulorAuth } from '../..'
+import { famulorCommon } from '../common'
 
 const inboundAssistantDropdown = () =>
-  Property.Dropdown({
-    auth: famulorAuth,
-    displayName: 'Inbound Assistant',
-    description: 'Select an inbound assistant to receive webhook notifications for',
-    required: true,
-    refreshers: ['auth'],
-    options: async ({ auth }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          placeholder: 'Please authenticate first',
-          options: [],
-        };
-      }
+    Property.Dropdown({
+        auth: famulorAuth,
+        displayName: 'Inbound Assistant',
+        description: 'Select an inbound assistant to receive webhook notifications for',
+        required: true,
+        refreshers: ['auth'],
+        options: async ({ auth }) => {
+            if (!auth) {
+                return {
+                    disabled: true,
+                    placeholder: 'Please authenticate first',
+                    options: [],
+                }
+            }
 
-      try {
-        // Filter for inbound assistants only
-        const assistants = await famulorCommon.listAllAssistants({ 
-          auth: auth.secret_text, 
-          type: 'inbound',
-          per_page: 100
-        });
-        
-        if (!assistants.data || assistants.data.length === 0) {
-          return {
-            disabled: true,
-            placeholder: 'No inbound assistants found. Create one first.',
-            options: [],
-          };
-        }
+            try {
+                // Filter for inbound assistants only
+                const assistants = await famulorCommon.listAllAssistants({
+                    auth: auth.secret_text,
+                    type: 'inbound',
+                    per_page: 100,
+                })
 
-        return {
-          options: assistants.data.map((assistant: any) => ({
-            label: `${assistant.name} (${assistant.status})`,
-            value: assistant.id,
-          })),
-        };
-      } catch (error) {
-        return {
-          disabled: true,
-          placeholder: 'Failed to fetch assistants',
-          options: [],
-        };
-      }
-    },
-  });
+                if (!assistants.data || assistants.data.length === 0) {
+                    return {
+                        disabled: true,
+                        placeholder: 'No inbound assistants found. Create one first.',
+                        options: [],
+                    }
+                }
+
+                return {
+                    options: assistants.data.map((assistant: any) => ({
+                        label: `${assistant.name} (${assistant.status})`,
+                        value: assistant.id,
+                    })),
+                }
+            } catch (error) {
+                return {
+                    disabled: true,
+                    placeholder: 'Failed to fetch assistants',
+                    options: [],
+                }
+            }
+        },
+    })
 
 export const inboundCall = createTrigger({
     auth: famulorAuth,
@@ -62,13 +62,13 @@ export const inboundCall = createTrigger({
         assistant_id: 123,
         customer_phone: '+16380991171',
         assistant_phone: '+16380991171',
-        call_id: "call_abc123",
-        timestamp: "2024-01-15T10:30:00Z",
-        status: "incoming",
+        call_id: 'call_abc123',
+        timestamp: '2024-01-15T10:30:00Z',
+        status: 'incoming',
         variables: {
-            customer_name: "John Doe",
-            caller_id: "+16380991171"
-        }
+            customer_name: 'John Doe',
+            caller_id: '+16380991171',
+        },
     },
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
@@ -76,15 +76,15 @@ export const inboundCall = createTrigger({
             auth: context.auth.secret_text,
             assistant_id: context.propsValue.assistant_id as number,
             webhook_url: context.webhookUrl,
-        });
+        })
     },
     async onDisable(context) {
         await famulorCommon.disableInboundWebhook({
             auth: context.auth.secret_text,
             assistant_id: context.propsValue.assistant_id as number,
-        });
+        })
     },
     async run(context) {
-        return [context.payload.body];
-    }
+        return [context.payload.body]
+    },
 })

@@ -49,7 +49,7 @@ export type BaseOAuth2ConnectionValue = {
     scope: string
     token_url: string
     authorization_method?: OAuth2AuthorizationMethod
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: legacy code
     data: Record<string, any>
     props?: Record<string, unknown>
     grant_type?: OAuth2GrantType
@@ -79,15 +79,24 @@ export type NoAuthConnectionValue = {
     type: AppConnectionType.NO_AUTH
 }
 
-export type AppConnectionValue<T extends AppConnectionType = AppConnectionType, PropsType extends Record<string, unknown> = Record<string, unknown>> =
-    T extends AppConnectionType.SECRET_TEXT ? SecretTextConnectionValue :
-        T extends AppConnectionType.BASIC_AUTH ? BasicAuthConnectionValue :
-            T extends AppConnectionType.CLOUD_OAUTH2 ? CloudOAuth2ConnectionValue :
-                T extends AppConnectionType.PLATFORM_OAUTH2 ? PlatformOAuth2ConnectionValue :
-                    T extends AppConnectionType.OAUTH2 ? OAuth2ConnectionValueWithApp :
-                        T extends AppConnectionType.CUSTOM_AUTH ? CustomAuthConnectionValue<PropsType> :
-                            T extends AppConnectionType.NO_AUTH ? NoAuthConnectionValue :
-                                never
+export type AppConnectionValue<
+    T extends AppConnectionType = AppConnectionType,
+    PropsType extends Record<string, unknown> = Record<string, unknown>,
+> = T extends AppConnectionType.SECRET_TEXT
+    ? SecretTextConnectionValue
+    : T extends AppConnectionType.BASIC_AUTH
+      ? BasicAuthConnectionValue
+      : T extends AppConnectionType.CLOUD_OAUTH2
+        ? CloudOAuth2ConnectionValue
+        : T extends AppConnectionType.PLATFORM_OAUTH2
+          ? PlatformOAuth2ConnectionValue
+          : T extends AppConnectionType.OAUTH2
+            ? OAuth2ConnectionValueWithApp
+            : T extends AppConnectionType.CUSTOM_AUTH
+              ? CustomAuthConnectionValue<PropsType>
+              : T extends AppConnectionType.NO_AUTH
+                ? NoAuthConnectionValue
+                : never
 
 export type AppConnection<Type extends AppConnectionType = AppConnectionType> = BaseModel<AppConnectionId> & {
     externalId: string
@@ -114,24 +123,26 @@ export type BasicAuthConnection = AppConnection<AppConnectionType.BASIC_AUTH>
 export type CustomAuthConnection = AppConnection<AppConnectionType.CUSTOM_AUTH>
 export type NoAuthConnection = AppConnection<AppConnectionType.NO_AUTH>
 
-export const AppConnectionWithoutSensitiveData = z.object({
-    ...BaseModelSchema,
-    externalId: z.string(),
-    displayName: z.string(),
-    type: z.nativeEnum(AppConnectionType),
-    pieceName: z.string(),
-    projectIds: z.array(ApId),
-    platformId: Nullable(z.string()),
-    scope: z.nativeEnum(AppConnectionScope),
-    status: z.nativeEnum(AppConnectionStatus),
-    ownerId: Nullable(z.string()),
-    owner: Nullable(UserWithMetaInformation),
-    metadata: Nullable(Metadata),
-    flowIds: Nullable(z.array(ApId)),
-    pieceVersion: z.string(),
-    preSelectForNewProjects: z.boolean(),
-    usingSecretManager: z.boolean(),
-}).describe('App connection is a connection to an external app.')
+export const AppConnectionWithoutSensitiveData = z
+    .object({
+        ...BaseModelSchema,
+        externalId: z.string(),
+        displayName: z.string(),
+        type: z.nativeEnum(AppConnectionType),
+        pieceName: z.string(),
+        projectIds: z.array(ApId),
+        platformId: Nullable(z.string()),
+        scope: z.nativeEnum(AppConnectionScope),
+        status: z.nativeEnum(AppConnectionStatus),
+        ownerId: Nullable(z.string()),
+        owner: Nullable(UserWithMetaInformation),
+        metadata: Nullable(Metadata),
+        flowIds: Nullable(z.array(ApId)),
+        pieceVersion: z.string(),
+        preSelectForNewProjects: z.boolean(),
+        usingSecretManager: z.boolean(),
+    })
+    .describe('App connection is a connection to an external app.')
 export type AppConnectionWithoutSensitiveData = z.infer<typeof AppConnectionWithoutSensitiveData>
 
 export const AppConnectionOwners = z.object({
@@ -142,7 +153,7 @@ export const AppConnectionOwners = z.object({
 
 export type AppConnectionOwners = z.infer<typeof AppConnectionOwners>
 /**i.e props: {projectId: "123"} and value: "{{projectId}}" will return "123" */
-export const resolveValueFromProps = (props: Record<string, unknown> | undefined, value: string)=>{
+export const resolveValueFromProps = (props: Record<string, unknown> | undefined, value: string) => {
     let resolvedScope = value
     if (!props) {
         return resolvedScope

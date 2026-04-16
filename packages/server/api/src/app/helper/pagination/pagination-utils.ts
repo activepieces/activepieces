@@ -29,9 +29,9 @@ export function encodeByType(type: string, value: unknown): string | null {
         }
         case 'object': {
             /**
-       * if reflection type is Object, check whether an object is a date.
-       * see: https://github.com/rbuckton/reflect-metadata/issues/84
-       */
+             * if reflection type is Object, check whether an object is a date.
+             * see: https://github.com/rbuckton/reflect-metadata/issues/84
+             */
             if (typeof (value as Record<string, unknown>).getTime === 'function') {
                 return (value as Date).getTime().toString()
             }
@@ -45,10 +45,7 @@ export function encodeByType(type: string, value: unknown): string | null {
     throw new Error(`unknown type in cursor: [${type}]${value}`)
 }
 
-export function decodeByType(
-    type: string,
-    value: string,
-): string | number | Date {
+export function decodeByType(type: string, value: string): string | number | Date {
     switch (type) {
         case 'object':
         case 'timestamp with time zone':
@@ -81,10 +78,8 @@ export function decodeByType(
     }
 }
 
-const decode = (str: string): string =>
-    Buffer.from(str, 'base64').toString('binary')
-const encode = (str: string): string =>
-    Buffer.from(str, 'binary').toString('base64')
+const decode = (str: string): string => Buffer.from(str, 'base64').toString('binary')
+const encode = (str: string): string => Buffer.from(str, 'binary').toString('base64')
 
 function encodeNextCursor(cursor: string | null | undefined) {
     if (isNil(cursor)) {

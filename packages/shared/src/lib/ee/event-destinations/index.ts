@@ -10,8 +10,6 @@ const EventDestinationBase = {
     url: z.string().url(),
 }
 
-
-
 const EventDestinationProjectScope = z.object({
     ...EventDestinationBase,
     scope: z.literal(EventDestinationScope.PROJECT),

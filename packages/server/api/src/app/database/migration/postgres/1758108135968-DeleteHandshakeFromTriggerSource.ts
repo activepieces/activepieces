@@ -15,5 +15,4 @@ export class DeleteHandshakeFromTriggerSource1758108135968 implements MigrationI
             ADD "handshakeConfiguration" jsonb
         `)
     }
-
 }

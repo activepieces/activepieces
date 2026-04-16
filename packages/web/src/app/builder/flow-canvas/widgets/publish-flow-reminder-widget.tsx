@@ -145,6 +145,7 @@ const PublishFlowReminderWidget = () => {
 };
 
 PublishFlowReminderWidget.displayName = 'PublishFlowReminderWidget';
+
 export { PublishFlowReminderWidget };
 
 const useShouldShowPublishButton = ({

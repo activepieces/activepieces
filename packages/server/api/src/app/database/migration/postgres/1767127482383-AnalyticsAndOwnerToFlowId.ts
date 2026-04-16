@@ -118,5 +118,4 @@ export class AnalyticsAndOwnerToFlowId1767127482383 implements MigrationInterfac
             ADD "totalFlows" integer NOT NULL
         `)
     }
-
 }

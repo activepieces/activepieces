@@ -9,13 +9,19 @@ import { mcpUtils } from './mcp-utils'
 
 const setupGuideInput = z.object({
     topic: z.enum(['connection', 'ai_provider']).describe('What to get setup instructions for'),
-    pieceName: z.string().optional().describe('For connections: the piece that needs auth (e.g., "@activepieces/piece-gmail"). Omit for general instructions.'),
+    pieceName: z
+        .string()
+        .optional()
+        .describe(
+            'For connections: the piece that needs auth (e.g., "@activepieces/piece-gmail"). Omit for general instructions.',
+        ),
 })
 
 export const apSetupGuideTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_setup_guide',
-        description: 'Get setup instructions for connections or AI providers. Returns steps for the user to follow in the UI.',
+        description:
+            'Get setup instructions for connections or AI providers. Returns steps for the user to follow in the UI.',
         inputSchema: setupGuideInput.shape,
         annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -26,8 +32,7 @@ export const apSetupGuideTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                     return await connectionGuide(mcp, log, pieceName)
                 }
                 return await aiProviderGuide(mcp, log)
-            }
-            catch (err) {
+            } catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_setup_guide failed')
                 return mcpUtils.mcpToolError('Failed to generate setup guide', err)
             }
@@ -35,26 +40,32 @@ export const apSetupGuideTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
     }
 }
 
-async function connectionGuide(mcp: McpServer, log: FastifyBaseLogger, pieceName?: string): Promise<{ content: [{ type: 'text', text: string }] }> {
+async function connectionGuide(
+    mcp: McpServer,
+    log: FastifyBaseLogger,
+    pieceName?: string,
+): Promise<{ content: [{ type: 'text'; text: string }] }> {
     if (isNil(pieceName)) {
         return {
-            content: [{
-                type: 'text',
-                text: [
-                    'How to set up a connection:',
-                    '',
-                    '1. Open your Activepieces dashboard',
-                    '2. Go to Settings → Connections',
-                    '3. Click "+ New Connection"',
-                    '4. Select the piece/app you want to connect',
-                    '5. Follow the prompts (OAuth login, API key, etc.)',
-                    '6. Save the connection',
-                    '',
-                    'Then use ap_list_connections to find the connection\'s externalId for use in flow steps.',
-                    '',
-                    'Tip: Pass pieceName to this tool for specific instructions (e.g., pieceName: "@activepieces/piece-gmail").',
-                ].join('\n'),
-            }],
+            content: [
+                {
+                    type: 'text',
+                    text: [
+                        'How to set up a connection:',
+                        '',
+                        '1. Open your Activepieces dashboard',
+                        '2. Go to Settings → Connections',
+                        '3. Click "+ New Connection"',
+                        '4. Select the piece/app you want to connect',
+                        '5. Follow the prompts (OAuth login, API key, etc.)',
+                        '6. Save the connection',
+                        '',
+                        "Then use ap_list_connections to find the connection's externalId for use in flow steps.",
+                        '',
+                        'Tip: Pass pieceName to this tool for specific instructions (e.g., pieceName: "@activepieces/piece-gmail").',
+                    ].join('\n'),
+                },
+            ],
         }
     }
 
@@ -66,12 +77,26 @@ async function connectionGuide(mcp: McpServer, log: FastifyBaseLogger, pieceName
     })
 
     if (isNil(piece)) {
-        return { content: [{ type: 'text', text: `❌ Piece "${pieceName}" not found. Use ap_list_pieces to find valid piece names.` }] }
+        return {
+            content: [
+                {
+                    type: 'text',
+                    text: `❌ Piece "${pieceName}" not found. Use ap_list_pieces to find valid piece names.`,
+                },
+            ],
+        }
     }
 
     const rawAuth = piece.auth
     if (isNil(rawAuth)) {
-        return { content: [{ type: 'text', text: `✅ "${piece.displayName}" does not require authentication. No connection setup needed.` }] }
+        return {
+            content: [
+                {
+                    type: 'text',
+                    text: `✅ "${piece.displayName}" does not require authentication. No connection setup needed.`,
+                },
+            ],
+        }
     }
 
     const authOptions = Array.isArray(rawAuth) ? rawAuth : [rawAuth]
@@ -79,7 +104,10 @@ async function connectionGuide(mcp: McpServer, log: FastifyBaseLogger, pieceName
     const authType = auth.type
     const lines: string[] = [`How to connect "${piece.displayName}":`, '']
     if (authOptions.length > 1) {
-        lines.push(`Note: This piece supports ${authOptions.length} authentication methods. Showing the primary one.`, '')
+        lines.push(
+            `Note: This piece supports ${authOptions.length} authentication methods. Showing the primary one.`,
+            '',
+        )
     }
 
     switch (authType) {
@@ -114,7 +142,7 @@ async function connectionGuide(mcp: McpServer, log: FastifyBaseLogger, pieceName
         case PropertyType.CUSTOM_AUTH: {
             const props = auth.props ?? {}
             const fieldNames = Object.entries(props).map(([key, prop]) => {
-                const p = prop as { displayName?: string, required?: boolean }
+                const p = prop as { displayName?: string; required?: boolean }
                 const req = p.required !== false ? ' (required)' : ' (optional)'
                 return `  - ${p.displayName ?? key}${req}`
             })
@@ -138,12 +166,15 @@ async function connectionGuide(mcp: McpServer, log: FastifyBaseLogger, pieceName
             )
     }
 
-    lines.push('', 'After setup, use ap_list_connections to find the connection\'s externalId for use in flow steps.')
+    lines.push('', "After setup, use ap_list_connections to find the connection's externalId for use in flow steps.")
 
     return { content: [{ type: 'text', text: lines.join('\n') }] }
 }
 
-async function aiProviderGuide(mcp: McpServer, log: FastifyBaseLogger): Promise<{ content: [{ type: 'text', text: string }] }> {
+async function aiProviderGuide(
+    mcp: McpServer,
+    log: FastifyBaseLogger,
+): Promise<{ content: [{ type: 'text'; text: string }] }> {
     const project = await projectService(log).getOneOrThrow(mcp.projectId)
     const providers = await aiProviderService(log).listProviders(project.platformId)
 
@@ -151,14 +182,13 @@ async function aiProviderGuide(mcp: McpServer, log: FastifyBaseLogger): Promise<
 
     if (providers.length > 0) {
         lines.push(
-            `${providers.length} AI provider(s) already configured: ${providers.map(p => p.provider).join(', ')}`,
+            `${providers.length} AI provider(s) already configured: ${providers.map((p) => p.provider).join(', ')}`,
             '',
             'Use ap_list_ai_models to see available models.',
             '',
             'To add another provider:',
         )
-    }
-    else {
+    } else {
         lines.push('No AI providers configured yet.', '', 'How to add an AI provider:')
     }
 

@@ -1,18 +1,14 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { greipAuth } from '../common/auth';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { greipAuth } from '../common/auth'
 
 export const profanityTextDetectedTrigger = createTrigger({
-  name: 'profanity_text_detected',
-  displayName: 'Profanity Text Detected',
-  description: 'Triggers when Greip detects profanity in a specific text',
-  auth: greipAuth,
-  props: {
-    webhookInstructions: Property.MarkDown({
-      value: `
+    name: 'profanity_text_detected',
+    displayName: 'Profanity Text Detected',
+    description: 'Triggers when Greip detects profanity in a specific text',
+    auth: greipAuth,
+    props: {
+        webhookInstructions: Property.MarkDown({
+            value: `
 To use this trigger, you need to manually set up a webhook in your Greip account:
 
 1. Login to your Greip dashboard.
@@ -27,24 +23,23 @@ To use this trigger, you need to manually set up a webhook in your Greip account
 
 **Note:** Webhooks are only available for paid subscriptions.
       `,
-    }),
-  },
-  type: TriggerStrategy.WEBHOOK,
-  sampleData: {
-    event: 'profanity',
-    text: '**** *****',
-    totalBadWords: 2,
-    riskScore: 1,
-    isSafe: false,
-  },
-  async onEnable(context) {
-    // Webhooks are set up manually in Greip dashboard
-  },
-  async onDisable(context) {
-    // Webhooks are removed manually in Greip dashboard
-  },
-  async run(context) {
-    return [context.payload.body];
-  },
-});
-
+        }),
+    },
+    type: TriggerStrategy.WEBHOOK,
+    sampleData: {
+        event: 'profanity',
+        text: '**** *****',
+        totalBadWords: 2,
+        riskScore: 1,
+        isSafe: false,
+    },
+    async onEnable(context) {
+        // Webhooks are set up manually in Greip dashboard
+    },
+    async onDisable(context) {
+        // Webhooks are removed manually in Greip dashboard
+    },
+    async run(context) {
+        return [context.payload.body]
+    },
+})

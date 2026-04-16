@@ -34,13 +34,16 @@ case "$RUN_CHECKS" in
     echo "Skipping lint and tests."
     ;;
   *)
-    echo "Running lint..."
+    echo "Running Biome lint..."
+    npx biome check . || { echo ""; echo "Biome lint failed. To auto-fix issues, run:"; echo "  npm run lint-biome-fix"; exit 1; }
+    echo "Running ESLint (core)..."
     npm run lint-core || { echo ""; echo "Lint failed. To auto-fix issues, run:"; echo "  npm run lint-dev"; echo "Or target a specific package:"; echo "  npx turbo run lint --filter=\"<packageName>\" --force -- --fix"; exit 1; }
     npm run lint-affected || { echo ""; echo "Lint failed. To auto-fix issues, run:"; echo "  npm run lint-dev"; echo "Or target a specific package:"; echo "  npx turbo run lint --filter=\"<packageName>\" --force -- --fix"; exit 1; }
+    echo "Running type-aware lint..."
+    npm run lint-typeaware || { echo ""; echo "Type-aware lint failed."; exit 1; }
     echo "Running tests..."
     npm run test-unit || { echo ""; echo "Unit tests failed. Check the output above for details."; exit 1; }
     npm run test-api || { echo ""; echo "API tests failed. Check the output above for details."; exit 1; }
     ;;
 esac
-
 

@@ -16,4 +16,5 @@ const FullLogo = () => {
   );
 };
 FullLogo.displayName = 'FullLogo';
+
 export { FullLogo };

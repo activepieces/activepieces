@@ -1,28 +1,28 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { hunterApiCall } from '../common';
-import { hunterAuth } from '../auth';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { hunterAuth } from '../auth'
+import { hunterApiCall } from '../common'
 import {
-    leadSelectDropdownProp,
+    companyIndustryProp,
+    companyLeadProp,
+    companySizeProp,
+    confidenceScoreProp,
+    countryCodeProp,
+    customAttributesProp,
     emailProp,
     firstNameProp,
     lastNameProp,
-    positionProp,
-    companyLeadProp,
-    companyIndustryProp,
-    companySizeProp,
-    confidenceScoreProp,
-    websiteProp,
-    countryCodeProp,
-    linkedinUrlProp,
-    phoneNumberProp,
-    twitterProp,
-    notesProp,
-    sourceProp,
+    leadSelectDropdownProp,
     leadsListDropdownProp,
     leadsListIdsProp,
-    customAttributesProp,
-} from '../common/props';
+    linkedinUrlProp,
+    notesProp,
+    phoneNumberProp,
+    positionProp,
+    sourceProp,
+    twitterProp,
+    websiteProp,
+} from '../common/props'
 
 export const updateLeadAction = createAction({
     auth: hunterAuth,
@@ -51,26 +51,23 @@ export const updateLeadAction = createAction({
         custom_attributes: customAttributesProp,
     },
     async run(context) {
-        const props = context.propsValue;
-        const leadId = props.lead_id;
+        const props = context.propsValue
+        const leadId = props.lead_id
 
-        const body: Record<string, unknown> = {};
+        const body: Record<string, unknown> = {}
         for (const [key, value] of Object.entries(props)) {
-            if (key === 'lead_id') continue;
+            if (key === 'lead_id') continue
             if (
                 value !== undefined &&
                 value !== null &&
-                !(
-                    (Array.isArray(value) && value.length === 0) ||
-                    (typeof value === 'string' && value === '')
-                )
+                !((Array.isArray(value) && value.length === 0) || (typeof value === 'string' && value === ''))
             ) {
-                body[key] = value;
+                body[key] = value
             }
         }
 
         if (Object.keys(body).length === 0) {
-            throw new Error('You must specify at least one field to update.');
+            throw new Error('You must specify at least one field to update.')
         }
 
         await hunterApiCall({
@@ -78,8 +75,8 @@ export const updateLeadAction = createAction({
             endpoint: `/leads/${leadId}`,
             method: HttpMethod.PUT,
             body,
-        });
+        })
 
-        return { success: true };
+        return { success: true }
     },
-});
+})

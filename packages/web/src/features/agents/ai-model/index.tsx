@@ -256,8 +256,8 @@ export function AIModelSelector({
                   {!selectedProvider
                     ? t('Select provider first')
                     : models.length === 0
-                    ? t('No models')
-                    : t('Select model')}
+                      ? t('No models')
+                      : t('Select model')}
                 </span>
               )}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

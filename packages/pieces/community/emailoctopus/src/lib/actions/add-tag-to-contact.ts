@@ -1,9 +1,9 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { HttpMethod } from "@activepieces/pieces-common";
-import { createHash } from "crypto";
-import { emailOctopusAuth } from "../common/auth";
-import { EmailOctopusClient } from "../common/client";
-import { emailOctopusProps } from "../common/props";
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { createHash } from 'crypto'
+import { emailOctopusAuth } from '../common/auth'
+import { EmailOctopusClient } from '../common/client'
+import { emailOctopusProps } from '../common/props'
 
 export const addTagToContact = createAction({
     auth: emailOctopusAuth,
@@ -25,28 +25,17 @@ export const addTagToContact = createAction({
     },
 
     async run(context) {
-        const { list_id, email_address, tags } = context.propsValue;
-        const client = new EmailOctopusClient(context.auth.secret_text);
+        const { list_id, email_address, tags } = context.propsValue
+        const client = new EmailOctopusClient(context.auth.secret_text)
 
-        
-        const contactId = createHash('md5')
-            .update(email_address.toLowerCase())
-            .digest('hex');
+        const contactId = createHash('md5').update(email_address.toLowerCase()).digest('hex')
 
-        
-        const tagsObject = Object.fromEntries(
-            (tags as string[]).map(tag => [tag, true])
-        );
+        const tagsObject = Object.fromEntries((tags as string[]).map((tag) => [tag, true]))
 
         const body = {
             tags: tagsObject,
-        };
+        }
 
-        
-        return await client.makeRequest(
-            HttpMethod.PUT,
-            `/lists/${list_id}/contacts/${contactId}`,
-            body
-        );
+        return await client.makeRequest(HttpMethod.PUT, `/lists/${list_id}/contacts/${contactId}`, body)
     },
-});
+})

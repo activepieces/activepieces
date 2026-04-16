@@ -1,4 +1,4 @@
-import { apId, ApplicationEvent, isNil, PrincipalType } from '@activepieces/shared'
+import { ApplicationEvent, apId, isNil, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { authenticationUtils } from '../authentication/authentication-utils'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
@@ -8,7 +8,6 @@ import { networkUtils } from './network-utils'
 import { rejectedPromiseHandler } from './promise-handler'
 import { system } from './system/system'
 import { AppSystemProp } from './system/system-props'
-
 
 type UserEventListener = (params: ApplicationEvent) => void
 type WorkerEventListener = (projectId: string, params: ApplicationEvent) => void
@@ -33,49 +32,63 @@ type MetaInformation = {
 }
 
 export const applicationEvents = (log: FastifyBaseLogger) => ({
-    registerListeners(log: FastifyBaseLogger, registration: {
-        userEvent: (log: FastifyBaseLogger) => UserEventListener
-        workerEvent: (log: FastifyBaseLogger) => WorkerEventListener
-    }): void {
+    registerListeners(
+        log: FastifyBaseLogger,
+        registration: {
+            userEvent: (log: FastifyBaseLogger) => UserEventListener
+            workerEvent: (log: FastifyBaseLogger) => WorkerEventListener
+        },
+    ): void {
         listeners.userEventListeners.push(registration.userEvent(log))
         listeners.workerEventListeners.push(registration.workerEvent(log))
     },
     sendUserEvent(requestOrMeta: FastifyRequest | MetaInformation, params: RawAuditEventParam): void {
-        rejectedPromiseHandler(enrichAuditEventParam(requestOrMeta, params, log).then((event) => {
-            if (!isNil(event)) {
-                for (const listener of listeners.userEventListeners) {
-                    listener(event)
+        rejectedPromiseHandler(
+            enrichAuditEventParam(requestOrMeta, params, log).then((event) => {
+                if (!isNil(event)) {
+                    for (const listener of listeners.userEventListeners) {
+                        listener(event)
+                    }
                 }
-            }
-        }), log)
+            }),
+            log,
+        )
     },
     sendWorkerEvent(projectId: string, params: RawAuditEventParam): void {
-        projectService(log).getPlatformId(projectId).then((platformId) => {
-            for (const listener of listeners.workerEventListeners) {
-                const event = {
-                    ...params,
-                    projectId,
-                    platformId,
-                    id: apId(),
-                    created: new Date().toISOString(),
-                    updated: new Date().toISOString(),
-                } as ApplicationEvent
-                listener(projectId, event)
-            }
-        }).catch((error) => {
-            log.error({ err: error }, '[applicationEvents#sendWorkerEvent] Failed to send worker event')
-        })
+        projectService(log)
+            .getPlatformId(projectId)
+            .then((platformId) => {
+                for (const listener of listeners.workerEventListeners) {
+                    const event = {
+                        ...params,
+                        projectId,
+                        platformId,
+                        id: apId(),
+                        created: new Date().toISOString(),
+                        updated: new Date().toISOString(),
+                    } as ApplicationEvent
+                    listener(projectId, event)
+                }
+            })
+            .catch((error) => {
+                log.error({ err: error }, '[applicationEvents#sendWorkerEvent] Failed to send worker event')
+            })
     },
 })
 
-
-async function enrichAuditEventParam(requestOrMeta: FastifyRequest | MetaInformation, params: RawAuditEventParam, log: FastifyBaseLogger): Promise<ApplicationEvent | undefined> {
+async function enrichAuditEventParam(
+    requestOrMeta: FastifyRequest | MetaInformation,
+    params: RawAuditEventParam,
+    log: FastifyBaseLogger,
+): Promise<ApplicationEvent | undefined> {
     const meta = await extractMetaInformation(requestOrMeta, log)
     if (isNil(meta)) {
         return undefined
     }
     const user = meta.userId ? await userService(log).getOneOrFail({ id: meta.userId }) : undefined
-    const identity = !isNil(user?.identityId) ? await userIdentityService(log).getOneOrFail({ id: user.identityId }) : undefined
+    const identity = !isNil(user?.identityId)
+        ? await userIdentityService(log).getOneOrFail({ id: user.identityId })
+        : undefined
     const project = meta.projectId ? await projectService(log).getOne(meta.projectId) : undefined
     const eventToSave: unknown = {
         id: apId(),
@@ -100,7 +113,10 @@ async function enrichAuditEventParam(requestOrMeta: FastifyRequest | MetaInforma
     return cleanedEvent
 }
 
-async function extractMetaInformation(requestOrMeta: FastifyRequest | MetaInformation, log: FastifyBaseLogger): Promise<MetaInformation | undefined> {
+async function extractMetaInformation(
+    requestOrMeta: FastifyRequest | MetaInformation,
+    log: FastifyBaseLogger,
+): Promise<MetaInformation | undefined> {
     const isRequest = 'principal' in requestOrMeta
     if (isRequest) {
         const request = requestOrMeta as FastifyRequest

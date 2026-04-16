@@ -1,8 +1,8 @@
 import {
-  AgentTool,
-  FlowTriggerType,
-  AgentToolType,
   AgentFlowTool,
+  AgentTool,
+  AgentToolType,
+  FlowTriggerType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Search } from 'lucide-react';
@@ -12,11 +12,11 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogClose,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';

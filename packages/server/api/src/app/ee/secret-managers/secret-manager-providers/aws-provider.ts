@@ -1,4 +1,12 @@
-import { ActivepiecesError, AWSProviderConfig, ErrorCode, isNil, isObject, isString, SecretManagerProviderId } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    AWSProviderConfig,
+    ErrorCode,
+    isNil,
+    isObject,
+    isString,
+    SecretManagerProviderId,
+} from '@activepieces/shared'
 import { GetSecretValueCommand, ListSecretsCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager'
 import { FastifyBaseLogger } from 'fastify'
 import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
@@ -19,8 +27,7 @@ export const awsProvider = (log: FastifyBaseLogger): SecretManagerProvider<Secre
             const client = getSecretsManagerClient(config)
             await client.send(new ListSecretsCommand({ MaxResults: 1 }))
             return true
-        }
-        catch (error: unknown) {
+        } catch (error: unknown) {
             throwConnectionError({ error, provider: SecretManagerProviderId.AWS, log })
         }
     },
@@ -35,9 +42,11 @@ export const awsProvider = (log: FastifyBaseLogger): SecretManagerProvider<Secre
 
         try {
             const client = getSecretsManagerClient(config)
-            const response = await client.send(new GetSecretValueCommand({
-                SecretId: secretName,
-            }))
+            const response = await client.send(
+                new GetSecretValueCommand({
+                    SecretId: secretName,
+                }),
+            )
 
             const secret = response.SecretString
             if (!secret) {
@@ -48,23 +57,21 @@ export const awsProvider = (log: FastifyBaseLogger): SecretManagerProvider<Secre
             if (!isObject(parsedSecretJson)) {
                 throw new Error('Unexpected secret response from AWS')
             }
-            
+
             const value = parsedSecretJson[secretJsonKey]
             if (isNil(value) || !isString(value)) {
                 throw new Error(`Secret value for key ${secretJsonKey} not found`)
             }
 
             return value
-        }
-        catch (error: unknown) {
+        } catch (error: unknown) {
             if (error instanceof ActivepiecesError) throw error
             throwGetSecretError({ error, path: request.path, provider: SecretManagerProviderId.AWS, request, log })
         }
     },
-
 })
 // secretParam has path which is in the format of secretName:secretJsonKey
-const validatePathFormat = (path: string): { secretName: string, secretJsonKey: string } => {
+const validatePathFormat = (path: string): { secretName: string; secretJsonKey: string } => {
     const separatorIndex = path.indexOf(':')
     if (separatorIndex === -1) {
         throw new ActivepiecesError({

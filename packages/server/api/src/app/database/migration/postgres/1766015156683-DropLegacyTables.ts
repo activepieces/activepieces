@@ -26,5 +26,4 @@ export class DropLegacyTables1766015156683 implements MigrationInterface {
             ADD CONSTRAINT "FK_dd85c7c51f3c8137aecb1cafd34" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
     }
-
 }

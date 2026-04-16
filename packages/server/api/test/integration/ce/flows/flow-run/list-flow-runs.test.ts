@@ -1,6 +1,6 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import { FastifyInstance } from 'fastify'
 import { describeWithAuth } from '../../../../helpers/describe-with-auth'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -12,17 +12,21 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-describeWithAuth('List flow runs endpoint', () => app!, (setup) => {
-    it('should return empty list with correct structure', async () => {
-        const ctx = await setup()
+describeWithAuth(
+    'List flow runs endpoint',
+    () => app!,
+    (setup) => {
+        it('should return empty list with correct structure', async () => {
+            const ctx = await setup()
 
-        const response = await ctx.get('/v1/flow-runs', {
-            projectId: ctx.project.id,
+            const response = await ctx.get('/v1/flow-runs', {
+                projectId: ctx.project.id,
+            })
+
+            expect(response?.statusCode).toBe(200)
+            const body = response?.json()
+            expect(body.data).toEqual([])
+            expect(body.cursor).toBeUndefined()
         })
-
-        expect(response?.statusCode).toBe(200)
-        const body = response?.json()
-        expect(body.data).toEqual([])
-        expect(body.cursor).toBeUndefined()
-    })
-})
+    },
+)

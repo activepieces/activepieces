@@ -20,5 +20,4 @@ export class AddFlowIndexToTriggerSource1757555419075 implements MigrationInterf
             DROP INDEX "idx_trigger_flow_id"
         `)
     }
-
 }

@@ -1,1 +1,1 @@
-export type HttpMessageBody =  any
+export type HttpMessageBody = any

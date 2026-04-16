@@ -10,16 +10,18 @@ import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
 const AUTH_REQUEST_TTL_10_MINUTES_SECONDS = 10 * 60
 
 export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) => {
-
     app.get('/authorize', AuthorizeRequest, async (req, reply) => {
-        const { client_id, redirect_uri, response_type, code_challenge, code_challenge_method, state, scope } = req.query
+        const { client_id, redirect_uri, response_type, code_challenge, code_challenge_method, state, scope } =
+            req.query
 
         if (response_type !== 'code') {
             return reply.status(400).send({ error: 'unsupported_response_type' })
         }
 
         if (code_challenge_method !== 'S256') {
-            return reply.status(400).send({ error: 'invalid_request', error_description: 'Only S256 code challenge method is supported' })
+            return reply
+                .status(400)
+                .send({ error: 'invalid_request', error_description: 'Only S256 code challenge method is supported' })
         }
 
         const client = await mcpOAuthClientService.getByClientId(client_id)

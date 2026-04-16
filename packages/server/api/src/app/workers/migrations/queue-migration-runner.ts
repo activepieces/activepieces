@@ -30,7 +30,6 @@ export const queueMigration = (log: FastifyBaseLogger) => ({
                 await deleteLegacyRedisKeys(log).run()
             },
         })
-      
     },
 })
 
@@ -38,11 +37,9 @@ async function needMigration(): Promise<boolean> {
     const redisConnection = await redisConnections.useExisting()
     const queueMigration = await redisConnection.get(QUEUE_MIGRATION_KEY)
     return queueMigration !== QUEUE_MIGRATION_VERSION
-
 }
 
 async function updateMigrationVersion(): Promise<void> {
     const redisConnection = await redisConnections.useExisting()
     await redisConnection.set(QUEUE_MIGRATION_KEY, QUEUE_MIGRATION_VERSION)
 }
-

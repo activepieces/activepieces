@@ -1,24 +1,24 @@
 import {
+  ExecutionToolStatus,
   isNil,
   MarkdownContentBlock,
   MarkdownVariant,
-  TASK_COMPLETION_TOOL_NAME,
-  ToolCallStatus,
-  ExecutionToolStatus,
   normalizeToolOutputToExecuteResponse,
+  TASK_COMPLETION_TOOL_NAME,
   type ToolCallContentBlock,
+  ToolCallStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
+  BookOpen,
+  Braces,
+  CheckCheck,
+  CircleCheckBig,
   CircleX,
   Loader2,
-  Wrench,
-  BookOpen,
   MessageSquareText,
-  CircleCheckBig,
-  CheckCheck,
   SquareTerminal,
-  Braces,
+  Wrench,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -28,11 +28,11 @@ import { ApMarkdown } from '@/components/custom/markdown';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import {
   Accordion,
+  AccordionContent,
   AccordionItem,
   AccordionTrigger,
-  AccordionContent,
 } from '@/components/ui/accordion';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { agentToolHooks } from '../agent-tool-hooks';
 
@@ -124,7 +124,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
         }`}
       >
         <span className="text-sm font-semibold">
-          {isLoading ? 'Loading...' : metadata?.displayName ?? 'Unknown Tool'}
+          {isLoading ? 'Loading...' : (metadata?.displayName ?? 'Unknown Tool')}
           {!isSuccess && t(' (Failed)')}
         </span>
       </span>

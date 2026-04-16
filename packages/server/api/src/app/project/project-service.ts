@@ -87,19 +87,27 @@ export const projectService = (log: FastifyBaseLogger) => ({
             ...(request.maxConcurrentJobs !== undefined ? { maxConcurrentJobs: request.maxConcurrentJobs } : {}),
         }
 
-        const teamUpdate = request.type === ProjectType.TEAM ? {
-            ...spreadIfDefined('displayName', request.displayName),
-            ...spreadIfDefined('icon', request.icon),
-        } : {}
+        const teamUpdate =
+            request.type === ProjectType.TEAM
+                ? {
+                      ...spreadIfDefined('displayName', request.displayName),
+                      ...spreadIfDefined('icon', request.icon),
+                  }
+                : {}
 
         await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
         return this.getOneOrThrow(projectId)
     },
 
     async getPlatformId(projectId: ProjectId): Promise<string> {
-        const result = await projectRepo().createQueryBuilder('project').withDeleted().select('"platformId"').where({
-            id: projectId,
-        }).getRawOne()
+        const result = await projectRepo()
+            .createQueryBuilder('project')
+            .withDeleted()
+            .select('"platformId"')
+            .where({
+                id: projectId,
+            })
+            .getRawOne()
         const platformId = result?.platformId
         if (isNil(platformId)) {
             throw new Error(`Platform ID for project ${projectId} is undefined in webhook.`)
@@ -163,7 +171,9 @@ export const projectService = (log: FastifyBaseLogger) => ({
             .addOrderBy('project.id', 'ASC')
 
         if (params.displayName) {
-            queryBuilder.andWhere('project."displayName" ILIKE :displayName', { displayName: `%${params.displayName}%` })
+            queryBuilder.andWhere('project."displayName" ILIKE :displayName', {
+                displayName: `%${params.displayName}%`,
+            })
         }
 
         await applyProjectsAccessFilters(queryBuilder, params)
@@ -202,18 +212,17 @@ export const projectService = (log: FastifyBaseLogger) => ({
             externalId,
         })
     },
-    createProjectIcon: ()=>{
+    createProjectIcon: () => {
         const colors = Object.values(ColorName)
         const icon: ProjectIcon = {
             color: colors[Math.floor(Math.random() * colors.length)],
         }
         return icon
     },
-    callProjectPostCreateHooks: async (savedProject: Project)=>{
+    callProjectPostCreateHooks: async (savedProject: Project) => {
         await projectHooks.get(log).postCreate(savedProject)
     },
 })
-
 
 export async function applyProjectsAccessFilters<T extends ObjectLiteral>(
     queryBuilder: SelectQueryBuilder<T>,
@@ -224,15 +233,17 @@ export async function applyProjectsAccessFilters<T extends ObjectLiteral>(
         return
     }
 
-    queryBuilder.andWhere(new Brackets(qb => {
-        qb.where(
-            'project."ownerId" = :userId AND project.type = :personalType',
-            { userId, personalType: ProjectType.PERSONAL },
-        ).orWhere(
-            'project.id IN (SELECT "projectId" FROM project_member WHERE "userId" = :userId AND "platformId" = :platformId)',
-            { userId, platformId },
-        )
-    }))
+    queryBuilder.andWhere(
+        new Brackets((qb) => {
+            qb.where('project."ownerId" = :userId AND project.type = :personalType', {
+                userId,
+                personalType: ProjectType.PERSONAL,
+            }).orWhere(
+                'project.id IN (SELECT "projectId" FROM project_member WHERE "userId" = :userId AND "platformId" = :platformId)',
+                { userId, platformId },
+            )
+        }),
+    )
 }
 async function assertExternalIdIsUnique(externalId: string | undefined | null, projectId: ProjectId): Promise<void> {
     if (!isNil(externalId)) {

@@ -549,5 +549,4 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
             ADD CONSTRAINT "FK_03177dc6779e6e147866d43c050" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
     }
-
 }

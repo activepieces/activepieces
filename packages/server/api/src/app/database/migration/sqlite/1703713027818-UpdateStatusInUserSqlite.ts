@@ -1,15 +1,17 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { system } from '../../../helper/system/system'  
+import { system } from '../../../helper/system/system'
 
-export class UpdateStatusInUserSqlite1703713027818
-implements MigrationInterface {
+export class UpdateStatusInUserSqlite1703713027818 implements MigrationInterface {
     name = 'UpdateStatusInUserSqlite1703713027818'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'up',
+        )
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)

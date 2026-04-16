@@ -1,9 +1,4 @@
-import {
-    flowStructureUtil,
-    FlowVersion,
-    isNil,
-    Step,
-} from '@activepieces/shared'
+import { FlowVersion, flowStructureUtil, isNil, Step } from '@activepieces/shared'
 import { Migration } from '.'
 
 export const migrateV17AddLastUpdatedDate: Migration = {

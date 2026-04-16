@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sapAribaAuth } from '../auth';
-import { sapAribaCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { sapAribaAuth } from '../auth'
+import { sapAribaCommon } from '../common'
 
 export const createContractWorkspace = createAction({
     auth: sapAribaAuth,
@@ -109,47 +109,47 @@ export const createContractWorkspace = createAction({
             supplierSystemId,
             isTestProject,
             additionalFields,
-        } = context.propsValue;
+        } = context.propsValue
 
         const queryParams: Record<string, string> = {
             realm,
             user,
             passwordAdapter,
-        };
+        }
 
         const body: Record<string, unknown> = {
             title,
-        };
+        }
 
-        if (description) body['description'] = description;
-        if (templateId) body['templateId'] = templateId;
-        if (effectiveDate) body['effectiveDate'] = effectiveDate;
-        if (expirationDate) body['expirationDate'] = expirationDate;
-        if (isTestProject !== undefined) body['isTestProject'] = isTestProject;
+        if (description) body['description'] = description
+        if (templateId) body['templateId'] = templateId
+        if (effectiveDate) body['effectiveDate'] = effectiveDate
+        if (expirationDate) body['expirationDate'] = expirationDate
+        if (isTestProject !== undefined) body['isTestProject'] = isTestProject
 
         if (contractAmount && contractCurrency) {
             body['contractAmount'] = {
                 amount: contractAmount,
                 currency: contractCurrency,
-            };
+            }
         }
 
         if (ownerUniqueName) {
             body['owner'] = {
                 uniqueName: ownerUniqueName,
                 passwordAdapter: ownerPasswordAdapter || passwordAdapter,
-            };
+            }
         }
 
         if (supplierName || supplierSystemId) {
             body['supplier'] = {
                 ...(supplierName && { name: supplierName }),
                 ...(supplierSystemId && { systemID: supplierSystemId }),
-            };
+            }
         }
 
         if (additionalFields && typeof additionalFields === 'object') {
-            Object.assign(body, additionalFields);
+            Object.assign(body, additionalFields)
         }
 
         const response = await sapAribaCommon.makeRequest(
@@ -157,9 +157,9 @@ export const createContractWorkspace = createAction({
             HttpMethod.POST,
             '/contractWorkspaces',
             queryParams,
-            body
-        );
+            body,
+        )
 
-        return response;
+        return response
     },
-});
+})

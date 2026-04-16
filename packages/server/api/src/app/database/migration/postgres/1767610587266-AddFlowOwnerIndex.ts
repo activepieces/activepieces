@@ -17,5 +17,4 @@ export class AddFlowOwnerIndex1767610587266 implements MigrationInterface {
             DROP INDEX "idx_flow_owner_id"
         `)
     }
-
 }

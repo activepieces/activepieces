@@ -111,5 +111,4 @@ export class AddExternalIdToMCPSqlite1753786833156 implements MigrationInterface
             CREATE INDEX "mcp_project_id" ON "mcp" ("projectId")
         `)
     }
-
 }

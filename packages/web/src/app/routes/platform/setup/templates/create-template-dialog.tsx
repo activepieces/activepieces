@@ -1,6 +1,6 @@
 import {
-  TemplateTag as TemplateTagType,
   FlowVersionTemplate,
+  TemplateTag as TemplateTagType,
   TemplateType,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';

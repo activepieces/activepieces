@@ -213,5 +213,4 @@ export class TableWebhooksSqlite1737550783153 implements MigrationInterface {
             DROP TABLE "table_webhook"
         `)
     }
-
 }

@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
-import { callSalesforceApi, salesforcesCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { callSalesforceApi, salesforcesCommon } from '../common'
 
 export const createTask = createAction({
     auth: salesforceAuth,
@@ -32,15 +32,7 @@ export const createTask = createAction({
         }),
     },
     async run(context) {
-        const {
-            Subject,
-            OwnerId,
-            Status,
-            Priority,
-            Description,
-            WhoId,
-            WhatId
-        } = context.propsValue;
+        const { Subject, OwnerId, Status, Priority, Description, WhoId, WhatId } = context.propsValue
 
         const rawBody = {
             Subject,
@@ -49,23 +41,26 @@ export const createTask = createAction({
             Priority,
             Description,
             WhoId,
-            WhatId
-        };
+            WhatId,
+        }
 
-        const cleanedBody = Object.entries(rawBody).reduce((acc, [key, value]) => {
-            if (value !== undefined && value !== null && value !== '') {
-                acc[key] = value;
-            }
-            return acc;
-        }, {} as Record<string, unknown>);
+        const cleanedBody = Object.entries(rawBody).reduce(
+            (acc, [key, value]) => {
+                if (value !== undefined && value !== null && value !== '') {
+                    acc[key] = value
+                }
+                return acc
+            },
+            {} as Record<string, unknown>,
+        )
 
         const response = await callSalesforceApi(
             HttpMethod.POST,
             context.auth,
             '/services/data/v56.0/sobjects/Task',
-            cleanedBody
-        );
+            cleanedBody,
+        )
 
-        return response.body;
+        return response.body
     },
-});
+})

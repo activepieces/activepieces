@@ -36,15 +36,15 @@ export class UnifyPieceName1686138629812 implements MigrationInterface {
 
         log.info(
             'UnifyPieceName1686138629812, finished renaming ' +
-        count +
-        ' flows and connections count ' +
-        connectionCount +
-        ' appEventsRoutCount ' +
-        appEventsRoutCount +
-        ' pieceMetadataCount ' +
-        pieceMetadataCount +
-        ' triggerEventCount ' +
-        triggerEventCount,
+                count +
+                ' flows and connections count ' +
+                connectionCount +
+                ' appEventsRoutCount ' +
+                appEventsRoutCount +
+                ' pieceMetadataCount ' +
+                pieceMetadataCount +
+                ' triggerEventCount ' +
+                triggerEventCount,
         )
     }
 
@@ -59,23 +59,20 @@ export class UnifyPieceName1686138629812 implements MigrationInterface {
 
         log.info(
             'UnifyPieceName1686138629812, finished reverting renaming ' +
-        count +
-        ' flows and connections count ' +
-        connectionCount +
-        ' appEventsRoutCount ' +
-        appEventsRoutCount +
-        ' pieceMetadataCount ' +
-        pieceMetadataCount +
-        ' triggerEventCount ' +
-        triggerEventCount,
+                count +
+                ' flows and connections count ' +
+                connectionCount +
+                ' appEventsRoutCount ' +
+                appEventsRoutCount +
+                ' pieceMetadataCount ' +
+                pieceMetadataCount +
+                ' triggerEventCount ' +
+                triggerEventCount,
         )
     }
 }
 
-async function updateFlowVersions(
-    queryRunner: QueryRunner,
-    revert: boolean,
-): Promise<number> {
+async function updateFlowVersions(queryRunner: QueryRunner, revert: boolean): Promise<number> {
     const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
     let count = 0
 
@@ -85,100 +82,70 @@ async function updateFlowVersions(
 
         if (update) {
             count++
-            await queryRunner.query(
-                `UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`,
-                [flowVersion.trigger, flowVersion.id],
-            )
+            await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [
+                flowVersion.trigger,
+                flowVersion.id,
+            ])
         }
     }
 
     return count
 }
 
-async function updateTriggerEvent(
-    queryRunner: QueryRunner,
-    revert: boolean,
-): Promise<number> {
-    const triggerEvents = await queryRunner.query(
-        `SELECT * FROM ${TRIGGER_EVENT}`,
-    )
+async function updateTriggerEvent(queryRunner: QueryRunner, revert: boolean): Promise<number> {
+    const triggerEvents = await queryRunner.query(`SELECT * FROM ${TRIGGER_EVENT}`)
     let count = 0
     for (const triggerEvent of triggerEvents) {
         if (triggerEvent.source) {
             if (revert) {
                 triggerEvent.source = `@activepieces/piece-${triggerEvent.source}`
-            }
-            else {
-                triggerEvent.source = triggerEvent.source.replace(
-                    '@activepieces/piece-',
-                    '',
-                )
+            } else {
+                triggerEvent.source = triggerEvent.source.replace('@activepieces/piece-', '')
             }
             count++
-            await queryRunner.query(
-                `UPDATE ${TRIGGER_EVENT} SET source = $1 WHERE id = $2`,
-                [triggerEvent.source, triggerEvent.id],
-            )
+            await queryRunner.query(`UPDATE ${TRIGGER_EVENT} SET source = $1 WHERE id = $2`, [
+                triggerEvent.source,
+                triggerEvent.id,
+            ])
         }
     }
     return count
 }
 
-async function updateAppConnections(
-    queryRunner: QueryRunner,
-    revert: boolean,
-): Promise<number> {
-    const appConnections = await queryRunner.query(
-        `SELECT * FROM ${APP_CONNECTION_TABLE}`,
-    )
+async function updateAppConnections(queryRunner: QueryRunner, revert: boolean): Promise<number> {
+    const appConnections = await queryRunner.query(`SELECT * FROM ${APP_CONNECTION_TABLE}`)
     let count = 0
 
     for (const appConnection of appConnections) {
-        appConnection.appName = getPackageNameForPiece(
-            appConnection.appName,
-            revert,
-        )
+        appConnection.appName = getPackageNameForPiece(appConnection.appName, revert)
         count++
-        await queryRunner.query(
-            `UPDATE ${APP_CONNECTION_TABLE} SET "appName" = $1 WHERE id = $2`,
-            [appConnection.appName, appConnection.id],
-        )
+        await queryRunner.query(`UPDATE ${APP_CONNECTION_TABLE} SET "appName" = $1 WHERE id = $2`, [
+            appConnection.appName,
+            appConnection.id,
+        ])
     }
 
     return count
 }
 
-async function updateAppEventRoutes(
-    queryRunner: QueryRunner,
-    revert: boolean,
-): Promise<number> {
-    const appEventsRoutes = await queryRunner.query(
-        `SELECT * FROM ${APP_EVENT_ROUTING_TABLE}`,
-    )
+async function updateAppEventRoutes(queryRunner: QueryRunner, revert: boolean): Promise<number> {
+    const appEventsRoutes = await queryRunner.query(`SELECT * FROM ${APP_EVENT_ROUTING_TABLE}`)
     let count = 0
 
     for (const appEventsRoute of appEventsRoutes) {
-        appEventsRoute.appName = getPackageNameForPiece(
-            appEventsRoute.appName,
-            revert,
-        )
+        appEventsRoute.appName = getPackageNameForPiece(appEventsRoute.appName, revert)
         count++
-        await queryRunner.query(
-            `UPDATE ${APP_EVENT_ROUTING_TABLE} SET "appName" = $1 WHERE id = $2`,
-            [appEventsRoute.appName, appEventsRoute.id],
-        )
+        await queryRunner.query(`UPDATE ${APP_EVENT_ROUTING_TABLE} SET "appName" = $1 WHERE id = $2`, [
+            appEventsRoute.appName,
+            appEventsRoute.id,
+        ])
     }
 
     return count
 }
 
-async function updatePieceMetadata(
-    queryRunner: QueryRunner,
-    revert: boolean,
-): Promise<number> {
-    const pieceMetadatas = await queryRunner.query(
-        'SELECT * FROM piece_metadata;',
-    )
+async function updatePieceMetadata(queryRunner: QueryRunner, revert: boolean): Promise<number> {
+    const pieceMetadatas = await queryRunner.query('SELECT * FROM piece_metadata;')
     let count = 0
 
     for (const pieceMetadata of pieceMetadatas) {
@@ -195,10 +162,7 @@ function updateStep(step: Step | undefined, revert: boolean): boolean {
     let update = false
     while (step) {
         if (step.type === PIECE_TYPE || step.type === PIECE_TRIGGER_TYPE) {
-            step.settings.pieceName = getPackageNameForPiece(
-                step.settings.pieceName,
-                revert,
-            )!
+            step.settings.pieceName = getPackageNameForPiece(step.settings.pieceName, revert)!
             update = true
         }
         if (step.firstLoopAction) {
@@ -218,10 +182,7 @@ function updateStep(step: Step | undefined, revert: boolean): boolean {
     return update
 }
 
-const getPackageNameForPiece = (
-    pieceName: string | undefined,
-    revert: boolean,
-): string | undefined => {
+const getPackageNameForPiece = (pieceName: string | undefined, revert: boolean): string | undefined => {
     if (!pieceName) {
         return pieceName
     }

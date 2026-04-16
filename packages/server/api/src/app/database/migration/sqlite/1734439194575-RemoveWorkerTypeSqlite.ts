@@ -125,5 +125,4 @@ export class RemoveWorkerTypeSqlite1734439194575 implements MigrationInterface {
             DROP TABLE "temporary_worker_machine"
         `)
     }
-
 }

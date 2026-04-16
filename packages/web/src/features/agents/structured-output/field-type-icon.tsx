@@ -1,8 +1,8 @@
 import { AgentOutputFieldType } from '@activepieces/shared';
 import {
-  Type as TextIcon,
-  Hash as NumberIcon,
   CheckSquare as BooleanIcon,
+  Hash as NumberIcon,
+  Type as TextIcon,
 } from 'lucide-react';
 
 interface FieldTypeIconProps {

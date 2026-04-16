@@ -51,8 +51,10 @@ function isNil(value: unknown): value is null | undefined {
 }
 
 function isMcpTriggerPiece(flowVersion: FlowVersion): boolean {
-    return flowVersion.trigger.type === TriggerType.PIECE && 
-           flowVersion.trigger.settings.pieceName === '@activepieces/piece-mcp'
+    return (
+        flowVersion.trigger.type === TriggerType.PIECE &&
+        flowVersion.trigger.settings.pieceName === '@activepieces/piece-mcp'
+    )
 }
 
 const log = system.globalLogger()
@@ -78,49 +80,64 @@ export class MigrateMcpFlowsToBeTools1748996336492 implements MigrationInterface
     public async down(_queryRunner: QueryRunner): Promise<void> {
         // No down migration needed
     }
-
 }
 
 async function AddMcpFlowTools(queryRunner: QueryRunner, mcpId: string, projectId: string) {
-    const flows = await queryRunner.query(`
+    const flows = await queryRunner.query(
+        `
         SELECT * FROM "flow" WHERE "projectId" = $1 AND "status" = 'ENABLED' AND "publishedVersionId" IS NOT NULL
-    `, [projectId])
+    `,
+        [projectId],
+    )
 
-    const populatedFlows = await Promise.all(flows.map(async (flow: Flow) => {
-        const version = await queryRunner.query(`
+    const populatedFlows = await Promise.all(
+        flows.map(async (flow: Flow) => {
+            const version = await queryRunner.query(
+                `
             SELECT * FROM "flow_version" WHERE "id" = $1
-        `, [flow.publishedVersionId])
+        `,
+                [flow.publishedVersionId],
+            )
 
-        if (isNil(version) || version.length === 0 || !isMcpTriggerPiece(version[0])) {
-            return null
-        }
+            if (isNil(version) || version.length === 0 || !isMcpTriggerPiece(version[0])) {
+                return null
+            }
 
-        return {
-            ...flow,
-            version,
-        }
-    }))
+            return {
+                ...flow,
+                version,
+            }
+        }),
+    )
 
     const populatedFlowsCount = populatedFlows.filter((flow) => flow !== null).length
     totalFlows += populatedFlowsCount
-    log.info({ populatedFlowsCount, totalFlows: flows.length, mcpId, projectId }, '[AddMcpFlowTools] Adding MCP flow tools')
+    log.info(
+        { populatedFlowsCount, totalFlows: flows.length, mcpId, projectId },
+        '[AddMcpFlowTools] Adding MCP flow tools',
+    )
 
-    await Promise.all(populatedFlows.map(async (flow: Flow | null) => {
-        if (isNil(flow)) {
-            return
-        }
+    await Promise.all(
+        populatedFlows.map(async (flow: Flow | null) => {
+            if (isNil(flow)) {
+                return
+            }
 
-        const mcpTool: McpTool = {
-            id: apId(),
-            mcpId,
-            type: McpToolType.FLOW,
-            flowId: flow.id,
-            created: new Date().toISOString(),
-            updated: new Date().toISOString(),
-        }
+            const mcpTool: McpTool = {
+                id: apId(),
+                mcpId,
+                type: McpToolType.FLOW,
+                flowId: flow.id,
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+            }
 
-        await queryRunner.query(`
+            await queryRunner.query(
+                `
             INSERT INTO "mcp_tool" ("id", "mcpId", "type", "flowId", "created", "updated") VALUES ($1, $2, $3, $4, $5, $6)
-        `, [mcpTool.id, mcpTool.mcpId, mcpTool.type, mcpTool.flowId, mcpTool.created, mcpTool.updated])
-    }))
+        `,
+                [mcpTool.id, mcpTool.mcpId, mcpTool.type, mcpTool.flowId, mcpTool.created, mcpTool.updated],
+            )
+        }),
+    )
 }

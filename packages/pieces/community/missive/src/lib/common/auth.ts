@@ -1,5 +1,5 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const missiveAuth = PieceAuth.SecretText({
     displayName: 'API Token',
@@ -22,24 +22,24 @@ export const missiveAuth = PieceAuth.SecretText({
                 authentication: {
                     type: AuthenticationType.BEARER_TOKEN,
                     token: auth,
-                }
-            });
+                },
+            })
 
             if (response.status === 200) {
                 return {
                     valid: true,
-                };
+                }
             }
 
             return {
                 valid: false,
                 error: 'Invalid API token. Please check your token and try again.',
-            };
+            }
         } catch (error) {
             return {
                 valid: false,
                 error: 'Failed to validate API token. Please check your token and try again.',
-            };
+            }
         }
-    }
-}); 
+    },
+})

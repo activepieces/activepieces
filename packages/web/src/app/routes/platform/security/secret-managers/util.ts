@@ -35,7 +35,7 @@ function getDefaultValues(
         scope: connection.scope,
         projectIds:
           connection.scope === SecretManagerConnectionScope.PROJECT
-            ? connection.projectIds ?? []
+            ? (connection.projectIds ?? [])
             : [],
       }
     : {

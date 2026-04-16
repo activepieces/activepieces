@@ -11,11 +11,8 @@ export function deleteProperties(obj: Record<string, unknown>, props: string[]) 
 }
 
 export function omit<T extends object, K extends keyof T>(obj: T, keysToOmit: K[]): Omit<T, K> {
-    return Object.fromEntries(
-        Object.entries(obj).filter(([key]) => !keysToOmit.includes(key as K)),
-    ) as Omit<T, K>
+    return Object.fromEntries(Object.entries(obj).filter(([key]) => !keysToOmit.includes(key as K))) as Omit<T, K>
 }
-
 
 export const spreadIfNotUndefined = <T>(key: string, value: T | undefined): Record<string, T> => {
     if (value === undefined) {
@@ -35,10 +32,7 @@ export const spreadIfDefined = <T>(key: string, value: T | undefined | null): Re
     }
 }
 
-export function deleteProps<T extends Record<string, unknown>, K extends keyof T>(
-    obj: T,
-    prop: K[],
-): Omit<T, K> {
+export function deleteProps<T extends Record<string, unknown>, K extends keyof T>(obj: T, prop: K[]): Omit<T, K> {
     const newObj = { ...obj }
     for (const p of prop) {
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -52,7 +46,7 @@ export function sanitizeObjectForPostgresql<T>(input: T): T {
         if (isString(str)) {
             // eslint-disable-next-line no-control-regex
             const controlCharsRegex = /\u0000/g
-            return str.replace(controlCharsRegex, '')            
+            return str.replace(controlCharsRegex, '')
         }
         return str
     })
@@ -60,14 +54,11 @@ export function sanitizeObjectForPostgresql<T>(input: T): T {
 export function applyFunctionToValuesSync<T>(obj: unknown, apply: (str: string) => unknown): T {
     if (isNil(obj)) {
         return obj as T
-    }
-    else if (isString(obj)) {
+    } else if (isString(obj)) {
         return apply(obj) as T
-    }
-    else if (Array.isArray(obj)) {
-        return obj.map(item => applyFunctionToValuesSync(item, apply)) as unknown as T
-    }
-    else if (isObject(obj)) {
+    } else if (Array.isArray(obj)) {
+        return obj.map((item) => applyFunctionToValuesSync(item, apply)) as unknown as T
+    } else if (isObject(obj)) {
         return Object.fromEntries(
             Object.entries(obj).map(([key, value]) => [key, applyFunctionToValuesSync(value, apply)]),
         ) as T
@@ -78,16 +69,13 @@ export function applyFunctionToValuesSync<T>(obj: unknown, apply: (str: string) 
 export async function applyFunctionToValues<T>(obj: unknown, apply: (str: string) => Promise<unknown>): Promise<T> {
     if (isNil(obj)) {
         return obj as T
-    }
-    else if (isString(obj)) {
+    } else if (isString(obj)) {
         return (await apply(obj)) as T
-    }
-    else if (Array.isArray(obj)) {
+    } else if (Array.isArray(obj)) {
         // Create a new array and map over it with Promise.all
-        const newArray = await Promise.all(obj.map(item => applyFunctionToValues(item, apply)))
+        const newArray = await Promise.all(obj.map((item) => applyFunctionToValues(item, apply)))
         return newArray as unknown as T
-    }
-    else if (isObject(obj)) {
+    } else if (isObject(obj)) {
         // Use Object.fromEntries and map entries asynchronously
         const newEntries = await Promise.all(
             Object.entries(obj).map(async ([key, value]) => [key, await applyFunctionToValues(value, apply)]),
@@ -96,7 +84,6 @@ export async function applyFunctionToValues<T>(obj: unknown, apply: (str: string
     }
     return obj as T
 }
-
 
 export const isObject = (obj: unknown): obj is Record<string, unknown> => {
     return typeof obj === 'object' && obj !== null && !Array.isArray(obj)
@@ -109,17 +96,16 @@ export function groupBy<T, K extends string | number | symbol>(
     keySelector: (item: T) => K,
 ): Record<K, T[]> {
     const result = {} as Record<K, T[]>
-  
+
     for (const item of items) {
         const key = keySelector(item)
-  
+
         if (!result[key]) {
             result[key] = []
         }
-  
+
         result[key].push(item)
     }
-  
+
     return result
 }
-  

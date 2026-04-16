@@ -1,7 +1,7 @@
 import {
   ApplicationEventName,
-  EventDestination,
   CreatePlatformEventDestinationRequestBody,
+  EventDestination,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useState } from 'react';

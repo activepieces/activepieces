@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const findInvoices = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -49,25 +49,25 @@ export const findInvoices = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
-        const { invoiceNumber, supplier, businessUnit, validationStatus, limit, offset } = context.propsValue;
+        const client = makeClient(context.auth.props)
+        const { invoiceNumber, supplier, businessUnit, validationStatus, limit, offset } = context.propsValue
 
         const queryParams: Record<string, string | number> = {
             limit: Math.min(limit || 25, 500),
             offset: offset || 0,
-        };
-
-        const filters: string[] = [];
-        if (invoiceNumber) filters.push(`InvoiceNumber="${invoiceNumber}"`);
-        if (supplier) filters.push(`Supplier="${supplier}"`);
-        if (businessUnit) filters.push(`BusinessUnit="${businessUnit}"`);
-        if (validationStatus) filters.push(`ValidationStatus="${validationStatus}"`);
-
-        if (filters.length > 0) {
-            queryParams['q'] = filters.join(' AND ');
         }
 
-        const response = await client.searchRecords('/invoices', queryParams);
-        return response;
+        const filters: string[] = []
+        if (invoiceNumber) filters.push(`InvoiceNumber="${invoiceNumber}"`)
+        if (supplier) filters.push(`Supplier="${supplier}"`)
+        if (businessUnit) filters.push(`BusinessUnit="${businessUnit}"`)
+        if (validationStatus) filters.push(`ValidationStatus="${validationStatus}"`)
+
+        if (filters.length > 0) {
+            queryParams['q'] = filters.join(' AND ')
+        }
+
+        const response = await client.searchRecords('/invoices', queryParams)
+        return response
     },
-});
+})

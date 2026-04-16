@@ -1,7 +1,7 @@
-import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { slackAuth } from '../auth';
-import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
-import { ViewSubmissionPayload } from '../common/types';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { slackAuth } from '../auth'
+import { getTeamId, SlackAuthValue } from '../common/auth-helpers'
+import { ViewSubmissionPayload } from '../common/types'
 
 export const newModalInteractionTrigger = createTrigger({
     auth: slackAuth,
@@ -26,26 +26,26 @@ export const newModalInteractionTrigger = createTrigger({
     type: TriggerStrategy.APP_WEBHOOK,
     sampleData: undefined,
     onEnable: async (context) => {
-        const teamId = await getTeamId(context.auth as SlackAuthValue);
+        const teamId = await getTeamId(context.auth as SlackAuthValue)
         context.app.createListeners({
             events: [context.propsValue.interactionType as string],
             identifierValue: teamId,
-        });
+        })
     },
     onDisable: async (context) => {
         // Ignored
     },
 
     run: async (context) => {
-        const body = context.payload.body as { payload: string };
-        const payload = JSON.parse(body.payload) as ViewSubmissionPayload;
+        const body = context.payload.body as { payload: string }
+        const payload = JSON.parse(body.payload) as ViewSubmissionPayload
 
-        const interactionType = context.propsValue.interactionType as string;
+        const interactionType = context.propsValue.interactionType as string
         if (payload.type !== interactionType) {
-            return [];
+            return []
         }
 
-        const { token: _token, ...safePayload } = payload;
-        return [safePayload];
+        const { token: _token, ...safePayload } = payload
+        return [safePayload]
     },
-});
+})

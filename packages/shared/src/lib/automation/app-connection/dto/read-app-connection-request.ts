@@ -12,16 +12,12 @@ export const ListAppConnectionsRequestQuery = z.object({
     limit: z.coerce.number().optional(),
 })
 
-export type ListAppConnectionsRequestQuery = z.infer<
-  typeof ListAppConnectionsRequestQuery
->
+export type ListAppConnectionsRequestQuery = z.infer<typeof ListAppConnectionsRequestQuery>
 
 export const GetAppConnectionForWorkerRequestQuery = z.object({
     externalId: z.string(),
 })
-export type GetAppConnectionForWorkerRequestQuery = z.infer<
-    typeof GetAppConnectionForWorkerRequestQuery
->
+export type GetAppConnectionForWorkerRequestQuery = z.infer<typeof GetAppConnectionForWorkerRequestQuery>
 
 export const ListGlobalConnectionsRequestQuery = ListAppConnectionsRequestQuery.omit({ projectId: true })
 export type ListGlobalConnectionsRequestQuery = z.infer<typeof ListGlobalConnectionsRequestQuery>

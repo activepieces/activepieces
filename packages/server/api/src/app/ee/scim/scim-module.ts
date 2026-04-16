@@ -5,17 +5,23 @@ import { scimGroupController } from './scim-group-controller'
 import { scimUserController } from './scim-user-controller'
 
 export const scimModule: FastifyPluginAsyncZod = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.scimEnabled))
+    app.addHook(
+        'preHandler',
+        platformMustHaveFeatureEnabled((platform) => platform.plan.scimEnabled),
+    )
     app.addContentTypeParser('application/scim+json', { parseAs: 'string' }, function (_req, body, done) {
         try {
-            if (body == null || (typeof body === 'string' && body.trim() === '') || (Array.isArray(body) && body.length === 0)) {
+            if (
+                body == null ||
+                (typeof body === 'string' && body.trim() === '') ||
+                (Array.isArray(body) && body.length === 0)
+            ) {
                 done(null, {})
                 return
             }
             const json = JSON.parse(body as string)
             done(null, json)
-        }
-        catch (err) {
+        } catch (err) {
             const error: Error & { statusCode?: number } = err instanceof Error ? err : new Error('JSON parsing failed')
             error.statusCode = 400
             done(error, undefined)

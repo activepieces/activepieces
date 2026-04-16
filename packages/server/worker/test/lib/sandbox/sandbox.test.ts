@@ -1,8 +1,8 @@
-import { ChildProcess } from 'child_process'
 import { EventEmitter } from 'node:events'
-import { describe, it, expect, vi, afterEach } from 'vitest'
-import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
 import { ActivepiecesError, EngineResponseStatus, ErrorCode, WorkerContract } from '@activepieces/shared'
+import { ChildProcess } from 'child_process'
+import { type Socket as ClientSocket, io as ioClient } from 'socket.io-client'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createSandbox } from '../../../src/lib/sandbox/sandbox'
 import { Sandbox, SandboxLogger, SandboxProcessMaker } from '../../../src/lib/sandbox/types'
 
@@ -167,17 +167,13 @@ describe('createSandbox', () => {
 
             const engineResponse = { status: 200, body: 'ok' }
 
-            client.on('rpc', (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
+            client.on('rpc', (msg: { method: string; payload: unknown }, ack: (result: unknown) => void) => {
                 if (msg.method === 'executeOperation') {
                     ack(engineResponse)
                 }
             })
 
-            const result = await sandbox.execute(
-                'EXECUTE_FLOW' as any,
-                {} as any,
-                { timeoutInSeconds: 10 },
-            )
+            const result = await sandbox.execute('EXECUTE_FLOW' as any, {} as any, { timeoutInSeconds: 10 })
 
             expect(result).toEqual({ ...engineResponse, logs: undefined })
         })
@@ -187,7 +183,7 @@ describe('createSandbox', () => {
             const client = testPM.getClient()
 
             let callCount = 0
-            client.on('rpc', (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
+            client.on('rpc', (msg: { method: string; payload: unknown }, ack: (result: unknown) => void) => {
                 if (msg.method === 'executeOperation') {
                     callCount++
                     if (callCount === 1) {
@@ -196,26 +192,17 @@ describe('createSandbox', () => {
                             status: EngineResponseStatus.INTERNAL_ERROR,
                             error: 'Engine error: AppWebhookUrlNotAvailableError',
                         })
-                    }
-                    else {
+                    } else {
                         ack({ response: { success: true }, status: EngineResponseStatus.OK })
                     }
                 }
             })
 
-            const firstResult = await sandbox.execute(
-                'EXECUTE_FLOW' as any,
-                {} as any,
-                { timeoutInSeconds: 10 },
-            )
+            const firstResult = await sandbox.execute('EXECUTE_FLOW' as any, {} as any, { timeoutInSeconds: 10 })
             expect(firstResult.status).toBe(EngineResponseStatus.INTERNAL_ERROR)
             expect(firstResult.error).toBe('Engine error: AppWebhookUrlNotAvailableError')
 
-            const secondResult = await sandbox.execute(
-                'EXECUTE_FLOW' as any,
-                {} as any,
-                { timeoutInSeconds: 10 },
-            )
+            const secondResult = await sandbox.execute('EXECUTE_FLOW' as any, {} as any, { timeoutInSeconds: 10 })
             expect(secondResult.status).toBe(EngineResponseStatus.OK)
             expect(secondResult.response).toEqual({ success: true })
         })
@@ -225,7 +212,7 @@ describe('createSandbox', () => {
             const client = testPM.getClient()
 
             const engineResponse = { status: 200, body: 'ok' }
-            client.on('rpc', (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
+            client.on('rpc', (msg: { method: string; payload: unknown }, ack: (result: unknown) => void) => {
                 if (msg.method === 'executeOperation') {
                     client.emit('rpc-notify', { method: 'stdout', payload: { message: 'line1\n' } })
                     client.emit('rpc-notify', { method: 'stderr', payload: { message: 'err1\n' } })
@@ -236,11 +223,7 @@ describe('createSandbox', () => {
                 }
             })
 
-            const result = await sandbox.execute(
-                'EXECUTE_FLOW' as any,
-                {} as any,
-                { timeoutInSeconds: 10 },
-            )
+            const result = await sandbox.execute('EXECUTE_FLOW' as any, {} as any, { timeoutInSeconds: 10 })
 
             expect(result).toEqual({ ...engineResponse, logs: 'stdout:\nline1\nline2\n\nstderr:\nerr1\n' })
         })
@@ -249,20 +232,19 @@ describe('createSandbox', () => {
             const { sandbox, workerHandlers } = await startSandbox()
             const client = testPM.getClient()
 
-            client.on('rpc', (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
+            client.on('rpc', (msg: { method: string; payload: unknown }, ack: (result: unknown) => void) => {
                 if (msg.method === 'executeOperation') {
                     // Simulate calling back to worker via RPC
-                    client.timeout(5000).emitWithAck('rpc', { method: 'updateRunProgress', payload: { progress: 50 } }).then(() => {
-                        ack({ status: 200 })
-                    })
+                    client
+                        .timeout(5000)
+                        .emitWithAck('rpc', { method: 'updateRunProgress', payload: { progress: 50 } })
+                        .then(() => {
+                            ack({ status: 200 })
+                        })
                 }
             })
 
-            await sandbox.execute(
-                'EXECUTE_FLOW' as any,
-                {} as any,
-                { timeoutInSeconds: 10 },
-            )
+            await sandbox.execute('EXECUTE_FLOW' as any, {} as any, { timeoutInSeconds: 10 })
 
             expect(workerHandlers.updateRunProgress).toHaveBeenCalledWith({ progress: 50 })
         })
@@ -277,17 +259,12 @@ describe('createSandbox', () => {
                 cb()
             })
 
-            const executePromise = sandbox.execute(
-                'EXECUTE_FLOW' as any,
-                {} as any,
-                { timeoutInSeconds: 0.5 },
-            )
+            const executePromise = sandbox.execute('EXECUTE_FLOW' as any, {} as any, { timeoutInSeconds: 0.5 })
 
             await expect(executePromise).rejects.toThrow()
             try {
                 await executePromise
-            }
-            catch (err) {
+            } catch (err) {
                 expect((err as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_EXECUTION_TIMEOUT)
             }
         })
@@ -301,17 +278,12 @@ describe('createSandbox', () => {
                 child.emit('exit', 134, null)
             })
 
-            const executePromise = sandbox.execute(
-                'EXECUTE_FLOW' as any,
-                {} as any,
-                { timeoutInSeconds: 10 },
-            )
+            const executePromise = sandbox.execute('EXECUTE_FLOW' as any, {} as any, { timeoutInSeconds: 10 })
 
             await expect(executePromise).rejects.toThrow()
             try {
                 await executePromise
-            }
-            catch (err) {
+            } catch (err) {
                 expect((err as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_MEMORY_ISSUE)
             }
         })
@@ -322,23 +294,21 @@ describe('createSandbox', () => {
             const child = testPM.getChild()
 
             client.on('rpc', () => {
-                client.emit('rpc-notify', { method: 'stderr', payload: { message: 'Flow run data size exceeded the maximum allowed size' } })
+                client.emit('rpc-notify', {
+                    method: 'stderr',
+                    payload: { message: 'Flow run data size exceeded the maximum allowed size' },
+                })
                 setTimeout(() => {
                     child.emit('exit', 1, null)
                 }, 50)
             })
 
-            const executePromise = sandbox.execute(
-                'EXECUTE_FLOW' as any,
-                {} as any,
-                { timeoutInSeconds: 10 },
-            )
+            const executePromise = sandbox.execute('EXECUTE_FLOW' as any, {} as any, { timeoutInSeconds: 10 })
 
             await expect(executePromise).rejects.toThrow()
             try {
                 await executePromise
-            }
-            catch (err) {
+            } catch (err) {
                 expect((err as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED)
             }
         })
@@ -352,17 +322,12 @@ describe('createSandbox', () => {
                 child.emit('exit', 1, null)
             })
 
-            const executePromise = sandbox.execute(
-                'EXECUTE_FLOW' as any,
-                {} as any,
-                { timeoutInSeconds: 10 },
-            )
+            const executePromise = sandbox.execute('EXECUTE_FLOW' as any, {} as any, { timeoutInSeconds: 10 })
 
             await expect(executePromise).rejects.toThrow()
             try {
                 await executePromise
-            }
-            catch (err) {
+            } catch (err) {
                 expect((err as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_INTERNAL_ERROR)
             }
         })
@@ -373,17 +338,13 @@ describe('createSandbox', () => {
             const child = testPM.getChild()
             const removeAllListenersSpy = vi.spyOn(child, 'removeAllListeners')
 
-            client.on('rpc', (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
+            client.on('rpc', (msg: { method: string; payload: unknown }, ack: (result: unknown) => void) => {
                 if (msg.method === 'executeOperation') {
                     ack({ status: 200 })
                 }
             })
 
-            await sandbox.execute(
-                'EXECUTE_FLOW' as any,
-                {} as any,
-                { timeoutInSeconds: 10 },
-            )
+            await sandbox.execute('EXECUTE_FLOW' as any, {} as any, { timeoutInSeconds: 10 })
 
             expect(removeAllListenersSpy).toHaveBeenCalledWith('exit')
             expect(removeAllListenersSpy).toHaveBeenCalledWith('error')

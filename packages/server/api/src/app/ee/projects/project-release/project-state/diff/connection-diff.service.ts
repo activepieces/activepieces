@@ -4,9 +4,9 @@ export const connectionDiffService = {
     diff({ newState, currentState }: DiffParams): ConnectionOperation[] {
         const connectionOperations: ConnectionOperation[] = []
 
-        currentState.connections?.forEach(connection => {
+        currentState.connections?.forEach((connection) => {
             const connectionState = newState.connections?.find((c) => c.externalId === connection.externalId)
-            const connectionChanged =  connectionState?.pieceName !== connection.pieceName
+            const connectionChanged = connectionState?.pieceName !== connection.pieceName
             if (!isNil(connectionState) && connectionChanged) {
                 connectionOperations.push({
                     type: ConnectionOperationType.UPDATE_CONNECTION,
@@ -15,8 +15,8 @@ export const connectionDiffService = {
                 })
             }
         })
-    
-        newState.connections?.forEach(connection => {
+
+        newState.connections?.forEach((connection) => {
             const isExistingConnection = currentState.connections?.find((c) => c.externalId === connection.externalId)
             if (isNil(isExistingConnection)) {
                 connectionOperations.push({
@@ -25,7 +25,7 @@ export const connectionDiffService = {
                 })
             }
         })
-    
+
         return connectionOperations
     },
 }
@@ -33,4 +33,4 @@ export const connectionDiffService = {
 type DiffParams = {
     currentState: ProjectState
     newState: ProjectState
-} 
+}

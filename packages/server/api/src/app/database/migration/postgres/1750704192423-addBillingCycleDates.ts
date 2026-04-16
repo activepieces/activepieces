@@ -37,5 +37,4 @@ export class AddBillingCycleDates1750704192423 implements MigrationInterface {
             ALTER TABLE "platform_plan" DROP COLUMN "stripeSubscriptionStartDate"
         `)
     }
-
 }

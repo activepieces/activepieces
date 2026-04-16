@@ -1,81 +1,65 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { makeRequest } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
-import { copyAiAuth } from '../auth';
-
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework'
+import { isNil } from '@activepieces/shared'
+import { copyAiAuth } from '../auth'
+import { makeRequest } from '../common/client'
 
 export const workflowRunCompletedTrigger = createTrigger({
-    auth:copyAiAuth,
+    auth: copyAiAuth,
     name: 'workflow_run_completed',
     displayName: 'Workflow Run Completed',
     description: 'Triggered when a workflow run is completed.',
     props: {
         workflowId: Property.ShortText({
-			displayName: 'Workflow ID',
-			required: true,
-		}),
+            displayName: 'Workflow ID',
+            required: true,
+        }),
     },
     type: TriggerStrategy.WEBHOOK,
     sampleData: {
-        "status": "COMPLETE",
-        "input": {
-          "should_run": "Test"
+        status: 'COMPLETE',
+        input: {
+            should_run: 'Test',
         },
-        "toolKey": null,
-        "metadata": {
-          "webapp": true
+        toolKey: null,
+        metadata: {
+            webapp: true,
         },
-        "error": null,
-        "createdAt": "2025-05-07T09:31:40.545Z",
-        "id": "WRUN-7515d814-3890-4ba0-ae32-fa6abcf76432",
-        "workflowRunId": "WRUN-7515d814-3890-4ba0-ae32-fa6abcf76432",
-        "workflowId": "WCFG-506c46fb-6459-4e23-979b-875444170626",
-        "credits": 1,
-        "output": {
-          "final_output": "",
-          "send_api_request": "{}",
+        error: null,
+        createdAt: '2025-05-07T09:31:40.545Z',
+        id: 'WRUN-7515d814-3890-4ba0-ae32-fa6abcf76432',
+        workflowRunId: 'WRUN-7515d814-3890-4ba0-ae32-fa6abcf76432',
+        workflowId: 'WCFG-506c46fb-6459-4e23-979b-875444170626',
+        credits: 1,
+        output: {
+            final_output: '',
+            send_api_request: '{}',
         },
-        "type": "workflowRun.completed"
-      },
+        type: 'workflowRun.completed',
+    },
     async onEnable(context) {
-        const response = await makeRequest(
-            context.auth.secret_text,
-            HttpMethod.POST,
-            '/webhook',
-            {
-                "url": context.webhookUrl,
-                "eventType": "workflowRun.completed",
-                "workflowId": context.propsValue.workflowId
-              }
+        const response = (await makeRequest(context.auth.secret_text, HttpMethod.POST, '/webhook', {
+            url: context.webhookUrl,
+            eventType: 'workflowRun.completed',
+            workflowId: context.propsValue.workflowId,
+        })) as CreateWebhookResponse
 
-        ) as CreateWebhookResponse;
-
-        await context.store.put<{webhookId:string}>('workflow_run_completed',{webhookId:response.data.id})
-       
+        await context.store.put<{ webhookId: string }>('workflow_run_completed', { webhookId: response.data.id })
     },
     async onDisable(context) {
-        const response = await context.store.get<{webhookId:string}>('workflow_run_completed');
-        if(!isNil(response) && !isNil(response.webhookId))
-        {
-             await makeRequest(
-                context.auth.secret_text,
-                HttpMethod.DELETE,
-                `/webhook/${response.webhookId}`,
-                {}
-            )
-
+        const response = await context.store.get<{ webhookId: string }>('workflow_run_completed')
+        if (!isNil(response) && !isNil(response.webhookId)) {
+            await makeRequest(context.auth.secret_text, HttpMethod.DELETE, `/webhook/${response.webhookId}`, {})
         }
     },
     async run(context) {
-        return [context.payload.body];
+        return [context.payload.body]
     },
-});
-
+})
 
 type CreateWebhookResponse = {
-    status:string;
-    data:{
-        id:string
+    status: string
+    data: {
+        id: string
     }
 }

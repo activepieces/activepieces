@@ -1,32 +1,27 @@
-import {
-    buildFlowOriginContextBlock,
-    processMessageTimestamp,
-    slackSendMessage,
-    textToSectionBlocks,
-} from './utils';
-import { assertNotNullOrUndefined, ExecutionType, PauseType } from '@activepieces/shared';
-import { ChatPostMessageResponse } from '@slack/web-api';
-import { getBotToken, SlackAuthValue } from './auth-helpers';
+import { assertNotNullOrUndefined, ExecutionType, PauseType } from '@activepieces/shared'
+import { ChatPostMessageResponse } from '@slack/web-api'
+import { getBotToken, SlackAuthValue } from './auth-helpers'
+import { buildFlowOriginContextBlock, processMessageTimestamp, slackSendMessage, textToSectionBlocks } from './utils'
 
 export const requestAction = async (conversationId: string, context: any) => {
-    const { actions } = context.propsValue;
-    assertNotNullOrUndefined(actions, 'actions');
+    const { actions } = context.propsValue
+    assertNotNullOrUndefined(actions, 'actions')
 
     if (!actions.length) {
-        throw new Error(`Must have at least one button action`);
+        throw new Error(`Must have at least one button action`)
     }
 
     const actionTextToIds = actions.map(({ label, style }: { label: string; style: string }) => {
         if (!label) {
-            throw new Error(`Button text for the action cannot be empty`);
+            throw new Error(`Button text for the action cannot be empty`)
         }
 
         return {
             label,
             style,
             actionId: encodeURI(label as string),
-        };
-    });
+        }
+    })
 
     if (context.executionType === ExecutionType.BEGIN) {
         context.run.pause({
@@ -34,41 +29,37 @@ export const requestAction = async (conversationId: string, context: any) => {
                 type: PauseType.WEBHOOK,
                 actions: actionTextToIds.map((action: { actionId: string }) => action.actionId),
             },
-        });
+        })
 
-        const token = getBotToken(context.auth as SlackAuthValue);
-        const { text, username, profilePicture, replyBroadcast } = context.propsValue;
+        const token = getBotToken(context.auth as SlackAuthValue)
+        const { text, username, profilePicture, replyBroadcast } = context.propsValue
 
-        assertNotNullOrUndefined(token, 'token');
-        assertNotNullOrUndefined(text, 'text');
+        assertNotNullOrUndefined(token, 'token')
+        assertNotNullOrUndefined(text, 'text')
 
-        const actionElements = actionTextToIds.map(
-            (action: { label: string; style: string; actionId: string }) => {
-                const actionLink = context.generateResumeUrl({
-                    queryParams: { action: action.actionId },
-                });
+        const actionElements = actionTextToIds.map((action: { label: string; style: string; actionId: string }) => {
+            const actionLink = context.generateResumeUrl({
+                queryParams: { action: action.actionId },
+            })
 
-                return {
-                    type: 'button',
-                    text: {
-                        type: 'plain_text',
-                        text: action.label,
-                    },
-                    ...(action.style && { style: action.style }),
-                    value: actionLink,
-                    action_id: action.actionId,
-                };
-            },
-        );
+            return {
+                type: 'button',
+                text: {
+                    type: 'plain_text',
+                    text: action.label,
+                },
+                ...(action.style && { style: action.style }),
+                value: actionLink,
+                action_id: action.actionId,
+            }
+        })
 
         const messageResponse: ChatPostMessageResponse = await slackSendMessage({
             token,
             text: `${context.propsValue.text}`,
             username,
             profilePicture,
-            threadTs: context.propsValue.threadTs
-                ? processMessageTimestamp(context.propsValue.threadTs)
-                : undefined,
+            threadTs: context.propsValue.threadTs ? processMessageTimestamp(context.propsValue.threadTs) : undefined,
             replyBroadcast,
             blocks: [
                 ...textToSectionBlocks(`${context.propsValue.text}`),
@@ -77,12 +68,10 @@ export const requestAction = async (conversationId: string, context: any) => {
                     block_id: 'actions',
                     elements: actionElements,
                 },
-                ...(context.propsValue.mentionOriginFlow
-                    ? [buildFlowOriginContextBlock(context)]
-                    : []),
+                ...(context.propsValue.mentionOriginFlow ? [buildFlowOriginContextBlock(context)] : []),
             ],
             conversationId: conversationId,
-        });
+        })
 
         return {
             action: actionTextToIds.at(0) || 'N/A',
@@ -122,15 +111,15 @@ export const requestAction = async (conversationId: string, context: any) => {
                     },
                 ],
             },
-        };
+        }
     } else {
         const payloadQueryParams = context.resumePayload.queryParams as {
-            action: string;
-        };
+            action: string
+        }
 
         return {
             action: decodeURI(payloadQueryParams.action),
             payload: context.resumePayload.body,
-        };
+        }
     }
-};
+}

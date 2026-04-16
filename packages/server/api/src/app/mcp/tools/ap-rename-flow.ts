@@ -54,8 +54,7 @@ export const apRenameFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 return {
                     content: [{ type: 'text', text: `✅ Flow renamed to "${displayName}".` }],
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 return mcpUtils.mcpToolError('Flow rename failed', err)
             }
         },

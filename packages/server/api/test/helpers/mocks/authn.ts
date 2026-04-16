@@ -1,9 +1,7 @@
 import { SignInRequest, SignUpRequest } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
-export const createMockSignUpRequest = (
-    signUpRequest?: Partial<SignUpRequest>,
-): SignUpRequest => {
+export const createMockSignUpRequest = (signUpRequest?: Partial<SignUpRequest>): SignUpRequest => {
     return {
         email: signUpRequest?.email ?? faker.internet.email(),
         password: signUpRequest?.password ?? faker.internet.password(),
@@ -14,9 +12,7 @@ export const createMockSignUpRequest = (
     }
 }
 
-export const createMockSignInRequest = (
-    signInRequest?: Partial<SignInRequest>,
-): SignInRequest => {
+export const createMockSignInRequest = (signInRequest?: Partial<SignInRequest>): SignInRequest => {
     return {
         email: signInRequest?.email ?? faker.internet.email(),
         password: signInRequest?.password ?? faker.internet.password(),

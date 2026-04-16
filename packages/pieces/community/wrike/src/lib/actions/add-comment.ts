@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { wrikeAuth } from '../common/auth';
-import { wrikeCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { wrikeAuth } from '../common/auth'
+import { wrikeCommon } from '../common/client'
 
 export const addComment = createAction({
     name: 'add_comment',
@@ -32,7 +32,8 @@ export const addComment = createAction({
         }),
         plainText: Property.Checkbox({
             displayName: 'Plain Text',
-            description: 'Whether the comment should be treated as plain text (no HTML formatting). Default is HTML formatting.',
+            description:
+                'Whether the comment should be treated as plain text (no HTML formatting). Default is HTML formatting.',
             required: false,
             defaultValue: false,
         }),
@@ -40,10 +41,10 @@ export const addComment = createAction({
     async run(context) {
         const commentData: Record<string, any> = {
             text: context.propsValue['text'],
-        };
+        }
 
         if (context.propsValue['plainText'] !== undefined) {
-            commentData['plainText'] = context.propsValue['plainText'];
+            commentData['plainText'] = context.propsValue['plainText']
         }
 
         const response = await wrikeCommon.apiCall({
@@ -51,8 +52,8 @@ export const addComment = createAction({
             method: HttpMethod.POST,
             resourceUri: `/${context.propsValue['entityType']}/${context.propsValue['entityId']}/comments`,
             body: commentData,
-        });
+        })
 
-        return response.body;
+        return response.body
     },
-});
+})

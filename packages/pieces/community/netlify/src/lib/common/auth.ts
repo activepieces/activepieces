@@ -1,7 +1,7 @@
-import { PieceAuth } from "@activepieces/pieces-framework";
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const netlifyAuth = PieceAuth.OAuth2({
-  description: `
+    description: `
 To authenticate with Netlify:
 
 1. Go to your Netlify user settings
@@ -13,8 +13,8 @@ To authenticate with Netlify:
 
 **Note:** If your team uses SAML SSO, you must grant access to the team when generating your token.
 `,
-  authUrl: "https://app.netlify.com/authorize",
-  tokenUrl: "https://api.netlify.com/oauth/token",
-  required: true,
-  scope: [],
-});
+    authUrl: 'https://app.netlify.com/authorize',
+    tokenUrl: 'https://api.netlify.com/oauth/token',
+    required: true,
+    scope: [],
+})

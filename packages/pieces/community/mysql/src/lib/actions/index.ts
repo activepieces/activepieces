@@ -1,15 +1,8 @@
-import executeQuery from './execute-query';
-import getTables from './get-tables';
-import insertRow from './insert-row';
-import updateRows from './update-row';
-import deleteRows from './delete-row';
-import selectRows from './find-rows';
+import deleteRows from './delete-row'
+import executeQuery from './execute-query'
+import selectRows from './find-rows'
+import getTables from './get-tables'
+import insertRow from './insert-row'
+import updateRows from './update-row'
 
-export default [
-  selectRows,
-  insertRow,
-  updateRows,
-  deleteRows,
-  getTables,
-  executeQuery,
-];
+export default [selectRows, insertRow, updateRows, deleteRows, getTables, executeQuery]

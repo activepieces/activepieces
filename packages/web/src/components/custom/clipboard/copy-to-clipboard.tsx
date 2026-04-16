@@ -51,4 +51,5 @@ const CopyToClipboardInput = ({
 };
 
 CopyToClipboardInput.displayName = 'CopyToClipboardInput';
+
 export { CopyToClipboardInput };

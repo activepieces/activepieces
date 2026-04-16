@@ -1,5 +1,3 @@
-import os from 'os'
-import path from 'path'
 import {
     ActivepiecesError,
     ApEdition,
@@ -11,12 +9,12 @@ import {
     PieceSyncMode,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import os from 'os'
+import path from 'path'
 import { DatabaseType } from '../../database/database-type'
 import { RedisType } from '../../database/redis/types'
 import { pinoLogging } from '../logger'
 import { AppSystemProp, ContainerType, environmentVariables, SystemProp } from './system-props'
-
-
 
 const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: 'true',
@@ -95,7 +93,6 @@ export const system = {
             )
         }
         return value
-
     },
     getNumber(prop: SystemProp): number | null {
         const stringNumber = getEnvVarOrReturnDefaultValue(prop)

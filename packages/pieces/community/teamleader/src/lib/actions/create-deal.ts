@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { teamleaderAuth } from '../common/auth';
-import { teamleaderCommon } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { teamleaderAuth } from '../common/auth'
+import { teamleaderCommon } from '../common/client'
 
 export const createDeal = createAction({
     name: 'create_deal',
@@ -21,29 +21,31 @@ export const createDeal = createAction({
             options: {
                 options: [
                     { label: 'Company', value: 'company' },
-                    { label: 'Contact', value: 'contact' }
-                ]
-            }
+                    { label: 'Contact', value: 'contact' },
+                ],
+            },
         }),
         customer_id: Property.Dropdown({
-          auth:teamleaderAuth,
-  
+            auth: teamleaderAuth,
+
             displayName: 'Customer',
             description: 'Select the customer (company or contact)',
             required: true,
             refreshers: ['customer_type'],
             options: async ({ auth, customer_type }) => {
-                if (!auth) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please authenticate first'
-                };
+                if (!auth)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please authenticate first',
+                    }
 
-                if (!customer_type) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please select customer type first'
-                };
+                if (!customer_type)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please select customer type first',
+                    }
 
                 try {
                     if (customer_type === 'company') {
@@ -51,59 +53,61 @@ export const createDeal = createAction({
                             auth,
                             method: HttpMethod.POST,
                             resourceUri: '/companies.list',
-                            body: {}
-                        });
+                            body: {},
+                        })
 
                         return {
                             disabled: false,
                             options: response.body.data.map((company: any) => ({
                                 label: company.name,
-                                value: company.id
-                            }))
-                        };
+                                value: company.id,
+                            })),
+                        }
                     } else {
                         const response = await teamleaderCommon.apiCall({
                             auth,
                             method: HttpMethod.POST,
                             resourceUri: '/contacts.list',
-                            body: {}
-                        });
+                            body: {},
+                        })
 
                         return {
                             disabled: false,
                             options: response.body.data.map((contact: any) => ({
                                 label: `${contact.first_name} ${contact.last_name || ''}`.trim(),
-                                value: contact.id
-                            }))
-                        };
+                                value: contact.id,
+                            })),
+                        }
                     }
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading customers'
-                    };
+                        placeholder: 'Error loading customers',
+                    }
                 }
-            }
+            },
         }),
         contact_person_id: Property.Dropdown({
-          auth:teamleaderAuth,
+            auth: teamleaderAuth,
             displayName: 'Contact Person',
             description: 'Contact person for this deal (for company customers)',
             required: false,
             refreshers: ['customer_type', 'customer_id'],
             options: async ({ auth, customer_type, customer_id }) => {
-                if (!auth) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please authenticate first'
-                };
+                if (!auth)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please authenticate first',
+                    }
 
-                if (customer_type !== 'company' || !customer_id) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Only available for company customers'
-                };
+                if (customer_type !== 'company' || !customer_id)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Only available for company customers',
+                    }
 
                 try {
                     const response = await teamleaderCommon.apiCall({
@@ -112,26 +116,26 @@ export const createDeal = createAction({
                         resourceUri: '/companies.info',
                         body: {
                             id: customer_id,
-                            includes: 'related_contacts'
-                        }
-                    });
+                            includes: 'related_contacts',
+                        },
+                    })
 
-                    const relatedContacts = response.body.data.related_contacts || [];
+                    const relatedContacts = response.body.data.related_contacts || []
                     return {
                         disabled: false,
                         options: relatedContacts.map((contact: any) => ({
                             label: `${contact.first_name} ${contact.last_name || ''}`.trim(),
-                            value: contact.id
-                        }))
-                    };
+                            value: contact.id,
+                        })),
+                    }
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading contacts'
-                    };
+                        placeholder: 'Error loading contacts',
+                    }
                 }
-            }
+            },
         }),
         summary: Property.LongText({
             displayName: 'Summary',
@@ -139,54 +143,56 @@ export const createDeal = createAction({
             required: false,
         }),
         source_id: Property.Dropdown({
-          auth:teamleaderAuth,
+            auth: teamleaderAuth,
             displayName: 'Source',
             description: 'How the lead was acquired',
             required: false,
             refreshers: [],
             options: async ({ auth }) => {
-                if (!auth) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please authenticate first'
-                };
+                if (!auth)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please authenticate first',
+                    }
 
                 try {
                     const response = await teamleaderCommon.apiCall({
                         auth,
                         method: HttpMethod.POST,
                         resourceUri: '/dealSources.list',
-                        body: {}
-                    });
+                        body: {},
+                    })
 
                     return {
                         disabled: false,
                         options: response.body.data.map((source: any) => ({
                             label: source.name,
-                            value: source.id
-                        }))
-                    };
+                            value: source.id,
+                        })),
+                    }
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading sources'
-                    };
+                        placeholder: 'Error loading sources',
+                    }
                 }
-            }
+            },
         }),
         department_id: Property.Dropdown({
-          auth:teamleaderAuth,
+            auth: teamleaderAuth,
             displayName: 'Department',
             description: 'Department responsible for this deal',
             required: false,
             refreshers: [],
             options: async ({ auth }) => {
-                if (!auth) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please authenticate first'
-                };
+                if (!auth)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please authenticate first',
+                    }
 
                 try {
                     const response = await teamleaderCommon.apiCall({
@@ -195,39 +201,40 @@ export const createDeal = createAction({
                         resourceUri: '/departments.list',
                         body: {
                             filter: {
-                                status: ['active']
-                            }
-                        }
-                    });
+                                status: ['active'],
+                            },
+                        },
+                    })
 
                     return {
                         disabled: false,
                         options: response.body.data.map((department: any) => ({
                             label: department.name,
-                            value: department.id
-                        }))
-                    };
+                            value: department.id,
+                        })),
+                    }
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading departments'
-                    };
+                        placeholder: 'Error loading departments',
+                    }
                 }
-            }
+            },
         }),
         responsible_user_id: Property.Dropdown({
-          auth:teamleaderAuth,
+            auth: teamleaderAuth,
             displayName: 'Responsible User',
             description: 'User responsible for this deal',
             required: false,
             refreshers: [],
             options: async ({ auth }) => {
-                if (!auth) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please authenticate first'
-                };
+                if (!auth)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please authenticate first',
+                    }
 
                 try {
                     const response = await teamleaderCommon.apiCall({
@@ -236,63 +243,64 @@ export const createDeal = createAction({
                         resourceUri: '/users.list',
                         body: {
                             filter: {
-                                status: ['active']
-                            }
-                        }
-                    });
+                                status: ['active'],
+                            },
+                        },
+                    })
 
                     return {
                         disabled: false,
                         options: response.body.data.map((user: any) => ({
                             label: `${user.first_name} ${user.last_name}`,
-                            value: user.id
-                        }))
-                    };
+                            value: user.id,
+                        })),
+                    }
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading users'
-                    };
+                        placeholder: 'Error loading users',
+                    }
                 }
-            }
+            },
         }),
         phase_id: Property.Dropdown({
-          auth:teamleaderAuth,
+            auth: teamleaderAuth,
             displayName: 'Phase',
             description: 'Deal phase or stage',
             required: false,
             refreshers: [],
             options: async ({ auth }) => {
-                if (!auth) return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please authenticate first'
-                };
+                if (!auth)
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please authenticate first',
+                    }
 
                 try {
                     const response = await teamleaderCommon.apiCall({
                         auth,
                         method: HttpMethod.POST,
                         resourceUri: '/dealPhases.list',
-                        body: {}
-                    });
+                        body: {},
+                    })
 
                     return {
                         disabled: false,
                         options: response.body.data.map((phase: any) => ({
                             label: phase.name,
-                            value: phase.id
-                        }))
-                    };
+                            value: phase.id,
+                        })),
+                    }
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading phases'
-                    };
+                        placeholder: 'Error loading phases',
+                    }
                 }
-            }
+            },
         }),
         estimated_value_amount: Property.Number({
             displayName: 'Estimated Value',
@@ -314,9 +322,9 @@ export const createDeal = createAction({
                     { label: 'Norwegian Krone (NOK)', value: 'NOK' },
                     { label: 'Swedish Krona (SEK)', value: 'SEK' },
                     { label: 'Japanese Yen (JPY)', value: 'JPY' },
-                    { label: 'Chinese Yuan (CNY)', value: 'CNY' }
-                ]
-            }
+                    { label: 'Chinese Yuan (CNY)', value: 'CNY' },
+                ],
+            },
         }),
         estimated_probability: Property.Number({
             displayName: 'Estimated Probability',
@@ -342,8 +350,8 @@ export const createDeal = createAction({
                     displayName: 'Value',
                     description: 'Field value',
                     required: true,
-                })
-            }
+                }),
+            },
         }),
     },
     async run(context) {
@@ -351,52 +359,52 @@ export const createDeal = createAction({
             lead: {
                 customer: {
                     type: context.propsValue.customer_type,
-                    id: context.propsValue.customer_id
-                }
+                    id: context.propsValue.customer_id,
+                },
             },
-            title: context.propsValue.title
-        };
-
-        if (context.propsValue.contact_person_id) {
-            deal['lead']['contact_person_id'] = context.propsValue.contact_person_id;
+            title: context.propsValue.title,
         }
 
-        if (context.propsValue.summary) deal['summary'] = context.propsValue.summary;
-        if (context.propsValue.source_id) deal['source_id'] = context.propsValue.source_id;
-        if (context.propsValue.department_id) deal['department_id'] = context.propsValue.department_id;
-        if (context.propsValue.responsible_user_id) deal['responsible_user_id'] = context.propsValue.responsible_user_id;
-        if (context.propsValue.phase_id) deal['phase_id'] = context.propsValue.phase_id;
+        if (context.propsValue.contact_person_id) {
+            deal['lead']['contact_person_id'] = context.propsValue.contact_person_id
+        }
+
+        if (context.propsValue.summary) deal['summary'] = context.propsValue.summary
+        if (context.propsValue.source_id) deal['source_id'] = context.propsValue.source_id
+        if (context.propsValue.department_id) deal['department_id'] = context.propsValue.department_id
+        if (context.propsValue.responsible_user_id) deal['responsible_user_id'] = context.propsValue.responsible_user_id
+        if (context.propsValue.phase_id) deal['phase_id'] = context.propsValue.phase_id
 
         if (context.propsValue.estimated_value_amount && context.propsValue.estimated_value_currency) {
             deal['estimated_value'] = {
                 amount: context.propsValue.estimated_value_amount,
-                currency: context.propsValue.estimated_value_currency
-            };
+                currency: context.propsValue.estimated_value_currency,
+            }
         }
 
         if (context.propsValue.estimated_probability !== undefined) {
-            deal['estimated_probability'] = context.propsValue.estimated_probability;
+            deal['estimated_probability'] = context.propsValue.estimated_probability
         }
 
         if (context.propsValue.estimated_closing_date) {
-            const closingDate = new Date(context.propsValue.estimated_closing_date);
-            deal['estimated_closing_date'] = closingDate.toISOString().split('T')[0];
+            const closingDate = new Date(context.propsValue.estimated_closing_date)
+            deal['estimated_closing_date'] = closingDate.toISOString().split('T')[0]
         }
 
         if (context.propsValue.custom_fields && context.propsValue.custom_fields.length > 0) {
             deal['custom_fields'] = context.propsValue.custom_fields.map((fieldObj: any) => ({
                 id: fieldObj.id,
-                value: fieldObj.value
-            }));
+                value: fieldObj.value,
+            }))
         }
 
         const response = await teamleaderCommon.apiCall({
             auth: context.auth,
             method: HttpMethod.POST,
             resourceUri: '/deals.create',
-            body: deal
-        });
+            body: deal,
+        })
 
-        return response.body;
+        return response.body
     },
-});
+})

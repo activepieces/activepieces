@@ -31,5 +31,4 @@ export class SetFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072 i
 
         log.info('[setFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072#down]')
     }
-
 }

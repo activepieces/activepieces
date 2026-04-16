@@ -8,7 +8,6 @@ import { mcpOAuthCodeService } from '../code/mcp-oauth-code.service'
 import { mcpOAuthTokenService, OAuthTokenError } from './mcp-oauth-token.service'
 
 export const mcpOAuthTokenController: FastifyPluginAsyncZod = async (app) => {
-
     app.post('/token', TokenRequest, async (req, reply) => {
         const { grant_type, client_id } = req.body
 
@@ -20,8 +19,7 @@ export const mcpOAuthTokenController: FastifyPluginAsyncZod = async (app) => {
                 return await handleRefreshToken(req.body, reply)
             }
             return await reply.status(400).send({ error: 'unsupported_grant_type' })
-        }
-        catch (e) {
+        } catch (e) {
             if (e instanceof OAuthTokenError) {
                 return reply.status(400).send({
                     error: e.errorCode,
@@ -60,7 +58,9 @@ async function authenticateClient(body: TokenRequestBody, reply: FastifyReply): 
 async function handleAuthorizationCode(body: TokenRequestBody, reply: FastifyReply): Promise<void> {
     const { code, code_verifier, redirect_uri } = body
     if (!code || !code_verifier || !redirect_uri) {
-        await reply.status(400).send({ error: 'invalid_request', error_description: 'Missing code, code_verifier, or redirect_uri' })
+        await reply
+            .status(400)
+            .send({ error: 'invalid_request', error_description: 'Missing code, code_verifier, or redirect_uri' })
         return
     }
 
@@ -69,7 +69,9 @@ async function handleAuthorizationCode(body: TokenRequestBody, reply: FastifyRep
 
     const authCode = await mcpOAuthCodeService.consume(code, client.clientId, redirect_uri)
     if (isNil(authCode)) {
-        await reply.status(400).send({ error: 'invalid_grant', error_description: 'Invalid or expired authorization code' })
+        await reply
+            .status(400)
+            .send({ error: 'invalid_grant', error_description: 'Invalid or expired authorization code' })
         return
     }
 

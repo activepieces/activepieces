@@ -1,6 +1,6 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import Odoo from "../../commom/index";
-import { odooAuth } from '../auth';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import Odoo from '../../commom/index'
+import { odooAuth } from '../auth'
 
 export default createAction({
     name: 'create_company', // Must be a unique across the piece, this shouldn't be changed.
@@ -23,7 +23,7 @@ export default createAction({
             displayName: 'Company E-mail',
             description: undefined,
             required: true,
-        })
+        }),
     },
     async run(context) {
         const odoo = new Odoo({
@@ -35,17 +35,16 @@ export default createAction({
         })
 
         try {
-            const uid = await odoo.connect();
-            console.log("Connected to Odoo server. Uid: ", uid);
+            const uid = await odoo.connect()
+            console.log('Connected to Odoo server. Uid: ', uid)
             const c = await odoo.saveCompany({
                 name: context.propsValue['name'],
                 phone: context.propsValue['phone'],
                 email: context.propsValue['email'],
-            });
+            })
             return `Company ${c} created!`
         } catch (err) {
-            return err;
+            return err
         }
     },
-});
-
+})

@@ -1,5 +1,4 @@
-import path from 'path'
-import { ApEnvironment, apId, ApMultipartFile, spreadIfDefined } from '@activepieces/shared'
+import { ApEnvironment, ApMultipartFile, apId, spreadIfDefined } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyMultipart, { MultipartFile } from '@fastify/multipart'
@@ -8,6 +7,7 @@ import fastify, { FastifyInstance } from 'fastify'
 import { fastifyRawBody } from 'fastify-raw-body'
 import fastifySocketIO from 'fastify-socket'
 import { validatorCompiler } from 'fastify-type-provider-zod'
+import path from 'path'
 import qs from 'qs'
 import { Socket } from 'socket.io'
 import { getAdapter, setupApp } from './app'
@@ -21,7 +21,6 @@ import { AppSystemProp } from './helper/system/system-props'
 import { mcpOAuthHttpController } from './mcp/oauth/mcp-oauth.controller'
 import { mcpOAuthRootModule } from './mcp/oauth/mcp-oauth.module'
 
-
 export let app: FastifyInstance | undefined = undefined
 
 export const setupServer = async (): Promise<FastifyInstance> => {
@@ -33,12 +32,15 @@ export const setupServer = async (): Promise<FastifyInstance> => {
         await app.register(mcpOAuthHttpController, { prefix: '/mcp' })
     }
 
-    await app.register(async (apiApp) => {
-        await apiApp.register(healthModule)
-        if (system.isApp()) {
-            await setupApp(apiApp)
-        }
-    }, { prefix: '/api' })
+    await app.register(
+        async (apiApp) => {
+            await apiApp.register(healthModule)
+            if (system.isApp()) {
+                await setupApp(apiApp)
+            }
+        },
+        { prefix: '/api' },
+    )
 
     if (system.isApp()) {
         await app.register(fastifySocketIO, {
@@ -54,8 +56,12 @@ export const setupServer = async (): Promise<FastifyInstance> => {
                 .then(() => next())
                 .catch(() => next(new Error('Authentication error')))
         })
-        app.io.on('connection', (socket: Socket) => rejectedPromiseHandler(websocketService.init(socket, app!.log), app!.log))
-        app.io.on('disconnect', (socket: Socket) => rejectedPromiseHandler(websocketService.onDisconnect(socket), app!.log))
+        app.io.on('connection', (socket: Socket) =>
+            rejectedPromiseHandler(websocketService.init(socket, app!.log), app!.log),
+        )
+        app.io.on('disconnect', (socket: Socket) =>
+            rejectedPromiseHandler(websocketService.onDisconnect(socket), app!.log),
+        )
     }
 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
@@ -66,8 +72,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
             setHeaders: (res, filepath) => {
                 if (filepath.endsWith('.html')) {
                     void res.setHeader('Cache-Control', 'public, max-age=120')
-                }
-                else {
+                } else {
                     void res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
                 }
             },
@@ -133,13 +138,12 @@ async function setupBaseApp(): Promise<FastifyInstance> {
                 data: await part.toBuffer(),
                 type: 'file',
                 mimetype: part.mimetype,
-            };
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (part as any).value = apFile
+            }
+            // biome-ignore lint/suspicious/noExplicitAny: legacy code
+            ;(part as any).value = apFile
         },
     })
     exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
-
 
     await app.register(fastifyRawBody, {
         field: 'rawBody',
@@ -165,7 +169,22 @@ async function setupBaseApp(): Promise<FastifyInstance> {
     return app
 }
 
-const STATIC_FILE_EXTENSIONS = new Set(['.js', '.css', '.map', '.json', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot'])
+const STATIC_FILE_EXTENSIONS = new Set([
+    '.js',
+    '.css',
+    '.map',
+    '.json',
+    '.png',
+    '.jpg',
+    '.jpeg',
+    '.gif',
+    '.svg',
+    '.ico',
+    '.woff',
+    '.woff2',
+    '.ttf',
+    '.eot',
+])
 
 function hasStaticFileExtension(url: string): boolean {
     const pathname = url.split('?')[0]
@@ -174,7 +193,7 @@ function hasStaticFileExtension(url: string): boolean {
     return STATIC_FILE_EXTENSIONS.has(pathname.slice(lastDot))
 }
 
-type ZodLike = { safeParse: (data: unknown) => { success: boolean, data?: unknown } }
+type ZodLike = { safeParse: (data: unknown) => { success: boolean; data?: unknown } }
 
 function resolveZodSchema(maybeSchema: unknown): ZodLike | null {
     if (typeof maybeSchema === 'object' && maybeSchema !== null) {
@@ -207,5 +226,3 @@ function convertDatesToStrings(data: unknown): unknown {
     }
     return data
 }
-
-

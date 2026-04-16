@@ -23,7 +23,14 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         assertNotNullOrUndefined(flowVersion, 'flowVersion')
 
-        const provisioned = await provisionFlowPieces({ flowVersion, platformId: data.platformId, flowId: data.flowId, projectId: data.projectId, log: ctx.log, apiClient: ctx.apiClient })
+        const provisioned = await provisionFlowPieces({
+            flowVersion,
+            platformId: data.platformId,
+            flowId: data.flowId,
+            projectId: data.projectId,
+            log: ctx.log,
+            apiClient: ctx.apiClient,
+        })
         if (!provisioned) {
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
@@ -67,13 +74,11 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
             }
 
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
-        }
-        catch (e) {
+        } catch (e) {
             ctx.log.error({ error: String(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
             await ctx.sandboxManager.invalidate(ctx.log)
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
-        }
-        finally {
+        } finally {
             await ctx.sandboxManager.release(ctx.log)
         }
     },

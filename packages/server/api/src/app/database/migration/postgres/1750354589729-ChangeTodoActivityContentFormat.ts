@@ -33,5 +33,4 @@ export class ChangeTodoActivityContentFormat1750354589729 implements MigrationIn
                 RENAME COLUMN "content" TO "description"
         `)
     }
-
 }

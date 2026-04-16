@@ -3,47 +3,30 @@ import { FastifyPluginAsync, FastifyRequest } from 'fastify'
 import { webhookController } from './webhook-controller'
 
 export const webhookModule: FastifyPluginAsync = async (app) => {
-    app.addContentTypeParser(
-        'application/json',
-        { parseAs: 'string' },
-        (_req, body: string, done) => {
-            if (body == null || body.trim() === '') {
-                return done(null, {})
-            }
-      
-            try {
-                done(null, JSON.parse(body))
-            }
-            catch (err) {
-                const error: Error & { statusCode?: number } = err instanceof Error ? err : new Error('JSON parsing failed')
-                error.statusCode = 400
-                done(error, undefined)
-            }
-        },
-    )
+    app.addContentTypeParser('application/json', { parseAs: 'string' }, (_req, body: string, done) => {
+        if (body == null || body.trim() === '') {
+            return done(null, {})
+        }
+
+        try {
+            done(null, JSON.parse(body))
+        } catch (err) {
+            const error: Error & { statusCode?: number } = err instanceof Error ? err : new Error('JSON parsing failed')
+            error.statusCode = 400
+            done(error, undefined)
+        }
+    })
 
     // Add content type parsers for binary types
-    app.addContentTypeParser(
-        /^image\/.*/,
-        { parseAs: 'buffer' },
-        async (_request: FastifyRequest, payload: Buffer) => {
-            return payload
-        },
-    )
-    app.addContentTypeParser(
-        /^video\/.*/,
-        { parseAs: 'buffer' },
-        async (_request: FastifyRequest, payload: Buffer) => {
-            return payload
-        },
-    )
-    app.addContentTypeParser(
-        /^audio\/.*/,
-        { parseAs: 'buffer' },
-        async (_request: FastifyRequest, payload: Buffer) => {
-            return payload
-        },
-    )
+    app.addContentTypeParser(/^image\/.*/, { parseAs: 'buffer' }, async (_request: FastifyRequest, payload: Buffer) => {
+        return payload
+    })
+    app.addContentTypeParser(/^video\/.*/, { parseAs: 'buffer' }, async (_request: FastifyRequest, payload: Buffer) => {
+        return payload
+    })
+    app.addContentTypeParser(/^audio\/.*/, { parseAs: 'buffer' }, async (_request: FastifyRequest, payload: Buffer) => {
+        return payload
+    })
     app.addContentTypeParser(
         'application/pdf',
         { parseAs: 'buffer' },
@@ -75,9 +58,9 @@ export const webhookModule: FastifyPluginAsync = async (app) => {
         (_req, body: string, done) => {
             try {
                 done(null, xmlParser.parse(body))
-            }
-            catch (err) {
-                const error: Error & { statusCode?: number } = err instanceof Error ? err : new Error('XML parsing failed')
+            } catch (err) {
+                const error: Error & { statusCode?: number } =
+                    err instanceof Error ? err : new Error('XML parsing failed')
                 error.statusCode = 400
                 done(error, undefined)
             }

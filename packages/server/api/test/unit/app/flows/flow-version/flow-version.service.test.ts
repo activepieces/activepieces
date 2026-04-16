@@ -1,10 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import {
-    FlowActionType,
-    FlowTriggerType,
-    FlowVersionState,
-} from '@activepieces/shared'
 import type { FlowVersion } from '@activepieces/shared'
+import { FlowActionType, FlowTriggerType, FlowVersionState } from '@activepieces/shared'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockGetPiece = vi.fn()
 const mockGetPlatformId = vi.fn().mockResolvedValue('platform-1')

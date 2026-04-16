@@ -2,7 +2,10 @@ import {
     ConfigureRepoRequest,
     GitRepoWithoutSensitiveData,
     Permission,
-    PrincipalType, PushGitRepoRequest, SeekPage } from '@activepieces/shared'
+    PrincipalType,
+    PushGitRepoRequest,
+    SeekPage,
+} from '@activepieces/shared'
 import { FastifyPluginAsync } from 'fastify'
 import { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -16,22 +19,17 @@ import { gitRepoService } from './git-sync.service'
 
 export const gitRepoModule: FastifyPluginAsync = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.environmentsEnabled))
+    app.addHook(
+        'preHandler',
+        platformMustHaveFeatureEnabled((platform) => platform.plan.environmentsEnabled),
+    )
     await app.register(gitRepoController, { prefix: '/v1/git-repos' })
 }
 
-export const gitRepoController: FastifyPluginCallbackZod = (
-    app,
-    _options,
-    done,
-): void => {
-
-
+export const gitRepoController: FastifyPluginCallbackZod = (app, _options, done): void => {
     app.post('/', ConfigureRepoRequestSchema, async (request, reply) => {
         const gitSync = await gitRepoService(request.log).upsert(request.body)
-        await reply
-            .status(StatusCodes.CREATED)
-            .send(gitSync)
+        await reply.status(StatusCodes.CREATED).send(gitSync)
     })
 
     app.get('/', ListRepoRequestSchema, async (request) => {
@@ -59,7 +57,6 @@ export const gitRepoController: FastifyPluginCallbackZod = (
     done()
 }
 
-
 const DeleteRepoRequestSchema = {
     config: {
         security: securityAccess.project([PrincipalType.USER], Permission.WRITE_PROJECT_RELEASE, {
@@ -78,7 +75,6 @@ const DeleteRepoRequestSchema = {
     },
 }
 
-
 const PushRepoRequestSchema = {
     config: {
         security: securityAccess.project([PrincipalType.USER], Permission.WRITE_PROJECT_RELEASE, {
@@ -87,8 +83,7 @@ const PushRepoRequestSchema = {
         }),
     },
     schema: {
-        description:
-            'Push single flow to the git repository',
+        description: 'Push single flow to the git repository',
         body: PushGitRepoRequest,
         params: z.object({
             id: z.string(),
@@ -101,9 +96,13 @@ const PushRepoRequestSchema = {
 
 const ConfigureRepoRequestSchema = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_PROJECT_RELEASE, {
-            type: ProjectResourceType.BODY,
-        }),
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_PROJECT_RELEASE,
+            {
+                type: ProjectResourceType.BODY,
+            },
+        ),
     },
     schema: {
         tags: ['git-repos'],

@@ -1,8 +1,8 @@
 import {
   FlowAction,
-  StepLocationRelativeToParent,
   FlowTrigger,
   Note,
+  StepLocationRelativeToParent,
 } from '@activepieces/shared';
 import { Edge } from '@xyflow/react';
 

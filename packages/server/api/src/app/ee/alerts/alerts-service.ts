@@ -1,5 +1,15 @@
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { ActivepiecesError, Alert, AlertChannel, ApEdition, ApId, apId, ErrorCode, ListAlertsParams, SeekPage } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    Alert,
+    AlertChannel,
+    ApEdition,
+    ApId,
+    apId,
+    ErrorCode,
+    ListAlertsParams,
+    SeekPage,
+} from '@activepieces/shared'
 
 import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
@@ -54,9 +64,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
             projectName: project.displayName,
             flowId: issueToAlert.flowId,
             flowName: flowVersion.displayName,
-            createdAt: dayjs(issueToAlert.created)
-                .tz('America/Los_Angeles')
-                .format('DD MMM YYYY, HH:mm [PT]'),
+            createdAt: dayjs(issueToAlert.created).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
         }
 
         await sendAlertOnFlowFailure(log, alertsInfo)
@@ -77,7 +85,8 @@ export const alertsService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        await repo().createQueryBuilder()
+        await repo()
+            .createQueryBuilder()
             .insert()
             .into(AlertEntity)
             .values({

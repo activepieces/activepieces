@@ -29,6 +29,5 @@ export class ChangeProjectUniqueConstraintToPartialIndex1729098769827 implements
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id"
             ON "project" ("platformId", "externalId");
         `)
-
     }
 }

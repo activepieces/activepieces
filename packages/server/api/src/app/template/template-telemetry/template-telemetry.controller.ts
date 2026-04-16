@@ -19,4 +19,3 @@ const SendEventParams = {
         body: TemplateTelemetryEvent,
     },
 }
-

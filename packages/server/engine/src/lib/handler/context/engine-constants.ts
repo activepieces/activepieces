@@ -1,5 +1,22 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, flowStructureUtil, FlowVersionState, PlatformId, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import {
+    DEFAULT_MCP_DATA,
+    EngineGenericError,
+    ExecuteFlowOperation,
+    ExecutePropsOptions,
+    ExecuteToolOperation,
+    ExecuteTriggerOperation,
+    ExecutionType,
+    FlowVersionState,
+    flowStructureUtil,
+    PlatformId,
+    ProgressUpdateType,
+    Project,
+    ProjectId,
+    ResumePayload,
+    RunEnvironment,
+    TriggerHookType,
+} from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -89,10 +106,16 @@ export class EngineConstants {
 
     public constructor(params: EngineConstantsParams) {
         if (!params.publicApiUrl.endsWith('/api/')) {
-            throw new EngineGenericError('PublicUrlNotEndsWithSlashError', `Public URL must end with a slash, got: ${params.publicApiUrl}`)
+            throw new EngineGenericError(
+                'PublicUrlNotEndsWithSlashError',
+                `Public URL must end with a slash, got: ${params.publicApiUrl}`,
+            )
         }
         if (!params.internalApiUrl.endsWith('/')) {
-            throw new EngineGenericError('InternalApiUrlNotEndsWithSlashError', `Internal API URL must end with a slash, got: ${params.internalApiUrl}`)
+            throw new EngineGenericError(
+                'InternalApiUrlNotEndsWithSlashError',
+                `Internal API URL must end with a slash, got: ${params.internalApiUrl}`,
+            )
         }
 
         this.flowId = params.flowId
@@ -117,7 +140,7 @@ export class EngineConstants {
         this.timeoutInSeconds = params.timeoutInSeconds
         this.stepNames = params.stepNames
     }
-  
+
     public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
         return new EngineConstants({
             flowId: input.flowVersion.flowId,
@@ -136,7 +159,7 @@ export class EngineConstants {
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             runEnvironment: input.runEnvironment,
             stepNameToTest: input.stepNameToTest ?? undefined,
-            logsUploadUrl: input.logsUploadUrl, 
+            logsUploadUrl: input.logsUploadUrl,
             logsFileId: input.logsFileId,
             timeoutInSeconds: input.timeoutInSeconds,
             platformId: input.platformId,
@@ -168,7 +191,9 @@ export class EngineConstants {
         })
     }
 
-    public static fromExecutePropertyInput(input: Omit<ExecutePropsOptions, 'piece'> & { pieceName: string, pieceVersion: string }): EngineConstants {
+    public static fromExecutePropertyInput(
+        input: Omit<ExecutePropsOptions, 'piece'> & { pieceName: string; pieceVersion: string },
+    ): EngineConstants {
         return new EngineConstants({
             flowId: input.flowVersion?.flowId ?? DEFAULT_MCP_DATA.flowId,
             flowVersionId: input.flowVersion?.id ?? DEFAULT_MCP_DATA.flowVersionId,
@@ -188,7 +213,9 @@ export class EngineConstants {
             stepNameToTest: undefined,
             timeoutInSeconds: input.timeoutInSeconds,
             platformId: input.platformId,
-            stepNames: input.flowVersion?.trigger ? flowStructureUtil.getAllSteps(input.flowVersion.trigger).map((step) => step.name) : [],
+            stepNames: input.flowVersion?.trigger
+                ? flowStructureUtil.getAllSteps(input.flowVersion.trigger).map((step) => step.name)
+                : [],
         })
     }
 
@@ -237,7 +264,7 @@ export class EngineConstants {
             },
         })
 
-        this.project = await response.json() as Project
+        this.project = (await response.json()) as Project
         return this.project
     }
 
@@ -246,7 +273,6 @@ export class EngineConstants {
         return project.externalId ?? undefined
     }
 }
-
 
 const addTrailingSlashIfMissing = (url: string): string => {
     return url.endsWith('/') ? url : url + '/'

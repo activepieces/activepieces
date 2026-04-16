@@ -6,9 +6,12 @@ export class AddProjectRelationInUserInvitation1732790412900 implements Migratio
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info(
+            {
+                name: this.name,
+            },
+            'up',
+        )
         // Delete user invitations with invalid project IDs
         await queryRunner.query(`
             DELETE FROM "user_invitation" 
@@ -38,9 +41,12 @@ export class AddProjectRelationInUserInvitation1732790412900 implements Migratio
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'down')
+        log.info(
+            {
+                name: this.name,
+            },
+            'down',
+        )
         await queryRunner.query(`
             ALTER TABLE "user_invitation" DROP CONSTRAINT "fk_user_invitation_project_id"
         `)
@@ -58,5 +64,4 @@ export class AddProjectRelationInUserInvitation1732790412900 implements Migratio
         `)
         }
     }
-
 }

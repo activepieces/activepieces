@@ -15,8 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { isMac } from '@/lib/dom-utils';
 
@@ -26,6 +26,7 @@ import { NoteDragOverlayMode } from '../state/notes-state';
 import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { ApNode } from './utils/types';
+
 const verticalPaddingOnFitView = 100;
 const calculateNodePositionInCanvas = (
   canvasWidth: number,
@@ -62,8 +63,8 @@ const calculateViewportDelta = (
           canvas.width +
           flowCanvasConsts.AP_NODE_SIZE.STEP.width * 2)
       : nodePosition.x < 0
-      ? -1 * nodePosition.x
-      : 0,
+        ? -1 * nodePosition.x
+        : 0,
   y:
     nodePosition.y > canvas.height
       ? nodePosition.y -

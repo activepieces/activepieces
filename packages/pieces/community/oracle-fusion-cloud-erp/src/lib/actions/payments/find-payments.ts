@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../auth';
-import { makeClient } from '../../common/client';
+import { createAction, Property } from '@activepieces/pieces-framework'
+import { oracleFusionCloudErpAuth } from '../../auth'
+import { makeClient } from '../../common/client'
 
 export const findPayments = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -60,27 +60,28 @@ export const findPayments = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth.props);
-        const { paymentNumber, payee, businessUnit, paymentStatus, paymentDateFrom, paymentDateTo, limit, offset } = context.propsValue;
+        const client = makeClient(context.auth.props)
+        const { paymentNumber, payee, businessUnit, paymentStatus, paymentDateFrom, paymentDateTo, limit, offset } =
+            context.propsValue
 
         const queryParams: Record<string, string | number> = {
             limit: Math.min(limit || 25, 500),
             offset: offset || 0,
-        };
-
-        const filters: string[] = [];
-        if (paymentNumber) filters.push(`PaymentNumber=${paymentNumber}`);
-        if (payee) filters.push(`Payee="${payee}"`);
-        if (businessUnit) filters.push(`BusinessUnit="${businessUnit}"`);
-        if (paymentStatus) filters.push(`PaymentStatus="${paymentStatus}"`);
-        if (paymentDateFrom) filters.push(`PaymentDate>="${paymentDateFrom}"`);
-        if (paymentDateTo) filters.push(`PaymentDate<="${paymentDateTo}"`);
-
-        if (filters.length > 0) {
-            queryParams['q'] = filters.join(' AND ');
         }
 
-        const response = await client.searchRecords('/payablesPayments', queryParams);
-        return response;
+        const filters: string[] = []
+        if (paymentNumber) filters.push(`PaymentNumber=${paymentNumber}`)
+        if (payee) filters.push(`Payee="${payee}"`)
+        if (businessUnit) filters.push(`BusinessUnit="${businessUnit}"`)
+        if (paymentStatus) filters.push(`PaymentStatus="${paymentStatus}"`)
+        if (paymentDateFrom) filters.push(`PaymentDate>="${paymentDateFrom}"`)
+        if (paymentDateTo) filters.push(`PaymentDate<="${paymentDateTo}"`)
+
+        if (filters.length > 0) {
+            queryParams['q'] = filters.join(' AND ')
+        }
+
+        const response = await client.searchRecords('/payablesPayments', queryParams)
+        return response
     },
-});
+})

@@ -1,18 +1,11 @@
-import {
-    AppConnection,
-    AppConnectionStatus,
-    User,
-    UserIdentity,
-} from '@activepieces/shared'
+import { AppConnection, AppConnectionStatus, User, UserIdentity } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import {
-    BaseColumnSchemaPart,
-} from '../database/database-common'
+import { BaseColumnSchemaPart } from '../database/database-common'
 import { EncryptedObject } from '../helper/encryption'
 
 export type AppConnectionSchema = Omit<AppConnection, 'value'> & {
     value: EncryptedObject
-    owner?: (User & { identity?: UserIdentity })
+    owner?: User & { identity?: UserIdentity }
 }
 
 export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({

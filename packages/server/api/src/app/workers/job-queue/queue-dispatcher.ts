@@ -19,7 +19,7 @@ function createQueueDispatcher(params: {
     async function poll(): Promise<ConsumeJobRequest | null> {
         return new Promise<ConsumeJobRequest | null>((resolve) => {
             const timer = setTimeout(() => {
-                const idx = waiters.findIndex(w => w.resolve === resolve)
+                const idx = waiters.findIndex((w) => w.resolve === resolve)
                 if (idx !== -1) {
                     waiters.splice(idx, 1)
                 }
@@ -54,10 +54,18 @@ function createQueueDispatcher(params: {
 
             const waiter = waiters.shift()
             if (isNil(waiter)) {
-                log.warn({ queueName, jobId: job.jobId }, '[QueueDispatcher] job dequeued but no waiter available, returning to queue')
-                const { error: orphanError } = await tryCatch(() => onOrphanedJob(job.jobId, job.token, job.queueName, log))
+                log.warn(
+                    { queueName, jobId: job.jobId },
+                    '[QueueDispatcher] job dequeued but no waiter available, returning to queue',
+                )
+                const { error: orphanError } = await tryCatch(() =>
+                    onOrphanedJob(job.jobId, job.token, job.queueName, log),
+                )
                 if (orphanError) {
-                    log.error({ queueName, jobId: job.jobId, error: String(orphanError) }, '[QueueDispatcher] failed to return orphaned job to queue')
+                    log.error(
+                        { queueName, jobId: job.jobId, error: String(orphanError) },
+                        '[QueueDispatcher] failed to return orphaned job to queue',
+                    )
                 }
                 continue
             }
@@ -86,7 +94,7 @@ function createQueueDispatcher(params: {
 }
 
 function sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
+    return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 type Waiter = {
@@ -100,4 +108,4 @@ export type QueueDispatcher = {
     waiterCount(): number
 }
 
-export { createQueueDispatcher, WAITER_TIMEOUT_MS, ERROR_RETRY_DELAY_MS }
+export { createQueueDispatcher, ERROR_RETRY_DELAY_MS, WAITER_TIMEOUT_MS }

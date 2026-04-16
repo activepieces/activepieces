@@ -1,7 +1,7 @@
 import {
     FlowActionType,
-    flowStructureUtil,
     FlowTriggerType,
+    flowStructureUtil,
     isNil,
     McpServer,
     McpToolDefinition,
@@ -17,7 +17,8 @@ export const apValidateFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
     return {
         title: 'ap_validate_flow',
         permission: Permission.READ_FLOW,
-        description: 'Validate a flow for structural issues without publishing. Checks step validity, template references, and empty branches. Returns a detailed report with all issues found. Use this before ap_lock_and_publish to catch problems early.',
+        description:
+            'Validate a flow for structural issues without publishing. Checks step validity, template references, and empty branches. Returns a detailed report with all issues found. Use this before ap_lock_and_publish to catch problems early.',
         inputSchema: validateFlowInput.shape,
         annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -30,9 +31,15 @@ export const apValidateFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                 }
 
                 const result = validateFlow({ trigger: flow.version.trigger })
-                return { content: [{ type: 'text', text: formatValidationResult({ result, flowDisplayName: flow.version.displayName }) }] }
-            }
-            catch (err) {
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: formatValidationResult({ result, flowDisplayName: flow.version.displayName }),
+                        },
+                    ],
+                }
+            } catch (err) {
                 return mcpUtils.mcpToolError('Flow validation failed', err)
             }
         },
@@ -45,11 +52,15 @@ const validateFlowInput = z.object({
 
 function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
     const allSteps = flowStructureUtil.getAllSteps(trigger)
-    const allStepNames = new Set(allSteps.map(s => s.name))
+    const allStepNames = new Set(allSteps.map((s) => s.name))
     const issues: ValidationIssue[] = []
 
     if (trigger.type === FlowTriggerType.EMPTY) {
-        issues.push({ category: 'step_validity', stepName: 'trigger', message: 'Trigger is not configured (use ap_update_trigger).' })
+        issues.push({
+            category: 'step_validity',
+            stepName: 'trigger',
+            message: 'Trigger is not configured (use ap_update_trigger).',
+        })
     }
 
     const seenSteps = new Set<string>()
@@ -62,14 +73,16 @@ function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
 
         if (isSkipped) {
             skippedCount++
-        }
-        else if (step.valid) {
+        } else if (step.valid) {
             validCount++
-        }
-        else {
+        } else {
             invalidCount++
             if (!flowStructureUtil.isTrigger(step.type)) {
-                issues.push({ category: 'step_validity', stepName: step.name, message: `"${step.displayName}" is invalid (use ap_update_step to fix).` })
+                issues.push({
+                    category: 'step_validity',
+                    stepName: step.name,
+                    message: `"${step.displayName}" is invalid (use ap_update_step to fix).`,
+                })
             }
         }
 
@@ -81,10 +94,17 @@ function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
                 if (seenRefs.has(ref)) continue
                 seenRefs.add(ref)
                 if (!allStepNames.has(ref)) {
-                    issues.push({ category: 'template_reference', stepName: step.name, message: `"${step.displayName}" references "{{${ref}...}}" which does not exist in the flow.` })
-                }
-                else if (!seenSteps.has(ref)) {
-                    issues.push({ category: 'template_reference', stepName: step.name, message: `"${step.displayName}" references "{{${ref}...}}" which comes AFTER it in execution order.` })
+                    issues.push({
+                        category: 'template_reference',
+                        stepName: step.name,
+                        message: `"${step.displayName}" references "{{${ref}...}}" which does not exist in the flow.`,
+                    })
+                } else if (!seenSteps.has(ref)) {
+                    issues.push({
+                        category: 'template_reference',
+                        stepName: step.name,
+                        message: `"${step.displayName}" references "{{${ref}...}}" which comes AFTER it in execution order.`,
+                    })
                 }
             }
         }
@@ -95,7 +115,11 @@ function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
             for (let i = 0; i < children.length; i++) {
                 if (isNil(children[i])) {
                     const branchName = branches[i]?.branchName ?? `Branch ${i}`
-                    issues.push({ category: 'empty_branch', stepName: step.name, message: `"${step.displayName}" has empty branch: "${branchName}".` })
+                    issues.push({
+                        category: 'empty_branch',
+                        stepName: step.name,
+                        message: `"${step.displayName}" has empty branch: "${branchName}".`,
+                    })
                 }
             }
         }
@@ -103,7 +127,13 @@ function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
         seenSteps.add(step.name)
     }
 
-    return { totalSteps: allSteps.length, validSteps: validCount, invalidSteps: invalidCount, skippedSteps: skippedCount, issues }
+    return {
+        totalSteps: allSteps.length,
+        validSteps: validCount,
+        invalidSteps: invalidCount,
+        skippedSteps: skippedCount,
+        issues,
+    }
 }
 
 function collectStringValues({ step }: { step: Step }): string[] {
@@ -124,13 +154,20 @@ function collectStringValues({ step }: { step: Step }): string[] {
 
         if ('branches' in settings && Array.isArray(settings.branches)) {
             for (const branch of settings.branches) {
-                if (typeof branch === 'object' && branch !== null && 'conditions' in branch && Array.isArray(branch.conditions)) {
+                if (
+                    typeof branch === 'object' &&
+                    branch !== null &&
+                    'conditions' in branch &&
+                    Array.isArray(branch.conditions)
+                ) {
                     for (const group of branch.conditions) {
                         if (!Array.isArray(group)) continue
                         for (const cond of group) {
                             if (typeof cond === 'object' && cond !== null) {
-                                if ('firstValue' in cond && typeof cond.firstValue === 'string') result.push(cond.firstValue)
-                                if ('secondValue' in cond && typeof cond.secondValue === 'string') result.push(cond.secondValue)
+                                if ('firstValue' in cond && typeof cond.firstValue === 'string')
+                                    result.push(cond.firstValue)
+                                if ('secondValue' in cond && typeof cond.secondValue === 'string')
+                                    result.push(cond.secondValue)
                             }
                         }
                     }
@@ -147,8 +184,7 @@ function walkValues(obj: unknown, fn: (val: unknown) => void): void {
     fn(obj)
     if (Array.isArray(obj)) {
         for (const item of obj) walkValues(item, fn)
-    }
-    else if (typeof obj === 'object') {
+    } else if (typeof obj === 'object') {
         for (const val of Object.values(obj)) walkValues(val, fn)
     }
 }
@@ -173,7 +209,13 @@ const CATEGORY_LABELS: Record<ValidationIssue['category'], string> = {
     empty_branch: 'Empty Branches',
 }
 
-function formatValidationResult({ result, flowDisplayName }: { result: ValidationResult, flowDisplayName: string }): string {
+function formatValidationResult({
+    result,
+    flowDisplayName,
+}: {
+    result: ValidationResult
+    flowDisplayName: string
+}): string {
     if (result.issues.length === 0) {
         const skippedNote = result.skippedSteps > 0 ? `, ${result.skippedSteps} skipped` : ''
         return `✅ Flow "${flowDisplayName}" is ready to publish (${result.totalSteps} steps, ${result.validSteps} valid${skippedNote}).`
@@ -199,7 +241,9 @@ function formatValidationResult({ result, flowDisplayName }: { result: Validatio
         }
     }
 
-    lines.push(`Summary: ${result.totalSteps} total, ${result.validSteps} valid, ${result.invalidSteps} invalid, ${result.skippedSteps} skipped`)
+    lines.push(
+        `Summary: ${result.totalSteps} total, ${result.validSteps} valid, ${result.invalidSteps} invalid, ${result.skippedSteps} skipped`,
+    )
 
     return lines.join('\n')
 }
