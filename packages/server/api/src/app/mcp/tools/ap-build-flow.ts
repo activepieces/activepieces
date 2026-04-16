@@ -67,6 +67,17 @@ export const apBuildFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                 const platformId = project.platformId
                 const projectId = mcp.projectId
 
+                const triggerAuthError = mcpUtils.validateAuth(trigger.auth)
+                if (triggerAuthError) {
+                    return triggerAuthError
+                }
+                for (const step of steps) {
+                    const stepAuthError = mcpUtils.validateAuth(step.auth)
+                    if (stepAuthError) {
+                        return stepAuthError
+                    }
+                }
+
                 const flow = await flowService(log).create({
                     projectId,
                     request: { displayName: flowName, projectId },
@@ -91,33 +102,39 @@ export const apBuildFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                         propertySettings: {},
                     },
                 })
-                await flowService(log).update({
+                let currentFlow = await flowService(log).update({
                     id: flowId, projectId, userId: null, platformId,
                     operation: { type: FlowOperationType.UPDATE_TRIGGER, request: triggerPayload },
                 })
+                const skippedSteps: string[] = []
 
-                let parentStepName = 'trigger'
                 for (const step of steps) {
-                    const skeleton = buildSkeleton({ step, parentStepName })
+                    const latestTrigger = currentFlow!.version.trigger
+                    const stepName = flowStructureUtil.findUnusedName(latestTrigger)
+                    const allSteps = flowStructureUtil.getAllSteps(latestTrigger)
+                    const lastStep = allSteps[allSteps.length - 1]
+
+                    const skeleton = buildSkeleton({ step, name: stepName })
                     const parseResult = UpdateActionRequest.safeParse(skeleton)
                     if (!parseResult.success) {
+                        skippedSteps.push(step.displayName)
                         continue
                     }
-                    await flowService(log).update({
+
+                    currentFlow = await flowService(log).update({
                         id: flowId, projectId, userId: null, platformId,
                         operation: {
                             type: FlowOperationType.ADD_ACTION,
                             request: {
-                                parentStep: parentStepName,
+                                parentStep: lastStep.name,
                                 stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
                                 action: parseResult.data,
                             },
                         },
                     })
-                    parentStepName = String(skeleton.name)
                 }
 
-                const finalFlow = await flowService(log).getOnePopulated({ id: flowId, projectId })
+                const finalFlow = currentFlow
                 if (!finalFlow) {
                     return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId}).` }] }
                 }
@@ -126,10 +143,11 @@ export const apBuildFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                 const validCount = allSteps.filter(s => s.valid).length
                 const invalidSteps = allSteps.filter(s => !s.valid).map(s => s.name)
 
-                if (invalidSteps.length === 0) {
+                const skippedHint = skippedSteps.length > 0 ? ` Skipped: ${skippedSteps.join(', ')}.` : ''
+                if (invalidSteps.length === 0 && skippedSteps.length === 0) {
                     return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} steps, all valid.` }] }
                 }
-                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} steps (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}). Use ap_update_step or ap_update_trigger to fix.` }] }
+                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} steps (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix.` }] }
             }
             catch (err) {
                 return mcpUtils.mcpToolError('Failed to build flow', err)
@@ -138,12 +156,10 @@ export const apBuildFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
     }
 }
 
-function buildSkeleton({ step, parentStepName }: {
+function buildSkeleton({ step, name }: {
     step: z.infer<typeof stepSpec>
-    parentStepName: string
+    name: string
 }): Record<string, unknown> {
-    const stepIndex = parentStepName === 'trigger' ? 1 : Number(parentStepName.replace('step_', '')) + 1
-    const name = `step_${stepIndex}`
     const resolvedInput = {
         ...(step.input ?? {}),
         ...(step.auth ? { auth: `{{connections['${step.auth}']}}` } : {}),
