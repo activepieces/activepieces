@@ -55,8 +55,8 @@ export const findPerson = createAction({
     });
 
     return {
-      people: res.data?.items ?? [],
-      next_cursor: res.data?.pagination?.nextLink,
+      data: res.data,
+      success: true,
     };
   },
 });
