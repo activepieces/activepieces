@@ -1,5 +1,6 @@
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import {
+    AppConnectionStatus,
     EngineResponse,
     EngineResponseStatus,
     FlowVersion,
@@ -12,6 +13,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { getPiecePackageWithoutArchive } from '../../pieces/metadata/piece-metadata-service'
@@ -45,6 +47,11 @@ export const apGetPiecePropsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                 const props = mcpUtils.buildPropSummaries(component.props)
                 const requiresAuth = component.requireAuth && !isNil(piece.auth)
 
+                let authHint: AuthHint | undefined
+                if (requiresAuth && !auth) {
+                    authHint = await discoverAvailableConnections({ pieceName: normalized, projectId: mcp.projectId, log })
+                }
+
                 await resolvePropertyOptions({
                     props,
                     componentProps: component.props,
@@ -64,6 +71,7 @@ export const apGetPiecePropsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                     displayName: component.displayName,
                     description: component.description,
                     requiresAuth,
+                    ...(authHint && { authHint }),
                     props,
                 }
 
@@ -143,6 +151,37 @@ async function resolvePropertyOptions({ props, componentProps, pieceName, pieceV
     }))
 }
 
+async function discoverAvailableConnections({ pieceName, projectId, log }: {
+    pieceName: string
+    projectId: string
+    log: FastifyBaseLogger
+}): Promise<AuthHint> {
+    try {
+        const project = await projectService(log).getOneOrThrow(projectId)
+        const connections = await appConnectionService(log).list({
+            projectId,
+            platformId: project.platformId,
+            pieceName,
+            cursorRequest: null,
+            scope: undefined,
+            displayName: undefined,
+            status: [AppConnectionStatus.ACTIVE],
+            limit: 10,
+            externalIds: undefined,
+        })
+        const active = connections.data
+            .map(c => ({ externalId: c.externalId, displayName: c.displayName }))
+        if (active.length > 0) {
+            return { message: 'Pass one as the auth param.', connections: active }
+        }
+        return { message: 'No connections found. Set up in UI or use ap_setup_guide.', connections: [] }
+    }
+    catch (err) {
+        log.debug({ err, pieceName }, 'Failed to discover connections')
+        return { message: 'Use ap_list_connections to find connections.', connections: [] }
+    }
+}
+
 function withTimeout<T>({ promise, ms }: { promise: Promise<T>, ms: number }): Promise<T> {
     let timer: ReturnType<typeof setTimeout>
     return Promise.race([
@@ -175,4 +214,9 @@ type ResolvePropertyOptionsParams = {
     providedInput: Record<string, unknown>
     projectId: string
     log: FastifyBaseLogger
+}
+
+type AuthHint = {
+    message: string
+    connections: Array<{ externalId: string, displayName: string }>
 }
