@@ -23,7 +23,7 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
     })
 
     /**
-     * @deprecated Deprecated since 2026-04-13. Scheduled for removal after 2026-10-13.
+     * @deprecated Deprecated since 2026-04-13. can be only removed after all paused jobs after deployment of this version to sink.
      * Handles resume for V0 waitpoints created by legacy pieces using run.pause() + generateResumeUrl().
      * The requestId param is NOT validated — flowRunId (an unguessable apId) provides access control.
      */
@@ -40,7 +40,7 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
     })
 
     /**
-     * @deprecated Deprecated since 2026-04-13. Scheduled for removal after 2026-10-13.
+     * @deprecated Deprecated since 2026-04-13. can be only removed after all paused jobs after deployment of this version to sink.
      */
     app.all('/:id/requests/:requestId/sync', V0ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>

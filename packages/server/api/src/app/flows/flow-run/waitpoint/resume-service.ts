@@ -108,7 +108,6 @@ export const resumeService = (log: FastifyBaseLogger) => ({
 async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger): Promise<void> {
     const { flowRun, waitpoint, resumePayload, workerHandlerIdOverride, httpRequestIdOverride } = params
     const platformId = await projectService(log).getPlatformId(flowRun.projectId)
-    await flowRunSideEffects(log).onResume(flowRun)
     await addToQueue({
         payload: resumePayload,
         flowRun,
@@ -121,6 +120,7 @@ async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger
         executeTrigger: false,
         executionType: ExecutionType.RESUME,
     }, log)
+    await flowRunSideEffects(log).onResume(flowRun)
 }
 
 type SyncResumePayload = {
