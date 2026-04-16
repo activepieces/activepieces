@@ -25,10 +25,11 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
             await execPromise(`${isolateBinaryPath} --box-id=${boxId} --cleanup`)
             await execPromise(`${isolateBinaryPath} --box-id=${boxId} --init`)
 
-            // Pre-create /root and mount subdirs in the sandbox rootfs (isolate doesn't create /root by default)
+            // Pre-create mount point directories in the sandbox rootfs (isolate doesn't create them)
             const sandboxRootfs = `/var/local/lib/isolate/${boxId}/root`
-            await mkdir(`${sandboxRootfs}/root/common`, { recursive: true })
-            await mkdir(`${sandboxRootfs}/root/codes`, { recursive: true })
+            for (const mount of mounts) {
+                await mkdir(`${sandboxRootfs}${mount.sandboxPath}`, { recursive: true })
+            }
 
             // Engine runs at /root/common/<filename> inside the sandbox (common dir is mounted there)
             const engineSandboxPath = path.join('/root/common', path.basename(enginePath))
