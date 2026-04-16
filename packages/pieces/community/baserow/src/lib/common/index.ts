@@ -141,13 +141,20 @@ export async function ensureSelectOptionsExist({
 
     if (missingValues.length === 0) continue;
 
-    await tryCatch(() =>
+    const { error } = await tryCatch(() =>
       client.updateFieldSelectOptions({
         fieldId: field.id,
         newOptions: missingValues,
         existingOptions: field.select_options,
       })
     );
+
+    if (error) {
+      console.error(
+        `[baserow] Failed to create missing select options for field "${field.name}" (id: ${field.id}):`,
+        error
+      );
+    }
   }
 }
 
