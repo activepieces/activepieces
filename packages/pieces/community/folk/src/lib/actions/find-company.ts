@@ -50,7 +50,7 @@ export const findCompany = createAction({
       limit: limit || 20,
       cursor,
       combinator: (combinator === 'or' ? 'or' : 'and'),
-      nameFilter: query || nameFilter,
+      nameFilter: nameFilter || query,
     });
 
     return {
