@@ -23,7 +23,7 @@ export const folk = createPiece({
   auth: folkAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/folk.png',
-  authors: ['sparkybug'],
+  authors: ['sparkybug', 'Angelebeats'],
   categories: [PieceCategory.SALES_AND_CRM],
   description:
     'Folk is a CRM for building relationships at scale. Manage your contacts, companies, and relationships in one place.',
