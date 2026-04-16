@@ -107,5 +107,10 @@
   "None": "Aucun",
   "JSON": "JSON",
   "Form Data": "Données du formulaire",
-  "Raw": "Brut"
+  "Raw": "Brut",
+  "New Folder": "New Folder",
+  "Triggers when a new folder is created inside a watched Dropbox folder.": "Déclenche lorsqu'un nouveau dossier est créé dans un dossier Dropbox surveillé.",
+  "Watched Folder Path": "Chemin du dossier surveillé",
+  "Folder path to watch. Use empty string \"\" for root.": "Chemin du dossier à surveiller. Utilisez une chaîne vide \"\" pour la racine.",
+  "Watch subfolders recursively. May return many results.": "Surveiller les sous-dossiers récursivement. Peut retourner plusieurs résultats."
 }

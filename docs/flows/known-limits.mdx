@@ -46,7 +46,11 @@ Files from actions or triggers are stored in the database/S3 to support retries 
   > This is the total combined size of all inputs and outputs for each step in a single flow run.
 ---
 
-### Webhook Payload Limits
+### Webhook Limits
+
+- **Webhook Response Timeout**: **30 seconds**
+  (Configurable via `AP_WEBHOOK_TIMEOUT_SECONDS`, default: **30 seconds**)
+  > For synchronous webhook requests (URLs ending in `/sync`), Activepieces will wait up to this limit before returning a 408 Request Timeout response.
 
 - **Maximum Webhook Payload Size**: **5 MB**
   (Configurable via `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB`, default: **5 MB**)

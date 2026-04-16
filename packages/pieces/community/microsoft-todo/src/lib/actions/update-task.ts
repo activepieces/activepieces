@@ -1,7 +1,6 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getTaskListsDropdown, getTasksInListDropdown } from '../common';
+import { getTaskListsDropdown, getTasksInListDropdown, createTodoClient } from '../common';
 import { microsoftToDoAuth } from '../auth';
-import { Client } from '@microsoft/microsoft-graph-client';
 import { Importance, TaskStatus, TodoTask } from '@microsoft/microsoft-graph-types';
 
 export const updateTaskAction = createAction({
@@ -11,7 +10,7 @@ export const updateTaskAction = createAction({
 	description: 'Update an existing task.',
 	props: {
 		task_list_id: Property.Dropdown({
-   auth: microsoftToDoAuth,
+			auth: microsoftToDoAuth,
 			displayName: 'Task List',
 			description: 'The task list containing the task to update.',
 			required: true,
@@ -24,7 +23,7 @@ export const updateTaskAction = createAction({
 			},
 		}),
 		task_id: Property.Dropdown({
-   auth: microsoftToDoAuth,
+			auth: microsoftToDoAuth,
 			displayName: 'Task',
 			description: 'The task to update.',
 			required: true,
@@ -113,11 +112,7 @@ export const updateTaskAction = createAction({
 			categories,
 		} = propsValue;
 
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-		});
+		const client = createTodoClient(auth);
 
 		const taskBody: TodoTask = {
 			title,
@@ -163,15 +158,6 @@ export const updateTaskAction = createAction({
 
 		// Only send request if there's something to update
 		if (Object.keys(taskBody).length === 0) {
-			// Optionally return the existing task or a message, or fetch and return task if ID is present
-			// For now, just return a message or do nothing if nothing to update.
-			// However, a PATCH with empty body might be treated as bad request by some APIs.
-			// Microsoft Graph usually ignores fields not present, so an empty body PATCH might be a no-op.
-			// Best to ensure at least one field is being modified or return early.
-			// Let's assume for now the user intends a no-op if all update fields are blank,
-			// but this might need a more specific behavior (e.g. fetch current task data).
-			// For safety, if requestBody is empty, we could fetch the task and return it.
-			// For now, let's proceed with the PATCH, it should be a no-op by MS Graph if body is empty.
 			throw new Error('Please provide any field to update.');
 		}
 

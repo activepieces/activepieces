@@ -2,11 +2,15 @@ import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { createS3 } from './common';
 
 const description = `
-This piece allows you to upload files to Amazon S3 or other S3 compatible services.
+Connect your Amazon S3 account to read, write, and manage files in your buckets.
 
-Amazon S3 Settings:
-Regions: https://docs.aws.amazon.com/general/latest/gr/s3.html
-Endpoint: leave blank
+**How to get your credentials:**
+1. Open the [AWS IAM Console](https://console.aws.amazon.com/iam/) and go to **Users**.
+2. Select your user (or create a new one), then go to **Security credentials**.
+3. Click **Create access key** — copy both the Access Key ID and Secret Access Key.
+4. Make sure the IAM user has the **AmazonS3FullAccess** policy (or a scoped S3 policy for your bucket).
+
+Using a non-AWS S3-compatible service (MinIO, DigitalOcean Spaces, Backblaze B2, etc.)? Set the **Endpoint** field to your service URL.
 `;
 
 export const amazonS3Auth = PieceAuth.CustomAuth({
@@ -14,18 +18,22 @@ export const amazonS3Auth = PieceAuth.CustomAuth({
   props: {
     accessKeyId: Property.ShortText({
       displayName: 'Access Key ID',
+      description: 'Your AWS access key ID. Found in AWS IAM Console → Users → Security credentials.',
       required: true,
     }),
     secretAccessKey: PieceAuth.SecretText({
       displayName: 'Secret Access Key',
+      description: 'Your AWS secret access key. Only shown once when you create the access key — store it safely.',
       required: true,
     }),
     bucket: Property.ShortText({
-      displayName: 'Bucket',
+      displayName: 'Bucket Name',
+      description: 'The name of your S3 bucket (e.g. "my-company-files"). Found in the AWS S3 Console.',
       required: true,
     }),
     endpoint: Property.ShortText({
-      displayName: 'Endpoint',
+      displayName: 'Endpoint (Optional)',
+      description: 'Leave blank for Amazon S3. Only set this when using an S3-compatible service like MinIO, DigitalOcean Spaces, or Backblaze B2 (e.g. "https://nyc3.digitaloceanspaces.com").',
       required: false,
     }),
     region: Property.StaticDropdown({

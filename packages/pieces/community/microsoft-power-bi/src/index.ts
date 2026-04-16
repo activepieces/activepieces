@@ -1,4 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { getMicrosoftCloudFromAuth, getPowerBiBaseUrl } from './lib/common/microsoft-cloud';
 import {
   createPiece,
   OAuth2PropertyValue,
@@ -21,7 +22,10 @@ export const microsoftPowerBi = createPiece({
     pushRowsToDatasetTableAction,
     createCustomApiCallAction({
       auth: microsoftPowerBiAuth,
-      baseUrl: () => 'https://api.powerbi.com/v1.0/myorg/datasets',
+      baseUrl: (auth) => {
+        const cloud = getMicrosoftCloudFromAuth(auth as OAuth2PropertyValue);
+        return getPowerBiBaseUrl(cloud) + '/datasets';
+      },
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,

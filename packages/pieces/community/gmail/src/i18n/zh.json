@@ -12,7 +12,7 @@
   "Reply to an existing email.": "Reply to an existing email.",
   "Creates a draft reply to an existing email.": "Creates a draft reply to an existing email.",
   "Get an email via Id.": "Get an email via Id.",
-  "Find emails using advanced search criteria.": "Find emails using advanced search criteria.",
+  "Find emails using advanced search criteria. At least one search filter (from, to, subject, label, category, date, content, or attachment) is required.": "Find emails using advanced search criteria. At least one search filter (from, to, subject, label, category, date, content, or attachment) is required.",
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
   "Receiver Email (To)": "Receiver Email (To)",
   "CC Email": "CC Email",

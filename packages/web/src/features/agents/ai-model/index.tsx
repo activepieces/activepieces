@@ -21,6 +21,16 @@ import { cn } from '@/lib/utils';
 
 import { aiModelHooks } from './hooks';
 
+export const PROVIDER_EMBEDDING_MODELS: Partial<
+  Record<AIProviderName, string>
+> = {
+  [AIProviderName.OPENAI]: 'text-embedding-3-small',
+  [AIProviderName.GOOGLE]: 'text-embedding-004',
+  [AIProviderName.AZURE]: 'text-embedding-3-small',
+  [AIProviderName.ACTIVEPIECES]: 'text-embedding-3-small',
+  [AIProviderName.OPENROUTER]: 'openai/text-embedding-3-small',
+};
+
 type AIModelSelectorProps = {
   defaultProvider?: AIProviderName;
   defaultModel?: string;
@@ -284,6 +294,16 @@ export function AIModelSelector({
           </PopoverContent>
         </Popover>
       </div>
+
+      {selectedProvider && (
+        <p className="text-xs text-muted-foreground">
+          {PROVIDER_EMBEDDING_MODELS[selectedProvider]
+            ? t('Embedding model for knowledge base: {model}', {
+                model: PROVIDER_EMBEDDING_MODELS[selectedProvider],
+              })
+            : t('This provider does not support knowledge base embeddings.')}
+        </p>
+      )}
     </div>
   );
 }

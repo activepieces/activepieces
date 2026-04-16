@@ -1,4 +1,5 @@
 import { Client } from '@microsoft/microsoft-graph-client';
+import { getGraphBaseUrl } from './microsoft-cloud';
 
 type GraphRetryOptions = {
 	maxRetries?: number;
@@ -6,11 +7,12 @@ type GraphRetryOptions = {
 	maxDelayMs?: number;
 };
 
-export const createGraphClient = (accessToken: string): Client => {
+export const createGraphClient = (accessToken: string, cloud?: string | null): Client => {
 	return Client.initWithMiddleware({
 		authProvider: {
 			getAccessToken: () => Promise.resolve(accessToken),
 		},
+		baseUrl: getGraphBaseUrl(cloud),
 	});
 };
 

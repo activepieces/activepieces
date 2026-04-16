@@ -3,7 +3,6 @@ import {
   FlowActionType,
   FlowTrigger,
   FlowTriggerType,
-  FlowVersionState,
   flowStructureUtil,
 } from '@activepieces/shared';
 import { useEffect, useRef, useState } from 'react';
@@ -29,9 +28,7 @@ import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
 import { flowCanvasHooks } from './flow-canvas/hooks';
 import { flowCanvasConsts } from './flow-canvas/utils/consts';
-import PublishFlowReminderWidget from './flow-canvas/widgets/publish-flow-reminder-widget';
-import { RunInfoWidget } from './flow-canvas/widgets/run-info-widget';
-import { ViewingOldVersionWidget } from './flow-canvas/widgets/viewing-old-version-widget';
+import { BuilderBanner } from './flow-canvas/widgets/builder-banner';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { CursorPositionProvider } from './state/cursor-position-context';
@@ -80,7 +77,6 @@ const BuilderPage = () => {
       enabled:
         selectedStep?.type === FlowActionType.PIECE ||
         selectedStep?.type === FlowTriggerType.PIECE,
-      getExactVersion: flowVersion.state === FlowVersionState.LOCKED,
     });
   flowCanvasHooks.useSetSocketListener(refetchPiece);
   flowCanvasHooks.useListenToExistingRun();
@@ -102,9 +98,7 @@ const BuilderPage = () => {
               ></FlowCanvas>
             </CursorPositionProvider>
 
-            <PublishFlowReminderWidget />
-            <RunInfoWidget />
-            <ViewingOldVersionWidget />
+            <BuilderBanner />
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
                 <CanvasControls
@@ -200,6 +194,10 @@ function constructContainerKey({
     step?.type === FlowTriggerType.PIECE || step?.type === FlowActionType.PIECE
       ? step?.settings.pieceName
       : undefined;
+  const pieceVersion =
+    step?.type === FlowTriggerType.PIECE || step?.type === FlowActionType.PIECE
+      ? step?.settings.pieceVersion
+      : undefined;
   //we need to re-render the step settings form when the step is skipped, so when the user edits the settings after setting it to skipped the changes are reflected in the update request
   const isSkipped =
     step?.type != FlowTriggerType.EMPTY &&
@@ -207,7 +205,7 @@ function constructContainerKey({
     step?.skip;
   return `${flowVersionId}-${stepName ?? ''}-${triggerOrActionName ?? ''}-${
     pieceName ?? ''
-  }-${'skipped-' + !!isSkipped}-${
+  }-${pieceVersion ?? ''}-${'skipped-' + !!isSkipped}-${
     hasPieceModelLoaded ? 'loaded' : 'not-loaded'
   }`;
 }

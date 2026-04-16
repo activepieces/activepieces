@@ -12,44 +12,46 @@ export const amazons3UploadFile = createAction({
   props: {
     file: Property.File({
       displayName: 'File',
+      description: 'The file to upload to S3.',
       required: true,
     }),
     fileName: Property.ShortText({
-      displayName: 'File Name',
+      displayName: 'File Name (Optional)',
       required: false,
-      description: 'The File Name to use, if not set the API will try to figure out the file name.',
+      description: 'The name to save the file as in S3 (e.g. "report-2024.csv"). If left blank, a unique name is generated automatically.',
     }),
     acl: Property.StaticDropdown({
-      displayName: 'ACL',
+      displayName: 'Access Control (ACL)',
+      description: 'Who can access this file after upload. Use "Private" for internal files, "Public Read" to make the file publicly accessible via URL.',
       required: false,
       options: {
         options: [
           {
-            label: 'private',
+            label: 'Private (only your account)',
             value: 'private',
           },
           {
-            label: 'public-read',
+            label: 'Public Read (anyone can view)',
             value: 'public-read',
           },
           {
-            label: 'public-read-write',
+            label: 'Public Read/Write (anyone can view and upload)',
             value: 'public-read-write',
           },
           {
-            label: 'authenticated-read',
+            label: 'Authenticated AWS Users Read',
             value: 'authenticated-read',
           },
           {
-            label: 'aws-exec-read',
+            label: 'AWS EC2 Read (aws-exec-read)',
             value: 'aws-exec-read',
           },
           {
-            label: 'bucket-owner-read',
+            label: 'Bucket Owner Read',
             value: 'bucket-owner-read',
           },
           {
-            label: 'bucket-owner-full-control',
+            label: 'Bucket Owner Full Control',
             value: 'bucket-owner-full-control',
           },
         ],

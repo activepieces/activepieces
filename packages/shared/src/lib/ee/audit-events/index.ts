@@ -28,6 +28,7 @@ export enum ApplicationEventName {
     FLOW_RUN_RESUMED = 'flow.run.resumed',
     FLOW_RUN_STARTED = 'flow.run.started',
     FLOW_RUN_FINISHED = 'flow.run.finished',
+    FLOW_RUN_RETRIED = 'flow.run.retried',
     FOLDER_CREATED = 'folder.created',
     FOLDER_UPDATED = 'folder.updated',
     FOLDER_DELETED = 'folder.deleted',
@@ -101,6 +102,7 @@ export const FlowRunEvent = z.object({
         z.literal(ApplicationEventName.FLOW_RUN_STARTED),
         z.literal(ApplicationEventName.FLOW_RUN_FINISHED),
         z.literal(ApplicationEventName.FLOW_RUN_RESUMED),
+        z.literal(ApplicationEventName.FLOW_RUN_RETRIED),
     ]),
     data: z.object({
         flowRun: z.object({
@@ -297,6 +299,9 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
         }
         case ApplicationEventName.FLOW_RUN_RESUMED: {
             return `Flow run ${event.data.flowRun.id} is resumed`
+        }
+        case ApplicationEventName.FLOW_RUN_RETRIED: {
+            return `Flow run ${event.data.flowRun.id} is retried from a failed step`
         }
         case ApplicationEventName.FLOW_CREATED:
             return `Flow ${event.data.flow.id} is created`

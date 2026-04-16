@@ -1,5 +1,5 @@
 
-import {  FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest } from '@activepieces/shared'
+import { FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -32,10 +32,7 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
             id: flowVersion.flowId,
             projectId: request.principal.projectId,
         })
-        return flowVersionService(request.log).lockPieceVersions({
-            flowVersion,
-            projectId: request.principal.projectId,
-        })
+        return flowVersion
     })
 
 

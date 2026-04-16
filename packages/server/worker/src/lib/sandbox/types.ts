@@ -8,7 +8,7 @@ export type SandboxMount = {
 }
 
 export type SandboxResourceLimits = {
-    memoryBytes: number
+    memoryLimitMb: number
     cpuMsPerSec: number
     timeLimitSeconds: number
 }
@@ -26,8 +26,7 @@ export type SandboxProcessMaker = {
 }
 
 export type SandboxResult = EngineResponse<unknown> & {
-    stdOut: string
-    stdError: string
+    logs: string | undefined
 }
 
 export type Sandbox = {

@@ -243,7 +243,7 @@ export class EngineConstants {
 
     public externalProjectId = async (): Promise<string | undefined> => {
         const project = await this.getProject()
-        return project.externalId
+        return project.externalId ?? undefined
     }
 }
 

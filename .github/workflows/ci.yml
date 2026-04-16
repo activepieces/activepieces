@@ -93,7 +93,7 @@ jobs:
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
         run: npx turbo run build --filter='@activepieces/piece-*'
 
-      - name: Run all tests and migration check in parallel
+      - name: Run all tests and migration checks in parallel
         run: |
           set -euo pipefail
           pids=()
@@ -102,6 +102,9 @@ jobs:
           pids+=($!)
 
           npx turbo run test-ce test-ee test-cloud check-migrations --filter=api &
+          pids+=($!)
+
+          npx tsx tools/scripts/check-migration-rollback.ts &
           pids+=($!)
 
           status=0

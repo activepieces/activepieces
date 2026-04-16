@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { ApMultipartFile } from '../../../core/common'
 import { OptionalArrayFromQuery, OptionalBooleanFromQuery } from '../../../core/common/base-model'
+import { SeekPage } from '../../../core/common/seek-page'
 import { ApEdition } from '../../../core/flag/flag'
 import { PackageType, PieceCategory } from '../piece'
 
@@ -110,3 +111,17 @@ export const AddPieceRequestBody = z.union([
 ])
 
 export type AddPieceRequestBody = z.infer<typeof AddPieceRequestBody>
+
+export const ListPieceVersionsRequestParams = z.object({
+    name: z.string(),
+})
+export const ListPieceVersionsWithScopeRequestParams = z.object({
+    name: z.string(),
+    scope: z.string(),
+})
+export type ListPieceVersionsWithScopeRequestParams = z.infer<typeof ListPieceVersionsWithScopeRequestParams>
+
+export type ListPieceVersionsRequestParams = z.infer<typeof ListPieceVersionsRequestParams>
+
+export const ListPieceVersionsResponse = z.object({ version: z.string() })
+export type ListPieceVersionsResponse = SeekPage<z.infer<typeof ListPieceVersionsResponse>>

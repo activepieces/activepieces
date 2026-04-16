@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { microsoftToDoAuth } from '../auth';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { createTodoClient } from '../common';
 
 export const createTaskListAction = createAction({
 	auth: microsoftToDoAuth,
@@ -17,11 +17,7 @@ export const createTaskListAction = createAction({
 	async run(context) {
 		const { auth, propsValue } = context;
 
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-		});
+		const client = createTodoClient(auth);
 
 		const response = await client.api('/me/todo/lists').post({
 			displayName: propsValue.displayName,

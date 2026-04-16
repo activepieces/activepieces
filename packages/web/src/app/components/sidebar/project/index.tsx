@@ -31,7 +31,7 @@ const ProjectSideBarItem = ({
   const projectAvatar = isNil(project.icon) ? null : project.type ===
     ProjectType.TEAM ? (
     <Avatar
-      className="size-4 scale-125 text-sm font-bold flex items-center justify-center rounded-[4px]"
+      className="size-[18px] text-sm font-bold flex items-center justify-center rounded-[4px]"
       style={{
         backgroundColor: PROJECT_COLOR_PALETTE[project.icon.color].color,
         color: PROJECT_COLOR_PALETTE[project.icon.color].textColor,
@@ -56,7 +56,11 @@ const ProjectSideBarItem = ({
       })}
     >
       {projectAvatar}
-      {!isCollapsed && <span className={cn('truncate')}>{displayText}</span>}
+      {!isCollapsed && (
+        <span className={cn('truncate', { 'font-semibold': isCurrentProject })}>
+          {displayText}
+        </span>
+      )}
     </SidebarMenuButton>
   );
 };

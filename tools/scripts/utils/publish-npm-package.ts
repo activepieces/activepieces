@@ -4,7 +4,32 @@ import { execSync } from 'node:child_process'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { readPackageJson } from './files'
 import { packagePrePublishChecks } from './package-pre-publish-checks'
-import { buildWorkspaceVersionMap, resolveWorkspaceDependencies } from './workspace-utils'
+import { preparePieceDistForPublish } from '../../../packages/cli/src/lib/utils/prepare-piece-utils'
+import { isExactVersion } from '../../../packages/cli/src/lib/utils/workspace-utils'
+
+function assertNoSemverRanges(packageJsonPath: string): void {
+  const json = JSON.parse(readFileSync(packageJsonPath).toString())
+  const depFields = ['dependencies', 'devDependencies', 'peerDependencies'] as const
+  const ranged: string[] = []
+
+  for (const field of depFields) {
+    const deps: Record<string, string> | undefined = json[field]
+    if (!deps) {
+      continue
+    }
+    for (const [name, version] of Object.entries(deps)) {
+      if (!isExactVersion(version)) {
+        ranged.push(`${field}.${name}: ${version}`)
+      }
+    }
+  }
+
+  if (ranged.length > 0) {
+    throw new Error(
+      `[publishPackage] refusing to publish ${json.name}@${json.version} — non-exact versions found:\n  ${ranged.join('\n  ')}`,
+    )
+  }
+}
 
 function assertNoUnresolvedWorkspaceDeps(packageJsonPath: string): void {
   const json = JSON.parse(readFileSync(packageJsonPath).toString())
@@ -47,18 +72,19 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   }
   const { version } = await readPackageJson(path)
 
-  // Update version and resolve workspace dependencies in dist package.json before publishing
-  const versionMap = buildWorkspaceVersionMap(process.cwd())
+  // Pins all dependency versions (including transitive) from bun.lock.
+  // For pieces built via CLI or prepare-pieces-for-publish, this already ran during build — calling it
+  // again is idempotent. For shared/common/framework, this is the only place it runs before publish.
+  preparePieceDistForPublish(path)
+
   const json = JSON.parse(readFileSync(`${outputPath}/package.json`).toString())
   json.version = version
   json.main = './src/index.js'
   json.types = './src/index.d.ts'
-  json.dependencies = resolveWorkspaceDependencies(json.dependencies, versionMap)
-  json.devDependencies = resolveWorkspaceDependencies(json.devDependencies, versionMap)
-  json.peerDependencies = resolveWorkspaceDependencies(json.peerDependencies, versionMap)
   writeFileSync(`${outputPath}/package.json`, JSON.stringify(json, null, 2))
 
   assertNoUnresolvedWorkspaceDeps(`${outputPath}/package.json`)
+  assertNoSemverRanges(`${outputPath}/package.json`)
 
   execSync(`npm publish --access public --tag latest`, { cwd: outputPath, stdio: 'inherit' })
 

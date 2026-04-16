@@ -59,7 +59,7 @@ export const LanguageToggle = () => {
             variant="outline"
             role="combobox"
             className={cn(
-              'w-full justify-between h-9 font-normal',
+              'w-full justify-between font-normal',
               !selectedLanguage && 'text-muted-foreground',
             )}
             disabled={isPending}
@@ -78,7 +78,7 @@ export const LanguageToggle = () => {
           <Command>
             <CommandInput
               placeholder={i18n.t('Search language...')}
-              className="h-9 text-sm"
+              className="h-8 text-sm"
             />
             <CommandList>
               <ScrollArea className="h-[200px] w-[300px]">

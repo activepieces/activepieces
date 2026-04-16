@@ -168,7 +168,7 @@ export function SearchResultRow({
         iconTextColor={item.iconTextColor}
         iconLetter={item.iconLetter}
       />
-      <span className="min-w-0 shrink truncate text-sm font-medium">
+      <span className="min-w-0 shrink truncate text-sm font-normal">
         <HighlightText text={item.label} query={query ?? ''} />
       </span>
       {item.status === 'ENABLED' && (

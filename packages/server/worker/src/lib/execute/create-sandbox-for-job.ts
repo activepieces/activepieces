@@ -59,9 +59,10 @@ function getProcessMaker(executionMode: string, log: Logger, boxId: number) {
     }
 }
 
-function parseMemoryLimit(memoryLimit: string): number {
-    const parsed = parseInt(memoryLimit, 10)
-    return isNaN(parsed) ? 256 : parsed
+function parseMemoryLimit(memoryLimitKb: string): number {
+    const parsed = parseInt(memoryLimitKb, 10)
+    const kb = isNaN(parsed) ? 1048576 : parsed
+    return Math.floor(kb / 1024)
 }
 
 function buildSandboxEnv(settings: ReturnType<typeof workerSettings.getSettings>): Record<string, string> {
@@ -71,10 +72,15 @@ function buildSandboxEnv(settings: ReturnType<typeof workerSettings.getSettings>
         AP_MAX_FLOW_RUN_LOG_SIZE_MB: String(settings.MAX_FLOW_RUN_LOG_SIZE_MB),
         AP_MAX_FILE_SIZE_MB: String(settings.MAX_FILE_SIZE_MB),
         NODE_PATH: '/usr/src/node_modules',
+        AP_SSRF_PROTECTION_ENABLED: settings.SSRF_PROTECTION_ENABLED === true ? 'true' : 'false',
     }
     if (settings.DEV_PIECES.length > 0) {
         env['AP_DEV_PIECES'] = settings.DEV_PIECES.join(',')
     }
+    if (settings.SSRF_ALLOW_LIST.length > 0) {
+        env['AP_SSRF_ALLOW_LIST'] = settings.SSRF_ALLOW_LIST.join(',')
+    }
+
     for (const key of settings.SANDBOX_PROPAGATED_ENV_VARS) {
         if (process.env[key]) {
             env[key] = process.env[key]!

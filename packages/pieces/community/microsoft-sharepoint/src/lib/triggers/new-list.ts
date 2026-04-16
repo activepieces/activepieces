@@ -5,9 +5,10 @@ import {
 	PiecePropValueSchema,
 	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { List } from '@microsoft/microsoft-graph-types';
 type Props = {
@@ -20,10 +21,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePo
 		const { siteId } = propsValue;
 		const isTestMode = lastFetchEpochMS === 0;
 
+		const cloud = auth.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(auth.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		const lists = [];

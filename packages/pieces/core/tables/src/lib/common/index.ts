@@ -85,21 +85,21 @@ export const tablesCommon = {
     tableFields.forEach(field => {
       switch (field.type) {
         case FieldType.NUMBER:
-          fieldValidations[field.id] = z.union([z.number(), z.string().transform(val => {
+          fieldValidations[field.externalId] = z.union([z.number(), z.string().transform(val => {
             const num = Number(val);
             if (isNaN(num)) throw new Error(`Invalid number for field "${field.name}"`);
             return num;
           })]).optional();
           break;
         case FieldType.DATE:
-          fieldValidations[field.id] = z.union([z.date(), z.string().transform(val => {
+          fieldValidations[field.externalId] = z.union([z.date(), z.string().transform(val => {
             const date = new Date(val);
             if (isNaN(date.getTime())) throw new Error(`Invalid date for field "${field.name}"`);
             return date;
           })]).optional();
           break;
         default:
-          fieldValidations[field.id] = z.string().optional();
+          fieldValidations[field.externalId] = z.string().optional();
       }
     });
     return fieldValidations;

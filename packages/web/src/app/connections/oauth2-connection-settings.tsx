@@ -29,6 +29,7 @@ import { Input } from '@/components/ui/input';
 import { OAuth2App, oauth2Utils } from '@/features/connections';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { cn } from '@/lib/utils';
 
 import { GenericPropertiesForm } from '../builder/piece-properties/generic-properties-form';
 
@@ -64,7 +65,6 @@ function OAuth2ConnectionSettings({
       ? 'https://secrets.activepieces.com/redirect'
       : thirdPartyUrl ?? 'no_redirect_url_found';
 
-  const hasCode = form.getValues().request.value.code;
   const showRedirectUrlInput =
     oauth2App.oauth2Type === AppConnectionType.OAUTH2 &&
     grantType === OAuth2GrantType.AUTHORIZATION_CODE;
@@ -89,11 +89,15 @@ function OAuth2ConnectionSettings({
             control={form.control}
             render={({ field }) => (
               <FormItem className="flex flex-col gap-2">
-                <FormLabel>{t('Client ID')}</FormLabel>
+                <FormLabel
+                  className="flex items-center gap-1"
+                  showRequiredIndicator
+                >
+                  <span>{t('Client ID')}</span>
+                </FormLabel>
                 <FormControl>
                   <SecretInput {...field} type="text" />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           ></FormField>
@@ -102,11 +106,15 @@ function OAuth2ConnectionSettings({
             control={form.control}
             render={({ field }) => (
               <FormItem className="flex flex-col gap-2">
-                <FormLabel>{t('Client Secret')}</FormLabel>
+                <FormLabel
+                  className="flex items-center gap-1"
+                  showRequiredIndicator
+                >
+                  <span>{t('Client Secret')}</span>
+                </FormLabel>
                 <FormControl>
                   <SecretInput {...field} type="password" />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           ></FormField>
@@ -123,42 +131,56 @@ function OAuth2ConnectionSettings({
       )}
 
       {grantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
-        <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-full">
-          <div className="rounded-full border border-solid p-1 flex items-center justify-center">
-            <img src={piece.logoUrl} className="w-5 h-5"></img>
-          </div>
-          <div className="text-sm">{piece.displayName}</div>
-          <div className="grow"></div>
-          <Button
-            size={'sm'}
-            variant={'basic'}
-            className={hasCode ? 'text-destructive' : ''}
-            disabled={!isConnectButtonEnabled}
-            loading={loading}
-            type="button"
-            onClick={async () => {
-              if (!hasCode) {
-                openPopup(
-                  redirectUrl,
-                  form.getValues().request.value.client_id,
-                  form.getValues().request.value.props,
-                  piece.name,
-                  form,
-                  setLoading,
-                );
-              } else {
-                form.setValue('request.value.code', '', {
-                  shouldValidate: true,
-                });
-                form.setValue('request.value.code_challenge', '', {
-                  shouldValidate: true,
-                });
-              }
-            }}
-          >
-            {hasCode ? t('Disconnect') : t('Connect')}
-          </Button>
-        </div>
+        <FormField
+          name="request.value.code"
+          control={form.control}
+          render={({ field }) => {
+            const hasCode = !isNil(field.value) && field.value !== '';
+            return (
+              <FormItem className="flex flex-col gap-2">
+                <FormControl>
+                  <input type="hidden" {...field} />
+                </FormControl>
+                <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-full">
+                  <div className="rounded-full  border border-solid p-1 flex items-center justify-center">
+                    <img src={piece.logoUrl} className="w-5 h-5"></img>
+                  </div>
+                  <div className="text-sm">{piece.displayName}</div>
+                  <div className="grow"></div>
+                  <Button
+                    size={'sm'}
+                    variant={'basic'}
+                    className={cn(hasCode && 'text-destructive')}
+                    disabled={!isConnectButtonEnabled}
+                    loading={loading}
+                    type="button"
+                    onClick={async () => {
+                      if (!hasCode) {
+                        openPopup({
+                          redirectUrl,
+                          clientId: form.getValues().request.value.client_id,
+                          props: form.getValues().request.value.props,
+                          pieceName: piece.name,
+                          form,
+                          pieceVersion: piece.version,
+                          setLoading,
+                        });
+                      } else {
+                        field.onChange('');
+                        form.setValue('request.value.code_challenge', '', {
+                          shouldValidate: true,
+                        });
+                      }
+                    }}
+                  >
+                    {hasCode ? t('Disconnect') : t('Connect')}
+                  </Button>
+                </div>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
       )}
     </div>
   );
@@ -167,19 +189,15 @@ function OAuth2ConnectionSettings({
 OAuth2ConnectionSettings.displayName = 'OAuth2ConnectionSettings';
 export { OAuth2ConnectionSettings };
 
-async function openPopup(
-  redirectUrl: string,
-  clientId: string,
-  props: Record<string, unknown> | undefined,
-  pieceName: string,
-  form: UseFormReturn<{
-    request:
-      | UpsertCloudOAuth2Request
-      | UpsertOAuth2Request
-      | UpsertPlatformOAuth2Request;
-  }>,
-  setLoading: Dispatch<SetStateAction<boolean>>,
-) {
+async function openPopup({
+  redirectUrl,
+  clientId,
+  props,
+  pieceName,
+  pieceVersion,
+  form,
+  setLoading,
+}: OpenPopupParams) {
   let authorizationUrl, codeVerifier;
   try {
     setLoading(true);
@@ -187,6 +205,7 @@ async function openPopup(
       pieceName,
       clientId,
       redirectUrl,
+      pieceVersion,
       props,
     });
     authorizationUrl = result.authorizationUrl;
@@ -219,4 +238,19 @@ type OAuth2ConnectionSettingsProps = {
   authProperty: OAuth2Property<OAuth2Props>;
   oauth2App: OAuth2App;
   grantType: OAuth2GrantType;
+};
+
+type OpenPopupParams = {
+  redirectUrl: string;
+  clientId: string;
+  props: Record<string, unknown> | undefined;
+  pieceName: string;
+  pieceVersion: string;
+  form: UseFormReturn<{
+    request:
+      | UpsertCloudOAuth2Request
+      | UpsertOAuth2Request
+      | UpsertPlatformOAuth2Request;
+  }>;
+  setLoading: Dispatch<SetStateAction<boolean>>;
 };

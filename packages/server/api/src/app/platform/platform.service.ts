@@ -19,6 +19,7 @@ import { ActivepiecesError,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
+import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-client'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
@@ -125,6 +126,9 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 platformId: params.id,
                 ...params.plan,
             })
+        }
+        if (!isNil(params.federatedAuthProviders?.saml)) {
+            invalidateSamlClientCache(params.id)
         }
         log.info({ platformId: params.id }, 'Platform updated')
         return platformRepo().save(updatedPlatform)

@@ -1,6 +1,7 @@
 import {
   AgentPieceProps,
   AgentProviderModel,
+  AIProviderName,
   isNil,
   PieceAction,
   PieceActionSettings,
@@ -99,7 +100,18 @@ const selectAgentFormComponentForProperty = (
 
   switch (propertyName) {
     case AgentPieceProps.AGENT_TOOLS: {
-      return <AgentTools disabled={disabled} toolsField={field} />;
+      const providerModel = params.form?.watch?.(
+        'settings.input.aiProviderModel',
+      ) as AgentProviderModel | undefined;
+      return (
+        <AgentTools
+          disabled={disabled}
+          toolsField={field}
+          selectedProvider={
+            providerModel?.provider as AIProviderName | undefined
+          }
+        />
+      );
     }
     case AgentPieceProps.STRUCTURED_OUTPUT: {
       return (

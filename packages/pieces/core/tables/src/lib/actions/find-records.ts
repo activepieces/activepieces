@@ -1,4 +1,4 @@
-import { createAction, DynamicPropsValue, PieceAuth, Property, PropertyContext } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@activepieces/shared';
@@ -57,7 +57,7 @@ export const findRecords = createAction({
                 options: {
                   options: fields.map((field) => ({
                     label: field.name,
-                    value: { id: field.id, type: field.type, name: field.name } as FieldInfo,
+                    value: { id: field.externalId, type: field.type, name: field.name } as FieldInfo,
                   })),
                 },
               }),
@@ -130,15 +130,18 @@ export const findRecords = createAction({
       await propsValidation.validateZod({ value }, schema);
     }
 
+    const tableFields = await tablesCommon.getTableFields({ tableId, context });
+
     const parsedFilters: Filter[] = filtersArray.map((filter) => {
+      const fieldId = tableFields.find((f) => f.externalId === filter.field.id)?.id ?? filter.field.id;
       if (filter.operator === FilterOperator.EXISTS || filter.operator === FilterOperator.NOT_EXISTS) {
         return {
-          fieldId: filter.field.id,
+          fieldId,
           operator: filter.operator,
         };
       }
       return {
-        fieldId: filter.field.id,
+        fieldId,
         operator: filter.operator,
         value: filter.value as string,
       };
