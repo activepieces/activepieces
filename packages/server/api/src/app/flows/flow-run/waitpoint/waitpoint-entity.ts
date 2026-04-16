@@ -33,10 +33,6 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
             type: 'timestamp with time zone',
             nullable: true,
         },
-        timeoutSeconds: {
-            type: Number,
-            nullable: true,
-        },
         responseToSend: {
             type: 'jsonb',
             nullable: true,

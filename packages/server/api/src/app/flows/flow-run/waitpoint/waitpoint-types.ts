@@ -27,7 +27,6 @@ type Waitpoint = {
     status: WaitpointStatus
     stepName: string
     resumeDateTime: string | null
-    timeoutSeconds: number | null
     responseToSend: RespondResponse | null
     workerHandlerId: string | null
     httpRequestId: string | null
@@ -41,7 +40,6 @@ type CreateForPauseParams = {
     type: `${PauseType}`
     version: WaitpointVersion
     resumeDateTime?: string
-    timeoutSeconds?: number
     responseToSend?: RespondResponse
     workerHandlerId?: string
     httpRequestId?: string
