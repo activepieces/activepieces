@@ -14,6 +14,24 @@ import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES } fro
 
 const EDITION_REQUIRES_RBAC = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 
+const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
+
+### Workflow
+1. Discover: ap_list_pieces, ap_list_connections, ap_list_ai_models
+2. Schema: ap_get_piece_props (get field names/types before configuring)
+3. Build: ap_build_flow (one call for new flows) OR ap_create_flow → ap_update_trigger → ap_add_step (granular)
+4. Validate: ap_validate_flow
+5. Publish: ap_lock_and_publish → ap_change_flow_status
+
+### Key patterns
+- **Auth**: ap_list_connections → get \`externalId\` → pass as \`auth\` param on ap_update_step/ap_update_trigger.
+- **Step refs**: \`{{stepName.field}}\` — no \`.output.\` in the path (e.g. \`{{trigger.body.email}}\`, \`{{step_1.id}}\`).
+- **Step names**: \`trigger\`, \`step_1\`, \`step_2\`, etc. Use ap_flow_structure to see all names.
+- **Piece names**: full format (e.g. "@activepieces/piece-slack") for ap_add_step/ap_update_trigger. Short names work for lookup tools.
+- **Modifying steps**: use ap_update_step/ap_update_trigger. Never delete+recreate — loses sample data.
+- **CODE steps**: export a \`code\` fn; access inputs via \`inputs.key\`.
+- **Tables**: use field names, not IDs.`
+
 export const mcpServerRepository = repoFactory(McpServerEntity)
 
 export const mcpServerService = (log: FastifyBaseLogger) => {
@@ -78,6 +96,8 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                         sizes: ['192x192'],
                     },
                 ],
+            }, {
+                instructions: MCP_SERVER_INSTRUCTIONS,
             })
             const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
             for (const flow of enabledFlows) {
@@ -160,12 +180,12 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
 }
 
 
-export async function resolvePermissionChecker({ userId, projectId, log }: { userId: string | undefined, projectId: string, log: FastifyBaseLogger }): Promise<PermissionChecker> {
+export async function resolvePermissionChecker({ userId, projectId, log }: { userId: string, projectId: string, log: FastifyBaseLogger }): Promise<PermissionChecker> {
     const allowAll: PermissionChecker = {
         check: () => null,
         wrapExecute: ({ execute }) => execute,
     }
-    if (isNil(userId) || !EDITION_REQUIRES_RBAC) {
+    if (!EDITION_REQUIRES_RBAC) {
         return allowAll
     }
 
@@ -288,7 +308,7 @@ type McpToolErrorResult = {
 
 type BuildServerRequest = {
     mcp: PopulatedMcpServer
-    userId?: string
+    userId: string
 }
 
 type RotateTokenRequest = {

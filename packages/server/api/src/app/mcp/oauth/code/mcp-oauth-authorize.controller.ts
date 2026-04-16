@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { jwtUtils } from '../../../helper/jwt-utils'
 import { system } from '../../../helper/system/system'
-import { WorkerSystemProp } from '../../../helper/system/system-props'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
 
 const AUTH_REQUEST_TTL_10_MINUTES_SECONDS = 10 * 60
@@ -47,7 +47,7 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
             expiresInSeconds: AUTH_REQUEST_TTL_10_MINUTES_SECONDS,
         })
 
-        const frontendUrl = system.getOrThrow(WorkerSystemProp.FRONTEND_URL)
+        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
         const authorizePageUrl = new URL('/mcp-authorize', frontendUrl)
         authorizePageUrl.searchParams.set('authRequestId', authRequestToken)
 
