@@ -159,6 +159,63 @@ async function fetchWorkItemsByIds({
   return results;
 }
 
+async function createSubscription({
+  auth,
+  projectId,
+  eventType,
+  webhookUrl,
+  workItemType,
+}: {
+  auth: AzureDevOpsAuth;
+  projectId: string;
+  eventType: AzureDevOpsHookEvent;
+  webhookUrl: string;
+  workItemType?: string;
+}): Promise<SubscriptionResponse> {
+  const publisherInputs: Record<string, string> = { projectId };
+  if (workItemType) {
+    publisherInputs['workItemType'] = workItemType;
+  }
+
+  return azureDevOpsApiCall<SubscriptionResponse>({
+    organizationUrl: auth.props.organizationUrl,
+    pat: auth.props.pat,
+    method: HttpMethod.POST,
+    endpoint: '/_apis/hooks/subscriptions',
+    queryParams: { 'api-version': '7.1' },
+    body: {
+      publisherId: 'tfs',
+      eventType,
+      resourceVersion: '1.0',
+      consumerId: 'webHooks',
+      consumerActionId: 'httpRequest',
+      publisherInputs,
+      consumerInputs: {
+        url: webhookUrl,
+        resourceDetailsToSend: 'all',
+        messagesToSend: 'none',
+        detailedMessagesToSend: 'none',
+      },
+    },
+  });
+}
+
+async function deleteSubscription({
+  auth,
+  subscriptionId,
+}: {
+  auth: AzureDevOpsAuth;
+  subscriptionId: string;
+}): Promise<void> {
+  await azureDevOpsApiCall<void>({
+    organizationUrl: auth.props.organizationUrl,
+    pat: auth.props.pat,
+    method: HttpMethod.DELETE,
+    endpoint: `/_apis/hooks/subscriptions/${subscriptionId}`,
+    queryParams: { 'api-version': '7.1' },
+  });
+}
+
 async function fetchProjectId(
   auth: AzureDevOpsAuth,
   projectName: string,
@@ -465,6 +522,8 @@ export const azureDevOpsCommon = {
   fetchProjectId,
   fetchTeamMembers,
   fetchWorkItemTypeStates,
+  createSubscription,
+  deleteSubscription,
 };
 
 export interface JsonPatchOperation {
@@ -579,4 +638,17 @@ export interface WorkItemStateColor {
   name: string;
   color?: string;
   category?: string;
+}
+
+export type AzureDevOpsHookEvent =
+  | 'workitem.created'
+  | 'workitem.updated'
+  | 'workitem.commented';
+
+export interface SubscriptionResponse {
+  id: string;
+  publisherId: string;
+  eventType: string;
+  consumerId: string;
+  consumerActionId: string;
 }

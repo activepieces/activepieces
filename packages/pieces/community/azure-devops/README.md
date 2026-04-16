@@ -19,6 +19,7 @@ To connect Azure DevOps to Activepieces, you need a Personal Access Token (PAT):
 5. Under **Scopes**, select:
    - **Work Items**: Read & Write
    - **Project and Team**: Read
+   - *(Optional, only for the instant trigger)* **Service Connections**: Read & Manage — lets the piece register and clean up its Service Hooks subscriptions.
 6. Click **Create** and copy the token (you won't see it again)
 
 You'll also need your **Organization URL**, which looks like `https://dev.azure.com/mycompany`.
@@ -33,11 +34,16 @@ You'll also need your **Organization URL**, which looks like `https://dev.azure.
 | **List Work Items** | Query work items using WIQL (Work Item Query Language) |
 | **Add Comment** | Add a comment to an existing work item |
 
-## Trigger
+## Triggers
 
 | Trigger | Description |
 |---------|-------------|
-| **New or Updated Work Item** | Fires when any work item is created or updated. Polls every 5 minutes. |
+| **New or Updated Work Item (Instant)** | Fires instantly via Azure DevOps Service Hooks when a work item is created, updated, or commented on. Requires a public Activepieces webhook URL. |
+| **New or Updated Work Item** | Polling fallback that checks every few minutes. Use when your Activepieces instance is not reachable from the public internet. |
+
+### Instant trigger setup
+
+The instant trigger registers a Service Hooks subscription in Azure DevOps automatically and removes it when the flow is disabled. Service Hooks deliver events to the webhook URL shown in the trigger's "Test" step — this URL must be reachable from Azure DevOps over HTTPS. If your Activepieces instance runs behind a private network, use the polling trigger instead.
 
 ## Example Workflow
 

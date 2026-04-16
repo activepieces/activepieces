@@ -12,6 +12,7 @@ import { updateWorkItemAction } from './lib/actions/update-work-item';
 import { listWorkItemsAction } from './lib/actions/list-work-items';
 import { addCommentAction } from './lib/actions/add-comment';
 import { newUpdatedWorkItemTrigger } from './lib/triggers/new-updated-work-item';
+import { newUpdatedWorkItemWebhookTrigger } from './lib/triggers/new-updated-work-item-webhook';
 import { azureDevOpsCommon, ProjectListResponse } from './lib/common';
 
 const authDescription = `To get your Personal Access Token (PAT):
@@ -92,7 +93,7 @@ export const azureDevOps = createPiece({
       }),
     }),
   ],
-  triggers: [newUpdatedWorkItemTrigger],
+  triggers: [newUpdatedWorkItemWebhookTrigger, newUpdatedWorkItemTrigger],
 });
 
 export type AzureDevOpsAuth = AppConnectionValueForAuthProperty<typeof azureDevOpsAuth>;
