@@ -66,7 +66,7 @@ export const createWorkItemAction = createAction({
       organizationUrl: orgUrl,
       pat: auth.props.pat,
       method: HttpMethod.POST,
-      endpoint: `/${encodeURIComponent(project)}/_apis/wit/workitems/$${encodeURIComponent(work_item_type as string)}`,
+      endpoint: `/${encodeURIComponent(project)}/_apis/wit/workitems/$${encodeURIComponent(azureDevOpsCommon.narrowString(work_item_type, 'work_item_type'))}`,
       queryParams: { 'api-version': '7.1' },
       body: operations,
       isJsonPatch: true,

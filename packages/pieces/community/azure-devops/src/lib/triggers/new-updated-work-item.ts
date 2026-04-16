@@ -4,8 +4,9 @@ import {
   StaticPropsValue,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
-import { azureDevOpsAuth, AzureDevOpsAuth } from '../common';
 import {
+  azureDevOpsAuth,
+  AzureDevOpsAuth,
   azureDevOpsCommon,
   FlatWorkItem,
   WiqlResponse,
@@ -24,6 +25,7 @@ const polling: Polling<AzureDevOpsAuth, StaticPropsValue<typeof props>> = {
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const orgUrl = azureDevOpsCommon.sanitizeOrgUrl(auth.props.organizationUrl);
     const { project, work_item_type, state_filter } = propsValue;
+    const projectName = azureDevOpsCommon.narrowString(project, 'project');
 
     const sinceEpoch =
       lastFetchEpochMS && lastFetchEpochMS > 0
@@ -31,19 +33,23 @@ const polling: Polling<AzureDevOpsAuth, StaticPropsValue<typeof props>> = {
         : Date.now() - POLLING_FIRST_RUN_LOOKBACK_DAYS * 24 * 60 * 60 * 1000;
     const sinceIso = new Date(sinceEpoch).toISOString();
 
-    const escapedProject = azureDevOpsCommon.escapeWiqlString(project as string);
+    const escapedProject = azureDevOpsCommon.escapeWiqlString(projectName);
     let wiqlQuery =
       `SELECT [System.Id], [System.ChangedDate] FROM WorkItems ` +
       `WHERE [System.TeamProject] = '${escapedProject}' ` +
       `AND [System.ChangedDate] >= '${sinceIso}'`;
 
     if (work_item_type) {
-      const escapedType = azureDevOpsCommon.escapeWiqlString(work_item_type as string);
+      const escapedType = azureDevOpsCommon.escapeWiqlString(
+        azureDevOpsCommon.narrowString(work_item_type, 'work_item_type'),
+      );
       wiqlQuery += ` AND [System.WorkItemType] = '${escapedType}'`;
     }
 
     if (state_filter) {
-      const escapedState = azureDevOpsCommon.escapeWiqlString(state_filter as string);
+      const escapedState = azureDevOpsCommon.escapeWiqlString(
+        azureDevOpsCommon.narrowString(state_filter, 'state_filter'),
+      );
       wiqlQuery += ` AND [System.State] = '${escapedState}'`;
     }
 
@@ -53,7 +59,7 @@ const polling: Polling<AzureDevOpsAuth, StaticPropsValue<typeof props>> = {
       organizationUrl: orgUrl,
       pat: auth.props.pat,
       method: HttpMethod.POST,
-      endpoint: `/${encodeURIComponent(project as string)}/_apis/wit/wiql`,
+      endpoint: `/${encodeURIComponent(projectName)}/_apis/wit/wiql`,
       queryParams: {
         '$top': '200',
         'api-version': '7.1',

@@ -31,6 +31,13 @@ function asAzureAuth(auth: unknown): AzureDevOpsAuth {
   return auth as AzureDevOpsAuth;
 }
 
+function narrowString(value: unknown, fieldName: string): string {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error(`Expected non-empty string for "${fieldName}", got ${typeof value}`);
+  }
+  return value;
+}
+
 const authDescription = `To get your Personal Access Token (PAT):
 
 1. Go to **Azure DevOps** and click your profile icon (top-right)
@@ -361,7 +368,7 @@ function createAssignedToDropdown(required: boolean) {
       }
       const typedAuth = asAzureAuth(auth);
       try {
-        const members = await fetchTeamMembers(typedAuth, project as string);
+        const members = await fetchTeamMembers(typedAuth, narrowString(project, 'project'));
         if (members.length === 0) {
           return {
             disabled: false,
@@ -420,8 +427,8 @@ function createStateDropdown(required: boolean, description: string) {
       try {
         const states = await fetchWorkItemTypeStates(
           typedAuth,
-          project as string,
-          work_item_type as string,
+          narrowString(project, 'project'),
+          narrowString(work_item_type, 'work_item_type'),
         );
         if (states.length === 0) {
           return {
@@ -472,7 +479,7 @@ function createWorkItemTypeDropdown(required: boolean, description: string) {
       }
       const typedAuth = asAzureAuth(auth);
       try {
-        const response = await fetchWorkItemTypes(typedAuth, project as string);
+        const response = await fetchWorkItemTypes(typedAuth, narrowString(project, 'project'));
         if (!response.value || response.value.length === 0) {
           return {
             disabled: false,
@@ -577,6 +584,7 @@ export const azureDevOpsCommon = {
   sanitizeOrgUrl,
   isValidUrl,
   asAuth: asAzureAuth,
+  narrowString,
   apiCall: azureDevOpsApiCall,
   fetchWorkItemsByIds,
   flattenWorkItem,
