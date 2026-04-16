@@ -3,11 +3,12 @@ import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 
-const AUTH_TYPES = new Set<PropertyType>([
+const HIDDEN_PROP_TYPES = new Set<PropertyType>([
     PropertyType.OAUTH2,
     PropertyType.SECRET_TEXT,
     PropertyType.BASIC_AUTH,
     PropertyType.CUSTOM_AUTH,
+    PropertyType.MARKDOWN,
 ])
 
 const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
@@ -28,7 +29,7 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
     const uiRequired: string[] = []
     const allProps: string[] = []
     for (const [propName, prop] of Object.entries(props)) {
-        if (AUTH_TYPES.has(prop.type)) {
+        if (HIDDEN_PROP_TYPES.has(prop.type)) {
             continue
         }
         allProps.push(`${propName} (${prop.type}${prop.required ? ', required' : ''})`)
@@ -66,7 +67,7 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
 
 function buildPropSummaries(props: PiecePropertyMap): PropSummary[] {
     return Object.entries(props)
-        .filter(([, prop]) => !AUTH_TYPES.has(prop.type))
+        .filter(([, prop]) => !HIDDEN_PROP_TYPES.has(prop.type))
         .map(([name, prop]) => {
             const summary: PropSummary = {
                 name,
