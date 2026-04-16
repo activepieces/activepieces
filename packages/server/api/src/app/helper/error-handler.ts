@@ -21,7 +21,6 @@ export const errorHandler = async (
             [ErrorCode.ENTITY_NOT_FOUND]: StatusCodes.NOT_FOUND,
             [ErrorCode.EXISTING_USER]: StatusCodes.CONFLICT,
             [ErrorCode.EXISTING_ALERT_CHANNEL]: StatusCodes.CONFLICT,
-            [ErrorCode.FLOW_IN_USE]: StatusCodes.CONFLICT,
             [ErrorCode.FLOW_OPERATION_IN_PROGRESS]: StatusCodes.CONFLICT,
             [ErrorCode.AUTHORIZATION]: StatusCodes.FORBIDDEN,
             [ErrorCode.SIGN_UP_DISABLED]: StatusCodes.FORBIDDEN,

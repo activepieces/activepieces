@@ -18,6 +18,7 @@ import {
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { RightSideBarType } from '@/app/builder/types';
+import { ActiveUsersWidget } from '@/components/custom/active-users-widget';
 import EditableText from '@/components/custom/editable-text';
 import { HomeButton } from '@/components/custom/home-button';
 import { PageHeader } from '@/components/custom/page-header';
@@ -185,6 +186,7 @@ export const BuilderHeader = () => {
           {t('Support')}
         </Button>
       )}
+      <ActiveUsersWidget resourceId={flow.id} />
       {hasPermissionToReadRuns && (
         <Button
           variant="ghost"

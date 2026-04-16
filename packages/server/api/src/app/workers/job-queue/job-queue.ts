@@ -3,12 +3,11 @@ import { ApId, EventDestinationJobData, ExecuteFlowJobData, getDefaultJobPriorit
 import { Job, Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
-import { platformCanaryService } from '../../core/canary/platform-canary.service'
 import { redisConnections } from '../../database/redis-connections'
-import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
+import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { getPlatformQueueName, QueueName } from '../job'
+import { getWorkerGroupQueueName, QueueName } from '../job'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
@@ -114,6 +113,10 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }, '[jobQueue#removeOneTimeJob] job not found in queue')
     },
 
+    async getOrCreateQueue({ queueName }: { queueName: string }): Promise<Queue> {
+        return ensureQueueExists({ log, queueName })
+    },
+
     getAllQueues(): Queue[] {
         const queues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
         return queues
@@ -198,12 +201,11 @@ async function getQueueName(platformId: string | null, log: FastifyBaseLogger): 
     if (!platformId) {
         return QueueName.WORKER_JOBS
     }
-    const canaryPlatformIds = await platformCanaryService(log).getCanaryPlatformIds()
-    if (canaryPlatformIds.includes(platformId)) {
-        return QueueName.CANARY_JOBS
+    const groupId = await workerGroupService(log).getWorkerGroupId({ platformId })
+    if (isNil(groupId)) {
+        return QueueName.WORKER_JOBS
     }
-    const isDedicatedWorkersEnabled = await dedicatedWorkers(log).isEnabledForPlatform(platformId)
-    return isDedicatedWorkersEnabled ? getPlatformQueueName(platformId) : QueueName.WORKER_JOBS
+    return getWorkerGroupQueueName(groupId)
 }
 
 

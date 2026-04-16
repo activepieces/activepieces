@@ -27,24 +27,20 @@ import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { getPlatformQueueName, QueueName, redisMetadataKey, RunsMetadataUpsertData } from '../job'
+import { getWorkerGroupQueueName, QueueName, redisMetadataKey, RunsMetadataUpsertData } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
-const getPollQueueName = (platformIdForDedicatedWorker?: string, isCanaryWorker = false): string => {
-    return isCanaryWorker
-        ? QueueName.CANARY_JOBS
-        : platformIdForDedicatedWorker
-            ? getPlatformQueueName(platformIdForDedicatedWorker)
-            : QueueName.WORKER_JOBS
+const getPollQueueName = (workerGroupId?: string): string => {
+    return workerGroupId ? getWorkerGroupQueueName(workerGroupId) : QueueName.WORKER_JOBS
 }
 
-export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWorker?: string, isCanaryWorker = false): WorkerToApiContract {
+export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): WorkerToApiContract {
     return {
         async poll(input) {
-            log.info({ workerId: input.workerId, platformIdForDedicatedWorker, isCanaryWorker }, '[workerRpc#poll] Poll request received')
-            await machineService(log).onConnection(input, platformIdForDedicatedWorker)
-            const pollQueueName = getPollQueueName(platformIdForDedicatedWorker, isCanaryWorker)
+            log.info({ workerId: input.workerId, workerGroupId }, '[workerRpc#poll] Poll request received')
+            await machineService(log).onConnection(input, workerGroupId)
+            const pollQueueName = getPollQueueName(workerGroupId)
             const job = await jobBroker(log).poll(pollQueueName)
             if (job) {
                 log.info({ workerId: input.workerId, jobId: job.jobId, jobType: job.jobData.jobType }, '[workerRpc#poll] Returning job to worker')
@@ -191,10 +187,7 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
             if (isNil(flow)) {
                 return null
             }
-            return flowVersionService(log).lockPieceVersions({
-                flowVersion,
-                projectId: flow.projectId,
-            })
+            return flowVersion
         },
 
         async getPiece(input) {
@@ -227,13 +220,13 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
         },
 
         async getUsedPieces() {
-            const redisKey = `usedPieces:${platformIdForDedicatedWorker ?? 'shared'}`
+            const redisKey = `usedPieces:${workerGroupId ?? 'shared'}`
             const pieces = await distributedStore.get<PiecePackage[]>(redisKey)
             return pieces ?? []
         },
 
         async markPieceAsUsed(input) {
-            const redisKey = `usedPieces:${platformIdForDedicatedWorker ?? 'shared'}`
+            const redisKey = `usedPieces:${workerGroupId ?? 'shared'}`
             const existing = await distributedStore.get<PiecePackage[]>(redisKey) ?? []
             const existingKeys = new Set(existing.map((p) => `${p.pieceName}@${p.pieceVersion}`))
             const newPieces = input.pieces.filter((p) => !existingKeys.has(`${p.pieceName}@${p.pieceVersion}`))

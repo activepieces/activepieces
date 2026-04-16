@@ -33,23 +33,37 @@ jobs:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        
       - name: Extract migration manifest from target image
         id: manifest
         run: |
           IMAGE="ghcr.io/activepieces/activepieces-cloud:${{ inputs.rollback_to_image_tag }}"
           docker pull "$IMAGE"
-          MANIFEST=$(docker run --rm "$IMAGE" \
-            cat /usr/src/app/packages/server/api/dist/src/migration-manifest.json)
+          MANIFEST=$(docker run --rm --entrypoint cat "$IMAGE" \
+            /usr/src/app/packages/server/api/dist/src/migration-manifest.json)
           echo "json=$MANIFEST" >> $GITHUB_OUTPUT
 
       - name: Rollback DB migrations
         run: |
           FORCE_FLAG=${{ inputs.force && '"--force"' || '""' }}
           MANIFEST='${{ steps.manifest.outputs.json }}'
-          ssh ops -t -t "bash -ic \"cd mrsk/prod && kamal app exec --config-file=config/app.yml -- \
-            node /usr/src/app/packages/server/api/dist/src/rollback.js \
-            --manifest '$MANIFEST' $FORCE_FLAG ; exit\""
 
+          printf '%s' "$MANIFEST" | ssh ops 'cat > /tmp/rollback-manifest.json'
+
+          ssh ops -t -t 'bash -ic "$(cat <<'"'"'EOF'"'"'
+          cd mrsk/prod
+          MANIFEST=$(cat /tmp/rollback-manifest.json | jq -c '"'"'[.[] | select(. != null)]'"'"')
+          MANIFEST_ESCAPED="${MANIFEST//\"/\\\"}"
+          kamal app exec --reuse --config-file=config/app.yml -- node /usr/src/app/packages/server/api/dist/src/rollback.js --manifest "$MANIFEST_ESCAPED"
+          EOF
+          )"'
+  
       - name: Redeploy app to target image
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy \

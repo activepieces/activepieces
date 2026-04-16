@@ -18,7 +18,10 @@ export const flowCache = (log: Logger, apiClient: WorkerToApiContract) => ({
                     if (isNil(flow)) {
                         return true
                     }
-                    const parsedFlow = JSON.parse(flow) as FlowVersion
+                    const parsedFlow = flow === 'null' ? null : JSON.parse(flow) as FlowVersion
+                    if (isNil(parsedFlow)) {
+                        return false
+                    }
                     return parsedFlow.schemaVersion !== LATEST_FLOW_SCHEMA_VERSION
                 },
                 installFn: async () => {
@@ -44,7 +47,10 @@ export const flowCache = (log: Logger, apiClient: WorkerToApiContract) => ({
                     if (isNil(flow)) {
                         return true
                     }
-                    const parsedFlow = JSON.parse(flow) as FlowVersion
+                    const parsedFlow = JSON.parse(flow) as FlowVersion | null
+                    if (isNil(parsedFlow)) {
+                        return true
+                    }
                     return parsedFlow.state !== FlowVersionState.LOCKED
                 },
             })

@@ -1,10 +1,10 @@
-import { FlowRetryStrategy, FlowRunStatus, isFlowRunStateTerminal, isNil, McpServer, McpToolDefinition } from '@activepieces/shared'
+import { FlowRetryStrategy, FlowRunStatus, isFlowRunStateTerminal, isNil, McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { formatRunResult, pollForRunCompletion } from './flow-run-utils'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const retryStrategyValues = Object.values(FlowRetryStrategy) as [FlowRetryStrategy, ...FlowRetryStrategy[]]
 
@@ -16,7 +16,8 @@ const retryRunInput = z.object({
 export const apRetryRunTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_retry_run',
-        description: 'Retry a failed flow run. Use FROM_FAILED_STEP to resume from the failure point, or ON_LATEST_VERSION to re-run with the current published version. Only works on failed runs.',
+        permission: Permission.WRITE_RUN,
+        description: 'Retry a failed flow run. FROM_FAILED_STEP resumes at failure point, ON_LATEST_VERSION re-runs entirely.',
         inputSchema: retryRunInput.shape,
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
@@ -61,7 +62,7 @@ export const apRetryRunTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolD
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_retry_run failed')
-                return mcpToolError('Failed to retry run', err)
+                return mcpUtils.mcpToolError('Failed to retry run', err)
             }
         },
     }

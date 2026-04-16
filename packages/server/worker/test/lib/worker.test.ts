@@ -2,13 +2,13 @@ import { createServer } from 'node:http'
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { Server as IOServer } from 'socket.io'
 import {
+    createRpcServer,
     PackageType,
     PieceType,
     WorkerJobType,
     EngineResponseStatus,
     WebsocketServerEvent,
 } from '@activepieces/shared'
-import { createRpcServer } from '@activepieces/shared/server'
 import { JobResultKind } from '../../src/lib/execute/types'
 import type {
     WorkerToApiContract,
@@ -178,7 +178,7 @@ describe('worker integration', () => {
     }
 
     it('polls for a job, executes it, and reports completion', async () => {
-        const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds: 10 }
+        const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds: 10 }
         mockGetHandler.mockReturnValue({
             jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
             execute: vi.fn().mockResolvedValue(expectedResult),
@@ -229,7 +229,7 @@ describe('worker integration', () => {
     it('skips null poll responses and re-polls', async () => {
         mockGetHandler.mockReturnValue({
             jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-            execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET }),
+            execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }),
         })
 
         const job = buildConsumeJobRequest({ jobId: 'job-after-null' })
@@ -263,7 +263,7 @@ describe('worker integration', () => {
     it('treats USER_FAILURE differently from INTERNAL_ERROR in fire-and-forget', async () => {
         mockGetHandler.mockReturnValue({
             jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-            execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET }),
+            execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }),
         })
 
         const job = buildConsumeJobRequest()
@@ -273,9 +273,45 @@ describe('worker integration', () => {
         expect(completeJobCalls[0].status).toBe(EngineResponseStatus.OK)
     }, 15_000)
 
+    it('propagates INTERNAL_ERROR status from fire-and-forget result to completeJob', async () => {
+        mockGetHandler.mockReturnValue({
+            jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+            execute: vi.fn().mockResolvedValue({
+                kind: JobResultKind.FIRE_AND_FORGET,
+                status: EngineResponseStatus.INTERNAL_ERROR,
+                logs: 'MODULE_NOT_FOUND: @activepieces/shared',
+            }),
+        })
+
+        const job = buildConsumeJobRequest({ jobId: 'job-internal-error' })
+        const { completeJobCalls } = await connectWorkerWithPoll([job, null])
+
+        expect(completeJobCalls.length).toBe(1)
+        expect(completeJobCalls[0].jobId).toBe('job-internal-error')
+        expect(completeJobCalls[0].status).toBe(EngineResponseStatus.INTERNAL_ERROR)
+        expect(completeJobCalls[0].logs).toBe('MODULE_NOT_FOUND: @activepieces/shared')
+    }, 15_000)
+
+    it('propagates TIMEOUT status from fire-and-forget result to completeJob', async () => {
+        mockGetHandler.mockReturnValue({
+            jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+            execute: vi.fn().mockResolvedValue({
+                kind: JobResultKind.FIRE_AND_FORGET,
+                status: EngineResponseStatus.TIMEOUT,
+            }),
+        })
+
+        const job = buildConsumeJobRequest({ jobId: 'job-timeout' })
+        const { completeJobCalls } = await connectWorkerWithPoll([job, null])
+
+        expect(completeJobCalls.length).toBe(1)
+        expect(completeJobCalls[0].jobId).toBe('job-timeout')
+        expect(completeJobCalls[0].status).toBe(EngineResponseStatus.TIMEOUT)
+    }, 15_000)
+
     describe('resilience to invalid job data', () => {
         it('survives a job with invalid jobData fields and continues processing', async () => {
-            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds: 5 }
+            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds: 5 }
             mockGetHandler.mockReturnValue({
                 jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
                 execute: vi.fn().mockResolvedValue(expectedResult),
@@ -298,7 +334,7 @@ describe('worker integration', () => {
         }, 15_000)
 
         it('survives a job with an unrecognized jobType and continues polling', async () => {
-            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds: 5 }
+            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds: 5 }
             mockGetHandler.mockReturnValue({
                 jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
                 execute: vi.fn().mockResolvedValue(expectedResult),
@@ -322,7 +358,7 @@ describe('worker integration', () => {
         it('survives a job with empty object as jobData and continues polling', async () => {
             mockGetHandler.mockReturnValue({
                 jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-                execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET }),
+                execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }),
             })
 
             const invalidJob = buildConsumeJobRequest({
@@ -343,7 +379,7 @@ describe('worker integration', () => {
         it('survives a job with non-object primitive jobData and continues polling', async () => {
             mockGetHandler.mockReturnValue({
                 jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-                execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET }),
+                execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }),
             })
 
             const invalidJob = buildConsumeJobRequest({
@@ -362,7 +398,7 @@ describe('worker integration', () => {
         }, 15_000)
 
         it('survives multiple consecutive invalid jobs and still processes a valid one', async () => {
-            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds: 7 }
+            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds: 7 }
             mockGetHandler.mockReturnValue({
                 jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
                 execute: vi.fn().mockResolvedValue(expectedResult),
@@ -396,7 +432,7 @@ describe('worker integration', () => {
                 })
                 .mockReturnValueOnce({
                     jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-                    execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, delayInSeconds: 5 }),
+                    execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds: 5 }),
                 })
 
             const job1 = buildConsumeJobRequest({ jobId: 'job-crash' })
@@ -416,7 +452,7 @@ describe('worker integration', () => {
         it('handles interleaved nulls, invalid jobs, and valid jobs', async () => {
             mockGetHandler.mockReturnValue({
                 jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-                execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET }),
+                execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }),
             })
 
             const validJob1 = buildConsumeJobRequest({ jobId: 'valid-1' })

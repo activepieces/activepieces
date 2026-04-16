@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../auth';
-import { Client } from '@microsoft/microsoft-graph-client';
 import { microsoftTeamsCommon } from '../common';
+import { createGraphClient } from '../common/graph';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
@@ -32,11 +32,8 @@ export const requestApprovalInChannel = createAction({
       assertNotNullOrUndefined(channelId, 'channelId');
       assertNotNullOrUndefined(message, 'message');
 
-      const client = Client.initWithMiddleware({
-        authProvider: {
-          getAccessToken: () => Promise.resolve(token),
-        },
-      });
+      const cloud = context.auth.props?.['cloud'] as string | undefined;
+      const client = createGraphClient(token, cloud);
 
       const attachmentId = Date.now().toString();
       const approvalLink = context.generateResumeUrl({

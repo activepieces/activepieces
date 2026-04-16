@@ -29,7 +29,6 @@ export type ApErrorParams =
     | EngineOperationFailureParams
     | EntityNotFoundErrorParams
     | ExistingUserErrorParams
-    | FlowIsLockedErrorParams
     | FlowOperationErrorParams
     | FlowOperationInProgressErrorParams
     | FlowRunRetryOutsideRetentionErrorParams
@@ -94,6 +93,7 @@ export type ApErrorParams =
     | FlowMigrationFailedParams
     | ResumeLogsFileMissingParams
     | ExecutionStateMissingParams
+    | GenericErrorParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -256,13 +256,6 @@ ErrorCode.FLOW_OPERATION_INVALID,
 
 export type FlowOperationInProgressErrorParams = BaseErrorParams<
 ErrorCode.FLOW_OPERATION_IN_PROGRESS, {
-    message: string
-}>
-
-export type FlowIsLockedErrorParams = BaseErrorParams<
-ErrorCode.FLOW_IN_USE,
-{
-    flowVersionId: FlowVersionId
     message: string
 }>
 
@@ -490,6 +483,10 @@ export type ExecutionStateMissingParams = BaseErrorParams<ErrorCode.EXECUTION_ST
     logsFileId: string
 }>
 
+export type GenericErrorParams = BaseErrorParams<ErrorCode.GENERIC_ERROR, {
+    message: string
+}>
+
 export enum ErrorCode {
     INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
@@ -516,7 +513,6 @@ export enum ErrorCode {
     PROJECT_EXTERNAL_ID_ALREADY_EXISTS = 'PROJECT_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
-    FLOW_IN_USE = 'FLOW_IN_USE',
     FLOW_RUN_RETRY_OUTSIDE_RETENTION = 'FLOW_RUN_RETRY_OUTSIDE_RETENTION',
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
@@ -562,5 +558,6 @@ export enum ErrorCode {
     FLOW_MIGRATION_FAILED = 'FLOW_MIGRATION_FAILED',
     RESUME_LOGS_FILE_MISSING = 'RESUME_LOGS_FILE_MISSING',
     EXECUTION_STATE_MISSING = 'EXECUTION_STATE_MISSING',
+    GENERIC_ERROR = 'GENERIC_ERROR',
 }
 

@@ -134,6 +134,7 @@ async function setupSubflowFixtures() {
             name: 'trigger',
             displayName: 'Callable Flow',
             valid: true,
+            lastUpdatedDate: new Date().toISOString(),
             settings: {
                 pieceName: '@activepieces/piece-subflows',
                 pieceVersion: '0.4.11',
@@ -203,6 +204,7 @@ async function setupSubflowFixtures() {
             name: 'trigger',
             displayName: 'Catch Webhook',
             valid: true,
+            lastUpdatedDate: new Date().toISOString(),
             settings: {
                 pieceName: '@activepieces/piece-webhook',
                 pieceVersion: '0.1.29',
@@ -269,6 +271,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
         flowId: childFlow.id,
         state: FlowVersionState.LOCKED,
         trigger: {
+            lastUpdatedDate: new Date().toISOString(),
             type: FlowTriggerType.PIECE,
             name: 'trigger',
             displayName: 'Callable Flow',
@@ -366,6 +369,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
             name: 'trigger',
             displayName: 'Catch Webhook',
             valid: true,
+            lastUpdatedDate: new Date().toISOString(),
             settings: {
                 pieceName: '@activepieces/piece-webhook',
                 pieceVersion: '0.1.29',
@@ -459,7 +463,7 @@ describe('Execute Flow E2E', () => {
             valid: true,
             settings: {
                 pieceName: '@activepieces/piece-data-mapper',
-                pieceVersion: '~0.3.15',
+                pieceVersion: '0.3.15',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -486,9 +490,10 @@ describe('Execute Flow E2E', () => {
                 name: 'trigger',
                 displayName: 'Catch Webhook',
                 valid: true,
+                lastUpdatedDate: new Date().toISOString(),
                 settings: {
                     pieceName: '@activepieces/piece-webhook',
-                    pieceVersion: '~0.1.29',
+                    pieceVersion: '0.1.29',
                     triggerName: 'catch_webhook',
                     input: { authType: 'none' },
                     propertySettings: {},
@@ -533,7 +538,7 @@ describe('Execute Flow E2E', () => {
                 projectId: mockProject.id,
             })
         }
-
+        console.log(result)
         // Assertions
         expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
         expect(result.steps.step_1.output).toEqual(
@@ -593,9 +598,10 @@ describe('Execute Flow E2E', () => {
                 name: 'trigger',
                 displayName: 'Catch Webhook',
                 valid: true,
+                lastUpdatedDate: new Date().toISOString(),
                 settings: {
                     pieceName: '@activepieces/piece-webhook',
-                    pieceVersion: '~0.1.29',
+                    pieceVersion: '0.1.29',
                     triggerName: 'catch_webhook',
                     input: { authType: 'none' },
                     propertySettings: {},
@@ -739,7 +745,7 @@ describe('Execute Flow E2E', () => {
             valid: true,
             settings: {
                 pieceName: '@activepieces/piece-delay',
-                pieceVersion: '~0.3.26',
+                pieceVersion: '0.3.26',
                 actionName: 'delayFor',
                 input: {
                     unit: 'seconds',
@@ -764,9 +770,10 @@ describe('Execute Flow E2E', () => {
                 name: 'trigger',
                 displayName: 'Catch Webhook',
                 valid: true,
+                lastUpdatedDate: new Date().toISOString(),
                 settings: {
                     pieceName: '@activepieces/piece-webhook',
-                    pieceVersion: '~0.1.29',
+                    pieceVersion: '0.1.29',
                     triggerName: 'catch_webhook',
                     input: { authType: 'none' },
                     propertySettings: {},
@@ -792,7 +799,6 @@ describe('Execute Flow E2E', () => {
         })
 
         const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
-
         expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
         expect(result.steps.step_2.output).toEqual(
             expect.objectContaining({ resumed: true }),

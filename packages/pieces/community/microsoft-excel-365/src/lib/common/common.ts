@@ -5,12 +5,13 @@ import {
 	AuthenticationType,
 	HttpRequest,
 } from '@activepieces/pieces-common';
+import { getGraphBaseUrl } from './microsoft-cloud';
 import { isNil } from '@activepieces/shared';
 import { excelAuth } from '../auth';
 import { getDrivePath } from './helpers';
 
 export const excelCommon = {
-	baseUrl: 'https://graph.microsoft.com/v1.0/me/drive',
+	getBaseUrl: (cloud?: string | null) => getGraphBaseUrl(cloud) + '/v1.0/me/drive',
 	workbook_id: Property.Dropdown({
 		auth: excelAuth,
 		displayName: 'Workbook',
@@ -24,10 +25,11 @@ export const excelCommon = {
 				};
 			}
 			const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+			const cloud = authProp.props?.['cloud'] as string | undefined;
 			const workbooks: { id: string; name: string }[] = (
 				await httpClient.sendRequest<{ value: { id: string; name: string }[] }>({
 					method: HttpMethod.GET,
-					url: `${excelCommon.baseUrl}/items/root/search(q='.xlsx')?$select=id,name`,
+					url: `${excelCommon.getBaseUrl(cloud)}/items/root/search(q='.xlsx')?$select=id,name`,
 					authentication: {
 						type: AuthenticationType.BEARER_TOKEN,
 						token: authProp['access_token'],
@@ -60,10 +62,11 @@ export const excelCommon = {
 				};
 			}
 			const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+			const cloud = authProp.props?.['cloud'] as string | undefined;
 			const worksheets: { id: string; name: string }[] = (
 				await httpClient.sendRequest<{ value: { id: string; name: string }[] }>({
 					method: HttpMethod.GET,
-					url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets?$select=id,name`,
+					url: `${excelCommon.getBaseUrl(cloud)}/items/${workbook_id}/workbook/worksheets?$select=id,name`,
 					authentication: {
 						type: AuthenticationType.BEARER_TOKEN,
 						token: authProp['access_token'],
@@ -96,10 +99,11 @@ export const excelCommon = {
 				};
 			}
 			const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+			const cloud = authProp.props?.['cloud'] as string | undefined;
 			const tables: { id: string; name: string }[] = (
 				await httpClient.sendRequest<{ value: { id: string; name: string }[] }>({
 					method: HttpMethod.GET,
-					url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets/${worksheet_id}/tables`,
+					url: `${excelCommon.getBaseUrl(cloud)}/items/${workbook_id}/workbook/worksheets/${worksheet_id}/tables`,
 					authentication: {
 						type: AuthenticationType.BEARER_TOKEN,
 						token: authProp['access_token'],
@@ -222,12 +226,14 @@ export const excelCommon = {
 			}
 
 			const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+			const cloud = authProp.props?.['cloud'] as string | undefined;
 
 			const rootFolderId = 'root';
 			const allFolders: { id: string; name: string }[] = await excelCommon.getAllFolders(
 				rootFolderId,
 				authProp['access_token'],
-				''
+				'',
+				cloud
 			);
 			allFolders.unshift({
 				id: rootFolderId,
@@ -245,12 +251,12 @@ export const excelCommon = {
 			};
 		},
 	}),
-	getHeaders: async function (workbookId: string, accessToken: string, worksheetId: string) {
+	getHeaders: async function (workbookId: string, accessToken: string, worksheetId: string, cloud?: string | null) {
 		const response = await httpClient.sendRequest<{
 			values: (string | number | boolean)[][];
 		}>({
 			method: HttpMethod.GET,
-			url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange(valuesOnly=true)`,
+			url: `${excelCommon.getBaseUrl(cloud)}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange(valuesOnly=true)`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: accessToken,
@@ -281,9 +287,10 @@ export const excelCommon = {
 	getLastUsedRow: async function (
 		workbookId: string,
 		worksheetId: string,
-		accessToken: string
+		accessToken: string,
+		cloud?: string | null
 	): Promise<number> {
-		const url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`;
+		const url = `${excelCommon.getBaseUrl(cloud)}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`;
 
 		const request: HttpRequest = {
 			method: HttpMethod.GET,
@@ -304,9 +311,10 @@ export const excelCommon = {
 	getLastUsedColumn: async function (
 		workbookId: string,
 		worksheetId: string,
-		accessToken: string
+		accessToken: string,
+		cloud?: string | null
 	): Promise<string> {
-		const url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`;
+		const url = `${excelCommon.getBaseUrl(cloud)}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`;
 
 		const request: HttpRequest = {
 			method: HttpMethod.GET,
@@ -328,9 +336,10 @@ export const excelCommon = {
 		workbookId: string,
 		worksheetId: string,
 		accessToken: string,
-		drivePath?: string
+		drivePath?: string,
+		cloud?: string | null
 	): Promise<(string | number | boolean)[][]> {
-		const basePath = drivePath || excelCommon.baseUrl;
+		const basePath = drivePath || excelCommon.getBaseUrl(cloud);
 		const response = await httpClient.sendRequest<{
 			values: (string | number | boolean)[][];
 		}>({
@@ -356,9 +365,10 @@ export const excelCommon = {
 	getAllFolders: async function (
 		folderId: string,
 		authToken: string,
-		currentPath: string
+		currentPath: string,
+		cloud?: string | null
 	): Promise<{ id: string; name: string }[]> {
-		const apiUrl = `${excelCommon.baseUrl}/items/${folderId}/children?$filter=folder ne null`;
+		const apiUrl = `${excelCommon.getBaseUrl(cloud)}/items/${folderId}/children?$filter=folder ne null`;
 		const response = await httpClient.sendRequest<{
 			value: { id: string; name: string; folder?: unknown }[];
 		}>({
@@ -381,7 +391,7 @@ export const excelCommon = {
 		let allSubFolders: { id: string; name: string }[] = [...folders];
 
 		for (const folder of folders) {
-			const subFolders = await excelCommon.getAllFolders(folder.id, authToken, folder.name);
+			const subFolders = await excelCommon.getAllFolders(folder.id, authToken, folder.name, cloud);
 			allSubFolders = allSubFolders.concat(subFolders);
 		}
 		return allSubFolders;

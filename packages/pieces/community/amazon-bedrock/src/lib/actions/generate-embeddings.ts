@@ -43,7 +43,7 @@ export const generateEmbeddings = createAction({
       displayName: 'Embedding Purpose',
       required: false,
       description:
-        'Optimize embeddings for your use case. Only used by Nova Multimodal Embeddings.',
+        'How the embeddings will be used — helps the model optimize the output. Only applies to Nova Multimodal Embeddings models. Leave as "Generic Index" if unsure.',
       defaultValue: 'GENERIC_INDEX',
       options: {
         options: [
@@ -56,16 +56,16 @@ export const generateEmbeddings = createAction({
       },
     }),
     dimensions: Property.Number({
-      displayName: 'Dimensions',
+      displayName: 'Vector Dimensions',
       required: false,
       description:
-        'The number of dimensions for the output embedding vector. Titan Embed v2: 256, 512, 1024. Nova Multimodal: 256, 384, 1024, 3072.',
+        'Size of the output vector. Larger = more accurate but slower/costlier. Titan Embed v2 supports: 256, 512, 1024. Nova Multimodal supports: 256, 384, 1024, 3072. Leave blank to use the model default.',
     }),
     normalize: Property.Checkbox({
-      displayName: 'Normalize',
+      displayName: 'Normalize Output',
       required: false,
       description:
-        'Whether to normalize the output embedding vector. Supported by Titan Embed v2.',
+        'Scale the output vector so its values range between -1 and 1. Recommended for similarity comparisons. Only supported by Titan Embed v2.',
       defaultValue: true,
     }),
   },

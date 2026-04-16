@@ -36,10 +36,62 @@ export const listRowsAction = createAction({
       description: `If provided rows will be order by specific field.Use **-** sign for descending / **+** sing for ascending ordering.
         Example. "-My Field" will return rows in descending order based on "My Field" field.`,
     }),
+    filter_type: Property.StaticDropdown({
+      displayName: 'Filter Type',
+      description:
+        'When AND is selected, all filters must match. When OR is selected, any filter can match.',
+      required: false,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'AND', value: 'AND' },
+          { label: 'OR', value: 'OR' },
+        ],
+      },
+    }),
+    filters: Property.Array({
+      displayName: 'Filters',
+      description:
+        'List of filters. Each filter is an object with "field" (field ID as number), "type" (operator), and "value" (filter value).',
+      required: false,
+    }),
   },
   async run(context) {
-    const { table_id, page, limit, search, order_by } = context.propsValue as {table_id: number, page?: number, limit?: number, search?: string, order_by?: string};
-    const client = makeClient(context.auth.props);
-    return await client.listRows(table_id, page, limit, search, order_by);
+    const { table_id, page, limit, search, order_by, filter_type, filters } =
+      context.propsValue;
+    const client = await makeClient(context.auth);
+
+    let advancedFilters:
+      | {
+          filter_type: string;
+          filters: { field: number; type: string; value: string }[];
+        }
+      | undefined;
+
+    if (filters && filters.length > 0) {
+      const parsedFilters = filters.map((f) => {
+        const filter =
+          typeof f === 'string' ? JSON.parse(f) : (f as Record<string, unknown>);
+        return {
+          field: Number(filter['field']),
+          type: String(filter['type'] ?? 'equal'),
+          value: String(filter['value'] ?? ''),
+        };
+      });
+      advancedFilters = {
+        filter_type: filter_type ?? 'AND',
+        filters: parsedFilters,
+      };
+    }
+
+    return await client.listRows(
+      table_id!,
+      page,
+      limit,
+      search,
+      order_by,
+      undefined,
+      advancedFilters
+    );
   },
 });

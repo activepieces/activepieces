@@ -1,5 +1,9 @@
 {
   "Create and manage Power BI datasets and push data to them": "Power BI データセットを作成・管理し、データをプッシュします",
+  "Cloud Environment": "クラウド環境",
+  "Select your Microsoft cloud environment.": "Microsoft クラウド環境を選択します。",
+  "Commercial (Global)": "取引（世界）",
+  "US Government (GCC High)": "米国政府（GCCハイ）",
   "If you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Power BI Service (Delegated) permissions** under **API permissions**:\n - Dataset.ReadWrite.All\n - offline_access": "If you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Power BI Service (Delegated) permissions** under **API permissions**:\n - Dataset.ReadWrite.All\n - offline_access",
   "Create Dataset": "データセットを作成",
   "Push Rows to Dataset Table": "データセットテーブルに行をプッシュする",

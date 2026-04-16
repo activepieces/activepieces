@@ -19,7 +19,6 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@activepieces/shared/server': path.resolve(__dirname, '../../../packages/shared/src/lib/automation/engine/rpc.ts'),
       '@activepieces/shared': path.resolve(__dirname, '../../../packages/shared/src/index.ts'),
       '@activepieces/pieces-framework': path.resolve(__dirname, '../../../packages/pieces/framework/src/index.ts'),
       '@activepieces/pieces-common': path.resolve(__dirname, '../../../packages/pieces/common/src/index.ts'),
