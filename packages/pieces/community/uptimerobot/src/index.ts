@@ -18,7 +18,7 @@ export const uptimeRobot = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/uptimerobot.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: uptimeRobotAuth,
-  authors: ['gh0st'],
+  authors: ['majewskibartosz'],
   actions: [
     getMonitorsAction,
     createMonitorAction,

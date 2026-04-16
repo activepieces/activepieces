@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   flattenMonitor,
-  monitorDropdown,
   uptimeRobotApiCall,
+  uptimeRobotCommon,
   UptimeRobotEditMonitorResponse,
   UptimeRobotMonitorsResponse,
 } from '../common';
@@ -14,7 +14,8 @@ export const editMonitorAction = createAction({
   displayName: 'Edit Monitor',
   description: 'Update the settings of an existing UptimeRobot monitor',
   props: {
-    monitor: monitorDropdown,
+    monitor: uptimeRobotCommon.monitorIdField,
+    monitorDropdown: uptimeRobotCommon.monitorDropdownOptional,
     friendly_name: Property.ShortText({
       displayName: 'New Monitor Name',
       description: "Update the name of this monitor (e.g. 'Company Website v2'). Leave empty to keep the current name.",
@@ -22,7 +23,7 @@ export const editMonitorAction = createAction({
     }),
     url: Property.ShortText({
       displayName: 'New URL or IP Address',
-      description: "Update the URL or IP address being monitored. Leave empty to keep the current URL.",
+      description: 'Update the URL or IP address being monitored. Leave empty to keep the current URL.',
       required: false,
     }),
     interval: Property.Number({
@@ -32,13 +33,17 @@ export const editMonitorAction = createAction({
     }),
   },
   async run(context) {
-    const { monitor: monitorId, friendly_name, url, interval } = context.propsValue;
+    const { monitor, monitorDropdown, friendly_name, url, interval } = context.propsValue;
+    const monitorId = monitor || monitorDropdown;
+
+    if (!monitorId) {
+      throw new Error('Please provide a Monitor ID or select a monitor from the dropdown');
+    }
 
     const body: Record<string, unknown> = {
       id: monitorId,
     };
 
-    // Only send fields the user filled in — empty fields would overwrite current values
     if (friendly_name) body['friendly_name'] = friendly_name;
     if (url) body['url'] = url;
     if (interval !== undefined && interval !== null) body['interval'] = interval;

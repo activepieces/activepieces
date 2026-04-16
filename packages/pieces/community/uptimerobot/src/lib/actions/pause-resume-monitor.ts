@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   flattenMonitor,
-  monitorDropdown,
   uptimeRobotApiCall,
+  uptimeRobotCommon,
   UptimeRobotEditMonitorResponse,
   UptimeRobotMonitorsResponse,
 } from '../common';
@@ -14,7 +14,8 @@ export const pauseResumeMonitorAction = createAction({
   displayName: 'Pause or Resume Monitor',
   description: 'Temporarily pause or resume monitoring for a specific monitor',
   props: {
-    monitor: monitorDropdown,
+    monitor: uptimeRobotCommon.monitorIdField,
+    monitorDropdown: uptimeRobotCommon.monitorDropdownOptional,
     action: Property.StaticDropdown({
       displayName: 'Action',
       description: 'Pause stops all checks and alerts. Resume restarts monitoring from where it left off.',
@@ -28,22 +29,32 @@ export const pauseResumeMonitorAction = createAction({
     }),
   },
   async run(context) {
-    const { monitor: monitorId, action: statusValue } = context.propsValue;
+    const { monitor, monitorDropdown, action: statusValue } = context.propsValue;
+    const monitorId = monitor || monitorDropdown;
 
-    const edited = await uptimeRobotApiCall<UptimeRobotEditMonitorResponse>({
+    if (!monitorId) {
+      throw new Error('Please provide a Monitor ID or select a monitor from the dropdown');
+    }
+
+    const newStatus = Number(statusValue);
+
+    await uptimeRobotApiCall<UptimeRobotEditMonitorResponse>({
       apiKey: context.auth.secret_text,
       endpoint: 'editMonitor',
       body: {
-        id: monitorId,
-        status: statusValue,
+        id: Number(monitorId),
+        status: newStatus,
       },
     });
+
+    // Wait for UptimeRobot to propagate the status change
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const data = await uptimeRobotApiCall<UptimeRobotMonitorsResponse>({
       apiKey: context.auth.secret_text,
       endpoint: 'getMonitors',
       body: {
-        monitors: String(edited.monitor.id),
+        monitors: monitorId,
         custom_uptime_ratios: '30',
         response_times: 1,
       },
@@ -54,6 +65,9 @@ export const pauseResumeMonitorAction = createAction({
       throw new Error('Monitor was updated but could not be retrieved');
     }
 
-    return flattenMonitor({ monitor: updated });
+    return {
+      ...flattenMonitor({ monitor: updated }),
+      action_performed: newStatus === 0 ? 'paused' : 'resumed',
+    };
   },
 });

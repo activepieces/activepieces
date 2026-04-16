@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import {
-  monitorDropdown,
   uptimeRobotApiCall,
+  uptimeRobotCommon,
   UptimeRobotDeleteMonitorResponse,
 } from '../common';
 import { uptimeRobotAuth } from '../auth';
@@ -12,10 +12,16 @@ export const deleteMonitorAction = createAction({
   displayName: 'Delete Monitor',
   description: 'Permanently delete a monitor from UptimeRobot',
   props: {
-    monitor: monitorDropdown,
+    monitor: uptimeRobotCommon.monitorIdField,
+    monitorDropdown: uptimeRobotCommon.monitorDropdownOptional,
   },
   async run(context) {
-    const monitorId = context.propsValue.monitor;
+    const { monitor, monitorDropdown } = context.propsValue;
+    const monitorId = monitor || monitorDropdown;
+
+    if (!monitorId) {
+      throw new Error('Please provide a Monitor ID or select a monitor from the dropdown');
+    }
 
     await uptimeRobotApiCall<UptimeRobotDeleteMonitorResponse>({
       apiKey: context.auth.secret_text,

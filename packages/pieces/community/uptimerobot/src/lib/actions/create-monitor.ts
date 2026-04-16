@@ -18,7 +18,8 @@ export const createMonitorAction = createAction({
 - **HTTP** — checks if your website returns a successful HTTP response. Best for most websites and APIs.
 - **Keyword** — loads the page and checks whether a specific word is present or absent. Useful for detecting error pages that return a 200 status code.
 - **Ping** — sends an ICMP ping to a server or IP address.
-- **Port** — checks if a specific TCP port is open on a host.`,
+- **Port** — checks if a specific TCP port is open on a host.
+- **Heartbeat** — expects periodic pings from your service. Alerts if no ping received within the interval.`,
     }),
     friendly_name: Property.ShortText({
       displayName: 'Monitor Name',
@@ -41,6 +42,7 @@ export const createMonitorAction = createAction({
           { label: 'Keyword (check page content)', value: 2 },
           { label: 'Ping (ICMP ping)', value: 3 },
           { label: 'Port (TCP port check)', value: 4 },
+          { label: 'Heartbeat (expects pings from your service)', value: 5 },
         ],
       },
     }),
