@@ -3,9 +3,17 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
 import { Buffer } from 'buffer';
 import { createTicket } from './lib/actions/create-ticket';
+import { getTicket } from './lib/actions/get-ticket';
+import { updateTicket } from './lib/actions/update-ticket';
 import { addNoteToTicket } from './lib/actions/add-note-to-ticket';
 import { createRequester } from './lib/actions/create-requester';
 import { requestTicketApproval } from './lib/actions/request-ticket-approval';
+import { createSolutionArticle } from './lib/actions/create-solution-article';
+import { getSolutionArticle } from './lib/actions/get-solution-article';
+import { updateSolutionArticle } from './lib/actions/update-solution-article';
+import { deleteSolutionArticle } from './lib/actions/delete-solution-article';
+import { listSolutionArticles } from './lib/actions/list-solution-articles';
+import { listSolutionCategories } from './lib/actions/list-solution-categories';
 import { newTicket } from './lib/triggers/new-ticket';
 import { updatedTicket } from './lib/triggers/updated-ticket';
 import { newRequester } from './lib/triggers/new-requester';
@@ -67,9 +75,17 @@ export const freshservice = createPiece({
   auth: freshserviceAuth,
   actions: [
     createTicket,
+    getTicket,
+    updateTicket,
     addNoteToTicket,
     createRequester,
     requestTicketApproval,
+    createSolutionArticle,
+    getSolutionArticle,
+    updateSolutionArticle,
+    deleteSolutionArticle,
+    listSolutionArticles,
+    listSolutionCategories,
     createCustomApiCallAction({
       baseUrl: (auth) =>
         `https://${auth?.props.domain ?? ''}.freshservice.com/api/v2`,
