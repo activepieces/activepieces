@@ -10,7 +10,7 @@ export const findCompany = createAction({
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',
-      description: 'Enter company name or email to search for',
+      description: 'Enter company name to search for',
       required: true,
     }),
     limit: Property.Number({
