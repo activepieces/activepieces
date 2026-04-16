@@ -135,22 +135,19 @@ export async function ensureSelectOptionsExist({
         ? [rawValue]
         : [];
 
-    for (const value of values) {
-      const alreadyExists = field.select_options.some((o) => o.value === value);
-      if (alreadyExists) continue;
+    const missingValues = values.filter(
+      (value) => !field.select_options.some((o) => o.value === value)
+    );
 
-      const { error } = await tryCatch(() =>
-        client.updateFieldSelectOptions({
-          fieldId: field.id,
-          newOption: value,
-          existingOptions: field.select_options,
-        })
-      );
+    if (missingValues.length === 0) continue;
 
-      if (!error) {
-        field.select_options.push({ id: -1, value, color: 'light-blue' });
-      }
-    }
+    await tryCatch(() =>
+      client.updateFieldSelectOptions({
+        fieldId: field.id,
+        newOptions: missingValues,
+        existingOptions: field.select_options,
+      })
+    );
   }
 }
 

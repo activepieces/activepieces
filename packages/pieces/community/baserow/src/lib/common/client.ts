@@ -209,20 +209,13 @@ export class BaserowClient {
       headers: { Authorization: this.authHeader },
     });
   }
-  async getFieldSelectOptions(fieldId: number): Promise<BaserowSelectOption[]> {
-    const field = await this.makeRequest<{ select_options: BaserowSelectOption[] }>(
-      HttpMethod.GET,
-      `/database/fields/${fieldId}/`
-    );
-    return field.select_options ?? [];
-  }
   async updateFieldSelectOptions({
     fieldId,
-    newOption,
+    newOptions,
     existingOptions,
   }: {
     fieldId: number;
-    newOption: string;
+    newOptions: string[];
     existingOptions: BaserowSelectOption[];
   }): Promise<void> {
     await this.makeRequest(
@@ -232,7 +225,7 @@ export class BaserowClient {
       {
         select_options: [
           ...existingOptions.map((o) => ({ id: o.id, value: o.value, color: o.color })),
-          { value: newOption, color: 'light-blue' },
+          ...newOptions.map((value) => ({ value, color: 'light-blue' })),
         ],
       }
     );
