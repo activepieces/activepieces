@@ -5,7 +5,11 @@ import {
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mailgunAuth } from '../..';
-import { mailgunCommon, mailgunApiCall } from '../common';
+import {
+  mailgunCommon,
+  mailgunApiCall,
+  mailgunApiCallAbsoluteUrl,
+} from '../common';
 
 export const bulkBounceThresholdExceeded = createTrigger({
   auth: mailgunAuth,
@@ -18,7 +22,7 @@ export const bulkBounceThresholdExceeded = createTrigger({
     threshold: Property.Number({
       displayName: 'Threshold',
       description:
-        'Number of failed events within the window that will trigger the alert.',
+        'Number of failed events within the window that will trigger the alert. Up to ~3000 events per poll are inspected; setting a higher threshold is not recommended.',
       required: true,
       defaultValue: 20,
     }),
@@ -87,6 +91,7 @@ export const bulkBounceThresholdExceeded = createTrigger({
       domain,
       severity,
       beginEpoch,
+      stopAt: threshold,
     });
 
     if (events.length < threshold) {
@@ -96,7 +101,8 @@ export const bulkBounceThresholdExceeded = createTrigger({
     }
 
     const lastAlertMs = await context.store.get<number>(LAST_ALERT_STORE_KEY);
-    if (lastAlertMs && nowMs - lastAlertMs < windowMs) {
+    if (lastAlertMs) {
+      // Already alerted for this incident; stay silent until the count drops back below the threshold.
       return [];
     }
 
@@ -126,6 +132,7 @@ export const bulkBounceThresholdExceeded = createTrigger({
       domain,
       severity,
       beginEpoch,
+      stopAt: threshold,
     });
 
     return [
@@ -145,32 +152,54 @@ async function fetchFailedEventsInWindow({
   domain,
   severity,
   beginEpoch,
+  stopAt,
 }: {
   apiKey: string;
   region: string;
   domain: string;
   severity: string;
   beginEpoch: number;
+  stopAt: number;
 }): Promise<FailedEvent[]> {
   const queryParams: Record<string, string> = {
     event: 'failed',
     begin: String(beginEpoch),
     ascending: 'yes',
-    limit: '300',
+    limit: String(EVENTS_PAGE_SIZE),
   };
   if (severity !== 'all') {
     queryParams.severity = severity;
   }
 
-  const response = await mailgunApiCall<EventsResponse>({
+  const all: FailedEvent[] = [];
+  let response = await mailgunApiCall<EventsResponse>({
     apiKey,
     region,
     method: HttpMethod.GET,
     path: `/v3/${domain}/events`,
     queryParams,
   });
+  all.push(...(response.body.items ?? []));
 
-  return response.body.items ?? [];
+  // Follow Mailgun's `paging.next` to keep counting, but stop as soon as we
+  // have enough to exceed the threshold so a sustained attack doesn't hammer
+  // the API, and cap total pages so we never loop indefinitely.
+  let pagesFetched = 1;
+  while (
+    all.length < stopAt &&
+    pagesFetched < MAX_EVENT_PAGES &&
+    response.body.paging?.next &&
+    (response.body.items?.length ?? 0) > 0
+  ) {
+    response = await mailgunApiCallAbsoluteUrl<EventsResponse>({
+      apiKey,
+      url: response.body.paging.next,
+    });
+    all.push(...(response.body.items ?? []));
+    pagesFetched += 1;
+  }
+
+  return all;
 }
 
 function buildAlertPayload({
@@ -213,6 +242,8 @@ function buildAlertPayload({
 }
 
 const LAST_ALERT_STORE_KEY = 'mailgun_bounce_threshold_last_alert_epoch';
+const EVENTS_PAGE_SIZE = 300;
+const MAX_EVENT_PAGES = 10;
 
 type FailedEvent = {
   timestamp: number;
