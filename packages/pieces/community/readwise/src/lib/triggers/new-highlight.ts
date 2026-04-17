@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { readwiseAuth } from '../../index';
 import {
   makeReadwiseRequest,
@@ -11,39 +11,40 @@ interface PollingState {
   lastCheckedAt: string;
 }
 
+async function fetchPage(token: string, url: string): Promise<ReadwisePaginatedResponse<ReadwiseHighlight>> {
+  const response = await httpClient.sendRequest<ReadwisePaginatedResponse<ReadwiseHighlight>>({
+    method: HttpMethod.GET,
+    url,
+    headers: {
+      Authorization: `Token ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  return response.body;
+}
+
 async function fetchAllSince(token: string, since: string): Promise<ReadwiseHighlight[]> {
   const allHighlights: ReadwiseHighlight[] = [];
-  let nextUrl: string | null = null;
-  let isFirstPage = true;
 
-  do {
-    let response: ReadwisePaginatedResponse<ReadwiseHighlight>;
+  // First page uses the helper (builds URL from base + endpoint)
+  let response = await makeReadwiseRequest<ReadwisePaginatedResponse<ReadwiseHighlight>>({
+    token,
+    method: HttpMethod.GET,
+    endpoint: '/highlights/',
+    params: {
+      page_size: '1000',
+      order: 'updated',
+      updated__gt: since,
+    },
+  });
 
-    if (isFirstPage) {
-      response = await makeReadwiseRequest<ReadwisePaginatedResponse<ReadwiseHighlight>>({
-        token,
-        method: HttpMethod.GET,
-        endpoint: '/highlights/',
-        params: {
-          page_size: '1000',
-          order: 'updated',
-          updated__gt: since,
-        },
-      });
-      isFirstPage = false;
-    } else {
-      const parsed = new URL(nextUrl!);
-      const endpoint = parsed.pathname + parsed.search;
-      response = await makeReadwiseRequest<ReadwisePaginatedResponse<ReadwiseHighlight>>({
-        token,
-        method: HttpMethod.GET,
-        endpoint,
-      });
-    }
+  allHighlights.push(...response.results);
 
+  // Subsequent pages use the full nextUrl from the response directly
+  while (response.next) {
+    response = await fetchPage(token, response.next);
     allHighlights.push(...response.results);
-    nextUrl = response.next;
-  } while (nextUrl);
+  }
 
   return allHighlights;
 }
