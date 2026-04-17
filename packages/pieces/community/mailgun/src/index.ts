@@ -12,6 +12,9 @@ import { addMailingListMember } from './lib/actions/add-mailing-list-member';
 import { getEvents } from './lib/actions/get-events';
 import { getDomainStats } from './lib/actions/get-domain-stats';
 import { listBounces } from './lib/actions/list-bounces';
+import { deleteBouncesBulk } from './lib/actions/delete-bounces-bulk';
+import { getDomainHealth } from './lib/actions/get-domain-health';
+import { bulkBounceThresholdExceeded } from './lib/triggers/bulk-bounce-threshold-exceeded';
 import { newBounceEvent } from './lib/triggers/new-bounce-event';
 import { newComplaintEvent } from './lib/triggers/new-complaint-event';
 import { newDeliveryEvent } from './lib/triggers/new-delivery-event';
@@ -90,6 +93,8 @@ export const mailgun = createPiece({
     getEvents,
     getDomainStats,
     listBounces,
+    deleteBouncesBulk,
+    getDomainHealth,
     createCustomApiCallAction({
       baseUrl: (auth) => {
         return auth?.props.region === 'eu'
@@ -112,5 +117,6 @@ export const mailgun = createPiece({
     newOpenEvent,
     newClickEvent,
     newUnsubscribeEvent,
+    bulkBounceThresholdExceeded,
   ],
 });
