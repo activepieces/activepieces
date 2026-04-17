@@ -90,12 +90,6 @@ export default defineConfig(({ command, mode }) => {
           __dirname,
           '../../packages/pieces/framework/src',
         ),
-        // request-filtering-agent extends Node.js http.Agent and cannot run in the browser.
-        // SSRF protection is server-side only, so we stub it out for the browser bundle.
-        'request-filtering-agent': path.resolve(
-          __dirname,
-          './src/stubs/request-filtering-agent.ts',
-        ),
       },
     },
     plugins: [

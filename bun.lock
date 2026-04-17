@@ -8080,13 +8080,12 @@
     },
     "packages/server/utils": {
       "name": "@activepieces/server-utils",
-      "version": "0.2.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/shared": "workspace:*",
         "async-mutex": "0.4.0",
         "check-disk-space": "3.4.0",
         "dayjs": "1.11.9",
-        "ipaddr.js": "2.3.0",
         "systeminformation": "5.25.11",
       },
       "devDependencies": {
@@ -8129,10 +8128,11 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.60.0",
+      "version": "0.61.0",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
+        "ipaddr.js": "2.3.0",
         "nanoid": "3.3.8",
         "semver": "7.6.0",
         "socket.io-client": "4.8.1",
@@ -8157,7 +8157,6 @@
       "name": "web",
       "version": "0.0.1",
       "dependencies": {
-        "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "@codemirror/commands": "6.10.3",
