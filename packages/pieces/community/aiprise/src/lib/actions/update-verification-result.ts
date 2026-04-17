@@ -35,7 +35,7 @@ export const updateVerificationResultAction = createAction({
     const response = await aiprise.makeRequest<Record<string, unknown>>({
       apiKey: context.auth.secret_text,
       method: HttpMethod.POST,
-      path: '/update_user_verification_result',
+      path: '/verify/update_user_verification_result',
       body: { session_id, result },
     });
     return response;

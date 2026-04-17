@@ -22,7 +22,7 @@ export const getVerificationResultAction = createAction({
     const result = await aiprise.makeRequest<Record<string, unknown>>({
       apiKey: context.auth.secret_text,
       method: HttpMethod.GET,
-      path: `/get_user_verification_result/${session_id}`,
+      path: `/verify/get_user_verification_result/${session_id}`,
     });
     return result;
   },

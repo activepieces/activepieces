@@ -28,7 +28,7 @@ export const runBusinessVerificationAction = createAction({
     const result = await aiprise.makeRequest<Record<string, unknown>>({
       apiKey: context.auth.secret_text,
       method: HttpMethod.POST,
-      path: '/run_business_verification',
+      path: '/verify/run_business_verification',
       body: { template_id, business_id },
     });
     return result;

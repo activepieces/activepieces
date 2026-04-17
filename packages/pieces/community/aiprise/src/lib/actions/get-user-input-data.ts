@@ -22,7 +22,7 @@ export const getUserInputDataAction = createAction({
     const result = await aiprise.makeRequest<Record<string, unknown>>({
       apiKey: context.auth.secret_text,
       method: HttpMethod.GET,
-      path: `/get_user_input_data_from_request/${session_id}`,
+      path: `/verify/get_user_input_data_from_request/${session_id}`,
     });
     return result;
   },
