@@ -32,7 +32,7 @@ export type PieceMetadataRefreshMessage =
     | { type: PieceMetadataRefreshType.BULK_SYNC }
 
 const CACHE_KEY = {
-    list: (locale: LocalesEnum): string => `list:${locale}`,
+    list: (locale: LocalesEnum, release: string): string => `list:${locale}:${release}`,
     piece: (name: string, version: string, platformId: string | undefined): string => `piece:${name}:${version}:${platformId ?? 'OFFICIAL'}`,
     registry: (): string => 'registry',
 }
@@ -54,10 +54,11 @@ export const pieceCache = (log: FastifyBaseLogger) => {
 
         async getList(params: GetListParams): Promise<PieceMetadataSchema[]> {
             const { platformId, locale = LocalesEnum.ENGLISH } = params
-            const cacheKey = CACHE_KEY.list(locale)
+            const currentRelease = await apVersionUtil.getCurrentRelease()
+            const cacheKey = CACHE_KEY.list(locale, currentRelease)
 
             const cachedPieces = await getCachedOrFetch(cacheKey, async () => {
-                const latestPieces = await fetchLatestPiecesFromDB()
+                const latestPieces = await fetchLatestCompatiblePiecesFromDB(currentRelease)
                 return translatePieces(latestPieces, locale)
             })
 
@@ -66,7 +67,6 @@ export const pieceCache = (log: FastifyBaseLogger) => {
                 pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: true }),
             )
 
-            const currentRelease = await apVersionUtil.getCurrentRelease()
             const devPieceNames = new Set(translatedDevPieces.map((p) => p.name))
             const filteredPieces = [...cachedPieces.filter((p) => !devPieceNames.has(p.name)), ...translatedDevPieces]
                 .filter((piece) => filterPieceBasedOnType(platformId, piece))
@@ -137,13 +137,14 @@ function translatePieces(pieces: PieceMetadataSchema[], locale: LocalesEnum): Pi
     })
 }
 
-async function fetchLatestPiecesFromDB(): Promise<PieceMetadataSchema[]> {
+async function fetchLatestCompatiblePiecesFromDB(currentRelease: string): Promise<PieceMetadataSchema[]> {
     const allKeys = await repo()
         .createQueryBuilder('pm')
-        .select(['pm."id"', 'pm."name"', 'pm."version"', 'pm."platformId"'])
+        .select(['pm."id"', 'pm."name"', 'pm."version"', 'pm."platformId"', 'pm."minimumSupportedRelease"', 'pm."maximumSupportedRelease"'])
         .getRawMany<PieceKey>()
 
-    const latestIds = pickLatestVersionIds(allKeys)
+    const compatibleKeys = allKeys.filter((piece) => isSupportedRelease(currentRelease, piece))
+    const latestIds = pickLatestVersionIds(compatibleKeys)
     return latestIds.length > 0 ? repo().find({ where: { id: In(latestIds) } }) : []
 }
 
@@ -206,13 +207,13 @@ function handleRefreshMessage(message: PieceMetadataRefreshMessage): void {
     switch (message.type) {
         case PieceMetadataRefreshType.CREATE:
             cache.set(CACHE_KEY.piece(message.piece.name, message.piece.version, message.piece.platformId), message.piece)
-            invalidateAggregateCaches()
+            void invalidateAggregateCaches()
             break
         case PieceMetadataRefreshType.DELETE:
             for (const piece of message.pieces) {
                 cache.delete(CACHE_KEY.piece(piece.name, piece.version, undefined))
             }
-            invalidateAggregateCaches()
+            void invalidateAggregateCaches()
             break
         case PieceMetadataRefreshType.UPDATE_USAGE: {
             const { piece } = message
@@ -224,15 +225,16 @@ function handleRefreshMessage(message: PieceMetadataRefreshMessage): void {
             break
         }
         case PieceMetadataRefreshType.BULK_SYNC:
-            invalidateAggregateCaches()
+            void invalidateAggregateCaches()
             break
     }
 }
 
-function invalidateAggregateCaches(): void {
+async function invalidateAggregateCaches(): Promise<void> {
     invalidateKey(CACHE_KEY.registry())
+    const currentRelease = await apVersionUtil.getCurrentRelease()
     for (const locale of Object.values(LocalesEnum)) {
-        invalidateKey(CACHE_KEY.list(locale as LocalesEnum))
+        invalidateKey(CACHE_KEY.list(locale as LocalesEnum, currentRelease))
     }
 }
 
@@ -274,4 +276,6 @@ type PieceKey = {
     name: string
     version: string
     platformId: string | null
+    minimumSupportedRelease?: string
+    maximumSupportedRelease?: string
 }
