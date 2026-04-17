@@ -22,23 +22,16 @@ export const runUserVerificationAction = createAction({
         'Your own identifier for this person — for example their user ID, email address, or order number. AiPrise stores this alongside the verification so you can match results back to your records.',
       required: true,
     }),
-    callback_url: Property.ShortText({
-      displayName: 'Notify Me When Done (URL)',
-      description:
-        'A URL that AiPrise will call (POST) once the verification reaches a final decision — either approved or declined. Leave blank if you plan to check the result manually. To receive results automatically in a flow, use the webhook URL from the **Identity Verification Completed** trigger.',
-      required: false,
-    }),
   },
   async run(context) {
-    const { template_id, user_id, callback_url } = context.propsValue;
+    const { template_id, user_id } = context.propsValue;
     const result = await aiprise.makeRequest<Record<string, unknown>>({
       apiKey: context.auth.secret_text,
       method: HttpMethod.POST,
-      path: '/run_user_verification',
+      path: '/verify/run_user_verification',
       body: {
         template_id,
         user_id,
-        ...(callback_url ? { callback_url } : {}),
       },
     });
     return result;

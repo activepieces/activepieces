@@ -10,9 +10,7 @@ import { updateVerificationResultAction } from './lib/actions/update-verificatio
 import { runBusinessVerificationAction } from './lib/actions/run-business-verification';
 import { getBusinessResultAction } from './lib/actions/get-business-result';
 import { getBusinessInputDataAction } from './lib/actions/get-business-input-data';
-import { runPhoneCheckAction } from './lib/actions/run-phone-check';
-import { runEmailCheckAction } from './lib/actions/run-email-check';
-import { runUserAmlCheckAction } from './lib/actions/run-user-aml-check';
+import { runDocumentCheckAction } from './lib/actions/run-document-check';
 
 export const aipriseAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -34,22 +32,15 @@ export const aiprise = createPiece({
   auth: aipriseAuth,
   authors: ['sanket-a11y'],
   actions: [
-    // KYC — User Verification
     runUserVerificationAction,
     getVerificationUrlAction,
     getVerificationResultAction,
     getUserInputDataAction,
     updateVerificationResultAction,
-    // KYB — Business Verification
     runBusinessVerificationAction,
     getBusinessResultAction,
     getBusinessInputDataAction,
-    // Fraud Checks
-    runPhoneCheckAction,
-    runEmailCheckAction,
-    runUserAmlCheckAction,
-    
-    // Custom API call for power users
+    runDocumentCheckAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.aiprise.com/api/v1',
       auth: aipriseAuth,
@@ -58,7 +49,5 @@ export const aiprise = createPiece({
       }),
     }),
   ],
-  triggers: [
-
-  ],
+  triggers: [],
 });
