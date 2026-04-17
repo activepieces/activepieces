@@ -143,7 +143,6 @@ export async function searchIssuesByJql({
 }): Promise<JiraSearchResponse> {
 	const bodyPayload: Record<string, any> = { maxResults };
 	if (nextPageToken) bodyPayload['nextPageToken'] = nextPageToken;
-	if (expand && expand.length > 0) bodyPayload['expand'] = expand;
 
 	const searchResult = (await executeJql({
 		auth,
@@ -166,15 +165,16 @@ export async function searchIssuesByJql({
 		body: {
 			issueIdsOrKeys: issueIds,
 			fields,
+			expand
 		},
 	});
 
-	const body = bulkFetchResponse.body as { issues: any[] };
+	const body = bulkFetchResponse.body as { issues: any[]; names?: Record<string, string> };
 
 	return {
         issues: body.issues,
         nextPageToken: searchResult.nextPageToken,
-        names: searchResult.names,
+        names: body.names,
     };
 }
 
