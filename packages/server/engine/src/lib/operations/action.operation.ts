@@ -118,14 +118,14 @@ export const actionOperation = {
                     output,
                 },
             }
-        } catch (e: any) {
+        } catch (e) {
             return {
                 status: EngineResponseStatus.OK,
                 response: {
                     success: false,
                     input: processedInput,
                     output: null,
-                    message: e.message,
+                    message: (e as Error).message,
                 },
             }
         }
