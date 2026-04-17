@@ -275,7 +275,9 @@ const ExecuteActionEndpointRequest = {
         body: ExecuteActionRequest,
     },
     config: {
-        security: securityAccess.project([PrincipalType.USER]),
+        security: securityAccess.project([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.BODY,
+        }),
     },
 }
 
