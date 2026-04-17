@@ -2,14 +2,14 @@ import { promisify } from 'node:util'
 import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { CONTENT_ENCODING_ZSTD, DEFAULT_MCP_DATA, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { CONTENT_ENCODING_ZSTD, DEFAULT_MCP_DATA, EngineGenericError, FlowActionType, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import fetchRetry from 'fetch-retry'
-import { EngineConstants } from '../handler/context/engine-constants'
-import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { utils } from '../utils'
 import { workerSocket } from '../worker-socket'
+import { EngineConstants } from './context/engine-constants'
+import { FlowExecutorContext } from './context/flow-execution-context'
 
 
 const zstdCompress = promisify(zstdCompressCallback)
@@ -27,14 +27,13 @@ async function backupLoop(signal: AbortSignal): Promise<void> {
     while (!signal.aborted) {
         try {
             if (latestUpdateParams) {
-                await progressService.backup(latestUpdateParams)
+                await runProgressService.backup(latestUpdateParams)
             }
         }
         catch (err) {
             console.error('[Progress] Backup failed', err)
         }
 
-        // Sleep for interval or until aborted
         try {
             await setTimeout(BACKUP_INTERVAL_MS, undefined, { signal })
         }
@@ -44,7 +43,7 @@ async function backupLoop(signal: AbortSignal): Promise<void> {
     }
 }
 
-export const progressService = {
+export const runProgressService = {
     init: (): void => {
         if (backupController) {
             return
@@ -95,7 +94,7 @@ export const progressService = {
             update: async (params: { data: unknown }) => {
                 const steps = flowExecutorContext
                     .upsertStep(stepName, stepOutput.setOutput(params.data)).steps
-                    
+
                 const stepResponse = extractStepResponse({
                     steps,
                     runId: engineConstants.flowRunId,
@@ -129,29 +128,26 @@ export const progressService = {
             if (isNil(logsUploadUrl)) {
                 throw new EngineGenericError('LogsUploadUrlNotSetError', 'Logs upload URL is not set')
             }
-            const uploadLogResponse = await uploadExecutionState(logsUploadUrl!, executionState)
+            const uploadLogResponse = await uploadExecutionState(logsUploadUrl, executionState)
             if (!uploadLogResponse.ok) {
                 throw new EngineGenericError('ProgressUpdateError', 'Failed to upload execution state', uploadLogResponse)
             }
-    
+
             const stepResponse = extractStepResponse({
                 steps: flowExecutorContext.steps,
                 runId: engineConstants.flowRunId,
                 stepName: engineConstants.stepNameToTest,
             })
-    
+
             const request: UploadRunLogsRequest = {
                 runId: engineConstants.flowRunId,
                 projectId: engineConstants.projectId,
-                workerHandlerId: engineConstants.serverHandlerId ?? null,
-                httpRequestId: engineConstants.httpRequestId ?? null,
                 status: flowExecutorContext.verdict.status,
-                progressUpdateType: engineConstants.progressUpdateType,
+                streamStepProgress: engineConstants.streamStepProgress,
                 logsFileId: engineConstants.logsFileId,
                 failedStep: 'failedStep' in flowExecutorContext.verdict ? flowExecutorContext.verdict.failedStep : undefined,
                 stepNameToTest: engineConstants.stepNameToTest,
                 stepResponse,
-                pauseMetadata: flowExecutorContext.verdict.status === FlowRunStatus.PAUSED ? flowExecutorContext.verdict.pauseMetadata : undefined,
                 startTime: savedStartTime ?? undefined,
                 finishTime: isFlowRunStateTerminal({
                     status: flowExecutorContext.verdict.status,
@@ -181,15 +177,8 @@ export const progressService = {
     },
 }
 
-process.on('SIGTERM', () => void progressService.shutdown())
-process.on('SIGINT', () => void progressService.shutdown())
-
-type CreateOutputContextParams = {
-    engineConstants: EngineConstants
-    flowExecutorContext: FlowExecutorContext
-    stepName: string
-    stepOutput: GenericStepOutput<FlowActionType.PIECE, unknown>
-}
+process.on('SIGTERM', () => void runProgressService.shutdown())
+process.on('SIGINT', () => void runProgressService.shutdown())
 
 const sendUpdateProgress = async (request: UpdateRunProgressRequest): Promise<void> => {
     const result = await utils.tryCatchAndThrowOnEngineError(() =>
@@ -247,7 +236,6 @@ const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | und
     }
 }
 
-
 type UpdateStepProgressParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
@@ -259,6 +247,13 @@ type BackUpLogsParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
     stepNameToUpdate?: string
+}
+
+type CreateOutputContextParams = {
+    engineConstants: EngineConstants
+    flowExecutorContext: FlowExecutorContext
+    stepName: string
+    stepOutput: GenericStepOutput<FlowActionType.PIECE, unknown>
 }
 
 type ExtractStepResponse = {
