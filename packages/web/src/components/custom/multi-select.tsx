@@ -255,7 +255,13 @@ const MultiSelectTrigger = React.forwardRef<
             {props.showRefresh && (
               <SelectUtilButton
                 tooltipText={t('Refresh')}
-                onClick={props.onRefresh}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  if (props.onRefresh) {
+                    props.onRefresh();
+                  }
+                }}
                 Icon={RefreshCcw}
               ></SelectUtilButton>
             )}
