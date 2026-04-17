@@ -138,7 +138,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             const { pieceVersion, input, stepNameToTest } = req.body
             const decodedName = decodeURIComponent(name)
 
-            const { response } = await userInteractionWatcher.submitAndWaitForResponse<ExecuteActionResponse>({
+            const { response } = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteActionResponse>>({
                 jobType: WorkerJobType.EXECUTE_ACTION,
                 platformId: platform.id,
                 projectId,
