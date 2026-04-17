@@ -63,14 +63,6 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 assertMountInsideRoot(mount)
             }
 
-            await execPromise(`${isolateBinaryPath} --box-id=${boxId} --cleanup`)
-            await execPromise(`${isolateBinaryPath} --box-id=${boxId} --init`)
-
-            const sandboxRootfs = `/var/local/lib/isolate/${boxId}/root`
-            for (const mount of mounts) {
-                await mkdir(`${sandboxRootfs}${mount.sandboxPath}`, { recursive: true })
-            }
-
             const engineSandboxPath = path.join('/root/common', path.basename(enginePath))
             const sandboxEnv = {
                 ...env,
@@ -78,6 +70,14 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 SANDBOX_ID: sandboxId,
             }
             assertSandboxEnv(sandboxEnv)
+
+            await execPromise(`${isolateBinaryPath} --box-id=${boxId} --cleanup`)
+            await execPromise(`${isolateBinaryPath} --box-id=${boxId} --init`)
+
+            const sandboxRootfs = `/var/local/lib/isolate/${boxId}/root`
+            for (const mount of mounts) {
+                await mkdir(`${sandboxRootfs}${mount.sandboxPath}`, { recursive: true })
+            }
 
             const envArgs = Object.entries(sandboxEnv)
                 .map(([key, value]) => `--env=${key}=${value}`)

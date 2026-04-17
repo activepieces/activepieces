@@ -206,28 +206,33 @@ describe('createSandbox', () => {
         })
 
         it.each([
-            ['..', 'flowVersionId'],
-            ['../etc', 'flowVersionId'],
-            ['a/b', 'flowVersionId'],
-            ['fv\\1', 'flowVersionId'],
-            ['fv\0null', 'flowVersionId'],
+            ['.'],
+            ['..'],
+            ['../etc'],
+            ['a/b'],
+            ['fv\\1'],
+            ['fv\0null'],
+            [''],
         ])('rejects path traversal in flowVersionId: %s', async (flowVersionId) => {
             const log = createMockLogger()
             const workerHandlers = createMockWorkerHandlers()
             testPM = createTestProcessMaker()
             sandbox = createSandbox(log, 'sb-fv-trav', defaultOptions, testPM.maker, workerHandlers)
 
-            await expect(sandbox.start({ flowVersionId, platformId: '', mounts: [] })).rejects.toThrow()
+            let caughtErr: unknown
             try {
                 await sandbox.start({ flowVersionId, platformId: '', mounts: [] })
             }
             catch (err) {
-                expect((err as ActivepiecesError).error.code).toBe(ErrorCode.VALIDATION)
+                caughtErr = err
             }
+            expect(caughtErr).toBeDefined()
+            expect((caughtErr as ActivepiecesError).error.code).toBe(ErrorCode.VALIDATION)
             expect(testPM.maker.create).not.toHaveBeenCalled()
         })
 
         it.each([
+            ['.'],
             ['..'],
             ['../other'],
             ['plat/sub'],
@@ -239,13 +244,15 @@ describe('createSandbox', () => {
             testPM = createTestProcessMaker()
             sandbox = createSandbox(log, 'sb-plat-trav', defaultOptions, testPM.maker, workerHandlers)
 
-            await expect(sandbox.start({ flowVersionId: 'fv-1', platformId, mounts: [] })).rejects.toThrow()
+            let caughtErr: unknown
             try {
                 await sandbox.start({ flowVersionId: 'fv-1', platformId, mounts: [] })
             }
             catch (err) {
-                expect((err as ActivepiecesError).error.code).toBe(ErrorCode.VALIDATION)
+                caughtErr = err
             }
+            expect(caughtErr).toBeDefined()
+            expect((caughtErr as ActivepiecesError).error.code).toBe(ErrorCode.VALIDATION)
             expect(testPM.maker.create).not.toHaveBeenCalled()
         })
 

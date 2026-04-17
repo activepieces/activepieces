@@ -8,7 +8,14 @@ import { getGlobalCachePathLatestVersion, getGlobalCodeCachePath } from '../cach
 import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
 
 function assertSafePathSegment(value: string, field: string): void {
-    if (value.length === 0 || value.includes('..') || value.includes('/') || value.includes('\\') || value.includes('\0')) {
+    const isUnsafe = value.length === 0
+        || value === '.'
+        || value === '..'
+        || value.includes('..')
+        || value.includes('/')
+        || value.includes('\\')
+        || value.includes('\0')
+    if (isUnsafe) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: { message: `Invalid ${field}: "${value}" — path segment contains disallowed characters` },

@@ -247,6 +247,8 @@ describe('isolateProcess', () => {
             const env = { ...BASE_ENV } as Record<string, string>
             delete env[missingKey]
             await expect(callCreate({ env })).rejects.toThrow(/Required sandbox env/)
+            expect(execPromiseMock).not.toHaveBeenCalled()
+            expect(mkdirMock).not.toHaveBeenCalled()
             expect(spawnMock).not.toHaveBeenCalled()
         })
 
@@ -257,6 +259,7 @@ describe('isolateProcess', () => {
         ])('throws when required env "%s" is empty string', async (key) => {
             const env = { ...BASE_ENV, [key]: '' }
             await expect(callCreate({ env })).rejects.toThrow(/Required sandbox env/)
+            expect(execPromiseMock).not.toHaveBeenCalled()
             expect(spawnMock).not.toHaveBeenCalled()
         })
 
@@ -269,6 +272,7 @@ describe('isolateProcess', () => {
         ])('rejects malformed env key (%s)', async (_label, badKey) => {
             const env = { ...BASE_ENV, [badKey]: 'v' }
             await expect(callCreate({ env })).rejects.toThrow(/Invalid sandbox env key/)
+            expect(execPromiseMock).not.toHaveBeenCalled()
             expect(spawnMock).not.toHaveBeenCalled()
         })
 
@@ -279,6 +283,7 @@ describe('isolateProcess', () => {
         ])('rejects env values containing %s', async (_label, badValue) => {
             const env = { ...BASE_ENV, MY_VAR: badValue }
             await expect(callCreate({ env })).rejects.toThrow(/must not contain newlines or NUL bytes/)
+            expect(execPromiseMock).not.toHaveBeenCalled()
             expect(spawnMock).not.toHaveBeenCalled()
         })
     })
