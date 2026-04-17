@@ -125,7 +125,7 @@ export const actionOperation = {
                     success: false,
                     input: processedInput,
                     output: null,
-                    message: (e as Error).message,
+                    message: e instanceof Error ? e.message : String(e),
                 },
             }
         }
