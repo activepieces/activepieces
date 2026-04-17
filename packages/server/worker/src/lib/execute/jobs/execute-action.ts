@@ -40,6 +40,7 @@ export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobRe
                     internalApiUrl: ctx.internalApiUrl,
                     publicApiUrl: ctx.publicApiUrl,
                     timeoutInSeconds,
+                    stepNameToTest: data.stepNameToTest,
                 },
                 { timeoutInSeconds },
             )
