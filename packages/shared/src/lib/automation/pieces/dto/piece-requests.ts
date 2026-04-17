@@ -127,6 +127,7 @@ export const ListPieceVersionsResponse = z.object({ version: z.string() })
 export type ListPieceVersionsResponse = SeekPage<z.infer<typeof ListPieceVersionsResponse>>
 
 export const ExecuteActionRequest = z.object({
+    projectId: z.string(),
     pieceVersion: VersionType.optional(),
     input: z.record(z.string(), z.unknown()),
     stepNameToTest: z.string().optional(),
