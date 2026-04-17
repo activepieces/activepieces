@@ -1,7 +1,9 @@
 import { environmentMigrations } from '@activepieces/server-utils'
 import { from } from 'env-var'
 
-const env = from(environmentMigrations.migrate())
+function env() {
+    return from(environmentMigrations.migrate())
+}
 
 function getApiUrl(): string {
     const containerType = system.get(WorkerSystemProp.CONTAINER_TYPE) ?? 'WORKER_AND_APP'
@@ -48,16 +50,16 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
 
 export const system = {
     get(prop: WorkerSystemProp): string | undefined {
-        return env.get(prop).asString() ?? defaultValues[prop]
+        return env().get(prop).asString() ?? defaultValues[prop]
     },
     getOrThrow(prop: WorkerSystemProp): string {
-        return env.get(prop).required().asString()
+        return env().get(prop).required().asString()
     },
     getBoolean(prop: WorkerSystemProp): boolean | undefined {
-        return env.get(prop).asBoolStrict()
+        return env().get(prop).asBoolStrict()
     },
     getList(prop: WorkerSystemProp): string[] {
-        const value = env.get(prop).asString() ?? defaultValues[prop]
+        const value = env().get(prop).asString() ?? defaultValues[prop]
         return value ? value.split(',').map(s => s.trim()).filter(Boolean) : []
     },
 }
