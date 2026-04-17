@@ -2,9 +2,9 @@ import { createEnvelopeEventTrigger } from '../envelope-event-trigger';
 
 export const recipientAuthenticationFailed = createEnvelopeEventTrigger({
   name: 'recipientAuthenticationFailed',
-  displayName: 'Recipient Authentication Failed',
+  displayName: 'Person Failed Identity Check',
   description:
-    'Triggers when a recipient fails the identity authentication check.',
+    'Triggers when a recipient fails the identity verification step before signing.',
   docusignEvent: 'recipient-authenticationfailed',
   sampleData: {
     event: 'recipient-authenticationfailed',

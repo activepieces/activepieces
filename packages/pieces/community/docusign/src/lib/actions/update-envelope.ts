@@ -8,9 +8,9 @@ import { createApiClient } from '../common';
 export const updateEnvelope = createAction({
   auth: docusignAuth,
   name: 'updateEnvelope',
-  displayName: 'Update Envelope',
+  displayName: 'Update Signing Request',
   description:
-    'Send a draft envelope, void an in-progress envelope, resend signing emails, or update the email subject and message on a draft.',
+    'Send a draft, cancel, resend reminders, or edit the subject line on a signing request.',
   props: {
     accountId: Property.ShortText({
       displayName: 'Account ID',

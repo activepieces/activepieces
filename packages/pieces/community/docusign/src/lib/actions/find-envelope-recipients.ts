@@ -5,9 +5,9 @@ import { EnvelopesApi } from 'docusign-esign';
 
 export const findEnvelopeRecipients = createAction({
   name: 'findEnvelopeRecipients',
-  displayName: 'Get Envelope Recipients',
+  displayName: 'Get People on a Signing Request',
   description:
-    'Retrieve all recipients (signers, carbon copies, etc.) for an envelope.',
+    'Get the full list of people on a signing request — signers, viewers, and anyone copied.',
   auth: docusignAuth,
   props: {
     accountId: Property.ShortText({

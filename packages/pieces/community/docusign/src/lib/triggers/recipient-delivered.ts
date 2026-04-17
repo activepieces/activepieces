@@ -2,8 +2,8 @@ import { createEnvelopeEventTrigger } from '../envelope-event-trigger';
 
 export const recipientDelivered = createEnvelopeEventTrigger({
   name: 'recipientDelivered',
-  displayName: 'Recipient Delivered',
-  description: 'Triggers when an individual recipient has viewed the envelope.',
+  displayName: 'Person Opened Signing Request',
+  description: 'Triggers when a specific person opens and views the signing request.',
   docusignEvent: 'recipient-delivered',
   sampleData: {
     event: 'recipient-delivered',

@@ -2,9 +2,9 @@ import { createEnvelopeEventTrigger } from '../envelope-event-trigger';
 
 export const envelopeCompleted = createEnvelopeEventTrigger({
   name: 'envelopeCompleted',
-  displayName: 'Envelope Completed',
+  displayName: 'Document Fully Signed',
   description:
-    'Triggers when all recipients have signed and the envelope reaches the completed state.',
+    'Triggers when everyone has completed their signature and the document is fully signed.',
   docusignEvent: 'envelope-completed',
   sampleData: {
     event: 'envelope-completed',

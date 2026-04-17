@@ -2,8 +2,9 @@ import { createEnvelopeEventTrigger } from '../envelope-event-trigger';
 
 export const envelopeSent = createEnvelopeEventTrigger({
   name: 'envelopeSent',
-  displayName: 'Envelope Sent',
-  description: 'Triggers when an envelope is sent to recipients.',
+  displayName: 'Signing Request Sent',
+  description:
+    'Triggers when a signing request is emailed out to recipients for the first time.',
   docusignEvent: 'envelope-sent',
   sampleData: {
     event: 'envelope-sent',

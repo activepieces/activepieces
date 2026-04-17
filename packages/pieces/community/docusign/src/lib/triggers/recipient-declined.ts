@@ -2,9 +2,9 @@ import { createEnvelopeEventTrigger } from '../envelope-event-trigger';
 
 export const recipientDeclined = createEnvelopeEventTrigger({
   name: 'recipientDeclined',
-  displayName: 'Recipient Declined',
+  displayName: 'Person Refused to Sign',
   description:
-    'Triggers when an individual recipient declines to sign the envelope.',
+    'Triggers when a specific person refuses to sign the document.',
   docusignEvent: 'recipient-declined',
   sampleData: {
     event: 'recipient-declined',

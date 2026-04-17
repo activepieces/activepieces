@@ -2,9 +2,9 @@ import { createEnvelopeEventTrigger } from '../envelope-event-trigger';
 
 export const envelopeVoided = createEnvelopeEventTrigger({
   name: 'envelopeVoided',
-  displayName: 'Envelope Voided',
+  displayName: 'Signing Request Cancelled',
   description:
-    'Triggers when a sender voids an in-progress envelope, cancelling all pending signatures.',
+    'Triggers when the sender cancels an in-progress signing request before everyone has signed.',
   docusignEvent: 'envelope-voided',
   sampleData: {
     event: 'envelope-voided',

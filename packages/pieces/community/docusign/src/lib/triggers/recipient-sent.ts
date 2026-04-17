@@ -2,9 +2,9 @@ import { createEnvelopeEventTrigger } from '../envelope-event-trigger';
 
 export const recipientSent = createEnvelopeEventTrigger({
   name: 'recipientSent',
-  displayName: 'Recipient Sent',
+  displayName: 'Signing Email Sent to Person',
   description:
-    'Triggers when a signing request is sent to an individual recipient.',
+    'Triggers when DocuSign sends the signing email to a specific person.',
   docusignEvent: 'recipient-sent',
   sampleData: {
     event: 'recipient-sent',

@@ -10,7 +10,7 @@ import {
 export const listTemplates = createAction({
   name: 'listTemplates',
   displayName: 'Find Templates by Name',
-  description: 'Search for templates by name and return all matches.',
+  description: 'Search for reusable signing templates by name.',
   auth: docusignAuth,
   props: {
     accountId: Property.ShortText({

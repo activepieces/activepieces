@@ -2,8 +2,9 @@ import { createEnvelopeEventTrigger } from '../envelope-event-trigger';
 
 export const envelopeCreated = createEnvelopeEventTrigger({
   name: 'envelopeCreated',
-  displayName: 'Envelope Created',
-  description: 'Triggers when a new envelope is created.',
+  displayName: 'Signing Request Created',
+  description:
+    'Triggers when a new signing request (envelope) is created in DocuSign — whether sent immediately or saved as a draft.',
   docusignEvent: 'envelope-created',
   sampleData: {
     event: 'envelope-created',
