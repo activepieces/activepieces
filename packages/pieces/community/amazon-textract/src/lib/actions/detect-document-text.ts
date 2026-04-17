@@ -13,7 +13,7 @@ export const detectDocumentText = createAction({
   name: 'detect-document-text',
   displayName: 'Detect Document Text',
   description:
-    'Extract plain text from a document. Faster and cheaper than Analyze Document — use this when you only need the text content without forms or tables. Supports JPEG, PNG, PDF (single page), and TIFF.',
+    'Extract plain text from a document. Faster and cheaper than Analyze Document — use this when you only need the text content without forms or tables. Supports JPEG and PNG via direct upload; PDF and TIFF via S3 only.',
   props: {
     source: Property.StaticDropdown({
       displayName: 'Document Source',
@@ -51,7 +51,7 @@ export const detectDocumentText = createAction({
         return {
           file: Property.File({
             displayName: 'File',
-            description: 'The document to read. Supported formats: JPEG, PNG, PDF (single page), TIFF. Maximum 10 MB.',
+            description: 'The document to read. Only JPEG and PNG are supported for direct upload (max 5 MB). For PDF or TIFF files, use the "From S3 bucket" option instead.',
             required: true,
           }),
         };

@@ -21,7 +21,7 @@ import {
     FlowVersionState,
     PackageType,
     PieceType,
-    ProgressUpdateType,
+    StreamStepProgress,
     RunEnvironment,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
@@ -271,6 +271,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
         flowId: childFlow.id,
         state: FlowVersionState.LOCKED,
         trigger: {
+            lastUpdatedDate: new Date().toISOString(),
             type: FlowTriggerType.PIECE,
             name: 'trigger',
             displayName: 'Callable Flow',
@@ -368,6 +369,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
             name: 'trigger',
             displayName: 'Catch Webhook',
             valid: true,
+            lastUpdatedDate: new Date().toISOString(),
             settings: {
                 pieceName: '@activepieces/piece-webhook',
                 pieceVersion: '0.1.29',
@@ -508,11 +510,11 @@ describe('Execute Flow E2E', () => {
             platformId: mockPlatform.id,
             executionType: ExecutionType.BEGIN,
             environment: RunEnvironment.TESTING,
-            progressUpdateType: ProgressUpdateType.NONE,
+            streamStepProgress: StreamStepProgress.NONE,
             executeTrigger: false,
             flowVersionId: mockFlowVersion.id,
             projectId: mockProject.id,
-            synchronousHandlerId: undefined,
+            workerHandlerId: undefined,
             httpRequestId: undefined,
             failParentOnFailure: undefined,
         })
@@ -619,11 +621,11 @@ describe('Execute Flow E2E', () => {
                     platformId: mockPlatform.id,
                     executionType: ExecutionType.BEGIN,
                     environment: RunEnvironment.TESTING,
-                    progressUpdateType: ProgressUpdateType.NONE,
+                    streamStepProgress: StreamStepProgress.NONE,
                     executeTrigger: false,
                     flowVersionId: mockFlowVersion.id,
                     projectId: mockProject.id,
-                    synchronousHandlerId: undefined,
+                    workerHandlerId: undefined,
                     httpRequestId: undefined,
                     failParentOnFailure: undefined,
                 }),
@@ -677,11 +679,11 @@ describe('Execute Flow E2E', () => {
             platformId: mockPlatform.id,
             executionType: ExecutionType.BEGIN,
             environment: RunEnvironment.TESTING,
-            progressUpdateType: ProgressUpdateType.NONE,
+            streamStepProgress: StreamStepProgress.NONE,
             executeTrigger: false,
             flowVersionId: parentFlowVersion.id,
             projectId: mockProject.id,
-            synchronousHandlerId: undefined,
+            workerHandlerId: undefined,
             httpRequestId: undefined,
             failParentOnFailure: undefined,
         })
@@ -787,11 +789,11 @@ describe('Execute Flow E2E', () => {
             platformId: mockPlatform.id,
             executionType: ExecutionType.BEGIN,
             environment: RunEnvironment.TESTING,
-            progressUpdateType: ProgressUpdateType.NONE,
+            streamStepProgress: StreamStepProgress.NONE,
             executeTrigger: false,
             flowVersionId: mockFlowVersion.id,
             projectId: mockProject.id,
-            synchronousHandlerId: undefined,
+            workerHandlerId: undefined,
             httpRequestId: undefined,
             failParentOnFailure: undefined,
         })
@@ -812,11 +814,11 @@ describe('Execute Flow E2E', () => {
             platformId: mockPlatform.id,
             executionType: ExecutionType.BEGIN,
             environment: RunEnvironment.TESTING,
-            progressUpdateType: ProgressUpdateType.TEST_FLOW,
+            streamStepProgress: StreamStepProgress.WEBSOCKET,
             executeTrigger: false,
             flowVersionId: parentFlowVersion.id,
             projectId: mockProject.id,
-            synchronousHandlerId: undefined,
+            workerHandlerId: undefined,
             httpRequestId: undefined,
             failParentOnFailure: undefined,
             stepNameToTest: 'step_1',
@@ -839,7 +841,7 @@ describe('Execute Flow E2E', () => {
     it('executes webhook → call subflow (wait-for-response) → return webhook response', async () => {
         const { parentFlow } = await setupSubflowWithWebhookResponseFixtures()
 
-        // Hit the real /sync route so synchronousHandlerId + httpRequestId are wired up,
+        // Hit the real /sync route so workerHandlerId + httpRequestId are wired up,
         // enabling the webhook Return Response step to send back the HTTP response.
         const response = await app.inject({
             method: 'POST',

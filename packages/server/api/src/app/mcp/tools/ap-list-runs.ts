@@ -3,7 +3,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { formatRunSummary } from './flow-run-utils'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const runStatusValues = Object.values(FlowRunStatus) as [FlowRunStatus, ...FlowRunStatus[]]
 
@@ -17,7 +17,7 @@ export const apListRunsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolD
     return {
         title: 'ap_list_runs',
         permission: Permission.READ_RUN,
-        description: 'List recent flow runs with optional filters. Returns run ID, status, environment, timestamps, and failed step info. Does not include step outputs — use ap_get_run for full details.',
+        description: 'List recent flow runs with optional filters. Returns run ID, status, timestamps, and failed step info.',
         inputSchema: listRunsInput.shape,
         annotations: { readOnlyHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -46,7 +46,7 @@ export const apListRunsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolD
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_list_runs failed')
-                return mcpToolError('Failed to list runs', err)
+                return mcpUtils.mcpToolError('Failed to list runs', err)
             }
         },
     }

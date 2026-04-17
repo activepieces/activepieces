@@ -5,7 +5,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PauseType, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
+import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
 import { CallableFlowRequest, CallableFlowResponse, findFlowByExternalIdOrThrow, listEnabledFlowsWithSubflowTrigger } from '../common';
 
 type FlowValue = {
@@ -115,6 +115,17 @@ export const callFlow = createAction({
       externalId: context.propsValue.flow?.externalId,
     });
 
+    let callbackUrl: string | undefined
+    if (context.propsValue.waitForResponse) {
+      const waitpoint = await context.run.createWaitpoint({
+        type: 'WEBHOOK',
+      });
+      callbackUrl = waitpoint.buildResumeUrl({
+        queryParams: {},
+      });
+      context.run.waitForWaitpoint(waitpoint.id);
+    }
+
     const response = await httpClient.sendRequest<CallableFlowRequest>({
       method: HttpMethod.POST,
       url: `${context.server.apiUrl}v1/webhooks/${flow?.id}`,
@@ -125,19 +136,9 @@ export const callFlow = createAction({
       },
       body: {
         data: payload,
-        callbackUrl: context.propsValue.waitForResponse ?  context.generateResumeUrl({
-          queryParams: {}
-        }) : undefined,
+        callbackUrl,
       },
     });
-    if (context.propsValue.waitForResponse) {
-      context.run.pause({
-        pauseMetadata: {
-          type: PauseType.WEBHOOK,
-          response: {},
-        }
-      })
-    }
     return response.body;
   },
   errorHandlingOptions: {

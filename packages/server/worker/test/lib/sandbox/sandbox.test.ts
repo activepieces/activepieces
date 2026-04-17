@@ -16,6 +16,7 @@ vi.mock('tree-kill', () => ({
 
 vi.mock('../../../src/lib/cache/cache-paths', () => ({
     getGlobalCachePathLatestVersion: vi.fn(() => '/tmp/test-cache'),
+    getGlobalCodeCachePath: vi.fn(() => '/tmp/test-cache/codes'),
 }))
 
 function createMockLogger(): SandboxLogger {
@@ -118,7 +119,7 @@ describe('createSandbox', () => {
                         AP_CUSTOM_PIECES_PATHS: '/root/custom_pieces',
                     }),
                     resourceLimits: {
-                        memoryBytes: 256 * 1024 * 1024,
+                        memoryLimitMb: 256,
                         cpuMsPerSec: 1000,
                         timeLimitSeconds: 300,
                     },
@@ -135,8 +136,56 @@ describe('createSandbox', () => {
             await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
 
             const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
-            expect(createCall.mounts).toEqual([])
+            const customPieceMount = createCall.mounts.find((m: { sandboxPath: string }) => m.sandboxPath === '/root/custom_pieces')
+            expect(customPieceMount).toBeUndefined()
             expect(createCall.env.AP_CUSTOM_PIECES_PATHS).toBeUndefined()
+        })
+
+        it('scopes code mount to flowVersionId when non-reusable', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-scoped', { ...defaultOptions, reusable: false }, testPM.maker, workerHandlers)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const codeMount = createCall.mounts.find((m: { sandboxPath: string }) => m.sandboxPath.startsWith('/root/codes'))
+            expect(codeMount).toEqual({
+                hostPath: '/tmp/test-cache/codes/fv-1',
+                sandboxPath: '/root/codes/fv-1',
+                optional: true,
+            })
+        })
+
+        it('mounts full codes directory when reusable even with flowVersionId', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-reuse', { ...defaultOptions, reusable: true }, testPM.maker, workerHandlers)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const codeMount = createCall.mounts.find((m: { sandboxPath: string }) => m.sandboxPath.startsWith('/root/codes'))
+            expect(codeMount).toEqual({
+                hostPath: '/tmp/test-cache/codes',
+                sandboxPath: '/root/codes',
+                optional: true,
+            })
+        })
+
+        it('omits code mount when non-reusable without flowVersionId', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-no-fv', { ...defaultOptions, reusable: false }, testPM.maker, workerHandlers)
+
+            await sandbox.start({ flowVersionId: undefined, platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const codeMount = createCall.mounts.find((m: { sandboxPath: string }) => m.sandboxPath.startsWith('/root/codes'))
+            expect(codeMount).toBeUndefined()
         })
 
         it('is idempotent when already connected', async () => {
