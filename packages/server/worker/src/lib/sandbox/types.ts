@@ -8,7 +8,7 @@ export type SandboxMount = {
 }
 
 export type SandboxResourceLimits = {
-    memoryBytes: number
+    memoryLimitMb: number
     cpuMsPerSec: number
     timeLimitSeconds: number
 }
@@ -48,6 +48,7 @@ export type SandboxInitOptions = {
     memoryLimitMb: number
     cpuMsPerSec: number
     timeLimitSeconds: number
+    reusable: boolean
     command?: string[]
     baseMounts?: SandboxMount[]
 }

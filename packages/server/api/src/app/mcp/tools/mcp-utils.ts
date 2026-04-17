@@ -3,22 +3,36 @@ import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 
-const AUTH_TYPES = new Set<PropertyType>([
+const NON_INPUT_PROP_TYPES = new Set<PropertyType>([
     PropertyType.OAUTH2,
     PropertyType.SECRET_TEXT,
     PropertyType.BASIC_AUTH,
     PropertyType.CUSTOM_AUTH,
+    PropertyType.MARKDOWN,
 ])
 
-const DYNAMIC_PROP_TYPES = new Set<PropertyType>([
+const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
     PropertyType.DROPDOWN,
     PropertyType.MULTI_SELECT_DROPDOWN,
     PropertyType.DYNAMIC,
 ])
 
+const STEP_REFERENCE_HINT = 'Use {{stepName.field}} to reference prior steps (no .output. in path).'
+
 function mcpToolError(prefix: string, err: unknown): { content: [{ type: 'text', text: string }] } {
     const message = err instanceof Error ? err.message : String(err)
     return { content: [{ type: 'text', text: `❌ ${prefix}: ${message}` }] }
+}
+
+function formatOptionsHint(options: Array<{ label: string, value: unknown }> | undefined): string {
+    if (!options || options.length === 0) {
+        return ''
+    }
+    const values = options.map(o => String(o.value))
+    if (values.length > 10) {
+        return ` — options: ${values.slice(0, 10).join(', ')}... (${values.length} total)`
+    }
+    return ` — options: ${values.join(', ')}`
 }
 
 function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentType }: DiagnosePiecePropsParams): DiagnosisResult {
@@ -26,18 +40,21 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
     const uiRequired: string[] = []
     const allProps: string[] = []
     for (const [propName, prop] of Object.entries(props)) {
-        if (AUTH_TYPES.has(prop.type)) {
+        if (NON_INPUT_PROP_TYPES.has(prop.type)) {
             continue
         }
         allProps.push(`${propName} (${prop.type}${prop.required ? ', required' : ''})`)
         if (prop.required) {
             const value = input[propName]
             if (value === undefined || value === null || value === '') {
-                if (DYNAMIC_PROP_TYPES.has(prop.type)) {
+                if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
                     uiRequired.push(`${propName} (${prop.displayName})`)
                 }
                 else {
-                    missing.push(`${propName} (${prop.type})`)
+                    const hint = (prop.type === PropertyType.STATIC_DROPDOWN || prop.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN)
+                        ? formatOptionsHint(prop.options?.options)
+                        : ''
+                    missing.push(`${propName} (${prop.type}${hint})`)
                 }
             }
         }
@@ -64,7 +81,7 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
 
 function buildPropSummaries(props: PiecePropertyMap): PropSummary[] {
     return Object.entries(props)
-        .filter(([, prop]) => !AUTH_TYPES.has(prop.type))
+        .filter(([, prop]) => !NON_INPUT_PROP_TYPES.has(prop.type))
         .map(([name, prop]) => {
             const summary: PropSummary = {
                 name,
@@ -85,7 +102,7 @@ function buildPropSummaries(props: PiecePropertyMap): PropSummary[] {
                 summary.note = 'Dynamic dropdown — options load from your account via API. Configure in the Activepieces UI, or provide a known value.'
             }
             if (prop.type === PropertyType.DYNAMIC) {
-                summary.note = 'Dynamic properties — fields are generated based on other input values. Configure in the Activepieces UI.'
+                summary.note = 'DYNAMIC — call ap_get_piece_props with auth+input to resolve sub-fields.'
             }
             return summary
         })
@@ -121,7 +138,70 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
     return { piece, component, pieceName: normalized }
 }
 
-export const mcpUtils = { mcpToolError, diagnosePieceProps, buildPropSummaries, normalizePieceName, lookupPieceComponent }
+function findResolvableProps({ props, componentProps, auth, providedInput }: FindResolvablePropsParams): PropSummary[] {
+    return props.filter(prop => {
+        const propDef = componentProps[prop.name]
+        if (isNil(propDef) || !RESOLVABLE_PROP_TYPES.has(prop.type) || !('refreshers' in propDef)) {
+            return false
+        }
+        const refreshers = (propDef as { refreshers: string[] }).refreshers
+        return refreshers.every(r => r === 'auth' ? !!auth : providedInput[r] !== undefined)
+    })
+}
+
+function validateAuth(auth: string | undefined): { content: [{ type: 'text', text: string }] } | null {
+    if (auth !== undefined && /['{}\[\]]/.test(auth)) {
+        return { content: [{ type: 'text', text: '❌ auth must be a plain externalId with no special characters. Use the exact value from ap_list_connections.' }] }
+    }
+    return null
+}
+
+async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }: {
+    settings: Record<string, unknown>
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<void> {
+    const pieceName = settings.pieceName
+    const pieceVersion = settings.pieceVersion
+    const actionName = settings.actionName
+    if (typeof pieceName !== 'string' || typeof pieceVersion !== 'string' || typeof actionName !== 'string') {
+        return
+    }
+    try {
+        const piece = await pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion })
+        const action = piece.actions[actionName]
+        if (isNil(action)) {
+            return
+        }
+        const defaults: Record<string, unknown> = {}
+        for (const [propName, prop] of Object.entries(action.props)) {
+            if (prop.type === PropertyType.ARRAY && !prop.required) {
+                defaults[propName] = []
+            }
+            else if (prop.type === PropertyType.DYNAMIC && !prop.required) {
+                defaults[propName] = {}
+            }
+            else if (prop.type === PropertyType.CHECKBOX && !prop.required) {
+                defaults[propName] = prop.defaultValue ?? false
+            }
+        }
+        settings.input = { ...defaults, ...(typeof settings.input === 'object' && settings.input !== null ? settings.input : {}) }
+    }
+    catch (err) {
+        log.warn({ err, pieceName, actionName }, 'fillDefaultsForMissingOptionalProps: failed, skipping defaults')
+    }
+}
+
+export const mcpUtils = { mcpToolError, diagnosePieceProps, buildPropSummaries, normalizePieceName, lookupPieceComponent, findResolvableProps, validateAuth, fillDefaultsForMissingOptionalProps, STEP_REFERENCE_HINT }
+
+export type { PropSummary }
+
+type FindResolvablePropsParams = {
+    props: PropSummary[]
+    componentProps: PiecePropertyMap
+    auth: string | undefined
+    providedInput: Record<string, unknown>
+}
 
 type DiagnosePiecePropsParams = {
     props: PiecePropertyMap
@@ -146,6 +226,7 @@ type PropSummary = {
     description?: string
     defaultValue?: unknown
     options?: Array<{ label: string, value: unknown }>
+    dynamicFields?: PropSummary[]
     note?: string
 }
 

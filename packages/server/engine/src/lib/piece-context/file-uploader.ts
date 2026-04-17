@@ -7,13 +7,18 @@ const RETRY_CONFIG = {
     retryDelay: 3000,
 } as const
 
-export function createFilesService({ stepName, flowId, engineToken, apiUrl }: CreateFilesServiceParams): FilesService {
+export function createFileUploader({ stepName, flowId, engineToken, apiUrl }: CreateFileUploaderParams): FilesService {
     const maxFileSizeMb = Number(process.env.AP_MAX_FILE_SIZE_MB)
     const fileStorageLocation = process.env.AP_FILE_STORAGE_LOCATION as FileLocation
     const useSignedUrl = (process.env.AP_S3_USE_SIGNED_URLS === 'true') && fileStorageLocation === FileLocation.S3
 
     return {
         write: async ({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> => {
+            if (!Buffer.isBuffer(data)) {
+                throw new Error(
+                    `Expected file data to be a Buffer, but received ${typeof data === 'object' ? Object.prototype.toString.call(data) : typeof data}`,
+                )
+            }
             validateFileSize(data, maxFileSizeMb)
             const formData = createFormData({ fileName, data, stepName, flowId, useSignedUrl })
             const result = await uploadFileMetadata({ formData, engineToken, apiUrl })
@@ -89,9 +94,9 @@ async function uploadFileContent({ url, data }: { url: string, data: Buffer }): 
     if (!uploadResponse.ok) {
         throw new FileStoreError({
             status: uploadResponse.status,
-            body: uploadResponse.body,
+            body: await uploadResponse.text(),
         })
     }
 }
 
-type CreateFilesServiceParams = { apiUrl: string, stepName: string, flowId: string, engineToken: string }
+type CreateFileUploaderParams = { apiUrl: string, stepName: string, flowId: string, engineToken: string }
