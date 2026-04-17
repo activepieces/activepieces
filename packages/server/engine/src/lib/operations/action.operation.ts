@@ -82,6 +82,7 @@ export const actionOperation = {
                 publicUrl: operation.publicApiUrl,
             },
             propsValue: processedInput,
+            // Tags are not supported in single action execution as there is no flow run associated with it
             tags: { add: async () => {} },
             connections: utils.createConnectionManager({
                 apiUrl: operation.internalApiUrl,
