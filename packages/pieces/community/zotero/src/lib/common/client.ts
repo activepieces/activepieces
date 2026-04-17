@@ -1,15 +1,17 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
-export const ZOTERO_BASE_URL = 'https://api.zotero.org';
-
-export interface ZoteroRequestParams {
-  apiKey: string;
-  userOrGroup: string;
-  libraryId: string;
-  method: HttpMethod;
-  endpoint: string;
-  body?: object;
-  params?: Record<string, string>;
+async function sendRequest<T>(apiKey: string, method: HttpMethod, url: string, body?: object): Promise<T> {
+  const response = await httpClient.sendRequest<T>({
+    method,
+    url,
+    headers: {
+      'Zotero-API-Key': apiKey,
+      'Zotero-API-Version': '3',
+      'Content-Type': 'application/json',
+    },
+    body,
+  });
+  return response.body;
 }
 
 function libraryPath(userOrGroup: string, libraryId: string): string {
@@ -30,17 +32,19 @@ export async function makeZoteroRequest<T>({
   if (params) {
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
   }
-  const response = await httpClient.sendRequest<T>({
-    method,
-    url: url.toString(),
-    headers: {
-      'Zotero-API-Key': apiKey,
-      'Zotero-API-Version': '3',
-      'Content-Type': 'application/json',
-    },
-    body,
-  });
-  return response.body;
+  return sendRequest<T>(apiKey, method, url.toString(), body);
+}
+
+export const ZOTERO_BASE_URL = 'https://api.zotero.org';
+
+export interface ZoteroRequestParams {
+  apiKey: string;
+  userOrGroup: string;
+  libraryId: string;
+  method: HttpMethod;
+  endpoint: string;
+  body?: object;
+  params?: Record<string, string>;
 }
 
 export interface ZoteroItem {

@@ -3,42 +3,6 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { zoteroAuth } from '../../index';
 import { makeZoteroRequest, ZoteroItem, ZOTERO_BASE_URL } from '../common/client';
 
-interface ZoteroState {
-  lastVersion: number;
-}
-
-async function fetchPageDirect(apiKey: string, url: string): Promise<{ items: ZoteroItem[]; nextUrl: string | null }> {
-  const response = await httpClient.sendRequest<ZoteroItem[]>({
-    method: HttpMethod.GET,
-    url,
-    headers: {
-      'Zotero-API-Key': apiKey,
-      'Zotero-API-Version': '3',
-    },
-  });
-  // Zotero uses Link header for pagination
-  const linkHeader = (response.headers as Record<string, string>)['link'] ?? '';
-  const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
-  const nextUrl = nextMatch ? nextMatch[1] : null;
-  return { items: response.body, nextUrl };
-}
-
-async function fetchAllSince(apiKey: string, userOrGroup: string, libraryId: string, sinceVersion: number): Promise<ZoteroItem[]> {
-  const allItems: ZoteroItem[] = [];
-  const prefix = userOrGroup === 'user' ? 'users' : 'groups';
-  const firstUrl = `${ZOTERO_BASE_URL}/${prefix}/${libraryId}/items?since=${sinceVersion}&sort=dateAdded&direction=desc&limit=100`;
-
-  let { items, nextUrl } = await fetchPageDirect(apiKey, firstUrl);
-  allItems.push(...items);
-
-  while (nextUrl) {
-    ({ items, nextUrl } = await fetchPageDirect(apiKey, nextUrl));
-    allItems.push(...items);
-  }
-
-  return allItems;
-}
-
 export const newItem = createTrigger({
   name: 'new_item',
   displayName: 'New Item Added',
@@ -65,11 +29,10 @@ export const newItem = createTrigger({
   async run(context) {
     const { api_key, user_or_group, library_id } = context.auth.props;
     const state = (await context.store.get<ZoteroState>('zotero_state')) ?? { lastVersion: 0 };
-
-    const newItems = await fetchAllSince(api_key, user_or_group, library_id, state.lastVersion);
+    const newItems = await fetchAllSince({ apiKey: api_key, userOrGroup: user_or_group, libraryId: library_id, sinceVersion: state.lastVersion });
 
     if (newItems.length > 0) {
-      const maxVersion = Math.max(...newItems.map((i) => i.version));
+      const maxVersion = newItems.reduce((max, i) => (i.version > max ? i.version : max), 0);
       await context.store.put<ZoteroState>('zotero_state', { lastVersion: maxVersion });
     }
 
@@ -107,3 +70,44 @@ export const newItem = createTrigger({
     },
   },
 });
+
+interface ZoteroState {
+  lastVersion: number;
+}
+
+interface FetchAllParams {
+  apiKey: string;
+  userOrGroup: string;
+  libraryId: string;
+  sinceVersion: number;
+}
+
+async function fetchPage({ apiKey, url }: { apiKey: string; url: string }): Promise<{ items: ZoteroItem[]; nextUrl: string | null }> {
+  const response = await httpClient.sendRequest<ZoteroItem[]>({
+    method: HttpMethod.GET,
+    url,
+    headers: {
+      'Zotero-API-Key': apiKey,
+      'Zotero-API-Version': '3',
+    },
+  });
+  const linkHeader = (response.headers as Record<string, string>)['link'] ?? '';
+  const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+  return { items: response.body, nextUrl: nextMatch ? nextMatch[1] : null };
+}
+
+async function fetchAllSince({ apiKey, userOrGroup, libraryId, sinceVersion }: FetchAllParams): Promise<ZoteroItem[]> {
+  const allItems: ZoteroItem[] = [];
+  const prefix = userOrGroup === 'user' ? 'users' : 'groups';
+  const firstUrl = `${ZOTERO_BASE_URL}/${prefix}/${libraryId}/items?since=${sinceVersion}&sort=dateAdded&direction=desc&limit=100`;
+
+  let { items, nextUrl } = await fetchPage({ apiKey, url: firstUrl });
+  allItems.push(...items);
+
+  while (nextUrl) {
+    ({ items, nextUrl } = await fetchPage({ apiKey, url: nextUrl }));
+    allItems.push(...items);
+  }
+
+  return allItems;
+}
