@@ -1,14 +1,13 @@
-import { EnvelopesApi } from 'docusign-esign';
-
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { docusignAuth } from '../auth';
-import { DocusignAuthType } from '../../';
 import { createApiClient } from '../common';
+import { EnvelopesApi } from 'docusign-esign';
 
-export const getEnvelope = createAction({
-  name: 'getEnvelope',
-  displayName: 'Get Signing Request Details',
-  description: 'Look up the full details of a signing request — status, recipients, and dates — using its ID.',
+export const findEnvelopeRecipients = createAction({
+  name: 'findEnvelopeRecipients',
+  displayName: 'Get People on a Signing Request',
+  description:
+    'Get the full list of people on a signing request — signers, viewers, and anyone copied.',
   auth: docusignAuth,
   props: {
     accountId: Property.ShortText({
@@ -22,8 +21,9 @@ export const getEnvelope = createAction({
   },
   async run({ auth, propsValue }) {
     const apiClient = await createApiClient(auth);
-    const envelopeApiClient = new EnvelopesApi(apiClient);
-    return await envelopeApiClient.getEnvelope(
+    const envelopesApiClient = new EnvelopesApi(apiClient);
+
+    return await envelopesApiClient.listRecipients(
       propsValue.accountId,
       propsValue.envelopeId
     );
