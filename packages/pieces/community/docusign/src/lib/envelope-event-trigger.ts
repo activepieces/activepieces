@@ -49,6 +49,10 @@ export function createEnvelopeEventTrigger({
             events: [docusignEvent],
             allowEnvelopePublish: 'true',
             configurationType: 'custom',
+            deliveryMode: 'SIM',
+            eventData: {
+              version: 'restv2.1',
+            },
             enableLog: 'true',
           },
         }

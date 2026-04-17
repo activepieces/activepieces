@@ -6,18 +6,17 @@ export const recipientCompleted = createEnvelopeEventTrigger({
   description: 'Triggers when an individual recipient has signed the envelope.',
   docusignEvent: 'recipient-completed',
   sampleData: {
-    envelopeId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
-    emailSubject: 'Please sign this document',
-    recipients: {
-      signers: [
-        {
-          name: 'John Smith',
-          email: 'john.smith@example.com',
-          recipientId: '1',
-          status: 'completed',
-          signedDateTime: '2024-01-15T10:25:00.000Z',
-        },
-      ],
+    event: 'recipient-completed',
+    apiVersion: 'v2.1',
+    uri: '/restapi/v2.1/accounts/6544471c-xxx-xxxx-xxxx-xxxb8a61f598/envelopes/f83f22a4-xxx-xxx-xxx-a039b5451096',
+    retryCount: 0,
+    configurationId: 22127526,
+    generatedDateTime: '2026-04-17T06:58:23.7089453Z',
+    data: {
+      accountId: '6544471c-xxx-xxxx-xxxx-xxxb8a61f598',
+      userId: '7063cf65-xxxx-xxx-xx-xxxxxx',
+      envelopeId: 'f83f22a4-xxx-xxx-xxx-a039b5451096',
+      recipientId: '1',
     },
   },
 });

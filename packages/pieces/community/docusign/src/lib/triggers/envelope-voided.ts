@@ -7,14 +7,16 @@ export const envelopeVoided = createEnvelopeEventTrigger({
     'Triggers when a sender voids an in-progress envelope, cancelling all pending signatures.',
   docusignEvent: 'envelope-voided',
   sampleData: {
-    status: 'voided',
-    envelopeId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
-    emailSubject: 'Please sign this document',
-    sender: {
-      userName: 'Jane Doe',
-      email: 'jane.doe@example.com',
+    event: 'envelope-voided',
+    apiVersion: 'v2.1',
+    uri: '/restapi/v2.1/accounts/6544471c-xxx-xxx-xxxx-39bb8a61f598/envelopes/b31128f9-xxxx-xxxx-xxx-7835d84310f5',
+    retryCount: 0,
+    configurationId: 22127522,
+    generatedDateTime: '2026-04-17T06:52:37.9980000Z',
+    data: {
+      accountId: '6544471c-xxx-xxx-xxxx-39bb8a61f598',
+      userId: '7063cf65-xxx-xxxx-xxxx-ba5ba6bc213b',
+      envelopeId: 'b31128f9-xxxx-xxx-xx-xxxx',
     },
-    voidedDateTime: '2024-01-15T10:30:00.000Z',
-    voidedReason: 'Document needs to be revised.',
   },
 });
