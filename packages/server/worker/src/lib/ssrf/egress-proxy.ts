@@ -2,8 +2,8 @@ import dns from 'node:dns/promises'
 import http, { IncomingMessage, ServerResponse } from 'node:http'
 import net from 'node:net'
 import { Duplex } from 'node:stream'
+import { ssrfIpClassifier } from '@activepieces/shared'
 import { Logger } from 'pino'
-import { isBlockedIp } from './ip-classifier'
 
 export async function startEgressProxy({ log, allowList }: StartOptions): Promise<EgressProxy> {
     const server = http.createServer()
@@ -37,13 +37,13 @@ export async function startEgressProxy({ log, allowList }: StartOptions): Promis
 
 async function resolveOrRefuse({ hostname, allowList }: { hostname: string, allowList: string[] }): Promise<string> {
     if (net.isIP(hostname) > 0) {
-        if (isBlockedIp({ ip: hostname, allowList })) {
+        if (ssrfIpClassifier.isBlockedIp({ ip: hostname, allowList })) {
             throw new BlockedHostError(hostname, hostname)
         }
         return hostname
     }
     const { address } = await dns.lookup(hostname)
-    if (isBlockedIp({ ip: address, allowList })) {
+    if (ssrfIpClassifier.isBlockedIp({ ip: address, allowList })) {
         throw new BlockedHostError(hostname, address)
     }
     return address

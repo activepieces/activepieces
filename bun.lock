@@ -193,6 +193,7 @@
         "intercom-client": "6.2.0",
         "intl-messageformat": "10.5.14",
         "ioredis": "5.4.1",
+        "ipaddr.js": "2.3.0",
         "isolated-vm": "6.0.2",
         "js-yaml": "4.1.1",
         "jsdom": "23.0.1",
@@ -8079,12 +8080,13 @@
     },
     "packages/server/utils": {
       "name": "@activepieces/server-utils",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/shared": "workspace:*",
         "async-mutex": "0.4.0",
         "check-disk-space": "3.4.0",
         "dayjs": "1.11.9",
+        "ipaddr.js": "2.3.0",
         "systeminformation": "5.25.11",
       },
       "devDependencies": {

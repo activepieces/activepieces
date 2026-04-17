@@ -1,5 +1,6 @@
 // core
 export * from './lib/core/common'
+export { ssrfIpClassifier } from './lib/core/common/ssrf-ip-classifier'
 export * from './lib/core/common/activepieces-error'
 export * from './lib/core/common/telemetry'
 export * from './lib/core/common/seek-page'
