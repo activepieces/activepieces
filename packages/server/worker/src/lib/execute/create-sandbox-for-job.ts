@@ -33,6 +33,9 @@ export function createSandboxForJob(params: {
         { hostPath: getGlobalCacheCommonPath(), sandboxPath: '/root/common' },
     ]
 
+    const executionMode = settings.EXECUTION_MODE as ExecutionMode
+    const requiresFixedWsRpcPort = executionMode === ExecutionMode.SANDBOX_PROCESS || executionMode === ExecutionMode.SANDBOX_CODE_AND_PROCESS
+
     return createSandbox(
         log,
         sandboxId,
@@ -43,7 +46,7 @@ export function createSandboxForJob(params: {
             timeLimitSeconds: settings.FLOW_TIMEOUT_SECONDS,
             reusable,
             baseMounts,
-            wsRpcPort: wsRpcPortForBox(boxId),
+            wsRpcPort: requiresFixedWsRpcPort ? wsRpcPortForBox(boxId) : undefined,
         },
         processMaker,
         workerHandlers,

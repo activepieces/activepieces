@@ -1,4 +1,6 @@
 import { createServer } from 'http'
+import dns from 'node:dns/promises'
+import net from 'node:net'
 import os from 'os'
 import { systemUsage } from '@activepieces/server-utils'
 import {
@@ -64,7 +66,7 @@ export const worker = {
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
             await fetchAndStoreSettings(socket!)
-            await ensureEgressProxyStarted()
+            await ensureEgressProxyStarted({ apiUrl })
             await ensureKernelLockdownApplied()
             void warmupPiecesOnStartup(apiClient)
             void startPollingWorkers(apiClient).catch((err) => {
@@ -109,17 +111,33 @@ export const worker = {
     },
 }
 
-async function ensureEgressProxyStarted(): Promise<void> {
+async function ensureEgressProxyStarted({ apiUrl }: { apiUrl: string }): Promise<void> {
     if (egressProxy) return
     const settings = workerSettings.getSettings()
     if (!settings.SSRF_PROTECTION_ENABLED) {
         return
     }
+    const apiHostIps = await resolveHostToIps(apiUrl)
+    const allowList = [...new Set([...settings.SSRF_ALLOW_LIST, ...apiHostIps])]
     egressProxy = await startEgressProxy({
         log: logger,
-        allowList: settings.SSRF_ALLOW_LIST,
+        allowList,
     })
     egressProxyState.setPort(egressProxy.port)
+    logger.info({ apiHostIps }, 'Egress proxy allowlist seeded with worker API host')
+}
+
+async function resolveHostToIps(rawUrl: string): Promise<string[]> {
+    try {
+        const hostname = new URL(rawUrl).hostname
+        if (net.isIP(hostname) > 0) return [hostname]
+        const addresses = await dns.lookup(hostname, { all: true })
+        return addresses.map((a) => a.address)
+    }
+    catch (err) {
+        logger.warn({ err, rawUrl }, 'Failed to resolve API host for egress proxy allowlist')
+        return []
+    }
 }
 
 async function ensureKernelLockdownApplied(): Promise<void> {
