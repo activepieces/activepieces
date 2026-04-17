@@ -11,6 +11,11 @@ import {
   mailgunApiCallAbsoluteUrl,
 } from '../common';
 
+const LAST_ALERT_STORE_KEY = 'mailgun_bounce_threshold_last_alert_epoch';
+const EVENTS_PAGE_SIZE = 300;
+const MAX_EVENT_PAGES = 10;
+const MAX_THRESHOLD = EVENTS_PAGE_SIZE * MAX_EVENT_PAGES;
+
 export const bulkBounceThresholdExceeded = createTrigger({
   auth: mailgunAuth,
   name: 'bulk_bounce_threshold_exceeded',
@@ -21,8 +26,7 @@ export const bulkBounceThresholdExceeded = createTrigger({
     domain: mailgunCommon.domainDropdown,
     threshold: Property.Number({
       displayName: 'Threshold',
-      description:
-        'Number of failed events within the window that will trigger the alert. Up to ~3000 events per poll are inspected; setting a higher threshold is not recommended.',
+      description: `Number of failed events within the window that will trigger the alert. Must be between 1 and ${MAX_THRESHOLD} (capped to keep each poll bounded).`,
       required: true,
       defaultValue: 20,
     }),
@@ -81,6 +85,8 @@ export const bulkBounceThresholdExceeded = createTrigger({
     const { domain, threshold, window_minutes, severity } = context.propsValue;
     const auth = context.auth;
 
+    assertThresholdInRange(threshold);
+
     const nowMs = Date.now();
     const windowMs = window_minutes * 60 * 1000;
     const beginEpoch = Math.floor((nowMs - windowMs) / 1000);
@@ -121,6 +127,8 @@ export const bulkBounceThresholdExceeded = createTrigger({
   async test(context) {
     const { domain, threshold, window_minutes, severity } = context.propsValue;
     const auth = context.auth;
+
+    assertThresholdInRange(threshold);
 
     const nowMs = Date.now();
     const windowMs = window_minutes * 60 * 1000;
@@ -241,9 +249,16 @@ function buildAlertPayload({
   };
 }
 
-const LAST_ALERT_STORE_KEY = 'mailgun_bounce_threshold_last_alert_epoch';
-const EVENTS_PAGE_SIZE = 300;
-const MAX_EVENT_PAGES = 10;
+function assertThresholdInRange(threshold: number): void {
+  if (!Number.isFinite(threshold) || threshold < 1) {
+    throw new Error('Threshold must be a positive integer (1 or greater).');
+  }
+  if (threshold > MAX_THRESHOLD) {
+    throw new Error(
+      `Threshold ${threshold} exceeds the maximum supported value (${MAX_THRESHOLD}). Lower the threshold or shorten the window.`,
+    );
+  }
+}
 
 type FailedEvent = {
   timestamp: number;
