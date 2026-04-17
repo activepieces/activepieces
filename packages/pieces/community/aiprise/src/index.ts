@@ -11,6 +11,8 @@ import { runBusinessVerificationAction } from './lib/actions/run-business-verifi
 import { getBusinessResultAction } from './lib/actions/get-business-result';
 import { getBusinessInputDataAction } from './lib/actions/get-business-input-data';
 import { runDocumentCheckAction } from './lib/actions/run-document-check';
+import { createBusinessProfileAction } from './lib/actions/create-business-profile';
+import { getAdditionalUserInfoAction } from './lib/actions/get-additional-user-info';
 
 export const aipriseAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -41,6 +43,8 @@ export const aiprise = createPiece({
     getBusinessResultAction,
     getBusinessInputDataAction,
     runDocumentCheckAction,
+    createBusinessProfileAction,
+    getAdditionalUserInfoAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.aiprise.com/api/v1',
       auth: aipriseAuth,
