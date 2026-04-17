@@ -1,8 +1,4 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  PiecePropValueSchema,
-} from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { readwiseAuth } from '../../index';
 import {
@@ -12,8 +8,44 @@ import {
 } from '../common/client';
 
 interface PollingState {
-  lastHighlightId: number;
   lastCheckedAt: string;
+}
+
+async function fetchAllSince(token: string, since: string): Promise<ReadwiseHighlight[]> {
+  const allHighlights: ReadwiseHighlight[] = [];
+  let nextUrl: string | null = null;
+  let isFirstPage = true;
+
+  do {
+    let response: ReadwisePaginatedResponse<ReadwiseHighlight>;
+
+    if (isFirstPage) {
+      response = await makeReadwiseRequest<ReadwisePaginatedResponse<ReadwiseHighlight>>({
+        token,
+        method: HttpMethod.GET,
+        endpoint: '/highlights/',
+        params: {
+          page_size: '1000',
+          order: 'updated',
+          updated__gt: since,
+        },
+      });
+      isFirstPage = false;
+    } else {
+      const parsed = new URL(nextUrl!);
+      const endpoint = parsed.pathname + parsed.search;
+      response = await makeReadwiseRequest<ReadwisePaginatedResponse<ReadwiseHighlight>>({
+        token,
+        method: HttpMethod.GET,
+        endpoint,
+      });
+    }
+
+    allHighlights.push(...response.results);
+    nextUrl = response.next;
+  } while (nextUrl);
+
+  return allHighlights;
 }
 
 export const newHighlight = createTrigger({
@@ -24,17 +56,7 @@ export const newHighlight = createTrigger({
   props: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    const token = context.auth as string;
-    const response = await makeReadwiseRequest<ReadwisePaginatedResponse<ReadwiseHighlight>>(
-      token,
-      HttpMethod.GET,
-      '/highlights/',
-      undefined,
-      { page_size: '1', order: '-updated' }
-    );
-    const latestId = response.results[0]?.id ?? 0;
     await context.store.put<PollingState>('readwise_state', {
-      lastHighlightId: latestId,
       lastCheckedAt: new Date().toISOString(),
     });
   },
@@ -42,46 +64,27 @@ export const newHighlight = createTrigger({
     await context.store.delete('readwise_state');
   },
   async run(context) {
-    const token = context.auth as string;
-    const state = await context.store.get<PollingState>('readwise_state') ?? {
-      lastHighlightId: 0,
+    const token = context.auth.secret_text;
+    const state = (await context.store.get<PollingState>('readwise_state')) ?? {
       lastCheckedAt: new Date(0).toISOString(),
     };
 
-    const response = await makeReadwiseRequest<ReadwisePaginatedResponse<ReadwiseHighlight>>(
-      token,
-      HttpMethod.GET,
-      '/highlights/',
-      undefined,
-      {
-        page_size: '50',
-        order: '-updated',
-        updated__gt: state.lastCheckedAt,
-      }
-    );
+    const newHighlights = await fetchAllSince(token, state.lastCheckedAt);
 
-    const newHighlights = response.results.filter(
-      (h) => h.id > state.lastHighlightId
-    );
-
-    if (newHighlights.length > 0) {
-      await context.store.put<PollingState>('readwise_state', {
-        lastHighlightId: Math.max(...newHighlights.map((h) => h.id)),
-        lastCheckedAt: new Date().toISOString(),
-      });
-    }
+    await context.store.put<PollingState>('readwise_state', {
+      lastCheckedAt: new Date().toISOString(),
+    });
 
     return newHighlights;
   },
   async test(context) {
-    const token = context.auth as string;
-    const response = await makeReadwiseRequest<ReadwisePaginatedResponse<ReadwiseHighlight>>(
+    const token = context.auth.secret_text;
+    const response = await makeReadwiseRequest<ReadwisePaginatedResponse<ReadwiseHighlight>>({
       token,
-      HttpMethod.GET,
-      '/highlights/',
-      undefined,
-      { page_size: '3', order: '-updated' }
-    );
+      method: HttpMethod.GET,
+      endpoint: '/highlights/',
+      params: { page_size: '3', order: '-updated' },
+    });
     return response.results;
   },
   sampleData: {

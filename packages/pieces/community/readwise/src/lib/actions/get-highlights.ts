@@ -31,23 +31,21 @@ export const getHighlights = createAction({
     }),
   },
   async run(context) {
-    const token = context.auth as string;
-    const params: Record<string, string> = {
+    const token = context.auth.secret_text;
+    const queryParams: Record<string, string> = {
       page_size: String(context.propsValue.page_size ?? 100),
     };
     if (context.propsValue.book_id) {
-      params['book_id'] = context.propsValue.book_id;
+      queryParams['book_id'] = context.propsValue.book_id;
     }
     if (context.propsValue.updated_after) {
-      params['updated__gt'] = new Date(context.propsValue.updated_after).toISOString();
+      queryParams['updated__gt'] = new Date(context.propsValue.updated_after).toISOString();
     }
-    const response = await makeReadwiseRequest<ReadwisePaginatedResponse<ReadwiseHighlight>>(
+    return makeReadwiseRequest<ReadwisePaginatedResponse<ReadwiseHighlight>>({
       token,
-      HttpMethod.GET,
-      '/highlights/',
-      undefined,
-      params
-    );
-    return response;
+      method: HttpMethod.GET,
+      endpoint: '/highlights/',
+      params: queryParams,
+    });
   },
 });

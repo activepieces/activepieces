@@ -56,25 +56,22 @@ export const createHighlight = createAction({
     }),
   },
   async run(context) {
-    const token = context.auth as string;
-    const highlight: Record<string, unknown> = {
-      text: context.propsValue.text,
-    };
-    if (context.propsValue.title) highlight['title'] = context.propsValue.title;
-    if (context.propsValue.author) highlight['author'] = context.propsValue.author;
-    if (context.propsValue.source_url) highlight['source_url'] = context.propsValue.source_url;
-    if (context.propsValue.note) highlight['note'] = context.propsValue.note;
-    if (context.propsValue.category) highlight['category'] = context.propsValue.category;
-    if (context.propsValue.highlighted_at) {
-      highlight['highlighted_at'] = new Date(context.propsValue.highlighted_at).toISOString();
+    const token = context.auth.secret_text;
+    const p = context.propsValue;
+    const highlight: Record<string, unknown> = { text: p.text };
+    if (p.title) highlight['title'] = p.title;
+    if (p.author) highlight['author'] = p.author;
+    if (p.source_url) highlight['source_url'] = p.source_url;
+    if (p.note) highlight['note'] = p.note;
+    if (p.category) highlight['category'] = p.category;
+    if (p.highlighted_at) {
+      highlight['highlighted_at'] = new Date(p.highlighted_at).toISOString();
     }
-
-    const response = await makeReadwiseRequest<{ highlights: unknown[] }>(
+    return makeReadwiseRequest<{ highlights: unknown[] }>({
       token,
-      HttpMethod.POST,
-      '/highlights/',
-      { highlights: [highlight] }
-    );
-    return response;
+      method: HttpMethod.POST,
+      endpoint: '/highlights/',
+      body: { highlights: [highlight] },
+    });
   },
 });

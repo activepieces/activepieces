@@ -2,13 +2,21 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const READWISE_BASE_URL = 'https://readwise.io/api/v2';
 
-export async function makeReadwiseRequest<T>(
-  token: string,
-  method: HttpMethod,
-  endpoint: string,
-  body?: object,
-  params?: Record<string, string>
-): Promise<T> {
+export interface ReadwiseRequestParams {
+  token: string;
+  method: HttpMethod;
+  endpoint: string;
+  body?: object;
+  params?: Record<string, string>;
+}
+
+export async function makeReadwiseRequest<T>({
+  token,
+  method,
+  endpoint,
+  body,
+  params,
+}: ReadwiseRequestParams): Promise<T> {
   const url = new URL(`${READWISE_BASE_URL}${endpoint}`);
   if (params) {
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
@@ -42,23 +50,6 @@ export interface ReadwiseHighlight {
   tags: { id: number; name: string }[];
   is_favorite: boolean;
   is_discard: boolean;
-}
-
-export interface ReadwiseBook {
-  id: number;
-  title: string;
-  author: string;
-  category: string;
-  source: string;
-  num_highlights: number;
-  last_highlight_at: string | null;
-  updated: string;
-  cover_image_url: string;
-  highlights_url: string;
-  source_url: string | null;
-  asin: string | null;
-  tags: { id: number; name: string }[];
-  document_note: string;
 }
 
 export interface ReadwisePaginatedResponse<T> {
