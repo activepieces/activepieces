@@ -21,7 +21,7 @@ function assertMountInsideRoot(mount: SandboxMount): void {
     }
 }
 
-const ENV_KEY_RE = /^[A-Z_][A-Z0-9_]*$/
+const ENV_KEY_RE = /^[A-Za-z_][A-Za-z0-9_]*$/
 const FORBIDDEN_VALUE_CHARS = /[\n\r\0]/
 const REQUIRED_SANDBOX_ENV_KEYS: readonly string[] = [
     'HOME',

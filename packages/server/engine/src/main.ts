@@ -1,3 +1,4 @@
+import './lib/ssrf/ssrf-guard'
 import { isNil } from '@activepieces/shared'
 import { runProgressService } from './lib/handler/run-progress'
 import { workerSocket } from './lib/worker-socket'

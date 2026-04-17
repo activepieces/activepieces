@@ -7,6 +7,7 @@ import { simpleProcess } from '../sandbox/fork'
 import { isolateProcess } from '../sandbox/isolate'
 import { createSandbox } from '../sandbox/sandbox'
 import { Sandbox, SandboxMount } from '../sandbox/types'
+import { egressProxyState } from '../ssrf/proxy-state'
 
 export function createSandboxForJob(params: {
     log: Logger
@@ -42,11 +43,22 @@ export function createSandboxForJob(params: {
             timeLimitSeconds: settings.FLOW_TIMEOUT_SECONDS,
             reusable,
             baseMounts,
+            wsRpcPort: wsRpcPortForBox(boxId),
         },
         processMaker,
         workerHandlers,
     )
 }
+
+export function wsRpcPortForBox(boxId: number): number {
+    return WS_RPC_BASE_PORT + boxId
+}
+
+export function wsRpcPortRange(numBoxes: number): number[] {
+    return Array.from({ length: numBoxes }, (_, i) => WS_RPC_BASE_PORT + i)
+}
+
+const WS_RPC_BASE_PORT = 52000
 
 function getProcessMaker(executionMode: string, log: Logger, boxId: number) {
     switch (executionMode) {
@@ -80,6 +92,17 @@ function buildSandboxEnv(settings: ReturnType<typeof workerSettings.getSettings>
     }
     if (settings.SSRF_ALLOW_LIST.length > 0) {
         env['AP_SSRF_ALLOW_LIST'] = settings.SSRF_ALLOW_LIST.join(',')
+    }
+
+    const proxyPort = egressProxyState.getPort()
+    if (settings.SSRF_PROTECTION_ENABLED && proxyPort !== null) {
+        const proxyUrl = `http://127.0.0.1:${proxyPort}`
+        env['HTTP_PROXY'] = proxyUrl
+        env['HTTPS_PROXY'] = proxyUrl
+        env['http_proxy'] = proxyUrl
+        env['https_proxy'] = proxyUrl
+        env['NO_PROXY'] = ''
+        env['no_proxy'] = ''
     }
 
     for (const key of settings.SANDBOX_PROPAGATED_ENV_VARS) {

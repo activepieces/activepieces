@@ -22,9 +22,13 @@ import { pieceInstaller } from './cache/pieces/piece-installer'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
+import { wsRpcPortRange } from './execute/create-sandbox-for-job'
 import { getHandler } from './execute/job-registry'
 import { createSandboxManager, SandboxManager } from './execute/sandbox-manager'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
+import { EgressProxy, startEgressProxy } from './ssrf/egress-proxy'
+import { applyIptablesLockdown, IptablesLockdown } from './ssrf/iptables-lockdown'
+import { egressProxyState } from './ssrf/proxy-state'
 
 
 const tracer = trace.getTracer('worker')
@@ -38,6 +42,10 @@ const workerId = `worker-${nanoid()}`
 const workerHostname = os.hostname()
 
 let healthServerInstance: ReturnType<typeof createServer> | null = null
+
+let egressProxy: EgressProxy | null = null
+
+let iptablesLockdown: IptablesLockdown | null = null
 
 let sandboxManagers: SandboxManager[] = []
 
@@ -56,6 +64,8 @@ export const worker = {
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
             await fetchAndStoreSettings(socket!)
+            await ensureEgressProxyStarted()
+            await ensureKernelLockdownApplied()
             void warmupPiecesOnStartup(apiClient)
             void startPollingWorkers(apiClient).catch((err) => {
                 logger.error({ error: err }, 'Polling workers crashed unexpectedly')
@@ -86,9 +96,55 @@ export const worker = {
         socket = null
         healthServerInstance?.close()
         healthServerInstance = null
+        if (iptablesLockdown) {
+            await iptablesLockdown.remove()
+            iptablesLockdown = null
+        }
+        if (egressProxy) {
+            await egressProxy.close()
+            egressProxy = null
+            egressProxyState.setPort(null)
+        }
         logger.info('Worker stopped')
     },
 }
+
+async function ensureEgressProxyStarted(): Promise<void> {
+    if (egressProxy) return
+    const settings = workerSettings.getSettings()
+    if (!settings.SSRF_PROTECTION_ENABLED) {
+        return
+    }
+    egressProxy = await startEgressProxy({
+        log: logger,
+        allowList: settings.SSRF_ALLOW_LIST,
+    })
+    egressProxyState.setPort(egressProxy.port)
+}
+
+async function ensureKernelLockdownApplied(): Promise<void> {
+    if (iptablesLockdown) return
+    const settings = workerSettings.getSettings()
+    const executionMode = settings.EXECUTION_MODE as ExecutionMode
+    const isIsolateMode = executionMode === ExecutionMode.SANDBOX_PROCESS || executionMode === ExecutionMode.SANDBOX_CODE_AND_PROCESS
+    if (!isIsolateMode) {
+        return
+    }
+    if (!egressProxy) {
+        throw new Error('Kernel lockdown requires the egress proxy to be running; AP_SSRF_PROTECTION_ENABLED must be true')
+    }
+    iptablesLockdown = await applyIptablesLockdown({
+        log: logger,
+        proxyPort: egressProxy.port,
+        wsRpcPorts: wsRpcPortRange(SANDBOX_NUM_BOXES),
+        firstBoxUid: SANDBOX_FIRST_UID,
+        numBoxes: SANDBOX_NUM_BOXES,
+    })
+    logger.info({ proxyPort: egressProxy.port, firstBoxUid: SANDBOX_FIRST_UID, numBoxes: SANDBOX_NUM_BOXES }, 'Kernel-level SSRF lockdown applied')
+}
+
+const SANDBOX_FIRST_UID = 60000
+const SANDBOX_NUM_BOXES = 1000
 
 async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void> {
     if (polling) return
