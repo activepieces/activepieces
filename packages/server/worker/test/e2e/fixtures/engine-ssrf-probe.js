@@ -10,7 +10,6 @@ const net = require('node:net')
 const { URL } = require('node:url')
 
 const ssrfGuardModule = require('./ssrf-guard-bundle.js')
-const SSRFBlockedError = ssrfGuardModule.SSRFBlockedError
 const GUARD_ENABLED = ssrfGuardModule.ssrfGuard && ssrfGuardModule.ssrfGuard.isEnabled()
 
 async function main() {
@@ -83,7 +82,7 @@ function dnsLookupExpectBlocked(action) {
         dns.promises.lookup(action.hostname).then(() => {
             resolve({ case: action.case, ok: false, outcome: 'resolved' })
         }).catch((err) => {
-            const isSsrf = err && (err.name === 'SSRFBlockedError' || err instanceof SSRFBlockedError)
+            const isSsrf = err && err.name === 'SSRFBlockedError'
             resolve({
                 case: action.case,
                 ok: isSsrf,
