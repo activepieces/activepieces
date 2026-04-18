@@ -5,8 +5,6 @@ import { EnvHttpProxyAgent, getGlobalDispatcher, setGlobalDispatcher } from 'und
 
 let currentGuard: InstalledGuard | null = null
 
-installSsrfGuard()
-
 export const ssrfGuard = {
     install: installSsrfGuard,
     uninstall: uninstallSsrfGuard,
@@ -223,3 +221,5 @@ type InstalledGuard = {
 type Uninstall = () => void
 
 type DnsCallback = (err: NodeJS.ErrnoException | null, address: string | dns.LookupAddress[], family?: number) => void
+
+installSsrfGuard()
