@@ -80,7 +80,7 @@ export const createItem = createAction({
           : [],
     };
 
-    return makeZoteroRequest<unknown[]>({
+    const { body } = await makeZoteroRequest<unknown[]>({
       apiKey: api_key,
       userOrGroup: user_or_group,
       libraryId: library_id,
@@ -88,5 +88,6 @@ export const createItem = createAction({
       endpoint: '/items',
       body: [item],
     });
+    return body;
   },
 });

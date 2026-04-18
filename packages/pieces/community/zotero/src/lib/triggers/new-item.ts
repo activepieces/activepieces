@@ -12,7 +12,8 @@ export const newItem = createTrigger({
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
     const { api_key, user_or_group, library_id } = context.auth.props;
-    const items = await makeZoteroRequest<ZoteroItem[]>({
+    // Seed with the current library version from the response header, not item-level version
+    const { lastModifiedVersion } = await makeZoteroRequest<ZoteroItem[]>({
       apiKey: api_key,
       userOrGroup: user_or_group,
       libraryId: library_id,
@@ -20,8 +21,7 @@ export const newItem = createTrigger({
       endpoint: '/items',
       params: { limit: '1', sort: 'dateAdded', direction: 'desc' },
     });
-    const version = items[0]?.version ?? 0;
-    await context.store.put<ZoteroState>('zotero_state', { lastVersion: version });
+    await context.store.put<ZoteroState>('zotero_state', { lastVersion: lastModifiedVersion });
   },
   async onDisable(context) {
     await context.store.delete('zotero_state');
@@ -29,18 +29,20 @@ export const newItem = createTrigger({
   async run(context) {
     const { api_key, user_or_group, library_id } = context.auth.props;
     const state = (await context.store.get<ZoteroState>('zotero_state')) ?? { lastVersion: 0 };
-    const newItems = await fetchAllSince({ apiKey: api_key, userOrGroup: user_or_group, libraryId: library_id, sinceVersion: state.lastVersion });
+    const { items, nextLibraryVersion } = await fetchAllSince({
+      apiKey: api_key,
+      userOrGroup: user_or_group,
+      libraryId: library_id,
+      sinceVersion: state.lastVersion,
+    });
 
-    if (newItems.length > 0) {
-      const maxVersion = newItems.reduce((max, i) => (i.version > max ? i.version : max), 0);
-      await context.store.put<ZoteroState>('zotero_state', { lastVersion: maxVersion });
-    }
+    await context.store.put<ZoteroState>('zotero_state', { lastVersion: nextLibraryVersion });
 
-    return newItems;
+    return items;
   },
   async test(context) {
     const { api_key, user_or_group, library_id } = context.auth.props;
-    return makeZoteroRequest<ZoteroItem[]>({
+    const { body } = await makeZoteroRequest<ZoteroItem[]>({
       apiKey: api_key,
       userOrGroup: user_or_group,
       libraryId: library_id,
@@ -48,6 +50,7 @@ export const newItem = createTrigger({
       endpoint: '/items',
       params: { limit: '3', sort: 'dateAdded', direction: 'desc' },
     });
+    return body;
   },
   sampleData: {
     key: 'ABC12345',
@@ -82,7 +85,12 @@ interface FetchAllParams {
   sinceVersion: number;
 }
 
-async function fetchPage({ apiKey, url }: { apiKey: string; url: string }): Promise<{ items: ZoteroItem[]; nextUrl: string | null }> {
+interface FetchAllResult {
+  items: ZoteroItem[];
+  nextLibraryVersion: number;
+}
+
+async function fetchPage({ apiKey, url }: { apiKey: string; url: string }): Promise<{ items: ZoteroItem[]; nextUrl: string | null; libraryVersion: number }> {
   const response = await httpClient.sendRequest<ZoteroItem[]>({
     method: HttpMethod.GET,
     url,
@@ -91,23 +99,25 @@ async function fetchPage({ apiKey, url }: { apiKey: string; url: string }): Prom
       'Zotero-API-Version': '3',
     },
   });
-  const linkHeader = (response.headers as Record<string, string>)['link'] ?? '';
+  const headers = response.headers as Record<string, string>;
+  const linkHeader = headers['link'] ?? '';
   const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
-  return { items: response.body, nextUrl: nextMatch ? nextMatch[1] : null };
+  const libraryVersion = parseInt(headers['last-modified-version'] ?? '0', 10);
+  return { items: response.body, nextUrl: nextMatch ? nextMatch[1] : null, libraryVersion };
 }
 
-async function fetchAllSince({ apiKey, userOrGroup, libraryId, sinceVersion }: FetchAllParams): Promise<ZoteroItem[]> {
+async function fetchAllSince({ apiKey, userOrGroup, libraryId, sinceVersion }: FetchAllParams): Promise<FetchAllResult> {
   const allItems: ZoteroItem[] = [];
   const prefix = userOrGroup === 'user' ? 'users' : 'groups';
   const firstUrl = `${ZOTERO_BASE_URL}/${prefix}/${libraryId}/items?since=${sinceVersion}&sort=dateAdded&direction=desc&limit=100`;
 
-  let { items, nextUrl } = await fetchPage({ apiKey, url: firstUrl });
+  let { items, nextUrl, libraryVersion } = await fetchPage({ apiKey, url: firstUrl });
   allItems.push(...items);
 
   while (nextUrl) {
-    ({ items, nextUrl } = await fetchPage({ apiKey, url: nextUrl }));
+    ({ items, nextUrl, libraryVersion } = await fetchPage({ apiKey, url: nextUrl }));
     allItems.push(...items);
   }
 
-  return allItems;
+  return { items: allItems, nextLibraryVersion: libraryVersion };
 }

@@ -1,6 +1,11 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
-async function sendRequest<T>(apiKey: string, method: HttpMethod, url: string, body?: object): Promise<T> {
+export interface ZoteroResponse<T> {
+  body: T;
+  lastModifiedVersion: number;
+}
+
+async function sendRequest<T>(apiKey: string, method: HttpMethod, url: string, body?: object): Promise<ZoteroResponse<T>> {
   const response = await httpClient.sendRequest<T>({
     method,
     url,
@@ -11,7 +16,11 @@ async function sendRequest<T>(apiKey: string, method: HttpMethod, url: string, b
     },
     body,
   });
-  return response.body;
+  const lastModifiedVersion = parseInt(
+    (response.headers as Record<string, string>)['last-modified-version'] ?? '0',
+    10,
+  );
+  return { body: response.body, lastModifiedVersion };
 }
 
 function libraryPath(userOrGroup: string, libraryId: string): string {
@@ -27,7 +36,7 @@ export async function makeZoteroRequest<T>({
   endpoint,
   body,
   params,
-}: ZoteroRequestParams): Promise<T> {
+}: ZoteroRequestParams): Promise<ZoteroResponse<T>> {
   const url = new URL(`${ZOTERO_BASE_URL}${libraryPath(userOrGroup, libraryId)}${endpoint}`);
   if (params) {
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));

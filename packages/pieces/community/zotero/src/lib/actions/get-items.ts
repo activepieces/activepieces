@@ -53,7 +53,7 @@ export const getItems = createAction({
       ? `/collections/${context.propsValue.collection_key}/items`
       : '/items';
 
-    return makeZoteroRequest<ZoteroItem[]>({
+    const { body } = await makeZoteroRequest<ZoteroItem[]>({
       apiKey: api_key,
       userOrGroup: user_or_group,
       libraryId: library_id,
@@ -61,5 +61,6 @@ export const getItems = createAction({
       endpoint,
       params: queryParams,
     });
+    return body;
   },
 });
