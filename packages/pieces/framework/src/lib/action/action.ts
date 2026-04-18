@@ -30,6 +30,10 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
   auth?: PieceAuth
   displayName: string
   description: string
+  descriptionForLLM?: string
+  outputSchema?: Record<string, unknown>
+  tags?: string[]
+  difficulty?: 'easy' | 'medium' | 'hard'
   props: ActionProps
   run: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>
   test?: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>
@@ -43,6 +47,10 @@ export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |
     public readonly name: string,
     public readonly displayName: string,
     public readonly description: string,
+    public readonly descriptionForLLM: string | undefined,
+    public readonly outputSchema: Record<string, unknown> | undefined,
+    public readonly tags: string[] | undefined,
+    public readonly difficulty: 'easy' | 'medium' | 'hard' | undefined,
     public readonly props: ActionProps,
     public readonly run: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>,
     public readonly test: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>,
@@ -57,6 +65,10 @@ export type Action<
   ActionProps extends InputPropertyMap = any,
 > = IAction<PieceAuth, ActionProps>
 
+export type ActionResult<T = unknown> =
+  | { success: true; data: T }
+  | { success: false; error: string }
+
 export const createAction = <
   PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = PieceAuthProperty,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,6 +80,10 @@ export const createAction = <
     params.name,
     params.displayName,
     params.description,
+    params.descriptionForLLM,
+    params.outputSchema,
+    params.tags,
+    params.difficulty,
     params.props,
     params.run,
     params.test ?? params.run,
