@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Build and run the privileged sandbox/SSRF integration test container.
-# Requires a local Docker daemon. See packages/server/worker/integration-test/README.md.
+# Requires a local Docker daemon. See packages/server/worker/test/e2e/README.md.
 
 set -euo pipefail
 
@@ -11,7 +11,7 @@ if ! command -v docker >/dev/null 2>&1; then
 fi
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-DOCKERFILE="$ROOT/packages/server/worker/integration-test/Dockerfile"
+DOCKERFILE="$ROOT/packages/server/worker/test/e2e/Dockerfile"
 IMAGE="activepieces-sandbox-e2e:local"
 
 echo "=> Building image $IMAGE"

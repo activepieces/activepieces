@@ -1,7 +1,7 @@
 import http from 'node:http'
 import net from 'node:net'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { startEgressProxy, EgressProxy } from '../../src/lib/ssrf/egress-proxy'
+import { startEgressProxy, EgressProxy } from '../../src/lib/egress/proxy'
 import { silentLogger } from './helpers/silent-logger'
 import { EchoServer, startHttpEcho } from './helpers/test-server'
 

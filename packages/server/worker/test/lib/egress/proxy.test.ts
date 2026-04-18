@@ -1,7 +1,8 @@
 import http from 'node:http'
 import { AddressInfo, createServer, Server } from 'node:net'
 import pino from 'pino'
-import { EgressProxy, startEgressProxy } from '../../../src/lib/ssrf/egress-proxy'
+import { afterEach, describe, expect, it } from 'vitest'
+import { EgressProxy, startEgressProxy } from '../../../src/lib/egress/proxy'
 
 const log = pino({ level: 'silent' })
 

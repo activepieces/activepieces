@@ -1,15 +1,16 @@
 import { execFile, spawn } from 'node:child_process'
 import { promisify } from 'node:util'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { applyIptablesLockdown, IptablesLockdown } from '../../src/lib/ssrf/iptables-lockdown'
+import { sandboxCapacity } from '../../src/lib/sandbox/capacity'
+import { iptablesLockdown, IptablesLockdown } from '../../src/lib/egress/iptables-lockdown'
 import { requireLinuxPrivileged } from './helpers/privilege-guard'
 import { silentLogger } from './helpers/silent-logger'
 import { EchoServer, startTcpEcho } from './helpers/test-server'
 
 const execFileAsync = promisify(execFile)
 
-const SANDBOX_UID = 60000
-const SANDBOX_GID = 60000
+const SANDBOX_UID = sandboxCapacity.firstBoxUid
+const SANDBOX_GID = sandboxCapacity.firstBoxUid
 const CHAIN = 'AP_EGRESS_LOCKDOWN'
 
 const skip = requireLinuxPrivileged()
@@ -33,10 +34,10 @@ describe.skipIf(skip)('iptables-lockdown — real kernel rules', () => {
     })
 
     beforeEach(async () => {
-        lockdown = await applyIptablesLockdown({
+        lockdown = await iptablesLockdown.apply({
             log: silentLogger(),
             proxyPort: proxyEcho.port,
-            wsRpcPorts: [rpcEcho.port],
+            wsRpcPortRange: { first: rpcEcho.port, last: rpcEcho.port },
             firstBoxUid: SANDBOX_UID,
             numBoxes: 1,
         })
@@ -52,7 +53,8 @@ describe.skipIf(skip)('iptables-lockdown — real kernel rules', () => {
     it('installs the AP_EGRESS_LOCKDOWN chain in the OUTPUT flow', async () => {
         const { stdout } = await execFileAsync('iptables', ['-S', CHAIN])
         expect(stdout).toContain(`-A ${CHAIN} -o lo -p tcp -m tcp --dport ${proxyEcho.port} -j ACCEPT`)
-        expect(stdout).toContain(`-A ${CHAIN} -o lo -p tcp -m tcp --dport ${rpcEcho.port} -j ACCEPT`)
+        // iptables renders single-port ranges as either "N" or "N:N" depending on version.
+        expect(stdout).toMatch(new RegExp(`-A ${CHAIN} -o lo -p tcp -m tcp --dport ${rpcEcho.port}(:${rpcEcho.port})? -j ACCEPT`))
         expect(stdout).toContain(`-A ${CHAIN} -j REJECT --reject-with icmp-host-prohibited`)
 
         const { stdout: outputChain } = await execFileAsync('iptables', ['-S', 'OUTPUT'])

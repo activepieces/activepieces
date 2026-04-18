@@ -3,19 +3,20 @@ import { nanoid } from 'nanoid'
 import { Logger } from 'pino'
 import { getEnginePath, getGlobalCacheCommonPath, getGlobalCodeCachePath } from '../cache/cache-paths'
 import { workerSettings } from '../config/worker-settings'
+import { sandboxCapacity } from '../sandbox/capacity'
 import { simpleProcess } from '../sandbox/fork'
 import { isolateProcess } from '../sandbox/isolate'
 import { createSandbox } from '../sandbox/sandbox'
 import { Sandbox, SandboxMount } from '../sandbox/types'
-import { egressProxyState } from '../ssrf/proxy-state'
 
 export function createSandboxForJob(params: {
     log: Logger
     apiClient: WorkerToApiContract
     boxId: number
     reusable: boolean
+    proxyPort: number | null
 }): Sandbox {
-    const { log, apiClient, boxId, reusable } = params
+    const { log, apiClient, boxId, reusable, proxyPort } = params
     const settings = workerSettings.getSettings()
     const sandboxId = nanoid()
 
@@ -34,34 +35,27 @@ export function createSandboxForJob(params: {
     ]
 
     const executionMode = settings.EXECUTION_MODE as ExecutionMode
-    const requiresFixedWsRpcPort = executionMode === ExecutionMode.SANDBOX_PROCESS || executionMode === ExecutionMode.SANDBOX_CODE_AND_PROCESS
 
     return createSandbox(
         log,
         sandboxId,
         {
-            env: buildSandboxEnv(settings),
+            env: buildSandboxEnv({ settings, proxyPort }),
             memoryLimitMb,
             cpuMsPerSec: 1000,
             timeLimitSeconds: settings.FLOW_TIMEOUT_SECONDS,
             reusable,
             baseMounts,
-            wsRpcPort: requiresFixedWsRpcPort ? wsRpcPortForBox(boxId) : undefined,
+            wsRpcPort: isIsolateMode(executionMode) ? sandboxCapacity.wsRpcPortForBox(boxId) : undefined,
         },
         processMaker,
         workerHandlers,
     )
 }
 
-export function wsRpcPortForBox(boxId: number): number {
-    return WS_RPC_BASE_PORT + boxId
+export function isIsolateMode(mode: ExecutionMode): boolean {
+    return mode === ExecutionMode.SANDBOX_PROCESS || mode === ExecutionMode.SANDBOX_CODE_AND_PROCESS
 }
-
-export function wsRpcPortRange(numBoxes: number): number[] {
-    return Array.from({ length: numBoxes }, (_, i) => WS_RPC_BASE_PORT + i)
-}
-
-const WS_RPC_BASE_PORT = 52000
 
 function getProcessMaker(executionMode: string, log: Logger, boxId: number) {
     switch (executionMode) {
@@ -81,8 +75,20 @@ function parseMemoryLimit(memoryLimitKb: string): number {
     return Math.floor(kb / 1024)
 }
 
-function buildSandboxEnv(settings: ReturnType<typeof workerSettings.getSettings>): Record<string, string> {
-    const env: Record<string, string> = {
+function buildSandboxEnv({ settings, proxyPort }: {
+    settings: WorkerSettings
+    proxyPort: number | null
+}): Record<string, string> {
+    return {
+        ...baseEnv(settings),
+        ...ssrfEnv(settings),
+        ...proxyEnv({ settings, proxyPort }),
+        ...propagatedEnv(settings),
+    }
+}
+
+function baseEnv(settings: WorkerSettings): Record<string, string> {
+    return {
         HOME: '/tmp/',
         AP_EXECUTION_MODE: settings.EXECUTION_MODE,
         AP_MAX_FLOW_RUN_LOG_SIZE_MB: String(settings.MAX_FLOW_RUN_LOG_SIZE_MB),
@@ -90,24 +96,35 @@ function buildSandboxEnv(settings: ReturnType<typeof workerSettings.getSettings>
         NODE_PATH: '/usr/src/node_modules',
         AP_SSRF_PROTECTION_ENABLED: settings.SSRF_PROTECTION_ENABLED === true ? 'true' : 'false',
     }
+}
+
+function ssrfEnv(settings: WorkerSettings): Record<string, string> {
+    const env: Record<string, string> = {}
     if (settings.DEV_PIECES.length > 0) {
         env['AP_DEV_PIECES'] = settings.DEV_PIECES.join(',')
     }
     if (settings.SSRF_ALLOW_LIST.length > 0) {
         env['AP_SSRF_ALLOW_LIST'] = settings.SSRF_ALLOW_LIST.join(',')
     }
+    return env
+}
 
-    const proxyPort = egressProxyState.getPort()
-    if (settings.SSRF_PROTECTION_ENABLED && proxyPort !== null) {
-        const proxyUrl = `http://127.0.0.1:${proxyPort}`
-        env['HTTP_PROXY'] = proxyUrl
-        env['HTTPS_PROXY'] = proxyUrl
-        env['http_proxy'] = proxyUrl
-        env['https_proxy'] = proxyUrl
-        env['NO_PROXY'] = ''
-        env['no_proxy'] = ''
+function proxyEnv({ settings, proxyPort }: {
+    settings: WorkerSettings
+    proxyPort: number | null
+}): Record<string, string> {
+    if (!settings.SSRF_PROTECTION_ENABLED || proxyPort === null) {
+        return {}
     }
+    const proxyUrl = `http://127.0.0.1:${proxyPort}`
+    return {
+        ...Object.fromEntries(PROXY_URL_ENV_KEYS.map((k) => [k, proxyUrl])),
+        ...Object.fromEntries(NO_PROXY_ENV_KEYS.map((k) => [k, ''])),
+    }
+}
 
+function propagatedEnv(settings: WorkerSettings): Record<string, string> {
+    const env: Record<string, string> = {}
     for (const key of settings.SANDBOX_PROPAGATED_ENV_VARS) {
         if (process.env[key]) {
             env[key] = process.env[key]!
@@ -115,3 +132,8 @@ function buildSandboxEnv(settings: ReturnType<typeof workerSettings.getSettings>
     }
     return env
 }
+
+const PROXY_URL_ENV_KEYS = ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy'] as const
+const NO_PROXY_ENV_KEYS = ['NO_PROXY', 'no_proxy'] as const
+
+type WorkerSettings = ReturnType<typeof workerSettings.getSettings>

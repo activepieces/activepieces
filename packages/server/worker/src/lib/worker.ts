@@ -1,6 +1,4 @@
 import { createServer } from 'http'
-import dns from 'node:dns/promises'
-import net from 'node:net'
 import os from 'os'
 import { systemUsage } from '@activepieces/server-utils'
 import {
@@ -24,13 +22,10 @@ import { pieceInstaller } from './cache/pieces/piece-installer'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
-import { wsRpcPortRange } from './execute/create-sandbox-for-job'
+import { EgressStack, startEgressStack } from './egress/lifecycle'
 import { getHandler } from './execute/job-registry'
 import { createSandboxManager, SandboxManager } from './execute/sandbox-manager'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
-import { EgressProxy, startEgressProxy } from './ssrf/egress-proxy'
-import { applyIptablesLockdown, IptablesLockdown } from './ssrf/iptables-lockdown'
-import { egressProxyState } from './ssrf/proxy-state'
 
 
 const tracer = trace.getTracer('worker')
@@ -45,9 +40,7 @@ const workerHostname = os.hostname()
 
 let healthServerInstance: ReturnType<typeof createServer> | null = null
 
-let egressProxy: EgressProxy | null = null
-
-let iptablesLockdown: IptablesLockdown | null = null
+let egressStack: EgressStack | null = null
 
 let sandboxManagers: SandboxManager[] = []
 
@@ -66,8 +59,17 @@ export const worker = {
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
             await fetchAndStoreSettings(socket!)
-            await ensureEgressProxyStarted({ apiUrl })
-            await ensureKernelLockdownApplied()
+            if (!egressStack) {
+                const { data, error } = await tryCatch(() => startEgressStack({ log: logger, apiUrl }))
+                if (error) {
+                    // Kill switch: if SSRF hardening can't be applied, refuse to accept any job.
+                    // Running without egress protection in a configured-hardened worker is
+                    // more dangerous than crash-looping — the orchestrator will restart us.
+                    logger.fatal({ err: error }, 'Egress stack failed to start; aborting worker to avoid running unprotected')
+                    process.exit(1)
+                }
+                egressStack = data
+            }
             void warmupPiecesOnStartup(apiClient)
             void startPollingWorkers(apiClient).catch((err) => {
                 logger.error({ error: err }, 'Polling workers crashed unexpectedly')
@@ -98,71 +100,13 @@ export const worker = {
         socket = null
         healthServerInstance?.close()
         healthServerInstance = null
-        if (iptablesLockdown) {
-            await iptablesLockdown.remove()
-            iptablesLockdown = null
-        }
-        if (egressProxy) {
-            await egressProxy.close()
-            egressProxy = null
-            egressProxyState.setPort(null)
+        if (egressStack) {
+            await egressStack.shutdown()
+            egressStack = null
         }
         logger.info('Worker stopped')
     },
 }
-
-async function ensureEgressProxyStarted({ apiUrl }: { apiUrl: string }): Promise<void> {
-    if (egressProxy) return
-    const settings = workerSettings.getSettings()
-    if (!settings.SSRF_PROTECTION_ENABLED) {
-        return
-    }
-    const apiHostIps = await resolveHostToIps(apiUrl)
-    const allowList = [...new Set([...settings.SSRF_ALLOW_LIST, ...apiHostIps])]
-    egressProxy = await startEgressProxy({
-        log: logger,
-        allowList,
-    })
-    egressProxyState.setPort(egressProxy.port)
-    logger.info({ apiHostIps }, 'Egress proxy allowlist seeded with worker API host')
-}
-
-async function resolveHostToIps(rawUrl: string): Promise<string[]> {
-    try {
-        const hostname = new URL(rawUrl).hostname
-        if (net.isIP(hostname) > 0) return [hostname]
-        const addresses = await dns.lookup(hostname, { all: true })
-        return addresses.map((a) => a.address)
-    }
-    catch (err) {
-        logger.warn({ err, rawUrl }, 'Failed to resolve API host for egress proxy allowlist')
-        return []
-    }
-}
-
-async function ensureKernelLockdownApplied(): Promise<void> {
-    if (iptablesLockdown) return
-    const settings = workerSettings.getSettings()
-    const executionMode = settings.EXECUTION_MODE as ExecutionMode
-    const isIsolateMode = executionMode === ExecutionMode.SANDBOX_PROCESS || executionMode === ExecutionMode.SANDBOX_CODE_AND_PROCESS
-    if (!isIsolateMode) {
-        return
-    }
-    if (!egressProxy) {
-        throw new Error('Kernel lockdown requires the egress proxy to be running; AP_SSRF_PROTECTION_ENABLED must be true')
-    }
-    iptablesLockdown = await applyIptablesLockdown({
-        log: logger,
-        proxyPort: egressProxy.port,
-        wsRpcPorts: wsRpcPortRange(SANDBOX_NUM_BOXES),
-        firstBoxUid: SANDBOX_FIRST_UID,
-        numBoxes: SANDBOX_NUM_BOXES,
-    })
-    logger.info({ proxyPort: egressProxy.port, firstBoxUid: SANDBOX_FIRST_UID, numBoxes: SANDBOX_NUM_BOXES }, 'Kernel-level SSRF lockdown applied')
-}
-
-const SANDBOX_FIRST_UID = 60000
-const SANDBOX_NUM_BOXES = 1000
 
 async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void> {
     if (polling) return
@@ -181,7 +125,8 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
-    sandboxManagers = Array.from({ length: concurrency }, (_, i) => createSandboxManager(i + 1))
+    const proxyPort = egressStack?.proxyPort ?? null
+    sandboxManagers = Array.from({ length: concurrency }, (_, i) => createSandboxManager({ boxId: i + 1, proxyPort }))
 
     logger.info({ concurrency }, 'Starting polling workers')
 

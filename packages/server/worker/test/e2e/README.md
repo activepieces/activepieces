@@ -2,8 +2,8 @@
 
 These tests exercise the three SSRF hardening layers against real Linux primitives:
 
-- **Egress proxy** — HTTP/CONNECT forward proxy with IP allowlist (`src/lib/ssrf/egress-proxy.ts`)
-- **iptables lockdown** — kernel OUTPUT chain that REJECTs sandbox UIDs except the proxy port (`src/lib/ssrf/iptables-lockdown.ts`)
+- **Egress proxy** — HTTP/CONNECT forward proxy with IP allowlist (`src/lib/egress/proxy.ts`)
+- **iptables lockdown** — kernel OUTPUT chain that REJECTs sandbox UIDs except the proxy port (`src/lib/egress/iptables-lockdown.ts`)
 - **Engine SSRF guard** — Node.js `dns.lookup` + `Socket.connect` + undici hooks (`engine/src/lib/ssrf/ssrf-guard.ts`)
 
 They require `iptables`, the `isolate` binary, and `CAP_NET_ADMIN` / `CAP_SYS_ADMIN` — none of which are available on macOS. Run them through the provided Docker harness.
@@ -22,4 +22,4 @@ If the suite is invoked directly on a host that lacks the required primitives it
 
 ## Why these exist alongside the unit tests
 
-The unit tests under `packages/server/worker/test/lib/ssrf/` and `packages/server/engine/test/ssrf/` mock `execFile`, `spawn`, and kernel state. They prove the logic branches, not that the kernel is actually enforcing anything. These e2e tests close that gap.
+The unit tests under `packages/server/worker/test/lib/egress/` and `packages/server/engine/test/ssrf/` mock `execFile`, `spawn`, and kernel state. They prove the logic branches, not that the kernel is actually enforcing anything. These e2e tests close that gap.

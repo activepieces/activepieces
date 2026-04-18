@@ -1,6 +1,7 @@
 import dns from 'node:dns'
 import { Socket, createServer, Server } from 'node:net'
-import { getGlobalDispatcher, ProxyAgent, setGlobalDispatcher } from 'undici'
+import { EnvHttpProxyAgent, getGlobalDispatcher, setGlobalDispatcher } from 'undici'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { ssrfGuard, SSRFBlockedError } from '../../src/lib/ssrf/ssrf-guard'
 
 function connectOnce(options: { host: string, port: number }): Promise<{ connected: boolean, error?: Error }> {
@@ -144,10 +145,10 @@ describe('ssrf-guard', () => {
             setGlobalDispatcher(originalDispatcher)
         })
 
-        it('replaces the global dispatcher with a ProxyAgent when HTTPS_PROXY is set', () => {
+        it('replaces the global dispatcher with an EnvHttpProxyAgent when HTTPS_PROXY is set', () => {
             process.env['HTTPS_PROXY'] = 'http://127.0.0.1:4444'
             ssrfGuard.install({ enabled: true, allowList: [] })
-            expect(getGlobalDispatcher()).toBeInstanceOf(ProxyAgent)
+            expect(getGlobalDispatcher()).toBeInstanceOf(EnvHttpProxyAgent)
         })
 
         it('leaves dispatcher untouched when no proxy env is set', () => {

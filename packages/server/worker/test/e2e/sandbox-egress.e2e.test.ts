@@ -2,15 +2,16 @@ import { chmod, mkdtemp, copyFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { startEgressProxy, EgressProxy } from '../../src/lib/ssrf/egress-proxy'
-import { applyIptablesLockdown, IptablesLockdown } from '../../src/lib/ssrf/iptables-lockdown'
+import { sandboxCapacity } from '../../src/lib/sandbox/capacity'
 import { getIsolateExecutableName, isolateProcess } from '../../src/lib/sandbox/isolate'
+import { iptablesLockdown, IptablesLockdown } from '../../src/lib/egress/iptables-lockdown'
+import { startEgressProxy, EgressProxy } from '../../src/lib/egress/proxy'
 import { requireIsolateBinary, requireLinuxPrivileged } from './helpers/privilege-guard'
 import { silentLogger } from './helpers/silent-logger'
 import { EchoServer, startHttpEcho } from './helpers/test-server'
 
 const BOX_ID = 0
-const SANDBOX_UID = 60000 + BOX_ID
+const SANDBOX_UID = sandboxCapacity.firstBoxUid + BOX_ID
 const ISOLATE_BINARY_PATH = path.resolve(process.cwd(), 'packages/server/api/src/assets', getIsolateExecutableName())
 
 const skip = requireLinuxPrivileged() ?? requireIsolateBinary(ISOLATE_BINARY_PATH)
@@ -42,10 +43,9 @@ describe.skipIf(skip)('sandbox egress — full stack (proxy + iptables + isolate
     })
 
     beforeEach(async () => {
-        lockdown = await applyIptablesLockdown({
+        lockdown = await iptablesLockdown.apply({
             log: silentLogger(),
             proxyPort: proxy.port,
-            wsRpcPorts: [],
             firstBoxUid: SANDBOX_UID,
             numBoxes: 1,
         })

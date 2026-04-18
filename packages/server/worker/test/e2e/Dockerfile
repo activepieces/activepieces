@@ -63,4 +63,4 @@ ENV E2E_LOG_LEVEL=warn
 # cwd is the repo root — isolate.ts resolves its binary via `process.cwd() + packages/server/api/src/assets/…`.
 WORKDIR /usr/src/app
 
-CMD ["bun", "x", "vitest", "run", "--config", "packages/server/worker/integration-test/vitest.config.ts"]
+CMD ["bun", "x", "vitest", "run", "--config", "packages/server/worker/test/e2e/vitest.config.ts"]
