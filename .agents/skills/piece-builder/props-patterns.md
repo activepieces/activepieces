@@ -2,6 +2,8 @@
 
 Used in both `createAction({ props: {...} })` and `createTrigger({ props: {...} })`.
 
+> **The `example` field is mandatory on every static property.** Provide a realistic sample value (not `"string"` or `"value"`) that shows the expected format. This guides LLMs to generate valid inputs on the first try. Dynamic dropdowns and `DynamicProperties` may omit `example` since the values come from API calls. See `SKILL.md` → AI Metadata section.
+
 ---
 
 ## Text
@@ -9,13 +11,16 @@ Used in both `createAction({ props: {...} })` and `createTrigger({ props: {...} 
 ```typescript
 Property.ShortText({
   displayName: 'Title',
-  description: 'Optional help text',
+  description: 'Short descriptive title. Max 255 characters.',
+  example: 'Q1 2026 Product Launch',
   required: true,
   defaultValue: 'Default text',
 })
 
 Property.LongText({
   displayName: 'Body',
+  description: 'Long-form text. Supports markdown.',
+  example: 'Kickoff meeting notes and action items for the launch.',
   required: false,
 })
 ```
@@ -25,12 +30,16 @@ Property.LongText({
 ```typescript
 Property.Number({
   displayName: 'Limit',
+  description: 'Maximum number of records to return.',
+  example: 10,
   required: false,
   defaultValue: 10,
 })
 
 Property.Checkbox({
   displayName: 'Include archived?',
+  description: 'Whether to include archived records in the result.',
+  example: false,
   required: false,
   defaultValue: false,
 })
@@ -41,6 +50,8 @@ Property.Checkbox({
 ```typescript
 Property.DateTime({
   displayName: 'Due Date',
+  description: 'ISO 8601 date-time. Timezone-aware.',
+  example: '2026-04-17T10:30:00Z',
   required: false,
 })
 ```
@@ -50,6 +61,7 @@ Property.DateTime({
 ```typescript
 Property.File({
   displayName: 'Attachment',
+  description: 'File to upload. Max 25 MB.',
   required: false,
 })
 ```
@@ -59,13 +71,15 @@ Property.File({
 ```typescript
 Property.Json({
   displayName: 'Custom Data',
-  description: 'Enter valid JSON',
+  description: 'Enter valid JSON.',
+  example: { key: 'value', count: 3 },
   required: false,
 })
 
 Property.Object({
   displayName: 'Metadata',
-  description: 'Key-value pairs',
+  description: 'Key-value pairs.',
+  example: { name: 'Jane', role: 'admin' },
   required: false,
 })
 ```
@@ -76,17 +90,21 @@ Property.Object({
 // Simple array of strings
 Property.Array({
   displayName: 'Tags',
+  description: 'List of tag names to apply.',
+  example: ['bug', 'enhancement'],
   required: false,
 })
 
 // Array with structured sub-properties
 Property.Array({
   displayName: 'Line Items',
+  description: 'Each line item must include name and quantity.',
+  example: [{ name: 'Widget', quantity: 2, price: 9.99 }],
   required: true,
   properties: {
-    name: Property.ShortText({ displayName: 'Item Name', required: true }),
-    quantity: Property.Number({ displayName: 'Quantity', required: true }),
-    price: Property.Number({ displayName: 'Price', required: false }),
+    name: Property.ShortText({ displayName: 'Item Name', description: 'Product name.', example: 'Widget', required: true }),
+    quantity: Property.Number({ displayName: 'Quantity', description: 'Units to order.', example: 2, required: true }),
+    price: Property.Number({ displayName: 'Price', description: 'Unit price in USD.', example: 9.99, required: false }),
   },
 })
 ```
@@ -96,6 +114,8 @@ Property.Array({
 ```typescript
 Property.StaticDropdown({
   displayName: 'Status',
+  description: 'Current status of the record.',
+  example: 'active',
   required: true,
   options: {
     options: [
@@ -108,6 +128,8 @@ Property.StaticDropdown({
 
 Property.StaticMultiSelectDropdown({
   displayName: 'Categories',
+  description: 'One or more categories to classify the record.',
+  example: ['sales', 'marketing'],
   required: false,
   options: {
     options: [

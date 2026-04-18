@@ -139,8 +139,9 @@ Copy config files from an existing simple piece (e.g. `packages/pieces/core/qrco
 | HTTP client, shared helpers, pagination         | `common-patterns.md`  |
 | Every prop and dropdown **(mandatory for all)** | `ux-guidelines.md`    |
 | Every return value **(mandatory for all)**      | `output-quality.md`   |
+| **AI metadata (mandatory on every action & trigger)** | `SKILL.md` → AI Metadata section |
 
-`ux-guidelines.md` and `output-quality.md` apply to **every** action and trigger -- read them before starting, not only when unsure.
+`ux-guidelines.md`, `output-quality.md`, and the **AI Metadata** section apply to **every** action and trigger -- read them before starting, not only when unsure.
 
 ### Step 5: WIRE & VERIFY
 
@@ -288,13 +289,78 @@ Every action output must be directly mappable to Google Sheets, Excel, and Activ
 
 Full patterns and examples: read `output-quality.md`
 
+## AI Metadata: Required for Every Action & Trigger
+
+Pieces must be usable by AI agents and MCP clients. **Every action and trigger must populate these fields** -- they are not optional.
+
+### Required fields on every `createAction` / `createTrigger`
+
+| Field | Type | Purpose |
+|---|---|---|
+| `descriptionForLLM` | `string` | LLM-optimized description. Template: `"<Verb> <what>. Use when <situation>. <Constraints>."` Max ~500 chars. |
+| `tags` | `string[]` | Classification tags. Pick one verb tag from: `read`, `write`, `delete`, `search`, `list` -- plus one domain tag (`issues`, `messages`, `files`, `contacts`, etc.). |
+| `difficulty` | `'easy' \| 'medium' \| 'hard'` | `easy` = single API call, no dependencies. `medium` = multiple calls, needs lookups. `hard` = multi-step with side effects. |
+
+### Required on every `createAction` (in addition to above)
+
+| Field | Type | Purpose |
+|---|---|---|
+| `outputSchema` | `Record<string, unknown>` | JSON Schema of what `run()` returns. Every top-level field must have a `type` and `description`. Lets LLMs use downstream fields without hallucinating names. |
+
+### Required on every `Property`
+
+| Field | Type | Purpose |
+|---|---|---|
+| `example` | `unknown` | A realistic sample value showing the expected format. Not `"string"` or `"value"` -- an actual example. |
+
+### Description writing rules
+
+-   **Verb-first:** `"Creates"`, `"Fetches"`, `"Searches"`, `"Updates"`, `"Deletes"` -- never noun-first.
+-   **Two parts:** what it does + when to use it.
+-   **State constraints:** `"Requires a repository owner"`, `"Returns up to 100 results"`, `"At least one of X or Y must be provided"`.
+-   **Under 500 characters** -- shorter wins for LLM context.
+
+**Bad:** `"Create Issue in GitHub Repository"`
+**Good:** `"Creates a new issue in a GitHub repository. Use when you need to report a bug, request a feature, or track work. Requires repository owner and name. Returns issue number and URL."`
+
+### Property `example` rules
+
+-   Show format, not just concept.
+-   For IDs: show the real format (`"cus_abc123xyz"`, not `"id"`).
+-   For enums: pick a common one (`"open"`, not `"status"`).
+-   For dates: ISO 8601 (`"2026-04-17T10:30:00Z"`).
+-   For URLs: full URL (`"https://example.com/file.pdf"`).
+
+**Bad:** `description: "The title"` (no example)
+**Good:** `description: "Issue title. Max 255 characters.", example: "Bug: Login page crashes on mobile Safari"`
+
+### Optional but recommended: `ActionResult<T>` return type
+
+For new actions, wrap the return in the `ActionResult<T>` type exported from `@activepieces/pieces-framework`:
+
+```typescript
+import { ActionResult } from '@activepieces/pieces-framework';
+
+async run(context): Promise<ActionResult<{ number: number; html_url: string }>> {
+  try {
+    const issue = await createIssue(context.propsValue);
+    return { success: true, data: { number: issue.number, html_url: issue.html_url } };
+  } catch (e) {
+    return { success: false, error: (e as Error).message };
+  }
+}
+```
+
+This gives agents a predictable success/error shape instead of raw API responses.
+
 ## Critical Reminders
 
-1. **Register in tsconfig.base.json** -- Alphabetically in `compilerOptions.paths`. Build fails without this.
-2. **Action names are permanent** -- The `name` field in `createAction`/`createTrigger` must never change after publishing.
-3. **Export auth from index.ts** -- Actions and triggers import auth via `import { myAppAuth } from '../../'`.
-4. **Always provide sampleData** on triggers -- Even if it's just `{}`.
-5. **ux-guidelines.md and output-quality.md are mandatory** -- Read them before implementing any action or trigger.
+1. **AI Metadata is MANDATORY** -- every action/trigger must have `descriptionForLLM`, `tags`, `difficulty`; every action must also have `outputSchema`; every property must have `example`. See the AI Metadata section above.
+2. **Register in tsconfig.base.json** -- Alphabetically in `compilerOptions.paths`. Build fails without this.
+3. **Action names are permanent** -- The `name` field in `createAction`/`createTrigger` must never change after publishing.
+4. **Export auth from index.ts** -- Actions and triggers import auth via `import { myAppAuth } from '../../'`.
+5. **Always provide sampleData** on triggers -- Even if it's just `{}`.
+6. **ux-guidelines.md and output-quality.md are mandatory** -- Read them before implementing any action or trigger.
 
 ## When to Ask the User
 
