@@ -79,13 +79,6 @@ export const ProjectWithLimits = Project.omit({ deleted: true }).extend({
     analytics: projectAnalytics,
 })
 
-export const UpdateProjectRequestInCommunity = z.object({
-    displayName: z.string().regex(new RegExp(SAFE_STRING_PATTERN)).optional(),
-    metadata: Metadata.optional(),
-})
-
-export type UpdateProjectRequestInCommunity = z.infer<typeof UpdateProjectRequestInCommunity>
-
 export type ProjectWithLimits = z.infer<typeof ProjectWithLimits>
 
 export const ProjectMetaData = z.object({

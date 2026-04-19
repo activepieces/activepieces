@@ -162,7 +162,7 @@ export const InviteUserDialog = ({
         : platform.plan.projectRolesEnabled && project.type === ProjectType.TEAM
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
-      platformRole: PlatformRole.ADMIN,
+      platformRole: PlatformRole.OPERATOR,
       projectRole: undefined,
     },
   });
