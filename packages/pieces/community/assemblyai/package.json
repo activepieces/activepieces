@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-assemblyai",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {

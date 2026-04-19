@@ -13,6 +13,11 @@ import { shipmentCreated } from './lib/triggers/shipment-created';
 import { createCustomer } from './lib/actions/create-customer';
 import { bigcommerceAuth } from './lib/common/auth';
 import { createAProduct } from './lib/actions/create-a-product';
+import { updateAProduct } from './lib/actions/update-a-product';
+import { deleteAProduct } from './lib/actions/delete-a-product';
+import { getOrder } from './lib/actions/get-order';
+import { listOrders } from './lib/actions/list-orders';
+import { listCategories } from './lib/actions/list-categories';
 import { createBlogPost } from './lib/actions/create-blog-post';
 import { createCustomerAddress } from './lib/actions/create-customer-address';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
@@ -25,16 +30,21 @@ import { findOrCreateProduct } from './lib/actions/find-or-create-product';
 import { findOrCreateCustomersAddress } from './lib/actions/find-or-create-customers-address';
 
 export const bigcommerce = createPiece({
-  displayName: 'Bigcommerce',
+  displayName: 'BigCommerce',
   description:
     'BigCommerce is a leading e-commerce platform that enables businesses to create and manage online stores.',
   auth: bigcommerceAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.82.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bigcommerce.png',
-  authors: ['gs03-dev', 'sanket-a11y'],
+  authors: ['gs03-dev', 'sanket-a11y', 'Angelebeats'],
   actions: [
     createCustomer,
     createAProduct,
+    updateAProduct,
+    deleteAProduct,
+    getOrder,
+    listOrders,
+    listCategories,
     createBlogPost,
     createCustomerAddress,
     searchCustomer,
