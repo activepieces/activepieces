@@ -2,48 +2,55 @@
 
 Fastify 5 + TypeORM (PostgreSQL) + BullMQ (Redis) + `fastify-type-provider-zod`.
 
-## Patterns (Reference Real Code)
+## Tech Stack
 
-- **Entity**: `EntitySchema` + `BaseColumnSchemaPart` + `ApIdSchema`. Register in `getEntities()`. See `tables/table/table.entity.ts`.
-- **Service (dominant)**: `export const myService = (log: FastifyBaseLogger) => ({...})` — use when logging, telemetry, or locking needed. See `flows/flow/flow.service.ts`.
-- **Service (simple)**: `export const myService = {...}` — use for pure CRUD. See `tables/table/table.service.ts`.
-- **Controller**: `FastifyPluginAsyncZod`. Route config objects AFTER controller. See `tables/table/table.controller.ts`.
-- **Module**: Register in `app.ts`. See `tables/tables.module.ts`.
+- **Framework**: Fastify 5
+- **ORM**: TypeORM with PostgreSQL
+- **Job Queues**: BullMQ
+- **Cache/Redis**: ioredis
+- **Observability**: OpenTelemetry
+- **Language**: TypeScript (strict)
 
-## Security Access (6 variants)
+## Project Structure
 
-- `securityAccess.project(principals, permission, { type: ProjectResourceType.X })` — project-scoped
-- `securityAccess.platformAdminOnly(principals)` — platform admin
-- `securityAccess.publicPlatform(principals)` — any platform member
-- `securityAccess.public()` — no auth
-- `securityAccess.unscoped(principals)` — worker/internal
-- `securityAccess.engine()` — engine only
+- `src/app/` — Feature modules (flows, pieces, tables, authentication, webhooks, etc.)
+- `src/app/ee/` — Enterprise features (SSO, SAML, SCIM, multi-tenancy)
+- `src/app/database/` — Database migrations and connection setup (TypeORM)
+- `src/app/helper/` — Shared server utilities
 
-`ProjectResourceType`: `BODY`, `QUERY`, `PARAM`, `TABLE`. Populates `request.projectId` via middleware.
+## Patterns
 
-## Migrations
+- **Controllers**: Use `FastifyPluginAsyncTypebox` pattern for route definitions with TypeBox schema validation
+- **HTTP methods**: Use `POST` for all create and update operations
+- **Database migrations**: Generated and managed via TypeORM
+- **Feature modules**: Each module typically has controller, service, and entity files
+- **Array columns in TypeORM entities**: Always use this pattern:
+  ```ts
+  columnName: {
+      type: String,
+      array: true,
+      nullable: false,
+  }
+  ```
 
-1. Read [playbook](https://www.activepieces.com/docs/handbook/engineering/playbooks/database-migration)
-2. Create class implementing `MigrationInterface` with `up()` and `down()`
-3. Import in `postgres-connection.ts` → add to `getMigrations()` (chronological)
-4. PGlite: use `CREATE INDEX` (not `CONCURRENTLY`). Set `transaction = false` for `CONCURRENTLY`.
+## Email Templates
 
-## Edition Gating
+Email templates live in `src/assets/emails/`. When creating or modifying email templates, follow these rules:
 
-- CE: `src/app/`. EE: `src/app/ee/`. Never cross-import.
-- Gate EE: `app.addHook('preHandler', platformMustHaveFeatureEnabled((p) => p.plan.myFlag))`
-- Hooks pattern: `hooksFactory.create<T>(ceDefault)` in CE, `.set(eeImpl)` in `app.ts`
-- Quota: `platformPlanService(log).checkActiveFlowsExceededLimit()`
+- **F-pattern layout** — All content (logo, heading, body, notes, fallback link, footer) must be **left-aligned**. The CTA button is auto-width, left-aligned.
+- **Design system consistency** — Use the same font scale as the web app: Inter font family, 32px/500 headings, 16px body, 14px closing, 11px muted text. Colors: `#0a0a0a` headings, `#2f2e2e` body, `#a3a3a3` muted.
+- **White-label ready** — Use `{{fullLogoUrl}}`, `{{primaryColor}}`, `{{primaryColorLight}}`, and `{{platformName}}` Mustache variables. Never hardcode "Activepieces" or brand colors.
+- **Card-on-background layout** — White card (`560px`, `border-radius: 12px`) on `{{primaryColorLight}}` tinted background.
+- **CTA button** — Auto-width, left-aligned, `{{primaryColor}}` background, 16px/500 white text, `12px 18px` padding, `8px` border-radius.
+- **Fallback link** — Below the CTA: "If the button doesn't work, click here." at 11px `#a3a3a3`, with `click here` underlined in `{{primaryColor}}`.
+- **Bold sparingly in body** — Only bold dynamic names the user needs to identify quickly (project name, role, flow name). Never bold static text.
+- **Outlook compatibility** — Include `<!--[if mso]>` font-family override block. Use table-based layout with inline styles only.
+- **No external dependencies** — No `<link>` stylesheets, no tracking pixels, no external font CSS. The `@font-face` CDN URLs in `<style>` are acceptable as progressive enhancement.
+- **Footer** — Use `{{> footer}}` Mustache partial. It renders the address only on Cloud edition.
 
-## Infrastructure
+## Guidelines
 
-- `repoFactory(Entity)` → `repo()` or `repo(entityManager)` for transactions
-- `buildPaginator({ entity, query })` + `paginationHelper.decodeCursor/createPage`
-- `distributedLock(log).runExclusive({ key, timeoutInSeconds, fn })`
-- `transaction(async (em) => {...})`
-- `websocketService.to(projectId).emit(event, data)`
-- `entitiesMustBeOwnedByCurrentProject` preSerialization hook for project-scoped responses
-
-## Testing
-
-See `test/integration/ce/` for patterns. Use `setupTestEnvironment()` + `createTestContext(app)` → `ctx.post()`, `ctx.get()`. DB auto-cleaned. Run: `npm run test-api`.
+- Read existing code before making changes to understand patterns
+- Follow the existing controller/service pattern when adding new endpoints
+- Write database migrations for schema changes, never modify entities directly without a migration
+- Keep enterprise features isolated in `src/app/ee/`

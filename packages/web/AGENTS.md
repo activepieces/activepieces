@@ -97,6 +97,9 @@ return useQuery({
 - If the query already has an `enabled` condition, combine them: `enabled: !!existing && platform.plan.<flag>`.
 - For pages with plan-gated content, also wrap with `LockedFeatureGuard` so users see an upgrade prompt instead of a broken/empty page.
 
+## F-Pattern Layout
+
+All user-facing layouts — pages, dialogs, cards, email templates — follow the **F-pattern reading model**. Content is left-aligned so users scan left-to-right then down the left edge. Avoid centering text blocks, headings, or body copy. CTAs (buttons) may be full-width but should not cause surrounding text to be centered.
 ## i18n / Translation Strings
 
 This project uses **ICU MessageFormat** via `i18next-icu` (configured in `src/i18n.ts`). All translation strings in `packages/web/public/locales/en/translation.json` must follow ICU syntax, **not** default i18next syntax.
