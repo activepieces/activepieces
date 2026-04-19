@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { SAFE_STRING_PATTERN } from '../../core/common'
 import { BaseModelSchema, DateOrString, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { Metadata } from '../../core/common/metadata'
