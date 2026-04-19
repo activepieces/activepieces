@@ -1,14 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { gmailAuth } from '../auth';
+import {
+  gmailAuth,
+  createGoogleClient,
+  getAccessToken,
+  getUserEmail,
+} from '../auth';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail from 'nodemailer/lib/mailer';
-import {
-  assertNotNullOrUndefined,
-  ExecutionType,
-  PauseType,
-} from '@activepieces/shared';
+import { assertNotNullOrUndefined, ExecutionType } from '@activepieces/shared';
 
 export const requestApprovalInEmail = createAction({
   auth: gmailAuth,
@@ -70,7 +70,7 @@ export const requestApprovalInEmail = createAction({
   async run(context) {
     if (context.executionType === ExecutionType.BEGIN) {
       try {
-        const token = context.auth.access_token;
+        const token = await getAccessToken(context.auth);
 
         const { subject, body } = context.propsValue;
 
@@ -79,10 +79,14 @@ export const requestApprovalInEmail = createAction({
         assertNotNullOrUndefined(subject, 'subject');
         assertNotNullOrUndefined(body, 'body');
 
-        const approvalLink = context.generateResumeUrl({
+        const waitpoint = await context.run.createWaitpoint({
+          type: 'WEBHOOK',
+        });
+
+        const approvalLink = waitpoint.buildResumeUrl({
           queryParams: { action: 'approve' },
         });
-        const disapprovalLink = context.generateResumeUrl({
+        const disapprovalLink = waitpoint.buildResumeUrl({
           queryParams: { action: 'disapprove' },
         });
 
@@ -97,8 +101,7 @@ export const requestApprovalInEmail = createAction({
         </div>
       `;
 
-        const authClient = new OAuth2Client();
-        authClient.setCredentials(context.auth);
+        const authClient = await createGoogleClient(context.auth);
 
         const gmail = google.gmail({ version: 'v1', auth: authClient });
 
@@ -128,11 +131,7 @@ export const requestApprovalInEmail = createAction({
 
         const senderEmail =
           context.propsValue.from ||
-          (
-            await google
-              .oauth2({ version: 'v2', auth: authClient })
-              .userinfo.get()
-          ).data.email;
+          (await getUserEmail(context.auth, authClient));
         if (senderEmail) {
           mailOptions.from = context.propsValue.sender_name
             ? `${context.propsValue['sender_name']} <${senderEmail}>`
@@ -171,12 +170,7 @@ export const requestApprovalInEmail = createAction({
             raw: encodedPayload,
           },
         });
-        context.run.pause({
-          pauseMetadata: {
-            type: PauseType.WEBHOOK,
-            response: {},
-          },
-        });
+        context.run.waitForWaitpoint(waitpoint.id);
 
         return {
           approved: false, // default approval is false

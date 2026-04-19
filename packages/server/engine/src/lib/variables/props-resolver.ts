@@ -3,7 +3,7 @@ import { AP_FUNCTIONS, applyFunctionToValues, evaluateExpression, isNil, isStrin
 
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { createConnectionService } from '../services/connections.service'
+import { createConnectionResolver } from '../piece-context/connection-resolver'
 import { utils } from '../utils'
 
 const VARIABLE_PATTERN = /\{\{(.*?)\}\}/g
@@ -163,7 +163,7 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
     if (censoredInput) {
         return '**REDACTED**'
     }
-    const connection = await createConnectionService({ engineToken, projectId, apiUrl, contextVersion: params.contextVersion }).obtain(connectionName)
+    const connection = await createConnectionResolver({ engineToken, projectId, apiUrl, contextVersion: params.contextVersion }).obtain(connectionName)
     const pathAfterConnectionName = parsePathAfterConnectionName(variableName, connectionName)
     if (isNil(pathAfterConnectionName) || pathAfterConnectionName.length === 0) {
         return connection

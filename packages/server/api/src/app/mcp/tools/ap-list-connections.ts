@@ -38,7 +38,7 @@ export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): M
         title: 'ap_list_connections',
         permission: Permission.READ_APP_CONNECTION,
         description:
-            'List OAuth/app connections available to the current project. Use this to discover available connections before adding steps that require auth (e.g. Google Drive, Slack). Filter by pieceName to find connections for a specific app, or by displayName to find a named connection. Use the `externalId` (not `id`) with the `auth` parameter of `ap_update_step`/`ap_update_trigger`. If no connection exists for the required piece, use ap_setup_guide to help the user create one.',
+            'List OAuth/app connections in the project. Returns externalId needed for the auth parameter on steps.',
         inputSchema: {
             pieceName: listConnectionsSchema.shape.pieceName,
             displayName: listConnectionsSchema.shape.displayName,

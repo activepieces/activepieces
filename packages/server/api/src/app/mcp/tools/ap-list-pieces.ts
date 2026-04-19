@@ -23,7 +23,7 @@ const listPiecesSchema = z.object({
 export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_pieces',
-        description: 'List available integration pieces (pieceName, pieceVersion, actions count, triggers count). IMPORTANT: Always search for a suitable piece before resorting to a CODE step — this should be the first tool you call when building or modifying a flow. Use includeActions=true to get action names, descriptions, and required input fields. Use includeTriggers=true to get trigger names, descriptions, and required input fields. Use suggestionType=ACTION or TRIGGER to filter pieces that only have relevant actions or triggers. Use specific searchQuery terms (e.g. "gmail" not "email send") for best results.',
+        description: 'List available pieces with their actions and triggers. Use includeActions/includeTriggers for details.',
         inputSchema: {
             categories: listPiecesSchema.shape.categories,
             tags: listPiecesSchema.shape.tags,
@@ -50,7 +50,14 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 if (!params.includeActions && !params.includeTriggers) {
                     const totalCount = pieces.length
                     const LIST_CAP = 50
-                    const capped = pieces.slice(0, LIST_CAP)
+                    const capped = pieces.slice(0, LIST_CAP).map(p => ({
+                        name: p.name,
+                        displayName: p.displayName,
+                        version: p.version,
+                        description: p.description,
+                        actions: p.actions,
+                        triggers: p.triggers,
+                    }))
                     const hint = totalCount > LIST_CAP ? ` (showing ${LIST_CAP} of ${totalCount} — use searchQuery to narrow results)` : ''
                     return {
                         content: [{ type: 'text', text: `✅ Successfully listed pieces${hint}:\n${JSON.stringify(capped)}` }],
@@ -80,7 +87,6 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                                 displayName: a.displayName,
                                 description: a.description,
                                 requireAuth: a.requireAuth,
-                                inputProps: mcpUtils.buildPropSummaries(a.props),
                             }))
                         }
                         if (params.includeTriggers) {
@@ -89,7 +95,6 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                                 displayName: t.displayName,
                                 description: t.description,
                                 requireAuth: t.requireAuth,
-                                inputProps: mcpUtils.buildPropSummaries(t.props),
                             }))
                         }
                     }

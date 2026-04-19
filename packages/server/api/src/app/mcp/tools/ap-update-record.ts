@@ -15,7 +15,7 @@ export const apUpdateRecordTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
     return {
         title: 'ap_update_record',
         permission: Permission.WRITE_TABLE,
-        description: 'Update specific cells in a record. Pass field names and new values — only specified fields are updated, others remain unchanged. Use ap_find_records to get record IDs.',
+        description: 'Update specific cells in a record. Only specified fields are changed.',
         inputSchema: updateRecordInput.shape,
         annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {

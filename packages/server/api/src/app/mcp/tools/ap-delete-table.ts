@@ -12,7 +12,7 @@ export const apDeleteTableTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
     return {
         title: 'ap_delete_table',
         permission: Permission.WRITE_TABLE,
-        description: 'Permanently delete a table and all its records and fields. This action cannot be undone. Use ap_list_tables to find the table ID.',
+        description: 'Permanently delete a table and all its data.',
         inputSchema: deleteTableInput.shape,
         annotations: { destructiveHint: true, openWorldHint: false },
         execute: async (args) => {
