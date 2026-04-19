@@ -1,0 +1,20 @@
+{
+  "name": "@activepieces/piece-customerio",
+  "version": "0.0.1",
+  "description": "Customer.io marketing automation piece for Activepieces",
+  "license": "MIT",
+  "main": "src/index.js",
+  "keywords": ["activepieces", "piece", "customerio", "email", "marketing"],
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint ./src --ext .ts"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-common": "*",
+    "@activepieces/pieces-framework": "*",
+    "@activepieces/shared": "*"
+  },
+  "devDependencies": {
+    "typescript": "5.1.6"
+  }
+}
