@@ -1,6 +1,6 @@
 # Action Patterns
 
-> **AI Metadata is mandatory on every action.** The `infoForLLM` bundle (just `description` today) must be populated. See `SKILL.md` → AI Metadata section for the rules.
+> **AI Metadata is mandatory on every action.** The `infoForLLM` bundle (just `description` today) must be populated, and every input property must carry a meaningful `description` with an example baked in where useful. See `SKILL.md` → AI Metadata section for the rules.
 
 ## Action Template
 
@@ -22,14 +22,16 @@ export const createRecordAction = createAction({
     description: "Creates a new record in My App. Use when you need to add a new entry (e.g. customer, task, or document) to the user's My App workspace. Requires a name; description is optional.",
   },
   props: {
+    // Every prop needs a description; embed an example in the prose where it
+    // clarifies the expected format (IDs, dates, enums, URLs, etc.).
     name: Property.ShortText({
       displayName: 'Name',
-      description: 'The name of the record. Max 255 characters.',
+      description: "Name of the record. Max 255 characters. Example: 'Q1 2026 Product Launch'.",
       required: true,
     }),
     description: Property.LongText({
       displayName: 'Description',
-      description: 'Optional longer description for the record.',
+      description: "Optional longer description for the record. Markdown supported. Example: 'Kickoff meeting notes and action items.'",
       required: false,
     }),
   },
@@ -51,7 +53,7 @@ export const createRecordAction = createAction({
 });
 ```
 
-**AI Metadata is mandatory -- do not skip `infoForLLM.description`.** See `SKILL.md` → AI Metadata section for rules and examples.
+**AI Metadata is mandatory -- do not skip `infoForLLM.description`, and never leave a property without a `description`.** Embed example values in prop descriptions whenever a sample value clarifies the format. See `SKILL.md` → AI Metadata section for rules and examples.
 
 **Real example:** `packages/pieces/community/github/src/lib/actions/create-issue.ts`
 

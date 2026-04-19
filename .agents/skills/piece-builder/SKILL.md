@@ -317,6 +317,24 @@ infoForLLM: {
 **Bad:** `"Create Issue in GitHub Repository"`
 **Good:** `"Creates a new issue in a GitHub repository. Use when you need to report a bug, request a feature, or track work. Requires repository owner and name. Returns issue number and URL."`
 
+### Property `description`: required on every prop, embed example values
+
+Every input property must have a `description` (the existing field on `Property.*`). The description is the **only** signal an LLM/MCP agent has about how to fill the prop, so write it as a one-or-two-sentence spec rather than a label.
+
+When a sample value would clarify the expected format (IDs, dates, enums, URLs, structured strings), bake it into the description prose using `(e.g. ...)` or `Example: ...`. There is no separate `example` field — the description carries the whole signal.
+
+Rules:
+-   **State the format**, not just the concept. "Issue title. Max 255 characters. Example: 'Bug: Login page crashes on mobile Safari'" beats "The title".
+-   **Prefer realistic samples**: actual ID formats (`'cus_abc123xyz'`), real ISO 8601 dates (`'2026-04-17T10:30:00Z'`), full URLs with protocol (`'https://example.com/file.pdf'`).
+-   **Skip examples** when the prop is self-explanatory (e.g. a boolean checkbox), when values come from an API at runtime (`Property.Dropdown`), or when shape is determined at runtime (`Property.DynamicProperties`).
+-   **Avoid placeholder-only examples**: never write `'string'`, `'value'`, `'<your API key>'`, `'example'`, empty `{}` / `[]`, or mismatched enum values.
+
+**Bad:** `description: "The status"`
+**Good:** `description: "Current status of the record. One of: 'open', 'in_progress', 'closed'."`
+
+**Bad:** `description: "Issue body"`
+**Good:** `description: "Markdown-formatted issue body. Example: '## Steps to reproduce\\n1. Open the app\\n2. ...'"`
+
 ### Optional but recommended: `ActionResult<T>` return type
 
 For new actions, wrap the return in the `ActionResult<T>` type exported from `@activepieces/pieces-framework`:
@@ -338,7 +356,7 @@ This gives agents a predictable success/error shape instead of raw API responses
 
 ## Critical Reminders
 
-1. **AI Metadata is MANDATORY** -- every action/trigger must have an `infoForLLM` bundle with `description`. See the AI Metadata section above.
+1. **AI Metadata is MANDATORY** -- every action/trigger must have an `infoForLLM` bundle with `description`, AND every input property must have a `description` (with an example baked in where useful). See the AI Metadata section above.
 2. **Register in tsconfig.base.json** -- Alphabetically in `compilerOptions.paths`. Build fails without this.
 3. **Action names are permanent** -- The `name` field in `createAction`/`createTrigger` must never change after publishing.
 4. **Export auth from index.ts** -- Actions and triggers import auth via `import { myAppAuth } from '../../'`.

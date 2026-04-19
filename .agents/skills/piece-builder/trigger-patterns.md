@@ -1,6 +1,6 @@
 # Trigger Patterns
 
-> **AI Metadata is mandatory for every trigger.** Every `createTrigger` call must include an `infoForLLM` bundle with `description`. See `SKILL.md` → AI Metadata section for the rules.
+> **AI Metadata is mandatory for every trigger.** Every `createTrigger` call must include an `infoForLLM` bundle with `description`, and every input property on the trigger must carry a `description` (with an example baked in where useful). See `SKILL.md` → AI Metadata section for the rules.
 
 Two main types: **Polling** (check API periodically) and **Webhook** (receive push notifications).
 
