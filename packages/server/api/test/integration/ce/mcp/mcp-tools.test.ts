@@ -31,6 +31,7 @@ import { apValidateFlowTool } from '../../../../src/app/mcp/tools/ap-validate-fl
 import { apUpdateTriggerTool } from '../../../../src/app/mcp/tools/ap-update-trigger'
 import { apDuplicateFlowTool } from '../../../../src/app/mcp/tools/ap-duplicate-flow'
 import { apUpdateBranchTool } from '../../../../src/app/mcp/tools/ap-update-branch'
+import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
 
 let app: FastifyInstance
 let mockLog: FastifyBaseLogger
@@ -79,6 +80,36 @@ beforeAll(async () => {
         },
     })
     await db.save('piece_metadata', gmailPiece)
+
+    const arrayPiece = createMockPieceMetadata({
+        name: '@activepieces/piece-test-array',
+        displayName: 'Test Array',
+        version: '0.1.0',
+        pieceType: PieceType.OFFICIAL,
+        packageType: PackageType.REGISTRY,
+        platformId: undefined,
+        actions: {
+            action_with_array: {
+                name: 'action_with_array',
+                displayName: 'Action With Array',
+                description: 'Action with array property',
+                requireAuth: false,
+                props: {
+                    items: {
+                        type: 'ARRAY',
+                        displayName: 'Items',
+                        required: true,
+                        properties: {
+                            name: { type: 'SHORT_TEXT', displayName: 'Name', required: true },
+                            value: { type: 'NUMBER', displayName: 'Value', required: false },
+                        },
+                    },
+                },
+            },
+        },
+        triggers: {},
+    })
+    await db.save('piece_metadata', arrayPiece)
 
     const dynamicPiece = createMockPieceMetadata({
         name: '@activepieces/piece-test-dynamic',
@@ -1855,5 +1886,158 @@ describe('MCP Tools integration', () => {
         expect(output).toContain('AND')
         expect(output).toContain('OR')
         expect(output).toContain('EXISTS')
+    })
+
+    // ── ARRAY item schema exposure ───────────────────────────────────
+
+    it('67. ap_get_piece_props — ARRAY property includes item sub-schemas', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-test-array',
+            actionOrTriggerName: 'action_with_array',
+            type: 'action',
+        })
+
+        const output = text(result)
+        expect(output).toContain('✅')
+        expect(output).toContain('ARRAY')
+        expect(output).toContain('"items"')
+        expect(output).toContain('"name": "name"')
+        expect(output).toContain('"name": "value"')
+        expect(output).toContain('SHORT_TEXT')
+        expect(output).toContain('NUMBER')
+    })
+
+    // ── ap_list_flows with filters ───────────────────────────────────
+
+    it('68. ap_list_flows — respects limit parameter', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Flow 1' })
+        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Flow 2' })
+        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Flow 3' })
+
+        const result = await apListFlowsTool(mcp, mockLog).execute({ limit: 2 })
+        const output = text(result)
+
+        expect(output).toContain('✅')
+        expect(output).toContain('2 flow(s)')
+    })
+
+    it('69. ap_list_flows — filters by name', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Alpha Flow' })
+        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Beta Flow' })
+        await apCreateFlowTool(mcp, mockLog).execute({ flowName: 'Alpha Two' })
+
+        const result = await apListFlowsTool(mcp, mockLog).execute({ name: 'Alpha' })
+        const output = text(result)
+
+        expect(output).toContain('filtered')
+        expect(output).toContain('Alpha')
+        expect(output).not.toContain('Beta Flow')
+    })
+
+    // ── ROUTER validation UX ─────────────────────────────────────────
+
+    it('70. ap_validate_step_config — ROUTER with empty settings gives helpful example', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apValidateStepConfigTool(mcp, mockLog).execute({
+            stepType: 'ROUTER',
+        })
+
+        const output = text(result)
+        expect(output).toContain('⚠️')
+        expect(output).toContain('executionType')
+        expect(output).toContain('EXECUTE_FIRST_MATCH')
+        expect(output).toContain('CONDITION')
+        expect(output).toContain('FALLBACK')
+    })
+
+    it('71. ap_validate_step_config — ROUTER with valid settings passes', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apValidateStepConfigTool(mcp, mockLog).execute({
+            stepType: 'ROUTER',
+            settings: {
+                branches: [
+                    { branchName: 'B1', branchType: 'CONDITION', conditions: [[{ firstValue: '{{trigger.x}}', operator: 'EXISTS' }]] },
+                    { branchName: 'Otherwise', branchType: 'FALLBACK' },
+                ],
+                executionType: 'EXECUTE_FIRST_MATCH',
+            },
+        })
+
+        expect(text(result)).toContain('✅')
+    })
+
+    // ── Published flow warning ────────────────────────────────────────
+
+    it('72. ap_add_step — warns when flow is published', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Published Flow Test')
+
+        await apUpdateTriggerTool(mcp, mockLog).execute({
+            flowId,
+            pieceName: '@activepieces/piece-test-email',
+            pieceVersion: '~0.1.0',
+            triggerName: 'new_email',
+        })
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.CODE,
+            displayName: 'Pre-publish Code',
+        })
+
+        await apUpdateStepTool(mcp, mockLog).execute({
+            flowId,
+            stepName: 'step_1',
+            sourceCode: 'export const code = async () => { return { ok: true }; };',
+            input: {},
+        })
+
+        await apLockAndPublishTool(mcp, mockLog).execute({ flowId })
+
+        const result = await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'step_1',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.CODE,
+            displayName: 'Post-publish Code',
+        })
+
+        expect(text(result)).toContain('published')
+        expect(text(result)).toContain('draft')
+        expect(text(result)).toContain('ap_lock_and_publish')
+    })
+
+    // ── Error sanitization ───────────────────────────────────────────
+
+    it('73. mcpToolError — sanitizes internal paths from error messages', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        // Simulate what mcpUtils.mcpToolError does with internal paths
+        const fakeError = new Error('Cannot find module at /root/codes/abc123/step_1/index.js and /root/common/node_modules/.bun/@activepieces+piece-slack@0.16.2/lib.js')
+        const result = mcpUtils.mcpToolError('Test', fakeError)
+        const output = text(result)
+
+        expect(output).not.toContain('/root/codes/')
+        expect(output).not.toContain('/root/common/')
+        expect(output).not.toContain('.bun/')
+        expect(output).toContain('<sandbox>')
+        expect(output).toContain('<internal>')
     })
 })

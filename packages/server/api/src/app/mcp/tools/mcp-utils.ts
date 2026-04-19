@@ -1,5 +1,5 @@
 import { PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, FlowActionType, flowStructureUtil, isNil } from '@activepieces/shared'
+import { BranchOperator, FlowActionType, flowStructureUtil, isNil, isObject } from '@activepieces/shared'
 import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -22,8 +22,17 @@ const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
 const STEP_REFERENCE_HINT = 'Use {{stepName.field}} to reference prior steps (no .output. in path).'
 
 function mcpToolError(prefix: string, err: unknown): { content: [{ type: 'text', text: string }] } {
-    const message = err instanceof Error ? err.message : String(err)
+    const raw = err instanceof Error ? err.message : String(err)
+    const message = sanitizeErrorMessage(raw)
     return { content: [{ type: 'text', text: `❌ ${prefix}: ${message}` }] }
+}
+
+function sanitizeErrorMessage(message: string): string {
+    return message
+        .replace(/\/root\/codes\/[^\s:)]+/g, '<sandbox>')
+        .replace(/\/root\/common\/[^\s:)]+/g, '<internal>')
+        .replace(/\/home\/[^\s:)]+node_modules\/[^\s:)]+/g, '<internal>')
+        .replace(/node_modules\/\.bun\/[^\s:)]+/g, '<internal>')
 }
 
 function formatOptionsHint(options: Array<{ label: string, value: unknown }> | undefined): string {
@@ -81,7 +90,9 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
     return { parts, missing, uiRequired, hasAuth }
 }
 
-function buildPropSummaries(props: PiecePropertyMap): PropSummary[] {
+const MAX_PROP_DEPTH = 3
+
+function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
     return Object.entries(props)
         .filter(([, prop]) => !NON_INPUT_PROP_TYPES.has(prop.type))
         .map(([name, prop]) => {
@@ -105,6 +116,10 @@ function buildPropSummaries(props: PiecePropertyMap): PropSummary[] {
             }
             if (prop.type === PropertyType.DYNAMIC) {
                 summary.note = 'DYNAMIC — call ap_get_piece_props with auth+input to resolve sub-fields.'
+            }
+            if (prop.type === PropertyType.ARRAY && 'properties' in prop && isObject(prop.properties) && depth < MAX_PROP_DEPTH) {
+                const arraySubProps: PiecePropertyMap = prop.properties
+                summary.items = buildPropSummaries(arraySubProps, depth + 1)
             }
             return summary
         })
@@ -180,6 +195,13 @@ function resolveRouterStep({ stepName, trigger }: { stepName: string, trigger: S
     return { routerStep: step as RouterAction }
 }
 
+function publishedFlowWarning(publishedVersionId: string | null | undefined): string {
+    if (isNil(publishedVersionId)) {
+        return ''
+    }
+    return '\n⚠️ This flow is published. Changes apply to the draft only — use ap_lock_and_publish to push them live.'
+}
+
 function validateAuth(auth: string | undefined): { content: [{ type: 'text', text: string }] } | null {
     if (auth !== undefined && /['{}\[\]]/.test(auth)) {
         return { content: [{ type: 'text', text: '❌ auth must be a plain externalId with no special characters. Use the exact value from ap_list_connections.' }] }
@@ -223,7 +245,21 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
     }
 }
 
-export const mcpUtils = { mcpToolError, truncate, resolveRouterStep, diagnosePieceProps, buildPropSummaries, normalizePieceName, lookupPieceComponent, findResolvableProps, validateAuth, fillDefaultsForMissingOptionalProps, STEP_REFERENCE_HINT, BRANCH_CONDITIONS_INPUT_SCHEMA }
+export const mcpUtils = {
+    mcpToolError,
+    truncate,
+    resolveRouterStep,
+    publishedFlowWarning,
+    diagnosePieceProps,
+    buildPropSummaries,
+    normalizePieceName,
+    lookupPieceComponent,
+    findResolvableProps,
+    validateAuth,
+    fillDefaultsForMissingOptionalProps,
+    STEP_REFERENCE_HINT,
+    BRANCH_CONDITIONS_INPUT_SCHEMA,
+}
 
 export type { PropSummary }
 
@@ -258,6 +294,7 @@ type PropSummary = {
     defaultValue?: unknown
     options?: Array<{ label: string, value: unknown }>
     dynamicFields?: PropSummary[]
+    items?: PropSummary[]
     note?: string
 }
 

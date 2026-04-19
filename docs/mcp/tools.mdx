@@ -10,11 +10,13 @@ These tools are always available (locked) and read-only. They help AI agents und
 
 ### ap_list_flows
 
-List all flows in the current project.
+List flows in the current project with status, trigger type, and published state.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
-| — | — | — | No inputs required |
+| `limit` | number | No | Max flows to return (default 100, max 500) |
+| `status` | string | No | Filter by status: `ENABLED` or `DISABLED` |
+| `name` | string | No | Filter by flow name (partial match) |
 
 ### ap_flow_structure
 
