@@ -35,7 +35,7 @@ export function createSandboxManager(boxId: number): SandboxManager {
                     params.log.error({ err }, 'Error shutting down previous sandbox'),
                 )
             }
-            currentSandbox = createSandboxForJob({ ...params, boxId })
+            currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox() })
             return currentSandbox
         },
         async invalidate(log: Logger): Promise<void> {
