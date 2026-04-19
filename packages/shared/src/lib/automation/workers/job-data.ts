@@ -1,14 +1,14 @@
 
 import { z } from 'zod'
 import { isNil } from '../../core/common'
-import { ProgressUpdateType, TriggerHookType, TriggerPayload } from '../engine'
+import { StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { PiecePackage } from '../pieces/piece'
 
-export const LATEST_JOB_DATA_SCHEMA_VERSION = 5
+export const LATEST_JOB_DATA_SCHEMA_VERSION = 6
 
 export const InlineJobPayload = z.object({
     type: z.literal('inline'),
@@ -37,12 +37,12 @@ const ASYNC_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'medium'
 const SYNC_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'high'
 export const RATE_LIMIT_PRIORITY: keyof typeof JOB_PRIORITY = 'lowest'
 
-function getExecuteFlowPriority(environment: RunEnvironment, synchronousHandlerId: string | undefined | null): keyof typeof JOB_PRIORITY {
+function getExecuteFlowPriority(environment: RunEnvironment, workerHandlerId: string | undefined | null): keyof typeof JOB_PRIORITY {
     switch (environment) {
         case RunEnvironment.TESTING:
             return TESTING_EXECUTE_FLOW_PRIORITY
         case RunEnvironment.PRODUCTION:
-            return isNil(synchronousHandlerId) ? ASYNC_EXECUTE_FLOW_PRIORITY : SYNC_EXECUTE_FLOW_PRIORITY
+            return isNil(workerHandlerId) ? ASYNC_EXECUTE_FLOW_PRIORITY : SYNC_EXECUTE_FLOW_PRIORITY
     }
 }
 
@@ -55,7 +55,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EVENT_DESTINATION:
             return 'medium'
         case WorkerJobType.EXECUTE_FLOW:
-            return getExecuteFlowPriority(job.environment, job.synchronousHandlerId)
+            return getExecuteFlowPriority(job.environment, job.workerHandlerId)
         case WorkerJobType.EXECUTE_PROPERTY:
         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
         case WorkerJobType.EXECUTE_VALIDATION:
@@ -118,12 +118,12 @@ export const ExecuteFlowJobData = z.object({
     flowId: z.string(),
     flowVersionId: z.string(),
     runId: z.string(),
-    synchronousHandlerId: z.union([z.string(), z.null()]).optional(),
+    workerHandlerId: z.union([z.string(), z.null()]).optional(),
     httpRequestId: z.string().optional(),
     payload: JobPayload,
     executeTrigger: z.boolean().optional(),
     executionType: z.nativeEnum(ExecutionType),
-    progressUpdateType: z.nativeEnum(ProgressUpdateType),
+    streamStepProgress: z.nativeEnum(StreamStepProgress),
     stepNameToTest: z.string().optional(),
     sampleData: z.record(z.string(), z.unknown()).optional(),
     logsUploadUrl: z.string(),
