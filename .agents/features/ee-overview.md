@@ -1,6 +1,27 @@
 # Enterprise Edition (EE) Overview
 
-All EE code lives in `src/app/ee/`. **Never import EE code from CE code.** Use `hooksFactory` for CE/EE integration.
+## Summary
+The Enterprise Edition extends the Community Edition with commercial features grouped into distinct modules under `packages/server/api/src/app/ee/`. EE modules are never imported from CE code; instead, CE defines hook interfaces via `hooksFactory.create<T>(ceDefault)` and EE implementations are injected via `.set(eeImpl)` inside the edition switch in `app.ts`. Plan flags on `PlatformPlan` (40+ boolean fields) gate individual features at the endpoint level using `platformMustHaveFeatureEnabled()`. License keys map to plan flag presets, enabling trial periods and per-customer feature combinations.
+
+## Key Files
+- `packages/server/api/src/app/ee/` — all EE module source code
+- `packages/server/api/src/app/app.ts` — edition switch (lines ~247–317) where EE modules are registered
+- `packages/server/api/src/app/ee/platform/platform-plan/` — PlatformPlan entity + Stripe billing + AI credits
+- `packages/server/api/src/app/ee/license-keys/` — license activation, trial, plan flag mapping
+- `packages/server/api/src/app/ee/authentication/ee-authorization.ts` — shared authorization preHandler hooks
+- `packages/server/api/src/app/ee/helper/` — SMTP email service + appearance/branding helper
+
+## Edition Availability
+- **Community (CE)**: None of the modules in `src/app/ee/` are available.
+- **Enterprise (EE)**: All modules available, individual features gated by plan flags.
+- **Cloud**: All modules available; some modules registered for Cloud but not self-hosted EE (e.g., AppSumo integration, cloud admin).
+
+## Domain Terms
+- **PlatformPlan**: Entity with 40+ boolean flags representing purchased features; drives all `platformMustHaveFeatureEnabled` checks.
+- **LicenseKey**: Activates a preset bundle of plan flags; supports trial mode with expiry date.
+- **hooksFactory**: CE/EE integration point — CE declares the interface with a no-op default; EE sets the real implementation; callers are edition-agnostic.
+- **platformMustHaveFeatureEnabled**: Fastify `preHandler` hook factory that returns HTTP 402 `FEATURE_DISABLED` when a plan flag is false.
+- **Edition switch**: Block in `app.ts` that registers EE/Cloud modules conditionally based on `ApEdition`.
 
 ## Feature Gating Patterns
 

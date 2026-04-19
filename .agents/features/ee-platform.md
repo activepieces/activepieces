@@ -1,6 +1,31 @@
 # EE Platform Module
 
-Billing, quota enforcement, AI credits, license keys, and cloud admin.
+## Summary
+The EE Platform module manages billing, quota enforcement, AI credits, license keys, and cloud admin operations for the Activepieces platform. It provides the `PlatformPlan` entity that gates every enterprise feature flag, enforces active-flow limits, and integrates with Stripe for cloud subscriptions and OpenRouter for AI credit accounting. Self-hosted Enterprise installs use license keys instead of Stripe to unlock features.
+
+## Key Files
+- `packages/server/api/src/app/ee/platform/` — backend service and controller
+- `packages/server/api/src/app/ee/billing/` — Stripe webhook, checkout, billing controller
+- `packages/shared/src/lib/ee/billing/index.ts` — shared plan constants, Zod schemas, `STANDARD_CLOUD_PLAN`, `OPEN_SOURCE_PLAN`
+- `packages/shared/src/lib/management/platform/` — `PlatformPlan` type and all feature-flag fields
+- `packages/web/src/features/billing/api/billing-plans-api.ts` — `platformBillingApi` (portal, checkout, AI credits, auto top-up)
+- `packages/web/src/features/billing/hooks/billing-hooks.ts` — `billingQueries`, `billingMutations`
+- `packages/web/src/features/billing/components/` — `SubscriptionInfo`, `ActiveFlowAddon`, `AICreditUsage`, `LicenseKey`, `PurchaseAICreditsDialog`, `AutoTopUpConfigDialog`
+- `packages/web/src/app/routes/platform/billing/index.tsx` — Billing page (gated by edition, uses `LockedFeatureGuard`)
+
+## Edition Availability
+- **Community (CE)**: No billing UI. `OPEN_SOURCE_PLAN` applied — unlimited flows, 0 AI credits, no team projects. All feature flags off.
+- **Enterprise (EE, self-hosted)**: License key activates feature flags. No Stripe. `downgradeToFreePlan` reverts on expiry.
+- **Cloud**: Full Stripe integration. `STANDARD_CLOUD_PLAN` is the default; paid addons unlock higher active-flow limits and AI credits. Cloud Enterprise has all flags enabled.
+
+## Domain Terms
+- **PlatformPlan**: The single entity (one-per-platform) holding all billing state, feature flags, and limits.
+- **Active Flows**: Published and enabled flows that count against the `activeFlowsLimit` quota.
+- **AI Credits**: Usage currency for OpenRouter-backed AI actions. 1000 credits = $1 USD.
+- **Auto Top-Up**: Automatic Stripe invoice triggered when AI credits fall below a configured threshold.
+- **License Key**: A signed token (self-hosted EE) that maps to a feature set and expiration date.
+- **QUOTA_EXCEEDED**: The HTTP 402 error code thrown when the active flow limit is reached.
+- **Included Credits**: Credits bundled in the plan that reset monthly via `tryResetPlanIncludedCredits()`.
 
 ## PlatformPlan Entity (40+ columns)
 
@@ -55,6 +80,15 @@ Billing, quota enforcement, AI credits, license keys, and cloud admin.
 - `POST /v1/admin/platforms/apply-license-key` — activate license by email
 - `POST /v1/admin/platforms/increase-ai-credits` — manually add credits
 - `POST /v1/admin/platforms/dedicated-workers` — enable/disable dedicated workers
+
+## Frontend Billing API
+
+`/v1/platform-billing/info` — `GET`, returns `PlatformBillingInformation` (plan details + usage).
+`/v1/platform-billing/portal` — `POST`, returns Stripe portal URL (opens in new tab).
+`/v1/platform-billing/create-checkout-session` — `POST`, creates subscription checkout → navigates to Stripe.
+`/v1/platform-billing/update-active-flows-addon` — `POST`, changes active-flow limit addon.
+`/v1/platform-billing/ai-credits/create-checkout-session` — `POST`, one-time AI credit purchase.
+`/v1/platform-billing/ai-credits/auto-topup` — `POST`, configure or disable auto top-up; may return `stripeCheckoutUrl` for first-time payment method setup.
 
 ## Plan Constants (from shared)
 
