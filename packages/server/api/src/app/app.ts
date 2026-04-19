@@ -328,7 +328,9 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             break
     }
 
-    await systemJobsSchedule(app.log).startWorker()
+    app.addHook('onReady', async () => {
+        await systemJobsSchedule(app.log).startWorker()
+    })
 
     app.addHook('onClose', async () => {
         app.log.info('Shutting down')

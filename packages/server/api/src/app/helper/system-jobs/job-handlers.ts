@@ -11,7 +11,8 @@ export const systemJobHandlers = {
         const jobHandler = jobHandlers.get(name)
     
         if (isNil(jobHandler)) {
-            throw new Error(`No handler for job ${name}`)
+            const registered = Array.from(jobHandlers.keys()).join(', ')
+            throw new Error(`No handler for job ${name}. Registered handlers: [${registered}]`)
         }
         
         return jobHandler
