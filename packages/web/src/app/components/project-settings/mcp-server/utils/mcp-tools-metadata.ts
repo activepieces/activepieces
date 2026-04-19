@@ -100,6 +100,10 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
     label: 'Flow Building',
     tools: [
       {
+        name: 'ap_build_flow',
+        description: 'Create a complete flow in one call: trigger + steps',
+      },
+      {
         name: 'ap_update_trigger',
         description: 'Set or update the trigger for a flow',
       },
