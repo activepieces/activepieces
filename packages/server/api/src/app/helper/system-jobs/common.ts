@@ -1,4 +1,4 @@
-import { Flow, FlowId, PlatformId, ProjectId, UserId } from '@activepieces/shared'
+import { Flow, FlowId, FlowRunId, PlatformId, ProjectId, UserId } from '@activepieces/shared'
 import { Job, JobsOptions } from 'bullmq'
 import { Dayjs } from 'dayjs'
 
@@ -13,6 +13,7 @@ export enum SystemJobName {
     HARD_DELETE_PROJECT = 'hard-delete-project',
     HARD_DELETE_PLATFORM = 'hard-delete-platform',
     COPILOT_INDEX_REFRESH = 'copilot-index-refresh',
+    RESUME_DELAY_WAITPOINT = 'resume-delay-waitpoint',
 }
 
 type DeleteFlowDurableSystemJobData =  {
@@ -37,6 +38,12 @@ type HardDeletePlatformSystemJobData = {
     identityId: string
 }
 
+type ResumeDelayWaitpointSystemJobData = {
+    flowRunId: FlowRunId
+    projectId: ProjectId
+    waitpointId: string
+}
+
 type SystemJobDataMap = {
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>
@@ -48,6 +55,7 @@ type SystemJobDataMap = {
     [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
     [SystemJobName.HARD_DELETE_PLATFORM]: HardDeletePlatformSystemJobData
     [SystemJobName.COPILOT_INDEX_REFRESH]: Record<string, never>
+    [SystemJobName.RESUME_DELAY_WAITPOINT]: ResumeDelayWaitpointSystemJobData
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
