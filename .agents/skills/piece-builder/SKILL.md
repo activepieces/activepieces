@@ -295,32 +295,17 @@ Pieces must be usable by AI agents and MCP clients. **Every action and trigger m
 
 ### Required on every `createAction` / `createTrigger`
 
-The `infoForLLM` bundle groups all agent-facing metadata under a single optional object on the action/trigger params. Populate every inner field:
+The `infoForLLM` bundle is a single optional object on the action/trigger params. Today it carries one field; the bundle exists so future agent-facing metadata can land here without bloating the top-level type.
 
 ```typescript
-import { createAction, ActionDifficulty } from '@activepieces/pieces-framework';
-
-// ...
 infoForLLM: {
-  description: '...',                  // see template below
-  tags: ['write', '...'],              // one verb tag + one domain tag
-  difficulty: ActionDifficulty.EASY,   // enum: EASY | MEDIUM | HARD
-  outputSchema: `...`,                 // string — see below
+  description: '...',   // LLM-optimized description (see template below)
 },
 ```
 
 | Inner field | Type | Purpose |
 |---|---|---|
 | `description` | `string` | LLM-optimized description. Template: `"<Verb> <what>. Use when <situation>. <Constraints>."` Max ~500 chars. |
-| `tags` | `string[]` | Classification tags. Pick one verb tag from: `read`, `write`, `delete`, `search`, `list` -- plus one domain tag (`issues`, `messages`, `files`, `contacts`, etc.). |
-| `difficulty` | `ActionDifficulty` | Enum exported by `@activepieces/pieces-framework`. Values: `ActionDifficulty.EASY` (single API call, no dependencies), `ActionDifficulty.MEDIUM` (multiple calls, needs lookups), `ActionDifficulty.HARD` (multi-step with side effects). Use the enum member, not the string literal — TypeScript rejects a bare `'easy'`. |
-| `outputSchema` | `string` | Describes the shape returned by `run()` (or emitted by the trigger). Use a **stringified JSON example** for static shapes or **prose-with-example** for dynamic outputs (HTTP responses, spreadsheet rows, SQL queries). Always use backtick template literals. Required on actions; strongly recommended on triggers that emit a non-trivial payload. |
-
-### Required on every `Property`
-
-| Field | Type | Purpose |
-|---|---|---|
-| `example` | `unknown` | A realistic sample value showing the expected format. Not `"string"` or `"value"` -- an actual example. |
 
 ### Description writing rules
 
@@ -331,17 +316,6 @@ infoForLLM: {
 
 **Bad:** `"Create Issue in GitHub Repository"`
 **Good:** `"Creates a new issue in a GitHub repository. Use when you need to report a bug, request a feature, or track work. Requires repository owner and name. Returns issue number and URL."`
-
-### Property `example` rules
-
--   Show format, not just concept.
--   For IDs: show the real format (`"cus_abc123xyz"`, not `"id"`).
--   For enums: pick a common one (`"open"`, not `"status"`).
--   For dates: ISO 8601 (`"2026-04-17T10:30:00Z"`).
--   For URLs: full URL (`"https://example.com/file.pdf"`).
-
-**Bad:** `description: "The title"` (no example)
-**Good:** `description: "Issue title. Max 255 characters.", example: "Bug: Login page crashes on mobile Safari"`
 
 ### Optional but recommended: `ActionResult<T>` return type
 
@@ -364,7 +338,7 @@ This gives agents a predictable success/error shape instead of raw API responses
 
 ## Critical Reminders
 
-1. **AI Metadata is MANDATORY** -- every action/trigger must have an `infoForLLM` bundle with `description`, `tags`, `difficulty`, and `outputSchema` (for actions, and for triggers that emit a non-trivial payload); every property must have `example`. See the AI Metadata section above.
+1. **AI Metadata is MANDATORY** -- every action/trigger must have an `infoForLLM` bundle with `description`. See the AI Metadata section above.
 2. **Register in tsconfig.base.json** -- Alphabetically in `compilerOptions.paths`. Build fails without this.
 3. **Action names are permanent** -- The `name` field in `createAction`/`createTrigger` must never change after publishing.
 4. **Export auth from index.ts** -- Actions and triggers import auth via `import { myAppAuth } from '../../'`.

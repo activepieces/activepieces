@@ -2,8 +2,6 @@
 
 Used in both `createAction({ props: {...} })` and `createTrigger({ props: {...} })`.
 
-> **The `example` field is mandatory on every static property.** Provide a realistic sample value (not `"string"` or `"value"`) that shows the expected format. This guides LLMs to generate valid inputs on the first try. Dynamic dropdowns and `DynamicProperties` may omit `example` since the values come from API calls. See `SKILL.md` → AI Metadata section.
-
 ---
 
 ## Text
@@ -12,7 +10,6 @@ Used in both `createAction({ props: {...} })` and `createTrigger({ props: {...} 
 Property.ShortText({
   displayName: 'Title',
   description: 'Short descriptive title. Max 255 characters.',
-  example: 'Q1 2026 Product Launch',
   required: true,
   defaultValue: 'Default text',
 })
@@ -20,7 +17,6 @@ Property.ShortText({
 Property.LongText({
   displayName: 'Body',
   description: 'Long-form text. Supports markdown.',
-  example: 'Kickoff meeting notes and action items for the launch.',
   required: false,
 })
 ```
@@ -31,7 +27,6 @@ Property.LongText({
 Property.Number({
   displayName: 'Limit',
   description: 'Maximum number of records to return.',
-  example: 10,
   required: false,
   defaultValue: 10,
 })
@@ -39,7 +34,6 @@ Property.Number({
 Property.Checkbox({
   displayName: 'Include archived?',
   description: 'Whether to include archived records in the result.',
-  example: false,
   required: false,
   defaultValue: false,
 })
@@ -51,7 +45,6 @@ Property.Checkbox({
 Property.DateTime({
   displayName: 'Due Date',
   description: 'ISO 8601 date-time. Timezone-aware.',
-  example: '2026-04-17T10:30:00Z',
   required: false,
 })
 ```
@@ -72,14 +65,12 @@ Property.File({
 Property.Json({
   displayName: 'Custom Data',
   description: 'Enter valid JSON.',
-  example: { key: 'value', count: 3 },
   required: false,
 })
 
 Property.Object({
   displayName: 'Metadata',
   description: 'Key-value pairs.',
-  example: { name: 'Jane', role: 'admin' },
   required: false,
 })
 ```
@@ -91,7 +82,6 @@ Property.Object({
 Property.Array({
   displayName: 'Tags',
   description: 'List of tag names to apply.',
-  example: ['bug', 'enhancement'],
   required: false,
 })
 
@@ -99,12 +89,11 @@ Property.Array({
 Property.Array({
   displayName: 'Line Items',
   description: 'Each line item must include name and quantity.',
-  example: [{ name: 'Widget', quantity: 2, price: 9.99 }],
   required: true,
   properties: {
-    name: Property.ShortText({ displayName: 'Item Name', description: 'Product name.', example: 'Widget', required: true }),
-    quantity: Property.Number({ displayName: 'Quantity', description: 'Units to order.', example: 2, required: true }),
-    price: Property.Number({ displayName: 'Price', description: 'Unit price in USD.', example: 9.99, required: false }),
+    name: Property.ShortText({ displayName: 'Item Name', description: 'Product name.', required: true }),
+    quantity: Property.Number({ displayName: 'Quantity', description: 'Units to order.', required: true }),
+    price: Property.Number({ displayName: 'Price', description: 'Unit price in USD.', required: false }),
   },
 })
 ```
@@ -115,7 +104,6 @@ Property.Array({
 Property.StaticDropdown({
   displayName: 'Status',
   description: 'Current status of the record.',
-  example: 'active',
   required: true,
   options: {
     options: [
@@ -129,7 +117,6 @@ Property.StaticDropdown({
 Property.StaticMultiSelectDropdown({
   displayName: 'Categories',
   description: 'One or more categories to classify the record.',
-  example: ['sales', 'marketing'],
   required: false,
   options: {
     options: [
@@ -193,7 +180,7 @@ Property.Dropdown({
 })
 ```
 
-**Real example:** `packages/pieces/community/github/src/lib/common/index.ts` -- see `repositoryDropdown`, `issueDropdown`, `labelDropDown`
+**Real `issueDropdown`, `labelDropDown`
 
 ## Multi-Select Dropdown (dynamic)
 
