@@ -1,8 +1,6 @@
 import {
-    FlowActionType,
     FlowOperationRequest,
     FlowOperationType,
-    flowStructureUtil,
     isNil,
     McpServer,
     McpToolDefinition,
@@ -42,15 +40,11 @@ export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
             }
 
-            const routerStep = flowStructureUtil.getStep(routerStepName, flow.version.trigger)
-            if (isNil(routerStep) || routerStep.type !== FlowActionType.ROUTER) {
-                return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Step "${routerStepName}" is not a ROUTER step. Use ap_flow_structure to find router steps.`,
-                    }],
-                }
+            const resolved = mcpUtils.resolveRouterStep({ stepName: routerStepName, trigger: flow.version.trigger })
+            if (resolved.error) {
+                return resolved.error
             }
+            const routerStep = resolved.routerStep
 
             const branches = (routerStep as { settings: { branches: unknown[] } }).settings.branches
             if (branchIndex < 0 || branchIndex >= branches.length) {
