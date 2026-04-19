@@ -1,6 +1,6 @@
 # Trigger Patterns
 
-> **AI Metadata is mandatory for every trigger.** Every `createTrigger` call must include `descriptionForLLM`, `tags`, and `difficulty`. See `SKILL.md` → AI Metadata section for the rules.
+> **AI Metadata is mandatory for every trigger.** Every `createTrigger` call must include an `infoForLLM` bundle (`description`, `tags`, `difficulty`, and `outputSchema` whenever the trigger emits a non-trivial payload). See `SKILL.md` → AI Metadata section for the rules.
 
 Two main types: **Polling** (check API periodically) and **Webhook** (receive push notifications).
 
@@ -51,12 +51,13 @@ export const newRecordTrigger = createTrigger({
   name: 'new_record',
   displayName: 'New Record',
   description: 'Triggers when a new record is created',
-  // REQUIRED: LLM-optimized description
-  descriptionForLLM: 'Fires when a new record is created in My App. Use to start workflows when a customer, task, or document is added. Polls every ~5 minutes.',
-  // REQUIRED: one verb tag + one domain tag
-  tags: ['read', 'records'],
-  // REQUIRED: easy | medium | hard
-  difficulty: 'easy',
+  // REQUIRED: AI metadata bundle read by LLM/MCP agents.
+  infoForLLM: {
+    description: 'Fires when a new record is created in My App. Use to start workflows when a customer, task, or document is added. Polls every ~5 minutes.',
+    tags: ['read', 'records'],
+    difficulty: 'easy',
+    outputSchema: `{ type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' }, created_at: { type: 'string', format: 'date-time' } } }`,
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.POLLING,
@@ -131,10 +132,13 @@ export const newRecordTrigger = createTrigger({
   name: 'new_record',
   displayName: 'New Record',
   description: 'Triggers when a new record is created in a project',
-  // REQUIRED
-  descriptionForLLM: 'Fires when a new record is created in a specific project in My App. Use to start workflows scoped to one project (e.g. notify the project team when a task is added). Polls every ~5 minutes.',
-  tags: ['read', 'records'],
-  difficulty: 'easy',
+  // REQUIRED: AI metadata bundle.
+  infoForLLM: {
+    description: 'Fires when a new record is created in a specific project in My App. Use to start workflows scoped to one project (e.g. notify the project team when a task is added). Polls every ~5 minutes.',
+    tags: ['read', 'records'],
+    difficulty: 'easy',
+    outputSchema: `{ type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' }, project_id: { type: 'string' }, created_at: { type: 'string', format: 'date-time' } } }`,
+  },
   props,
   sampleData: {},
   type: TriggerStrategy.POLLING,
@@ -161,10 +165,13 @@ export const newRecordWebhookTrigger = createTrigger({
   name: 'new_record_webhook',
   displayName: 'New Record',
   description: 'Triggers when a new record is created',
-  // REQUIRED
-  descriptionForLLM: 'Fires in real time when a new record is created in My App. Use to start workflows the moment a customer, task, or document is added -- no polling delay.',
-  tags: ['read', 'records'],
-  difficulty: 'medium',
+  // REQUIRED: AI metadata bundle.
+  infoForLLM: {
+    description: 'Fires in real time when a new record is created in My App. Use to start workflows the moment a customer, task, or document is added -- no polling delay.',
+    tags: ['read', 'records'],
+    difficulty: 'medium',
+    outputSchema: `{ type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' }, created_at: { type: 'string', format: 'date-time' } } }`,
+  },
   props: {},
   sampleData: {
     id: '123',

@@ -291,21 +291,27 @@ Full patterns and examples: read `output-quality.md`
 
 ## AI Metadata: Required for Every Action & Trigger
 
-Pieces must be usable by AI agents and MCP clients. **Every action and trigger must populate these fields** -- they are not optional.
+Pieces must be usable by AI agents and MCP clients. **Every action and trigger must populate the `infoForLLM` bundle** -- it is not optional.
 
-### Required fields on every `createAction` / `createTrigger`
+### Required on every `createAction` / `createTrigger`
 
-| Field | Type | Purpose |
+The `infoForLLM` bundle groups all agent-facing metadata under a single optional object on the action/trigger params. Populate every inner field:
+
+```typescript
+infoForLLM: {
+  description: '...',       // see template below
+  tags: ['write', '...'],   // one verb tag + one domain tag
+  difficulty: 'easy',       // 'easy' | 'medium' | 'hard'
+  outputSchema: `...`,      // string — see below
+},
+```
+
+| Inner field | Type | Purpose |
 |---|---|---|
-| `descriptionForLLM` | `string` | LLM-optimized description. Template: `"<Verb> <what>. Use when <situation>. <Constraints>."` Max ~500 chars. |
+| `description` | `string` | LLM-optimized description. Template: `"<Verb> <what>. Use when <situation>. <Constraints>."` Max ~500 chars. |
 | `tags` | `string[]` | Classification tags. Pick one verb tag from: `read`, `write`, `delete`, `search`, `list` -- plus one domain tag (`issues`, `messages`, `files`, `contacts`, etc.). |
 | `difficulty` | `'easy' \| 'medium' \| 'hard'` | `easy` = single API call, no dependencies. `medium` = multiple calls, needs lookups. `hard` = multi-step with side effects. |
-
-### Required on every `createAction` (in addition to above)
-
-| Field | Type | Purpose |
-|---|---|---|
-| `outputSchema` | `Record<string, unknown>` | JSON Schema of what `run()` returns. Every top-level field must have a `type` and `description`. Lets LLMs use downstream fields without hallucinating names. |
+| `outputSchema` | `string` | Describes the shape returned by `run()` (or emitted by the trigger). Use a **stringified JSON example** for static shapes or **prose-with-example** for dynamic outputs (HTTP responses, spreadsheet rows, SQL queries). Always use backtick template literals. Required on actions; strongly recommended on triggers that emit a non-trivial payload. |
 
 ### Required on every `Property`
 
@@ -355,7 +361,7 @@ This gives agents a predictable success/error shape instead of raw API responses
 
 ## Critical Reminders
 
-1. **AI Metadata is MANDATORY** -- every action/trigger must have `descriptionForLLM`, `tags`, `difficulty`; every action must also have `outputSchema`; every property must have `example`. See the AI Metadata section above.
+1. **AI Metadata is MANDATORY** -- every action/trigger must have an `infoForLLM` bundle with `description`, `tags`, `difficulty`, and `outputSchema` (for actions, and for triggers that emit a non-trivial payload); every property must have `example`. See the AI Metadata section above.
 2. **Register in tsconfig.base.json** -- Alphabetically in `compilerOptions.paths`. Build fails without this.
 3. **Action names are permanent** -- The `name` field in `createAction`/`createTrigger` must never change after publishing.
 4. **Export auth from index.ts** -- Actions and triggers import auth via `import { myAppAuth } from '../../'`.

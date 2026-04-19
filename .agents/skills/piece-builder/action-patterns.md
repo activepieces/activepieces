@@ -1,6 +1,6 @@
 # Action Patterns
 
-> **AI Metadata is mandatory on every action.** `descriptionForLLM`, `tags`, `difficulty`, `outputSchema`, and property `example` fields must all be populated. See `SKILL.md` → AI Metadata section for the rules.
+> **AI Metadata is mandatory on every action.** The `infoForLLM` bundle (`description`, `tags`, `difficulty`, `outputSchema`) and a property-level `example` on every static prop must all be populated. See `SKILL.md` → AI Metadata section for the rules.
 
 ## Action Template
 
@@ -16,20 +16,18 @@ export const createRecordAction = createAction({
   name: 'create_record',              // Unique snake_case ID -- never change after publishing
   displayName: 'Create Record',
   description: 'Creates a new record in My App',
-  // REQUIRED: LLM-optimized description. Template: "<Verb> <what>. Use when <situation>. <Constraints>."
-  descriptionForLLM: "Creates a new record in My App. Use when you need to add a new entry (e.g. customer, task, or document) to the user's My App workspace. Requires a name; description is optional.",
-  // REQUIRED: one verb tag + one domain tag
-  tags: ['write', 'records'],
-  // REQUIRED: easy (single call) | medium (multiple calls / lookups) | hard (multi-step with side effects)
-  difficulty: 'easy',
-  // REQUIRED: JSON Schema of what run() returns -- helps LLMs use downstream fields without hallucinating.
-  outputSchema: {
-    type: 'object',
-    properties: {
-      id: { type: 'string', description: 'Unique ID of the created record' },
-      name: { type: 'string', description: 'Name of the record' },
-      created_at: { type: 'string', format: 'date-time', description: 'ISO 8601 creation timestamp' },
-    },
+  // REQUIRED: AI metadata bundle read by LLM/MCP agents.
+  infoForLLM: {
+    // Template: "<Verb> <what>. Use when <situation>. <Constraints>."
+    description: "Creates a new record in My App. Use when you need to add a new entry (e.g. customer, task, or document) to the user's My App workspace. Requires a name; description is optional.",
+    // One verb tag + one domain tag.
+    tags: ['write', 'records'],
+    // easy (single call) | medium (multiple calls / lookups) | hard (multi-step with side effects).
+    difficulty: 'easy',
+    // String describing the output shape. For static shapes, a stringified JSON example.
+    // For dynamic shapes, prose with a representative example. Use backticks so single
+    // quotes don't need escaping.
+    outputSchema: `{ type: 'object', properties: { id: { type: 'string', description: 'Unique ID of the created record' }, name: { type: 'string', description: 'Name of the record' }, created_at: { type: 'string', format: 'date-time', description: 'ISO 8601 creation timestamp' } } }`,
   },
   props: {
     name: Property.ShortText({
@@ -63,7 +61,7 @@ export const createRecordAction = createAction({
 });
 ```
 
-**AI Metadata is mandatory -- do not skip `descriptionForLLM`, `tags`, `difficulty`, `outputSchema`, or property `example` fields.** See `SKILL.md` → AI Metadata section for rules and examples.
+**AI Metadata is mandatory -- do not skip any inner field of `infoForLLM`, or any property `example`.** See `SKILL.md` → AI Metadata section for rules and examples.
 
 **Real example:** `packages/pieces/community/github/src/lib/actions/create-issue.ts`
 
