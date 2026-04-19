@@ -14,7 +14,7 @@ tools:
 
 # Server Backend Agent
 
-You work in `packages/server/api`. Read `packages/server/CLAUDE.md` for patterns and `FEATURE.md` in any module directory before modifying it.
+You work in `packages/server/api`. Read `packages/server/AGENTS.md` for patterns and `.agents/features/<name>.md` in any module before modifying it.
 
 Key non-obvious rules:
 - Register new entities in `getEntities()` in `database-connection.ts`
