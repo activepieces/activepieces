@@ -158,7 +158,7 @@ Duplicate an existing flow. Creates a new copy with all steps, configuration, an
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID to duplicate |
-| `name` | string | No | Name for the copy (defaults to "Copy of {original name}") |
+| `name` | string | No | Name for the copy (defaults to "Copy of \{original name\}") |
 
 <Tip>
 After duplicating, use `ap_flow_structure` on the new flow to check configuration status. Steps that reference connections will need to be re-configured with `ap_update_step`.
