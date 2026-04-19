@@ -109,18 +109,19 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                     operation,
                 })
                 const trigger = updatedFlow.version.trigger
+                const draftWarning = mcpUtils.publishedFlowWarning(flow.publishedVersionId)
                 if (!trigger.valid) {
                     const diagnosis = await diagnoseMissingTriggerInputs({ pieceName, pieceVersion, triggerName, input, platformId: project.platformId, log })
                     const hint = diagnosis ?? 'Check that triggerName is correct and all required inputs are provided. Use ap_list_connections to get a valid connection externalId for auth.'
                     return {
                         content: [{
                             type: 'text',
-                            text: `⚠️ Trigger updated but still invalid. ${hint}`,
+                            text: `⚠️ Trigger updated but still invalid. ${hint}${draftWarning}`,
                         }],
                     }
                 }
                 return {
-                    content: [{ type: 'text', text: `✅ Successfully updated trigger to "${pieceName}/${triggerName}".` }],
+                    content: [{ type: 'text', text: `✅ Successfully updated trigger to "${pieceName}/${triggerName}".${draftWarning}` }],
                 }
             }
             catch (err) {
