@@ -204,6 +204,89 @@ describe('Piece Metadata CE API', () => {
         })
     })
 
+    describe('release-compatibility fallback', () => {
+        it('GET /v1/pieces/:scope/:name falls back to the newest compatible version when latest requires a newer release', async () => {
+            const compatible = createMockPieceMetadata({
+                name: '@activepieces/piece-release-test',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                version: '0.1.32',
+                minimumSupportedRelease: '0.0.0',
+                maximumSupportedRelease: '99999.99999.9999',
+            })
+            const incompatible = createMockPieceMetadata({
+                name: '@activepieces/piece-release-test',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                version: '0.1.33',
+                minimumSupportedRelease: '99.0.0',
+                maximumSupportedRelease: '99999.99999.9999',
+            })
+            await db.save('piece_metadata', [compatible, incompatible])
+            await pieceCache(mockLog).setup()
+
+            const ctx = await createTestContext(app!)
+            const response = await ctx.get('/v1/pieces/@activepieces/piece-release-test')
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().version).toBe('0.1.32')
+        })
+
+        it('GET /v1/pieces returns the newest compatible version in list when latest is incompatible', async () => {
+            const compatible = createMockPieceMetadata({
+                name: 'list-release-test-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                version: '0.1.32',
+                minimumSupportedRelease: '0.0.0',
+                maximumSupportedRelease: '99999.99999.9999',
+            })
+            const incompatible = createMockPieceMetadata({
+                name: 'list-release-test-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                version: '0.1.33',
+                minimumSupportedRelease: '99.0.0',
+                maximumSupportedRelease: '99999.99999.9999',
+            })
+            await db.save('piece_metadata', [compatible, incompatible])
+            await pieceCache(mockLog).setup()
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.UNKNOWN,
+                id: apId(),
+            })
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/pieces',
+                headers: { authorization: `Bearer ${testToken}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const entry = response?.json().find((p: { name: string }) => p.name === 'list-release-test-piece')
+            expect(entry).toBeDefined()
+            expect(entry.version).toBe('0.1.32')
+        })
+
+        it('GET /v1/pieces/:scope/:name returns 404 when all versions are incompatible', async () => {
+            const incompatible = createMockPieceMetadata({
+                name: '@activepieces/piece-all-incompatible',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                version: '0.1.33',
+                minimumSupportedRelease: '99.0.0',
+                maximumSupportedRelease: '99999.99999.9999',
+            })
+            await db.save('piece_metadata', incompatible)
+            await pieceCache(mockLog).setup()
+
+            const ctx = await createTestContext(app!)
+            const response = await ctx.get('/v1/pieces/@activepieces/piece-all-incompatible')
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
     describe('pieceMetadataService.get() — custom pieces', () => {
         it('should return undefined for custom piece when platformId is not provided', async () => {
             const platformId = apId()
