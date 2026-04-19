@@ -83,6 +83,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'Create a new flow',
       },
       {
+        name: 'ap_duplicate_flow',
+        description:
+          'Duplicate an existing flow with all steps and configuration',
+      },
+      {
         name: 'ap_rename_flow',
         description: 'Rename an existing flow',
       },
@@ -127,6 +132,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
       {
         name: 'ap_add_branch',
         description: 'Add a conditional branch to a router step',
+      },
+      {
+        name: 'ap_update_branch',
+        description:
+          'Update the conditions or name of an existing router branch',
       },
       {
         name: 'ap_delete_branch',

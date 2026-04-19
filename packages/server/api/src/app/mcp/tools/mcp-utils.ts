@@ -1,6 +1,8 @@
 import { PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { isNil } from '@activepieces/shared'
+import { BranchOperator, FlowActionType, flowStructureUtil, isNil } from '@activepieces/shared'
+import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 
 const NON_INPUT_PROP_TYPES = new Set<PropertyType>([
@@ -149,6 +151,35 @@ function findResolvableProps({ props, componentProps, auth, providedInput }: Fin
     })
 }
 
+const BRANCH_CONDITIONS_INPUT_SCHEMA = z.array(
+    z.array(
+        z.object({
+            firstValue: z.string().describe('Left-hand value (can be a template expression like {{step_1.field}})'),
+            operator: z.enum(Object.values(BranchOperator) as [BranchOperator, ...BranchOperator[]]).optional().describe('Comparison operator. Single-value operators (no secondValue needed): EXISTS, DOES_NOT_EXIST, BOOLEAN_IS_TRUE, BOOLEAN_IS_FALSE, LIST_IS_EMPTY, LIST_IS_NOT_EMPTY'),
+            secondValue: z.string().optional().describe('Right-hand value — required for all operators except single-value ones'),
+            caseSensitive: z.boolean().optional().describe('For text operators: whether to match case sensitively'),
+        }),
+    ),
+)
+
+function truncate(str: string, max: number): string {
+    return str.length <= max ? str : str.slice(0, max) + '... (truncated)'
+}
+
+function resolveRouterStep({ stepName, trigger }: { stepName: string, trigger: Step }): ResolveRouterStepResult {
+    const step = flowStructureUtil.getStep(stepName, trigger)
+    if (isNil(step) || step.type !== FlowActionType.ROUTER) {
+        const routers = flowStructureUtil.getAllSteps(trigger)
+            .filter(s => s.type === FlowActionType.ROUTER)
+            .map(s => s.name)
+            .join(', ')
+        return {
+            error: { content: [{ type: 'text', text: `❌ Step "${stepName}" is not a ROUTER step. Available routers: ${routers || 'none'}` }] },
+        }
+    }
+    return { routerStep: step as RouterAction }
+}
+
 function validateAuth(auth: string | undefined): { content: [{ type: 'text', text: string }] } | null {
     if (auth !== undefined && /['{}\[\]]/.test(auth)) {
         return { content: [{ type: 'text', text: '❌ auth must be a plain externalId with no special characters. Use the exact value from ap_list_connections.' }] }
@@ -192,7 +223,7 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
     }
 }
 
-export const mcpUtils = { mcpToolError, diagnosePieceProps, buildPropSummaries, normalizePieceName, lookupPieceComponent, findResolvableProps, validateAuth, fillDefaultsForMissingOptionalProps, STEP_REFERENCE_HINT }
+export const mcpUtils = { mcpToolError, truncate, resolveRouterStep, diagnosePieceProps, buildPropSummaries, normalizePieceName, lookupPieceComponent, findResolvableProps, validateAuth, fillDefaultsForMissingOptionalProps, STEP_REFERENCE_HINT, BRANCH_CONDITIONS_INPUT_SCHEMA }
 
 export type { PropSummary }
 
@@ -241,3 +272,9 @@ type LookupPieceComponentParams = {
 type LookupPieceComponentResult =
     | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string }, pieceName: string, error?: never }
     | { error: { content: [{ type: 'text', text: string }] }, piece?: never, component?: never, pieceName?: never }
+
+type McpToolResult = { content: [{ type: 'text', text: string }] }
+
+type ResolveRouterStepResult =
+    | { routerStep: RouterAction, error?: never }
+    | { error: McpToolResult, routerStep?: never }
