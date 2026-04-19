@@ -26,7 +26,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             platformRole: userInvitation.platformRole,
         })
         const { email, platformId } = userInvitation
-        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation, log)
+        const { name: projectName } = await getEntityNameForInvitation(userInvitation, log)
         await emailSender(log).send({
             emails: [email],
             platformId,
@@ -35,7 +35,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
                 vars: {
                     setupLink: invitationLink,
                     projectName,
-                    role,
                 },
             },
         })
