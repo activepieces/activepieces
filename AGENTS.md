@@ -14,9 +14,9 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 - **Multi-server**: Use `distributedLock`, BullMQ deduplication, or `FOR UPDATE SKIP LOCKED` for concurrent operations.
 - **Managed PostgreSQL**: No custom extensions. Use `sanitizeObjectForPostgresql()` for external data.
 - **Before modifying a module**: Read its `.agents/features/<name>.md` file for entities, services, and integration details.
-
-## File Structure
-
+| `.agents/features/*.md` | ~60 lines each | When Claude explores the feature | Entity schemas, services, data flows |
+| `.claude/rules/` | 3-5 lines each | Every session | Critical safety checks (entity registration, data isolation, edition safety) |
+| `.agents/skills/` | 30-65 lines each | When invoked | Step-by-step workflows (`/add-feature`, `/add-entity`, `/add-endpoint`) |
 - **Exported types and constants must be placed at the end of the file**, after all logic (functions, hooks, components, classes, etc.). This keeps the logic front and centre when reading a file, and groups the public contract at a predictable location.
 
   ```ts
