@@ -225,7 +225,6 @@ export const InviteUserDialog = ({
   };
 
   const downloadCsv = () => {
-    const escapeCsvField = (value: string) => `"${value.replace(/"/g, '""')}"`;
     const rows = [
       'email,invitation_link',
       ...resultsWithLinks.map(
@@ -510,3 +509,4 @@ function buildInviteToast({
     </span>
   );
 }
+const escapeCsvField = (value: string) => `"${value.replace(/"/g, '""')}"`;
