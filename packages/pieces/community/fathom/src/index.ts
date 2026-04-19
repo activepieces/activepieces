@@ -1,23 +1,24 @@
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { getRecordingSummary } from './lib/actions/get-recording-summary';
-import { getRecordingTranscript } from './lib/actions/get-recording-transcript';
-import { listMeetings } from './lib/actions/list-meetings';
-import { findTeam } from './lib/actions/find-team';
-import { findTeamMember } from './lib/actions/find-team-member';
-import { newRecording } from './lib/triggers/new-recording';
-import { fathomAuth } from './lib/common/auth';
+import { getSiteStats } from './lib/actions/get-site-stats.action';
+import { listSites } from './lib/actions/list-sites.action';
+import { getCurrentVisitors } from './lib/actions/get-current-visitors.action';
+import { newConversion } from './lib/triggers/new-conversion.trigger';
 
-export { fathomAuth };
+export const fathomAuth = PieceAuth.SecretText({
+  displayName: 'API Key',
+  description: 'Your Fathom Analytics API key from usefathom.com/account/api',
+  required: true,
+});
 
 export const fathom = createPiece({
-  displayName: 'Fathom',
+  displayName: 'Fathom Analytics',
+  description: 'Privacy-focused website analytics',
   auth: fathomAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/fathom.png',
-  authors: ["fortunamide", "onyedikachi-david"],
-  categories: [PieceCategory.PRODUCTIVITY],
-  description: 'Fathom is an AI meeting assistant that automatically records, transcribes, highlights, and generates AI summaries and action items from your meetings. Integrate with workflows to react to meeting events and retrieve meeting data.',
-  actions: [getRecordingSummary, getRecordingTranscript, listMeetings, findTeam, findTeamMember],
-  triggers: [newRecording],
+  categories: [PieceCategory.ANALYTICS],
+  authors: ['Tosh94'],
+  actions: [getSiteStats, listSites, getCurrentVisitors],
+  triggers: [newConversion],
 });
