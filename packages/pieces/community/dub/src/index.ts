@@ -1,37 +1,24 @@
-import { createPiece } from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { dubAuth, DUB_API_BASE } from './lib/auth';
-import { createLink } from './lib/actions/create-link';
-import { getLink } from './lib/actions/get-link';
-import { listLinks } from './lib/actions/list-links';
-import { updateLink } from './lib/actions/update-link';
-import { deleteLink } from './lib/actions/delete-link';
-import { linkClicked } from './lib/triggers/link-clicked';
-import { linkCreated } from './lib/triggers/link-created';
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { createLink } from './lib/actions/create-link.action';
+import { listLinks } from './lib/actions/list-links.action';
+import { getAnalytics } from './lib/actions/get-analytics.action';
+import { newClick } from './lib/triggers/new-click.trigger';
+
+export const dubAuth = PieceAuth.SecretText({
+  displayName: 'API Key',
+  description: 'Your Dub.co API key from app.dub.co/settings/api',
+  required: true,
+});
 
 export const dub = createPiece({
   displayName: 'Dub',
-  description:
-    'Dub is the modern link attribution platform for creating, managing, and analysing short links, tracking conversions, and running affiliate programmes.',
+  description: 'Open-source link management and short URLs',
+  auth: dubAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/dub.png',
-  categories: [PieceCategory.MARKETING, PieceCategory.DEVELOPER_TOOLS],
-  auth: dubAuth,
-  actions: [
-    createLink,
-    getLink,
-    listLinks,
-    updateLink,
-    deleteLink,
-    createCustomApiCallAction({
-      auth: dubAuth,
-      baseUrl: () => DUB_API_BASE,
-      authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth.secret_text}`,
-      }),
-    }),
-  ],
-  authors: ['Harmatta'],
-  triggers: [linkClicked, linkCreated],
+  categories: [PieceCategory.MARKETING],
+  authors: ['Tosh94'],
+  actions: [createLink, listLinks, getAnalytics],
+  triggers: [newClick],
 });
