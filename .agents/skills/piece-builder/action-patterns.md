@@ -7,7 +7,7 @@
 Each action goes in its own file under `src/lib/actions/`:
 
 ```typescript
-import { createAction, Property, ActionResult } from '@activepieces/pieces-framework';
+import { createAction, Property, ActionResult, ActionDifficulty } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { myAppAuth } from '../../';
 
@@ -22,8 +22,8 @@ export const createRecordAction = createAction({
     description: "Creates a new record in My App. Use when you need to add a new entry (e.g. customer, task, or document) to the user's My App workspace. Requires a name; description is optional.",
     // One verb tag + one domain tag.
     tags: ['write', 'records'],
-    // easy (single call) | medium (multiple calls / lookups) | hard (multi-step with side effects).
-    difficulty: 'easy',
+    // Enum: EASY (single call) | MEDIUM (multiple calls / lookups) | HARD (multi-step with side effects).
+    difficulty: ActionDifficulty.EASY,
     // String describing the output shape. For static shapes, a stringified JSON example.
     // For dynamic shapes, prose with a representative example. Use backticks so single
     // quotes don't need escaping.

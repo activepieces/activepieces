@@ -19,7 +19,7 @@ Two deduplication strategies:
 ### TIMEBASED Polling (most common)
 
 ```typescript
-import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty, ActionDifficulty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { myAppAuth } from '../../';
 
@@ -55,7 +55,7 @@ export const newRecordTrigger = createTrigger({
   infoForLLM: {
     description: 'Fires when a new record is created in My App. Use to start workflows when a customer, task, or document is added. Polls every ~5 minutes.',
     tags: ['read', 'records'],
-    difficulty: 'easy',
+    difficulty: ActionDifficulty.EASY,
     outputSchema: `{ type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' }, created_at: { type: 'string', format: 'date-time' } } }`,
   },
   props: {},
@@ -136,7 +136,7 @@ export const newRecordTrigger = createTrigger({
   infoForLLM: {
     description: 'Fires when a new record is created in a specific project in My App. Use to start workflows scoped to one project (e.g. notify the project team when a task is added). Polls every ~5 minutes.',
     tags: ['read', 'records'],
-    difficulty: 'easy',
+    difficulty: ActionDifficulty.EASY,
     outputSchema: `{ type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' }, project_id: { type: 'string' }, created_at: { type: 'string', format: 'date-time' } } }`,
   },
   props,
@@ -156,7 +156,7 @@ Use when the API supports webhook registration. The flow:
 3. `onDisable` -- Delete the webhook when the flow is turned off
 
 ```typescript
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, ActionDifficulty } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { myAppAuth } from '../../';
 
@@ -169,7 +169,7 @@ export const newRecordWebhookTrigger = createTrigger({
   infoForLLM: {
     description: 'Fires in real time when a new record is created in My App. Use to start workflows the moment a customer, task, or document is added -- no polling delay.',
     tags: ['read', 'records'],
-    difficulty: 'medium',
+    difficulty: ActionDifficulty.MEDIUM,
     outputSchema: `{ type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' }, created_at: { type: 'string', format: 'date-time' } } }`,
   },
   props: {},

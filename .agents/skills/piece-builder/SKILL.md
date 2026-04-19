@@ -298,11 +298,14 @@ Pieces must be usable by AI agents and MCP clients. **Every action and trigger m
 The `infoForLLM` bundle groups all agent-facing metadata under a single optional object on the action/trigger params. Populate every inner field:
 
 ```typescript
+import { createAction, ActionDifficulty } from '@activepieces/pieces-framework';
+
+// ...
 infoForLLM: {
-  description: '...',       // see template below
-  tags: ['write', '...'],   // one verb tag + one domain tag
-  difficulty: 'easy',       // 'easy' | 'medium' | 'hard'
-  outputSchema: `...`,      // string — see below
+  description: '...',                  // see template below
+  tags: ['write', '...'],              // one verb tag + one domain tag
+  difficulty: ActionDifficulty.EASY,   // enum: EASY | MEDIUM | HARD
+  outputSchema: `...`,                 // string — see below
 },
 ```
 
@@ -310,7 +313,7 @@ infoForLLM: {
 |---|---|---|
 | `description` | `string` | LLM-optimized description. Template: `"<Verb> <what>. Use when <situation>. <Constraints>."` Max ~500 chars. |
 | `tags` | `string[]` | Classification tags. Pick one verb tag from: `read`, `write`, `delete`, `search`, `list` -- plus one domain tag (`issues`, `messages`, `files`, `contacts`, etc.). |
-| `difficulty` | `'easy' \| 'medium' \| 'hard'` | `easy` = single API call, no dependencies. `medium` = multiple calls, needs lookups. `hard` = multi-step with side effects. |
+| `difficulty` | `ActionDifficulty` | Enum exported by `@activepieces/pieces-framework`. Values: `ActionDifficulty.EASY` (single API call, no dependencies), `ActionDifficulty.MEDIUM` (multiple calls, needs lookups), `ActionDifficulty.HARD` (multi-step with side effects). Use the enum member, not the string literal — TypeScript rejects a bare `'easy'`. |
 | `outputSchema` | `string` | Describes the shape returned by `run()` (or emitted by the trigger). Use a **stringified JSON example** for static shapes or **prose-with-example** for dynamic outputs (HTTP responses, spreadsheet rows, SQL queries). Always use backtick template literals. Required on actions; strongly recommended on triggers that emit a non-trivial payload. |
 
 ### Required on every `Property`
