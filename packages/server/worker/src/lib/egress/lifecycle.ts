@@ -1,6 +1,6 @@
 import dns from 'node:dns/promises'
 import net from 'node:net'
-import { ExecutionMode } from '@activepieces/shared'
+import { ExecutionMode, NetworkMode } from '@activepieces/shared'
 import { Logger } from 'pino'
 import { workerSettings } from '../config/worker-settings'
 import { isIsolateMode } from '../execute/create-sandbox-for-job'
@@ -10,7 +10,7 @@ import { EgressProxy, startEgressProxy } from './proxy'
 
 export async function startEgressStack({ log, apiUrl }: StartParams): Promise<EgressStack> {
     const settings = workerSettings.getSettings()
-    const proxy = settings.SSRF_PROTECTION_ENABLED
+    const proxy = settings.NETWORK_MODE === NetworkMode.STRICT
         ? await startProxyWithApiAllowlist({ log, apiUrl, settings })
         : null
     try {
@@ -47,7 +47,7 @@ async function applyKernelLockdown({ log, proxy }: {
     proxy: EgressProxy | null
 }): Promise<IptablesLockdown> {
     if (!proxy) {
-        throw new Error('Kernel lockdown requires the egress proxy to be running; AP_SSRF_PROTECTION_ENABLED must be true')
+        throw new Error('Kernel lockdown requires the egress proxy to be running; AP_NETWORK_MODE must be set to STRICT')
     }
     const lockdown = await iptablesLockdown.apply({
         log,

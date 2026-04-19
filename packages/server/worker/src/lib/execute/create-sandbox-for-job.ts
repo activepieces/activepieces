@@ -1,4 +1,4 @@
-import { ExecutionMode, WorkerContract, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionMode, NetworkMode, WorkerContract, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { Logger } from 'pino'
 import { getEnginePath, getGlobalCacheCommonPath, getGlobalCodeCachePath } from '../cache/cache-paths'
@@ -94,7 +94,7 @@ function baseEnv(settings: WorkerSettings): Record<string, string> {
         AP_MAX_FLOW_RUN_LOG_SIZE_MB: String(settings.MAX_FLOW_RUN_LOG_SIZE_MB),
         AP_MAX_FILE_SIZE_MB: String(settings.MAX_FILE_SIZE_MB),
         NODE_PATH: '/usr/src/node_modules',
-        AP_SSRF_PROTECTION_ENABLED: settings.SSRF_PROTECTION_ENABLED === true ? 'true' : 'false',
+        AP_NETWORK_MODE: settings.NETWORK_MODE,
     }
 }
 
@@ -113,7 +113,7 @@ function proxyEnv({ settings, proxyPort }: {
     settings: WorkerSettings
     proxyPort: number | null
 }): Record<string, string> {
-    if (!settings.SSRF_PROTECTION_ENABLED || proxyPort === null) {
+    if (settings.NETWORK_MODE !== NetworkMode.STRICT || proxyPort === null) {
         return {}
     }
     const proxyUrl = `http://127.0.0.1:${proxyPort}`

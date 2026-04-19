@@ -1,6 +1,6 @@
 import dns from 'node:dns'
 import { isIP, Socket } from 'node:net'
-import { EngineGenericError, ssrfIpClassifier } from '@activepieces/shared'
+import { EngineGenericError, NetworkMode, ssrfIpClassifier } from '@activepieces/shared'
 import { EnvHttpProxyAgent, getGlobalDispatcher, setGlobalDispatcher } from 'undici'
 
 let currentGuard: InstalledGuard | null = null
@@ -9,7 +9,7 @@ export const ssrfGuard = {
     install(options: InstallOptions = {}): void {
         currentGuard?.uninstall()
         currentGuard = null
-        const enabled = options.enabled ?? (process.env['AP_SSRF_PROTECTION_ENABLED'] === 'true')
+        const enabled = options.enabled ?? (process.env['AP_NETWORK_MODE'] === NetworkMode.STRICT)
         if (!enabled) {
             currentGuard = { enabled: false, uninstall: () => undefined, policy: EMPTY_POLICY }
             return

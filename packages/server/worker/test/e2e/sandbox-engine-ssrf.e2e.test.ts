@@ -139,7 +139,7 @@ async function runProbe({ commonDir, plan, proxyPort, wsRpcPort }: {
             AP_SANDBOX_WS_PORT: String(wsRpcPort),
             AP_BASE_CODE_DIRECTORY: '/root/codes',
             SANDBOX_ID: 'e2e-engine-ssrf',
-            AP_SSRF_PROTECTION_ENABLED: 'true',
+            AP_NETWORK_MODE: 'STRICT',
             AP_SSRF_ALLOW_LIST: '',
             HTTP_PROXY: proxyUrl,
             HTTPS_PROXY: proxyUrl,
