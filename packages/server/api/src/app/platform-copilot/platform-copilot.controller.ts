@@ -3,30 +3,25 @@ import { createUIMessageStream, pipeUIMessageStreamToResponse, stepCountIs, stre
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { platformCopilotIndexer } from './platform-copilot-indexer'
 import { createCopilotTools } from './platform-copilot-tools'
 import { platformCopilotService } from './platform-copilot.service'
 
 export const platformCopilotController: FastifyPluginAsyncZod = async (app) => {
     app.post('/chat', ChatRequest, async (request, reply) => {
-        const platformId = request.principal.platform.id
-        const { model, systemWithContext, messages } = await platformCopilotService(app.log).prepareChat({
-            platformId,
+        const { model, system, messages } = platformCopilotService().prepareChat({
             message: request.body.message,
             conversationHistory: request.body.conversationHistory,
-            modelId: request.body.modelId,
-            provider: request.body.provider,
         })
 
         const stream = createUIMessageStream({
             execute: async ({ writer }) => {
-                const tools = createCopilotTools({ platformId })
+                const tools = createCopilotTools()
                 const result = streamText({
                     model,
-                    system: systemWithContext,
+                    system,
                     messages,
                     tools,
-                    stopWhen: stepCountIs(5),
+                    stopWhen: stepCountIs(10),
                 })
 
                 writer.merge(result.toUIMessageStream())
@@ -45,27 +40,6 @@ export const platformCopilotController: FastifyPluginAsyncZod = async (app) => {
             headers: { ...UI_MESSAGE_STREAM_HEADERS },
         })
     })
-
-    app.post('/index', IndexRequest, async (_request) => {
-        const indexer = platformCopilotIndexer(app.log)
-        indexer.reindex().catch((err: unknown) => app.log.error(err, '[platformCopilotController] re-index failed'))
-        return { status: 'indexing_started' }
-    })
-}
-
-const IndexRequest = {
-    config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
-    },
-    schema: {
-        tags: ['platform-copilot'],
-        description: 'Trigger re-indexing of Activepieces docs and codebase',
-        response: {
-            200: z.object({
-                status: z.string(),
-            }),
-        },
-    },
 }
 
 const ChatRequest = {
@@ -83,8 +57,6 @@ const ChatRequest = {
                     content: z.string(),
                 }),
             ).default([]),
-            modelId: z.string().optional(),
-            provider: z.string().optional(),
-        } satisfies Record<keyof PlatformCopilotChatRequest, unknown> & Record<string, unknown>),
+        } satisfies Record<keyof PlatformCopilotChatRequest, unknown>),
     },
 }

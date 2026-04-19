@@ -359,7 +359,6 @@ import { AddWaitpointTable1775747638323 } from './migration/postgres/17757476383
 import { AddConcurrencyPoolTable1775800000000 } from './migration/postgres/1775800000000-AddConcurrencyPoolTable'
 import { AddDefaultToAiProvidersEnabled1776000000000 } from './migration/postgres/1776000000000-AddDefaultToAiProvidersEnabled'
 import { DropWaitpointTimeoutSeconds1776342514732 } from './migration/postgres/1776342514732-DropWaitpointTimeoutSeconds'
-import { AddCopilotCodeChunksTable1776200000000 } from './migration/postgres/1776200000000-AddCopilotCodeChunksTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -733,7 +732,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAiProvidersEnabledToPlatformPlan1775728983000,
         AddConcurrencyPoolTable1775800000000,
         AddDefaultToAiProvidersEnabled1776000000000,
-        AddCopilotCodeChunksTable1776200000000,
         DropWaitpointTimeoutSeconds1776342514732,
     ]
     return migrations

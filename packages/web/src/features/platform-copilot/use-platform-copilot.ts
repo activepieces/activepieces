@@ -1,89 +1,11 @@
-import {
-  AIProviderModel,
-  AIProviderWithoutSensitiveData,
-} from '@activepieces/shared';
 import { useChat } from '@ai-sdk/react';
-import { useQuery } from '@tanstack/react-query';
 import { DefaultChatTransport, isTextUIPart, UIMessage } from 'ai';
 import { useEffect, useMemo } from 'react';
 
-import { aiProviderApi } from '@/features/platform-admin/api/ai-provider-api';
 import { API_URL } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
-export type CopilotModel = {
-  modelId: string;
-  modelName: string;
-  provider: string;
-  providerDisplayName: string;
-};
-
-export function useCopilotModels() {
-  const providersQuery = useQuery({
-    queryKey: ['copilot-providers'],
-    queryFn: () => aiProviderApi.list(),
-  });
-
-  const providers = providersQuery.data ?? [];
-  const hasProviders = providers.length > 0;
-
-  const modelsQuery = useQuery({
-    queryKey: ['copilot-models', providers.map((p) => p.provider).join(',')],
-    enabled: hasProviders,
-    queryFn: async () => {
-      const results = await Promise.allSettled(
-        providers.map((p) =>
-          aiProviderApi
-            .listModelsForProvider(p.provider)
-            .then((models) => ({ provider: p, models })),
-        ),
-      );
-
-      const models: CopilotModel[] = [];
-      for (const result of results) {
-        if (result.status !== 'fulfilled') continue;
-        const { provider, models: providerModels } = result.value;
-        for (const m of providerModels) {
-          if (m.type === 'text' && isChatModel(m.id)) {
-            models.push({
-              modelId: m.id,
-              modelName: m.name,
-              provider: provider.provider,
-              providerDisplayName: provider.name,
-            });
-          }
-        }
-      }
-      models.sort(
-        (a, b) =>
-          PREFERRED_MODEL_SCORE(b.modelId) - PREFERRED_MODEL_SCORE(a.modelId),
-      );
-
-      const perProvider = new Map<string, number>();
-      return models.filter((m) => {
-        const count = perProvider.get(m.provider) ?? 0;
-        if (count >= 3) return false;
-        perProvider.set(m.provider, count + 1);
-        return true;
-      });
-    },
-  });
-
-  return {
-    models: modelsQuery.data ?? [],
-    isLoading: providersQuery.isLoading || modelsQuery.isLoading,
-    hasProviders,
-    providers,
-  };
-}
-
-export function usePlatformCopilot(
-  {
-    selectedModel,
-  }: {
-    selectedModel: CopilotModel | null;
-  } = { selectedModel: null },
-) {
+export function usePlatformCopilot() {
   const storageKey = `ap-copilot-${
     authenticationSession.getCurrentUserId() ?? 'anon'
   }`;
@@ -106,12 +28,6 @@ export function usePlatformCopilot(
           body: {
             message: getMessageText(lastMessage),
             conversationHistory,
-            ...(selectedModel
-              ? {
-                  modelId: selectedModel.modelId,
-                  provider: selectedModel.provider,
-                }
-              : {}),
           },
         };
       },
@@ -172,41 +88,4 @@ function isValidMessage(item: unknown): boolean {
     typeof record['role'] === 'string' &&
     Array.isArray(record['parts'])
   );
-}
-
-export type { AIProviderModel, AIProviderWithoutSensitiveData };
-
-const EXCLUDED_PATTERNS = [
-  'realtime',
-  'audio',
-  'vision',
-  'tts',
-  'whisper',
-  'dall-e',
-  'embedding',
-  'babbage',
-  'davinci',
-  'instruct',
-  'transcription',
-  'moderation',
-  'search',
-];
-
-function isChatModel(modelId: string): boolean {
-  const id = modelId.toLowerCase();
-  return !EXCLUDED_PATTERNS.some((p) => id.includes(p));
-}
-
-function PREFERRED_MODEL_SCORE(modelId: string): number {
-  const id = modelId.toLowerCase();
-  if (id.includes('claude-haiku')) return 100;
-  if (id.includes('gpt-4o-mini')) return 90;
-  if (id.includes('gemini-2.0-flash')) return 85;
-  if (id.includes('gemini-flash')) return 80;
-  if (id.includes('claude-sonnet')) return 75;
-  if (id.includes('gpt-4o')) return 70;
-  if (id.includes('claude')) return 60;
-  if (id.includes('gpt-4')) return 50;
-  if (id.includes('gemini')) return 40;
-  return 0;
 }

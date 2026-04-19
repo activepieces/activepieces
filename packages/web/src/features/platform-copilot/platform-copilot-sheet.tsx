@@ -1,17 +1,18 @@
-import { isTextUIPart, UIMessage } from 'ai';
+import { isTextUIPart, ToolUIPart, UIMessage } from 'ai';
 import { t } from 'i18next';
 import {
   ArrowUp,
   Bot,
   Check,
-  ChevronsUpDown,
   Code2,
   Copy,
+  FileText,
+  Folder,
+  Github,
   Globe,
   Puzzle,
-  RefreshCw,
+  Search,
   Server,
-  Settings,
   Square,
   Trash2,
   XIcon,
@@ -19,37 +20,19 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
-import { useNavigate } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { API_URL } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
-import {
-  CopilotModel,
-  useCopilotModels,
-  usePlatformCopilot,
-} from './use-platform-copilot';
+import { usePlatformCopilot } from './use-platform-copilot';
 
 const SUGGESTIONS = [
   { text: 'How do I build my first flow?', icon: Zap },
@@ -57,29 +40,17 @@ const SUGGESTIONS = [
   { text: 'How do I write a custom piece?', icon: Code2 },
   { text: 'How do I set up webhooks?', icon: Globe },
   { text: 'How do I deploy with Docker?', icon: Server },
-  { text: 'How do I configure AI providers?', icon: Bot },
+  { text: 'What plans does Activepieces offer?', icon: Bot },
 ];
 
 export function PlatformCopilotSheet({
   open,
   onOpenChange,
 }: PlatformCopilotSheetProps) {
-  const navigate = useNavigate();
-  const { models, isLoading: modelsLoading } = useCopilotModels();
-  const [selectedModel, setSelectedModel] = useState<CopilotModel | null>(null);
-  const [modelPopoverOpen, setModelPopoverOpen] = useState(false);
-
-  useEffect(() => {
-    if (!selectedModel && models.length > 0) setSelectedModel(models[0]);
-  }, [models, selectedModel]);
-
-  const { messages, sendMessage, status, stop, clearChat } = usePlatformCopilot(
-    { selectedModel },
-  );
+  const { messages, sendMessage, status, stop, clearChat } =
+    usePlatformCopilot();
 
   const isGenerating = status === 'submitted' || status === 'streaming';
-  const canChat = selectedModel !== null;
-
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -95,10 +66,10 @@ export function PlatformCopilotSheet({
 
   const handleSend = useCallback(
     (text: string) => {
-      if (!text || isGenerating || !canChat) return;
+      if (!text || isGenerating) return;
       void sendMessage({ text });
     },
-    [isGenerating, canChat, sendMessage],
+    [isGenerating, sendMessage],
   );
 
   const hasMessages = messages.length > 0;
@@ -118,15 +89,7 @@ export function PlatformCopilotSheet({
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4">
           {!hasMessages && !isGenerating ? (
-            <EmptyState
-              canChat={canChat}
-              modelsLoading={modelsLoading}
-              onSuggest={handleSend}
-              onConfigure={() => {
-                onOpenChange(false);
-                navigate('/platform/setup/ai');
-              }}
-            />
+            <EmptyState onSuggest={handleSend} />
           ) : (
             <div className="flex flex-col gap-5">
               {messages.map((msg) => (
@@ -136,7 +99,7 @@ export function PlatformCopilotSheet({
                   isStreaming={isGenerating}
                 />
               ))}
-              {isGenerating && !lastAssistantHasText(messages) && (
+              {isGenerating && !lastAssistantHasActivity(messages) && (
                 <TypingIndicator />
               )}
             </div>
@@ -145,19 +108,8 @@ export function PlatformCopilotSheet({
 
         <InputArea
           isGenerating={isGenerating}
-          canChat={canChat}
-          modelsLoading={modelsLoading}
-          models={models}
-          selectedModel={selectedModel}
-          modelPopoverOpen={modelPopoverOpen}
-          setModelPopoverOpen={setModelPopoverOpen}
-          setSelectedModel={setSelectedModel}
           onSend={handleSend}
           onStop={stop}
-          onConfigure={() => {
-            onOpenChange(false);
-            navigate('/platform/setup/ai');
-          }}
         />
       </SheetContent>
     </Sheet>
@@ -199,7 +151,6 @@ function Header({
             </TooltipContent>
           </Tooltip>
         )}
-        <ReindexButton />
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -226,46 +177,146 @@ const MessageBubble = React.memo(
     message: UIMessage;
     isStreaming: boolean;
   }) {
-    const content = message.parts.find(isTextUIPart)?.text ?? '';
     const isUser = message.role === 'user';
+    const text = collectText(message);
 
     if (isUser) {
       return (
         <div className="flex justify-end animate-in fade-in slide-in-from-bottom-2 duration-200">
           <div className="bg-primary text-primary-foreground rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm max-w-[85%] leading-relaxed whitespace-pre-wrap">
-            {content}
+            {text}
           </div>
         </div>
       );
     }
 
-    if (!content && !isStreaming) return null;
-    if (!content) return null;
+    const toolParts = message.parts.filter(isToolPart);
+    const hasActivity = toolParts.length > 0 || text.length > 0;
+    if (!hasActivity && !isStreaming) return null;
+    if (!hasActivity) return null;
 
     return (
       <div className="flex items-start gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
         <div className="size-7 rounded-full bg-background border border-border flex items-center justify-center shrink-0 mt-0.5">
           <img src="/logo.svg" alt="" className="size-4" />
         </div>
-        <div className="flex-1 min-w-0 text-sm leading-relaxed">
-          <AssistantMarkdown content={content} />
+        <div className="flex-1 min-w-0 text-sm leading-relaxed space-y-2">
+          {toolParts.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {toolParts.map((part, idx) => (
+                <ToolChip key={`${part.type}-${idx}`} part={part} />
+              ))}
+            </div>
+          )}
+          {text.length > 0 && <AssistantMarkdown content={text} />}
           {isStreaming && (
             <span className="inline-block size-1.5 rounded-full bg-primary animate-pulse ml-1 align-middle" />
           )}
-          {!isStreaming && content && <CopyBtn text={content} />}
+          {!isStreaming && text.length > 0 && <CopyBtn text={text} />}
         </div>
       </div>
     );
   },
   (prev, next) => {
-    // Always re-render the currently-streaming bubble so it shows each new token
     if (prev.isStreaming || next.isStreaming) return false;
-    // Completed messages: skip re-render unless content or role actually changed
-    const prevText = prev.message.parts.find(isTextUIPart)?.text ?? '';
-    const nextText = next.message.parts.find(isTextUIPart)?.text ?? '';
+    if (prev.message.parts.length !== next.message.parts.length) return false;
+    const prevText = collectText(prev.message);
+    const nextText = collectText(next.message);
     return prevText === nextText && prev.message.role === next.message.role;
   },
 );
+
+function ToolChip({ part }: { part: ToolUIPart }) {
+  const toolName = part.type.startsWith('tool-')
+    ? part.type.slice('tool-'.length)
+    : part.type;
+  const { icon: Icon, label } = describeTool(toolName, part);
+  const inProgress =
+    part.state === 'input-streaming' || part.state === 'input-available';
+  const errored = part.state === 'output-error';
+
+  return (
+    <Badge
+      variant="secondary"
+      className={cn(
+        'gap-1.5 px-2 py-1 font-normal text-[11px] max-w-full',
+        errored && 'bg-destructive-50 text-destructive-700',
+      )}
+    >
+      <Icon className={cn('size-3 shrink-0', inProgress && 'animate-pulse')} />
+      <span className="truncate">{label}</span>
+    </Badge>
+  );
+}
+
+function describeTool(
+  toolName: string,
+  part: ToolUIPart,
+): { icon: typeof Search; label: string } {
+  const input = (part.input ?? {}) as Record<string, unknown>;
+  switch (toolName) {
+    case 'research': {
+      const queries = input['queries'];
+      const first = Array.isArray(queries)
+        ? (queries[0] as string | undefined)
+        : undefined;
+      return {
+        icon: Search,
+        label: chipLabel(t('Researching'), first),
+      };
+    }
+    case 'web_search':
+      return {
+        icon: Search,
+        label: chipLabel(t('Searching'), input['query'] as string | undefined),
+      };
+    case 'read_url':
+      return {
+        icon: FileText,
+        label: chipLabel(
+          t('Reading'),
+          shortUrl(input['url'] as string | undefined),
+        ),
+      };
+    case 'search_github_code':
+      return {
+        icon: Github,
+        label: chipLabel(
+          t('Searching repo'),
+          input['query'] as string | undefined,
+        ),
+      };
+    case 'read_github_file':
+      return {
+        icon: FileText,
+        label: chipLabel(t('Reading'), input['filePath'] as string | undefined),
+      };
+    case 'list_github_directory':
+      return {
+        icon: Folder,
+        label: chipLabel(t('Browsing'), input['dirPath'] as string | undefined),
+      };
+    default:
+      return { icon: Search, label: toolName };
+  }
+}
+
+function chipLabel(prefix: string, detail: string | undefined): string {
+  const trimmed = (detail ?? '').toString().trim();
+  if (trimmed.length === 0) return `${prefix}…`;
+  const truncated = trimmed.length > 60 ? trimmed.slice(0, 60) + '…' : trimmed;
+  return `${prefix}: ${truncated}`;
+}
+
+function shortUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  try {
+    const u = new URL(url);
+    return u.hostname + u.pathname;
+  } catch {
+    return url;
+  }
+}
 
 const AssistantMarkdown = React.memo(
   function AssistantMarkdown({ content }: { content: string }) {
@@ -435,23 +486,14 @@ function TypingIndicator() {
   );
 }
 
-function lastAssistantHasText(msgs: UIMessage[]): boolean {
+function lastAssistantHasActivity(msgs: UIMessage[]): boolean {
   const last = msgs[msgs.length - 1];
   if (!last || last.role !== 'assistant') return false;
-  return (last.parts.find(isTextUIPart)?.text ?? '').length > 0;
+  if (last.parts.some(isToolPart)) return true;
+  return collectText(last).length > 0;
 }
 
-function EmptyState({
-  canChat,
-  modelsLoading,
-  onSuggest,
-  onConfigure,
-}: {
-  canChat: boolean;
-  modelsLoading: boolean;
-  onSuggest: (s: string) => void;
-  onConfigure: () => void;
-}) {
+function EmptyState({ onSuggest }: { onSuggest: (s: string) => void }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-full gap-8 py-4">
       <div className="flex flex-col items-center text-center gap-3 animate-in fade-in slide-in-from-bottom-3 duration-500">
@@ -469,16 +511,6 @@ function EmptyState({
           </p>
         </div>
       </div>
-      {!canChat && !modelsLoading && (
-        <Button
-          variant="outline"
-          className="gap-2 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100"
-          onClick={onConfigure}
-        >
-          <Settings className="size-4" />
-          {t('Configure AI Provider')}
-        </Button>
-      )}
       <div className="w-full grid grid-cols-2 gap-2">
         {SUGGESTIONS.map((s, i) => {
           const Icon = s.icon;
@@ -486,36 +518,16 @@ function EmptyState({
             <button
               key={s.text}
               type="button"
-              disabled={!canChat}
               onClick={() => onSuggest(s.text)}
               style={{
                 animationDelay: `${200 + i * 60}ms`,
                 animationFillMode: 'both',
               }}
-              className={cn(
-                'group text-left p-3 rounded-xl border bg-muted/30 animate-in fade-in slide-in-from-bottom-1 duration-400',
-                canChat
-                  ? 'hover:bg-primary/5 hover:border-primary/30 hover:shadow-sm transition-all duration-150'
-                  : 'opacity-40 cursor-not-allowed',
-              )}
+              className="group text-left p-3 rounded-xl border bg-muted/30 animate-in fade-in slide-in-from-bottom-1 duration-400 hover:bg-primary/5 hover:border-primary/30 hover:shadow-sm transition-all duration-150"
             >
               <div className="flex flex-col gap-2">
-                <Icon
-                  className={cn(
-                    'size-4 transition-colors duration-150',
-                    canChat
-                      ? 'text-muted-foreground group-hover:text-primary'
-                      : 'text-muted-foreground',
-                  )}
-                />
-                <span
-                  className={cn(
-                    'text-xs leading-snug transition-colors duration-150',
-                    canChat
-                      ? 'text-muted-foreground group-hover:text-foreground'
-                      : 'text-muted-foreground',
-                  )}
-                >
+                <Icon className="size-4 transition-colors duration-150 text-muted-foreground group-hover:text-primary" />
+                <span className="text-xs leading-snug transition-colors duration-150 text-muted-foreground group-hover:text-foreground">
                   {t(s.text)}
                 </span>
               </div>
@@ -529,50 +541,24 @@ function EmptyState({
 
 function InputArea({
   isGenerating,
-  canChat,
-  modelsLoading,
-  models,
-  selectedModel,
-  modelPopoverOpen,
-  setModelPopoverOpen,
-  setSelectedModel,
   onSend,
   onStop,
-  onConfigure,
 }: {
   isGenerating: boolean;
-  canChat: boolean;
-  modelsLoading: boolean;
-  models: CopilotModel[];
-  selectedModel: CopilotModel | null;
-  modelPopoverOpen: boolean;
-  setModelPopoverOpen: (v: boolean) => void;
-  setSelectedModel: (m: CopilotModel) => void;
   onSend: (text: string) => void;
   onStop: () => void;
-  onConfigure: () => void;
 }) {
   const [localInput, setLocalInput] = useState('');
 
   const handleSend = () => {
     const trimmed = localInput.trim();
-    if (!trimmed || isGenerating || !canChat) return;
+    if (!trimmed || isGenerating) return;
     onSend(trimmed);
     setLocalInput('');
   };
 
   return (
     <div className="px-4 pb-4 pt-3 bg-background border-t shrink-0">
-      {!canChat && !modelsLoading && (
-        <Button
-          variant="outline"
-          className="w-full mb-3 gap-2 text-sm"
-          onClick={onConfigure}
-        >
-          <Settings className="size-4" />
-          {t('Configure AI Provider')}
-        </Button>
-      )}
       <div className="flex flex-col rounded-xl border bg-background shadow-sm focus-within:ring-1 focus-within:ring-ring transition-shadow">
         <textarea
           rows={1}
@@ -586,17 +572,12 @@ function InputArea({
               handleSend();
             }
           }}
-          disabled={isGenerating || !canChat}
+          disabled={isGenerating}
         />
         <div className="flex items-center justify-between px-3 pb-2 pt-1">
-          <ModelSelector
-            models={models}
-            selectedModel={selectedModel}
-            modelsLoading={modelsLoading}
-            open={modelPopoverOpen}
-            onOpenChange={setModelPopoverOpen}
-            onSelect={setSelectedModel}
-          />
+          <span className="text-[11px] text-muted-foreground/70">
+            {t('Powered by Activepieces')}
+          </span>
           {isGenerating ? (
             <Button
               type="button"
@@ -612,7 +593,7 @@ function InputArea({
               type="button"
               size="icon"
               className="size-8 rounded-lg"
-              disabled={!localInput.trim() || !canChat}
+              disabled={!localInput.trim()}
               onClick={handleSend}
             >
               <ArrowUp className="size-4" />
@@ -624,122 +605,15 @@ function InputArea({
   );
 }
 
-function ModelSelector({
-  models,
-  selectedModel,
-  modelsLoading,
-  open,
-  onOpenChange,
-  onSelect,
-}: {
-  models: CopilotModel[];
-  selectedModel: CopilotModel | null;
-  modelsLoading: boolean;
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  onSelect: (m: CopilotModel) => void;
-}) {
-  if (models.length === 0)
-    return (
-      <span className="text-[11px] text-muted-foreground">
-        {modelsLoading ? t('Loading...') : ''}
-      </span>
-    );
-  return (
-    <Popover open={open} onOpenChange={onOpenChange}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="flex items-center gap-1 h-7 px-1.5 text-[11px] text-muted-foreground hover:text-foreground rounded-md hover:bg-muted/50 transition-colors max-w-[200px]"
-        >
-          <span className="truncate">
-            {selectedModel
-              ? `${selectedModel.providerDisplayName} / ${selectedModel.modelName}`
-              : t('Select model')}
-          </span>
-          <ChevronsUpDown className="size-3 shrink-0 opacity-50" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[280px] p-0" align="start" side="top">
-        <Command>
-          <CommandInput
-            placeholder={t('Search models...')}
-            className="h-9 text-sm"
-          />
-          <CommandList className="max-h-[220px] overflow-y-scroll">
-            <CommandEmpty className="py-3 text-center text-xs text-muted-foreground">
-              {t('No models found')}
-            </CommandEmpty>
-            {models.map((m) => (
-              <CommandItem
-                key={`${m.provider}-${m.modelId}`}
-                value={`${m.providerDisplayName} ${m.modelName} ${m.modelId}`}
-                onSelect={() => {
-                  onSelect(m);
-                  onOpenChange(false);
-                }}
-                className="text-xs gap-2 flex items-center"
-              >
-                <Check
-                  className={cn(
-                    'size-3.5 shrink-0',
-                    selectedModel?.modelId === m.modelId
-                      ? 'opacity-100'
-                      : 'opacity-0',
-                  )}
-                />
-                <span className="text-muted-foreground whitespace-nowrap shrink-0">
-                  {m.providerDisplayName} /
-                </span>
-                <span className="truncate ml-1">{m.modelName}</span>
-              </CommandItem>
-            ))}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
+function collectText(message: UIMessage): string {
+  return message.parts
+    .filter(isTextUIPart)
+    .map((p) => p.text)
+    .join('');
 }
 
-function ReindexButton() {
-  const [s, setS] = useState<'idle' | 'loading' | 'done'>('idle');
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-8 rounded-full"
-          disabled={s === 'loading'}
-          onClick={() => {
-            setS('loading');
-            void fetch(`${API_URL}/v1/platform-copilot/index`, {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${
-                  authenticationSession.getToken() ?? ''
-                }`,
-              },
-            })
-              .then(() => {
-                setS('done');
-                setTimeout(() => setS('idle'), 3000);
-              })
-              .catch(() => setS('idle'));
-          }}
-        >
-          <RefreshCw
-            className={cn(
-              'size-4',
-              s === 'loading' && 'animate-spin',
-              s === 'done' && 'text-emerald-500',
-            )}
-          />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">{t('Reindex')}</TooltipContent>
-    </Tooltip>
-  );
+function isToolPart(part: UIMessage['parts'][number]): part is ToolUIPart {
+  return typeof part.type === 'string' && part.type.startsWith('tool-');
 }
 
 type PlatformCopilotSheetProps = {
