@@ -323,8 +323,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             break
         case ApEdition.COMMUNITY:
             await app.register(platformProjectModule)
-            await app.register(projectMemberModule)
-            await app.register(projectRoleModule)
             await app.register(communityPiecesModule)
             break
     }

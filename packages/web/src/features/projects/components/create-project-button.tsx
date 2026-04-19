@@ -9,6 +9,7 @@ import { Plus } from 'lucide-react';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
+import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
 import {
   Tooltip,
   TooltipContent,
@@ -102,18 +103,48 @@ function FullVariant({ disabled }: { disabled: boolean }) {
   );
 }
 
+function SidebarMenuVariant({
+  disabled,
+  onCreate,
+}: {
+  disabled: boolean;
+  onCreate?: (project: ProjectWithLimits) => void;
+}) {
+  if (disabled) {
+    return (
+      <UpgradeTooltip>
+        <SidebarMenuButton disabled className="text-muted-foreground gap-2">
+          <Plus className="size-4" />
+          <span>{t('Add team project')}</span>
+        </SidebarMenuButton>
+      </UpgradeTooltip>
+    );
+  }
+  return (
+    <NewProjectDialog onCreate={onCreate}>
+      <SidebarMenuButton className="text-muted-foreground gap-2">
+        <Plus className="size-4" />
+        <span>{t('Add team project')}</span>
+      </SidebarMenuButton>
+    </NewProjectDialog>
+  );
+}
+
 export function CreateProjectButton({
   variant,
   projects,
   onCreate,
 }: {
-  variant: 'icon' | 'full';
+  variant: 'icon' | 'full' | 'sidebar-menu';
   projects: Pick<ProjectWithLimits, 'type'>[];
   onCreate?: (project: ProjectWithLimits) => void;
 }) {
   const disabled = useIsCreateProjectDisabled({ projects });
   if (variant === 'icon') {
     return <IconVariant disabled={disabled} onCreate={onCreate} />;
+  }
+  if (variant === 'sidebar-menu') {
+    return <SidebarMenuVariant disabled={disabled} onCreate={onCreate} />;
   }
   return <FullVariant disabled={disabled} />;
 }

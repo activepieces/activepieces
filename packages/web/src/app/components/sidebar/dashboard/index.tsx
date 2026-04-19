@@ -7,7 +7,7 @@ import {
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Search, Plus } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
@@ -30,7 +30,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarSeparator,
   useSidebar,
   SidebarGroupLabel,
@@ -38,7 +37,6 @@ import {
 } from '@/components/ui/sidebar-shadcn';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import {
-  NewProjectDialog,
   CreateProjectButton,
   projectCollectionUtils,
   getProjectName,
@@ -321,16 +319,13 @@ export function ProjectDashboardSidebar({
               {shouldShowInlineAddButton && state === 'expanded' && (
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <NewProjectDialog
+                    <CreateProjectButton
+                      variant="sidebar-menu"
+                      projects={projects ?? []}
                       onCreate={(project) => {
                         navigate(`/projects/${project.id}/flows`);
                       }}
-                    >
-                      <SidebarMenuButton className="text-muted-foreground gap-2">
-                        <Plus className="size-4" />
-                        <span>{t('Add team project')}</span>
-                      </SidebarMenuButton>
-                    </NewProjectDialog>
+                    />
                   </SidebarMenuItem>
                 </SidebarMenu>
               )}

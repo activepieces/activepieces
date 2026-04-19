@@ -119,7 +119,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     manageTemplatesEnabled: false,
     customAppearanceEnabled: false,
     teamProjectsLimit: TeamProjectsLimit.ONE,
-    projectRolesEnabled: true,
+    projectRolesEnabled: false,
     customDomainsEnabled: false,
     apiKeysEnabled: false,
     ssoEnabled: false,
