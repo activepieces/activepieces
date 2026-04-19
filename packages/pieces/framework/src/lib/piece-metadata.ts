@@ -1,6 +1,6 @@
 import { PiecePropertyMap } from "./property";
 import { WebhookRenewConfiguration } from "./trigger/trigger";
-import { ErrorHandlingOptionsParam } from "./action/action";
+import { ErrorHandlingOptionsParam, InfoForLLM } from "./action/action";
 import { PieceAuthProperty } from "./property/authentication";
 import { z } from "zod";
 import { LocalesEnum, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from "@activepieces/shared";
@@ -49,10 +49,7 @@ export const ActionBase = z.object({
   name: z.string(),
   displayName: z.string(),
   description: z.string(),
-  descriptionForLLM: z.string().optional(),
-  outputSchema: z.record(z.string(), z.unknown()).optional(),
-  tags: z.array(z.string()).optional(),
-  difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+  infoForLLM: InfoForLLM.optional(),
   props: PiecePropertyMap,
   requireAuth: z.boolean(),
   errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
@@ -62,10 +59,7 @@ export type ActionBase = {
   name: string,
   displayName: string,
   description: string,
-  descriptionForLLM?: string,
-  outputSchema?: Record<string, unknown>,
-  tags?: string[],
-  difficulty?: 'easy' | 'medium' | 'hard',
+  infoForLLM?: InfoForLLM,
   props: PiecePropertyMap,
   requireAuth: boolean;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
@@ -75,9 +69,7 @@ export const TriggerBase = z.object({
   name: z.string(),
   displayName: z.string(),
   description: z.string(),
-  descriptionForLLM: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+  infoForLLM: InfoForLLM.optional(),
   props: PiecePropertyMap,
   errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
   type: z.nativeEnum(TriggerStrategy),

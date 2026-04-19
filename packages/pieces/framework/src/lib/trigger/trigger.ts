@@ -4,6 +4,7 @@ import { TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
 import { isNil, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared';
+import { InfoForLLM } from '../action/action';
 export { TriggerStrategy }
 
 export const DEDUPE_KEY_PROPERTY = '_dedupe_key'
@@ -44,9 +45,7 @@ type BaseTriggerParams<
   name: string
   displayName: string
   description: string
-  descriptionForLLM?: string
-  tags?: string[]
-  difficulty?: 'easy' | 'medium' | 'hard'
+  infoForLLM?: InfoForLLM
   requireAuth?: boolean
   auth?: PieceAuth
   props: TriggerProps
@@ -87,9 +86,7 @@ export class ITrigger<
     public readonly name: string,
     public readonly displayName: string,
     public readonly description: string,
-    public readonly descriptionForLLM: string | undefined,
-    public readonly tags: string[] | undefined,
-    public readonly difficulty: 'easy' | 'medium' | 'hard' | undefined,
+    public readonly infoForLLM: InfoForLLM | undefined,
     public readonly requireAuth: boolean,
     public readonly props: TriggerProps,
     public readonly type: TS,
@@ -126,9 +123,7 @@ export const createTrigger = <
         params.name,
         params.displayName,
         params.description,
-        params.descriptionForLLM,
-        params.tags,
-        params.difficulty,
+        params.infoForLLM,
         params.requireAuth ?? true,
         params.props,
         params.type,
@@ -149,9 +144,7 @@ export const createTrigger = <
         params.name,
         params.displayName,
         params.description,
-        params.descriptionForLLM,
-        params.tags,
-        params.difficulty,
+        params.infoForLLM,
         params.requireAuth ?? true,
         params.props,
         params.type,
@@ -172,9 +165,7 @@ export const createTrigger = <
         params.name,
         params.displayName,
         params.description,
-        params.descriptionForLLM,
-        params.tags,
-        params.difficulty,
+        params.infoForLLM,
         params.requireAuth ?? true,
         params.props,
         params.type,
@@ -195,9 +186,7 @@ export const createTrigger = <
         params.name,
         params.displayName,
         params.description,
-        params.descriptionForLLM,
-        params.tags,
-        params.difficulty,
+        params.infoForLLM,
         params.requireAuth ?? true,
         params.props,
         params.type,

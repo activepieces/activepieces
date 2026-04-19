@@ -19,6 +19,34 @@ export const ErrorHandlingOptionsParam = z.object({
 })
 export type ErrorHandlingOptionsParam = z.infer<typeof ErrorHandlingOptionsParam>
 
+/**
+ * Metadata an LLM/MCP agent reads to choose this action or trigger and consume
+ * its output reliably. Optional today; intended to become the gating field for
+ * exposing actions as direct MCP tools (`piece.{name}.{action}`).
+ *
+ * Kept as a single bundle so the "AI-ready" contract lives in one well-named
+ * place, and so future fields (e.g. `recommendedForAgents`, `outputForAgent`)
+ * can land here without bloating the top-level action/trigger type.
+ */
+export const InfoForLLM = z.object({
+  /** Imperative-mood description optimised for tool selection by an LLM. */
+  description: z.string().optional(),
+  /**
+   * Free-form description of the output shape.
+   * - Static outputs: stringified JSON example, e.g.
+   *   `'{ id: string, threadId: string, labelIds: string[] }'`.
+   * - Dynamic outputs (HTTP responses, spreadsheet rows, SQL queries):
+   *   prose explaining the shape with a representative example, since the
+   *   exact keys are not known at design time.
+   */
+  outputSchema: z.string().optional(),
+  /** Agent-side categorisation tags, e.g. `['write', 'messaging']`. */
+  tags: z.array(z.string()).optional(),
+  /** Heuristic difficulty hint for agent curation and recommendation. */
+  difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+})
+export type InfoForLLM = z.infer<typeof InfoForLLM>
+
 type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined, ActionProps extends InputPropertyMap> = {
   /**
    * A dummy parameter used to infer {@code PieceAuth} type
@@ -30,10 +58,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
   auth?: PieceAuth
   displayName: string
   description: string
-  descriptionForLLM?: string
-  outputSchema?: Record<string, unknown>
-  tags?: string[]
-  difficulty?: 'easy' | 'medium' | 'hard'
+  infoForLLM?: InfoForLLM
   props: ActionProps
   run: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>
   test?: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>
@@ -47,10 +72,7 @@ export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |
     public readonly name: string,
     public readonly displayName: string,
     public readonly description: string,
-    public readonly descriptionForLLM: string | undefined,
-    public readonly outputSchema: Record<string, unknown> | undefined,
-    public readonly tags: string[] | undefined,
-    public readonly difficulty: 'easy' | 'medium' | 'hard' | undefined,
+    public readonly infoForLLM: InfoForLLM | undefined,
     public readonly props: ActionProps,
     public readonly run: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>,
     public readonly test: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>,
@@ -80,10 +102,7 @@ export const createAction = <
     params.name,
     params.displayName,
     params.description,
-    params.descriptionForLLM,
-    params.outputSchema,
-    params.tags,
-    params.difficulty,
+    params.infoForLLM,
     params.props,
     params.run,
     params.test ?? params.run,
