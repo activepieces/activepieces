@@ -27,9 +27,9 @@ export const apDuplicateFlowTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
         },
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, name } = duplicateFlowInput.parse(args)
-
             try {
+                const { flowId, name } = duplicateFlowInput.parse(args)
+
                 const [sourceFlow, project] = await Promise.all([
                     flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
                     projectService(log).getOneOrThrow(mcp.projectId),
@@ -48,27 +48,36 @@ export const apDuplicateFlowTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                     },
                 })
 
-                const updatedFlow = await flowService(log).update({
-                    id: newFlow.id,
-                    projectId: mcp.projectId,
-                    userId: null,
-                    platformId: project.platformId,
-                    operation: {
-                        type: FlowOperationType.IMPORT_FLOW,
-                        request: {
-                            displayName,
-                            trigger: sourceFlow.version.trigger,
-                            schemaVersion: sourceFlow.version.schemaVersion ?? null,
-                            notes: sourceFlow.version.notes ?? null,
+                try {
+                    const updatedFlow = await flowService(log).update({
+                        id: newFlow.id,
+                        projectId: mcp.projectId,
+                        userId: null,
+                        platformId: project.platformId,
+                        operation: {
+                            type: FlowOperationType.IMPORT_FLOW,
+                            request: {
+                                displayName,
+                                trigger: sourceFlow.version.trigger,
+                                schemaVersion: sourceFlow.version.schemaVersion ?? null,
+                                notes: sourceFlow.version.notes ?? null,
+                            },
                         },
-                    },
-                })
+                    })
 
-                return {
-                    content: [{
-                        type: 'text',
-                        text: `✅ Flow duplicated successfully.\n  Original: "${sourceFlow.version.displayName}" (id: ${sourceFlow.id})\n  Copy: "${updatedFlow.version.displayName}" (id: ${updatedFlow.id})\n\nNote: Connections are not copied — use ap_flow_structure on the new flow to check configuration status and re-configure steps as needed.`,
-                    }],
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: `✅ Flow duplicated successfully.\n  Original: "${sourceFlow.version.displayName}" (id: ${sourceFlow.id})\n  Copy: "${updatedFlow.version.displayName}" (id: ${updatedFlow.id})\n\nNote: Connections are not copied — use ap_flow_structure on the new flow to check configuration status and re-configure steps as needed.`,
+                        }],
+                    }
+                }
+                catch (importErr) {
+                    try {
+                        await flowService(log).delete({ id: newFlow.id, projectId: mcp.projectId })
+                    }
+                    catch { /* best-effort cleanup */ }
+                    return mcpUtils.mcpToolError('Flow duplication failed', importErr)
                 }
             }
             catch (err) {

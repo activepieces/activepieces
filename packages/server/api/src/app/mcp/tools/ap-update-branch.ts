@@ -38,76 +38,76 @@ export const apUpdateBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
         },
         annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, routerStepName, branchIndex, branchName, conditions } = updateBranchInput.parse(args)
-            if (isNil(branchName) && isNil(conditions)) {
-                return { content: [{ type: 'text', text: '❌ Nothing to update. Provide at least branchName or conditions.' }] }
-            }
-
-            const [flow, project] = await Promise.all([
-                flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
-                projectService(log).getOneOrThrow(mcp.projectId),
-            ])
-            if (isNil(flow)) {
-                return { content: [{ type: 'text', text: '❌ Flow not found' }] }
-            }
-
-            const resolved = mcpUtils.resolveRouterStep({ stepName: routerStepName, trigger: flow.version.trigger })
-            if (resolved.error) {
-                return resolved.error
-            }
-            const routerStep = resolved.routerStep
-
-            const branches = [...routerStep.settings.branches]
-
-            if (branchIndex < 0 || branchIndex >= branches.length) {
-                return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ branchIndex ${branchIndex} is out of range. Valid indices are 0–${branches.length - 1}.`,
-                    }],
+            try {
+                const { flowId, routerStepName, branchIndex, branchName, conditions } = updateBranchInput.parse(args)
+                if (isNil(branchName) && isNil(conditions)) {
+                    return { content: [{ type: 'text', text: '❌ Nothing to update. Provide at least branchName or conditions.' }] }
                 }
-            }
 
-            const targetBranch = branches[branchIndex]
-            if (targetBranch.branchType === BranchExecutionType.FALLBACK) {
-                if (conditions !== undefined) {
+                const [flow, project] = await Promise.all([
+                    flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
+                    projectService(log).getOneOrThrow(mcp.projectId),
+                ])
+                if (isNil(flow)) {
+                    return { content: [{ type: 'text', text: '❌ Flow not found' }] }
+                }
+
+                const resolved = mcpUtils.resolveRouterStep({ stepName: routerStepName, trigger: flow.version.trigger })
+                if (resolved.error) {
+                    return resolved.error
+                }
+                const routerStep = resolved.routerStep
+
+                const branches = [...routerStep.settings.branches]
+
+                if (branchIndex < 0 || branchIndex >= branches.length) {
                     return {
                         content: [{
                             type: 'text',
-                            text: `❌ Cannot set conditions on the fallback branch (index ${branchIndex}). Only branchName can be updated for fallback branches.`,
+                            text: `❌ branchIndex ${branchIndex} is out of range. Valid indices are 0–${branches.length - 1}.`,
                         }],
                     }
                 }
-                branches[branchIndex] = {
-                    ...targetBranch,
-                    ...(branchName !== undefined && { branchName }),
+
+                const targetBranch = branches[branchIndex]
+                if (targetBranch.branchType === BranchExecutionType.FALLBACK) {
+                    if (conditions !== undefined) {
+                        return {
+                            content: [{
+                                type: 'text',
+                                text: `❌ Cannot set conditions on the fallback branch (index ${branchIndex}). Only branchName can be updated for fallback branches.`,
+                            }],
+                        }
+                    }
+                    branches[branchIndex] = {
+                        ...targetBranch,
+                        ...(branchName !== undefined && { branchName }),
+                    }
                 }
-            }
-            else {
-                branches[branchIndex] = {
-                    ...targetBranch,
-                    ...(branchName !== undefined && { branchName }),
-                    ...(conditions !== undefined && { conditions }),
+                else {
+                    branches[branchIndex] = {
+                        ...targetBranch,
+                        ...(branchName !== undefined && { branchName }),
+                        ...(conditions !== undefined && { conditions }),
+                    }
                 }
-            }
 
-            const updatedSettings: RouterActionSettings = {
-                ...routerStep.settings,
-                branches,
-            }
+                const updatedSettings: RouterActionSettings = {
+                    ...routerStep.settings,
+                    branches,
+                }
 
-            const operation: FlowOperationRequest = {
-                type: FlowOperationType.UPDATE_ACTION,
-                request: {
-                    type: FlowActionType.ROUTER,
-                    name: routerStep.name,
-                    displayName: routerStep.displayName,
-                    valid: routerStep.valid,
-                    settings: updatedSettings,
-                },
-            }
+                const operation: FlowOperationRequest = {
+                    type: FlowOperationType.UPDATE_ACTION,
+                    request: {
+                        type: FlowActionType.ROUTER,
+                        name: routerStep.name,
+                        displayName: routerStep.displayName,
+                        valid: routerStep.valid,
+                        settings: updatedSettings,
+                    },
+                }
 
-            try {
                 await flowService(log).update({
                     id: flow.id,
                     projectId: mcp.projectId,
