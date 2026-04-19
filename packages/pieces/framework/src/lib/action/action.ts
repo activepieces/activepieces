@@ -20,6 +20,22 @@ export const ErrorHandlingOptionsParam = z.object({
 export type ErrorHandlingOptionsParam = z.infer<typeof ErrorHandlingOptionsParam>
 
 /**
+ * Heuristic difficulty hint for an action or trigger, used by agent curation
+ * and recommendation layers. Extracted to an enum so new levels can be added
+ * in one place rather than updating a literal union at every site.
+ *
+ * - `EASY`   — single API call, no lookups, simple input.
+ * - `MEDIUM` — multiple API calls or lookups, dependent dropdowns, 5+ props.
+ * - `HARD`   — multi-step flow with side effects, bulk operations, waitpoints,
+ *              or multiple output shapes.
+ */
+export enum ActionDifficulty {
+  EASY = 'easy',
+  MEDIUM = 'medium',
+  HARD = 'hard',
+}
+
+/**
  * Metadata an LLM/MCP agent reads to choose this action or trigger and consume
  * its output reliably. Optional today; intended to become the gating field for
  * exposing actions as direct MCP tools (`piece.{name}.{action}`).
@@ -43,7 +59,7 @@ export const InfoForLLM = z.object({
   /** Agent-side categorisation tags, e.g. `['write', 'messaging']`. */
   tags: z.array(z.string()).optional(),
   /** Heuristic difficulty hint for agent curation and recommendation. */
-  difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+  difficulty: z.nativeEnum(ActionDifficulty).optional(),
 })
 export type InfoForLLM = z.infer<typeof InfoForLLM>
 
