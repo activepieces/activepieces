@@ -1,0 +1,205 @@
+import { PieceCategory } from '@activepieces/shared';
+
+export const RESOURCE_CONFIG: Record<string, { label: string; path: string; guided: boolean }> = {
+  contact: { label: 'Contact', path: 'contacts', guided: true },
+  company: { label: 'Company', path: 'companies', guided: true },
+  deal: { label: 'Deal', path: 'deals', guided: true },
+  product: { label: 'Product', path: 'products', guided: true },
+  budget: { label: 'Budget', path: 'budgets', guided: true },
+  list: { label: 'List', path: 'lists', guided: true },
+  pipeline: { label: 'Pipeline', path: 'pipelines', guided: true },
+  pipelineItem: { label: 'Pipeline Item', path: 'pipeline-items', guided: true },
+  invoice: { label: 'Invoice', path: 'invoices', guided: true },
+  order: { label: 'Order', path: 'orders', guided: true },
+  project: { label: 'Project', path: 'projects', guided: true },
+  task: { label: 'Task', path: 'tasks', guided: true },
+};
+
+export const RESOURCE_OPTIONS = Object.entries(RESOURCE_CONFIG).map(([key, config]) => ({
+  label: config.label,
+  value: key,
+}));
+
+export const GUIDED_RESOURCES = Object.entries(RESOURCE_CONFIG)
+  .filter(([, config]) => config.guided)
+  .map(([key]) => key);
+
+export const RESOURCE_LABELS: Record<string, string> = {
+  contact: 'Contact',
+  company: 'Company',
+  deal: 'Deal',
+  product: 'Product',
+  budget: 'Budget',
+  list: 'List',
+  pipeline: 'Pipeline',
+  pipelineItem: 'Pipeline Item',
+  invoice: 'Invoice',
+  order: 'Order',
+  project: 'Project',
+  task: 'Task',
+};
+
+export const COLLECTION_KEYS = [
+  'data',
+  'items',
+  'results',
+  'contacts',
+  'companies',
+  'deals',
+  'products',
+  'budgets',
+  'lists',
+  'pipelines',
+  'pipeline_items',
+  'invoices',
+  'orders',
+  'projects',
+  'tasks',
+  'databins',
+  'responses',
+];
+
+export const COUNTRIES = [
+  { label: 'Germany', value: 'DE' },
+  { label: 'Austria', value: 'AT' },
+  { label: 'Switzerland', value: 'CH' },
+  { label: 'United States', value: 'US' },
+  { label: 'United Kingdom', value: 'GB' },
+  { label: 'France', value: 'FR' },
+  { label: 'Italy', value: 'IT' },
+  { label: 'Spain', value: 'ES' },
+  { label: 'Netherlands', value: 'NL' },
+  { label: 'Belgium', value: 'BE' },
+  { label: 'Poland', value: 'PL' },
+  { label: 'Portugal', value: 'PT' },
+  { label: 'Sweden', value: 'SE' },
+  { label: 'Denmark', value: 'DK' },
+  { label: 'Norway', value: 'NO' },
+  { label: 'Finland', value: 'FI' },
+  { label: 'Australia', value: 'AU' },
+  { label: 'Canada', value: 'CA' },
+  { label: 'Brazil', value: 'BR' },
+  { label: 'India', value: 'IN' },
+  { label: 'China', value: 'CN' },
+  { label: 'Japan', value: 'JP' },
+  { label: 'South Korea', value: 'KR' },
+  { label: 'Singapore', value: 'SG' },
+  { label: 'United Arab Emirates', value: 'AE' },
+  { label: 'South Africa', value: 'ZA' },
+  { label: 'Mexico', value: 'MX' },
+  { label: 'Argentina', value: 'AR' },
+  { label: 'Chile', value: 'CL' },
+  { label: 'Colombia', value: 'CO' },
+  { label: 'Peru', value: 'PE' },
+  { label: 'Other', value: 'OTHER' },
+];
+
+export const STATES_DE = [
+  { label: 'Baden-Württemberg', value: 'BW' },
+  { label: 'Bayern', value: 'BY' },
+  { label: 'Berlin', value: 'BE' },
+  { label: 'Brandenburg', value: 'BB' },
+  { label: 'Bremen', value: 'HB' },
+  { label: 'Hamburg', value: 'HH' },
+  { label: 'Hessen', value: 'HE' },
+  { label: 'Mecklenburg-Vorpommern', value: 'MV' },
+  { label: 'Niedersachsen', value: 'NI' },
+  { label: 'Nordrhein-Westfalen', value: 'NW' },
+  { label: 'Rheinland-Pfalz', value: 'RP' },
+  { label: 'Saarland', value: 'SL' },
+  { label: 'Sachsen', value: 'SN' },
+  { label: 'Sachsen-Anhalt', value: 'ST' },
+  { label: 'Schleswig-Holstein', value: 'SH' },
+  { label: 'Thüringen', value: 'TH' },
+];
+
+export const STATES_AT = [
+  { label: 'Burgenland', value: '1' },
+  { label: 'Kärnten', value: '2' },
+  { label: 'Niederösterreich', value: '3' },
+  { label: 'Oberösterreich', value: '4' },
+  { label: 'Salzburg', value: '5' },
+  { label: 'Steiermark', value: '6' },
+  { label: 'Tirol', value: '7' },
+  { label: 'Vorarlberg', value: '8' },
+  { label: 'Wien', value: '9' },
+];
+
+export const STATES_CH = [
+  { label: 'Aargau', value: 'AG' },
+  { label: 'Appenzell Ausserrhoden', value: 'AR' },
+  { label: 'Appenzell Innerrhoden', value: 'AI' },
+  { label: 'Basel-Landschaft', value: 'BL' },
+  { label: 'Basel-Stadt', value: 'BS' },
+  { label: 'Bern', value: 'BE' },
+  { label: 'Fribourg', value: 'FR' },
+  { label: 'Genf', value: 'GE' },
+  { label: 'Glarus', value: 'GL' },
+  { label: 'Graubünden', value: 'GR' },
+  { label: 'Jura', value: 'JU' },
+  { label: 'Luzern', value: 'LU' },
+  { label: 'Neuenburg', value: 'NE' },
+  { label: 'Nidwalden', value: 'NW' },
+  { label: 'Obwalden', value: 'OW' },
+  { label: 'Schaffhausen', value: 'SH' },
+  { label: 'Schwyz', value: 'SZ' },
+  { label: 'Solothurn', value: 'SO' },
+  { label: 'St. Gallen', value: 'SG' },
+  { label: 'Thurgau', value: 'TG' },
+  { label: 'Tessin', value: 'TI' },
+  { label: 'Uri', value: 'UR' },
+  { label: 'Waadt', value: 'VD' },
+  { label: 'Wallis', value: 'VS' },
+  { label: 'Zug', value: 'ZG' },
+  { label: 'Zürich', value: 'ZH' },
+];
+
+export const CURRENCIES = [
+  { label: 'EUR - Euro', value: 'EUR' },
+  { label: 'USD - US Dollar', value: 'USD' },
+  { label: 'GBP - British Pound', value: 'GBP' },
+  { label: 'CHF - Swiss Franc', value: 'CHF' },
+  { label: 'JPY - Japanese Yen', value: 'JPY' },
+  { label: 'CNY - Chinese Yuan', value: 'CNY' },
+  { label: 'CAD - Canadian Dollar', value: 'CAD' },
+  { label: 'AUD - Australian Dollar', value: 'AUD' },
+  { label: 'INR - Indian Rupee', value: 'INR' },
+  { label: 'BRL - Brazilian Real', value: 'BRL' },
+  { label: 'SEK - Swedish Krona', value: 'SEK' },
+  { label: 'NOK - Norwegian Krone', value: 'NOK' },
+  { label: 'DKK - Danish Krone', value: 'DKK' },
+  { label: 'PLN - Polish Zloty', value: 'PLN' },
+  { label: 'CZK - Czech Koruna', value: 'CZK' },
+  { label: 'HUF - Hungarian Forint', value: 'HUF' },
+  { label: 'RUB - Russian Ruble', value: 'RUB' },
+  { label: 'ZAR - South African Rand', value: 'ZAR' },
+  { label: 'MXN - Mexican Peso', value: 'MXN' },
+  { label: 'SGD - Singapore Dollar', value: 'SGD' },
+  { label: 'HKD - Hong Kong Dollar', value: 'HKD' },
+  { label: 'KRW - South Korean Won', value: 'KRW' },
+  { label: 'TRY - Turkish Lira', value: 'TRY' },
+  { label: 'AED - UAE Dirham', value: 'AED' },
+  { label: 'SAR - Saudi Riyal', value: 'SAR' },
+  { label: 'NZD - New Zealand Dollar', value: 'NZD' },
+  { label: 'THB - Thai Baht', value: 'THB' },
+  { label: 'MYR - Malaysian Ringgit', value: 'MYR' },
+  { label: 'PHP - Philippine Peso', value: 'PHP' },
+  { label: 'IDR - Indonesian Rupiah', value: 'IDR' },
+  { label: 'VND - Vietnamese Dong', value: 'VND' },
+];
+
+export const DEAL_STATUS = [
+  { label: 'Open', value: 'open' },
+  { label: 'Won', value: 'won' },
+  { label: 'Lost', value: 'lost' },
+  { label: 'Abandoned', value: 'abandoned' },
+];
+
+export const TASK_PRIORITY = [
+  { label: 'Low', value: 'low' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'High', value: 'high' },
+  { label: 'Urgent', value: 'urgent' },
+];
+
+export const PIECE_CATEGORY = PieceCategory.SALES_AND_CRM;
