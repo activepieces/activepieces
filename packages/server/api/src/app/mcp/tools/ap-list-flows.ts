@@ -19,7 +19,7 @@ export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
         permission: Permission.READ_FLOW,
         description: 'List flows in the current project with status, trigger type, and published state.',
         inputSchema: {
-            limit: z.number().optional().describe(`Max flows to return (default ${DEFAULT_LIMIT}, max ${MAX_LIMIT}).`),
+            limit: z.number().int().min(1).max(MAX_LIMIT).optional().describe(`Max flows to return (default ${DEFAULT_LIMIT}, max ${MAX_LIMIT}).`),
             status: z.enum(Object.values(FlowStatus) as [FlowStatus, ...FlowStatus[]]).optional().describe('Filter by status: ENABLED or DISABLED.'),
             name: z.string().optional().describe('Filter by flow name (partial match).'),
         },

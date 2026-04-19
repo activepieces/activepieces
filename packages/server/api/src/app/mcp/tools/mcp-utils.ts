@@ -90,7 +90,9 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
     return { parts, missing, uiRequired, hasAuth }
 }
 
-function buildPropSummaries(props: PiecePropertyMap): PropSummary[] {
+const MAX_PROP_DEPTH = 3
+
+function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
     return Object.entries(props)
         .filter(([, prop]) => !NON_INPUT_PROP_TYPES.has(prop.type))
         .map(([name, prop]) => {
@@ -115,9 +117,9 @@ function buildPropSummaries(props: PiecePropertyMap): PropSummary[] {
             if (prop.type === PropertyType.DYNAMIC) {
                 summary.note = 'DYNAMIC — call ap_get_piece_props with auth+input to resolve sub-fields.'
             }
-            if (prop.type === PropertyType.ARRAY && 'properties' in prop && isObject(prop.properties)) {
+            if (prop.type === PropertyType.ARRAY && 'properties' in prop && isObject(prop.properties) && depth < MAX_PROP_DEPTH) {
                 const arraySubProps: PiecePropertyMap = prop.properties
-                summary.items = buildPropSummaries(arraySubProps)
+                summary.items = buildPropSummaries(arraySubProps, depth + 1)
             }
             return summary
         })
