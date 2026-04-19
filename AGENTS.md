@@ -13,16 +13,38 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 - **Side effects**: Separated into `*-side-effects.ts` files, called explicitly after mutations.
 - **Multi-server**: Use `distributedLock`, BullMQ deduplication, or `FOR UPDATE SKIP LOCKED` for concurrent operations.
 - **Managed PostgreSQL**: No custom extensions. Use `sanitizeObjectForPostgresql()` for external data.
-- **Before modifying a module**: Read its `FEATURE.md` file for entities, services, and integration details.
+- **Before modifying a module**: Read its `.agents/features/<name>.md` file for entities, services, and integration details.
+
+## File Structure
+
+- **Exported types and constants must be placed at the end of the file**, after all logic (functions, hooks, components, classes, etc.). This keeps the logic front and centre when reading a file, and groups the public contract at a predictable location.
+
+  ```ts
+  // ✅ Correct
+  function doSomething() { ... }
+
+  export const MY_CONST = 'value';
+  export type MyType = { ... };
+  // ✅ Correct
+  const businessService = () => { ... }
+
+  export const MY_CONST = 'value';
+  export type MyType = { ... };
+
+  // ❌ Wrong — types/consts mixed in before logic
+  export const MY_CONST = 'value';
+  export type MyType = { ... };
+  function doSomething() { ... }
+  ```
 
 ## Coding Conventions
 
 - **No `any` type** — Use proper type definitions or `unknown` with type guards
-- **Zod error messages must be i18n keys** — Every `.min()`, `.refine()`, `.superRefine()`, etc. that surfaces a user-facing message must pass a string that exists as a key in `packages/web/public/locales/en/translation.json`. For common messages (e.g. required fields) use the `formErrors` constant from `@activepieces/shared`. Add a new translation key if none fits; never use raw English sentences that are not in the translation file.
-- **`@activepieces/shared` version bump** — Any change to `packages/shared` must be accompanied by a version bump in `packages/shared/package.json`: bump the **patch** version for non-breaking additions or fixes, bump the **minor** version for new exports or behaviour changes after you check if it has already been bumped in the current branch or not
 - **No type casting** — Do not use `as SomeType` to force types. If you encounter an unnecessary cast, remove it.
 - **No deprecated APIs** — Before using any library method or export, check its JSDoc. If it carries a `@deprecated` tag, use the recommended replacement instead. Examples: prefer `z.enum` over `z.nativeEnum`.
 - **Go-style error handling** — Use `tryCatch` / `tryCatchSync` from `@activepieces/shared`
+- **Zod error messages must be i18n keys** — Every `.min()`, `.refine()`, `.superRefine()`, etc. that surfaces a user-facing message must pass a string that exists as a key in `packages/web/public/locales/en/translation.json`. For common messages (e.g. required fields) use the `formErrors` constant from `@activepieces/shared`. Add a new translation key if none fits; never use raw English sentences that are not in the translation file.
+- **`@activepieces/shared` version bump** — Any change to `packages/shared` must be accompanied by a version bump in `packages/shared/package.json`: bump the **patch** version for non-breaking additions or fixes, bump the **minor** version for new exports or behaviour changes after you check if it has already been bumped in the current branch or not
 - **Helper functions** — Define non-exported helpers outside of const declarations
 - **Named parameters** — Always use a single destructured object parameter instead of positional arguments. This applies to every function with more than one parameter, regardless of type. It prevents mix-ups at the call site and makes future additions non-breaking.
 - **File order**: Imports → Exported functions/constants → Helper functions → Types
@@ -34,14 +56,6 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 - **Global error dialog via `meta`** — `app.tsx` has a `QueryCache.onError` handler that shows an error dialog when `query.meta?.showErrorDialog` is truthy. When adding a new `useQuery` that fetches primary page data (e.g. table rows, list data), add `meta: { showErrorDialog: true }` to the query options.
 - **Do NOT add** `showErrorDialog` to minor/auxiliary queries (feature flags, piece metadata, single-item fetches, filter options, user details). These should fail silently.
 - Rule of thumb: if the query failure would leave the user staring at an empty table or blank page with no explanation, it should have `meta: { showErrorDialog: true }`.
-- **No `any`** — use `unknown` with type guards
-- **No `as SomeType`** — no type casting
-- **No deprecated APIs** — prefer `z.enum` over `z.nativeEnum`
-- **Go-style errors** — `tryCatch()` / `tryCatchSync()` from `@activepieces/shared`
-- **Zod errors = i18n keys** — use `formErrors` from shared or keys from `translation.json`
-- **Shared version bump** — any change to `packages/shared` needs patch (fix) or minor (new export) bump
-- **File order**: Imports → Exports → Helpers → Types at END
-- **Comments**: only *why*, never *what*
 
 ## Key Utilities (`@activepieces/shared`)
 
@@ -65,9 +79,6 @@ npm run lint-dev      # Lint with auto-fix (ALWAYS before done)
 
 ## Git Push
 
-```bash
-CLAUDE_PUSH=yes git push -u origin HEAD
-```
 - Always prefix `git push` with `CLAUDE_PUSH=yes` to auto-approve the pre-push lint/test gate, e.g. `CLAUDE_PUSH=yes git push -u origin HEAD`.
 
 ## Pull Requests
