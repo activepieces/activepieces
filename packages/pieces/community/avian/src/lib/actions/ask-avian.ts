@@ -184,6 +184,14 @@ export const askAvian = createAction({
     messageHistory = [...messageHistory, completion.choices[0].message];
 
     if (memoryKey) {
+      // Prevent unbounded memory growth that would exceed the context window.
+      // Keep the most recent messages, dropping the oldest ones first.
+      const MAX_HISTORY_MESSAGES = 50;
+      if (messageHistory.length > MAX_HISTORY_MESSAGES) {
+        messageHistory = messageHistory.slice(
+          messageHistory.length - MAX_HISTORY_MESSAGES
+        );
+      }
       await store.put(memoryKey, messageHistory, StoreScope.PROJECT);
     }
 
