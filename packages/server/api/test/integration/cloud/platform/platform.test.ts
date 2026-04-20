@@ -356,6 +356,38 @@ describe('Platform API', () => {
             expect(responseBody.plan.licenseKey).toBeNull()
         })
 
+        it('Returns license key for non-embedded users', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    licenseKey: 'test-license-key',
+                },
+            })
+
+            const mockToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            const responseBody = response?.json()
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.plan.licenseKey).toBe('test-license-key')
+        })
+
         it('Fails if user is not a platform member', async () => {
             const { mockOwner: mockOwner1, mockPlatform: mockPlatform1 } = await mockAndSaveBasicSetup()
             const { mockPlatform: mockPlatform2 } = await mockAndSaveBasicSetup()
