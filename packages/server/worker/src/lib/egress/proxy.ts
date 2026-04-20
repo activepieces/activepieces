@@ -8,8 +8,9 @@ export async function startEgressProxy({ log, allowList }: StartOptions): Promis
     const server = new ProxyServer({
         port: 0,
         host: '127.0.0.1',
+        // proxy-chain expects an empty upstream-override record when the request is allowed through unchanged.
         prepareRequestFunction: async ({ hostname }): Promise<Record<string, never>> => {
-            await assertHostAllowed({ hostname, allowList, log })
+            await assertHostnameAllowedOrThrow({ hostname, allowList, log })
             return {}
         },
     })
@@ -21,7 +22,7 @@ export async function startEgressProxy({ log, allowList }: StartOptions): Promis
     }
 }
 
-async function assertHostAllowed({ hostname, allowList, log }: AssertArgs): Promise<void> {
+async function assertHostnameAllowedOrThrow({ hostname, allowList, log }: AssertHostnameAllowedParams): Promise<void> {
     // Resolve every A/AAAA record and reject if any is blocked. Checking only the first
     // resolved IP is bypassable with a multi-record response where one entry is private.
     // Residual risk: proxy-chain re-resolves the hostname for the upstream connection,
@@ -41,7 +42,7 @@ type StartOptions = {
     allowList: string[]
 }
 
-type AssertArgs = {
+type AssertHostnameAllowedParams = {
     hostname: string
     allowList: string[]
     log: Logger
