@@ -1,0 +1,119 @@
+import {
+  createTrigger,
+  TriggerStrategy,
+  AppConnectionValueForAuthProperty,
+} from '@activepieces/pieces-framework';
+import {
+  DedupeStrategy,
+  HttpMethod,
+  Polling,
+  pollingHelper,
+} from '@activepieces/pieces-common';
+import { greenhouseAuth } from '../auth';
+import { greenhouseApiCall } from '../common';
+
+type JobPostLocation = {
+  id: number;
+  name: string;
+  office_id: number | null;
+  job_post_custom_location_id: number | null;
+  job_post_location_type: { id: number; name: string } | null;
+};
+
+type GreenhouseJobPost = {
+  id: number;
+  title: string;
+  job_id: number;
+  location: JobPostLocation | null;
+  internal: boolean;
+  external: boolean;
+  active: boolean;
+  live: boolean;
+  first_published_at: string | null;
+  content: string | null;
+  internal_content: string | null;
+  created_at: string;
+  updated_at: string;
+  demographic_question_set_id: number | null;
+};
+
+type GreenhouseAuth = AppConnectionValueForAuthProperty<typeof greenhouseAuth>;
+
+const polling: Polling<GreenhouseAuth, Record<string, never>> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, lastFetchEpochMS }) => {
+    const apiKey = (auth as { secret_text: string }).secret_text;
+
+    const createdAfter =
+      lastFetchEpochMS > 0
+        ? new Date(lastFetchEpochMS).toISOString()
+        : new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const response = await greenhouseApiCall<GreenhouseJobPost[]>({
+      apiKey,
+      method: HttpMethod.GET,
+      endpoint: '/job_posts',
+      queryParams: {
+        created_after: createdAfter,
+        per_page: '100',
+      },
+    });
+
+    const jobPosts = response.body ?? [];
+
+    return jobPosts.map((post) => ({
+      epochMilliSeconds: new Date(post.created_at).getTime(),
+      data: {
+        id: post.id,
+        title: post.title,
+        job_id: post.job_id,
+        location: post.location?.name ?? null,
+        location_id: post.location?.id ?? null,
+        internal: post.internal,
+        external: post.external,
+        active: post.active,
+        live: post.live,
+        first_published_at: post.first_published_at,
+        created_at: post.created_at,
+        updated_at: post.updated_at,
+        demographic_question_set_id: post.demographic_question_set_id,
+      },
+    }));
+  },
+};
+
+export const newJobPostTrigger = createTrigger({
+  auth: greenhouseAuth,
+  name: 'new_job_post',
+  displayName: 'New Job Post',
+  description: 'Triggers when a new job post is created.',
+  props: {},
+  sampleData: {
+    id: 123,
+    title: 'Software Engineer',
+    job_id: 1234,
+    location: 'New York, NY',
+    location_id: 123456,
+    internal: false,
+    external: true,
+    active: true,
+    live: true,
+    first_published_at: '2024-03-15T10:00:00.000Z',
+    created_at: '2024-03-15T09:00:00.000Z',
+    updated_at: '2024-03-15T10:00:00.000Z',
+    demographic_question_set_id: 999,
+  },
+  type: TriggerStrategy.POLLING,
+  async test(context) {
+    return await pollingHelper.test(polling, context);
+  },
+  async onEnable(context) {
+    await pollingHelper.onEnable(polling, context);
+  },
+  async onDisable(context) {
+    await pollingHelper.onDisable(polling, context);
+  },
+  async run(context) {
+    return await pollingHelper.poll(polling, context);
+  },
+});

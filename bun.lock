@@ -3195,6 +3195,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/greenhouse": {
+      "name": "@activepieces/piece-greenhouse",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/greenpt": {
       "name": "@activepieces/piece-greenpt",
       "version": "0.1.4",
@@ -8815,6 +8825,8 @@
     "@activepieces/piece-graphql": ["@activepieces/piece-graphql@workspace:packages/pieces/core/graphql"],
 
     "@activepieces/piece-gravityforms": ["@activepieces/piece-gravityforms@workspace:packages/pieces/community/gravityforms"],
+
+    "@activepieces/piece-greenhouse": ["@activepieces/piece-greenhouse@workspace:packages/pieces/community/greenhouse"],
 
     "@activepieces/piece-greenpt": ["@activepieces/piece-greenpt@workspace:packages/pieces/community/greenpt"],
 
