@@ -69,6 +69,7 @@ const auth = betterAuth({
         },
     },
     emailVerification: {
+        sendOnSignUp: false,
         sendVerificationEmail: service.sendVerificationEmail,
     },
     trustedOrigins: async (request) => {
