@@ -8,6 +8,7 @@ import { useMemo } from 'react';
 import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
 import { userInvitationsHooks } from '@/features/members/hooks/user-invitations-hooks';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
 import { EmailStatusType } from './types';
@@ -45,7 +46,7 @@ export function useUserSuggestions({
   const { data: platformUsersData } = platformUserHooks.useUsers();
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const { invitations } = userInvitationsHooks.useInvitations();
-
+  const { platform } = platformHooks.useCurrentPlatform();
   const currentUserEmail = currentUser?.email.toLowerCase();
   const searchTerm = inputValue.trim();
 
@@ -65,7 +66,12 @@ export function useUserSuggestions({
   );
 
   const suggestedUsers = useMemo<SuggestedUser[]>(() => {
-    if (isPlatformPage || !platformUsersData?.data) return [];
+    if (
+      isPlatformPage ||
+      !platformUsersData?.data ||
+      platform.plan.embeddingEnabled
+    )
+      return [];
 
     const filtered = platformUsersData.data
       .filter((user) => {
