@@ -13,6 +13,7 @@ import {
   RESPONSE_QUERY_PARAM,
   STATE_QUERY_PARAM,
 } from '@/lib/navigation-utils';
+import { getCookie } from '@/lib/utils';
 
 const RedirectPage: React.FC = React.memo(() => {
   const location = useLocation();
@@ -61,7 +62,9 @@ const RedirectPage: React.FC = React.memo(() => {
 
       const handleThirdPartyLogin = async () => {
         try {
-          authenticationSession.saveResponse(response, false);
+          const token = getCookie('token');
+          console.log(token);
+          authenticationSession.saveResponse({ ...response, token }, false);
           navigate(from);
         } catch (e) {
           if (

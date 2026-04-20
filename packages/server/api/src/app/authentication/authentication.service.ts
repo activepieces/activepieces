@@ -392,7 +392,7 @@ type Get2faStatusParams = {
 }
 
 type MfaSetupResponseParams = {
-  email: string
-  password: string
-  platformId?: string
+    email: string
+    password: string
+    platformId?: string
 }

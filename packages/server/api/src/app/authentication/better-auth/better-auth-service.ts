@@ -11,6 +11,7 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { userService } from '../../user/user-service'
 import { authenticationService } from '../authentication.service'
 import { userIdentityRepository } from '../user-identity/user-identity-service'
+import { apDayjs } from '@activepieces/server-utils'
 
 type SentData = {
     user: User
@@ -124,7 +125,13 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
                 })
             }
 
-            throw ctx.redirect(`${redirectBaseUrl}?response=${JSON.stringify(response)}&state=${state}`)
+            const { token, ...user } = response
+            ctx.setCookie('token', token, {
+                httpOnly: false,
+                path: '/',
+                expires: apDayjs().add(30, 'seconds').toDate()
+            })
+            throw ctx.redirect(`${redirectBaseUrl}?response=${JSON.stringify(user)}&state=${state}` )
         }
     },
 

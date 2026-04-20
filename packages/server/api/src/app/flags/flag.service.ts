@@ -13,7 +13,7 @@ import { webhookSecretsUtils } from './webhook-secrets-util'
 
 const flagRepo = repoFactory(FlagEntity)
 
-export const flagService = (_log: FastifyBaseLogger) => ({
+export const flagService = (log: FastifyBaseLogger) => ({
     save: async (flag: FlagType): Promise<Flag> => {
         return flagRepo().save({
             id: flag.id,
