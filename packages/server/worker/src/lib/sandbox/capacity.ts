@@ -9,6 +9,9 @@ export const sandboxCapacity = {
     firstBoxUid: FIRST_BOX_UID,
     numBoxes: NUM_BOXES,
     wsRpcBasePort: WS_RPC_BASE_PORT,
+    // boxIds are assigned 1..NUM_BOXES (see worker.ts), so the live port range is
+    // WS_RPC_BASE_PORT+1 .. WS_RPC_BASE_PORT+NUM_BOXES. Using a 0-indexed range here
+    // left the last box's port outside the iptables ACCEPT range in STRICT mode.
     wsRpcPortForBox: (boxId: number): number => WS_RPC_BASE_PORT + boxId,
-    wsRpcPortRange: { first: WS_RPC_BASE_PORT, last: WS_RPC_BASE_PORT + NUM_BOXES - 1 },
+    wsRpcPortRange: { first: WS_RPC_BASE_PORT + 1, last: WS_RPC_BASE_PORT + NUM_BOXES },
 }
