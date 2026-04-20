@@ -68,10 +68,12 @@ function UserSuggestionsPopover({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape' && isOpen) {
-      e.nativeEvent.stopImmediatePropagation();
-      setShowSuggestions(false);
-      setSelectedValue('');
+    if (e.key === 'Escape') {
+      if (isOpen) {
+        e.nativeEvent.stopImmediatePropagation();
+        setShowSuggestions(false);
+        setSelectedValue('');
+      }
       onOpenChange?.(false);
       return;
     }
