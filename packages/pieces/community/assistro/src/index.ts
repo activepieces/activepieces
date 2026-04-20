@@ -9,7 +9,7 @@ export const whatsappOrderNotification = createPiece({
     description: 'Send WhatsApp order notifications using Syncmate',
     auth: whatsappOrderNotificationAuth,
     minimumSupportedRelease: '0.30.0',
-    logoUrl: 'https://cdn.activepieces.com/pieces/whatsapp.png',
+    logoUrl: 'https://cdn.activepieces.com/pieces/assistro.png',
     authors: ['assistro-syncmate'],
     actions: [sendMessage, groupSend, channelSend],
     triggers: [],
