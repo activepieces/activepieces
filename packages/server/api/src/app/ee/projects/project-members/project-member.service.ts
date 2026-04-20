@@ -227,14 +227,14 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
     },
     async hasPermissionOnAnyProject({ userId, platformId, permission }: HasPermissionOnAnyProjectParams): Promise<boolean> {
-        const memberships = await repo().find({
-            where: { userId, platformId },
-            relations: ['projectRole'],
-        })
-        return memberships.some((m) => {
-            const role = m.projectRole
-            return role.permissions?.includes(permission)
-        })
+        const count = await repo()
+            .createQueryBuilder('project_member')
+            .innerJoin('project_member.projectRole', 'project_role')
+            .where('project_member.userId = :userId', { userId })
+            .andWhere('project_member.platformId = :platformId', { platformId })
+            .andWhere(':permission = ANY(project_role.permissions)', { permission })
+            .getCount()
+        return count > 0
     },
     async countActiveUsersByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
         if (projectIds.length === 0) return new Map()
@@ -326,7 +326,6 @@ async function enrichProjectMemberWithUser(
             lastName: identity.lastName,
             created: user.created,
             updated: user.updated,
-            provider: identity.provider,
         },
     }
 }
