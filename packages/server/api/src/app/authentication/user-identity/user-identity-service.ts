@@ -178,12 +178,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
     async verify(id: string): Promise<UserIdentity> {
         const user = await userIdentityRepository().findOneByOrFail({ id })
         if (user.emailVerified) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'User is already verified',
-                },
-            })
+            return user satisfies UserIdentity
         }
         await userIdentityRepository().update({ id }, {
             emailVerified: true,
