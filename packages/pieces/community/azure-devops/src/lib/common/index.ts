@@ -442,7 +442,7 @@ function createAssignedToDropdown(required: boolean) {
         return {
           disabled: true,
           options: [],
-          placeholder: `Failed to load team members. Check your connection${extractHttpStatus(error)}.`,
+          placeholder: `Load failed${extractHttpStatus(error)}. Check PAT.`,
         };
       }
     },
@@ -503,7 +503,7 @@ function createStateDropdown(required: boolean, description: string) {
         return {
           disabled: true,
           options: [],
-          placeholder: `Failed to load states. Check your connection${extractHttpStatus(error)}.`,
+          placeholder: `Load failed${extractHttpStatus(error)}. Check PAT.`,
         };
       }
     },
@@ -553,7 +553,7 @@ function createWorkItemTypeDropdown(required: boolean, description: string) {
         return {
           disabled: true,
           options: [],
-          placeholder: `Failed to load work item types. Check your connection${extractHttpStatus(error)}.`,
+          placeholder: `Load failed${extractHttpStatus(error)}. Check PAT.`,
         };
       }
     },
@@ -596,7 +596,7 @@ export const azureDevOpsCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: `Failed to load projects. Check your connection${extractHttpStatus(error)}.`,
+          placeholder: `Load failed${extractHttpStatus(error)}. Check PAT.`,
         };
       }
     },
