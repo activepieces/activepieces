@@ -1,7 +1,8 @@
+import dns from 'node:dns/promises'
 import http from 'node:http'
 import { AddressInfo, createServer, Server } from 'node:net'
 import pino from 'pino'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EgressProxy, startEgressProxy } from '../../../src/lib/egress/proxy'
 
 const log = pino({ level: 'silent' })
@@ -130,6 +131,43 @@ describe('egress-proxy', () => {
                 host: 'example.com',
             })
             expect(res.statusCode).toBe(400)
+        })
+    })
+
+    describe('multi-A-record hostnames', () => {
+        afterEach(() => {
+            vi.restoreAllMocks()
+        })
+
+        it('rejects hostname when any resolved IP is private (public + private A records)', async () => {
+            vi.spyOn(dns, 'lookup').mockResolvedValue([
+                { address: '8.8.8.8', family: 4 },
+                { address: '10.0.0.5', family: 4 },
+            ] as unknown as dns.LookupAddress)
+            proxy = await startEgressProxy({ log, allowList: [] })
+            const res = await fetchThroughProxy({
+                proxyPort: proxy.port,
+                targetUrl: 'http://multi.example.test/',
+                host: 'multi.example.test',
+            })
+            expect(res.statusCode).toBe(403)
+            expect(res.body).toContain('Egress blocked')
+        })
+
+        it('rejects hostname when the ONLY non-first resolved IP is private (proves we check every A record)', async () => {
+            vi.spyOn(dns, 'lookup').mockResolvedValue([
+                { address: '8.8.8.8', family: 4 },
+                { address: '8.8.4.4', family: 4 },
+                { address: '192.168.1.1', family: 4 },
+            ] as unknown as dns.LookupAddress)
+            proxy = await startEgressProxy({ log, allowList: [] })
+            const res = await fetchThroughProxy({
+                proxyPort: proxy.port,
+                targetUrl: 'http://rebind.example.test/',
+                host: 'rebind.example.test',
+            })
+            expect(res.statusCode).toBe(403)
+            expect(res.body).toContain('Egress blocked')
         })
     })
 

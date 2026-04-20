@@ -53,7 +53,9 @@ function installDnsHook(policy: GuardPolicy): Uninstall {
     const wrappedLookup = function lookup(...args: unknown[]): unknown {
         const [hostname, optionsOrCallback, maybeCallback] = args
         const callback = typeof optionsOrCallback === 'function' ? optionsOrCallback as DnsCallback : maybeCallback as DnsCallback | undefined
-        const options = typeof optionsOrCallback === 'object' ? optionsOrCallback : undefined
+        const callerOptions = typeof optionsOrCallback === 'object' && optionsOrCallback !== null
+            ? optionsOrCallback as dns.LookupOptions
+            : undefined
         const guarded: DnsCallback = (err, address, family) => {
             if (err || !callback) {
                 callback?.(err, address, family)
@@ -65,9 +67,18 @@ function installDnsHook(policy: GuardPolicy): Uninstall {
                 callback(blockedError(String(hostname), blocked.address), '' as string, 0)
                 return
             }
-            callback(null, address, family)
+            if (callerOptions?.all) {
+                callback(null, entries)
+                return
+            }
+            const first = entries[0]
+            if (!first) {
+                callback(null, '' as string, 0)
+                return
+            }
+            callback(null, first.address, first.family)
         }
-        return (boundLookup as (...a: unknown[]) => unknown)(hostname, options ?? {}, guarded)
+        return (boundLookup as (...a: unknown[]) => unknown)(hostname, { ...callerOptions, all: true }, guarded)
     }
     Object.assign(wrappedLookup, originalLookup)
 
@@ -75,14 +86,13 @@ function installDnsHook(policy: GuardPolicy): Uninstall {
     ;(dns as any).lookup = wrappedLookup
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(dns.promises as any).lookup = async (hostname: string, options?: dns.LookupOptions) => {
-        const result = await boundPromisesLookup(hostname, options as dns.LookupOptions & { all: true })
-        const addresses = Array.isArray(result) ? result : [result]
-        for (const entry of addresses) {
+        const all = await boundPromisesLookup(hostname, { ...options, all: true })
+        for (const entry of all) {
             if (ssrfIpClassifier.isBlockedIp({ ip: entry.address, allowList: policy.allowList })) {
                 throw blockedError(hostname, entry.address)
             }
         }
-        return result
+        return options?.all ? all : all[0]
     }
 
     return () => {

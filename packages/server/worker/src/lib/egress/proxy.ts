@@ -22,11 +22,16 @@ export async function startEgressProxy({ log, allowList }: StartOptions): Promis
 }
 
 async function assertHostAllowed({ hostname, allowList, log }: AssertArgs): Promise<void> {
-    const ip = net.isIP(hostname) > 0
-        ? hostname
-        : (await dns.lookup(hostname)).address
-    if (ssrfIpClassifier.isBlockedIp({ ip, allowList })) {
-        log.warn({ host: hostname, ip }, 'Egress proxy refused request')
+    // Resolve every A/AAAA record and reject if any is blocked. Checking only the first
+    // resolved IP is bypassable with a multi-record response where one entry is private.
+    // Residual risk: proxy-chain re-resolves the hostname for the upstream connection,
+    // so a timing-precise DNS rebind between the two lookups is not covered here.
+    const ips = net.isIP(hostname) > 0
+        ? [hostname]
+        : (await dns.lookup(hostname, { all: true })).map((a) => a.address)
+    const blocked = ips.find((ip) => ssrfIpClassifier.isBlockedIp({ ip, allowList }))
+    if (blocked) {
+        log.warn({ host: hostname, ip: blocked, allResolvedIps: ips }, 'Egress proxy refused request')
         throw new RequestError(`Egress blocked: ${hostname}`, 403)
     }
 }

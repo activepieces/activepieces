@@ -10,11 +10,12 @@ import { EgressProxy, startEgressProxy } from './proxy'
 
 export async function startEgressStack({ log, apiUrl }: StartParams): Promise<EgressStack> {
     const settings = workerSettings.getSettings()
-    const proxy = settings.NETWORK_MODE === NetworkMode.STRICT
+    const strict = settings.NETWORK_MODE === NetworkMode.STRICT
+    const proxy = strict
         ? await startProxyWithApiAllowlist({ log, apiUrl, settings })
         : null
     try {
-        const lockdown = isIsolateMode(settings.EXECUTION_MODE as ExecutionMode)
+        const lockdown = strict && isIsolateMode(settings.EXECUTION_MODE as ExecutionMode)
             ? await applyKernelLockdown({ log, proxy })
             : null
         return {
@@ -23,8 +24,6 @@ export async function startEgressStack({ log, apiUrl }: StartParams): Promise<Eg
         }
     }
     catch (err) {
-        // Kill switch: partial hardening is worse than none. If the kernel lockdown step
-        // fails we tear the proxy back down and re-throw so the worker refuses to boot.
         if (proxy) await proxy.close().catch((closeErr) => log.warn({ closeErr }, 'Proxy close failed during SSRF rollback'))
         throw err
     }

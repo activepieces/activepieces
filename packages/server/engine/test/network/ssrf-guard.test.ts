@@ -2,7 +2,7 @@ import dns from 'node:dns'
 import { Socket, createServer, Server } from 'node:net'
 import { EngineGenericError } from '@activepieces/shared'
 import { EnvHttpProxyAgent, getGlobalDispatcher, setGlobalDispatcher } from 'undici'
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ssrfGuard } from '../../src/lib/network/ssrf-guard'
 
 function connectOnce(options: { host: string, port: number }): Promise<{ connected: boolean, error?: Error }> {
@@ -85,6 +85,89 @@ describe('ssrf-guard', () => {
             ssrfGuard.install({ enabled: true, allowList: ['127.0.0.1'] })
             const result = await dns.promises.lookup('localhost', { family: 4 })
             expect(result.address).toBe('127.0.0.1')
+        })
+    })
+
+    describe('dns.lookup hook — multi-A-record coverage', () => {
+        const publicThenPrivate = [
+            { address: '8.8.8.8', family: 4 },
+            { address: '10.0.0.1', family: 4 },
+        ]
+        const allPublic = [
+            { address: '8.8.8.8', family: 4 },
+            { address: '1.1.1.1', family: 4 },
+        ]
+
+        afterEach(() => {
+            vi.restoreAllMocks()
+        })
+
+        it('promises api: blocks when caller omits { all: true } but one A record is private', async () => {
+            vi.spyOn(dns.promises, 'lookup').mockResolvedValue(publicThenPrivate as unknown as dns.LookupAddress)
+            ssrfGuard.install({ enabled: true, allowList: [] })
+            await expect(dns.promises.lookup('multi.example.test')).rejects.toBeInstanceOf(EngineGenericError)
+        })
+
+        it('promises api: blocks when caller passes { all: true } and one A record is private', async () => {
+            vi.spyOn(dns.promises, 'lookup').mockResolvedValue(publicThenPrivate as unknown as dns.LookupAddress)
+            ssrfGuard.install({ enabled: true, allowList: [] })
+            await expect(dns.promises.lookup('multi.example.test', { all: true })).rejects.toBeInstanceOf(EngineGenericError)
+        })
+
+        it('promises api: returns single-entry shape when caller omits { all: true } and all records are public', async () => {
+            vi.spyOn(dns.promises, 'lookup').mockResolvedValue(allPublic as unknown as dns.LookupAddress)
+            ssrfGuard.install({ enabled: true, allowList: [] })
+            const result = await dns.promises.lookup('public.example.test')
+            expect(Array.isArray(result)).toBe(false)
+            expect((result as dns.LookupAddress).address).toBe('8.8.8.8')
+        })
+
+        it('promises api: returns array shape when caller passes { all: true } and all records are public', async () => {
+            vi.spyOn(dns.promises, 'lookup').mockResolvedValue(allPublic as unknown as dns.LookupAddress)
+            ssrfGuard.install({ enabled: true, allowList: [] })
+            const result = await dns.promises.lookup('public.example.test', { all: true })
+            expect(Array.isArray(result)).toBe(true)
+            expect(result).toHaveLength(2)
+        })
+
+        it('callback api: blocks when caller omits { all: true } but one A record is private', async () => {
+            vi.spyOn(dns, 'lookup').mockImplementation(((_host: unknown, _optionsOrCb: unknown, cb?: unknown) => {
+                const callback = typeof _optionsOrCb === 'function' ? _optionsOrCb : cb
+                ;(callback as (err: Error | null, addresses: dns.LookupAddress[]) => void)(null, publicThenPrivate)
+            }) as unknown as typeof dns.lookup)
+            ssrfGuard.install({ enabled: true, allowList: [] })
+            const err = await new Promise<unknown>((resolve) => {
+                dns.lookup('multi.example.test', (e) => resolve(e))
+            })
+            expect(err).toBeInstanceOf(EngineGenericError)
+        })
+
+        it('callback api: passes first public entry when caller omits { all: true }', async () => {
+            vi.spyOn(dns, 'lookup').mockImplementation(((_host: unknown, _optionsOrCb: unknown, cb?: unknown) => {
+                const callback = typeof _optionsOrCb === 'function' ? _optionsOrCb : cb
+                ;(callback as (err: Error | null, addresses: dns.LookupAddress[]) => void)(null, allPublic)
+            }) as unknown as typeof dns.lookup)
+            ssrfGuard.install({ enabled: true, allowList: [] })
+            const result = await new Promise<{ err: unknown, address: unknown, family: unknown }>((resolve) => {
+                dns.lookup('public.example.test', (err, address, family) => resolve({ err, address, family }))
+            })
+            expect(result.err).toBeNull()
+            expect(result.address).toBe('8.8.8.8')
+            expect(result.family).toBe(4)
+        })
+
+        it('callback api: passes full array when caller passes { all: true }', async () => {
+            vi.spyOn(dns, 'lookup').mockImplementation(((_host: unknown, _optionsOrCb: unknown, cb?: unknown) => {
+                const callback = typeof _optionsOrCb === 'function' ? _optionsOrCb : cb
+                ;(callback as (err: Error | null, addresses: dns.LookupAddress[]) => void)(null, allPublic)
+            }) as unknown as typeof dns.lookup)
+            ssrfGuard.install({ enabled: true, allowList: [] })
+            const result = await new Promise<{ err: unknown, address: unknown }>((resolve) => {
+                dns.lookup('public.example.test', { all: true }, (err, address) => resolve({ err, address }))
+            })
+            expect(result.err).toBeNull()
+            expect(Array.isArray(result.address)).toBe(true)
+            expect(result.address).toHaveLength(2)
         })
     })
 
