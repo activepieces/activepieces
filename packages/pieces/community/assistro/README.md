@@ -15,7 +15,7 @@ To use this piece, you need an API Key from Assistro.
 
 1.  Log in to your [Assistro account](https://app.assistro.co).
 2.  Go to the **Configuration** page.
-3.  Enable the **Pabbly Add-on**.
+3. Enable the **Activepieces Add-on**.
 4.  Copy the generated API Key.
 
 ## Actions
