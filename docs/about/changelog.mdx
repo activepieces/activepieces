@@ -8,7 +8,7 @@ icon: "code-commit"
 
 ### Network Security
 
-Activepieces now ships with a built-in **network proxy that protects your automations from network attacks**. When turned on, flows can still reach the public internet, but they can no longer reach sensitive addresses on your own network — like your database, your Redis cache, your cloud provider's metadata service, or anything else running inside your private infrastructure. That closes a common class of attack where a malicious link or prompt tricks a flow into calling an internal-only URL.
+Activepieces now ships with a built-in **network proxy that protects your automations from network attacks**.
 
 - **One switch to turn it on** — set `AP_NETWORK_MODE=STRICT` and the protection is active. It's **opt-in today**, but in an upcoming release it will become **opt-out** (on by default).
 - **Allow list for trusted internal services** — if a flow legitimately needs to reach an internal API or database, add its address (or a whole subnet like `10.10.0.0/24`) to `AP_SSRF_ALLOW_LIST`.
