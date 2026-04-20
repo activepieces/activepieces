@@ -40,13 +40,15 @@ function isBlockedRawIpTarget({ target, policy }: IsBlockedRawIpTargetParams): b
 }
 
 function isExemptLoopbackPort({ host, port, policy }: IsExemptLoopbackPortParams): boolean {
-    if (host !== '127.0.0.1' || port === undefined) return false
+    if (!LOOPBACK_IPS.has(host) || port === undefined) return false
     return policy.allowedLoopbackPorts.has(port)
 }
 
 function buildBlockedError({ host, ip }: BuildBlockedErrorParams): SSRFBlockedError {
     return new SSRFBlockedError({ host, ip })
 }
+
+const LOOPBACK_IPS = new Set(['127.0.0.1', '::1'])
 
 type ConnectTarget = {
     host?: string

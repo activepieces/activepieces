@@ -65,6 +65,18 @@ describe('ssrf-guard', () => {
             expect(ssrfGuard.isBlockedIp('10.0.0.5')).toBe(false)
             expect(ssrfGuard.isBlockedIp('10.0.0.6')).toBe(true)
         })
+
+        it('allowList supports CIDR entries', () => {
+            ssrfGuard.install({ enabled: true, allowList: ['10.0.0.0/24'] })
+            expect(ssrfGuard.isBlockedIp('10.0.0.1')).toBe(false)
+            expect(ssrfGuard.isBlockedIp('10.0.0.254')).toBe(false)
+            expect(ssrfGuard.isBlockedIp('10.0.1.1')).toBe(true)
+        })
+
+        it('allowList rejects CIDR entry crossing address families', () => {
+            ssrfGuard.install({ enabled: true, allowList: ['10.0.0.0/24'] })
+            expect(ssrfGuard.isBlockedIp('::1')).toBe(true)
+        })
     })
 
     describe('dns.lookup hook', () => {

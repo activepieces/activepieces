@@ -9,6 +9,24 @@ function parseOrNull(ip: string): ipaddr.IPv4 | ipaddr.IPv6 | null {
     }
 }
 
+function isInAllowList({ ip, allowList }: { ip: string, allowList: string[] }): boolean {
+    if (allowList.includes(ip)) return true
+    const addr = parseOrNull(ip)
+    if (!addr) return false
+    return allowList.some((entry) => entry.includes('/') && matchesCidr({ addr, cidr: entry }))
+}
+
+function matchesCidr({ addr, cidr }: { addr: ipaddr.IPv4 | ipaddr.IPv6, cidr: string }): boolean {
+    try {
+        const range = ipaddr.parseCIDR(cidr)
+        if (addr.kind() !== range[0].kind()) return false
+        return addr.match(range)
+    }
+    catch {
+        return false
+    }
+}
+
 function isBlockedRange(addr: ipaddr.IPv4 | ipaddr.IPv6): boolean {
     if (addr.kind() === 'ipv6') {
         const v6 = addr as ipaddr.IPv6
@@ -20,7 +38,7 @@ function isBlockedRange(addr: ipaddr.IPv4 | ipaddr.IPv6): boolean {
 }
 
 function isBlockedIp({ ip, allowList }: { ip: string, allowList: string[] }): boolean {
-    if (allowList.includes(ip)) {
+    if (isInAllowList({ ip, allowList })) {
         return false
     }
     const addr = parseOrNull(ip)
