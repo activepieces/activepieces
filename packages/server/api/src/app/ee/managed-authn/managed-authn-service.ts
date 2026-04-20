@@ -70,7 +70,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
                 id: externalPrincipal.platformId,
             },
             tokenVersion: identity.tokenVersion,
-        }, 7 * 24 * 60 * 60)
+        }, 2 * 60 * 60)
         return {
             id: user.id,
             platformRole: user.platformRole,
