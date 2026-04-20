@@ -20,7 +20,6 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
             email,
 
         })
-        log.info({ isInvited }, '[socialsingin]')
 
         if (!isInvited) {
             throw new ActivepiecesError({

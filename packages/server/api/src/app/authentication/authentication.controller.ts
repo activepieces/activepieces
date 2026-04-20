@@ -22,7 +22,7 @@ import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'
-import auth from './better-auth/auth'
+import { betterAuthInstance } from './better-auth/auth'
 
 export const authenticationController: FastifyPluginAsyncZod = async (
     app,
@@ -97,7 +97,7 @@ export const authenticationController: FastifyPluginAsyncZod = async (
 
     app.post('/exchange-session', ExchangeSessionRequestOptions, async (request) => {
         const predefinedPlatformId = await platformUtils.getPlatformIdForRequest(request)
-        const session = await auth.api.getSession({
+        const session = await betterAuthInstance.get().api.getSession({
             headers: new Headers({ cookie: request.headers.cookie ?? '' }),
         })
         if (!session?.user) {

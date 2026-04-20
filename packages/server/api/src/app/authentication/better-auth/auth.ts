@@ -1,109 +1,135 @@
 import { cryptoUtils } from '@activepieces/server-utils'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
 import { sso } from '@better-auth/sso'
 import { betterAuth } from 'better-auth'
 import { createAuthMiddleware } from 'better-auth/api'
 import { twoFactor } from 'better-auth/plugins'
+import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
-import pg from 'pg'
 import { getPostgresConnectionString } from '../../database/database-connection'
+import { DatabaseType } from '../../database/database-type'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { passwordHasher } from '../lib/password-hasher'
 import { userIdentityRepository } from '../user-identity/user-identity-service'
 import { betterAuthService } from './better-auth-service'
 
-const { Pool } = pg
+async function getBetterAuthDatabase() {
+    const dbType = system.get(AppSystemProp.DB_TYPE)
+    if (dbType === DatabaseType.PGLITE) {
+        const { getPGliteInstance } = await import('typeorm-pglite')
+        const { PGliteDialect } = await import('kysely-pglite-dialect')
+        const pglite = await getPGliteInstance()
+        return { dialect: new PGliteDialect({ pglite }), type: 'postgres' as const }
+    }
+    const { default: pg } = await import('pg')
+    return new pg.Pool({ connectionString: getPostgresConnectionString() })
+}
 
-const service = betterAuthService(system.globalLogger())
+async function createBetterAuth(log: FastifyBaseLogger) {
+    const database = await getBetterAuthDatabase()
+    const service = betterAuthService(log)
 
-const auth = betterAuth({
-    basePath: '/v1/better-auth',
-    database: new Pool({
-        connectionString: getPostgresConnectionString(),
-    }),
-    user: {
-        modelName: 'user_identity',
-        additionalFields: {
-            firstName: {
-                type: 'string',
-                returned: true,
-                required: true,
-                input: true,
-                defaultValue: 'Unknown',
-            },
-            lastName: {
-                type: 'string',
-                returned: true,
-                required: true,
-                input: true,
-                defaultValue: 'Unknown',
-            },
-            provider: {
-                type: 'string',
-                returned: true,
-                required: true,
-                input: true,
-                defaultValue: 'SSO',
-            },
-            trackEvents: {
-                type: 'boolean',
-                returned: true,
-            },
-            newsLetter: {
-                type: 'boolean',
-                returned: true,
-            },
-            tokenVersion: {
-                type: 'string',
-                returned: true,
+    return betterAuth({
+        basePath: '/v1/better-auth',
+        database,
+        user: {
+            modelName: 'user_identity',
+            additionalFields: {
+                firstName: {
+                    type: 'string',
+                    returned: true,
+                    required: true,
+                    input: true,
+                    defaultValue: 'Unknown',
+                },
+                lastName: {
+                    type: 'string',
+                    returned: true,
+                    required: true,
+                    input: true,
+                    defaultValue: 'Unknown',
+                },
+                provider: {
+                    type: 'string',
+                    returned: true,
+                    required: true,
+                    input: true,
+                    defaultValue: 'SSO',
+                },
+                trackEvents: {
+                    type: 'boolean',
+                    returned: true,
+                },
+                newsLetter: {
+                    type: 'boolean',
+                    returned: true,
+                },
+                tokenVersion: {
+                    type: 'string',
+                    returned: true,
+                },
             },
         },
-    },
-    emailAndPassword: {
-        enabled: true,
-        requireEmailVerification: true,
-        sendResetPassword: service.sendResetPassword,
-        password: {
-            hash: passwordHasher.hash,
-            verify: (data) => passwordHasher.compare(data.password, data.hash),
-        },
-    },
-    emailVerification: {
-        sendOnSignUp: false,
-        sendVerificationEmail: service.sendVerificationEmail,
-    },
-    trustedOrigins: async (request) => {
-        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-        if (!request) {
-            return [frontendUrl]
-        }
-        if (request.url.includes('/sso/')) {
-            const origin = request.headers.get('origin')
-            return origin ? [frontendUrl, origin] : [frontendUrl]
-        }
-        return [frontendUrl]
-    },
-    plugins: [
-        twoFactor({ issuer: 'Activepieces' }),
-        sso({
-            redirectURI: `${system.getOrThrow(AppSystemProp.FRONTEND_URL)}/api/v1/better-auth/sso/callback`,
-            trustEmailVerified: true,
-            provisionUser: async ({ user, userInfo }) => {
-                const nameParts = (userInfo.name ?? '').split(' ')
-                await userIdentityRepository().update(user.id, {
-                    firstName: nameParts[0] ?? 'Unknown',
-                    lastName: nameParts.slice(1).join(' ') || 'Unknown',
-                    tokenVersion: nanoid(),
-                    password: await passwordHasher.hash(await cryptoUtils.generateRandomPassword()),
-                })
+        emailAndPassword: {
+            enabled: true,
+            requireEmailVerification: true,
+            sendResetPassword: service.sendResetPassword,
+            password: {
+                hash: passwordHasher.hash,
+                verify: (data) => passwordHasher.compare(data.password, data.hash),
             },
-            provisionUserOnEveryLogin: false,
-        }),
-    ],
-    hooks: {
-        before: createAuthMiddleware(service.beforeHook),
-        after: createAuthMiddleware(service.afterHook),
-    },
-})
+        },
+        emailVerification: {
+            sendOnSignUp: false,
+            sendVerificationEmail: service.sendVerificationEmail,
+        },
+        trustedOrigins: async (request) => {
+            const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+            const defaultOrigins = [frontendUrl, 'https://accounts.google.com', 'https://*.googleapis.com']
+            if (!request) {
+                return defaultOrigins
+            }
+            if (request.url.includes('/sso')) {
+                const origin = request.headers.get('origin')
+                return [...defaultOrigins, ...(origin ? [origin] : [])]
+            }
+            return defaultOrigins
+        },
+        plugins: [
+            twoFactor({ issuer: 'Activepieces' }),
+            sso({
+                redirectURI: `${system.getOrThrow(AppSystemProp.FRONTEND_URL)}/api/v1/better-auth/sso/callback`,
+                trustEmailVerified: true,
+                provisionUser: async ({ user, userInfo }) => {
+                    const nameParts = (userInfo.name ?? '').split(' ')
+                    await userIdentityRepository().update(user.id, {
+                        firstName: nameParts[0] ?? 'Unknown',
+                        lastName: nameParts.slice(1).join(' ') || 'Unknown',
+                        tokenVersion: nanoid(),
+                        password: await passwordHasher.hash(await cryptoUtils.generateRandomPassword()),
+                        imageUrl: userInfo.image ?? undefined,
+                    })
+                },
+                provisionUserOnEveryLogin: true,
+            }),
+        ],
+        hooks: {
+            before: createAuthMiddleware(service.beforeHook),
+            after: createAuthMiddleware(service.afterHook),
+        },
+    })
+}
 
-export default auth
+
+let _auth: Awaited<ReturnType<typeof createBetterAuth>> | null = null
+
+export const betterAuthInstance = {
+    init: async (log: FastifyBaseLogger) => {
+        _auth = await createBetterAuth(log)
+    },
+    get: () => {
+        assertNotNullOrUndefined(_auth, 'better-auth not initialized')
+        return _auth
+    },
+}

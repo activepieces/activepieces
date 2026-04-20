@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid'
 import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { userRepo } from '../../user/user-service'
-import auth from '../better-auth/auth'
+import { betterAuthInstance } from '../better-auth/auth'
 import { passwordHasher } from '../lib/password-hasher'
 import { UserIdentityEntity } from './user-identity-entity'
 
@@ -15,7 +15,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
     async create(params: CreateIdentityParams): Promise<UserIdentity> {
         log.info({ email: params.email }, 'Creating user identity')
 
-        const { error, data: response } = await tryCatch(async () => auth.api.signUpEmail({
+        const { error, data: response } = await tryCatch(async () => betterAuthInstance.get().api.signUpEmail({
             body: {
                 email: params.email,
                 name: `${params.firstName } ${params.lastName}`,
@@ -58,10 +58,10 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             emailVerified: params.emailVerified ?? false,
         })
 
-        return identity satisfies UserIdentity
+        return identity
     },
     async verifyIdentityPassword(params: VerifyIdentityPasswordParams): Promise<VerifyIdentityPasswordResult> {
-        const { error, data } = await tryCatch(async () => auth.api.signInEmail({
+        const { error, data } = await tryCatch(async () => betterAuthInstance.get().api.signInEmail({
             body: {
                 email: params.email,
                 password: params.password,
@@ -97,20 +97,20 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         const twoFactorRedirect = typeof response === 'object' && response !== null && 'twoFactorRedirect' in response && response['twoFactorRedirect'] === true
 
         const identity = await userIdentityRepository().findOneByOrFail({ email: params.email.toLowerCase().trim() })
-        return { identity: identity satisfies UserIdentity, responseHeaders, twoFactorRedirect }
+        return { identity, responseHeaders, twoFactorRedirect }
     },
     async getIdentityByEmail(email: string): Promise<UserIdentity | null> {
         const cleanedEmail = email.toLowerCase().trim()
         const identity = await userIdentityRepository().findOneBy({ email: cleanedEmail })
-        return identity satisfies UserIdentity | null
+        return identity
     },
     async getOne(params: GetOneOrFailParams): Promise<UserIdentity | null > {
         const identity = await userIdentityRepository().findOneBy({ id: params.id })
-        return identity satisfies UserIdentity | null
+        return identity
     },
     async getOneOrFail(params: GetOneOrFailParams): Promise<UserIdentity> {
         const identity = await userIdentityRepository().findOneByOrFail({ id: params.id })
-        return identity satisfies UserIdentity
+        return identity
     },
     async getBasicInformation(id: string): Promise<Pick<UserIdentity, 'email' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'imageUrl'>> {
         const user = await userIdentityRepository().findOneByOrFail({ id })
@@ -124,7 +124,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         }
     },
     async sendVerifyEmail(params: SendVerificationEmailParams): Promise<void> {
-        await auth.api.sendVerificationEmail({
+        await betterAuthInstance.get().api.sendVerificationEmail({
             body: {
                 email: params.email,
             },
@@ -134,7 +134,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         })
     },
     async verifyEmail(params: VerifyEmailParams): Promise<UserIdentity> {
-        const res = await auth.api.verifyEmail({
+        const res = await betterAuthInstance.get().api.verifyEmail({
             query: {
                 token: params.otp,
             },
@@ -146,10 +146,10 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             })
         }
         const user = await userIdentityRepository().findOneByOrFail({ id: params.identityId })
-        return user satisfies UserIdentity
+        return user
     },
     async sendResetPasswordEmail(params: SendResetPasswordParams): Promise<void> {
-        await auth.api.requestPasswordReset({
+        await betterAuthInstance.get().api.requestPasswordReset({
             body: {
                 email: params.email,
             },
@@ -159,7 +159,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         })
     },
     async resetPassword(params: ResetPasswordParams): Promise<UserIdentity> {
-        const res = await auth.api.resetPassword({
+        const res = await betterAuthInstance.get().api.resetPassword({
             body: {
                 token: params.otp,
                 newPassword: params.newPassword,
@@ -172,19 +172,19 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             })
         }
         const user = await userIdentityRepository().findOneByOrFail({ id: params.identityId })
-        return user satisfies UserIdentity
+        return user
     },
     // to force verification
     async verify(id: string): Promise<UserIdentity> {
         const user = await userIdentityRepository().findOneByOrFail({ id })
         if (user.emailVerified) {
-            return user satisfies UserIdentity
+            return user
         }
         await userIdentityRepository().update({ id }, {
             emailVerified: true,
         })
         return {
-            ...user satisfies UserIdentity,
+            ...user,
             emailVerified: true,
         }
     },

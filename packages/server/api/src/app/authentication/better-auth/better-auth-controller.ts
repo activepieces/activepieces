@@ -3,7 +3,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { platformUtils } from '../../platform/platform.utils'
-import auth from './auth'
+import { betterAuthInstance } from './auth'
 
 export const betterAuthController: FastifyPluginAsyncZod = async (app) => {
     app.route({
@@ -11,7 +11,7 @@ export const betterAuthController: FastifyPluginAsyncZod = async (app) => {
         url: '/v1/better-auth/*',
         async handler(request, reply) {
             try {
-                const response = await auth.handler(toWebRequest(request))
+                const response = await betterAuthInstance.get().handler(toWebRequest(request))
 
                 void reply.status(response.status)
                 response.headers.forEach((value, key) => {
@@ -39,7 +39,7 @@ export const betterAuthController: FastifyPluginAsyncZod = async (app) => {
         const targetPath = `/v1/better-auth/sso/saml2/callback/${providerId}`
         const targetUrl = new URL(targetPath, `http://${request.headers.host}`)
 
-        const response = await auth.handler(toWebRequest(request, targetUrl))
+        const response = await betterAuthInstance.get().handler(toWebRequest(request, targetUrl))
 
         void reply.status(response.status)
         response.headers.forEach((value, key) => {

@@ -1,16 +1,7 @@
 import { UserIdentity } from '@activepieces/shared'
 import { EntitySchema, EntitySchemaColumnOptions } from 'typeorm'
 
-type UserIdentitySchema = UserIdentity & {
-    name: string
-    image?: string
-    password?: string
-    /** @deprecated use emailVerified instead */
-    verified: boolean
-    twoFactorEnabled: boolean
-}
-
-export const UserIdentityEntity = new EntitySchema<UserIdentitySchema>({
+export const UserIdentityEntity = new EntitySchema<UserIdentity>({
     name: 'user_identity',
     columns: {
         id: {
@@ -38,12 +29,7 @@ export const UserIdentityEntity = new EntitySchema<UserIdentitySchema>({
             type: Boolean,
             nullable: true,
         },
-        /** @deprecated use emailVerified instead */
-        verified: {
-            type: Boolean,
-            nullable: false,
-            default: false,
-        },
+
         emailVerified: {
             type: Boolean,
             nullable: false,
@@ -74,6 +60,13 @@ export const UserIdentityEntity = new EntitySchema<UserIdentitySchema>({
             nullable: true,
         },
         twoFactorEnabled: {
+            type: Boolean,
+            nullable: false,
+            default: false,
+        },
+
+        /** @deprecated use emailVerified instead */
+        verified: {
             type: Boolean,
             nullable: false,
             default: false,

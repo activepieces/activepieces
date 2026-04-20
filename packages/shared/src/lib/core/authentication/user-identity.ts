@@ -23,6 +23,13 @@ export const UserIdentity = z.object({
     provider: z.nativeEnum(UserIdentityProvider),
     imageUrl: Nullable(z.string()),
     twoFactorEnabled: z.boolean().optional(),
+
+    /** @deprecated use emailVerified instead */
+    verified: z.boolean().optional(),
+
+    //** Unused Better auth fields */
+    name: z.string(),
+    image: z.string().optional(),
 })
 
 export type UserIdentity = z.infer<typeof UserIdentity>

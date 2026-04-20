@@ -10,6 +10,7 @@ import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
+import { betterAuthInstance } from './authentication/better-auth/auth'
 import { registerDefaultSsoProviders } from './authentication/better-auth/default-sso-registration'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
@@ -185,7 +186,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     app.addHook('preHandler', authenticationMiddleware)
     app.addHook('preHandler', authorizationMiddleware)
     app.addHook('preHandler', rbacMiddleware)
-    
+
     const canaryAppUrl = system.get(AppSystemProp.CANARY_APP_URL)
     if (!isNil(canaryAppUrl)) {
         await app.register(replyFrom, { base: canaryAppUrl })
@@ -207,6 +208,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(appConnectionModule)
     await app.register(openapiModule)
     await app.register(appEventRoutingModule)
+    await betterAuthInstance.init(app.log)
     await app.register(authenticationModule)
     await app.register(triggerModule)
     await app.register(platformModule)

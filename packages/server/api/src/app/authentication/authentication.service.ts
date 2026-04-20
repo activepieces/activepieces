@@ -139,7 +139,8 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         }
 
         const existingUser = await userService(log).getOneByIdentityAndPlatform({ identityId: params.identityId, platformId })
-        if (existingUser) {
+
+        if (isNil(existingUser)) {
             await assertCanSignup(log, {
                 platformId,
                 provider: userIdentity.provider,
