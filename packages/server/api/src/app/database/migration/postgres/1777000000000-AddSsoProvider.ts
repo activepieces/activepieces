@@ -68,6 +68,11 @@ export class AddSsoProvider1777000000000 implements Migration {
                     ),
                     'spMetadata',  json_build_object(
                         'entityID', 'Activepieces'
+                    ),
+                    'mapping', json_build_object(
+                        'email',     'email',
+                        'firstName', 'firstName',
+                        'lastName',  'lastName'
                     )
                 )::text,
                 NOW(),
