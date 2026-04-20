@@ -57,7 +57,7 @@ describe('Enterprise User API', () => {
             expect(responseBody.data[0].id).toBe(mockOwner.id)
         })
 
-        it('Allows non-JWT users with invite permission to list platform users', async () => {
+        it('Allows non-embed users with invite permission to list platform users', async () => {
             // arrange
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
@@ -109,7 +109,7 @@ describe('Enterprise User API', () => {
             expect(responseBody.data.length).toBeGreaterThanOrEqual(1)
         })
 
-        it('Rejects non-JWT users without invite permission', async () => {
+        it('Rejects non-embed users without invite permission', async () => {
             // arrange
             const { mockPlatform } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
@@ -144,7 +144,7 @@ describe('Enterprise User API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
-        it('Rejects JWT users from listing platform users', async () => {
+        it('Rejects embed users from listing platform users', async () => {
             // arrange
             const { mockPlatform } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
@@ -179,7 +179,7 @@ describe('Enterprise User API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
-        it('Allows admin JWT users to list platform users', async () => {
+        it('Allows admin embed users to list platform users', async () => {
             // arrange
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 userIdentity: {

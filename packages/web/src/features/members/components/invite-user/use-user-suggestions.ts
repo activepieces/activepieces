@@ -120,21 +120,20 @@ export function useUserSuggestions({
       (u) => u.email.toLowerCase() === email,
     );
 
-    // User has access (current user, admin/operator, or existing platform user on platform page)
-    if (
-      email === currentUserEmail ||
-      (platformUser && isPlatformAdminOrOperator(platformUser)) ||
-      (isPlatformPage && platformUser)
-    ) {
+    const isCurrentUser = email === currentUserEmail;
+    const isPlatformAdminOrOperator =
+      platformUser &&
+      (platformUser.platformRole === PlatformRole.ADMIN ||
+        platformUser.platformRole === PlatformRole.OPERATOR);
+    const isPlatformUser = isPlatformPage && platformUser;
+    if (isCurrentUser || isPlatformAdminOrOperator || isPlatformUser) {
       return { email, type: 'has-access', user: platformUser };
     }
 
-    // Already a project member
     if (!isPlatformPage && projectMemberEmails.has(email)) {
       return { email, type: 'in-project', user: platformUser };
     }
 
-    // Has pending invitation
     if (pendingInvitationEmails.has(email)) {
       return { email, type: 'already-invited', user: platformUser };
     }

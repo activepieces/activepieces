@@ -175,7 +175,6 @@ async function listUsers(platformId: PlatformId): Promise<UserWithMetaInformatio
             platformRole: user.platformRole,
             created: user.created,
             updated: user.updated,
-            provider: user.identity.provider,
         }
     })
 }
