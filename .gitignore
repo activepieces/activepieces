@@ -48,6 +48,11 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# Local environment — never commit secrets
+.env
+.env.local
+.env.*.local
+
 
 .angular
 activepieces-engine.js
