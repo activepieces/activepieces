@@ -1,3 +1,4 @@
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
@@ -33,6 +34,7 @@ export const betterAuthController: FastifyPluginAsyncZod = async (app) => {
         schema: { body: z.record(z.string(), z.unknown()) },
     }, async (request, reply) => {
         const platformId = await platformUtils.getPlatformIdForRequest(request)
+        assertNotNullOrUndefined(platformId, 'platformId')
         const providerId = `saml-${platformId}`
         const targetPath = `/v1/better-auth/sso/saml2/callback/${providerId}`
         const targetUrl = new URL(targetPath, `http://${request.headers.host}`)

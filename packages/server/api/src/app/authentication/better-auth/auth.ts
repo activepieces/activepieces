@@ -88,13 +88,12 @@ const auth = betterAuth({
             redirectURI: `${system.getOrThrow(AppSystemProp.FRONTEND_URL)}/api/v1/better-auth/sso/callback`,
             trustEmailVerified: true,
             provisionUser: async ({ user, userInfo }) => {
-                system.globalLogger().info({ user, userInfo }, 'provision')
                 const nameParts = (userInfo.name ?? '').split(' ')
                 await userIdentityRepository().update(user.id, {
                     firstName: nameParts[0] ?? 'Unknown',
                     lastName: nameParts.slice(1).join(' ') || 'Unknown',
                     tokenVersion: nanoid(),
-                    password: await cryptoUtils.generateRandomPassword(),
+                    password: await passwordHasher.hash(await cryptoUtils.generateRandomPassword()),
                 })
             },
             provisionUserOnEveryLogin: false,
