@@ -1,5 +1,7 @@
 import { tool } from 'ai'
 import { z } from 'zod'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 
 const JINA_SEARCH = 'https://s.jina.ai'
 const JINA_READ = 'https://r.jina.ai'
@@ -49,6 +51,16 @@ export function createCopilotTools() {
                     }
                 }
 
+
+                console.log("******* RESEARCH ************")
+                console.log({
+                    queries,
+                    totalHits: ranked.length,
+                    sources,
+                    otherHits: ranked.slice(sources.length, sources.length + 5).map((h) => ({ title: h.title, url: h.url, snippet: h.snippet })),
+                })
+                console.log("******* RESEARCH ************")
+
                 return {
                     queries,
                     totalHits: ranked.length,
@@ -69,6 +81,11 @@ export function createCopilotTools() {
                     return { error: result.error, url }
                 }
                 const { text, truncated } = truncateWithFlag(result.text, READ_TRUNCATE_CHARS)
+
+                console.log("******* READ URL ************")
+                console.log( { url, content: text, truncated })
+                console.log("******* READ URL ************")
+
                 return { url, content: text, truncated }
             },
         }),
@@ -85,7 +102,7 @@ export function createCopilotTools() {
                     'Accept': 'application/vnd.github.text-match+json',
                     'X-GitHub-Api-Version': '2022-11-28',
                 }
-                const token = process.env['GITHUB_TOKEN']
+                const token = system.getOrThrow(AppSystemProp.GITHUB_TOKEN)
                 if (token) headers['Authorization'] = `Bearer ${token}`
 
                 const res = await safeFetch(url, { headers })
@@ -98,6 +115,9 @@ export function createCopilotTools() {
                     url: `${GITHUB_BLOB}/${item.path}`,
                     fragments: (item.text_matches ?? []).map((m) => truncate(m.fragment, 300)),
                 }))
+                console.log("******* SEARCH GITGUB CODE ************")
+                console.log({ query, total: json?.total_count ?? items.length, items })
+                console.log("******* SEARCH GITGUB CODE ************")
                 return { query, total: json?.total_count ?? items.length, items }
             },
         }),
@@ -114,6 +134,11 @@ export function createCopilotTools() {
                     return { error: `File not found: ${filePath} (HTTP ${res.status})`, filePath, url: `${GITHUB_BLOB}/${filePath}` }
                 }
                 const { text, truncated } = truncateWithFlag(res.text ?? '', READ_TRUNCATE_CHARS)
+
+                console.log("******* READ GITGUB FILE ************")
+                console.log({ filePath, url: `${GITHUB_BLOB}/${filePath}`, content: text, lineCount: (res.text ?? '').split('\n').length, truncated })
+                console.log("******* READ GITGUB FILE ************")
+
                 return { filePath, url: `${GITHUB_BLOB}/${filePath}`, content: text, lineCount: (res.text ?? '').split('\n').length, truncated }
             },
         }),
@@ -126,7 +151,7 @@ export function createCopilotTools() {
             execute: async ({ dirPath }) => {
                 const url = `${GITHUB_API}/repos/${REPO}/contents/${dirPath}?ref=main`
                 const headers: Record<string, string> = { Accept: 'application/vnd.github+json' }
-                const token = process.env['GITHUB_TOKEN']
+                const token = system.getOrThrow(AppSystemProp.GITHUB_TOKEN)
                 if (token) headers['Authorization'] = `Bearer ${token}`
 
                 const res = await safeFetch(url, { headers })
@@ -134,6 +159,14 @@ export function createCopilotTools() {
                     return { error: `Directory not found: ${dirPath} (HTTP ${res.status})`, dirPath }
                 }
                 const items = (res.json as GithubContentEntry[]) ?? []
+
+                console.log("******* LIST GITGUB DIRECTORy ************")
+                console.log({
+                    dirPath,
+                    entries: items.map((i) => ({ name: i.name, type: i.type, path: i.path })),
+                    count: items.length,
+                })
+                console.log("******* LIST GITGUB DIRECTORy ************")
                 return {
                     dirPath,
                     entries: items.map((i) => ({ name: i.name, type: i.type, path: i.path })),
@@ -147,10 +180,17 @@ export function createCopilotTools() {
 async function runJinaSearch(query: string): Promise<JinaHit[]> {
     const url = `${JINA_SEARCH}/${encodeURIComponent(query)}`
     const headers: Record<string, string> = { Accept: 'application/json' }
-    const jinaKey = process.env['JINA_API_KEY']
+    const jinaKey = system.getOrThrow(AppSystemProp.JINA_API_KEY)
     if (jinaKey) headers['Authorization'] = `Bearer ${jinaKey}`
 
     const res = await safeFetch(url, { headers })
+
+
+    console.log("####################### RUN JINA SEARCH #############################3")
+    console.log(res)
+    console.log("#######################################################3")
+
+
     if (!res.ok) return []
     const json = res.json as JinaSearchResponse
     return (json?.data ?? []).slice(0, SEARCH_RESULT_LIMIT).map((r) => ({
@@ -165,10 +205,15 @@ async function runJinaSearch(query: string): Promise<JinaHit[]> {
 async function fetchJinaReader(url: string): Promise<JinaReadResult> {
     const target = `${JINA_READ}/${url}`
     const headers: Record<string, string> = { Accept: 'text/markdown' }
-    const jinaKey = process.env['JINA_API_KEY']
+    const jinaKey = system.getOrThrow(AppSystemProp.JINA_API_KEY)
     if (jinaKey) headers['Authorization'] = `Bearer ${jinaKey}`
 
     const res = await safeFetch(target, { headers })
+
+    console.log("####################### FETCH JINA READER #############################3")
+    console.log(res)
+    console.log("#######################################################3")
+
     if (!res.ok) {
         return { ok: false, error: `Failed to read URL (HTTP ${res.status})` }
     }

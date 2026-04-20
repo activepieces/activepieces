@@ -164,6 +164,8 @@ const systemPropValidators: {
     [AppSystemProp.SECRET_MANAGER_API_KEY]: stringValidator,
 
     [AppSystemProp.OPENAI_API_KEY]: stringValidator,
+    [AppSystemProp.JINA_API_KEY]: stringValidator,
+    [AppSystemProp.GITHUB_TOKEN]: stringValidator,
 
     // Tables
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
