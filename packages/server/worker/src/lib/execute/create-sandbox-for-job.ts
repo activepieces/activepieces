@@ -82,8 +82,8 @@ function buildSandboxEnv({ settings, proxyPort }: {
     return {
         ...baseEnv(settings),
         ...ssrfEnv(settings),
-        ...proxyEnv({ settings, proxyPort }),
         ...propagatedEnv(settings),
+        ...proxyEnv({ settings, proxyPort }),
     }
 }
 
