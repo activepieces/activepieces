@@ -143,6 +143,7 @@ export class UserIdentityForBetterAuth1776192009225 implements Migration {
         await queryRunner.query('alter table "user_identity" alter column "id" type character varying(21)')
 
         await queryRunner.query('alter table "user_identity" drop column if exists "emailVerified"')
+        await queryRunner.query(`UPDATE "user_identity" SET "password" = 'PLACEHOLDER' WHERE "password" IS NULL`) // just in case user_identity got created by betterauth and the syncing/provisioning after failed
         await queryRunner.query('alter table "user_identity" alter column "password" set not null')
         await queryRunner.query('alter table "user_identity" drop column if exists "draft"')
         await queryRunner.query('alter table "user_identity" drop column if exists "image"')
