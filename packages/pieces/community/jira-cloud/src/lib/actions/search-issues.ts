@@ -55,9 +55,9 @@ Example: *all and -comment returns everything except comments.`,
 
     const { jql, maxResults, sanitizeJql, fields, mapNames } = propsValue;
     
-    let fieldList = fields as string[];
+    const fieldList = fields as string[];
 
-    let expandParams = mapNames ? ['names'] : [];
+    const expandParams = mapNames ? ['names'] : [];
 
     const allIssues: any[] = [];
     let nextPageToken: string | undefined;

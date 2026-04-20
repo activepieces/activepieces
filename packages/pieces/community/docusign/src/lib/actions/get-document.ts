@@ -8,8 +8,8 @@ import { createApiClient } from '../common';
 
 export const getDocument = createAction({
   name: 'getDocument',
-  displayName: 'Get document',
-  description: 'Get document from a specific envelope',
+  displayName: 'Download Document from Signing Request',
+  description: 'Download a document (or all documents) from a signing request as a file.',
   auth: docusignAuth,
   props: {
     accountId: Property.ShortText({

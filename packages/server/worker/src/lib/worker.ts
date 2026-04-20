@@ -166,7 +166,6 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
                     : result.status,
                 errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
                 logs: extractLogs(execError ?? undefined, result ?? undefined),
-                delayInSeconds: result?.kind === JobResultKind.FIRE_AND_FORGET ? result.delayInSeconds : undefined,
                 response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
             }),
         )
@@ -341,7 +340,7 @@ function sleep(ms: number): Promise<void> {
 
 
 function startHealthServer(): ReturnType<typeof createServer> {
-    const port = Number(system.get(WorkerSystemProp.PORT))
+    const port = Number(process.env[WorkerSystemProp.PORT] ?? system.get(WorkerSystemProp.PORT))
     const healthPaths = new Set(['/worker/health', '/v1/health'])
     const server = createServer((req, res) => {
         if (req.method === 'GET' && req.url && healthPaths.has(req.url)) {

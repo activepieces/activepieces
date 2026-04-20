@@ -50,7 +50,14 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 if (!params.includeActions && !params.includeTriggers) {
                     const totalCount = pieces.length
                     const LIST_CAP = 50
-                    const capped = pieces.slice(0, LIST_CAP)
+                    const capped = pieces.slice(0, LIST_CAP).map(p => ({
+                        name: p.name,
+                        displayName: p.displayName,
+                        version: p.version,
+                        description: p.description,
+                        actions: p.actions,
+                        triggers: p.triggers,
+                    }))
                     const hint = totalCount > LIST_CAP ? ` (showing ${LIST_CAP} of ${totalCount} — use searchQuery to narrow results)` : ''
                     return {
                         content: [{ type: 'text', text: `✅ Successfully listed pieces${hint}:\n${JSON.stringify(capped)}` }],
@@ -80,7 +87,6 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                                 displayName: a.displayName,
                                 description: a.description,
                                 requireAuth: a.requireAuth,
-                                inputProps: mcpUtils.buildPropSummaries(a.props),
                             }))
                         }
                         if (params.includeTriggers) {
@@ -89,7 +95,6 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                                 displayName: t.displayName,
                                 description: t.description,
                                 requireAuth: t.requireAuth,
-                                inputProps: mcpUtils.buildPropSummaries(t.props),
                             }))
                         }
                     }

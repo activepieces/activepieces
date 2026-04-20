@@ -113,6 +113,7 @@ describe('worker settings override', () => {
         await worker.stop()
         delete process.env.AP_EXECUTION_MODE
         delete process.env.AP_WORKER_GROUP_ID
+        delete process.env.AP_REUSE_SANDBOX
         await new Promise<void>((resolve) => {
             ioServer.close(() => resolve())
         })
@@ -190,6 +191,7 @@ describe('worker settings override', () => {
     it('worker group + SANDBOX_PROCESS passes validation', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
         process.env.AP_EXECUTION_MODE = ExecutionMode.SANDBOX_PROCESS
+        process.env.AP_REUSE_SANDBOX = 'false'
         const serverSettings = buildWorkerSettingsResponse()
         await connectAndWaitForSettings(serverSettings)
 
@@ -201,6 +203,7 @@ describe('worker settings override', () => {
     it('worker group + SANDBOX_CODE_AND_PROCESS passes validation', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
         process.env.AP_EXECUTION_MODE = ExecutionMode.SANDBOX_CODE_AND_PROCESS
+        process.env.AP_REUSE_SANDBOX = 'false'
         const serverSettings = buildWorkerSettingsResponse()
         await connectAndWaitForSettings(serverSettings)
 
@@ -229,6 +232,7 @@ describe('worker settings override', () => {
 
     it('worker group + no local override, server sends SANDBOX_PROCESS → passes', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
+        process.env.AP_REUSE_SANDBOX = 'false'
         const serverSettings = buildWorkerSettingsResponse({ EXECUTION_MODE: ExecutionMode.SANDBOX_PROCESS })
         await connectAndWaitForSettings(serverSettings)
 

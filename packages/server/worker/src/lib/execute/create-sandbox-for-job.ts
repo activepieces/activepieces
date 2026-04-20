@@ -12,8 +12,9 @@ export function createSandboxForJob(params: {
     log: Logger
     apiClient: WorkerToApiContract
     boxId: number
+    reusable: boolean
 }): Sandbox {
-    const { log, apiClient, boxId } = params
+    const { log, apiClient, boxId, reusable } = params
     const settings = workerSettings.getSettings()
     const sandboxId = nanoid()
 
@@ -29,7 +30,6 @@ export function createSandboxForJob(params: {
 
     const baseMounts: SandboxMount[] = [
         { hostPath: getGlobalCacheCommonPath(), sandboxPath: '/root/common' },
-        { hostPath: getGlobalCodeCachePath(), sandboxPath: '/root/codes', optional: true },
     ]
 
     return createSandbox(
@@ -40,6 +40,7 @@ export function createSandboxForJob(params: {
             memoryLimitMb,
             cpuMsPerSec: 1000,
             timeLimitSeconds: settings.FLOW_TIMEOUT_SECONDS,
+            reusable,
             baseMounts,
         },
         processMaker,

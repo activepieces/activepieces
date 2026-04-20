@@ -1,4 +1,4 @@
-import { ApEdition, ExecutionType, JOB_PRIORITY, PlanName, ProgressUpdateType, RATE_LIMIT_PRIORITY, RunEnvironment, WorkerJobType } from '@activepieces/shared'
+import { ApEdition, ExecutionType, JOB_PRIORITY, PlanName, StreamStepProgress, RATE_LIMIT_PRIORITY, RunEnvironment, WorkerJobType } from '@activepieces/shared'
 import { Job } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { Redis } from 'ioredis'
@@ -33,7 +33,7 @@ function createFlowJobData(overrides?: Record<string, unknown>) {
         flowVersionId: `fv-${crypto.randomUUID()}`,
         runId: `run-${crypto.randomUUID()}`,
         executionType: ExecutionType.BEGIN,
-        progressUpdateType: ProgressUpdateType.NONE,
+        streamStepProgress: StreamStepProgress.NONE,
         payload: {},
         logsUploadUrl: 'http://localhost/logs',
         logsFileId: 'log-file-id',

@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, PlatformRole, SeekPage, spreadIfDefined, User, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, PlatformRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
@@ -38,7 +38,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         }
         return invitation
     },
-    async provisionUserInvitation({ user, email }: ProvisionUserInvitationParams): Promise<void> {
+    async provisionUserInvitation({ email }: ProvisionUserInvitationParams): Promise<void> {
         const invitations = await repo().createQueryBuilder('user_invitation')
             .where('LOWER("user_invitation"."email") = :email', { email: email.toLowerCase().trim() })
             .andWhere({
@@ -46,9 +46,18 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             })
             .getMany()
 
+        if (invitations.length === 0) return
+
+        const identity = await userIdentityService(log).getIdentityByEmail(email)
+        if (isNil(identity)) return
+
         log.info({ count: invitations.length }, '[provisionUserInvitation] list invitations')
         for (const invitation of invitations) {
             log.info({ invitation }, '[provisionUserInvitation] provision')
+            const user = await userService(log).getOrCreateWithProject({
+                identity,
+                platformId: invitation.platformId,
+            })
             switch (invitation.type) {
                 case InvitationType.PLATFORM: {
                     assertNotNullOrUndefined(invitation.platformRole, 'platformRole')
@@ -183,28 +192,25 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         }
         return invitation
     },
-    async accept({ invitationId, platformId }: AcceptParams): Promise<{ registered: boolean }> {
+    async accept({ invitationId, platformId }: AcceptParams): Promise<void> {
         const invitation = await this.getOneOrThrow({ id: invitationId, platformId })
         await repo().update(invitation.id, {
             status: InvitationStatus.ACCEPTED,
         })
         const identity = await userIdentityService(log).getIdentityByEmail(invitation.email)
         if (isNil(identity)) {
-            return {
-                registered: false,
-            }
+            return
         }
-        const user = await userService(log).getOrCreateWithProject({
-            identity,
-            platformId: invitation.platformId,
-        })
         await this.provisionUserInvitation({
             email: invitation.email,
-            user,
         })
-        return {
-            registered: true,
-        }
+    },
+    async hasAnyAcceptedInvitationsForEmail({ email }: { email: string }): Promise<boolean> {
+        const count = await repo().createQueryBuilder('user_invitation')
+            .where('LOWER("user_invitation"."email") = :email', { email: email.toLowerCase().trim() })
+            .andWhere({ status: InvitationStatus.ACCEPTED })
+            .getCount()
+        return count > 0
     },
     async hasAnyAcceptedInvitations({
         email,
@@ -273,7 +279,6 @@ type HasAnyAcceptedInvitationsParams = {
     platformId: string
 }
 type ProvisionUserInvitationParams = {
-    user: User
     email: string
 }
 
