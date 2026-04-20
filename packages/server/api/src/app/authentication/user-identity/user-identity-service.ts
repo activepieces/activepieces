@@ -30,6 +30,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         }))
 
         if (error || !response?.user) {
+            log.error({ errorMessage: error?.message, errorStack: error?.stack, errorString: String(error), response }, '[userIdentityService] signup failed')
             throw new ActivepiecesError({
                 code: ErrorCode.EXISTING_USER,
                 params: {
