@@ -32,7 +32,7 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
                     jwt: token,
                     key: signingKey.publicKey,
                     algorithm: ALGORITHM,
-                    issuer: null,
+                    issuer: 'otom8',
                 })
 
                 const projectRole = await getProjectRole(payload, signingKey.platformId)
