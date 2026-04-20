@@ -1,7 +1,6 @@
 import {
   InvitationStatus,
   PlatformRole,
-  UserIdentityProvider,
   UserWithMetaInformation,
 } from '@activepieces/shared';
 import { useMemo } from 'react';
@@ -73,7 +72,6 @@ export function useUserSuggestions({
         const email = user.email.toLowerCase();
         return (
           email !== currentUserEmail &&
-          user.provider !== UserIdentityProvider.JWT &&
           !isPlatformAdminOrOperator(user) &&
           !emailSetHas(currentEmails, email) &&
           matchesSearch(user, searchTerm)

@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { UserIdentityProvider } from '../authentication/user-identity'
 import { BaseModelSchema, DateOrString, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { UserBadge } from './badges'
@@ -60,7 +59,6 @@ export const UserWithMetaInformation = z.object({
     updated: DateOrString,
     lastActiveDate: Nullable(DateOrString),
     imageUrl: Nullable(z.string()),
-    provider: z.enum(UserIdentityProvider),
 })
 
 export type UserWithMetaInformation = z.infer<typeof UserWithMetaInformation>
