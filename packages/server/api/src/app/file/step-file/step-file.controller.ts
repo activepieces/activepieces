@@ -4,7 +4,9 @@ import {
     File,
     FileLocation,
     FileType,
+    isNil,
     StepFileUpsertRequest,
+    tryCatch,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -65,24 +67,26 @@ type FileToken = {
 }
 
 async function getFileByToken(token: string, log: FastifyBaseLogger): Promise<Omit<File, 'data'>> {
-    try {
+    const { data, error } = await tryCatch(async () => {
         const decodedToken = await jwtUtils.decodeAndVerify<FileToken>({
             jwt: token,
             key: await jwtUtils.getJwtSecret(),
         })
-        return await fileService(log).getFileOrThrow({
+        if (isNil(decodedToken.fileId)) {
+            return null
+        }
+        return fileService(log).getFileOrThrow({
             fileId: decodedToken.fileId,
             type: FileType.FLOW_STEP_FILE,
         })
-    }
-    catch (e) {
+    })
+    if (!isNil(error) || isNil(data)) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_BEARER_TOKEN,
-            params: {
-                message: 'invalid token or expired for the step file',
-            },
+            params: { message: 'invalid token or expired for the step file' },
         })
     }
+    return data
 }
 
 function extractBufferOrUndefined(value: unknown): Buffer | undefined {
