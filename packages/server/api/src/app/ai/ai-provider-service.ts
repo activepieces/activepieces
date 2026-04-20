@@ -68,7 +68,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async listModels(platformId: PlatformId, provider: AIProviderName): Promise<AIProviderModel[]> {
         const { config, auth } = await this.getConfigOrThrow({ platformId, provider })
 
-        const cacheKey = `${provider}-${auth.apiKey}`
+        const cacheKey = `${provider}-${Object.values(auth).join('|')}`
         if (modelsCache.has(cacheKey) && !('models' in config)) {
             return modelsCache.get(cacheKey)!
         }
@@ -168,7 +168,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         let auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(aiProvider.auth)
 
         if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
-            const doesHaveKeys = !isNil(auth) && !isNil(auth.apiKey) && auth.apiKey !== ''
+            const doesHaveKeys = !isNil(auth) && 'apiKey' in auth && !isNil(auth.apiKey) && auth.apiKey !== ''
             if (!doesHaveKeys) {
                 const { auth: activePiecesAuth } = await enrichWithKeysIfNeeded(aiProvider, platformId, log)
 
