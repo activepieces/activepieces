@@ -28,10 +28,18 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { AWS_BEDROCK_REGIONS } from '@/features/agents/aws-regions';
 
 import { ModelFormPopover } from './model-form-popover';
 
@@ -56,48 +64,53 @@ export const UpsertProviderConfigForm = ({
   });
 
   const [showApiKeyInput, setShowApiKeyInput] = useState(!isEditMode);
+  const [showBedrockSecretInput, setShowBedrockSecretInput] = useState(
+    !isEditMode,
+  );
 
   return (
     <div className="grid space-y-4">
-      <FormField
-        control={form.control}
-        name="auth.apiKey"
-        render={({ field }) => (
-          <FormItem className="grid space-y-3">
-            <div className="flex items-center justify-between">
-              <FormLabel htmlFor="apiKey">
-                {provider === AIProviderName.CLOUDFLARE_GATEWAY
-                  ? t('AI Gateway Token')
-                  : t('API Key')}
-              </FormLabel>
-              {!showApiKeyInput && (
-                <Button
-                  type="button"
-                  variant="basic"
-                  size="sm"
-                  onClick={() => setShowApiKeyInput(true)}
-                  disabled={isLoading}
-                >
-                  <Pencil className="h-4 w-4 mr-2" />
-                  {t('Edit')}
-                </Button>
+      {provider !== AIProviderName.BEDROCK && (
+        <FormField
+          control={form.control}
+          name="auth.apiKey"
+          render={({ field }) => (
+            <FormItem className="grid space-y-3">
+              <div className="flex items-center justify-between">
+                <FormLabel htmlFor="apiKey">
+                  {provider === AIProviderName.CLOUDFLARE_GATEWAY
+                    ? t('AI Gateway Token')
+                    : t('API Key')}
+                </FormLabel>
+                {!showApiKeyInput && (
+                  <Button
+                    type="button"
+                    variant="basic"
+                    size="sm"
+                    onClick={() => setShowApiKeyInput(true)}
+                    disabled={isLoading}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    {t('Edit')}
+                  </Button>
+                )}
+              </div>
+              {showApiKeyInput && (
+                <FormControl>
+                  <Input
+                    {...field}
+                    required={apiKeyRequired}
+                    id="apiKey"
+                    placeholder={'sk_************************'}
+                    disabled={isLoading}
+                  />
+                </FormControl>
               )}
-            </div>
-            {showApiKeyInput && (
-              <FormControl>
-                <Input
-                  {...field}
-                  required={apiKeyRequired}
-                  id="apiKey"
-                  placeholder={'sk_************************'}
-                  disabled={isLoading}
-                />
-              </FormControl>
-            )}
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
 
       {provider === AIProviderName.AZURE && (
         <FormField
@@ -200,6 +213,100 @@ export const UpsertProviderConfigForm = ({
                   />
                 </FormControl>
 
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
+      )}
+
+      {provider === AIProviderName.BEDROCK && (
+        <>
+          <FormField
+            control={form.control}
+            name="auth.accessKeyId"
+            render={({ field }) => (
+              <FormItem className="grid space-y-3">
+                <FormLabel htmlFor="accessKeyId">
+                  {t('AWS Access Key ID')}
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    required={apiKeyRequired}
+                    id="accessKeyId"
+                    placeholder={'AKIA************'}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="auth.secretAccessKey"
+            render={({ field }) => (
+              <FormItem className="grid space-y-3">
+                <div className="flex items-center justify-between">
+                  <FormLabel htmlFor="secretAccessKey">
+                    {t('AWS Secret Access Key')}
+                  </FormLabel>
+                  {!showBedrockSecretInput && (
+                    <Button
+                      type="button"
+                      variant="basic"
+                      size="sm"
+                      onClick={() => setShowBedrockSecretInput(true)}
+                      disabled={isLoading}
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
+                      {t('Edit')}
+                    </Button>
+                  )}
+                </div>
+                {showBedrockSecretInput && (
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="password"
+                      required={apiKeyRequired}
+                      id="secretAccessKey"
+                      placeholder={'****************************************'}
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="config.region"
+            render={({ field }) => (
+              <FormItem className="grid space-y-3">
+                <FormLabel htmlFor="region">{t('AWS Region')}</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={isLoading}
+                >
+                  <FormControl>
+                    <SelectTrigger id="region">
+                      <SelectValue placeholder={t('Select a region')} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {AWS_BEDROCK_REGIONS.map((region) => (
+                      <SelectItem key={region.value} value={region.value}>
+                        {region.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

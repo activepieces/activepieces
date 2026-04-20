@@ -1,4 +1,5 @@
 import {
+  AIProviderAuthConfig,
   CreateAIProviderRequest,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
@@ -37,7 +38,7 @@ export const aiProviderMutations = {
           const updateData: UpdateAIProviderRequest = {
             displayName: data.displayName,
             config: data.config,
-            ...(data.auth?.apiKey?.length > 0 ? { auth: data.auth } : {}),
+            ...(hasAnyAuthFieldFilled(data.auth) ? { auth: data.auth } : {}),
           };
           return aiProviderApi.update(providerId, updateData);
         } else {
@@ -48,6 +49,17 @@ export const aiProviderMutations = {
       onError,
     });
   },
+};
+
+const hasAnyAuthFieldFilled = (
+  auth: AIProviderAuthConfig | undefined,
+): boolean => {
+  if (!auth) {
+    return false;
+  }
+  return Object.values(auth).some(
+    (value) => typeof value === 'string' && value.length > 0,
+  );
 };
 
 type UpsertAiProviderOptions = {

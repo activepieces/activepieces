@@ -71,6 +71,18 @@ It is strongly recommended that you add your credit card information to your Ope
 2. In the api key input, make sure to include any required prefix, i.e 'Bearer sk-****************'.
 3. In the api key header, set the value of your auth header name (e.g. 'Authorization').`),
   },
+  {
+    provider: AIProviderName.BEDROCK,
+    name: 'AWS Bedrock',
+    logoUrl: 'https://cdn.activepieces.com/pieces/amazon-bedrock.png',
+    markdown: t(`Connect your AWS account to use Amazon Bedrock AI models.
+
+1. Open the [AWS IAM Console](https://console.aws.amazon.com/iam/) and go to **Users**.
+2. Select your user (or create a new one), then go to **Security credentials**.
+3. Click **Create access key** — copy both the Access Key ID and Secret Access Key.
+4. Make sure the IAM user has the **AmazonBedrockFullAccess** policy attached.
+5. In the [AWS Bedrock Console](https://console.aws.amazon.com/bedrock/), go to **Model access** and request access to the models you want to use.`),
+  },
 ];
 
 export type AiProviderInfo = {
