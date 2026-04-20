@@ -86,4 +86,10 @@ describe('startEgressStack', () => {
         expect(iptablesLockdown.apply).not.toHaveBeenCalled()
         await stack.shutdown()
     })
+
+    it('STRICT: throws when API host cannot be resolved (refuses silent broken state)', async () => {
+        stubSettings({ network: NetworkMode.STRICT, execution: ExecutionMode.UNSANDBOXED })
+        await expect(startEgressStack({ log, apiUrl: 'http://this-host-does-not-resolve.invalid.test:3000' })).rejects.toThrow(/Failed to resolve API host/)
+        expect(startEgressProxy).not.toHaveBeenCalled()
+    })
 })

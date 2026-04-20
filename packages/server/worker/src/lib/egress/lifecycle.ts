@@ -28,7 +28,15 @@ export async function startEgressStack({ log, apiUrl }: StartParams): Promise<Eg
 
 async function maybeStartProxyAllowingApiHost({ log, apiUrl, settings }: StartProxyParams): Promise<EgressProxy | null> {
     if (settings.NETWORK_MODE !== NetworkMode.STRICT) return null
-    const apiHostIps = await resolveHostToIps({ log, rawUrl: apiUrl })
+    const { data: apiHostIps, error: resolveError } = await tryCatch(() => resolveHostToIps({ rawUrl: apiUrl }))
+    if (resolveError) {
+        const failureMessage = `Failed to resolve API host "${apiUrl}" for egress proxy allow list in STRICT mode — worker refuses to start in a silently broken state. ` +
+            `Resolve the DNS issue or pre-list the API IPs in AP_SSRF_ALLOW_LIST. ${resolveError.message}`
+        throw new ActivepiecesError(
+            { code: ErrorCode.ENGINE_OPERATION_FAILURE, params: { message: failureMessage } },
+            failureMessage,
+        )
+    }
     const allowList = [...new Set([...settings.SSRF_ALLOW_LIST, ...apiHostIps])]
     const proxy = await startEgressProxy({ log, allowList })
     log.info({ apiHostIps, port: proxy.port }, 'Egress proxy started')
@@ -72,18 +80,11 @@ async function closeProxyQuietly({ log, proxy }: CloseProxyQuietlyParams): Promi
     if (closeError) log.warn({ closeError }, 'Proxy close failed during SSRF rollback')
 }
 
-async function resolveHostToIps({ log, rawUrl }: ResolveHostParams): Promise<string[]> {
-    const { data, error } = await tryCatch(async () => {
-        const hostname = new URL(rawUrl).hostname
-        if (net.isIP(hostname) > 0) return [hostname]
-        const addresses = await dns.lookup(hostname, { all: true })
-        return addresses.map((a) => a.address)
-    })
-    if (error) {
-        log.warn({ err: error, rawUrl }, 'Failed to resolve API host for egress proxy allowlist')
-        return []
-    }
-    return data
+async function resolveHostToIps({ rawUrl }: ResolveHostParams): Promise<string[]> {
+    const hostname = new URL(rawUrl).hostname
+    if (net.isIP(hostname) > 0) return [hostname]
+    const addresses = await dns.lookup(hostname, { all: true })
+    return addresses.map((a) => a.address)
 }
 
 type StartParams = {
@@ -114,7 +115,6 @@ type CloseProxyQuietlyParams = {
 }
 
 type ResolveHostParams = {
-    log: Logger
     rawUrl: string
 }
 
