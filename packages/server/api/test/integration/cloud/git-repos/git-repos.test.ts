@@ -347,34 +347,82 @@ describe('Git API', () => {
             return { statusCode: response?.statusCode ?? 0 }
         }
 
-        it('should reject a slug containing path traversal segments', async () => {
-            const { statusCode } = await postCreate({ slug: '../../../../tmp/pwned' })
+        const MALICIOUS_SLUGS: Array<[string, string]> = [
+            ['..', 'parent directory reference'],
+            ['.', 'current directory reference'],
+            ['', 'empty string'],
+            ['../test', 'relative traversal'],
+            ['../../etc/passwd', 'deep relative traversal'],
+            ['foo/bar', 'forward slash'],
+            ['foo\\bar', 'backslash'],
+            ['with\0null', 'null byte'],
+            ['a b', 'space'],
+            ['../../../../tmp/pwned', 'many-dot traversal'],
+            ['a'.repeat(200), 'over length limit'],
+        ]
+
+        it.each(MALICIOUS_SLUGS)('should reject slug %j (%s)', async (slug) => {
+            const { statusCode } = await postCreate({ slug })
             expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
         })
 
-        it('should reject a slug containing a forward slash', async () => {
-            const { statusCode } = await postCreate({ slug: 'a/b' })
+        const SAFE_SLUGS = [
+            'safe-slug',
+            'project_1',
+            'activepieces',
+            'a',
+            'dot.inside.name',
+            'UPPER-lower.123',
+        ]
+
+        it.each(SAFE_SLUGS)('should accept slug %j', async (slug) => {
+            const { statusCode } = await postCreate({ slug })
+            expect(statusCode).toBe(StatusCodes.CREATED)
+        })
+
+        const MALICIOUS_BRANCHES: Array<[string, string]> = [
+            ['--upload-pack=evil', 'option-like branch'],
+            ['-M', 'single-dash option'],
+            ['', 'empty string'],
+            ['foo\0bar', 'null byte'],
+            ['branch with space', 'whitespace'],
+        ]
+
+        it.each(MALICIOUS_BRANCHES)('should reject branch %j (%s)', async (branch) => {
+            const { statusCode } = await postCreate({ branch })
             expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
         })
 
-        it('should reject a slug of exactly "."', async () => {
-            const { statusCode } = await postCreate({ slug: '.' })
+        const SAFE_BRANCHES = ['main', 'feature/add-thing', 'release-1.2.3', 'user_a/topic']
+
+        it.each(SAFE_BRANCHES)('should accept branch %j', async (branch) => {
+            const { statusCode } = await postCreate({ branch })
+            expect(statusCode).toBe(StatusCodes.CREATED)
+        })
+
+        const MALICIOUS_REMOTE_URLS: Array<[string, string]> = [
+            ['git@bogus', 'missing colon'],
+            ['https://github.com/foo/bar.git', 'http protocol'],
+            ['file:///etc/passwd', 'file protocol'],
+            ['ext::sh -c evil', 'ext transport'],
+            ['', 'empty string'],
+            ['git@host:path with space', 'whitespace'],
+        ]
+
+        it.each(MALICIOUS_REMOTE_URLS)('should reject remoteUrl %j (%s)', async (remoteUrl) => {
+            const { statusCode } = await postCreate({ remoteUrl })
             expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
         })
 
-        it('should reject a slug of exactly ".."', async () => {
-            const { statusCode } = await postCreate({ slug: '..' })
-            expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
-        })
+        const SAFE_REMOTE_URLS = [
+            'git@github.com:activepieces/test.git',
+            'git@gitlab.com:group/subgroup/project',
+            'git@bitbucket.org:team/repo.git',
+        ]
 
-        it('should reject a branch starting with a dash', async () => {
-            const { statusCode } = await postCreate({ branch: '--upload-pack=evil' })
-            expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
-        })
-
-        it('should reject a remoteUrl that is not in git@host:path format', async () => {
-            const { statusCode } = await postCreate({ remoteUrl: 'git@bogus' })
-            expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
+        it.each(SAFE_REMOTE_URLS)('should accept remoteUrl %j', async (remoteUrl) => {
+            const { statusCode } = await postCreate({ remoteUrl })
+            expect(statusCode).toBe(StatusCodes.CREATED)
         })
     })
 })

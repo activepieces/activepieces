@@ -89,6 +89,36 @@ describe('fileSystemUtils', () => {
             }
         })
 
+        it('should reject a target that is itself a symlink pointing outside the base', async () => {
+            const outsideDir = await mkdtemp(join(tmpdir(), 'server-utils-test-outside-'))
+            const outsideFile = join(outsideDir, 'target.json')
+            try {
+                await writeFile(outsideFile, '{}')
+                const symlinkFile = join(tempDir, 'inner.json')
+                await symlink(outsideFile, symlinkFile)
+                await expect(fileSystemUtils.assertPathInside({ baseDir: tempDir, targetPath: symlinkFile })).rejects.toThrow(/path escape detected/)
+            }
+            finally {
+                await rm(outsideDir, { recursive: true, force: true })
+            }
+        })
+
+        it('should allow a symlink that stays inside the base', async () => {
+            const innerReal = join(tempDir, 'real')
+            await mkdir(innerReal, { recursive: true })
+            const symlinkInBase = join(tempDir, 'alias')
+            await symlink(innerReal, symlinkInBase)
+            const target = join(symlinkInBase, 'file.json')
+            await expect(fileSystemUtils.assertPathInside({ baseDir: tempDir, targetPath: target })).resolves.toBeUndefined()
+        })
+
+        it('should reject when ".." in the missing tail escapes the base', async () => {
+            const nestedDir = join(tempDir, 'inner')
+            await mkdir(nestedDir, { recursive: true })
+            const target = join(nestedDir, '..', '..', 'outside.json')
+            await expect(fileSystemUtils.assertPathInside({ baseDir: tempDir, targetPath: target })).rejects.toThrow(/path escape detected/)
+        })
+
         it('should allow a target under a directory that exists inside the base', async () => {
             const nestedDir = join(tempDir, 'inner')
             await mkdir(nestedDir, { recursive: true })
