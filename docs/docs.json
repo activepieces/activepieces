@@ -513,6 +513,7 @@
                      "handbook/engineering/playbooks/e2e-tests",
                      "handbook/engineering/playbooks/testing-strategy",
                      "handbook/engineering/playbooks/connect-claude-to-chrome",
+                     "handbook/engineering/playbooks/ai-engineering-guide",
                      {
                         "group": "Postmortems",
                         "icon": "triangle-exclamation",
