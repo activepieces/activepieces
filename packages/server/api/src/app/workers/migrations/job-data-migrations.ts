@@ -1,4 +1,4 @@
-import { apId, JobData, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
+import { apId, JobData, StreamStepProgress, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRunLogsService } from '../../flows/flow-run/logs/flow-run-logs-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -43,8 +43,32 @@ function createMigrations(log: FastifyBaseLogger): JobMigration[] {
             return { ...job, schemaVersion: 5 }
         },
     }
+    const renameProgressAndHandlerFields: JobMigration = {
+        runAtSchemaVersion: 5,
+        migrate: async (job: JobData) => {
+            if (job.jobType === WorkerJobType.EXECUTE_FLOW) {
+                const legacy = job as Record<string, unknown>
+                const streamStepProgress: StreamStepProgress = (legacy['streamStepProgress'] as StreamStepProgress | undefined) ?? migrateProgressUpdateType(legacy['progressUpdateType'] as string | undefined)
+                const workerHandlerId: string | null = (legacy['workerHandlerId'] as string | undefined) ?? (legacy['synchronousHandlerId'] as string | undefined) ?? null
+                return {
+                    ...job,
+                    schemaVersion: 6,
+                    streamStepProgress,
+                    workerHandlerId,
+                }
+            }
+            return { ...job, schemaVersion: 6 }
+        },
+    }
 
-    return [enrichFlowIdAndLogsUrl, migratePayloadToUnion]
+    return [enrichFlowIdAndLogsUrl, migratePayloadToUnion, renameProgressAndHandlerFields]
+}
+
+function migrateProgressUpdateType(progressUpdateType: string | undefined): StreamStepProgress {
+    if (progressUpdateType === 'TEST_FLOW' || progressUpdateType === 'WEBHOOK_RESPONSE') {
+        return StreamStepProgress.WEBSOCKET
+    }
+    return StreamStepProgress.NONE
 }
 
 export const jobMigrations = (log: FastifyBaseLogger) => ({

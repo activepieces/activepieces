@@ -27,7 +27,6 @@ type BaseEmailTemplateData<Name extends string, Vars extends Record<string, stri
 
 type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
     projectName: string
-    role: string
     setupLink: string
 }>
 
@@ -52,11 +51,6 @@ type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     createdAt: string
 }>
 
-type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failure', {
-    flowName: string
-    projectName: string
-}>
-
 type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
     badgeTitle: string
     badgeDescription: string
@@ -74,7 +68,6 @@ export type EmailTemplateData =
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
-  | TriggerFailureThresholdTemplateData
   | BadgeAwardedTemplateData
   | ScimUserWelcomeTemplateData
 

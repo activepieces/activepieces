@@ -2,9 +2,7 @@ import { apDayjs } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     apId,
-    assertNotNullOrUndefined,
     Cursor,
-    EngineHttpResponse,
     ErrorCode,
     ExecutionType,
     FlowId,
@@ -18,20 +16,17 @@ import {
     isNil,
     JobPayload,
     LATEST_JOB_DATA_SCHEMA_VERSION,
-    PauseMetadata,
-    PauseType,
     PlatformId,
-    ProgressUpdateType,
     ProjectId,
     RunEnvironment,
     SampleDataFileType,
     SeekPage,
+    StreamStepProgress,
     UploadLogsBehavior,
     WorkerJobType,
 } from '@activepieces/shared'
 import { context, propagation, trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -42,7 +37,6 @@ import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
-import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { payloadOffloader } from '../../workers/payload-offloader'
 import { flowService } from '../flow/flow.service'
@@ -169,10 +163,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 return addToQueue({
                     flowRun: updatedFlowRun,
                     platformId,
-                    progressUpdateType: ProgressUpdateType.NONE,
+                    streamStepProgress: StreamStepProgress.NONE,
                     executeTrigger: false,
                     executionType: ExecutionType.RESUME,
-                    synchronousHandlerId: undefined,
+                    workerHandlerId: undefined,
                     httpRequestId: undefined,
                 }, log)
             }
@@ -186,8 +180,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     payload,
                     platformId: await projectService(log).getPlatformId(oldFlowRun.projectId),
                     executionType: ExecutionType.BEGIN,
-                    progressUpdateType: ProgressUpdateType.NONE,
-                    synchronousHandlerId: undefined,
+                    streamStepProgress: StreamStepProgress.NONE,
+                    workerHandlerId: undefined,
                     httpRequestId: undefined,
                     executeTrigger: false,
                     environment: oldFlowRun.environment,
@@ -259,67 +253,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             }
         })
     },
-    async resume({
-        flowRunId,
-        payload,
-        requestId,
-        progressUpdateType,
-        executionType,
-        checkRequestId,
-    }: ResumeWebhookParams): Promise<FlowRun> {
-        log.info({
-            runId: flowRunId,
-        }, 'Resuming flow run')
-
-        let flowRun = await findFlowRunOrThrow(flowRunId)
-
-        // Guard against the race condition where the engine has not yet committed its PAUSED
-        // state (and pauseMetadata) to the DB by the time the subflow calls this resume URL.
-        const PAUSE_WAIT_INTERVAL_MS = 200
-        const PAUSE_WAIT_TIMEOUT_MS = 30000
-        const waitStart = Date.now()
-        while (
-            isNil(flowRun.pauseMetadata) &&
-            (flowRun.status === FlowRunStatus.RUNNING || flowRun.status === FlowRunStatus.QUEUED) &&
-            Date.now() - waitStart < PAUSE_WAIT_TIMEOUT_MS
-        ) {
-            await new Promise((resolve) => setTimeout(resolve, PAUSE_WAIT_INTERVAL_MS))
-            flowRun = await findFlowRunOrThrow(flowRunId)
-        }
-        if (isNil(flowRun.pauseMetadata) && (flowRun.status === FlowRunStatus.RUNNING || flowRun.status === FlowRunStatus.QUEUED)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.PAUSE_METADATA_MISSING,
-                params: {},
-            })
-        }
-
-        const resolvedRun = resolveFlowRunForResume({ flowRun, requestId, checkRequestId })
-
-        if (isNil(resolvedRun)) {
-            return flowRun
-        }
-
-        const platformId = await projectService(log).getPlatformId(resolvedRun.projectId)
-        await flowRunSideEffects(log).onResume(resolvedRun)
-        return addToQueue({
-            payload,
-            flowRun: resolvedRun,
-            platformId,
-            synchronousHandlerId: returnHandlerId(resolvedRun.pauseMetadata, requestId, log),
-            httpRequestId: resolvedRun.pauseMetadata?.type === PauseType.WEBHOOK ? resolvedRun.pauseMetadata.requestIdToReply ?? undefined : undefined,
-            progressUpdateType,
-            executeTrigger: false,
-            executionType,
-        }, log)
-    },
-
     async start({
         flowId,
         payload,
         executeTrigger,
         executionType,
-        synchronousHandlerId,
-        progressUpdateType,
+        workerHandlerId,
+        streamStepProgress,
         httpRequestId,
         projectId,
         flowVersionId,
@@ -335,7 +275,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 'flowRun.projectId': projectId,
                 'flowRun.environment': environment,
                 'flowRun.executionType': executionType,
-                'flowRun.progressUpdateType': progressUpdateType,
+                'flowRun.streamStepProgress': streamStepProgress,
                 'flowRun.executeTrigger': executeTrigger,
                 'flowRun.httpRequestId': httpRequestId ?? 'none',
             },
@@ -360,9 +300,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     payload,
                     executeTrigger,
                     executionType,
-                    synchronousHandlerId,
+                    workerHandlerId,
                     httpRequestId,
-                    progressUpdateType,
+                    streamStepProgress,
                 }, log)
 
                 span.setAttribute('flowRun.queued', true)
@@ -400,11 +340,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             flowRun,
             payload: triggerPayload,
             executionType: ExecutionType.BEGIN,
-            synchronousHandlerId: undefined,
+            workerHandlerId: undefined,
             httpRequestId: undefined,
             platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
-            progressUpdateType: ProgressUpdateType.TEST_FLOW,
+            streamStepProgress: StreamStepProgress.WEBSOCKET,
             sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined,
         }, log)
     },
@@ -426,11 +366,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             flowRun,
             payload: triggerPayload,
             executionType: ExecutionType.BEGIN,
-            synchronousHandlerId: undefined,
+            workerHandlerId: undefined,
             httpRequestId: undefined,
             platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
-            progressUpdateType: ProgressUpdateType.TEST_FLOW,
+            streamStepProgress: StreamStepProgress.WEBSOCKET,
             sampleData: undefined,
         }, log)
     },
@@ -474,46 +414,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             ...flowRun,
             steps,
         }
-    },
-    async handleSyncResumeFlow({ runId, payload, requestId }: { runId: string, payload: unknown, requestId: string }): Promise<EngineHttpResponse> {
-        const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
-            id: runId,
-            projectId: undefined,
-        })
-        const synchronousHandlerId = engineResponseWatcher(log).getServerId()
-        assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required for sync resume request')
-        const resolvedRun = resolveFlowRunForResume({ flowRun, requestId, checkRequestId: true })
-        if (isNil(resolvedRun)) {
-            return {
-                status: StatusCodes.NOT_FOUND,
-                body: {},
-                headers: {},
-            }
-        }
-        if (resolvedRun.status !== FlowRunStatus.PAUSED) {
-            return {
-                status: StatusCodes.CONFLICT,
-                body: { 'message': 'Flow run is not paused', 'flowRunStatus': resolvedRun.status },
-                headers: {},
-            }
-        }
-        const platformId = await projectService(log).getPlatformId(resolvedRun.projectId)
-        await flowRunSideEffects(log).onResume(resolvedRun)
-        await addToQueue({
-            payload,
-            flowRun: resolvedRun,
-            platformId,
-            synchronousHandlerId,
-            httpRequestId: requestId,
-            executeTrigger: false,
-            progressUpdateType: ProgressUpdateType.TEST_FLOW,
-            executionType: ExecutionType.RESUME,
-        }, log)
-        return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(requestId, true, WEBHOOK_TIMEOUT_MS, {
-            status: StatusCodes.NO_CONTENT,
-            body: {},
-            headers: {},
-        })
     },
 })
 
@@ -623,22 +523,7 @@ async function filterFlowRunsAndApplyFilters(
 }
 
 
-function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined, log: FastifyBaseLogger): string {
-    const handlerId = engineResponseWatcher(log).getServerId()
-    if (isNil(pauseMetadata)) {
-        return handlerId
-    }
-
-    if (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId && pauseMetadata.handlerId) {
-        return pauseMetadata.handlerId
-    }
-    else {
-        return handlerId
-    }
-}
-
-
-async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Promise<FlowRun> {
+export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Promise<FlowRun> {
     const logsFileId = params.flowRun.logsFileId ?? apId()
     const logsUploadUrl = await flowRunLogsService(log).constructUploadUrl({
         logsFileId,
@@ -651,7 +536,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
     propagation.inject(context.active(), traceContext)
 
     let jobPayload: JobPayload = { type: 'inline', value: null }
-    if (!isNil(params.payload) && isNil(params.synchronousHandlerId)) {
+    if (!isNil(params.payload) && isNil(params.workerHandlerId)) {
         jobPayload = await payloadOffloader.offloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
     }
     else if (!isNil(params.payload)) {
@@ -663,7 +548,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
         type: JobType.ONE_TIME,
         data: {
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-            synchronousHandlerId: params.synchronousHandlerId ?? null,
+            workerHandlerId: params.workerHandlerId ?? null,
             projectId: params.flowRun.projectId,
             platformId: params.platformId,
             environment: params.flowRun.environment,
@@ -675,7 +560,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
             executeTrigger: params.executeTrigger,
             httpRequestId: params.httpRequestId,
             executionType: params.executionType,
-            progressUpdateType: params.progressUpdateType,
+            streamStepProgress: params.streamStepProgress,
             stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
             sampleData: params.sampleData,
             logsUploadUrl,
@@ -686,7 +571,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
     return params.flowRun
 }
 
-async function findFlowRunOrThrow(flowRunId: FlowRunId): Promise<FlowRun> {
+export async function findFlowRunOrThrow(flowRunId: FlowRunId): Promise<FlowRun> {
     const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({ id: flowRunId }).getOne()
     if (isNil(flowRun)) {
         throw new ActivepiecesError({
@@ -699,19 +584,6 @@ async function findFlowRunOrThrow(flowRunId: FlowRunId): Promise<FlowRun> {
         })
     }
     return flowRun
-}
-
-function matchesPauseRequestId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined): boolean {
-    return isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
-}
-
-function resolveFlowRunForResume(
-    { flowRun, requestId, checkRequestId }: { flowRun: FlowRun, requestId: string | undefined, checkRequestId: boolean },
-): FlowRun | null {
-    if (!checkRequestId || matchesPauseRequestId(flowRun.pauseMetadata, requestId)) {
-        return flowRun
-    }
-    return null
 }
 
 function queryBuilderForFlowRun(repo: Repository<FlowRun>): SelectQueryBuilder<FlowRun> {
@@ -783,15 +655,15 @@ type GetOneParams = {
     projectId: ProjectId | undefined
 }
 
-type AddToQueueParams = {
+export type AddToQueueParams = {
     flowRun: FlowRun
     platformId: PlatformId
     payload?: unknown
     executeTrigger: boolean
     executionType: ExecutionType
-    synchronousHandlerId: string | undefined
+    workerHandlerId: string | undefined
     httpRequestId: string | undefined
-    progressUpdateType: ProgressUpdateType
+    streamStepProgress: StreamStepProgress
     sampleData?: Record<string, unknown>
 }
 
@@ -808,9 +680,9 @@ type StartParams = {
     stepNameToTest?: string
     executeTrigger: boolean
     executionType: ExecutionType
-    synchronousHandlerId: string | undefined
+    workerHandlerId: string | undefined
     httpRequestId: string | undefined
-    progressUpdateType: ProgressUpdateType
+    streamStepProgress: StreamStepProgress
     sampleData?: Record<string, unknown>
 }
 
@@ -869,15 +741,6 @@ type BulkArchiveActionParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
-}
-
-type ResumeWebhookParams = {
-    flowRunId: FlowRunId
-    requestId?: string
-    progressUpdateType: ProgressUpdateType
-    payload?: unknown
-    executionType: ExecutionType
-    checkRequestId: boolean
 }
 
 type FilterFlowRunsAndApplyFiltersParams = {

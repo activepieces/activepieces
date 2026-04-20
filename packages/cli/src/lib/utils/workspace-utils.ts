@@ -57,7 +57,7 @@ export function resolveWorkspaceDependencies(
 }
 
 export function isExactVersion(version: string): boolean {
-  return /^\d+\.\d+\.\d+(-[\w.]+)?$/.test(version)
+  return /^\d+(\.\d+){0,2}(-[\w.]+)?$/.test(version)
 }
 
 export function stripSemverRanges(

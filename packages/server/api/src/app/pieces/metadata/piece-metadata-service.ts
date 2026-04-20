@@ -26,6 +26,7 @@ import { EntityManager, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { pubsub } from '../../helper/pubsub'
+import { apVersionUtil } from '../../helper/system/system-props'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import { PIECE_METADATA_REFRESH_CHANNEL, pieceCache, PieceMetadataRefreshMessage, PieceMetadataRefreshType } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
@@ -318,7 +319,8 @@ const findExactVersion = async (
 ): Promise<{ name: string, version: string, platformId: string | undefined } | undefined> => {
     const { name, version, platformId } = params
     const versionToSearch = findNextExcludedVersion(version)
-    const registry = await pieceCache(log).getRegistry({ release: undefined, platformId })
+    const currentRelease = await apVersionUtil.getCurrentRelease()
+    const registry = await pieceCache(log).getRegistry({ release: currentRelease, platformId })
     const matchingRegistryEntries = registry.filter((entry) => {
         if (entry.name !== name) {
             return false
