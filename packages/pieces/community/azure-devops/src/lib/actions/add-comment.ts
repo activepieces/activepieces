@@ -12,7 +12,8 @@ export const addCommentAction = createAction({
     project: azureDevOpsCommon.projectDropdown,
     work_item_id: Property.Number({
       displayName: 'Work Item ID',
-      description: 'The ID of the work item to add a comment to (e.g. 123)',
+      description:
+        'Numeric ID of the work item (e.g. 123). To pass it dynamically, reference the ID from a previous step (e.g. `{{trigger.id}}`), not the title.',
       required: true,
     }),
     comment: Property.LongText({

@@ -15,7 +15,8 @@ export const getWorkItemAction = createAction({
     project: azureDevOpsCommon.projectDropdown,
     work_item_id: Property.Number({
       displayName: 'Work Item ID',
-      description: 'The ID of the work item to retrieve (e.g. 123)',
+      description:
+        'Numeric ID of the work item (e.g. 123). To pass it dynamically, reference the ID from a previous step (e.g. `{{trigger.id}}`), not the title.',
       required: true,
     }),
   },
