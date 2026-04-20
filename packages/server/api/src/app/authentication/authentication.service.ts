@@ -15,10 +15,10 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     async signUp(params: SignUpParams): Promise<{ result: AuthenticationResponse | MfaChallengeResponse, responseHeaders: Headers | null }> {
 
         if (isNil(params.platformId)) {
-            const userIdentity = await userIdentityService(log).create(params)
-            if (params.provider !== UserIdentityProvider.EMAIL) {
-                await userIdentityService(log).verify(userIdentity.id)
-            }
+            const userIdentity = await userIdentityService(log).create({
+                ...params,
+                emailVerified: params.provider !== UserIdentityProvider.EMAIL,
+            })
             const authResponse = await createUserAndPlatform(userIdentity, log)
             return { result: authResponse, responseHeaders: null }
         }

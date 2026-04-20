@@ -60,9 +60,9 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         })
 
         return {
-          ...identity,
-          password: hashedPassword,
-          emailVerified: params.emailVerified ?? false,
+            ...identity,
+            password: hashedPassword,
+            emailVerified: params.emailVerified ?? false,
         }
     },
     async verifyIdentityPassword(params: VerifyIdentityPasswordParams): Promise<VerifyIdentityPasswordResult> {
