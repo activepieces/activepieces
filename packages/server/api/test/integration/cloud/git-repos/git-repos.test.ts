@@ -317,4 +317,54 @@ describe('Git API', () => {
             expect(gitRepo.slug).toBe(mockGitRepo.slug)
         })
     })
+
+    describe('Create API — path-traversal hardening', () => {
+        async function postCreate(payload: unknown): Promise<{ statusCode: number }> {
+            const { mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                platform: {},
+                plan: { environmentsEnabled: true },
+            })
+            const token = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: { id: mockProject.platformId },
+            })
+            const body = {
+                projectId: mockProject.id,
+                remoteUrl: 'git@github.com:activepieces/test.git',
+                sshPrivateKey: faker.hacker.noun(),
+                branch: 'main',
+                branchType: GitBranchType.PRODUCTION,
+                slug: 'safe-slug',
+                ...(payload as Record<string, unknown>),
+            }
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/git-repos',
+                payload: body,
+                headers: { authorization: `Bearer ${token}` },
+            })
+            return { statusCode: response?.statusCode ?? 0 }
+        }
+
+        it('should reject a slug containing path traversal segments', async () => {
+            const { statusCode } = await postCreate({ slug: '../../../../tmp/pwned' })
+            expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('should reject a slug containing a forward slash', async () => {
+            const { statusCode } = await postCreate({ slug: 'a/b' })
+            expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('should reject a branch starting with a dash', async () => {
+            const { statusCode } = await postCreate({ branch: '--upload-pack=evil' })
+            expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('should reject a remoteUrl that is not in git@host:path format', async () => {
+            const { statusCode } = await postCreate({ remoteUrl: 'git@bogus' })
+            expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+    })
 })

@@ -81,6 +81,30 @@ describe('Table API', () => {
             const body = response?.json()
             expect(body.externalId).toBe(externalId)
         })
+
+        it('should reject an externalId containing path traversal segments', async () => {
+            const ctx = await setup()
+
+            const response = await ctx.post('/v1/tables', {
+                projectId: ctx.project.id,
+                name: 'Traversal Table',
+                externalId: '../../../../tmp/pwned',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('should reject an externalId containing a forward slash', async () => {
+            const ctx = await setup()
+
+            const response = await ctx.post('/v1/tables', {
+                projectId: ctx.project.id,
+                name: 'Slash Table',
+                externalId: 'a/b',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
     })
 
     describeWithAuth('POST /v1/tables/:id (Update)', () => app!, (setup) => {

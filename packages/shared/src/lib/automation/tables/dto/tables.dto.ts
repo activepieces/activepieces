@@ -1,15 +1,18 @@
 import { z } from 'zod'
 import { Nullable } from '../../../core/common'
 import { OptionalArrayFromQuery } from '../../../core/common/base-model'
+import { formErrors } from '../../../form-errors'
 import { FieldState } from '../../project-release/project-state'
 import { TableAutomationStatus, TableAutomationTrigger } from '../table'
 import { TableWebhookEventType } from '../table-webhook'
+
+const SAFE_EXTERNAL_ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/
 
 export const CreateTableRequest = z.object({
     projectId: z.string(),
     name: z.string(),
     fields: z.array(FieldState).optional(),
-    externalId: z.string().optional(),
+    externalId: z.string().regex(SAFE_EXTERNAL_ID_PATTERN, formErrors.invalidExternalId).optional(),
     folderId: z.string().optional(),
     folderName: z.string().optional(),
 })
