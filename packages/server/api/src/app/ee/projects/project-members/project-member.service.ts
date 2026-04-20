@@ -230,9 +230,11 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         const count = await repo()
             .createQueryBuilder('project_member')
             .innerJoin('project_member.projectRole', 'project_role')
+            .innerJoin('project_member.project', 'project')
             .where('project_member.userId = :userId', { userId })
             .andWhere('project_member.platformId = :platformId', { platformId })
             .andWhere(':permission = ANY(project_role.permissions)', { permission })
+            .andWhere('project.deleted IS NULL')
             .getCount()
         return count > 0
     },
