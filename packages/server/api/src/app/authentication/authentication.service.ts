@@ -48,10 +48,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         })
 
         const userIdentity = await userIdentityService(log).create({ ...params, emailVerified: true })
-        const user = await userService(log).getOrCreateWithProject({
-            identity: userIdentity,
-            platformId: params.platformId,
-        })
+
         await userInvitationsService(log).provisionUserInvitation({ email: params.email })
 
         log.info({ email: params.email, platformId: params.platformId }, 'User signed up to existing platform')
@@ -101,7 +98,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         return { result: authResponse, responseHeaders }
     },
     async exchangeSession(params: ExchangeSessionParams): Promise<AuthenticationResponse | MfaChallengeResponse> {
-        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(params.identityId, log) : params.predefinedPlatformId
+        const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformIdForFederatedAuthn(params.identityId, log) : params.predefinedPlatformId
         if (isNil(platformId)) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHENTICATION,
