@@ -146,7 +146,7 @@ function flattenResource(resource: WorkItemResource): FlatWorkItem {
     id: resource.id ?? resource.workItemId ?? 0,
     rev: resource.rev ?? 0,
     url: resource.url,
-    fields: resource.fields ?? {},
+    fields: resource.revision?.fields ?? resource.fields ?? {},
   });
 }
 
