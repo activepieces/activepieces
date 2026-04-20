@@ -14,10 +14,15 @@ export const updateWorkItemAction = createAction({
   description: 'Updates an existing work item in Azure DevOps',
   props: {
     project: azureDevOpsCommon.projectDropdown,
-    work_item_type: azureDevOpsCommon.workItemTypeDropdown,
+    work_item_type: {
+      ...azureDevOpsCommon.workItemTypeDropdown,
+      description:
+        'Type of the work item. Used only to load the matching list of states below — it does not change the work item\'s type. Changing type requires a separate Azure DevOps operation not supported here.',
+    },
     work_item_id: Property.Number({
       displayName: 'Work Item ID',
-      description: 'The ID of the work item to update (e.g. 123)',
+      description:
+        'Numeric ID of the work item (e.g. 123). To pass it dynamically from a previous step, use a reference like `{{trigger.id}}` or the output of a Get/List step — not the title.',
       required: true,
     }),
     title: Property.ShortText({
@@ -43,7 +48,7 @@ export const updateWorkItemAction = createAction({
 
     const operations: JsonPatchOperation[] = [];
 
-    if (title !== undefined && title !== '') {
+    if (isNonEmptyString(title)) {
       operations.push({
         op: 'replace',
         path: '/fields/System.Title',
@@ -51,7 +56,7 @@ export const updateWorkItemAction = createAction({
       });
     }
 
-    if (description !== undefined && description !== '') {
+    if (isNonEmptyString(description)) {
       operations.push({
         op: 'replace',
         path: '/fields/System.Description',
@@ -59,7 +64,7 @@ export const updateWorkItemAction = createAction({
       });
     }
 
-    if (state !== undefined && state !== '') {
+    if (isNonEmptyString(state)) {
       operations.push({
         op: 'replace',
         path: '/fields/System.State',
@@ -67,7 +72,7 @@ export const updateWorkItemAction = createAction({
       });
     }
 
-    if (assigned_to !== undefined && assigned_to !== '') {
+    if (isNonEmptyString(assigned_to)) {
       operations.push({
         op: 'replace',
         path: '/fields/System.AssignedTo',
@@ -110,3 +115,7 @@ export const updateWorkItemAction = createAction({
     return azureDevOpsCommon.flattenWorkItem(response);
   },
 });
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0;
+}
