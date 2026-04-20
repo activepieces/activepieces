@@ -37,7 +37,10 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             }
             log.info({ email: params.email, provider: params.provider }, 'User signed up and platform created')
 
-            await createUserAndPlatform(userIdentity, log)
+            const authResponse = await createUserAndPlatform(userIdentity, log)
+            if (!userIdentity.emailVerified) {
+                return { result: authResponse, responseHeaders: null }
+            }
             return mfaSetupResponse(log, { email: params.email, password: params.password })
         }
 
@@ -47,7 +50,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             email: params.email,
         })
 
-        const userIdentity = await userIdentityService(log).create({ ...params, emailVerified: true })
+        await userIdentityService(log).create({ ...params, emailVerified: true })
 
         await userInvitationsService(log).provisionUserInvitation({ email: params.email })
 
