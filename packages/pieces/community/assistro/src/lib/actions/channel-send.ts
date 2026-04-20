@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { whatsappOrderNotificationAuth } from '../common/auth';
+import { WhatsAppMessage } from '../common/types';
 
 export const channelSend = createAction({
 	auth: whatsappOrderNotificationAuth,
@@ -45,9 +46,3 @@ export const channelSend = createAction({
 		});
 	},
 });
-
-type WhatsAppMessage = {
-	number: string;
-	message: string;
-	type: number;
-};

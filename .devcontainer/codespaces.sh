@@ -10,3 +10,4 @@ curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo 
 gh codespace ports visibility 3000:public -c $CODESPACE_NAME
 gh codespace ports visibility 4200:public -c $CODESPACE_NAME
 export BACKEND_URL=$(gh codespace ports -c $CODESPACE_NAME --json sourcePort,browseUrl | jq -r '.[] | select(.sourcePort == 3000) | .browseUrl')
+export VITE_API_BASE_URL=$BACKEND_URL

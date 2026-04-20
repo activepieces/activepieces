@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { whatsappOrderNotificationAuth } from '../common/auth';
+import { MediaItem, WhatsAppMessage } from '../common/types';
 
 export const groupSend = createAction({
 	auth: whatsappOrderNotificationAuth,
@@ -42,8 +43,7 @@ export const groupSend = createAction({
 
 		const mediaArray: MediaItem[] = [];
 		if (media && media.length > 0) {
-			for (let i = 0; i < media.length; i++) {
-				const item = media[i] as MediaItem;
+			for (const item of (media as unknown as MediaItem[])) {
 				mediaArray.push({
 					media_base64: item.media_base64,
 					file_name: item.file_name,
@@ -74,15 +74,3 @@ export const groupSend = createAction({
 		});
 	},
 });
-
-type MediaItem = {
-	media_base64: string;
-	file_name: string;
-};
-
-type WhatsAppMessage = {
-	number: string;
-	message: string;
-	type: number;
-	media?: MediaItem[];
-};
