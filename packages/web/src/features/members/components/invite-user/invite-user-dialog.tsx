@@ -17,6 +17,7 @@ import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { TagInput } from '@/components/custom/tag-input';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -30,14 +31,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
 import { PlatformRoleSelect } from '@/features/members/components/platform-role-select';
 import { ProjectRoleSelect } from '@/features/members/components/project-role-select';
@@ -167,7 +162,7 @@ export const InviteUserDialog = ({
         : platform.plan.projectRolesEnabled && project.type === ProjectType.TEAM
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
-      platformRole: PlatformRole.MEMBER,
+      platformRole: PlatformRole.OPERATOR,
       projectRole: undefined,
     },
   });
@@ -205,13 +200,6 @@ export const InviteUserDialog = ({
     }
 
     mutate(data);
-  };
-
-  const copyInvitationLink = (link: string) => {
-    navigator.clipboard.writeText(link);
-    toast.success(t('Invitation link copied successfully'), {
-      duration: 3000,
-    });
   };
 
   const copyAllLinks = () => {
@@ -360,29 +348,10 @@ export const InviteUserDialog = ({
                     {resultsWithLinks.map((result) => (
                       <div key={result.id} className="flex flex-col gap-1">
                         <Label className="text-sm">{result.email}</Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="text"
-                            readOnly={true}
-                            value={result.link!}
-                            className="flex-1 rounded-l-md rounded-r-none focus-visible:ring-0! focus-visible:ring-offset-0!"
-                          />
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                className="rounded-l-none rounded-r-md"
-                                onClick={() => copyInvitationLink(result.link!)}
-                              >
-                                <CopyIcon height={15} width={15} />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                              {t('Copy')}
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
+                        <CopyToClipboardInput
+                          useInput={true}
+                          textToCopy={result.link!}
+                        />
                       </div>
                     ))}
                   </div>
