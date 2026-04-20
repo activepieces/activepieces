@@ -1,4 +1,4 @@
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, PlatformRole, Principal, PrincipalType, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, Permission, PlatformRole, Principal, PrincipalType, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../../../authentication/user-identity/user-identity-service'
 import { rbacService } from '../../../../ee/authentication/project-role/rbac-service'
@@ -51,7 +51,14 @@ async function assertNonEmbedOrAdmin(principal: Principal, log: FastifyBaseLogge
             },
         })
     }
-    assertNotNullOrUndefined(user.platformId, 'platformId')
+    if (isNil(user.platformId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'User is not associated with a platform.',
+            },
+        })
+    }
     const hasInvitePermission = await projectMemberService(log).hasPermissionOnAnyProject({
         userId: user.id,
         platformId: user.platformId,
