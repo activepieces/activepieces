@@ -66,9 +66,6 @@ export function ProjectSettingsDialog({
   const { data: showProjectMembers } = flagsHooks.useFlag(
     ApFlagId.SHOW_PROJECT_MEMBERS,
   );
-  const { data: gitSyncEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.GIT_SYNC_ENABLED,
-  );
   const { platform } = platformHooks.useCurrentPlatform();
   const platformRole = userHooks.getCurrentUserPlatformRole();
 
@@ -153,9 +150,7 @@ export function ProjectSettingsDialog({
       id: 'environment' as TabId,
       label: t('Environment'),
       icon: <GitBranch className="w-4 h-4" />,
-      disabled:
-        !checkAccess(Permission.READ_PROJECT_RELEASE) ||
-        gitSyncEnabled === false,
+      disabled: !checkAccess(Permission.READ_PROJECT_RELEASE),
     },
   ].filter((tab) => !tab.disabled);
 

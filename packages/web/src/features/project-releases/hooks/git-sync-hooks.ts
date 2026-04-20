@@ -1,5 +1,4 @@
 import {
-  ApFlagId,
   ConfigureRepoRequest,
   GitBranchType,
   GitRepo,
@@ -10,7 +9,6 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -30,18 +28,11 @@ export const gitSyncHooks = {
       refetch: query.refetch,
     };
   },
-  useIsGitSyncEnabled: () => {
-    const { data: gitSyncEnabled } = flagsHooks.useFlag<boolean>(
-      ApFlagId.GIT_SYNC_ENABLED,
-    );
-    return gitSyncEnabled ?? true;
-  },
   useShowPushToGit: () => {
     const { platform } = platformHooks.useCurrentPlatform();
-    const gitSyncEnabled = gitSyncHooks.useIsGitSyncEnabled();
     const { gitSync } = gitSyncHooks.useGitSync(
       authenticationSession.getProjectId()!,
-      platform.plan.environmentsEnabled && gitSyncEnabled,
+      platform.plan.environmentsEnabled,
     );
     const userHasPermissionToPushToGit = useAuthorization().checkAccess(
       Permission.WRITE_PROJECT_RELEASE,
@@ -49,7 +40,6 @@ export const gitSyncHooks = {
 
     return (
       userHasPermissionToPushToGit &&
-      gitSyncEnabled &&
       !isNil(gitSync) &&
       gitSync.branchType === GitBranchType.DEVELOPMENT
     );

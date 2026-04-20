@@ -17,11 +17,10 @@ import { ReleaseCard } from './release-card';
 
 const EnvironmentSettings = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const gitSyncEnabled = gitSyncHooks.useIsGitSyncEnabled();
 
   const { gitSync, isLoading, refetch } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.plan.environmentsEnabled && gitSyncEnabled,
+    platform.plan.environmentsEnabled,
   );
 
   const { mutate } = gitSyncMutations.useDisconnectGitSync({
