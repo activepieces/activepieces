@@ -7,7 +7,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "axios": "1.13.5",
+    "axios": "1.15.0",
     "cheerio": "1.0.0-rc.12",
     "dayjs": "1.11.9",
     "feedparser": "2.2.10",

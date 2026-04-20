@@ -1,5 +1,4 @@
 import {
-  PiecePropValueSchema,
   Property,
   TriggerStrategy,
   createTrigger,

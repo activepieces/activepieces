@@ -120,7 +120,7 @@ jobs:
 
       - name: Deploy Workers to production
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker.yml --roles=web --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker.yml --skip-push; exit"'
 
       - uses: actions/checkout@v4
         with:

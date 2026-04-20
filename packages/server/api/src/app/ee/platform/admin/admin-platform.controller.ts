@@ -8,7 +8,7 @@ import { securityAccess } from '../../../core/security/authorization/fastify-sec
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
-import { workerGroupService } from '../platform-plan/worker-group.service'
+import { CANARY_WORKER_GROUP_ID, workerGroupService } from '../platform-plan/worker-group.service'
 import { adminPlatformService } from './admin-platform.service'
 
 const API_KEY_HEADER = 'api-key'
@@ -60,20 +60,16 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
     })
 
     app.post('/platforms/worker-group', UpdateWorkerGroupRequest, async (req, res) => {
-        await workerGroupService(req.log).updateWorkerGroup({
-            platformId: req.body.platformId,
-            workerGroupId: req.body.workerGroupId,
-        })
+        const { platformId, workerGroupId } = req.body
+        await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId })
+        await workerGroupService(req.log).updateWorkerGroup({ platformId, workerGroupId })
         return res.status(StatusCodes.OK).send()
     })
 
     app.post('/platforms/canary', UpdateCanaryRequest, async (req, res) => {
-        await workerGroupService(req.log).updateCanary({ platformId: req.body.platformId, canary: req.body.canary })
-        return res.status(StatusCodes.OK).send()
-    })
-
-    app.delete('/platforms/canary', DisableAllCanaryRequest, async (req, res) => {
-        await workerGroupService(req.log).disableAllCanary()
+        const { platformId, canary } = req.body
+        await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId: canary ? CANARY_WORKER_GROUP_ID : null })
+        await workerGroupService(req.log).updateCanary({ platformId, canary })
         return res.status(StatusCodes.OK).send()
     })
 }
@@ -102,14 +98,6 @@ const UpdateCanaryRequest = {
         security: securityAccess.public(),
     },
 }
-
-const DisableAllCanaryRequest = {
-    schema: {},
-    config: {
-        security: securityAccess.public(),
-    },
-}
-
 
 const AdminRetryRunsRequest = {
     schema: {

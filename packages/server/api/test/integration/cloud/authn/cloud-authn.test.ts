@@ -319,6 +319,58 @@ describe('Authentication API', () => {
             expect(responseBody?.verified).toBe(true)
         })
 
+        it('should join enterprise platform when signing up with accepted invitation on cloud (no custom domain)', async () => {
+            // arrange - enterprise platform exists
+            const { mockPlatform, mockUser } = await createMockPlatformAndDomain({
+                platform: { emailAuthEnabled: true },
+                plan: { projectRolesEnabled: true, licenseKey: 'test-key' },
+            })
+
+            const mockProject = createMockProject({
+                ownerId: mockUser.id,
+                platformId: mockPlatform.id,
+            })
+            await db.save('project', mockProject)
+
+            const invitedEmail = faker.internet.email()
+
+            // ACCEPTED invitation (user clicked invite link)
+            const mockUserInvitation = createMockUserInvitation({
+                platformId: mockPlatform.id,
+                email: invitedEmail,
+                platformRole: PlatformRole.MEMBER,
+                type: InvitationType.PLATFORM,
+                status: InvitationStatus.ACCEPTED,
+                created: dayjs().toISOString(),
+            })
+            await db.save('user_invitation', mockUserInvitation)
+
+            const mockSignUpRequest = createMockSignUpRequest({ email: invitedEmail })
+
+            // act - sign up WITHOUT Host header (cloud.activepieces.com, no custom domain)
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/sign-up',
+                body: mockSignUpRequest,
+            })
+
+            const responseBody = response?.json()
+
+            // assert - user should be on enterprise platform
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody?.platformId).toBe(mockPlatform.id)
+
+            // Invitation should be provisioned (deleted after processing)
+            const remainingInvitation = await databaseConnection()
+                .getRepository('user_invitation')
+                .findOneBy({ id: mockUserInvitation.id })
+            expect(remainingInvitation).toBeNull()
+
+            // A personal platform was also created for the user
+            const allPlatforms = await databaseConnection().getRepository('platform').find()
+            expect(allPlatforms.length).toBe(2)
+        })
+
         it('fails to sign up invited user platform if no project exist', async () => {
             // arrange
             const { mockCustomDomain } = await createMockPlatformAndDomain({

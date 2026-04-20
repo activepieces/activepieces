@@ -15,10 +15,34 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     async signUp(params: SignUpParams): Promise<{ result: AuthenticationResponse | MfaChallengeResponse, responseHeaders: Headers | null }> {
 
         if (isNil(params.platformId)) {
+            const hasInvitations = await userInvitationsService(log).hasAnyAcceptedInvitationsForEmail({ email: params.email })
+            const isFederatedProvider = params.provider === UserIdentityProvider.JWT
             const userIdentity = await userIdentityService(log).create({
                 ...params,
-                emailVerified: params.provider !== UserIdentityProvider.EMAIL,
+                emailVerified: hasInvitations || isFederatedProvider,
             })
+
+            await userInvitationsService(log).provisionUserInvitation({ email: params.email })
+            const preferredPlatformId = await getPreferredPlatformId(userIdentity.id, log)
+
+            if (!isNil(preferredPlatformId)) {
+                const user = await userService(log).getOneByIdentityAndPlatform({
+                    identityId: userIdentity.id,
+                    platformId: preferredPlatformId,
+                })
+                if (!isNil(user)) {
+                    log.info({ email: params.email, provider: params.provider, preferredPlatformId }, 'User signed up with invitation, returning preferred platform token')
+                    const authResponse = await authenticationUtils(log).getProjectAndToken({
+                        userId: user.id,
+                        platformId: preferredPlatformId,
+                        projectId: null,
+                    })
+                    return { result: authResponse, responseHeaders: null }
+
+                }
+            }
+            log.info({ email: params.email, provider: params.provider }, 'User signed up and platform created')
+
             const authResponse = await createUserAndPlatform(userIdentity, log)
             return { result: authResponse, responseHeaders: null }
         }
@@ -34,10 +58,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             identity: userIdentity,
             platformId: params.platformId,
         })
-        await userInvitationsService(log).provisionUserInvitation({
-            email: params.email,
-            user,
-        })
+        await userInvitationsService(log).provisionUserInvitation({ email: params.email })
 
         log.info({ email: params.email, platformId: params.platformId }, 'User signed up to existing platform')
 
@@ -55,7 +76,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     },
     async signInWithPassword(params: SignInWithPasswordParams): Promise<{ result: AuthenticationResponse | MfaChallengeResponse, responseHeaders: Headers | null }> {
         const { identity, responseHeaders, twoFactorRedirect } = await userIdentityService(log).verifyIdentityPassword(params)
-        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(identity.id, log) : params.predefinedPlatformId
+        const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformIdForFederatedAuthn(identity.id, log) : params.predefinedPlatformId
         if (isNil(platformId)) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHENTICATION,
@@ -132,7 +153,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         }
     },
     async socialSignIn(params: FederatedAuthnParams): Promise<AuthenticationResponse | MfaChallengeResponse> {
-        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(params.identityId, log) : params.predefinedPlatformId
+        const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformIdForFederatedAuthn(params.identityId, log) : params.predefinedPlatformId
         const userIdentity = await userIdentityService(log).getOneOrFail({ id: params.identityId })
         if (isNil(platformId)) {
             return createUserAndPlatform(userIdentity, log)
@@ -152,10 +173,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             identity: userIdentity,
             platformId,
         })
-        await userInvitationsService(log).provisionUserInvitation({
-            email: userIdentity.email,
-            user,
-        })
+        await userInvitationsService(log).provisionUserInvitation({ email: userIdentity.email })
 
         // If user has 2FA enabled, redirect to verify flow.
         if (userIdentity.twoFactorEnabled) {
@@ -251,10 +269,12 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
 
     switch (cloudEdition) {
         case ApEdition.CLOUD:
-            await userIdentityService(log).sendVerifyEmail({
-                email: userIdentity.email,
-                platformId: platform.id,
-            })
+            if (!userIdentity.emailVerified) {
+                await userIdentityService(log).sendVerifyEmail({
+                    email: userIdentity.email,
+                    platformId: platform.id,
+                })
+            }
             break
         case ApEdition.COMMUNITY:
         case ApEdition.ENTERPRISE:
@@ -280,12 +300,21 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
     })
 }
 
-async function getPersonalPlatformIdForIdentity(identityId: string, log: FastifyBaseLogger): Promise<string | null> {
+async function getPreferredPlatformIdForFederatedAuthn(identityId: string, log: FastifyBaseLogger): Promise<string | null> {
+    const identity = await userIdentityService(log).getOne({ id: identityId })
+    if (isNil(identity)) {
+        return null
+    }
+    return getPreferredPlatformId(identity.id, log)
+}
+
+async function getPreferredPlatformId(identityId: string, log: FastifyBaseLogger): Promise<string | null> {
     const edition = system.getEdition()
     if (edition === ApEdition.CLOUD) {
         const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId })
-        const platform = platforms.find((platform) => !platformUtils.isCustomerOnDedicatedDomain(platform))
-        return platform?.id ?? null
+        const nonDedicated = platforms.filter((p) => !platformUtils.isCustomerOnDedicatedDomain(p))
+        const licensed = nonDedicated.find((p) => !isNil(p.plan.licenseKey))
+        return licensed?.id ?? nonDedicated[0]?.id ?? null
     }
     return null
 }
