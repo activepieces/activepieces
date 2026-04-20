@@ -1,6 +1,6 @@
 # Server Backend
 
-You are working in the Activepieces server API (`packages/server/api`).
+Fastify 5 + TypeORM (PostgreSQL) + BullMQ (Redis) + `fastify-type-provider-zod`.
 
 ## Tech Stack
 
