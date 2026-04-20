@@ -7,17 +7,25 @@ const CHAIN = 'AP_EGRESS_LOCKDOWN'
 export const iptablesLockdown = {
     async apply(params: ApplyParams): Promise<IptablesLockdown> {
         const { log } = params
-        await assertIptablesAvailable()
+        await assertBinaryAvailable({ binary: IPV4.binary })
+        await assertBinaryAvailable({ binary: IPV6.binary })
 
-        for (const cmd of iptablesLockdown.buildApplyCommands(params)) {
-            const { error } = await tryCatch(() => runIptables(cmd))
-            if (error) {
-                log.error({ err: error, cmd }, 'iptables rule failed; rolling back')
-                await removeLockdown({ log, params })
-                throw new IptablesLockdownError(
-                    `Failed to apply iptables rule "${cmd.join(' ')}" — ` +
-                    `kernel enforcement requires NET_ADMIN capability and iptables binary. ${error.message}`,
-                )
+        // Stale chain from an unclean shutdown makes `-N` fail with "Chain already exists",
+        // which cascades into a rollback loop. Run the remove commands best-effort first so
+        // a restart starts from a clean slate on both families.
+        await preflightCleanup({ log, params })
+
+        for (const family of FAMILIES) {
+            for (const args of buildApplyCommandsForFamily({ params, rejectWith: family.rejectWith })) {
+                const { error } = await tryCatch(() => runRule({ binary: family.binary, args }))
+                if (error) {
+                    log.error({ err: error, binary: family.binary, args }, 'iptables rule failed; rolling back')
+                    await removeLockdown({ log, params })
+                    throw new IptablesLockdownError(
+                        `Failed to apply ${family.binary} rule "${args.join(' ')}" — ` +
+                        `kernel enforcement requires NET_ADMIN capability and ${family.binary} binary. ${error.message}`,
+                    )
+                }
             }
         }
 
@@ -25,15 +33,7 @@ export const iptablesLockdown = {
     },
 
     buildApplyCommands(params: ApplyParams): string[][] {
-        const { proxyPort, wsRpcPortRange, firstBoxUid, numBoxes } = params
-        const uidRange = `${firstBoxUid}-${firstBoxUid + numBoxes - 1}`
-        return [
-            rule.createChain(CHAIN),
-            rule.allowLoopbackTcp({ chain: CHAIN, dport: String(proxyPort) }),
-            ...(wsRpcPortRange ? [rule.allowLoopbackTcp({ chain: CHAIN, dport: `${wsRpcPortRange.first}:${wsRpcPortRange.last}` })] : []),
-            rule.rejectAll({ chain: CHAIN, rejectWith: 'icmp-host-prohibited' }),
-            rule.jumpFromOutputForUid({ uidRange, target: CHAIN }),
-        ]
+        return buildApplyCommandsForFamily({ params, rejectWith: IPV4.rejectWith })
     },
 
     buildRemoveCommands({ firstBoxUid, numBoxes }: ApplyParams): string[][] {
@@ -60,22 +60,45 @@ const rule = {
     deleteChain: (name: string): string[] => ['-X', name],
 }
 
-async function removeLockdown({ log, params }: { log: Logger, params: ApplyParams }): Promise<void> {
-    for (const cmd of iptablesLockdown.buildRemoveCommands(params)) {
-        const { error } = await tryCatch(() => runIptables(cmd))
-        if (error) log.warn({ err: error, cmd }, 'iptables cleanup command failed (best-effort)')
+function buildApplyCommandsForFamily({ params, rejectWith }: { params: ApplyParams, rejectWith: string }): string[][] {
+    const { proxyPort, wsRpcPortRange, firstBoxUid, numBoxes } = params
+    const uidRange = `${firstBoxUid}-${firstBoxUid + numBoxes - 1}`
+    return [
+        rule.createChain(CHAIN),
+        rule.allowLoopbackTcp({ chain: CHAIN, dport: String(proxyPort) }),
+        ...(wsRpcPortRange ? [rule.allowLoopbackTcp({ chain: CHAIN, dport: `${wsRpcPortRange.first}:${wsRpcPortRange.last}` })] : []),
+        rule.rejectAll({ chain: CHAIN, rejectWith }),
+        rule.jumpFromOutputForUid({ uidRange, target: CHAIN }),
+    ]
+}
+
+async function preflightCleanup({ log, params }: { log: Logger, params: ApplyParams }): Promise<void> {
+    for (const family of FAMILIES) {
+        for (const args of iptablesLockdown.buildRemoveCommands(params)) {
+            const { error } = await tryCatch(() => runRule({ binary: family.binary, args }))
+            if (error) log.debug({ err: error, binary: family.binary, args }, 'preflight cleanup step had no prior state (expected on fresh start)')
+        }
     }
 }
 
-async function runIptables(args: string[]): Promise<void> {
-    await spawnWithKill({ cmd: 'iptables', args, timeoutMs: IPTABLES_TIMEOUT_MS })
+async function removeLockdown({ log, params }: { log: Logger, params: ApplyParams }): Promise<void> {
+    for (const family of FAMILIES) {
+        for (const args of iptablesLockdown.buildRemoveCommands(params)) {
+            const { error } = await tryCatch(() => runRule({ binary: family.binary, args }))
+            if (error) log.warn({ err: error, binary: family.binary, args }, 'iptables cleanup command failed (best-effort)')
+        }
+    }
 }
 
-async function assertIptablesAvailable(): Promise<void> {
-    const { error } = await tryCatch(() => spawnWithKill({ cmd: 'iptables', args: ['-V'], timeoutMs: IPTABLES_TIMEOUT_MS }))
+async function runRule({ binary, args }: { binary: string, args: string[] }): Promise<void> {
+    await spawnWithKill({ cmd: binary, args, timeoutMs: IPTABLES_TIMEOUT_MS })
+}
+
+async function assertBinaryAvailable({ binary }: { binary: string }): Promise<void> {
+    const { error } = await tryCatch(() => spawnWithKill({ cmd: binary, args: ['-V'], timeoutMs: IPTABLES_TIMEOUT_MS }))
     if (error) {
         throw new IptablesLockdownError(
-            `iptables binary not available. Install iptables in the worker image for kernel-enforced SSRF. ${error.message}`,
+            `${binary} binary not available. Install ${binary} in the worker image for kernel-enforced SSRF. ${error.message}`,
         )
     }
 }
@@ -86,6 +109,10 @@ export class IptablesLockdownError extends Error {
         this.name = 'IptablesLockdownError'
     }
 }
+
+const IPV4 = { binary: 'iptables', rejectWith: 'icmp-host-prohibited' } as const
+const IPV6 = { binary: 'ip6tables', rejectWith: 'icmp6-adm-prohibited' } as const
+const FAMILIES = [IPV4, IPV6] as const
 
 const IPTABLES_TIMEOUT_MS = 5_000
 
