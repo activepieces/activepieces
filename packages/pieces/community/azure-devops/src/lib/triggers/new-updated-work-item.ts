@@ -31,13 +31,13 @@ const polling: Polling<AzureDevOpsAuth, StaticPropsValue<typeof props>> = {
       lastFetchEpochMS && lastFetchEpochMS > 0
         ? lastFetchEpochMS + 1
         : Date.now() - POLLING_FIRST_RUN_LOOKBACK_DAYS * 24 * 60 * 60 * 1000;
-    const sinceIso = new Date(sinceEpoch).toISOString().replace(/\.\d{3}Z$/, '');
+    const sinceDate = new Date(sinceEpoch).toISOString().slice(0, 10);
 
     const escapedProject = azureDevOpsCommon.escapeWiqlString(projectName);
     let wiqlQuery =
       `SELECT [System.Id], [System.ChangedDate] FROM WorkItems ` +
       `WHERE [System.TeamProject] = '${escapedProject}' ` +
-      `AND [System.ChangedDate] >= '${sinceIso}'`;
+      `AND [System.ChangedDate] >= '${sinceDate}'`;
 
     if (work_item_type) {
       const escapedType = azureDevOpsCommon.escapeWiqlString(
