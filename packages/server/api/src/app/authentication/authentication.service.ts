@@ -32,19 +32,13 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 })
                 if (!isNil(user)) {
                     log.info({ email: params.email, provider: params.provider, preferredPlatformId }, 'User signed up with invitation, returning preferred platform token')
-                    const authResponse = await authenticationUtils(log).getProjectAndToken({
-                        userId: user.id,
-                        platformId: preferredPlatformId,
-                        projectId: null,
-                    })
-                    return { result: authResponse, responseHeaders: null }
-
+                    return mfaSetupResponse(log, { email: params.email, password: params.password, platformId: preferredPlatformId })
                 }
             }
             log.info({ email: params.email, provider: params.provider }, 'User signed up and platform created')
 
-            const authResponse = await createUserAndPlatform(userIdentity, log)
-            return { result: authResponse, responseHeaders: null }
+            await createUserAndPlatform(userIdentity, log)
+            return mfaSetupResponse(log, { email: params.email, password: params.password })
         }
 
         await assertCanSignup(log, {
@@ -62,17 +56,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
 
         log.info({ email: params.email, platformId: params.platformId }, 'User signed up to existing platform')
 
-        // Always offer 2FA setup after joining an existing platform.
-        // Get a better-auth session cookie so the setup page can call authClient.twoFactor.enable().
-        const { responseHeaders } = await userIdentityService(log).verifyIdentityPassword({
-            email: params.email,
-            password: params.password,
-        })
-        const platform = await platformService(log).getOneOrThrow(params.platformId)
-        return {
-            result: { mfaRequired: true as const, setupRequired: true, enforced: platform.enforceTotp },
-            responseHeaders,
-        }
+        return mfaSetupResponse(log, { email: params.email, password: params.password, platformId: params.platformId })
     },
     async signInWithPassword(params: SignInWithPasswordParams): Promise<{ result: AuthenticationResponse | MfaChallengeResponse, responseHeaders: Headers | null }> {
         const { identity, responseHeaders, twoFactorRedirect } = await userIdentityService(log).verifyIdentityPassword(params)
@@ -352,6 +336,17 @@ async function assertCanSignup(log: FastifyBaseLogger, params: AssertSignupParam
     })
 }
 
+async function mfaSetupResponse(log: FastifyBaseLogger, params: MfaSetupResponseParams) {
+    const { responseHeaders } = await userIdentityService(log).verifyIdentityPassword({
+        email: params.email,
+        password: params.password,
+    })
+    const platform = params.platformId ? await platformService(log).getOneOrThrow(params.platformId) : null
+    return {
+        result: { mfaRequired: true as const, setupRequired: true, enforced: platform?.enforceTotp ?? false },
+        responseHeaders,
+    }
+}
 
 type FederatedAuthnParams = {
     predefinedPlatformId?: string
@@ -394,4 +389,10 @@ type ExchangeSessionParams = {
 
 type Get2faStatusParams = {
     userId: string
+}
+
+type MfaSetupResponseParams = {
+  email: string
+  password: string
+  platformId?: string
 }
