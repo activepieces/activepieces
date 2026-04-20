@@ -2,7 +2,7 @@
 
 ## Option 1: Contribute to Activepieces Community (Recommended)
 If you want your piece to be available to everyone on Activepieces Cloud and the main repo:
-1.  **Revert the package name** in `package.json` to `@heratshah/whatsapp-notifications-by-syncmate`.
+1.  **The package name** in `package.json` is already `@activepieces/piece-assistro` — no reversion needed.
 2.  **Fork** the [Activepieces repository](https://github.com/activepieces/activepieces) on GitHub.
 3.  **Push** your changes to your fork.
 4.  **Open a Pull Request** against the `main` branch of `activepieces/activepieces`.
