@@ -951,6 +951,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/azure-devops": {
+      "name": "@activepieces/piece-azure-devops",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/azure-openai": {
       "name": "@activepieces/piece-azure-openai",
       "version": "0.1.4",
@@ -8418,6 +8428,8 @@
     "@activepieces/piece-azure-blob-storage": ["@activepieces/piece-azure-blob-storage@workspace:packages/pieces/community/azure-blob-storage"],
 
     "@activepieces/piece-azure-communication-services": ["@activepieces/piece-azure-communication-services@workspace:packages/pieces/community/azure-communication-services"],
+
+    "@activepieces/piece-azure-devops": ["@activepieces/piece-azure-devops@workspace:packages/pieces/community/azure-devops"],
 
     "@activepieces/piece-azure-openai": ["@activepieces/piece-azure-openai@workspace:packages/pieces/community/azure-openai"],
 
