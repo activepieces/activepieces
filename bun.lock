@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 1,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -862,7 +861,7 @@
     },
     "packages/pieces/community/assistro": {
       "name": "@activepieces/piece-assistro",
-      "version": "0.0.1",
+      "version": "1.0.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -15426,7 +15425,7 @@
 
     "@dnd-kit/accessibility/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
-    "@dust-tt/client/@modelcontextprotocol/sdk": ["@modelcontextprotocol/sdk@github:dust-tt/typescript-sdk#bca26e4", { "dependencies": { "ajv": "^6.12.6", "content-type": "^1.0.5", "cors": "^2.8.5", "cross-spawn": "^7.0.5", "eventsource": "^3.0.2", "express": "^5.0.1", "express-rate-limit": "^7.5.0", "pkce-challenge": "^5.0.0", "raw-body": "^3.0.0", "zod": "^3.23.8", "zod-to-json-schema": "^3.24.1" } }, "dust-tt-typescript-sdk-bca26e4", "sha512-oxLE3SEGCVIhVNbn7xB9YgL7I6zrKujcH9s6e/1KcAj1VOht4lnM/oetqhwh9XhBh02cDHwkqHTzzIEBnBViiw=="],
+    "@dust-tt/client/@modelcontextprotocol/sdk": ["@modelcontextprotocol/sdk@github:dust-tt/typescript-sdk#bca26e4", { "dependencies": { "ajv": "^6.12.6", "content-type": "^1.0.5", "cors": "^2.8.5", "cross-spawn": "^7.0.5", "eventsource": "^3.0.2", "express": "^5.0.1", "express-rate-limit": "^7.5.0", "pkce-challenge": "^5.0.0", "raw-body": "^3.0.0", "zod": "^3.23.8", "zod-to-json-schema": "^3.24.1" } }, "dust-tt-typescript-sdk-bca26e4"],
 
     "@dust-tt/client/eventsource-parser": ["eventsource-parser@1.1.2", "", {}, "sha512-v0eOBUbiaFojBu2s2NPBfYUoRR9GjcDNvCXVaqEf5vVfpIAh9f8RCo4vXTP8c63QRKCFwoLpMpTdPwwhEKVgzA=="],
 
