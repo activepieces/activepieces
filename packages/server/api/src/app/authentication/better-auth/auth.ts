@@ -5,43 +5,12 @@ import { createAuthMiddleware } from 'better-auth/api'
 import { twoFactor } from 'better-auth/plugins'
 import { nanoid } from 'nanoid'
 import pg from 'pg'
-import { databaseConnection } from '../../database/database-connection'
+import { getPostgresConnectionString } from '../../database/database-connection'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { passwordHasher } from '../lib/password-hasher'
-import { UserIdentityEntity } from '../user-identity/user-identity-entity'
+import { userIdentityRepository } from '../user-identity/user-identity-service'
 import { betterAuthService } from './better-auth-service'
-
-function getEnvOrThrow(key: string): string {
-    const value = process.env[key]
-    if (!value) {
-        throw new Error(`Environment variable ${key} is not set`)
-    }
-    return value
-}
-
-function getConnectionString(): string {
-    const url = process.env['AP_POSTGRES_URL']
-
-    if (url) {
-        return url
-    }
-
-    const database = getEnvOrThrow('AP_POSTGRES_DATABASE')
-    const host = getEnvOrThrow('AP_POSTGRES_HOST')
-    const password = getEnvOrThrow('AP_POSTGRES_PASSWORD')
-    const serializedPort = getEnvOrThrow('AP_POSTGRES_PORT')
-    const port = Number.parseInt(serializedPort, 10)
-    const username = getEnvOrThrow('AP_POSTGRES_USERNAME')
-
-    if (!username || !password || !database) {
-        throw new Error('Missing required database connection properties')
-    }
-    // URL encode password to handle special characters
-    const encodedPassword = encodeURIComponent(password)
-
-    return `postgresql://${username}:${encodedPassword}@${host}:${port}/${database}`
-}
 
 const { Pool } = pg
 
@@ -50,7 +19,7 @@ const service = betterAuthService(system.globalLogger())
 const auth = betterAuth({
     basePath: '/v1/better-auth',
     database: new Pool({
-        connectionString: getConnectionString(),
+        connectionString: getPostgresConnectionString(),
     }),
     user: {
         modelName: 'user_identity',
@@ -102,7 +71,17 @@ const auth = betterAuth({
     emailVerification: {
         sendVerificationEmail: service.sendVerificationEmail,
     },
-    trustedOrigins: ['*'],
+    trustedOrigins: async (request) => {
+        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+        if (!request) {
+            return [frontendUrl]
+        }
+        if (request.url.includes('/sso/')) {
+            const origin = request.headers.get('origin')
+            return origin ? [frontendUrl, origin] : [frontendUrl]
+        }
+        return [frontendUrl]
+    },
     plugins: [
         twoFactor({ issuer: 'Activepieces' }),
         sso({
@@ -111,14 +90,12 @@ const auth = betterAuth({
             provisionUser: async ({ user, userInfo }) => {
                 system.globalLogger().info({ user, userInfo }, 'provision')
                 const nameParts = (userInfo.name ?? '').split(' ')
-                await databaseConnection()
-                    .getRepository(UserIdentityEntity)
-                    .update(user.id, {
-                        firstName: nameParts[0] ?? 'Unknown',
-                        lastName: nameParts.slice(1).join(' ') || 'Unknown',
-                        tokenVersion: nanoid(),
-                        password: await cryptoUtils.generateRandomPassword(),
-                    })
+                await userIdentityRepository().update(user.id, {
+                    firstName: nameParts[0] ?? 'Unknown',
+                    lastName: nameParts.slice(1).join(' ') || 'Unknown',
+                    tokenVersion: nanoid(),
+                    password: await cryptoUtils.generateRandomPassword(),
+                })
             },
             provisionUserOnEveryLogin: false,
         }),

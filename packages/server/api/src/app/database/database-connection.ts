@@ -161,3 +161,20 @@ export const databaseConnection = (): DataSource => {
 export function resetDatabaseConnection(): void {
     setPersistedConnection(null)
 }
+
+export function getPostgresConnectionString(): string {
+    const url = system.get(AppSystemProp.POSTGRES_URL)
+    if (!isNil(url)) {
+        return url
+    }
+
+    const database = system.getOrThrow(AppSystemProp.POSTGRES_DATABASE)
+    const host = system.getOrThrow(AppSystemProp.POSTGRES_HOST)
+    const password = system.getOrThrow(AppSystemProp.POSTGRES_PASSWORD)
+    const serializedPort = system.getOrThrow(AppSystemProp.POSTGRES_PORT)
+    const port = Number.parseInt(serializedPort, 10)
+    const username = system.getOrThrow(AppSystemProp.POSTGRES_USERNAME)
+
+    const encodedPassword = encodeURIComponent(password)
+    return `postgresql://${username}:${encodedPassword}@${host}:${port}/${database}`
+}

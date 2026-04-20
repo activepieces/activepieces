@@ -1,7 +1,7 @@
 import { ActivepiecesError, ApplicationEventName, assertNotNullOrUndefined, ErrorCode, isMfaChallenge, OtpType, tryCatch, UserIdentityProvider } from '@activepieces/shared'
-import { AuthContext, GenericEndpointContext, MiddlewareContext, MiddlewareOptions } from 'better-auth/*'
+import { AuthContext, MiddlewareContext, MiddlewareOptions } from 'better-auth/*'
 import { getOAuthState } from 'better-auth/api'
-import { BetterAuthOptions, Session, User } from 'better-auth/types'
+import { BetterAuthOptions, User } from 'better-auth/types'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { emailService } from '../../ee/helper/email/email-service'
@@ -21,7 +21,6 @@ type SentData = {
 type IBetterAuthService = {
     sendResetPassword: (data: SentData, request: Request | undefined) => Promise<void>
     sendVerificationEmail: (data: SentData, request: Request | undefined) => Promise<void>
-    postCreateSession: (session: Session, ctx: GenericEndpointContext | null) => Promise<void>
 
     beforeHook: (inputContext: MiddlewareContext<MiddlewareOptions, AuthContext<BetterAuthOptions> & {
         returned?: unknown
@@ -45,15 +44,13 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
     },
 
     sendVerificationEmail: async (data, request) => {
+        if (data.user.emailVerified) return
         await emailService(log).sendOtp({
             userIdentity: data.user,
             platformId: platformIdFromRequestQuery(request),
             otp: encodeURIComponent(data.token),
             type: OtpType.EMAIL_VERIFICATION,
         })
-    },
-    postCreateSession: async (_session, _ctx) => {
-        return
     },
     beforeHook: async (_ctx) => {
         return
