@@ -1,5 +1,5 @@
 import { isIP, Socket } from 'node:net'
-import { EngineGenericError, ssrfIpClassifier } from '@activepieces/shared'
+import { SSRFBlockedError, ssrfIpClassifier } from '@activepieces/shared'
 import type { GuardPolicy, UninstallFn } from './ssrf-guard'
 
 export function installSocketConnectGuard(policy: GuardPolicy): UninstallFn {
@@ -44,11 +44,8 @@ function isExemptLoopbackPort({ host, port, policy }: IsExemptLoopbackPortParams
     return policy.allowedLoopbackPorts.has(port)
 }
 
-function buildBlockedError({ host, ip }: BuildBlockedErrorParams): EngineGenericError {
-    return new EngineGenericError(
-        'SSRFBlockedError',
-        `SSRF protection: refusing to connect to ${host} (resolved ${ip}) — private, loopback, link-local, or multicast address`,
-    )
+function buildBlockedError({ host, ip }: BuildBlockedErrorParams): SSRFBlockedError {
+    return new SSRFBlockedError({ host, ip })
 }
 
 type ConnectTarget = {

@@ -1,5 +1,5 @@
 import dns from 'node:dns'
-import { EngineGenericError, ssrfIpClassifier } from '@activepieces/shared'
+import { SSRFBlockedError, ssrfIpClassifier } from '@activepieces/shared'
 import type { GuardPolicy, UninstallFn } from './ssrf-guard'
 
 export function installDnsLookupGuard(policy: GuardPolicy): UninstallFn {
@@ -82,11 +82,8 @@ function findBlockedEntry({ entries, allowList }: FindBlockedEntryParams): dns.L
     return entries.find((entry) => ssrfIpClassifier.isBlockedIp({ ip: entry.address, allowList }))
 }
 
-function buildBlockedError({ host, ip }: BuildBlockedErrorParams): EngineGenericError {
-    return new EngineGenericError(
-        'SSRFBlockedError',
-        `SSRF protection: refusing to connect to ${host} (resolved ${ip}) — private, loopback, link-local, or multicast address`,
-    )
+function buildBlockedError({ host, ip }: BuildBlockedErrorParams): SSRFBlockedError {
+    return new SSRFBlockedError({ host, ip })
 }
 
 function assignLookup(target: typeof dns, fn: typeof dns.lookup): void {

@@ -1,6 +1,6 @@
 import dns from 'node:dns'
 import { Socket, createServer, Server } from 'node:net'
-import { EngineGenericError } from '@activepieces/shared'
+import { SSRFBlockedError } from '@activepieces/shared'
 import { EnvHttpProxyAgent, getGlobalDispatcher, setGlobalDispatcher } from 'undici'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ssrfGuard } from '../../src/lib/network/ssrf-guard'
@@ -70,7 +70,7 @@ describe('ssrf-guard', () => {
     describe('dns.lookup hook', () => {
         it('rejects hostname resolving to loopback via promises api', async () => {
             ssrfGuard.install({ enabled: true, allowList: [] })
-            await expect(dns.promises.lookup('localhost')).rejects.toBeInstanceOf(EngineGenericError)
+            await expect(dns.promises.lookup('localhost')).rejects.toBeInstanceOf(SSRFBlockedError)
         })
 
         it('rejects hostname resolving to loopback via callback api', async () => {
@@ -78,7 +78,7 @@ describe('ssrf-guard', () => {
             const err = await new Promise<unknown>((resolve) => {
                 dns.lookup('localhost', (e) => resolve(e))
             })
-            expect(err).toBeInstanceOf(EngineGenericError)
+            expect(err).toBeInstanceOf(SSRFBlockedError)
         })
 
         it('honours allowList for normally blocked IP', async () => {
@@ -105,13 +105,13 @@ describe('ssrf-guard', () => {
         it('promises api: blocks when caller omits { all: true } but one A record is private', async () => {
             vi.spyOn(dns.promises, 'lookup').mockResolvedValue(publicThenPrivate as unknown as dns.LookupAddress)
             ssrfGuard.install({ enabled: true, allowList: [] })
-            await expect(dns.promises.lookup('multi.example.test')).rejects.toBeInstanceOf(EngineGenericError)
+            await expect(dns.promises.lookup('multi.example.test')).rejects.toBeInstanceOf(SSRFBlockedError)
         })
 
         it('promises api: blocks when caller passes { all: true } and one A record is private', async () => {
             vi.spyOn(dns.promises, 'lookup').mockResolvedValue(publicThenPrivate as unknown as dns.LookupAddress)
             ssrfGuard.install({ enabled: true, allowList: [] })
-            await expect(dns.promises.lookup('multi.example.test', { all: true })).rejects.toBeInstanceOf(EngineGenericError)
+            await expect(dns.promises.lookup('multi.example.test', { all: true })).rejects.toBeInstanceOf(SSRFBlockedError)
         })
 
         it('promises api: returns single-entry shape when caller omits { all: true } and all records are public', async () => {
@@ -139,7 +139,7 @@ describe('ssrf-guard', () => {
             const err = await new Promise<unknown>((resolve) => {
                 dns.lookup('multi.example.test', (e) => resolve(e))
             })
-            expect(err).toBeInstanceOf(EngineGenericError)
+            expect(err).toBeInstanceOf(SSRFBlockedError)
         })
 
         it('callback api: passes first public entry when caller omits { all: true }', async () => {
@@ -189,14 +189,14 @@ describe('ssrf-guard', () => {
             ssrfGuard.install({ enabled: true, allowList: [] })
             const result = await connectOnce({ host: '169.254.169.254', port: 80 })
             expect(result.connected).toBe(false)
-            expect(result.error).toBeInstanceOf(EngineGenericError)
+            expect(result.error).toBeInstanceOf(SSRFBlockedError)
         })
 
         it('blocks connect({ host, port }) to RFC1918 IP', async () => {
             ssrfGuard.install({ enabled: true, allowList: [] })
             const result = await connectOnce({ host: '10.0.0.5', port: 443 })
             expect(result.connected).toBe(false)
-            expect(result.error).toBeInstanceOf(EngineGenericError)
+            expect(result.error).toBeInstanceOf(SSRFBlockedError)
         })
 
         it('allows loopback target on a whitelisted port (engine↔worker RPC, egress proxy)', async () => {
@@ -209,7 +209,7 @@ describe('ssrf-guard', () => {
             ssrfGuard.install({ enabled: true, allowList: [], allowedLoopbackPorts: [publicPort + 1] })
             const result = await connectOnce({ host: '127.0.0.1', port: publicPort })
             expect(result.connected).toBe(false)
-            expect(result.error).toBeInstanceOf(EngineGenericError)
+            expect(result.error).toBeInstanceOf(SSRFBlockedError)
         })
 
         it('allowList overrides block for raw IP connect', async () => {
