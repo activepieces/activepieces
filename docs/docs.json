@@ -200,6 +200,7 @@
                      "install/architecture/overview",
                      "install/architecture/workers",
                      "install/architecture/engine",
+                     "install/architecture/network-mode",
                      "install/architecture/benchmark"
                   ]
                }

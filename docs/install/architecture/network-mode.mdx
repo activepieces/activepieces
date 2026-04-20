@@ -1,0 +1,72 @@
+---
+title: "Network Mode"
+description: "How Activepieces isolates user-code egress from your internal network"
+icon: "shield-halved"
+---
+
+## Overview
+
+Every flow eventually runs **user-supplied code** — Code steps, piece actions, HTTP requests. Without an explicit boundary, that code can reach anything the host can reach: `127.0.0.1`, Redis, Postgres, the Kubernetes API, cloud-metadata endpoints (`169.254.169.254`), the VPC. `AP_NETWORK_MODE` is the switch that controls this boundary.
+
+<Tip>
+`AP_NETWORK_MODE` defaults to `UNRESTRICTED`. Set it to `STRICT` in production to opt into the full defense-in-depth stack described below.
+</Tip>
+
+| Value | Effect |
+|---|---|
+| `UNRESTRICTED` | No outbound guards. User code can reach any host the worker can reach. Default while the hardening stack is being validated. |
+| `STRICT` | All three layers below are installed. Outbound connections to private, loopback, link-local, and cloud-metadata IPs are blocked from user code. |
+
+Related env vars:
+
+- `AP_SSRF_ALLOW_LIST` — comma-separated IPs that bypass the block (e.g. an internal DB or sidecar).
+- `HTTP_PROXY` / `HTTPS_PROXY` — if set, the engine routes all outbound HTTP(S) through the proxy. Loopback proxy ports are auto-exempted.
+
+## How Isolation Works
+
+In `STRICT` mode, three layers stack. Each one is a tripwire — if a request slips past one, the next one stops it.
+
+<Steps>
+  <Step title="Engine SSRF guard (in-process)">
+    The engine monkey-patches Node's `dns.lookup`, `Socket.prototype.connect`, and `undici`'s global dispatcher. The moment user code resolves a hostname or opens a socket, the guard checks the resulting IP against a blocklist (every non-`unicast` range — RFC1918, loopback, link-local, multicast, cloud metadata). Covers `axios`, `fetch`, `undici`, and raw `http`/`net` in one pass.
+  </Step>
+  <Step title="Egress proxy (per worker)">
+    The worker spins up a loopback-bound HTTP(S) CONNECT proxy (`proxy-chain`). User code is routed through it by the engine dispatcher. The proxy re-resolves every hostname and checks **every** A/AAAA record — closing the multi-record bypass where one IP is public and another is private.
+  </Step>
+  <Step title="Kernel lockdown (sandboxed modes only)">
+    In isolate-based sandboxing, the worker applies `iptables` rules at boot that restrict egress from sandbox UIDs to the proxy port only. Even if user code finds a way to hit the raw socket layer, the kernel drops the packet.
+  </Step>
+</Steps>
+
+## How It Applies to Each Sandbox Mode
+
+Network Mode layers on top of the sandbox execution mode — they are independent choices. The table below shows what is active in `STRICT` mode for each sandbox:
+
+| Sandbox Mode | Engine SSRF guard | Egress proxy | Kernel lockdown |
+|---|---|---|---|
+| **No Sandboxing** (`UNSANDBOXED`) | ✅ | ✅ | ❌ — no per-UID separation available |
+| **V8 Sandboxing** (`SANDBOX_CODE_ONLY`) | ✅ | ✅ | ❌ — engine process shares the host UID |
+| **Kernel Namespaces** (`SANDBOX_PROCESS` with `isolate`) | ✅ | ✅ | ✅ — `iptables` rules scoped to sandbox UIDs |
+
+See [Workers & Sandboxing](./workers) for what each sandbox mode isolates at the process level. Network Mode is orthogonal: it isolates what the sandbox is allowed to *reach*, regardless of *how* it runs.
+
+<Warning>
+In `UNSANDBOXED` and V8 modes there is no kernel-level fallback. The in-process SSRF guard and the egress proxy are the only two layers — which is still strong, but a determined attacker who compromises the Node process can bypass in-process checks. Use `SANDBOX_PROCESS` in multi-tenant deployments.
+</Warning>
+
+## Verifying Your Setup
+
+From a Code step in a test flow, try:
+
+```js
+const res = await fetch('http://169.254.169.254/latest/meta-data/')
+```
+
+With `AP_NETWORK_MODE=STRICT` you should see an `SSRFBlockedError` (from the engine guard) or a 403 from the egress proxy (for hostname-resolved requests). With `UNRESTRICTED` the request will succeed if the host allows it — confirming the guard is off.
+
+## Rolling Out
+
+1. Start in `UNRESTRICTED` (default) and identify any internal services that legitimate flows need to reach (internal APIs, databases used by Code steps, etc.).
+2. Add those IPs to `AP_SSRF_ALLOW_LIST`.
+3. Switch to `AP_NETWORK_MODE=STRICT`. Watch worker logs for `SSRFBlockedError` or `Egress proxy refused request` — each one is either an attack, a misconfigured flow, or a missing allow-list entry.
+4. For multi-tenant deployments, also enable `SANDBOX_PROCESS` execution mode so the kernel lockdown layer is active.
