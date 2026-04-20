@@ -100,7 +100,8 @@ const getFileType = (name: string): Attachment['type'] => {
   return 'other';
 };
 
-const RTL_RE = /[\u0590-\u05FF\u0600-\u06FF\u0700-\u07BF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
+const RTL_RE =
+  /[\u0590-\u05FF\u0600-\u06FF\u0700-\u07BF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
 const LTR_RE = /[A-Za-z\u00C0-\u024F]/;
 
 const detectDir = (text: string): 'rtl' | 'ltr' => {
@@ -2131,8 +2132,7 @@ export function AIChatBox({
                                     if (
                                       before.substring(lineStart).trim() === ''
                                     ) {
-                                      val =
-                                        before + '• ' + val.substring(pos);
+                                      val = before + '• ' + val.substring(pos);
                                       setEditDraft(val);
                                       requestAnimationFrame(() => {
                                         ta.selectionStart = ta.selectionEnd =
@@ -2168,8 +2168,8 @@ export function AIChatBox({
                               <div className="flex items-start gap-1.5 text-xs text-muted-foreground leading-snug">
                                 <Info size={14} className="shrink-0 mt-0.5" />
                                 <span>
-                                  Editing creates a new branch — use the
-                                  arrows to switch.
+                                  Editing creates a new branch — use the arrows
+                                  to switch.
                                 </span>
                               </div>
                               <div className="flex items-center gap-1.5 shrink-0">
@@ -2204,132 +2204,135 @@ export function AIChatBox({
                           )
                         )}
                         {editingMsgId !== msg.id && (
-                        <div className="msg-meta flex items-center justify-end gap-1.5 mt-1">
-                          <DelayedTooltip>
-                            <TooltipTrigger asChild>
-                              <span className="text-xs text-muted-foreground cursor-default">
-                                {msg.time}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent
-                              side="bottom"
-                              className="pointer-events-none"
-                            >
-                              {msg.fullDate}
-                            </TooltipContent>
-                          </DelayedTooltip>
-                          {msg.text && editingMsgId !== msg.id && (
-                            <>
-                              <DelayedTooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    className="text-muted-foreground hover:text-foreground"
-                                    onClick={() =>
-                                      startEditMessage(msg.id, msg.text)
-                                    }
-                                  >
-                                    <Pencil size={16} />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent
-                                  side="bottom"
-                                  className="pointer-events-none"
-                                >
-                                  Edit
-                                </TooltipContent>
-                              </DelayedTooltip>
-                              <DelayedTooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    className="text-muted-foreground hover:text-foreground"
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(msg.text);
-                                      setCopiedId(msg.id);
-                                      setTimeout(() => setCopiedId(null), 1500);
-                                    }}
-                                  >
-                                    {copiedId === msg.id ? (
-                                      <Check size={16} strokeWidth={2.5} />
-                                    ) : (
-                                      <Copy size={16} />
-                                    )}
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent
-                                  side="bottom"
-                                  className="pointer-events-none"
-                                >
-                                  {copiedId === msg.id ? 'Copied!' : 'Copy'}
-                                </TooltipContent>
-                              </DelayedTooltip>
-                            </>
-                          )}
-                          {msg.branches &&
-                            msg.branches.length > 1 &&
-                            editingMsgId !== msg.id && (
-                              <div className="flex items-center gap-0.5">
-                                <DelayedTooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon-sm"
-                                      className="text-muted-foreground hover:text-foreground w-6"
-                                      disabled={(msg.branchIndex ?? 0) <= 0}
-                                      onClick={() =>
-                                        switchBranch(
-                                          msg.id,
-                                          (msg.branchIndex ?? 0) - 1,
-                                        )
-                                      }
-                                    >
-                                      <ChevronLeft size={16} />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent
-                                    side="bottom"
-                                    className="pointer-events-none"
-                                  >
-                                    Previous
-                                  </TooltipContent>
-                                </DelayedTooltip>
-                                <span className="text-sm text-muted-foreground tabular-nums select-none">
-                                  {(msg.branchIndex ?? 0) + 1}/
-                                  {msg.branches.length}
+                          <div className="msg-meta flex items-center justify-end gap-1.5 mt-1">
+                            <DelayedTooltip>
+                              <TooltipTrigger asChild>
+                                <span className="text-xs text-muted-foreground cursor-default">
+                                  {msg.time}
                                 </span>
+                              </TooltipTrigger>
+                              <TooltipContent
+                                side="bottom"
+                                className="pointer-events-none"
+                              >
+                                {msg.fullDate}
+                              </TooltipContent>
+                            </DelayedTooltip>
+                            {msg.text && editingMsgId !== msg.id && (
+                              <>
                                 <DelayedTooltip>
                                   <TooltipTrigger asChild>
                                     <Button
                                       variant="ghost"
                                       size="icon-sm"
-                                      className="text-muted-foreground hover:text-foreground w-6"
-                                      disabled={
-                                        (msg.branchIndex ?? 0) >=
-                                        msg.branches.length - 1
-                                      }
+                                      className="text-muted-foreground hover:text-foreground"
                                       onClick={() =>
-                                        switchBranch(
-                                          msg.id,
-                                          (msg.branchIndex ?? 0) + 1,
-                                        )
+                                        startEditMessage(msg.id, msg.text)
                                       }
                                     >
-                                      <ChevronRight size={16} />
+                                      <Pencil size={16} />
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent
                                     side="bottom"
                                     className="pointer-events-none"
                                   >
-                                    Next
+                                    Edit
                                   </TooltipContent>
                                 </DelayedTooltip>
-                              </div>
+                                <DelayedTooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon-sm"
+                                      className="text-muted-foreground hover:text-foreground"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(msg.text);
+                                        setCopiedId(msg.id);
+                                        setTimeout(
+                                          () => setCopiedId(null),
+                                          1500,
+                                        );
+                                      }}
+                                    >
+                                      {copiedId === msg.id ? (
+                                        <Check size={16} strokeWidth={2.5} />
+                                      ) : (
+                                        <Copy size={16} />
+                                      )}
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent
+                                    side="bottom"
+                                    className="pointer-events-none"
+                                  >
+                                    {copiedId === msg.id ? 'Copied!' : 'Copy'}
+                                  </TooltipContent>
+                                </DelayedTooltip>
+                              </>
                             )}
-                        </div>
+                            {msg.branches &&
+                              msg.branches.length > 1 &&
+                              editingMsgId !== msg.id && (
+                                <div className="flex items-center gap-0.5">
+                                  <DelayedTooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className="text-muted-foreground hover:text-foreground w-6"
+                                        disabled={(msg.branchIndex ?? 0) <= 0}
+                                        onClick={() =>
+                                          switchBranch(
+                                            msg.id,
+                                            (msg.branchIndex ?? 0) - 1,
+                                          )
+                                        }
+                                      >
+                                        <ChevronLeft size={16} />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                      side="bottom"
+                                      className="pointer-events-none"
+                                    >
+                                      Previous
+                                    </TooltipContent>
+                                  </DelayedTooltip>
+                                  <span className="text-sm text-muted-foreground tabular-nums select-none">
+                                    {(msg.branchIndex ?? 0) + 1}/
+                                    {msg.branches.length}
+                                  </span>
+                                  <DelayedTooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className="text-muted-foreground hover:text-foreground w-6"
+                                        disabled={
+                                          (msg.branchIndex ?? 0) >=
+                                          msg.branches.length - 1
+                                        }
+                                        onClick={() =>
+                                          switchBranch(
+                                            msg.id,
+                                            (msg.branchIndex ?? 0) + 1,
+                                          )
+                                        }
+                                      >
+                                        <ChevronRight size={16} />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                      side="bottom"
+                                      className="pointer-events-none"
+                                    >
+                                      Next
+                                    </TooltipContent>
+                                  </DelayedTooltip>
+                                </div>
+                              )}
+                          </div>
                         )}
                       </div>
                     </div>
