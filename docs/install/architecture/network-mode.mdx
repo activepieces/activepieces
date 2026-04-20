@@ -26,6 +26,44 @@ Related env vars:
 
 In `STRICT` mode, three layers stack. Each one is a tripwire — if a request slips past one, the next one stops it.
 
+```mermaid
+flowchart LR
+    UC["User code<br/>(Code step · Piece · fetch)"]
+
+    subgraph L1["Layer 1 — Engine SSRF guard (in-process)"]
+        direction TB
+        L1check{"IP in blocked<br/>range?"}
+    end
+
+    subgraph L2["Layer 2 — Egress proxy (loopback)"]
+        direction TB
+        L2check{"Any A/AAAA<br/>record blocked?"}
+    end
+
+    subgraph L3["Layer 3 — iptables lockdown (SANDBOX_PROCESS only)"]
+        direction TB
+        L3check{"Destination is<br/>proxy port?"}
+    end
+
+    NET(["Public internet"])
+    B1["SSRFBlockedError"]
+    B2["403 Egress blocked"]
+    B3["Kernel drops packet"]
+
+    UC --> L1check
+    L1check -- yes --> B1
+    L1check -- no --> L2check
+    L2check -- yes --> B2
+    L2check -- no --> L3check
+    L3check -- no --> B3
+    L3check -- yes --> NET
+
+    classDef blocked fill:#fde2e2,stroke:#d33,color:#7a1414
+    classDef allowed fill:#e3f7e4,stroke:#2a7,color:#14532d
+    class B1,B2,B3 blocked
+    class NET allowed
+```
+
 <Steps>
   <Step title="Engine SSRF guard (in-process)">
     The engine monkey-patches Node's `dns.lookup`, `Socket.prototype.connect`, and `undici`'s global dispatcher. The moment user code resolves a hostname or opens a socket, the guard checks the resulting IP against a blocklist (every non-`unicast` range — RFC1918, loopback, link-local, multicast, cloud metadata). Covers `axios`, `fetch`, `undici`, and raw `http`/`net` in one pass.
