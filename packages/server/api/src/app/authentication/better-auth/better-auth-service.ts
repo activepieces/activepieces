@@ -87,6 +87,8 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
             const platformId = extractPlatformIdFromProviderId(ssoProviderId)
             const state = JSON.stringify({ provider: null, from: null })
 
+            const existingUser = platformId ? await userService(log).getOneByIdentityAndPlatform({ identityId, platformId }) : null
+
             const { data: response, error } = await tryCatch(async () => authenticationService(log).socialSignIn({
                 identityId,
                 predefinedPlatformId: platformId,
@@ -109,7 +111,6 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
             }
 
             if (!isNil(platformId)) {
-                const existingUser = await userService(log).getOneByIdentityAndPlatform({ identityId, platformId })
                 applicationEvents(log).sendUserEvent({
                     platformId: response.platformId!,
                     userId: response.id,

@@ -1,5 +1,5 @@
 import { cryptoUtils } from '@activepieces/server-utils'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { sso } from '@better-auth/sso'
 import { betterAuth } from 'better-auth'
 import { createAuthMiddleware } from 'better-auth/api'
@@ -20,7 +20,7 @@ async function getBetterAuthDatabase() {
         const { getPGliteInstance } = await import('typeorm-pglite')
         const { PGliteDialect } = await import('kysely-pglite-dialect')
         const pglite = await getPGliteInstance()
-        return { dialect: new PGliteDialect({ pglite }), type: 'postgres' as const }
+        return { dialect: new PGliteDialect(pglite), type: 'postgres' as const }
     }
     const { default: pg } = await import('pg')
     return new pg.Pool({ connectionString: getPostgresConnectionString() })
@@ -122,14 +122,15 @@ async function createBetterAuth(log: FastifyBaseLogger) {
 }
 
 
-let _auth: Awaited<ReturnType<typeof createBetterAuth>> | null = null
+let authInstance: Awaited<ReturnType<typeof createBetterAuth>> | null = null
 
 export const betterAuthInstance = {
     init: async (log: FastifyBaseLogger) => {
-        _auth = await createBetterAuth(log)
+        if (!isNil(authInstance)) return
+        authInstance = await createBetterAuth(log)
     },
     get: () => {
-        assertNotNullOrUndefined(_auth, 'better-auth not initialized')
-        return _auth
+        assertNotNullOrUndefined(authInstance, 'better-auth not initialized')
+        return authInstance
     },
 }
