@@ -7,13 +7,11 @@ import {
     McpServer,
     McpToolDefinition,
     Permission,
-    PieceActionSettings,
     UpdateActionRequest,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
-import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
 
@@ -178,30 +176,5 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 return mcpUtils.mcpToolError('Step update failed', err)
             }
         },
-    }
-}
-
-async function diagnoseMissingInputs({ settings, platformId, log }: {
-    settings: PieceActionSettings
-    platformId: string
-    log: FastifyBaseLogger
-}): Promise<string | null> {
-    const { pieceName, pieceVersion, actionName } = settings
-    if (isNil(actionName)) {
-        return 'Missing actionName.'
-    }
-    try {
-        const piece = await pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion })
-        const action = piece.actions[actionName]
-        if (isNil(action)) {
-            return `Action "${actionName}" not found in piece "${pieceName}". Use ap_list_pieces with includeActions=true to get valid action names.`
-        }
-        const input = settings.input ?? {}
-        const { parts } = mcpUtils.diagnosePieceProps({ props: action.props, input, pieceAuth: piece.auth, requireAuth: action.requireAuth, componentType: 'action' })
-        return parts.join(' ')
-    }
-    catch (err) {
-        log.warn({ err, pieceName, actionName }, 'diagnoseMissingInputs: failed to fetch piece metadata')
-        return null
     }
 }
