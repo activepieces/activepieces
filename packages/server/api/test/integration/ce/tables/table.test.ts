@@ -105,6 +105,30 @@ describe('Table API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
         })
+
+        it('should reject an externalId of exactly "."', async () => {
+            const ctx = await setup()
+
+            const response = await ctx.post('/v1/tables', {
+                projectId: ctx.project.id,
+                name: 'Dot Table',
+                externalId: '.',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('should reject an externalId of exactly ".."', async () => {
+            const ctx = await setup()
+
+            const response = await ctx.post('/v1/tables', {
+                projectId: ctx.project.id,
+                name: 'DotDot Table',
+                externalId: '..',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
     })
 
     describeWithAuth('POST /v1/tables/:id (Update)', () => app!, (setup) => {

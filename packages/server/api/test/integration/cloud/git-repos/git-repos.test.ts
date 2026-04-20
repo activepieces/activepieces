@@ -357,6 +357,16 @@ describe('Git API', () => {
             expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
         })
 
+        it('should reject a slug of exactly "."', async () => {
+            const { statusCode } = await postCreate({ slug: '.' })
+            expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('should reject a slug of exactly ".."', async () => {
+            const { statusCode } = await postCreate({ slug: '..' })
+            expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
         it('should reject a branch starting with a dash', async () => {
             const { statusCode } = await postCreate({ branch: '--upload-pack=evil' })
             expect(statusCode).toBe(StatusCodes.BAD_REQUEST)

@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { formErrors } from '../../form-errors'
 
-const SAFE_SLUG_PATTERN = /^[A-Za-z0-9._-]{1,128}$/
+const SAFE_SLUG_PATTERN = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/
 const SAFE_BRANCH_PATTERN = /^(?!-)[A-Za-z0-9._/-]{1,255}$/
 const SAFE_REMOTE_URL_PATTERN = /^git@[A-Za-z0-9.-]+:[A-Za-z0-9._/-]+(\.git)?$/
 
