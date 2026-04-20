@@ -65,7 +65,7 @@ function upsertFile(request: UploadLogsToken, log: FastifyBaseLogger, content: B
         data: content,
         size: content?.length ?? 0,
         type: FileType.FLOW_RUN_LOG,
-        compression: FileCompression.ZSTD,
+        compression: FileCompression.NONE,
         metadata: {
             flowRunId: request.flowRunId,
             projectId: request.projectId,

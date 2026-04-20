@@ -1,4 +1,4 @@
-import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, CONTENT_ENCODING_ZSTD, FileCompression, FileLocation, FileType, isZstdCompressed, UploadLogsBehavior, UploadLogsQueryParams } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, FileLocation, FileType, UploadLogsBehavior, UploadLogsQueryParams } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -21,7 +21,7 @@ export const flowRunLogsController: FastifyPluginAsyncZod = async (app) => {
             const decodedToken = await flowRunLogsService(request.log).verifyToken(token)
             if (decodedToken.behavior === UploadLogsBehavior.REDIRECT_TO_S3) {
                 const fileMetadata = await flowRunLogsService(request.log).upsertMetadata(decodedToken)
-                const s3SignedUrl = await s3Helper(request.log).putS3SignedUrl({ s3Key: fileMetadata.s3Key!, contentEncoding: CONTENT_ENCODING_ZSTD })
+                const s3SignedUrl = await s3Helper(request.log).putS3SignedUrl({ s3Key: fileMetadata.s3Key! })
                 request.log.info({
                     s3Key: fileMetadata.s3Key,
                 }, 'Redirecting to S3 signed URL')
@@ -60,10 +60,6 @@ export const flowRunLogsController: FastifyPluginAsyncZod = async (app) => {
             return reply.redirect(s3SignedUrl)
         }
         const data = file.location === FileLocation.DB ? file.data : await s3Helper(request.log).getFile(file.s3Key!)
-        const isCompressed = file.compression === FileCompression.ZSTD || isZstdCompressed(data)
-        if (isCompressed) {
-            void reply.header('Content-Encoding', CONTENT_ENCODING_ZSTD)
-        }
         return reply.type('application/octet-stream').send(data)
     })
 }
