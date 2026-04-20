@@ -24,6 +24,7 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { authClient } from '@/lib/better-auth';
 
 type NewOAuth2DialogProps = {
   providerName: 'google' | 'github';
@@ -54,6 +55,19 @@ export const NewOAuth2Dialog = ({
   const { mutate, isPending } = useMutation({
     mutationFn: async (request: UpdatePlatformRequestBody) => {
       await platformApi.update(request, platform.id);
+      const googleConfig = request.federatedAuthProviders?.google;
+      if (googleConfig && providerName === 'google') {
+        await authClient.sso.register({
+          providerId: `${providerName}-${platform.id}`,
+          issuer: 'https://accounts.google.com',
+          domain: `platform-${platform.id}`,
+          oidcConfig: {
+            clientId: googleConfig.clientId,
+            clientSecret: googleConfig.clientSecret,
+            scopes: ['openid', 'email', 'profile'],
+          },
+        });
+      }
       await refetch();
     },
     onSuccess: () => {

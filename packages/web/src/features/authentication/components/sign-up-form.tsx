@@ -31,7 +31,10 @@ import {
   PopoverTitle,
 } from '@/components/ui/popover';
 import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
-import { PasswordRequirementsList, PasswordStrengthBolt } from '@/features/authentication/components/password-validator';
+import {
+  PasswordRequirementsList,
+  PasswordStrengthBolt,
+} from '@/features/authentication/components/password-validator';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';

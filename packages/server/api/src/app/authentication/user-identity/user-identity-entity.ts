@@ -73,11 +73,6 @@ export const UserIdentityEntity = new EntitySchema<UserIdentitySchema>({
             type: String,
             nullable: true,
         },
-        draft: {
-            type: Boolean,
-            nullable: false,
-            default: false,
-        },
         twoFactorEnabled: {
             type: Boolean,
             nullable: false,

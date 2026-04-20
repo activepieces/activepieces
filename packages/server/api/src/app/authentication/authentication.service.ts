@@ -135,17 +135,17 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(params.identityId, log) : params.predefinedPlatformId
         const userIdentity = await userIdentityService(log).getOneOrFail({ id: params.identityId })
         if (isNil(platformId)) {
-            await userIdentityService(log).unDraft(params.identityId)
             return createUserAndPlatform(userIdentity, log)
         }
 
-        if (userIdentity.draft) {
+        const existingUsers = await userService(log).getByIdentityId({ identityId: params.identityId })
+        const isNewUser = existingUsers.length === 0
+        if (isNewUser) {
             await assertCanSignup(log, {
                 platformId,
                 provider: userIdentity.provider,
                 email: userIdentity.email,
             })
-            await userIdentityService(log).unDraft(params.identityId)
         }
 
         const user = await userService(log).getOrCreateWithProject({

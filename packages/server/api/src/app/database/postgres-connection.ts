@@ -359,6 +359,7 @@ import { AddConcurrencyPoolTable1775800000000 } from './migration/postgres/17758
 import { AddDefaultToAiProvidersEnabled1776000000000 } from './migration/postgres/1776000000000-AddDefaultToAiProvidersEnabled'
 import { UserIdentityForBetterAuth1776192009225 } from './migration/postgres/1776192009225-UserIdentityForBetterAuth'
 import { AddTwoFactor1776600000000 } from './migration/postgres/1776600000000-AddTwoFactor'
+import { AddSsoProvider1777000000000 } from './migration/postgres/1777000000000-AddSsoProvider'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -733,6 +734,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddDefaultToAiProvidersEnabled1776000000000,
         UserIdentityForBetterAuth1776192009225,
         AddTwoFactor1776600000000,
+        AddSsoProvider1777000000000,
     ]
     return migrations
 }

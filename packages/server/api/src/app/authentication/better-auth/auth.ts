@@ -1,14 +1,15 @@
-// @ts-nocheck - better-auth type references internal bun paths which are non-portable
 import { cryptoUtils } from '@activepieces/server-utils'
-import { UserIdentityProvider } from '@activepieces/shared'
+import { sso } from '@better-auth/sso'
 import { betterAuth } from 'better-auth'
 import { createAuthMiddleware } from 'better-auth/api'
 import { twoFactor } from 'better-auth/plugins'
 import { nanoid } from 'nanoid'
 import pg from 'pg'
+import { databaseConnection } from '../../database/database-connection'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { passwordHasher } from '../lib/password-hasher'
+import { UserIdentityEntity } from '../user-identity/user-identity-entity'
 import { betterAuthService } from './better-auth-service'
 
 function getEnvOrThrow(key: string): string {
@@ -59,18 +60,21 @@ const auth = betterAuth({
                 returned: true,
                 required: true,
                 input: true,
+                defaultValue: 'Unknown',
             },
             lastName: {
                 type: 'string',
                 returned: true,
                 required: true,
                 input: true,
+                defaultValue: 'Unknown',
             },
             provider: {
                 type: 'string',
                 returned: true,
                 required: true,
                 input: true,
+                defaultValue: 'SSO',
             },
             trackEvents: {
                 type: 'boolean',
@@ -83,13 +87,6 @@ const auth = betterAuth({
             tokenVersion: {
                 type: 'string',
                 returned: true,
-            },
-            draft: {
-                type: 'string',
-                returned: false,
-                required: false,
-                input: false,
-                defaultValue: false, // true only for social sign in
             },
         },
     },
@@ -105,30 +102,26 @@ const auth = betterAuth({
     emailVerification: {
         sendVerificationEmail: service.sendVerificationEmail,
     },
-    socialProviders: {
-        google: {
-            clientId: getEnvOrThrow('AP_GOOGLE_CLIENT_ID'),
-            clientSecret: getEnvOrThrow('AP_GOOGLE_CLIENT_SECRET'),
-            redirectURI: `${system.getOrThrow(AppSystemProp.FRONTEND_URL)}/api/v1/better-auth/callback/google`,
-
-            mapProfileToUser: async (profile) => {
-                return {
-                    ...profile,
-                    firstName: profile.given_name ?? 'john',
-                    lastName: profile.family_name ?? 'doe',
-                    trackEvents: true,
-                    newsLetter: true,
-                    provider: UserIdentityProvider.GOOGLE,
-                    tokenVersion: nanoid(),
-                    password: await cryptoUtils.generateRandomPassword(),
-                    draft: true,
-                }
-            },
-        },
-    },
     trustedOrigins: ['*'],
     plugins: [
         twoFactor({ issuer: 'Activepieces' }),
+        sso({
+            redirectURI: `${system.getOrThrow(AppSystemProp.FRONTEND_URL)}/api/v1/better-auth/sso/callback`,
+            trustEmailVerified: true,
+            provisionUser: async ({ user, userInfo }) => {
+                system.globalLogger().info({ user, userInfo }, 'provision')
+                const nameParts = (userInfo.name ?? '').split(' ')
+                await databaseConnection()
+                    .getRepository(UserIdentityEntity)
+                    .update(user.id, {
+                        firstName: nameParts[0] ?? 'Unknown',
+                        lastName: nameParts.slice(1).join(' ') || 'Unknown',
+                        tokenVersion: nanoid(),
+                        password: await cryptoUtils.generateRandomPassword(),
+                    })
+            },
+            provisionUserOnEveryLogin: false,
+        }),
     ],
     hooks: {
         before: createAuthMiddleware(service.beforeHook),

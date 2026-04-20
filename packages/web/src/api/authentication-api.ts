@@ -58,4 +58,10 @@ export const authenticationApi = {
       hasPassword: boolean;
     }>('/v1/authentication/2fa-status');
   },
+  getFederatedProviderId({ providerName }: { providerName: string }) {
+    return api.get<{ providerId: string | null }>(
+      '/v1/authentication/federated-provider-id',
+      { providerName },
+    );
+  },
 };

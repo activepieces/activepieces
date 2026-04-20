@@ -1233,7 +1233,11 @@ function AuthAnimation() {
           'auth-anim-canvas relative overflow-hidden origin-top-left group',
           'bg-cover bg-center bg-no-repeat',
         )}
-        style={{ height: '100%', backgroundImage: 'url(https://cdn.activepieces.com/assets/auth-anim-bg.webp)' }}
+        style={{
+          height: '100%',
+          backgroundImage:
+            'url(https://cdn.activepieces.com/assets/auth-anim-bg.webp)',
+        }}
       >
         {/* Scene Title - top center */}
         <div className="absolute top-24 left-0 right-0 z-50 flex justify-center">

@@ -10,6 +10,7 @@ import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
+import { registerDefaultSsoProviders } from './authentication/better-auth/default-sso-registration'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
 import { rateLimitModule } from './core/security/rate-limit'
@@ -24,7 +25,6 @@ import { appSumoModule } from './ee/appsumo/appsumo.module'
 import { auditEventModule } from './ee/audit-logs/audit-event-module'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
-import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { domainHelper } from './ee/custom-domains/domain-helper'
@@ -271,7 +271,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(appSumoModule)
             await app.register(customDomainModule)
             await app.register(signingKeyModule)
-            await app.register(authnSsoSamlModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
@@ -298,7 +297,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
             await app.register(signingKeyModule)
-            await app.register(authnSsoSamlModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
@@ -362,6 +360,7 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
     const pieces = process.env.AP_DEV_PIECES
 
+    await registerDefaultSsoProviders(app.log)
     await migrateQueuesAndRunConsumers(app)
     app.log.info('Queues migrated and consumers run')
     if (environment === ApEnvironment.DEVELOPMENT) {

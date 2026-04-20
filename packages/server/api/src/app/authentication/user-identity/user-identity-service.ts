@@ -191,16 +191,6 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('password', params.password ? await passwordHasher.hash(params.password) : undefined),
         })
     },
-    async unDraft(id: string): Promise<UserIdentity> {
-        const identity = await userIdentityRepository().findOneByOrFail({ id })
-        await userIdentityRepository().update({ id }, {
-            draft: false,
-        })
-        return {
-            ...identity as UserIdentity,
-            draft: false,
-        }
-    },
     async delete(id: string, entityManager?: EntityManager): Promise<void> {
         await userIdentityRepository(entityManager).delete({ id })
     },

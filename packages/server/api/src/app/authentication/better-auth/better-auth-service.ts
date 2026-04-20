@@ -1,17 +1,16 @@
-import { ActivepiecesError, ApplicationEventName, assertNotNullOrUndefined, ErrorCode, isMfaChallenge, OtpType, tryCatch } from '@activepieces/shared'
-import { AuthContext, MiddlewareContext, MiddlewareOptions } from 'better-auth/*'
+import { ActivepiecesError, ApplicationEventName, assertNotNullOrUndefined, ErrorCode, isMfaChallenge, OtpType, tryCatch, UserIdentityProvider } from '@activepieces/shared'
+import { AuthContext, GenericEndpointContext, MiddlewareContext, MiddlewareOptions } from 'better-auth/*'
 import { getOAuthState } from 'better-auth/api'
-import { BetterAuthOptions, User } from 'better-auth/types'
+import { BetterAuthOptions, Session, User } from 'better-auth/types'
 import { FastifyBaseLogger } from 'fastify'
-import { databaseConnection } from '../../database/database-connection'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { emailService } from '../../ee/helper/email/email-service'
 import { applicationEvents } from '../../helper/application-events'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { platformUtils } from '../../platform/platform.utils'
+import { userService } from '../../user/user-service'
 import { authenticationService } from '../authentication.service'
-import { UserIdentityEntity } from '../user-identity/user-identity-entity'
+import { userIdentityRepository } from '../user-identity/user-identity-service'
 
 type SentData = {
     user: User
@@ -22,6 +21,7 @@ type SentData = {
 type IBetterAuthService = {
     sendResetPassword: (data: SentData, request: Request | undefined) => Promise<void>
     sendVerificationEmail: (data: SentData, request: Request | undefined) => Promise<void>
+    postCreateSession: (session: Session, ctx: GenericEndpointContext | null) => Promise<void>
 
     beforeHook: (inputContext: MiddlewareContext<MiddlewareOptions, AuthContext<BetterAuthOptions> & {
         returned?: unknown
@@ -52,28 +52,46 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
             type: OtpType.EMAIL_VERIFICATION,
         })
     },
-
+    postCreateSession: async (_session, _ctx) => {
+        return
+    },
     beforeHook: async (_ctx) => {
         return
     },
     afterHook: async (ctx) => {
-        if (ctx.path.startsWith('/callback')) {
-            const identityId = ctx.context.newSession?.user.id
-            assertNotNullOrUndefined(identityId, 'identityId')
-            const oAuthState = await getOAuthState()
-            const platformId = oAuthState?.platformId ?? await platformUtils.getPlatformIdForRequest({
-                log,
-            })
-            const state = JSON.stringify({
-                provider: oAuthState?.provider,
-                from: oAuthState?.from,
-            })
+        const isSsoOidcCallback = ctx.path === '/sso/callback'
+        const isSsoSamlCallback = ctx.path.startsWith('/sso/saml2/callback/')
 
-            // Read draft before socialSignIn changes it, to distinguish sign-up vs sign-in
-            const identityBeforeSignIn = await databaseConnection()
-                .getRepository(UserIdentityEntity)
-                .findOneBy({ id: identityId })
-            const isNewUser = identityBeforeSignIn?.draft ?? false
+        if (isSsoOidcCallback || isSsoSamlCallback) {
+            // If null, the SSO callback failed (error redirect) — let it pass through.
+            const identityId = ctx.context.newSession?.user.id
+            if (!identityId) {
+                log.warn({ path: ctx.path }, '[afterHook] newSession is null — SSO callback likely failed, letting error redirect pass through')
+                return
+            }
+
+            let ssoProviderId: string = ''
+            if (isSsoSamlCallback) {
+                assertNotNullOrUndefined(ctx.request, 'ctx.request')
+                ssoProviderId = new URL(ctx.request.url).pathname.split('/').pop()!
+            }
+            if (isSsoOidcCallback) {
+                const state = await getOAuthState()
+                assertNotNullOrUndefined(state, 'state')
+                ssoProviderId = state.ssoProviderId
+            }
+
+            const provider = ssoProviderId.startsWith('saml-')
+                ? UserIdentityProvider.SAML
+                : UserIdentityProvider.GOOGLE
+
+            await userIdentityRepository().update(identityId, { provider })
+
+            const platformId = extractPlatformIdFromProviderId(ssoProviderId)
+            const state = JSON.stringify({ provider: null, from: null })
+
+            const existingUsers = await userService(log).getByIdentityId({ identityId })
+            const isNewUser = existingUsers.length === 0
 
             const { data: response, error } = await tryCatch(async () => authenticationService(log).socialSignIn({
                 identityId,
@@ -113,6 +131,16 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
     },
 
 })
+
+function extractPlatformIdFromProviderId(providerId: string): string | undefined {
+    for (const prefix of ['google-', 'saml-']) {
+        if (providerId.startsWith(prefix)) {
+            const candidate = providerId.slice(prefix.length)
+            return candidate === 'default' ? undefined : candidate
+        }
+    }
+    return undefined
+}
 
 const platformIdFromRequestQuery = (request: Request | undefined) => {
     if (request) {

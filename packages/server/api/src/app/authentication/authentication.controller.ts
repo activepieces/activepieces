@@ -11,11 +11,14 @@ import { ActivepiecesError,
 } from '@activepieces/shared'
 import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { applicationEvents } from '../helper/application-events'
 import { networkUtils } from '../helper/network-utils'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'
@@ -113,6 +116,24 @@ export const authenticationController: FastifyPluginAsyncZod = async (
         return authenticationService(request.log).get2faStatus({ userId: request.principal.id })
     })
 
+    app.get('/federated-provider-id', FederatedProviderIdRequestOptions, async (request) => {
+        const platformId = await platformUtils.getPlatformIdForRequest(request)
+        const providerName = request.query.providerName
+        if (platformId) {
+            const platform = await platformService(request.log).getOne(platformId)
+            if (providerName === 'saml' && platform?.federatedAuthProviders?.saml) {
+                return { providerId: `saml-${platformId}` }
+            }
+            if (providerName === 'google' && platform?.federatedAuthProviders?.google) {
+                return { providerId: `google-${platformId}` }
+            }
+        }
+        if (providerName === 'saml') {
+            return { providerId: null }
+        }
+        return { providerId: `${providerName}-default` }
+    })
+
     app.post('/switch-platform', SwitchPlatformRequestOptions, async (request) => {
         const user = await userService(request.log).getOneOrFail({ id: request.principal.id })
         return authenticationService(request.log).switchPlatform({
@@ -176,4 +197,18 @@ const TwoFaStatusRequestOptions = {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {},
+}
+
+const FederatedProviderIdRequestOptions = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        querystring: z.object({
+            providerName: z.enum(['google', 'github', 'saml']),
+        }),
+        response: {
+            [StatusCodes.OK]: z.object({ providerId: z.string().nullable() }),
+        },
+    },
 }

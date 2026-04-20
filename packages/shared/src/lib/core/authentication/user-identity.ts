@@ -22,7 +22,6 @@ export const UserIdentity = z.object({
     tokenVersion: z.string().optional(),
     provider: z.nativeEnum(UserIdentityProvider),
     imageUrl: Nullable(z.string()),
-    draft: z.boolean().optional(),
     twoFactorEnabled: z.boolean().optional(),
 })
 
