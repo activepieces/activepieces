@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApplicationEventName, assertNotNullOrUndefined, ErrorCode, isMfaChallenge, OtpType, tryCatch, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, ApplicationEventName, assertNotNullOrUndefined, ErrorCode, isMfaChallenge, isNil, OtpType, tryCatch, UserIdentityProvider } from '@activepieces/shared'
 import { AuthContext, MiddlewareContext, MiddlewareOptions } from 'better-auth/*'
 import { getOAuthState } from 'better-auth/api'
 import { BetterAuthOptions, User } from 'better-auth/types'
@@ -87,9 +87,6 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
             const platformId = extractPlatformIdFromProviderId(ssoProviderId)
             const state = JSON.stringify({ provider: null, from: null })
 
-            const existingUsers = await userService(log).getByIdentityId({ identityId })
-            const isNewUser = existingUsers.length === 0
-
             const { data: response, error } = await tryCatch(async () => authenticationService(log).socialSignIn({
                 identityId,
                 predefinedPlatformId: platformId,
@@ -111,17 +108,20 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
                 throw ctx.redirect(`${redirectBaseUrl}?mfa=verify&state=${state}`)
             }
 
-            applicationEvents(log).sendUserEvent({
-                platformId: response.platformId!,
-                userId: response.id,
-                projectId: response.projectId,
-                ip: ctx.request!.headers.get(system.get(AppSystemProp.CLIENT_REAL_IP_HEADER) ?? '') ?? '',
-            }, {
-                action: isNewUser ? ApplicationEventName.USER_SIGNED_UP : ApplicationEventName.USER_SIGNED_IN,
-                data: {
-                    source: 'sso',
-                },
-            })
+            if (!isNil(platformId)) {
+                const existingUser = await userService(log).getOneByIdentityAndPlatform({ identityId, platformId })
+                applicationEvents(log).sendUserEvent({
+                    platformId: response.platformId!,
+                    userId: response.id,
+                    projectId: response.projectId,
+                    ip: ctx.request!.headers.get(system.get(AppSystemProp.CLIENT_REAL_IP_HEADER) ?? '') ?? '',
+                }, {
+                    action: isNil(existingUser) ? ApplicationEventName.USER_SIGNED_UP : ApplicationEventName.USER_SIGNED_IN,
+                    data: {
+                        source: 'sso',
+                    },
+                })
+            }
 
             throw ctx.redirect(`${redirectBaseUrl}?response=${JSON.stringify(response)}&state=${state}`)
         }
