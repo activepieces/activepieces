@@ -53,12 +53,17 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         }
 
         // Sync hashed password into user_identity for rollback compatibility
+        const hashedPassword = await passwordHasher.hash(params.password)
         await userIdentityRepository().update({ id: identity.id }, {
-            password: await passwordHasher.hash(params.password),
+            password: hashedPassword,
             emailVerified: params.emailVerified ?? false,
         })
 
-        return identity
+        return {
+          ...identity,
+          password: hashedPassword,
+          emailVerified: params.emailVerified ?? false,
+        }
     },
     async verifyIdentityPassword(params: VerifyIdentityPasswordParams): Promise<VerifyIdentityPasswordResult> {
         const { error, data } = await tryCatch(async () => betterAuthInstance.get().api.signInEmail({

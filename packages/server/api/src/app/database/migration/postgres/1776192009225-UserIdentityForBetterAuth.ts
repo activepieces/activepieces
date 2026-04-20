@@ -9,11 +9,9 @@ export class UserIdentityForBetterAuth1776192009225 implements Migration {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
 
-        await queryRunner.query(`
-            alter table "user_identity" add column "name" character varying not null default '';
-            alter table "user_identity" add column "image" character varying;
-            alter table "user_identity" add column "draft" boolean not null default false;
-        `)
+        await queryRunner.query(`alter table "user_identity" add column "name" character varying not null default ''`)
+        await queryRunner.query(`alter table "user_identity" add column "image" character varying`)
+        await queryRunner.query(`alter table "user_identity" add column "draft" boolean not null default false`)
 
         await queryRunner.query('alter table "user_identity" alter column "password" drop not null')
         await queryRunner.query('alter table "user_identity" add column "emailVerified" boolean not null default false')
@@ -43,10 +41,8 @@ export class UserIdentityForBetterAuth1776192009225 implements Migration {
             alter table "user_identity" alter column "id" type character varying;
         `)
 
-        await queryRunner.query(`
-            alter table "user_identity" rename column "created" to "createdAt";
-            alter table "user_identity" rename column "updated" to "updatedAt";
-        `)
+        await queryRunner.query(`alter table "user_identity" rename column "created" to "createdAt"`)
+        await queryRunner.query(`alter table "user_identity" rename column "updated" to "updatedAt"`)
 
         await queryRunner.query(`
             create table "session" ("id" text not null primary key, "expiresAt" timestamptz not null, "token" text not null unique, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz not null, "ipAddress" text, "userAgent" text, "userId" text not null references "user_identity" ("id") on delete cascade);
@@ -62,6 +58,7 @@ export class UserIdentityForBetterAuth1776192009225 implements Migration {
 
         await queryRunner.query('create index "session_userId_idx" on "session" ("userId")')
         await queryRunner.query('create index "account_userId_idx" on "account" ("userId")')
+        await queryRunner.query('create index "account_providerId_accountId_idx" on "account" ("providerId", "accountId")')
         await queryRunner.query('create index "verification_identifier_idx" on "verification" ("identifier")')
 
         // Migrate existing email/password users into the account table in batches
@@ -128,6 +125,7 @@ export class UserIdentityForBetterAuth1776192009225 implements Migration {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query('drop index if exists "verification_identifier_idx"')
+        await queryRunner.query('drop index if exists "account_providerId_accountId_idx"')
         await queryRunner.query('drop index if exists "account_userId_idx"')
         await queryRunner.query('drop index if exists "session_userId_idx"')
 
@@ -135,10 +133,8 @@ export class UserIdentityForBetterAuth1776192009225 implements Migration {
         await queryRunner.query('drop table if exists "account"')
         await queryRunner.query('drop table if exists "session"')
 
-        await queryRunner.query(`
-            alter table "user_identity" rename column "createdAt" to "created";
-            alter table "user_identity" rename column "updatedAt" to "updated";
-        `)
+        await queryRunner.query(`alter table "user_identity" rename column "createdAt" to "created"`)
+        await queryRunner.query(`alter table "user_identity" rename column "updatedAt" to "updated"`)
 
         await queryRunner.query('alter table "user_identity" alter column "id" type character varying(21)')
 
