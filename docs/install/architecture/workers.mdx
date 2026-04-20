@@ -37,7 +37,7 @@ Only choose `SANDBOX_PROCESS` if you genuinely need arbitrary `npm` packages in 
 The engine runs as a plain `child_process.fork` with a memory cap. In `SANDBOX_CODE_ONLY`, every Code step is additionally wrapped in a fresh [`isolated-vm`](https://www.npmjs.com/package/isolated-vm) context — 128 MB per isolate, `require` removed, disposed after the step. No Linux-namespace machinery, no `CAP_SYS_ADMIN`, no privileged container. Sandboxes stay warm across jobs, so execution is fast.
 
 - **V8 guarantees:** user code cannot touch `require`, the filesystem, or other steps' memory.
-- **V8 does not:** protect isolates from each other if the host Node process itself is compromised — which is fine, because the worker pod is your trust boundary.
+- **V8 does not:** protect isolates from each other if the host Node process itself is compromised.
 
 ### `isolate` binary — `SANDBOX_PROCESS`, `SANDBOX_CODE_AND_PROCESS`
 
