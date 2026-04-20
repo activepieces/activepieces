@@ -4,6 +4,21 @@ description: "A log of all notable changes to Activepieces"
 icon: "code-commit"
 ---
 
+<Update label="April 2026" description="Network Security">
+
+### Network Security
+
+Flows now run behind an opt-in defense-in-depth stack that blocks user code from reaching private, loopback, link-local, and cloud-metadata IPs — closing the usual SSRF attack paths to internal services, Redis, Postgres, and cloud metadata endpoints.
+
+- **New `AP_NETWORK_MODE` setting** — defaults to `UNRESTRICTED`; set to `STRICT` in production to turn on the stack.
+- **Three stacked layers** — in-process SSRF guard (covers `axios`, `fetch`, `undici`, raw `http`/`net`), a per-worker egress proxy that re-checks every A/AAAA record, and an `iptables` + `ip6tables` kernel lockdown scoped to sandbox UIDs in isolate mode.
+- **Escape hatch** — `AP_SSRF_ALLOW_LIST` accepts both exact IPs and CIDR ranges (e.g. `10.10.0.0/24`) for internal services that legitimately need to be reachable from flows.
+- **Proxy-aware** — `HTTP_PROXY` / `HTTPS_PROXY` are honored; loopback proxy ports are auto-exempted.
+
+See the [Network Security](/install/architecture/network-security) architecture page for the full breakdown.
+
+</Update>
+
 <Update label="April 2026" description="Shared Concurrency Pools">
 
 ### Shared concurrency pools
