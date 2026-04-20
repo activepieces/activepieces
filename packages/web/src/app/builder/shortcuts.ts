@@ -36,6 +36,15 @@ export const useHandleKeyPressOnCanvas = () => {
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isTyping =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable;
+      if (isTyping) {
+        return;
+      }
+
       const insideSelectionRect =
         e.target instanceof HTMLElement &&
         e.target.classList.contains(
