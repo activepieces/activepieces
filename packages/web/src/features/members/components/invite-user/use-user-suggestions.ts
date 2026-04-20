@@ -110,6 +110,7 @@ export function useUserSuggestions({
     currentEmails,
     searchTerm,
     currentUserEmail,
+    platform.plan.embeddingEnabled,
   ]);
 
   const emailStatus = useMemo<EmailStatusType | null>(() => {
