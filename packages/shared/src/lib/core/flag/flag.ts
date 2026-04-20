@@ -1,3 +1,4 @@
+
 import { BaseModel } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 
@@ -69,5 +70,4 @@ export enum ApFlagId {
     SHOW_BILLING_PAGE = 'SHOW_BILLING_PAGE',
     PROJECT_RATE_LIMITER_ENABLED = 'PROJECT_RATE_LIMITER_ENABLED',
     DEFAULT_CONCURRENT_JOBS_LIMIT = 'DEFAULT_CONCURRENT_JOBS_LIMIT',
-    SMTP_CONFIGURED = 'SMTP_CONFIGURED',
 }

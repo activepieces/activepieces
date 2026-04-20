@@ -307,6 +307,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.GIT_SYNC_ENABLED,
+                value: system.getBoolean(AppSystemProp.GIT_SYNC_ENABLED) ?? true,
+                created,
+                updated,
+            },
         )
 
         if (system.isApp()) {
