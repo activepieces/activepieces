@@ -11,8 +11,10 @@ import {
   FileSpreadsheet,
   FileText,
   Image,
+  Info,
   Link,
   Paperclip,
+  Pencil,
   Plug,
   Plus,
   RefreshCw,
@@ -58,6 +60,11 @@ type Attachment = {
   size: string;
 };
 
+type Branch = {
+  userText: string;
+  messages: Message[];
+};
+
 type Message = {
   id: number;
   role: 'user' | 'ai';
@@ -70,6 +77,8 @@ type Message = {
   quotes?: { text: string; msgId: number }[];
   responses?: string[];
   responseIndex?: number;
+  branches?: Branch[];
+  branchIndex?: number;
 };
 
 const FILE_ACCEPT =
@@ -89,6 +98,17 @@ const getFileType = (name: string): Attachment['type'] => {
   )
     return 'code';
   return 'other';
+};
+
+const RTL_RE = /[\u0590-\u05FF\u0600-\u06FF\u0700-\u07BF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
+const LTR_RE = /[A-Za-z\u00C0-\u024F]/;
+
+const detectDir = (text: string): 'rtl' | 'ltr' => {
+  for (const ch of text) {
+    if (RTL_RE.test(ch)) return 'rtl';
+    if (LTR_RE.test(ch)) return 'ltr';
+  }
+  return 'ltr';
 };
 
 const formatSize = (bytes: number): string => {
@@ -162,6 +182,10 @@ const keyframes = `
   .msgs-area::-webkit-scrollbar { width: 12px; }
   .msgs-area::-webkit-scrollbar-track { background: transparent; }
   .msgs-area::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--muted-foreground) 20%, transparent); border-radius: 4px; border: 2px solid transparent; background-clip: padding-box; }
+  .edit-textarea { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--muted-foreground) 35%, transparent) transparent; }
+  .edit-textarea::-webkit-scrollbar { width: 8px; }
+  .edit-textarea::-webkit-scrollbar-track { background: transparent; }
+  .edit-textarea::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--muted-foreground) 35%, transparent); border-radius: 4px; }
   .suggest-chip { background: transparent; border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 11px; color: var(--foreground); cursor: pointer; text-align: left; transition: all 0.2s ease; font-family: inherit; outline: none; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
   .suggest-chip:focus-visible { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent); }
   .suggest-chip:hover { border-color: transparent; }
@@ -235,8 +259,8 @@ const keyframes = `
   .reply-popup button { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; border: none; background: var(--foreground); color: var(--background); font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
   .reply-popup button:hover { opacity: 0.9; }
   .prompt-float { background: transparent; padding-right: 8px; }
-  .prompt-float-inner { max-width: clamp(280px, calc(100vw - 700px), 560px); margin: 0 auto; width: 100%; }
-  .prompt-float-footer { background: linear-gradient(to bottom, transparent, var(--background) 40%); max-width: calc(clamp(280px, calc(100vw - 700px), 560px) + 20px); margin: 0 auto; width: calc(100% + 20px); padding-top: 80px; margin-top: -80px; }
+  .prompt-float-inner { max-width: clamp(320px, calc(100vw - 580px), 720px); margin: 0 auto; width: 100%; padding: 0 16px; box-sizing: border-box; }
+  .prompt-float-footer { background: linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--background) 30%, transparent) 35%, color-mix(in srgb, var(--background) 70%, transparent) 65%, var(--background) 90%); max-width: calc(clamp(320px, calc(100vw - 580px), 720px) + 20px); margin: 0 auto; width: calc(100% + 20px); padding-top: 160px; margin-top: -160px; }
 `;
 
 const REMARK_PLUGINS = [gfm, breaks];
@@ -382,6 +406,10 @@ export function AIChatBox({
     {},
   );
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [editingMsgId, setEditingMsgId] = useState<number | null>(null);
+  const [editDraft, setEditDraft] = useState('');
+  const hasBranchesRef = useRef(false);
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [selectedModel, setSelectedModel] = useState('GPT-4o');
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
@@ -411,6 +439,21 @@ export function AIChatBox({
   useEffect(() => {
     textareaRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    if (editingMsgId !== null && editTextareaRef.current) {
+      const ta = editTextareaRef.current;
+      ta.style.height = 'auto';
+      ta.style.height = `${ta.scrollHeight}px`;
+    }
+  }, [editingMsgId]);
+
+  useEffect(() => {
+    if (editingMsgId === null) return;
+    const lastMsg = messages[messages.length - 1];
+    if (!lastMsg || lastMsg.id !== editingMsgId) return;
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [editDraft, editingMsgId, messages]);
 
   const finishImgProgress = (msgId: number) => {
     if (imgTimersRef.current[msgId]) {
@@ -505,6 +548,7 @@ export function AIChatBox({
   }, []);
 
   useEffect(() => {
+    if (hasBranchesRef.current) return;
     const mapped: Message[] = chatHook.messages.map((m, i) => {
       let text = '';
       for (const part of m.parts) {
@@ -658,6 +702,167 @@ export function AIChatBox({
       setTyping(false);
       setMessages((prev) =>
         prev.map((m) => (m.id === msgId ? { ...m, streaming: false } : m)),
+      );
+    }
+    abortRef.current = null;
+  };
+
+  const startEditMessage = (msgId: number, text: string) => {
+    setEditingMsgId(msgId);
+    setEditDraft(text);
+  };
+
+  const cancelEditMessage = () => {
+    setEditingMsgId(null);
+    setEditDraft('');
+  };
+
+  const switchBranch = (msgId: number, newIndex: number) => {
+    const msgIndex = messages.findIndex((m) => m.id === msgId);
+    if (msgIndex === -1) return;
+    const msg = messages[msgIndex];
+    if (!msg.branches || newIndex < 0 || newIndex >= msg.branches.length)
+      return;
+    const currentBranchIndex = msg.branchIndex ?? 0;
+    const currentAfter = messages.slice(msgIndex + 1);
+    const newBranches = msg.branches.map((b, i) =>
+      i === currentBranchIndex ? { ...b, messages: currentAfter } : b,
+    );
+    const targetBranch = newBranches[newIndex];
+    const newMsg: Message = {
+      ...msg,
+      text: targetBranch.userText,
+      branches: newBranches,
+      branchIndex: newIndex,
+    };
+    setMessages([
+      ...messages.slice(0, msgIndex),
+      newMsg,
+      ...targetBranch.messages,
+    ]);
+  };
+
+  const saveEditMessage = async (msgId: number) => {
+    const newText = editDraft.trim();
+    if (!newText) return;
+    const msgIndex = messages.findIndex((m) => m.id === msgId);
+    if (msgIndex === -1) return;
+
+    const originalMsg = messages[msgIndex];
+    const messagesAfter = messages.slice(msgIndex + 1);
+    const currentBranches = originalMsg.branches;
+    const currentBranchIndex = originalMsg.branchIndex ?? 0;
+
+    let newBranches: Branch[];
+    if (!currentBranches) {
+      newBranches = [
+        { userText: originalMsg.text, messages: messagesAfter },
+        { userText: newText, messages: [] },
+      ];
+    } else {
+      newBranches = currentBranches.map((b, i) =>
+        i === currentBranchIndex ? { ...b, messages: messagesAfter } : b,
+      );
+      newBranches.push({ userText: newText, messages: [] });
+    }
+    const newBranchIndex = newBranches.length - 1;
+
+    const updatedMsg: Message = {
+      ...originalMsg,
+      text: newText,
+      branches: newBranches,
+      branchIndex: newBranchIndex,
+    };
+
+    const truncated = [...messages.slice(0, msgIndex), updatedMsg];
+    hasBranchesRef.current = true;
+    setMessages(truncated);
+    setEditingMsgId(null);
+    setEditDraft('');
+    setTyping(true);
+    setThinkingText(pickThinkingText());
+
+    const chatHistory: { role: 'user' | 'assistant'; content: string }[] =
+      truncated
+        .filter((m) => m.text)
+        .map((m) => ({
+          role: m.role === 'user' ? ('user' as const) : ('assistant' as const),
+          content: m.text,
+        }));
+
+    const aiMsgId = Date.now();
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: aiMsgId,
+        role: 'ai',
+        text: '',
+        time: getTime(),
+        fullDate: getFullDate(),
+        streaming: true,
+      },
+    ]);
+
+    try {
+      abortRef.current = new AbortController();
+      const conversationId = await getOrCreateConversation();
+      const authToken = authenticationSession.getToken();
+
+      const res = await fetch(
+        `${API_URL}/v1/chat/conversations/${conversationId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content: newText, history: chatHistory }),
+          signal: abortRef.current.signal,
+        },
+      );
+
+      setTyping(false);
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
+      let buffer = '';
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
+        for (const eventBlock of events) {
+          const eventLines = eventBlock.split('\n');
+          const dataLine = eventLines.find((l) => l.startsWith('data: '));
+          const eventLine = eventLines.find((l) => l.startsWith('event: '));
+          if (!dataLine || !eventLine) continue;
+          const eventType = eventLine.replace('event: ', '');
+          try {
+            const data = JSON.parse(dataLine.replace('data: ', ''));
+            if (eventType === 'content_delta' && data.text) {
+              fullText += data.text;
+              const captured = fullText;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === aiMsgId ? { ...m, text: captured } : m,
+                ),
+              );
+            }
+          } catch {
+            /* skip */
+          }
+        }
+      }
+
+      setMessages((prev) =>
+        prev.map((m) => (m.id === aiMsgId ? { ...m, streaming: false } : m)),
+      );
+    } catch {
+      setTyping(false);
+      setMessages((prev) =>
+        prev.map((m) => (m.id === aiMsgId ? { ...m, streaming: false } : m)),
       );
     }
     abortRef.current = null;
@@ -902,6 +1107,10 @@ export function AIChatBox({
       messages.some((m) => m.streaming)
     )
       return;
+    if (editingMsgId !== null) {
+      setEditingMsgId(null);
+      setEditDraft('');
+    }
     const fullText = text;
     setInput('');
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
@@ -1219,6 +1428,7 @@ export function AIChatBox({
         <textarea
           ref={textareaRef}
           rows={2}
+          dir={detectDir(input)}
           placeholder="Message AI Piecer..."
           value={input}
           onChange={handleInput}
@@ -1507,6 +1717,7 @@ export function AIChatBox({
                     <div
                       key={msg.id}
                       id={`msg-${msg.id}`}
+                      dir={detectDir(msg.text)}
                       className="ai-msg msg-enter py-2"
                       onMouseUp={handleTextSelect}
                     >
@@ -1711,7 +1922,12 @@ export function AIChatBox({
                       key={msg.id}
                       className="msg-enter user-msg-wrap flex justify-end py-1"
                     >
-                      <div className="max-w-[75%] w-fit ml-auto">
+                      <div
+                        className={cn(
+                          'ml-auto max-w-[75%]',
+                          editingMsgId === msg.id ? 'w-full' : 'w-fit',
+                        )}
+                      >
                         {msg.images && msg.images.length > 0 && (
                           <div
                             className={cn(
@@ -1894,11 +2110,100 @@ export function AIChatBox({
                             ))}
                           </div>
                         )}
-                        {msg.text && (
-                          <div className="bg-muted text-accent-foreground dark:text-neutral-300 px-4 py-2.5 rounded-[18px_18px_4px_18px] text-base leading-relaxed whitespace-pre-wrap break-words overflow-wrap-break-word w-fit ml-auto">
-                            {msg.text}
+                        {msg.text && editingMsgId === msg.id ? (
+                          <div className="bg-sidebar border border-border rounded-2xl p-2 w-full flex flex-col gap-2">
+                            <div className="rounded-xl bg-white dark:bg-background border border-border focus-within:border-ring transition-colors overflow-hidden">
+                              <textarea
+                                ref={editTextareaRef}
+                                dir={detectDir(editDraft)}
+                                value={editDraft}
+                                onChange={(e) => {
+                                  const ta = e.target;
+                                  let val = ta.value;
+                                  const pos = ta.selectionStart;
+                                  if (
+                                    pos >= 2 &&
+                                    val.substring(pos - 2, pos) === '- '
+                                  ) {
+                                    const before = val.substring(0, pos - 2);
+                                    const lineStart =
+                                      before.lastIndexOf('\n') + 1;
+                                    if (
+                                      before.substring(lineStart).trim() === ''
+                                    ) {
+                                      val =
+                                        before + '• ' + val.substring(pos);
+                                      setEditDraft(val);
+                                      requestAnimationFrame(() => {
+                                        ta.selectionStart = ta.selectionEnd =
+                                          lineStart +
+                                          before.substring(lineStart).length +
+                                          2;
+                                      });
+                                      ta.style.height = 'auto';
+                                      ta.style.height = `${ta.scrollHeight}px`;
+                                      return;
+                                    }
+                                  }
+                                  setEditDraft(val);
+                                  ta.style.height = 'auto';
+                                  ta.style.height = `${ta.scrollHeight}px`;
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    saveEditMessage(msg.id);
+                                  }
+                                  if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    cancelEditMessage();
+                                  }
+                                }}
+                                autoFocus
+                                className="edit-textarea w-full bg-transparent border-none outline-none resize-none text-base text-accent-foreground dark:text-neutral-300 leading-relaxed max-h-[240px] overflow-y-auto block px-3 py-2"
+                                rows={1}
+                              />
+                            </div>
+                            <div className="flex items-center justify-between gap-3 px-1">
+                              <div className="flex items-start gap-1.5 text-xs text-muted-foreground leading-snug">
+                                <Info size={14} className="shrink-0 mt-0.5" />
+                                <span>
+                                  Editing creates a new branch — use the
+                                  arrows to switch.
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <Button
+                                  variant="outline"
+                                  size="xs"
+                                  onClick={cancelEditMessage}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  size="xs"
+                                  onClick={() => saveEditMessage(msg.id)}
+                                  disabled={
+                                    !editDraft.trim() ||
+                                    editDraft.trim() === msg.text.trim()
+                                  }
+                                >
+                                  Save
+                                </Button>
+                              </div>
+                            </div>
                           </div>
+                        ) : (
+                          msg.text && (
+                            <div
+                              dir={detectDir(msg.text)}
+                              className="bg-muted text-accent-foreground dark:text-neutral-300 px-4 py-2.5 rounded-[18px_18px_4px_18px] text-base leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] w-fit max-w-full ml-auto"
+                            >
+                              {msg.text}
+                            </div>
+                          )
                         )}
+                        {editingMsgId !== msg.id && (
                         <div className="msg-meta flex items-center justify-end gap-1.5 mt-1">
                           <DelayedTooltip>
                             <TooltipTrigger asChild>
@@ -1913,35 +2218,119 @@ export function AIChatBox({
                               {msg.fullDate}
                             </TooltipContent>
                           </DelayedTooltip>
-                          {msg.text && (
-                            <DelayedTooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  className="text-muted-foreground hover:text-foreground"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(msg.text);
-                                    setCopiedId(msg.id);
-                                    setTimeout(() => setCopiedId(null), 1500);
-                                  }}
+                          {msg.text && editingMsgId !== msg.id && (
+                            <>
+                              <DelayedTooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="text-muted-foreground hover:text-foreground"
+                                    onClick={() =>
+                                      startEditMessage(msg.id, msg.text)
+                                    }
+                                  >
+                                    <Pencil size={16} />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent
+                                  side="bottom"
+                                  className="pointer-events-none"
                                 >
-                                  {copiedId === msg.id ? (
-                                    <Check size={16} strokeWidth={2.5} />
-                                  ) : (
-                                    <Copy size={16} />
-                                  )}
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent
-                                side="bottom"
-                                className="pointer-events-none"
-                              >
-                                {copiedId === msg.id ? 'Copied!' : 'Copy'}
-                              </TooltipContent>
-                            </DelayedTooltip>
+                                  Edit
+                                </TooltipContent>
+                              </DelayedTooltip>
+                              <DelayedTooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="text-muted-foreground hover:text-foreground"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(msg.text);
+                                      setCopiedId(msg.id);
+                                      setTimeout(() => setCopiedId(null), 1500);
+                                    }}
+                                  >
+                                    {copiedId === msg.id ? (
+                                      <Check size={16} strokeWidth={2.5} />
+                                    ) : (
+                                      <Copy size={16} />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent
+                                  side="bottom"
+                                  className="pointer-events-none"
+                                >
+                                  {copiedId === msg.id ? 'Copied!' : 'Copy'}
+                                </TooltipContent>
+                              </DelayedTooltip>
+                            </>
                           )}
+                          {msg.branches &&
+                            msg.branches.length > 1 &&
+                            editingMsgId !== msg.id && (
+                              <div className="flex items-center gap-0.5">
+                                <DelayedTooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon-sm"
+                                      className="text-muted-foreground hover:text-foreground w-6"
+                                      disabled={(msg.branchIndex ?? 0) <= 0}
+                                      onClick={() =>
+                                        switchBranch(
+                                          msg.id,
+                                          (msg.branchIndex ?? 0) - 1,
+                                        )
+                                      }
+                                    >
+                                      <ChevronLeft size={16} />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent
+                                    side="bottom"
+                                    className="pointer-events-none"
+                                  >
+                                    Previous
+                                  </TooltipContent>
+                                </DelayedTooltip>
+                                <span className="text-sm text-muted-foreground tabular-nums select-none">
+                                  {(msg.branchIndex ?? 0) + 1}/
+                                  {msg.branches.length}
+                                </span>
+                                <DelayedTooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon-sm"
+                                      className="text-muted-foreground hover:text-foreground w-6"
+                                      disabled={
+                                        (msg.branchIndex ?? 0) >=
+                                        msg.branches.length - 1
+                                      }
+                                      onClick={() =>
+                                        switchBranch(
+                                          msg.id,
+                                          (msg.branchIndex ?? 0) + 1,
+                                        )
+                                      }
+                                    >
+                                      <ChevronRight size={16} />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent
+                                    side="bottom"
+                                    className="pointer-events-none"
+                                  >
+                                    Next
+                                  </TooltipContent>
+                                </DelayedTooltip>
+                              </div>
+                            )}
                         </div>
+                        )}
                       </div>
                     </div>
                   );

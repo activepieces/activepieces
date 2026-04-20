@@ -50,8 +50,8 @@ export function ChatWithAIPage() {
   }, [handleNewChat]);
 
   return (
-    <div className="flex flex-col h-full -mx-4">
-      <div className="p-2 flex items-center justify-between">
+    <div className="flex flex-col h-full">
+      <div className="px-4 py-2 flex items-center justify-between">
         <PageHeader
           title={t('AI Piecer')}
           showSidebarToggle={true}
