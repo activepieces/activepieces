@@ -8,12 +8,11 @@ icon: "code-commit"
 
 ### Network Security
 
-Flows now run behind an opt-in defense-in-depth stack that blocks user code from reaching private, loopback, link-local, and cloud-metadata IPs — closing the usual SSRF attack paths to internal services, Redis, Postgres, and cloud metadata endpoints.
+Activepieces now ships with a built-in **network proxy that protects your automations from network attacks**. When turned on, flows can still reach the public internet, but they can no longer reach sensitive addresses on your own network — like your database, your Redis cache, your cloud provider's metadata service, or anything else running inside your private infrastructure. That closes a common class of attack where a malicious link or prompt tricks a flow into calling an internal-only URL.
 
-- **New `AP_NETWORK_MODE` setting** — defaults to `UNRESTRICTED` today; set to `STRICT` in production to turn on the stack. In an upcoming release the default will flip and `STRICT` will become opt-out.
-- **Three stacked layers** — in-process SSRF guard (covers `axios`, `fetch`, `undici`, raw `http`/`net`), a per-worker egress proxy that re-checks every A/AAAA record, and an `iptables` + `ip6tables` kernel lockdown scoped to sandbox UIDs in isolate mode.
-- **Escape hatch** — `AP_SSRF_ALLOW_LIST` accepts both exact IPs and CIDR ranges (e.g. `10.10.0.0/24`) for internal services that legitimately need to be reachable from flows.
-- **Proxy-aware** — `HTTP_PROXY` / `HTTPS_PROXY` are honored; loopback proxy ports are auto-exempted.
+- **One switch to turn it on** — set `AP_NETWORK_MODE=STRICT` and the protection is active. It's **opt-in today**, but in an upcoming release it will become **opt-out** (on by default).
+- **Allow list for trusted internal services** — if a flow legitimately needs to reach an internal API or database, add its address (or a whole subnet like `10.10.0.0/24`) to `AP_SSRF_ALLOW_LIST`.
+- **Works with your corporate proxy** — if you already use `HTTP_PROXY` / `HTTPS_PROXY`, Activepieces respects them automatically.
 
 See the [Network Security](/install/architecture/network-security) architecture page for the full breakdown.
 
