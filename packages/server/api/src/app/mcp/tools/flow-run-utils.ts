@@ -4,6 +4,7 @@ import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { projectService } from '../../project/project-service'
+import { mcpUtils } from './mcp-utils'
 
 const POLL_INTERVAL_MS = 2000
 const MAX_WAIT_MS = 120_000
@@ -160,16 +161,13 @@ function formatStepOutput(name: string, step: unknown): string {
 
     if (status === StepOutputStatus.FAILED && errorMessage !== undefined) {
         const errStr = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
-        parts.push(`    Error: ${truncate(errStr, 300)}`)
+        parts.push(`    Error: ${mcpUtils.truncate(errStr, 300)}`)
     }
     else if (output !== undefined) {
         const outStr = typeof output === 'string' ? output : JSON.stringify(output)
-        parts.push(`    Output: ${truncate(outStr, 500)}`)
+        parts.push(`    Output: ${mcpUtils.truncate(outStr, 500)}`)
     }
 
     return parts.join('\n')
 }
 
-function truncate(str: string, max: number): string {
-    return str.length <= max ? str : str.slice(0, max) + '... (truncated)'
-}
