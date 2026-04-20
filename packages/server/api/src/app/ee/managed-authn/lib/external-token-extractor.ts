@@ -45,6 +45,7 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
                     externalFirstName: payload.firstName,
                     externalLastName: payload.lastName,
                     projectRole: projectRole.name,
+                    projectDisplayName: 'projectDisplayName' in payload ? (payload as { projectDisplayName?: string }).projectDisplayName : undefined,
                     pieces: {
                         filterType: piecesFilterType ?? PiecesFilterType.NONE,
                         tags: piecesTags ?? [],

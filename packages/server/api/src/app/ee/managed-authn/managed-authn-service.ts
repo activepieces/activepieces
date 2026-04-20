@@ -63,6 +63,12 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             id: user.identityId,
         })
 
+        // Sync display name from Clerk on every SSO so name changes propagate
+        await userIdentityService(log).update(user.identityId, {
+            firstName: externalPrincipal.externalFirstName,
+            lastName: externalPrincipal.externalLastName,
+        })
+
         const token = await accessTokenManager(log).generateToken({
             id: user.id,
             type: PrincipalType.USER,
