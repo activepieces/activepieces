@@ -13,6 +13,7 @@ import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
@@ -245,15 +246,17 @@ export const membersTableColumns = ({
       if (row.original.type === 'invitation') {
         const email = row.original.data.email;
         return (
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 min-w-0">
             <UserAvatar
               name={email}
               email={email}
               size={32}
               disableTooltip={true}
             />
-            <div className="flex flex-col gap-1">
-              <p className="text-sm text-orange-700">{email}</p>
+            <div className="flex flex-col gap-1 min-w-0">
+              <TextWithTooltip tooltipMessage={email}>
+                <p className="text-sm text-orange-700">{email}</p>
+              </TextWithTooltip>
             </div>
           </div>
         );
@@ -264,7 +267,7 @@ export const membersTableColumns = ({
         const name = `${row.original.data.firstName} ${row.original.data.lastName}`;
 
         return (
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 min-w-0">
             <UserAvatar
               name={name}
               email={email}
@@ -272,9 +275,11 @@ export const membersTableColumns = ({
               disableTooltip={true}
               imageUrl={row.original.data.imageUrl}
             />
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 min-w-0">
               <p className="text-sm font-medium leading-none">{name}</p>
-              <p className="text-sm text-muted-foreground">{email}</p>
+              <TextWithTooltip tooltipMessage={email}>
+                <p className="text-sm text-muted-foreground">{email}</p>
+              </TextWithTooltip>
             </div>
           </div>
         );
@@ -284,16 +289,18 @@ export const membersTableColumns = ({
       const name = `${row.original.data.user.firstName} ${row.original.data.user.lastName}`;
 
       return (
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 min-w-0">
           <UserAvatar
             name={name}
             email={email}
             size={32}
             disableTooltip={true}
           />
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 min-w-0">
             <p className="text-sm font-medium leading-none">{name}</p>
-            <p className="text-sm text-muted-foreground">{email}</p>
+            <TextWithTooltip tooltipMessage={email}>
+              <p className="text-sm text-muted-foreground">{email}</p>
+            </TextWithTooltip>
           </div>
         </div>
       );
