@@ -23,7 +23,7 @@ export const greenhouse = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/greenhouse.png',
   categories: [PieceCategory.HUMAN_RESOURCES],
-  authors: [],
+  authors: ['onyedikachi-david'],
   actions: [
     createCandidateAction,
     createCandidateNoteAction,
