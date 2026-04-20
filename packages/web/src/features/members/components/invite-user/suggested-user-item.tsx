@@ -81,17 +81,17 @@ function PlatformUserItem({
 function EmailStatusSuggestionItem({
   emailStatus,
   onSelect,
-  isPlatformPage,
+  isPlatformInvite,
 }: {
   emailStatus: EmailStatusType;
   onSelect: (email: string) => void;
-  isPlatformPage?: boolean;
+  isPlatformInvite?: boolean;
 }) {
   const getBadgeAndState = () => {
     switch (emailStatus.type) {
       case 'new-user':
         return {
-          label: isPlatformPage ? t('New User') : t('New Member'),
+          label: isPlatformInvite ? t('New User') : t('New Member'),
           className:
             'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-900',
           disabled: false,
@@ -168,5 +168,5 @@ type SuggestedUserItemProps =
       type: 'email-status';
       emailStatus: EmailStatusType;
       onSelect: (email: string) => void;
-      isPlatformPage?: boolean;
+      isPlatformInvite?: boolean;
     };

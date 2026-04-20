@@ -201,17 +201,20 @@ export const InviteUserDialog = ({
     },
   });
 
+  const invitationType = form.getValues().type;
+  const isPlatformInvite = invitationType === InvitationType.PLATFORM;
+
   const handleEmailsChange = useCallback(
     (emails: ReadonlyArray<string>) => {
       const filtered = emails.filter((e) => {
         const lower = e.toLowerCase();
-        if (isPlatformPage) return !platformUserEmails.has(lower);
+        if (isPlatformInvite) return !platformUserEmails.has(lower);
         return !projectMemberEmails.has(lower);
       });
       form.setValue('emails', [...filtered]);
       form.trigger('emails');
     },
-    [form, isPlatformPage, platformUserEmails, projectMemberEmails],
+    [form, isPlatformInvite, platformUserEmails, projectMemberEmails],
   );
 
   const onSubmit = (data: FormSchema) => {
@@ -266,15 +269,15 @@ export const InviteUserDialog = ({
 
   const dialogTitle = hasLinks
     ? t('Invitation Links')
-    : isPlatformPage
-    ? t('Invite to Your Platform')
+    : isPlatformInvite
+    ? t('Invite to platform')
     : t('Add Members');
 
   const dialogDescription = getDialogDescription({
     hasLinks,
     addedMembersCount,
     resultsWithLinksCount: resultsWithLinks.length,
-    isPlatformPage,
+    invitationType,
     isSmtpConfigured: isSmtpConfigured ?? false,
     projectName: project.displayName,
   });
@@ -319,7 +322,7 @@ export const InviteUserDialog = ({
                           value={field.value}
                           onChange={handleEmailsChange}
                           placeholder={t('Invite users by email')}
-                          isPlatformPage={isPlatformPage}
+                          invitationType={invitationType}
                           onOpenChange={setSuggestionsOpen}
                         />
                         <FormMessage />
@@ -346,7 +349,7 @@ export const InviteUserDialog = ({
                       </Button>
                     </DialogClose>
                     <Button type="submit" loading={isPending}>
-                      {isPlatformPage ? t('Invite') : t('Add')}
+                      {isPlatformInvite ? t('Invite') : t('Add')}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -401,14 +404,14 @@ function getDialogDescription({
   hasLinks,
   addedMembersCount,
   resultsWithLinksCount,
-  isPlatformPage,
+  invitationType,
   isSmtpConfigured,
   projectName,
 }: {
   hasLinks: boolean;
   addedMembersCount: number;
   resultsWithLinksCount: number;
-  isPlatformPage: boolean;
+  invitationType: InvitationType;
   isSmtpConfigured: boolean;
   projectName: string;
 }): string {
@@ -431,7 +434,7 @@ function getDialogDescription({
     return addedPrefix + linkText;
   }
 
-  if (isPlatformPage) {
+  if (invitationType === InvitationType.PLATFORM) {
     const base = t(
       'Invite team members to collaborate and build amazing flows together.',
     );

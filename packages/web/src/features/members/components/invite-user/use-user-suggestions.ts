@@ -20,7 +20,7 @@ export type SuggestedUser = UserWithMetaInformation & {
 type UseUserSuggestionsParams = {
   inputValue: string;
   currentEmails: string[];
-  isPlatformPage: boolean;
+  isPlatformInvite: boolean;
 };
 
 const isPlatformAdminOrOperator = (user: { platformRole: PlatformRole }) =>
@@ -40,7 +40,7 @@ const matchesSearch = (user: UserWithMetaInformation, searchTerm: string) => {
 export function useUserSuggestions({
   inputValue,
   currentEmails,
-  isPlatformPage,
+  isPlatformInvite,
 }: UseUserSuggestionsParams) {
   const { data: currentUser } = userHooks.useCurrentUser();
   const { data: platformUsersData } = platformUserHooks.useUsers();
@@ -67,7 +67,7 @@ export function useUserSuggestions({
 
   const suggestedUsers = useMemo<SuggestedUser[]>(() => {
     if (
-      isPlatformPage ||
+      isPlatformInvite ||
       !platformUsersData?.data ||
       platform.plan.embeddingEnabled
     )
@@ -103,7 +103,7 @@ export function useUserSuggestions({
 
     return filtered.slice(0, 10);
   }, [
-    isPlatformPage,
+    isPlatformInvite,
     platformUsersData,
     projectMemberEmails,
     pendingInvitationEmails,
@@ -114,7 +114,13 @@ export function useUserSuggestions({
   ]);
 
   const emailStatus = useMemo<EmailStatusType | null>(() => {
-    if (isPlatformPage || !platformUsersData?.data || !searchTerm) return null;
+    if (
+      isPlatformInvite ||
+      !platformUsersData?.data ||
+      !searchTerm ||
+      platform.plan.embeddingEnabled
+    )
+      return null;
 
     const email = searchTerm.toLowerCase();
 
@@ -132,12 +138,12 @@ export function useUserSuggestions({
       platformUser &&
       (platformUser.platformRole === PlatformRole.ADMIN ||
         platformUser.platformRole === PlatformRole.OPERATOR);
-    const isPlatformUser = isPlatformPage && platformUser;
+    const isPlatformUser = isPlatformInvite && platformUser;
     if (isCurrentUser || isPlatformAdminOrOperator || isPlatformUser) {
       return { email, type: 'has-access', user: platformUser };
     }
 
-    if (!isPlatformPage && projectMemberEmails.has(email)) {
+    if (!isPlatformInvite && projectMemberEmails.has(email)) {
       return { email, type: 'in-project', user: platformUser };
     }
 
@@ -147,7 +153,7 @@ export function useUserSuggestions({
 
     return { email, type: 'new-user', user: undefined };
   }, [
-    isPlatformPage,
+    isPlatformInvite,
     searchTerm,
     currentEmails,
     suggestedUsers,
@@ -155,6 +161,7 @@ export function useUserSuggestions({
     pendingInvitationEmails,
     platformUsersData,
     currentUserEmail,
+    platform.plan.embeddingEnabled,
   ]);
 
   const selectableItems = useMemo<string[]>(() => {

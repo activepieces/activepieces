@@ -1,3 +1,4 @@
+import { InvitationType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Globe, UserCheck } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
@@ -14,7 +15,7 @@ function UserSuggestionsPopover({
   value,
   onChange,
   placeholder,
-  isPlatformPage,
+  invitationType,
   onOpenChange,
 }: UserSuggestionsPopoverProps) {
   const [inputValue, setInputValue] = useState('');
@@ -22,6 +23,7 @@ function UserSuggestionsPopover({
   const [selectedValue, setSelectedValue] = useState('');
   const [tagInputKey, setTagInputKey] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isPlatformInvite = invitationType === InvitationType.PLATFORM;
 
   const {
     suggestedUsers,
@@ -32,7 +34,7 @@ function UserSuggestionsPopover({
   } = useUserSuggestions({
     inputValue,
     currentEmails: Array.from(value),
-    isPlatformPage: isPlatformPage ?? false,
+    isPlatformInvite,
   });
 
   const getTagMeta = useCallback(
@@ -53,10 +55,10 @@ function UserSuggestionsPopover({
         className:
           'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-900',
         icon: <Globe className="size-3 shrink-0" />,
-        tooltip: isPlatformPage ? t('New User') : t('New Member'),
+        tooltip: isPlatformInvite ? t('New User') : t('New Member'),
       };
     },
-    [platformUserEmails, isPlatformPage],
+    [platformUserEmails, isPlatformInvite],
   );
 
   const handleSelectUser = (email: string) => {
@@ -148,7 +150,7 @@ function UserSuggestionsPopover({
                     <SuggestedUserItem
                       type="email-status"
                       emailStatus={emailStatus}
-                      isPlatformPage={isPlatformPage}
+                      isPlatformInvite={isPlatformInvite}
                       onSelect={handleSelectUser}
                     />
                   )}
@@ -169,7 +171,7 @@ type UserSuggestionsPopoverProps = {
   value: ReadonlyArray<string>;
   onChange: (emails: ReadonlyArray<string>) => void;
   placeholder?: string;
-  isPlatformPage?: boolean;
+  invitationType: InvitationType;
   onOpenChange?: (open: boolean) => void;
 };
 

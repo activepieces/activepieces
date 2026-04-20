@@ -1303,7 +1303,7 @@
   "Invitation link copied successfully": "Invitation link copied successfully",
   "Invitation Link": "Invitation Link",
   "Invitation Links": "Invitation Links",
-  "Invite to Your Platform": "",
+  "Invite to platform": "",
   "membersAddedImmediately": "{count, plural, =1 {1 platform member joined {projectName}.} other {# platform members joined {projectName}.}}",
   "Please copy the link below and share it with the user you want to invite. The invitation expires in 7 days.": "",
   "Please copy the links below and share them with the users you want to invite. The invitations expire in 7 days.": "",
