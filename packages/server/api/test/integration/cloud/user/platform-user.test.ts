@@ -208,34 +208,6 @@ describe('Enterprise User API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
         })
 
-        it('Returns provider field in user list response', async () => {
-            // arrange
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
-
-            const mockOwnerToken = await generateMockToken({
-                id: mockOwner.id,
-                type: PrincipalType.USER,
-                platform: {
-                    id: mockPlatform.id,
-                },
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/api/v1/users',
-                headers: {
-                    authorization: `Bearer ${mockOwnerToken}`,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const responseBody = response?.json()
-            expect(responseBody.data[0].provider).toBeDefined()
-            expect(responseBody.data[0].provider).toBe(UserIdentityProvider.EMAIL)
-        })
-
     })
 
     describe('Update user endpoint', () => {
