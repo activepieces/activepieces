@@ -107,4 +107,3 @@ With `AP_NETWORK_MODE=STRICT` you should see an `SSRFBlockedError` (from the eng
 1. Start in `UNRESTRICTED` (default) and identify any internal services that legitimate flows need to reach (internal APIs, databases used by Code steps, etc.).
 2. Add those IPs to `AP_SSRF_ALLOW_LIST`.
 3. Switch to `AP_NETWORK_MODE=STRICT`. Watch worker logs for `SSRFBlockedError` or `Egress proxy refused request` — each one is either an attack, a misconfigured flow, or a missing allow-list entry.
-4. For multi-tenant deployments, also enable `SANDBOX_PROCESS` execution mode so the kernel lockdown layer is active.
