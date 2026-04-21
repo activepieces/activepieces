@@ -119,6 +119,7 @@ function leadId(required = true) {
           auth: token,
           path: 'leads/list',
           method: HttpMethod.POST,
+          maxPages: 5,
         }),
       );
 
@@ -148,25 +149,8 @@ function leadId(required = true) {
   });
 }
 
-function webhookEventType(required = true) {
-  return Property.StaticDropdown({
-    displayName: 'Event Type',
-    description: 'The type of event that triggers the webhook.',
-    required,
-    options: {
-      disabled: false,
-      options: [
-        { label: 'Lead Interested', value: 'lead_interested' },
-        { label: 'Lead Not Interested', value: 'lead_not_interested' },
-        { label: 'Lead Neutral', value: 'lead_neutral' },
-      ],
-    },
-  });
-}
-
 export const instantlyProps = {
   campaignId,
   listId,
   leadId,
-  webhookEventType,
 };
