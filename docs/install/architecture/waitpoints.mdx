@@ -10,8 +10,7 @@ stateDiagram-v2
     [*] --> PENDING: createWaitpoint
     PENDING --> COMPLETED: resume signal
     COMPLETED --> [*]: flow resumes
-    [*] --> COMPLETED: pre-completed
-(resume arrived first)
+    [*] --> COMPLETED: pre-completed (resume arrived first)
 ```
 
 ## Schema
