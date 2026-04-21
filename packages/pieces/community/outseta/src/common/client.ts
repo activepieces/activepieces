@@ -50,8 +50,11 @@ export class OutsetaClient {
 
   static escapeOData(value: string): string {
     const odataEscaped = value.replace(/'/g, "''");
+    // `+` is intentionally NOT in the safe set: some URL parsers decode it
+    // as space, which would silently corrupt tagged emails like
+    // `user+tag@example.com`. Encoding to %2B is unambiguous.
     return odataEscaped.replace(
-      /[^A-Za-z0-9@:._\-~+!$()*]/g,
+      /[^A-Za-z0-9@:._\-~!$()*]/g,
       (c) => encodeURIComponent(c)
     );
   }
