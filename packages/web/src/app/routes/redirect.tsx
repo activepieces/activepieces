@@ -63,7 +63,6 @@ const RedirectPage: React.FC = React.memo(() => {
       const handleThirdPartyLogin = async () => {
         try {
           const token = getCookie('token');
-          console.log(token);
           authenticationSession.saveResponse({ ...response, token }, false);
           navigate(from);
         } catch (e) {

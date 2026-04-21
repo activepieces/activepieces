@@ -1,5 +1,9 @@
 import { z } from 'zod'
 
+function isMfaChallenge(r: unknown): r is MfaChallengeResponse {
+    return typeof r === 'object' && r !== null && (r as Record<string, unknown>)['mfaRequired'] === true
+}
+
 export const MfaChallengeResponse = z.object({
     mfaRequired: z.literal(true),
     setupRequired: z.boolean().optional(),
@@ -7,6 +11,6 @@ export const MfaChallengeResponse = z.object({
 })
 export type MfaChallengeResponse = z.infer<typeof MfaChallengeResponse>
 
-export function isMfaChallenge(r: unknown): r is MfaChallengeResponse {
-    return typeof r === 'object' && r !== null && (r as Record<string, unknown>)['mfaRequired'] === true
-}
+export const RATE_LIMIT_WINDOW_SECONDS = 10
+
+export { isMfaChallenge }

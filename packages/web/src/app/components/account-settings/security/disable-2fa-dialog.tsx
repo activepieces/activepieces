@@ -15,6 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { OtpInput } from '@/components/ui/otp-input';
+import { useRateLimit } from '@/features/authentication';
 import { authClient } from '@/lib/better-auth';
 
 function DisableTwoFaForm({
@@ -28,6 +29,8 @@ function DisableTwoFaForm({
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const { isRateLimited, rateLimitMessage, handleRateLimitOrError } =
+    useRateLimit();
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +56,7 @@ function DisableTwoFaForm({
   };
 
   const handleOtpComplete = async ({ value }: { value: string }) => {
+    if (isRateLimited) return;
     setError(null);
     setIsPending(true);
     try {
@@ -60,7 +64,7 @@ function DisableTwoFaForm({
         code: value,
       });
       if (verifyError) {
-        setError(t('Invalid code. Please try again.'));
+        handleRateLimitOrError(verifyError, setError);
         return;
       }
       const { error: disableError } = await authClient.twoFactor.disable({});
@@ -120,9 +124,12 @@ function DisableTwoFaForm({
         <div className="flex flex-col gap-4">
           <OtpInput
             onChange={handleOtpComplete}
-            disabled={isPending}
+            disabled={isPending || isRateLimited}
             autoFocus
           />
+          {rateLimitMessage && (
+            <p className="text-sm text-destructive">{rateLimitMessage}</p>
+          )}
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
       )}

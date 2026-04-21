@@ -11,7 +11,7 @@ import { setPlatformOAuthService } from './app-connection/app-connection-service
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
 import { betterAuthInstance } from './authentication/better-auth/auth'
-import { registerDefaultSsoProviders } from './authentication/better-auth/default-sso-registration'
+import { betterAuthService } from './authentication/better-auth/better-auth-service'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
 import { rateLimitModule } from './core/security/rate-limit'
@@ -361,7 +361,7 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
     const pieces = process.env.AP_DEV_PIECES
 
-    await registerDefaultSsoProviders(app.log)
+    await betterAuthService(app.log).registerDefaultSsoProviders()
     await migrateQueuesAndRunConsumers(app)
     app.log.info('Queues migrated and consumers run')
     if (environment === ApEnvironment.DEVELOPMENT) {

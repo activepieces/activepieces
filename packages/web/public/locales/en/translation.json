@@ -1508,6 +1508,7 @@
   "I have saved these backup codes in a safe place": "I have saved these backup codes in a safe place",
   "Continue to app": "Continue to app",
   "Invalid code. Please try again.": "Invalid code. Please try again.",
+  "Too many attempts. Try again in {seconds, plural, =1 {1 second} other {# seconds}}.": "Too many attempts. Try again in {seconds, plural, =1 {1 second} other {# seconds}}.",
   "Enter your password to enable two-factor authentication.": "Enter your password to enable two-factor authentication.",
   "Enter your password to disable two-factor authentication.": "Enter your password to disable two-factor authentication.",
   "I've saved these codes": "I've saved these codes",

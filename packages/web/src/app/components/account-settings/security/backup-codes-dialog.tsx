@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { OtpInput } from '@/components/ui/otp-input';
 import { Separator } from '@/components/ui/separator';
+import { useRateLimit } from '@/features/authentication';
 import { authClient } from '@/lib/better-auth';
 import { downloadTxt } from '@/lib/utils';
 
@@ -34,6 +35,8 @@ function BackupCodesForm({
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const { isRateLimited, rateLimitMessage, handleRateLimitOrError } =
+    useRateLimit();
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +61,7 @@ function BackupCodesForm({
   };
 
   const handleOtpComplete = async ({ value }: { value: string }) => {
+    if (isRateLimited) return;
     setError(null);
     setIsPending(true);
     try {
@@ -65,7 +69,7 @@ function BackupCodesForm({
         code: value,
       });
       if (verifyError) {
-        setError(t('Invalid code. Please try again.'));
+        handleRateLimitOrError(verifyError, setError);
         return;
       }
       const { data, error: genError } =
@@ -162,7 +166,13 @@ function BackupCodesForm({
           </form>
         ) : (
           <div className="flex flex-col gap-3">
-            <OtpInput onChange={handleOtpComplete} disabled={isPending} />
+            <OtpInput
+              onChange={handleOtpComplete}
+              disabled={isPending || isRateLimited}
+            />
+            {rateLimitMessage && (
+              <p className="text-sm text-destructive">{rateLimitMessage}</p>
+            )}
             {error && <p className="text-sm text-destructive">{error}</p>}
             <DialogFooter>
               <Button

@@ -7,7 +7,7 @@ import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { OtpInput } from '@/components/ui/otp-input';
-import { AuthLayout } from '@/features/authentication';
+import { AuthLayout, useRateLimit } from '@/features/authentication';
 import { authenticationSession } from '@/lib/authentication-session';
 import { authClient } from '@/lib/better-auth';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
@@ -19,14 +19,17 @@ const TwoFactorVerifyPage: React.FC = () => {
   const [isPending, setIsPending] = useState(false);
 
   const redirectAfterLogin = useRedirectAfterLogin();
+  const { isRateLimited, rateLimitMessage, handleRateLimitOrError } =
+    useRateLimit();
 
   const handleVerifyTotp = async ({ value }: { value: string }) => {
+    if (isRateLimited) return;
     setErrorMessage(null);
     setIsPending(true);
     try {
       const { error } = await authClient.twoFactor.verifyTotp({ code: value });
       if (error) {
-        setErrorMessage(t('Invalid code. Please try again.'));
+        handleRateLimitOrError(error, setErrorMessage);
         return;
       }
       const data = await authenticationApi.exchangeSession();
@@ -43,7 +46,7 @@ const TwoFactorVerifyPage: React.FC = () => {
 
   const handleBackupCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!backupCode.trim()) return;
+    if (!backupCode.trim() || isRateLimited) return;
     setErrorMessage(null);
     setIsPending(true);
     try {
@@ -51,7 +54,7 @@ const TwoFactorVerifyPage: React.FC = () => {
         code: backupCode.trim(),
       });
       if (error) {
-        setErrorMessage(t('Invalid code. Please try again.'));
+        handleRateLimitOrError(error, setErrorMessage);
         return;
       }
       const data = await authenticationApi.exchangeSession();
@@ -65,6 +68,8 @@ const TwoFactorVerifyPage: React.FC = () => {
       setIsPending(false);
     }
   };
+
+  const isDisabled = isPending || isRateLimited;
 
   return (
     <AuthLayout>
@@ -87,9 +92,12 @@ const TwoFactorVerifyPage: React.FC = () => {
           <>
             <OtpInput
               onChange={handleVerifyTotp}
-              disabled={isPending}
+              disabled={isDisabled}
               autoFocus
             />
+            {rateLimitMessage && (
+              <p className="text-sm text-destructive">{rateLimitMessage}</p>
+            )}
             {errorMessage && (
               <p className="text-sm text-destructive">{errorMessage}</p>
             )}
@@ -114,16 +122,19 @@ const TwoFactorVerifyPage: React.FC = () => {
               placeholder="xxxxxxxx"
               value={backupCode}
               onChange={(e) => setBackupCode(e.target.value)}
-              disabled={isPending}
+              disabled={isDisabled}
               autoFocus
             />
+            {rateLimitMessage && (
+              <p className="text-sm text-destructive">{rateLimitMessage}</p>
+            )}
             {errorMessage && (
               <p className="text-sm text-destructive">{errorMessage}</p>
             )}
             <Button
               type="submit"
               loading={isPending}
-              disabled={!backupCode.trim()}
+              disabled={!backupCode.trim() || isRateLimited}
             >
               {t('Confirm')}
             </Button>

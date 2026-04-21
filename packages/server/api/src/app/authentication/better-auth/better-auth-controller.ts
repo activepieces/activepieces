@@ -39,7 +39,7 @@ export const betterAuthController: FastifyPluginAsyncZod = async (app) => {
         const platformId = await platformUtils.getPlatformIdForRequest(request)
         assertNotNullOrUndefined(platformId, 'platformId')
         const providerId = `saml-${platformId}`
-        const targetPath = `/v1/better-auth/sso/saml2/callback/${providerId}`
+        const targetPath = `/api/v1/better-auth/sso/saml2/callback/${providerId}`
         const targetUrl = new URL(targetPath, `http://${request.headers.host}`)
 
         const response = await betterAuthInstance.get().handler(toWebRequest({ url: request.url, headers: request.headers as Record<string, string | string[] | undefined>, method: request.method, body: request.body, ip: request.ip }, targetUrl))

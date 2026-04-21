@@ -1,5 +1,5 @@
 import { cryptoUtils } from '@activepieces/server-utils'
-import { apId, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { apId, assertNotNullOrUndefined, isNil, RATE_LIMIT_WINDOW_SECONDS } from '@activepieces/shared'
 import { sso } from '@better-auth/sso'
 import { betterAuth } from 'better-auth'
 import { createAuthMiddleware } from 'better-auth/api'
@@ -31,7 +31,7 @@ async function createBetterAuth(log: FastifyBaseLogger) {
     const service = betterAuthService(log)
 
     return betterAuth({
-        basePath: '/v1/better-auth',
+        basePath: '/api/v1/better-auth',
         database,
         rateLimit: {
             enabled: true,
@@ -40,7 +40,7 @@ async function createBetterAuth(log: FastifyBaseLogger) {
             storage: 'database',
             customRules: {
                 '/two-factor/*': {
-                    window: 10,
+                    window: RATE_LIMIT_WINDOW_SECONDS,
                     max: 3,
                 },
             },

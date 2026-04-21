@@ -9,7 +9,7 @@ import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { OtpInput } from '@/components/ui/otp-input';
-import { AuthLayout } from '@/features/authentication';
+import { AuthLayout, useRateLimit } from '@/features/authentication';
 import { authenticationSession } from '@/lib/authentication-session';
 import { authClient } from '@/lib/better-auth';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
@@ -37,6 +37,8 @@ const TwoFactorSetupPage: React.FC = () => {
   const [enableError, setEnableError] = useState<string | null>(null);
 
   const redirectAfterLogin = useRedirectAfterLogin();
+  const { isRateLimited, rateLimitMessage, handleRateLimitOrError } =
+    useRateLimit();
 
   useEffect(() => {
     const enableTotp = async () => {
@@ -76,12 +78,13 @@ const TwoFactorSetupPage: React.FC = () => {
   };
 
   const handleVerifyOtp = async ({ value }: { value: string }) => {
+    if (isRateLimited) return;
     setVerifyError(null);
     setIsPending(true);
     try {
       const { error } = await authClient.twoFactor.verifyTotp({ code: value });
       if (error) {
-        setVerifyError(t('Invalid code. Please try again.'));
+        handleRateLimitOrError(error, setVerifyError);
         return;
       }
       const data = await authenticationApi.exchangeSession();
@@ -157,10 +160,13 @@ const TwoFactorSetupPage: React.FC = () => {
             <div className="flex justify-center">
               <OtpInput
                 onChange={handleVerifyOtp}
-                disabled={isPending || !totpUri}
+                disabled={isPending || !totpUri || isRateLimited}
                 autoFocus
               />
             </div>
+            {rateLimitMessage && (
+              <p className="text-sm text-destructive">{rateLimitMessage}</p>
+            )}
             {verifyError && (
               <p className="text-sm text-destructive">{verifyError}</p>
             )}

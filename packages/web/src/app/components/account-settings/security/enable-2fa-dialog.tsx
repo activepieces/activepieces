@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { OtpInput } from '@/components/ui/otp-input';
+import { useRateLimit } from '@/features/authentication';
 import { authClient } from '@/lib/better-auth';
 import { downloadTxt } from '@/lib/utils';
 
@@ -39,6 +40,8 @@ function EnableTwoFaForm({
   const [enableError, setEnableError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [savedChecked, setSavedChecked] = useState(false);
+  const { isRateLimited, rateLimitMessage, handleRateLimitOrError } =
+    useRateLimit();
 
   // For social (passwordless) users, call enable immediately on open
   useEffect(() => {
@@ -90,12 +93,13 @@ function EnableTwoFaForm({
   };
 
   const handleOtpComplete = async ({ value }: { value: string }) => {
+    if (isRateLimited) return;
     setVerifyError(null);
     setIsPending(true);
     try {
       const { error } = await authClient.twoFactor.verifyTotp({ code: value });
       if (error) {
-        setVerifyError(t('Invalid code. Please try again.'));
+        handleRateLimitOrError(error, setVerifyError);
         return;
       }
       await queryClient.invalidateQueries({ queryKey: ['2fa-status'] });
@@ -176,10 +180,13 @@ function EnableTwoFaForm({
           <div className="flex justify-center">
             <OtpInput
               onChange={handleOtpComplete}
-              disabled={isPending}
+              disabled={isPending || isRateLimited}
               autoFocus
             />
           </div>
+          {rateLimitMessage && (
+            <p className="text-sm text-destructive">{rateLimitMessage}</p>
+          )}
           {verifyError && (
             <p className="text-sm text-destructive">{verifyError}</p>
           )}

@@ -4,6 +4,8 @@ import { AuthContext, MiddlewareContext, MiddlewareOptions } from 'better-auth/*
 import { getOAuthState } from 'better-auth/api'
 import { BetterAuthOptions, User } from 'better-auth/types'
 import { FastifyBaseLogger } from 'fastify'
+import { nanoid } from 'nanoid'
+import { databaseConnection } from '../../database/database-connection'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { emailService } from '../../ee/helper/email/email-service'
 import { applicationEvents } from '../../helper/application-events'
@@ -22,6 +24,7 @@ type SentData = {
 type IBetterAuthService = {
     sendResetPassword: (data: SentData, request: Request | undefined) => Promise<void>
     sendVerificationEmail: (data: SentData, request: Request | undefined) => Promise<void>
+    registerDefaultSsoProviders: () => Promise<void>
 
     beforeHook: (inputContext: MiddlewareContext<MiddlewareOptions, AuthContext<BetterAuthOptions> & {
         returned?: unknown
@@ -52,6 +55,31 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
             otp: encodeURIComponent(data.token),
             type: OtpType.EMAIL_VERIFICATION,
         })
+    },
+    registerDefaultSsoProviders: async () => {
+        const clientId = system.get(AppSystemProp.GOOGLE_CLIENT_ID)
+        const clientSecret = system.get(AppSystemProp.GOOGLE_CLIENT_SECRET)
+
+        if (isNil(clientId) || isNil(clientSecret)) {
+            log.info('[registerDefaultSsoProviders] AP_GOOGLE_CLIENT_ID or AP_GOOGLE_CLIENT_SECRET not set, skipping default Google SSO registration')
+            return
+        }
+
+        const oidcConfig = JSON.stringify({
+            clientId,
+            clientSecret,
+            scopes: ['openid', 'email', 'profile'],
+        })
+
+        await databaseConnection().query(`
+            INSERT INTO "ssoProvider" ("id", "providerId", "issuer", "domain", "oidcConfig", "createdAt", "updatedAt")
+            VALUES ($1, 'google-default', 'https://accounts.google.com', '', $2, NOW(), NOW())
+            ON CONFLICT ("providerId") DO UPDATE
+                SET "oidcConfig"  = EXCLUDED."oidcConfig",
+                    "updatedAt"   = NOW()
+        `, [nanoid(), oidcConfig])
+
+        log.info('[registerDefaultSsoProviders] Default Google SSO provider registered/updated')
     },
     beforeHook: async (_ctx) => {
         return
