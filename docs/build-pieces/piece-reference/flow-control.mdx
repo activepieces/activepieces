@@ -40,6 +40,8 @@ import { ExecutionType } from '@activepieces/shared';
 async run(ctx) {
   if (ctx.executionType === ExecutionType.BEGIN) {
     // First invocation: create the waitpoint and pause.
+    // A real WEBHOOK waitpoint must surface waitpoint.buildResumeUrl(...) to
+    // the outside world — see the "Wait for a webhook callback" section below.
     const waitpoint = await ctx.run.createWaitpoint({ type: 'WEBHOOK' });
     ctx.run.waitForWaitpoint(waitpoint.id);
     return {};
@@ -152,7 +154,7 @@ async run(ctx) {
 On the `RESUME` branch, `ctx.resumePayload` is whatever the resume call carried in:
 
 ```typescript
-ctx.resumePayload.body        // request body, or the DELAY job payload
+ctx.resumePayload.body        // request body from the webhook caller (empty for DELAY)
 ctx.resumePayload.headers     // HTTP headers from the webhook caller
 ctx.resumePayload.queryParams // parsed ?foo=bar query string
 ```
