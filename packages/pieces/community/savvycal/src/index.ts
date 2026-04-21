@@ -11,6 +11,10 @@ import { findEventsByEmailAction } from './lib/actions/find-events-by-email';
 import { listSchedulingLinksAction } from './lib/actions/list-scheduling-links';
 
 import { newEventTrigger } from './lib/triggers/new-event';
+import { newCheckoutTrigger } from './lib/triggers/new-checkout';
+import { newAttendeeEventTrigger } from './lib/triggers/new-attendee-event';
+import { newPollResponseTrigger } from './lib/triggers/new-poll-response';
+import { workflowActionTriggeredTrigger } from './lib/triggers/workflow-action-triggered';
 
 import { SAVVYCAL_BASE_URL } from './lib/common';
 
@@ -66,5 +70,11 @@ export const savvyCal = createPiece({
       }),
     }),
   ],
-  triggers: [newEventTrigger],
+  triggers: [
+    newEventTrigger,
+    newCheckoutTrigger,
+    newAttendeeEventTrigger,
+    newPollResponseTrigger,
+    workflowActionTriggeredTrigger,
+  ],
 });

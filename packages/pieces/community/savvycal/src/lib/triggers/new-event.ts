@@ -11,26 +11,6 @@ const EVENT_TYPES = [
   { label: 'Event Rescheduled', value: 'event.rescheduled' },
   { label: 'Event Changed', value: 'event.changed' },
   { label: 'Event Canceled', value: 'event.canceled' },
-  { label: 'Checkout Pending', value: 'event.checkout.pending' },
-  { label: 'Checkout Expired', value: 'event.checkout.expired' },
-  { label: 'Checkout Completed', value: 'event.checkout.completed' },
-  { label: 'Attendee Added', value: 'event.attendee.added' },
-  { label: 'Attendee Canceled', value: 'event.attendee.canceled' },
-  { label: 'Attendee Rescheduled', value: 'event.attendee.rescheduled' },
-  { label: 'Poll Response Created', value: 'poll.response.created' },
-  { label: 'Poll Response Updated', value: 'poll.response.updated' },
-  { label: 'Workflow Action Triggered', value: 'workflow.action.triggered' },
-];
-
-// Only pure event.* types (not checkout or attendee sub-types) map to a SavvyCalEvent payload
-const PURE_EVENT_TYPES = [
-  'event.created',
-  'event.requested',
-  'event.approved',
-  'event.declined',
-  'event.rescheduled',
-  'event.changed',
-  'event.canceled',
 ];
 
 export const newEventTrigger = createTrigger({
@@ -155,9 +135,7 @@ export const newEventTrigger = createTrigger({
     const linkId = body.payload?.link?.id;
     if (selectedLinkIds && selectedLinkIds.length > 0 && linkId !== undefined && !selectedLinkIds.includes(linkId)) return [];
 
-    const payload = PURE_EVENT_TYPES.includes(body.type)
-      ? flattenEvent(body.payload)
-      : (body.payload as unknown as Record<string, unknown>);
+    const payload = flattenEvent(body.payload);
     return [{ event_type: body.type, ...payload }];
   },
 
