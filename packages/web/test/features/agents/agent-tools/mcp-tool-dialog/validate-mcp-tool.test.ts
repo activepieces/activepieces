@@ -1,7 +1,7 @@
 import { AgentToolType, McpAuthType, McpProtocol } from '@activepieces/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { validateAgentMcpTool } from './validate-mcp-tool';
+import { validateAgentMcpTool } from '@/features/agents/agent-tools/mcp-tool-dialog/validate-mcp-tool';
 
 describe('validateAgentMcpTool', () => {
   beforeEach(() => {
