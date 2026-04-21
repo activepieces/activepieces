@@ -10,10 +10,10 @@ export const newSubscriptionEventTrigger = createTrigger({
     "Triggers on subscription billing events. Configure a matching notification in Outseta → Settings → Notifications pointing to this trigger's webhook URL.",
   type: TriggerStrategy.WEBHOOK,
   props: {
-    eventSubType: Property.StaticDropdown({
-      displayName: 'Event',
+    eventSubTypes: Property.StaticMultiSelectDropdown({
+      displayName: 'Events',
       description:
-        'Select the subscription event to listen for. Must match the notification type you configure in Outseta.',
+        'Select one or more subscription events to listen for. Configure a matching notification in Outseta for each selected event, all pointing to this webhook URL.',
       required: true,
       options: {
         disabled: false,
@@ -57,7 +57,8 @@ export const newSubscriptionEventTrigger = createTrigger({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    const orderBy = context.propsValue.eventSubType === 'started' ? 'Created' : 'Updated';
+    const selected = (context.propsValue.eventSubTypes ?? []) as string[];
+    const orderBy = selected.includes('started') ? 'Created' : 'Updated';
     const res = await client.get<{ items?: Record<string, unknown>[]; Items?: Record<string, unknown>[] }>(
       `/api/v1/billing/subscriptions?$top=5&$orderby=${orderBy} desc`
     );

@@ -10,10 +10,10 @@ export const newAccountEventTrigger = createTrigger({
     "Triggers on account lifecycle events. Configure a matching notification in Outseta → Settings → Notifications pointing to this trigger's webhook URL.",
   type: TriggerStrategy.WEBHOOK,
   props: {
-    eventSubType: Property.StaticDropdown({
-      displayName: 'Event',
+    eventSubTypes: Property.StaticMultiSelectDropdown({
+      displayName: 'Events',
       description:
-        'Select the account event to listen for. Must match the notification type you configure in Outseta.',
+        'Select one or more account events to listen for. Configure a matching notification in Outseta for each selected event, all pointing to this webhook URL.',
       required: true,
       options: {
         disabled: false,
@@ -53,7 +53,8 @@ export const newAccountEventTrigger = createTrigger({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    const orderBy = context.propsValue.eventSubType === 'created' ? 'Created' : 'Updated';
+    const selected = (context.propsValue.eventSubTypes ?? []) as string[];
+    const orderBy = selected.includes('created') ? 'Created' : 'Updated';
     const res = await client.get<{ items?: Record<string, unknown>[]; Items?: Record<string, unknown>[] }>(
       `/api/v1/crm/accounts?$top=5&$orderby=${orderBy} desc`
     );
