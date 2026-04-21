@@ -14,17 +14,12 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { projectRoleApi } from '@/features/platform-admin/api/project-role-api';
 
 import { projectMembersApi } from '../api/project-members-api';
+
+import { RoleSelector } from './role-selector';
 
 interface EditRoleDialogProps {
   member: ProjectMemberWithUser;
@@ -39,7 +34,7 @@ export function EditRoleDialog({
 }: EditRoleDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(member.projectRole.name);
-  const { data: rolesData } = useQuery({
+  const { data: rolesData, isPending: rolesLoading } = useQuery({
     queryKey: ['project-roles'],
     queryFn: () => projectRoleApi.list(),
   });
@@ -52,10 +47,17 @@ export function EditRoleDialog({
         role: newRole,
       });
     },
-    onSuccess: () => {
-      toast.success(t('Role updated successfully'), {
-        duration: 3000,
-      });
+    onSuccess: (_data, roleName) => {
+      toast.success(
+        t('{firstName} {lastName} role has become {roleName}', {
+          firstName: member.user.firstName,
+          lastName: member.user.lastName,
+          roleName,
+        }),
+        {
+          duration: 3000,
+        },
+      );
       onSave();
       setIsOpen(false);
     },
@@ -86,18 +88,14 @@ export function EditRoleDialog({
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-2">
-          <Select onValueChange={handleRoleChange} defaultValue={selectedRole}>
-            <SelectTrigger>
-              <SelectValue placeholder={t('Select Role')} />
-            </SelectTrigger>
-            <SelectContent>
-              {roles.map((role) => (
-                <SelectItem key={role.name} value={role.name}>
-                  {role.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <RoleSelector
+            type="project"
+            value={selectedRole}
+            onValueChange={handleRoleChange}
+            roles={roles}
+            isLoading={rolesLoading}
+            isAssigningRole={isPending}
+          />
         </div>
         <DialogFooter>
           <Button onClick={handleSave} loading={isPending}>

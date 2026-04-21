@@ -200,6 +200,8 @@
                      "install/architecture/overview",
                      "install/architecture/workers",
                      "install/architecture/engine",
+                     "install/architecture/durable-execution",
+                     "install/architecture/waitpoints",
                      "install/architecture/network-security",
                      "install/architecture/benchmark"
                   ]
