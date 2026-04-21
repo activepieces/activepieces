@@ -45,38 +45,30 @@ export const createUserProfileAction = createAction({
       displayName: 'Phone Number',
       required: false,
     }),
-    address: Property.Array({
-      displayName: 'Address',
-      description:
-        'Address as a JSON object. Supported fields: `address_street_1`, `address_street_2`, `address_city`, `address_state`, `address_zip_code`, `address_country` (2-letter ISO country code).',
+    address_street_1: Property.ShortText({
+      displayName: 'Street Address 1',
       required: false,
-      properties: {
-        address_street_1: Property.ShortText({
-          displayName: 'Street Address 1',
-          required: false,
-        }),
-        address_street_2: Property.ShortText({
-          displayName: 'Street Address 2',
-          required: false,
-        }),
-        address_city: Property.ShortText({
-          displayName: 'City',
-          required: false,
-        }),
-        address_state: Property.ShortText({
-          displayName: 'State/Province',
-          required: false,
-        }),
-        address_zip_code: Property.ShortText({
-          displayName: 'ZIP/Postal Code',
-          required: false,
-        }),
-        address_country: Property.ShortText({
-          displayName: 'Country Code',
-          description: '2-letter ISO country code (e.g. US, GB).',
-          required: false,
-        }),
-      },
+    }),
+    address_street_2: Property.ShortText({
+      displayName: 'Street Address 2',
+      required: false,
+    }),
+    address_city: Property.ShortText({
+      displayName: 'City',
+      required: false,
+    }),
+    address_state: Property.ShortText({
+      displayName: 'State/Province',
+      required: false,
+    }),
+    address_zip_code: Property.ShortText({
+      displayName: 'ZIP/Postal Code',
+      required: false,
+    }),
+    address_country: Property.ShortText({
+      displayName: 'Country Code',
+      description: '2-letter ISO country code (e.g. US, GB).',
+      required: false,
     }),
     client_reference_id: Property.ShortText({
       displayName: 'Client Reference ID',
@@ -106,7 +98,12 @@ export const createUserProfileAction = createAction({
       date_of_birth,
       email_address,
       phone_number,
-      address,
+      address_street_1,
+      address_street_2,
+      address_city,
+      address_state,
+      address_zip_code,
+      address_country,
       client_reference_id,
       events_callback_url,
       tags,
@@ -122,7 +119,16 @@ export const createUserProfileAction = createAction({
     if (date_of_birth) body['date_of_birth'] = date_of_birth;
     if (email_address) body['email_address'] = email_address;
     if (phone_number) body['phone_number'] = phone_number;
-    if (address) body['address'] = address;
+
+    const address: Record<string, string> = {};
+    if (address_street_1) address['address_street_1'] = address_street_1;
+    if (address_street_2) address['address_street_2'] = address_street_2;
+    if (address_city) address['address_city'] = address_city;
+    if (address_state) address['address_state'] = address_state;
+    if (address_zip_code) address['address_zip_code'] = address_zip_code;
+    if (address_country) address['address_country'] = address_country;
+    if (Object.keys(address).length > 0) body['address'] = address;
+
     if (client_reference_id) body['client_reference_id'] = client_reference_id;
     if (events_callback_url) body['events_callback_url'] = events_callback_url;
     if (tags && tags.length > 0) body['tags'] = tags;
