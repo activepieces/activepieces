@@ -1,5 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { tryCatch } from '@activepieces/shared';
 import { toFormUrlEncoded } from './common/form';
 
 export const uptimeRobotAuth = PieceAuth.SecretText({
@@ -16,8 +17,8 @@ The key starts with \`u\` followed by a long string of numbers and letters.
 **Note:** Free plans are limited to 10 API requests per minute. Paid plans support up to 5,000 req/min.`,
   required: true,
   validate: async ({ auth }) => {
-    try {
-      const response = await httpClient.sendRequest<{
+    const { data: response, error } = await tryCatch(() =>
+      httpClient.sendRequest<{
         stat: string;
         error?: { message: string };
       }>({
@@ -25,19 +26,22 @@ The key starts with \`u\` followed by a long string of numbers and letters.
         url: 'https://api.uptimerobot.com/v2/getAccountDetails',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: toFormUrlEncoded({ api_key: auth, format: 'json' }),
-      });
-      if (response.body.stat === 'ok') {
-        return { valid: true };
-      }
-      return {
-        valid: false,
-        error: response.body.error?.message ?? 'Invalid API key',
-      };
-    } catch {
+      }),
+    );
+
+    if (error) {
       return {
         valid: false,
         error: 'Could not validate API key. Please check your connection.',
       };
     }
+
+    if (response.body.stat === 'ok') {
+      return { valid: true };
+    }
+    return {
+      valid: false,
+      error: response.body.error?.message ?? 'Invalid API key',
+    };
   },
 });

@@ -1,5 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
+import { tryCatch } from '@activepieces/shared';
 import { uptimeRobotAuth } from '../auth';
 import { toFormUrlEncoded } from './form';
 
@@ -38,16 +39,17 @@ async function callApi<T extends UptimeRobotBaseResponse>({
 }): Promise<T> {
   const payload = { api_key: apiKey, format: 'json', ...body };
 
-  let response;
-  try {
-    response = await httpClient.sendRequest<T>({
+  const { data: response, error } = await tryCatch(() =>
+    httpClient.sendRequest<T>({
       method: HttpMethod.POST,
       url: `${BASE_URL}/${endpoint}`,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: toFormUrlEncoded(payload),
-    });
-  } catch (e) {
-    const err = e as { response?: { status?: number } };
+    }),
+  );
+
+  if (error) {
+    const err = error as { response?: { status?: number } };
     const status = err.response?.status;
     if (status === 429) {
       throw new Error(
