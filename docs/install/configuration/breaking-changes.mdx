@@ -12,9 +12,19 @@ icon: "hammer"
 - The environment variable `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` has been renamed to `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`.
 - The default value has changed from `100` to `5`.
 
+#### Outbound HTTP is now SSRF-filtered by default
+- All server-side outbound HTTP (OAuth token claim/refresh, Hashicorp Vault, CyberArk Conjur, event-destination webhooks, on-call pager webhooks, MCP tool validation) is now routed through a shared `request-filtering-agent` that blocks connections to **private** (`10.x`, `172.16–31.x`, `192.168.x`), **loopback** (`127.0.0.1`, `::1`), **link-local / cloud-metadata** (`169.254.169.254`), and other non-unicast IPs.
+- If a target is blocked, the error surfaced in the admin UI now explicitly mentions `AP_SSRF_ALLOW_LIST` so operators know how to recover.
+
 ### Do you need to take action?
 - If you have `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` set in your environment, rename it to `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`.
 - If you relied on the previous default of `100`, explicitly set `AP_DEFAULT_CONCURRENT_JOBS_LIMIT=100` to preserve the old behavior.
+- **If any of the following run on a private IP or hostname that resolves to one, set `AP_SSRF_ALLOW_LIST` before upgrading**, otherwise connection tests will fail:
+  - Self-hosted Hashicorp Vault
+  - CyberArk Conjur
+  - Self-hosted OAuth2 token endpoints (e.g. on-prem Keycloak)
+  - Any internal webhook used as an event destination or on-call pager
+- `AP_SSRF_ALLOW_LIST` is a comma-separated list of IPs or CIDR blocks, e.g. `AP_SSRF_ALLOW_LIST=10.0.5.12,192.168.10.0/24`. Restart the server after setting it.
 
 ## 0.82.0
 
