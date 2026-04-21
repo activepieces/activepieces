@@ -1,16 +1,16 @@
 ---
 title: 'Flow Control'
 icon: 'Joystick'
-description: 'Learn How to Control Flow from Inside the Piece'
+description: 'Learn how to control flow execution from inside a piece'
 ---
 
-Flow Controls provide the ability to control the flow of execution from inside a piece. By using the `ctx` parameter in the `run` method of actions, you can perform various operations to control the flow.
+Flow Controls let an action change the shape of the run — stop it early, send an intermediate HTTP response, or **pause the flow and resume later** when an external signal arrives. All of these are exposed on the `ctx` parameter of the action's `run` method.
 
 ## Stop Flow
 
-You can stop the flow and provide a response to the webhook trigger. This can be useful when you want to terminate the execution of the piece and send a specific response back.
+Stop the flow and (optionally) return a response to the webhook trigger that started it.
 
-**Example with Response:**
+**With a response:**
 
 ```typescript
 context.run.stop({
@@ -22,44 +22,143 @@ context.run.stop({
 });
 ```
 
-**Example without Response:**
+**Without a response:**
 
 ```typescript
 context.run.stop();
 ```
 
-## Pause Flow and Wait for Webhook
+## Pause with a waitpoint
 
-You can pause flow and return HTTP response, also provide a callback to URL that you can call with certain payload and continue the flow.
+A **waitpoint** is a durable checkpoint: the run is marked `PAUSED`, its execution state is persisted, and the action will be invoked a second time once the waitpoint is resumed. Waitpoints survive worker restarts — see [Durable Execution](/install/architecture/durable-execution) for the full model.
 
-**Example:**
-
-```typescript
-ctx.run.pause({
-  pauseMetadata: {
-    type: PauseType.WEBHOOK,
-    response: {
-      callbackUrl: context.generateResumeUrl({
-        queryParams: {},
-      }),
-    },
-  },
-});
-```
-
-## Pause Flow and Delay
-
-You can pause or delay the flow until a specific timestamp. Currently, the only supported type of pause is a delay based on a future timestamp.
-
-**Example:**
+The same action runs twice — once to create the waitpoint, once to read the resume payload — so every pausing action branches on `ctx.executionType`:
 
 ```typescript
-ctx.run.pause({
-    pauseMetadata: {
-        type: PauseType.DELAY,
-        resumeDateTime: futureTime.toUTCString()
-    }
-});
+import { ExecutionType } from '@activepieces/shared';
+
+async run(ctx) {
+  if (ctx.executionType === ExecutionType.BEGIN) {
+    // First invocation: create the waitpoint and pause.
+    const waitpoint = await ctx.run.createWaitpoint({ type: 'WEBHOOK' });
+    ctx.run.waitForWaitpoint(waitpoint.id);
+    return {};
+  }
+
+  // Second invocation: the waitpoint was resumed.
+  return {
+    body: ctx.resumePayload.body,
+    headers: ctx.resumePayload.headers,
+    queryParams: ctx.resumePayload.queryParams,
+  };
+}
 ```
 
-These flow hooks give you control over the execution of the piece by allowing you to stop the flow or pause it until a certain condition is met. You can use these hooks to customize the behavior and flow of your actions.
+Two hooks do the work:
+
+- `ctx.run.createWaitpoint({ type, ... })` — registers the waitpoint on the server and returns `{ id, resumeUrl, buildResumeUrl }`.
+- `ctx.run.waitForWaitpoint(waitpointId)` — tells the engine the step's verdict is `paused`; the run transitions to `PAUSED` after the action returns.
+
+There are two waitpoint types.
+
+### Wait for a webhook callback
+
+Create a `WEBHOOK` waitpoint and expose its resume URL — the flow will resume whenever that URL is called.
+
+```typescript
+async run(ctx) {
+  if (ctx.executionType === ExecutionType.BEGIN) {
+    const waitpoint = await ctx.run.createWaitpoint({ type: 'WEBHOOK' });
+
+    const callbackUrl = waitpoint.buildResumeUrl({
+      queryParams: { runId: ctx.run.id },
+    });
+
+    // Send `callbackUrl` somewhere the outside world can reach it
+    // (email, Slack message, third-party API, etc).
+
+    ctx.run.waitForWaitpoint(waitpoint.id);
+    return {};
+  }
+
+  return {
+    approved: ctx.resumePayload.queryParams['action'] === 'approve',
+  };
+}
+```
+
+`buildResumeUrl` takes an optional `sync: true` to return the caller a synchronous response produced by the remainder of the flow, and a `queryParams` object that is carried through to `ctx.resumePayload.queryParams` on resume.
+
+### Respond immediately and wait for the next webhook
+
+Pause the flow **and** immediately reply to the webhook trigger — useful for "we got your submission, we'll call you back" patterns. Pass `responseToSend` and your HTTP response is sent right away; the flow then sits paused until the returned URL is called.
+
+```typescript
+async run(ctx) {
+  if (ctx.executionType === ExecutionType.BEGIN) {
+    const waitpoint = await ctx.run.createWaitpoint({
+      type: 'WEBHOOK',
+      responseToSend: {
+        status: 200,
+        headers: {},
+        body: { accepted: true },
+      },
+    });
+
+    const nextWebhookUrl = waitpoint.buildResumeUrl({
+      queryParams: { created: new Date().toISOString() },
+      sync: true,
+    });
+
+    // nextWebhookUrl is what the counterpart should call to resume this run.
+
+    ctx.run.waitForWaitpoint(waitpoint.id);
+    return { nextWebhookUrl };
+  }
+
+  return {
+    body: ctx.resumePayload.body,
+    headers: ctx.resumePayload.headers,
+    queryParams: ctx.resumePayload.queryParams,
+  };
+}
+```
+
+### Delay until a timestamp
+
+Create a `DELAY` waitpoint with the UTC timestamp you want to resume at. The server schedules a one-time job that fires at `resumeDateTime` and resumes the run automatically.
+
+```typescript
+async run(ctx) {
+  if (ctx.executionType === ExecutionType.RESUME) {
+    return { success: true };
+  }
+
+  const futureTime = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+  const waitpoint = await ctx.run.createWaitpoint({
+    type: 'DELAY',
+    resumeDateTime: futureTime.toUTCString(),
+  });
+  ctx.run.waitForWaitpoint(waitpoint.id);
+  return {};
+}
+```
+
+`resumeDateTime` is capped by the server's `AP_PAUSED_FLOW_TIMEOUT_DAYS` setting; the engine throws `PausedFlowTimeoutError` if you ask for a longer delay.
+
+## Reading the resume payload
+
+On the `RESUME` branch, `ctx.resumePayload` is whatever the resume call carried in:
+
+```typescript
+ctx.resumePayload.body        // request body, or the DELAY job payload
+ctx.resumePayload.headers     // HTTP headers from the webhook caller
+ctx.resumePayload.queryParams // parsed ?foo=bar query string
+```
+
+For `DELAY` waitpoints there is no incoming HTTP request, so the payload is empty — use the `RESUME` branch simply to produce the step's final output.
+
+<Warning>
+  **Deprecated:** older pieces use `ctx.run.pause({ pauseMetadata: { type: PauseType.WEBHOOK | PauseType.DELAY, ... } })` together with `ctx.generateResumeUrl(...)`. That V0 API is kept for backwards compatibility with in-flight paused runs and will be removed. New actions must use `ctx.run.createWaitpoint` + `ctx.run.waitForWaitpoint`.
+</Warning>

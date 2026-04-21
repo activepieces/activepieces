@@ -1,0 +1,59 @@
+---
+title: "Waitpoints"
+icon: "hourglass-half"
+---
+
+A **waitpoint** is the durable row that represents a paused step on a flow run. It is the single source of truth for a pause — the flow run row only carries status (`PAUSED`, `RUNNING`, …); the *why* lives on the waitpoint.
+
+## Schema
+
+| Field | Meaning |
+| --- | --- |
+| `flowRunId`, `stepName` | Which run/step is paused. Unique together — a step has at most one waitpoint. |
+| `type` | `DELAY` or `WEBHOOK`. |
+| `status` | `PENDING` until the resume signal arrives, then `COMPLETED`. |
+| `resumeDateTime` | For `DELAY`: when to fire the resume. |
+| `responseToSend` | For `WEBHOOK`: optional HTTP response returned immediately to the original webhook trigger. |
+| `resumePayload` | `{ body, headers, queryParams }` from the resume call, surfaced to the piece as `ctx.resumePayload`. |
+| `workerHandlerId`, `httpRequestId` | Routing hints for synchronous resumes. |
+| `version` | `V1` (current). `V0` is the legacy `pauseMetadata`-based path, kept for in-flight runs. |
+
+## Types
+
+- **`DELAY`** — resumes at `resumeDateTime`. On insert, the server upserts a one-time BullMQ job (`RESUME_DELAY_WAITPOINT`) scheduled at that timestamp. The delay is capped by `AP_PAUSED_FLOW_TIMEOUT_DAYS`; the engine throws `PausedFlowTimeoutError` beyond that.
+- **`WEBHOOK`** — resumes on any HTTP call to the waitpoint's resume URL. If `responseToSend` is set, it is replied immediately to the original trigger so a single webhook can respond-then-pause.
+
+## Lifecycle
+
+1. **Create.** The piece calls `ctx.run.createWaitpoint({ type, ... })` + `ctx.run.waitForWaitpoint(id)`. The engine sets the step verdict to `paused` and `POST`s `/v1/waitpoints`. The server inserts a `PENDING` row (idempotent via `ON CONFLICT DO NOTHING` on `flow_run_id + step_name`).
+2. **Checkpoint.** The engine serializes `FlowExecutorContext` into the run's log file and transitions the flow run to `PAUSED`.
+3. **Resume signal.** Either an HTTP call on `/v1/flow-runs/:id/waitpoints/:waitpointId[/sync]` or the scheduled BullMQ job firing. Both land in `WaitpointService.handleResumeSignal` with the callback's `{ body, headers, queryParams }`.
+4. **Re-run.** A worker rebuilds the context from the log file and re-invokes the same action with `ctx.executionType === ExecutionType.RESUME` and `ctx.resumePayload` populated.
+
+## Resume-before-pause race
+
+A callback can arrive before the flow run has finished writing `PAUSED` to disk. The protocol absorbs the race:
+
+- `WaitpointService.complete()` takes a pessimistic write lock on the `PENDING` row. If it exists, it flips to `COMPLETED` and stores `resumePayload`. If it does not, a **pre-completed** row is inserted.
+- When the flow run transitions to `PAUSED`, the `runsMetadataQueue` handler checks for a matching `COMPLETED` waitpoint and enqueues the resume job immediately.
+
+Duplicate callbacks are absorbed by the uniqueness constraint; the engine never processes a resume twice.
+
+## Endpoints
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| `POST` | `/v1/waitpoints` | Engine-only. Creates a `PENDING` waitpoint, returns its resume URL. |
+| `ALL` | `/v1/flow-runs/:id/waitpoints/:waitpointId` | Resume, async. |
+| `ALL` | `/v1/flow-runs/:id/waitpoints/:waitpointId/sync` | Resume, sync — the HTTP response is whatever the flow produces after resuming. |
+| `ALL` | `/v1/flow-runs/:id/requests/:requestId[/sync]` | **V0 legacy**, kept for in-flight `pauseMetadata`-based runs. |
+
+## Restart behavior
+
+- `WEBHOOK` waitpoints sit in Postgres; nothing to restart.
+- `DELAY` waitpoints are BullMQ delayed jobs and survive worker restarts natively.
+- Legacy paused runs are re-queued by the `refill-paused-jobs` migration.
+
+## Piece API
+
+Piece authors create waitpoints with `ctx.run.createWaitpoint` / `ctx.run.waitForWaitpoint`. Patterns for `WEBHOOK`, `DELAY`, and `responseToSend` are in Flow Control.
