@@ -8,7 +8,7 @@ import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-send
 import { emailService } from '../ee/helper/email/email-service'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
-import { jwtUtils } from '../helper/jwt-utils'
+import { JwtAudience, jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { platformService } from '../platform/platform.service'
@@ -23,6 +23,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         const decodedToken = await jwtUtils.decodeAndVerify<UserInvitationToken>({
             jwt: invitationToken,
             key: await jwtUtils.getJwtSecret(),
+            audience: JwtAudience.USER_INVITATION,
         })
         const invitation = await repo().findOneBy({
             id: decodedToken.id,
@@ -244,6 +245,7 @@ async function generateInvitationLink(userInvitation: UserInvitation, expireyInS
         },
         expiresInSeconds: expireyInSeconds,
         key: await jwtUtils.getJwtSecret(),
+        audience: JwtAudience.USER_INVITATION,
     })
 
     return domainHelper.getPublicUrl({
