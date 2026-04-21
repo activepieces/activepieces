@@ -190,9 +190,6 @@ const systemPropValidators: {
 
     // On-call
     [AppSystemProp.PAGE_ONCALL_WEBHOOK]: urlValidator,
-
-    // Git sync
-    [AppSystemProp.GIT_SYNC_ENABLED]: booleanValidator,
 }
 
 
