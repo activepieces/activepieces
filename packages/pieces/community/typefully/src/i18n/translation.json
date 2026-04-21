@@ -83,5 +83,13 @@
   "Scheduled Date (newest first)": "Scheduled Date (newest first)",
   "Scheduled Date (oldest first)": "Scheduled Date (oldest first)",
   "New Event": "New Event",
-  "Triggers when a webhook event is received from Typefully.": "Triggers when a webhook event is received from Typefully."
+  "Triggers when a webhook event is received from Typefully.": "Triggers when a webhook event is received from Typefully.",
+  "Events": "Events",
+  "Filter which events trigger this flow. Leave empty to receive all events configured in Typefully.": "Filter which events trigger this flow. Leave empty to receive all events configured in Typefully.",
+  "Draft Created": "Draft Created",
+  "Draft Scheduled": "Draft Scheduled",
+  "Draft Published": "Draft Published",
+  "Draft Status Changed": "Draft Status Changed",
+  "Draft Tags Changed": "Draft Tags Changed",
+  "Draft Deleted": "Draft Deleted"
 }

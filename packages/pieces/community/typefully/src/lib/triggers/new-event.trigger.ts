@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { typefullyAuth } from '../auth';
 import { typefullyApiCall } from '../common/client';
@@ -44,6 +44,22 @@ export const newEventTrigger = createTrigger({
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		instructions: instructionsMarkdown,
+		events: Property.StaticMultiSelectDropdown({
+			displayName: 'Events',
+			description: 'Filter which events trigger this flow. Leave empty to receive all events configured in Typefully.',
+			required: false,
+			options: {
+				disabled: false,
+				options: [
+					{ label: 'Draft Created', value: 'draft.created' },
+					{ label: 'Draft Scheduled', value: 'draft.scheduled' },
+					{ label: 'Draft Published', value: 'draft.published' },
+					{ label: 'Draft Status Changed', value: 'draft.status_changed' },
+					{ label: 'Draft Tags Changed', value: 'draft.tags_changed' },
+					{ label: 'Draft Deleted', value: 'draft.deleted' },
+				],
+			},
+		}),
 	},
 	sampleData: {
 		event: 'draft.created',
@@ -58,16 +74,20 @@ export const newEventTrigger = createTrigger({
 	async test(context) {
 		const draft = await fetchLatestDraft(context.auth.secret_text);
 		if (!draft) return [];
-		return [
-			{
-				event: STATUS_TO_EVENT[draft.status] ?? 'draft.created',
-				data: draft,
-			},
-		];
+		const selectedEvents = context.propsValue.events as string[] | undefined;
+		const inferredEvent = STATUS_TO_EVENT[draft.status] ?? 'draft.created';
+		const eventToUse = selectedEvents && selectedEvents.length > 0
+			? (selectedEvents.includes(inferredEvent) ? inferredEvent : selectedEvents[0])
+			: inferredEvent;
+		return [{ event: eventToUse, data: draft }];
 	},
 	async run(context) {
 		const body = context.payload.body as { event?: string; data?: Record<string, unknown> };
 		if (!body.data) return [];
+		const selectedEvents = context.propsValue.events as string[] | undefined;
+		if (selectedEvents && selectedEvents.length > 0 && body.event && !selectedEvents.includes(body.event)) {
+			return [];
+		}
 		return [body];
 	},
 });

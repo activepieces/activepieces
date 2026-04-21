@@ -83,5 +83,13 @@
   "Scheduled Date (newest first)": "Date planifiée (récent d'abord)",
   "Scheduled Date (oldest first)": "Date planifiée (ancien d'abord)",
   "New Event": "Nouvel événement",
-  "Triggers when a webhook event is received from Typefully.": "Se déclenche lors de la réception d'un événement webhook de Typefully."
+  "Triggers when a webhook event is received from Typefully.": "Se déclenche lors de la réception d'un événement webhook de Typefully.",
+  "Events": "Événements",
+  "Filter which events trigger this flow. Leave empty to receive all events configured in Typefully.": "Filtrer les événements qui déclenchent ce flow. Laisser vide pour recevoir tous les événements configurés dans Typefully.",
+  "Draft Created": "Contenu créé",
+  "Draft Scheduled": "Contenu planifié",
+  "Draft Published": "Contenu publié",
+  "Draft Status Changed": "Statut du contenu modifié",
+  "Draft Tags Changed": "Tags du contenu modifiés",
+  "Draft Deleted": "Contenu supprimé"
 }
