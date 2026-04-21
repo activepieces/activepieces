@@ -1,8 +1,10 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { tryCatch } from '@activepieces/shared';
 import { instantlyAuth } from '../auth';
 import { instantlyClient } from '../common/client';
 import { instantlyProps } from '../common/props';
-import { InstantlyWebhook, InstantlyWebhookPayload } from '../common/types';
+import { InstantlyLead, InstantlyWebhook, InstantlyWebhookPayload } from '../common/types';
 
 function hasProperty<K extends PropertyKey>(
   obj: object,
@@ -69,6 +71,19 @@ function createGroupedWebhookTrigger({
           webhookId: webhook.id,
         });
       }
+    },
+    async test(context) {
+      const { data: leads } = await tryCatch(() =>
+        instantlyClient.listAllPages<InstantlyLead>({
+          auth: context.auth.secret_text,
+          path: 'leads/list',
+          method: HttpMethod.POST,
+          maxPages: 1,
+        }),
+      );
+
+      const lead = leads?.[0];
+      return [{ ...sampleData, ...(lead ? { lead_email: lead.email } : {}) }];
     },
     async run(context) {
       const eventType = extractEventType(context.payload.body);
