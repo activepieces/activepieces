@@ -10,28 +10,63 @@ import { oneDriveCommon } from '../common/common';
 export const downloadFile = createAction({
   auth: oneDriveAuth,
   name: 'download_file',
-  description: 'Download a file from your Microsoft OneDrive',
-  displayName: 'Download file',
+  description: 'Get and download a file using a File ID or filename.',
+  displayName: 'Get File',
   props: {
-    fileId: Property.ShortText({
-      displayName: 'File ID',
-      description: 'The ID of the file to download',
+    lookupBy: Property.StaticDropdown({
+      displayName: 'Look Up By',
+      required: true,
+      defaultValue: 'id',
+      options: {
+        options: [
+          { label: 'File ID', value: 'id' },
+          { label: 'File Name', value: 'name' },
+        ],
+      },
+    }),
+    fileIdentifier: Property.ShortText({
+      displayName: 'File ID / File Name',
+      description:
+        'Enter the File ID or the exact filename depending on the "Look Up By" selection',
       required: true,
     }),
   },
   async run(context) {
-    const fileId = context.propsValue.fileId;
+    const { lookupBy, fileIdentifier } = context.propsValue;
     const cloud = context.auth.props?.['cloud'] as string | undefined;
     const baseUrl = oneDriveCommon.getBaseUrl(cloud);
 
-    const fileDetails = await httpClient.sendRequest<{name:string}>({
-      method:HttpMethod.GET,
-      url:`${baseUrl}/items/${fileId}?$select=name`,
+    let fileId: string;
+
+    if (lookupBy === 'name') {
+      const searchRes = await httpClient.sendRequest<{
+        value: { id: string; name: string }[];
+      }>({
+        method: HttpMethod.GET,
+        url: `${baseUrl}/root/search(q='${encodeURIComponent(fileIdentifier)}')`,
+        queryParams: { $select: 'id,name', $top: '10' },
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: context.auth.access_token,
+        },
+      });
+      const match = searchRes.body.value.find((f) => f.name === fileIdentifier);
+      if (!match) {
+        throw new Error(`No file found with name "${fileIdentifier}"`);
+      }
+      fileId = match.id;
+    } else {
+      fileId = fileIdentifier;
+    }
+
+    const fileDetails = await httpClient.sendRequest<{ name: string }>({
+      method: HttpMethod.GET,
+      url: `${baseUrl}/items/${fileId}?$select=name`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-    })
+    });
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.GET,
@@ -40,7 +75,7 @@ export const downloadFile = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-      responseType:'arraybuffer'
+      responseType: 'arraybuffer',
     });
 
     const desiredHeaders = [
@@ -49,7 +84,7 @@ export const downloadFile = createAction({
       'content-location',
       'expires',
     ];
-    const filteredHeaders: any = {};
+    const filteredHeaders: Record<string, unknown> = {};
 
     if (result.headers) {
       for (const key of desiredHeaders) {
@@ -59,11 +94,10 @@ export const downloadFile = createAction({
 
     return {
       ...filteredHeaders,
-      data:await context.files.write({
+      data: await context.files.write({
         fileName: fileDetails.body.name,
         data: Buffer.from(result.body),
-      })
-
-    }
+      }),
+    };
   },
 });
