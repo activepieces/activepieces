@@ -200,14 +200,6 @@ async function getUsage(log: FastifyBaseLogger, platform: Platform): Promise<Pla
 }
 
 async function getPlan(log: FastifyBaseLogger, platform: Platform): Promise<PlatformPlanLimits> {
-    const edition = system.getEdition()
-    if (edition === ApEdition.COMMUNITY) {
-        return {
-            ...OPEN_SOURCE_PLAN,
-            stripeSubscriptionStartDate: 0,
-            stripeSubscriptionEndDate: 0,
-        }
-    }
     return platformPlanService(log).getOrCreateForPlatform(platform.id)
 }
 
