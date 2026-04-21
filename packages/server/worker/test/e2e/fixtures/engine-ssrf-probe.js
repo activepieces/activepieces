@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-// Probe that loads the bundled engine ssrf-guard (installs DNS/Socket/undici hooks
-// at require-time) and then runs each AP_PROBE_PLAN case against the hooked stack.
-// Uses node core only for egress; HTTP calls are plain http.request (the proxy env
-// is set via process.env.HTTP_PROXY).
+// Probe that installs the bundled engine ssrf-guard (DNS/Socket + http/https
+// globalAgent + undici dispatcher) and then runs each AP_PROBE_PLAN case
+// against the hooked stack. Uses node core only for egress; HTTP calls are
+// plain http.request (the proxy URL is read from process.env.AP_EGRESS_PROXY_URL).
 
 const dns = require('node:dns')
 const http = require('node:http')
@@ -10,7 +10,8 @@ const net = require('node:net')
 const { URL } = require('node:url')
 
 const ssrfGuardModule = require('./ssrf-guard-bundle.js')
-const GUARD_ENABLED = ssrfGuardModule.ssrfGuard && ssrfGuardModule.ssrfGuard.isEnabled()
+ssrfGuardModule.ssrfGuard.install()
+const GUARD_ENABLED = ssrfGuardModule.ssrfGuard.isEnabled()
 
 async function main() {
     let plan
@@ -93,14 +94,17 @@ function dnsLookupExpectBlocked(action) {
 }
 
 function httpViaProxy(action) {
+    // Target the real destination and let http.globalAgent (installed by
+    // ssrf-guard as an HttpProxyAgent) route through the loopback proxy —
+    // mirrors how pieces issue requests rather than hand-addressing the proxy.
     return new Promise((resolve) => {
-        const proxyUrl = new URL(process.env.HTTP_PROXY || '')
+        const target = new URL(action.url)
         const req = http.request({
-            host: proxyUrl.hostname,
-            port: parseInt(proxyUrl.port, 10),
+            host: target.hostname,
+            port: parseInt(target.port, 10) || 80,
             method: 'GET',
-            path: action.url,
-            headers: { host: new URL(action.url).host },
+            path: target.pathname + target.search,
+            headers: { host: target.host },
         }, (res) => {
             const chunks = []
             res.on('data', (c) => chunks.push(c))
