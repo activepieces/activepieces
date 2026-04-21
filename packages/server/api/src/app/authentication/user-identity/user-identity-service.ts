@@ -55,9 +55,11 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
 
         // Sync hashed password into user_identity for rollback compatibility
         const hashedPassword = await passwordHasher.hash(params.password)
+        const verified = params.emailVerified ?? false
         await userIdentityRepository().update({ id: identity.id }, {
             password: hashedPassword,
-            emailVerified: params.emailVerified ?? false,
+            emailVerified: verified,
+            verified,
         })
 
         return {
@@ -196,6 +198,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         }
         await userIdentityRepository().update({ id }, {
             emailVerified: true,
+            verified: true,
         })
         return {
             ...user,

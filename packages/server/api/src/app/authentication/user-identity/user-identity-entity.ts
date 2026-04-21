@@ -1,11 +1,12 @@
 import { UserIdentity } from '@activepieces/shared'
 import { EntitySchema, EntitySchemaColumnOptions } from 'typeorm'
+import { ApIdSchema } from '../../database/database-common'
 
 export const UserIdentityEntity = new EntitySchema<UserIdentity>({
     name: 'user_identity',
     columns: {
         id: {
-            type: String,
+            ...ApIdSchema,
             primary: true,
         } as EntitySchemaColumnOptions,
         createdAt: {
