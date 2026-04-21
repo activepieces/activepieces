@@ -10,15 +10,25 @@ These tools are always available (locked) and read-only. They help AI agents und
 
 ### ap_list_flows
 
-List all flows in the current project.
+List flows in the current project with status, trigger type, and published state.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
-| — | — | — | No inputs required |
+| `limit` | number | No | Max flows to return (default 100, max 500) |
+| `status` | string | No | Filter by status: `ENABLED` or `DISABLED` |
+| `name` | string | No | Filter by flow name (partial match) |
 
 ### ap_flow_structure
 
-Get the structure of a flow: step tree, configuration status, and valid insert locations.
+Get the full structure of a flow: step tree, configuration status, step input values, router branch conditions, and valid insert locations. Shows the actual configured inputs for each step (URL, body, headers, etc.) so the AI can read and edit existing configurations.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+
+### ap_validate_flow
+
+Validate a flow for structural issues without publishing. Checks step validity, template references, and empty branches.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -34,13 +44,45 @@ List available pieces with their actions and triggers. Required before adding or
 | `includeActions` | boolean | No | Include action details |
 | `includeTriggers` | boolean | No | Include trigger details |
 
+### ap_get_piece_props
+
+Get the detailed input property schema for a specific piece action or trigger. Returns field names, types, required/optional, descriptions, default values, and dropdown options. When auth is required but not provided, automatically lists available connections. Use this before `ap_update_step` or `ap_update_trigger` to know exactly which fields to set.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `pieceName` | string | Yes | Piece name (e.g., `@activepieces/piece-slack`) |
+| `actionOrTriggerName` | string | Yes | Action or trigger name (e.g., `send_channel_message`) |
+| `type` | string | Yes | `action` or `trigger` |
+| `auth` | string | No | Connection externalId. When provided, dynamic dropdowns and DYNAMIC sub-fields are resolved. |
+| `flowId` | string | No | Flow ID for resolving dependent dropdowns that need step context. |
+| `input` | object | No | Known input values for resolving dependent DYNAMIC properties (e.g., `{"body_type": "json"}`). |
+
+### ap_validate_step_config
+
+Validate a step configuration before applying it. Returns field-level errors without modifying any flow.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `stepType` | string | Yes | `PIECE_ACTION`, `PIECE_TRIGGER`, `CODE`, `LOOP_ON_ITEMS`, or `ROUTER` |
+| `pieceName` | string | No | For PIECE types: piece name (short names like `slack` accepted) |
+| `actionName` | string | No | For PIECE_ACTION: action name |
+| `triggerName` | string | No | For PIECE_TRIGGER: trigger name |
+| `input` | object | No | For PIECE types: input config to validate |
+| `auth` | string | No | For PIECE types: any non-empty string indicates auth is provided |
+| `sourceCode` | string | No | For CODE: JavaScript/TypeScript source code |
+| `packageJson` | string | No | For CODE: package.json as JSON string |
+| `loopItems` | string | No | For LOOP_ON_ITEMS: items expression |
+| `settings` | object | No | For ROUTER: raw router settings |
+
 ### ap_list_connections
 
 List OAuth/app connections in the project. Required before adding steps that need authentication.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
-| — | — | — | No inputs required |
+| `pieceName` | string | No | Filter by piece name. Short names like `slack` or `google-sheets` are auto-expanded. |
+| `displayName` | string | No | Filter by connection display name (partial match) |
+| `status` | array | No | Filter by status: `ACTIVE`, `MISSING`, or `ERROR` |
 
 ### ap_list_ai_models
 
@@ -111,6 +153,19 @@ Create a new empty flow.
 |-------|------|----------|-------------|
 | `flowName` | string | Yes | Display name for the flow |
 
+### ap_duplicate_flow
+
+Duplicate an existing flow. Creates a new copy with all steps, configuration, and canvas notes. Connections and sample data are not copied.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID to duplicate |
+| `name` | string | No | Name for the copy (defaults to "Copy of \{original name\}") |
+
+<Tip>
+After duplicating, use `ap_flow_structure` on the new flow to check configuration status. Steps that reference connections will need to be re-configured with `ap_update_step`.
+</Tip>
+
 ### ap_rename_flow
 
 Rename an existing flow.
@@ -143,6 +198,22 @@ Publish the current draft of a flow. Validates all steps are configured.
 
 Add, configure, and remove steps in a flow.
 
+### ap_build_flow
+
+Create a complete flow in one call — trigger plus any number of steps. Steps are added sequentially (trigger → step_1 → step_2 → ...). All steps are validated on creation. Use granular tools (`ap_add_step`, `ap_update_step`) to modify existing flows or add nested structures (loop contents, router branches).
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowName` | string | Yes | Name for the new flow |
+| `trigger` | object | Yes | `{pieceName, pieceVersion, triggerName, input?, auth?}` |
+| `steps` | array | Yes | Array of step specs, each with `type`, `displayName`, and type-specific fields |
+
+**Step types in the array:**
+- **PIECE**: `pieceName`, `pieceVersion`, `actionName`, `input`, `auth`
+- **CODE**: `sourceCode`, `input`
+- **LOOP_ON_ITEMS**: `loopItems`
+- **ROUTER**: creates a router with Branch 1 + Otherwise
+
 ### ap_update_trigger
 
 Set or update the trigger for a flow.
@@ -159,7 +230,7 @@ Set or update the trigger for a flow.
 
 ### ap_add_step
 
-Add a new step to a flow. Creates a skeleton — configure it with `ap_update_step`.
+Add a new step to a flow. Optionally configure it in the same call by providing `input`, `auth`, `sourceCode`, or `loopItems`.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -172,6 +243,11 @@ Add a new step to a flow. Creates a skeleton — configure it with `ap_update_st
 | `pieceVersion` | string | No | For PIECE steps |
 | `actionName` | string | No | For PIECE steps |
 | `branchIndex` | number | No | For INSIDE_BRANCH |
+| `input` | object | No | Step input config (key-value pairs) |
+| `auth` | string | No | Connection externalId |
+| `sourceCode` | string | No | For CODE steps: JavaScript/TypeScript source |
+| `packageJson` | string | No | For CODE steps: npm dependencies |
+| `loopItems` | string | No | For LOOP steps: items expression |
 
 ### ap_update_step
 
@@ -186,10 +262,12 @@ Update an existing step's settings. Auto-fills default values for optional prope
 | `auth` | string | No | Connection externalId |
 | `actionName` | string | No | For PIECE steps |
 | `loopItems` | string | No | For LOOP steps |
+| `sourceCode` | string | No | For CODE steps: JavaScript/TypeScript source code |
+| `packageJson` | string | No | For CODE steps: npm dependencies as JSON string |
 | `skip` | boolean | No | Skip this step |
 
 <Tip>
-Use `{{stepName.output.field}}` syntax in input values to reference data from previous steps.
+Use `{{stepName.field}}` syntax in input values to reference data from previous steps (e.g., `{{trigger.body.email}}`, `{{step_1.id}}`). Do NOT include `.output.` in the path.
 </Tip>
 
 ### ap_delete_step
@@ -205,26 +283,50 @@ Delete a step from a flow.
 
 ## Router & Branching
 
-Manage conditional branches in router steps.
+Manage conditional branches in router steps. Use `ap_flow_structure` to see existing branch conditions and indices.
 
 ### ap_add_branch
 
-Add a conditional branch to a router step.
+Add a conditional branch to a router step. The branch is inserted before the fallback (Otherwise) branch.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
-| `stepName` | string | Yes | The router step name |
+| `routerStepName` | string | Yes | The router step name |
+| `branchName` | string | Yes | Display name for the branch |
+| `conditions` | array | No | Conditions array (see below) |
+
+**Conditions format:** Outer array = OR groups, inner array = AND conditions. Each condition has:
+- `firstValue` (string) — left-hand value, can use `{{step_1.field}}` template syntax
+- `operator` (string) — e.g. `TEXT_CONTAINS`, `NUMBER_IS_GREATER_THAN`, `EXISTS`, `BOOLEAN_IS_TRUE`
+- `secondValue` (string, optional) — right-hand value (not needed for single-value operators)
+- `caseSensitive` (boolean, optional) — for text operators
+
+### ap_update_branch
+
+Update the conditions and/or name of an existing router branch without affecting the steps inside it.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+| `routerStepName` | string | Yes | The router step name |
+| `branchIndex` | number | Yes | Branch index (0-based) |
+| `branchName` | string | No | New display name |
+| `conditions` | array | No | New conditions (same format as `ap_add_branch`). Replaces existing conditions entirely. |
+
+<Warning>
+Cannot set conditions on the fallback branch — only `branchName` can be updated for fallback branches.
+</Warning>
 
 ### ap_delete_branch
 
-Delete a branch from a router step.
+Delete a branch from a router step. Cannot delete the fallback (last) branch.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
-| `stepName` | string | Yes | The router step name |
-| `branchIndex` | number | Yes | Which branch to delete |
+| `routerStepName` | string | Yes | The router step name |
+| `branchIndex` | number | Yes | Branch index to delete (0-based) |
 
 ---
 
@@ -317,11 +419,12 @@ Test flows, inspect results, and retry failures. Test tools poll for up to 120 s
 
 ### ap_test_flow
 
-Test a flow end-to-end in the test environment using saved sample data.
+Test a flow end-to-end in the test environment. Pass `triggerTestData` to provide mock trigger output when no sample data exists (e.g., for webhook triggers).
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
+| `triggerTestData` | object | No | Mock trigger output data. Saved as sample data before running the test. |
 
 <Warning>
 The flow must have a configured trigger. The tool validates this before running and returns a clear error if not.
@@ -329,12 +432,13 @@ The flow must have a configured trigger. The tool validates this before running 
 
 ### ap_test_step
 
-Test a single step within a flow. Runs all steps up to and including the target step.
+Test a single step within a flow. Runs all steps up to and including the target step. Pass `triggerTestData` when no sample data exists.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
 | `stepName` | string | Yes | Step to test |
+| `triggerTestData` | object | No | Mock trigger output data. |
 
 ### ap_retry_run
 

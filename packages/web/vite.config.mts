@@ -35,7 +35,27 @@ export default defineConfig(({ command, mode }) => {
           changeOrigin: true,
           rewrite: (p: string) => p,
         },
-        '/.well-known/oauth-authorization-server': {
+        '/.well-known': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
+        '/register': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
+        '/authorize': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
+        '/token': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+        },
+        '/revoke': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
@@ -50,6 +70,12 @@ export default defineConfig(({ command, mode }) => {
       host: 'localhost',
     },
     resolve: {
+      dedupe: [
+        '@codemirror/state',
+        '@codemirror/view',
+        '@codemirror/language',
+        '@codemirror/commands',
+      ],
       alias: {
         '@': path.resolve(__dirname, './src'),
         '@activepieces/shared': path.resolve(
@@ -63,12 +89,6 @@ export default defineConfig(({ command, mode }) => {
         '@activepieces/pieces-framework': path.resolve(
           __dirname,
           '../../packages/pieces/framework/src',
-        ),
-        // request-filtering-agent extends Node.js http.Agent and cannot run in the browser.
-        // SSRF protection is server-side only, so we stub it out for the browser bundle.
-        'request-filtering-agent': path.resolve(
-          __dirname,
-          './src/stubs/request-filtering-agent.ts',
         ),
       },
     },

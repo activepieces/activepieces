@@ -11,7 +11,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const deleteStepInput = z.object({
     flowId: z.string(),
@@ -22,7 +22,7 @@ export const apDeleteStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
     return {
         title: 'ap_delete_step',
         permission: Permission.WRITE_FLOW,
-        description: 'Delete a step from a flow. Use ap_flow_structure to get valid step names.',
+        description: 'Delete a step from a flow. Prefer ap_update_step to modify — delete destroys sample data.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             stepName: z.string().describe('The name of the step to delete. Use ap_flow_structure to get valid values.'),
@@ -64,12 +64,13 @@ export const apDeleteStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                     platformId: project.platformId,
                     operation,
                 })
+                const draftWarning = mcpUtils.publishedFlowWarning(flow.publishedVersionId)
                 return {
-                    content: [{ type: 'text', text: `✅ Successfully deleted step "${stepName}" from flow.` }],
+                    content: [{ type: 'text', text: `✅ Successfully deleted step "${stepName}" from flow.${draftWarning}` }],
                 }
             }
             catch (err) {
-                return mcpToolError('Step delete failed', err)
+                return mcpUtils.mcpToolError('Step delete failed', err)
             }
         },
     }

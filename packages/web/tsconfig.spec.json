@@ -2,8 +2,27 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "module": "commonjs",
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@activepieces/shared": [
+        "../../packages/shared/src"
+      ],
+      "@activepieces/pieces-framework": [
+        "../../packages/pieces/framework/src"
+      ],
+      "ee-embed-sdk": [
+        "../../packages/ee/embed-sdk/src"
+      ],
+      "@activepieces/piece-ai": [
+        "../../packages/pieces/community/ai/src"
+      ]
+    },
     "types": [
+      "vite/client",
       "vitest/globals",
       "node"
     ]

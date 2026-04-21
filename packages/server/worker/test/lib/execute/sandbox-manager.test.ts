@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ApEnvironment, ExecutionMode } from '@activepieces/shared'
+import { ApEnvironment, ExecutionMode, NetworkMode } from '@activepieces/shared'
 
 const mockGetSettings = vi.fn()
 
@@ -56,7 +56,7 @@ function buildSettings({ executionMode, environment }: { executionMode: string, 
         S3_USE_SIGNED_URLS: 'false',
         EVENT_DESTINATION_TIMEOUT_SECONDS: 30,
         EDITION: 'community',
-        SSRF_PROTECTION_ENABLED: false,
+        NETWORK_MODE: NetworkMode.UNRESTRICTED,
         SSRF_ALLOW_LIST: [],
     }
 }

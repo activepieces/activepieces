@@ -2,7 +2,7 @@ import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 export const apCreateFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
@@ -31,7 +31,7 @@ export const apCreateFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
             catch (err) {
-                return mcpToolError('Flow creation failed', err)
+                return mcpUtils.mcpToolError('Flow creation failed', err)
             }
         },
     }

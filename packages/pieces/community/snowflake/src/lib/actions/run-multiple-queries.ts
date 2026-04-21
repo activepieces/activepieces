@@ -12,43 +12,40 @@ const DEFAULT_QUERY_TIMEOUT = 30000;
 export const runMultipleQueries = createAction({
   name: 'runMultipleQueries',
   displayName: 'Run Multiple Queries',
-  description: 'Run Multiple Queries',
+  description:
+    'Execute multiple SQL statements in sequence against your Snowflake database. Optionally wrap them in a transaction so all changes are rolled back if any statement fails.',
   auth: snowflakeAuth,
   props: {
     sqlTexts: Property.Array({
-      displayName: 'SQL queries',
+      displayName: 'SQL Queries',
       description:
-        'Array of SQL queries to execute in order, in the same transaction. Use :1, :2… placeholders to use binding parameters. ' +
-        'Avoid using "?" to avoid unexpected behaviors when having multiple queries.',
+        'List of SQL statements to run in order. Use `:1`, `:2`… placeholders to reference shared **Parameters** values. Avoid `?` placeholders when running multiple queries — use numbered placeholders instead to prevent unexpected behaviour.',
       required: true,
     }),
     binds: Property.Array({
       displayName: 'Parameters',
       description:
-        'Binding parameters shared across all queries to prevent SQL injection attacks. ' +
-        'Use :1, :2, etc. to reference parameters in order. ' +
-        'Avoid using "?" to avoid unexpected behaviors when having multiple queries. ' +
-        'Unused parameters are allowed.',
+        'Values shared across all queries for the numbered placeholders (`:1`, `:2`…). Provide them in order. Unused parameters are allowed.',
       required: false,
     }),
     useTransaction: Property.Checkbox({
       displayName: 'Use Transaction',
       description:
-        'When enabled, all queries will be executed in a single transaction. If any query fails, all changes will be rolled back.',
+        'When enabled, all queries run inside a single transaction. If any query fails, every preceding change in this batch is rolled back automatically.',
       required: false,
       defaultValue: false,
     }),
     timeout: Property.Number({
-      displayName: 'Query timeout (ms)',
+      displayName: 'Query Timeout (ms)',
       description:
-        'An integer indicating the maximum number of milliseconds to wait for a query to complete before timing out.',
+        'Maximum time in milliseconds to wait for each query to complete before cancelling it. Defaults to 30 000 ms (30 seconds).',
       required: false,
       defaultValue: DEFAULT_QUERY_TIMEOUT,
     }),
     application: Property.ShortText({
-      displayName: 'Application name',
+      displayName: 'Application Name',
       description:
-        'A string indicating the name of the client application connecting to the server.',
+        'An optional label sent to Snowflake to identify this client. Visible in query history under **Monitoring → Query History → Client Application**.',
       required: false,
       defaultValue: DEFAULT_APPLICATION_NAME,
     }),

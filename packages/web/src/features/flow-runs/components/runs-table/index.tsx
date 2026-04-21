@@ -114,7 +114,6 @@ export const RunsTable = () => {
       return runningRuns?.length ? 15 * 1000 : false;
     },
   });
-
   const columns = runsTableColumns({
     data,
     selectedRows,
