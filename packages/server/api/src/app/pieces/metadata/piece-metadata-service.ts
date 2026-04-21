@@ -6,7 +6,6 @@ import {
     ErrorCode,
     EXACT_VERSION_REGEX,
     isNil,
-    ListPieceVersionsResponse,
     LocalesEnum,
     PackageType,
     PieceCategory,
@@ -54,30 +53,11 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             return toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType)
         },
         async registry(params: RegistryParams): Promise<PiecePackageInformation[]> {
-            const registry = await pieceCache(log).getRegistry({ release: params.release })
+            const registry = await pieceCache(log).getRegistry({ release: params.release, platformId: params.platformId })
             return registry.map((piece) => ({
                 name: piece.name,
                 version: piece.version,
             }))
-        },
-        async listVersions({ name, platformId, projectId }: ListVersionsParams): Promise<ListPieceVersionsResponse> {
-            const piece = await this.get({ name, platformId, projectId })
-            if (isNil(piece)) {
-                return {
-                    data: [],
-                    next: null,
-                    previous: null,
-                }
-            }
-            const registry = await pieceCache(log).getRegistry({ release: undefined, platformId })
-            const versions = registry
-                .filter((entry) => entry.name === name)
-                .map((entry) => entry.version)
-            return {
-                data: versions.sort((a, b) => semVer.rcompare(a, b)).map((version) => ({ version })),
-                next: null,
-                previous: null,
-            }
         },
         async get({ projectId, platformId, version, name }: GetOrThrowParams): Promise<PieceMetadataModel | undefined> {
             const bestMatch = await findExactVersion(log, { name, version, platformId })
@@ -441,11 +421,6 @@ type GetExactPieceVersionParams = {
 
 type RegistryParams = {
     release: string
-}
-
-type ListVersionsParams = {
-    name: string
-    platformId: string 
-    projectId: string
+    platformId?: string
 }
 
