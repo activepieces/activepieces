@@ -31,8 +31,14 @@ export class OutsetaClient {
 
   async getAllPages<T>(basePath: string, pageSize = 100): Promise<T[]> {
     const allItems: T[] = [];
-    // Outseta's `offset` is page-based (0 = first page, 1 = second page, ...)
-    // not item-based, so we increment by 1, not by pageSize.
+    // Outseta's `offset` is PAGE-BASED, not item-based.
+    // Verified against the live API on /crm/people (total=182):
+    //   limit=100 offset=0 → 100 items (items 0-99)
+    //   limit=100 offset=1 → 82 items  (items 100-181)
+    //   limit=100 offset=2 → 0 items   (past end)
+    //   limit=50  offset=3 → 32 items  (items 150-181)
+    //   limit=25  offset=7 → 7 items   (items 175-181)
+    // Increment by 1 per iteration, not by pageSize.
     let page = 0;
 
     while (true) {
