@@ -10,6 +10,10 @@ export const newSupportTicketEventTrigger = createTrigger({
     "Triggers on support ticket events. Configure a matching notification in Outseta → Settings → Notifications pointing to this trigger's webhook URL.",
   type: TriggerStrategy.WEBHOOK,
   props: {
+    setup: Property.MarkDown({
+      value:
+        '**Setup:** Copy this trigger\'s webhook URL `{{webhookUrl}}`. In Outseta go to **Settings → Notifications → Add Notification**, select the event you chose below and paste the URL as the callback. If you selected multiple events, create one notification per event — all pointing to this same URL.',
+    }),
     eventSubTypes: Property.StaticMultiSelectDropdown({
       displayName: 'Events',
       description:

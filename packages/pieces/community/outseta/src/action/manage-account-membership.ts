@@ -57,9 +57,11 @@ export const manageAccountMembershipAction = createAction({
         (pa: any) => pa.Person?.Uid === context.propsValue.personUid
       );
       if (alreadyLinked) {
-        throw new Error(
-          `Person ${context.propsValue.personUid} is already a member of account ${context.propsValue.accountUid}.`
-        );
+        return {
+          action: 'already_member',
+          account_uid: context.propsValue.accountUid,
+          person_uid: context.propsValue.personUid,
+        };
       }
       const updatedMemberships = [
         ...existingMemberships.map((pa: any) => ({
@@ -88,9 +90,11 @@ export const manageAccountMembershipAction = createAction({
       (pa: any) => pa.Person?.Uid === context.propsValue.personUid
     );
     if (!membership) {
-      throw new Error(
-        `Person ${context.propsValue.personUid} is not a member of account ${context.propsValue.accountUid}.`
-      );
+      return {
+        action: 'not_a_member',
+        account_uid: context.propsValue.accountUid,
+        person_uid: context.propsValue.personUid,
+      };
     }
     await client.delete<any>(
       `/api/v1/crm/accounts/${context.propsValue.accountUid}/memberships/${membership.Uid}`
