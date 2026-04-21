@@ -9,7 +9,6 @@ import { getPersonAction } from './action/get-person';
 import { getDealAction } from './action/get-deal';
 
 // Actions — Create
-import { createPersonAction } from './action/create-person';
 import { createAccountAction } from './action/create-account';
 import { createDealAction } from './action/create-deal';
 
@@ -41,14 +40,12 @@ import { addInvoiceAction } from './action/add-invoice';
 import { addInvoicePaymentAction } from './action/add-invoice-payment';
 
 // Actions — CRM
-import { addPersonToAccountAction } from './action/add-person-to-account';
-import { removePersonFromAccountAction } from './action/remove-person-from-account';
+import { manageAccountMembershipAction } from './action/manage-account-membership';
 import { deleteDealAction } from './action/delete-deal';
 import { addCustomActivityAction } from './action/add-custom-activity';
 
 // Actions — Email
-import { subscribeToEmailListAction } from './action/subscribe-to-email-list';
-import { removeSubscriberFromListAction } from './action/remove-subscriber-from-list';
+import { manageEmailListSubscriptionAction } from './action/manage-email-list-subscription';
 import { sendConfirmationEmailAction } from './action/send-confirmation-email';
 
 // Actions — Support
@@ -85,7 +82,6 @@ export const outseta = createPiece({
     getPersonAction,
     getDealAction,
     // Create
-    createPersonAction,
     createAccountAction,
     createDealAction,
     // Delete
@@ -112,12 +108,10 @@ export const outseta = createPiece({
     addInvoiceAction,
     addInvoicePaymentAction,
     // CRM
-    addPersonToAccountAction,
-    removePersonFromAccountAction,
+    manageAccountMembershipAction,
     addCustomActivityAction,
     // Email
-    subscribeToEmailListAction,
-    removeSubscriberFromListAction,
+    manageEmailListSubscriptionAction,
     sendConfirmationEmailAction,
     // Support
     addCaseAction,
