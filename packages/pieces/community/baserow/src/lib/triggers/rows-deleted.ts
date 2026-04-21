@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowJwtAuth } from '../auth';
-import { baserowCommon } from '../common';
+import { baserowCommon, makeJwtClient } from '../common';
 import { createWebhookTriggerHooks } from '../common/webhook-trigger';
 
 const webhookHooks = createWebhookTriggerHooks('rows.deleted', 'baserow_rows_deleted');
@@ -28,6 +28,16 @@ export const rowsDeletedTrigger = createTrigger({
   async run(context) {
     const body = context.payload.body as { row_ids?: number[] };
     const rows = (body.row_ids ?? []).map((id) => ({ id }));
+    return [{ rows, count: rows.length }];
+  },
+  async test(context) {
+    const tableId = context.propsValue.table_id;
+    if (!tableId) return [{ rows: [], count: 0 }];
+    const client = await makeJwtClient(context.auth);
+    const response = (await client.listRows(tableId, 1, 10)) as {
+      results?: { id: number }[];
+    };
+    const rows = (response.results ?? []).map((row) => ({ id: row.id }));
     return [{ rows, count: rows.length }];
   },
 });

@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowJwtAuth } from '../auth';
-import { baserowCommon } from '../common';
+import { baserowCommon, makeJwtClient } from '../common';
 import { createWebhookTriggerHooks } from '../common/webhook-trigger';
 
 const webhookHooks = createWebhookTriggerHooks('rows.updated', 'baserow_rows_updated');
@@ -38,6 +38,19 @@ export const rowsUpdatedTrigger = createTrigger({
     const rows = (body.items ?? []).map((item, i) => ({
       row: item,
       previous: (body.old_items ?? [])[i] ?? null,
+    }));
+    return [{ rows, count: rows.length }];
+  },
+  async test(context) {
+    const tableId = context.propsValue.table_id;
+    if (!tableId) return [{ rows: [], count: 0 }];
+    const client = await makeJwtClient(context.auth);
+    const response = (await client.listRows(tableId, 1, 10)) as {
+      results?: Record<string, unknown>[];
+    };
+    const rows = (response.results ?? []).map((row) => ({
+      row,
+      previous: null,
     }));
     return [{ rows, count: rows.length }];
   },

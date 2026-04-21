@@ -13,7 +13,7 @@ export const rowEventTrigger = createTrigger({
   auth: baserowJwtAuth,
   displayName: 'Row Event',
   description:
-    'Triggers when a row is created, updated, or deleted in a Baserow table.',
+    'Triggers when a row is created, updated, or deleted in a Baserow table. Choose which events to listen to.',
   type: TriggerStrategy.WEBHOOK,
   props: {
     table_id: baserowCommon.tableId(),
@@ -93,6 +93,20 @@ export const rowEventTrigger = createTrigger({
     return items.map((row) => ({
       event_type: eventType,
       row,
+      previous_row: null,
+    }));
+  },
+  async test(context) {
+    const tableId = context.propsValue.table_id;
+    if (!tableId) return [];
+    const client = await makeJwtClient(context.auth);
+    const response = (await client.listRows(tableId, 1, 10)) as {
+      results?: Record<string, unknown>[];
+    };
+    return (response.results ?? []).map((row) => ({
+      event_type: 'rows.created',
+      row,
+      previous_row: null,
     }));
   },
 });
