@@ -25,6 +25,10 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  isSessionExpiredError,
+  getSessionExpiredMessage,
+} from '@/features/authentication';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authClient } from '@/lib/better-auth';
 
@@ -62,7 +66,7 @@ export const NewOAuth2Dialog = ({
       await platformApi.update(request, platform.id);
       const googleConfig = request.federatedAuthProviders?.google;
       if (googleConfig && providerName === 'google') {
-        await authClient.sso.register({
+        const { error } = await authClient.sso.register({
           providerId: `${providerName}-${platform.id}`,
           issuer: 'https://accounts.google.com',
           domain: `platform-${platform.id}`,
@@ -72,6 +76,9 @@ export const NewOAuth2Dialog = ({
             scopes: ['openid', 'email', 'profile'],
           },
         });
+        if (error) {
+          throw error;
+        }
       }
       await refetch();
     },
@@ -80,6 +87,20 @@ export const NewOAuth2Dialog = ({
         duration: 3000,
       });
       setOpen(false);
+    },
+    onError: (error) => {
+      if (
+        'status' in error &&
+        isSessionExpiredError({ status: error.status as number })
+      ) {
+        form.setError('root.serverError', {
+          message: getSessionExpiredMessage(),
+        });
+      } else {
+        form.setError('root.serverError', {
+          message: t('Something went wrong'),
+        });
+      }
     },
   });
 

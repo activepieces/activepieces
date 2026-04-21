@@ -25,7 +25,7 @@ function use2faRateLimit({
         setError(null);
         return;
       }
-      if (isSessionExpiredError(error)) {
+      if (error?.status === 401) {
         setError(getSessionExpiredMessage());
         return;
       }
