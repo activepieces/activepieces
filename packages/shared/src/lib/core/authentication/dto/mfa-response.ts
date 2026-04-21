@@ -11,6 +11,6 @@ export const MfaChallengeResponse = z.object({
 })
 export type MfaChallengeResponse = z.infer<typeof MfaChallengeResponse>
 
-export const RATE_LIMIT_WINDOW_SECONDS = 10
+export const RATE_LIMIT_WINDOW_SECONDS = 30
 
 export { isMfaChallenge }
