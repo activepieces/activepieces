@@ -47,7 +47,10 @@ export const manageAccountMembershipAction = createAction({
     const account = await client.get<any>(
       `/api/v1/crm/accounts/${context.propsValue.accountUid}`
     );
-    const existingMemberships: any[] = account.PersonAccount ?? [];
+    const existingMemberships: any[] =
+      account.PersonAccount?.items ??
+      account.PersonAccount?.Items ??
+      (Array.isArray(account.PersonAccount) ? account.PersonAccount : []);
 
     if (context.propsValue.action === 'add') {
       const alreadyLinked = existingMemberships.some(

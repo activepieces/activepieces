@@ -49,7 +49,8 @@ export class OutsetaClient {
   }
 
   static escapeOData(value: string): string {
-    return encodeURIComponent(value.replace(/'/g, "''"));
+    const odataEscaped = value.replace(/'/g, "''");
+    return encodeURIComponent(odataEscaped).replace(/%40/g, '@');
   }
 
   private async request<T>(
