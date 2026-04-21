@@ -1,36 +1,19 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowJwtAuth } from '../auth';
 import { baserowCommon, makeJwtClient } from '../common';
 
 const STORE_KEY = 'baserow_row_event';
+const ALL_EVENTS = ['rows.created', 'rows.updated', 'rows.deleted'];
 
 export const rowEventTrigger = createTrigger({
   name: 'baserow_row_event',
   auth: baserowJwtAuth,
   displayName: 'Row Event',
   description:
-    'Triggers when a row is created, updated, or deleted in a Baserow table. Choose which events to listen to.',
+    'Triggers when a row is created, updated, or deleted in a Baserow table. To react to only one event type, use the dedicated Row Created, Row Updated, or Row Deleted triggers.',
   type: TriggerStrategy.WEBHOOK,
   props: {
     table_id: baserowCommon.tableId(),
-    events: Property.StaticMultiSelectDropdown({
-      displayName: 'Events',
-      description: 'Select which row events should trigger this flow.',
-      required: true,
-      defaultValue: ['rows.created', 'rows.updated', 'rows.deleted'],
-      options: {
-        disabled: false,
-        options: [
-          { label: 'Row Created', value: 'rows.created' },
-          { label: 'Row Updated', value: 'rows.updated' },
-          { label: 'Row Deleted', value: 'rows.deleted' },
-        ],
-      },
-    }),
   },
   sampleData: {
     event_type: 'rows.updated',
@@ -49,13 +32,12 @@ export const rowEventTrigger = createTrigger({
   },
   async onEnable(context) {
     const tableId = context.propsValue.table_id;
-    const selectedEvents = context.propsValue.events;
-    if (!tableId || !selectedEvents || selectedEvents.length === 0) return;
+    if (!tableId) return;
     const client = await makeJwtClient(context.auth);
     const webhook = await client.createWebhook(
       tableId,
       context.webhookUrl,
-      selectedEvents,
+      ALL_EVENTS,
       `Activepieces – ${STORE_KEY}`
     );
     await context.store.put(STORE_KEY, { webhookId: webhook.id });
