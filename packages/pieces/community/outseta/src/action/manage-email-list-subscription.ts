@@ -51,7 +51,24 @@ export const manageEmailListSubscriptionAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
+    const existingSubscriptions = await client.getAllPages<any>(
+      `/api/v1/email/lists/${context.propsValue.emailListUid}/subscriptions?Person.Email=${encodeURIComponent(context.propsValue.email)}&fields=*,Person.*`
+    );
+    const subscription = existingSubscriptions.find(
+      (s: any) => s.Person?.Email?.toLowerCase() === context.propsValue.email.toLowerCase()
+    );
+
     if (context.propsValue.action === 'subscribe') {
+      if (subscription) {
+        return {
+          action: 'already_subscribed',
+          uid: subscription.Uid ?? null,
+          email_list_uid: context.propsValue.emailListUid,
+          person_email: subscription.Person?.Email ?? null,
+          person_uid: subscription.Person?.Uid ?? null,
+        };
+      }
+
       const person: Record<string, unknown> = {
         Email: context.propsValue.email,
       };
@@ -75,17 +92,12 @@ export const manageEmailListSubscriptionAction = createAction({
         created: result.Created ?? null,
       };
     }
-
-    const subscriptions = await client.getAllPages<any>(
-      `/api/v1/email/lists/${context.propsValue.emailListUid}/subscriptions?Person.Email=${encodeURIComponent(context.propsValue.email)}&fields=*,Person.*`
-    );
-    const subscription = subscriptions.find(
-      (s: any) => s.Person?.Email?.toLowerCase() === context.propsValue.email.toLowerCase()
-    );
     if (!subscription) {
-      throw new Error(
-        `No subscription found for email "${context.propsValue.email}" in this list.`
-      );
+      return {
+        action: 'not_subscribed',
+        email_list_uid: context.propsValue.emailListUid,
+        email: context.propsValue.email,
+      };
     }
     await client.delete<any>(
       `/api/v1/email/lists/${context.propsValue.emailListUid}/subscriptions/${subscription.Uid}`
