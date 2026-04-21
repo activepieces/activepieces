@@ -11,6 +11,22 @@ export class BetterAuth1776192009225 implements Migration {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
 
+        // ── temporary nanoid function for ID generation ─────────────────
+        await queryRunner.query(`
+            CREATE OR REPLACE FUNCTION _ap_nanoid() RETURNS character varying(21) AS $$
+            DECLARE
+                alphabet text := '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+                result   text := '';
+                i        int;
+            BEGIN
+                FOR i IN 1..21 LOOP
+                    result := result || substr(alphabet, floor(random() * 62)::int + 1, 1);
+                END LOOP;
+                RETURN result;
+            END;
+            $$ LANGUAGE plpgsql VOLATILE
+        `)
+
         // ── user_identity schema changes ──────────────────────────────────
         await queryRunner.query('alter table "user_identity" add column "name" character varying not null default \'\'')
         await queryRunner.query('alter table "user_identity" add column "image" character varying')
@@ -72,7 +88,7 @@ export class BetterAuth1776192009225 implements Migration {
                 loop
                     insert into "account" ("id", "accountId", "providerId", "userId", "password", "createdAt", "updatedAt")
                     select
-                        replace(gen_random_uuid()::text, '-', '')::character varying(21),
+                        _ap_nanoid(),
                         "email",
                         'credential',
                         "id",
@@ -104,7 +120,7 @@ export class BetterAuth1776192009225 implements Migration {
                 loop
                     insert into "account" ("id", "accountId", "providerId", "userId", "createdAt", "updatedAt")
                     select
-                        replace(gen_random_uuid()::text, '-', '')::character varying(21),
+                        _ap_nanoid(),
                         "email",
                         'google',
                         "id",
@@ -158,7 +174,7 @@ export class BetterAuth1776192009225 implements Migration {
         await queryRunner.query(`
             INSERT INTO "ssoProvider" ("id", "providerId", "issuer", "domain", "oidcConfig", "createdAt", "updatedAt")
             SELECT
-                replace(gen_random_uuid()::text, '-', '')::character varying(21),
+                _ap_nanoid(),
                 'google-' || p."id",
                 'https://accounts.google.com',
                 'platform-' || p."id",
@@ -181,7 +197,7 @@ export class BetterAuth1776192009225 implements Migration {
         await queryRunner.query(`
             INSERT INTO "ssoProvider" ("id", "providerId", "issuer", "domain", "samlConfig", "createdAt", "updatedAt")
             SELECT
-                replace(gen_random_uuid()::text, '-', '')::character varying(21),
+                _ap_nanoid(),
                 'saml-' || p."id",
                 'Activepieces',
                 'platform-' || p."id",
@@ -219,6 +235,9 @@ export class BetterAuth1776192009225 implements Migration {
                 "lastRequest" BIGINT NOT NULL
             )
         `)
+
+        // ── cleanup temporary function ──────────────────────────────────
+        await queryRunner.query('DROP FUNCTION IF EXISTS _ap_nanoid()')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
