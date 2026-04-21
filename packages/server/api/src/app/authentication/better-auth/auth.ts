@@ -84,18 +84,11 @@ async function createBetterAuth(log: FastifyBaseLogger) {
             sendOnSignUp: false,
             sendVerificationEmail: service.sendVerificationEmail,
         },
-        trustedOrigins: async (request) => {
-            const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-            const defaultOrigins = [frontendUrl, 'https://accounts.google.com', 'https://*.googleapis.com']
-            if (!request) {
-                return defaultOrigins
-            }
-            if (request.url.includes('/sso')) {
-                const origin = request.headers.get('origin')
-                return [...defaultOrigins, ...(origin ? [origin] : [])]
-            }
-            return defaultOrigins
-        },
+        trustedOrigins: [
+            system.getOrThrow(AppSystemProp.FRONTEND_URL),
+            'https://accounts.google.com',
+            'https://*.googleapis.com',
+        ],
         plugins: [
             twoFactor({ issuer: 'Activepieces' }),
             sso({
@@ -111,7 +104,7 @@ async function createBetterAuth(log: FastifyBaseLogger) {
                         imageUrl: userInfo.image ?? undefined,
                     })
                 },
-                provisionUserOnEveryLogin: true,
+                provisionUserOnEveryLogin: false,
             }),
         ],
         hooks: {

@@ -732,7 +732,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAiProvidersEnabledToPlatformPlan1775728983000,
         AddConcurrencyPoolTable1775800000000,
         AddDefaultToAiProvidersEnabled1776000000000,
-        // BetterAuth1776192009225,
+        BetterAuth1776192009225,
         DropWaitpointTimeoutSeconds1776342514732,
     ]
     return migrations

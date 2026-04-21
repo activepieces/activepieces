@@ -1,3 +1,4 @@
+import { apDayjs } from '@activepieces/server-utils'
 import { ActivepiecesError, ApplicationEventName, assertNotNullOrUndefined, ErrorCode, isMfaChallenge, isNil, OtpType, tryCatch, UserIdentityProvider } from '@activepieces/shared'
 import { AuthContext, MiddlewareContext, MiddlewareOptions } from 'better-auth/*'
 import { getOAuthState } from 'better-auth/api'
@@ -11,7 +12,6 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { userService } from '../../user/user-service'
 import { authenticationService } from '../authentication.service'
 import { userIdentityRepository } from '../user-identity/user-identity-service'
-import { apDayjs } from '@activepieces/server-utils'
 
 type SentData = {
     user: User
@@ -129,7 +129,7 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
             ctx.setCookie('token', token, {
                 httpOnly: false,
                 path: '/',
-                expires: apDayjs().add(30, 'seconds').toDate()
+                expires: apDayjs().add(30, 'seconds').toDate(),
             })
             throw ctx.redirect(`${redirectBaseUrl}?response=${JSON.stringify(user)}&state=${state}` )
         }

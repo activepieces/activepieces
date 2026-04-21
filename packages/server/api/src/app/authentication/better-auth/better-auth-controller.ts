@@ -20,6 +20,7 @@ export const betterAuthController: FastifyPluginAsyncZod = async (app) => {
                 void reply.send(response.body ? await response.text() : null)
             }
             catch (error) {
+                request.log.error({ err: error }, '[better-auth] Unhandled authentication error')
                 void reply.status(500).send({
                     error: 'Internal authentication error',
                     code: 'AUTH_FAILURE',

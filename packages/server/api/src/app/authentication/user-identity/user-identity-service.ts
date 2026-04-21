@@ -30,11 +30,23 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         }))
 
         if (error || !response?.user) {
+            const isExistingUser = !error
+                || error.message === 'User already exists'
+                || ("code" in error && error.code === 'USER_ALREADY_EXISTS')
+            if (isExistingUser) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.EXISTING_USER,
+                    params: {
+                        email: params.email,
+                        platformId: null,
+                    },
+                })
+            }
+            log.error({ err: error, email: params.email }, '[userIdentityService#create] signUpEmail failed unexpectedly')
             throw new ActivepiecesError({
-                code: ErrorCode.EXISTING_USER,
+                code: ErrorCode.AUTHENTICATION,
                 params: {
-                    email: params.email,
-                    platformId: null,
+                    message: 'Sign up failed',
                 },
             })
         }
@@ -151,6 +163,12 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             })
         }
         const user = await userIdentityRepository().findOneByOrFail({ id: params.identityId })
+        if (!user.emailVerified) {
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_OTP,
+                params: {},
+            })
+        }
         return user
     },
     async sendResetPasswordEmail(params: SendResetPasswordParams): Promise<void> {
@@ -176,6 +194,8 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
                 params: {},
             })
         }
+        const hashedPassword = await passwordHasher.hash(params.newPassword)
+        await userIdentityRepository().update({ id: params.identityId }, { password: hashedPassword })
         const user = await userIdentityRepository().findOneByOrFail({ id: params.identityId })
         return user
     },
