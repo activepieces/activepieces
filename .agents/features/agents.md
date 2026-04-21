@@ -51,7 +51,7 @@ The agent step is a `PIECE` action on `@activepieces/piece-agent`. Its `settings
 - `webSearch` / `webSearchOptions` — optional web search tool configuration
 
 ## Tool Validation
-MCP tools are validated before saving via `POST /v1/mcp/:mcpId/validate-agent-mcp-tool` (see `mcpToolApi`), which calls the MCP server and returns the list of tool names or an error.
+MCP tools are validated in the browser before saving via `mcpToolApi.validateAgentMcpTool` (see `packages/web/src/features/agents/agent-tools/mcp-tool-dialog/validate-mcp-tool.ts`), which performs the JSON-RPC `initialize` + `tools/list` handshake directly against the MCP server and returns the list of tool names or an error. Moving this out of the server eliminates the SSRF surface from user-supplied MCP URLs.
 
 ## Timeline Rendering
 `AgentTimeline` receives `AgentStepBlock[]` from the step output and renders:

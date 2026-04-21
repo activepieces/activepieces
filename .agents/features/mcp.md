@@ -75,7 +75,8 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `POST /v1/mcp/:projectId` — update status and/or enabledTools
 - `POST /v1/mcp/:projectId/rotate` — rotate auth token
 - `POST /v1/mcp/:projectId/http` — StreamableHTTP MCP protocol endpoint (main protocol handler)
-- `POST /v1/mcp/:projectId/validate-agent-mcp-tool` — validate external MCP server URL
+
+External MCP tool validation is performed entirely in the browser (see `packages/web/src/features/agents/agent-tools/mcp-tool-dialog/validate-mcp-tool.ts`); there is no server-side endpoint for it.
 
 ## Authentication
 
