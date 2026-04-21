@@ -18,7 +18,8 @@ export const publishPiece = async (name: string): Promise<void> => {
     return
   }
 
-  await exec(`turbo run build --filter=@activepieces/piece-${name}`)
+  const { name: packageName } = await readPackageJson(directory)
+  await exec(`turbo run build --filter=${packageName}`)
 
   await publishNpmPackage(directory)
 
