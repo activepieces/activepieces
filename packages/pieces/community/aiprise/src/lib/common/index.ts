@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
-const BASE_URL = 'https://api.aiprise.com/api/v1';
+const BASE_URL = 'https://api-sandbox.aiprise.com/api/v1';
 
 async function makeRequest<T>({
   apiKey,

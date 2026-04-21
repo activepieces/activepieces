@@ -2,7 +2,7 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
 
-import { runUserVerificationAction } from './lib/actions/run-user-verification';
+import { runUserVerificationProfileAction } from './lib/actions/run-user-verification-profile';
 import { getVerificationUrlAction } from './lib/actions/get-verification-url';
 import { getVerificationResultAction } from './lib/actions/get-verification-result';
 import { getUserInputDataAction } from './lib/actions/get-user-input-data';
@@ -12,7 +12,9 @@ import { getBusinessResultAction } from './lib/actions/get-business-result';
 import { getBusinessInputDataAction } from './lib/actions/get-business-input-data';
 import { runDocumentCheckAction } from './lib/actions/run-document-check';
 import { createBusinessProfileAction } from './lib/actions/create-business-profile';
+import { createUserProfileAction } from './lib/actions/create-user-profile';
 import { getAdditionalUserInfoAction } from './lib/actions/get-additional-user-info';
+import { getBusinessDocumentsAction } from './lib/actions/get-business-documents';
 
 export const aipriseAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -34,7 +36,7 @@ export const aiprise = createPiece({
   auth: aipriseAuth,
   authors: ['sanket-a11y'],
   actions: [
-    runUserVerificationAction,
+    runUserVerificationProfileAction,
     getVerificationUrlAction,
     getVerificationResultAction,
     getUserInputDataAction,
@@ -44,12 +46,14 @@ export const aiprise = createPiece({
     getBusinessInputDataAction,
     runDocumentCheckAction,
     createBusinessProfileAction,
+    createUserProfileAction,
     getAdditionalUserInfoAction,
+    getBusinessDocumentsAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.aiprise.com/api/v1',
       auth: aipriseAuth,
       authMapping: async (auth) => ({
-        'X-API-KEY': (auth as { secret_text: string }).secret_text,
+        'X-API-KEY': auth.secret_text,
       }),
     }),
   ],

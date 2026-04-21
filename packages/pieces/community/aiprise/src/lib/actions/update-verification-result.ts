@@ -10,7 +10,7 @@ export const updateVerificationResultAction = createAction({
   description:
     'Manually changes the outcome of an identity check — useful when a human reviewer needs to approve or decline a case that AiPrise flagged for manual review.',
   props: {
-    session_id: Property.ShortText({
+    verification_session_id: Property.ShortText({
       displayName: 'Verification Session ID',
       description:
         'The ID of the verification whose decision you want to change. You can get this from the output of the **Start Identity Verification** action, or from the **session_id** field in any webhook payload from AiPrise.',
@@ -23,20 +23,21 @@ export const updateVerificationResultAction = createAction({
       required: true,
       options: {
         options: [
-          { label: 'Approved — pass the person', value: 'approved' },
-          { label: 'Declined — reject the person', value: 'declined' },
-          { label: 'Pending — send back to manual review', value: 'pending' },
+          { label: 'Approved — pass the person', value: 'APPROVED' },
+          { label: 'Declined — reject the person', value: 'DECLINED' },
+          { label: 'Review — put in manual review', value: 'REVIEW' },
+          {label: 'Deactivated — deactivate the profile', value: 'DEACTIVATED' },
         ],
       },
     }),
   },
   async run(context) {
-    const { session_id, result } = context.propsValue;
+    const { verification_session_id, result } = context.propsValue;
     const response = await aiprise.makeRequest<Record<string, unknown>>({
       apiKey: context.auth.secret_text,
       method: HttpMethod.POST,
       path: '/verify/update_user_verification_result',
-      body: { session_id, result },
+      body: { verification_session_id, result },
     });
     return response;
   },

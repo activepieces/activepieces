@@ -16,20 +16,19 @@ export const runBusinessVerificationAction = createAction({
         'Which set of checks to run on the business. To find this: log in to AiPrise → go to **Templates** → open the template you want → copy the **Template ID** shown at the top of the page.',
       required: true,
     }),
-    business_id: Property.ShortText({
-      displayName: 'Your Business Reference',
-      description:
-        'Your own identifier for this company — for example your CRM account ID, company registration number, or internal record ID. AiPrise stores this alongside the verification so you can match results back to your records.',
+    business_profile_id: Property.ShortText({
+      displayName: 'Business Profile ID',
+      description: ' The ID of the business profile you want to verify. This is returned when you create a business profile, or you can look it up using the List Business Profiles action.',
       required: true,
     }),
   },
   async run(context) {
-    const { template_id, business_id } = context.propsValue;
+    const { template_id, business_profile_id } = context.propsValue;
     const result = await aiprise.makeRequest<Record<string, unknown>>({
       apiKey: context.auth.secret_text,
       method: HttpMethod.POST,
-      path: '/verify/run_business_verification',
-      body: { template_id, business_id },
+      path: '/verify/run_verification_for_business_profile_id',
+      body: { template_id, business_profile_id },
     });
     return result;
   },

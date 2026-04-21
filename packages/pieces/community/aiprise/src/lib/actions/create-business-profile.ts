@@ -50,10 +50,37 @@ export const createBusinessProfileAction = createAction({
       description: 'A government-issued entity identifier for this business.',
       required: false,
     }),
-    addresses: Property.Json({
+    addresses: Property.Array({
       displayName: 'Addresses',
       description: 'A JSON array of address objects associated with the business.',
       required: false,
+      properties: {
+        address_street_1: Property.ShortText({
+          displayName: 'Street Address 1',
+          required: false,
+        }),
+        address_street_2: Property.ShortText({
+          displayName: 'Street Address 2',
+          required: false,
+        }),
+        address_city: Property.ShortText({
+          displayName: 'City',
+          required: false,
+        }),
+        address_state: Property.ShortText({
+          displayName: 'State/Province',
+          required: false,
+        }),
+        address_zip_code: Property.ShortText({
+          displayName: 'ZIP/Postal Code',
+          required: false,
+        }),
+        address_country: Property.ShortText({
+          displayName: 'Country Code',
+          description: '2-letter ISO country code (e.g. US, GB).',
+          required: false,
+        }),
+      },
     }),
     phone_numbers: Property.Array({
       displayName: 'Phone Numbers',
@@ -65,7 +92,7 @@ export const createBusinessProfileAction = createAction({
       description: 'One or more email addresses associated with the business.',
       required: false,
     }),
-    additional_information: Property.Json({
+    additional_information: Property.Array({
       displayName: 'Additional Information',
       description: 'A JSON array of supporting documents or extra data for this business.',
       required: false,
@@ -75,11 +102,7 @@ export const createBusinessProfileAction = createAction({
       description: 'Your own internal identifier for this business.',
       required: false,
     }),
-    client_reference_data: Property.Json({
-      displayName: 'Client Reference Data',
-      description: 'Any additional JSON data you want to store alongside this profile.',
-      required: false,
-    }),
+   
     callback_url: Property.ShortText({
       displayName: 'Callback URL',
       description: 'A webhook URL that AiPrise will call with verification results.',
@@ -111,7 +134,6 @@ export const createBusinessProfileAction = createAction({
       email_addresses,
       additional_information,
       client_reference_id,
-      client_reference_data,
       callback_url,
       events_callback_url,
       tags,
@@ -126,12 +148,11 @@ export const createBusinessProfileAction = createAction({
     if (country_code) body['country_code'] = country_code;
     if (state_code) body['state_code'] = state_code;
     if (business_entity_id) body['business_entity_id'] = business_entity_id;
-    if (addresses) body['addresses'] = addresses;
+    if (addresses && addresses.length > 0) body['addresses'] = addresses;
     if (phone_numbers && phone_numbers.length > 0) body['phone_numbers'] = phone_numbers;
     if (email_addresses && email_addresses.length > 0) body['email_addresses'] = email_addresses;
     if (additional_information) body['additional_information'] = additional_information;
     if (client_reference_id) body['client_reference_id'] = client_reference_id;
-    if (client_reference_data) body['client_reference_data'] = client_reference_data;
     if (callback_url) body['callback_url'] = callback_url;
     if (events_callback_url) body['events_callback_url'] = events_callback_url;
     if (tags && tags.length > 0) body['tags'] = tags;
