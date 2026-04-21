@@ -7,15 +7,13 @@ const EVENT_TYPE_STATUS_MAP: Record<string, string> = {
   post_published: 'published',
   post_scheduled: 'scheduled',
   post_failed: 'failed',
-  comment_added: 'published',
 };
 
-export const newNotificationTrigger = createTrigger({
+export const postNotificationTrigger = createTrigger({
   auth: feedhiveAuth,
-  name: 'new_notification',
-  displayName: 'New Notification',
-  description:
-    'Triggers when FeedHive sends a notification (post published, scheduled, failed, or comment added).',
+  name: 'post_notification',
+  displayName: 'Post Notification',
+  description: 'Triggers when a post is published, scheduled, or fails.',
   props: {
     event_type: Property.StaticDropdown({
       displayName: 'Event Type',
@@ -28,7 +26,6 @@ export const newNotificationTrigger = createTrigger({
           { label: 'Post Published', value: 'post_published' },
           { label: 'Post Scheduled', value: 'post_scheduled' },
           { label: 'Post Failed', value: 'post_failed' },
-          { label: 'Comment Added', value: 'comment_added' },
         ],
       },
     }),
@@ -38,14 +35,16 @@ export const newNotificationTrigger = createTrigger({
 1. Enable this flow and copy the **Webhook URL** shown below.
 2. In FeedHive, go to **Settings → Automation → Notifications**.
 3. Click **Create New Notification**.
-4. Choose the matching event type and paste the Webhook URL, then click **Save**.
-
-To listen to multiple event types, create a separate flow per event type, each with its own FeedHive notification.`,
+4. Choose the matching event type and paste the Webhook URL, then click **Save**.`,
     }),
   },
   sampleData: {
     post_id: 'xxxx-abcd-1234',
     post_excerpt: 'This is the first part of the post caption...',
+    social_type: 'Facebook',
+    social_name: 'My Facebook Page',
+    public_id: '123456789101112_1314151617181920',
+    public_url: 'https://www.facebook.com/xxxx/posts/yyyy',
     post: {
       content: [{ text: 'Full post caption.', media: [] }],
       labels: ['Marketing'],
@@ -129,16 +128,6 @@ function buildSamplePayload(
         message: '(see FeedHive notification)',
         social_type: '(see FeedHive notification)',
         social_name: '(see FeedHive notification)',
-      };
-    case 'comment_added':
-      return {
-        ...base,
-        comment_id: null,
-        commented_at: null,
-        commented_by: null,
-        commented_by_name: '(see FeedHive notification)',
-        commented_by_email: '(see FeedHive notification)',
-        comment_text: '(see FeedHive notification)',
       };
     default:
       return base;

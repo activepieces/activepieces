@@ -62,12 +62,13 @@
   "Template Variables": "Template Variables",
   "If your workflow template uses placeholders like [[first_name]], provide them here as key-value pairs (e.g. first_name → John). Each key maps directly to a [[placeholder]] in your template.": "If your workflow template uses placeholders like [[first_name]], provide them here as key-value pairs (e.g. first_name → John). Each key maps directly to a [[placeholder]] in your template.",
   "Custom API Call": "Custom API Call",
-  "New Notification": "New Notification",
-  "Triggers when FeedHive sends a notification (post published, scheduled, failed, or comment added).": "Triggers when FeedHive sends a notification (post published, scheduled, failed, or comment added).",
+  "Post Notification": "Post Notification",
+  "Triggers when a post is published, scheduled, or fails.": "Triggers when a post is published, scheduled, or fails.",
+  "Comment Notification": "Comment Notification",
+  "Triggers when a comment is added to one of your posts.": "Triggers when a comment is added to one of your posts.",
   "Event Type": "Event Type",
   "Choose the event type you will configure in FeedHive. This is used to load sample data when testing the trigger — it does not filter incoming webhooks.": "Choose the event type you will configure in FeedHive. This is used to load sample data when testing the trigger — it does not filter incoming webhooks.",
   "Post Published": "Post Published",
   "Post Scheduled": "Post Scheduled",
-  "Post Failed": "Post Failed",
-  "Comment Added": "Comment Added"
+  "Post Failed": "Post Failed"
 }

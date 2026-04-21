@@ -2,7 +2,8 @@ import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
 import { feedhiveAuth } from './lib/common/auth';
-import { newNotificationTrigger } from './lib/triggers/new-notification';
+import { postNotificationTrigger } from './lib/triggers/post-notification';
+import { commentNotificationTrigger } from './lib/triggers/comment-notification';
 import { createPostAction } from './lib/actions/create-post';
 import { updatePostAction } from './lib/actions/update-post';
 import { getPostAction } from './lib/actions/get-post';
@@ -37,5 +38,5 @@ export const feedhive = createPiece({
       }),
     }),
   ],
-  triggers: [newNotificationTrigger],
+  triggers: [postNotificationTrigger, commentNotificationTrigger],
 });
