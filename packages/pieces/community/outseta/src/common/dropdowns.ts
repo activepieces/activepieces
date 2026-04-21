@@ -107,16 +107,20 @@ export function planUidDropdown(options?: {
       if (!client) {
         return { disabled: true, options: [], placeholder: 'Connect your Outseta account first.' };
       }
-      try {
-        // If accountUid is provided, filter plans by the account's plan family
-        let planFamilyUid: string | null = null;
-        if (accountUid) {
+
+      let planFamilyUid: string | null = null;
+      if (accountUid) {
+        try {
           const account = await client.get<any>(
             `/api/v1/crm/accounts/${accountUid}?fields=CurrentSubscription.Plan.PlanFamily.*`
           );
           planFamilyUid = account?.CurrentSubscription?.Plan?.PlanFamily?.Uid ?? null;
+        } catch {
+          return { disabled: true, options: [], placeholder: 'Failed to load account. Check the Account UID.' };
         }
+      }
 
+      try {
         const res = await client.get<any>('/api/v1/billing/plans?$top=100');
         let items: any[] = res?.items ?? res?.Items ?? [];
 
@@ -153,9 +157,9 @@ export function addOnUidDropdown(options?: {
       if (!client) {
         return { disabled: true, options: [], placeholder: 'Connect your Outseta account first.' };
       }
-      try {
-        // If accountUid is provided, only show add-ons on the account's subscription
-        if (accountUid) {
+
+      if (accountUid) {
+        try {
           const account = await client.get<any>(
             `/api/v1/crm/accounts/${accountUid}?fields=CurrentSubscription.SubscriptionAddOns.*,CurrentSubscription.SubscriptionAddOns.AddOn.*`
           );
@@ -170,9 +174,12 @@ export function addOnUidDropdown(options?: {
               value: sa.AddOn?.Uid ?? sa.Uid,
             })),
           };
+        } catch {
+          return { disabled: true, options: [], placeholder: 'Failed to load account. Check the Account UID.' };
         }
+      }
 
-        // Fallback: show all add-ons
+      try {
         const res = await client.get<any>('/api/v1/billing/addons?$top=100');
         const items: any[] = res?.items ?? res?.Items ?? [];
         return {

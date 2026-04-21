@@ -287,6 +287,7 @@
   "Failed to load pipeline stages.": "Failed to load pipeline stages.",
   "Failed to load plans.": "Failed to load plans.",
   "Failed to load add-ons.": "Failed to load add-ons.",
+  "Failed to load account. Check the Account UID.": "Failed to load account. Check the Account UID.",
   "Failed to load email lists.": "Failed to load email lists.",
   "Failed to load discounts.": "Failed to load discounts.",
   "Failed to load entities.": "Failed to load entities.",

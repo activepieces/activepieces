@@ -77,7 +77,7 @@ export const manageEmailListSubscriptionAction = createAction({
     }
 
     const subscriptions = await client.getAllPages<any>(
-      `/api/v1/email/lists/${context.propsValue.emailListUid}/subscriptions`
+      `/api/v1/email/lists/${context.propsValue.emailListUid}/subscriptions?$filter=Person/Email eq '${OutsetaClient.escapeOData(context.propsValue.email)}'&fields=*,Person.*`
     );
     const subscription = subscriptions.find(
       (s: any) => s.Person?.Email?.toLowerCase() === context.propsValue.email.toLowerCase()

@@ -287,6 +287,7 @@
   "Failed to load pipeline stages.": "Échec du chargement des étapes du pipeline.",
   "Failed to load plans.": "Échec du chargement des forfaits.",
   "Failed to load add-ons.": "Échec du chargement des modules complémentaires.",
+  "Failed to load account. Check the Account UID.": "Échec du chargement du compte. Vérifiez l'UID du compte.",
   "Failed to load email lists.": "Échec du chargement des listes e-mail.",
   "Failed to load discounts.": "Échec du chargement des remises.",
   "Failed to load entities.": "Échec du chargement des entités.",
