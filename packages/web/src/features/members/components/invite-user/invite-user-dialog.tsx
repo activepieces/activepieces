@@ -1,4 +1,6 @@
 import {
+  ApFlagId,
+  InvitationStatus,
   InvitationType,
   Permission,
   PlatformRole,
@@ -8,13 +10,14 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { CopyIcon } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { CopyIcon, DownloadIcon } from 'lucide-react';
+import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { TagInput } from '@/components/custom/tag-input';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -28,18 +31,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
 import { PlatformRoleSelect } from '@/features/members/components/platform-role-select';
 import { ProjectRoleSelect } from '@/features/members/components/project-role-select';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { HttpError } from '@/lib/api';
 import { formatUtils } from '@/lib/format-utils';
@@ -52,10 +51,10 @@ const FormSchema = z.object({
   emails: z
     .array(z.string())
     .min(1, t('Please enter at least one email address')),
-  type: z.nativeEnum(InvitationType, {
+  type: z.enum(InvitationType, {
     message: t('Please select invitation type'),
   }),
-  platformRole: z.nativeEnum(PlatformRole, {
+  platformRole: z.enum(PlatformRole, {
     message: t('Please select platform role'),
   }),
   projectRole: z.string().optional(),
@@ -73,12 +72,17 @@ export const InviteUserDialog = ({
   onInviteSuccess?: () => void;
 }) => {
   const { embedState } = useEmbedding();
-  const [invitationLink, setInvitationLink] = useState('');
+  const [invitationResults, setInvitationResults] = useState<
+    UserInvitationWithLink[]
+  >([]);
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [tagInputKey, setTagInputKey] = useState(0);
   const inputRef = useRef<HTMLDivElement>(null);
   const { platform } = platformHooks.useCurrentPlatform();
+  const { data: isSmtpConfigured } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SMTP_CONFIGURED,
+  );
   const { refetch } = userInvitationsHooks.useInvitations();
   const { project } = projectCollectionUtils.useCurrentProject();
   const { checkAccess } = useAuthorization();
@@ -88,8 +92,14 @@ export const InviteUserDialog = ({
     Permission.WRITE_INVITATION,
   );
 
+  const resultsWithLinks = invitationResults.filter((r) => r.link);
+  const hasLinks = resultsWithLinks.length > 0;
+  const addedMembersCount = invitationResults.filter(
+    (r) => r.status === InvitationStatus.ACCEPTED,
+  ).length;
+
   const { mutate, isPending } = useMutation<
-    UserInvitationWithLink,
+    UserInvitationWithLink[],
     HttpError,
     FormSchema
   >({
@@ -109,18 +119,29 @@ export const InviteUserDialog = ({
             }),
       );
 
-      const results = await Promise.all(promises);
-      return results[0];
+      return Promise.all(promises);
     },
-    onSuccess: (res) => {
-      if (res.link) {
-        setInvitationLink(res.link);
+    onSuccess: (results) => {
+      const addedCount = results.filter(
+        (r) => r.status === InvitationStatus.ACCEPTED,
+      ).length;
+      const invitedCount = results.filter((r) => r.link).length;
+
+      if (invitedCount > 0) {
+        setInvitationResults(results);
       } else {
         setOpen(false);
         form.reset();
-        toast.success(t('Invitation sent successfully'), {
-          duration: 3000,
-        });
+      }
+
+      const toastMessage = buildInviteToast({
+        addedCount,
+        invitedCount,
+        sentCount: results.length - addedCount - invitedCount,
+        projectName: project.displayName,
+      });
+      if (toastMessage) {
+        toast.success(toastMessage, { duration: 3000 });
       }
       refetch();
       onInviteSuccess?.();
@@ -141,7 +162,7 @@ export const InviteUserDialog = ({
         : platform.plan.projectRolesEnabled && project.type === ProjectType.TEAM
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
-      platformRole: PlatformRole.MEMBER,
+      platformRole: PlatformRole.OPERATOR,
       projectRole: undefined,
     },
   });
@@ -181,11 +202,30 @@ export const InviteUserDialog = ({
     mutate(data);
   };
 
-  const copyInvitationLink = () => {
-    navigator.clipboard.writeText(invitationLink);
-    toast.success(t('Invitation link copied successfully'), {
+  const copyAllLinks = () => {
+    const text = resultsWithLinks
+      .map((r) => `${r.email}: ${r.link}`)
+      .join('\n');
+    navigator.clipboard.writeText(text);
+    toast.success(t('All invitation links copied successfully'), {
       duration: 3000,
     });
+  };
+
+  const downloadCsv = () => {
+    const rows = [
+      'email,invitation_link',
+      ...resultsWithLinks.map(
+        (r) => `${escapeCsvField(r.email)},${escapeCsvField(r.link!)}`,
+      ),
+    ].join('\n');
+    const blob = new Blob([rows], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'invitations.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleSelectUser = (email: string) => {
@@ -206,6 +246,21 @@ export const InviteUserDialog = ({
     return null;
   }
 
+  const dialogTitle = hasLinks
+    ? t('Invitation Links')
+    : isPlatformPage
+    ? t('Invite to Your Platform')
+    : t('Add Members');
+
+  const dialogDescription = getDialogDescription({
+    hasLinks,
+    addedMembersCount,
+    resultsWithLinksCount: resultsWithLinks.length,
+    isPlatformPage,
+    isSmtpConfigured: isSmtpConfigured ?? false,
+    projectName: project.displayName,
+  });
+
   return (
     <>
       {
@@ -215,7 +270,7 @@ export const InviteUserDialog = ({
           onOpenChange={(open) => {
             setOpen(open);
             form.reset();
-            setInvitationLink('');
+            setInvitationResults([]);
             setInputValue('');
             setShowSuggestions(false);
             setTagInputKey(0);
@@ -223,38 +278,11 @@ export const InviteUserDialog = ({
         >
           <DialogContent className="sm:max-w-[475px]">
             <DialogHeader>
-              <DialogTitle>
-                {invitationLink
-                  ? t('Invitation Link')
-                  : isPlatformPage
-                  ? t('Invite to Your Platform')
-                  : t('Add Members')}
-              </DialogTitle>
-              <DialogDescription>
-                {invitationLink ? (
-                  t(
-                    'Please copy the link below and share it with the user you want to invite, the invitation expires in 7 days.',
-                  )
-                ) : isPlatformPage ? (
-                  t(
-                    'Invite team members to collaborate and build amazing flows together.',
-                  )
-                ) : (
-                  <>
-                    {t('Add new members to')}{' '}
-                    <span className="text-foreground font-semibold">
-                      {project.displayName}
-                    </span>
-                    {'. '}
-                    {t(
-                      'They will be added immediately and receive an email notification.',
-                    )}
-                  </>
-                )}
-              </DialogDescription>
+              <DialogTitle>{dialogTitle}</DialogTitle>
+              <DialogDescription>{dialogDescription}</DialogDescription>
             </DialogHeader>
 
-            {!invitationLink ? (
+            {!hasLinks ? (
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
@@ -314,40 +342,43 @@ export const InviteUserDialog = ({
                 </form>
               </Form>
             ) : (
-              <>
-                <Label htmlFor="invitationLink" className="mb-2">
-                  {t('Invitation Link')}
-                </Label>
-                <div className="flex">
-                  <Input
-                    name="invitationLink"
-                    type="text"
-                    readOnly={true}
-                    defaultValue={invitationLink}
-                    placeholder={t('Invitation Link')}
-                    onFocus={(event) => {
-                      event.target.select();
-                      copyInvitationLink();
-                    }}
-                    className=" rounded-l-md rounded-r-none focus-visible:ring-0! focus-visible:ring-offset-0!"
-                  />
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant={'outline'}
-                        className=" rounded-l-none rounded-r-md"
-                        onClick={copyInvitationLink}
-                      >
-                        <CopyIcon height={15} width={15}></CopyIcon>
-                      </Button>
-                    </TooltipTrigger>
-
-                    <TooltipContent side="bottom">{t('Copy')}</TooltipContent>
-                  </Tooltip>
-                </div>
-              </>
+              <div className="flex flex-col gap-3">
+                <ScrollArea className="max-h-[300px]">
+                  <div className="flex flex-col gap-3">
+                    {resultsWithLinks.map((result) => (
+                      <div key={result.id} className="flex flex-col gap-1">
+                        <Label className="text-sm">{result.email}</Label>
+                        <CopyToClipboardInput
+                          useInput={true}
+                          textToCopy={result.link!}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                {resultsWithLinks.length > 1 && (
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={copyAllLinks}
+                    >
+                      <CopyIcon height={15} width={15} />
+                      {t('Copy All')}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={downloadCsv}
+                    >
+                      <DownloadIcon height={15} width={15} />
+                      {t('Download CSV')}
+                    </Button>
+                  </div>
+                )}
+              </div>
             )}
           </DialogContent>
         </Dialog>
@@ -355,3 +386,96 @@ export const InviteUserDialog = ({
     </>
   );
 };
+
+function getDialogDescription({
+  hasLinks,
+  addedMembersCount,
+  resultsWithLinksCount,
+  isPlatformPage,
+  isSmtpConfigured,
+  projectName,
+}: {
+  hasLinks: boolean;
+  addedMembersCount: number;
+  resultsWithLinksCount: number;
+  isPlatformPage: boolean;
+  isSmtpConfigured: boolean;
+  projectName: string;
+}): string {
+  if (hasLinks) {
+    const addedPrefix =
+      addedMembersCount > 0
+        ? t('membersAddedImmediately', {
+            count: addedMembersCount,
+            projectName,
+          }) + ' '
+        : '';
+    const linkText =
+      resultsWithLinksCount === 1
+        ? t(
+            'Please copy the link below and share it with the user you want to invite. The invitation expires in 7 days.',
+          )
+        : t(
+            'Please copy the links below and share them with the users you want to invite. The invitations expire in 7 days.',
+          );
+    return addedPrefix + linkText;
+  }
+
+  if (isPlatformPage) {
+    const base = t(
+      'Invite team members to collaborate and build amazing flows together.',
+    );
+    return isSmtpConfigured
+      ? base
+      : base +
+          ' ' +
+          t(
+            'Invitations will be shared via link since email is not configured.',
+          );
+  }
+
+  return isSmtpConfigured
+    ? t(
+        'Existing platform members will be added immediately. New users will receive an invitation email.',
+      )
+    : t(
+        'Existing platform members will be added immediately. New users must use the invitation link.',
+      );
+}
+
+function buildInviteToast({
+  addedCount,
+  invitedCount,
+  sentCount,
+  projectName,
+}: {
+  addedCount: number;
+  invitedCount: number;
+  sentCount: number;
+  projectName: string;
+}): React.ReactNode | null {
+  const lines: string[] = [];
+  if (addedCount > 0) {
+    lines.push(t('membersAddedCount', { count: addedCount, projectName }));
+  }
+  if (invitedCount > 0) {
+    lines.push(t('invitationsLinkCount', { count: invitedCount }));
+  }
+  if (sentCount > 0) {
+    lines.push(t('invitationsSentCount', { count: sentCount }));
+  }
+  if (lines.length === 0) {
+    return null;
+  }
+  return (
+    <span>
+      {lines.map((line, i) => (
+        <React.Fragment key={i}>
+          {i > 0 && <br />}
+          {line}
+        </React.Fragment>
+      ))}
+    </span>
+  );
+}
+const escapeCsvField = (value: string) => `"${value.replace(/"/g, '""')}"`;

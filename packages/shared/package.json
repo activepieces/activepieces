@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/shared",
-  "version": "0.60.0",
+  "version": "0.65.0",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",
@@ -8,6 +8,7 @@
   "dependencies": {
     "dayjs": "1.11.9",
     "deepmerge-ts": "7.1.0",
+    "ipaddr.js": "2.3.0",
     "nanoid": "3.3.8",
     "semver": "7.6.0",
     "socket.io-client": "4.8.1",
