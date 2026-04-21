@@ -60,7 +60,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     },
     async signInWithPassword(params: SignInWithPasswordParams): Promise<{ result: AuthenticationResponse | MfaChallengeResponse, responseHeaders: Headers | null }> {
         const { identity, responseHeaders, twoFactorRedirect } = await userIdentityService(log).verifyIdentityPassword(params)
-        const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformIdForFederatedAuthn(identity.id, log) : params.predefinedPlatformId
+        const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformId(identity.id, log) : params.predefinedPlatformId
         if (isNil(platformId)) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHENTICATION,
@@ -136,16 +136,14 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             hasPassword: identity.provider === UserIdentityProvider.EMAIL,
         }
     },
-    async socialSignIn(params: FederatedAuthnParams): Promise<AuthenticationResponse | MfaChallengeResponse> {
+    async socialSignIn(params: SocialSigninParams): Promise<AuthenticationResponse | MfaChallengeResponse> {
         const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformIdForFederatedAuthn(params.identityId, log) : params.predefinedPlatformId
         const userIdentity = await userIdentityService(log).getOneOrFail({ id: params.identityId })
         if (isNil(platformId)) {
             return createUserAndPlatform(userIdentity, log)
         }
 
-        const existingUser = await userService(log).getOneByIdentityAndPlatform({ identityId: params.identityId, platformId })
-
-        if (isNil(existingUser)) {
+        if (isNil(params.existingUser)) {
             await assertCanSignup(log, {
                 platformId,
                 provider: userIdentity.provider,
@@ -348,9 +346,10 @@ async function mfaSetupResponse(log: FastifyBaseLogger, params: MfaSetupResponse
     }
 }
 
-type FederatedAuthnParams = {
+type SocialSigninParams = {
     predefinedPlatformId?: string
     identityId: string
+    existingUser?: User | null
 }
 
 type SignUpParams = {

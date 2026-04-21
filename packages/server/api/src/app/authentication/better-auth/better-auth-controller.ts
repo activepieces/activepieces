@@ -8,6 +8,7 @@ import { platformUtils } from '../../platform/platform.utils'
 import { betterAuthInstance } from './auth'
 
 export const betterAuthController: FastifyPluginAsyncZod = async (app) => {
+
     app.route({
         method: ['GET', 'POST'],
         url: '/v1/better-auth/*',

@@ -36,23 +36,7 @@ export class BetterAuth1776192009225 implements Migration {
         await queryRunner.query('alter table "user_identity" add column "emailVerified" boolean not null default false')
 
         await queryRunner.query(`
-            do $$
-            declare
-                batch_size int := 1000;
-                updated int;
-            begin
-                loop
-                    update "user_identity"
-                    set "emailVerified" = "verified"
-                    where id in (
-                        select id from "user_identity"
-                        where "emailVerified" is distinct from "verified"
-                        limit batch_size
-                    );
-                    get diagnostics updated = row_count;
-                    exit when updated = 0;
-                end loop;
-            end $$
+            UPDATE "user_identity" SET "emailVerified" = "verified" WHERE "emailVerified" IS DISTINCT FROM "verified"
         `)
 
         await queryRunner.query('alter table "user_identity" rename column "created" to "createdAt"')
@@ -83,9 +67,21 @@ export class BetterAuth1776192009225 implements Migration {
             declare
                 batch_size int := 1000;
                 last_id text := '';
-                inserted int;
+                batch_max_id text;
             begin
                 loop
+                    select max("id") into batch_max_id
+                    from (
+                        select "id" from "user_identity"
+                        where "provider" = 'EMAIL'
+                        and "password" is not null
+                        and "id" > last_id
+                        order by "id"
+                        limit batch_size
+                    ) batch;
+
+                    exit when batch_max_id is null;
+
                     insert into "account" ("id", "accountId", "providerId", "userId", "password", "createdAt", "updatedAt")
                     select
                         _ap_nanoid(),
@@ -99,11 +95,9 @@ export class BetterAuth1776192009225 implements Migration {
                     where "provider" = 'EMAIL'
                     and "password" is not null
                     and "id" > last_id
-                    order by "id"
-                    limit batch_size;
-                    get diagnostics inserted = row_count;
-                    exit when inserted = 0;
-                    select max("userId") into last_id from "account" where "providerId" = 'credential';
+                    and "id" <= batch_max_id;
+
+                    last_id := batch_max_id;
                 end loop;
             end $$
         `)
@@ -115,9 +109,20 @@ export class BetterAuth1776192009225 implements Migration {
             declare
                 batch_size int := 1000;
                 last_id text := '';
-                inserted int;
+                batch_max_id text;
             begin
                 loop
+                    select max("id") into batch_max_id
+                    from (
+                        select "id" from "user_identity"
+                        where "provider" = 'GOOGLE'
+                        and "id" > last_id
+                        order by "id"
+                        limit batch_size
+                    ) batch;
+
+                    exit when batch_max_id is null;
+
                     insert into "account" ("id", "accountId", "providerId", "userId", "createdAt", "updatedAt")
                     select
                         _ap_nanoid(),
@@ -129,11 +134,9 @@ export class BetterAuth1776192009225 implements Migration {
                     from "user_identity"
                     where "provider" = 'GOOGLE'
                     and "id" > last_id
-                    order by "id"
-                    limit batch_size;
-                    get diagnostics inserted = row_count;
-                    exit when inserted = 0;
-                    select max("userId") into last_id from "account" where "providerId" = 'google';
+                    and "id" <= batch_max_id;
+
+                    last_id := batch_max_id;
                 end loop;
             end $$
         `)

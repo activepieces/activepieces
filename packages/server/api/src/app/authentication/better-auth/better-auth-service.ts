@@ -121,6 +121,7 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
             const { data: response, error } = await tryCatch(async () => authenticationService(log).socialSignIn({
                 identityId,
                 predefinedPlatformId: platformId,
+                existingUser,
             }))
 
             const redirectBaseUrl = await domainHelper.getPublicUrl({ path: '/redirect' })
