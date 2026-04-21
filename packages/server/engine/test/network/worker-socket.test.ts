@@ -22,6 +22,7 @@ describe('workerSocket — STRICT-mode handshake', () => {
     })
 
     afterEach(async () => {
+        workerSocket.disconnect()
         http.globalAgent = originalHttpAgent
         if (originalNetworkMode === undefined) delete process.env['AP_NETWORK_MODE']
         else process.env['AP_NETWORK_MODE'] = originalNetworkMode

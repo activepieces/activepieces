@@ -81,6 +81,13 @@ export const workerSocket = {
     sendError: (error: unknown): void => {
         notifyClient?.stderr({ message: inspect(error) })
     },
+
+    disconnect: (): void => {
+        socket?.disconnect()
+        socket = undefined
+        workerClient = undefined
+        notifyClient = undefined
+    },
 }
 
 function buildSocketOptions(sandboxId: string): Partial<ManagerOptions & SocketOptions> {
