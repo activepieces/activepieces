@@ -1,10 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  flattenMonitor,
-  uptimeRobotApiCall,
   uptimeRobotCommon,
   UptimeRobotEditMonitorResponse,
-  UptimeRobotMonitorsResponse,
 } from '../common';
 import { uptimeRobotAuth } from '../auth';
 
@@ -12,13 +9,19 @@ export const pauseResumeMonitorAction = createAction({
   auth: uptimeRobotAuth,
   name: 'pause_resume_monitor',
   displayName: 'Pause or Resume Monitor',
-  description: 'Temporarily pause or resume monitoring for a specific monitor',
+  description: 'Temporarily pause or resume monitoring for a specific monitor.',
   props: {
-    monitor: uptimeRobotCommon.monitorIdField,
-    monitorDropdown: uptimeRobotCommon.monitorDropdownOptional,
+    monitor: uptimeRobotCommon.monitorDropdownOptional,
+    monitor_id_override: Property.ShortText({
+      displayName: 'Or Enter Monitor ID',
+      description:
+        'Use this to pass a dynamic Monitor ID from a previous step. If set, this overrides the dropdown selection above.',
+      required: false,
+    }),
     action: Property.StaticDropdown({
       displayName: 'Action',
-      description: 'Pause stops all checks and alerts. Resume restarts monitoring from where it left off.',
+      description:
+        'Pause stops all checks and alerts. Resume restarts monitoring.',
       required: true,
       options: {
         options: [
@@ -29,44 +32,29 @@ export const pauseResumeMonitorAction = createAction({
     }),
   },
   async run(context) {
-    const { monitor, monitorDropdown, action: statusValue } = context.propsValue;
-    const monitorId = monitor || monitorDropdown;
+    const { monitor, monitor_id_override } = context.propsValue;
+    const overrideId =
+      typeof monitor_id_override === 'string' ? monitor_id_override.trim() : '';
+    const monitorId = overrideId.length > 0 ? overrideId : monitor;
 
     if (!monitorId) {
-      throw new Error('Please provide a Monitor ID or select a monitor from the dropdown');
+      throw new Error('Please select a monitor or enter a Monitor ID.');
     }
-
-    const newStatus = Number(statusValue);
-
-    await uptimeRobotApiCall<UptimeRobotEditMonitorResponse>({
+    const newStatus = Number(context.propsValue.action);
+    await uptimeRobotCommon.apiCall<UptimeRobotEditMonitorResponse>({
       apiKey: context.auth.secret_text,
       endpoint: 'editMonitor',
-      body: {
-        id: Number(monitorId),
-        status: newStatus,
-      },
+      body: { id: Number(monitorId), status: newStatus },
     });
-
-    // Wait for UptimeRobot to propagate the status change
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const data = await uptimeRobotApiCall<UptimeRobotMonitorsResponse>({
+    const flat = await uptimeRobotCommon.fetchFlatMonitorById({
       apiKey: context.auth.secret_text,
-      endpoint: 'getMonitors',
-      body: {
-        monitors: monitorId,
-        custom_uptime_ratios: '30',
-        response_times: 1,
-      },
+      id: monitorId,
     });
-
-    const updated = data.monitors[0];
-    if (!updated) {
-      throw new Error('Monitor was updated but could not be retrieved');
+    if (!flat) {
+      throw new Error('Monitor status changed but could not be retrieved.');
     }
-
     return {
-      ...flattenMonitor({ monitor: updated }),
+      ...flat,
       action_performed: newStatus === 0 ? 'paused' : 'resumed',
     };
   },

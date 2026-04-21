@@ -28,10 +28,10 @@ export const uptimeRobot = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.uptimerobot.com/v2',
       auth: uptimeRobotAuth,
-      // UptimeRobot authenticates via POST body (api_key field), not headers.
-      // Add api_key to the request body manually when using this action.
+      authLocation: 'queryParams',
       authMapping: async (auth) => ({
-        'X-Api-Key': auth.secret_text,
+        api_key: auth.secret_text,
+        format: 'json',
       }),
     }),
   ],

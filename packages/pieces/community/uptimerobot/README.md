@@ -19,12 +19,16 @@ To connect UptimeRobot to Activepieces, you need an API key:
 5. Copy the key (it starts with `u` followed by numbers and letters)
 6. Paste it into the API Key field in Activepieces
 
+## Rate limits
+
+UptimeRobot's Free plan limits you to **10 API requests per minute**. Paid plans allow up to 5,000 req/min. Heavy workflows (polling trigger + frequent actions) may hit the Free-plan limit. Consider upgrading if you see rate-limit errors.
+
 ## Actions
 
 | Action | Description |
 |--------|-------------|
 | **Get Monitors** | List all your monitors with optional filters by name, type, or status |
-| **Create Monitor** | Create a new HTTP, Keyword, Ping, or Port monitor |
+| **Create Monitor** | Create a new HTTP, Keyword, Ping, Port, or Heartbeat monitor |
 | **Edit Monitor** | Update a monitor's name, URL, or check interval |
 | **Delete Monitor** | Permanently remove a monitor |
 | **Pause or Resume Monitor** | Temporarily pause or resume monitoring |
@@ -33,7 +37,7 @@ To connect UptimeRobot to Activepieces, you need an API key:
 
 | Trigger | Description |
 |---------|-------------|
-| **Monitor Status Change** | Fires when any monitor goes up or down. Polls every 5 minutes. |
+| **Monitor Status Change** | Polling trigger. Fires when a monitor goes up or down. Poll cadence (~5 min) is controlled by the Activepieces platform admin. |
 
 ## Example Workflow
 
@@ -57,6 +61,7 @@ To connect UptimeRobot to Activepieces, you need an API key:
 - **Keyword** — Loads the page and checks whether a specific word is present or absent. Useful for detecting error pages that return 200 status.
 - **Ping** — Sends an ICMP ping to a server or IP address.
 - **Port** — Checks if a specific TCP port is open on a host.
+- **Heartbeat** — Expects periodic pings from your service. Alerts if no ping received within the interval.
 
 ## API Reference
 

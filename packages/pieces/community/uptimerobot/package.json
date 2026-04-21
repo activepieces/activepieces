@@ -1,6 +1,7 @@
 {
   "name": "@activepieces/piece-uptimerobot",
   "version": "0.0.1",
+  "description": "UptimeRobot piece — monitor websites, APIs, and servers and react to up/down events.",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {

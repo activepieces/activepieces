@@ -1,84 +1,25 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  fetchAllMonitors,
-  flattenMonitor,
-  uptimeRobotCommon,
-} from '../common';
+import { uptimeRobotCommon } from '../common';
 import { uptimeRobotAuth } from '../auth';
 
 export const getMonitorsAction = createAction({
   auth: uptimeRobotAuth,
   name: 'get_monitors',
   displayName: 'Get Monitors',
-  description: 'List and search your UptimeRobot monitors with optional filters',
+  description:
+    'List and search your UptimeRobot monitors with optional filters. Leave the Monitors / Monitor IDs fields empty to return all monitors.',
   props: {
-    monitorIds: Property.ShortText({
-      displayName: 'Monitor IDs',
-      description: 'Comma-separated monitor IDs or single ID from previous step (e.g. {{create_monitor.id}}). Leave empty to use dropdown or return all.',
-      required: false,
-    }),
-    monitors: Property.MultiSelectDropdown({
-      auth: uptimeRobotAuth,
-      displayName: 'Or Select Monitors',
+    monitor_ids: uptimeRobotCommon.monitorMultiSelect,
+    monitor_ids_csv: Property.ShortText({
+      displayName: 'Or Enter Monitor IDs (comma-separated)',
       description:
-        'Search and select specific monitors. Ignored if Monitor IDs above is provided.',
+        'Use this to pass dynamic Monitor IDs from a previous step (e.g. "123, 456"). Merged with any selections above.',
       required: false,
-      refreshers: [],
-      refreshOnSearch: true,
-      options: async ({ auth }, { searchValue }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please connect your UptimeRobot account first',
-          };
-        }
-
-        const additionalBody: Record<string, unknown> = {};
-        if (searchValue) {
-          additionalBody['search'] = searchValue;
-        }
-
-        try {
-          const monitors = await fetchAllMonitors({
-            apiKey: auth.secret_text,
-            additionalBody,
-          });
-
-          if (monitors.length === 0) {
-            return {
-              disabled: false,
-              options: [],
-              placeholder: searchValue
-                ? 'No monitors match your search'
-                : 'No monitors found in your account',
-            };
-          }
-
-          return {
-            disabled: false,
-            options: monitors.map((m) => {
-              const statusLabel =
-                uptimeRobotCommon.MONITOR_STATUS_MAP[m.status] ?? String(m.status);
-              return {
-                label: `${m.friendly_name} (${m.url}) — ${statusLabel}`,
-                value: String(m.id),
-              };
-            }),
-          };
-        } catch (error) {
-          console.error('Failed to fetch monitors for search:', error);
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Failed to load monitors. Check your API key.',
-          };
-        }
-      },
     }),
     type: Property.StaticDropdown({
       displayName: 'Monitor Type',
-      description: 'Only return monitors of this type. Leave empty for all types.',
+      description:
+        'Only return monitors of this type. Leave empty for all types.',
       required: false,
       options: {
         options: [
@@ -92,46 +33,55 @@ export const getMonitorsAction = createAction({
     }),
     status: Property.StaticDropdown({
       displayName: 'Status',
-      description: 'Only return monitors with this status. Leave empty for all statuses.',
+      description:
+        'Only return monitors with this status. Leave empty for all statuses.',
       required: false,
       options: {
         options: [
-          { label: 'Up', value: '2' },
-          { label: 'Down', value: '9' },
-          { label: 'Paused', value: '0' },
-          { label: 'Seems down', value: '8' },
-          { label: 'Not checked yet', value: '1' },
+          { label: 'Up', value: 2 },
+          { label: 'Down', value: 9 },
+          { label: 'Paused', value: 0 },
+          { label: 'Seems down', value: 8 },
+          { label: 'Not checked yet', value: 1 },
         ],
       },
     }),
   },
   async run(context) {
-    const { monitorIds, monitors: selectedMonitorIds, type, status } = context.propsValue;
+    const { monitor_ids, monitor_ids_csv, type, status } = context.propsValue;
 
     const additionalBody: Record<string, unknown> = {
       custom_uptime_ratios: '30',
       response_times: 1,
     };
 
-    // Priority: monitorIds field > dropdown selection
-    if (monitorIds) {
-      // Support comma-separated IDs: "123,456,789" or single ID
-      additionalBody['monitors'] = monitorIds.replace(/,/g, '-').trim();
-    } else if (selectedMonitorIds && selectedMonitorIds.length > 0) {
-      additionalBody['monitors'] = selectedMonitorIds.join('-');
+    const selectedIds = Array.isArray(monitor_ids)
+      ? monitor_ids.filter((v): v is string => typeof v === 'string')
+      : [];
+    const csvIds =
+      typeof monitor_ids_csv === 'string'
+        ? monitor_ids_csv
+            .split(',')
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0)
+        : [];
+    const allIds = Array.from(new Set([...selectedIds, ...csvIds]));
+    if (allIds.length > 0) {
+      additionalBody['monitors'] = allIds.join('-');
     }
     if (type !== undefined && type !== null) {
       additionalBody['types'] = String(type);
     }
     if (status !== undefined && status !== null) {
-      additionalBody['statuses'] = status;
+      additionalBody['statuses'] = String(status);
     }
 
-    const monitors = await fetchAllMonitors({
+    const monitors = await uptimeRobotCommon.fetchAllMonitors({
       apiKey: context.auth.secret_text,
       additionalBody,
     });
-
-    return monitors.map((monitor) => flattenMonitor({ monitor }));
+    return monitors.map((monitor) =>
+      uptimeRobotCommon.flattenMonitor({ monitor }),
+    );
   },
 });

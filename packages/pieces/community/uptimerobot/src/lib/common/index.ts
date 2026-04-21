@@ -1,9 +1,11 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 import { uptimeRobotAuth } from '../auth';
+import { toFormUrlEncoded } from './form';
 
 const BASE_URL = 'https://api.uptimerobot.com/v2';
 const MAX_MONITORS_PER_PAGE = 50;
+const MAX_DROPDOWN_MONITORS = 500;
 
 const MONITOR_TYPE_MAP: Record<number, string> = {
   1: 'HTTP',
@@ -21,14 +23,11 @@ const MONITOR_STATUS_MAP: Record<number, string> = {
   9: 'Down',
 };
 
-function toFormUrlEncoded(obj: Record<string, unknown>): string {
-  return Object.entries(obj)
-    .filter(([, v]) => v !== undefined && v !== null)
-    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
-    .join('&');
+function statusLabel(status: number): string {
+  return MONITOR_STATUS_MAP[status] ?? String(status);
 }
 
-export async function uptimeRobotApiCall<T extends UptimeRobotBaseResponse>({
+async function callApi<T extends UptimeRobotBaseResponse>({
   apiKey,
   endpoint,
   body,
@@ -37,64 +36,74 @@ export async function uptimeRobotApiCall<T extends UptimeRobotBaseResponse>({
   endpoint: string;
   body?: Record<string, unknown>;
 }): Promise<T> {
-  const payload = {
-    api_key: apiKey,
-    format: 'json',
-    ...body,
-  };
+  const payload = { api_key: apiKey, format: 'json', ...body };
 
-  const response = await httpClient.sendRequest<T>({
-    method: HttpMethod.POST,
-    url: `${BASE_URL}/${endpoint}`,
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: toFormUrlEncoded(payload),
-  });
+  let response;
+  try {
+    response = await httpClient.sendRequest<T>({
+      method: HttpMethod.POST,
+      url: `${BASE_URL}/${endpoint}`,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: toFormUrlEncoded(payload),
+    });
+  } catch (e) {
+    const err = e as { response?: { status?: number } };
+    const status = err.response?.status;
+    if (status === 429) {
+      throw new Error(
+        'UptimeRobot rate limit exceeded (Free plan: 10 req/min). Wait a moment and retry, or upgrade your plan.',
+      );
+    }
+    if (status !== undefined && status >= 500) {
+      throw new Error(
+        `UptimeRobot is unavailable (HTTP ${status}). Please try again shortly.`,
+      );
+    }
+    throw new Error(
+      `UptimeRobot API request failed${status ? ` (HTTP ${status})` : ''}: ${endpoint}`,
+    );
+  }
 
   if (response.body.stat === 'fail') {
-    const msg = response.body.error?.message ?? 'UptimeRobot API request failed';
-    throw new Error(msg);
+    throw new Error(response.body.error?.message ?? 'UptimeRobot API request failed');
   }
 
   return response.body;
 }
 
-export async function fetchAllMonitors({
+async function fetchAllMonitors({
   apiKey,
   additionalBody,
+  shouldStop,
 }: {
   apiKey: string;
   additionalBody?: Record<string, unknown>;
+  shouldStop?: (all: UptimeRobotMonitor[]) => boolean;
 }): Promise<UptimeRobotMonitor[]> {
-  const allMonitors: UptimeRobotMonitor[] = [];
+  const all: UptimeRobotMonitor[] = [];
   let offset = 0;
-  let hasMore = true;
-
-  while (hasMore) {
-    const data = await uptimeRobotApiCall<UptimeRobotMonitorsResponse>({
+  while (true) {
+    const data = await callApi<UptimeRobotMonitorsResponse>({
       apiKey,
       endpoint: 'getMonitors',
-      body: {
-        limit: MAX_MONITORS_PER_PAGE,
-        offset,
-        ...additionalBody,
-      },
+      body: { limit: MAX_MONITORS_PER_PAGE, offset, ...additionalBody },
     });
-
-    allMonitors.push(...data.monitors);
+    all.push(...data.monitors);
+    if (shouldStop && shouldStop(all)) break;
     offset += MAX_MONITORS_PER_PAGE;
-    hasMore = data.monitors.length === MAX_MONITORS_PER_PAGE && offset < data.pagination.total;
+    if (data.monitors.length < MAX_MONITORS_PER_PAGE) break;
+    if (offset >= data.pagination.total) break;
   }
-
-  return allMonitors;
+  return all;
 }
 
-export function flattenMonitor({ monitor }: { monitor: UptimeRobotMonitor }): FlatMonitor {
+function flattenMonitor({ monitor }: { monitor: UptimeRobotMonitor }): FlatMonitor {
   return {
     id: String(monitor.id),
     friendly_name: monitor.friendly_name,
     url: monitor.url,
     type: MONITOR_TYPE_MAP[monitor.type] ?? String(monitor.type),
-    status: MONITOR_STATUS_MAP[monitor.status] ?? String(monitor.status),
+    status: statusLabel(monitor.status),
     interval_seconds: monitor.interval,
     uptime_ratio_30d: monitor.custom_uptime_ratio ?? null,
     average_response_time_ms: monitor.average_response_time
@@ -103,104 +112,121 @@ export function flattenMonitor({ monitor }: { monitor: UptimeRobotMonitor }): Fl
   };
 }
 
-export const uptimeRobotCommon = {
-  MAX_MONITORS_PER_PAGE,
-  MONITOR_TYPE_MAP,
-  MONITOR_STATUS_MAP,
-  monitorIdField: Property.ShortText({
-    displayName: 'Monitor ID',
-    description: 'The monitor ID. Use this for dynamic values from previous steps (e.g. from Create Monitor output).',
-    required: false,
-  }),
-  monitorDropdownOptional: Property.Dropdown({
-    displayName: 'Or Select Monitor',
-    description: 'Select a monitor from the list. Ignored if Monitor ID above is provided.',
-    refreshers: [],
-    required: false,
-    auth: uptimeRobotAuth,
-    options: async ({ auth }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please connect your UptimeRobot account first',
-        };
-      }
-      try {
-        const monitors = await fetchAllMonitors({
-          apiKey: auth.secret_text,
-        });
-        if (monitors.length === 0) {
-          return {
-            disabled: false,
-            options: [],
-            placeholder: 'No monitors found. Create one in UptimeRobot first.',
-          };
-        }
-        return {
-          disabled: false,
-          options: monitors.map((m) => {
-            const statusLabel = MONITOR_STATUS_MAP[m.status] ?? String(m.status);
-            return {
-              label: `${m.friendly_name} (${m.url}) — ${statusLabel}`,
-              value: String(m.id),
-            };
-          }),
-        };
-      } catch (error) {
-        console.error('Failed to fetch monitors:', error);
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Failed to load monitors. Check your API key.',
-        };
-      }
+async function fetchFlatMonitorById({
+  apiKey,
+  id,
+}: {
+  apiKey: string;
+  id: number | string;
+}): Promise<FlatMonitor | null> {
+  const data = await callApi<UptimeRobotMonitorsResponse>({
+    apiKey,
+    endpoint: 'getMonitors',
+    body: {
+      monitors: String(id),
+      custom_uptime_ratios: '30',
+      response_times: 1,
     },
-  }),
+  });
+  const monitor = data.monitors[0];
+  return monitor ? flattenMonitor({ monitor }) : null;
+}
+
+async function buildMonitorOptions({
+  auth,
+  searchValue,
+}: {
+  auth: { secret_text: string } | undefined;
+  searchValue?: string;
+}): Promise<{
+  disabled: boolean;
+  options: { label: string; value: string }[];
+  placeholder?: string;
+}> {
+  if (!auth) {
+    return {
+      disabled: true,
+      options: [],
+      placeholder: 'Please connect your UptimeRobot account first',
+    };
+  }
+  try {
+    const additionalBody: Record<string, unknown> = {};
+    if (searchValue) additionalBody['search'] = searchValue;
+    const monitors = await fetchAllMonitors({
+      apiKey: auth.secret_text,
+      additionalBody,
+      shouldStop: (all) => all.length >= MAX_DROPDOWN_MONITORS,
+    });
+    if (monitors.length === 0) {
+      return {
+        disabled: false,
+        options: [],
+        placeholder: searchValue
+          ? 'No monitors match your search'
+          : 'No monitors found. Create one in UptimeRobot first.',
+      };
+    }
+    const capped = monitors.slice(0, MAX_DROPDOWN_MONITORS);
+    const truncated = monitors.length >= MAX_DROPDOWN_MONITORS;
+    return {
+      disabled: false,
+      options: capped.map((m) => ({
+        label: `${m.friendly_name} (${m.url}) — ${statusLabel(m.status)}`,
+        value: String(m.id),
+      })),
+      ...(truncated
+        ? {
+            placeholder: `Showing first ${MAX_DROPDOWN_MONITORS} monitors — type to search for more`,
+          }
+        : {}),
+    };
+  } catch {
+    return {
+      disabled: true,
+      options: [],
+      placeholder: 'Failed to load monitors. Check your API key.',
+    };
+  }
+}
+
+export const uptimeRobotCommon = {
+  apiCall: callApi,
+  fetchAllMonitors,
+  fetchFlatMonitorById,
+  flattenMonitor,
+  buildMonitorOptions,
   monitorDropdown: Property.Dropdown({
     displayName: 'Monitor',
     description: 'Select the monitor to act on',
     refreshers: [],
+    refreshOnSearch: true,
     required: true,
     auth: uptimeRobotAuth,
-    options: async ({ auth }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please connect your UptimeRobot account first',
-        };
-      }
-      try {
-        const monitors = await fetchAllMonitors({
-          apiKey: auth.secret_text,
-        });
-        if (monitors.length === 0) {
-          return {
-            disabled: false,
-            options: [],
-            placeholder: 'No monitors found. Create one in UptimeRobot first.',
-          };
-        }
-        return {
-          disabled: false,
-          options: monitors.map((m) => {
-            const statusLabel = MONITOR_STATUS_MAP[m.status] ?? String(m.status);
-            return {
-              label: `${m.friendly_name} (${m.url}) — ${statusLabel}`,
-              value: String(m.id),
-            };
-          }),
-        };
-      } catch (error) {
-        console.error('Failed to fetch monitors:', error);
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Failed to load monitors. Check your API key.',
-        };
-      }
-    },
+    options: async ({ auth }, { searchValue }) =>
+      buildMonitorOptions({ auth, searchValue: searchValue ?? undefined }),
+  }),
+  monitorDropdownOptional: Property.Dropdown({
+    displayName: 'Monitor',
+    description:
+      'Select the monitor to act on, or leave blank and use "Monitor ID" below to pass a dynamic value.',
+    refreshers: [],
+    refreshOnSearch: true,
+    required: false,
+    auth: uptimeRobotAuth,
+    options: async ({ auth }, { searchValue }) =>
+      buildMonitorOptions({ auth, searchValue: searchValue ?? undefined }),
+  }),
+  monitorMultiSelect: Property.MultiSelectDropdown({
+    displayName: 'Monitors',
+    description:
+      'Filter to specific monitors. Leave empty to include all monitors in your account.',
+    refreshers: [],
+    refreshOnSearch: true,
+    required: false,
+    auth: uptimeRobotAuth,
+    options: async ({ auth }, { searchValue }) =>
+      buildMonitorOptions({ auth, searchValue: searchValue ?? undefined }),
   }),
 };
 
