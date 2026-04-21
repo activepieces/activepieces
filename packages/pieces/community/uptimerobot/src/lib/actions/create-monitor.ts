@@ -12,46 +12,34 @@ import { uptimeRobotAuth } from '../auth';
 export const createMonitorAction = createAction({
   auth: uptimeRobotAuth,
   name: 'create_monitor',
-  displayName: 'Create Monitor',
-  description: 'Create a new uptime monitor in UptimeRobot',
+  displayName: 'Create HTTP Monitor',
+  description: 'Create a new HTTP(S) uptime monitor in UptimeRobot',
   props: {
-    instructions: Property.MarkDown({
-      value: `**Monitor type guide:**
-- **HTTP** — checks if your website returns a successful HTTP response. Best for most websites and APIs.
-- **Keyword** — loads the page and checks whether a specific word is present or absent. Useful for detecting error pages that return a 200 status code.
-- **Ping** — sends an ICMP ping to a server or IP address.
-- **Port** — checks if a specific TCP port is open on a host.
-- **Heartbeat** — expects periodic pings from your service. Alerts if no ping received within the interval.`,
-    }),
     friendly_name: Property.ShortText({
       displayName: 'Monitor Name',
       description: "A name for this monitor (e.g. 'Company Website' or 'API Server')",
       required: true,
     }),
     url: Property.ShortText({
-      displayName: 'URL or IP Address',
-      description: "The URL or IP address to monitor (e.g. 'https://example.com')",
+      displayName: 'URL',
+      description:
+        "The full URL to monitor, including the protocol (e.g. 'https://example.com').",
       required: true,
     }),
     type: Property.StaticDropdown({
       displayName: 'Monitor Type',
-      description: 'How UptimeRobot checks this target. HTTP is the most common.',
+      description:
+        'Only HTTP(S) monitors are supported at the moment. Other UptimeRobot types (Keyword, Ping, Port, Heartbeat) are not yet verified end-to-end and will be added in a future release.',
       required: true,
       defaultValue: 1,
       options: {
-        options: [
-          { label: 'HTTP (recommended for websites)', value: 1 },
-          { label: 'Keyword (check page content)', value: 2 },
-          { label: 'Ping (ICMP ping)', value: 3 },
-          { label: 'Port (TCP port check)', value: 4 },
-          { label: 'Heartbeat (expects pings from your service)', value: 5 },
-        ],
+        options: [{ label: 'HTTP(S)', value: 1 }],
       },
     }),
     interval: Property.Number({
       displayName: 'Check Interval (seconds)',
       description:
-        'How often UptimeRobot checks this target. Minimum 60s on Free plan, 30s on Pro. For Heartbeat monitors, this is the expected time between incoming pings — an alert is raised if no ping is received within this window.',
+        'How often UptimeRobot checks this URL, in seconds. Minimum 300s (5 min) on the Free plan, 60s on Solo/Team, 30s on Enterprise.',
       required: false,
       defaultValue: 300,
     }),
@@ -66,12 +54,13 @@ export const createMonitorAction = createAction({
           return {
             keyword_type: Property.StaticDropdown({
               displayName: 'Keyword Condition',
-              description: 'Whether the keyword must be present or absent on the page.',
+              description:
+                'When UptimeRobot should raise an alert. "Alert when exists" marks the monitor down the moment the keyword appears on the page; "Alert when does NOT exist" marks it down when the keyword is missing.',
               required: true,
               options: {
                 options: [
-                  { label: 'Keyword must exist on page', value: 2 },
-                  { label: 'Keyword must NOT exist on page', value: 1 },
+                  { label: 'Alert when keyword exists on page', value: 1 },
+                  { label: 'Alert when keyword does NOT exist on page', value: 2 },
                 ],
               },
             }),
