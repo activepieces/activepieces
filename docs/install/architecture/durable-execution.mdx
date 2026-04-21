@@ -3,66 +3,68 @@ title: "Durable Execution"
 icon: "shield-check"
 ---
 
-Flow runs in Activepieces are durable: progress survives worker crashes, deployments, and long pauses because state is persisted on every step boundary rather than held in a worker process.
+A worker is halfway through a five-step flow when its container is recycled. Another worker picks the run up seconds later, walks the graph from the trigger, and for every step whose output is already in the run's log it skips execution and reuses the cached output. It stops at the first step that is not yet in the log and runs that one. The flow finishes as if nothing happened. That is durable execution in Activepieces — one mechanism that covers crashes, deploys, multi-day pauses, and retries.
+
+## The run log
+
+Every flow run has a **run log**: a single compressed checkpoint file that holds everything needed to resume the run on a fresh worker.
+
+What is in it:
+
+- One entry per completed step, keyed by step name: its input (with secrets censored), its output, its status, its duration, and — for failed steps — the error message.
+- Loop iterations and router branches are recorded with the same shape, nested under their parent step.
+- Run-level tags.
+
+When it is written:
+
+- **Once at the start of the run**, before the first step executes, so a crash in step one still has something to resume from.
+- **Every 15 seconds during execution**, by a background loop that snapshots whatever steps have completed since the last write.
+- **Once on the final state** — success, failure, or pause.
+
+Each write overwrites the previous copy of the log. Only the latest checkpoint is retained, and the file is compressed before upload so a long-running flow with large step outputs does not bloat storage.
+
+## Replay and skip
+
+Resume is not a special path. Every time a worker starts executing a run — the first time or the hundredth — it walks the flow graph from the trigger, and at every step asks: *is the output of this step already in the log?*
+
+- If yes, and the step completed (`SUCCEEDED` or `PAUSED`), the engine returns the cached output immediately and moves to the next step.
+- If no, the engine executes the step for real, records its output, and continues.
+
+The first time a run is scheduled, the log is empty, so every step runs for real. After a resume, the log is full up to the interruption, so the engine fast-forwards through all of that and only executes whatever came next.
 
 ```mermaid
-stateDiagram-v2
-    [*] --> QUEUED: trigger fires
-    QUEUED --> RUNNING: worker claims job
-    RUNNING --> PAUSED: waitpoint created
-    PAUSED --> RUNNING: resume signal
-    RUNNING --> SUCCEEDED
-    RUNNING --> FAILED
-    SUCCEEDED --> [*]
-    FAILED --> [*]
+sequenceDiagram
+    participant Worker
+    participant Log as Run log
+    participant Flow as Flow graph
+
+    Worker->>Log: load checkpoint
+    Worker->>Flow: walk from trigger
+    Flow-->>Worker: step A
+    Worker->>Log: output for A?
+    Log-->>Worker: yes (cached)
+    Note over Worker: skip A, reuse output
+    Flow-->>Worker: step B
+    Worker->>Log: output for B?
+    Log-->>Worker: yes (cached)
+    Note over Worker: skip B, reuse output
+    Flow-->>Worker: step C
+    Worker->>Log: output for C?
+    Log-->>Worker: no
+    Note over Worker: execute C, append to log
 ```
 
-## Guarantees
+Worst-case data loss on an abrupt crash is the single step that was executing when the worker died — it is simply re-run from the last checkpoint. Everything before it is already in the log and is skipped.
 
-- A completed step is never re-executed implicitly. Retries are explicit (per-step or per-run).
-- A paused step is never dropped. Pause state is a durable row in Postgres, not memory.
-- Any worker can resume any run. There is no sticky worker and no leader election.
+## What triggers a resume
 
-## How state is persisted
+Every kind of interruption resolves through the same replay path; only the trigger differs.
 
-A running flow carries an execution context — the graph's current position, every completed step's output, the run verdict, and the loop/branch path. That context is serialized and compressed into a log file on object storage.
+- **Worker crash or deployment.** The queue reassigns the run to another worker, which loads the run log and replays.
+- **Paused step.** The piece creates a [waitpoint](/install/architecture/waitpoints) (a timer or a webhook callback). When the waitpoint fires, a resume job is enqueued and a worker replays the run.
+- **Retry from failed step.** The same run log is reused — the failed step stays in the log, the run is re-queued, and a worker replays up to that step and re-runs forward from there.
+- **Normal progression within one worker.** The replay model still applies; the worker just never had to leave the process to do it.
 
-- Checkpointed on every step boundary, with a periodic background backup.
-- Worst-case data loss on crash is the in-flight step, which is retried from the last checkpoint.
-- The same checkpoint powers "retry from failed step": the pre-failure context is rebuilt and the run resumes from the exact failure point, keeping prior outputs.
+## Piece-author contract
 
-## How execution is scheduled
-
-Runs move between states via a durable job queue on Redis, not in-process calls:
-
-1. A trigger enqueues a run. Any worker claims it.
-2. When a step pauses or finishes, the worker writes the updated context and returns.
-3. When a resume signal arrives (timer or callback), it enqueues a resume job against the persisted context.
-
-Workers hold no durable state of their own, so restarts are safe and scaling is linear.
-
-```mermaid
-flowchart LR
-    Trigger([Trigger]) --> Queue[(Job queue)]
-    Queue -->|claim| Worker[Worker]
-    Worker <-->|context| Logs[(Log file)]
-    Worker -->|state| PG[(Postgres)]
-    Resume([Resume signal]) --> Queue
-```
-
-## How pause works
-
-A paused step is represented by a **waitpoint** — a row that records which run is paused, at which step, waiting for what, plus the resume payload once it arrives. Waitpoints make two things possible:
-
-- A timer-based pause that outlives a deployment is a delayed job plus a Postgres row. Nothing in memory.
-- A callback that arrives before the `PAUSED` transition is committed is recorded against the waitpoint and replayed into the run as soon as it reaches `PAUSED`.
-
-From the piece author's side, a paused step is invoked exactly twice — once to create the waitpoint, once to read the resume payload — regardless of how many workers handle the run in between.
-
-The waitpoint schema, lifecycle, and race-handling protocol are on the [Waitpoints](/install/architecture/waitpoints) page.
-
-## Consistency notes
-
-- Flow state transitions are committed to Postgres before any side effect is acknowledged to a caller.
-- Resume signals are idempotent: a waitpoint is completed at most once, and duplicate callbacks are absorbed by a uniqueness constraint on the paused step.
-- On a race between "run finished pausing" and "callback arrived," the callback is pre-recorded and replayed once the run reaches `PAUSED`.
+Actions are executed once per run. The only exception is an action that explicitly pauses itself: its code is entered twice — once to create the waitpoint, once to read the resume payload — regardless of how many workers the run bounces between. Everything else shows up in the log as a single entry with a single output.
