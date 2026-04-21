@@ -23,7 +23,7 @@
     "lint-pieces": "turbo run lint --filter='@activepieces/piece-*'",
     "lint-affected": "turbo run lint --affected",
     "lint-dev": "turbo run lint --filter='!@activepieces/piece-*' --force -- --fix",
-    "test-unit": "turbo run test --filter=@activepieces/engine --filter=@activepieces/shared",
+    "test-unit": "turbo run test --filter=@activepieces/engine --filter=@activepieces/shared --filter=web",
     "test-api": "turbo run check-migrations test-ce test-ee test-cloud --filter=api --concurrency=1",
     "cli": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts",
     "create-piece": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts pieces create",

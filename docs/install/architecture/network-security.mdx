@@ -1,10 +1,19 @@
 ---
 title: "Network Security"
-description: "How Activepieces isolates user-code egress from your internal network"
+description: "How Activepieces isolates outbound traffic from your internal network"
 icon: "shield-halved"
 ---
 
 ## Overview
+
+Activepieces makes outbound HTTP from two surfaces, and each is hardened separately:
+
+1. **User code in flows** — Code steps, piece actions, anything a flow author can write. Hardened by `AP_NETWORK_MODE`; see [User-code egress](#user-code-egress).
+2. **Server-side HTTP from the API** — OAuth token claim/refresh, Vault, Conjur, event-destination webhooks, on-call pager, MCP tool validation. Always filtered, tuned via `AP_SSRF_ALLOW_LIST`; see [Server-side egress](#server-side-egress).
+
+Both surfaces block the same set of IPs (RFC1918 private, loopback, link-local / cloud-metadata, non-unicast) and share the `AP_SSRF_ALLOW_LIST` allow-list.
+
+## User-code egress
 
 Every flow eventually runs **user-supplied code** — Code steps, piece actions, HTTP requests. Without an explicit boundary, that code can reach anything the host can reach: `127.0.0.1`, Redis, Postgres, the Kubernetes API, cloud-metadata endpoints (`169.254.169.254`), the VPC. `AP_NETWORK_MODE` is the switch that controls this boundary.
 
@@ -107,3 +116,27 @@ With `AP_NETWORK_MODE=STRICT` you should see an `SSRFBlockedError` (from the eng
 1. Start in `UNRESTRICTED` (default) and identify any internal services that legitimate flows need to reach (internal APIs, databases used by Code steps, etc.).
 2. Add those IPs to `AP_SSRF_ALLOW_LIST`.
 3. Switch to `AP_NETWORK_MODE=STRICT`. Watch worker logs for `SSRFBlockedError` or `Egress proxy refused request` — each one is either an attack, a misconfigured flow, or a missing allow-list entry.
+
+## Server-side egress
+
+Separate from flow code, the API server itself makes outbound HTTP on behalf of admins and users — OAuth token claim/refresh, Hashicorp Vault, CyberArk Conjur, event-destination webhooks, on-call pager, MCP tool validation. The URLs come from admin config (Vault server URL) or user input (webhook destination, MCP server URL), so the same SSRF risks apply.
+
+Unlike user-code egress, **this layer is always on** — it does not require `AP_NETWORK_MODE=STRICT`. It is implemented as a `request-filtering-agent` wrapper attached to the shared axios instances in `@activepieces/server-utils`; every outbound request flows through it. The blocked ranges are identical to the engine guard (RFC1918, loopback, link-local / cloud metadata, non-unicast).
+
+<Tip>
+`AP_SSRF_ALLOW_LIST` is shared between both surfaces. Add an IP or CIDR once and it applies to user-code egress **and** server-side HTTP. Restart the server after changing the value.
+</Tip>
+
+When a request is blocked, the axios error surfaced in the admin UI includes the `AP_SSRF_ALLOW_LIST` hint, so operators see the remediation directly in connection-test dialogs.
+
+### Self-hosted providers on private IPs
+
+If Vault, Conjur, an on-prem OAuth2 token endpoint, or an internal webhook resolves to a private IP, the server-side filter will reject it until you add the target to `AP_SSRF_ALLOW_LIST`:
+
+```
+AP_SSRF_ALLOW_LIST=10.0.5.12,192.168.10.0/24
+```
+
+### Relaxed TLS is still filtered
+
+Connectors that accept self-signed certs (e.g. CyberArk Conjur in a private cluster) use `rejectUnauthorized: false`. The SSRF filter is preserved under this setting — TLS verification is relaxed, SSRF protection is not.
