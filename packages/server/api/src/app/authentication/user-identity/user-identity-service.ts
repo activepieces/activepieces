@@ -30,23 +30,12 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         }))
 
         if (error || !response?.user) {
-            const isExistingUser = !error
-                || error.message === 'User already exists'
-                || ("code" in error && error.code === 'USER_ALREADY_EXISTS')
-            if (isExistingUser) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.EXISTING_USER,
-                    params: {
-                        email: params.email,
-                        platformId: null,
-                    },
-                })
-            }
-            log.error({ err: error, email: params.email }, '[userIdentityService#create] signUpEmail failed unexpectedly')
+            log.error({ err: error, email: params.email }, '[userIdentityService#create] signUpEmail failed')
             throw new ActivepiecesError({
-                code: ErrorCode.AUTHENTICATION,
+                code: ErrorCode.EXISTING_USER,
                 params: {
-                    message: 'Sign up failed',
+                    email: params.email,
+                    platformId: null,
                 },
             })
         }
@@ -226,6 +215,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
 
 const getPlatformIdByEmail = async (email: string) => {
     const identity = await userIdentityRepository().findOneByOrFail({ email })
+    if (!identity) return null
     const user = await userRepo().findOneBy({ identityId: identity.id })
     return user?.platformId ?? null
 }
