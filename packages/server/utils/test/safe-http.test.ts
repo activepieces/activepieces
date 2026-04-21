@@ -37,3 +37,17 @@ describe('safeHttp.createAxios', () => {
         expect(instance.defaults.httpsAgent).toBeInstanceOf(RequestFilteringHttpsAgent)
     })
 })
+
+describe('safeHttp end-to-end blocking', () => {
+    it.each([
+        ['loopback v4', 'http://127.0.0.1/'],
+        ['loopback v6', 'http://[::1]/'],
+        ['private v4', 'http://10.0.0.1/'],
+        ['link-local / metadata', 'http://169.254.169.254/latest/meta-data/'],
+    ])('rejects %s via safeHttp.axios', async (_label, url) => {
+        const instance = safeHttp.createAxios({ timeout: 2000 })
+        await expect(instance.get(url)).rejects.toMatchObject({
+            message: expect.stringMatching(/DNS lookup .* not allowed|IP .* not allowed|is not allowed/i),
+        })
+    })
+})

@@ -13,6 +13,7 @@ function buildAgents({ allowList }: BuildAgentsParams): SsrfAgents {
     const filteringOptions = {
         keepAlive: true,
         allowPrivateIPAddress: false,
+        allowLoopbackIPAddress: false,
         allowMetaIPAddress: false,
         allowIPAddressList: allowList,
     }
@@ -22,12 +23,8 @@ function buildAgents({ allowList }: BuildAgentsParams): SsrfAgents {
     }
 }
 
-function buildDefaultAgents(): SsrfAgents {
-    return buildAgents({ allowList: parseAllowListFromEnv() })
-}
-
 function createAxios(config?: AxiosRequestConfig): AxiosInstance {
-    const { httpAgent, httpsAgent } = buildDefaultAgents()
+    const { httpAgent, httpsAgent } = buildAgents({ allowList: parseAllowListFromEnv() })
     return axios.create({
         ...config,
         httpAgent,
@@ -35,13 +32,15 @@ function createAxios(config?: AxiosRequestConfig): AxiosInstance {
     })
 }
 
-const defaultAxios = createAxios()
+let lazyDefaultAxios: AxiosInstance | undefined
 
 export const safeHttp = {
     buildAgents,
-    buildDefaultAgents,
     createAxios,
-    axios: defaultAxios,
+    get axios(): AxiosInstance {
+        lazyDefaultAxios ??= createAxios()
+        return lazyDefaultAxios
+    },
 }
 
 export type SsrfAgents = {
