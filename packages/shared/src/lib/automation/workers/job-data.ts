@@ -8,7 +8,7 @@ import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { PiecePackage } from '../pieces/piece'
 
-export const LATEST_JOB_DATA_SCHEMA_VERSION = 6
+export const LATEST_JOB_DATA_SCHEMA_VERSION = 7
 
 export const InlineJobPayload = z.object({
     type: z.literal('inline'),
