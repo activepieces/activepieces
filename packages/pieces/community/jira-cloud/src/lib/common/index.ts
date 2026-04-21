@@ -125,25 +125,37 @@ export async function executeJql({
 }
 
 export async function searchIssuesByJql({
-    auth,
-    jql,
-    maxResults,
-    sanitizeJql,
-    nextPageToken,
-    fields,
-		expand,
+	auth,
+	jql,
+	maxResults,
+	sanitizeJql,
+	nextPageToken,
+	fields,
+	expand,
 }: {
-    auth: JiraAuth;
-    jql: string;
-    maxResults: number;
-    sanitizeJql: boolean;
-    nextPageToken?: string;
-    fields?: string[];
-		expand?: string[];
+	auth: JiraAuth;
+	jql: string;
+	maxResults: number;
+	sanitizeJql: boolean;
+	nextPageToken?: string;
+	fields?: string[];
+	expand?: string[];
 }): Promise<JiraSearchResponse> {
 	const bodyPayload: Record<string, any> = { maxResults };
 	if (nextPageToken) bodyPayload['nextPageToken'] = nextPageToken;
-	if (expand && expand.length > 0) bodyPayload['expand'] = expand;
+	
+	// Clean the array by removing any empty, null, or whitespace-only items
+  	const cleanedFields = fields?.filter((f) => f && f.trim().length > 0) || [];
+
+	if (cleanedFields.length > 0) {
+		bodyPayload['fields'] = cleanedFields;
+	} else {
+		bodyPayload['fields'] = ['*navigable'];
+	}
+	
+	if (expand && expand.length > 0) {
+		bodyPayload['expand'] = expand.join(','); 
+	}
 
 	const searchResult = (await executeJql({
 		auth,
@@ -152,30 +164,9 @@ export async function searchIssuesByJql({
 		jql,
 		body: bodyPayload,
 		sanitizeJql,
-	})) as { issues: any[]; nextPageToken?: string; names?: Record<string, string> };
+	})) as JiraSearchResponse;
 
-	const issueIds = searchResult.issues.map((issue) => issue.id);
-    if (issueIds.length === 0) {
-        return { issues: [] };
-    }
-
-	const bulkFetchResponse = await sendJiraRequest({
-		auth,
-		url: 'issue/bulkfetch',
-		method: HttpMethod.POST,
-		body: {
-			issueIdsOrKeys: issueIds,
-			fields,
-		},
-	});
-
-	const body = bulkFetchResponse.body as { issues: any[] };
-
-	return {
-        issues: body.issues,
-        nextPageToken: searchResult.nextPageToken,
-        names: searchResult.names,
-    };
+	return searchResult;
 }
 
 export async function createJiraIssue(data: CreateIssueParams) {
