@@ -65,11 +65,16 @@ export const findOrAddDealAction = createAction({
 
     // If person found, search for deals in the pipeline
     if (person) {
-      // Outseta does not support nested filters on /crm/deals (DealPipelineStage.*
-      // returns "Invalid filter specification"), so fetch all deals with the
-      // pipeline expanded and filter client-side.
+      // Outseta does not support nested filters on /crm/deals
+      // (DealPipelineStage.* / DealPeople.* return "Invalid filter
+      // specification"), but Account.Uid IS supported. When the user
+      // provides an accountUid we narrow the scan to that account;
+      // otherwise we fall back to scanning all deals.
+      const accountFilter = context.propsValue.accountUid
+        ? `Account.Uid=${encodeURIComponent(context.propsValue.accountUid)}&`
+        : '';
       const deals = await client.getAllPages<any>(
-        `/api/v1/crm/deals?fields=Uid,Name,Amount,DealPipelineStage.Uid,DealPipelineStage.DealPipeline.Uid,DealPeople.Person.Uid,DealPeople.Person.Email,Account.Uid`
+        `/api/v1/crm/deals?${accountFilter}fields=Uid,Name,Amount,DealPipelineStage.Uid,DealPipelineStage.DealPipeline.Uid,DealPeople.Person.Uid,DealPeople.Person.Email,Account.Uid`
       );
       const existingDeal = deals.find(
         (deal: any) =>
