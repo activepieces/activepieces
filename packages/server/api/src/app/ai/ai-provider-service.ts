@@ -3,6 +3,7 @@ import {
     apId,
     BaseAIProviderAuthConfig,
     BedrockProviderAuthConfig,
+    BedrockProviderConfig,
     CreateAIProviderRequest,
     ErrorCode,
     GetProviderConfigResponse,
@@ -70,7 +71,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async listModels(platformId: PlatformId, provider: AIProviderName): Promise<AIProviderModel[]> {
         const { config, auth } = await this.getConfigOrThrow({ platformId, provider })
 
-        const cacheKey = `${provider}-${getAuthCacheFingerprint({ provider, auth })}`
+        const cacheKey = `${provider}-${getAuthCacheFingerprint({ provider, auth, config })}`
         if (modelsCache.has(cacheKey) && !('models' in config)) {
             return modelsCache.get(cacheKey)!
         }
@@ -288,11 +289,12 @@ async function doesActivepiecesProviderHasKeys(aiProvider: AIProviderSchema): Pr
     return !isNil(decryptedAuth) && !isNil(decryptedAuth.apiKey) && decryptedAuth.apiKey !== ''
 }
 
-function getAuthCacheFingerprint({ provider, auth }: { provider: AIProviderName, auth: AIProviderAuthConfig }): string {
+function getAuthCacheFingerprint({ provider, auth, config }: { provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig }): string {
     switch (provider) {
         case AIProviderName.BEDROCK: {
             const { accessKeyId, secretAccessKey } = auth as BedrockProviderAuthConfig
-            return `${accessKeyId}-${secretAccessKey}`
+            const { region } = config as BedrockProviderConfig
+            return `${accessKeyId}-${secretAccessKey}-${region}`
         }
         default: {
             const { apiKey } = auth as BaseAIProviderAuthConfig

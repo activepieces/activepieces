@@ -51,8 +51,8 @@ export const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
 export type OpenRouterProviderAuthConfig = z.infer<typeof OpenRouterProviderAuthConfig>
 
 export const BedrockProviderAuthConfig = z.object({
-    accessKeyId: z.string(),
-    secretAccessKey: z.string(),
+    accessKeyId: z.string().min(1),
+    secretAccessKey: z.string().min(1),
 })
 export type BedrockProviderAuthConfig = z.infer<typeof BedrockProviderAuthConfig>
 
