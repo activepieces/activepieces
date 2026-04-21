@@ -18,11 +18,11 @@ export const publishPiece = async (name: string): Promise<void> => {
     return
   }
 
-  await exec(`turbo run build --filter=@activepieces/piece-${name}`)
+  const { name: packageName, version } = await readPackageJson(directory)
+  await exec(`turbo run build --filter=${packageName}`)
 
   await publishNpmPackage(directory)
 
-  const { version } = await readPackageJson(directory)
   console.info(chalk.green.bold(`[publishPiece] success, name=${name}, version=${version}`))
 }
 

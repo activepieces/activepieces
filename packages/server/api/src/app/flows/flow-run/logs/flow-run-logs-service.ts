@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../../ee/custom-domains/domain-helper'
 import { fileService } from '../../../file/file.service'
-import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
+import { JwtAudience, JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 
 export const flowRunLogsService = (log: FastifyBaseLogger) => {
     return {
@@ -13,6 +13,7 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
                 key: await jwtUtils.getJwtSecret(),
                 algorithm: JwtSignAlgorithm.HS256,
                 issuer: null,
+                audience: JwtAudience.FLOW_RUN_LOG,
             })
             return payload
         },
@@ -27,6 +28,7 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
                 key: await jwtUtils.getJwtSecret(),
                 algorithm: JwtSignAlgorithm.HS256,
                 expiresInSeconds: dayjs.duration(100, 'year').asSeconds(),
+                audience: JwtAudience.FLOW_RUN_LOG,
             })
             return domainHelper.getApiUrlForWorker({ path: `/v1/flow-runs/logs?token=${token}`, platformId: null })
         },

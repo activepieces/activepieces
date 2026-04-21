@@ -1,7 +1,8 @@
-import { apId, JobData, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
+import { apId, JobData, StreamStepProgress, UploadLogsBehavior, UploadLogsToken, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRunLogsService } from '../../flows/flow-run/logs/flow-run-logs-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { jwtUtils } from '../../helper/jwt-utils'
 
 function createMigrations(log: FastifyBaseLogger): JobMigration[] {
     const enrichFlowIdAndLogsUrl: JobMigration = {
@@ -43,8 +44,66 @@ function createMigrations(log: FastifyBaseLogger): JobMigration[] {
             return { ...job, schemaVersion: 5 }
         },
     }
+    const renameProgressAndHandlerFields: JobMigration = {
+        runAtSchemaVersion: 5,
+        migrate: async (job: JobData) => {
+            if (job.jobType === WorkerJobType.EXECUTE_FLOW) {
+                const legacy = job as Record<string, unknown>
+                const streamStepProgress: StreamStepProgress = (legacy['streamStepProgress'] as StreamStepProgress | undefined) ?? migrateProgressUpdateType(legacy['progressUpdateType'] as string | undefined)
+                const workerHandlerId: string | null = (legacy['workerHandlerId'] as string | undefined) ?? (legacy['synchronousHandlerId'] as string | undefined) ?? null
+                return {
+                    ...job,
+                    schemaVersion: 6,
+                    streamStepProgress,
+                    workerHandlerId,
+                }
+            }
+            return { ...job, schemaVersion: 6 }
+        },
+    }
+    const reSignLogsUploadUrlWithAudience: JobMigration = {
+        runAtSchemaVersion: 6,
+        migrate: async (job: JobData) => {
+            if (job.jobType !== WorkerJobType.EXECUTE_FLOW) {
+                return { ...job, schemaVersion: 7 }
+            }
+            const behavior = extractLogsBehaviorFromUrl(job.logsUploadUrl) ?? UploadLogsBehavior.UPLOAD_DIRECTLY
+            const logsUploadUrl = await flowRunLogsService(log).constructUploadUrl({
+                logsFileId: job.logsFileId,
+                projectId: job.projectId,
+                flowRunId: job.runId,
+                behavior,
+            })
+            return {
+                ...job,
+                schemaVersion: 7,
+                logsUploadUrl,
+            }
+        },
+    }
 
-    return [enrichFlowIdAndLogsUrl, migratePayloadToUnion]
+    return [enrichFlowIdAndLogsUrl, migratePayloadToUnion, renameProgressAndHandlerFields, reSignLogsUploadUrlWithAudience]
+}
+
+function extractLogsBehaviorFromUrl(url: string): UploadLogsBehavior | null {
+    const queryIndex = url.indexOf('?')
+    if (queryIndex === -1) {
+        return null
+    }
+    const token = new URLSearchParams(url.slice(queryIndex + 1)).get('token')
+    if (token === null) {
+        return null
+    }
+    const decoded = jwtUtils.decode<UploadLogsToken>({ jwt: token })
+    const parsed = UploadLogsToken.safeParse(decoded?.payload)
+    return parsed.success ? parsed.data.behavior : null
+}
+
+function migrateProgressUpdateType(progressUpdateType: string | undefined): StreamStepProgress {
+    if (progressUpdateType === 'TEST_FLOW' || progressUpdateType === 'WEBHOOK_RESPONSE') {
+        return StreamStepProgress.WEBSOCKET
+    }
+    return StreamStepProgress.NONE
 }
 
 export const jobMigrations = (log: FastifyBaseLogger) => ({

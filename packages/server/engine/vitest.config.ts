@@ -8,7 +8,7 @@ process.chdir(repoRoot)
 process.env.AP_EXECUTION_MODE = 'UNSANDBOXED'
 process.env.AP_BASE_CODE_DIRECTORY = 'packages/server/engine/test/resources/codes'
 process.env.AP_TEST_MODE = 'true'
-process.env.AP_DEV_PIECES = 'http,data-mapper,approval,webhook'
+process.env.AP_DEV_PIECES = 'http,data-mapper,approval,webhook,delay'
 
 export default defineConfig({
   test: {
