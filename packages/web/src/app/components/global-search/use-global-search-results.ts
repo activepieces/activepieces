@@ -2,6 +2,7 @@ import { PROJECT_COLOR_PALETTE } from '@activepieces/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { flowsApi } from '@/features/flows';
 import { foldersApi } from '@/features/folders';
 import { projectCollectionUtils, getProjectName } from '@/features/projects';
@@ -38,6 +39,8 @@ function getTimePeriod(
 export function useGlobalSearchResults(query: string, open: boolean) {
   const projectId = authenticationSession.getProjectId() ?? '';
   const isPlatformAdmin = useIsPlatformAdmin();
+  const { embedState } = useEmbedding();
+  const hideTables = embedState.hideTables;
   const { data: allProjects = [] } = projectCollectionUtils.useAll();
   const currentProject = allProjects.find((p) => p.id === projectId);
   const currentProjectName = currentProject
@@ -88,7 +91,7 @@ export function useGlobalSearchResults(query: string, open: boolean) {
         limit: SEARCH_LIMIT,
         cursor: undefined,
       }),
-    enabled: searchEnabled || suggestionsEnabled,
+    enabled: (searchEnabled || suggestionsEnabled) && !hideTables,
     staleTime: hasQuery ? 15_000 : 60_000,
     placeholderData: keepPreviousData,
   });
