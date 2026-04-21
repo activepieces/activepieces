@@ -25,16 +25,35 @@ function buildAgents({ allowList, httpsAgentOptions }: BuildAgentsParams): SsrfA
     }
 }
 
+function isSsrfFilterError(error: unknown): boolean {
+    if (!(error instanceof Error)) return false
+    const message = typeof error.message === 'string' ? error.message : ''
+    const cause = error.cause instanceof Error ? error.cause.message : ''
+    return SSRF_FILTER_MESSAGE_REGEX.test(message) || SSRF_FILTER_MESSAGE_REGEX.test(cause)
+}
+
+function attachSsrfErrorInterceptor(instance: AxiosInstance): AxiosInstance {
+    instance.interceptors.response.use(undefined, (error: unknown) => {
+        if (isSsrfFilterError(error)) {
+            const original = error instanceof Error ? error.message : String(error)
+            const enriched = `${original} — ${SSRF_REMEDIATION_HINT}`
+            if (error instanceof Error) error.message = enriched
+        }
+        return Promise.reject(error)
+    })
+    return instance
+}
+
 function createAxios(config?: AxiosRequestConfig, { httpsAgentOptions }: SafeAxiosOptions = {}): AxiosInstance {
     const { httpAgent, httpsAgent } = buildAgents({
         allowList: parseAllowListFromEnv(),
         httpsAgentOptions,
     })
-    return axios.create({
+    return attachSsrfErrorInterceptor(axios.create({
         ...config,
         httpAgent,
         httpsAgent,
-    })
+    }))
 }
 
 function createRetryingAxios(config?: AxiosRequestConfig, options?: SafeAxiosOptions): AxiosInstance {
@@ -50,6 +69,9 @@ function createRetryingAxios(config?: AxiosRequestConfig, options?: SafeAxiosOpt
 
 let lazyDefaultAxios: AxiosInstance | undefined
 let lazyRetryingAxios: AxiosInstance | undefined
+
+const SSRF_FILTER_MESSAGE_REGEX = /(DNS lookup .* not allowed|IP .* is not allowed)/i
+const SSRF_REMEDIATION_HINT = 'the target is blocked by the SSRF filter. If it is a trusted internal host (e.g. a self-hosted Vault, Conjur, or OAuth2 provider), add its IP or CIDR to the AP_SSRF_ALLOW_LIST environment variable (comma-separated) and restart the server.'
 
 export const safeHttp = {
     buildAgents,
