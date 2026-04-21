@@ -219,6 +219,7 @@
   "The UID of the person to update.": "L'UID de la personne à mettre à jour.",
   "The UID of the person to add to the account.": "L'UID de la personne à ajouter au compte.",
   "The UID of the person to associate with this deal.": "L'UID de la personne à associer à ce deal.",
+  "UID of a person to add as a contact on this deal. Existing contacts are preserved.": "UID d'une personne à ajouter comme contact sur ce deal. Les contacts existants sont conservés.",
   "The UID of the person submitting the ticket.": "L'UID de la personne soumettant le ticket.",
   "The UID of the person to delete.": "L'UID de la personne à supprimer.",
   "The email address of the contact associated with the deal.": "L'adresse e-mail du contact associé au deal.",

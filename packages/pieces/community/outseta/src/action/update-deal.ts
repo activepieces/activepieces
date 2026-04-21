@@ -41,7 +41,8 @@ export const updateDealAction = createAction({
     }),
     personUid: Property.ShortText({
       displayName: 'Person UID',
-      description: 'The UID of the person to associate with this deal.',
+      description:
+        'UID of a person to add as a contact on this deal. Existing contacts are preserved.',
       required: false,
     }),
   },
@@ -77,9 +78,17 @@ export const updateDealAction = createAction({
       deal.Account = { Uid: context.propsValue.accountUid };
     }
     if (context.propsValue.personUid) {
-      deal.DealPeople = [
-        { Person: { Uid: context.propsValue.personUid } },
-      ];
+      const existing: any[] =
+        deal.DealPeople?.items ?? deal.DealPeople?.Items ?? deal.DealPeople ?? [];
+      const alreadyLinked = existing.some(
+        (dp: any) => dp.Person?.Uid === context.propsValue.personUid
+      );
+      if (!alreadyLinked) {
+        deal.DealPeople = [
+          ...existing.map((dp: any) => ({ Person: { Uid: dp.Person?.Uid } })),
+          { Person: { Uid: context.propsValue.personUid } },
+        ];
+      }
     }
 
     const updated = await client.put<any>(

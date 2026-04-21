@@ -219,6 +219,7 @@
   "The UID of the person to update.": "The UID of the person to update.",
   "The UID of the person to add to the account.": "The UID of the person to add to the account.",
   "The UID of the person to associate with this deal.": "The UID of the person to associate with this deal.",
+  "UID of a person to add as a contact on this deal. Existing contacts are preserved.": "UID of a person to add as a contact on this deal. Existing contacts are preserved.",
   "The UID of the person submitting the ticket.": "The UID of the person submitting the ticket.",
   "The UID of the person to delete.": "The UID of the person to delete.",
   "The email address of the contact associated with the deal.": "The email address of the contact associated with the deal.",
