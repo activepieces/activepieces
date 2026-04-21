@@ -1,5 +1,9 @@
-import { AgentToolType } from '@activepieces/shared';
-import type { AgentPieceTool, AgentTool } from '@activepieces/shared';
+import { AgentToolType, AIProviderName } from '@activepieces/shared';
+import type {
+  AgentKnowledgeBaseTool,
+  AgentPieceTool,
+  AgentTool,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import { ControllerRenderProps } from 'react-hook-form';
@@ -13,6 +17,7 @@ import {
   AgentPieceToolComponent,
   AgentFlowToolDialog,
   AgentMcpDialog,
+  KnowledgeBaseSection,
 } from '@/features/agents';
 
 import { AgentPieceDialog } from './piece-tool-dialog';
@@ -27,11 +32,13 @@ const icons = [
 interface AgentToolsProps {
   toolsField: ControllerRenderProps;
   disabled?: boolean;
+  selectedProvider?: AIProviderName;
 }
 
 export const AgentTools = ({
   disabled,
   toolsField: agentToolsField,
+  selectedProvider,
 }: AgentToolsProps) => {
   const tools = Array.isArray(agentToolsField.value)
     ? (agentToolsField.value as AgentTool[])
@@ -45,6 +52,10 @@ export const AgentTools = ({
 
   const flowTools = tools.filter((tool) => tool.type === AgentToolType.FLOW);
   const mcpTools = tools.filter((tool) => tool.type === AgentToolType.MCP);
+  const kbTools = tools.filter(
+    (tool): tool is AgentKnowledgeBaseTool =>
+      tool.type === AgentToolType.KNOWLEDGE_BASE,
+  );
   const pieceToToolMap = tools
     .filter((tool) => tool.type === AgentToolType.PIECE)
     .reduce<Record<string, AgentPieceTool[]>>((acc, tool) => {
@@ -61,7 +72,10 @@ export const AgentTools = ({
       <h2 className="text-sm font-medium">{t('Agent Tools')}</h2>
 
       <div className="mt-2">
-        {tools.length > 0 ? (
+        {flowTools.length +
+          mcpTools.length +
+          Object.keys(pieceToToolMap).length >
+        0 ? (
           <>
             <Accordion
               type="single"
@@ -135,6 +149,15 @@ export const AgentTools = ({
           </div>
         )}
       </div>
+
+      <KnowledgeBaseSection
+        disabled={disabled}
+        tools={kbTools}
+        allTools={tools}
+        removeTool={removeTool}
+        onToolsUpdate={onToolsUpdate}
+        selectedProvider={selectedProvider}
+      />
 
       <AgentFlowToolDialog onToolsUpdate={onToolsUpdate} tools={tools} />
       <AgentPieceDialog tools={tools} onToolsUpdate={onToolsUpdate} />

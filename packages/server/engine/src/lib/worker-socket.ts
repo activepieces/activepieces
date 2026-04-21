@@ -1,19 +1,17 @@
-import { inspect } from 'util'
+import { inspect } from 'node:util'
 import {
     createNotifyClient,
     createRpcClient,
     createRpcServer,
     EngineContract,
     EngineResponse,
-    EngineResponseStatus,
     ERROR_MESSAGES_TO_REDACT,
-    tryCatch,
     WorkerContract,
     WorkerNotifyContract,
 } from '@activepieces/shared'
 import { io, type Socket } from 'socket.io-client'
+import { runProgressService } from './handler/run-progress'
 import { execute } from './operations'
-import { progressService } from './services/progress.service'
 
 let socket: Socket | undefined
 let workerClient: WorkerContract | undefined
@@ -56,25 +54,24 @@ export const workerSocket = {
 
         createRpcServer<EngineContract>(socket, {
             executeOperation: async ({ operationType, operation }): Promise<EngineResponse<unknown>> => {
-                const result = await tryCatch(async () => {
-                    progressService.init()
+                runProgressService.init()
+                try {
                     const response = await execute(operationType, operation)
-                    await progressService.shutdown()
                     return JSON.parse(JSON.stringify(response)) as EngineResponse<unknown>
-                })
-
-                if (result.error) {
-                    console.error(result.error)
-                    return {
-                        response: undefined,
-                        status: EngineResponseStatus.INTERNAL_ERROR,
-                        error: inspect(result.error),
-                    }
                 }
-
-                return result.data
+                finally {
+                    await runProgressService.shutdown()
+                }
             },
         })
+
+        const gc = global.gc
+        if (typeof gc === 'function') {
+            const GC_INTERVAL_MS = 60_000
+            setInterval(() => {
+                gc()
+            }, GC_INTERVAL_MS)
+        }
 
         socket.connect()
     },

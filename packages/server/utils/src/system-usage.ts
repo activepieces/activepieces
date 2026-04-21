@@ -1,11 +1,11 @@
-import { exec } from 'child_process'
 import fs from 'fs'
 import os from 'os'
-import { promisify } from 'util'
 import { MachineInformation, tryCatch } from '@activepieces/shared'
+import checkDiskSpace from 'check-disk-space'
+import si from 'systeminformation'
 import { fileSystemUtils } from './file-system-utils'
 
-const execAsync = promisify(exec)
+const MAX_REASONABLE_MEMORY_BYTES = 4 * 1024 ** 4 // 4 TiB
 
 let prevCpuUsage = process.cpuUsage()
 let prevTimestamp = Date.now()
@@ -31,7 +31,7 @@ async function getCgroupMemory(): Promise<{ totalRamInBytes: number, ramUsage: n
         if (!usageStr) continue
         const totalRamInBytes = parseInt(limitStr)
         const usedBytes = parseInt(usageStr)
-        if (isNaN(totalRamInBytes) || isNaN(usedBytes) || totalRamInBytes <= 0) continue
+        if (isNaN(totalRamInBytes) || isNaN(usedBytes) || totalRamInBytes <= 0 || totalRamInBytes > MAX_REASONABLE_MEMORY_BYTES) continue
         return {
             totalRamInBytes,
             ramUsage: (usedBytes / totalRamInBytes) * 100,
@@ -42,7 +42,7 @@ async function getCgroupMemory(): Promise<{ totalRamInBytes: number, ramUsage: n
 
 function getConstrainedMemoryTotal(): number | null {
     const constrained = process.constrainedMemory?.()
-    if (constrained && constrained > 0) return constrained
+    if (constrained && constrained > 0 && constrained <= MAX_REASONABLE_MEMORY_BYTES) return constrained
     return null
 }
 
@@ -81,52 +81,29 @@ export const systemUsage = {
             }
         }
 
+        const mem = await si.mem()
         return {
-            totalRamInBytes: os.totalmem(),
-            ramUsage: (os.totalmem() - os.freemem()) / os.totalmem() * 100,
+            totalRamInBytes: mem.total,
+            ramUsage: (mem.used / mem.total) * 100,
         }
     },
 
     async getDiskInfo(): Promise<MachineInformation['diskInfo']> {
-        const platform = os.platform()
-
         const { data, error } = await tryCatch(async () => {
-            if (platform === 'win32') {
-                const { stdout } = await execAsync('wmic logicaldisk get size,freespace,caption')
-                const lines = stdout.trim().split('\n').slice(1)
-                let total = 0, free = 0
-
-                for (const line of lines) {
-                    const [, freeSpace, size] = line.trim().split(/\s+/)
-                    if (freeSpace && size) {
-                        total += parseInt(size)
-                        free += parseInt(freeSpace)
+            const paths = ['/', process.cwd()]
+            for (const path of paths) {
+                const { data: disk } = await tryCatch(() => checkDiskSpace(path))
+                if (disk) {
+                    const used = disk.size - disk.free
+                    return {
+                        total: disk.size,
+                        free: disk.free,
+                        used,
+                        percentage: disk.size > 0 ? (used / disk.size) * 100 : 0,
                     }
                 }
-
-                const used = total - free
-                return {
-                    total,
-                    free,
-                    used,
-                    percentage: (used / total) * 100,
-                }
             }
-            else {
-                const { stdout } = await execAsync('df -k / | tail -1')
-                const [, blocks, used, available] = stdout.trim().split(/\s+/)
-
-                const totalBytes = parseInt(blocks) * 1024
-                const usedBytes = parseInt(used) * 1024
-                const freeBytes = parseInt(available) * 1024
-
-                return {
-                    total: totalBytes,
-                    free: freeBytes,
-                    used: usedBytes,
-                    percentage: (usedBytes / totalBytes) * 100,
-                }
-            }
+            return { total: 0, free: 0, used: 0, percentage: 0 }
         })
         if (error) {
             return { total: 0, free: 0, used: 0, percentage: 0 }

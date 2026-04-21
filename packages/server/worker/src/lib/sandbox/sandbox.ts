@@ -4,8 +4,54 @@ import path from 'path'
 import { ActivepiecesError, assertNotNullOrUndefined, createNotifyServer, createRpcClient, createRpcServer, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, ErrorCode, isNil, WorkerContract, WorkerNotifyContract } from '@activepieces/shared'
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
-import { getGlobalCachePathLatestVersion } from '../cache/cache-paths'
+import { getGlobalCachePathLatestVersion, getGlobalCodeCachePath } from '../cache/cache-paths'
 import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
+
+function assertSafePathSegment(value: string, field: string): void {
+    const isUnsafe = value.length === 0
+        || value === '.'
+        || value === '..'
+        || value.includes('..')
+        || value.includes('/')
+        || value.includes('\\')
+        || value.includes('\0')
+    if (isUnsafe) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `Invalid ${field}: "${value}" — path segment contains disallowed characters` },
+        })
+    }
+}
+
+function assertSandboxPathUnderRoot(mount: SandboxMount): void {
+    const normalized = path.posix.normalize(mount.sandboxPath)
+    if (!normalized.startsWith('/root/') && normalized !== '/root') {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `Mount sandboxPath "${mount.sandboxPath}" must be under /root/` },
+        })
+    }
+}
+
+function buildCodeMount({ flowVersionId, reusable }: { flowVersionId: string | undefined, reusable: boolean }): SandboxMount | null {
+    const codeCachePath = getGlobalCodeCachePath()
+    if (reusable) {
+        return {
+            hostPath: codeCachePath,
+            sandboxPath: '/root/codes',
+            optional: true,
+        }
+    }
+    if (!isNil(flowVersionId)) {
+        assertSafePathSegment(flowVersionId, 'flowVersionId')
+        return {
+            hostPath: path.join(codeCachePath, flowVersionId),
+            sandboxPath: `/root/codes/${flowVersionId}`,
+            optional: true,
+        }
+    }
+    return null
+}
 
 export function createSandbox(
     log: SandboxLogger,
@@ -45,7 +91,7 @@ export function createSandbox(
             }
         })
 
-        httpServer.listen(0)
+        httpServer.listen(options.wsRpcPort ?? 0)
 
         const address = httpServer.address()
         if (typeof address === 'object' && address !== null) {
@@ -71,11 +117,14 @@ export function createSandbox(
         })
     }
 
+    function isReady(): boolean {
+        return !isNil(connectedSocket) && connectedSocket.connected && !isNil(childProcess) && childProcess.exitCode === null
+    }
+
     return {
         id: sandboxId,
         start: async ({ flowVersionId, platformId, mounts }) => {
-            const ready = !isNil(connectedSocket) && connectedSocket.connected && !isNil(childProcess)
-            if (ready) {
+            if (isReady()) {
                 return
             }
             log.debug({
@@ -86,8 +135,10 @@ export function createSandbox(
 
             const port = createSocketServer()
 
+            const codeMount = buildCodeMount({ flowVersionId, reusable: options.reusable })
             const customPieceMounts: SandboxMount[] = []
             if (platformId) {
+                assertSafePathSegment(platformId, 'platformId')
                 const customPiecesHostPath = path.resolve(getGlobalCachePathLatestVersion(), 'custom_pieces', platformId)
                 customPieceMounts.push({
                     hostPath: customPiecesHostPath,
@@ -96,10 +147,20 @@ export function createSandbox(
                 })
             }
 
+            const allMounts: SandboxMount[] = [
+                ...(options.baseMounts ?? []),
+                ...(codeMount ? [codeMount] : []),
+                ...mounts,
+                ...customPieceMounts,
+            ]
+            for (const mount of allMounts) {
+                assertSandboxPathUnderRoot(mount)
+            }
+
             childProcess = await processMaker.create({
                 sandboxId,
                 command: options.command ?? [],
-                mounts: [...(options.baseMounts ?? []), ...mounts, ...customPieceMounts],
+                mounts: allMounts,
                 env: {
                     ...options.env,
                     AP_SANDBOX_WS_PORT: String(port),
@@ -108,7 +169,7 @@ export function createSandbox(
                         : {}),
                 },
                 resourceLimits: {
-                    memoryBytes: options.memoryLimitMb * 1024 * 1024,
+                    memoryLimitMb: options.memoryLimitMb,
                     cpuMsPerSec: options.cpuMsPerSec,
                     timeLimitSeconds: options.timeLimitSeconds,
                 },
@@ -132,35 +193,37 @@ export function createSandbox(
         execute: async (operationType: EngineOperationType, operation: EngineOperation, executeOptions: SandboxOptions) => {
             let killedByTimeout = false
             let timeout: NodeJS.Timeout | null = null
+            const executeSocket = connectedSocket
+            const executeProcess = childProcess
             const operationPromise = new Promise<SandboxResult>((resolve, reject) => {
-                assertNotNullOrUndefined(childProcess, 'Sandbox process should not be null')
-                assertNotNullOrUndefined(connectedSocket, 'Connected socket should not be null')
+                assertNotNullOrUndefined(executeProcess, 'Sandbox process should not be null')
+                assertNotNullOrUndefined(executeSocket, 'Connected socket should not be null')
 
                 let stdError = ''
                 let stdOut = ''
 
-                createNotifyServer<WorkerNotifyContract>(connectedSocket!, {
+                createNotifyServer<WorkerNotifyContract>(executeSocket, {
                     stdout: (input: EngineStdout) => {
-                        stdOut += input.message 
+                        stdOut += input.message
                     },
                     stderr: (input: EngineStderr) => {
-                        stdError += input.message 
+                        stdError += input.message
                     },
                 })
 
                 timeout = setTimeout(async () => {
                     killedByTimeout = true
                     log.debug({ sandboxId }, 'Killing sandbox by timeout')
-                    if (!isNil(childProcess)) {
-                        await killProcess(childProcess, log)
+                    if (!isNil(executeProcess)) {
+                        await killProcess(executeProcess, log)
                     }
                 }, executeOptions.timeoutInSeconds * 1000)
 
-                childProcess.on('error', (error) => {
+                executeProcess.on('error', (error) => {
                     log.error({ sandboxId, error: String(error) }, 'Sandbox process error')
                 })
 
-                childProcess.on('exit', (code, signal) => {
+                executeProcess.on('exit', (code, signal) => {
                     handleProcessExit(log, {
                         sandboxId,
                         operationType,
@@ -173,11 +236,11 @@ export function createSandbox(
                     })
                 })
 
-                log.info({ sandboxId, operationType }, '[Sandbox] Executing operation via RPC')
+                log.debug({ sandboxId, operationType }, '[Sandbox] Executing operation via RPC')
                 const operationTimeoutMs = (executeOptions.timeoutInSeconds + 5) * 1000
-                const client = createRpcClient<EngineContract>(connectedSocket!, operationTimeoutMs)
+                const client = createRpcClient<EngineContract>(executeSocket, operationTimeoutMs)
                 client.executeOperation({ operationType, operation }).then((engineResponse: EngineResponse<unknown>) => {
-                    resolve({ engine: engineResponse, stdOut, stdError })
+                    resolve({ ...engineResponse, logs: buildLogs(stdOut, stdError) })
                 }).catch((error: unknown) => {
                     log.error({ sandboxId, error: String(error) }, '[Sandbox] RPC call failed')
                     reject(error)
@@ -188,7 +251,7 @@ export function createSandbox(
                 return await operationPromise
             }
             finally {
-                log.info({
+                log.debug({
                     sandboxId,
                     operationType,
                     killedByTimeout: String(killedByTimeout),
@@ -196,14 +259,12 @@ export function createSandbox(
                 if (!isNil(timeout)) {
                     clearTimeout(timeout)
                 }
-                connectedSocket?.removeAllListeners('rpc-notify')
-                childProcess?.removeAllListeners('exit')
-                childProcess?.removeAllListeners('error')
+                executeSocket?.removeAllListeners('rpc-notify')
+                executeProcess?.removeAllListeners('exit')
+                executeProcess?.removeAllListeners('error')
             }
         },
-        isReady: () => {
-            return !isNil(connectedSocket) && connectedSocket.connected && !isNil(childProcess)
-        },
+        isReady,
         shutdown: async () => {
             if (!isNil(childProcess)) {
                 log.debug({ sandboxId }, 'Shutting down sandbox')
@@ -253,14 +314,15 @@ function handleProcessExit(log: SandboxLogger, params: ProcessExitParams): void 
         }))
     }
     else {
+        const reason = 'Worker exited with code ' + code + ' and signal ' + signal
         reject(new ActivepiecesError({
             code: ErrorCode.SANDBOX_INTERNAL_ERROR,
             params: {
-                reason: 'Worker exited with code ' + code + ' and signal ' + signal,
+                reason,
                 standardOutput: stdOut,
                 standardError: stdError,
             },
-        }))
+        }, `${reason} standardOutput=${stdOut} standardError=${stdError}`))
     }
 }
 
@@ -280,6 +342,13 @@ function killProcess(child: ChildProcess, log: SandboxLogger): Promise<void> {
             resolve()
         })
     })
+}
+
+function buildLogs(stdOut: string, stdError: string): string | undefined {
+    const parts: string[] = []
+    if (stdOut) parts.push(`stdout:\n${stdOut}`)
+    if (stdError) parts.push(`stderr:\n${stdError}`)
+    return parts.length > 0 ? parts.join('\n') : undefined
 }
 
 type ProcessExitParams = {

@@ -15,7 +15,6 @@ import { ApMarkdown } from '@/components/custom/markdown';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { FormControl } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 
 import { ArrayPieceProperty } from './array-property';
@@ -41,7 +40,6 @@ export const selectGenericFormComponentForProperty = ({
   propertySettings,
   hideLabel,
   enableMarkdownForInputWithMention,
-  showSecretInput = false,
 }: SelectGenericFormComponentForPropertyParams) => {
   switch (property.type) {
     case PropertyType.ARRAY:
@@ -254,9 +252,8 @@ export const selectGenericFormComponentForProperty = ({
               onChange={field.onChange}
               enableMarkdown={enableMarkdownForInputWithMention}
             ></TextInputWithMentions>
-          ) : showSecretInput ? (
+          ) : (
             <SecretInput
-              allowTogglingSecretManagerMode={true}
               ref={field.ref}
               value={field.value}
               onChange={field.onChange}
@@ -265,16 +262,6 @@ export const selectGenericFormComponentForProperty = ({
                 property.type === PropertyType.SECRET_TEXT ? 'password' : 'text'
               }
             ></SecretInput>
-          ) : (
-            <Input
-              ref={field.ref}
-              value={field.value}
-              onChange={field.onChange}
-              disabled={disabled}
-              type={
-                property.type === PropertyType.SECRET_TEXT ? 'password' : 'text'
-              }
-            ></Input>
           )}
         </AutoFormFieldWrapper>
       );
@@ -330,7 +317,6 @@ export const selectGenericFormComponentForProperty = ({
 };
 
 export type SelectGenericFormComponentForPropertyParams = {
-  showSecretInput?: boolean;
   field: ControllerRenderProps<Record<string, any>, string>;
   hideLabel?: boolean;
   propertyName: string;

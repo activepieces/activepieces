@@ -18,12 +18,20 @@ import { exceptionHandler } from './helper/exception-handler'
 import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
+import { mcpOAuthHttpController } from './mcp/oauth/mcp-oauth.controller'
+import { mcpOAuthRootModule } from './mcp/oauth/mcp-oauth.module'
 
 
 export let app: FastifyInstance | undefined = undefined
 
 export const setupServer = async (): Promise<FastifyInstance> => {
     app = await setupBaseApp()
+
+    // MCP OAuth endpoints at domain root (required by MCP spec)
+    if (system.isApp()) {
+        await app.register(mcpOAuthRootModule)
+        await app.register(mcpOAuthHttpController, { prefix: '/mcp' })
+    }
 
     await app.register(async (apiApp) => {
         await apiApp.register(healthModule)
@@ -71,6 +79,9 @@ export const setupServer = async (): Promise<FastifyInstance> => {
             return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Route not found' })
         }
         if (system.isApp() && environment !== ApEnvironment.DEVELOPMENT) {
+            if (hasStaticFileExtension(request.url)) {
+                return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Asset not found' })
+            }
             return reply.sendFile('index.html')
         }
         return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Route not found' })
@@ -92,7 +103,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         querystringParser: qs.parse,
         loggerInstance: system.globalLogger(),
         ignoreTrailingSlash: true,
-        pluginTimeout: 30000,
+        pluginTimeout: 120000,
         bodyLimit: Math.max(fileSizeLimit + 4, flowRunLogSizeLimit + 4, 25) * 1024 * 1024,
         genReqId: () => {
             return `req_${apId()}`
@@ -152,6 +163,15 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         app.getDefaultJsonParser('ignore', 'ignore'),
     )
     return app
+}
+
+const STATIC_FILE_EXTENSIONS = new Set(['.js', '.css', '.map', '.json', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot'])
+
+function hasStaticFileExtension(url: string): boolean {
+    const pathname = url.split('?')[0]
+    const lastDot = pathname.lastIndexOf('.')
+    if (lastDot === -1) return false
+    return STATIC_FILE_EXTENSIONS.has(pathname.slice(lastDot))
 }
 
 type ZodLike = { safeParse: (data: unknown) => { success: boolean, data?: unknown } }

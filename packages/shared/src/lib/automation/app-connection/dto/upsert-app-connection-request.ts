@@ -154,6 +154,22 @@ export const UpsertGlobalConnectionRequestBody =
     ])
 export type UpsertGlobalConnectionRequestBody = z.infer<typeof UpsertGlobalConnectionRequestBody>
 
+export const GetOAuth2AuthorizationUrlRequestBody = z.object({
+    pieceName: z.string(),
+    pieceVersion: z.string().optional(),
+    projectId: z.string().optional(),
+    clientId: z.string(),
+    redirectUrl: z.string(),
+    props: z.record(z.string(), z.unknown()).optional(),
+})
+export type GetOAuth2AuthorizationUrlRequestBody = z.infer<typeof GetOAuth2AuthorizationUrlRequestBody>
+
+export const GetOAuth2AuthorizationUrlResponse = z.object({
+    authorizationUrl: z.string(),
+    codeVerifier: z.string().optional(),
+})
+export type GetOAuth2AuthorizationUrlResponse = z.infer<typeof GetOAuth2AuthorizationUrlResponse>
+
 export const ReplaceAppConnectionsRequestBody = z.object({
     sourceAppConnectionId: z.string(),
     targetAppConnectionId: z.string(),

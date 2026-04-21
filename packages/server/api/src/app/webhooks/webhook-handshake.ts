@@ -14,7 +14,7 @@ export const webhookHandshake = {
 
         const platformId = await projectService(logger).getPlatformId(params.projectId)
 
-        const engineHelperResponse = await userInteractionWatcher(logger).submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.HANDSHAKE>>>({
+        const engineHelperResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.HANDSHAKE>>>({
             jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
             hookType: TriggerHookType.HANDSHAKE,
             flowId: params.flowId,
@@ -23,7 +23,7 @@ export const webhookHandshake = {
             test: false,
             platformId,
             triggerPayload: payload,
-        })
+        }, logger)
 
         if (engineHelperResponse.status !== EngineResponseStatus.OK) {
             return null

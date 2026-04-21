@@ -2,6 +2,7 @@ import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { PieceCategory } from '@activepieces/shared';
 import { makePhoneCall } from "./lib/actions/make-phone-call";
 import { phoneCallEnded } from "./lib/triggers/phone-call-ended";
+import { conversationEnded } from "./lib/triggers/conversation-ended";
 import { addLead } from "./lib/actions/add-lead";
 import { sendSms } from "./lib/actions/send-sms";
 import { inboundCall } from "./lib/triggers/inbound-call";
@@ -9,7 +10,27 @@ import { getAssistants } from "./lib/triggers/get-assistants";
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { baseApiUrl } from './lib/common';
 import { campaignControl } from "./lib/actions/campaign-control";
+import { createCampaign } from "./lib/actions/create-campaign";
 import { deleteLead } from "./lib/actions/delete-lead";
+import { updateLead } from "./lib/actions/update-lead";
+import { getCurrentUser } from "./lib/actions/get-current-user";
+import { listLeads } from "./lib/actions/list-leads";
+import { listPhoneNumbers } from "./lib/actions/list-phone-numbers";
+import { searchAvailablePhoneNumbers } from "./lib/actions/search-available-phone-numbers";
+import { purchasePhoneNumber } from "./lib/actions/purchase-phone-number";
+import { generateAiReply } from "./lib/actions/generate-ai-reply";
+import { createConversation } from "./lib/actions/create-conversation";
+import { getConversation } from "./lib/actions/get-conversation";
+import { sendMessage } from "./lib/actions/send-message";
+import { listConversations } from "./lib/actions/list-conversations";
+import { listCalls } from "./lib/actions/list-calls";
+import { getCall } from "./lib/actions/get-call";
+import { deleteCall } from "./lib/actions/delete-call";
+import { getWhatsAppSenders } from "./lib/actions/get-whatsapp-senders";
+import { getWhatsAppTemplates } from "./lib/actions/get-whatsapp-templates";
+import { sendWhatsAppTemplate } from "./lib/actions/send-whatsapp-template";
+import { sendWhatsAppFreeform } from "./lib/actions/send-whatsapp-freeform";
+import { getWhatsAppSessionStatus } from "./lib/actions/get-whatsapp-session-status";
 
 
 export const famulorAuth =  PieceAuth.SecretText({
@@ -55,7 +76,33 @@ export const famulor = createPiece({
   description: "AI-powered calling and SMS platform. Automate outbound campaigns, manage leads, and get real-time call analytics.",
   authors: ['bekservice', 'onyedikachi-david'],
   categories: [PieceCategory.SALES_AND_CRM],
-  actions: [addLead,sendSms,campaignControl,makePhoneCall,deleteLead],
-  triggers: [phoneCallEnded,getAssistants,inboundCall],
+  actions: [
+    addLead,
+    listLeads,
+    listPhoneNumbers,
+    searchAvailablePhoneNumbers,
+    purchasePhoneNumber,
+    sendSms,
+    createCampaign,
+    campaignControl,
+    makePhoneCall,
+    updateLead,
+    deleteLead,
+    getCurrentUser,
+    generateAiReply,
+    createConversation,
+    getConversation,
+    sendMessage,
+    getWhatsAppSenders,
+    getWhatsAppTemplates,
+    sendWhatsAppTemplate,
+    sendWhatsAppFreeform,
+    getWhatsAppSessionStatus,
+    listConversations,
+    listCalls,
+    getCall,
+    deleteCall,
+  ],
+  triggers: [phoneCallEnded, conversationEnded, getAssistants, inboundCall],
 });
-    
+

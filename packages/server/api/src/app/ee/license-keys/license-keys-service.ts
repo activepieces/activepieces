@@ -159,6 +159,8 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 analyticsEnabled: key.analyticsEnabled,
                 eventStreamingEnabled: key.eventStreamingEnabled,
                 secretManagersEnabled: key.secretManagersEnabled,
+                agentsEnabled: key.agentsEnabled,
+                aiProvidersEnabled: key.aiProvidersEnabled ?? true,
             },
         })
     },
@@ -183,4 +185,6 @@ const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt'
     projectRolesEnabled: false,
     eventStreamingEnabled: false,
     secretManagersEnabled: false,
+    agentsEnabled: false,
+    aiProvidersEnabled: false,
 }

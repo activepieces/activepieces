@@ -1,5 +1,8 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
+# Claude Code worktrees
+.claude/worktrees/
+
 pieces-cache-db-*.sqlite
 
 # compiled output
@@ -11,7 +14,6 @@ firebase-admin-sdk.json
 dev
 /cache
 /logs/
-.env
 
 # SDK Build
 builds
@@ -64,8 +66,7 @@ activepieces-engine.js
 scratch.md
 
 # environment variables
-.env
-.env.local*
+.env*
 
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md

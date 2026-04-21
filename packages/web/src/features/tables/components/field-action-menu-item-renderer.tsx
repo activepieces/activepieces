@@ -59,7 +59,7 @@ const ApFieldActionMenuItemRenderer = ({
     case FieldActionType.RENAME:
       return (
         <DropdownMenuItem
-          onSelect={(e) => {
+          onSelect={() => {
             setPopoverContent(<RenameFieldPopoverContent name={field.name} />);
             //this is needed because the popover is not open when the content is set
             // so we need to wait for the next frame to open it

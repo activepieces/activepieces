@@ -4,6 +4,36 @@ description: "A log of all notable changes to Activepieces"
 icon: "code-commit"
 ---
 
+<Update label="April 2026" description="Network Security">
+
+### Network Security
+
+Activepieces now ships with a built-in **network proxy that protects your automations from network attacks**.
+
+- **One switch to turn it on** — set `AP_NETWORK_MODE=STRICT` and the protection is active. It's **opt-in today**, but in an upcoming release it will become **opt-out** (on by default).
+- **Allow list for trusted internal services** — if a flow legitimately needs to reach an internal API or database, add its address (or a whole subnet like `10.10.0.0/24`) to `AP_SSRF_ALLOW_LIST`.
+- **Works with your corporate proxy** — if you already use `HTTP_PROXY` / `HTTPS_PROXY`, Activepieces respects them automatically.
+
+See the [Network Security](/install/architecture/network-security) architecture page for the full breakdown.
+
+</Update>
+
+<Update label="April 2026" description="Shared Concurrency Pools">
+
+### Shared concurrency pools
+
+Projects can now share a single concurrency limit through **concurrency pools**, giving platform operators finer control over how worker capacity is distributed.
+
+- **Per-project concurrency** — set **Max Concurrent Jobs** directly in Project Settings > General.
+- **Shared pools** — multiple projects can be grouped into the same pool so they draw from one shared limit instead of each having its own.
+- **Embedding support** — when provisioning users via JWT, include `concurrencyPoolKey` and `concurrencyPoolLimit` claims to create or reuse a pool automatically. See [Provision Users](/embedding/provision-users).
+
+![Project Settings — Max Concurrent Jobs](/resources/screenshots/manage-concurrency.png)
+
+Learn more in the [Manage Concurrency](/admin-guide/guides/manage-concurrency) guide.
+
+</Update>
+
 <Update label="March 2026" description="Stability & Reliability Improvements">
 
 ### Stability & reliability improvements
@@ -41,9 +71,9 @@ End-to-end validation:
 
 </Update>
 
-<Update label="March 2026" description="Dashboard 2.0">
+<Update label="March 2026" description="Platform Admin">
 
-### Dashboard 2.0 — full UI redesign
+### Platform Admin — full UI redesign
 
 A comprehensive visual refresh across all Platform Admin and Project pages with a cleaner, more consistent interface.
 

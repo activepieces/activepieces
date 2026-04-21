@@ -30,6 +30,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { applyProjectsAccessFilters, projectService } from '../../project/project-service'
+import { concurrencyPoolService } from '../platform/concurrency-pool/concurrency-pool.service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { projectMemberService } from './project-members/project-member.service'
 import { ProjectPlanEntity } from './project-plan/project-plan.entity'
@@ -130,11 +131,15 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     }: UpdateParams): Promise<ProjectWithLimits> {
         const project = await projectService(log).getOneOrThrow(projectId)
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-        const { globalConnectionExternalIds, ...rest } = request
+        const { globalConnectionExternalIds, maxConcurrentJobs, ...rest } = request
+        let resolvedPoolId: string | null | undefined
         await transaction(async (entityManager) => {
+            resolvedPoolId = await resolvePoolId({ platformId: project.platformId, projectId, maxConcurrentJobs, log })
             await projectService(log).update(projectId, {
                 type: project.type,
                 ...rest,
+                ...(resolvedPoolId !== undefined ? { poolId: resolvedPoolId } : {}),
+                ...(maxConcurrentJobs !== undefined ? { maxConcurrentJobs } : {}),
             }, entityManager)
             if (platformPlan.globalConnectionsEnabled && globalConnectionExternalIds) {
                 const projectGlobalConnections = await appConnectionsRepo(entityManager).find({
@@ -191,6 +196,9 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 }
             }
         })
+        if (resolvedPoolId !== undefined) {
+            await concurrencyPoolService(log).assignProject({ projectId, poolId: resolvedPoolId })
+        }
         return this.getWithPlanAndUsageOrThrow(projectId)
     },
     async getWithPlanAndUsageOrThrow(
@@ -228,6 +236,13 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 type: 'one-time',
                 date: apDayjs(),
             },
+            customConfig: {
+                attempts: 25,
+                backoff: {
+                    type: 'fixed',
+                    delay: 60000,
+                },
+            },
         })
     },
 })
@@ -262,6 +277,27 @@ async function enrichProjects(
     })
 }
 
+async function resolvePoolId({ platformId, projectId, maxConcurrentJobs, log }: ResolvePoolIdParams): Promise<string | null | undefined> {
+    if (typeof maxConcurrentJobs === 'number') {
+        const { poolId } = await concurrencyPoolService(log).upsertPool({
+            platformId,
+            key: projectId,
+            maxConcurrentJobs,
+        })
+        return poolId
+    }
+    if (maxConcurrentJobs === null) {
+        return null
+    }
+    return undefined
+}
+
+type ResolvePoolIdParams = {
+    platformId: string
+    projectId: string
+    maxConcurrentJobs: number | null | undefined
+    log: FastifyBaseLogger
+}
 
 type GetAllForParamsAndUser = {
     userId: string

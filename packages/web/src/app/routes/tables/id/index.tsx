@@ -18,6 +18,7 @@ import {
 } from '@/features/tables';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { useResourceLock } from '@/hooks/use-resource-lock';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +35,8 @@ const ApTableEditorPage = () => {
     createRecord,
     fields,
     records,
+    table,
+    setLockedByOtherUser,
   ] = useTableState((state) => [
     state.selectedRecords,
     state.setSelectedRecords,
@@ -42,7 +45,17 @@ const ApTableEditorPage = () => {
     state.createRecord,
     state.fields,
     state.records,
+    state.table,
+    state.setLockedByOtherUser,
   ]);
+
+  const { lockedBy, takeOver } = useResourceLock({
+    resourceId: table.id,
+  });
+
+  useEffect(() => {
+    setLockedByOtherUser(!!lockedBy);
+  }, [lockedBy, setLockedByOtherUser]);
 
   const gridRef = useRef<DataGridHandle>(null);
   const { theme } = useTheme();
@@ -52,8 +65,9 @@ const ApTableEditorPage = () => {
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
+  const canEdit = userHasTableWritePermission && !lockedBy;
   const isAllowedToCreateRecord =
-    userHasTableWritePermission && maxRecords && records.length < maxRecords;
+    canEdit && maxRecords && records.length < maxRecords;
 
   const createEmptyRecord = () => {
     createRecord({
@@ -99,12 +113,16 @@ const ApTableEditorPage = () => {
   return (
     <div className="w-full flex flex-col justify-start items-start h-full">
       <div className="flex items-center justify-between w-full pr-4 border-b">
-        <ApTableHeader onBack={handleBack} />
+        <ApTableHeader
+          onBack={handleBack}
+          lockedBy={lockedBy}
+          takeOver={takeOver}
+        />
       </div>
 
-      <div className="flex w-full flex-col flex-1 h-full">
-        <div className="flex-1 flex flex-col">
-          <div className="flex-1">
+      <div className="flex w-full flex-col flex-1 min-h-0">
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 min-h-0">
             <DataGrid
               ref={gridRef}
               columns={columns}
@@ -116,9 +134,7 @@ const ApTableEditorPage = () => {
                 'scroll-smooth w-full !h-full bg-muted/30 !border-0',
                 theme === 'dark' ? 'rdg-dark' : 'rdg-light',
               )}
-              bottomSummaryRows={
-                userHasTableWritePermission ? [{ id: 'new-record' }] : []
-              }
+              bottomSummaryRows={canEdit ? [{ id: 'new-record' }] : []}
               rowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
               headerRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
               summaryRowHeight={

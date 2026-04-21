@@ -17,13 +17,13 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { projectCollectionUtils } from '@/features/projects';
+import { ApProjectDisplay } from '@/features/projects/components/ap-project-display';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
-import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectAvatar } from '../project-avatar';
 
 import { AlertsSettings } from './alerts';
@@ -74,6 +74,7 @@ export function ProjectSettingsDialog({
       projectName: initialValues?.projectName,
       icon: project.icon,
       externalId: initialValues?.externalId,
+      maxConcurrentJobs: project.maxConcurrentJobs,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
@@ -83,6 +84,7 @@ export function ProjectSettingsDialog({
       displayName: values.projectName,
       externalId: values.externalId,
       icon: values.icon,
+      maxConcurrentJobs: values.maxConcurrentJobs,
     });
     toast.success(t('Your changes have been saved.'), {
       duration: 3000,
@@ -96,6 +98,7 @@ export function ProjectSettingsDialog({
       form.reset({
         ...initialValues,
         icon: project.icon,
+        maxConcurrentJobs: project.maxConcurrentJobs,
       });
       setActiveTab(initialTab);
     }

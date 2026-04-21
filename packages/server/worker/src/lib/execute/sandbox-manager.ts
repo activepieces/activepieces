@@ -1,25 +1,11 @@
 import { ApEnvironment, ExecutionMode, isNil, WorkerToApiContract } from '@activepieces/shared'
 import { Logger } from 'pino'
+import { system, WorkerSystemProp } from '../config/configs'
 import { workerSettings } from '../config/worker-settings'
 import { Sandbox } from '../sandbox/types'
 import { createSandboxForJob } from './create-sandbox-for-job'
 
-function canReuseSandbox(): boolean {
-    const settings = workerSettings.getSettings()
-    if (settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT) {
-        return true
-    }
-    if (!isNil(settings.PLATFORM_ID_FOR_DEDICATED_WORKER)) {
-        return true
-    }
-    const trustedModes = [ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.UNSANDBOXED]
-    if (trustedModes.includes(settings.EXECUTION_MODE as ExecutionMode)) {
-        return true
-    }
-    return false
-}
-
-export function createSandboxManager(boxId: number): SandboxManager {
+export function createSandboxManager({ boxId, proxyPort }: { boxId: number, proxyPort: number | null }): SandboxManager {
     let currentSandbox: Sandbox | null = null
 
     return {
@@ -33,7 +19,7 @@ export function createSandboxManager(boxId: number): SandboxManager {
                     params.log.error({ err }, 'Error shutting down previous sandbox'),
                 )
             }
-            currentSandbox = createSandboxForJob({ ...params, boxId })
+            currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox(), proxyPort })
             return currentSandbox
         },
         async invalidate(log: Logger): Promise<void> {
@@ -53,6 +39,22 @@ export function createSandboxManager(boxId: number): SandboxManager {
             await this.invalidate(log)
         },
     }
+}
+
+function canReuseSandbox(): boolean {
+    const reuseSandbox = system.get(WorkerSystemProp.REUSE_SANDBOX)
+    if (!isNil(reuseSandbox)) {
+        return reuseSandbox === 'true'
+    }
+    const settings = workerSettings.getSettings()
+    if (settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT) {
+        return true
+    }
+    const trustedModes = [ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.UNSANDBOXED]
+    if (trustedModes.includes(settings.EXECUTION_MODE as ExecutionMode)) {
+        return true
+    }
+    return false
 }
 
 export type SandboxManager = {

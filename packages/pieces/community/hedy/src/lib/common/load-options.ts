@@ -1,8 +1,8 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import { HedyApiClient } from './client';
-import { PaginatedResponse, Topic } from './types';
 import { hedyAuth } from '../auth';
+import { createClient } from './client';
+import { PaginatedResponse, Topic } from './types';
 
 function toTopicArray(result: unknown): Topic[] {
   if (Array.isArray(result)) {
@@ -34,7 +34,7 @@ export const topicDropdown = Property.Dropdown({
       };
     }
 
-    const client = new HedyApiClient(auth.secret_text);
+    const client = createClient(auth);
     try {
       const response = await client.request<Topic[]>({
         method: HttpMethod.GET,

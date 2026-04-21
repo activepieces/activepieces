@@ -24,6 +24,7 @@ import { fileService } from '../file/file.service'
 import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
+import { userIdentityHelper } from '../helper/user-identity-helper'
 import { projectService } from '../project/project-service'
 import { userRepo, userService } from '../user/user-service'
 import { platformService } from './platform.service'
@@ -73,7 +74,20 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
         }
-        return platformService(req.log).getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
+        const platform = await platformService(req.log).getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
+        if (req.principal.type === PrincipalType.USER) {
+            const isEmbedded = await userIdentityHelper(req.log).isUserEmbedded(req.principal.id)
+            if (isEmbedded) {
+                return {
+                    ...platform,
+                    plan: {
+                        ...platform.plan,
+                        licenseKey: null,
+                    },
+                }
+            }
+        }
+        return platform
     })
 
     app.get('/assets/:id', GetAssetRequest, async (req, reply) => {
@@ -90,6 +104,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             .status(StatusCodes.OK)
             .send(data.data)
     })
+
 
     if (edition === ApEdition.CLOUD) {
         app.delete('/:id', DeletePlatformRequest, async (req, res) => {
@@ -212,3 +227,4 @@ const GetAssetRequest = {
         }),
     },
 }
+

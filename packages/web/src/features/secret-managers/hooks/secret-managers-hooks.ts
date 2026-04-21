@@ -1,36 +1,41 @@
 import {
   ConnectSecretManagerRequest,
-  DisconnectSecretManagerRequest,
-  SecretManagerProviderMetaData,
+  SecretManagerConnectionWithStatus,
 } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
 import { platformHooks } from '@/hooks/platform-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { secretManagersApi } from '../api/secret-managers-api';
 
 export const secretManagersHooks = {
-  useListSecretManagers: ({
+  useListSecretManagerConnections: ({
     connectedOnly,
-  }: { connectedOnly?: boolean } = {}) => {
+    listForPlatform,
+  }: { connectedOnly?: boolean; listForPlatform?: boolean } = {}) => {
     const { platform } = platformHooks.useCurrentPlatform();
-    return useQuery<SecretManagerProviderMetaData[]>({
-      queryKey: ['secret-managers'],
+    const projectId = listForPlatform
+      ? undefined
+      : authenticationSession.getProjectId()!;
+    return useQuery<SecretManagerConnectionWithStatus[]>({
+      queryKey: ['secret-managers', projectId],
       queryFn: async () => {
-        const secretManagers = await secretManagersApi.list();
+        const result = await secretManagersApi.list({ projectId });
         if (connectedOnly) {
-          return secretManagers.data.filter(
-            (secretManager) => secretManager.connection?.connected,
+          return result.data.filter(
+            (connection) => connection.connection?.connected,
           );
         }
-        return secretManagers.data;
+        return result.data;
       },
       enabled: platform.plan.secretManagersEnabled,
+      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
   },
-  useConnectSecretManager: ({
+  useCreateSecretManagerConnection: ({
     onSuccess,
     onError,
   }: {
@@ -38,8 +43,12 @@ export const secretManagersHooks = {
     onError: (error: Error) => void;
   }) => {
     const queryClient = useQueryClient();
-    return useMutation<void, Error, ConnectSecretManagerRequest>({
-      mutationFn: secretManagersApi.connect,
+    return useMutation<
+      SecretManagerConnectionWithStatus,
+      Error,
+      ConnectSecretManagerRequest
+    >({
+      mutationFn: secretManagersApi.create,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
         toast.success(t('Connected successfully'));
@@ -48,20 +57,42 @@ export const secretManagersHooks = {
       onError,
     });
   },
-  useDisconnectSecretManager: () => {
+  useUpdateSecretManagerConnection: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: () => void;
+    onError: (error: Error) => void;
+  }) => {
     const queryClient = useQueryClient();
-    return useMutation<void, Error, DisconnectSecretManagerRequest>({
-      mutationFn: secretManagersApi.disconnect,
+    return useMutation<
+      SecretManagerConnectionWithStatus,
+      Error,
+      { id: string; config: ConnectSecretManagerRequest }
+    >({
+      mutationFn: ({ id, config }) => secretManagersApi.update(id, config),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
-        toast.success(t('Disconnected successfully'));
+        toast.success(t('Updated successfully'));
+        onSuccess();
+      },
+      onError,
+    });
+  },
+  useDeleteSecretManagerConnection: () => {
+    const queryClient = useQueryClient();
+    return useMutation<void, Error, string>({
+      mutationFn: (id) => secretManagersApi.delete(id),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
+        toast.success(t('Deleted successfully'));
       },
     });
   },
   useClearCache: () => {
     const queryClient = useQueryClient();
-    return useMutation<void, Error, void>({
-      mutationFn: secretManagersApi.clearCache,
+    return useMutation<void, Error, string | undefined>({
+      mutationFn: (connectionId) => secretManagersApi.clearCache(connectionId),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
         toast.success(t('Cache cleared successfully'));

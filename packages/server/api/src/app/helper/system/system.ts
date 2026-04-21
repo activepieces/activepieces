@@ -8,13 +8,14 @@ import {
     ExecutionMode,
     FileLocation,
     isNil,
+    NetworkMode,
     PieceSyncMode,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../../database/database-type'
 import { RedisType } from '../../database/redis/types'
 import { pinoLogging } from '../logger'
-import { AppSystemProp, ContainerType, environmentVariables, SystemProp, WorkerSystemProp } from './system-props'
+import { AppSystemProp, ContainerType, environmentVariables, SystemProp } from './system-props'
 
 
 
@@ -29,8 +30,8 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.DB_TYPE]: DatabaseType.POSTGRES,
     [AppSystemProp.EDITION]: ApEdition.COMMUNITY,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: '{}',
-    [WorkerSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
-    [WorkerSystemProp.PORT]: '3000',
+    [AppSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
+    [AppSystemProp.PORT]: '3000',
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
     [AppSystemProp.PIECES_CACHE_MAX_ENTRIES]: '1000',
@@ -50,7 +51,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
-    [AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY]: '10',
+    [AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY]: '2',
     [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: '180',
     [AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS]: '10',
     [AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS]: '30',
@@ -58,7 +59,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
     [AppSystemProp.REDIS_TYPE]: RedisType.STANDALONE,
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
-    [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '100',
+    [AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT]: '5',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: '10000',
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: '100',
@@ -66,6 +67,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: '300000',
     [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: DefaultProjectRole.EDITOR,
+    [AppSystemProp.NETWORK_MODE]: NetworkMode.UNRESTRICTED,
 }
 
 let globalLogger: FastifyBaseLogger
@@ -167,12 +169,12 @@ export const system = {
     },
     isWorker(): boolean {
         return [ContainerType.WORKER, ContainerType.WORKER_AND_APP].includes(
-            this.getOrThrow<ContainerType>(WorkerSystemProp.CONTAINER_TYPE),
+            this.getOrThrow<ContainerType>(AppSystemProp.CONTAINER_TYPE),
         )
     },
     isApp(): boolean {
         return [ContainerType.APP, ContainerType.WORKER_AND_APP].includes(
-            this.getOrThrow<ContainerType>(WorkerSystemProp.CONTAINER_TYPE),
+            this.getOrThrow<ContainerType>(AppSystemProp.CONTAINER_TYPE),
         )
     },
 }

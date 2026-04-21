@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { ReadMoreDescription } from '@/components/custom/read-more-description';
 import { Button } from '@/components/ui/button';
 import { FormItem, FormLabel } from '@/components/ui/form';
+import { RequiredFieldAsterisk } from '@/components/ui/label';
 import { Toggle } from '@/components/ui/toggle';
 import {
   Tooltip,
@@ -62,7 +63,7 @@ function AutoFormFieldWrapper({
                 {isAuthProperty ? t('Connection') : property.displayName}
               </span>{' '}
               {(isAuthProperty || property.required) && (
-                <span className="text-destructive">*</span>
+                <RequiredFieldAsterisk />
               )}
             </div>
             {property && !isAuthProperty && (

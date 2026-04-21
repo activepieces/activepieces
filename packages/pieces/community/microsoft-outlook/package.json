@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-outlook",
-  "version": "0.2.13",
+  "version": "0.3.2",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {

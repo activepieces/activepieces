@@ -14,7 +14,7 @@ import { applicationEvents } from '../helper/application-events'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
-import { WorkerSystemProp } from '../helper/system/system-props'
+import { AppSystemProp } from '../helper/system/system-props'
 import { jobQueue, JobType } from '../workers/job-queue/job-queue'
 import {
     EventDestinationEntity,
@@ -101,14 +101,14 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
     trigger: async ({ platformId, projectId, event }: TriggerParams): Promise<void> => {
         const conditions: FindOptionsWhere<EventDestinationSchema>[] = [{
             platformId,
-            events: ArrayContains([event]),
+            events: ArrayContains([event.action]),
             scope: EventDestinationScope.PLATFORM,
         }]
         const broadcastToProject = !isNil(projectId) && PROJECT_SCOPE_EVENTS.includes(event.action)
         if (broadcastToProject) {
             conditions.push({
                 projectId,
-                events: ArrayContains([event]),
+                events: ArrayContains([event.action]),
                 scope: EventDestinationScope.PROJECT,
             })
         }
@@ -168,7 +168,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
 })
 
 const assertUrlIsExternal = (url: string) => {
-    const frontendUrl = system.get(WorkerSystemProp.FRONTEND_URL)
+    const frontendUrl = system.get(AppSystemProp.FRONTEND_URL)
     assertNotNullOrUndefined(frontendUrl, 'frontendUrl')
     if (new URL(url).host === new URL(frontendUrl).host) {
         throw new ActivepiecesError({

@@ -1,4 +1,5 @@
 import {
+    BranchCondition,
     BranchExecutionType,
     FlowActionType,
     flowCanvasUtils,
@@ -8,12 +9,14 @@ import {
     McpServer,
     McpToolDefinition,
     Note,
+    Permission,
     StepLocationRelativeToParent,
 } from '@activepieces/shared'
 import type { Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
+import { mcpUtils } from './mcp-utils'
 
 type StepInfo = {
     name: string
@@ -34,11 +37,11 @@ function getConfigStatus(step: Step): string {
     const s = step.settings as { triggerName?: string, actionName?: string }
     switch (step.type) {
         case FlowTriggerType.EMPTY:
-            return 'unconfigured (no trigger set)'
+            return 'unconfigured (no trigger set — use ap_update_trigger)'
         case FlowTriggerType.PIECE:
-            return s.triggerName ? 'invalid (check required inputs)' : 'unconfigured (triggerName missing)'
+            return s.triggerName ? 'invalid (use ap_update_trigger to fix — check required inputs)' : 'unconfigured (triggerName missing)'
         case FlowActionType.PIECE:
-            return s.actionName ? 'invalid (check required inputs)' : 'unconfigured (actionName missing)'
+            return s.actionName ? 'invalid (use ap_update_step to fix — check required inputs)' : 'unconfigured (actionName missing)'
         case FlowActionType.CODE:
             return 'invalid (check sourceCode/input)'
         case FlowActionType.LOOP_ON_ITEMS:
@@ -50,9 +53,64 @@ function getConfigStatus(step: Step): string {
     }
 }
 
-function buildFlowStructure(trigger: Step): StepInfo[] {
+function hasSampleData(step: Step): boolean {
+    if (!('sampleData' in step.settings)) {
+        return false
+    }
+    const sampleData = step.settings.sampleData
+    return typeof sampleData === 'object' && sampleData !== null && 'sampleDataFileId' in sampleData && sampleData.sampleDataFileId != null
+}
+
+function formatStepSettings(step: Step): string[] {
+    const lines: string[] = []
+    const settings = step.settings as Record<string, unknown>
+
+    if (step.type === FlowTriggerType.PIECE || step.type === FlowActionType.PIECE) {
+        const input = settings.input as Record<string, unknown> | undefined
+        if (input && Object.keys(input).length > 0) {
+            lines.push(`  input: ${mcpUtils.truncate(JSON.stringify(input), 500)}`)
+        }
+    }
+    else if (step.type === FlowActionType.CODE) {
+        const sourceCode = settings.sourceCode as { code?: string, packageJson?: string } | undefined
+        if (sourceCode?.code) {
+            lines.push(`  sourceCode: ${mcpUtils.truncate(sourceCode.code, 300)}`)
+        }
+        if (sourceCode?.packageJson && sourceCode.packageJson !== '{}') {
+            lines.push(`  packageJson: ${mcpUtils.truncate(sourceCode.packageJson, 200)}`)
+        }
+        const input = settings.input as Record<string, unknown> | undefined
+        if (input && Object.keys(input).length > 0) {
+            lines.push(`  input: ${mcpUtils.truncate(JSON.stringify(input), 300)}`)
+        }
+    }
+    else if (step.type === FlowActionType.LOOP_ON_ITEMS) {
+        const items = settings.items as string | undefined
+        if (items) {
+            lines.push(`  loopItems: ${items}`)
+        }
+    }
+    return lines
+}
+
+function formatBranchConditions(conditions: BranchCondition[][]): string {
+    const groups = conditions.map((andGroup) => {
+        const parts = andGroup.map((c) => {
+            const op = c.operator ?? '?'
+            const caseSensitive = 'caseSensitive' in c && c.caseSensitive ? ' [case-sensitive]' : ''
+            return 'secondValue' in c
+                ? `${c.firstValue} ${op} ${c.secondValue}${caseSensitive}`
+                : `${c.firstValue} ${op}${caseSensitive}`
+        })
+        return parts.join(' AND ')
+    })
+    return groups.join(' OR ')
+}
+
+function buildFlowStructure(trigger: Step): { structure: StepInfo[], stepByName: Map<string, Step> } {
     const allSteps = flowStructureUtil.getAllSteps(trigger)
-    return allSteps.map((step): StepInfo => {
+    const stepByName = new Map(allSteps.map(s => [s.name, s]))
+    const structure = allSteps.map((step): StepInfo => {
         if (flowStructureUtil.isTrigger(step.type)) {
             return {
                 name: step.name,
@@ -104,13 +162,14 @@ function buildFlowStructure(trigger: Step): StepInfo[] {
             configStatus: getConfigStatus(step),
         }
     })
+    return { structure, stepByName }
 }
 
 function formatFlowStructure(
     flowDisplayName: string,
     flowId: string,
     structure: StepInfo[],
-    trigger: Step,
+    stepByName: Map<string, Step>,
     positions: Map<string, { x: number, y: number }>,
     notes: Note[],
 ): string {
@@ -125,14 +184,18 @@ function formatFlowStructure(
         const skipLabel = step.skip ? ' [SKIPPED]' : ''
         const pos = positions.get(step.name)
         const canvasLabel = pos ? ` | canvas: (${Math.round(pos.x)}, ${Math.round(pos.y)})` : ''
+        const fullStep = stepByName.get(step.name)
+        const sampleLabel = fullStep && hasSampleData(fullStep) ? ' | has sample data' : ''
 
         if (step.relationship === 'trigger') {
             let triggerDetail = ''
-            if (trigger.type === FlowTriggerType.PIECE) {
-                const s = trigger.settings as { pieceName?: string, triggerName?: string }
-                triggerDetail = s.pieceName ? ` (piece: ${s.pieceName}, trigger: ${s.triggerName ?? 'not set'})` : ''
+            if (fullStep && fullStep.type === FlowTriggerType.PIECE) {
+                triggerDetail = ` (piece: ${fullStep.settings.pieceName}, trigger: ${fullStep.settings.triggerName ?? 'not set'})`
             }
-            lines.push(`- [TRIGGER] ${step.name} | ${step.type} | "${step.displayName}"${triggerDetail} | parent: — | ${step.configStatus}${skipLabel}${canvasLabel}`)
+            lines.push(`- [TRIGGER] ${step.name} | ${step.type} | "${step.displayName}"${triggerDetail} | parent: — | ${step.configStatus}${sampleLabel}${skipLabel}${canvasLabel}`)
+            if (fullStep) {
+                lines.push(...formatStepSettings(fullStep))
+            }
             continue
         }
 
@@ -145,19 +208,27 @@ function formatFlowStructure(
 
         let stepDetail = ''
         if (step.type === FlowActionType.PIECE) {
-            const fullStep = flowStructureUtil.getStep(step.name, trigger)
             const s = fullStep?.settings as { pieceName?: string, actionName?: string } | undefined
             if (s?.pieceName) stepDetail = ` (piece: ${s.pieceName}, action: ${s.actionName ?? 'not set'})`
         }
 
-        lines.push(`- ${step.name} | ${step.type} | "${step.displayName}"${stepDetail} | parent: ${step.parentName} | ${rel} | ${step.configStatus}${skipLabel}${canvasLabel}`)
+        lines.push(`- ${step.name} | ${step.type} | "${step.displayName}"${stepDetail} | parent: ${step.parentName} | ${rel} | ${step.configStatus}${sampleLabel}${skipLabel}${canvasLabel}`)
 
-        if (step.type === FlowActionType.ROUTER) {
-            const fullStep = flowStructureUtil.getStep(step.name, trigger)
-            const branches = (fullStep as { settings?: { branches?: { branchName?: string, branchType?: string }[] } } | undefined)?.settings?.branches ?? []
+        if (fullStep) {
+            lines.push(...formatStepSettings(fullStep))
+        }
+
+        if (step.type === FlowActionType.ROUTER && fullStep) {
+            const branches = (fullStep.settings as { branches?: { branchName?: string, branchType?: string, conditions?: BranchCondition[][] }[] })?.branches ?? []
             branches.forEach((b, i) => {
                 const btype = b.branchType === BranchExecutionType.FALLBACK ? 'fallback' : 'condition'
-                lines.push(`  branch[${i}]: "${b.branchName ?? ''}" (${btype})`)
+                if (btype === 'condition' && b.conditions && b.conditions.length > 0) {
+                    const condStr = formatBranchConditions(b.conditions)
+                    lines.push(`  branch[${i}]: "${b.branchName ?? ''}" (${btype}) | conditions: ${condStr}`)
+                }
+                else {
+                    lines.push(`  branch[${i}]: "${b.branchName ?? ''}" (${btype})`)
+                }
             })
         }
     }
@@ -179,8 +250,8 @@ function formatFlowStructure(
             lines.push(`  Inside loop of "${step.name}": parentStepName="${step.name}", stepLocationRelativeToParent="${StepLocationRelativeToParent.INSIDE_LOOP}"`)
         }
         if (step.type === FlowActionType.ROUTER) {
-            const fullStep = flowStructureUtil.getStep(step.name, trigger)
-            const branches = (fullStep as { settings?: { branches?: { branchName?: string }[] } } | undefined)?.settings?.branches ?? []
+            const routerStep = stepByName.get(step.name)
+            const branches = (routerStep?.settings as { branches?: { branchName?: string }[] } | undefined)?.branches ?? []
             branches.forEach((b, i) => {
                 lines.push(`  Branch ${i} of "${step.name}"${b.branchName ? ` ("${b.branchName}")` : ''}: parentStepName="${step.name}", stepLocationRelativeToParent="${StepLocationRelativeToParent.INSIDE_BRANCH}", branchIndex=${i}`)
             })
@@ -189,6 +260,10 @@ function formatFlowStructure(
 
     lines.push('')
     lines.push('Step types: trigger = EMPTY | PIECE_TRIGGER; action = CODE | PIECE | LOOP_ON_ITEMS | ROUTER')
+    lines.push('')
+    lines.push('## Referencing step outputs')
+    lines.push(mcpUtils.STEP_REFERENCE_HINT)
+    lines.push('Use ap_test_step or ap_test_flow to generate sample data and see available output fields.')
 
     lines.push('')
     lines.push('## Canvas Notes')
@@ -208,6 +283,7 @@ function formatFlowStructure(
 export const apFlowStructureTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_flow_structure',
+        permission: Permission.READ_FLOW,
         description: 'Get the structure of a flow: step tree (parent/child), each step type, configuration status (configured/unconfigured/invalid), and valid insert locations for ap_add_step.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
@@ -216,25 +292,19 @@ export const apFlowStructureTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
         execute: async ({ flowId }) => {
             try {
                 const flow = await flowService(log).getOnePopulated({
-                    id: flowId as string,
+                    id: String(flowId),
                     projectId: mcp.projectId,
                 })
                 if (isNil(flow)) {
                     return { content: [{ type: 'text', text: '❌ Flow not found' }] }
                 }
-                const structure = buildFlowStructure(flow.version.trigger)
+                const { structure, stepByName } = buildFlowStructure(flow.version.trigger)
                 const positions = flowCanvasUtils.computeStepPositions(flow.version.trigger)
-                const text = formatFlowStructure(flow.version.displayName, flow.id, structure, flow.version.trigger, positions, flow.version.notes ?? [])
+                const text = formatFlowStructure(flow.version.displayName, flow.id, structure, stepByName, positions, flow.version.notes ?? [])
                 return { content: [{ type: 'text', text }] }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Failed to get flow structure: ${message}`,
-                    }],
-                }
+                return mcpUtils.mcpToolError('Failed to get flow structure', err)
             }
         },
     }

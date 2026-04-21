@@ -3,6 +3,7 @@ import {
     apId,
     Cursor,
     EngineResponse,
+    EngineResponseStatus,
     ErrorCode,
     ExecuteTriggerResponse,
     FileCompression,
@@ -77,7 +78,7 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
         switch (trigger.type) {
             case FlowTriggerType.PIECE: {
 
-                const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.TEST>>>({
+                const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.TEST>>>({
                     hookType: TriggerHookType.TEST,
                     flowId: flow.id,
                     flowVersionId: flow.version.id,
@@ -85,16 +86,16 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                     projectId,
                     jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
                     platformId,
-                })
+                }, log)
                 await triggerEventRepo().delete({
                     projectId,
                     flowId: flow.id,
                 })
-                if (!engineResponse.response.success) {
+                if (engineResponse.status !== EngineResponseStatus.OK) {
                     throw new ActivepiecesError({
                         code: ErrorCode.TEST_TRIGGER_FAILED,
                         params: {
-                            message: engineResponse.response.message!,
+                            message: engineResponse.error ?? 'Unknown trigger error',
                         },
                     })
                 }

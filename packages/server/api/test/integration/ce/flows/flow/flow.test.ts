@@ -22,7 +22,6 @@ import {
     createMockFlow,
     createMockFlowVersion,
     createMockPieceMetadata,
-    mockAndSaveBasicSetup,
 } from '../../../../helpers/mocks'
 import { createTestContext } from '../../../../helpers/test-context'
 
@@ -149,7 +148,6 @@ describe('Flow API', () => {
                 expect(responseBody.folderId).toBeNull()
                 expect(responseBody.publishedVersionId).toBe(mockFlowVersion.id)
                 expect(responseBody.metadata).toBeNull()
-                expect(responseBody.operationStatus).toBe('ENABLING')
                 expect(Object.keys(responseBody.version)).toHaveLength(14)
                 expect(responseBody.version.id).toBe(mockFlowVersion.id)
             }
@@ -179,16 +177,14 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(14)
             expect(responseBody?.id).toBe(mockFlow.id)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
             expect(responseBody?.projectId).toBe(ctx.project.id)
             expect(responseBody?.folderId).toBeNull()
-            expect(responseBody?.status).toBe('ENABLED')
+            expect(responseBody?.status).toBe('DISABLED')
             expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
             expect(responseBody?.metadata).toBeNull()
-            expect(responseBody?.operationStatus).toBe('DISABLING')
             expect(responseBody?.templateId).toBeNull()
             expect(Object.keys(responseBody?.version)).toHaveLength(14)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
@@ -259,16 +255,14 @@ describe('Flow API', () => {
             const responseBody: PopulatedFlow | undefined = response?.json()
             expect(responseBody).toBeDefined()
             if (responseBody) {
-                expect(Object.keys(responseBody)).toHaveLength(14)
                 expect(responseBody.id).toBe(mockFlow.id)
                 expect(responseBody.created).toBeDefined()
                 expect(responseBody.updated).toBeDefined()
                 expect(responseBody.projectId).toBe(ctx.project.id)
                 expect(responseBody.folderId).toBeNull()
-                expect(responseBody.status).toBe(mockFlow.status)
+                expect(responseBody.status).toBe('ENABLED')
                 expect(responseBody.publishedVersionId).toBe(mockFlowVersion.id)
                 expect(responseBody.metadata).toBeNull()
-                expect(responseBody.operationStatus).toBe('DISABLING')
                 expect(Object.keys(responseBody.version)).toHaveLength(14)
                 expect(responseBody.version.id).toBe(mockFlowVersion.id)
                 expect(responseBody.version.state).toBe('LOCKED')

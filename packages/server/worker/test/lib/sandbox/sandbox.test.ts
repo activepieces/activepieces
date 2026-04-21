@@ -4,7 +4,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
 import { ActivepiecesError, EngineResponseStatus, ErrorCode, WorkerContract } from '@activepieces/shared'
 import { createSandbox } from '../../../src/lib/sandbox/sandbox'
-import { Sandbox, SandboxLogger, SandboxProcessMaker } from '../../../src/lib/sandbox/types'
+import { Sandbox, SandboxLogger, SandboxMount, SandboxProcessMaker } from '../../../src/lib/sandbox/types'
 
 const { treeKillMock } = vi.hoisted(() => ({
     treeKillMock: vi.fn((_pid: number, _signal: string, cb: (err?: Error) => void) => cb()),
@@ -16,6 +16,7 @@ vi.mock('tree-kill', () => ({
 
 vi.mock('../../../src/lib/cache/cache-paths', () => ({
     getGlobalCachePathLatestVersion: vi.fn(() => '/tmp/test-cache'),
+    getGlobalCodeCachePath: vi.fn(() => '/tmp/test-cache/codes'),
 }))
 
 function createMockLogger(): SandboxLogger {
@@ -45,6 +46,7 @@ function createTestProcessMaker() {
             const port = params.env.AP_SANDBOX_WS_PORT
             child = new EventEmitter() as ChildProcess & EventEmitter
             ;(child as ChildProcess).pid = 12345
+            ;(child as ChildProcess).exitCode = null
             ;(child as ChildProcess).kill = vi.fn()
 
             client = ioClient(`http://127.0.0.1:${port}`, {
@@ -117,7 +119,7 @@ describe('createSandbox', () => {
                         AP_CUSTOM_PIECES_PATHS: '/root/custom_pieces',
                     }),
                     resourceLimits: {
-                        memoryBytes: 256 * 1024 * 1024,
+                        memoryLimitMb: 256,
                         cpuMsPerSec: 1000,
                         timeLimitSeconds: 300,
                     },
@@ -134,7 +136,198 @@ describe('createSandbox', () => {
             await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
 
             const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
-            expect(createCall.mounts).toEqual([])
+            const customPieceMount = createCall.mounts.find((m: { sandboxPath: string }) => m.sandboxPath === '/root/custom_pieces')
+            expect(customPieceMount).toBeUndefined()
+            expect(createCall.env.AP_CUSTOM_PIECES_PATHS).toBeUndefined()
+        })
+
+        it('scopes code mount to flowVersionId when non-reusable', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-scoped', { ...defaultOptions, reusable: false }, testPM.maker, workerHandlers)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const codeMount = createCall.mounts.find((m: { sandboxPath: string }) => m.sandboxPath.startsWith('/root/codes'))
+            expect(codeMount).toEqual({
+                hostPath: '/tmp/test-cache/codes/fv-1',
+                sandboxPath: '/root/codes/fv-1',
+                optional: true,
+            })
+        })
+
+        it('mounts full codes directory when reusable even with flowVersionId', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-reuse', { ...defaultOptions, reusable: true }, testPM.maker, workerHandlers)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const codeMount = createCall.mounts.find((m: { sandboxPath: string }) => m.sandboxPath.startsWith('/root/codes'))
+            expect(codeMount).toEqual({
+                hostPath: '/tmp/test-cache/codes',
+                sandboxPath: '/root/codes',
+                optional: true,
+            })
+        })
+
+        it('omits code mount when non-reusable without flowVersionId', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-no-fv', { ...defaultOptions, reusable: false }, testPM.maker, workerHandlers)
+
+            await sandbox.start({ flowVersionId: undefined, platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const codeMount = createCall.mounts.find((m: { sandboxPath: string }) => m.sandboxPath.startsWith('/root/codes'))
+            expect(codeMount).toBeUndefined()
+        })
+
+        it('resolves custom_pieces hostPath to cache/custom_pieces/<platformId>', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-plat', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: 'plat-xyz', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const customPieceMount = createCall.mounts.find((m: SandboxMount) => m.sandboxPath === '/root/custom_pieces')
+            expect(customPieceMount).toEqual({
+                hostPath: '/tmp/test-cache/custom_pieces/plat-xyz',
+                sandboxPath: '/root/custom_pieces',
+                optional: true,
+            })
+        })
+
+        it.each([
+            ['.'],
+            ['..'],
+            ['../etc'],
+            ['a/b'],
+            ['fv\\1'],
+            ['fv\0null'],
+            [''],
+        ])('rejects path traversal in flowVersionId: %s', async (flowVersionId) => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-fv-trav', defaultOptions, testPM.maker, workerHandlers)
+
+            let caughtErr: unknown
+            try {
+                await sandbox.start({ flowVersionId, platformId: '', mounts: [] })
+            }
+            catch (err) {
+                caughtErr = err
+            }
+            expect(caughtErr).toBeDefined()
+            expect((caughtErr as ActivepiecesError).error.code).toBe(ErrorCode.VALIDATION)
+            expect(testPM.maker.create).not.toHaveBeenCalled()
+        })
+
+        it.each([
+            ['.'],
+            ['..'],
+            ['../other'],
+            ['plat/sub'],
+            ['plat\\x'],
+            ['plat\0null'],
+        ])('rejects path traversal in platformId: %s', async (platformId) => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-plat-trav', defaultOptions, testPM.maker, workerHandlers)
+
+            let caughtErr: unknown
+            try {
+                await sandbox.start({ flowVersionId: 'fv-1', platformId, mounts: [] })
+            }
+            catch (err) {
+                caughtErr = err
+            }
+            expect(caughtErr).toBeDefined()
+            expect((caughtErr as ActivepiecesError).error.code).toBe(ErrorCode.VALIDATION)
+            expect(testPM.maker.create).not.toHaveBeenCalled()
+        })
+
+        it('rejects caller-supplied mount whose sandboxPath escapes /root/', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-escape', defaultOptions, testPM.maker, workerHandlers)
+
+            const maliciousMount: SandboxMount = { hostPath: '/host/evil', sandboxPath: '/root/../etc' }
+
+            await expect(
+                sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [maliciousMount] }),
+            ).rejects.toThrow()
+            expect(testPM.maker.create).not.toHaveBeenCalled()
+        })
+
+        it('rejects baseMount whose sandboxPath escapes /root/', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            const baseMounts: SandboxMount[] = [{ hostPath: '/host/secret', sandboxPath: '/etc/passwd-evil' }]
+            sandbox = createSandbox(log, 'sb-base-escape', { ...defaultOptions, baseMounts }, testPM.maker, workerHandlers)
+
+            await expect(
+                sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] }),
+            ).rejects.toThrow()
+            expect(testPM.maker.create).not.toHaveBeenCalled()
+        })
+
+        it('composes mounts in order: baseMounts, codeMount, callerMounts, customPieceMounts', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            const baseMounts: SandboxMount[] = [{ hostPath: '/host/common', sandboxPath: '/root/common' }]
+            sandbox = createSandbox(log, 'sb-order', { ...defaultOptions, baseMounts }, testPM.maker, workerHandlers)
+
+            const callerMount: SandboxMount = { hostPath: '/host/x', sandboxPath: '/root/x' }
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: 'plat-1', mounts: [callerMount] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            expect(createCall.mounts).toEqual([
+                { hostPath: '/host/common', sandboxPath: '/root/common' },
+                { hostPath: '/tmp/test-cache/codes/fv-1', sandboxPath: '/root/codes/fv-1', optional: true },
+                { hostPath: '/host/x', sandboxPath: '/root/x' },
+                { hostPath: '/tmp/test-cache/custom_pieces/plat-1', sandboxPath: '/root/custom_pieces', optional: true },
+            ])
+        })
+
+        it('never exposes host /etc, /root, or / as a sandbox mount', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-no-host-leak', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start(startOptions)
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            for (const mount of createCall.mounts as SandboxMount[]) {
+                expect(mount.hostPath).not.toBe('/')
+                expect(mount.hostPath).not.toBe('/etc')
+                expect(mount.hostPath).not.toBe('/root')
+                expect(mount.hostPath).not.toMatch(/^\/home(\/|$)/)
+            }
+        })
+
+        it('does not inject AP_CUSTOM_PIECES_PATHS when platformId is undefined', async () => {
+            const log = createMockLogger()
+            const workerHandlers = createMockWorkerHandlers()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-no-plat-env', defaultOptions, testPM.maker, workerHandlers)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
             expect(createCall.env.AP_CUSTOM_PIECES_PATHS).toBeUndefined()
         })
 
@@ -178,9 +371,7 @@ describe('createSandbox', () => {
                 { timeoutInSeconds: 10 },
             )
 
-            expect(result.engine).toEqual(engineResponse)
-            expect(result.stdOut).toBe('')
-            expect(result.stdError).toBe('')
+            expect(result).toEqual({ ...engineResponse, logs: undefined })
         })
 
         it('recovers after engine returns INTERNAL_ERROR and handles next job', async () => {
@@ -209,29 +400,30 @@ describe('createSandbox', () => {
                 {} as any,
                 { timeoutInSeconds: 10 },
             )
-            expect(firstResult.engine.status).toBe(EngineResponseStatus.INTERNAL_ERROR)
-            expect(firstResult.engine.error).toBe('Engine error: AppWebhookUrlNotAvailableError')
+            expect(firstResult.status).toBe(EngineResponseStatus.INTERNAL_ERROR)
+            expect(firstResult.error).toBe('Engine error: AppWebhookUrlNotAvailableError')
 
             const secondResult = await sandbox.execute(
                 'EXECUTE_FLOW' as any,
                 {} as any,
                 { timeoutInSeconds: 10 },
             )
-            expect(secondResult.engine.status).toBe(EngineResponseStatus.OK)
-            expect(secondResult.engine.response).toEqual({ success: true })
+            expect(secondResult.status).toBe(EngineResponseStatus.OK)
+            expect(secondResult.response).toEqual({ success: true })
         })
 
-        it('accumulates stdout and stderr from rpc-notify', async () => {
+        it('resolves with engine response and captures stdout/stderr', async () => {
             const { sandbox } = await startSandbox()
             const client = testPM.getClient()
 
+            const engineResponse = { status: 200, body: 'ok' }
             client.on('rpc', (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
                 if (msg.method === 'executeOperation') {
                     client.emit('rpc-notify', { method: 'stdout', payload: { message: 'line1\n' } })
                     client.emit('rpc-notify', { method: 'stderr', payload: { message: 'err1\n' } })
                     client.emit('rpc-notify', { method: 'stdout', payload: { message: 'line2\n' } })
                     setTimeout(() => {
-                        ack({ status: 200 })
+                        ack(engineResponse)
                     }, 50)
                 }
             })
@@ -242,8 +434,7 @@ describe('createSandbox', () => {
                 { timeoutInSeconds: 10 },
             )
 
-            expect(result.stdOut).toBe('line1\nline2\n')
-            expect(result.stdError).toBe('err1\n')
+            expect(result).toEqual({ ...engineResponse, logs: 'stdout:\nline1\nline2\n\nstderr:\nerr1\n' })
         })
 
         it('delegates worker contract calls to handlers', async () => {

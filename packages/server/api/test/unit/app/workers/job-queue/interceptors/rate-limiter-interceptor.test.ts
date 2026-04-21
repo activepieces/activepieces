@@ -1,8 +1,9 @@
-import { ApEdition, ExecutionType, JOB_PRIORITY, PlanName, ProgressUpdateType, RATE_LIMIT_PRIORITY, RunEnvironment, WorkerJobType } from '@activepieces/shared'
+import { ApEdition, ExecutionType, JOB_PRIORITY, PlanName, StreamStepProgress, RATE_LIMIT_PRIORITY, RunEnvironment, WorkerJobType } from '@activepieces/shared'
 import { Job } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { Redis } from 'ioredis'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getProjectMaxConcurrentJobsKey, getPlatformPlanNameKey } from '../../../../../../src/app/database/redis/keys'
+import { getConcurrencyPoolLimitKey, getConcurrencyPoolSetKey, getPlatformPlanNameKey, getProjectConcurrencyPoolKey } from '../../../../../../src/app/database/redis/keys'
 import { distributedStore, redisConnections } from '../../../../../../src/app/database/redis-connections'
 import { system } from '../../../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../../../src/app/helper/system/system-props'
@@ -32,7 +33,7 @@ function createFlowJobData(overrides?: Record<string, unknown>) {
         flowVersionId: `fv-${crypto.randomUUID()}`,
         runId: `run-${crypto.randomUUID()}`,
         executionType: ExecutionType.BEGIN,
-        progressUpdateType: ProgressUpdateType.NONE,
+        streamStepProgress: StreamStepProgress.NONE,
         payload: {},
         logsUploadUrl: 'http://localhost/logs',
         logsFileId: 'log-file-id',
@@ -58,30 +59,30 @@ function disableRateLimiter() {
     })
 }
 
+async function deleteKeysByPattern(redis: Redis, pattern: string): Promise<void> {
+    const stream = redis.scanStream({ match: pattern, count: 100 })
+    for await (const keys of stream) {
+        if (keys.length > 0) await redis.del(...keys)
+    }
+}
+
 describe('rateLimiterInterceptor', () => {
     beforeEach(async () => {
         vi.restoreAllMocks()
         enableRateLimiter()
         vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
             if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-            if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 100
+            if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
             return 0
         })
         vi.spyOn(system, 'getEdition').mockReturnValue(ApEdition.COMMUNITY)
 
         const redis = await redisConnections.useExisting()
-        const keys = await redis.keys('active_jobs_set:*')
-        if (keys.length > 0) {
-            await redis.del(...keys)
-        }
-        const projectKeys = await redis.keys('project:max-concurrent-jobs:*')
-        if (projectKeys.length > 0) {
-            await redis.del(...projectKeys)
-        }
-        const planKeys = await redis.keys('platform_plan:plan:*')
-        if (planKeys.length > 0) {
-            await redis.del(...planKeys)
-        }
+        await deleteKeysByPattern(redis, 'active_jobs_set:*')
+        await deleteKeysByPattern(redis, 'project:max-concurrent-jobs:*')
+        await deleteKeysByPattern(redis, 'platform_plan:plan:*')
+        await deleteKeysByPattern(redis, 'project:concurrency-pool:*')
+        await deleteKeysByPattern(redis, 'concurrency-pool:limit:*')
     })
 
     describe('skip guards', () => {
@@ -124,7 +125,7 @@ describe('rateLimiterInterceptor', () => {
         it('should ALLOW first job when under limit', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 2
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 2
                 return 0
             })
             const jobData = createFlowJobData()
@@ -137,15 +138,15 @@ describe('rateLimiterInterceptor', () => {
             expect(result.verdict).toBe(InterceptorVerdict.ALLOW)
 
             const redis = await redisConnections.useExisting()
-            const members = await redis.smembers(`active_jobs_set:${jobData.projectId}`)
+            const members = await redis.zrange(getConcurrencyPoolSetKey(jobData.projectId), 0, -1)
             expect(members).toHaveLength(1)
-            expect(members[0]).toMatch(/^job-1:/)
+            expect(members[0]).toBe(`${jobData.projectId}:job-1`)
         })
 
         it('should ALLOW up to max concurrent jobs', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 3
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 3
                 return 0
             })
             const jobData = createFlowJobData()
@@ -161,14 +162,14 @@ describe('rateLimiterInterceptor', () => {
             }
 
             const redis = await redisConnections.useExisting()
-            const members = await redis.smembers(`active_jobs_set:${jobData.projectId}`)
+            const members = await redis.zrange(getConcurrencyPoolSetKey(jobData.projectId), 0, -1)
             expect(members).toHaveLength(3)
         })
 
         it('should REJECT when at capacity', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 2
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 2
                 return 0
             })
             const jobData = createFlowJobData()
@@ -192,7 +193,7 @@ describe('rateLimiterInterceptor', () => {
         it('should not double-count the same jobId', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 2
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 2
                 return 0
             })
             const jobData = createFlowJobData()
@@ -205,14 +206,14 @@ describe('rateLimiterInterceptor', () => {
             expect(r2.verdict).toBe(InterceptorVerdict.ALLOW)
 
             const redis = await redisConnections.useExisting()
-            const members = await redis.smembers(`active_jobs_set:${jobData.projectId}`)
+            const members = await redis.zrange(getConcurrencyPoolSetKey(jobData.projectId), 0, -1)
             expect(members).toHaveLength(1)
         })
 
         it('should not let different projects interfere', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 1
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 1
                 return 0
             })
             const jobDataA = createFlowJobData({ projectId: 'proj-A' })
@@ -235,7 +236,7 @@ describe('rateLimiterInterceptor', () => {
         beforeEach(() => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 1
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 1
                 return 0
             })
         })
@@ -293,16 +294,16 @@ describe('rateLimiterInterceptor', () => {
         it('should clean stale jobs and allow new ones', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 1
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 1
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 1
                 return 0
             })
             const jobData = createFlowJobData()
-            const setKey = `active_jobs_set:${jobData.projectId}`
+            const setKey = getConcurrencyPoolSetKey(jobData.projectId)
 
-            // Manually insert a stale entry with an old timestamp
+            // Manually insert a stale entry with an old timestamp (score = old time)
             const redis = await redisConnections.useExisting()
             const oldTimestamp = Date.now() - 120_000 // 2 minutes ago
-            await redis.sadd(setKey, `stale-job:${oldTimestamp}`)
+            await redis.zadd(setKey, oldTimestamp, `${jobData.projectId}:stale-job`)
 
             // The set has 1 member (at capacity), but the stale entry should be cleaned
             const result = await rateLimiterInterceptor.preDispatch({
@@ -313,25 +314,27 @@ describe('rateLimiterInterceptor', () => {
             })
             expect(result.verdict).toBe(InterceptorVerdict.ALLOW)
 
-            const members = await redis.smembers(setKey)
+            const members = await redis.zrange(setKey, 0, -1)
             // Only the new job should remain
             expect(members).toHaveLength(1)
-            expect(members[0]).toMatch(/^new-job:/)
+            expect(members[0]).toBe(`${jobData.projectId}:new-job`)
         })
     })
 
     describe('limit resolution', () => {
-        it('should use project override when set', async () => {
+        it('should use pool override when set for project', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 100
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
                 return 0
             })
             const projectId = `proj-${crypto.randomUUID()}`
+            const poolId = `pool-${crypto.randomUUID()}`
             const jobData = createFlowJobData({ projectId })
 
-            // Set project override to 1
-            await distributedStore.put(getProjectMaxConcurrentJobsKey(projectId), 1)
+            // Map project to pool and set pool limit to 1
+            await distributedStore.put(getProjectConcurrencyPoolKey(projectId), poolId)
+            await distributedStore.put(getConcurrencyPoolLimitKey(poolId), 1)
 
             await rateLimiterInterceptor.preDispatch({ jobId: 'job-1', jobData, job: createMockJob(), log: mockLog })
             const result = await rateLimiterInterceptor.preDispatch({ jobId: 'job-2', jobData, job: createMockJob(), log: mockLog })
@@ -342,7 +345,7 @@ describe('rateLimiterInterceptor', () => {
             vi.spyOn(system, 'getEdition').mockReturnValue(ApEdition.CLOUD)
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 100
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
                 return 0
             })
             const platformId = `plat-${crypto.randomUUID()}`
@@ -366,7 +369,7 @@ describe('rateLimiterInterceptor', () => {
             vi.spyOn(system, 'getEdition').mockReturnValue(ApEdition.COMMUNITY)
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 100
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
                 return 0
             })
             const platformId = `plat-${crypto.randomUUID()}`
@@ -385,7 +388,7 @@ describe('rateLimiterInterceptor', () => {
         it('should fall back to default system prop', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 2
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 2
                 return 0
             })
             const jobData = createFlowJobData()
@@ -402,7 +405,7 @@ describe('rateLimiterInterceptor', () => {
         it('should release slot for completed job', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 2
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 2
                 return 0
             })
             const jobData = createFlowJobData()
@@ -411,12 +414,12 @@ describe('rateLimiterInterceptor', () => {
             await rateLimiterInterceptor.preDispatch({ jobId, jobData, job: createMockJob(), log: mockLog })
 
             const redis = await redisConnections.useExisting()
-            let members = await redis.smembers(`active_jobs_set:${jobData.projectId}`)
+            let members = await redis.zrange(getConcurrencyPoolSetKey(jobData.projectId), 0, -1)
             expect(members).toHaveLength(1)
 
             await rateLimiterInterceptor.onJobFinished({ jobId, jobData, log: mockLog })
 
-            members = await redis.smembers(`active_jobs_set:${jobData.projectId}`)
+            members = await redis.zrange(getConcurrencyPoolSetKey(jobData.projectId), 0, -1)
             expect(members).toHaveLength(0)
         })
 
@@ -430,7 +433,7 @@ describe('rateLimiterInterceptor', () => {
         it('should be idempotent', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) return 2
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 2
                 return 0
             })
             const jobData = createFlowJobData()
@@ -442,8 +445,142 @@ describe('rateLimiterInterceptor', () => {
             await rateLimiterInterceptor.onJobFinished({ jobId, jobData, log: mockLog })
 
             const redis = await redisConnections.useExisting()
-            const members = await redis.smembers(`active_jobs_set:${jobData.projectId}`)
+            const members = await redis.zrange(getConcurrencyPoolSetKey(jobData.projectId), 0, -1)
             expect(members).toHaveLength(0)
+        })
+    })
+
+    describe('pool concurrency', () => {
+        beforeEach(() => {
+            vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
+                if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
+                return 0
+            })
+        })
+
+        it('jobs from two projects in same pool count against shared limit', async () => {
+            const poolId = `pool-${crypto.randomUUID()}`
+            const projectIdA = `proj-pool-A-${crypto.randomUUID()}`
+            const projectIdB = `proj-pool-B-${crypto.randomUUID()}`
+
+            // Set up pool: limit=2, both projects mapped
+            await distributedStore.put(getConcurrencyPoolLimitKey(poolId), 2)
+            await distributedStore.put(getProjectConcurrencyPoolKey(projectIdA), poolId)
+            await distributedStore.put(getProjectConcurrencyPoolKey(projectIdB), poolId)
+
+            const jobDataA = createFlowJobData({ projectId: projectIdA })
+            const jobDataB = createFlowJobData({ projectId: projectIdB })
+
+            // proj-A takes slot 1
+            const r1 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-a1', jobData: jobDataA, job: createMockJob(), log: mockLog })
+            expect(r1.verdict).toBe(InterceptorVerdict.ALLOW)
+
+            // proj-B takes slot 2
+            const r2 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-b1', jobData: jobDataB, job: createMockJob(), log: mockLog })
+            expect(r2.verdict).toBe(InterceptorVerdict.ALLOW)
+
+            // Pool is full — proj-A new job should be rejected
+            const r3 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-a2', jobData: jobDataA, job: createMockJob(), log: mockLog })
+            expect(r3.verdict).toBe(InterceptorVerdict.REJECT)
+
+            // Pool is full — proj-B new job should also be rejected
+            const r4 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-b2', jobData: jobDataB, job: createMockJob(), log: mockLog })
+            expect(r4.verdict).toBe(InterceptorVerdict.REJECT)
+        })
+
+        it('pool at capacity does not block unrelated project', async () => {
+            const poolId = `pool-${crypto.randomUUID()}`
+            const projectIdA = `proj-pool-A-${crypto.randomUUID()}`
+            const projectIdUnrelated = `proj-unrelated-${crypto.randomUUID()}`
+
+            await distributedStore.put(getConcurrencyPoolLimitKey(poolId), 1)
+            await distributedStore.put(getProjectConcurrencyPoolKey(projectIdA), poolId)
+
+            const jobDataA = createFlowJobData({ projectId: projectIdA })
+            const jobDataUnrelated = createFlowJobData({ projectId: projectIdUnrelated })
+
+            // Fill the pool
+            await rateLimiterInterceptor.preDispatch({ jobId: 'job-a1', jobData: jobDataA, job: createMockJob(), log: mockLog })
+
+            // Pool project is now at capacity
+            const rejectA = await rateLimiterInterceptor.preDispatch({ jobId: 'job-a2', jobData: jobDataA, job: createMockJob(), log: mockLog })
+            expect(rejectA.verdict).toBe(InterceptorVerdict.REJECT)
+
+            // Unrelated project (no pool) should still be allowed
+            const allowUnrelated = await rateLimiterInterceptor.preDispatch({ jobId: 'job-u1', jobData: jobDataUnrelated, job: createMockJob(), log: mockLog })
+            expect(allowUnrelated.verdict).toBe(InterceptorVerdict.ALLOW)
+        })
+
+        it('same {projectId}:{jobId} member is deduped in pool ZSET', async () => {
+            const poolId = `pool-${crypto.randomUUID()}`
+            const projectIdA = `proj-dedup-${crypto.randomUUID()}`
+
+            await distributedStore.put(getConcurrencyPoolLimitKey(poolId), 2)
+            await distributedStore.put(getProjectConcurrencyPoolKey(projectIdA), poolId)
+
+            const jobData = createFlowJobData({ projectId: projectIdA })
+
+            const r1 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-dup', jobData, job: createMockJob(), log: mockLog })
+            expect(r1.verdict).toBe(InterceptorVerdict.ALLOW)
+
+            // Same jobId dispatched again — should not add a duplicate
+            const r2 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-dup', jobData, job: createMockJob(), log: mockLog })
+            expect(r2.verdict).toBe(InterceptorVerdict.ALLOW)
+
+            const redis = await redisConnections.useExisting()
+            const members = await redis.zrange(getConcurrencyPoolSetKey(poolId), 0, -1)
+            expect(members).toHaveLength(1)
+        })
+
+        it('releasing a pool slot frees space for another project in pool', async () => {
+            const poolId = `pool-${crypto.randomUUID()}`
+            const projectIdA = `proj-rel-A-${crypto.randomUUID()}`
+            const projectIdB = `proj-rel-B-${crypto.randomUUID()}`
+
+            await distributedStore.put(getConcurrencyPoolLimitKey(poolId), 1)
+            await distributedStore.put(getProjectConcurrencyPoolKey(projectIdA), poolId)
+            await distributedStore.put(getProjectConcurrencyPoolKey(projectIdB), poolId)
+
+            const jobDataA = createFlowJobData({ projectId: projectIdA })
+            const jobDataB = createFlowJobData({ projectId: projectIdB })
+
+            // proj-A fills the single slot
+            await rateLimiterInterceptor.preDispatch({ jobId: 'job-a1', jobData: jobDataA, job: createMockJob(), log: mockLog })
+
+            // proj-B is blocked
+            const blocked = await rateLimiterInterceptor.preDispatch({ jobId: 'job-b1', jobData: jobDataB, job: createMockJob(), log: mockLog })
+            expect(blocked.verdict).toBe(InterceptorVerdict.REJECT)
+
+            // proj-A finishes — releases the slot
+            await rateLimiterInterceptor.onJobFinished({ jobId: 'job-a1', jobData: jobDataA, log: mockLog })
+
+            // proj-B can now proceed
+            const allowed = await rateLimiterInterceptor.preDispatch({ jobId: 'job-b1', jobData: jobDataB, job: createMockJob(), log: mockLog })
+            expect(allowed.verdict).toBe(InterceptorVerdict.ALLOW)
+        })
+
+        it('per-project pool: single-project pool limits that project via pool ZSET key', async () => {
+            const projectId = `proj-fallback-${crypto.randomUUID()}`
+            const poolId = `pool-${crypto.randomUUID()}`
+            const jobData = createFlowJobData({ projectId })
+
+            // Map project to a solo pool and set the pool limit
+            await distributedStore.put(getProjectConcurrencyPoolKey(projectId), poolId)
+            await distributedStore.put(getConcurrencyPoolLimitKey(poolId), 1)
+
+            const r1 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-1', jobData, job: createMockJob(), log: mockLog })
+            expect(r1.verdict).toBe(InterceptorVerdict.ALLOW)
+
+            // Slot is taken — second job rejected
+            const r2 = await rateLimiterInterceptor.preDispatch({ jobId: 'job-2', jobData, job: createMockJob(), log: mockLog })
+            expect(r2.verdict).toBe(InterceptorVerdict.REJECT)
+
+            // Verify ZSET key is based on poolId, not projectId
+            const redis = await redisConnections.useExisting()
+            const members = await redis.zrange(getConcurrencyPoolSetKey(poolId), 0, -1)
+            expect(members).toHaveLength(1)
+            expect(members[0]).toBe(`${projectId}:job-1`)
         })
     })
 })

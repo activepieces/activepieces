@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-gmail",
-  "version": "0.11.4",
+  "version": "0.12.2",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
@@ -10,9 +10,9 @@
     "dayjs": "1.11.9",
     "googleapis": "129.0.0",
     "googleapis-common": "7.2.0",
-    "mailparser": "3.7.5",
+    "mailparser": "3.9.3",
     "mime-types": "2.1.35",
-    "nodemailer": "7.0.11",
+    "nodemailer": "8.0.5",
     "tslib": "2.6.2"
   },
   "scripts": {

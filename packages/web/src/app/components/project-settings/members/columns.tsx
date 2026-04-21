@@ -13,6 +13,7 @@ import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
@@ -61,7 +62,8 @@ const RoleCell = ({
   row: { original: MemberRowData };
   refetch: () => void;
 }) => {
-  const { data: rolesData } = projectRoleQueries.useProjectRoles(true);
+  const { data: rolesData, isPending: rolesLoading } =
+    projectRoleQueries.useProjectRoles(true);
 
   const roles = rolesData?.data ?? [];
   const { checkAccess } = useAuthorization();
@@ -77,15 +79,25 @@ const RoleCell = ({
   const isPlatformAdminOrOperator =
     row.original.type === 'platform-admin-operator';
 
-  const { mutate } = projectMembersMutations.useUpdateMemberRole({
-    onSuccess: () => {
-      toast.success(t('Role updated successfully'));
-      refetch();
-    },
-    onError: () => {
-      internalErrorToast();
-    },
-  });
+  const { mutate, isPending: isAssigningRole } =
+    projectMembersMutations.useUpdateMemberRole({
+      onSuccess: (variables) => {
+        if (row.original.type === 'member') {
+          const { user } = row.original.data;
+          toast.success(
+            t('{firstName} {lastName} role has become {roleName}', {
+              firstName: user.firstName,
+              lastName: user.lastName,
+              roleName: variables.role,
+            }),
+          );
+        }
+        refetch();
+      },
+      onError: () => {
+        internalErrorToast();
+      },
+    });
 
   const handleValueChange = (value: string) => {
     if (row.original.type === 'member') {
@@ -138,6 +150,8 @@ const RoleCell = ({
           onValueChange={handleValueChange}
           disabled={!userHasPermissionToUpdateRole}
           roles={roles}
+          isLoading={rolesLoading}
+          isAssigningRole={isAssigningRole}
         />
       </div>
     </PermissionNeededTooltip>
@@ -183,8 +197,6 @@ const ActionsCell = ({
     row.original.type === 'member'
       ? `${row.original.data.user.firstName} ${row.original.data.user.lastName}`
       : row.original.data.email;
-
-  const removeLabel = `${t('Remove')} ${displayName}`;
 
   return (
     <PermissionNeededTooltip hasPermission={userHasPermissionToDelete}>
@@ -234,15 +246,17 @@ export const membersTableColumns = ({
       if (row.original.type === 'invitation') {
         const email = row.original.data.email;
         return (
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 min-w-0">
             <UserAvatar
               name={email}
               email={email}
               size={32}
               disableTooltip={true}
             />
-            <div className="flex flex-col gap-1">
-              <p className="text-sm text-orange-700">{email}</p>
+            <div className="flex flex-col gap-1 min-w-0">
+              <TextWithTooltip tooltipMessage={email}>
+                <p className="text-sm text-orange-700">{email}</p>
+              </TextWithTooltip>
             </div>
           </div>
         );
@@ -253,7 +267,7 @@ export const membersTableColumns = ({
         const name = `${row.original.data.firstName} ${row.original.data.lastName}`;
 
         return (
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 min-w-0">
             <UserAvatar
               name={name}
               email={email}
@@ -261,9 +275,11 @@ export const membersTableColumns = ({
               disableTooltip={true}
               imageUrl={row.original.data.imageUrl}
             />
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 min-w-0">
               <p className="text-sm font-medium leading-none">{name}</p>
-              <p className="text-sm text-muted-foreground">{email}</p>
+              <TextWithTooltip tooltipMessage={email}>
+                <p className="text-sm text-muted-foreground">{email}</p>
+              </TextWithTooltip>
             </div>
           </div>
         );
@@ -273,16 +289,18 @@ export const membersTableColumns = ({
       const name = `${row.original.data.user.firstName} ${row.original.data.user.lastName}`;
 
       return (
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 min-w-0">
           <UserAvatar
             name={name}
             email={email}
             size={32}
             disableTooltip={true}
           />
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 min-w-0">
             <p className="text-sm font-medium leading-none">{name}</p>
-            <p className="text-sm text-muted-foreground">{email}</p>
+            <TextWithTooltip tooltipMessage={email}>
+              <p className="text-sm text-muted-foreground">{email}</p>
+            </TextWithTooltip>
           </div>
         </div>
       );

@@ -13,9 +13,9 @@ export enum PieceSelectorTabType {
 
 export const PieceSelectorTabsContext = createContext({
   selectedTab: PieceSelectorTabType.EXPLORE,
-  setSelectedTab: (tab: PieceSelectorTabType) => {},
+  setSelectedTab: (_tab: PieceSelectorTabType) => {},
   resetToBeforeNoneWasSelected: () => {},
-  setSelectedPieceInExplore: (piece: StepMetadataWithSuggestions | null) => {},
+  setSelectedPieceInExplore: (_piece: StepMetadataWithSuggestions | null) => {},
   selectedPieceInExplore: null as null | StepMetadataWithSuggestions,
 });
 

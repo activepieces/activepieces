@@ -50,6 +50,7 @@ export const tableHooks = {
             : undefined,
           name: searchParams.get('name') ?? undefined,
         }),
+      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
   },
   useCreateTable: (folderId: string) => {
@@ -71,7 +72,7 @@ export const tableHooks = {
         });
         await recordsApi.create({
           records: [
-            ...Array.from({ length: 1 }, (_) => [
+            ...Array.from({ length: 1 }, () => [
               {
                 fieldId: field.id,
                 value: '',

@@ -5,7 +5,8 @@ import { worker } from './worker'
 const workerToken = system.getOrThrow(WorkerSystemProp.WORKER_TOKEN)
 
 async function main(): Promise<void> {
-    await worker.start({ apiUrl: getApiUrl(), socketUrl: getSocketUrl(), workerToken })
+    const containerType = system.get(WorkerSystemProp.CONTAINER_TYPE) ?? 'WORKER_AND_APP'
+    await worker.start({ apiUrl: getApiUrl(), socketUrl: getSocketUrl(), workerToken, withHealthServer: containerType === 'WORKER' })
 
     const shutdown = async () => {
         const timeout = setTimeout(() => {
@@ -24,3 +25,4 @@ main().catch((err) => {
     logger.error({ error: err }, 'Worker crashed')
     process.exit(1)
 })
+

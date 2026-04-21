@@ -10,10 +10,6 @@ import {
   StepSettings,
   FlowTriggerType,
   debounce,
-  FlowAction,
-  FlowTrigger,
-  Step,
-  FlowActionType,
 } from '@activepieces/shared';
 import { QueryClient } from '@tanstack/react-query';
 import { StoreApi } from 'zustand';
@@ -48,7 +44,10 @@ export type FlowState = {
     type: 'input' | 'output';
     value: unknown;
   }) => void;
-  setVersion: (flowVersion: FlowVersion) => void;
+  setVersion: (
+    flowVersion: FlowVersion,
+    shouldReselectInitialStep?: boolean,
+  ) => void;
   addOperationListener: (
     listener: (
       flowVersion: FlowVersion,
@@ -260,7 +259,10 @@ export const createFlowState = (
 
         return { flowVersion: newFlowVersion };
       }),
-    setVersion: (flowVersion: FlowVersion) => {
+    setVersion: (
+      flowVersion: FlowVersion,
+      shouldReselectInitialStep: boolean = true,
+    ) => {
       const initiallySelectedStep =
         flowCanvasUtils.determineInitiallySelectedStep(null, flowVersion);
       const isEmptyTriggerInitiallySelected =
@@ -269,7 +271,9 @@ export const createFlowState = (
       set((state) => ({
         flowVersion,
         run: null,
-        selectedStep: initiallySelectedStep,
+        selectedStep: shouldReselectInitialStep
+          ? initiallySelectedStep
+          : state.selectedStep,
         readonly:
           state.flow.publishedVersionId !== flowVersion.id &&
           flowVersion.state === FlowVersionState.LOCKED,
@@ -344,6 +348,13 @@ export const createFlowState = (
             request: defaultValues,
           });
           selectStepByName('trigger');
+          applyOperation({
+            type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+            request: {
+              stepName: 'trigger',
+              sampleDataSettings: undefined,
+            },
+          });
           break;
         }
         case FlowOperationType.ADD_ACTION: {
@@ -392,6 +403,13 @@ export const createFlowState = (
                 customLogoUrl,
               },
               valid: defaultValues.valid,
+            },
+          });
+          applyOperation({
+            type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+            request: {
+              stepName: operation.stepName,
+              sampleDataSettings: undefined,
             },
           });
           removeStepTestListener(operation.stepName);

@@ -1,17 +1,17 @@
 import {
   isNil,
+  PROJECT_COLOR_PALETTE,
   PlatformRole,
   ProjectType,
   TeamProjectsLimit,
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Search, Plus } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
-import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
 import { SearchInput } from '@/components/custom/search-input';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
@@ -35,20 +35,21 @@ import {
   SidebarGroupLabel,
   SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
-import { projectCollectionUtils } from '@/features/projects';
+import {
+  CreateProjectButton,
+  projectCollectionUtils,
+  getProjectName,
+} from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
+import { recordAccess } from '../../global-search/access-history';
 import { GlobalSearchCommand } from '../../global-search/global-search-command';
+import { STATIC_PAGES } from '../../global-search/static-pages';
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import ProjectSideBarItem from '../project';
@@ -90,15 +91,11 @@ export function ProjectDashboardSidebar({
     return true;
   }, [platform.plan.teamProjectsLimit]);
 
-  const shouldDisableNewProjectButton = useMemo(() => {
-    if (platform.plan.teamProjectsLimit === TeamProjectsLimit.ONE) {
-      const teamProjects = projects.filter(
-        (project) => project.type === ProjectType.TEAM,
-      );
-      return teamProjects.length >= 1;
-    }
-    return false;
-  }, [platform.plan.teamProjectsLimit, projects]);
+  const shouldShowInlineAddButton =
+    platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE &&
+    currentUser?.platformRole === PlatformRole.ADMIN &&
+    projects.filter((project) => project.type === ProjectType.TEAM).length ===
+      0;
 
   const isSearchMode = debouncedSearchQuery.length > 0;
 
@@ -111,14 +108,29 @@ export function ProjectDashboardSidebar({
     }
     return projects;
   }, [isSearchMode, debouncedSearchQuery, projects]);
-
   const handleProjectSelect = useCallback(
     async (projectId: string) => {
+      const project = projects.find((p) => p.id === projectId);
+      if (project) {
+        const palette = project.icon
+          ? PROJECT_COLOR_PALETTE[project.icon.color]
+          : null;
+        const name = getProjectName(project);
+        recordAccess({
+          id: `project-${projectId}`,
+          type: 'project',
+          label: name,
+          href: `/projects/${projectId}/automations`,
+          iconBgColor: palette?.color,
+          iconTextColor: palette?.textColor,
+          iconLetter: name.charAt(0).toUpperCase(),
+        });
+      }
       projectCollectionUtils.setCurrentProject(projectId);
       navigate(`/projects/${projectId}/automations`);
       setSearchOpen(false);
     },
-    [navigate],
+    [navigate, projects],
   );
 
   const permissionFilter = (link: SidebarGeneralItemType) => {
@@ -142,7 +154,17 @@ export function ProjectDashboardSidebar({
     icon: CompassIcon,
     hasPermission: true,
     isSubItem: false,
-    onClick: handleExploreClick,
+    onClick: () => {
+      handleExploreClick();
+      const page = STATIC_PAGES.find((p) => p.href === '/templates');
+      if (page)
+        recordAccess({
+          id: page.id,
+          type: 'page',
+          label: page.label,
+          href: page.href,
+        });
+    },
   };
 
   const impactLink: SidebarItemType = {
@@ -153,6 +175,16 @@ export function ProjectDashboardSidebar({
     show: true,
     hasPermission: true,
     isSubItem: false,
+    onClick: () => {
+      const page = STATIC_PAGES.find((p) => p.href === '/impact');
+      if (page)
+        recordAccess({
+          id: page.id,
+          type: 'page',
+          label: page.label,
+          href: page.href,
+        });
+    },
   };
 
   const leaderboardLink: SidebarItemType = {
@@ -163,6 +195,16 @@ export function ProjectDashboardSidebar({
     show: true,
     hasPermission: true,
     isSubItem: false,
+    onClick: () => {
+      const page = STATIC_PAGES.find((p) => p.href === '/leaderboard');
+      if (page)
+        recordAccess({
+          id: page.id,
+          type: 'page',
+          label: page.label,
+          href: page.href,
+        });
+    },
   };
 
   const items = [exploreLink, impactLink, leaderboardLink].filter(
@@ -197,56 +239,13 @@ export function ProjectDashboardSidebar({
               <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
               <div className="flex items-center justify-center gap-2">
                 {shouldShowNewProjectButton && (
-                  <>
-                    {!shouldDisableNewProjectButton ? (
-                      <NewProjectDialog
-                        onCreate={(project) => {
-                          navigate(`/projects/${project.id}/flows`);
-                        }}
-                      >
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 hover:bg-accent"
-                        >
-                          <Plus />
-                        </Button>
-                      </NewProjectDialog>
-                    ) : (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              disabled
-                              className="h-6 w-6"
-                            >
-                              <Plus />
-                            </Button>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-[250px]">
-                          <p className="text-xs mb-1">
-                            {t(
-                              'Upgrade your plan to create additional team projects.',
-                            )}{' '}
-                            <button
-                              className="text-xs text-primary underline hover:no-underline"
-                              onClick={() =>
-                                window.open(
-                                  'https://www.activepieces.com/pricing',
-                                  '_blank',
-                                )
-                              }
-                            >
-                              {t('View Plans')}
-                            </button>
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                  </>
+                  <CreateProjectButton
+                    variant="icon"
+                    projects={projects ?? []}
+                    onCreate={(project) => {
+                      navigate(`/projects/${project.id}/flows`);
+                    }}
+                  />
                 )}
                 {shouldShowSearchButton && (
                   <Popover open={searchOpen} onOpenChange={setSearchOpen}>
@@ -269,7 +268,7 @@ export function ProjectDashboardSidebar({
                         placeholder={t('Search projects...')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e)}
-                        className="h-9"
+                        className="h-8"
                         autoFocus
                       />
                     </PopoverContent>
@@ -283,14 +282,14 @@ export function ProjectDashboardSidebar({
                 e.stopPropagation();
               }}
             >
-              <div className="flex grow max-h-[100%]">
+              <div className="flex max-h-[100%]">
                 {displayProjects.length > 0 ? (
                   <VirtualizedScrollArea
                     className={cn(
                       'flex-1',
                       state === 'collapsed'
                         ? 'flex flex-col items-center scrollbar-none'
-                        : 'scrollbar-hover',
+                        : '',
                     )}
                     items={displayProjects}
                     estimateSize={() => 35}
@@ -317,6 +316,19 @@ export function ProjectDashboardSidebar({
                   )
                 )}
               </div>
+              {shouldShowInlineAddButton && state === 'expanded' && (
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <CreateProjectButton
+                      variant="sidebar-menu"
+                      projects={projects ?? []}
+                      onCreate={(project) => {
+                        navigate(`/projects/${project.id}/flows`);
+                      }}
+                    />
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              )}
             </div>
           </SidebarGroup>
         </SidebarContent>
@@ -363,6 +375,19 @@ function SidebarPlatformAdminLink() {
         isSubItem={false}
         show={true}
         hasPermission={true}
+        onClick={() => {
+          const page = STATIC_PAGES.find(
+            (p) =>
+              p.href === '/platform/projects' && p.id === 'page-platform-admin',
+          );
+          if (page)
+            recordAccess({
+              id: page.id,
+              type: 'page',
+              label: page.label,
+              href: page.href,
+            });
+        }}
       />
     </SidebarMenu>
   );

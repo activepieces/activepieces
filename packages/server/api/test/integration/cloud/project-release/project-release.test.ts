@@ -2,7 +2,6 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 import {
     apId,
     CreateProjectReleaseRequestBody,
-    PopulatedFlow,
     ProjectReleaseType,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
@@ -12,6 +11,7 @@ import { db } from '../../../helpers/db'
 import {
     createMockApiKey,
     createMockFile,
+    createMockProject,
     createMockProjectRelease,
     mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
@@ -30,7 +30,9 @@ afterAll(async () => {
 describe('Project Release API', () => {
     describe('POST /v1/project-releases (Create)', () => {
         it('should fail if projectId does not match', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup({
+                plan: { environmentsEnabled: true },
+            })
             const apiKey = createMockApiKey({
                 platformId: mockPlatform.id,
             })
@@ -59,25 +61,29 @@ describe('Project Release API', () => {
         it('should create a PROJECT type release', async () => {
             const sourceCtx = await createTestContext(app!, {
                 project: { releasesEnabled: true },
+                plan: { environmentsEnabled: true },
             })
-            const targetCtx = await createTestContext(app!, {
-                platform: { ownerId: sourceCtx.user.id },
-                project: { releasesEnabled: true },
+
+            const mockSourceProject = createMockProject({
+                platformId: sourceCtx.platform.id,
+                ownerId: sourceCtx.user.id,
+                releasesEnabled: true,
             })
+            await db.save('project', mockSourceProject)
 
             // Create a flow in the source project
             await sourceCtx.post('/v1/flows', {
                 displayName: 'Source Flow',
-                projectId: sourceCtx.project.id,
-            }, { query: { projectId: sourceCtx.project.id } })
+                projectId: mockSourceProject.id,
+            }, { query: { projectId: mockSourceProject.id } })
 
-            const response = await targetCtx.post('/v1/project-releases', {
+            const response = await sourceCtx.post('/v1/project-releases', {
                 name: 'Test Release',
                 description: 'A test release',
                 selectedFlowsIds: null,
-                projectId: targetCtx.project.id,
+                projectId: sourceCtx.project.id,
                 type: ProjectReleaseType.PROJECT,
-                targetProjectId: sourceCtx.project.id,
+                targetProjectId: mockSourceProject.id,
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
@@ -88,6 +94,7 @@ describe('Project Release API', () => {
         it('should list releases for project', async () => {
             const ctx = await createTestContext(app!, {
                 project: { releasesEnabled: true },
+                plan: { environmentsEnabled: true },
             })
 
             const mockFile = createMockFile({
@@ -116,6 +123,7 @@ describe('Project Release API', () => {
         it('should return empty list for project with no releases', async () => {
             const ctx = await createTestContext(app!, {
                 project: { releasesEnabled: true },
+                plan: { environmentsEnabled: true },
             })
 
             const response = await ctx.get('/v1/project-releases', {
@@ -130,6 +138,7 @@ describe('Project Release API', () => {
         it('should support pagination', async () => {
             const ctx = await createTestContext(app!, {
                 project: { releasesEnabled: true },
+                plan: { environmentsEnabled: true },
             })
 
             for (let i = 0; i < 3; i++) {
@@ -163,6 +172,7 @@ describe('Project Release API', () => {
         it('should get release by id', async () => {
             const ctx = await createTestContext(app!, {
                 project: { releasesEnabled: true },
+                plan: { environmentsEnabled: true },
             })
 
             const mockFile = createMockFile({
@@ -190,6 +200,7 @@ describe('Project Release API', () => {
         it('should return 404 for non-existent release', async () => {
             const ctx = await createTestContext(app!, {
                 project: { releasesEnabled: true },
+                plan: { environmentsEnabled: true },
             })
             const nonExistentId = apId()
 
@@ -203,9 +214,11 @@ describe('Project Release API', () => {
         it('should deny cross-project access', async () => {
             const ctx1 = await createTestContext(app!, {
                 project: { releasesEnabled: true },
+                plan: { environmentsEnabled: true },
             })
             const ctx2 = await createTestContext(app!, {
                 project: { releasesEnabled: true },
+                plan: { environmentsEnabled: true },
             })
 
             const mockFile = createMockFile({
@@ -223,6 +236,81 @@ describe('Project Release API', () => {
             await db.save('project_release', mockRelease)
 
             const response = await ctx2.get(`/v1/project-releases/${mockRelease.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('should reject when environmentsEnabled is false', async () => {
+            const ctx = await createTestContext(app!, {
+                project: { releasesEnabled: true },
+                plan: { environmentsEnabled: false },
+            })
+
+            const response = await ctx.get('/v1/project-releases', {
+                projectId: ctx.project.id,
+            })
+
+            // FEATURE_DISABLED maps to PAYMENT_REQUIRED (402)
+            expect(response?.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        })
+
+        it('should reject create with targetProjectId from a different platform', async () => {
+            const ctx = await createTestContext(app!, {
+                project: { releasesEnabled: true },
+                plan: { environmentsEnabled: true },
+            })
+
+            const otherPlatformCtx = await createTestContext(app!, {
+                project: { releasesEnabled: true },
+                plan: { environmentsEnabled: true },
+            })
+
+            const response = await ctx.post('/v1/project-releases', {
+                name: 'IDOR Attempt',
+                description: 'Should fail',
+                selectedFlowsIds: null,
+                projectId: ctx.project.id,
+                type: ProjectReleaseType.PROJECT,
+                targetProjectId: otherPlatformCtx.project.id,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('should reject diff with targetProjectId from a different platform', async () => {
+            const ctx = await createTestContext(app!, {
+                project: { releasesEnabled: true },
+                plan: { environmentsEnabled: true },
+            })
+
+            const otherPlatformCtx = await createTestContext(app!, {
+                project: { releasesEnabled: true },
+                plan: { environmentsEnabled: true },
+            })
+
+            const response = await ctx.post('/v1/project-releases/diff', {
+                projectId: ctx.project.id,
+                type: ProjectReleaseType.PROJECT,
+                targetProjectId: otherPlatformCtx.project.id,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('should reject create with non-existent targetProjectId', async () => {
+            const ctx = await createTestContext(app!, {
+                project: { releasesEnabled: true },
+                plan: { environmentsEnabled: true },
+            })
+
+            const response = await ctx.post('/v1/project-releases', {
+                name: 'Non-existent target',
+                description: 'Should fail',
+                selectedFlowsIds: null,
+                projectId: ctx.project.id,
+                type: ProjectReleaseType.PROJECT,
+                targetProjectId: apId(),
+            })
 
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })

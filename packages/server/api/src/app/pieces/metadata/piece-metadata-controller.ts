@@ -116,6 +116,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
     app.get('/registry', RegistryPiecesRequest, async (req) => {
         const pieces = await pieceMetadataService(req.log).registry({
             release: req.query.release,
+            platformId: getPlatformId(req.principal),
         })
         return pieces
     })
@@ -134,7 +135,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 versionId: req.body.flowVersionId,
             })
             const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, SampleDataFileType.OUTPUT)
-            const { response } = await userInteractionWatcher(req.log).submitAndWaitForResponse<EngineResponse<unknown>>({
+            const { response } = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<unknown>>({
                 jobType: WorkerJobType.EXECUTE_PROPERTY,
                 platformId: platform.id,
                 projectId,
@@ -145,7 +146,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 sampleData,
                 searchValue: req.body.searchValue,
                 piece: await getPiecePackageWithoutArchive(req.log, platform.id, req.body),
-            })
+            }, req.log)
             return response
         },
     )

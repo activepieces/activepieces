@@ -2,19 +2,34 @@ import { promisify } from 'node:util'
 import { zstdCompress as zstdCompressCallback, zstdDecompress as zstdDecompressCallback } from 'node:zlib'
 import {
     apId,
+    ErrorCode,
     ExecutioOutputFile,
     FileCompression,
     FileLocation,
     FileType,
+    FlowRetryStrategy,
+    FlowRun,
+    FlowRunStatus,
+    FlowVersionState,
+    PrincipalType,
+    RunEnvironment,
     UploadLogsBehavior,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import * as s3HelperModule from '../../../../../src/app/file/s3-helper'
 import { flowRunLogsService } from '../../../../../src/app/flows/flow-run/logs/flow-run-logs-service'
-import { jwtUtils, JwtSignAlgorithm } from '../../../../../src/app/helper/jwt-utils'
+import { JwtAudience, jwtUtils, JwtSignAlgorithm } from '../../../../../src/app/helper/jwt-utils'
+import { databaseConnection } from '../../../../../src/app/database/database-connection'
+import { generateMockToken } from '../../../../helpers/auth'
 import { db } from '../../../../helpers/db'
-import { createMockFile, mockAndSaveBasicSetup } from '../../../../helpers/mocks'
+import {
+    createMockFile,
+    createMockFlow,
+    createMockFlowRun,
+    createMockFlowVersion,
+    mockAndSaveBasicSetup,
+} from '../../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
 const zstdCompress = promisify(zstdCompressCallback)
@@ -48,6 +63,7 @@ async function generateLogsToken(params: {
         key: await jwtUtils.getJwtSecret(),
         algorithm: JwtSignAlgorithm.HS256,
         expiresInSeconds: 3600,
+        audience: JwtAudience.FLOW_RUN_LOG,
     })
 }
 
@@ -600,6 +616,80 @@ describe('Flow Run Logs API', () => {
             })
 
             expect(response.statusCode).not.toBe(StatusCodes.OK)
+        })
+    })
+
+    describe('Retry outside retention window', () => {
+        async function setupOutdatedFlowRun() {
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+
+            const token = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: { id: mockPlatform.id },
+            })
+
+            const flow = createMockFlow({ projectId: mockProject.id })
+            await db.save('flow', flow)
+
+            const flowVersion = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.LOCKED })
+            await db.save('flow_version', flowVersion)
+
+            const oneYearAgo = new Date(Date.now() - 366 * 24 * 60 * 60 * 1000).toISOString()
+            const flowRun = createMockFlowRun({
+                projectId: mockProject.id,
+                flowId: flow.id,
+                flowVersionId: flowVersion.id,
+                status: FlowRunStatus.FAILED,
+                environment: RunEnvironment.PRODUCTION,
+                finishTime: oneYearAgo,
+            })
+            await db.save('flow_run', flowRun)
+            await databaseConnection().query(
+                'UPDATE flow_run SET created = $1 WHERE id = $2',
+                [oneYearAgo, flowRun.id],
+            )
+
+            return { token, mockProject, flowRun }
+        }
+
+        it('should return 410 GONE when retrying a single run created over a year ago', async () => {
+            const { token, mockProject, flowRun } = await setupOutdatedFlowRun()
+           // fetch the run from the database
+           const run = await db.findOneByOrFail('flow_run', { id: flowRun.id })
+           //log the run
+           console.log(run)
+
+            const response = await app!.inject({
+                method: 'POST',
+                url: `/api/v1/flow-runs/${flowRun.id}/retry`,
+                headers: { authorization: `Bearer ${token}` },
+                body: {
+                    strategy: FlowRetryStrategy.ON_LATEST_VERSION,
+                    projectId: mockProject.id,
+                },
+            })
+            expect(response.statusCode).toBe(StatusCodes.GONE)
+        })
+
+        it('should return FLOW_RUN_RETRY_OUTSIDE_RETENTION error code in bulk retry response for a run created over a year ago', async () => {
+            const { token, mockProject, flowRun } = await setupOutdatedFlowRun()
+
+            const response = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/flow-runs/retry',
+                headers: { authorization: `Bearer ${token}` },
+                body: {
+                    projectId: mockProject.id,
+                    flowRunIds: [flowRun.id],
+                    strategy: FlowRetryStrategy.ON_LATEST_VERSION,
+                },
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const body = response.json<{ error?: { errorCode: string } }[]>()
+            expect(body).toHaveLength(1)
+            expect(body[0].error?.errorCode).toBe(ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION)
         })
     })
 })

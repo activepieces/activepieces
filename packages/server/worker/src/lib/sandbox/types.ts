@@ -8,7 +8,7 @@ export type SandboxMount = {
 }
 
 export type SandboxResourceLimits = {
-    memoryBytes: number
+    memoryLimitMb: number
     cpuMsPerSec: number
     timeLimitSeconds: number
 }
@@ -23,6 +23,10 @@ export type CreateSandboxProcessParams = {
 
 export type SandboxProcessMaker = {
     create: (params: CreateSandboxProcessParams) => Promise<ChildProcess>
+}
+
+export type SandboxResult = EngineResponse<unknown> & {
+    logs: string | undefined
 }
 
 export type Sandbox = {
@@ -44,14 +48,10 @@ export type SandboxInitOptions = {
     memoryLimitMb: number
     cpuMsPerSec: number
     timeLimitSeconds: number
+    reusable: boolean
     command?: string[]
     baseMounts?: SandboxMount[]
-}
-
-export type SandboxResult = {
-    engine: EngineResponse<unknown>
-    stdOut: string
-    stdError: string
+    wsRpcPort?: number
 }
 
 export type SandboxOptions = {

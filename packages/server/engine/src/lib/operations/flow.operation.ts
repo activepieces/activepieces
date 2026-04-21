@@ -1,11 +1,13 @@
 import {
     BeginExecuteFlowOperation,
+    EngineGenericError,
     EngineResponse,
     EngineResponseStatus,
     ExecuteFlowOperation,
     ExecuteTriggerResponse,
     ExecutionType,
     FlowActionType,
+    FlowRunStatus,
     flowStructureUtil,
     GenericStepOutput,
     isNil,
@@ -19,22 +21,24 @@ import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
+import { runProgressService } from '../handler/run-progress'
 import { triggerHelper } from '../helper/trigger-helper'
-import { progressService } from '../services/progress.service'
 
 export const flowOperation = {
     execute: async (operation: ExecuteFlowOperation): Promise<EngineResponse<undefined>> => {
         const input = operation as ExecuteFlowOperation
         const constants = EngineConstants.fromExecuteFlowInput(input)
         const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input)).finishExecution()
-        await progressService.backup({
+        await runProgressService.backup({
             engineConstants: constants,
             flowExecutorContext: output,
         })
+        const status = output.verdict.status === FlowRunStatus.LOG_SIZE_EXCEEDED
+            ? EngineResponseStatus.LOG_SIZE_EXCEEDED
+            : EngineResponseStatus.OK
         return {
-            status: EngineResponseStatus.OK,
+            status,
             response: undefined,
-            delayInSeconds: output.getDelayedInSeconds(),
         }
     },
 }
@@ -69,6 +73,9 @@ const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): P
 async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
     switch (input.executionType) {
         case ExecutionType.BEGIN: {
+            if (Object.keys(input.executionState.steps).length > 0) {
+                throw new EngineGenericError('InvalidBeginStateError', 'BEGIN operation received with non-empty execution state')
+            }
             const newPayload = await runOrReturnPayload(input)
             flowContext = flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
                 type: input.flowVersion.trigger.type,

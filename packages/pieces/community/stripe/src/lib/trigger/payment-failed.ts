@@ -177,9 +177,11 @@ export const stripePaymentFailed = createTrigger({
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
       url: 'https://api.stripe.com/v1/charges/search',
+
       headers: {
         Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
+         'Stripe-Version': "2026-02-25.clover",
       },
       queryParams: {
         query: 'status:"failed"',

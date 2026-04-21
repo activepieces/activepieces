@@ -1,23 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { accountUidDropdown, planUidDropdown } from '../common/dropdowns';
 
 export const changeAccountPlanAction = createAction({
   name: 'change_account_plan',
   auth: outsetaAuth,
   displayName: 'Change Account Plan',
   description:
-    'Change an account\'s current plan to a different one (upgrade, downgrade, or switch to free)',
+    "Change an account's current subscription plan (upgrade, downgrade, or switch to free).",
   props: {
-    accountUid: Property.ShortText({
-      displayName: 'Account UID',
-      required: true,
-    }),
-    planUid: Property.ShortText({
-      displayName: 'New Plan UID',
-      required: true,
-      description: 'The UID of the plan to switch to',
-    }),
+    accountUid: accountUidDropdown(),
+    planUid: planUidDropdown({ displayName: 'New Plan' }),
     billingRenewalTerm: Property.StaticDropdown({
       displayName: 'Billing Renewal Term',
       required: true,
@@ -40,7 +34,6 @@ export const changeAccountPlanAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // First, get the account's current subscription UID
     const account = await client.get<any>(
       `/api/v1/crm/accounts/${context.propsValue.accountUid}?fields=Uid,CurrentSubscription.Uid`
     );
@@ -54,7 +47,7 @@ export const changeAccountPlanAction = createAction({
     const subscriptionUid = account.CurrentSubscription.Uid;
 
     const result = await client.put<any>(
-      `/api/v1/billing/subscriptions/${subscriptionUid}/changeSubscription`,
+      `/api/v1/billing/subscriptions/${subscriptionUid}/changesubscription`,
       {
         Account: { Uid: context.propsValue.accountUid },
         Plan: { Uid: context.propsValue.planUid },
@@ -62,6 +55,13 @@ export const changeAccountPlanAction = createAction({
       }
     );
 
-    return result;
+    return {
+      subscription_uid: result.Uid ?? null,
+      plan_uid: result.Plan?.Uid ?? null,
+      plan_name: result.Plan?.Name ?? null,
+      billing_renewal_term: result.BillingRenewalTerm ?? null,
+      renewal_date: result.RenewalDate ?? null,
+      updated: result.Updated ?? null,
+    };
   },
 });

@@ -13,6 +13,7 @@ import {
   CircleX,
   Loader2,
   Wrench,
+  BookOpen,
   MessageSquareText,
   CircleCheckBig,
   CheckCheck,
@@ -101,6 +102,8 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
 
   const renderToolIcon = () => {
     if (isLoading) return <Loader2 className="h-4 w-4 animate-spin shrink-0" />;
+    if (metadata?.iconType === 'knowledge-base')
+      return <BookOpen className="h-4 w-4 shrink-0" />;
     if (metadata?.logoUrl)
       return (
         <img

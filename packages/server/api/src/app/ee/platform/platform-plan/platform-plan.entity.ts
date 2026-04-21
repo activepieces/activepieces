@@ -67,6 +67,13 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         embeddingEnabled: {
             type: Boolean,
         },
+        agentsEnabled: {
+            type: Boolean,
+        },
+        aiProvidersEnabled: {
+            type: Boolean,
+            default: false,
+        },
         managePiecesEnabled: {
             type: Boolean,
         },
@@ -130,12 +137,22 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         eventStreamingEnabled: {
             type: Boolean,
         },
+        secretManagersEnabled: {
+            type: Boolean,
+        },
+        /** @deprecated use workerGroupId instead — will be removed in 0.83.0 */
         dedicatedWorkers: {
             type: 'jsonb',
             nullable: true,
         },
-        secretManagersEnabled: {
+        /** @deprecated use workerGroupId instead — will be removed in 0.83.0 */
+        canary: {
             type: Boolean,
+            default: false,
+        },
+        workerGroupId: {
+            type: String,
+            nullable: true,
         },
     },
     indices: [
@@ -143,6 +160,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             name: 'idx_platform_plan_platform_id',
             columns: ['platformId'],
             unique: true,
+        },
+        {
+            name: 'idx_platform_plan_worker_group_id',
+            columns: ['workerGroupId'],
         },
     ],
     relations: {

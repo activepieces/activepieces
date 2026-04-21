@@ -1,8 +1,9 @@
 import { z } from 'zod'
+import { ErrorCode } from '../../core/common/activepieces-error'
 import { BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { ExecutionState } from './execution/execution-output'
-import { FlowRunStatus, PauseMetadata } from './execution/flow-execution'
+import { FlowRunStatus } from './execution/flow-execution'
 
 export const PARENT_RUN_ID_HEADER = 'ap-parent-run-id'
 export const FAIL_PARENT_ON_FAILURE_HEADER = 'ap-fail-parent-on-failure'
@@ -41,7 +42,6 @@ export const FlowRun = z.object({
     startTime: z.string().optional(),
     finishTime: z.string().optional(),
     environment: z.nativeEnum(RunEnvironment),
-    pauseMetadata: PauseMetadata.optional(),
     // The steps data may be missing if the flow has not started yet,
     // or if the run is older than AP_EXECUTION_DATA_RETENTION_DAYS and its execution data has been purged.
     steps: Nullable(z.record(z.string(), z.unknown())),
@@ -62,3 +62,7 @@ export const FailedStep = z.object({
 export type FailedStep = z.infer<typeof FailedStep>
 
 export type FlowRun = z.infer<typeof FlowRun> & ExecutionState
+
+export type FlowRunWithRetryError = FlowRun & {
+    error?: { errorCode: ErrorCode, errorMessage: string }
+}

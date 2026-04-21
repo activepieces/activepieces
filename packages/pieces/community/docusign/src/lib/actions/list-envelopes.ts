@@ -1,14 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { docusignAuth } from '../auth';
-import { DocusignAuthType } from '../..';
 import { createApiClient } from '../common';
 import { Envelope, EnvelopesApi, EnvelopesInformation } from 'docusign-esign';
 
 export const listEnvelopes = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'listEnvelopes',
-  displayName: 'List envelopes',
-  description: 'List / search envelopes',
+  displayName: 'Search Signing Requests',
+  description:
+    'Find and list signing requests with optional filters like status, date range, or keyword.',
   auth: docusignAuth,
   props: {
     accountId: Property.ShortText({

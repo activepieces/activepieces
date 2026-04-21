@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Prevent committing .env files
+ENV_FILES=$(git diff --cached --name-only | grep '\.env' || true)
+if [ -n "$ENV_FILES" ]; then
+  echo "Error: Attempting to commit .env files:"
+  echo "$ENV_FILES"
+  echo "Please unstage them with: git reset HEAD <file>"
+  exit 1
+fi

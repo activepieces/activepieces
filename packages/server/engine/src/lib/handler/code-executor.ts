@@ -1,13 +1,11 @@
 import path from 'path'
-import importFresh from '@activepieces/import-fresh-webpack'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { CodeAction, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
-import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
-import { progressService } from '../services/progress.service'
 import { utils } from '../utils'
 import { ActionHandler, BaseExecutor } from './base-executor'
+import { runProgressService } from './run-progress'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
     async handle({
@@ -24,7 +22,7 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
 }
 
 const executeAction: ActionHandler<CodeAction> = async ({ action, executionState, constants }) => {
-    const stepStartTime = performance.now() 
+    const stepStartTime = performance.now()
     const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<Record<string, unknown>>({
         unresolvedInput: action.settings.input,
         executionState,
@@ -35,27 +33,26 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
         type: FlowActionType.CODE,
         status: StepOutputStatus.RUNNING,
     })
-    
+
     const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-        await progressService.sendUpdate({
+        await runProgressService.sendUpdate({
             engineConstants: constants,
             flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
             stepNameToUpdate: action.name,
         })
-    
+
         if (isNil(constants.runEnvironment)) {
             throw new EngineGenericError('RunEnvironmentNotSetError', 'Run environment is not set')
         }
 
         const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`)
-        const codeModule: CodeModule = await importFresh(artifactPath)
         const codeSandbox = await initCodeSandbox()
-    
+
         const output = await codeSandbox.runCodeModule({
-            codeModule,
+            codeFilePath: artifactPath,
             inputs: resolvedInput,
         })
-    
+
         return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime)).incrementStepsExecuted()
     }))
 

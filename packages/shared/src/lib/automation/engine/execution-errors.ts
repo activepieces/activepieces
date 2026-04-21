@@ -29,12 +29,6 @@ export class ConnectionNotFoundError extends ExecutionError {
     }
 }
 
-export class LogSizeExceededError extends ExecutionError {
-    constructor(cause?: unknown) {
-        super('LogSizeExceededError', formatMessage('Flow run data size exceeded the maximum allowed size'), ExecutionErrorType.ENGINE, cause)
-    }
-}
-
 export class ConnectionLoadingError extends ExecutionError {
     constructor(connectionName: string, cause?: unknown) {
         super('ConnectionLoadingFailure', formatMessage(`Failed to load connection (${connectionName})`), ExecutionErrorType.USER, cause)
@@ -106,5 +100,16 @@ export class InvalidCronExpressionError extends ExecutionError {
 export class EngineGenericError extends ExecutionError {
     constructor(name: string, message: string, cause?: unknown) {
         super(name, formatMessage(message), ExecutionErrorType.ENGINE, cause)
+    }
+}
+
+export class SSRFBlockedError extends ExecutionError {
+    constructor({ host, ip, cause }: { host: string, ip: string, cause?: unknown }) {
+        super(
+            'SSRFBlockedError',
+            formatMessage(`SSRF protection: refusing to connect to ${host} (resolved ${ip}) — private, loopback, link-local, or multicast address`),
+            ExecutionErrorType.USER,
+            cause,
+        )
     }
 }

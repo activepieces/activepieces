@@ -107,5 +107,10 @@
   "None": "geen",
   "JSON": "JSON",
   "Form Data": "Formulieren gegevens",
-  "Raw": "Onbewerkte"
+  "Raw": "Onbewerkte",
+  "New Folder": "Nieuwe map",
+  "Triggers when a new folder is created inside a watched Dropbox folder.": "Triggers wanneer een nieuwe map wordt aangemaakt in een gecontroleerde Dropbox-map.",
+  "Watched Folder Path": "Bekeken mappad",
+  "Folder path to watch. Use empty string \"\" for root.": "Mappad om te bekijken. Lege tekenreeks gebruiken \"\" voor root.",
+  "Watch subfolders recursively. May return many results.": "Bekijk submappen recursief. Kan veel resultaten opleveren."
 }

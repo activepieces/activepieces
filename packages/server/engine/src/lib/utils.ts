@@ -1,9 +1,9 @@
 import fs from 'fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
-import { ConnectionsManager, ContextVersion, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
-import { ExecutionError, ExecutionErrorType, Result, tryCatch } from '@activepieces/shared'
-import { createConnectionService } from './services/connections.service'
+import { ConnectionsManager, ContextVersion, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
+import { ExecutionError, ExecutionErrorType, RespondResponse, Result, tryCatch } from '@activepieces/shared'
+import { createConnectionResolver } from './piece-context/connection-resolver'
 
 export type FileEntry = {
     name: string
@@ -73,7 +73,7 @@ export const utils = {
     createConnectionManager(params: CreateConnectionManagerParams): ConnectionsManager {
         return {
             get: async (key: string) => {
-                const connection = await createConnectionService({ projectId: params.projectId, engineToken: params.engineToken, apiUrl: params.apiUrl, contextVersion: params.contextVersion }).obtain(key)
+                const connection = await createConnectionResolver({ projectId: params.projectId, engineToken: params.engineToken, apiUrl: params.apiUrl, contextVersion: params.contextVersion }).obtain(key)
                 if (params.target === 'actions') {
                     params.hookResponse.tags.push(`connection:${key}`)
                 }
@@ -82,33 +82,7 @@ export const utils = {
         }
     },
     sizeof(object: unknown): number {
-        const objectList = []
-        const stack = [object]
-        let bytes = 0
-
-        while (stack.length) {
-
-            const value = stack.pop()
-            if (typeof value === 'boolean') {
-                bytes += 4
-            }
-            else if (typeof value === 'string') {
-                bytes += value.length * 2
-            }
-            else if (typeof value === 'number') {
-                bytes += 8
-            }
-            else if (typeof value === 'object' && objectList.indexOf( value ) === -1) {
-                objectList.push(value)
-                // if the object is not an array, add the sizes of the keys
-                if (Object.prototype.toString.call(value) != '[object Array]') {
-                    for (const key in value) bytes += 2 * key.length
-                }
-                for (const key in value) stack.push(value[key as keyof typeof value])
-            }
-        }
-
-        return bytes
+        return Buffer.byteLength(JSON.stringify(object) ?? '', 'utf8')
     },
 }
 
@@ -117,19 +91,17 @@ function isEngineError(error: unknown): error is ExecutionError {
 }
 
 export type HookResponse = {
-    type: 'paused'
     tags: string[]
-    response: PauseHookParams
+    responseToSend?: RespondResponse
+} & ({
+    type: 'paused'
 } | {
     type: 'stopped'
-    tags: string[]
     response: StopHookParams
 } | {
     type: 'respond'
-    tags: string[]
     response: RespondHookParams
 } | {
     type: 'none'
-    tags: string[]
-}
+})
 type CreateConnectionManagerParams = { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' | 'properties', contextVersion: ContextVersion | undefined } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse, contextVersion: ContextVersion | undefined }

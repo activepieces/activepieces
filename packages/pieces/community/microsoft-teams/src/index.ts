@@ -1,4 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { getGraphBaseUrl } from './lib/common/microsoft-cloud';
 import {
   createPiece,
   OAuth2PropertyValue,
@@ -26,7 +27,7 @@ import { newChatMessageTrigger } from './lib/triggers/new-chat-message';
 export const microsoftTeams = createPiece({
   displayName: 'Microsoft Teams',
   auth: microsoftTeamsAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.82.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-teams.png',
   categories: [
     PieceCategory.BUSINESS_INTELLIGENCE,
@@ -49,7 +50,10 @@ export const microsoftTeams = createPiece({
     requestApprovalDirectMessage,
     createCustomApiCallAction({
       auth: microsoftTeamsAuth,
-      baseUrl: () => 'https://graph.microsoft.com/v1.0/teams',
+      baseUrl: (auth) => {
+        const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+        return getGraphBaseUrl(cloud) + '/v1.0/teams';
+      },
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),

@@ -6,6 +6,7 @@ import {
   destroy,
   execute,
   snowflakeCommonProps,
+  SnowflakeAuthValue,
 } from '../common';
 
 export const insertRowAction = createAction({
@@ -29,7 +30,7 @@ export const insertRowAction = createAction({
       .join(', ');
     const statement = `INSERT INTO ${tableName}(${columns}) VALUES(${valuePlaceholders})`;
 
-    const connection = configureConnection(context.auth.props);
+    const connection = configureConnection(context.auth as SnowflakeAuthValue);
     await connect(connection);
 
     const response = await execute(

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-tables",
-  "version": "0.2.17",
+  "version": "0.3.0",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {

@@ -1,10 +1,12 @@
 import {
     ExecutionType,
     FileType,
-    FlowRunStatus,
+    FlowOperationType,
+    FlowStatus,
+    isFlowRunStateTerminal,
     isNil,
     PiecePackage,
-    ProgressUpdateType,
+    StreamStepProgress,
     WebsocketClientEvent,
     WorkerToApiContract,
 } from '@activepieces/shared'
@@ -23,16 +25,21 @@ import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { RunsMetadataUpsertData } from '../job'
+import { getWorkerGroupQueueName, QueueName, RunsMetadataUpsertData } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
-export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWorker?: string): WorkerToApiContract {
+const getPollQueueName = (workerGroupId?: string): string => {
+    return workerGroupId ? getWorkerGroupQueueName(workerGroupId) : QueueName.WORKER_JOBS
+}
+
+export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): WorkerToApiContract {
     return {
         async poll(input) {
-            log.info({ workerId: input.workerId, platformIdForDedicatedWorker }, '[workerRpc#poll] Poll request received')
-            await machineService(log).onConnection(input, platformIdForDedicatedWorker)
-            const job = await jobBroker(log).poll(platformIdForDedicatedWorker)
+            log.info({ workerId: input.workerId, workerGroupId }, '[workerRpc#poll] Poll request received')
+            await machineService(log).onConnection(input, workerGroupId)
+            const pollQueueName = getPollQueueName(workerGroupId)
+            const job = await jobBroker(log).poll(pollQueueName)
             if (job) {
                 log.info({ workerId: input.workerId, jobId: job.jobId, jobType: job.jobData.jobType }, '[workerRpc#poll] Returning job to worker')
             }
@@ -61,15 +68,18 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
                 failedStep: input.failedStep,
                 startTime: input.startTime,
                 finishTime: input.finishTime,
-                pauseMetadata: input.pauseMetadata,
                 stepsCount: input.stepsCount,
                 stepNameToTest: input.stepNameToTest,
             }
             await runsMetadataQueue(log).add(logData)
 
-            if (input.stepResponse && input.progressUpdateType === ProgressUpdateType.TEST_FLOW) {
+            if (input.stepResponse && input.streamStepProgress === StreamStepProgress.WEBSOCKET) {
                 const stepData = { ...input.stepResponse, projectId: input.projectId }
-                if (input.status === FlowRunStatus.RUNNING) {
+                const isTerminalStatus = isFlowRunStateTerminal({
+                    status: input.status,
+                    ignoreInternalError: false,
+                })   
+                if (!isTerminalStatus) {
                     websocketService.to(input.projectId).emit(WebsocketClientEvent.TEST_STEP_PROGRESS, stepData)
                 }
                 else {
@@ -90,7 +100,7 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
         },
 
         async submitPayloads(input) {
-            const { flowVersionId, projectId, payloads, httpRequestId, progressUpdateType, environment, parentRunId, failParentOnFailure } = input
+            const { flowVersionId, projectId, payloads, httpRequestId, streamStepProgress, environment, parentRunId, failParentOnFailure } = input
 
             const flowVersion = await flowVersionService(log).getOne(flowVersionId)
             if (!flowVersion) {
@@ -110,9 +120,9 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
                         projectId,
                         platformId,
                         httpRequestId,
-                        synchronousHandlerId: undefined,
+                        workerHandlerId: undefined,
                         executionType: ExecutionType.BEGIN,
-                        progressUpdateType,
+                        streamStepProgress,
                         executeTrigger: false,
                         parentRunId,
                         failParentOnFailure,
@@ -151,10 +161,7 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
             if (isNil(flow)) {
                 return null
             }
-            return flowVersionService(log).lockPieceVersions({
-                flowVersion,
-                projectId: flow.projectId,
-            })
+            return flowVersion
         },
 
         async getPiece(input) {
@@ -187,13 +194,13 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
         },
 
         async getUsedPieces() {
-            const redisKey = `usedPieces:${platformIdForDedicatedWorker ?? 'shared'}`
+            const redisKey = `usedPieces:${workerGroupId ?? 'shared'}`
             const pieces = await distributedStore.get<PiecePackage[]>(redisKey)
             return pieces ?? []
         },
 
         async markPieceAsUsed(input) {
-            const redisKey = `usedPieces:${platformIdForDedicatedWorker ?? 'shared'}`
+            const redisKey = `usedPieces:${workerGroupId ?? 'shared'}`
             const existing = await distributedStore.get<PiecePackage[]>(redisKey) ?? []
             const existingKeys = new Set(existing.map((p) => `${p.pieceName}@${p.pieceVersion}`))
             const newPieces = input.pieces.filter((p) => !existingKeys.has(`${p.pieceName}@${p.pieceVersion}`))
@@ -201,5 +208,26 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
                 await distributedStore.put(redisKey, [...existing, ...newPieces])
             }
         },
+
+        async disableFlow(input) {
+            const { flowId, projectId } = input
+            const flow = await flowService(log).getOneOrThrow({ id: flowId, projectId })
+            if (flow.status === FlowStatus.DISABLED) {
+                return
+            }
+            const platformId = await projectService(log).getPlatformId(projectId)
+            await flowService(log).update({
+                id: flowId,
+                userId: null,
+                projectId,
+                platformId,
+                operation: {
+                    type: FlowOperationType.CHANGE_STATUS,
+                    request: { status: FlowStatus.DISABLED },
+                },
+            })
+            log.info({ flowId, projectId }, '[workerRpc#disableFlow] Flow disabled by worker request')
+        },
     }
 }
+

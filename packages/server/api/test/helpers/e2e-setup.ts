@@ -10,18 +10,17 @@ export type E2eContext = {
 }
 
 export async function setupE2eEnvironment(): Promise<E2eContext> {
-    const apiUrl = 'http://127.0.0.1:3000'
+    // Use port 0 so the OS assigns a free port, avoiding EADDRINUSE in parallel test runs.
+    const app = await setupTestEnvironment({ fresh: true })
+    await app.listen({ port: 0, host: '127.0.0.1' })
 
-    // Override before server setup so publicApiUrl / generateResumeUrl resolve to the
-    // test server, not the default AP_FRONTEND_URL (localhost:4200).
+    const address = app.server.address()
+    const port = typeof address === 'object' && address !== null ? address.port : 3000
+    const apiUrl = `http://127.0.0.1:${port}`
+
     process.env.AP_FRONTEND_URL = apiUrl
     process.env.AP_API_URL = apiUrl
-
-    const app = await setupTestEnvironment({ fresh: true })
-
-    // Listen on port 3000 — the worker's getApiUrl() returns http://127.0.0.1:3000/
-    // for WORKER_AND_APP container type, which is used as internalApiUrl for engine RPC.
-    await app.listen({ port: 3000, host: '127.0.0.1' })
+    process.env.AP_PORT = String(port)
 
     await migrateQueuesAndRunConsumers(app)
 

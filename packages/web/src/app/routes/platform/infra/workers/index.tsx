@@ -7,6 +7,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Server, Clock, Cpu, MemoryStick, HardDrive, Zap } from 'lucide-react';
+import prettyBytes from 'pretty-bytes';
 import React from 'react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
@@ -34,17 +35,17 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';
 import { cn } from '@/lib/utils';
 
-import { WorkerConfigsModal } from './worker-configs-dialog';
+import { WorkerConfigsPopover } from './worker-configs-popover';
 
 export default function WorkersPage() {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const isCloud = true;
+  const isCloud = edition === ApEdition.CLOUD;
   const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
 
   const fleetType = workersData?.[0]?.type;
 
   return (
-    <div className="flex flex-col w-full gap-4">
+    <div className="flex flex-col w-full gap-4 px-4">
       <DashboardPageHeader
         description={t('Check the health of your workers')}
         title={t('Workers')}
@@ -175,11 +176,8 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
     totalCpuCores,
   } = worker.information;
 
-  const usedRamGb =
-    (totalAvailableRamInBytes * (ramUsagePercentage / 100)) / 1024 ** 3;
-  const totalRamGb = totalAvailableRamInBytes / 1024 ** 3;
-  const usedDiskGb = diskInfo.used / 1024 ** 3;
-  const totalDiskGb = diskInfo.total / 1024 ** 3;
+  const usedRamBytes = totalAvailableRamInBytes * (ramUsagePercentage / 100);
+  const usedDiskBytes = diskInfo.used;
 
   const version = workerProps.version ?? 'v0.39.4';
 
@@ -233,7 +231,7 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
             <Badge variant={isOnline ? 'success' : 'destructive'}>
               {t(worker.status.toLowerCase())}
             </Badge>
-            <WorkerConfigsModal workerProps={workerProps} />
+            <WorkerConfigsPopover workerProps={workerProps} />
           </div>
         </div>
       </CardHeader>
@@ -257,7 +255,9 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
             </>
           }
           value={ramUsagePercentage}
-          detail={`${usedRamGb.toFixed(1)} / ${totalRamGb.toFixed(1)} GB`}
+          detail={`${prettyBytes(usedRamBytes, {
+            binary: true,
+          })} / ${prettyBytes(totalAvailableRamInBytes, { binary: true })}`}
         />
         <StatBar
           label={
@@ -267,7 +267,9 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
             </>
           }
           value={diskInfo.percentage}
-          detail={`${usedDiskGb.toFixed(1)} / ${totalDiskGb.toFixed(1)} GB`}
+          detail={`${prettyBytes(usedDiskBytes, {
+            binary: true,
+          })} / ${prettyBytes(diskInfo.total, { binary: true })}`}
         />
       </CardContent>
 

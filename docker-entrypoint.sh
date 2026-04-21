@@ -1,14 +1,12 @@
 #!/bin/sh
 
 export AP_CONTAINER_TYPE="${AP_CONTAINER_TYPE:-WORKER_AND_APP}"
-export AP_WORKERS="${AP_WORKERS:-1}"
 export AP_PORT="${AP_PORT:-80}"
-export AP_PM2_CLUSTER_MODE="${AP_PM2_CLUSTER_MODE:-false}"
+export AP_PM2_INSTANCES="${AP_PM2_INSTANCES:-1}"
 
 echo "AP_CONTAINER_TYPE: $AP_CONTAINER_TYPE"
-echo "AP_WORKERS: $AP_WORKERS"
 echo "AP_PORT: $AP_PORT"
-echo "AP_PM2_CLUSTER_MODE: $AP_PM2_CLUSTER_MODE"
+echo "AP_PM2_INSTANCES: $AP_PM2_INSTANCES"
 
 # Auto-generate worker token if not set and JWT secret is available
 if [ -z "$AP_WORKER_TOKEN" ] && [ -n "$AP_JWT_SECRET" ]; then
@@ -29,8 +27,8 @@ fi
 APPS=""
 
 if [ "$AP_CONTAINER_TYPE" = "APP" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_APP" ]; then
-    if [ "$AP_PM2_CLUSTER_MODE" = "true" ]; then
-        APP_INSTANCES=0
+    if [ "$AP_PM2_INSTANCES" -gt 1 ] 2>/dev/null; then
+        APP_INSTANCES=$AP_PM2_INSTANCES
         APP_EXEC_MODE="cluster"
     else
         APP_INSTANCES=1
@@ -53,7 +51,7 @@ if [ "$AP_CONTAINER_TYPE" = "WORKER" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_A
         name: 'activepieces-worker',
         script: 'packages/server/worker/dist/src/bootstrap.js',
         node_args: '--enable-source-maps',
-        instances: ${AP_WORKERS},
+        instances: 1,
         exec_mode: 'fork'
     },"
 fi
