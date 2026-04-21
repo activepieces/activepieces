@@ -1,4 +1,4 @@
-import { ActionErrorHandlingOptions, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
+import { ActionErrorHandlingOptions, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, StreamStepProgress, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
@@ -20,8 +20,8 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
             engineToken: params?.engineToken ?? 'engineToken',
             projectId: params?.projectId ?? 'projectId',
             triggerPieceName: params?.triggerPieceName ?? 'mcp-trigger-piece-name',
-            progressUpdateType: params?.progressUpdateType ?? ProgressUpdateType.NONE,
-            serverHandlerId: params?.serverHandlerId ?? null,
+            streamStepProgress: params?.streamStepProgress ?? StreamStepProgress.NONE,
+            workerHandlerId: params?.workerHandlerId ?? null,
             httpRequestId: params?.httpRequestId ?? null,
             resumePayload: params?.resumePayload,
             runEnvironment: params?.runEnvironment ?? RunEnvironment.TESTING,
@@ -136,9 +136,9 @@ export function buildMockBeginExecuteFlowOperation(
         executionType: ExecutionType.BEGIN,
         runEnvironment: RunEnvironment.TESTING,
         executionState: { steps: {}, tags: [] },
-        serverHandlerId: null,
+        workerHandlerId: null,
         httpRequestId: null,
-        progressUpdateType: ProgressUpdateType.NONE,
+        streamStepProgress: StreamStepProgress.NONE,
         stepNameToTest: null,
         triggerPayload: {},
         executeTrigger: false,

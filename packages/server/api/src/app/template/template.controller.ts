@@ -103,6 +103,25 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
             request.body.flows = migratedFlows
         },
     }, async (request, reply) => {
+        const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
+
+        switch (template.type) {
+            case TemplateType.OFFICIAL:
+            case TemplateType.SHARED:
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: { message: 'Cannot update official or shared templates' },
+                })
+            case TemplateType.CUSTOM: {
+                await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                assertTemplateBelongsToPlatform({
+                    templatePlatformId: template.platformId,
+                    principalPlatformId: request.principal.platform.id,
+                })
+                break
+            }
+        }
+
         const result = await templateService(app.log).update({ id: request.params.id, params: request.body })
         return reply.status(StatusCodes.OK).send(result)
     })
@@ -110,8 +129,21 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
     app.delete('/:id', DeleteParams, async (request, reply) => {
         const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
 
-        if (template.type === TemplateType.CUSTOM) {
-            await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+        switch (template.type) {
+            case TemplateType.OFFICIAL:
+            case TemplateType.SHARED:
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: { message: 'Cannot delete official or shared templates' },
+                })
+            case TemplateType.CUSTOM: {
+                await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                assertTemplateBelongsToPlatform({
+                    templatePlatformId: template.platformId,
+                    principalPlatformId: request.principal.platform.id,
+                })
+                break
+            }
         }
 
         await templateService(app.log).delete({
@@ -197,6 +229,18 @@ const UpdateParams = {
         params: GetIdParams,
         body: UpdateTemplateRequestBody,
     },
+}
+
+function assertTemplateBelongsToPlatform({ templatePlatformId, principalPlatformId }: {
+    templatePlatformId: string | null | undefined
+    principalPlatformId: string
+}): void {
+    if (templatePlatformId !== principalPlatformId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: { message: 'Template does not belong to your platform' },
+        })
+    }
 }
 
 async function loadOfficialTemplatesOrReturnEmpty(

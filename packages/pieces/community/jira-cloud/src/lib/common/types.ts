@@ -17,6 +17,12 @@ export type IssueFieldMetaData ={
     allowedValues?:Array<{value:string,id:string,name:string}>
 }
 
+export type JiraSearchResponse = {
+	issues: any[];
+    nextPageToken?: string;
+	names?: Record<string, string>;
+};
+
 export const VALID_CUSTOM_FIELD_TYPES = [
 	'userpicker',
 	'participants',

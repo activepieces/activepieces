@@ -22,6 +22,7 @@ import { pieceInstaller } from './cache/pieces/piece-installer'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
+import { EgressStack, startEgressStack } from './egress/lifecycle'
 import { getHandler } from './execute/job-registry'
 import { createSandboxManager, SandboxManager } from './execute/sandbox-manager'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
@@ -38,6 +39,8 @@ const workerId = `worker-${nanoid()}`
 const workerHostname = os.hostname()
 
 let healthServerInstance: ReturnType<typeof createServer> | null = null
+
+let egressStack: EgressStack | null = null
 
 let sandboxManagers: SandboxManager[] = []
 
@@ -56,6 +59,17 @@ export const worker = {
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
             await fetchAndStoreSettings(socket!)
+            if (!egressStack) {
+                const { data, error } = await tryCatch(() => startEgressStack({ log: logger, apiUrl }))
+                if (error) {
+                    // Kill switch: if SSRF hardening can't be applied, refuse to accept any job.
+                    // Running without egress protection in a configured-hardened worker is
+                    // more dangerous than crash-looping — the orchestrator will restart us.
+                    logger.fatal({ err: error }, 'Egress stack failed to start; aborting worker to avoid running unprotected')
+                    process.exit(1)
+                }
+                egressStack = data
+            }
             void warmupPiecesOnStartup(apiClient)
             void startPollingWorkers(apiClient).catch((err) => {
                 logger.error({ error: err }, 'Polling workers crashed unexpectedly')
@@ -86,6 +100,10 @@ export const worker = {
         socket = null
         healthServerInstance?.close()
         healthServerInstance = null
+        if (egressStack) {
+            await egressStack.shutdown()
+            egressStack = null
+        }
         logger.info('Worker stopped')
     },
 }
@@ -95,12 +113,20 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     polling = true
 
     const generation = connectionGeneration
+
+    if (sandboxManagers.length > 0) {
+        logger.info({ count: sandboxManagers.length }, 'Shutting down old sandbox managers before creating new ones')
+        await Promise.all(sandboxManagers.map((sm) => sm.shutdown(logger)))
+        sandboxManagers = []
+    }
+
     const rawConcurrency = Number(system.get(WorkerSystemProp.WORKER_CONCURRENCY) ?? '1')
     const concurrency = Number.isInteger(rawConcurrency) && rawConcurrency > 0 ? rawConcurrency : 1
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
-    sandboxManagers = Array.from({ length: concurrency }, (_, i) => createSandboxManager(i + 1))
+    const proxyPort = egressStack?.proxyPort ?? null
+    sandboxManagers = Array.from({ length: concurrency }, (_, i) => createSandboxManager({ boxId: i + 1, proxyPort }))
 
     logger.info({ concurrency }, 'Starting polling workers')
 
@@ -159,7 +185,6 @@ async function pollAndExecute(apiClient: WorkerToApiContract, sbManager: Sandbox
                     : result.status,
                 errorMessage: buildErrorMessage(execError ?? undefined, result ?? undefined),
                 logs: extractLogs(execError ?? undefined, result ?? undefined),
-                delayInSeconds: result?.kind === JobResultKind.FIRE_AND_FORGET ? result.delayInSeconds : undefined,
                 response: result?.kind === JobResultKind.SYNCHRONOUS ? result.response : undefined,
             }),
         )
@@ -334,7 +359,7 @@ function sleep(ms: number): Promise<void> {
 
 
 function startHealthServer(): ReturnType<typeof createServer> {
-    const port = Number(system.get(WorkerSystemProp.PORT))
+    const port = Number(process.env[WorkerSystemProp.PORT] ?? system.get(WorkerSystemProp.PORT))
     const healthPaths = new Set(['/worker/health', '/v1/health'])
     const server = createServer((req, res) => {
         if (req.method === 'GET' && req.url && healthPaths.has(req.url)) {

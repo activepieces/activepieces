@@ -2,7 +2,7 @@ name: Continuous Delivery — Cloud
 
 on:
   schedule:
-    - cron: '0 9 * * 0'  # Sunday 9 AM UTC — promote release candidate to prod
+    - cron: '0 9 * * 0' # Sunday 9 AM UTC — promote release candidate to prod
   workflow_call:
   workflow_dispatch:
     inputs:
@@ -11,7 +11,7 @@ on:
         required: true
         type: choice
         options:
-          - cloud-hotfix  # Build from current branch and deploy directly to production, bypassing staging
+          - cloud-hotfix # Build from current branch and deploy directly to production, bypassing staging
 
 jobs:
   guard:
@@ -42,7 +42,7 @@ jobs:
 
   build-image:
     needs: [guard]
-    if: needs.guard.result == 'success'
+    if: github.event_name != 'schedule' && needs.guard.result == 'success'
     runs-on: ubuntu-24.04
     outputs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}

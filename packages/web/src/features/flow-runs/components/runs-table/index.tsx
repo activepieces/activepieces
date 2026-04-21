@@ -74,6 +74,7 @@ export const RunsTable = () => {
     queryKey: ['flow-run-table', searchParams.toString(), projectId],
     staleTime: 0,
     gcTime: 0,
+    meta: { showErrorDialog: true, loadSubsetOptions: {} },
     queryFn: () => {
       const status = searchParams.getAll('status') as FlowRunStatus[];
       const flowId = searchParams.getAll('flowId');
@@ -113,7 +114,6 @@ export const RunsTable = () => {
       return runningRuns?.length ? 15 * 1000 : false;
     },
   });
-
   const columns = runsTableColumns({
     data,
     selectedRows,

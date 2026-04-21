@@ -8,7 +8,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@activepieces/import-fresh-webpack": "3.3.0",
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
@@ -17,11 +16,14 @@
     "cron-validator": "1.3.1",
     "dayjs": "1.11.9",
     "fetch-retry": "6.0.0",
+    "http-proxy-agent": "7.0.2",
+    "https-proxy-agent": "7.0.6",
     "isolated-vm": "6.0.2",
     "mime-types": "2.1.35",
     "nanoid": "3.3.8",
     "socket.io-client": "4.8.1",
     "tslib": "2.6.2",
+    "undici": "7.24.6",
     "zod": "4.3.6"
   },
   "devDependencies": {

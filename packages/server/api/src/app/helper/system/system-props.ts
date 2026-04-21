@@ -1,6 +1,6 @@
 import path from 'path'
+import { environmentMigrations } from '@activepieces/server-utils'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
-import { environmentMigrations } from './env-migrations'
 
 export type SystemProp = AppSystemProp
 
@@ -24,6 +24,7 @@ export enum AppSystemProp {
     CLOUDFLARE_ZONE_ID = 'CLOUDFLARE_ZONE_ID',
     CONFIG_PATH = 'CONFIG_PATH',
     DB_TYPE = 'DB_TYPE',
+    DEFAULT_CONCURRENT_JOBS_LIMIT = 'DEFAULT_CONCURRENT_JOBS_LIMIT',
     DEV_PIECES = 'DEV_PIECES',
     EDITION = 'EDITION',
     ENABLE_FLOW_ON_PUBLISH = 'ENABLE_FLOW_ON_PUBLISH',
@@ -48,7 +49,6 @@ export enum AppSystemProp {
     LOKI_PASSWORD = 'LOKI_PASSWORD',
     LOKI_URL = 'LOKI_URL',
     LOKI_USERNAME = 'LOKI_USERNAME',
-    MAX_CONCURRENT_JOBS_PER_PROJECT = 'MAX_CONCURRENT_JOBS_PER_PROJECT',
     MAX_FIELDS_PER_TABLE = 'MAX_FIELDS_PER_TABLE',
     MAX_FILE_SIZE_MB = 'MAX_FILE_SIZE_MB',
     MAX_FLOW_RUN_LOG_SIZE_MB = 'MAX_FLOW_RUN_LOG_SIZE_MB',
@@ -120,7 +120,7 @@ export enum AppSystemProp {
     EVENT_DESTINATION_TIMEOUT_SECONDS = 'EVENT_DESTINATION_TIMEOUT_SECONDS',
     CANARY_APP_URL = 'CANARY_APP_URL',
     SSRF_ALLOW_LIST = 'SSRF_ALLOW_LIST',
-    SSRF_PROTECTION_ENABLED = 'SSRF_PROTECTION_ENABLED',
+    NETWORK_MODE = 'NETWORK_MODE',
     MCP_OAUTH_ISSUER_URL = 'MCP_OAUTH_ISSUER_URL',
     CONTAINER_TYPE = 'CONTAINER_TYPE',
     FRONTEND_URL = 'FRONTEND_URL',

@@ -13,7 +13,7 @@ import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
-import { diagnosePieceProps, mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const updateTriggerInput = z.object({
     flowId: z.string(),
@@ -29,13 +29,13 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
     return {
         title: 'ap_update_trigger',
         permission: Permission.WRITE_FLOW,
-        description: 'Set or update the trigger for a flow. Use ap_list_pieces to get valid pieceName, pieceVersion, and triggerName. Use ap_list_connections to get the connection externalId for auth.',
+        description: 'Set or update the trigger for a flow.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             pieceName: z.string().describe('The piece name for the trigger (e.g. "@activepieces/piece-gmail"). Use ap_list_pieces to get valid values.'),
             pieceVersion: z.string().describe('The piece version (e.g. "~0.1.0"). Use ap_list_pieces to get valid values.'),
             triggerName: z.string().describe('The trigger name within the piece (e.g. "new_email"). Use ap_list_pieces with includeTriggers=true to get valid values.'),
-            input: z.record(z.string(), z.unknown()).optional().describe('Input settings for the trigger (key-value pairs). Use `{{stepName.output.field}}` to reference data from previous steps (e.g. `{{trigger.output.body.email}}`, `{{step_1.output.id}}`).'),
+            input: z.record(z.string(), z.unknown()).optional().describe(`Input settings for the trigger (key-value pairs). ${mcpUtils.STEP_REFERENCE_HINT}`),
             auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. The tool wraps it automatically as `{{connections[\'externalId\']}}`.'),
             displayName: z.string().optional().describe('Display name for the trigger step'),
         },
@@ -43,16 +43,11 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
         execute: async (args) => {
             const { flowId, pieceName, pieceVersion, triggerName, input: rawInput, auth, displayName: rawDisplayName } = updateTriggerInput.parse(args)
 
-            if (auth !== undefined && auth.includes('\'')) {
-                return {
-                    content: [{ type: 'text', text: '❌ auth value must not contain single quotes. Use the exact externalId from ap_list_connections.' }],
-                }
+            const authError = mcpUtils.validateAuth(auth)
+            if (authError) {
+                return authError
             }
 
-            const input = {
-                ...(rawInput ?? {}),
-                ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
-            }
             const displayName = rawDisplayName ?? triggerName
 
             const [flow, project] = await Promise.all([
@@ -61,6 +56,20 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
             ])
             if (isNil(flow)) {
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
+            }
+
+            const existingTrigger = flow.version.trigger
+            const existingPieceSettings = existingTrigger.type === FlowTriggerType.PIECE
+                && existingTrigger.settings.pieceName === pieceName
+                && existingTrigger.settings.triggerName === triggerName
+                ? existingTrigger.settings
+                : null
+
+            const { auth: _rawAuth, ...rawInputWithoutAuth } = rawInput ?? {}
+            const input = {
+                ...(existingPieceSettings?.input ?? {}),
+                ...rawInputWithoutAuth,
+                ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
             }
 
             const triggerPayload = {
@@ -74,7 +83,7 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                     pieceVersion,
                     triggerName,
                     input,
-                    propertySettings: {},
+                    propertySettings: existingPieceSettings?.propertySettings ?? {},
                 },
             }
 
@@ -100,22 +109,23 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                     operation,
                 })
                 const trigger = updatedFlow.version.trigger
+                const draftWarning = mcpUtils.publishedFlowWarning(flow.publishedVersionId)
                 if (!trigger.valid) {
                     const diagnosis = await diagnoseMissingTriggerInputs({ pieceName, pieceVersion, triggerName, input, platformId: project.platformId, log })
                     const hint = diagnosis ?? 'Check that triggerName is correct and all required inputs are provided. Use ap_list_connections to get a valid connection externalId for auth.'
                     return {
                         content: [{
                             type: 'text',
-                            text: `⚠️ Trigger updated but still invalid. ${hint}`,
+                            text: `⚠️ Trigger updated but still invalid. ${hint}${draftWarning}`,
                         }],
                     }
                 }
                 return {
-                    content: [{ type: 'text', text: `✅ Successfully updated trigger to "${pieceName}/${triggerName}".` }],
+                    content: [{ type: 'text', text: `✅ Successfully updated trigger to "${pieceName}/${triggerName}".${draftWarning}` }],
                 }
             }
             catch (err) {
-                return mcpToolError('Trigger update failed', err)
+                return mcpUtils.mcpToolError('Trigger update failed', err)
             }
         },
     }
@@ -135,7 +145,7 @@ async function diagnoseMissingTriggerInputs({ pieceName, pieceVersion, triggerNa
         if (isNil(trigger)) {
             return `Trigger "${triggerName}" not found in piece "${pieceName}". Use ap_list_pieces with includeTriggers=true to get valid trigger names.`
         }
-        const { parts, missing, uiRequired, hasAuth } = diagnosePieceProps({ props: trigger.props, input, pieceAuth: piece.auth, requireAuth: trigger.requireAuth, componentType: 'trigger' })
+        const { parts, missing, uiRequired, hasAuth } = mcpUtils.diagnosePieceProps({ props: trigger.props, input, pieceAuth: piece.auth, requireAuth: trigger.requireAuth, componentType: 'trigger' })
         if (missing.length === 0 && uiRequired.length === 0 && !hasAuth) {
             return 'All inputs are provided but the trigger may need sample data. Ask the user to send a test event or configure the trigger in the Activepieces UI.'
         }

@@ -201,6 +201,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         releasesEnabled: project?.releasesEnabled ?? false,
         metadata: project?.metadata ?? null,
         type: project?.type ?? ProjectType.TEAM,
+        poolId: project?.poolId ?? null,
         icon,
     }
 }
@@ -246,6 +247,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         showPoweredBy: platformPlan?.showPoweredBy ?? false,
         embeddingEnabled: platformPlan?.embeddingEnabled ?? false,
         agentsEnabled: platformPlan?.agentsEnabled ?? false,
+        aiProvidersEnabled: platformPlan?.aiProvidersEnabled ?? false,
         teamProjectsLimit: platformPlan?.teamProjectsLimit ?? TeamProjectsLimit.NONE,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
         customDomainsEnabled: platformPlan?.customDomainsEnabled ?? false,
@@ -254,7 +256,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         plan: platformPlan?.plan,
         secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
         scimEnabled: platformPlan?.scimEnabled ?? false,
-        agentsEnabled: platformPlan?.agentsEnabled ?? false,
+        canary: platformPlan?.canary ?? false
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/server-utils",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "typings": "./dist/src/index.d.ts",
@@ -11,8 +11,11 @@
   "dependencies": {
     "@activepieces/shared": "workspace:*",
     "async-mutex": "0.4.0",
+    "axios": "1.15.0",
+    "axios-retry": "4.4.1",
     "check-disk-space": "3.4.0",
     "dayjs": "1.11.9",
+    "request-filtering-agent": "3.2.0",
     "systeminformation": "5.25.11"
   },
   "devDependencies": {
