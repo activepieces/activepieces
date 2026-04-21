@@ -113,6 +113,28 @@ describe('jobMigrations reSignLogsUploadUrlWithAudience', () => {
         }))
     })
 
+    it('falls back to UPLOAD_DIRECTLY when legacy token has an invalid behavior value', async () => {
+        const tamperedToken = await jwtUtils.sign({
+            payload: {
+                logsFileId: 'file-1',
+                projectId: 'proj-1',
+                flowRunId: 'run-1',
+                behavior: 'EVIL_BEHAVIOR',
+            },
+            key: SECRET,
+            expiresInSeconds: 3600,
+        })
+        const job = baseFlowJob({
+            logsUploadUrl: `https://old-api.example.com/v1/flow-runs/logs?token=${tamperedToken}`,
+        })
+
+        await jobMigrations(mockLog).apply(job)
+
+        expect(mockConstructUploadUrl).toHaveBeenCalledWith(expect.objectContaining({
+            behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
+        }))
+    })
+
     it('bumps schemaVersion without re-signing for non-EXECUTE_FLOW jobs', async () => {
         const webhookJob = {
             jobType: WorkerJobType.EXECUTE_WEBHOOK,

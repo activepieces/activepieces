@@ -95,7 +95,8 @@ function extractLogsBehaviorFromUrl(url: string): UploadLogsBehavior | null {
         return null
     }
     const decoded = jwtUtils.decode<UploadLogsToken>({ jwt: token })
-    return decoded?.payload?.behavior ?? null
+    const parsed = UploadLogsToken.safeParse(decoded?.payload)
+    return parsed.success ? parsed.data.behavior : null
 }
 
 function migrateProgressUpdateType(progressUpdateType: string | undefined): StreamStepProgress {
