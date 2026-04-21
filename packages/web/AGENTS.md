@@ -21,6 +21,13 @@ You are working in the Activepieces web application (`packages/web`).
 - `src/features/` — Feature-based folders (flows, pieces, tables, auth, billing, etc.)
 - `src/lib/` — Shared utilities and helpers
 - `src/app/` — App-level routing and layout
+- `test/` — Unit tests (see **Testing** below)
+
+## Testing
+
+- **Tests live under `packages/web/test/`, never under `src/`.** Mirror the source path so the test for `src/features/foo/bar.ts` lives at `test/features/foo/bar.test.ts`. Keeping tests out of `src/` stops them from being shipped in the app bundle and keeps the production source tree free of test noise.
+- Import the subject under test via the `@/` alias (e.g. `import { x } from '@/features/foo/bar';`), not a relative path, so moving a file doesn't require updating tests.
+- Run with `cd packages/web && npm test` (vitest, node environment).
 
 ## Tailwind / Styling
 
