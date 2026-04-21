@@ -1529,6 +1529,8 @@
   "Save your backup codes": "Save your backup codes",
   "Two-factor authentication has been enabled": "Two-factor authentication has been enabled",
   "Two-factor authentication has been disabled": "Two-factor authentication has been disabled",
+  "Two-factor authentication enforcement enabled": "Two-factor authentication enforcement enabled",
+  "Two-factor authentication enforcement disabled. Users who already have 2FA enabled will continue to use it.": "Two-factor authentication enforcement disabled. Users who already have 2FA enabled will continue to use it.",
   "Backup codes regenerated successfully": "Backup codes regenerated successfully",
   "Disable Two-Factor Authentication": "Disable Two-Factor Authentication",
   "Scan this URI in your authenticator app or enter the secret manually.": "Scan this URI in your authenticator app or enter the secret manually.",

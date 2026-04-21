@@ -90,7 +90,7 @@ async function createBetterAuth(log: FastifyBaseLogger) {
             'https://*.googleapis.com',
         ],
         plugins: [
-            twoFactor({ issuer: 'Activepieces' }),
+            twoFactor({ issuer: 'Activepieces', allowPasswordless: true }),
             sso({
                 redirectURI: `${system.getOrThrow(AppSystemProp.FRONTEND_URL)}/api/v1/better-auth/sso/callback`,
                 trustEmailVerified: true,

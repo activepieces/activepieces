@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { Download } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -16,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { OtpInput } from '@/components/ui/otp-input';
 import { Separator } from '@/components/ui/separator';
+import { downloadTxt } from '@/lib/utils';
 import { authClient } from '@/lib/better-auth';
 
 function BackupCodesForm({
@@ -108,6 +110,14 @@ function BackupCodesForm({
               </code>
             ))}
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => downloadTxt(newCodes.join('\n'), 'backup-code.txt')}
+          >
+            <Download className="size-4 mr-2" />
+            {t('Download')}
+          </Button>
           <Separator />
         </div>
       )}
@@ -117,10 +127,10 @@ function BackupCodesForm({
         <p className="text-xs text-muted-foreground">
           {hasPassword
             ? t(
-                'Enter your password to generate new backup codes. This will invalidate all existing codes.',
+                'Enter your password to generate new backup codes. This will invalidate all existing codes.'
               )
             : t(
-                'Enter your authenticator code to generate new backup codes. This will invalidate all existing codes.',
+                'Enter your authenticator code to generate new backup codes. This will invalidate all existing codes.'
               )}
         </p>
 

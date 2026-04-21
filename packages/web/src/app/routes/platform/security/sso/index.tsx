@@ -45,7 +45,12 @@ const SSOPage = () => {
       platformId: platform.id,
       refetch,
       onSuccess: () => {
-        toast.success(t('Two-factor authentication enforcement updated'), {
+        const message = enforceTotp
+          ? t(
+              'Two-factor authentication enforcement disabled. Users who already have 2FA enabled will continue to use it.',
+            )
+          : t('Two-factor authentication enforcement enabled');
+        toast.success(message, {
           duration: 3000,
         });
       },

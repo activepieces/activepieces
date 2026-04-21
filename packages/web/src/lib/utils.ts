@@ -14,3 +14,13 @@ export function getCookie(name: string) {
 
 export const GAP_SIZE_FOR_STEP_SETTINGS = 'gap-3';
 export const DASHBOARD_CONTENT_PADDING_X = 'px-4';
+
+export function downloadTxt(content: string, fileName: string): void {
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}

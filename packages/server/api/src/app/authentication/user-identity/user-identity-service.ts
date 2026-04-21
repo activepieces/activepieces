@@ -214,7 +214,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
 })
 
 const getPlatformIdByEmail = async (email: string) => {
-    const identity = await userIdentityRepository().findOneByOrFail({ email })
+    const identity = await userIdentityRepository().findOneBy({ email })
     if (!identity) return null
     const user = await userRepo().findOneBy({ identityId: identity.id })
     return user?.platformId ?? null
