@@ -50,7 +50,10 @@ export class OutsetaClient {
 
   static escapeOData(value: string): string {
     const odataEscaped = value.replace(/'/g, "''");
-    return encodeURIComponent(odataEscaped).replace(/%40/g, '@');
+    return odataEscaped.replace(
+      /[^A-Za-z0-9@:._\-~+!$()*]/g,
+      (c) => encodeURIComponent(c)
+    );
   }
 
   private async request<T>(

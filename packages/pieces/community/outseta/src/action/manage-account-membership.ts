@@ -63,6 +63,7 @@ export const manageAccountMembershipAction = createAction({
       }
       const updatedMemberships = [
         ...existingMemberships.map((pa: any) => ({
+          Uid: pa.Uid,
           Person: { Uid: pa.Person?.Uid },
           IsPrimary: pa.IsPrimary ?? false,
         })),
