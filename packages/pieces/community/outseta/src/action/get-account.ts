@@ -62,6 +62,9 @@ export const getAccountAction = createAction({
       renewal_date: sub?.RenewalDate ?? null,
       start_date: sub?.StartDate ?? null,
       end_date: sub?.EndDate ?? null,
+      // Unified validity date: renewal_date for recurring plans,
+      // end_date for one-time plans (which have no renewal).
+      validity_date: sub?.RenewalDate ?? sub?.EndDate ?? null,
       add_ons: addOns.map((a: any) => ({
         uid: a.AddOn?.Uid ?? a.Uid ?? null,
         name: a.AddOn?.Name ?? null,
