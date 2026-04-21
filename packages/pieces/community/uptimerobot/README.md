@@ -28,7 +28,7 @@ UptimeRobot's Free plan limits you to **10 API requests per minute**. Paid plans
 | Action | Description |
 |--------|-------------|
 | **Get Monitors** | List all your monitors with optional filters by name, type, or status |
-| **Create Monitor** | Create a new HTTP, Keyword, Ping, Port, or Heartbeat monitor |
+| **Create Monitor** | Create a new HTTP(s) uptime monitor |
 | **Edit Monitor** | Update a monitor's name, URL, or check interval |
 | **Delete Monitor** | Permanently remove a monitor |
 | **Pause or Resume Monitor** | Temporarily pause or resume monitoring |
@@ -55,13 +55,9 @@ UptimeRobot's Free plan limits you to **10 API requests per minute**. Paid plans
 3. **Action:** Resolve Jira ticket
 4. **Action:** Close PagerDuty incident
 
-## Monitor Types
+## Supported Monitor Types
 
-- **HTTP** — Checks if your website returns a successful HTTP response. Best for most websites and APIs.
-- **Keyword** — Loads the page and checks whether a specific word is present or absent. Useful for detecting error pages that return 200 status.
-- **Ping** — Sends an ICMP ping to a server or IP address.
-- **Port** — Checks if a specific TCP port is open on a host.
-- **Heartbeat** — Expects periodic pings from your service. Alerts if no ping received within the interval.
+Currently only **HTTP(s)** monitors are supported (create, edit, list, delete, pause/resume). Other UptimeRobot types (Keyword, Ping, Port, Heartbeat) are not yet implemented and may be added in a future release.
 
 ## API Reference
 
