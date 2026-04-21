@@ -12,40 +12,20 @@ import {
 import { greenhouseAuth } from '../auth';
 import { greenhouseApiCall } from '../common';
 
-type GreenhouseUser = {
-  id: number;
-  first_name: string;
-  last_name: string;
-  name: string;
-  employee_id: string | null;
-};
-
 type GreenhouseApplication = {
   id: number;
   candidate_id: number;
+  job_id: number | null;
   prospect: boolean;
-  applied_at: string;
+  status: string;
+  created_at: string;
   rejected_at: string | null;
   last_activity_at: string | null;
-  location: { address: string } | null;
-  source: { id: number; public_name: string } | null;
-  credited_to: GreenhouseUser | null;
-  recruiter: GreenhouseUser | null;
-  coordinator: GreenhouseUser | null;
-  rejection_reason: string | null;
-  rejection_details: string | null;
-  jobs: { id: number; name: string }[];
+  location_address: string | null;
+  source_id: number | null;
+  referrer_id: number | null;
+  stage_id: number | null;
   job_post_id: number | null;
-  status: string;
-  current_stage: { id: number; name: string } | null;
-  answers: { question: string; answer: string }[];
-  prospective_office: { id: number; name: string } | null;
-  prospective_department: { id: number; name: string } | null;
-  prospect_detail: {
-    prospect_pool: { id: number; name: string } | null;
-    prospect_stage: { id: number; name: string } | null;
-    prospect_owner: GreenhouseUser | null;
-  };
 };
 
 type GreenhouseAuth = AppConnectionValueForAuthProperty<typeof greenhouseAuth>;
@@ -53,49 +33,41 @@ type GreenhouseAuth = AppConnectionValueForAuthProperty<typeof greenhouseAuth>;
 const polling: Polling<GreenhouseAuth, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const apiKey = (auth as { secret_text: string }).secret_text;
+    const { client_id, client_secret } = auth.props;
 
-    const lastActivityAfter =
+    const createdAfter =
       lastFetchEpochMS > 0
         ? new Date(lastFetchEpochMS).toISOString()
         : new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     const response = await greenhouseApiCall<GreenhouseApplication[]>({
-      apiKey,
+      auth: { client_id, client_secret },
       method: HttpMethod.GET,
       endpoint: '/applications',
       queryParams: {
         status: 'hired',
-        last_activity_after: lastActivityAfter,
-        per_page: '100',
+        'created_at[gte]': createdAfter,
+        per_page: '500',
       },
     });
 
-    const applications = response.body ?? [];
+    const applications = Array.isArray(response.body) ? response.body : [];
 
     return applications.map((app) => ({
-      epochMilliSeconds: new Date(app.last_activity_at ?? app.applied_at).getTime(),
+      epochMilliSeconds: new Date(app.last_activity_at ?? app.created_at).getTime(),
       data: {
         id: app.id,
         candidate_id: app.candidate_id,
+        job_id: app.job_id,
+        job_post_id: app.job_post_id,
         prospect: app.prospect,
         status: app.status,
-        applied_at: app.applied_at,
+        created_at: app.created_at,
         hired_at: app.last_activity_at,
-        location: app.location?.address ?? null,
-        source_id: app.source?.id ?? null,
-        source_name: app.source?.public_name ?? null,
-        credited_to_id: app.credited_to?.id ?? null,
-        credited_to_name: app.credited_to?.name ?? null,
-        recruiter_id: app.recruiter?.id ?? null,
-        recruiter_name: app.recruiter?.name ?? null,
-        coordinator_id: app.coordinator?.id ?? null,
-        coordinator_name: app.coordinator?.name ?? null,
-        job_ids: (app.jobs ?? []).map((j) => j.id).join(', '),
-        job_names: (app.jobs ?? []).map((j) => j.name).join(', '),
-        job_post_id: app.job_post_id,
-        current_stage_id: app.current_stage?.id ?? null,
-        current_stage_name: app.current_stage?.name ?? null,
+        location_address: app.location_address,
+        source_id: app.source_id,
+        referrer_id: app.referrer_id,
+        stage_id: app.stage_id,
       },
     }));
   },
@@ -110,24 +82,16 @@ export const candidateHiredTrigger = createTrigger({
   sampleData: {
     id: 48206478,
     candidate_id: 36952451,
+    job_id: 211706,
+    job_post_id: 123,
     prospect: false,
     status: 'hired',
-    applied_at: '2024-02-01T14:26:02.000Z',
+    created_at: '2024-02-01T14:26:02.000Z',
     hired_at: '2024-03-15T10:00:00.000Z',
-    location: 'New York, New York, USA',
+    location_address: 'New York, New York, USA',
     source_id: 33,
-    source_name: 'Glassdoor',
-    credited_to_id: null,
-    credited_to_name: null,
-    recruiter_id: 92120,
-    recruiter_name: 'Greenhouse Admin',
-    coordinator_id: 453636,
-    coordinator_name: 'Jane Smith',
-    job_ids: '211706',
-    job_names: 'Community Manager - New York',
-    job_post_id: 123,
-    current_stage_id: null,
-    current_stage_name: null,
+    referrer_id: null,
+    stage_id: null,
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

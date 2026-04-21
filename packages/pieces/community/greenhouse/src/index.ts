@@ -2,6 +2,7 @@ import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { greenhouseAuth } from './lib/auth';
+import { getAccessToken } from './lib/common';
 import { createCandidateAction } from './lib/actions/create-candidate';
 import { createCandidateNoteAction } from './lib/actions/create-candidate-note';
 import { createProspectAction } from './lib/actions/create-prospect';
@@ -33,11 +34,13 @@ export const greenhouse = createPiece({
     findOrCreateCandidateAction,
     findDueScorecardAction,
     createCustomApiCallAction({
-      baseUrl: () => 'https://harvest.greenhouse.io/v1',
+      baseUrl: () => 'https://harvest.greenhouse.io/v3',
       auth: greenhouseAuth,
-      authMapping: async (auth) => ({
-        Authorization: `Basic ${Buffer.from(`${(auth as { secret_text: string }).secret_text}:`).toString('base64')}`,
-      }),
+      authMapping: async (auth) => {
+        const { client_id, client_secret } = auth.props;
+        const token = await getAccessToken(client_id, client_secret);
+        return { Authorization: `Bearer ${token}` };
+      },
     }),
   ],
   triggers: [newCandidateApplicationTrigger, candidateHiredTrigger, newJobPostTrigger, jobUpdatedTrigger, newScheduledInterviewTrigger, newScorecardDueTrigger],

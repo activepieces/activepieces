@@ -12,29 +12,22 @@ import {
 import { greenhouseAuth } from '../auth';
 import { greenhouseApiCall } from '../common';
 
-type JobPostLocation = {
-  id: number;
-  name: string;
-  office_id: number | null;
-  job_post_custom_location_id: number | null;
-  job_post_location_type: { id: number; name: string } | null;
-};
-
 type GreenhouseJobPost = {
   id: number;
   title: string;
   job_id: number;
-  location: JobPostLocation | null;
+  job_board_id: number;
+  location: { type: string; name: string; id: number | null } | null;
   internal: boolean;
-  external: boolean;
   active: boolean;
   live: boolean;
+  featured: boolean;
   first_published_at: string | null;
-  content: string | null;
-  internal_content: string | null;
+  public_url: string | null;
+  language: string | null;
+  demographic_question_set_id: number | null;
   created_at: string;
   updated_at: string;
-  demographic_question_set_id: number | null;
 };
 
 type GreenhouseAuth = AppConnectionValueForAuthProperty<typeof greenhouseAuth>;
@@ -42,7 +35,7 @@ type GreenhouseAuth = AppConnectionValueForAuthProperty<typeof greenhouseAuth>;
 const polling: Polling<GreenhouseAuth, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const apiKey = (auth as { secret_text: string }).secret_text;
+    const { client_id, client_secret } = auth.props;
 
     const createdAfter =
       lastFetchEpochMS > 0
@@ -50,16 +43,16 @@ const polling: Polling<GreenhouseAuth, Record<string, never>> = {
         : new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     const response = await greenhouseApiCall<GreenhouseJobPost[]>({
-      apiKey,
+      auth: { client_id, client_secret },
       method: HttpMethod.GET,
       endpoint: '/job_posts',
       queryParams: {
-        created_after: createdAfter,
-        per_page: '100',
+        'created_at[gte]': createdAfter,
+        per_page: '500',
       },
     });
 
-    const jobPosts = response.body ?? [];
+    const jobPosts = Array.isArray(response.body) ? response.body : [];
 
     return jobPosts.map((post) => ({
       epochMilliSeconds: new Date(post.created_at).getTime(),
@@ -67,16 +60,20 @@ const polling: Polling<GreenhouseAuth, Record<string, never>> = {
         id: post.id,
         title: post.title,
         job_id: post.job_id,
-        location: post.location?.name ?? null,
+        job_board_id: post.job_board_id,
+        location_name: post.location?.name ?? null,
+        location_type: post.location?.type ?? null,
         location_id: post.location?.id ?? null,
         internal: post.internal,
-        external: post.external,
         active: post.active,
         live: post.live,
+        featured: post.featured,
+        public_url: post.public_url,
+        language: post.language,
         first_published_at: post.first_published_at,
+        demographic_question_set_id: post.demographic_question_set_id,
         created_at: post.created_at,
         updated_at: post.updated_at,
-        demographic_question_set_id: post.demographic_question_set_id,
       },
     }));
   },
@@ -92,16 +89,20 @@ export const newJobPostTrigger = createTrigger({
     id: 123,
     title: 'Software Engineer',
     job_id: 1234,
-    location: 'New York, NY',
-    location_id: 123456,
+    job_board_id: 56,
+    location_name: 'New York, NY',
+    location_type: 'free_text',
+    location_id: null,
     internal: false,
-    external: true,
     active: true,
     live: true,
+    featured: false,
+    public_url: 'https://boards.greenhouse.io/acme/jobs/123',
+    language: 'en',
     first_published_at: '2024-03-15T10:00:00.000Z',
+    demographic_question_set_id: null,
     created_at: '2024-03-15T09:00:00.000Z',
     updated_at: '2024-03-15T10:00:00.000Z',
-    demographic_question_set_id: 999,
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

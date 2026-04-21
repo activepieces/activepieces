@@ -1,29 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { greenhouseAuth } from '../auth';
-import { greenhouseApiCall, onBehalfOfProp } from '../common';
-
-type EmailAddress = { value: string; type: string };
-type PhoneNumber = { value: string; type: string };
-type WebsiteAddress = { value: string; type: string };
-
-type GreenhouseCandidate = {
-  id: number;
-  first_name: string;
-  last_name: string;
-  company: string | null;
-  title: string | null;
-  created_at: string;
-  updated_at: string;
-  last_activity: string | null;
-  is_private: boolean;
-  photo_url: string | null;
-  application_ids: number[];
-  email_addresses: EmailAddress[];
-  phone_numbers: PhoneNumber[];
-  website_addresses: WebsiteAddress[];
-  tags: string[];
-};
+import { greenhouseApiCall, shapeCandidate, GreenhouseCandidate } from '../common';
 
 export const updateCandidateAction = createAction({
   name: 'update_candidate',
@@ -31,7 +9,6 @@ export const updateCandidateAction = createAction({
   description: 'Updates an existing candidate profile in Greenhouse. Only fields you provide will be changed.',
   auth: greenhouseAuth,
   props: {
-    on_behalf_of: onBehalfOfProp,
     candidate_id: Property.ShortText({
       displayName: 'Candidate ID',
       description:
@@ -116,7 +93,6 @@ export const updateCandidateAction = createAction({
   },
   async run(context) {
     const {
-      on_behalf_of,
       candidate_id,
       first_name,
       last_name,
@@ -138,49 +114,18 @@ export const updateCandidateAction = createAction({
     if (company) body['company'] = company;
     if (title) body['title'] = title;
     if (tags && (tags as string[]).length > 0) body['tags'] = tags;
+    if (email) body['email_addresses'] = [{ value: email, type: email_type ?? 'personal' }];
+    if (phone) body['phone_numbers'] = [{ value: phone, type: phone_type ?? 'mobile' }];
+    if (website_url) body['website_addresses'] = [{ value: website_url, type: 'personal' }];
+    if (linkedin_url) body['social_media_addresses'] = [{ value: linkedin_url }];
 
-    if (email) {
-      body['email_addresses'] = [{ value: email, type: email_type ?? 'personal' }];
-    }
-    if (phone) {
-      body['phone_numbers'] = [{ value: phone, type: phone_type ?? 'mobile' }];
-    }
-
-    const websiteAddresses: WebsiteAddress[] = [];
-    if (linkedin_url) websiteAddresses.push({ value: linkedin_url, type: 'linkedin' });
-    if (website_url) websiteAddresses.push({ value: website_url, type: 'personal' });
-    if (websiteAddresses.length > 0) body['website_addresses'] = websiteAddresses;
-
-    const response = await greenhouseApiCall<GreenhouseCandidate>({
-      apiKey: context.auth.secret_text,
+    const response = await greenhouseApiCall<{ candidate: GreenhouseCandidate }>({
+      auth: context.auth.props,
       method: HttpMethod.PATCH,
       endpoint: `/candidates/${candidate_id}`,
       body,
-      onBehalfOf: on_behalf_of,
     });
 
-    const c = response.body;
-    return {
-      id: c.id,
-      first_name: c.first_name,
-      last_name: c.last_name,
-      company: c.company,
-      title: c.title,
-      created_at: c.created_at,
-      updated_at: c.updated_at,
-      last_activity: c.last_activity,
-      is_private: c.is_private,
-      photo_url: c.photo_url,
-      primary_email: c.email_addresses?.[0]?.value ?? null,
-      primary_email_type: c.email_addresses?.[0]?.type ?? null,
-      primary_phone: c.phone_numbers?.[0]?.value ?? null,
-      primary_phone_type: c.phone_numbers?.[0]?.type ?? null,
-      linkedin_url:
-        c.website_addresses?.find((w) => w.type === 'linkedin')?.value ?? null,
-      website_url:
-        c.website_addresses?.find((w) => w.type === 'personal')?.value ?? null,
-      tags: (c.tags ?? []).join(', '),
-      application_ids: (c.application_ids ?? []).join(', '),
-    };
+    return shapeCandidate(response.body.candidate);
   },
 });

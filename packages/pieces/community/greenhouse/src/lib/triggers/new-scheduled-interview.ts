@@ -13,38 +13,20 @@ import {
 import { greenhouseAuth } from '../auth';
 import { greenhouseApiCall } from '../common';
 
-type InterviewTime = {
-  date_time?: string;
-  date?: string;
-};
-
-type GreenhouseScheduledInterview = {
+type GreenhouseInterview = {
   id: number;
   application_id: number;
   external_event_id: string | null;
-  start: InterviewTime;
-  end: InterviewTime;
+  starts_at: string | null;
+  ends_at: string | null;
+  all_day_start_on: string | null;
+  all_day_end_on: string | null;
   location: string | null;
   video_conferencing_url: string | null;
   status: string;
+  organizer_id: number | null;
   created_at: string;
   updated_at: string;
-  interview: { id: number; name: string } | null;
-  organizer: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    name: string;
-    employee_id: string | null;
-  } | null;
-  interviewers: {
-    id: number;
-    employee_id: string | null;
-    name: string;
-    email: string;
-    response_status: string;
-    scorecard_id: number | null;
-  }[];
 };
 
 type TriggerProps = { days_ahead: number };
@@ -53,7 +35,7 @@ type GreenhouseAuth = AppConnectionValueForAuthProperty<typeof greenhouseAuth>;
 const polling: Polling<GreenhouseAuth, TriggerProps> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const apiKey = (auth as { secret_text: string }).secret_text;
+    const { client_id, client_secret } = auth.props;
     const daysAhead = propsValue.days_ahead ?? 7;
 
     const createdAfter =
@@ -61,22 +43,20 @@ const polling: Polling<GreenhouseAuth, TriggerProps> = {
         ? new Date(lastFetchEpochMS).toISOString()
         : new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    const startsBefore = new Date(
-      Date.now() + daysAhead * 24 * 60 * 60 * 1000
-    ).toISOString();
+    const startsBefore = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000).toISOString();
 
-    const response = await greenhouseApiCall<GreenhouseScheduledInterview[]>({
-      apiKey,
+    const response = await greenhouseApiCall<GreenhouseInterview[]>({
+      auth: { client_id, client_secret },
       method: HttpMethod.GET,
-      endpoint: '/scheduled_interviews',
+      endpoint: '/interviews',
       queryParams: {
-        created_after: createdAfter,
-        starts_before: startsBefore,
-        per_page: '100',
+        'created_at[gte]': createdAfter,
+        'starts_at[lte]': startsBefore,
+        per_page: '500',
       },
     });
 
-    const interviews = response.body ?? [];
+    const interviews = Array.isArray(response.body) ? response.body : [];
 
     return interviews.map((interview) => ({
       epochMilliSeconds: new Date(interview.created_at).getTime(),
@@ -85,17 +65,13 @@ const polling: Polling<GreenhouseAuth, TriggerProps> = {
         application_id: interview.application_id,
         external_event_id: interview.external_event_id,
         status: interview.status,
-        interview_id: interview.interview?.id ?? null,
-        interview_name: interview.interview?.name ?? null,
-        start_date_time: interview.start?.date_time ?? interview.start?.date ?? null,
-        end_date_time: interview.end?.date_time ?? interview.end?.date ?? null,
+        starts_at: interview.starts_at,
+        ends_at: interview.ends_at,
+        all_day_start_on: interview.all_day_start_on,
+        all_day_end_on: interview.all_day_end_on,
         location: interview.location,
         video_conferencing_url: interview.video_conferencing_url,
-        organizer_id: interview.organizer?.id ?? null,
-        organizer_name: interview.organizer?.name ?? null,
-        interviewer_ids: (interview.interviewers ?? []).map((i) => i.id).join(', '),
-        interviewer_names: (interview.interviewers ?? []).map((i) => i.name).join(', '),
-        interviewer_emails: (interview.interviewers ?? []).map((i) => i.email).join(', '),
+        organizer_id: interview.organizer_id,
         created_at: interview.created_at,
         updated_at: interview.updated_at,
       },
@@ -122,17 +98,13 @@ export const newScheduledInterviewTrigger = createTrigger({
     application_id: 102717457,
     external_event_id: 'external_event_id_1',
     status: 'scheduled',
-    interview_id: 8055374,
-    interview_name: 'Executive Interview',
-    start_date_time: '2024-03-20T13:15:00.000Z',
-    end_date_time: '2024-03-20T14:15:00.000Z',
+    starts_at: '2024-03-20T13:15:00.000Z',
+    ends_at: '2024-03-20T14:15:00.000Z',
+    all_day_start_on: null,
+    all_day_end_on: null,
     location: 'Big Conference Room',
     video_conferencing_url: 'https://zoom.us/j/123456789',
     organizer_id: 102361,
-    organizer_name: 'Champ Telluride',
-    interviewer_ids: '102361, 46444',
-    interviewer_names: 'Champ Telluride, Lucius Barbarossa',
-    interviewer_emails: 'champ@example.com, lucius@example.com',
     created_at: '2024-03-10T19:22:07.000Z',
     updated_at: '2024-03-10T19:22:07.000Z',
   },

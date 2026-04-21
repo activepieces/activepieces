@@ -1,18 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { greenhouseAuth } from '../auth';
-import { greenhouseApiCall, onBehalfOfProp } from '../common';
+import { greenhouseApiCall } from '../common';
 
 type GreenhouseNote = {
   id: number;
   created_at: string;
-  body: string;
-  visibility: string;
-  user: {
-    id: number;
-    first_name: string;
-    last_name: string;
-  } | null;
+  updated_at: string;
+  candidate_id: number | null;
+  application_id: number | null;
+  body: string | null;
+  subject: string | null;
+  type: string;
+  user_id: number | null;
+  visibility: string | null;
 };
 
 export const createCandidateNoteAction = createAction({
@@ -21,13 +22,24 @@ export const createCandidateNoteAction = createAction({
   description: 'Adds a note to an existing candidate profile in Greenhouse.',
   auth: greenhouseAuth,
   props: {
-    on_behalf_of: onBehalfOfProp,
     candidate_id: Property.ShortText({
       displayName: 'Candidate ID',
       description:
-        'The numeric ID of the candidate to add the note to. You can find this in the candidate URL in Greenhouse ' +
-        '(e.g. `https://app.greenhouse.io/people/**123456**`), or map it from a previous **Create Candidate** step.',
+        'The numeric ID of the candidate to add the note to. Found in the candidate URL in Greenhouse ' +
+        '(e.g. `https://app.greenhouse.io/people/**123456**`), or mapped from a previous **Create Candidate** step.',
       required: true,
+    }),
+    note_type: Property.StaticDropdown({
+      displayName: 'Note Type',
+      description: 'The type of note to create.',
+      required: true,
+      defaultValue: 'NOTE',
+      options: {
+        options: [
+          { label: 'Note', value: 'NOTE' },
+          { label: 'Activity', value: 'ACTIVITY' },
+        ],
+      },
     }),
     body: Property.LongText({
       displayName: 'Note',
@@ -48,32 +60,46 @@ export const createCandidateNoteAction = createAction({
         ],
       },
     }),
+    user_id: Property.ShortText({
+      displayName: 'Author User ID',
+      description:
+        'Optional. The Greenhouse user ID to attribute this note to. ' +
+        'To find it: go to **Configure → Users**, click a user, and copy the number from the URL ' +
+        '(e.g. `https://app.greenhouse.io/people/**12345**`).',
+      required: false,
+    }),
   },
   async run(context) {
-    const { on_behalf_of, candidate_id, body, visibility } = context.propsValue;
+    const { candidate_id, note_type, body, visibility, user_id } = context.propsValue;
+
+    const noteBody: Record<string, unknown> = {
+      candidate_id: Number(candidate_id),
+      note_type,
+      body,
+      visibility,
+    };
+
+    if (user_id) noteBody['user_id'] = Number(user_id);
 
     const response = await greenhouseApiCall<GreenhouseNote>({
-      apiKey: context.auth.secret_text,
+      auth: context.auth.props,
       method: HttpMethod.POST,
-      endpoint: `/candidates/${candidate_id}/activity_feed/notes`,
-      body: {
-        user_id: Number(on_behalf_of),
-        body,
-        visibility,
-      },
-      onBehalfOf: on_behalf_of,
+      endpoint: '/notes',
+      body: noteBody,
     });
 
     const note = response.body;
     return {
       id: note.id,
-      candidate_id,
+      candidate_id: note.candidate_id,
+      application_id: note.application_id,
       body: note.body,
+      subject: note.subject,
+      type: note.type,
       visibility: note.visibility,
       created_at: note.created_at,
-      created_by_user_id: note.user?.id ?? null,
-      created_by_first_name: note.user?.first_name ?? null,
-      created_by_last_name: note.user?.last_name ?? null,
+      updated_at: note.updated_at,
+      user_id: note.user_id,
     };
   },
 });

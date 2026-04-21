@@ -12,15 +12,6 @@ import {
 import { greenhouseAuth } from '../auth';
 import { greenhouseApiCall } from '../common';
 
-type HiringTeamMember = {
-  id: number;
-  first_name: string;
-  last_name: string;
-  name: string;
-  employee_id: string | null;
-  responsible?: boolean;
-};
-
 type GreenhouseJob = {
   id: number;
   name: string;
@@ -34,18 +25,12 @@ type GreenhouseJob = {
   updated_at: string;
   is_template: boolean;
   copied_from_id: number | null;
-  departments: { id: number; name: string; parent_id: number | null; external_id: string | null }[];
-  offices: { id: number; name: string; location: { name: string } | null; external_id: string | null }[];
-  hiring_team: {
-    hiring_managers: HiringTeamMember[];
-    recruiters: HiringTeamMember[];
-    coordinators: HiringTeamMember[];
-    sourcers: HiringTeamMember[];
-  };
+  department_id: number | null;
+  office_ids: number[];
   openings: {
     id: number;
     opening_id: string | null;
-    status: string;
+    open: boolean;
     opened_at: string | null;
     closed_at: string | null;
     application_id: number | null;
@@ -57,7 +42,7 @@ type GreenhouseAuth = AppConnectionValueForAuthProperty<typeof greenhouseAuth>;
 const polling: Polling<GreenhouseAuth, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const apiKey = (auth as { secret_text: string }).secret_text;
+    const { client_id, client_secret } = auth.props;
 
     const updatedAfter =
       lastFetchEpochMS > 0
@@ -65,16 +50,16 @@ const polling: Polling<GreenhouseAuth, Record<string, never>> = {
         : new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     const response = await greenhouseApiCall<GreenhouseJob[]>({
-      apiKey,
+      auth: { client_id, client_secret },
       method: HttpMethod.GET,
       endpoint: '/jobs',
       queryParams: {
-        updated_after: updatedAfter,
-        per_page: '100',
+        'updated_at[gte]': updatedAfter,
+        per_page: '500',
       },
     });
 
-    const jobs = response.body ?? [];
+    const jobs = Array.isArray(response.body) ? response.body : [];
 
     return jobs.map((job) => ({
       epochMilliSeconds: new Date(job.updated_at).getTime(),
@@ -89,15 +74,9 @@ const polling: Polling<GreenhouseAuth, Record<string, never>> = {
         opened_at: job.opened_at,
         closed_at: job.closed_at,
         updated_at: job.updated_at,
-        department_ids: (job.departments ?? []).map((d) => d.id).join(', '),
-        department_names: (job.departments ?? []).map((d) => d.name).join(', '),
-        office_ids: (job.offices ?? []).map((o) => o.id).join(', '),
-        office_names: (job.offices ?? []).map((o) => o.name).join(', '),
-        hiring_manager_ids: (job.hiring_team?.hiring_managers ?? []).map((u) => u.id).join(', '),
-        hiring_manager_names: (job.hiring_team?.hiring_managers ?? []).map((u) => u.name).join(', '),
-        recruiter_ids: (job.hiring_team?.recruiters ?? []).map((u) => u.id).join(', '),
-        recruiter_names: (job.hiring_team?.recruiters ?? []).map((u) => u.name).join(', '),
-        open_openings: (job.openings ?? []).filter((o) => o.status === 'open').length,
+        department_id: job.department_id,
+        office_ids: (job.office_ids ?? []).join(', '),
+        open_openings: (job.openings ?? []).filter((o) => o.open).length,
         total_openings: (job.openings ?? []).length,
       },
     }));
@@ -121,14 +100,8 @@ export const jobUpdatedTrigger = createTrigger({
     opened_at: '2024-01-20T14:42:58.000Z',
     closed_at: null,
     updated_at: '2024-03-10T16:22:15.000Z',
-    department_ids: '12345',
-    department_names: 'Engineering',
+    department_id: 12345,
     office_ids: '47012',
-    office_names: 'San Francisco',
-    hiring_manager_ids: '84275',
-    hiring_manager_names: 'Sarah Johnson',
-    recruiter_ids: '169779',
-    recruiter_names: 'Michael Chen',
     open_openings: 2,
     total_openings: 3,
   },
