@@ -1,5 +1,5 @@
 import { AIProviderModel, AIProviderModelType, BedrockProviderAuthConfig, BedrockProviderConfig } from '@activepieces/shared'
-import { BedrockClient, ListFoundationModelsCommand } from '@aws-sdk/client-bedrock'
+import { BedrockClient, ListFoundationModelsCommand, ModelModality } from '@aws-sdk/client-bedrock'
 import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
 
@@ -28,7 +28,7 @@ export const bedrockProvider: AIProviderStrategy<BedrockProviderAuthConfig, Bedr
             .map((m) => ({
                 id: m.modelId as string,
                 name: m.modelName ?? (m.modelId as string),
-                type: (m.outputModalities ?? []).includes('IMAGE') ? AIProviderModelType.IMAGE : AIProviderModelType.TEXT,
+                type: (m.outputModalities ?? []).includes(ModelModality.IMAGE) ? AIProviderModelType.IMAGE : AIProviderModelType.TEXT,
             }))
     },
 }
