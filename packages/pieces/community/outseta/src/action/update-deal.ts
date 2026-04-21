@@ -53,9 +53,9 @@ export const updateDealAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // Fetch full deal first to avoid wiping fields with a partial PUT
+    // Fetch full deal with DealPeople expanded to avoid wiping fields on PUT
     const deal = await client.get<any>(
-      `/api/v1/crm/deals/${context.propsValue.dealUid}`
+      `/api/v1/crm/deals/${context.propsValue.dealUid}?fields=*,DealPeople.*,DealPeople.Person.*,DealPipelineStage.*,Account.*`
     );
 
     if (context.propsValue.name) {

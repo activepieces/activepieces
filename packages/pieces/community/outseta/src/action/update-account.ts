@@ -74,9 +74,10 @@ export const updateAccountAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // Fetch full account first to avoid wiping fields with a partial PUT
+    // Fetch full account with nested collections expanded to avoid wiping
+    // fields like PersonAccount / BillingAddress / Subscriptions on PUT
     const account = await client.get<any>(
-      `/api/v1/crm/accounts/${context.propsValue.accountUid}`
+      `/api/v1/crm/accounts/${context.propsValue.accountUid}?fields=*,BillingAddress.*,MailingAddress.*,PersonAccount.*,PersonAccount.Person.*,Subscriptions.*`
     );
 
     let changed = false;

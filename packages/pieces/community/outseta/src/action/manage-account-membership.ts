@@ -45,7 +45,7 @@ export const manageAccountMembershipAction = createAction({
     });
 
     const account = await client.get<any>(
-      `/api/v1/crm/accounts/${context.propsValue.accountUid}`
+      `/api/v1/crm/accounts/${context.propsValue.accountUid}?fields=*,PersonAccount.*,PersonAccount.Person.*`
     );
     const existingMemberships: any[] =
       account.PersonAccount?.items ??

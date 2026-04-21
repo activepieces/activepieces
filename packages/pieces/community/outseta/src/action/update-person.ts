@@ -70,9 +70,9 @@ export const updatePersonAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // Fetch full person first to avoid wiping fields with a partial PUT
+    // Fetch full person with nested objects expanded to avoid wiping on PUT
     const person = await client.get<any>(
-      `/api/v1/crm/people/${context.propsValue.personUid}`
+      `/api/v1/crm/people/${context.propsValue.personUid}?fields=*,MailingAddress.*,Account.*`
     );
 
     let changed = false;
