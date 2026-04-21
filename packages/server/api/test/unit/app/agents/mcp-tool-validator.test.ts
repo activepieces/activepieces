@@ -1,12 +1,12 @@
 import { AgentToolType, McpAuthType, McpProtocol } from '@activepieces/shared'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../../../src/app/helper/ap-axios', () => ({
-    apAxios: { post: vi.fn() },
+vi.mock('@activepieces/server-utils', () => ({
+    safeHttp: { retryingAxios: { post: vi.fn() } },
 }))
 
 import { mcpToolValidator } from '../../../../src/app/agents/mcp-tool-validator'
-import { apAxios } from '../../../../src/app/helper/ap-axios'
+import { safeHttp } from '@activepieces/server-utils'
 
 type AxiosCall = { url: string, body: string, config: AxiosConfigLike }
 type AxiosConfigLike = { headers?: Record<string, string>, maxRedirects?: number, timeout?: number }
@@ -16,7 +16,7 @@ const SSE_HEADERS = { 'content-type': 'text/event-stream' }
 
 describe('mcpToolValidator.validateAgentMcpTool', () => {
     beforeEach(() => {
-        vi.mocked(apAxios.post).mockReset()
+        vi.mocked(safeHttp.retryingAxios.post).mockReset()
     })
 
     afterEach(() => {
@@ -69,7 +69,7 @@ describe('mcpToolValidator.validateAgentMcpTool', () => {
     })
 
     it('collapses any downstream failure to a single generic error', async () => {
-        vi.mocked(apAxios.post).mockRejectedValue(
+        vi.mocked(safeHttp.retryingAxios.post).mockRejectedValue(
             Object.assign(new Error('ENOTFOUND attacker.example'), { code: 'ENOTFOUND' }),
         )
 
@@ -81,7 +81,7 @@ describe('mcpToolValidator.validateAgentMcpTool', () => {
     })
 
     it('rejects malformed URLs without dialing', async () => {
-        const spy = vi.mocked(apAxios.post)
+        const spy = vi.mocked(safeHttp.retryingAxios.post)
 
         const result = await mcpToolValidator.validateAgentMcpTool(
             buildTool({ serverUrl: 'not a url' }),
@@ -93,7 +93,7 @@ describe('mcpToolValidator.validateAgentMcpTool', () => {
     })
 
     it('rejects non-http(s) URLs without dialing', async () => {
-        const spy = vi.mocked(apAxios.post)
+        const spy = vi.mocked(safeHttp.retryingAxios.post)
 
         const result = await mcpToolValidator.validateAgentMcpTool(
             buildTool({ serverUrl: 'file:///etc/passwd' }),
@@ -162,7 +162,7 @@ function buildTool(overrides: Partial<DefaultTool> = {}): DefaultTool {
 }
 
 function capturedCalls(): AxiosCall[] {
-    return vi.mocked(apAxios.post).mock.calls.map(([url, body, config]) => ({
+    return vi.mocked(safeHttp.retryingAxios.post).mock.calls.map(([url, body, config]) => ({
         url: String(url),
         body: typeof body === 'string' ? JSON.parse(body) : body,
         config: (config ?? {}) as AxiosConfigLike & { maxRedirects?: number, maxContentLength?: number, maxBodyLength?: number, timeout?: number },
@@ -173,7 +173,7 @@ function mockJsonRpcServer(
     { tools }: { tools: Array<{ name: string }> },
     { forceSse = false }: { forceSse?: boolean } = {},
 ): void {
-    vi.mocked(apAxios.post).mockImplementation(async (...args: unknown[]) => {
+    vi.mocked(safeHttp.retryingAxios.post).mockImplementation(async (...args: unknown[]) => {
         const rawBody = args[1]
         const body = typeof rawBody === 'string' ? JSON.parse(rawBody) : {}
         if (body.method === 'initialize') {

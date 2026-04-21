@@ -1,5 +1,5 @@
+import { safeHttp } from '@activepieces/server-utils'
 import { AgentMcpTool, buildAuthHeaders, McpProtocol, ValidateAgentMcpToolResponse } from '@activepieces/shared'
-import { apAxios } from '../helper/ap-axios'
 
 export const mcpToolValidator = {
     async validateAgentMcpTool(tool: AgentMcpTool): Promise<ValidateAgentMcpToolResponse> {
@@ -74,7 +74,7 @@ function acceptForProtocol(protocol: McpProtocol): string {
 }
 
 async function sendJsonRpc({ url, headers, accept, body }: SendJsonRpcParams): Promise<{ message: JsonRpcResponse, sessionId: string | null }> {
-    const response = await apAxios.post<string>(url, JSON.stringify(body), {
+    const response = await safeHttp.retryingAxios.post<string>(url, JSON.stringify(body), {
         headers: {
             'Content-Type': 'application/json',
             Accept: accept,
@@ -108,7 +108,7 @@ async function sendJsonRpc({ url, headers, accept, body }: SendJsonRpcParams): P
 
 async function sendInitializedNotification({ url, headers, accept }: SendInitializedNotificationParams): Promise<void> {
     try {
-        await apAxios.post(url, JSON.stringify({
+        await safeHttp.retryingAxios.post(url, JSON.stringify({
             jsonrpc: '2.0',
             method: 'notifications/initialized',
             params: {},
