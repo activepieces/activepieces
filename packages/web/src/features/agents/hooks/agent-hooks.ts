@@ -37,9 +37,10 @@ export const agentMutations = {
     return useMutation<
       ValidateAgentMcpToolResponse,
       Error,
-      { tool: AgentMcpTool }
+      { projectId: string; tool: AgentMcpTool }
     >({
-      mutationFn: ({ tool }) => mcpToolApi.validateAgentMcpTool(tool),
+      mutationFn: ({ projectId, tool }) =>
+        mcpToolApi.validateAgentMcpTool(projectId, tool),
       onSuccess,
       onError,
     });

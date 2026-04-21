@@ -1,9 +1,10 @@
-import { ApId, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
+import { AgentMcpTool, ApId, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { mcpServerService } from './mcp-service'
+import { mcpToolValidator } from './mcp-tool-validator'
 
 export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
 
@@ -25,6 +26,10 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
             projectId: req.projectId,
         })
     })
+
+    app.post('/validate-agent-mcp-tool', ValidateAgentMcpToolRequest, async (req) => {
+        return mcpToolValidator.validateAgentMcpTool(req.body)
+    })
 }
 
 export const UpdateMcpRequest = {
@@ -45,6 +50,26 @@ export const UpdateMcpRequest = {
             projectId: ApId,
         }),
         body: UpdateMcpServerRequest,
+    },
+}
+
+const ValidateAgentMcpToolRequest = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.WRITE_FLOW,
+            {
+                type: ProjectResourceType.PARAM,
+            },
+        ),
+    },
+    schema: {
+        tags: ['agent'],
+        description: 'Validate an external MCP tool URL by performing the handshake and returning its tool names. The outbound request is routed through the SSRF-filtered apAxios agent; no details about unreachable hosts are returned.',
+        params: z.object({
+            projectId: ApId,
+        }),
+        body: AgentMcpTool,
     },
 }
 

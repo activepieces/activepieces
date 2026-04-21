@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { agentMutations } from '../../hooks/agent-hooks';
 import { useMcpToolDialogStore } from '../stores/mcp-tools';
@@ -52,6 +53,7 @@ export const AddMcpToolForm = ({
   setPendingTool,
   handleClose,
 }: AddMcpToolFormProps) => {
+  const projectId = authenticationSession.getProjectId();
   const { editingMcpTool } = useMcpToolDialogStore();
 
   const { mutate: validateTool } = agentMutations.useValidateMcpTool({
@@ -123,7 +125,7 @@ export const AddMcpToolForm = ({
 
     setPendingTool(mcpTool);
     setStep('validating');
-    validateTool({ tool: mcpTool });
+    validateTool({ projectId: projectId!, tool: mcpTool });
   };
 
   const addHeaderField = () => {

@@ -3,12 +3,16 @@ import {
   ValidateAgentMcpToolResponse,
 } from '@activepieces/shared';
 
-import { validateAgentMcpTool } from './validate-mcp-tool';
+import { api } from '@/lib/api';
 
 export const mcpToolApi = {
   async validateAgentMcpTool(
+    projectId: string,
     request: AgentMcpTool,
   ): Promise<ValidateAgentMcpToolResponse> {
-    return validateAgentMcpTool(request);
+    return await api.post<ValidateAgentMcpToolResponse>(
+      `/v1/projects/${projectId}/mcp-server/validate-agent-mcp-tool`,
+      request,
+    );
   },
 };

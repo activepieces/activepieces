@@ -75,8 +75,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `POST /v1/mcp/:projectId` — update status and/or enabledTools
 - `POST /v1/mcp/:projectId/rotate` — rotate auth token
 - `POST /v1/mcp/:projectId/http` — StreamableHTTP MCP protocol endpoint (main protocol handler)
-
-External MCP tool validation is performed entirely in the browser (see `packages/web/src/features/agents/agent-tools/mcp-tool-dialog/validate-mcp-tool.ts`); there is no server-side endpoint for it.
+- `POST /v1/mcp/:projectId/validate-agent-mcp-tool` — validate an external MCP server URL (handshake + tools/list). Dials through `apAxios`, whose agents are built by `packages/server/api/src/app/helper/ssrf-agents.ts` and block private / loopback / link-local / meta IPs unless the operator adds them to `AP_SSRF_ALLOW_LIST`. Errors collapse to a single generic message.
 
 ## Authentication
 
