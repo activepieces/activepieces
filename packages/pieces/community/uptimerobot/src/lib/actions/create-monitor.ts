@@ -13,7 +13,7 @@ export const createMonitorAction = createAction({
   auth: uptimeRobotAuth,
   name: 'create_monitor',
   displayName: 'Create HTTP Monitor',
-  description: 'Create a new HTTP(S) uptime monitor in UptimeRobot',
+  description: 'Create a new HTTP uptime monitor in UptimeRobot',
   props: {
     friendly_name: Property.ShortText({
       displayName: 'Monitor Name',
@@ -29,11 +29,11 @@ export const createMonitorAction = createAction({
     type: Property.StaticDropdown({
       displayName: 'Monitor Type',
       description:
-        'Only HTTP(S) monitors are supported at the moment. Other UptimeRobot types (Keyword, Ping, Port, Heartbeat) are not yet verified end-to-end and will be added in a future release.',
+        'Only HTTP monitors are supported at the moment. Other UptimeRobot types (Keyword, Ping, Port, Heartbeat) are not yet verified end-to-end and will be added in a future release.',
       required: true,
       defaultValue: 1,
       options: {
-        options: [{ label: 'HTTP(S)', value: 1 }],
+        options: [{ label: 'HTTP', value: 1 }],
       },
     }),
     interval: Property.Number({

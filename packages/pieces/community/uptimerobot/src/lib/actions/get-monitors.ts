@@ -19,16 +19,10 @@ export const getMonitorsAction = createAction({
     type: Property.StaticDropdown({
       displayName: 'Monitor Type',
       description:
-        'Only return monitors of this type. Leave empty for all types.',
+        'Only HTTP monitors are supported at the moment. Other UptimeRobot types (Keyword, Ping, Port, Heartbeat) will be added in a future release. Leave empty to return monitors of all types.',
       required: false,
       options: {
-        options: [
-          { label: 'HTTP', value: 1 },
-          { label: 'Keyword', value: 2 },
-          { label: 'Ping', value: 3 },
-          { label: 'Port', value: 4 },
-          { label: 'Heartbeat', value: 5 },
-        ],
+        options: [{ label: 'HTTP', value: 1 }],
       },
     }),
     status: Property.StaticDropdown({
