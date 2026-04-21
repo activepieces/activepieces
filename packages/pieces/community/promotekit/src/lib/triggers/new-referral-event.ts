@@ -75,7 +75,7 @@ export const newReferralEvent = createTrigger({
       queryParams: { limit: '5' },
     });
     const selected: string[] = context.propsValue.eventTypes ?? [];
-    const eventType = selected.length === 1 ? selected[0] : 'referral.created';
+    const eventType = selected[0] ?? 'referral.created';
     return response.body.data.map((item) => ({
       type: eventType,
       ...promotekitCommon.flattenReferral(item),

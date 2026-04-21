@@ -76,7 +76,7 @@ export const newAffiliateEvent = createTrigger({
       queryParams: { limit: '5' },
     });
     const selected: string[] = context.propsValue.eventTypes ?? [];
-    const eventType = selected.length === 1 ? selected[0] : 'affiliate.created';
+    const eventType = selected[0] ?? 'affiliate.created';
     return response.body.data.map((item) => ({
       type: eventType,
       ...promotekitCommon.flattenAffiliate(item),
