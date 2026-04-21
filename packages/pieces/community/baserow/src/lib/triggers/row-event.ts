@@ -58,9 +58,19 @@ export const rowEventTrigger = createTrigger({
       event_type?: string;
       items?: unknown[];
       old_items?: unknown[];
+      row_ids?: number[];
     };
 
     const eventType = body.event_type ?? '';
+
+    if (eventType === 'rows.deleted') {
+      return (body.row_ids ?? []).map((id) => ({
+        event_type: eventType,
+        row: { id },
+        previous_row: null,
+      }));
+    }
+
     const items = body.items ?? [];
     const oldItems = body.old_items ?? [];
 
