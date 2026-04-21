@@ -2,7 +2,7 @@
 // Probe that loads the bundled engine ssrf-guard (installs DNS/Socket/undici hooks
 // at require-time) and then runs each AP_PROBE_PLAN case against the hooked stack.
 // Uses node core only for egress; HTTP calls are plain http.request (the proxy env
-// is set via process.env.HTTP_PROXY).
+// is set via process.env.AP_EGRESS_PROXY_URL).
 
 const dns = require('node:dns')
 const http = require('node:http')
@@ -94,7 +94,7 @@ function dnsLookupExpectBlocked(action) {
 
 function httpViaProxy(action) {
     return new Promise((resolve) => {
-        const proxyUrl = new URL(process.env.HTTP_PROXY || '')
+        const proxyUrl = new URL(process.env.AP_EGRESS_PROXY_URL || '')
         const req = http.request({
             host: proxyUrl.hostname,
             port: parseInt(proxyUrl.port, 10),
