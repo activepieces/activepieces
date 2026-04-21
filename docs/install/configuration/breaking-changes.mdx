@@ -28,6 +28,7 @@ icon: "hammer"
 ### Do you need to take action?
 - **Pinned piece versions** — if you create or update flows via the REST API with wildcard versions (`~` or `^`), switch to exact versions; wildcards are silently stripped. If your publish flow relied on `LOCK_AND_PUBLISH` resolving wildcards, set the exact version on each step before publishing. Use `GET /v1/pieces/:name/versions` to list available versions.
 - **Concurrent jobs** — rename `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` to `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`. To keep the old cap, set `AP_DEFAULT_CONCURRENT_JOBS_LIMIT=100`.
+- **SSRF filter** — if you self-host Vault, Conjur, an OAuth2 token endpoint, or any internal webhook on a private IP, set `AP_SSRF_ALLOW_LIST` (comma-separated IPs or CIDRs, e.g. `10.0.5.12,192.168.10.0/24`) before upgrading.
 
 
 ## 0.80.0
