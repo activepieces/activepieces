@@ -1,48 +1,39 @@
 ---
-title: "Workers & Sandboxing"
+title: "Workers"
+description: "Run, scale, and tune the container that executes your flows"
 icon: "gears"
 ---
 
-A **worker** pulls jobs from the queue and runs each one inside a **sandbox** — an isolated child process that executes the engine and talks back to the worker over a local WebSocket. Everything in this page is about the boundary between that sandbox and the host it runs on.
+The **worker** is the container that actually runs flows. It pulls jobs from Redis, executes each one inside a sandbox, and streams results back to the app. This page is about operating it: how many to run, how to size them, and what happens when one dies mid-flow.
 
-## Execution Modes
+## What a Worker Does
 
-<Snippet file="execution-mode.mdx" />
+Each worker pulls jobs off the BullMQ queue in Redis, hands them to a sandboxed engine process, and posts progress and results back to the app over HTTP. Workers are **stateless** — they hold no per-flow memory, which is what makes horizontal scaling and crash recovery straightforward.
+
+## Scaling
+
+There are two independent knobs:
+
+- **Replicas** — scale horizontally. Workers are stateless, so adding replicas is safe behind any orchestrator (Docker Compose, Kubernetes, Nomad). The default Docker Compose setup starts 5 replicas.
+- **`AP_WORKER_CONCURRENCY`** — concurrent jobs per replica. Default `5`. Each concurrent job uses one sandbox instance, so this also sets the peak sandbox count per worker.
+
+Size replicas for throughput, and concurrency for how much a single replica can chew on. If flows are CPU-bound, lower concurrency and add replicas. If flows are I/O-bound (most automation workloads), raise concurrency before adding replicas.
+
+See [Hardware Requirements](../configuration/hardware) for per-replica memory and CPU sizing.
 
 <Tip>
-**For enterprise deployments, use `SANDBOX_CODE_ONLY` (V8 isolation).** It is the only mode that is both multi-tenant-safe *and* runs as an unprivileged container — which is what Activepieces Cloud uses, and what fits inside a standard Kubernetes security baseline.
+In `UNSANDBOXED` and `SANDBOX_CODE_ONLY` modes, sandboxes stay warm across jobs, so steady-state execution is fast. `SANDBOX_PROCESS` spins up a fresh sandbox per run, which trades latency for kernel-level isolation.
 </Tip>
 
-## Why V8 Sandboxing Exists
+## Failure Behaviour
 
-`SANDBOX_PROCESS` uses the `isolate` binary, which creates fresh Linux namespaces per run. That needs `CAP_SYS_ADMIN` — in practice, `privileged: true` on the container. V8 Sandboxing exists so you don't have to grant that.
+If a worker crashes, is evicted, or loses its Redis lease mid-run, BullMQ requeues the job and another worker picks it up. The engine's durable-execution layer replays already-completed steps from persisted state rather than re-running them, so side effects are not duplicated. This means a worker restart or OOM kill during a flow is survivable — you do not need to drain traffic before rolling workers.
 
-### A concrete K8s example
+See [Durable Execution](./durable-execution) for exactly what is persisted and how replay works.
 
-You run Activepieces in your own Kubernetes cluster, next to a Salesforce-sync service and a finance-analytics pod. A customer ships a malicious Code step.
+## Sandbox & Network Isolation
 
-- **With `SANDBOX_PROCESS`** — the worker pod is privileged. A kernel exploit escapes to the host, reads the service-account token, hits the Kubernetes API, and pivots to the Salesforce pod and the finance DB. Blast radius: **your whole cluster**.
-- **With `SANDBOX_CODE_ONLY`** — the worker has no special capabilities. The Code step runs inside a fresh V8 isolate (no `require`, no filesystem, no npm). Blast radius: **that one worker pod**.
+How flows are isolated from the worker container and the outside world is two independent choices:
 
-V8 isolation is how you get multi-tenant code safety without handing a workflow engine kernel-level access to everything sharing the cluster.
-
-<Warning>
-Only choose `SANDBOX_PROCESS` if you genuinely need arbitrary `npm` packages in Code steps, and run it on a dedicated node pool. A privileged Activepieces worker should never share a node with unrelated workloads.
-</Warning>
-
-## How Each Mode Works
-
-### `fork()` + V8 — `UNSANDBOXED`, `SANDBOX_CODE_ONLY`
-
-The engine runs as a plain `child_process.fork` with a memory cap. In `SANDBOX_CODE_ONLY`, every Code step is additionally wrapped in a fresh [`isolated-vm`](https://www.npmjs.com/package/isolated-vm) context — 128 MB per isolate, `require` removed, disposed after the step. No Linux-namespace machinery, no `CAP_SYS_ADMIN`, no privileged container. Sandboxes stay warm across jobs, so execution is fast.
-
-- **V8 guarantees:** user code cannot touch `require`, the filesystem, or other steps' memory.
-- **V8 does not:** protect isolates from each other if the host Node process itself is compromised.
-
-### `isolate` binary — `SANDBOX_PROCESS`, `SANDBOX_CODE_AND_PROCESS`
-
-The engine runs inside [ioi/isolate](https://github.com/ioi/isolate), which creates fresh PID, mount, user, and UTS namespaces per run and mounts the engine and code artifacts read-only. Arbitrary `npm` packages are safe inside Code steps because filesystem and process state are scoped to the box. The cost: cold boot per run (not reusable), and the worker container must hold `CAP_SYS_ADMIN` — `--privileged` in Docker, `securityContext.privileged: true` in Kubernetes.
-
-## Network Isolation
-
-Execution mode decides *how* user code runs; `AP_NETWORK_MODE` decides *what it can reach*. See [Network Security](./network-security) for the SSRF guard, egress proxy, and iptables lockdown that layer on top of every sandbox mode.
+- [**Sandboxing**](./sandboxing) — `AP_EXECUTION_MODE` decides how user code is isolated from the host kernel. This is the most important security decision for multi-tenant deployments.
+- [**Network Security**](./network-security) — `AP_NETWORK_MODE` decides what the sandbox is allowed to reach on the network.
