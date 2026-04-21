@@ -7,6 +7,7 @@ import { outsetaAuth } from './auth';
 import { getAccountAction } from './action/get-account';
 import { getPersonAction } from './action/get-person';
 import { getDealAction } from './action/get-deal';
+import { getLastPaymentAction } from './action/get-last-payment';
 
 // Actions — Create
 import { createAccountAction } from './action/create-account';
@@ -81,6 +82,7 @@ export const outseta = createPiece({
     getAccountAction,
     getPersonAction,
     getDealAction,
+    getLastPaymentAction,
     // Create
     createAccountAction,
     createDealAction,

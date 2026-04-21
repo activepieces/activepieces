@@ -6,7 +6,7 @@ export const getPersonAction = createAction({
   name: 'get_person',
   auth: outsetaAuth,
   displayName: 'Retrieve Person',
-  description: 'Retrieve a person by email address.',
+  description: 'Retrieve a person by email address, including the linked account.',
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -23,7 +23,7 @@ export const getPersonAction = createAction({
 
     const email = context.propsValue.email;
     const items = await client.getAllPages<any>(
-      `/api/v1/crm/people?$filter=Email eq '${OutsetaClient.escapeOData(email)}'`
+      `/api/v1/crm/people?$filter=Email eq '${OutsetaClient.escapeOData(email)}'&fields=*,Account.*`
     );
 
     const person = items.find(
@@ -54,6 +54,9 @@ export const getPersonAction = createAction({
       mailing_address_state: person.MailingAddress?.State ?? null,
       mailing_address_postal_code: person.MailingAddress?.PostalCode ?? null,
       mailing_address_country: person.MailingAddress?.Country ?? null,
+      account_uid: person.Account?.Uid ?? null,
+      account_name: person.Account?.Name ?? null,
+      account_stage: person.Account?.AccountStage ?? null,
     };
   },
 });
