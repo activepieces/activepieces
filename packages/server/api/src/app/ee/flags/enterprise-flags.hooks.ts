@@ -57,9 +57,12 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         })
         modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = await domainHelper.getInternalUrl({
             path: '/redirect',
+            platformId,
+        })
+        modifiedFlags[ApFlagId.BETTER_AUTH_SSO_REDIRECT_URL] = await domainHelper.getPublicApiUrl({
+            path: '/v1/better-auth/sso/callback',
+            platformId,
         })
         return modifiedFlags
     },
 }
-
-

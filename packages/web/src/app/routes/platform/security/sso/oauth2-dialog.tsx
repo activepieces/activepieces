@@ -1,4 +1,5 @@
 import {
+  ApFlagId,
   PlatformWithoutSensitiveData,
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
@@ -24,6 +25,7 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { authClient } from '@/lib/better-auth';
 
 type NewOAuth2DialogProps = {
@@ -48,6 +50,9 @@ export const NewOAuth2Dialog = ({
   refetch,
 }: NewOAuth2DialogProps) => {
   const [open, setOpen] = useState(false);
+  const { data: redirectUrl } = flagsHooks.useFlag<string>(
+    ApFlagId.BETTER_AUTH_SSO_REDIRECT_URL,
+  );
   const form = useForm<OAuth2FormValues>({
     resolver: zodResolver(OAuth2FormValues),
   });
@@ -121,8 +126,13 @@ export const NewOAuth2Dialog = ({
         <div className="mb-4">
           <ApMarkdown
             markdown={t(
-              'Read more information about how to configure {provider} SSO [here](https://www.activepieces.com/docs/security/sso).',
-              { provider: providerDisplayName },
+              `Read more information about how to configure {provider} SSO [here](https://www.activepieces.com/docs/admin-guide/guides/sso).
+
+**Authorized redirect URI**:
+\`\`\`text
+{redirectUrl}
+\`\`\``,
+              { provider: providerDisplayName, redirectUrl: redirectUrl ?? '' },
             )}
           />
         </div>
