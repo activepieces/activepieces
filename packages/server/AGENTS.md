@@ -48,6 +48,12 @@ Email templates live in `src/assets/emails/`. When creating or modifying email t
 - **No external dependencies** — No `<link>` stylesheets, no tracking pixels, no external font CSS. The `@font-face` CDN URLs in `<style>` are acceptable as progressive enhancement.
 - **Footer** — Use `{{> footer}}` Mustache partial. It renders the address only on Cloud edition.
 
+## N+1 Query Prevention
+
+- **Never fetch a collection then query each item individually in a loop.** Use JOINs, subqueries, or `IN` clauses to push filtering and enrichment into a single query.
+- When checking a condition across related rows (e.g. "does any membership have permission X?"), JOIN the related table and filter in SQL rather than loading all rows and filtering in JS.
+- For list endpoints that enrich entities with related data, prefer `leftJoinAndSelect` / `innerJoin` or batch queries with `IN (:...ids)` over per-item lookups inside `Promise.all` / `.map()`.
+
 ## Guidelines
 
 - Read existing code before making changes to understand patterns
