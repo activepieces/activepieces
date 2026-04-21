@@ -21,15 +21,15 @@ import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
+import { runProgressService } from '../handler/run-progress'
 import { triggerHelper } from '../helper/trigger-helper'
-import { progressService } from '../services/progress.service'
 
 export const flowOperation = {
     execute: async (operation: ExecuteFlowOperation): Promise<EngineResponse<undefined>> => {
         const input = operation as ExecuteFlowOperation
         const constants = EngineConstants.fromExecuteFlowInput(input)
         const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input)).finishExecution()
-        await progressService.backup({
+        await runProgressService.backup({
             engineConstants: constants,
             flowExecutorContext: output,
         })
@@ -39,7 +39,6 @@ export const flowOperation = {
         return {
             status,
             response: undefined,
-            delayInSeconds: output.getDelayedInSeconds(),
         }
     },
 }

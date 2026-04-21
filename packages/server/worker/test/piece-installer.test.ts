@@ -151,7 +151,7 @@ describe('pieceInstaller', () => {
         const piece = makePiece('@activepieces/piece-cached')
         const pieceDir = pieceDirPath(piece)
 
-        await mkdir(pieceDir, { recursive: true })
+        await mkdir(join(pieceDir, 'node_modules'), { recursive: true })
         await writeFile(join(pieceDir, 'ready'), 'true')
 
         const installer = pieceInstaller(fakeLog, fakeApiClient)
