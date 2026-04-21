@@ -3,7 +3,7 @@ title: "Waitpoints"
 icon: "hourglass-half"
 ---
 
-A **waitpoint** is the durable row that represents a paused step on a flow run. It is the single source of truth for a pause — the flow run row only carries status (`PAUSED`, `RUNNING`, …); the *why* lives on the waitpoint.
+A **waitpoint** is the durable row that represents a paused step on a flow run. The flow run row only carries status (`PAUSED`, `RUNNING`, …); the *why* lives on the waitpoint.
 
 ```mermaid
 stateDiagram-v2
@@ -17,7 +17,7 @@ stateDiagram-v2
 
 | Field | Meaning |
 | --- | --- |
-| `flowRunId`, `stepName` | Which run/step is paused. Unique together — a step has at most one waitpoint. |
+| `flowRunId`, `stepName` | Which run/step is paused. Unique together: a step has at most one waitpoint. |
 | `type` | `DELAY` or `WEBHOOK`. |
 | `status` | `PENDING` until the resume signal arrives, then `COMPLETED`. |
 | `resumeDateTime` | For `DELAY`: when to fire the resume. |
@@ -26,14 +26,14 @@ stateDiagram-v2
 
 ## Types
 
-- **`DELAY`** — resumes at `resumeDateTime`. The server schedules a one-time job for that timestamp. The delay is bounded by a configurable server-side maximum.
-- **`WEBHOOK`** — resumes on any HTTP call to the waitpoint's resume URL. If `responseToSend` is set, it is replied immediately to the original trigger so a single webhook can respond-then-pause.
+- **`DELAY`**: resumes at `resumeDateTime`. The server schedules a one-time job for that timestamp. The delay is bounded by a configurable server-side maximum.
+- **`WEBHOOK`**: resumes on any HTTP call to the waitpoint's resume URL. If `responseToSend` is set, it is replied immediately to the original trigger so a single webhook can respond-then-pause.
 
 ## Lifecycle
 
-1. **Create.** The piece calls `ctx.run.createWaitpoint({ type, ... })` + `ctx.run.waitForWaitpoint(id)`. The engine sets the step verdict to `paused` and asks the server to insert a `PENDING` row. The insert is idempotent on the `(flow run, step)` pair.
+1. **Create.** The piece calls `ctx.run.createWaitpoint({ type, ... })` + `ctx.run.waitForWaitpoint(id)`. The engine marks the step as `paused` and asks the server to insert a `PENDING` row. The insert is idempotent on the `(flow run, step)` pair.
 2. **Checkpoint.** The engine serializes the execution context and transitions the flow run to `PAUSED`.
-3. **Resume signal.** Either an HTTP call on the resume URL or the scheduled job firing. Both carry a payload of `{ body, headers, queryParams }`.
+3. **Resume signal.** Either an HTTP call on the resume URL or the scheduled job firing. Both carry `{ body, headers, queryParams }`.
 4. **Re-run.** A worker rebuilds the context and re-invokes the same action with `ctx.executionType === ExecutionType.RESUME` and `ctx.resumePayload` populated.
 
 ```mermaid
@@ -70,7 +70,7 @@ Duplicate callbacks are absorbed by the uniqueness constraint; the engine never 
 | --- | --- | --- |
 | `POST` | `/v1/waitpoints` | Engine-only. Creates a `PENDING` waitpoint, returns its resume URL. |
 | `ALL` | `/v1/flow-runs/:id/waitpoints/:waitpointId` | Resume, async. |
-| `ALL` | `/v1/flow-runs/:id/waitpoints/:waitpointId/sync` | Resume, sync — the HTTP response is whatever the flow produces after resuming. |
+| `ALL` | `/v1/flow-runs/:id/waitpoints/:waitpointId/sync` | Resume, sync. The HTTP response is whatever the flow produces after resuming. |
 
 ## Piece API
 
