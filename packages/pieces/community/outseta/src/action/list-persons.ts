@@ -32,7 +32,7 @@ export const listPersonsAction = createAction({
     const offset = context.propsValue.offset ?? 0;
 
     const result = await client.get<any>(
-      `/api/v1/crm/people?$top=${limit}&$skip=${offset}`
+      `/api/v1/crm/people?limit=${limit}&offset=${offset}`
     );
 
     return result;

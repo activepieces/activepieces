@@ -35,7 +35,7 @@ export function pipelineDropdown(options?: {
         return { disabled: true, options: [], placeholder: 'Connect your Outseta account first.' };
       }
       try {
-        const res = await client.get<any>('/api/v1/crm/deals/pipelines?$top=100');
+        const res = await client.get<any>('/api/v1/crm/deals/pipelines?limit=100');
         const items: any[] = res?.items ?? res?.Items ?? [];
         return {
           disabled: false,
@@ -121,7 +121,7 @@ export function planUidDropdown(options?: {
       }
 
       try {
-        const res = await client.get<any>('/api/v1/billing/plans?$top=100');
+        const res = await client.get<any>('/api/v1/billing/plans?limit=100');
         let items: any[] = res?.items ?? res?.Items ?? [];
 
         if (planFamilyUid) {
@@ -180,7 +180,7 @@ export function addOnUidDropdown(options?: {
       }
 
       try {
-        const res = await client.get<any>('/api/v1/billing/addons?$top=100');
+        const res = await client.get<any>('/api/v1/billing/addons?limit=100');
         const items: any[] = res?.items ?? res?.Items ?? [];
         return {
           disabled: false,
@@ -209,7 +209,7 @@ export function emailListUidDropdown(options?: { required?: boolean }) {
         return { disabled: true, options: [], placeholder: 'Connect your Outseta account first.' };
       }
       try {
-        const res = await client.get<any>('/api/v1/email/lists?$top=100');
+        const res = await client.get<any>('/api/v1/email/lists?limit=100');
         const items: any[] = res?.items ?? res?.Items ?? [];
         return {
           disabled: false,
@@ -238,7 +238,7 @@ export function discountDropdown(options?: { required?: boolean }) {
         return { disabled: true, options: [], placeholder: 'Connect your Outseta account first.' };
       }
       try {
-        const res = await client.get<any>('/api/v1/billing/discountcoupons?$top=100');
+        const res = await client.get<any>('/api/v1/billing/discountcoupons?limit=100');
         const items: any[] = res?.items ?? res?.Items ?? [];
         return {
           disabled: false,

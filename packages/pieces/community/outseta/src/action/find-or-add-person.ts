@@ -63,7 +63,7 @@ export const findOrAddPersonAction = createAction({
     });
 
     const items = await client.getAllPages<any>(
-      `/api/v1/crm/people?$filter=Email eq '${OutsetaClient.escapeOData(context.propsValue.email)}'`
+      `/api/v1/crm/people?Email=${encodeURIComponent(context.propsValue.email)}`
     );
     const exactMatch = items.find(
       (item: any) =>

@@ -31,32 +31,23 @@ export class OutsetaClient {
 
   async getAllPages<T>(basePath: string, pageSize = 100): Promise<T[]> {
     const allItems: T[] = [];
-    let offset = 0;
+    // Outseta's `offset` is page-based (0 = first page, 1 = second page, ...)
+    // not item-based, so we increment by 1, not by pageSize.
+    let page = 0;
 
     while (true) {
       const separator = basePath.includes('?') ? '&' : '?';
       const res = await this.get<PaginatedResponse<T>>(
-        `${basePath}${separator}$top=${pageSize}&$skip=${offset}`
+        `${basePath}${separator}limit=${pageSize}&offset=${page}`
       );
       const items: T[] = res?.items ?? res?.Items ?? [];
       allItems.push(...items);
 
       if (items.length < pageSize) break;
-      offset += pageSize;
+      page += 1;
     }
 
     return allItems;
-  }
-
-  static escapeOData(value: string): string {
-    const odataEscaped = value.replace(/'/g, "''");
-    // `+` is intentionally NOT in the safe set: some URL parsers decode it
-    // as space, which would silently corrupt tagged emails like
-    // `user+tag@example.com`. Encoding to %2B is unambiguous.
-    return odataEscaped.replace(
-      /[^A-Za-z0-9@:._\-~!$()*]/g,
-      (c) => encodeURIComponent(c)
-    );
   }
 
   private async request<T>(

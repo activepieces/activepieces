@@ -31,6 +31,6 @@ export const listDealsAction = createAction({
     const limit = context.propsValue.limit ?? 100;
     const offset = context.propsValue.offset ?? 0;
 
-    return client.get<unknown>(`/api/v1/crm/deals?$top=${limit}&$skip=${offset}`);
+    return client.get<unknown>(`/api/v1/crm/deals?limit=${limit}&offset=${offset}`);
   },
 });

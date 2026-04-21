@@ -73,7 +73,7 @@ export const newPersonEventTrigger = createTrigger({
     const selected = (context.propsValue.eventSubTypes ?? []) as string[];
     const orderBy = selected.includes('created') ? 'Created' : 'Updated';
     const res = await client.get<{ items?: Record<string, unknown>[]; Items?: Record<string, unknown>[] }>(
-      `/api/v1/crm/people?$top=5&$orderby=${orderBy} desc`
+      `/api/v1/crm/people?limit=5&orderBy=${orderBy}&orderDirection=desc`
     );
     return res?.items ?? res?.Items ?? [];
   },

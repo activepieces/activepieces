@@ -26,8 +26,11 @@ export const getDealAction = createAction({
     const contactEmail = context.propsValue.contactEmail.toLowerCase();
     const pipelineUid = context.propsValue.pipelineUid;
 
+    // Outseta does not support nested filters on /crm/deals (DealPipelineStage.*
+    // returns "Invalid filter specification"), so fetch all deals with the
+    // pipeline expanded and filter client-side on pipelineUid.
     const items = await client.getAllPages<any>(
-      `/api/v1/crm/deals?$filter=DealPipelineStage/DealPipeline/Uid eq '${OutsetaClient.escapeOData(pipelineUid)}'&fields=*,DealPeople,DealPeople.Person,DealPipelineStage,DealPipelineStage.DealPipeline,Account`
+      `/api/v1/crm/deals?fields=Uid,Name,Amount,DueDate,Created,Updated,AssignedToPersonClientIdentifier,DealPipelineStage.Uid,DealPipelineStage.Name,DealPipelineStage.DealPipeline.Uid,DealPeople.Person.Uid,DealPeople.Person.Email,Account.Uid,Account.Name`
     );
 
     const match = items.find((deal: any) => {

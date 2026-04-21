@@ -23,7 +23,7 @@ export const getPersonAction = createAction({
 
     const email = context.propsValue.email;
     const items = await client.getAllPages<any>(
-      `/api/v1/crm/people?$filter=Email eq '${OutsetaClient.escapeOData(email)}'&fields=*,Account.*`
+      `/api/v1/crm/people?Email=${encodeURIComponent(email)}&fields=*,PersonAccount.Account.Uid,PersonAccount.Account.Name,PersonAccount.Account.AccountStage`
     );
 
     const person = items.find(
@@ -54,9 +54,9 @@ export const getPersonAction = createAction({
       mailing_address_state: person.MailingAddress?.State ?? null,
       mailing_address_postal_code: person.MailingAddress?.PostalCode ?? null,
       mailing_address_country: person.MailingAddress?.Country ?? null,
-      account_uid: person.Account?.Uid ?? null,
-      account_name: person.Account?.Name ?? null,
-      account_stage: person.Account?.AccountStage ?? null,
+      account_uid: person.PersonAccount?.[0]?.Account?.Uid ?? null,
+      account_name: person.PersonAccount?.[0]?.Account?.Name ?? null,
+      account_stage: person.PersonAccount?.[0]?.Account?.AccountStage ?? null,
     };
   },
 });

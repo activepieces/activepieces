@@ -84,7 +84,7 @@ export const newSubscriptionEventTrigger = createTrigger({
     const selected = (context.propsValue.eventSubTypes ?? []) as string[];
     const orderBy = selected.includes('started') ? 'Created' : 'Updated';
     const res = await client.get<{ items?: Record<string, unknown>[]; Items?: Record<string, unknown>[] }>(
-      `/api/v1/billing/subscriptions?$top=5&$orderby=${orderBy} desc`
+      `/api/v1/billing/subscriptions?limit=5&orderBy=${orderBy}&orderDirection=desc`
     );
     return res?.items ?? res?.Items ?? [];
   },
