@@ -58,7 +58,7 @@ export const updateCampaignAction = createAction({
 
     const body: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(fields)) {
-      if (value !== undefined && value !== null) {
+      if (value !== undefined && value !== null && value !== '') {
         body[key] = value;
       }
     }
