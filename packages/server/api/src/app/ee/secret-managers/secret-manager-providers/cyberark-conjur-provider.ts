@@ -1,8 +1,11 @@
-import https from 'https'
 import { safeHttp } from '@activepieces/server-utils'
 import { SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
+
+const conjurAxios = safeHttp.createRetryingAxios(undefined, {
+    httpsAgentOptions: { rejectUnauthorized: false },
+})
 
 export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.CYBERARK> => ({
     checkConnection: async (config) => {
@@ -62,7 +65,7 @@ const conjurApi = async ({
     method: string
     body?: Record<string, unknown> | string
 }) => {
-    return safeHttp.retryingAxios.request({
+    return conjurAxios.request({
         url,
         method,
         headers: {
@@ -71,8 +74,5 @@ const conjurApi = async ({
         },
         data: body,
         responseType: typeof body === 'string' ? 'text' : 'json',
-        httpsAgent: new https.Agent({
-            rejectUnauthorized: false,
-        }),
     })
 }

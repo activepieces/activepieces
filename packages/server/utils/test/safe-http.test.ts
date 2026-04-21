@@ -50,4 +50,14 @@ describe('safeHttp end-to-end blocking', () => {
             message: expect.stringMatching(/DNS lookup .* not allowed|IP .* not allowed|is not allowed/i),
         })
     })
+
+    it('still blocks private IPs when caller relaxes TLS via httpsAgentOptions', async () => {
+        const instance = safeHttp.createAxios(
+            { timeout: 2000 },
+            { httpsAgentOptions: { rejectUnauthorized: false } },
+        )
+        await expect(instance.get('https://127.0.0.1/')).rejects.toMatchObject({
+            message: expect.stringMatching(/DNS lookup .* not allowed|IP .* not allowed|is not allowed/i),
+        })
+    })
 })

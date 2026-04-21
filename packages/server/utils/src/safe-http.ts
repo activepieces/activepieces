@@ -11,7 +11,7 @@ function parseAllowListFromEnv(): string[] {
     return raw.split(',').map((s) => s.trim()).filter(Boolean)
 }
 
-function buildAgents({ allowList }: BuildAgentsParams): SsrfAgents {
+function buildAgents({ allowList, httpsAgentOptions }: BuildAgentsParams): SsrfAgents {
     const filteringOptions = {
         keepAlive: true,
         allowPrivateIPAddress: false,
@@ -21,12 +21,15 @@ function buildAgents({ allowList }: BuildAgentsParams): SsrfAgents {
     }
     return {
         httpAgent: new RequestFilteringHttpAgent(filteringOptions),
-        httpsAgent: new RequestFilteringHttpsAgent(filteringOptions),
+        httpsAgent: new RequestFilteringHttpsAgent({ ...filteringOptions, ...httpsAgentOptions }),
     }
 }
 
-function createAxios(config?: AxiosRequestConfig): AxiosInstance {
-    const { httpAgent, httpsAgent } = buildAgents({ allowList: parseAllowListFromEnv() })
+function createAxios(config?: AxiosRequestConfig, { httpsAgentOptions }: SafeAxiosOptions = {}): AxiosInstance {
+    const { httpAgent, httpsAgent } = buildAgents({
+        allowList: parseAllowListFromEnv(),
+        httpsAgentOptions,
+    })
     return axios.create({
         ...config,
         httpAgent,
@@ -34,8 +37,8 @@ function createAxios(config?: AxiosRequestConfig): AxiosInstance {
     })
 }
 
-function createRetryingAxios(config?: AxiosRequestConfig): AxiosInstance {
-    const instance = createAxios(config)
+function createRetryingAxios(config?: AxiosRequestConfig, options?: SafeAxiosOptions): AxiosInstance {
+    const instance = createAxios(config, options)
     axiosRetry(instance, {
         retries: 3,
         retryDelay: () => 2000,
@@ -67,6 +70,11 @@ export type SsrfAgents = {
     httpsAgent: https.Agent
 }
 
+export type SafeAxiosOptions = {
+    httpsAgentOptions?: https.AgentOptions
+}
+
 type BuildAgentsParams = {
     allowList: string[]
+    httpsAgentOptions?: https.AgentOptions
 }
