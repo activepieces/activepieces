@@ -359,6 +359,7 @@ import { AddWaitpointTable1775747638323 } from './migration/postgres/17757476383
 import { AddConcurrencyPoolTable1775800000000 } from './migration/postgres/1775800000000-AddConcurrencyPoolTable'
 import { AddDefaultToAiProvidersEnabled1776000000000 } from './migration/postgres/1776000000000-AddDefaultToAiProvidersEnabled'
 import { DropWaitpointTimeoutSeconds1776342514732 } from './migration/postgres/1776342514732-DropWaitpointTimeoutSeconds'
+import { BetterAuth1776192009225 } from './migration/postgres/1776192009225-BetterAuth'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -732,7 +733,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAiProvidersEnabledToPlatformPlan1775728983000,
         AddConcurrencyPoolTable1775800000000,
         AddDefaultToAiProvidersEnabled1776000000000,
-        // BetterAuth1776192009225,
+        BetterAuth1776192009225,
         DropWaitpointTimeoutSeconds1776342514732,
     ]
     return migrations

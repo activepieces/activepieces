@@ -39,22 +39,21 @@ export class BetterAuth1776192009225 implements Migration {
             end $$
         `)
 
-        await queryRunner.query('alter table "user_identity" alter column "id" type character varying')
         await queryRunner.query('alter table "user_identity" rename column "created" to "createdAt"')
         await queryRunner.query('alter table "user_identity" rename column "updated" to "updatedAt"')
         await queryRunner.query('ALTER TABLE "user_identity" ADD COLUMN IF NOT EXISTS "twoFactorEnabled" BOOLEAN NOT NULL DEFAULT FALSE')
 
         // ── better-auth core tables ───────────────────────────────────────
         await queryRunner.query(`
-            create table "session" ("id" text not null primary key, "expiresAt" timestamptz not null, "token" text not null unique, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz not null, "ipAddress" text, "userAgent" text, "userId" text not null references "user_identity" ("id") on delete cascade);
+            create table "session" ("id" character varying(21) not null primary key, "expiresAt" timestamptz not null, "token" text not null unique, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz not null, "ipAddress" text, "userAgent" text, "userId" text not null references "user_identity" ("id") on delete cascade);
         `)
 
         await queryRunner.query(`
-            create table "account" ("id" text not null primary key, "accountId" text not null, "providerId" text not null, "userId" text not null references "user_identity" ("id") on delete cascade, "accessToken" text, "refreshToken" text, "idToken" text, "accessTokenExpiresAt" timestamptz, "refreshTokenExpiresAt" timestamptz, "scope" text, "password" text, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz not null);
+            create table "account" ("id" character varying(21) not null primary key, "accountId" text not null, "providerId" text not null, "userId" text not null references "user_identity" ("id") on delete cascade, "accessToken" text, "refreshToken" text, "idToken" text, "accessTokenExpiresAt" timestamptz, "refreshTokenExpiresAt" timestamptz, "scope" text, "password" text, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz not null);
         `)
 
         await queryRunner.query(`
-            create table "verification" ("id" text not null primary key, "identifier" text not null, "value" text not null, "expiresAt" timestamptz not null, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz default CURRENT_TIMESTAMP not null);
+            create table "verification" ("id" character varying(21) not null primary key, "identifier" text not null, "value" text not null, "expiresAt" timestamptz not null, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz default CURRENT_TIMESTAMP not null);
         `)
 
         await queryRunner.query('create index "session_userId_idx" on "session" ("userId")')
@@ -73,7 +72,7 @@ export class BetterAuth1776192009225 implements Migration {
                 loop
                     insert into "account" ("id", "accountId", "providerId", "userId", "password", "createdAt", "updatedAt")
                     select
-                        gen_random_uuid()::text,
+                        replace(gen_random_uuid()::text, '-', '')::character varying(21),
                         "email",
                         'credential',
                         "id",
@@ -105,7 +104,7 @@ export class BetterAuth1776192009225 implements Migration {
                 loop
                     insert into "account" ("id", "accountId", "providerId", "userId", "createdAt", "updatedAt")
                     select
-                        gen_random_uuid()::text,
+                        replace(gen_random_uuid()::text, '-', '')::character varying(21),
                         "email",
                         'google',
                         "id",
@@ -126,7 +125,7 @@ export class BetterAuth1776192009225 implements Migration {
         // ── two-factor table ──────────────────────────────────────────────
         await queryRunner.query(`
             CREATE TABLE IF NOT EXISTS "twoFactor" (
-                "id" TEXT PRIMARY KEY,
+                "id" CHARACTER VARYING(21) NOT NULL PRIMARY KEY,
                 "secret" TEXT NOT NULL,
                 "backupCodes" TEXT NOT NULL,
                 "userId" TEXT NOT NULL REFERENCES "user_identity"("id") ON DELETE CASCADE,
@@ -142,7 +141,7 @@ export class BetterAuth1776192009225 implements Migration {
         // ── SSO provider table ────────────────────────────────────────────
         await queryRunner.query(`
             CREATE TABLE IF NOT EXISTS "ssoProvider" (
-                "id"             TEXT NOT NULL PRIMARY KEY,
+                "id"             CHARACTER VARYING(21) NOT NULL PRIMARY KEY,
                 "providerId"     TEXT NOT NULL UNIQUE,
                 "issuer"         TEXT NOT NULL,
                 "domain"         TEXT NOT NULL DEFAULT '',
@@ -159,7 +158,7 @@ export class BetterAuth1776192009225 implements Migration {
         await queryRunner.query(`
             INSERT INTO "ssoProvider" ("id", "providerId", "issuer", "domain", "oidcConfig", "createdAt", "updatedAt")
             SELECT
-                gen_random_uuid()::text,
+                replace(gen_random_uuid()::text, '-', '')::character varying(21),
                 'google-' || p."id",
                 'https://accounts.google.com',
                 'platform-' || p."id",
@@ -182,7 +181,7 @@ export class BetterAuth1776192009225 implements Migration {
         await queryRunner.query(`
             INSERT INTO "ssoProvider" ("id", "providerId", "issuer", "domain", "samlConfig", "createdAt", "updatedAt")
             SELECT
-                gen_random_uuid()::text,
+                replace(gen_random_uuid()::text, '-', '')::character varying(21),
                 'saml-' || p."id",
                 'Activepieces',
                 'platform-' || p."id",
@@ -210,9 +209,23 @@ export class BetterAuth1776192009225 implements Migration {
               AND p."federatedAuthProviders"->>'saml' != 'null'
             ON CONFLICT ("providerId") DO NOTHING
         `, [oldAcsUrl])
+
+        // rate limit table
+        await queryRunner.query(`
+            CREATE TABLE IF NOT EXISTS "rateLimit" (
+                "id" CHARACTER VARYING(21) NOT NULL PRIMARY KEY,
+                "key" TEXT NOT NULL UNIQUE,
+                "count" INTEGER NOT NULL,
+                "lastRequest" BIGINT NOT NULL
+            )
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+
+        // ── rate limit ──────────────────────────────────────────────────
+        await queryRunner.query('DROP TABLE IF EXISTS "rateLimit"')
+
         // ── SSO provider ──────────────────────────────────────────────────
         await queryRunner.query('DROP INDEX IF EXISTS "ssoProvider_providerId_idx"')
         await queryRunner.query('DROP TABLE IF EXISTS "ssoProvider"')
@@ -236,7 +249,6 @@ export class BetterAuth1776192009225 implements Migration {
         await queryRunner.query('ALTER TABLE "user_identity" DROP COLUMN IF EXISTS "twoFactorEnabled"')
         await queryRunner.query('alter table "user_identity" rename column "createdAt" to "created"')
         await queryRunner.query('alter table "user_identity" rename column "updatedAt" to "updated"')
-        await queryRunner.query('alter table "user_identity" alter column "id" type character varying(21)')
         await queryRunner.query('alter table "user_identity" drop column if exists "emailVerified"')
         await queryRunner.query('UPDATE "user_identity" SET "password" = \'PLACEHOLDER\' WHERE "password" IS NULL')
         await queryRunner.query('alter table "user_identity" alter column "password" set not null')

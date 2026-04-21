@@ -2,6 +2,8 @@ import { assertNotNullOrUndefined } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { platformUtils } from '../../platform/platform.utils'
 import { betterAuthInstance } from './auth'
 
@@ -11,7 +13,8 @@ export const betterAuthController: FastifyPluginAsyncZod = async (app) => {
         url: '/v1/better-auth/*',
         async handler(request, reply) {
             try {
-                const response = await betterAuthInstance.get().handler(toWebRequest(request))
+                const response = await betterAuthInstance.get().handler(toWebRequest({ url: request.url, headers: request.headers as Record<string, string | string[] | undefined>, method: request.method, body: request.body, ip: request.ip }))
+                app.log.info({ xx: request.headers, ip: request.ip }, '[]webrequest')
 
                 void reply.status(response.status)
                 response.headers.forEach((value, key) => {
@@ -40,7 +43,7 @@ export const betterAuthController: FastifyPluginAsyncZod = async (app) => {
         const targetPath = `/v1/better-auth/sso/saml2/callback/${providerId}`
         const targetUrl = new URL(targetPath, `http://${request.headers.host}`)
 
-        const response = await betterAuthInstance.get().handler(toWebRequest(request, targetUrl))
+        const response = await betterAuthInstance.get().handler(toWebRequest({ url: request.url, headers: request.headers as Record<string, string | string[] | undefined>, method: request.method, body: request.body, ip: request.ip }, targetUrl))
 
         void reply.status(response.status)
         response.headers.forEach((value, key) => {
@@ -50,11 +53,18 @@ export const betterAuthController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-function toWebRequest(request: { url: string, headers: Record<string, string | string[] | undefined>, method: string, body?: unknown }, overrideUrl?: URL): Request {
+function toWebRequest(request: { url: string, headers: Record<string, string | string[] | undefined>, method: string, body?: unknown, ip?: string }, overrideUrl?: URL): Request {
     const url = overrideUrl ?? new URL(request.url, `http://${request.headers.host}`)
     const headers = new Headers()
     for (const [key, value] of Object.entries(request.headers)) {
         if (value) headers.append(key, value.toString())
+    }
+    const clientIpHeader = system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)
+    if (clientIpHeader && !headers.has(clientIpHeader) && request.ip) {
+        headers.set(clientIpHeader, request.ip)
+    }
+    if (!headers.has('x-forwarded-for') && request.ip) {
+        headers.set('x-forwarded-for', request.ip)
     }
     const contentType = headers.get('content-type') ?? ''
     const isFormEncoded = contentType.includes('application/x-www-form-urlencoded')

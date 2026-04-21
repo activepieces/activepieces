@@ -11,9 +11,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { OtpInput } from '@/components/ui/otp-input';
 import { AuthLayout } from '@/features/authentication';
 import { authenticationSession } from '@/lib/authentication-session';
-import { downloadTxt } from '@/lib/utils';
 import { authClient } from '@/lib/better-auth';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
+import { downloadTxt } from '@/lib/utils';
 
 type Step = 'verify' | 'backup';
 
@@ -114,7 +114,7 @@ const TwoFactorSetupPage: React.FC = () => {
 
   const stepDescription: Record<Step, string> = {
     verify: t(
-      'Scan the QR code with your authenticator app, then enter the 6-digit code.'
+      'Scan the QR code with your authenticator app, then enter the 6-digit code.',
     ),
     backup: t('Save your backup codes'),
   };
@@ -187,7 +187,7 @@ const TwoFactorSetupPage: React.FC = () => {
           <>
             <p className="text-sm text-muted-foreground">
               {t(
-                'Save these backup codes in a safe place. Each code can only be used once.'
+                'Save these backup codes in a safe place. Each code can only be used once.',
               )}
             </p>
             <div className="grid grid-cols-2 gap-2">

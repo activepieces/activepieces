@@ -18,8 +18,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { OtpInput } from '@/components/ui/otp-input';
-import { downloadTxt } from '@/lib/utils';
 import { authClient } from '@/lib/better-auth';
+import { downloadTxt } from '@/lib/utils';
 
 type Step = 'password' | 'verify' | 'backup';
 
@@ -75,7 +75,7 @@ function EnableTwoFaForm({
       const { data, error } = await authClient.twoFactor.enable({ password });
       if (error || !data) {
         setEnableError(
-          error?.message ?? t('Invalid password. Please try again.')
+          error?.message ?? t('Invalid password. Please try again.'),
         );
         return;
       }
@@ -120,7 +120,7 @@ function EnableTwoFaForm({
         {step === 'verify' && (
           <DialogDescription>
             {t(
-              'Scan the QR code with your authenticator app, then enter the 6-digit code.'
+              'Scan the QR code with your authenticator app, then enter the 6-digit code.',
             )}
           </DialogDescription>
         )}
@@ -190,7 +190,7 @@ function EnableTwoFaForm({
         <div className="flex flex-col gap-4">
           <p className="text-sm text-muted-foreground">
             {t(
-              'Save these backup codes in a safe place. Each code can only be used once.'
+              'Save these backup codes in a safe place. Each code can only be used once.',
             )}
           </p>
           <div className="grid grid-cols-2 gap-2">

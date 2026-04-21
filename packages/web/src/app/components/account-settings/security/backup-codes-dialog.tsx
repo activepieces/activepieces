@@ -17,8 +17,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { OtpInput } from '@/components/ui/otp-input';
 import { Separator } from '@/components/ui/separator';
-import { downloadTxt } from '@/lib/utils';
 import { authClient } from '@/lib/better-auth';
+import { downloadTxt } from '@/lib/utils';
 
 function BackupCodesForm({
   backupCodesRemaining,
@@ -127,10 +127,10 @@ function BackupCodesForm({
         <p className="text-xs text-muted-foreground">
           {hasPassword
             ? t(
-                'Enter your password to generate new backup codes. This will invalidate all existing codes.'
+                'Enter your password to generate new backup codes. This will invalidate all existing codes.',
               )
             : t(
-                'Enter your authenticator code to generate new backup codes. This will invalidate all existing codes.'
+                'Enter your authenticator code to generate new backup codes. This will invalidate all existing codes.',
               )}
         </p>
 

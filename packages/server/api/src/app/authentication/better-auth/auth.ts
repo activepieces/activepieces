@@ -1,5 +1,5 @@
 import { cryptoUtils } from '@activepieces/server-utils'
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { apId, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { sso } from '@better-auth/sso'
 import { betterAuth } from 'better-auth'
 import { createAuthMiddleware } from 'better-auth/api'
@@ -33,6 +33,29 @@ async function createBetterAuth(log: FastifyBaseLogger) {
     return betterAuth({
         basePath: '/v1/better-auth',
         database,
+        rateLimit: {
+            enabled: true,
+            window: 60,
+            max: 10,
+            storage: 'database',
+            customRules: {
+                '/two-factor/*': {
+                    window: 10,
+                    max: 3,
+                },
+            },
+        },
+        advanced: {
+            database: {
+                generateId: () => apId(),
+            },
+            ipAddress: {
+                ipAddressHeaders: [
+                    system.get(AppSystemProp.CLIENT_REAL_IP_HEADER) ?? 'x-real-ip',
+                    'x-forwarded-for',
+                ],
+            },
+        },
         user: {
             modelName: 'user_identity',
             additionalFields: {
