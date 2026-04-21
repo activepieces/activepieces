@@ -95,7 +95,7 @@ Network Security layers on top of the sandbox execution mode — they are indepe
 | **V8 Sandboxing** (`SANDBOX_CODE_ONLY`) | ✅ | ✅ | ❌ — engine process shares the host UID |
 | **Kernel Namespaces** (`SANDBOX_PROCESS` with `isolate`) | ✅ | ✅ | ✅ — `iptables` rules scoped to sandbox UIDs |
 
-See [Workers & Sandboxing](./workers) for what each sandbox mode isolates at the process level. Network Security is orthogonal: it isolates what the sandbox is allowed to *reach*, regardless of *how* it runs.
+See [Sandboxing](./sandboxing) for what each sandbox mode isolates at the process level. Network Security is orthogonal: it isolates what the sandbox is allowed to *reach*, regardless of *how* it runs.
 
 <Warning>
 In `UNSANDBOXED` and V8 modes there is no kernel-level fallback. The in-process SSRF guard and the egress proxy are the only two layers — which is still strong, but a determined attacker who compromises the Node process can bypass in-process checks. Use `SANDBOX_PROCESS` in multi-tenant deployments.
