@@ -51,7 +51,7 @@ export const aiProviderMutations = {
   },
 };
 
-const hasAnyAuthFieldFilled = (
+export const hasAnyAuthFieldFilled = (
   auth: AIProviderAuthConfig | undefined,
 ): boolean => {
   if (!auth) {

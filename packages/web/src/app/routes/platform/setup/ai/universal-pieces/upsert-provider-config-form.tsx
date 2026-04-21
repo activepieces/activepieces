@@ -64,7 +64,7 @@ export const UpsertProviderConfigForm = ({
   });
 
   const [showApiKeyInput, setShowApiKeyInput] = useState(!isEditMode);
-  const [showBedrockSecretInput, setShowBedrockSecretInput] = useState(
+  const [showBedrockAuthInputs, setShowBedrockAuthInputs] = useState(
     !isEditMode,
   );
 
@@ -222,66 +222,72 @@ export const UpsertProviderConfigForm = ({
 
       {provider === AIProviderName.BEDROCK && (
         <>
-          <FormField
-            control={form.control}
-            name="auth.accessKeyId"
-            render={({ field }) => (
-              <FormItem className="grid space-y-3">
-                <FormLabel htmlFor="accessKeyId">
-                  {t('AWS Access Key ID')}
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    required={apiKeyRequired}
-                    id="accessKeyId"
-                    placeholder={'AKIA************'}
-                    disabled={isLoading}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {!showBedrockAuthInputs && (
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">
+                {t('AWS Credentials')}
+              </Label>
+              <Button
+                type="button"
+                variant="basic"
+                size="sm"
+                onClick={() => setShowBedrockAuthInputs(true)}
+                disabled={isLoading}
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                {t('Edit')}
+              </Button>
+            </div>
+          )}
 
-          <FormField
-            control={form.control}
-            name="auth.secretAccessKey"
-            render={({ field }) => (
-              <FormItem className="grid space-y-3">
-                <div className="flex items-center justify-between">
-                  <FormLabel htmlFor="secretAccessKey">
-                    {t('AWS Secret Access Key')}
-                  </FormLabel>
-                  {!showBedrockSecretInput && (
-                    <Button
-                      type="button"
-                      variant="basic"
-                      size="sm"
-                      onClick={() => setShowBedrockSecretInput(true)}
-                      disabled={isLoading}
-                    >
-                      <Pencil className="h-4 w-4 mr-2" />
-                      {t('Edit')}
-                    </Button>
-                  )}
-                </div>
-                {showBedrockSecretInput && (
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="password"
-                      required={apiKeyRequired}
-                      id="secretAccessKey"
-                      placeholder={'****************************************'}
-                      disabled={isLoading}
-                    />
-                  </FormControl>
+          {showBedrockAuthInputs && (
+            <>
+              <FormField
+                control={form.control}
+                name="auth.accessKeyId"
+                render={({ field }) => (
+                  <FormItem className="grid space-y-3">
+                    <FormLabel htmlFor="accessKeyId">
+                      {t('AWS Access Key ID')}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        required={apiKeyRequired}
+                        id="accessKeyId"
+                        placeholder={'AKIA************'}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              />
+
+              <FormField
+                control={form.control}
+                name="auth.secretAccessKey"
+                render={({ field }) => (
+                  <FormItem className="grid space-y-3">
+                    <FormLabel htmlFor="secretAccessKey">
+                      {t('AWS Secret Access Key')}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="password"
+                        required={apiKeyRequired}
+                        id="secretAccessKey"
+                        placeholder={'****************************************'}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          )}
 
           <FormField
             control={form.control}

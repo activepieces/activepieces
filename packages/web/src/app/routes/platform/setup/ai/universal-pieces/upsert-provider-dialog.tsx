@@ -1,5 +1,4 @@
 import {
-  AIProviderAuthConfig,
   AIProviderConfig,
   AIProviderName,
   AnthropicProviderAuthConfig,
@@ -54,7 +53,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
-import { aiProviderApi } from '@/features/platform-admin';
+import {
+  aiProviderApi,
+  hasAnyAuthFieldFilled,
+} from '@/features/platform-admin';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
@@ -340,15 +342,4 @@ const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
       OpenAIProviderConfig,
     ]),
   });
-};
-
-const hasAnyAuthFieldFilled = (
-  auth: AIProviderAuthConfig | undefined,
-): boolean => {
-  if (!auth) {
-    return false;
-  }
-  return Object.values(auth).some(
-    (value) => typeof value === 'string' && value.length > 0,
-  );
 };

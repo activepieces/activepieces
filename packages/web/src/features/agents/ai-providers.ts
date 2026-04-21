@@ -80,7 +80,7 @@ It is strongly recommended that you add your credit card information to your Ope
 1. Open the [AWS IAM Console](https://console.aws.amazon.com/iam/) and go to **Users**.
 2. Select your user (or create a new one), then go to **Security credentials**.
 3. Click **Create access key** — copy both the Access Key ID and Secret Access Key.
-4. Make sure the IAM user has the **AmazonBedrockFullAccess** policy attached.
+4. Attach a policy granting only the Bedrock actions this integration uses: \`bedrock:ListFoundationModels\`, \`bedrock:InvokeModel\`, and \`bedrock:InvokeModelWithResponseStream\`. Avoid broad policies like **AmazonBedrockFullAccess** — follow least-privilege so a leaked key has limited blast radius.
 5. In the [AWS Bedrock Console](https://console.aws.amazon.com/bedrock/), go to **Model access** and request access to the models you want to use.`),
   },
 ];
