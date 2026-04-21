@@ -145,13 +145,13 @@ export async function searchIssuesByJql({
 	if (nextPageToken) bodyPayload['nextPageToken'] = nextPageToken;
 	
 	// Clean the array by removing any empty, null, or whitespace-only items
-  const cleanedFields = fields?.filter((f) => f && f.trim().length > 0) || [];
+  	const cleanedFields = fields?.filter((f) => f && f.trim().length > 0) || [];
 
-  if (cleanedFields.length > 0) {
-    bodyPayload['fields'] = cleanedFields;
-  } else {
-    bodyPayload['fields'] = ['*navigable'];
-  }
+	if (cleanedFields.length > 0) {
+		bodyPayload['fields'] = cleanedFields;
+	} else {
+		bodyPayload['fields'] = ['*navigable'];
+	}
 	
 	if (expand && expand.length > 0) {
 		bodyPayload['expand'] = expand.join(','); 
