@@ -51,7 +51,9 @@ The agent step is a `PIECE` action on `@activepieces/piece-agent`. Its `settings
 - `webSearch` / `webSearchOptions` — optional web search tool configuration
 
 ## Tool Validation
-MCP tools are validated server-side via `POST /v1/projects/:projectId/mcp-server/validate-agent-mcp-tool` (see `mcp-tool-validator.ts`), which performs the JSON-RPC `initialize` → `notifications/initialized` → `tools/list` handshake against the target. The outbound call is routed through `apAxios`, whose http/https agents are built by `ssrf-agents.ts` to reject private / loopback / link-local / meta IPs by default. Operators can allow specific ranges via `AP_SSRF_ALLOW_LIST` (CIDR supported). All error paths collapse to a single generic message to avoid leaking reachability/port-scan signal.
+External MCP servers configured as agent tools are validated server-side via `POST /v1/projects/:projectId/agent-tools/mcp/validate` (see `packages/server/api/src/app/agents/`). The handler performs the JSON-RPC `initialize` → `notifications/initialized` → `tools/list` handshake against the target and returns its tool names. The outbound call is routed through `apAxios`, whose http/https agents are built by `ssrf-agents.ts` to reject private / loopback / link-local / meta IPs by default. Operators can allow specific ranges via `AP_SSRF_ALLOW_LIST` (CIDR supported). All error paths collapse to a single generic message to avoid leaking reachability signal.
+
+The validator lives under `agents/` (not `mcp/`) because it belongs to the **agent piece** domain — validating an external MCP server the agent will connect to at flow-execution time. The `mcp/` module handles the **opposite direction**: exposing Activepieces itself as an MCP server to external clients.
 
 ## Timeline Rendering
 `AgentTimeline` receives `AgentStepBlock[]` from the step output and renders:

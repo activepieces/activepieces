@@ -5,8 +5,8 @@ vi.mock('../../../../src/app/helper/ap-axios', () => ({
     apAxios: { post: vi.fn() },
 }))
 
+import { mcpToolValidator } from '../../../../src/app/agents/mcp-tool-validator'
 import { apAxios } from '../../../../src/app/helper/ap-axios'
-import { mcpToolValidator } from '../../../../src/app/mcp/mcp-tool-validator'
 
 type AxiosCall = { url: string, body: string, config: AxiosConfigLike }
 type AxiosConfigLike = { headers?: Record<string, string>, maxRedirects?: number, timeout?: number }
