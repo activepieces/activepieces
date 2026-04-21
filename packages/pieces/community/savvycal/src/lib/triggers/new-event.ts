@@ -26,12 +26,12 @@ export const newEventTrigger = createTrigger({
   auth: savvyCalAuth,
   name: 'new_event',
   displayName: 'New Event',
-  description: 'Triggers when a SavvyCal event occurs. Select the event type to listen for.',
+  description: 'Triggers when a SavvyCal event occurs. Select one or more event types, or leave empty to trigger on all types.',
   props: {
-    event_type: Property.StaticDropdown({
-      displayName: 'Event Type',
-      description: 'The type of event to trigger on.',
-      required: true,
+    event_types: Property.StaticMultiSelectDropdown({
+      displayName: 'Event Types',
+      description: 'Select which event types to trigger on. Leave empty to trigger on all event types.',
+      required: false,
       options: {
         options: EVENT_TYPES,
       },
@@ -137,7 +137,8 @@ export const newEventTrigger = createTrigger({
     const body = context.payload.body as { type: string; payload: SavvyCalEvent };
     if (!body?.payload) return [];
 
-    if (body.type !== context.propsValue.event_type) return [];
+    const selectedTypes = context.propsValue.event_types as string[] | undefined;
+    if (selectedTypes && selectedTypes.length > 0 && !selectedTypes.includes(body.type)) return [];
 
     const selectedLinkIds = context.propsValue.link_ids as string[] | undefined;
     const linkId = body.payload?.link?.id;
@@ -150,13 +151,13 @@ export const newEventTrigger = createTrigger({
   },
 
   async test(context) {
-    const eventType = context.propsValue.event_type as string;
-    if (!eventType.startsWith('event.')) return [];
+    const selectedTypes = context.propsValue.event_types as string[] | undefined;
+    const hasOnlyNonEventTypes = selectedTypes && selectedTypes.length > 0 && selectedTypes.every((t) => !t.startsWith('event.'));
+    if (hasOnlyNonEventTypes) return [];
 
     const selectedLinkIds = context.propsValue.link_ids as string[] | undefined;
     const queryParams: Record<string, string> = { limit: '10' };
     if (selectedLinkIds && selectedLinkIds.length === 1) queryParams['link_id'] = selectedLinkIds[0];
-    if (eventType === 'event.canceled' || eventType === 'event.declined') queryParams['state'] = 'canceled';
 
     const response = await savvyCalApiCall<{ entries: SavvyCalEvent[] }>({
       token: context.auth.secret_text,
@@ -167,6 +168,6 @@ export const newEventTrigger = createTrigger({
     const events = selectedLinkIds && selectedLinkIds.length > 1
       ? response.body.entries.filter((e) => selectedLinkIds.includes(e.link?.id ?? ''))
       : response.body.entries;
-    return events.slice(0, 5).map((e) => ({ event_type: eventType, ...flattenEvent(e) }));
+    return events.slice(0, 5).map((e) => ({ event_type: 'event.created', ...flattenEvent(e) }));
   },
 });
