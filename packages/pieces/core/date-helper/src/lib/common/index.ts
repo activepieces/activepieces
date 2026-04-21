@@ -83,15 +83,15 @@ export const getCorrectedFormat = (format:string) =>{
 }
 export function parseDate(date: string, format: string): dayjs.Dayjs {
   const correctedFormat = getCorrectedFormat(format);
-
+  
   // Try strict parsing with the provided format
   let djs = apDayjs(date, correctedFormat, true);
-
+  
   // If strict parsing fails, try lenient parsing (useful for formats that native parser handles well)
   if (!djs.isValid()) {
     djs = apDayjs(date, correctedFormat, false);
   }
-
+  
   // If still invalid, try without format (native parser fallback)
   if (!djs.isValid()) {
     djs = apDayjs(date);
