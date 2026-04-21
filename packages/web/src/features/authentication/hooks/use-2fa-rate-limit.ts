@@ -2,7 +2,9 @@ import { RATE_LIMIT_WINDOW_SECONDS } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useCallback, useEffect, useState } from 'react';
 
-function useRateLimit({ fallbackMessage }: { fallbackMessage?: string } = {}) {
+function use2faRateLimit({
+  fallbackMessage,
+}: { fallbackMessage?: string } = {}) {
   const [retryAfter, setRetryAfter] = useState(0);
 
   useEffect(() => {
@@ -21,6 +23,10 @@ function useRateLimit({ fallbackMessage }: { fallbackMessage?: string } = {}) {
       if (error?.status === 429) {
         setRetryAfter(RATE_LIMIT_WINDOW_SECONDS);
         setError(null);
+        return;
+      }
+      if (isSessionExpiredError(error)) {
+        setError(getSessionExpiredMessage());
         return;
       }
       setError(fallbackMessage ?? t('Invalid code. Please try again.'));
@@ -44,4 +50,14 @@ function useRateLimit({ fallbackMessage }: { fallbackMessage?: string } = {}) {
   };
 }
 
-export { useRateLimit };
+function isSessionExpiredError(
+  error: { status?: number } | null | undefined,
+): boolean {
+  return error?.status === 401;
+}
+
+function getSessionExpiredMessage(): string {
+  return t('Your session has expired. Please sign out and sign in again.');
+}
+
+export { use2faRateLimit, isSessionExpiredError, getSessionExpiredMessage };

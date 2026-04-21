@@ -18,7 +18,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { OtpInput } from '@/components/ui/otp-input';
-import { useRateLimit } from '@/features/authentication';
+import {
+  use2faRateLimit,
+  isSessionExpiredError,
+  getSessionExpiredMessage,
+} from '@/features/authentication';
 import { authClient } from '@/lib/better-auth';
 import { downloadTxt } from '@/lib/utils';
 
@@ -41,7 +45,7 @@ function EnableTwoFaForm({
   const [isPending, setIsPending] = useState(false);
   const [savedChecked, setSavedChecked] = useState(false);
   const { isRateLimited, rateLimitMessage, handleRateLimitOrError } =
-    useRateLimit();
+    use2faRateLimit();
 
   // For social (passwordless) users, call enable immediately on open
   useEffect(() => {
@@ -51,7 +55,11 @@ function EnableTwoFaForm({
       try {
         const { data, error } = await authClient.twoFactor.enable({});
         if (error || !data) {
-          setEnableError(t('Failed to initialize 2FA. Please try again.'));
+          setEnableError(
+            isSessionExpiredError(error)
+              ? getSessionExpiredMessage()
+              : t('Failed to initialize 2FA. Please try again.'),
+          );
           return;
         }
         setTotpUri(data.totpURI);
@@ -78,7 +86,9 @@ function EnableTwoFaForm({
       const { data, error } = await authClient.twoFactor.enable({ password });
       if (error || !data) {
         setEnableError(
-          error?.message ?? t('Invalid password. Please try again.'),
+          isSessionExpiredError(error)
+            ? getSessionExpiredMessage()
+            : error?.message ?? t('Invalid password. Please try again.'),
         );
         return;
       }

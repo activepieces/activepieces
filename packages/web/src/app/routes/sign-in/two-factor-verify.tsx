@@ -7,7 +7,7 @@ import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { OtpInput } from '@/components/ui/otp-input';
-import { AuthLayout, useRateLimit } from '@/features/authentication';
+import { AuthLayout, use2faRateLimit } from '@/features/authentication';
 import { authenticationSession } from '@/lib/authentication-session';
 import { authClient } from '@/lib/better-auth';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
@@ -20,7 +20,7 @@ const TwoFactorVerifyPage: React.FC = () => {
 
   const redirectAfterLogin = useRedirectAfterLogin();
   const { isRateLimited, rateLimitMessage, handleRateLimitOrError } =
-    useRateLimit();
+    use2faRateLimit();
 
   const handleVerifyTotp = async ({ value }: { value: string }) => {
     if (isRateLimited) return;

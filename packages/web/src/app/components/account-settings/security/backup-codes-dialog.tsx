@@ -17,7 +17,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { OtpInput } from '@/components/ui/otp-input';
 import { Separator } from '@/components/ui/separator';
-import { useRateLimit } from '@/features/authentication';
+import {
+  use2faRateLimit,
+  isSessionExpiredError,
+  getSessionExpiredMessage,
+} from '@/features/authentication';
 import { authClient } from '@/lib/better-auth';
 import { downloadTxt } from '@/lib/utils';
 
@@ -36,7 +40,7 @@ function BackupCodesForm({
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const { isRateLimited, rateLimitMessage, handleRateLimitOrError } =
-    useRateLimit();
+    use2faRateLimit();
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +51,11 @@ function BackupCodesForm({
       const { data, error: apiError } =
         await authClient.twoFactor.generateBackupCodes({ password });
       if (apiError || !data) {
-        setError(t('Invalid password. Please try again.'));
+        setError(
+          isSessionExpiredError(apiError)
+            ? getSessionExpiredMessage()
+            : t('Invalid password. Please try again.'),
+        );
         return;
       }
       setNewCodes(data.backupCodes);
@@ -75,7 +83,11 @@ function BackupCodesForm({
       const { data, error: genError } =
         await authClient.twoFactor.generateBackupCodes({});
       if (genError || !data) {
-        setError(t('Failed to regenerate backup codes. Please try again.'));
+        setError(
+          isSessionExpiredError(genError)
+            ? getSessionExpiredMessage()
+            : t('Failed to regenerate backup codes. Please try again.'),
+        );
         return;
       }
       setNewCodes(data.backupCodes);

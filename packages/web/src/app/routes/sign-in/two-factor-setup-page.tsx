@@ -9,7 +9,12 @@ import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { OtpInput } from '@/components/ui/otp-input';
-import { AuthLayout, useRateLimit } from '@/features/authentication';
+import {
+  AuthLayout,
+  use2faRateLimit,
+  isSessionExpiredError,
+  getSessionExpiredMessage,
+} from '@/features/authentication';
 import { authenticationSession } from '@/lib/authentication-session';
 import { authClient } from '@/lib/better-auth';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
@@ -38,7 +43,7 @@ const TwoFactorSetupPage: React.FC = () => {
 
   const redirectAfterLogin = useRedirectAfterLogin();
   const { isRateLimited, rateLimitMessage, handleRateLimitOrError } =
-    useRateLimit();
+    use2faRateLimit();
 
   useEffect(() => {
     const enableTotp = async () => {
@@ -48,7 +53,11 @@ const TwoFactorSetupPage: React.FC = () => {
           ...(password ? { password } : {}),
         });
         if (error || !data) {
-          setEnableError(t('Failed to initialize 2FA. Please try again.'));
+          setEnableError(
+            isSessionExpiredError(error)
+              ? getSessionExpiredMessage()
+              : t('Failed to initialize 2FA. Please try again.'),
+          );
           return;
         }
         setTotpUri(data.totpURI);

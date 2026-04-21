@@ -1535,7 +1535,8 @@
   "Backup codes regenerated successfully": "Backup codes regenerated successfully",
   "Disable Two-Factor Authentication": "Disable Two-Factor Authentication",
   "Scan this URI in your authenticator app or enter the secret manually.": "Scan this URI in your authenticator app or enter the secret manually.",
-  "Save these backup codes in a safe place. Each code can only be used once.": "Save these backup codes in a safe place. Each code can only be used once."
+  "Save these backup codes in a safe place. Each code can only be used once.": "Save these backup codes in a safe place. Each code can only be used once.",
+  "Your session has expired. Please sign out and sign in again.": "Your session has expired. Please sign out and sign in again."
   "Platform members get instant access to this project. New members get access after accepting the invitation.": "Platform members get instant access to this project. New members get access after accepting the invitation.",
   "Email addresses that already have access are skipped.": "Email addresses that already have access are skipped."
 }

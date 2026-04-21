@@ -15,7 +15,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { OtpInput } from '@/components/ui/otp-input';
-import { useRateLimit } from '@/features/authentication';
+import {
+  use2faRateLimit,
+  isSessionExpiredError,
+  getSessionExpiredMessage,
+} from '@/features/authentication';
 import { authClient } from '@/lib/better-auth';
 
 function DisableTwoFaForm({
@@ -30,7 +34,7 @@ function DisableTwoFaForm({
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const { isRateLimited, rateLimitMessage, handleRateLimitOrError } =
-    useRateLimit();
+    use2faRateLimit();
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +46,11 @@ function DisableTwoFaForm({
         password,
       });
       if (apiError) {
-        setError(t('Invalid password. Please try again.'));
+        setError(
+          isSessionExpiredError(apiError)
+            ? getSessionExpiredMessage()
+            : t('Invalid password. Please try again.'),
+        );
         return;
       }
       await queryClient.invalidateQueries({ queryKey: ['2fa-status'] });
@@ -69,7 +77,11 @@ function DisableTwoFaForm({
       }
       const { error: disableError } = await authClient.twoFactor.disable({});
       if (disableError) {
-        setError(t('Failed to disable 2FA. Please try again.'));
+        setError(
+          isSessionExpiredError(disableError)
+            ? getSessionExpiredMessage()
+            : t('Failed to disable 2FA. Please try again.'),
+        );
         return;
       }
       await queryClient.invalidateQueries({ queryKey: ['2fa-status'] });
