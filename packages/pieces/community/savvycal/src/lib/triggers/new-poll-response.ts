@@ -53,7 +53,7 @@ export const newPollResponseTrigger = createTrigger({
   async run(context) {
     const secret = await context.store.get<string>('webhookSecret');
     const signature = context.payload.headers['x-savvycal-signature'] as string | undefined;
-    if (secret && signature && !verifyWebhookSignature(secret, signature, context.payload.rawBody)) {
+    if (secret && (!signature || !verifyWebhookSignature(secret, signature, context.payload.rawBody))) {
       return [];
     }
 

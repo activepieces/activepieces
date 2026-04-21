@@ -88,8 +88,31 @@ export const listEventsAction = createAction({
       queryParams['link_id'] = selectedLinkIds[0];
     }
 
-    let events: SavvyCalEvent[];
-    if (limit && !needsClientFilter) {
+    if (limit && needsClientFilter) {
+      // Paginate page by page and stop as soon as we have enough post-filter results,
+      // so we never fetch unbounded pages when a limit is set alongside a client-side filter.
+      let after: string | null = null;
+      const collected: SavvyCalEvent[] = [];
+      do {
+        const params: Record<string, string> = { limit: '100', ...queryParams };
+        if (after) params['after'] = after;
+        const response = await savvyCalApiCall<{ entries: SavvyCalEvent[]; metadata: { after: string | null } }>({
+          token,
+          method: HttpMethod.GET,
+          path: '/events',
+          queryParams: params,
+        });
+        for (const event of response.body.entries) {
+          const matchesState = !selectedStates || selectedStates.length === 0 || selectedStates.includes(event.state);
+          const matchesLink = !hasLinkFilter || selectedLinkIds.includes(event.link?.id ?? '');
+          if (matchesState && matchesLink) collected.push(event);
+        }
+        after = collected.length >= limit ? null : response.body.metadata.after;
+      } while (after);
+      return collected.slice(0, limit).map(flattenEvent);
+    }
+
+    if (limit) {
       queryParams['limit'] = String(limit);
       const response = await savvyCalApiCall<{ entries: SavvyCalEvent[] }>({
         token,
@@ -97,15 +120,13 @@ export const listEventsAction = createAction({
         path: '/events',
         queryParams,
       });
-      events = response.body.entries;
-    } else {
-      events = await savvyCalPaginatedCall<SavvyCalEvent>({ token, path: '/events', queryParams });
+      return response.body.entries.map(flattenEvent);
     }
 
-    const filtered = events
+    const events = await savvyCalPaginatedCall<SavvyCalEvent>({ token, path: '/events', queryParams });
+    return events
       .filter((e) => !selectedStates || selectedStates.length === 0 || selectedStates.includes(e.state))
-      .filter((e) => !hasLinkFilter || selectedLinkIds.includes(e.link?.id ?? ''));
-
-    return (limit ? filtered.slice(0, limit) : filtered).map(flattenEvent);
+      .filter((e) => !hasLinkFilter || selectedLinkIds.includes(e.link?.id ?? ''))
+      .map(flattenEvent);
   },
 });
