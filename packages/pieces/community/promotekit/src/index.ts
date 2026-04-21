@@ -18,7 +18,6 @@ import { listCampaigns } from './lib/actions/list-campaigns';
 import { findCampaign } from './lib/actions/find-campaign';
 import { listPayouts } from './lib/actions/list-payouts';
 import { findPayout } from './lib/actions/find-payout';
-import { newEvent } from './lib/triggers/new-event';
 import { newAffiliateEvent } from './lib/triggers/new-affiliate-event';
 import { newReferralEvent } from './lib/triggers/new-referral-event';
 import { newCommissionEvent } from './lib/triggers/new-commission-event';
@@ -77,5 +76,5 @@ export const promotekit = createPiece({
       }),
     }),
   ],
-  triggers: [newEvent, newAffiliateEvent, newReferralEvent, newCommissionEvent],
+  triggers: [newAffiliateEvent, newReferralEvent, newCommissionEvent],
 });
