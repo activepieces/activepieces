@@ -1,6 +1,7 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { shouldFireOnPayload } from '../common/trigger-filter';
 
 export const newSubscriptionEventTrigger = createTrigger({
   name: 'new_subscription_event',
@@ -52,7 +53,26 @@ export const newSubscriptionEventTrigger = createTrigger({
     // Webhook must be removed manually in Outseta
   },
   async run(context) {
-    return [context.payload.body as Record<string, unknown>];
+    const payload = context.payload.body as Record<string, unknown>;
+    const selected = (context.propsValue.eventSubTypes ?? []) as string[];
+    if (
+      !shouldFireOnPayload({
+        payload,
+        selectedSubTypes: selected,
+        createSubType: 'started',
+        updateSubTypes: [
+          'plan_updated',
+          'cancellation_requested',
+          'payment_collected',
+          'payment_declined',
+          'addons_changed',
+          'renewal_extended',
+        ],
+      })
+    ) {
+      return [];
+    }
+    return [payload];
   },
   async test(context) {
     const client = new OutsetaClient({

@@ -43,6 +43,10 @@ export const findOrAddDealAction = createAction({
     }),
   },
   async run(context) {
+    if (!context.propsValue.pipelineUid) {
+      throw new Error('Pipeline is required.');
+    }
+
     const client = new OutsetaClient({
       domain: context.auth.props.domain,
       apiKey: context.auth.props.apiKey,
