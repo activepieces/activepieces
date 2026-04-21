@@ -58,24 +58,31 @@ export const updateDealAction = createAction({
       `/api/v1/crm/deals/${context.propsValue.dealUid}?fields=*,DealPeople.*,DealPeople.Person.*,DealPipelineStage.*,Account.*`
     );
 
+    let changed = false;
     if (context.propsValue.name) {
       deal.Name = context.propsValue.name;
+      changed = true;
     }
     if (context.propsValue.dealPipelineStageUid) {
       deal.DealPipelineStage = { Uid: context.propsValue.dealPipelineStageUid };
+      changed = true;
     }
     if (context.propsValue.amount != null) {
       deal.Amount = context.propsValue.amount;
+      changed = true;
     }
     if (context.propsValue.assignedToPersonClientIdentifier) {
       deal.AssignedToPersonClientIdentifier =
         context.propsValue.assignedToPersonClientIdentifier;
+      changed = true;
     }
     if (context.propsValue.dueDate) {
       deal.DueDate = context.propsValue.dueDate;
+      changed = true;
     }
     if (context.propsValue.accountUid) {
       deal.Account = { Uid: context.propsValue.accountUid };
+      changed = true;
     }
     if (context.propsValue.personUid) {
       const existing: any[] =
@@ -88,7 +95,12 @@ export const updateDealAction = createAction({
           ...existing.map((dp: any) => ({ Person: { Uid: dp.Person?.Uid } })),
           { Person: { Uid: context.propsValue.personUid } },
         ];
+        changed = true;
       }
+    }
+
+    if (!changed) {
+      throw new Error('At least one field must be provided.');
     }
 
     const updated = await client.put<any>(
