@@ -41,7 +41,7 @@ async function main() {
 
 function httpGetViaProxy(action) {
     return new Promise((resolve) => {
-        const proxyUrl = new URL(process.env.HTTP_PROXY || '')
+        const proxyUrl = new URL(process.env.AP_EGRESS_PROXY_URL || '')
         const req = http.request({
             host: proxyUrl.hostname,
             port: parseInt(proxyUrl.port, 10),
