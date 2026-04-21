@@ -14,7 +14,6 @@ export const betterAuthController: FastifyPluginAsyncZod = async (app) => {
         async handler(request, reply) {
             try {
                 const response = await betterAuthInstance.get().handler(toWebRequest({ url: request.url, headers: request.headers as Record<string, string | string[] | undefined>, method: request.method, body: request.body, ip: request.ip }))
-                app.log.info({ xx: request.headers, ip: request.ip }, '[]webrequest')
 
                 void reply.status(response.status)
                 response.headers.forEach((value, key) => {
