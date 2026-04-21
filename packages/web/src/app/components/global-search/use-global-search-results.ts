@@ -48,7 +48,9 @@ export function useGlobalSearchResults(query: string, open: boolean) {
     : null;
   const hasQuery = query.length > 0;
 
-  const accessHistory = getAccessHistory();
+  const accessHistory = hideTables
+    ? getAccessHistory().filter((h) => h.type !== 'table')
+    : getAccessHistory();
   const hasHistory = accessHistory.length > 0;
   const needsSupplement =
     !hasQuery && accessHistory.length < SUPPLEMENT_THRESHOLD;

@@ -57,7 +57,7 @@ export function useAutomationsData(
   const folderIds = foldersQuery.data?.map((f) => f.id).join(',') ?? '';
 
   const folderCountsQuery = useQuery<Map<string, number>>({
-    queryKey: ['folder-counts', projectId, folderIds],
+    queryKey: ['folder-counts', projectId, folderIds, hideTables],
     queryFn: async () => {
       const folders = foldersQuery.data!;
       const [folderFlowCounts, folderTableCounts] = await Promise.all([
@@ -85,7 +85,7 @@ export function useAutomationsData(
   });
 
   const folderContentsQuery = useQuery<FolderContentsMap>({
-    queryKey: ['all-folder-contents', projectId, folderIds],
+    queryKey: ['all-folder-contents', projectId, folderIds, hideTables],
     queryFn: async () => {
       const folders = foldersQuery.data!;
       const [folderFlowPages, folderTablePages] = await Promise.all([
@@ -235,7 +235,7 @@ export function useAutomationsData(
       ]);
 
       queryClient.setQueryData<FolderContentsMap>(
-        ['all-folder-contents', projectId, folderIds],
+        ['all-folder-contents', projectId, folderIds, hideTables],
         (old) => {
           if (!old) return old;
           const next = new Map(old);
