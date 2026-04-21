@@ -256,6 +256,45 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
+        it('rejects cross-tenant platform update (IDOR)', async () => {
+            // arrange — two independent platforms with their own admin owners
+            const { mockOwner: ownerOfPlatformA, mockPlatform: platformA } = await mockAndSaveBasicSetup()
+            const { mockOwner: ownerOfPlatformB, mockPlatform: platformB } = await mockAndSaveBasicSetup({
+                platform: { name: 'platform-b-original-name' },
+            })
+
+            const attackerToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: ownerOfPlatformA.id,
+                platform: { id: platformA.id },
+            })
+
+            // act — attacker (admin of platform A) points the write at platform B
+            const attackResponse = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${platformB.id}`,
+                headers: { authorization: `Bearer ${attackerToken}` },
+                body: { name: 'pwned' },
+            })
+
+            // assert — request is rejected
+            expect(attackResponse?.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            // assert — platform B was NOT mutated (defense-in-depth check)
+            const victimToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: ownerOfPlatformB.id,
+                platform: { id: platformB.id },
+            })
+            const victimReadResponse = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/${platformB.id}`,
+                headers: { authorization: `Bearer ${victimToken}` },
+            })
+            expect(victimReadResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(victimReadResponse?.json().name).toBe('platform-b-original-name')
+        })
+
     })
 
     describe('get platform endpoint', () => {
