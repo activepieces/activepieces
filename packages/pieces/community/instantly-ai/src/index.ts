@@ -20,15 +20,10 @@ import { activateCampaignAction } from './lib/actions/activate-campaign';
 import { pauseCampaignAction } from './lib/actions/pause-campaign';
 import { getCampaignAnalyticsAction } from './lib/actions/get-campaign-analytics';
 
-import { replyReceivedTrigger } from './lib/triggers/reply-received';
-import { emailSentTrigger } from './lib/triggers/email-sent';
-import { emailOpenedTrigger } from './lib/triggers/email-opened';
-import { linkClickedTrigger } from './lib/triggers/link-clicked';
-import { emailBouncedTrigger } from './lib/triggers/email-bounced';
-import { leadUnsubscribedTrigger } from './lib/triggers/lead-unsubscribed';
-import { campaignCompletedTrigger } from './lib/triggers/campaign-completed';
-import { leadInterestChangedTrigger } from './lib/triggers/lead-interest-changed';
-import { meetingBookedTrigger } from './lib/triggers/meeting-booked';
+import { emailActivityTrigger } from './lib/triggers/email-activity';
+import { leadStatusChangedTrigger } from './lib/triggers/lead-status-changed';
+import { meetingTrigger } from './lib/triggers/meeting';
+import { campaignAccountTrigger } from './lib/triggers/campaign-account';
 
 export const instantlyAi = createPiece({
   displayName: 'Instantly',
@@ -63,15 +58,10 @@ export const instantlyAi = createPiece({
     }),
   ],
   triggers: [
-    replyReceivedTrigger,
-    emailSentTrigger,
-    emailOpenedTrigger,
-    linkClickedTrigger,
-    emailBouncedTrigger,
-    leadUnsubscribedTrigger,
-    campaignCompletedTrigger,
-    leadInterestChangedTrigger,
-    meetingBookedTrigger,
+    emailActivityTrigger,
+    leadStatusChangedTrigger,
+    meetingTrigger,
+    campaignAccountTrigger,
   ],
 });
 
