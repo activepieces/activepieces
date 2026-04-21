@@ -81,10 +81,35 @@ describe('validateAgentMcpTool', () => {
     expect(result.error).toBeUndefined();
     expect(result.toolNames).toEqual(['one', 'two']);
 
+    const methods = parseCalls(fetchSpy).map((call) => call.body?.method);
+    expect(methods).toEqual([
+      'initialize',
+      'notifications/initialized',
+      'tools/list',
+    ]);
+    const firstHeaders = parseCalls(fetchSpy)[0].headers;
+    expect(firstHeaders['accept']).toBe('text/event-stream');
+  });
+
+  it('sends `notifications/initialized` between initialize and tools/list', async () => {
+    const fetchSpy = mockJsonRpcServer({ tools: [] });
+
+    await validateAgentMcpTool(
+      buildTool({ protocol: McpProtocol.SIMPLE_HTTP }),
+    );
+
     const calls = parseCalls(fetchSpy);
-    expect(calls[0].body.method).toBe('initialize');
-    expect(calls[1].body.method).toBe('tools/list');
-    expect(calls[0].headers['accept']).toBe('text/event-stream');
+    const notification = calls.find(
+      (call) => call.body?.method === 'notifications/initialized',
+    );
+    expect(notification).toBeDefined();
+    expect(notification!.body.id).toBeUndefined();
+    expect(calls.indexOf(notification!)).toBeGreaterThan(
+      calls.findIndex((call) => call.body?.method === 'initialize'),
+    );
+    expect(calls.indexOf(notification!)).toBeLessThan(
+      calls.findIndex((call) => call.body?.method === 'tools/list'),
+    );
   });
 
   describe('auth header mapping', () => {

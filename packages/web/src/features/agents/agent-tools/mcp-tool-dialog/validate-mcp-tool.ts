@@ -107,6 +107,13 @@ async function listToolsViaPost({
     ? { ...authHeaders, 'Mcp-Session-Id': initResult.sessionId }
     : authHeaders;
 
+  await sendInitializedNotification({
+    url: serverUrl,
+    headers: sessionHeaders,
+    accept,
+    signal,
+  });
+
   const toolsResult = await sendJsonRpc({
     url: serverUrl,
     headers: sessionHeaders,
@@ -121,6 +128,39 @@ async function listToolsViaPost({
   });
 
   return extractToolNames(toolsResult.message);
+}
+
+async function sendInitializedNotification({
+  url,
+  headers,
+  accept,
+  signal,
+}: {
+  url: string;
+  headers: Record<string, string>;
+  accept: string;
+  signal: AbortSignal;
+}): Promise<void> {
+  try {
+    await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: accept,
+        ...headers,
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'notifications/initialized',
+        params: {},
+      }),
+      signal,
+    });
+  } catch (error) {
+    if (signal.aborted) {
+      throw error;
+    }
+  }
 }
 
 async function sendJsonRpc({
@@ -291,7 +331,7 @@ function mapErrorMessage({
   error: unknown;
   signal: AbortSignal;
 }): string {
-  if (signal.aborted) {
+  if (isAbortError(error) || signal.aborted) {
     return `Validation timed out after ${VALIDATE_TIMEOUT_MS / 1000}s`;
   }
   if (error instanceof TypeError) {
@@ -301,6 +341,14 @@ function mapErrorMessage({
     return error.message;
   }
   return String(error);
+}
+
+function isAbortError(error: unknown): boolean {
+  return (
+    typeof DOMException !== 'undefined' &&
+    error instanceof DOMException &&
+    error.name === 'AbortError'
+  );
 }
 
 function isValidUrl(value: string): boolean {
