@@ -96,7 +96,7 @@ export function parseDate(date: string, format: string): dayjs.Dayjs {
   if (!djs.isValid()) {
     djs = apDayjs(date);
   }
-
+  
   if (!djs.isValid()) {
     throw new Error(`Failed to parse the date: ${date} with format: ${correctedFormat}`);
   }
