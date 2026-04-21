@@ -17,11 +17,21 @@ import { waitpointController } from './waitpoint/waitpoint-controller'
 
 
 export const flowRunModule: FastifyPluginAsync = async (app) => {
-    app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    await app.register(flowRunController, { prefix: '/v1/flow-runs' })
-    await app.register(resumeController, { prefix: '/v1/flow-runs' })
-    await app.register(flowRunLogsController, { prefix: '/v1/flow-runs' })
-    await app.register(waitpointController, { prefix: '/v1/waitpoints' })
+    systemJobHandlers.registerJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT, async (data: SystemJobData<SystemJobName.RESUME_DELAY_WAITPOINT>) => {
+        const flowRun = await flowRunService(app.log).getOneOrThrow({ id: data.flowRunId, projectId: data.projectId })
+        if (flowRun.status !== FlowRunStatus.PAUSED) {
+            app.log.info({ flowRunId: data.flowRunId, waitpointId: data.waitpointId, status: flowRun.status },
+                '[RESUME_DELAY_WAITPOINT] Flow not PAUSED, skipping')
+            return
+        }
+        app.log.info({ flowRunId: data.flowRunId, waitpointId: data.waitpointId },
+            '[RESUME_DELAY_WAITPOINT] Resuming flow')
+        await resumeService(app.log).resumeFromWaitpoint({
+            flowRunId: data.flowRunId,
+            waitpointId: data.waitpointId,
+            resumePayload: null,
+        })
+    })
     systemJobHandlers.registerJobHandler(SystemJobName.RUN_TELEMETRY, async (_job: SystemJobData<SystemJobName.RUN_TELEMETRY>) => {
         if (!telemetry(app.log).isEnabled()) {
             return
@@ -71,20 +81,10 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
             cron: '0/50 23 * * *',
         },
     })
-    systemJobHandlers.registerJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT, async (data: SystemJobData<SystemJobName.RESUME_DELAY_WAITPOINT>) => {
-        const flowRun = await flowRunService(app.log).getOneOrThrow({ id: data.flowRunId, projectId: data.projectId })
-        if (flowRun.status !== FlowRunStatus.PAUSED) {
-            app.log.info({ flowRunId: data.flowRunId, waitpointId: data.waitpointId, status: flowRun.status },
-                '[RESUME_DELAY_WAITPOINT] Flow not PAUSED, skipping')
-            return
-        }
-        app.log.info({ flowRunId: data.flowRunId, waitpointId: data.waitpointId },
-            '[RESUME_DELAY_WAITPOINT] Resuming flow')
-        await resumeService(app.log).resumeFromWaitpoint({
-            flowRunId: data.flowRunId,
-            waitpointId: data.waitpointId,
-            resumePayload: null,
-        })
-    })
+    app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
+    await app.register(flowRunController, { prefix: '/v1/flow-runs' })
+    await app.register(resumeController, { prefix: '/v1/flow-runs' })
+    await app.register(flowRunLogsController, { prefix: '/v1/flow-runs' })
+    await app.register(waitpointController, { prefix: '/v1/waitpoints' })
     await engineResponseWatcher(app.log).init()
 }

@@ -280,7 +280,9 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
-            await app.register(gitRepoModule)
+            if (system.getBoolean(AppSystemProp.GIT_SYNC_ENABLED)) {
+                await app.register(gitRepoModule)
+            }
             await app.register(auditEventModule)
             await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
@@ -327,7 +329,9 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             break
     }
 
-    await systemJobsSchedule(app.log).startWorker()
+    app.addHook('onReady', async () => {
+        await systemJobsSchedule(app.log).startWorker()
+    })
 
     app.addHook('onClose', async () => {
         app.log.info('Shutting down')
