@@ -48,12 +48,6 @@ Duplicate callbacks are absorbed by the uniqueness constraint; the engine never 
 | `ALL` | `/v1/flow-runs/:id/waitpoints/:waitpointId/sync` | Resume, sync — the HTTP response is whatever the flow produces after resuming. |
 | `ALL` | `/v1/flow-runs/:id/requests/:requestId[/sync]` | **V0 legacy**, kept for in-flight `pauseMetadata`-based runs. |
 
-## Restart behavior
-
-- `WEBHOOK` waitpoints sit in Postgres; nothing to restart.
-- `DELAY` waitpoints are BullMQ delayed jobs and survive worker restarts natively.
-- Legacy paused runs are re-queued by the `refill-paused-jobs` migration.
-
 ## Piece API
 
 Piece authors create waitpoints with `ctx.run.createWaitpoint` / `ctx.run.waitForWaitpoint`. Patterns for `WEBHOOK`, `DELAY`, and `responseToSend` are in Flow Control.
