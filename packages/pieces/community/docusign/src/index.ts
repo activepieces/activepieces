@@ -1,10 +1,4 @@
-import { AxiosError } from 'axios';
-
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 import { createApiClient } from './lib/common';

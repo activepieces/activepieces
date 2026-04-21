@@ -200,6 +200,9 @@
                      "install/architecture/overview",
                      "install/architecture/workers",
                      "install/architecture/engine",
+                     "install/architecture/durable-execution",
+                     "install/architecture/waitpoints",
+                     "install/architecture/network-security",
                      "install/architecture/benchmark"
                   ]
                }
@@ -511,7 +514,9 @@
                      "handbook/engineering/playbooks/product-announcement",
                      "handbook/engineering/playbooks/frontend-best-practices",
                      "handbook/engineering/playbooks/e2e-tests",
+                     "handbook/engineering/playbooks/testing-strategy",
                      "handbook/engineering/playbooks/connect-claude-to-chrome",
+                     "handbook/engineering/playbooks/ai-engineering-guide",
                      {
                         "group": "Postmortems",
                         "icon": "triangle-exclamation",
