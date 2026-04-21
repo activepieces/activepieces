@@ -81,6 +81,50 @@ describe('Table API', () => {
             const body = response?.json()
             expect(body.externalId).toBe(externalId)
         })
+
+        const MALICIOUS_EXTERNAL_IDS: Array<[string, string]> = [
+            ['..', 'parent directory reference'],
+            ['.', 'current directory reference'],
+            ['', 'empty string'],
+            ['../test', 'relative traversal'],
+            ['../../etc/passwd', 'deep relative traversal'],
+            ['foo/bar', 'forward slash'],
+            ['foo\\bar', 'backslash'],
+            ['with\0null', 'null byte'],
+            ['a b', 'space'],
+            ['../../../../tmp/pwned', 'many-dot traversal'],
+            ['a'.repeat(200), 'over length limit'],
+        ]
+
+        it.each(MALICIOUS_EXTERNAL_IDS)('should reject externalId %j (%s)', async (externalId) => {
+            const ctx = await setup()
+            const response = await ctx.post('/v1/tables', {
+                projectId: ctx.project.id,
+                name: 'Malicious Table',
+                externalId,
+            })
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        const SAFE_EXTERNAL_IDS = [
+            'safe-external-id',
+            'table_1',
+            'a',
+            'dot.inside.name',
+            'UPPER-lower.123',
+        ]
+
+        it.each(SAFE_EXTERNAL_IDS)('should accept externalId %j', async (externalId) => {
+            const ctx = await setup()
+            const response = await ctx.post('/v1/tables', {
+                projectId: ctx.project.id,
+                name: 'Safe Table',
+                externalId,
+            })
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.externalId).toBe(externalId)
+        })
     })
 
     describeWithAuth('POST /v1/tables/:id (Update)', () => app!, (setup) => {
