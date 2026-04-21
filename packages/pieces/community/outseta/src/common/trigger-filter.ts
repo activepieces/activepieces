@@ -1,3 +1,15 @@
+// Outseta webhook payloads don't carry event-type metadata — only the
+// entity. The only signal we can reliably extract is "was this just
+// created?" (Updated within a few seconds of Created) versus "was this
+// modified later?" (Updated significantly after Created). This helper
+// uses that signal as a coarse safety net: it can drop a Created-shaped
+// payload when the user only asked for non-create events, and vice
+// versa, which catches accidental Outseta misconfiguration.
+//
+// It cannot distinguish between non-create sub-events (e.g. Updated vs
+// Deleted vs Stage Updated). Fine-grained routing must be done at the
+// source by configuring only the Outseta notifications you actually
+// want for this webhook URL.
 export function shouldFireOnPayload(args: {
   payload: Record<string, unknown>;
   selectedSubTypes: string[];

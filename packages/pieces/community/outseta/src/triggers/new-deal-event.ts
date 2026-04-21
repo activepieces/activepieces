@@ -13,7 +13,7 @@ export const newDealEventTrigger = createTrigger({
   props: {
     setup: Property.MarkDown({
       value:
-        '**Setup:** Copy this trigger\'s webhook URL `{{webhookUrl}}`. In Outseta go to **Settings → Notifications → Add Notification**, select the event you chose below and paste the URL as the callback. If you selected multiple events, create one notification per event — all pointing to this same URL.',
+        '**Setup:** Copy this trigger\'s webhook URL `{{webhookUrl}}`. In Outseta go to **Settings → Notifications → Add Notification**, select the event you chose below and paste the URL as the callback. If you selected multiple events, create one notification per event — all pointing to this same URL.\n\n**Filtering:** Outseta webhook payloads do not include event-type metadata, so this trigger can only filter Created vs non-Created events from the payload itself. To narrow further (e.g. only Updated, only Deleted), configure only the Outseta notifications you actually want for this URL.',
     }),
     eventSubTypes: Property.StaticMultiSelectDropdown({
       displayName: 'Events',
