@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { ExecutionType, PauseType } from '@activepieces/shared';
+import { ExecutionType } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { markdownDescription } from '../common';
 
@@ -45,13 +45,12 @@ export const delayUntilAction = createAction({
       // use flow pause
       const currentTime = new Date();
       const futureTime = dayjs(currentTime.getTime() + delayInMs);
-      ctx.run.pause({
-        pauseMetadata: {
-          type: PauseType.DELAY,
-          resumeDateTime: futureTime.toISOString(),
-        },
+      const waitpoint = await ctx.run.createWaitpoint({
+        type: 'DELAY',
+        resumeDateTime: futureTime.toISOString(),
       });
-      return {}; // irrelevant as the flow is being paused, not completed
+      ctx.run.waitForWaitpoint(waitpoint.id);
+      return {};
     } else {
       // use setTimeout for delayTill between 0 and 5 seconds
       await new Promise((resolve) => setTimeout(resolve, delayInMs));

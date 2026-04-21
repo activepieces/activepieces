@@ -1,6 +1,6 @@
 {
   "extends": [
-    "../../../../.eslintrc.base.json"
+    "../../../../.eslintrc.json"
   ],
   "ignorePatterns": [
     "!**/*"

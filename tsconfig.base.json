@@ -50,6 +50,9 @@
       "@activepieces/piece-aidbase": [
         "packages/pieces/community/aidbase/src/index.ts"
       ],
+      "@activepieces/piece-aiprise": [
+        "packages/pieces/community/aiprise/src/index.ts"
+      ],
       "@activepieces/piece-aircall": [
         "packages/pieces/community/aircall/src/index.ts"
       ],
@@ -145,6 +148,9 @@
       ],
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
+      ],
+      "@activepieces/piece-bigcommerce": [
+        "packages/pieces/community/bigcommerce/src/index.ts"
       ],
       "@activepieces/piece-bigin-by-zoho": [
         "packages/pieces/community/bigin-by-zoho/src/index.ts"
@@ -638,6 +644,9 @@
       ],
       "@activepieces/piece-knack": [
         "packages/pieces/community/knack/src/index.ts"
+      ],
+      "@activepieces/piece-kustomer": [
+        "packages/pieces/community/kustomer/src/index.ts"
       ],
       "@activepieces/piece-kommo": [
         "packages/pieces/community/kommo/src/index.ts"
@@ -1171,6 +1180,9 @@
       ],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/community/telegram-bot/src/index.ts"
+      ],
+      "@activepieces/piece-telnyx": [
+        "packages/pieces/community/telnyx/src/index.ts"
       ],
       "@activepieces/piece-text-ai": [
         "packages/pieces/community/text-ai/src/index.ts"
