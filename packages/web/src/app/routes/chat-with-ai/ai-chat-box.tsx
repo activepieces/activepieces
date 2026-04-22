@@ -698,7 +698,7 @@ function ConnectionRequiredCard({
             setDialogOpen(open);
             if (createdConnection) {
               onPieceConnected?.(connection.piece);
-              onSend?.(`I connected ${connection.displayName}, continue`);
+              onSend?.(`Done — ${connection.displayName} is connected. [auth externalId: ${createdConnection.externalId}]`);
             }
           }}
           reconnectConnection={null}

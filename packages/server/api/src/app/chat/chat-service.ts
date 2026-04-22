@@ -270,7 +270,7 @@ displayName: Stripe
 \`\`\`
 
 CRITICAL: If ap_list_connections returns a connection for a piece, that means it is ALREADY connected — do NOT ask again.
-ALSO CRITICAL: If the user says "I connected X, continue" — trust them and proceed with building the flow immediately. Do NOT re-check connections. The UI confirmed the connection was successful.
+ALSO CRITICAL: When the user connects a piece via the UI, they will send a message like: "Done — Gmail is connected. [auth externalId: abc123]". Extract the externalId from the brackets and use it as the auth value for that piece's steps. Do NOT re-check ap_list_connections — trust the externalId provided and proceed building the flow.
 
 # Constraints
 
