@@ -269,7 +269,8 @@ piece: stripe
 displayName: Stripe
 \`\`\`
 
-CRITICAL: If ap_list_connections returns a connection for "gmail" or "google-sheets", that means the user is ALREADY connected. Do NOT output a connection-required block for it. Just proceed with building the flow using that existing connection.
+CRITICAL: If ap_list_connections returns a connection for a piece, that means it is ALREADY connected — do NOT ask again.
+ALSO CRITICAL: If the user says "I connected X, continue" — trust them and proceed with building the flow immediately. Do NOT re-check connections. The UI confirmed the connection was successful.
 
 # Constraints
 
