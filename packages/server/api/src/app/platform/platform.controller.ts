@@ -32,6 +32,14 @@ import { platformService } from './platform.service'
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncZod = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, _res) => {
+        if (req.principal.platform.id !== req.params.id) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'You are not authorized to access this platform',
+                },
+            })
+        }
         const platformId = req.principal.platform.id
 
         const [logoIconUrl, fullLogoUrl, favIconUrl] = await Promise.all([
@@ -56,13 +64,13 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
         ])
 
         await platformService(req.log).update({
-            id: req.params.id,
+            id: platformId,
             ...req.body,
             logoIconUrl,
             fullLogoUrl,
             favIconUrl,
         })
-        return platformService(req.log).getOneWithPlanAndUsageOrThrow(req.params.id)
+        return platformService(req.log).getOneWithPlanAndUsageOrThrow(platformId)
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {

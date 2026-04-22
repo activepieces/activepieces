@@ -2,7 +2,7 @@ import { randomBytes } from 'crypto'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { apId, McpOAuthToken } from '@activepieces/shared'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { jwtUtils } from '../../../helper/jwt-utils'
+import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { mcpOAuthPkce } from '../mcp-oauth.pkce'
@@ -34,6 +34,7 @@ async function issueAccessToken(params: IssueAccessTokenParams): Promise<string>
         },
         key,
         expiresInSeconds: ACCESS_TOKEN_TTL_15_MINUTES_SECONDS,
+        audience: JwtAudience.MCP_OAUTH_ACCESS,
     })
 }
 
@@ -108,6 +109,7 @@ export const mcpOAuthTokenService = {
         const payload = await jwtUtils.decodeAndVerify<McpOAuthAccessTokenPayload>({
             jwt: token,
             key,
+            audience: JwtAudience.MCP_OAUTH_ACCESS,
         })
         if (payload.type !== 'mcp_oauth') {
             throw new OAuthTokenError('invalid_token', 'Not an MCP OAuth token')
