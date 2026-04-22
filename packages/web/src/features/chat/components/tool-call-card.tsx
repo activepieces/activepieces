@@ -7,17 +7,15 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
 import type { ToolCallItem } from '../lib/use-chat';
 
 function formatToolName(raw: string): string {
-  let name = raw;
-  const mcpMatch = /^mcp__[^_]+__(.+)$/.exec(name);
-  if (mcpMatch) {
-    name = mcpMatch[1];
-  }
-  return name.replace(/^ap_/, '').replaceAll('_', ' ');
+  const mcpMatch = /^mcp__[^_]+__(.+)$/.exec(raw);
+  const name = mcpMatch ? mcpMatch[1] : raw;
+  return formatUtils.convertEnumToHumanReadable(name.replace(/^ap_/, ''));
 }
 
 function StatusIcon({ status }: { status: ToolCallItem['status'] }) {

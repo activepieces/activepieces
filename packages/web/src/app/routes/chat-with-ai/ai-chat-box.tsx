@@ -8,6 +8,7 @@ import {
   Copy,
   Loader2,
   Plus,
+  Sparkles,
   RefreshCw,
   Settings,
   Square,
@@ -511,7 +512,7 @@ function MessageContentWithAuth({ content }: { content: string }) {
   }
 
   return (
-    <div className="prose prose-sm dark:prose-invert max-w-none break-words [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:w-full [&_table]:text-sm [&_th]:text-left [&_th]:p-2 [&_td]:p-2 [&_table]:border-collapse [&_th]:border-b [&_td]:border-b [&_th]:border-border [&_td]:border-border">
+    <div className="prose prose-sm dark:prose-invert max-w-none break-words">
       <Markdown>{content}</Markdown>
     </div>
   );
@@ -612,7 +613,8 @@ function EmptyState({
   };
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-3">
+      <Sparkles className="h-8 w-8 text-amber-500" />
       <h2
         className="text-[32px] font-bold text-center leading-tight bg-gradient-to-r from-foreground via-foreground/80 to-primary bg-clip-text text-transparent"
         style={{ textWrap: 'balance' }}

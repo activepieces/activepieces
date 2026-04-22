@@ -50,8 +50,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     <SidebarMenuButton
       className={cn(
         { 'bg-sidebar-accent hover:bg-sidebar-accent!': isLinkActive },
-        item.highlight &&
-          'bg-gradient-to-r from-violet-500/10 via-amber-400/10 to-rose-500/10 hover:from-violet-500/20 hover:via-amber-400/20 hover:to-rose-500/20',
+        item.highlight && !isLinkActive && 'hover:bg-sidebar-accent/60',
       )}
       onClick={() => {
         item.onClick?.();
@@ -67,14 +66,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
         </span>
       )}
       {!isCollapsed && item.badge && (
-        <span
-          className={cn(
-            'ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-full',
-            item.highlight
-              ? 'bg-gradient-to-r from-violet-500 to-rose-500 text-white'
-              : 'bg-primary/10 text-primary',
-          )}
-        >
+        <span className="ml-auto text-[10px] font-medium text-primary">
           {item.badge}
         </span>
       )}
@@ -90,11 +82,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     </SidebarMenuButton>
   );
 
-  return (
-    <SidebarMenuItem>
-      {button}
-    </SidebarMenuItem>
-  );
+  return <SidebarMenuItem>{button}</SidebarMenuItem>;
 };
 
 function renderIcon(
