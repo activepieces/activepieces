@@ -112,7 +112,7 @@ const detectPreset = (
   return null;
 };
 
-const getDefaultRange = (presetKey: PresetKey) => {
+export const getDefaultRange = (presetKey: PresetKey) => {
   const preset = PRESETS[presetKey]();
   preset.from!.setHours(0, 0, 0, 0);
   preset.to!.setHours(23, 59, 59, 999);
