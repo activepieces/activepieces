@@ -19,7 +19,6 @@
     "http-proxy-agent": "7.0.2",
     "https-proxy-agent": "7.0.6",
     "isolated-vm": "6.0.2",
-    "mime-types": "2.1.35",
     "nanoid": "3.3.8",
     "socket.io-client": "4.8.1",
     "tslib": "2.6.2",
@@ -27,7 +26,6 @@
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@types/mime-types": "2.1.1",
     "@types/node": "24.11.0",
     "vitest": "3.0.8"
   }
