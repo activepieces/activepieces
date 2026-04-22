@@ -157,6 +157,7 @@ export const newEventTrigger = createTrigger({
   },
 
   async test(context) {
+    const selectedTypes = context.propsValue.event_types as string[] | undefined;
     const selectedLinkIds = context.propsValue.link_ids as string[] | undefined;
     const queryParams: Record<string, string> = { limit: '10' };
     if (selectedLinkIds && selectedLinkIds.length === 1) queryParams['link_id'] = selectedLinkIds[0];
@@ -170,6 +171,9 @@ export const newEventTrigger = createTrigger({
     const events = selectedLinkIds && selectedLinkIds.length > 1
       ? response.body.entries.filter((e) => selectedLinkIds.includes(e.link?.id ?? ''))
       : response.body.entries;
-    return events.slice(0, 5).map((e) => ({ event_type: 'event.created', ...flattenEvent(e) }));
+    // Honour the user's first selected type so the preview matches what they'll actually receive;
+    // fall back to event.created when no filter is set.
+    const previewType = selectedTypes?.[0] ?? 'event.created';
+    return events.slice(0, 5).map((e) => ({ event_type: previewType, ...flattenEvent(e) }));
   },
 });
