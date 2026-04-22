@@ -2,13 +2,13 @@ import { createServer } from 'node:http'
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { Server as IOServer } from 'socket.io'
 import {
-    createRpcServer,
     PackageType,
     PieceType,
     WorkerJobType,
     EngineResponseStatus,
     WebsocketServerEvent,
 } from '@activepieces/shared'
+import { createRpcServer } from '@activepieces/shared/server'
 import { JobResultKind } from '../../src/lib/execute/types'
 import type {
     WorkerToApiContract,
@@ -437,7 +437,70 @@ describe('worker integration', () => {
             expect(mockGetHandler).toHaveBeenCalledTimes(2)
         }, 15_000)
     })
+
+    describe('health endpoint', () => {
+        let healthPort: number
+
+        beforeEach(async () => {
+            healthPort = await getFreePort()
+            process.env.AP_PORT = String(healthPort)
+        })
+
+        afterEach(() => {
+            delete process.env.AP_PORT
+        })
+
+        async function startWithHealthServer(): Promise<void> {
+            worker.start({
+                apiUrl: `http://127.0.0.1:${port}/api/`,
+                socketUrl: { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' },
+                workerToken: 'test-token',
+                withHealthServer: true,
+            })
+            for (let i = 0; i < 50; i++) {
+                try {
+                    const res = await fetch(`http://127.0.0.1:${healthPort}/v1/health`)
+                    if (res.ok) return
+                }
+                catch {
+                    // server not ready yet
+                }
+                await new Promise<void>((resolve) => setTimeout(resolve, 100))
+            }
+            throw new Error(`Health server on port ${healthPort} did not start in time`)
+        }
+
+        it('responds 200 with status ok on /v1/health', async () => {
+            await startWithHealthServer()
+            const res = await fetch(`http://127.0.0.1:${healthPort}/v1/health`)
+            expect(res.status).toBe(200)
+            expect(await res.json()).toEqual({ status: 'ok' })
+        }, 5_000)
+
+        it('responds 200 with status ok on /worker/health', async () => {
+            await startWithHealthServer()
+            const res = await fetch(`http://127.0.0.1:${healthPort}/worker/health`)
+            expect(res.status).toBe(200)
+            expect(await res.json()).toEqual({ status: 'ok' })
+        }, 5_000)
+
+        it('responds 404 on unknown paths', async () => {
+            await startWithHealthServer()
+            const res = await fetch(`http://127.0.0.1:${healthPort}/unknown`)
+            expect(res.status).toBe(404)
+        }, 5_000)
+    })
 })
+
+function getFreePort(): Promise<number> {
+    return new Promise((resolve) => {
+        const srv = createServer()
+        srv.listen(0, () => {
+            const { port } = srv.address() as { port: number }
+            srv.close(() => resolve(port))
+        })
+    })
+}
 
 type CompleteJobCall = {
     jobId: string

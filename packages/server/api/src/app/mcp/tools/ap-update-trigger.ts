@@ -11,6 +11,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
+import { mcpToolError } from './mcp-utils'
 
 const updateTriggerInput = z.object({
     flowId: z.string(),
@@ -109,10 +110,7 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{ type: 'text', text: `❌ Trigger update failed: ${message}` }],
-                }
+                return mcpToolError('Trigger update failed', err)
             }
         },
     }

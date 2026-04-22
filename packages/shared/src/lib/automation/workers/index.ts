@@ -49,7 +49,6 @@ export type WorkerMachineWithStatus = z.infer<typeof WorkerMachineWithStatus>
 export const ConsumeJobRequest = z.object({
     jobId: z.string(),
     jobData: JobData,
-    timeoutInSeconds: z.number(),
     attempsStarted: z.number(),
     engineToken: z.string(),
     token: z.string(),
@@ -102,6 +101,9 @@ export const WorkerSettingsResponse = z.object({
     EVENT_DESTINATION_TIMEOUT_SECONDS: z.number(),
     PLATFORM_ID_FOR_DEDICATED_WORKER: z.string().optional(),
     EDITION: z.string(),
+    SSRF_PROTECTION_ENABLED: z.boolean(),
+    SSRF_ALLOW_LIST: z.array(z.string()),
+    PAGE_ONCALL_WEBHOOK: z.string().optional(),
 })
 
 export type WorkerSettingsResponse = z.infer<typeof WorkerSettingsResponse>

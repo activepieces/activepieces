@@ -14,8 +14,7 @@ import { getWebhookUrl } from '../utils/webhook-url'
 export const renewWebhookJob: JobHandler<RenewWebhookJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.RENEW_WEBHOOK,
     async execute(ctx: JobContext, data: RenewWebhookJobData): Promise<FireAndForgetJobResult> {
-        const settings = workerSettings.getSettings()
-        const timeoutInSeconds = settings.TRIGGER_HOOKS_TIMEOUT_SECONDS
+        const timeoutInSeconds = workerSettings.getSettings().TRIGGER_HOOKS_TIMEOUT_SECONDS
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         if (isNil(flowVersion)) {

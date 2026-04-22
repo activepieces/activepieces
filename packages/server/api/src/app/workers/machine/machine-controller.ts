@@ -1,4 +1,5 @@
-import { createRpcServer, PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerToApiContract } from '@activepieces/shared'
+import { PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerToApiContract } from '@activepieces/shared'
+import { createRpcServer } from '@activepieces/shared/server'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
@@ -13,9 +14,10 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
         return async (request: WorkerMachineHealthcheckRequest, _principal, _projectId, callback?: (data: unknown) => void) => {
             const rawPlatformId = socket.handshake.auth?.platformIdForDedicatedWorker
             const platformIdForDedicatedWorker = typeof rawPlatformId === 'string' ? rawPlatformId : undefined
+            const isCanaryWorker = socket.handshake.auth?.isCanaryWorker === true
             const response = await machineService(app.log).onConnection(request, platformIdForDedicatedWorker)
             callback?.(response)
-            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, platformIdForDedicatedWorker))
+            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, platformIdForDedicatedWorker, isCanaryWorker))
         }
     })
 

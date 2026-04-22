@@ -1,0 +1,88 @@
+name: Continuous Delivery — Release
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9 AM UTC
+  workflow_dispatch:
+
+jobs:
+  weekly-release:
+    runs-on: ubuntu-24.04
+    environment:
+      name: release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: release-candidate
+
+      - name: Set version from package.json
+        id: version
+        run: |
+          RELEASE=$(node --print "require('./package.json').version")
+          echo "release=$RELEASE" >> $GITHUB_OUTPUT
+
+      - name: Fail if Docker tag already exists
+        run: '! docker manifest inspect activepieces/activepieces:${{ steps.version.outputs.release }}'
+
+      - name: Create or update changelog via release-drafter
+        uses: release-drafter/release-drafter@v5
+        with:
+          commitish: main
+          prerelease: false
+          tag: ${{ steps.version.outputs.release }}
+          name: ${{ steps.version.outputs.release }}
+          version: ${{ steps.version.outputs.release }}
+          latest: true
+          publish: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create git tag
+        run: |
+          git tag -f ${{ steps.version.outputs.release }}
+          git push origin ${{ steps.version.outputs.release }} --force
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish release images
+        run: |
+          docker buildx imagetools create \
+            --tag activepieces/activepieces:${{ steps.version.outputs.release }} \
+            --tag activepieces/activepieces:latest \
+            --tag ghcr.io/activepieces/activepieces:${{ steps.version.outputs.release }} \
+            --tag ghcr.io/activepieces/activepieces:latest \
+            ghcr.io/activepieces/activepieces-cloud:release-candidate
+
+      - name: Check for breaking migrations
+        id: migration-check
+        run: npx tsx tools/scripts/check-release-migrations.ts ${{ steps.version.outputs.release }}
+    
+      - name: Add breaking migration note to release
+        if: steps.migration-check.outputs.has_breaking == 'true'
+        run: |
+          VERSION=${{ steps.version.outputs.release }}
+          BODY=$(gh release view "$VERSION" --json body -q .body)
+
+          NOTE=$(cat <<EOF
+
+          ---
+
+          > **Note:** This release includes database changes that can't be automatically rolled back (${{ steps.migration-check.outputs.breaking_names }}). See the [rollback guide](https://www.activepieces.com/docs/install/guides/rollback) for details.
+          EOF
+          )
+
+          gh release edit "$VERSION" --notes "${BODY}${NOTE}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

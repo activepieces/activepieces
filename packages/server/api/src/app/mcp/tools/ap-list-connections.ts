@@ -8,6 +8,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { projectService } from '../../project/project-service'
+import { mcpToolError } from './mcp-utils'
 
 const statusEnum = z.nativeEnum(AppConnectionStatus)
 
@@ -74,10 +75,7 @@ export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): M
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{ type: 'text', text: `❌ Failed to list connections: ${message}` }],
-                }
+                return mcpToolError('Failed to list connections', err)
             }
         },
     }

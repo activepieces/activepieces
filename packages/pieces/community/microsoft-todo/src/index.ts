@@ -15,6 +15,8 @@ import { findTaskListByNameAction } from './lib/actions/find-task-list-by-name';
 import { getTaskAction } from './lib/actions/get-task';
 import { updateTaskAction } from './lib/actions/update-task';
 import { updateTaskListAction } from './lib/actions/update-task-list';
+import { listTasksAction } from './lib/actions/list-tasks';
+import { listTaskListsAction } from './lib/actions/list-task-lists';
 
 import { microsoftToDoAuth } from './lib/auth';
 import { newListCreatedTrigger } from './lib/triggers/new-list-created';
@@ -33,6 +35,8 @@ export const microsoftTodo = createPiece({
   actions: [
     createTask,
     createTaskListAction,
+    listTasksAction,
+    listTaskListsAction,
     updateTaskAction,
     updateTaskListAction,
     completeTaskAction,

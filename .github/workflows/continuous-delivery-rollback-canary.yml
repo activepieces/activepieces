@@ -1,0 +1,79 @@
+name: Continuous Delivery — Rollback Canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      rollback_to_image_tag:
+        description: 'Image tag to roll back TO (e.g. 0.51.0.abc1234.canary). Leave blank to roll back to the current cloud production image.'
+        required: false
+        default: ''
+      force:
+        description: 'Force rollback even if breaking migrations exist'
+        type: boolean
+        default: false
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment:
+      name: canary
+    steps:
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+
+      - name: Resolve rollback image tag
+        id: target
+        run: |
+          TAG="${{ inputs.rollback_to_image_tag }}"
+          if [ -z "$TAG" ]; then
+            TAG=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app version --config-file=config/app.yml 2>&1 | grep -oE \"[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.beta\" | head -1 | tr -d \"[:space:]\"; exit"' | tr -d '\r' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.beta' | head -1)
+            echo "No tag provided — resolved current cloud production tag: $TAG"
+          fi
+          if [ -z "$TAG" ]; then
+            echo "ERROR: Could not resolve a rollback image tag."
+            exit 1
+          fi
+          echo "image_tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Extract migration manifest from target image
+        id: manifest
+        run: |
+          IMAGE="ghcr.io/activepieces/activepieces-cloud:${{ steps.target.outputs.image_tag }}"
+          docker pull "$IMAGE"
+          MANIFEST=$(docker run --rm "$IMAGE" \
+            cat /usr/src/app/packages/server/api/dist/src/migration-manifest.json)
+          echo "json=$MANIFEST" >> $GITHUB_OUTPUT
+
+      - name: Rollback DB migrations
+        run: |
+          FORCE_FLAG=${{ inputs.force && '"--force"' || '""' }}
+          MANIFEST='${{ steps.manifest.outputs.json }}'
+          ssh ops -t -t "bash -ic \"cd mrsk/prod && kamal app exec --config-file=config/app-canary.yml -- \
+            node /usr/src/app/packages/server/api/dist/src/rollback.js \
+            --manifest '$MANIFEST' $FORCE_FLAG ; exit\""
+
+      - name: Redeploy canary app to target image
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy \
+            --version ${{ steps.target.outputs.image_tag }} \
+            --config-file=config/app-canary.yml --skip-push; exit"'
+
+      - name: Redeploy canary workers to target image
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy \
+            --version ${{ steps.target.outputs.image_tag }} \
+            --config-file=config/worker.yml --roles=canary --skip-push; exit"'

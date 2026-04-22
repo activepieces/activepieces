@@ -1,12 +1,13 @@
 {
   "name": "@activepieces/piece-text-helper",
-  "version": "0.4.14",
+  "version": "0.4.15",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "jsdom": "^24.0.0",
     "showdown": "2.1.0",
     "slugify": "1.6.6",
     "string-strip-html": "8.5.0",
@@ -20,6 +21,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@types/jsdom": "^21.1.6",
     "@types/showdown": "2.0.6",
     "@types/turndown": "5.0.6",
     "vitest": "3.0.8"

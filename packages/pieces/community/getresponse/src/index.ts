@@ -14,7 +14,7 @@ export const getresponse = createPiece({
   description:
     'Email marketing and automation platform for contacts, campaigns, and newsletters.',
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://us-ws.gr-cdn.com/images/global/getresponse.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/getresponse.png',
   categories: [PieceCategory.MARKETING],
   authors: ['veri5ied'],
   auth: getresponseAuth,

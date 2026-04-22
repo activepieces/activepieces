@@ -1,0 +1,349 @@
+---
+title: "Tools Reference"
+icon: "wrench"
+description: "Complete catalog of all MCP tools available in Activepieces"
+---
+
+## Discovery
+
+These tools are always available (locked) and read-only. They help AI agents understand what's in the project before making changes.
+
+### ap_list_flows
+
+List all flows in the current project.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| — | — | — | No inputs required |
+
+### ap_flow_structure
+
+Get the structure of a flow: step tree, configuration status, and valid insert locations.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+
+### ap_list_pieces
+
+List available pieces with their actions and triggers. Required before adding or updating steps.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `searchQuery` | string | No | Filter pieces by name |
+| `includeActions` | boolean | No | Include action details |
+| `includeTriggers` | boolean | No | Include trigger details |
+
+### ap_list_connections
+
+List OAuth/app connections in the project. Required before adding steps that need authentication.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| — | — | — | No inputs required |
+
+### ap_list_ai_models
+
+List configured AI providers and their available models. Use this to discover valid `aiProviderModel` values for configuring Run Agent steps.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `provider` | string | No | Filter by provider (`openai`, `anthropic`, `google`, `azure`, `openrouter`, `activepieces`, `cloudflare-gateway`, `custom`) |
+
+### ap_list_tables
+
+List all tables in the project with their fields (name, type, id) and row counts.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| — | — | — | No inputs required |
+
+### ap_find_records
+
+Query records from a table with optional filtering.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `tableId` | string | Yes | The table ID |
+| `filters` | array | No | Filter conditions (fieldName, operator, value) |
+| `limit` | number | No | Max records (default 50, max 500) |
+
+**Filter operators:** `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `co` (contains), `exists`, `not_exists`
+
+### ap_list_runs
+
+List recent flow runs with optional filters.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | No | Filter by flow |
+| `status` | string | No | Filter by status (SUCCEEDED, FAILED, RUNNING, etc.) |
+| `limit` | number | No | Max runs (default 10, max 50) |
+
+### ap_get_run
+
+Get detailed results of a flow run including step-by-step outputs, errors, and durations.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowRunId` | string | Yes | The run ID |
+
+### ap_setup_guide
+
+Get step-by-step instructions for setting up connections or AI providers. Returns instructions for the user to follow in the UI — credentials are never handled through MCP.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `topic` | string | Yes | `connection` or `ai_provider` |
+| `pieceName` | string | No | For connections: which piece needs auth |
+
+---
+
+## Flow Management
+
+Create and manage flows.
+
+### ap_create_flow
+
+Create a new empty flow.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowName` | string | Yes | Display name for the flow |
+
+### ap_rename_flow
+
+Rename an existing flow.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+| `displayName` | string | Yes | New name |
+
+### ap_change_flow_status
+
+Enable or disable a flow.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+| `status` | string | Yes | `ENABLED` or `DISABLED` |
+
+### ap_lock_and_publish
+
+Publish the current draft of a flow. Validates all steps are configured.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+
+---
+
+## Flow Building
+
+Add, configure, and remove steps in a flow.
+
+### ap_update_trigger
+
+Set or update the trigger for a flow.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+| `pieceName` | string | Yes | Piece name (e.g., `@activepieces/piece-gmail`) |
+| `pieceVersion` | string | Yes | Piece version (e.g., `~0.11.6`) |
+| `triggerName` | string | Yes | Trigger name from the piece |
+| `input` | object | No | Trigger configuration |
+| `auth` | string | No | Connection externalId |
+| `displayName` | string | No | Display name for the trigger step |
+
+### ap_add_step
+
+Add a new step to a flow. Creates a skeleton — configure it with `ap_update_step`.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+| `parentStepName` | string | Yes | Step to insert after/into |
+| `stepLocationRelativeToParent` | string | Yes | `AFTER`, `INSIDE_LOOP`, or `INSIDE_BRANCH` |
+| `stepType` | string | Yes | `CODE`, `PIECE`, `LOOP_ON_ITEMS`, or `ROUTER` |
+| `displayName` | string | Yes | Step display name |
+| `pieceName` | string | No | For PIECE steps |
+| `pieceVersion` | string | No | For PIECE steps |
+| `actionName` | string | No | For PIECE steps |
+| `branchIndex` | number | No | For INSIDE_BRANCH |
+
+### ap_update_step
+
+Update an existing step's settings. Auto-fills default values for optional properties.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+| `stepName` | string | Yes | Step name (e.g., `step_1`) |
+| `displayName` | string | No | New display name |
+| `input` | object | No | Step configuration |
+| `auth` | string | No | Connection externalId |
+| `actionName` | string | No | For PIECE steps |
+| `loopItems` | string | No | For LOOP steps |
+| `skip` | boolean | No | Skip this step |
+
+<Tip>
+Use `{{stepName.output.field}}` syntax in input values to reference data from previous steps.
+</Tip>
+
+### ap_delete_step
+
+Delete a step from a flow.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+| `stepName` | string | Yes | Step to delete |
+
+---
+
+## Router & Branching
+
+Manage conditional branches in router steps.
+
+### ap_add_branch
+
+Add a conditional branch to a router step.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+| `stepName` | string | Yes | The router step name |
+
+### ap_delete_branch
+
+Delete a branch from a router step.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+| `stepName` | string | Yes | The router step name |
+| `branchIndex` | number | Yes | Which branch to delete |
+
+---
+
+## Annotations
+
+### ap_manage_notes
+
+Add, update, or delete canvas notes on a flow.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+| `operation` | string | Yes | `ADD`, `UPDATE`, or `DELETE` |
+| `noteId` | string | No | Required for UPDATE/DELETE |
+| `content` | string | No | Note text (required for ADD) |
+| `color` | string | No | Note color |
+| `position` | object | No | `{x, y}` canvas position |
+| `size` | object | No | `{width, height}` note dimensions (default 200x200) |
+
+---
+
+## Tables
+
+Full CRUD operations for the built-in Tables feature. Use field names (not IDs) when inserting or updating records.
+
+### ap_create_table
+
+Create a new table with an initial set of fields.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Table name |
+| `fields` | array | Yes | Fields: `{name, type, options?}` |
+
+**Field types:** `TEXT`, `NUMBER`, `DATE`, `STATIC_DROPDOWN` (requires `options` array)
+
+### ap_delete_table
+
+Permanently delete a table and all its data.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `tableId` | string | Yes | The table ID |
+
+### ap_manage_fields
+
+Add, rename, or delete fields on a table.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `tableId` | string | Yes | The table ID |
+| `operation` | string | Yes | `ADD`, `UPDATE`, or `DELETE` |
+| `fieldId` | string | No | Required for UPDATE/DELETE |
+| `name` | string | No | Required for ADD/UPDATE |
+| `type` | string | No | Required for ADD |
+| `options` | array | No | For STATIC_DROPDOWN |
+
+### ap_insert_records
+
+Insert one or more records into a table.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `tableId` | string | Yes | The table ID |
+| `records` | array | Yes | 1-50 records, each mapping field names to values |
+
+### ap_update_record
+
+Update specific cells in a record. Only specified fields are changed.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `tableId` | string | Yes | The table ID |
+| `recordId` | string | Yes | The record ID |
+| `fields` | object | Yes | Field names to new values |
+
+### ap_delete_records
+
+Permanently delete one or more records.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `recordIds` | array | Yes | Record IDs to delete |
+
+---
+
+## Testing & Runs
+
+Test flows, inspect results, and retry failures. Test tools poll for up to 120 seconds and return step-by-step results.
+
+### ap_test_flow
+
+Test a flow end-to-end in the test environment using saved sample data.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+
+<Warning>
+The flow must have a configured trigger. The tool validates this before running and returns a clear error if not.
+</Warning>
+
+### ap_test_step
+
+Test a single step within a flow. Runs all steps up to and including the target step.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+| `stepName` | string | Yes | Step to test |
+
+### ap_retry_run
+
+Retry a failed flow run.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowRunId` | string | Yes | The failed run ID |
+| `strategy` | string | Yes | `FROM_FAILED_STEP` or `ON_LATEST_VERSION` |
+
+- **FROM_FAILED_STEP**: Resume from where it failed, keeping previous step outputs
+- **ON_LATEST_VERSION**: Re-run the entire flow with the current published version

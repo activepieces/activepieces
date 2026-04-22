@@ -6,6 +6,7 @@ import { linearUpdateIssue } from './lib/actions/issues/update-issue';
 import { linearCreateProject } from './lib/actions/projects/create-project';
 import { linearUpdateProject } from './lib/actions/projects/update-project';
 import { linearRawGraphqlQuery } from './lib/actions/raw-graphql-query';
+import { linearNewComment } from './lib/triggers/new-comment';
 import { linearNewIssue } from './lib/triggers/new-issue';
 import { linearUpdatedIssue } from './lib/triggers/updated-issue';
 import { linearRemovedIssue } from './lib/triggers/removed-issue';
@@ -54,6 +55,7 @@ export const linear = createPiece({
     linearRawGraphqlQuery,
   ],
   triggers: [
+    linearNewComment,
     linearNewIssue,
     linearUpdatedIssue,
     linearRemovedIssue,

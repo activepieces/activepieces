@@ -1,0 +1,63 @@
+name: Continuous Delivery — Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      rollback_to_image_tag:
+        description: 'Image tag to roll back TO (e.g. 0.51.0.abc1234.beta)'
+        required: true
+      force:
+        description: 'Force rollback even if breaking migrations exist'
+        type: boolean
+        default: false
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+
+      - name: Extract migration manifest from target image
+        id: manifest
+        run: |
+          IMAGE="ghcr.io/activepieces/activepieces-cloud:${{ inputs.rollback_to_image_tag }}"
+          docker pull "$IMAGE"
+          MANIFEST=$(docker run --rm "$IMAGE" \
+            cat /usr/src/app/packages/server/api/dist/src/migration-manifest.json)
+          echo "json=$MANIFEST" >> $GITHUB_OUTPUT
+
+      - name: Rollback DB migrations
+        run: |
+          FORCE_FLAG=${{ inputs.force && '"--force"' || '""' }}
+          MANIFEST='${{ steps.manifest.outputs.json }}'
+          ssh ops -t -t "bash -ic \"cd mrsk/prod && kamal app exec --config-file=config/app.yml -- \
+            node /usr/src/app/packages/server/api/dist/src/rollback.js \
+            --manifest '$MANIFEST' $FORCE_FLAG ; exit\""
+
+      - name: Redeploy app to target image
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy \
+            --version ${{ inputs.rollback_to_image_tag }} \
+            --config-file=config/app.yml --skip-push; exit"'
+
+      - name: Redeploy workers to target image
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy \
+            --version ${{ inputs.rollback_to_image_tag }} \
+            --config-file=config/worker.yml --skip-push; exit"'

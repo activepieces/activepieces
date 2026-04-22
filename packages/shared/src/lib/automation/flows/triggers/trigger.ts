@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { STEP_NAME_REGEX } from '../../../core/common'
 import { VersionType } from '../../pieces'
 import { CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings, RouterActionSettings } from '../actions/action'
 import { PropertySettings } from '../properties'
@@ -26,7 +27,7 @@ export enum FlowTriggerType {
 }
 
 const commonProps = {
-    name: z.string(),
+    name: z.string().regex(STEP_NAME_REGEX),
     valid: z.boolean(),
     displayName: z.string(),
     nextAction: z.any().optional(),

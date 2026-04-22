@@ -192,6 +192,26 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async getLatestVersionsByFlowIds(flowIds: FlowId[], projectId?: ProjectId): Promise<Map<FlowId, FlowVersion>> {
+        if (flowIds.length === 0) {
+            return new Map()
+        }
+        const latestVersions = await flowVersionRepo()
+            .createQueryBuilder('fv')
+            .where('fv.flowId IN (:...flowIds)', { flowIds })
+            .distinctOn(['fv.flowId'])
+            .orderBy('fv.flowId')
+            .addOrderBy('fv.created', 'DESC')
+            .getMany()
+        const migratedEntries = await Promise.all(
+            latestVersions.map(async (version) => {
+                const migrated = await flowVersionMigrationService(log).migrate(version, projectId)
+                return [version.flowId, migrated] as const
+            }),
+        )
+        return new Map(migratedEntries)
+    },
+
     async getLatestLockedVersionOrThrow(flowId: FlowId): Promise<FlowVersion> {
         const lockedVersion = await this.getLatestVersion(flowId, FlowVersionState.LOCKED)
         if (isNil(lockedVersion)) {

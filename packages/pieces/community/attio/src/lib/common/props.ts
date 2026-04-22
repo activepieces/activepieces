@@ -1,7 +1,14 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { attioApiCall, attioPaginatedApiCall } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { AttributeResponse, ListResponse, ObjectResponse, SelectOptionResponse } from './types';
+import {
+	AttributeResponse,
+	CallRecordingResponse,
+	ListResponse,
+	MeetingResponse,
+	ObjectResponse,
+	SelectOptionResponse,
+} from './types';
 import { isNil } from '@activepieces/shared';
 import { attioAuth } from '../auth';
 
@@ -72,6 +79,176 @@ export const listIdDropdown = (params: DropdownParams) =>
 					value: obj.id.list_id,
 				})),
 			};
+		},
+	});
+
+export const taskIdDropdown = (params: DropdownParams) =>
+	Property.Dropdown({
+		auth: attioAuth,
+		displayName: params.displayName,
+		description: params.description,
+		required: params.required,
+		refreshers: [],
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account first.',
+				};
+			}
+
+			const response = await attioApiCall<{ data: Array<Record<string, any>> }>({
+				accessToken: auth.secret_text,
+				method: HttpMethod.GET,
+				resourceUri: '/tasks',
+				query: { limit: 200 },
+			});
+
+			return {
+				disabled: false,
+				options: response.data.map((task) => ({
+					label: task['content_plaintext'] ?? task['id']?.task_id,
+					value: task['id']?.task_id,
+				})),
+			};
+		},
+	});
+
+export const linkedRecordDropdown = (params: DropdownParams) =>
+	Property.Dropdown({
+		auth: attioAuth,
+		displayName: params.displayName,
+		description: params.description,
+		required: params.required,
+		refreshers: ['linked_object'],
+		options: async ({ auth, linked_object }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account first.',
+				};
+			}
+
+			if (!linked_object) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please select a Linked Object first.',
+				};
+			}
+
+			const response = await attioApiCall<{ data: Array<Record<string, any>> }>({
+				accessToken: auth.secret_text,
+				method: HttpMethod.POST,
+				resourceUri: `/objects/${linked_object}/records/query`,
+				body: { limit: 200, offset: 0 },
+			});
+
+			return {
+				disabled: false,
+				options: response.data.map((record) => {
+					const nameValues: Array<any> = record['values']?.['name'] ?? [];
+					const label =
+						nameValues[0]?.full_name ??
+						nameValues[0]?.value ??
+						record['id']?.record_id;
+					return { label: String(label), value: record['id']?.record_id };
+				}),
+			};
+		},
+	});
+
+export const meetingIdDropdown = (params: DropdownParams) =>
+	Property.Dropdown({
+		auth: attioAuth,
+		displayName: params.displayName,
+		description: params.description,
+		required: params.required,
+		refreshers: [],
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account first.',
+				};
+			}
+
+			try {
+				const response = await attioApiCall<{ data: Array<MeetingResponse> }>({
+					accessToken: auth.secret_text,
+					method: HttpMethod.GET,
+					resourceUri: '/meetings',
+					query: { limit: 200, sort: 'start_desc' },
+				});
+
+				return {
+					disabled: false,
+					options: response.data.map((meeting) => ({
+						label: meeting.title || meeting.id.meeting_id,
+						value: meeting.id.meeting_id,
+					})),
+				};
+			} catch {
+				return {
+					disabled: true,
+					options: [],
+					placeholder:
+						'Failed to load meetings. Ensure your API key has the "meeting:read" scope.',
+				};
+			}
+		},
+	});
+
+export const callRecordingIdDropdown = (params: DropdownParams) =>
+	Property.Dropdown({
+		auth: attioAuth,
+		displayName: params.displayName,
+		description: params.description,
+		required: params.required,
+		refreshers: ['meeting_id'],
+		options: async ({ auth, meeting_id }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account first.',
+				};
+			}
+
+			if (!meeting_id) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please select a meeting first.',
+				};
+			}
+
+			try {
+				const response = await attioApiCall<{ data: Array<CallRecordingResponse> }>({
+					accessToken: auth.secret_text,
+					method: HttpMethod.GET,
+					resourceUri: `/meetings/${meeting_id}/call_recordings`,
+					query: { limit: 200 },
+				});
+
+				return {
+					disabled: false,
+					options: response.data.map((rec) => ({
+						label: `${rec.created_at} (${rec.status})`,
+						value: rec.id.call_recording_id,
+					})),
+				};
+			} catch {
+				return {
+					disabled: true,
+					options: [],
+					placeholder:
+						'Failed to load recordings. Ensure your API key has the "call_recording:read" scope.',
+				};
+			}
 		},
 	});
 
@@ -160,6 +337,18 @@ async function createPropertyDefinition(
 				displayName: title,
 				required,
 			});
+		case 'record-reference': {
+			const targetSlug = property.relationship?.object_slug;
+			const label = targetSlug ?? 'record';
+			const field = is_multiselect ? Property.Array : Property.ShortText;
+			return field({
+				displayName: title,
+				required,
+				description: is_multiselect
+					? `Enter ${label} IDs (one per item).`
+					: `Enter the ${label} ID.`,
+			});
+		}
 		case 'actor-reference': {
 			const basicField = is_multiselect ? Property.Array : Property.ShortText;
 			return basicField({
@@ -297,20 +486,40 @@ export async function formatInputFields(
 		resourceUri: `/${objectType}/${objectId}/attributes`,
 	});
 
-	const typeMapping = attributes.reduce((acc, { api_slug, type }) => {
-		acc[api_slug] = type;
+	const typeMapping = attributes.reduce((acc, attr) => {
+		acc[attr.api_slug] = {
+			type: attr.type,
+			is_multiselect: attr.is_multiselect,
+			object_slug: attr.relationship?.object_slug ?? null,
+		};
 		return acc;
-	}, {} as Record<string, string>);
+	}, {} as Record<string, { type: string; is_multiselect: boolean; object_slug: string | null }>);
 
-	const formattedFields: Record<string, any> = {};
+	const formattedFields: Record<string, unknown> = {};
 
 	for (const [key, value] of Object.entries(inputValues)) {
 		if (isNil(value) || value === '') continue;
 		if(Array.isArray(value) && value.length === 0) continue;
 
-		const fieldType = typeMapping[key];
+		const fieldType = typeMapping[key]?.type;
 
 		switch (fieldType) {
+			case 'record-reference': {
+				if (isSearch) {
+					// Filter API shorthand: plain ID string for $eq, $in array for multiple
+					const ids: string[] = Array.isArray(value) ? value : [value];
+					formattedFields[key] = ids.length === 1 ? ids[0] : { $in: ids };
+				} else {
+					const targetSlug = typeMapping[key]?.object_slug;
+					const ids: string[] = Array.isArray(value) ? value : [value];
+					formattedFields[key] = ids.map((id) =>
+						targetSlug
+							? { target_record_id: id, target_object: targetSlug }
+							: { target_record_id: id },
+					);
+				}
+				break;
+			}
 			case 'phone-number':
 				formattedFields[key] = isSearch ? value : [value];
 				break;

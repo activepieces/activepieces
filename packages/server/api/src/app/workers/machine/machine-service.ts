@@ -58,6 +58,9 @@ async function buildSettingsResponse(log: FastifyBaseLogger, platformIdForDedica
         S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
         EVENT_DESTINATION_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS),
         EDITION: system.getOrThrow(AppSystemProp.EDITION),
+        SSRF_ALLOW_LIST: system.get(AppSystemProp.SSRF_ALLOW_LIST)?.split(',').map(f => f.trim()) ?? [],
+        SSRF_PROTECTION_ENABLED: system.get(AppSystemProp.SSRF_PROTECTION_ENABLED) === 'true',
+        PAGE_ONCALL_WEBHOOK: system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK),
     }
     settingsCache.set(cacheKey, settings)
     return settings

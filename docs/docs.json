@@ -60,6 +60,13 @@
                   ]
                },
                {
+                  "group": "MCP Server",
+                  "pages": [
+                     "mcp/overview",
+                     "mcp/tools"
+                  ]
+               },
+               {
                   "group": "About",
                   "pages": [
                      "about/i18n",
@@ -173,7 +180,8 @@
                      "install/guides/setup-opentelemetry",
                      "install/guides/setup-s3",
                      "install/guides/separate-workers",
-                     "install/guides/setup-app-webhooks"
+                     "install/guides/setup-app-webhooks",
+                     "install/guides/rollback"
                   ]
                },
                {
@@ -494,8 +502,9 @@
                   "icon": "code",
                   "pages": [
                      "handbook/engineering/playbooks/run-ee",
-                     "handbook/engineering/playbooks/setup-incident-io",
+                     "handbook/engineering/playbooks/setup-betterstack",
                      "handbook/engineering/playbooks/releases",
+                     "handbook/engineering/playbooks/canary-deployment",
                      "handbook/engineering/playbooks/infrastructure",
                      "handbook/engineering/playbooks/database-migration",
                      "handbook/engineering/playbooks/product-announcement",

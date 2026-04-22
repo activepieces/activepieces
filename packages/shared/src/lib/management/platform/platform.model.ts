@@ -95,6 +95,7 @@ export const PlatformPlan = z.object({
     dedicatedWorkers: Nullable(z.object({
         trustedEnvironment: z.boolean(),
     })),
+    canary: z.boolean(),
 })
 export type PlatformPlan = z.infer<typeof PlatformPlan>
 

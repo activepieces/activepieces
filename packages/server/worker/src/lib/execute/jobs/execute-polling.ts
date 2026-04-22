@@ -18,8 +18,7 @@ import { getWebhookUrl } from '../utils/webhook-url'
 export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_POLLING,
     async execute(ctx: JobContext, data: PollingJobData): Promise<FireAndForgetJobResult> {
-        const settings = workerSettings.getSettings()
-        const timeoutInSeconds = settings.TRIGGER_TIMEOUT_SECONDS
+        const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
         const flowVersion = await flowCache(ctx.log, ctx.apiClient).getVersion({ flowVersionId: data.flowVersionId })
         assertNotNullOrUndefined(flowVersion, 'flowVersion')

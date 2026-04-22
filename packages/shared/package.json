@@ -1,10 +1,19 @@
 {
   "name": "@activepieces/shared",
-  "version": "0.50.0",
+  "version": "0.51.8",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": "./dist/src/index.js",
+    "./server": "./dist/src/lib/automation/engine/rpc.js"
+  },
+  "typesVersions": {
+    "*": {
+      "server": ["./dist/src/lib/automation/engine/rpc.d.ts"]
+    }
+  },
   "dependencies": {
     "dayjs": "1.11.9",
     "deepmerge-ts": "7.1.0",

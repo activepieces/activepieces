@@ -11,6 +11,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
+import { mcpToolError } from './mcp-utils'
 
 const manageNotesInput = z.object({
     flowId: z.string(),
@@ -135,10 +136,7 @@ export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
                 return { content: [{ type: 'text', text: messages[op] }] }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{ type: 'text', text: `❌ Note operation failed: ${message}` }],
-                }
+                return mcpToolError('Note operation failed', err)
             }
         },
     }

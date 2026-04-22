@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { STEP_NAME_REGEX } from '../../../core/common'
 import { VersionType } from '../../pieces'
 import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
@@ -21,7 +22,7 @@ export enum BranchExecutionType {
 }
 
 const commonActionProps = {
-    name: z.string(),
+    name: z.string().regex(STEP_NAME_REGEX),
     valid: z.boolean(),
     displayName: z.string(),
     skip: z.boolean().optional(),

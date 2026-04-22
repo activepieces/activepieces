@@ -17,7 +17,20 @@ export function createRpcClient<T extends Contract>(
     return new Proxy({} as T, {
         get(_target, method: string) {
             return async (payload: unknown) => {
-                return socket.timeout(timeoutMs).emitWithAck(RPC_EVENT, { method, payload })
+                try {
+                    const result = await socket.timeout(timeoutMs).emitWithAck(RPC_EVENT, { method, payload })
+                    if (isRpcErrorEnvelope(result)) {
+                        throw new Error(`RPC [${method}] handler threw: ${result.__rpcError}`)
+                    }
+                    return result
+                }
+                catch (error) {
+                    if (error instanceof Error && error.message.startsWith('RPC [')) {
+                        throw error
+                    }
+                    const message = error instanceof Error ? error.message : String(error)
+                    throw new Error(`RPC [${method}] failed (timeout: ${timeoutMs}ms): ${message}`)
+                }
             }
         },
     })
@@ -29,8 +42,13 @@ export function createRpcServer<T extends Contract>(
 ): void {
     socket.on(RPC_EVENT, async (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
         const handler = handlers[msg.method as keyof T]
-        const result = await handler(msg.payload)
-        ack(result)
+        try {
+            const result = await handler(msg.payload)
+            ack(result)
+        }
+        catch (error) {
+            ack({ __rpcError: error instanceof Error ? error.message : String(error) })
+        }
     })
 }
 
@@ -54,4 +72,8 @@ export function createNotifyServer<T extends Contract>(
         const handler = handlers[msg.method as keyof T]
         handler(msg.payload)
     })
+}
+
+function isRpcErrorEnvelope(value: unknown): value is { __rpcError: string } {
+    return typeof value === 'object' && value !== null && '__rpcError' in value
 }
