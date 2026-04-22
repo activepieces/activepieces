@@ -1,27 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
 import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
-import { sendJiraRequest } from '../common';
+import { mapFieldNames, sendJiraRequest } from '../common';
 import { getIssueIdDropdown, getProjectIdDropdown } from '../common/props';
-
-function mapFieldNames(
-  fields: Record<string, any>,
-  fieldNames: Record<string, string>
-) {
-  const mappedFields = {} as Record<string, any>;
-
-  for (const [fieldId, fieldValue] of Object.entries(fields)) {
-    const fieldName = fieldNames?.[fieldId];
-    if (fieldName) {
-      mappedFields[fieldName] = fieldValue;
-    } else {
-      // fallback in case field cannot be mapped (but this should not happen)
-      mappedFields[fieldId] = fieldValue;
-    }
-  }
-
-  return mappedFields;
-}
 
 export const getIssueAction = createAction({
   auth: jiraCloudAuth,

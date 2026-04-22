@@ -1,4 +1,3 @@
-import { PropertyType } from '@activepieces/pieces-framework'
 import {
     FlowActionType,
     FlowOperationRequest,
@@ -16,7 +15,7 @@ import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
-import { diagnosePieceProps, mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const updateStepInput = z.object({
     flowId: z.string(),
@@ -27,26 +26,30 @@ const updateStepInput = z.object({
     actionName: z.string().optional(),
     loopItems: z.string().optional(),
     skip: z.boolean().optional(),
+    sourceCode: z.string().optional(),
+    packageJson: z.string().optional(),
 })
 
 export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_step',
         permission: Permission.WRITE_FLOW,
-        description: 'Update an existing step\'s settings in a flow. Use ap_flow_structure to get step names. Use ap_list_pieces to get valid pieceName, pieceVersion, actionName. If you are about to configure a CODE step, first verify with ap_list_pieces that no existing piece can accomplish the task. Provide only the fields you want to change.',
+        description: 'Update an existing step\'s settings. Provide only the fields you want to change.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             stepName: z.string().describe('The name of the step to update (e.g. "step_1"). Use ap_flow_structure to get valid values.'),
             displayName: z.string().optional().describe('New display name for the step'),
-            input: z.record(z.string(), z.unknown()).optional().describe('Input settings for the step (key-value pairs matching the action schema). Use `{{stepName.output.field}}` to reference data from previous steps (e.g. `{{trigger.output.body.email}}`, `{{step_1.output.id}}`).'),
+            input: z.record(z.string(), z.unknown()).optional().describe(`Input settings for the step (key-value pairs matching the action schema). ${mcpUtils.STEP_REFERENCE_HINT}`),
             auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. The tool wraps it automatically as `{{connections[\'externalId\']}}`.'),
             actionName: z.string().optional().describe('For PIECE steps: the action to perform. Use ap_list_pieces to get valid values.'),
             loopItems: z.string().optional().describe('For LOOP steps: expression for the items to iterate over'),
             skip: z.boolean().optional().describe('Whether to skip this step during execution'),
+            sourceCode: z.string().optional().describe('For CODE steps only: the JavaScript/TypeScript source code. Must export a `code` function: `export const code = async (inputs) => { ... }`.'),
+            packageJson: z.string().optional().describe('For CODE steps only: package.json content as a JSON string for npm dependencies. Defaults to "{}".'),
         },
         annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, stepName, displayName, input, auth, actionName, loopItems, skip } = updateStepInput.parse(args)
+            const { flowId, stepName, displayName, input, auth, actionName, loopItems, skip, sourceCode, packageJson } = updateStepInput.parse(args)
 
             const [flow, project] = await Promise.all([
                 flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
@@ -70,10 +73,9 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
 
-            if (auth !== undefined && auth.includes('\'')) {
-                return {
-                    content: [{ type: 'text', text: '❌ auth value must not contain single quotes. Use the exact externalId from ap_list_connections.' }],
-                }
+            const authError = mcpUtils.validateAuth(auth)
+            if (authError) {
+                return authError
             }
 
             const currentSettings = step.settings as Record<string, unknown>
@@ -102,9 +104,23 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                     return { content: [{ type: 'text', text: `❌ loopItems can only be set on LOOP_ON_ITEMS steps, but "${stepName}" is type ${step.type}.` }] }
                 }
             }
+            if (sourceCode !== undefined || packageJson !== undefined) {
+                if (step.type !== FlowActionType.CODE) {
+                    const param = sourceCode !== undefined ? 'sourceCode' : 'packageJson'
+                    return { content: [{ type: 'text', text: `❌ ${param} can only be set on CODE steps, but "${stepName}" is type ${step.type}.` }] }
+                }
+                const existing = currentSettings.sourceCode
+                const isObj = typeof existing === 'object' && existing !== null
+                const existingCode = isObj && 'code' in existing ? String(existing.code) : ''
+                const existingPkg = isObj && 'packageJson' in existing ? String(existing.packageJson) : '{}'
+                updatedSettings.sourceCode = {
+                    code: sourceCode ?? existingCode,
+                    packageJson: packageJson ?? existingPkg,
+                }
+            }
 
             if (step.type === FlowActionType.PIECE && input !== undefined) {
-                await fillDefaultsForMissingOptionalProps({
+                await mcpUtils.fillDefaultsForMissingOptionalProps({
                     settings: updatedSettings,
                     platformId: project.platformId,
                     log,
@@ -142,6 +158,7 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                     operation,
                 })
                 const updatedStep = flowStructureUtil.getStep(stepName, updatedFlow.version.trigger)
+                const draftWarning = mcpUtils.publishedFlowWarning(flow.publishedVersionId)
                 if (updatedStep && !updatedStep.valid) {
                     const diagnosis = updatedStep.type === FlowActionType.PIECE
                         ? await diagnoseMissingInputs({ settings: updatedStep.settings, platformId: project.platformId, log })
@@ -153,16 +170,16 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                     return {
                         content: [{
                             type: 'text',
-                            text: `⚠️ Step "${stepName}" updated but still invalid. ${hint}`,
+                            text: `⚠️ Step "${stepName}" updated but still invalid. ${hint}${draftWarning}`,
                         }],
                     }
                 }
                 return {
-                    content: [{ type: 'text', text: `✅ Successfully updated step "${stepName}".` }],
+                    content: [{ type: 'text', text: `✅ Successfully updated step "${stepName}".${draftWarning}` }],
                 }
             }
             catch (err) {
-                return mcpToolError('Step update failed', err)
+                return mcpUtils.mcpToolError('Step update failed', err)
             }
         },
     }
@@ -184,51 +201,11 @@ async function diagnoseMissingInputs({ settings, platformId, log }: {
             return `Action "${actionName}" not found in piece "${pieceName}". Use ap_list_pieces with includeActions=true to get valid action names.`
         }
         const input = settings.input ?? {}
-        const { parts } = diagnosePieceProps({ props: action.props, input, pieceAuth: piece.auth, requireAuth: action.requireAuth, componentType: 'action' })
+        const { parts } = mcpUtils.diagnosePieceProps({ props: action.props, input, pieceAuth: piece.auth, requireAuth: action.requireAuth, componentType: 'action' })
         return parts.join(' ')
     }
     catch (err) {
         log.warn({ err, pieceName, actionName }, 'diagnoseMissingInputs: failed to fetch piece metadata')
         return null
-    }
-}
-
-async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }: {
-    settings: Record<string, unknown>
-    platformId: string
-    log: FastifyBaseLogger
-}): Promise<void> {
-    const pieceName = settings.pieceName
-    const pieceVersion = settings.pieceVersion
-    const actionName = settings.actionName
-    if (typeof pieceName !== 'string' || typeof pieceVersion !== 'string' || typeof actionName !== 'string') {
-        return
-    }
-    try {
-        const piece = await pieceMetadataService(log).getOrThrow({
-            platformId,
-            name: pieceName,
-            version: pieceVersion,
-        })
-        const action = piece.actions[actionName]
-        if (isNil(action)) {
-            return
-        }
-        const defaults: Record<string, unknown> = {}
-        for (const [propName, prop] of Object.entries(action.props)) {
-            if (prop.type === PropertyType.ARRAY && !prop.required) {
-                defaults[propName] = []
-            }
-            else if (prop.type === PropertyType.DYNAMIC && !prop.required) {
-                defaults[propName] = {}
-            }
-            else if (prop.type === PropertyType.CHECKBOX && !prop.required) {
-                defaults[propName] = prop.defaultValue ?? false
-            }
-        }
-        settings.input = { ...defaults, ...(typeof settings.input === 'object' && settings.input !== null ? settings.input : {}) }
-    }
-    catch (err) {
-        log.warn({ err, pieceName, actionName }, 'fillDefaultsForMissingOptionalProps: failed to fetch piece metadata, skipping defaults')
     }
 }

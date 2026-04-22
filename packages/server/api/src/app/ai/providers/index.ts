@@ -2,6 +2,7 @@ import { AIProviderAuthConfig, AIProviderConfig, AIProviderName } from '@activep
 import type { AIProviderStrategy } from './ai-provider'
 import { anthropicProvider } from './anthropic-provider'
 import { azureProvider } from './azure-provider'
+import { bedrockProvider } from './bedrock-provider'
 import { cloudflareGatewayProvider } from './cloudflare-gateway-provider'
 import { googleProvider } from './google-provider'
 import { openAICompatibleProvider } from './openai-compatible-gateway-provider'
@@ -16,6 +17,7 @@ export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderAu
     [AIProviderName.GOOGLE]: googleProvider,
     [AIProviderName.CLOUDFLARE_GATEWAY]: cloudflareGatewayProvider,
     [AIProviderName.CUSTOM]: openAICompatibleProvider,
+    [AIProviderName.BEDROCK]: bedrockProvider,
     [AIProviderName.ACTIVEPIECES]: {
         ...openRouterProvider,
         name: 'Activepieces',

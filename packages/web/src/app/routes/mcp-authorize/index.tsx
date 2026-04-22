@@ -2,7 +2,7 @@ import { ProjectType, ProjectWithLimits, SeekPage } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { jwtDecode } from 'jwt-decode';
-import { Blocks, FolderKanban, Shield } from 'lucide-react';
+import { CheckCircle, FolderKanban, Lock, Plug, Workflow } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useDebouncedCallback } from 'use-debounce';
@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { MultiSelectFilter } from '@/features/automations/components/multi-select-filter';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -31,6 +32,7 @@ function McpAuthorizePage() {
   >(undefined);
   const [searchValue, setSearchValue] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [authorized, setAuthorized] = useState(false);
   const debouncedSetSearchValue = useDebouncedCallback(setSearchValue, 300);
   const isLoggedIn = authenticationSession.isLoggedIn();
   const projectTypeOptions = [
@@ -54,6 +56,7 @@ function McpAuthorizePage() {
       api.post<{ redirectUrl: string }>('/v1/mcp-oauth/approve', body),
     onSuccess: (data) => {
       window.location.href = data.redirectUrl;
+      setAuthorized(true);
     },
   });
 
@@ -83,33 +86,64 @@ function McpAuthorizePage() {
     });
   };
 
+  if (authorized) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center px-4">
+        <FullLogo />
+        <Card className="mt-4 w-full max-w-md rounded-sm drop-shadow-xl">
+          <CardContent className="flex flex-col items-center gap-5 pt-8 pb-8">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-success-100">
+              <CheckCircle className="h-7 w-7 text-success" />
+            </div>
+            <div className="flex flex-col items-center gap-2 text-center">
+              <CardTitle className="text-2xl">{t('Connected')}</CardTitle>
+              <CardDescription>
+                <span className="font-medium text-foreground">
+                  {clientName}
+                </span>{' '}
+                {t('is now connected to your project.')}
+              </CardDescription>
+            </div>
+            <Separator />
+            <p className="text-sm text-muted-foreground">
+              {t('You can close this tab and return to the application.')}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="mx-auto flex h-screen flex-col items-center justify-center gap-4 px-4">
+    <div className="flex h-screen flex-col items-center justify-center px-4">
       <FullLogo />
-      <Card className="w-full max-w-md rounded-sm drop-shadow-xl">
-        <CardHeader className="text-center pb-2">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Shield className="h-6 w-6 text-primary" />
+      <Card className="mt-4 w-full max-w-md rounded-sm drop-shadow-xl">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <Plug className="h-5 w-5 text-primary" />
           </div>
-          <CardTitle className="text-xl">
+          <CardTitle className="text-2xl">
             {t('Authorize Application')}
           </CardTitle>
-          <CardDescription className="pt-1">
+          <CardDescription>
             <span className="font-semibold text-foreground">{clientName}</span>{' '}
-            {t('wants to access your Activepieces account')}
+            {t('wants to connect to your Activepieces account')}
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="rounded-md border bg-muted/30 p-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Blocks className="h-4 w-4 shrink-0" />
-              <span>
-                {t(
-                  'This will allow the app to execute automations and access tools in your selected project.',
-                )}
-              </span>
-            </div>
+
+        <CardContent className="flex flex-col gap-5">
+          <div className="flex flex-col gap-3">
+            <PermissionItem
+              icon={<Workflow className="h-4 w-4 text-primary" />}
+              text={t('Build, test, and manage automations')}
+            />
+            <PermissionItem
+              icon={<Lock className="h-4 w-4 text-primary" />}
+              text={t('Use connections and execute flows')}
+            />
           </div>
+
+          <Separator />
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
@@ -150,12 +184,12 @@ function McpAuthorizePage() {
           </div>
 
           {approveMutation.isError && (
-            <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="rounded-md border border-destructive/50 bg-destructive-100 p-3 text-sm text-destructive">
               {t('Authorization failed. Please try again.')}
             </div>
           )}
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3">
             <Button
               type="button"
               variant="outline"
@@ -176,6 +210,23 @@ function McpAuthorizePage() {
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function PermissionItem({
+  icon,
+  text,
+}: {
+  icon: React.ReactNode;
+  text: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-md border bg-accent/50 px-3 py-2.5 text-sm">
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10">
+        {icon}
+      </div>
+      <span>{text}</span>
     </div>
   );
 }

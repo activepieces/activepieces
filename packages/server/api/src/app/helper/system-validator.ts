@@ -1,5 +1,5 @@
 import { inspect } from 'util'
-import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, isNil, NetworkMode, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../database/database-type'
 import { RedisType } from '../database/redis/types'
@@ -89,7 +89,7 @@ const systemPropValidators: {
     [AppSystemProp.ENCRYPTION_KEY]: stringValidator,
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: numberValidator,
     [AppSystemProp.JWT_SECRET]: stringValidator,
-    [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: numberValidator,
+    [AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT]: numberValidator,
     [AppSystemProp.PIECES_CACHE_MAX_ENTRIES]: numberValidator,
     [AppSystemProp.PIECES_SYNC_MODE]: enumValidator(Object.values(PieceSyncMode)),
     [AppSystemProp.POSTGRES_DATABASE]: stringValidator,
@@ -186,7 +186,7 @@ const systemPropValidators: {
     [AppSystemProp.CANARY_APP_URL]: urlValidator,
     // SSRF protection
     [AppSystemProp.SSRF_ALLOW_LIST]: stringValidator,
-    [AppSystemProp.SSRF_PROTECTION_ENABLED]: booleanValidator,
+    [AppSystemProp.NETWORK_MODE]: enumValidator(Object.values(NetworkMode)),
 
     // On-call
     [AppSystemProp.PAGE_ONCALL_WEBHOOK]: urlValidator,

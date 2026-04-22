@@ -1,3 +1,4 @@
+import { safeHttp } from '@activepieces/server-utils'
 import {
     EngineResponseStatus,
     EventDestinationJobData,
@@ -13,11 +14,13 @@ export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndFor
 
         ctx.log.info({ webhookUrl: data.webhookUrl, webhookId: data.webhookId }, 'Sending event destination')
 
-        const response = await fetch(data.webhookUrl, {
+        const response = await safeHttp.axios.request({
+            url: data.webhookUrl,
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data.payload),
-            signal: AbortSignal.timeout(timeoutInSeconds * 1000),
+            data: data.payload,
+            timeout: timeoutInSeconds * 1000,
+            validateStatus: () => true,
         })
 
         ctx.log.info({ webhookUrl: data.webhookUrl, status: response.status }, 'Event destination sent')

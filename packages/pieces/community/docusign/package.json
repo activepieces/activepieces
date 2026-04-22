@@ -1,13 +1,13 @@
 {
   "name": "@activepieces/piece-docusign",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "axios": "1.13.5",
+    "axios": "1.15.0",
     "docusign-esign": "8.1.0",
     "tslib": "2.6.2"
   },

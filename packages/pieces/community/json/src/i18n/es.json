@@ -2,8 +2,14 @@
   "Convert JSON to text and vice versa": "Convierte JSON a texto y viceversa",
   "Convert Json to Text": "Convertir Json a Texto",
   "Convert Text to Json": "Convertir texto a Json",
+  "Run JSONata Query": "Ejecutar JSONata Query",
   "Stringifies JSON.": "Cadena JSON.",
   "Parses text into JSON.": "Analiza el texto en JSON.",
+  "Use the JSONata language to filter, map, and transform complex JSON payloads natively in JavaScript.": "Utiliza el lenguaje JSONata para filtrar, mapear y transformar cargas útiles complejas JSON nativamente en JavaScript.",
   "JSON": "JSON",
-  "Text": "Texto"
+  "Text": "Texto",
+  "JSON Data": "Datos JSON",
+  "JSONata Query": "Consulta JSONata",
+  "Map the array or object you want to manipulate.": "Mapear la matriz u objeto que desea manipular.",
+  "Write a JSONata expression to manipulate your data. You can filter arrays, extract specific fields, group items, or reshape the JSON. (e.g., $[status=\"active\"])": "Escribe una expresión JSONata para manipular tus datos. Puedes filtrar arrays, extraer campos específicos, elementos de grupo o reformar el JSON. (por ejemplo, $[status=\"active\"])"
 }

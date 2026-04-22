@@ -51,8 +51,7 @@ Dedicated workers that connect to the canary app instead of the primary app:
 
 | Env var | Value |
 |---|---|
-| `AP_FRONTEND_URL` | canary app's URL |
-| `AP_IS_CANARY_WORKER` | `true` |
+| `AP_WORKER_GROUP_ID` | `canary` |
 
 Workers use `AP_FRONTEND_URL` for their Socket.IO RPC channel and for posting engine results back to the app. Canary workers are registered with the canary app, so the RPC path is fully isolated.
 

@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { ToolSet } from 'ai';
 import { ProviderOptions } from '@ai-sdk/provider-utils';
-import { spreadIfDefined, AIProviderName } from '@activepieces/shared';
+import { spreadIfDefined, AIProviderName, getEffectiveProviderAndModel } from '@activepieces/shared';
 import { anthropicSearchTool, openaiSearchTool, googleSearchTool } from './ai-sdk';
 
 function buildWebSearchOptionsProps(provider: string, params?: { showIncludeSources?: boolean }): InputPropertyMap {
@@ -217,7 +217,7 @@ function createWebSearchTool(
 }
 
 export function buildWebSearchOptionsProperty(
-  getProvider: (propsValue: Record<string, unknown>) => string | undefined,
+  getProviderAndModel: (propsValue: Record<string, unknown>) => { provider: string | undefined, model: string | undefined },
   refreshers: string[],
   params?: { showIncludeSources?: boolean },
 ) {
@@ -231,30 +231,35 @@ export function buildWebSearchOptionsProperty(
       if (!webSearchEnabled) {
         return {};
       }
-      const provider = getProvider(propsValue);
+      const { provider, model } = getProviderAndModel(propsValue);
       if (!provider) {
         return {};
       }
-      return buildWebSearchOptionsProps(provider, params);
+      const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model });
+      return buildWebSearchOptionsProps(effectiveProvider ?? provider, params);
     },
   });
 }
 
 export function buildWebSearchConfig(params: {
   provider: string
+  model?: string
   webSearchEnabled: boolean
   webSearchOptions: WebSearchOptions
 }): { tools: ToolSet | undefined, providerOptions: ProviderOptions | undefined } {
-  const { provider, webSearchEnabled, webSearchOptions } = params;
+  const { provider, model, webSearchEnabled, webSearchOptions } = params;
 
   if (!webSearchEnabled) {
     return { tools: undefined, providerOptions: undefined };
   }
 
+  const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model });
+  const resolvedProvider = effectiveProvider ?? provider;
+  
   const isOpenRouter =
-    provider === AIProviderName.OPENROUTER ||
-    provider === AIProviderName.ACTIVEPIECES;
-
+    resolvedProvider === AIProviderName.OPENROUTER ||
+    resolvedProvider === AIProviderName.ACTIVEPIECES;
+  
   if (isOpenRouter) {
     return {
       tools: undefined,
@@ -273,7 +278,7 @@ export function buildWebSearchConfig(params: {
   }
 
   return {
-    tools: createWebSearchTool(provider, webSearchOptions),
+    tools: createWebSearchTool(resolvedProvider, webSearchOptions),
     providerOptions: undefined,
   };
 }
