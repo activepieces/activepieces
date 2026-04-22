@@ -15,7 +15,6 @@ import { useDebounce } from 'use-debounce';
 import { SearchInput } from '@/components/custom/search-input';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
-import { SendIcon } from '@/components/icons/send';
 import { ShieldIcon } from '@/components/icons/shield';
 import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -121,14 +120,14 @@ export function ProjectDashboardSidebar({
           id: `project-${projectId}`,
           type: 'project',
           label: name,
-          href: `/projects/${projectId}/automations`,
+          href: `/projects/${projectId}/chat`,
           iconBgColor: palette?.color,
           iconTextColor: palette?.textColor,
           iconLetter: name.charAt(0).toUpperCase(),
         });
       }
       projectCollectionUtils.setCurrentProject(projectId);
-      navigate(`/projects/${projectId}/automations`);
+      navigate(`/projects/${projectId}/chat`);
       setSearchOpen(false);
     },
     [navigate, projects],
@@ -146,18 +145,6 @@ export function ProjectDashboardSidebar({
       userId: currentUser?.id,
     });
   }, []);
-
-  const chatWithAILink: SidebarItemType = {
-    type: 'link',
-    to: '/chat-with-ai',
-    label: t('Chat'),
-    show: platform.plan.chatEnabled,
-    icon: SendIcon,
-    hasPermission: platform.plan.chatEnabled,
-    isSubItem: false,
-    badge: t('Beta'),
-    highlight: true,
-  };
 
   const exploreLink: SidebarItemType = {
     type: 'link',
@@ -220,12 +207,9 @@ export function ProjectDashboardSidebar({
     },
   };
 
-  const items = [
-    chatWithAILink,
-    exploreLink,
-    impactLink,
-    leaderboardLink,
-  ].filter(permissionFilter);
+  const items = [exploreLink, impactLink, leaderboardLink].filter(
+    permissionFilter,
+  );
 
   return (
     !embedState.hideSideNav && (

@@ -33,6 +33,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/conversations', ListConversationsRoute, async (request) => {
         return chatService(request.log).listConversations({
+            projectId: request.projectId,
             userId: request.principal.id,
             cursor: request.query.cursor,
             limit: request.query.limit ?? 20,
@@ -42,6 +43,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
     app.get('/conversations/:id', GetConversationRoute, async (request) => {
         return chatService(request.log).getConversationOrThrow({
             id: request.params.id,
+            projectId: request.projectId,
             userId: request.principal.id,
         })
     })
@@ -49,6 +51,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
     app.post('/conversations/:id', UpdateConversationRoute, async (request) => {
         return chatService(request.log).updateConversation({
             id: request.params.id,
+            projectId: request.projectId,
             userId: request.principal.id,
             request: request.body,
         })
@@ -57,6 +60,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
     app.delete('/conversations/:id', DeleteConversationRoute, async (request, reply) => {
         await chatService(request.log).deleteConversation({
             id: request.params.id,
+            projectId: request.projectId,
             userId: request.principal.id,
             platformId: request.principal.platform.id,
         })
@@ -66,6 +70,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
     app.get('/conversations/:id/messages', GetMessagesRoute, async (request) => {
         const conversation = await chatService(request.log).getConversationOrThrow({
             id: request.params.id,
+            projectId: request.projectId,
             userId: request.principal.id,
         })
 
@@ -89,6 +94,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
         const conversation = await chatService(request.log).getConversationOrThrow({
             id: request.params.id,
+            projectId: request.projectId,
             userId: request.principal.id,
         })
 
@@ -151,6 +157,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                     onSessionTitle: (title: string) => {
                         void chatService(log).updateConversation({
                             id: request.params.id,
+                            projectId: request.projectId,
                             userId: request.principal.id,
                             request: { title },
                         })
@@ -159,8 +166,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             })
 
             const systemPrompt = await chatService(log).buildSystemPrompt({
-                userId: request.principal.id,
-                platformId,
+                projectId: request.projectId,
             })
             await chatSandboxAgent.sendPrompt({ session, text: content, systemPrompt })
 

@@ -7,6 +7,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { DelayedTooltip } from './delayed-tooltip';
@@ -31,6 +32,7 @@ export function ConversationList({
   selectedId?: string | null;
 }) {
   const queryClient = useQueryClient();
+  const projectId = authenticationSession.getProjectId();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
@@ -38,7 +40,7 @@ export function ConversationList({
 
   const { data: conversationsPage, isLoading: isLoadingConversations } =
     useQuery({
-      queryKey: ['chat-conversations'],
+      queryKey: ['chat-conversations', projectId],
       queryFn: () => chatApi.listConversations({ limit: 100 }),
     });
 
@@ -46,7 +48,7 @@ export function ConversationList({
     mutationFn: (id: string) => chatApi.deleteConversation(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations'],
+        queryKey: ['chat-conversations', projectId],
       });
     },
   });

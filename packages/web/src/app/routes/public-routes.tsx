@@ -16,9 +16,6 @@ import { RedirectPage } from './redirect';
 const ChatPage = React.lazy(() =>
   import('./chat').then((m) => ({ default: m.ChatPage })),
 );
-const ChatWithAIPage = React.lazy(() =>
-  import('./chat-with-ai').then((m) => ({ default: m.ChatWithAIPage })),
-);
 const FormPage = React.lazy(() =>
   import('./forms').then((m) => ({ default: m.FormPage })),
 );
@@ -42,18 +39,6 @@ export const publicRoutes = [
   {
     path: '/authenticate',
     element: <AuthenticatePage />,
-  },
-  {
-    path: '/chat-with-ai',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Chat">
-          <SuspenseWrapper>
-            <ChatWithAIPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
   },
   {
     path: '/templates',

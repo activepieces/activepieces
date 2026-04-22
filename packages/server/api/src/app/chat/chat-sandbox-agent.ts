@@ -2,7 +2,7 @@
  * All sandbox-agent imports are dynamic because the package is ESM-only
  * and this server uses CommonJS module resolution.
  */
-import type { ChatHistoryMessage, ChatHistoryToolCall } from '@activepieces/shared'
+import { type ChatHistoryMessage, type ChatHistoryToolCall } from '@activepieces/shared'
 
 type SandboxSession = {
     id: string
@@ -77,15 +77,18 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
     return initPromise
 }
 
-async function createSession({ anthropicApiKey, mcpProjects }: CreateSessionParams): Promise<SandboxSession> {
+async function createSession({ anthropicApiKey, mcpServerUrl, mcpToken }: CreateSessionParams): Promise<SandboxSession> {
     const sdk = await getOrCreateSdk({ anthropicApiKey })
 
-    const mcpServers: unknown[] = mcpProjects.map((p) => ({
-        type: 'http',
-        name: p.projectName || 'default-project',
-        url: p.mcpServerUrl,
-        headers: [{ name: 'Authorization', value: `Bearer ${p.mcpToken}` }],
-    }))
+    const mcpServers: unknown[] = []
+    if (mcpServerUrl && mcpToken) {
+        mcpServers.push({
+            type: 'http',
+            name: 'activepieces',
+            url: mcpServerUrl,
+            headers: [{ name: 'Authorization', value: `Bearer ${mcpToken}` }],
+        })
+    }
 
     const session = await sdk.createSession({
         agent: 'claude',
@@ -246,13 +249,8 @@ async function dispose(): Promise<void> {
 
 type CreateSessionParams = {
     anthropicApiKey: string
-    mcpProjects: McpProjectConfig[]
-}
-
-export type McpProjectConfig = {
-    projectName: string
-    mcpServerUrl: string
-    mcpToken: string
+    mcpServerUrl: string | null
+    mcpToken: string | null
 }
 
 type SendPromptParams = {

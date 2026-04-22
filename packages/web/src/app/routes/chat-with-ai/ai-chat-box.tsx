@@ -61,6 +61,7 @@ import {
 import { piecesHooks } from '@/features/pieces';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { aiProviderQueries } from '@/features/platform-admin';
+import { projectCollectionUtils } from '@/features/projects';
 import { cn } from '@/lib/utils';
 
 type AIChatBoxProps = {
@@ -126,7 +127,9 @@ function ChatBoxContent({
     setConversationId,
   } = useAgentChat({ onTitleUpdate, onConversationCreated });
   const hasSentFirst = useRef(false);
-  const [connectedPieces, setConnectedPieces] = useState<Set<string>>(new Set());
+  const [connectedPieces, setConnectedPieces] = useState<Set<string>>(
+    new Set(),
+  );
   const markPieceConnected = useCallback((piece: string) => {
     setConnectedPieces((prev) => new Set(prev).add(piece));
   }, []);
@@ -395,7 +398,12 @@ function AssistantMessage({
         {message.plan && <PlanCard entries={message.plan} />}
 
         {hasContent && (
-          <MessageContentWithAuth content={message.content} onSend={onSend} connectedPieces={connectedPieces} onPieceConnected={onPieceConnected} />
+          <MessageContentWithAuth
+            content={message.content}
+            onSend={onSend}
+            connectedPieces={connectedPieces}
+            onPieceConnected={onPieceConnected}
+          />
         )}
 
         {hasContent && !isStreaming && (
@@ -698,7 +706,9 @@ function ConnectionRequiredCard({
             setDialogOpen(open);
             if (createdConnection) {
               onPieceConnected?.(connection.piece);
-              onSend?.(`Done — ${connection.displayName} is connected. [auth externalId: ${createdConnection.externalId}]`);
+              onSend?.(
+                `Done — ${connection.displayName} is connected. [auth externalId: ${createdConnection.externalId}]`,
+              );
             }
           }}
           reconnectConnection={null}
@@ -868,27 +878,22 @@ function EmptyState({
   onSend: (text: string) => void;
   incognito: boolean;
 }) {
-  const greetings = [
-    t('Quiet moments build the best things'),
-    t('Ideas become automations here'),
-    t('Turn repetitive work into magic'),
-    t('Your next workflow starts here'),
-  ];
+  const { project } = projectCollectionUtils.useCurrentProject();
 
-  const getGreeting = () => {
-    if (incognito) return t('Private Chat');
-    const index = new Date().getDate() % greetings.length;
-    return greetings[index];
-  };
+  const greeting = incognito
+    ? t('Private Chat')
+    : t('What should we work on in {projectName}?', {
+        projectName: project.displayName,
+      });
 
   return (
     <div className="flex items-center gap-3">
       <Sparkles className="h-7 w-7 text-primary shrink-0" />
       <h2
-        className="text-[32px] font-bold leading-tight bg-gradient-to-r from-foreground via-foreground/80 to-primary bg-clip-text text-transparent"
+        className="text-[28px] font-bold leading-tight bg-gradient-to-r from-foreground via-foreground/80 to-primary bg-clip-text text-transparent"
         style={{ textWrap: 'balance' }}
       >
-        {getGreeting()}
+        {greeting}
       </h2>
     </div>
   );

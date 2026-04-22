@@ -6,12 +6,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { BoxIcon } from '@/components/icons/box';
 import { ConnectIcon } from '@/components/icons/connect';
 import { HistoryIcon } from '@/components/icons/history';
+import { SendIcon } from '@/components/icons/send';
 import { WorkflowIcon } from '@/components/icons/workflow';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
@@ -59,12 +61,20 @@ const AnimatedTab = ({
 export const ProjectDashboardLayoutHeader = () => {
   const { project } = projectCollectionUtils.useCurrentProject();
   const { checkAccess } = useAuthorization();
+  const { platform } = platformHooks.useCurrentPlatform();
   const { embedState } = useEmbedding();
   const location = useLocation();
   const navigate = useNavigate();
   const isEmbedded = embedState.isEmbedded;
 
   const primaryTabs: ProjectDashboardLayoutHeaderTab[] = [
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/chat'),
+      label: t('Chat'),
+      icon: SendIcon,
+      hasPermission: checkAccess(Permission.READ_CHAT),
+      show: platform.plan.chatEnabled,
+    },
     {
       to: authenticationSession.appendProjectRoutePrefix('/automations'),
       label: t('Automations'),

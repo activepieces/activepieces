@@ -16,22 +16,22 @@ import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { mcpServerService } from '../mcp/mcp-service'
 import { projectService } from '../project/project-service'
-import { userService } from '../user/user-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
-import { chatSandboxAgent, type McpProjectConfig } from './chat-sandbox-agent'
+import { chatSandboxAgent } from './chat-sandbox-agent'
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 
 export const chatService = (log: FastifyBaseLogger) => ({
     async createConversation({ projectId, userId, platformId, request }: CreateConversationParams): Promise<ChatConversation> {
-        const [anthropicApiKey, mcpProjects] = await Promise.all([
+        const [anthropicApiKey, mcpCredentials] = await Promise.all([
             getAnthropicApiKey({ platformId, log }),
-            getAllMcpCredentials({ userId, platformId, log }),
+            getMcpCredentials({ projectId, log }),
         ])
 
         const session = await chatSandboxAgent.createSession({
             anthropicApiKey,
-            mcpProjects,
+            mcpServerUrl: mcpCredentials.mcpServerUrl,
+            mcpToken: mcpCredentials.mcpToken,
         })
 
         try {
@@ -54,15 +54,16 @@ export const chatService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async listConversations({ userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<ChatConversation>> {
+    async listConversations({ projectId, userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<ChatConversation>> {
         const queryBuilder = conversationRepo()
             .createQueryBuilder('c')
-            .where('c.userId = :userId', { userId })
+            .where('c.projectId = :projectId', { projectId })
+            .andWhere('c.userId = :userId', { userId })
             .orderBy('c.created', 'DESC')
             .take(limit + 1)
 
         if (!isNil(cursor)) {
-            queryBuilder.andWhere('c.created < (SELECT cc.created FROM chat_conversation cc WHERE cc.id = :cursor AND cc.userId = :userId)', { cursor })
+            queryBuilder.andWhere('c.created < (SELECT cc.created FROM chat_conversation cc WHERE cc.id = :cursor AND cc.projectId = :projectId AND cc.userId = :userId)', { cursor })
         }
 
         const results = await queryBuilder.getMany()
@@ -76,8 +77,8 @@ export const chatService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async getConversationOrThrow({ id, userId }: GetConversationParams): Promise<ChatConversation> {
-        const conversation = await conversationRepo().findOneBy({ id, userId })
+    async getConversationOrThrow({ id, projectId, userId }: GetConversationParams): Promise<ChatConversation> {
+        const conversation = await conversationRepo().findOneBy({ id, projectId, userId })
         if (isNil(conversation)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -87,8 +88,8 @@ export const chatService = (log: FastifyBaseLogger) => ({
         return conversation
     },
 
-    async updateConversation({ id, userId, request }: UpdateConversationParams): Promise<ChatConversation> {
-        const conversation = await this.getConversationOrThrow({ id, userId })
+    async updateConversation({ id, projectId, userId, request }: UpdateConversationParams): Promise<ChatConversation> {
+        const conversation = await this.getConversationOrThrow({ id, projectId, userId })
         const updates: Partial<Pick<ChatConversation, 'title' | 'modelName'>> = {}
         if (request.title !== undefined) updates.title = request.title
         if (request.modelName !== undefined) updates.modelName = request.modelName
@@ -99,13 +100,13 @@ export const chatService = (log: FastifyBaseLogger) => ({
         return { ...conversation, ...updates }
     },
 
-    async deleteConversation({ id, userId, platformId }: DeleteConversationParams): Promise<void> {
-        const conversation = await this.getConversationOrThrow({ id, userId })
+    async deleteConversation({ id, projectId, userId, platformId }: DeleteConversationParams): Promise<void> {
+        const conversation = await this.getConversationOrThrow({ id, projectId, userId })
         if (conversation.sandboxSessionId) {
             const anthropicApiKey = await getAnthropicApiKey({ platformId, log })
             await chatSandboxAgent.destroySession({ sessionId: conversation.sandboxSessionId, anthropicApiKey }).catch(() => { /* session may already be gone */ })
         }
-        await conversationRepo().delete({ id, userId })
+        await conversationRepo().delete({ id, projectId, userId })
     },
 
     async updateTokenUsage({ conversationId, projectId, inputTokens, outputTokens }: UpdateTokenUsageParams): Promise<void> {
@@ -127,45 +128,24 @@ export const chatService = (log: FastifyBaseLogger) => ({
         await conversationRepo().update({ id: conversationId, projectId }, { summary })
     },
 
-    async buildSystemPrompt({ userId, platformId }: { userId: string, platformId: string }): Promise<string> {
-        const user = await userService(log).getOneOrFail({ id: userId })
-        const projects = await projectService(log).getAllForUser({
-            platformId,
-            userId,
-            isPrivileged: userService(log).isUserPrivileged(user),
-        })
-        const projectNames = projects.map((p) => p.displayName)
-        return buildAgentSystemPrompt(projectNames)
+    async buildSystemPrompt({ projectId }: { projectId: string }): Promise<string> {
+        const project = await projectService(log).getOneOrThrow(projectId)
+        return buildAgentSystemPrompt(project.displayName)
     },
 })
 
-async function getAllMcpCredentials({ userId, platformId, log }: { userId: string, platformId: string, log: FastifyBaseLogger }): Promise<McpProjectConfig[]> {
-    const user = await userService(log).getOneOrFail({ id: userId })
-    const projects = await projectService(log).getAllForUser({
-        platformId,
-        userId,
-        isPrivileged: userService(log).isUserPrivileged(user),
-    })
-
-    const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-    const mcpUrl = `${frontendUrl}/api/v1/mcp/agent`
-
-    const results: McpProjectConfig[] = []
-    for (const project of projects) {
-        try {
-            const mcpServer = await mcpServerService(log).getByProjectId(project.id)
-            results.push({
-                projectName: project.displayName,
-                mcpServerUrl: mcpUrl,
-                mcpToken: mcpServer.token,
-            })
-        }
-        catch {
-            // skip projects without MCP servers
+async function getMcpCredentials({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<{ mcpServerUrl: string | null, mcpToken: string | null }> {
+    try {
+        const mcpServer = await mcpServerService(log).getByProjectId(projectId)
+        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+        return {
+            mcpServerUrl: `${frontendUrl}/api/v1/mcp/agent`,
+            mcpToken: mcpServer.token,
         }
     }
-
-    return results
+    catch {
+        return { mcpServerUrl: null, mcpToken: null }
+    }
 }
 
 async function getAnthropicApiKey({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<string> {
@@ -180,22 +160,10 @@ function sanitizeProjectName(name: string): string {
     return name.replace(/["`<>\\]/g, '').slice(0, 64)
 }
 
-function buildAgentSystemPrompt(projectNames: string[]): string {
-    const safeNames = projectNames.map(sanitizeProjectName)
-    const isSingleProject = safeNames.length === 1
+function buildAgentSystemPrompt(projectName: string): string {
+    const safeName = sanitizeProjectName(projectName)
 
-    const projectSection = isSingleProject
-        ? `You are working in a project called "${safeNames[0]}". All tools operate on this project — no need to ask which project.`
-        : `The user has ${safeNames.length} projects: ${safeNames.join(', ')}.
-
-**Project rules (strict):**
-- User names a project → use that project's tools immediately.
-- User says "all projects" → query every project, combine results with project labels.
-- User doesn't specify a project → **always ask**: "Which project — ${safeNames.join(' or ')}?" Do NOT guess. Do NOT default to the first project.`
-
-    return `You are an automation assistant for Activepieces. You have direct access to the user's projects and can take real actions — listing flows, building automations, managing tables, querying data, and troubleshooting issues.
-
-${projectSection}
+    return `You are an automation assistant for Activepieces, working in the project "${safeName}". You have direct access to this project and can take real actions — listing flows, building automations, managing tables, querying data, and troubleshooting issues.
 
 # Response style
 
@@ -287,6 +255,7 @@ type CreateConversationParams = {
 }
 
 type ListConversationsParams = {
+    projectId: string
     userId: string
     cursor?: string
     limit: number
@@ -294,17 +263,20 @@ type ListConversationsParams = {
 
 type GetConversationParams = {
     id: string
+    projectId: string
     userId: string
 }
 
 type UpdateConversationParams = {
     id: string
+    projectId: string
     userId: string
     request: UpdateChatConversationRequest
 }
 
 type DeleteConversationParams = {
     id: string
+    projectId: string
     userId: string
     platformId: string
 }
