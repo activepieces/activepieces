@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, assertNotNullOrUndefined, EnginePrincipal, ErrorCode, PlatformId, Principal, PrincipalType, ProjectId, UserStatus, WorkerPrincipal } from '@activepieces/shared'
+import { ActivepiecesError, ALL_PRINCIPAL_TYPES, apId, EnginePrincipal, ErrorCode, PlatformId, Principal, PrincipalType, ProjectId, UserStatus, WorkerPrincipal } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { jwtUtils } from '../../helper/jwt-utils'
@@ -58,7 +58,14 @@ export const accessTokenManager = (log: FastifyBaseLogger) => ({
                 jwt: token,
                 key: secret,
             })
-            assertNotNullOrUndefined(decoded.type, 'decoded.type')
+            if (!ALL_PRINCIPAL_TYPES.includes(decoded.type)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.INVALID_BEARER_TOKEN,
+                    params: {
+                        message: 'invalid principal type',
+                    },
+                })
+            }
             await assertUserSession(log, decoded)
             return decoded
         }

@@ -317,4 +317,112 @@ describe('Git API', () => {
             expect(gitRepo.slug).toBe(mockGitRepo.slug)
         })
     })
+
+    describe('Create API — path-traversal hardening', () => {
+        async function postCreate(payload: unknown): Promise<{ statusCode: number }> {
+            const { mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                platform: {},
+                plan: { environmentsEnabled: true },
+            })
+            const token = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: { id: mockProject.platformId },
+            })
+            const body = {
+                projectId: mockProject.id,
+                remoteUrl: 'git@github.com:activepieces/test.git',
+                sshPrivateKey: faker.hacker.noun(),
+                branch: 'main',
+                branchType: GitBranchType.PRODUCTION,
+                slug: 'safe-slug',
+                ...(payload as Record<string, unknown>),
+            }
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/git-repos',
+                payload: body,
+                headers: { authorization: `Bearer ${token}` },
+            })
+            return { statusCode: response?.statusCode ?? 0 }
+        }
+
+        const MALICIOUS_SLUGS: Array<[string, string]> = [
+            ['..', 'parent directory reference'],
+            ['.', 'current directory reference'],
+            ['', 'empty string'],
+            ['../test', 'relative traversal'],
+            ['../../etc/passwd', 'deep relative traversal'],
+            ['foo/bar', 'forward slash'],
+            ['foo\\bar', 'backslash'],
+            ['with\0null', 'null byte'],
+            ['a b', 'space'],
+            ['../../../../tmp/pwned', 'many-dot traversal'],
+            ['a'.repeat(200), 'over length limit'],
+        ]
+
+        it.each(MALICIOUS_SLUGS)('should reject slug %j (%s)', async (slug) => {
+            const { statusCode } = await postCreate({ slug })
+            expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        const SAFE_SLUGS = [
+            'safe-slug',
+            'project_1',
+            'activepieces',
+            'a',
+            'dot.inside.name',
+            'UPPER-lower.123',
+        ]
+
+        it.each(SAFE_SLUGS)('should accept slug %j', async (slug) => {
+            const { statusCode } = await postCreate({ slug })
+            expect(statusCode).toBe(StatusCodes.CREATED)
+        })
+
+        const MALICIOUS_BRANCHES: Array<[string, string]> = [
+            ['--upload-pack=evil', 'option-like branch'],
+            ['-M', 'single-dash option'],
+            ['', 'empty string'],
+            ['foo\0bar', 'null byte'],
+            ['branch with space', 'whitespace'],
+        ]
+
+        it.each(MALICIOUS_BRANCHES)('should reject branch %j (%s)', async (branch) => {
+            const { statusCode } = await postCreate({ branch })
+            expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        const SAFE_BRANCHES = ['main', 'feature/add-thing', 'release-1.2.3', 'user_a/topic']
+
+        it.each(SAFE_BRANCHES)('should accept branch %j', async (branch) => {
+            const { statusCode } = await postCreate({ branch })
+            expect(statusCode).toBe(StatusCodes.CREATED)
+        })
+
+        const MALICIOUS_REMOTE_URLS: Array<[string, string]> = [
+            ['git@bogus', 'missing colon'],
+            ['https://github.com/foo/bar.git', 'http protocol'],
+            ['file:///etc/passwd', 'file protocol'],
+            ['ext::sh -c evil', 'ext transport'],
+            ['', 'empty string'],
+            ['git@host:path with space', 'whitespace'],
+        ]
+
+        it.each(MALICIOUS_REMOTE_URLS)('should reject remoteUrl %j (%s)', async (remoteUrl) => {
+            const { statusCode } = await postCreate({ remoteUrl })
+            expect(statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        const SAFE_REMOTE_URLS = [
+            'git@github.com:activepieces/test.git',
+            'git@gitlab.com:group/subgroup/project',
+            'git@bitbucket.org:team/repo.git',
+        ]
+
+        it.each(SAFE_REMOTE_URLS)('should accept remoteUrl %j', async (remoteUrl) => {
+            const { statusCode } = await postCreate({ remoteUrl })
+            expect(statusCode).toBe(StatusCodes.CREATED)
+        })
+    })
 })

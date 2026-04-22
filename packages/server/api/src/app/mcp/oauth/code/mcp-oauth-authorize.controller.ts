@@ -2,7 +2,7 @@ import { isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
-import { jwtUtils } from '../../../helper/jwt-utils'
+import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
@@ -45,6 +45,7 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
             },
             key,
             expiresInSeconds: AUTH_REQUEST_TTL_10_MINUTES_SECONDS,
+            audience: JwtAudience.MCP_OAUTH_AUTH_REQUEST,
         })
 
         const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)

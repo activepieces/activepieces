@@ -10,6 +10,7 @@ export enum AIProviderName {
     ACTIVEPIECES = 'activepieces',
     CLOUDFLARE_GATEWAY = 'cloudflare-gateway',
     CUSTOM = 'custom',
+    BEDROCK = 'bedrock',
 }
 
 
@@ -48,6 +49,12 @@ export type OpenAIProviderAuthConfig = z.infer<typeof OpenAIProviderAuthConfig>
 
 export const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
 export type OpenRouterProviderAuthConfig = z.infer<typeof OpenRouterProviderAuthConfig>
+
+export const BedrockProviderAuthConfig = z.object({
+    accessKeyId: z.string().min(1),
+    secretAccessKey: z.string().min(1),
+})
+export type BedrockProviderAuthConfig = z.infer<typeof BedrockProviderAuthConfig>
 
 export const AnthropicProviderConfig = z.object({})
 export type AnthropicProviderConfig = z.infer<typeof AnthropicProviderConfig>
@@ -94,6 +101,11 @@ export type OpenAIProviderConfig = z.infer<typeof OpenAIProviderConfig>
 export const OpenRouterProviderConfig = z.object({})
 export type OpenRouterProviderConfig = z.infer<typeof OpenRouterProviderConfig>
 
+export const BedrockProviderConfig = z.object({
+    region: z.string().min(1),
+})
+export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
+
 export const AIProviderAuthConfig = z.union([
     AnthropicProviderAuthConfig,
     AzureProviderAuthConfig,
@@ -103,6 +115,7 @@ export const AIProviderAuthConfig = z.union([
     CloudflareGatewayProviderAuthConfig,
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
+    BedrockProviderAuthConfig,
 ])
 export type AIProviderAuthConfig = z.infer<typeof AIProviderAuthConfig>
 // Order matters, put schemas with required fields first, empty ones last. This is to avoid empty objects matching any object.
@@ -110,6 +123,7 @@ export const AIProviderConfig = z.union([
     OpenAICompatibleProviderConfig,
     CloudflareGatewayProviderConfig,
     AzureProviderConfig,
+    BedrockProviderConfig,
     AnthropicProviderConfig,
     GoogleProviderConfig,
     OpenAIProviderConfig,
@@ -166,6 +180,12 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         provider: z.literal(AIProviderName.ACTIVEPIECES),
         config: ActivePiecesProviderConfig,
         auth: ActivePiecesProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.BEDROCK),
+        config: BedrockProviderConfig,
+        auth: BedrockProviderAuthConfig,
     }),
 ])
 
