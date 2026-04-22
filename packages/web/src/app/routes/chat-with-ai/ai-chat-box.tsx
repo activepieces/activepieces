@@ -183,6 +183,15 @@ function ChatBoxContent({
             );
           })}
 
+          {!isStreaming &&
+            messages.length > 0 &&
+            messages[messages.length - 1]?.role === 'assistant' && (
+              <QuickReplies
+                content={messages[messages.length - 1].content}
+                onSend={handleSend}
+              />
+            )}
+
           {error && (
             <div className="flex items-center gap-3 py-4 text-destructive text-sm animate-in fade-in duration-200">
               <span className="flex-1">{error}</span>
@@ -376,7 +385,7 @@ function ToolCallGroup({
   const allDone = toolCalls.every((tc) => tc.status !== 'running');
   const runningCount = toolCalls.filter((tc) => tc.status === 'running').length;
 
-  const count = allDone ? toolCalls.length : (runningCount || toolCalls.length);
+  const count = allDone ? toolCalls.length : runningCount || toolCalls.length;
   const summary = allDone
     ? t('Used {count} tools', { count })
     : t('Running {count} tools...', { count });
@@ -400,6 +409,70 @@ function ToolCallGroup({
         </div>
       </CollapsibleContent>
     </Collapsible>
+  );
+}
+
+function extractChoices(content: string): string[] {
+  if (!content.includes('?')) return [];
+
+  const orMatch = content.match(
+    /(?:which|what|choose|pick|select)[^?]*?[—–-]\s*(.+?)\?/i,
+  );
+  if (orMatch) {
+    const choiceStr = orMatch[1];
+    const choices = choiceStr
+      .split(/\s+or\s+|,\s*/i)
+      .map((c) => c.replace(/\*\*/g, '').trim())
+      .filter((c) => c.length > 0 && c.length < 60);
+    if (choices.length >= 2 && choices.length <= 4) return choices;
+  }
+
+  const bulletChoices: string[] = [];
+  const bulletRegex = /^[-•*]\s+\*?\*?(.+?)\*?\*?\s*$/gm;
+  let match = bulletRegex.exec(content);
+  while (match) {
+    bulletChoices.push(match[1].trim());
+    match = bulletRegex.exec(content);
+  }
+  if (bulletChoices.length >= 2 && bulletChoices.length <= 4) {
+    return bulletChoices;
+  }
+
+  return [];
+}
+
+function QuickReplies({
+  content,
+  onSend,
+}: {
+  content: string;
+  onSend: (text: string) => void;
+}) {
+  const choices = extractChoices(content);
+  if (choices.length === 0) return null;
+
+  const visibleChoices = choices.slice(0, 3);
+
+  return (
+    <div className="flex flex-wrap gap-2 py-2 animate-in fade-in duration-300">
+      {visibleChoices.map((choice) => (
+        <button
+          key={choice}
+          type="button"
+          onClick={() => onSend(choice)}
+          className="px-3 py-1.5 text-sm rounded-full border bg-background hover:bg-muted transition-colors cursor-pointer"
+        >
+          {choice}
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={() => onSend(t('All of them'))}
+        className="px-3 py-1.5 text-sm rounded-full border bg-background hover:bg-muted transition-colors cursor-pointer text-muted-foreground"
+      >
+        {t('All of them')}
+      </button>
+    </div>
   );
 }
 
