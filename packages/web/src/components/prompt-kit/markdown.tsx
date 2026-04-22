@@ -110,9 +110,9 @@ function MarkdownComponent({
     <div
       className={cn(
         '[&_pre]:overflow-x-auto [&_pre]:max-w-full',
-        '[&_table]:w-full [&_table]:text-sm [&_table]:border-collapse',
-        '[&_th]:text-left [&_th]:p-2 [&_th]:border-b [&_th]:border-border',
-        '[&_td]:p-2 [&_td]:border-b [&_td]:border-border',
+        '[&_table]:w-full [&_table]:text-sm [&_table]:border-collapse [&_table]:my-4',
+        '[&_th]:text-left [&_th]:p-2.5 [&_th]:border-b [&_th]:border-border [&_th]:font-semibold',
+        '[&_td]:p-2.5 [&_td]:border-b [&_td]:border-border',
         className,
       )}
     >
