@@ -35,7 +35,12 @@ try {
   }
 }
 
-execSync('bun install', { stdio: 'inherit' });
+if (!fs.existsSync('node_modules')) {
+  console.log("⚙️ Installing packages...");
+  execSync('bun install', { stdio: 'inherit' });
+} else {
+  console.log("✅ Packages already installed. Skipping bun install.");
+}
 
 // Pre-build dev pieces so dist/ exists before the server starts
 const dotenv = require('dotenv');
@@ -45,6 +50,7 @@ try {
 } catch {}
 const devPieces = process.env.AP_DEV_PIECES || envConfig.AP_DEV_PIECES;
 
+/*
 if (devPieces) {
   const pieceNames = [...new Set(devPieces.split(',').map(n => n.trim()))];
   const pieceFilters = pieceNames
@@ -53,3 +59,5 @@ if (devPieces) {
   console.log(`Building dev pieces: ${devPieces}`);
   execSync(`npx turbo run build ${pieceFilters}`, { stdio: 'inherit' });
 }
+*/
+console.log("✅ Build phase skipped (Building manually).");
