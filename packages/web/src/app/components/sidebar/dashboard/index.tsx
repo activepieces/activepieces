@@ -16,7 +16,7 @@ import { SearchInput } from '@/components/custom/search-input';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
 import { ShieldIcon } from '@/components/icons/shield';
-import { BotIcon } from '@/components/icons/bot';
+import { SendIcon } from '@/components/icons/send';
 import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -152,7 +152,7 @@ export function ProjectDashboardSidebar({
     to: '/chat-with-ai',
     label: t('Chat'),
     show: platform.plan.chatEnabled,
-    icon: BotIcon,
+    icon: SendIcon,
     hasPermission: platform.plan.chatEnabled,
     isSubItem: false,
     badge: t('Beta'),
