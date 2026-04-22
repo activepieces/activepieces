@@ -97,9 +97,11 @@ export async function buildLinkOptions(token: string, teamId?: string | null): P
 }
 
 export function flattenEvent(event: SavvyCalEvent): Record<string, unknown> {
-  const scheduler = event.attendees?.find((a) => !a.is_organizer) ?? event.attendees?.[0] ?? null;
+  const scheduler = event.attendees?.find((a) => !a.is_organizer) ?? null;
+  const organizer = event.attendees?.find((a) => a.is_organizer) ?? null;
   return {
     id: event.id,
+    uuid: event.uuid ?? null,
     summary: event.summary ?? null,
     description: event.description ?? null,
     state: event.state,
@@ -125,6 +127,10 @@ export function flattenEvent(event: SavvyCalEvent): Record<string, unknown> {
     attendee_email: scheduler?.email ?? null,
     attendee_phone: scheduler?.phone_number ?? null,
     attendee_time_zone: scheduler?.time_zone ?? null,
+    organizer_display_name: organizer?.display_name ?? null,
+    organizer_first_name: organizer?.first_name ?? null,
+    organizer_last_name: organizer?.last_name ?? null,
+    organizer_email: organizer?.email ?? null,
     conferencing_type: event.conferencing?.type ?? null,
     conferencing_join_url: event.conferencing?.join_url ?? null,
     conferencing_meeting_id: event.conferencing?.meeting_id ?? null,
@@ -147,6 +153,7 @@ export interface SavvyCalAttendee {
 
 export interface SavvyCalEvent {
   id: string;
+  uuid: string | null;
   summary: string | null;
   description: string | null;
   duration: number;

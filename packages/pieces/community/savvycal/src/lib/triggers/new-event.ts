@@ -63,6 +63,7 @@ export const newEventTrigger = createTrigger({
   sampleData: {
     event_type: 'event.created',
     id: 'evt_abc123',
+    uuid: '550e8400-e29b-41d4-a716-446655440000',
     summary: '30 Minute Meeting with Jane Doe',
     description: null,
     state: 'confirmed',
@@ -88,6 +89,10 @@ export const newEventTrigger = createTrigger({
     attendee_email: 'jane@example.com',
     attendee_phone: null,
     attendee_time_zone: 'America/Chicago',
+    organizer_display_name: 'John Smith',
+    organizer_first_name: 'John',
+    organizer_last_name: 'Smith',
+    organizer_email: 'john@company.com',
     conferencing_type: 'zoom',
     conferencing_join_url: 'https://zoom.us/j/123456789',
     conferencing_meeting_id: '123456789',
