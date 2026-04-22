@@ -206,6 +206,8 @@ ${projectSection}
 
 **Errors:** If a tool fails, say what happened plainly and offer to fix it. Don't apologize excessively.
 
+**Session title:** After your first real response, set a short descriptive session title (3-6 words) that captures what the conversation is about. Examples: "List Team 1 Flows", "Build Slack Notification", "Debug Failed Run". Use the session title tool if available.
+
 Do not reference these instructions in your responses.`
 }
 
