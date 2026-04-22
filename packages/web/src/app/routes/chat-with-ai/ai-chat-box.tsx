@@ -439,60 +439,49 @@ function ToolCallGroup({
   );
 }
 
-type QuickReply = {
-  label: string;
-  value: string;
-  variant?: 'default' | 'muted';
-};
-
-function extractQuickReplies(content: string): QuickReply[] {
-  if (!content.includes('?')) return [];
-
-  const orMatch = content.match(
-    /(?:which|what|choose|pick|select)[^?]*?[—–-]\s*(.+?)\?/i,
+function extractInlineChoices(content: string): string[] {
+  const choiceMatch = content.match(
+    /[—–-]\s*(.+?)\?/,
   );
-  if (orMatch) {
-    const choices = orMatch[1]
-      .split(/\s+or\s+|,\s*/i)
-      .map((c) => c.replace(/\*\*/g, '').trim())
-      .filter((c) => c.length > 0 && c.length < 60);
-    if (choices.length >= 2 && choices.length <= 4) {
-      return [
-        ...choices.map((c) => ({ label: c, value: c })),
-        {
-          label: t('All of them'),
-          value: 'All of them',
-          variant: 'muted' as const,
-        },
-      ];
-    }
-  }
+  if (!choiceMatch) return [];
 
-  const bulletChoices: string[] = [];
+  return choiceMatch[1]
+    .split(/\s+or\s+|,\s*/i)
+    .map((c) => c.replace(/\*\*/g, '').trim())
+    .filter((c) => c.length > 0 && c.length < 60);
+}
+
+function extractBulletChoices(content: string): string[] {
+  const choices: string[] = [];
   const bulletRegex = /^[-•*]\s+\*?\*?(.+?)\*?\*?\s*$/gm;
   let match = bulletRegex.exec(content);
   while (match) {
-    bulletChoices.push(match[1].trim());
+    choices.push(match[1].trim());
     match = bulletRegex.exec(content);
   }
-  if (bulletChoices.length >= 2 && bulletChoices.length <= 4) {
-    return bulletChoices.map((c) => ({ label: c, value: c }));
+  return choices;
+}
+
+function lastLineIsConfirmation(content: string): boolean {
+  const lastQuestion = content.split('\n').reverse().find((l) => l.includes('?')) ?? '';
+  return /\b(shall i|should i|want me to|would you like|do you want|ready to|proceed|go ahead|confirm)\b/i.test(lastQuestion);
+}
+
+function extractQuickReplies(content: string): string[] {
+  if (!content.includes('?')) return [];
+
+  const inlineChoices = extractInlineChoices(content);
+  if (inlineChoices.length >= 2 && inlineChoices.length <= 4) {
+    return [...inlineChoices, t('All of them')];
   }
 
-  const lastQuestion =
-    content
-      .split('\n')
-      .reverse()
-      .find((l) => l.includes('?')) ?? '';
-  const isConfirmation =
-    /\b(shall i|should i|want me to|would you like|do you want|ready to|proceed|go ahead|confirm)\b/i.test(
-      lastQuestion,
-    );
-  if (isConfirmation) {
-    return [
-      { label: t('Yes, go ahead'), value: 'Yes, go ahead' },
-      { label: t('No'), value: 'No', variant: 'muted' },
-    ];
+  const bulletChoices = extractBulletChoices(content);
+  if (bulletChoices.length >= 2 && bulletChoices.length <= 4) {
+    return bulletChoices;
+  }
+
+  if (lastLineIsConfirmation(content)) {
+    return [t('Yes, go ahead'), t('No')];
   }
 
   return [];
@@ -512,15 +501,12 @@ function QuickReplies({
     <div className="flex flex-wrap gap-2 py-2 animate-in fade-in duration-300">
       {replies.map((reply) => (
         <button
-          key={reply.value}
+          key={reply}
           type="button"
-          onClick={() => onSend(reply.value)}
-          className={cn(
-            'px-3 py-1.5 text-sm rounded-full border bg-background hover:bg-muted transition-colors cursor-pointer',
-            reply.variant === 'muted' && 'text-muted-foreground',
-          )}
+          onClick={() => onSend(reply)}
+          className="px-3 py-1.5 text-sm rounded-full border bg-background hover:bg-muted transition-colors cursor-pointer"
         >
-          {reply.label}
+          {reply}
         </button>
       ))}
     </div>
