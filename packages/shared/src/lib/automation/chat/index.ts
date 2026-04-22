@@ -37,9 +37,12 @@ function buildSendChatMessageRequestSchema() {
 
 export const ChatStreamEventType = {
     TEXT_CHUNK: 'TEXT_CHUNK',
+    THOUGHT_CHUNK: 'THOUGHT_CHUNK',
     TOOL_CALL_START: 'TOOL_CALL_START',
     TOOL_CALL_UPDATE: 'TOOL_CALL_UPDATE',
     TOOL_CALL_COMPLETE: 'TOOL_CALL_COMPLETE',
+    PLAN_UPDATE: 'PLAN_UPDATE',
+    SESSION_TITLE_UPDATE: 'SESSION_TITLE_UPDATE',
     USAGE_UPDATE: 'USAGE_UPDATE',
     ERROR: 'ERROR',
     DONE: 'DONE',
@@ -61,4 +64,19 @@ export type SendChatMessageRequest = z.infer<typeof SendChatMessageRequest>
 export type ChatStreamEvent = {
     type: ChatStreamEventType
     data: Record<string, unknown>
+}
+
+export type ChatHistoryToolCall = {
+    toolCallId: string
+    title: string
+    status: string
+    input?: Record<string, unknown>
+    output?: string
+}
+
+export type ChatHistoryMessage = {
+    role: 'user' | 'assistant'
+    content: string
+    toolCalls?: ChatHistoryToolCall[]
+    thoughts?: string
 }

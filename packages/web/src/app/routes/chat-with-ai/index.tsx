@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { EyeOff, Settings } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
@@ -10,12 +11,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { AIChatBox } from './ai-chat-box';
 import { ChatSettingsDialog } from './chat-settings-dialog';
 import { ConversationList } from './conversation-list';
 
 export function ChatWithAIPage() {
+  const queryClient = useQueryClient();
+  const projectId = authenticationSession.getProjectId();
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(null);
@@ -42,6 +46,12 @@ export function ChatWithAIPage() {
     setChatKey((k) => k + 1);
     setChatStarted(true);
   }, []);
+
+  const handleTitleUpdate = useCallback(() => {
+    void queryClient.invalidateQueries({
+      queryKey: ['chat-conversations', projectId],
+    });
+  }, [queryClient, projectId]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -128,6 +138,7 @@ export function ChatWithAIPage() {
           key={chatKey}
           incognito={incognito}
           conversationId={selectedConversationId}
+          onTitleUpdate={handleTitleUpdate}
           onFirstMessage={(text) => {
             if (!incognito) {
               const nextKey = msgCounter + 1;

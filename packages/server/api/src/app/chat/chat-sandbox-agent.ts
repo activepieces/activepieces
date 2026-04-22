@@ -2,6 +2,7 @@
  * All sandbox-agent imports are dynamic because the package is ESM-only
  * and this server uses CommonJS module resolution.
  */
+import type { ChatHistoryMessage, ChatHistoryToolCall } from '@activepieces/shared'
 
 type SandboxSession = {
     id: string
@@ -27,17 +28,9 @@ type SessionEvent = {
     }
 }
 
-type McpLocalConfig = {
-    type: 'local'
-    command: string
-    args?: string[]
-    env?: Record<string, string>
-}
-
 type SandboxAgentSdk = {
     createSession(request: { agent: string, sessionInit?: { cwd: string, mcpServers: unknown[] } }): Promise<SandboxSession>
     getEvents(request: { sessionId: string }): Promise<{ items: SessionEvent[] }>
-    setMcpConfig(query: { directory: string, mcpName: string }, config: McpLocalConfig): Promise<void>
     destroySession(sessionId: string): Promise<unknown>
     destroySandbox(): Promise<void>
     resumeSession(sessionId: string): Promise<SandboxSession>
@@ -71,7 +64,8 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
             }
 
             const mod = await import('sandbox-agent')
-            const persist = new mod.InMemorySessionPersistDriver()
+            const { FileSessionPersistDriver } = await import('./file-session-persist-driver')
+            const persist = new FileSessionPersistDriver()
             const startFn = mod.SandboxAgent.start as (opts: { sandbox: unknown, persist: unknown }) => Promise<SandboxAgentSdk>
             sdkInstance = await startFn({ sandbox, persist })
             return sdkInstance
@@ -86,17 +80,23 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
 async function createSession({ anthropicApiKey, mcpServerUrl, mcpToken }: CreateSessionParams): Promise<SandboxSession> {
     const sdk = await getOrCreateSdk({ anthropicApiKey })
 
+    const mcpServers: unknown[] = []
+    if (mcpServerUrl && mcpToken) {
+        mcpServers.push({
+            type: 'http',
+            name: 'activepieces',
+            url: mcpServerUrl,
+            headers: [{ name: 'Authorization', value: `Bearer ${mcpToken}` }],
+        })
+    }
+
     const session = await sdk.createSession({
         agent: 'claude',
         sessionInit: {
             cwd: process.cwd(),
-            mcpServers: [],
+            mcpServers,
         },
     })
-
-    if (mcpServerUrl && mcpToken) {
-        await registerMcpBridge(sdk, mcpServerUrl, mcpToken)
-    }
 
     session.onPermissionRequest((request) => {
         void session.respondPermission(request.id, 'once')
@@ -114,20 +114,24 @@ async function destroySession({ sessionId, anthropicApiKey }: DestroySessionPara
     await sdk.destroySession(sessionId)
 }
 
-async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionParams): Promise<Array<{ role: 'user' | 'assistant', content: string }>> {
+async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionParams): Promise<ChatHistoryMessage[]> {
     const sdk = await getOrCreateSdk({ anthropicApiKey })
     const { items } = await sdk.getEvents({ sessionId })
 
-    const messages: Array<{ role: 'user' | 'assistant', content: string }> = []
+    const messages: ChatHistoryMessage[] = []
     let currentAssistantText = ''
+    let currentThoughts = ''
+    let currentToolCalls: ChatHistoryToolCall[] = []
     let inAssistantMessage = false
 
     for (const event of items) {
         const payload = event.payload
         if (event.sender === 'client' && payload.method === 'session/prompt') {
-            if (inAssistantMessage && currentAssistantText) {
-                messages.push({ role: 'assistant', content: currentAssistantText })
+            if (inAssistantMessage) {
+                pushAssistantMessage(messages, currentAssistantText, currentThoughts, currentToolCalls)
                 currentAssistantText = ''
+                currentThoughts = ''
+                currentToolCalls = []
                 inAssistantMessage = false
             }
             const text = payload.params?.prompt?.[0]?.text
@@ -136,36 +140,85 @@ async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionPa
             }
         }
         else if (event.sender === 'agent' && payload.method === 'session/update') {
-            const update = payload.params?.update
-            if (update?.sessionUpdate === 'agent_message_chunk' && typeof update.content?.text === 'string') {
+            const update = payload.params?.update as Record<string, unknown> | undefined
+            if (!update) continue
+
+            const updateType = update.sessionUpdate as string | undefined
+
+            if (updateType === 'agent_message_chunk') {
+                const content = update.content as Record<string, unknown> | undefined
+                if (content && typeof content.text === 'string') {
+                    inAssistantMessage = true
+                    currentAssistantText += content.text
+                }
+            }
+            else if (updateType === 'agent_thought_chunk') {
+                const content = update.content as Record<string, unknown> | undefined
+                if (content && typeof content.text === 'string') {
+                    inAssistantMessage = true
+                    currentThoughts += content.text
+                }
+            }
+            else if (updateType === 'tool_call') {
                 inAssistantMessage = true
-                currentAssistantText += update.content.text
+                const toolCallId = typeof update.toolCallId === 'string' ? update.toolCallId : `tc-${Date.now()}`
+                const title = typeof update.title === 'string' ? update.title : 'Unknown tool'
+                const rawInput = typeof update.rawInput === 'object' && update.rawInput !== null && !Array.isArray(update.rawInput)
+                    ? update.rawInput as Record<string, unknown>
+                    : undefined
+                currentToolCalls.push({ toolCallId, title, status: 'in_progress', input: rawInput })
+            }
+            else if (updateType === 'tool_call_update') {
+                const toolCallId = typeof update.toolCallId === 'string' ? update.toolCallId : undefined
+                if (toolCallId) {
+                    const existing = currentToolCalls.find((tc) => tc.toolCallId === toolCallId)
+                    if (existing) {
+                        const status = typeof update.status === 'string' ? update.status : existing.status
+                        existing.status = status
+                        existing.output = extractHistoryToolOutput(update) ?? existing.output
+                    }
+                }
             }
         }
     }
 
-    if (inAssistantMessage && currentAssistantText) {
-        messages.push({ role: 'assistant', content: currentAssistantText })
+    if (inAssistantMessage) {
+        pushAssistantMessage(messages, currentAssistantText, currentThoughts, currentToolCalls)
     }
 
     return messages
 }
 
-async function registerMcpBridge(sdk: SandboxAgentSdk, mcpServerUrl: string, mcpToken: string): Promise<void> {
-    const path = await import('path')
-    const supergatewayBin = path.resolve(process.cwd(), 'packages/server/api/node_modules/.bin/supergateway')
+function pushAssistantMessage(
+    messages: ChatHistoryMessage[],
+    content: string,
+    thoughts: string,
+    toolCalls: ChatHistoryToolCall[],
+): void {
+    if (!content && !thoughts && toolCalls.length === 0) return
+    messages.push({
+        role: 'assistant',
+        content,
+        ...(thoughts ? { thoughts } : {}),
+        ...(toolCalls.length > 0 ? { toolCalls } : {}),
+    })
+}
 
-    await sdk.setMcpConfig(
-        { directory: process.cwd(), mcpName: 'activepieces' },
-        {
-            type: 'local',
-            command: supergatewayBin,
-            args: [
-                '--streamableHttp', mcpServerUrl,
-                '--oauth2Bearer', mcpToken,
-            ],
-        },
-    )
+function extractHistoryToolOutput(update: Record<string, unknown>): string | undefined {
+    if (typeof update.rawOutput === 'string') return update.rawOutput
+    if (Array.isArray(update.content)) {
+        const parts: string[] = []
+        for (const block of update.content) {
+            if (typeof block === 'object' && block !== null && !Array.isArray(block)) {
+                const b = block as Record<string, unknown>
+                if (b.type === 'text' && typeof b.text === 'string') {
+                    parts.push(b.text)
+                }
+            }
+        }
+        if (parts.length > 0) return parts.join('\n')
+    }
+    return undefined
 }
 
 async function resumeSession({ sessionId, anthropicApiKey }: ResumeSessionParams): Promise<SandboxSession> {

@@ -1,32 +1,52 @@
 import {
   type ChatConversation,
+  type ChatHistoryMessage,
   ChatStreamEventType,
 } from '@activepieces/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { chatApi, type ChatStreamEvent } from './chat-api';
 
-export type ChatMessageItem = {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  toolCalls: ToolCallItem[];
-  timestamp: number;
-};
-
-export type ToolCallItem = {
-  id: string;
-  name: string;
-  status: 'running' | 'completed' | 'failed';
-  input?: Record<string, unknown>;
-  output?: Record<string, unknown>;
-};
-
 function safeString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
 }
 
-export function useAgentChat() {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function mapHistoryToMessages({
+  data,
+  nextMessageId,
+}: {
+  data: ChatHistoryMessage[];
+  nextMessageId: () => string;
+}): ChatMessageItem[] {
+  return data.map((msg) => ({
+    id: nextMessageId(),
+    role: msg.role,
+    content: msg.content,
+    thoughts: msg.thoughts ?? '',
+    plan: null,
+    toolCalls:
+      msg.toolCalls?.map((tc) => ({
+        id: tc.toolCallId,
+        name: tc.title,
+        title: tc.title,
+        status: (tc.status === 'completed' ? 'completed' : 'failed') as
+          | 'running'
+          | 'completed'
+          | 'failed',
+        input: tc.input,
+        output: tc.output,
+      })) ?? [],
+    timestamp: Date.now(),
+  }));
+}
+
+export function useAgentChat({
+  onTitleUpdate,
+}: { onTitleUpdate?: (title: string) => void } = {}) {
   const [conversation, setConversation] = useState<
     ChatConversation | { id: string } | null
   >(null);
@@ -35,6 +55,8 @@ export function useAgentChat() {
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const messageIdCounter = useRef(0);
+  const onTitleUpdateRef = useRef(onTitleUpdate);
+  onTitleUpdateRef.current = onTitleUpdate;
 
   useEffect(() => {
     return () => {
@@ -61,6 +83,14 @@ export function useAgentChat() {
 
   const handleStreamEvent = useCallback(
     (assistantId: string, event: ChatStreamEvent) => {
+      if (event.type === ChatStreamEventType.SESSION_TITLE_UPDATE) {
+        const title = safeString(event.data.title);
+        if (title) {
+          onTitleUpdateRef.current?.(title);
+        }
+        return;
+      }
+
       setMessages((prev) =>
         prev.map((msg) => {
           if (msg.id !== assistantId) return msg;
@@ -72,29 +102,33 @@ export function useAgentChat() {
                 content: msg.content + safeString(event.data.text),
               };
 
+            case ChatStreamEventType.THOUGHT_CHUNK:
+              return {
+                ...msg,
+                thoughts: msg.thoughts + safeString(event.data.text),
+              };
+
             case ChatStreamEventType.TOOL_CALL_START:
               return {
                 ...msg,
                 toolCalls: [
                   ...msg.toolCalls,
                   {
-                    id:
-                      safeString(event.data.toolCallId) ||
-                      safeString(event.data.id) ||
-                      `tc-${Date.now()}`,
-                    name:
-                      safeString(event.data.toolName) ||
-                      safeString(event.data.name) ||
-                      'Unknown tool',
+                    id: safeString(event.data.toolCallId) || `tc-${Date.now()}`,
+                    name: safeString(event.data.toolName) || 'Unknown tool',
+                    title: safeString(event.data.title),
                     status: 'running' as const,
+                    kind: safeString(event.data.kind) || undefined,
+                    input: isRecord(event.data.rawInput)
+                      ? (event.data.rawInput as Record<string, unknown>)
+                      : undefined,
                   },
                 ],
               };
 
             case ChatStreamEventType.TOOL_CALL_UPDATE:
             case ChatStreamEventType.TOOL_CALL_COMPLETE: {
-              const tcId =
-                safeString(event.data.toolCallId) || safeString(event.data.id);
+              const tcId = safeString(event.data.toolCallId);
               if (!tcId) return msg;
               return {
                 ...msg,
@@ -106,9 +140,26 @@ export function useAgentChat() {
                           event.type === ChatStreamEventType.TOOL_CALL_COMPLETE
                             ? ('completed' as const)
                             : tc.status,
+                        output: safeString(event.data.output) || tc.output,
+                        title: safeString(event.data.title) || tc.title,
                       }
                     : tc,
                 ),
+              };
+            }
+
+            case ChatStreamEventType.PLAN_UPDATE: {
+              const entries = event.data.entries;
+              if (!Array.isArray(entries)) return msg;
+              return {
+                ...msg,
+                plan: entries.filter(isRecord).map((entry) => ({
+                  content: safeString(entry.content),
+                  status: safeString(
+                    entry.status,
+                    'pending',
+                  ) as PlanItem['status'],
+                })),
               };
             }
 
@@ -129,6 +180,8 @@ export function useAgentChat() {
         id: nextMessageId(),
         role: 'user',
         content,
+        thoughts: '',
+        plan: null,
         toolCalls: [],
         timestamp: Date.now(),
       };
@@ -139,6 +192,8 @@ export function useAgentChat() {
         id: assistantId,
         role: 'assistant',
         content: '',
+        thoughts: '',
+        plan: null,
         toolCalls: [],
         timestamp: Date.now(),
       };
@@ -208,14 +263,7 @@ export function useAgentChat() {
       setIsLoadingHistory(true);
       try {
         const { data } = await chatApi.getMessages(conversationId);
-        const loadedMessages: ChatMessageItem[] = data.map((msg) => ({
-          id: nextMessageId(),
-          role: msg.role,
-          content: msg.content,
-          toolCalls: [],
-          timestamp: Date.now(),
-        }));
-        setMessages(loadedMessages);
+        setMessages(mapHistoryToMessages({ data, nextMessageId }));
       } catch {
         setError('Failed to load conversation history');
       } finally {
@@ -238,3 +286,28 @@ export function useAgentChat() {
     setConversationId,
   };
 }
+
+export type ChatMessageItem = {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  thoughts: string;
+  plan: PlanItem[] | null;
+  toolCalls: ToolCallItem[];
+  timestamp: number;
+};
+
+export type ToolCallItem = {
+  id: string;
+  name: string;
+  title: string;
+  status: 'running' | 'completed' | 'failed';
+  kind?: string;
+  input?: Record<string, unknown>;
+  output?: string;
+};
+
+export type PlanItem = {
+  content: string;
+  status: 'pending' | 'in_progress' | 'completed';
+};

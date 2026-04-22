@@ -151,7 +151,18 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 const update = payload.params.update
                 if (!isPlainObject(update)) return
 
-                handleSessionUpdate(reply.raw, update)
+                handleSessionUpdate({
+                    raw: reply.raw,
+                    update,
+                    onSessionTitle: (title: string) => {
+                        void chatService(log).updateConversation({
+                            id: request.params.id,
+                            projectId: request.projectId,
+                            userId: request.principal.id,
+                            request: { title },
+                        })
+                    },
+                })
             })
 
             await chatSandboxAgent.sendPrompt({ session, text: content })
@@ -195,42 +206,123 @@ function getNumber(obj: Record<string, unknown>, key: string): number | undefine
     return typeof value === 'number' ? value : undefined
 }
 
-function handleSessionUpdate(raw: NodeJS.WritableStream, update: Record<string, unknown>): void {
-    if (update.sessionUpdate === 'agent_message_chunk' && isPlainObject(update.content) && update.content.type === 'text' && typeof update.content.text === 'string') {
-        writeSseEvent(raw, {
-            type: ChatStreamEventType.TEXT_CHUNK,
-            data: { text: update.content.text },
-        })
-    }
+function handleSessionUpdate({ raw, update, onSessionTitle }: {
+    raw: NodeJS.WritableStream
+    update: Record<string, unknown>
+    onSessionTitle?: (title: string) => void
+}): void {
+    const updateType = getString(update, 'sessionUpdate')
 
-    if (isPlainObject(update.toolCall)) {
-        const toolCall = update.toolCall
-        const status = getString(toolCall, 'status')
-        const data = {
-            toolCallId: getString(toolCall, 'toolCallId'),
-            toolName: getString(toolCall, 'toolName'),
-            status,
+    switch (updateType) {
+        case 'agent_message_chunk': {
+            const text = extractContentText(update)
+            if (text) {
+                writeSseEvent(raw, { type: ChatStreamEventType.TEXT_CHUNK, data: { text } })
+            }
+            break
         }
-        if (status === 'started' || status === 'running') {
-            writeSseEvent(raw, { type: ChatStreamEventType.TOOL_CALL_START, data })
+        case 'agent_thought_chunk': {
+            const text = extractContentText(update)
+            if (text) {
+                writeSseEvent(raw, { type: ChatStreamEventType.THOUGHT_CHUNK, data: { text } })
+            }
+            break
         }
-        else if (status === 'completed') {
-            writeSseEvent(raw, { type: ChatStreamEventType.TOOL_CALL_COMPLETE, data })
+        case 'tool_call': {
+            const title = getString(update, 'title') ?? 'Unknown tool'
+            writeSseEvent(raw, {
+                type: ChatStreamEventType.TOOL_CALL_START,
+                data: {
+                    toolCallId: getString(update, 'toolCallId'),
+                    toolName: title,
+                    title,
+                    status: getString(update, 'status'),
+                    kind: getString(update, 'kind'),
+                    rawInput: isPlainObject(update.rawInput) ? update.rawInput : undefined,
+                },
+            })
+            break
         }
-        else {
-            writeSseEvent(raw, { type: ChatStreamEventType.TOOL_CALL_UPDATE, data })
+        case 'tool_call_update': {
+            const status = getString(update, 'status')
+            const output = extractToolOutput(update)
+            const eventType = status === 'completed'
+                ? ChatStreamEventType.TOOL_CALL_COMPLETE
+                : ChatStreamEventType.TOOL_CALL_UPDATE
+            writeSseEvent(raw, {
+                type: eventType,
+                data: {
+                    toolCallId: getString(update, 'toolCallId'),
+                    title: getString(update, 'title'),
+                    status,
+                    output,
+                },
+            })
+            break
         }
+        case 'plan': {
+            const entries = update.entries
+            if (Array.isArray(entries)) {
+                writeSseEvent(raw, {
+                    type: ChatStreamEventType.PLAN_UPDATE,
+                    data: {
+                        entries: entries
+                            .filter(isPlainObject)
+                            .map((entry) => ({
+                                content: getString(entry, 'content') ?? '',
+                                status: getString(entry, 'status') ?? 'pending',
+                            })),
+                    },
+                })
+            }
+            break
+        }
+        case 'session_info_update': {
+            const title = getString(update, 'title')
+            if (title) {
+                writeSseEvent(raw, {
+                    type: ChatStreamEventType.SESSION_TITLE_UPDATE,
+                    data: { title },
+                })
+                onSessionTitle?.(title)
+            }
+            break
+        }
+        case 'usage_update': {
+            writeSseEvent(raw, {
+                type: ChatStreamEventType.USAGE_UPDATE,
+                data: {
+                    inputTokens: getNumber(update, 'inputTokens') ?? getNumber(update, 'used') ?? 0,
+                    outputTokens: getNumber(update, 'outputTokens') ?? 0,
+                    size: getNumber(update, 'size'),
+                    cost: getNumber(update, 'cost'),
+                },
+            })
+            break
+        }
+        default:
+            break
     }
+}
 
-    if (isPlainObject(update.usage)) {
-        writeSseEvent(raw, {
-            type: ChatStreamEventType.USAGE_UPDATE,
-            data: {
-                inputTokens: getNumber(update.usage, 'inputTokens') ?? 0,
-                outputTokens: getNumber(update.usage, 'outputTokens') ?? 0,
-            },
-        })
+function extractContentText(update: Record<string, unknown>): string | undefined {
+    if (!isPlainObject(update.content)) return undefined
+    if (update.content.type !== 'text') return undefined
+    return typeof update.content.text === 'string' ? update.content.text : undefined
+}
+
+function extractToolOutput(update: Record<string, unknown>): string | undefined {
+    if (typeof update.rawOutput === 'string') return update.rawOutput
+    if (Array.isArray(update.content)) {
+        const parts: string[] = []
+        for (const block of update.content) {
+            if (isPlainObject(block) && block.type === 'text' && typeof block.text === 'string') {
+                parts.push(block.text)
+            }
+        }
+        if (parts.length > 0) return parts.join('\n')
     }
+    return undefined
 }
 
 function writeSseEvent(raw: NodeJS.WritableStream, event: { type: ChatStreamEventType, data: Record<string, unknown> }): void {

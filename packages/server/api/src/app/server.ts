@@ -18,6 +18,7 @@ import { exceptionHandler } from './helper/exception-handler'
 import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
+import { mcpAgentController } from './mcp/mcp-agent-controller'
 import { mcpOAuthHttpController } from './mcp/oauth/mcp-oauth.controller'
 import { mcpOAuthRootModule } from './mcp/oauth/mcp-oauth.module'
 
@@ -31,6 +32,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     if (system.isApp()) {
         await app.register(mcpOAuthRootModule)
         await app.register(mcpOAuthHttpController, { prefix: '/mcp' })
+        await app.register(mcpAgentController, { prefix: '/api/v1/mcp/agent' })
     }
 
     await app.register(async (apiApp) => {

@@ -13,7 +13,7 @@ import {
   Workflow,
   Cable,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -21,16 +21,22 @@ import {
   ChatContainerRoot,
   ChatContainerScrollAnchor,
 } from '@/components/prompt-kit/chat-container';
-import { TextShimmerLoader } from '@/components/prompt-kit/loader';
 import { Markdown } from '@/components/prompt-kit/markdown';
 import {
   PromptInput,
   PromptInputActions,
   PromptInputTextarea,
 } from '@/components/prompt-kit/prompt-input';
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from '@/components/prompt-kit/reasoning';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
+import { ThinkingBar } from '@/components/prompt-kit/thinking-bar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PlanCard } from '@/features/chat/components/plan-card';
 import { ToolCallCard } from '@/features/chat/components/tool-call-card';
 import {
   useAgentChat,
@@ -43,12 +49,14 @@ type AIChatBoxProps = {
   incognito: boolean;
   conversationId?: string | null;
   onFirstMessage: (text: string) => void;
+  onTitleUpdate?: (title: string) => void;
 };
 
 export function AIChatBox({
   incognito,
   conversationId,
   onFirstMessage,
+  onTitleUpdate,
 }: AIChatBoxProps) {
   const { data: providers, isLoading: isLoadingProviders } =
     aiProviderQueries.useAiProviders();
@@ -74,6 +82,7 @@ export function AIChatBox({
       incognito={incognito}
       conversationId={conversationId}
       onFirstMessage={onFirstMessage}
+      onTitleUpdate={onTitleUpdate}
     />
   );
 }
@@ -82,6 +91,7 @@ function ChatBoxContent({
   incognito,
   conversationId: initialConversationId,
   onFirstMessage,
+  onTitleUpdate,
 }: AIChatBoxProps) {
   const {
     messages,
@@ -91,13 +101,8 @@ function ChatBoxContent({
     sendMessage,
     cancelStream,
     setConversationId,
-  } = useAgentChat();
+  } = useAgentChat({ onTitleUpdate });
   const hasSentFirst = useRef(false);
-
-  const robotUrl = useMemo(() => {
-    const id = Math.floor(Math.random() * 8926);
-    return `https://cdn.activepieces.com/pieces/ai/robots/robot_${id}.png`;
-  }, []);
 
   useEffect(() => {
     if (initialConversationId) {
@@ -117,12 +122,14 @@ function ChatBoxContent({
     [sendMessage, onFirstMessage],
   );
 
+  const lastMsg = messages[messages.length - 1];
   const isThinking =
     isStreaming &&
     messages.length > 0 &&
-    messages[messages.length - 1]?.role === 'assistant' &&
-    messages[messages.length - 1]?.content === '' &&
-    messages[messages.length - 1]?.toolCalls.length === 0;
+    lastMsg?.role === 'assistant' &&
+    lastMsg?.content === '' &&
+    lastMsg?.thoughts === '' &&
+    lastMsg?.toolCalls.length === 0;
 
   const isEmpty =
     messages.length === 0 && !initialConversationId && !isLoadingHistory;
@@ -131,11 +138,7 @@ function ChatBoxContent({
     return (
       <div className="flex flex-col h-full flex-1 min-w-0 items-center justify-center px-6 pb-8">
         <div className="flex-1" />
-        <EmptyState
-          onSend={handleSend}
-          incognito={incognito}
-          robotUrl={robotUrl}
-        />
+        <EmptyState onSend={handleSend} incognito={incognito} />
         <div className="w-full max-w-2xl mt-6">
           <ChatInput
             isStreaming={isStreaming}
@@ -166,6 +169,7 @@ function ChatBoxContent({
             const isEmptyAssistant =
               isLastStreamingAssistant &&
               msg.content === '' &&
+              msg.thoughts === '' &&
               msg.toolCalls.length === 0;
 
             if (isEmptyAssistant) return null;
@@ -174,7 +178,6 @@ function ChatBoxContent({
               <ChatMessage
                 key={msg.id}
                 message={msg}
-                robotUrl={robotUrl}
                 isStreaming={isLastStreamingAssistant}
                 onRetry={() => {
                   const lastUser = [...messages]
@@ -186,7 +189,7 @@ function ChatBoxContent({
             );
           })}
 
-          {isThinking && <ThinkingIndicator robotUrl={robotUrl} />}
+          {isThinking && <ThinkingIndicator onCancel={cancelStream} />}
 
           {error && (
             <div className="flex items-center gap-3 py-4 text-destructive text-sm animate-in fade-in duration-200">
@@ -229,53 +232,24 @@ function ChatBoxContent({
   );
 }
 
-const THINKING_WORDS = [
-  'Thinking',
-  'Analyzing',
-  'Processing',
-  'Reasoning',
-  'Understanding',
-  'Considering',
-  'Working on it',
-  'Figuring it out',
-  'Looking into it',
-  'On it',
-];
-
-function ThinkingIndicator({ robotUrl }: { robotUrl: string }) {
-  const [elapsed, setElapsed] = useState(0);
-  const [word] = useState(
-    () => THINKING_WORDS[Math.floor(Math.random() * THINKING_WORDS.length)],
-  );
-
-  useEffect(() => {
-    const interval = setInterval(() => setElapsed((s) => s + 1), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const label = elapsed > 0 ? `${word}... ${elapsed}s` : `${word}...`;
-
+function ThinkingIndicator({ onCancel }: { onCancel: () => void }) {
   return (
-    <div className="flex items-start gap-3 py-6 animate-in fade-in duration-300">
-      <img
-        src={robotUrl}
-        alt="AI"
-        className="h-7 w-7 rounded-full shrink-0 animate-bounce"
-        style={{ animationDuration: '1.5s' }}
+    <div className="py-4 animate-in fade-in duration-300">
+      <ThinkingBar
+        text={t('Thinking')}
+        onStop={onCancel}
+        stopLabel={t('Stop')}
       />
-      <TextShimmerLoader className="text-sm mt-1" text={label} />
     </div>
   );
 }
 
 function ChatMessage({
   message,
-  robotUrl,
   isStreaming,
   onRetry,
 }: {
   message: ChatMessageItem;
-  robotUrl: string;
   isStreaming: boolean;
   onRetry: () => void;
 }) {
@@ -288,7 +262,6 @@ function ChatMessage({
   return (
     <AssistantMessage
       message={message}
-      robotUrl={robotUrl}
       isStreaming={isStreaming}
       onRetry={onRetry}
     />
@@ -335,16 +308,16 @@ function UserMessage({ message }: { message: ChatMessageItem }) {
 
 function AssistantMessage({
   message,
-  robotUrl,
   isStreaming,
   onRetry,
 }: {
   message: ChatMessageItem;
-  robotUrl: string;
   isStreaming: boolean;
   onRetry: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const hasThoughts = message.thoughts.length > 0;
+  const isThinkingOnly = hasThoughts && !message.content && isStreaming;
 
   const handleCopy = useCallback(() => {
     void navigator.clipboard.writeText(message.content);
@@ -354,21 +327,26 @@ function AssistantMessage({
 
   return (
     <div className="flex items-start gap-3 py-4 animate-in fade-in slide-in-from-bottom-1 duration-200">
-      <img
-        src={robotUrl}
-        alt="AI"
-        className={cn(
-          'h-7 w-7 rounded-full shrink-0 mt-0.5',
-          isStreaming && 'animate-pulse',
-        )}
-      />
       <div className="flex-1 min-w-0 overflow-hidden">
+        {hasThoughts && (
+          <Reasoning isStreaming={isThinkingOnly} className="mb-2">
+            <ReasoningTrigger className="text-sm text-muted-foreground">
+              {t('Thinking')}
+            </ReasoningTrigger>
+            <ReasoningContent markdown contentClassName="text-xs">
+              {message.thoughts}
+            </ReasoningContent>
+          </Reasoning>
+        )}
+
+        {message.plan && <PlanCard entries={message.plan} />}
+
         {message.content && (
           <MessageContentWithAuth content={message.content} />
         )}
 
         {message.toolCalls.length > 0 && (
-          <div className="mt-3 space-y-1.5">
+          <div className="mt-1 space-y-0.5">
             {message.toolCalls.map((tc) => (
               <ToolCallCard key={tc.id} toolCall={tc} />
             ))}
@@ -429,7 +407,9 @@ function MessageContentWithAuth({ content }: { content: string }) {
         <div className="flex items-center gap-3 rounded-xl border bg-muted/30 p-4">
           <Zap className="h-5 w-5 text-muted-foreground shrink-0" />
           <p className="text-sm text-muted-foreground">
-            {t('Project tools (flows, tables, connections) will be available automatically in a future update.')}
+            {t(
+              'Project tools (flows, tables, connections) will be available automatically in a future update.',
+            )}
           </p>
         </div>
       </div>
@@ -520,11 +500,9 @@ function ChatInput({
 
 function EmptyState({
   incognito,
-  robotUrl,
 }: {
   onSend: (text: string) => void;
   incognito: boolean;
-  robotUrl: string;
 }) {
   const greetings = [
     t('Quiet moments build the best things'),
@@ -541,7 +519,6 @@ function EmptyState({
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <img src={robotUrl} alt="AI" className="h-16 w-16 rounded-2xl" />
       <h2
         className="text-[32px] font-bold text-center leading-tight bg-gradient-to-r from-foreground via-foreground/80 to-primary bg-clip-text text-transparent"
         style={{ textWrap: 'balance' }}

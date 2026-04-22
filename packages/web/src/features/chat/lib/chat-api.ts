@@ -1,5 +1,6 @@
 import {
   assertNotNullOrUndefined,
+  type ChatHistoryMessage,
   ChatConversation,
   ChatStreamEventType,
   CreateChatConversationRequest,
@@ -67,7 +68,7 @@ function conversationUrl(id: string): string {
 
 async function getMessages(
   conversationId: string,
-): Promise<{ data: Array<{ role: 'user' | 'assistant'; content: string }> }> {
+): Promise<{ data: ChatHistoryMessage[] }> {
   const res = await fetch(
     `${API_URL}/v1/chat/conversations/${conversationId}/messages?projectId=${getProjectId()}`,
     { headers: getAuthHeaders() },
