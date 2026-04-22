@@ -5,6 +5,7 @@ import { azureAdAuth } from './lib/auth';
 import { addMemberToGroupAction } from './lib/actions/add-member-to-group';
 import { addOrRemoveUserLicenseAction } from './lib/actions/add-or-remove-user-license';
 import { createGroupAction } from './lib/actions/create-group';
+import { createUserAction } from './lib/actions/create-user';
 import { deleteGroupAction } from './lib/actions/delete-group';
 import { deleteUserAction } from './lib/actions/delete-user';
 import { getEnabledUsersAction } from './lib/actions/get-enabled-users';
@@ -19,9 +20,6 @@ import { revokeSignInSessionAction } from './lib/actions/revoke-sign-in-session'
 import { updateUserAction } from './lib/actions/update-user';
 import { newDeletedUserTrigger } from './lib/triggers/new-deleted-user';
 import { newGroupTrigger } from './lib/triggers/new-group';
-import { newUpdatedGroupTrigger } from './lib/triggers/new-updated-group';
-import { newUpdatedMemberTrigger } from './lib/triggers/new-updated-member';
-import { newUpdatedUserTrigger } from './lib/triggers/new-updated-user';
 import { newUserTrigger } from './lib/triggers/new-user';
 
 export const azureAd = createPiece({
@@ -36,6 +34,7 @@ export const azureAd = createPiece({
         addMemberToGroupAction,
         addOrRemoveUserLicenseAction,
         createGroupAction,
+        createUserAction,
         deleteGroupAction,
         deleteUserAction,
         getEnabledUsersAction,
@@ -59,9 +58,6 @@ export const azureAd = createPiece({
     triggers: [
         newDeletedUserTrigger,
         newGroupTrigger,
-        newUpdatedGroupTrigger,
-        newUpdatedMemberTrigger,
-        newUpdatedUserTrigger,
         newUserTrigger,
     ],
 });

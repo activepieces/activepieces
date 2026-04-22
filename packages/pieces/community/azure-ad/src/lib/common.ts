@@ -6,7 +6,13 @@ const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
 
 export async function callGraphApi<T>(
     accessToken: string,
-    request: { method: HttpMethod; url: string; body?: object; query?: Record<string, string> },
+    request: {
+        method: HttpMethod;
+        url: string;
+        body?: object;
+        query?: Record<string, string>;
+        headers?: Record<string, string>;
+    },
 ): Promise<T> {
     let url = request.url.startsWith('http') ? request.url : `${GRAPH_BASE}${request.url}`;
     if (request.query && Object.keys(request.query).length > 0) {
@@ -19,6 +25,7 @@ export async function callGraphApi<T>(
         headers: {
             Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
+            ...request.headers,
         },
     };
     if (request.body !== undefined) {
@@ -211,9 +218,11 @@ export async function fetchGraphDeltaChanges<T extends { '@removed'?: unknown }>
     storeKey: string;
     deltaPath: string;
     select?: string;
+    shouldInclude?: (item: T) => boolean;
 }): Promise<T[]> {
     const storedDeltaLink = await params.store.get<string>(params.storeKey);
     const hasStoredLink = Boolean(storedDeltaLink);
+    const shouldInclude = params.shouldInclude ?? ((item: T) => !item['@removed']);
 
     let nextUrl: string | null;
     if (hasStoredLink) {
@@ -234,7 +243,7 @@ export async function fetchGraphDeltaChanges<T extends { '@removed'?: unknown }>
 
         if (hasStoredLink && res.value) {
             for (const item of res.value) {
-                if (!item['@removed']) {
+                if (shouldInclude(item)) {
                     collected.push(item);
                 }
             }

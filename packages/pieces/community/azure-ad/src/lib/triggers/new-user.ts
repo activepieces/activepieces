@@ -1,4 +1,3 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
     AppConnectionValueForAuthProperty,
@@ -7,8 +6,9 @@ import {
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { azureAdAuth } from '../auth';
-import { callGraphApi } from '../common';
+import { fetchGraphDeltaChanges } from '../common';
 
+const STORE_KEY = '_delta_link_new_user';
 const USER_SELECT =
     'id,displayName,userPrincipalName,mail,givenName,surname,jobTitle,mobilePhone,accountEnabled,createdDateTime';
 
@@ -44,6 +44,7 @@ export const newUserTrigger = createTrigger({
             store: context.store,
             propsValue: context.propsValue,
         });
+        await context.store.delete(STORE_KEY);
     },
     async test(context) {
         return await pollingHelper.test(polling, context);
@@ -58,22 +59,19 @@ const polling: Polling<
     Record<string, never>
 > = {
     strategy: DedupeStrategy.TIMEBASED,
-    async items({ auth, lastFetchEpochMS }) {
-        const query: Record<string, string> = {
-            $select: USER_SELECT,
-            $orderby: 'createdDateTime desc',
-            $top: '50',
-        };
-        if (lastFetchEpochMS !== 0) {
-            query['$filter'] = `createdDateTime gt ${dayjs(lastFetchEpochMS).toISOString()}`;
-        }
-        // https://learn.microsoft.com/en-us/graph/api/user-list?view=graph-rest-1.0&tabs=http
-        const res = await callGraphApi<{ value?: GraphUser[] }>(auth.access_token, {
-            method: HttpMethod.GET,
-            url: '/users',
-            query,
+    // /users/delta avoids the advanced-query restrictions on $filter + createdDateTime,
+    // while TIMEBASED dedup on createdDateTime ensures updates to an already-emitted user
+    // don't re-fire this trigger (updated users keep their original createdDateTime).
+    // https://learn.microsoft.com/en-us/graph/delta-query-users
+    async items({ auth, store }) {
+        const users = await fetchGraphDeltaChanges<GraphUser>({
+            accessToken: auth.access_token,
+            store,
+            storeKey: STORE_KEY,
+            deltaPath: '/users/delta',
+            select: USER_SELECT,
         });
-        return (res.value ?? [])
+        return users
             .filter((u) => u.createdDateTime)
             .map((user) => ({
                 epochMilliSeconds: dayjs(user.createdDateTime).valueOf(),
@@ -85,5 +83,6 @@ const polling: Polling<
 type GraphUser = {
     id: string;
     createdDateTime?: string;
+    '@removed'?: unknown;
     [key: string]: unknown;
 };

@@ -1,16 +1,10 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import {
-    AppConnectionValueForAuthProperty,
-    TriggerStrategy,
-    createTrigger,
-} from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { azureAdAuth } from '../auth';
-import { callGraphApi } from '../common';
+import { callGraphApi, fetchGraphDeltaChanges } from '../common';
 
-const DELETED_USER_SELECT =
-    'id,displayName,userPrincipalName,mail,givenName,surname,deletedDateTime';
+const STORE_KEY = '_delta_link_new_deleted_user';
+const USER_SELECT = 'id,displayName,userPrincipalName,mail,givenName,surname';
 
 export const newDeletedUserTrigger = createTrigger({
     auth: azureAdAuth,
@@ -21,66 +15,46 @@ export const newDeletedUserTrigger = createTrigger({
     props: {},
     sampleData: {
         id: '12345678-aaaa-bbbb-cccc-1234567890ab',
-        displayName: 'Ada Lovelace',
-        userPrincipalName: 'ada@contoso.onmicrosoft.com',
-        mail: 'ada@contoso.com',
-        givenName: 'Ada',
-        surname: 'Lovelace',
-        deletedDateTime: '2026-04-22T10:15:30Z',
+        '@removed': { reason: 'changed' },
     },
     async onEnable(context) {
-        await pollingHelper.onEnable(polling, {
-            auth: context.auth,
+        await fetchGraphDeltaChanges({
+            accessToken: context.auth.access_token,
             store: context.store,
-            propsValue: context.propsValue,
+            storeKey: STORE_KEY,
+            deltaPath: '/users/delta',
+            select: USER_SELECT,
+            shouldInclude: () => false,
         });
     },
     async onDisable(context) {
-        await pollingHelper.onDisable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        });
+        await context.store.delete(STORE_KEY);
     },
     async test(context) {
-        return await pollingHelper.test(polling, context);
+        // /directory/deletedItems doesn't require the advanced-query opt-in when no $filter is used.
+        // https://learn.microsoft.com/en-us/graph/api/directory-deleteditems-list?view=graph-rest-1.0&tabs=http
+        const res = await callGraphApi<{ value?: unknown[] }>(context.auth.access_token, {
+            method: HttpMethod.GET,
+            url: '/directory/deletedItems/microsoft.graph.user',
+            query: { $select: `${USER_SELECT},deletedDateTime`, $top: '3' },
+        });
+        return res.value ?? [];
     },
     async run(context) {
-        return await pollingHelper.poll(polling, context);
+        // Graph surfaces soft-deleted users as @removed entries on /users/delta.
+        // https://learn.microsoft.com/en-us/graph/delta-query-users#example-4-request-deleted-users
+        return await fetchGraphDeltaChanges<DeletedGraphUser>({
+            accessToken: context.auth.access_token,
+            store: context.store,
+            storeKey: STORE_KEY,
+            deltaPath: '/users/delta',
+            select: USER_SELECT,
+            shouldInclude: (item) => Boolean(item['@removed']),
+        });
     },
 });
 
-const polling: Polling<
-    AppConnectionValueForAuthProperty<typeof azureAdAuth>,
-    Record<string, never>
-> = {
-    strategy: DedupeStrategy.TIMEBASED,
-    async items({ auth, lastFetchEpochMS }) {
-        const query: Record<string, string> = {
-            $select: DELETED_USER_SELECT,
-            $orderby: 'deletedDateTime desc',
-            $top: '50',
-        };
-        if (lastFetchEpochMS !== 0) {
-            query['$filter'] = `deletedDateTime gt ${dayjs(lastFetchEpochMS).toISOString()}`;
-        }
-        // https://learn.microsoft.com/en-us/graph/api/directory-deleteditems-list?view=graph-rest-1.0&tabs=http
-        const res = await callGraphApi<{ value?: DeletedGraphUser[] }>(auth.access_token, {
-            method: HttpMethod.GET,
-            url: '/directory/deletedItems/microsoft.graph.user',
-            query,
-        });
-        return (res.value ?? [])
-            .filter((u) => u.deletedDateTime)
-            .map((user) => ({
-                epochMilliSeconds: dayjs(user.deletedDateTime).valueOf(),
-                data: user,
-            }));
-    },
-};
-
 type DeletedGraphUser = {
     id: string;
-    deletedDateTime?: string;
-    [key: string]: unknown;
+    '@removed'?: { reason?: string } | unknown;
 };
