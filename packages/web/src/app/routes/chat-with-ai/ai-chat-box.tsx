@@ -27,10 +27,17 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { Markdown } from '@/components/prompt-kit/markdown';
 import {
+  Message,
+  MessageAction,
+  MessageActions,
+  MessageContent,
+} from '@/components/prompt-kit/message';
+import {
   PromptInput,
   PromptInputActions,
   PromptInputTextarea,
 } from '@/components/prompt-kit/prompt-input';
+import { PromptSuggestion } from '@/components/prompt-kit/prompt-suggestion';
 import {
   Reasoning,
   ReasoningContent,
@@ -284,7 +291,6 @@ function ChatMessage({
 
 function UserMessage({ message }: { message: ChatMessageItem }) {
   const [copied, setCopied] = useState(false);
-  const time = formatTime(message.timestamp);
 
   const handleCopy = useCallback(() => {
     void navigator.clipboard.writeText(message.content);
@@ -293,28 +299,28 @@ function UserMessage({ message }: { message: ChatMessageItem }) {
   }, [message.content]);
 
   return (
-    <div className="flex flex-col items-end py-4 animate-in fade-in slide-in-from-bottom-1 duration-200">
-      <div className="bg-muted rounded-2xl rounded-br-md px-4 py-2.5 max-w-[80%]">
-        <p className="text-sm whitespace-pre-wrap break-words">
-          {message.content}
-        </p>
-      </div>
-      <div className="flex items-center gap-2 mt-1.5">
-        {time && (
-          <span className="text-[11px] text-muted-foreground">{time}</span>
-        )}
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="p-1 rounded hover:bg-muted text-muted-foreground transition-colors"
-          title={t('Copy')}
-        >
-          {copied ? (
-            <Check className="h-3.5 w-3.5 text-green-500" />
-          ) : (
-            <Copy className="h-3.5 w-3.5" />
-          )}
-        </button>
+    <div className="flex justify-end py-3 animate-in fade-in duration-200">
+      <div className="max-w-[80%]">
+        <Message className="flex-row-reverse">
+          <MessageContent className="bg-muted rounded-2xl rounded-br-md px-4 py-2.5 prose-sm">
+            {message.content}
+          </MessageContent>
+        </Message>
+        <MessageActions className="justify-end mt-1">
+          <MessageAction tooltip={t('Copy')}>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="p-1 rounded hover:bg-muted text-muted-foreground transition-colors"
+            >
+              {copied ? (
+                <Check className="h-3.5 w-3.5 text-green-500" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </MessageAction>
+        </MessageActions>
       </div>
     </div>
   );
@@ -377,28 +383,30 @@ function AssistantMessage({
         )}
 
         {hasContent && !isStreaming && (
-          <div className="flex items-center gap-1 mt-2 text-muted-foreground">
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="p-1.5 rounded-md hover:bg-muted transition-colors"
-              title={t('Copy')}
-            >
-              {copied ? (
-                <Check className="h-4 w-4 text-green-500" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={onRetry}
-              className="p-1.5 rounded-md hover:bg-muted transition-colors"
-              title={t('Regenerate')}
-            >
-              <RefreshCw className="h-4 w-4" />
-            </button>
-          </div>
+          <MessageActions className="mt-2">
+            <MessageAction tooltip={t('Copy')}>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="p-1.5 rounded-md hover:bg-muted transition-colors"
+              >
+                {copied ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </button>
+            </MessageAction>
+            <MessageAction tooltip={t('Regenerate')}>
+              <button
+                type="button"
+                onClick={onRetry}
+                className="p-1.5 rounded-md hover:bg-muted transition-colors"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </button>
+            </MessageAction>
+          </MessageActions>
         )}
       </div>
     </div>
@@ -869,19 +877,12 @@ function SuggestionCards({ onSend }: { onSend: (text: string) => void }) {
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+    <div className="flex flex-wrap justify-center gap-2 mt-3">
       {suggestions.map((s) => (
-        <button
-          key={s.text}
-          type="button"
-          onClick={() => onSend(s.text)}
-          className="flex flex-col items-start gap-2 p-3 rounded-xl border bg-background hover:bg-muted/50 transition-colors text-left cursor-pointer"
-        >
-          <s.icon className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground leading-snug">
-            {s.text}
-          </span>
-        </button>
+        <PromptSuggestion key={s.text} onClick={() => onSend(s.text)}>
+          <s.icon className="h-3.5 w-3.5" />
+          {s.text}
+        </PromptSuggestion>
       ))}
     </div>
   );
@@ -926,9 +927,4 @@ function MessageSkeletons() {
       </div>
     </div>
   );
-}
-
-function formatTime(timestamp: number): string {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
