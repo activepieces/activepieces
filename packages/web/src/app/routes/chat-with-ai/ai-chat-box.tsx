@@ -487,7 +487,7 @@ function parseCodeBlock(
   if (!match) return { block: null, cleanContent: content };
   return {
     block: match[1],
-    cleanContent: content.replace(match[0], '').trim(),
+    cleanContent: content.replace(match[0], '').replace(/\n{3,}/g, '\n\n').trim(),
   };
 }
 
@@ -576,36 +576,41 @@ type ConnectionRequired = {
   displayName: string;
 };
 
-function parseConnectionRequired(content: string): {
-  connection: ConnectionRequired | null;
+function parseAllConnectionsRequired(content: string): {
+  connections: ConnectionRequired[];
   cleanContent: string;
 } {
-  const { block, cleanContent } = parseCodeBlock(
-    content,
-    'connection-required',
-  );
-  if (!block) return { connection: null, cleanContent };
+  const connections: ConnectionRequired[] = [];
+  const regex = /```connection-required\n([\s\S]*?)```/g;
+  let cleaned = content;
+  let match = regex.exec(content);
 
-  const pieceMatch = /^piece:\s*(.+)$/m.exec(block);
-  const nameMatch = /^displayName:\s*(.+)$/m.exec(block);
+  while (match) {
+    const block = match[1];
+    const pieceMatch = /^piece:\s*(.+)$/m.exec(block);
+    const nameMatch = /^displayName:\s*(.+)$/m.exec(block);
+    if (pieceMatch) {
+      connections.push({
+        piece: pieceMatch[1].trim(),
+        displayName: nameMatch?.[1].trim() ?? pieceMatch[1].trim(),
+      });
+    }
+    cleaned = cleaned.replace(match[0], '');
+    match = regex.exec(content);
+  }
 
-  if (!pieceMatch) return { connection: null, cleanContent: content };
-
-  return {
-    connection: {
-      piece: pieceMatch[1].trim(),
-      displayName: nameMatch?.[1].trim() ?? pieceMatch[1].trim(),
-    },
-    cleanContent,
-  };
+  return { connections, cleanContent: cleaned.trim() };
 }
 
 function ConnectionRequiredCard({
   connection,
+  onSend,
 }: {
   connection: ConnectionRequired;
+  onSend?: (text: string) => void;
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [connected, setConnected] = useState(false);
   const shortName = connection.piece.replace(/[^a-z0-9-]/gi, '');
   const pieceName = connection.piece.startsWith('@activepieces/')
     ? connection.piece
@@ -624,30 +629,44 @@ function ConnectionRequiredCard({
           />
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-sm">
-              {t('Connect {name}', { name: connection.displayName })}
+              {connected
+                ? t('{name} connected', { name: connection.displayName })
+                : t('Connect {name}', { name: connection.displayName })}
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {t('This automation needs a {name} connection to work', {
-                name: connection.displayName,
-              })}
+              {connected
+                ? t('Ready to use')
+                : t('This automation needs a {name} connection to work', {
+                    name: connection.displayName,
+                  })}
             </p>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5 shrink-0"
-            disabled={isLoading}
-            onClick={() => setDialogOpen(true)}
-          >
-            {t('Connect')}
-          </Button>
+          {connected ? (
+            <Check className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 shrink-0"
+              disabled={isLoading}
+              onClick={() => setDialogOpen(true)}
+            >
+              {t('Connect')}
+            </Button>
+          )}
         </div>
       </div>
       {pieceModel && (
         <CreateOrEditConnectionDialog
           piece={pieceModel}
           open={dialogOpen}
-          setOpen={(open) => setDialogOpen(open)}
+          setOpen={(open, createdConnection) => {
+            setDialogOpen(open);
+            if (createdConnection) {
+              setConnected(true);
+              onSend?.(`I connected ${connection.displayName}, continue`);
+            }
+          }}
           reconnectConnection={null}
           isGlobalConnection={false}
         />
@@ -698,8 +717,8 @@ function MessageContentWithAuth({
 
   const { proposal, cleanContent: afterProposal } =
     parseAutomationProposal(content);
-  const { connection, cleanContent: afterConnection } =
-    parseConnectionRequired(afterProposal);
+  const { connections, cleanContent: afterConnection } =
+    parseAllConnectionsRequired(afterProposal);
   const { cleanContent: finalContent } =
     parseQuickReplies(afterConnection);
 
@@ -710,7 +729,9 @@ function MessageContentWithAuth({
           <Markdown>{finalContent}</Markdown>
         </div>
       )}
-      {connection && <ConnectionRequiredCard connection={connection} />}
+      {connections.map((conn) => (
+        <ConnectionRequiredCard key={conn.piece} connection={conn} onSend={onSend} />
+      ))}
       {proposal && (
         <AutomationProposalCard
           proposal={proposal}

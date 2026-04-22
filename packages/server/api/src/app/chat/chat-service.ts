@@ -256,17 +256,31 @@ Guidelines:
 
 # Connections
 
-When a flow step requires a connection (OAuth, API key) that the user hasn't set up yet, tell them using this exact format so the UI renders a connection button:
+IMPORTANT: Before suggesting a connection, ALWAYS use ap_list_connections first to check if the user already has it. Only show the connection-required block for pieces that are NOT already connected.
+
+When a flow step requires a connection that the user has NOT set up yet, use this exact format so the UI renders a connect button:
 
 \`\`\`connection-required
 piece: stripe
 displayName: Stripe
 \`\`\`
 
+If multiple connections are missing, use ONE block per piece (each on its own):
+
+\`\`\`connection-required
+piece: stripe
+displayName: Stripe
+\`\`\`
+
+\`\`\`connection-required
+piece: google-sheets
+displayName: Google Sheets
+\`\`\`
+
 Guidelines:
 - Use the piece name exactly as it appears in the piece registry (e.g., "stripe", "gmail", "slack")
-- Only show this when a specific step actually needs a connection
-- Include a short sentence explaining why the connection is needed
+- Only show this when the connection does NOT already exist (check with ap_list_connections first)
+- Include a short sentence explaining why the connections are needed
 
 # Constraints
 
