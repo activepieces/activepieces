@@ -20,6 +20,7 @@ Fastify 5 + TypeORM (PostgreSQL) + BullMQ (Redis) + `fastify-type-provider-zod`.
 
 ## Patterns
 
+- **Reuse existing endpoints before adding new ones** — Before adding a new endpoint, scan the controller you're working in (and any sibling controllers that handle the same resource) for an existing route that already returns the data you need. Prefer re-using or extending an existing endpoint over introducing a new one. New endpoints duplicate validation, caching, security configuration, docs, and test surface — and parallel endpoints tend to drift (different filters, different cache policies, different response shapes) and cause bugs. Only add a new endpoint when no existing route satisfies the use case.
 - **Controllers**: Use `FastifyPluginAsyncTypebox` pattern for route definitions with TypeBox schema validation
 - **HTTP methods**: Use `POST` for all create and update operations
 - **Database migrations**: Generated and managed via TypeORM
@@ -47,6 +48,12 @@ Email templates live in `src/assets/emails/`. When creating or modifying email t
 - **Outlook compatibility** — Include `<!--[if mso]>` font-family override block. Use table-based layout with inline styles only.
 - **No external dependencies** — No `<link>` stylesheets, no tracking pixels, no external font CSS. The `@font-face` CDN URLs in `<style>` are acceptable as progressive enhancement.
 - **Footer** — Use `{{> footer}}` Mustache partial. It renders the address only on Cloud edition.
+
+## N+1 Query Prevention
+
+- **Never fetch a collection then query each item individually in a loop.** Use JOINs, subqueries, or `IN` clauses to push filtering and enrichment into a single query.
+- When checking a condition across related rows (e.g. "does any membership have permission X?"), JOIN the related table and filter in SQL rather than loading all rows and filtering in JS.
+- For list endpoints that enrich entities with related data, prefer `leftJoinAndSelect` / `innerJoin` or batch queries with `IN (:...ids)` over per-item lookups inside `Promise.all` / `.map()`.
 
 ## Guidelines
 
