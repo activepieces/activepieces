@@ -1,7 +1,6 @@
-import { ActivepiecesError,
+import {
     ApplicationEventName,
     assertNotNullOrUndefined,
-    ErrorCode,
     isMfaChallenge,
     PrincipalType,
     SignInRequest,
@@ -22,7 +21,6 @@ import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'
-import { betterAuthInstance } from './better-auth/auth'
 
 export const authenticationController: FastifyPluginAsyncZod = async (
     app,
@@ -95,27 +93,6 @@ export const authenticationController: FastifyPluginAsyncZod = async (
         return reply.send(result)
     })
 
-    app.post('/exchange-session', ExchangeSessionRequestOptions, async (request) => {
-        const predefinedPlatformId = await platformUtils.getPlatformIdForRequest(request)
-        const session = await betterAuthInstance.get().api.getSession({
-            headers: new Headers({ cookie: request.headers.cookie ?? '' }),
-        })
-        if (!session?.user) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHENTICATION,
-                params: { message: 'No valid session' },
-            })
-        }
-        return authenticationService(request.log).exchangeSession({
-            identityId: session.user.id,
-            predefinedPlatformId,
-        })
-    })
-
-    app.get('/2fa-status', TwoFaStatusRequestOptions, async (request) => {
-        return authenticationService(request.log).get2faStatus({ userId: request.principal.id })
-    })
-
     app.get('/federated-provider-id', FederatedProviderIdRequestOptions, async (request) => {
         const platformId = await platformUtils.getPlatformIdForRequest(request)
         const providerName = request.query.providerName
@@ -182,21 +159,6 @@ const SignInRequestOptions = {
     schema: {
         body: SignInRequest,
     },
-}
-
-const ExchangeSessionRequestOptions = {
-    config: {
-        security: securityAccess.public(),
-        rateLimit: rateLimitOptions,
-    },
-    schema: {},
-}
-
-const TwoFaStatusRequestOptions = {
-    config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
-    },
-    schema: {},
 }
 
 const FederatedProviderIdRequestOptions = {

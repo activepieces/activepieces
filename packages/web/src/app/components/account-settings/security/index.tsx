@@ -1,10 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 
-import { authenticationApi } from '@/api/authentication-api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { twoFactorQueries } from '@/features/authentication';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { BackupCodesDialog } from './backup-codes-dialog';
@@ -18,10 +17,7 @@ function TwoFactorAuthSection() {
 
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const { data: status } = useQuery({
-    queryKey: ['2fa-status'],
-    queryFn: authenticationApi.get2faStatus,
-  });
+  const { data: status } = twoFactorQueries.useStatus();
 
   return (
     <div className="flex flex-col gap-3">

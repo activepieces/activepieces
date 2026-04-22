@@ -25,10 +25,6 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  isSessionExpiredError,
-  getSessionExpiredMessage,
-} from '@/features/authentication';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authClient } from '@/lib/better-auth';
 
@@ -89,12 +85,11 @@ export const NewOAuth2Dialog = ({
       setOpen(false);
     },
     onError: (error) => {
-      if (
-        'status' in error &&
-        isSessionExpiredError({ status: error.status as number })
-      ) {
+      if ('status' in error && error.status === 401) {
         form.setError('root.serverError', {
-          message: getSessionExpiredMessage(),
+          message: t(
+            'Your session has expired. Please sign out and sign in again.',
+          ),
         });
       } else {
         form.setError('root.serverError', {

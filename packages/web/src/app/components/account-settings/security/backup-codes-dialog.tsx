@@ -17,12 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { OtpInput } from '@/components/ui/otp-input';
 import { Separator } from '@/components/ui/separator';
-import {
-  use2faRateLimit,
-  isSessionExpiredError,
-  getSessionExpiredMessage,
-} from '@/features/authentication';
-import { authClient } from '@/lib/better-auth';
+import { twoFactorMutations, twoFactorUtils } from '@/features/authentication';
 import { downloadTxt } from '@/lib/utils';
 
 function BackupCodesForm({
@@ -38,67 +33,40 @@ function BackupCodesForm({
   const [newCodes, setNewCodes] = useState<string[]>([]);
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [isPending, setIsPending] = useState(false);
-  const { isRateLimited, rateLimitMessage, handleRateLimitOrError } =
-    use2faRateLimit();
 
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
+  const generateMutation = twoFactorMutations.useGenerateBackupCodes({
+    onSuccess: async (data) => {
+      setNewCodes(data.backupCodes);
+      await queryClient.invalidateQueries({ queryKey: ['2fa-status'] });
+      toast.success(t('Backup codes regenerated successfully'));
+    },
+    onError: (err) => {
+      setError(twoFactorUtils.extractErrorMessage(err));
+    },
+  });
+
+  const verifyTotpMutation = twoFactorMutations.useVerifyTotp({
+    onSuccess: () => {
+      generateMutation.mutate({});
+    },
+    onError: (err) => {
+      setError(twoFactorUtils.extractErrorMessage(err));
+    },
+  });
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!password) return;
     setError(null);
-    setIsPending(true);
-    try {
-      const { data, error: apiError } =
-        await authClient.twoFactor.generateBackupCodes({ password });
-      if (apiError || !data) {
-        setError(
-          isSessionExpiredError(apiError)
-            ? getSessionExpiredMessage()
-            : t('Invalid password. Please try again.'),
-        );
-        return;
-      }
-      setNewCodes(data.backupCodes);
-      await queryClient.invalidateQueries({ queryKey: ['2fa-status'] });
-      toast.success(t('Backup codes regenerated successfully'));
-    } catch {
-      setError(t('Invalid password. Please try again.'));
-    } finally {
-      setIsPending(false);
-    }
+    generateMutation.mutate({ password });
   };
 
-  const handleOtpComplete = async ({ value }: { value: string }) => {
-    if (isRateLimited) return;
+  const handleOtpComplete = ({ value }: { value: string }) => {
     setError(null);
-    setIsPending(true);
-    try {
-      const { error: verifyError } = await authClient.twoFactor.verifyTotp({
-        code: value,
-      });
-      if (verifyError) {
-        handleRateLimitOrError(verifyError, setError);
-        return;
-      }
-      const { data, error: genError } =
-        await authClient.twoFactor.generateBackupCodes({});
-      if (genError || !data) {
-        setError(
-          isSessionExpiredError(genError)
-            ? getSessionExpiredMessage()
-            : t('Failed to regenerate backup codes. Please try again.'),
-        );
-        return;
-      }
-      setNewCodes(data.backupCodes);
-      await queryClient.invalidateQueries({ queryKey: ['2fa-status'] });
-      toast.success(t('Backup codes regenerated successfully'));
-    } catch {
-      setError(t('Invalid code. Please try again.'));
-    } finally {
-      setIsPending(false);
-    }
+    verifyTotpMutation.mutate({ code: value });
   };
+
+  const isPending = generateMutation.isPending || verifyTotpMutation.isPending;
 
   return (
     <>
@@ -106,7 +74,7 @@ function BackupCodesForm({
         <DialogTitle>{t('Backup Codes')}</DialogTitle>
         <DialogDescription>
           {backupCodesRemaining > 0
-            ? t('Remaining backup codes: {{count}}', {
+            ? t('Remaining backup codes: {count}', {
                 count: backupCodesRemaining,
               })
             : t('Regenerate backup codes below.')}
@@ -178,13 +146,7 @@ function BackupCodesForm({
           </form>
         ) : (
           <div className="flex flex-col gap-3">
-            <OtpInput
-              onChange={handleOtpComplete}
-              disabled={isPending || isRateLimited}
-            />
-            {rateLimitMessage && (
-              <p className="text-sm text-destructive">{rateLimitMessage}</p>
-            )}
+            <OtpInput onChange={handleOtpComplete} disabled={isPending} />
             {error && <p className="text-sm text-destructive">{error}</p>}
             <DialogFooter>
               <Button

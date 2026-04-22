@@ -8,6 +8,6 @@ export async function initializeDatabase({ runMigrations }: { runMigrations: boo
     if (runMigrations) {
         await databaseConnection().runMigrations()
     }
-    await betterAuthInstance.init(system.globalLogger())
+    await betterAuthInstance.init(system.globalLogger(), !runMigrations) // this takes the inverse
     await databaseSeeds.run()
 }

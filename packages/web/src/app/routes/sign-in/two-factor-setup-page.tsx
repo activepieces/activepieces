@@ -1,22 +1,19 @@
-import { isMfaChallenge, AuthenticationResponse } from '@activepieces/shared';
+import { AuthenticationResponse } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Download } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { OtpInput } from '@/components/ui/otp-input';
 import {
   AuthLayout,
-  use2faRateLimit,
-  isSessionExpiredError,
-  getSessionExpiredMessage,
+  twoFactorMutations,
+  twoFactorUtils,
 } from '@/features/authentication';
 import { authenticationSession } from '@/lib/authentication-session';
-import { authClient } from '@/lib/better-auth';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { downloadTxt } from '@/lib/utils';
 
@@ -28,6 +25,7 @@ const TwoFactorSetupPage: React.FC = () => {
   const state = location.state as {
     password?: string;
     enforced?: boolean;
+    authResponse?: AuthenticationResponse;
   } | null;
   const password = state?.password;
   const enforced = state?.enforced ?? true;
@@ -36,76 +34,62 @@ const TwoFactorSetupPage: React.FC = () => {
   const [totpUri, setTotpUri] = useState<string | null>(null);
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [authData, setAuthData] = useState<AuthenticationResponse | null>(null);
-  const [verifyError, setVerifyError] = useState<string | null>(null);
   const [savedChecked, setSavedChecked] = useState(false);
-  const [isPending, setIsPending] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
   const [enableError, setEnableError] = useState<string | null>(null);
 
   const redirectAfterLogin = useRedirectAfterLogin();
-  const { isRateLimited, rateLimitMessage, handleRateLimitOrError } =
-    use2faRateLimit();
+
+  const enableMutation = twoFactorMutations.useEnable({
+    onSuccess: (data) => {
+      setTotpUri(data.totpURI);
+      setBackupCodes(data.backupCodes ?? []);
+    },
+    onError: (error) => {
+      setEnableError(twoFactorUtils.extractErrorMessage(error));
+    },
+  });
+
+  const verifyTotpMutation = twoFactorMutations.useVerifyTotp({
+    onSuccess: (data) => {
+      setAuthData(data);
+      setStep('backup');
+    },
+    onError: (error) => {
+      setVerifyError(twoFactorUtils.extractErrorMessage(error));
+    },
+  });
+
+  const disableMutation = twoFactorMutations.useDisable({
+    onSuccess: () => {
+      if (state?.authResponse) {
+        authenticationSession.saveResponse(state.authResponse, false);
+        redirectAfterLogin();
+      } else {
+        navigate('/sign-in');
+      }
+    },
+    onError: () => {
+      if (state?.authResponse) {
+        authenticationSession.saveResponse(state.authResponse, false);
+        redirectAfterLogin();
+      } else {
+        navigate('/sign-in');
+      }
+    },
+  });
 
   useEffect(() => {
-    const enableTotp = async () => {
-      setIsPending(true);
-      try {
-        const { data, error } = await authClient.twoFactor.enable({
-          ...(password ? { password } : {}),
-        });
-        if (error || !data) {
-          setEnableError(
-            isSessionExpiredError(error)
-              ? getSessionExpiredMessage()
-              : t('Failed to initialize 2FA. Please try again.'),
-          );
-          return;
-        }
-        setTotpUri(data.totpURI);
-        setBackupCodes(data.backupCodes ?? []);
-      } catch {
-        setEnableError(t('Failed to initialize 2FA. Please try again.'));
-      } finally {
-        setIsPending(false);
-      }
-    };
-    enableTotp();
+    enableMutation.mutate({ ...(password ? { password } : {}) });
   }, []);
 
-  const handleSkip = async () => {
-    setIsPending(true);
-    try {
-      const data = await authenticationApi.exchangeSession();
-      if (!isMfaChallenge(data)) {
-        authenticationSession.saveResponse(data, false);
-        redirectAfterLogin();
-      }
-    } catch {
-      navigate('/sign-in');
-    } finally {
-      setIsPending(false);
-    }
+  const handleSkip = () => {
+    disableMutation.mutate({ ...(password ? { password } : {}) });
   };
 
-  const handleVerifyOtp = async ({ value }: { value: string }) => {
-    if (isRateLimited) return;
+  const handleVerifyOtp = ({ value }: { value: string }) => {
     setVerifyError(null);
-    setIsPending(true);
-    try {
-      const { error } = await authClient.twoFactor.verifyTotp({ code: value });
-      if (error) {
-        handleRateLimitOrError(error, setVerifyError);
-        return;
-      }
-      const data = await authenticationApi.exchangeSession();
-      if (!isMfaChallenge(data)) {
-        setAuthData(data);
-        setStep('backup');
-      }
-    } catch {
-      setVerifyError(t('Invalid code. Please try again.'));
-    } finally {
-      setIsPending(false);
-    }
+    verifyTotpMutation.mutate({ code: value });
   };
 
   const handleFinish = () => {
@@ -114,6 +98,11 @@ const TwoFactorSetupPage: React.FC = () => {
       redirectAfterLogin();
     }
   };
+
+  const isPending =
+    enableMutation.isPending ||
+    verifyTotpMutation.isPending ||
+    disableMutation.isPending;
 
   const manualSecret = totpUri
     ? new URL(totpUri).searchParams.get('secret') ?? undefined
@@ -169,13 +158,10 @@ const TwoFactorSetupPage: React.FC = () => {
             <div className="flex justify-center">
               <OtpInput
                 onChange={handleVerifyOtp}
-                disabled={isPending || !totpUri || isRateLimited}
+                disabled={isPending || !totpUri}
                 autoFocus
               />
             </div>
-            {rateLimitMessage && (
-              <p className="text-sm text-destructive">{rateLimitMessage}</p>
-            )}
             {verifyError && (
               <p className="text-sm text-destructive">{verifyError}</p>
             )}

@@ -15,12 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { OtpInput } from '@/components/ui/otp-input';
-import {
-  use2faRateLimit,
-  isSessionExpiredError,
-  getSessionExpiredMessage,
-} from '@/features/authentication';
-import { authClient } from '@/lib/better-auth';
+import { twoFactorMutations, twoFactorUtils } from '@/features/authentication';
 
 function DisableTwoFaForm({
   onOpenChange,
@@ -32,67 +27,40 @@ function DisableTwoFaForm({
   const queryClient = useQueryClient();
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [isPending, setIsPending] = useState(false);
-  const { isRateLimited, rateLimitMessage, handleRateLimitOrError } =
-    use2faRateLimit();
 
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
+  const disableMutation = twoFactorMutations.useDisable({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['2fa-status'] });
+      toast.success(t('Two-factor authentication has been disabled'));
+      onOpenChange(false);
+    },
+    onError: (err) => {
+      setError(twoFactorUtils.extractErrorMessage(err));
+    },
+  });
+
+  const verifyTotpMutation = twoFactorMutations.useVerifyTotp({
+    onSuccess: () => {
+      disableMutation.mutate({});
+    },
+    onError: (err) => {
+      setError(twoFactorUtils.extractErrorMessage(err));
+    },
+  });
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!password) return;
     setError(null);
-    setIsPending(true);
-    try {
-      const { error: apiError } = await authClient.twoFactor.disable({
-        password,
-      });
-      if (apiError) {
-        setError(
-          isSessionExpiredError(apiError)
-            ? getSessionExpiredMessage()
-            : t('Invalid password. Please try again.'),
-        );
-        return;
-      }
-      await queryClient.invalidateQueries({ queryKey: ['2fa-status'] });
-      toast.success(t('Two-factor authentication has been disabled'));
-      onOpenChange(false);
-    } catch {
-      setError(t('Invalid password. Please try again.'));
-    } finally {
-      setIsPending(false);
-    }
+    disableMutation.mutate({ password });
   };
 
-  const handleOtpComplete = async ({ value }: { value: string }) => {
-    if (isRateLimited) return;
+  const handleOtpComplete = ({ value }: { value: string }) => {
     setError(null);
-    setIsPending(true);
-    try {
-      const { error: verifyError } = await authClient.twoFactor.verifyTotp({
-        code: value,
-      });
-      if (verifyError) {
-        handleRateLimitOrError(verifyError, setError);
-        return;
-      }
-      const { error: disableError } = await authClient.twoFactor.disable({});
-      if (disableError) {
-        setError(
-          isSessionExpiredError(disableError)
-            ? getSessionExpiredMessage()
-            : t('Failed to disable 2FA. Please try again.'),
-        );
-        return;
-      }
-      await queryClient.invalidateQueries({ queryKey: ['2fa-status'] });
-      toast.success(t('Two-factor authentication has been disabled'));
-      onOpenChange(false);
-    } catch {
-      setError(t('Invalid code. Please try again.'));
-    } finally {
-      setIsPending(false);
-    }
+    verifyTotpMutation.mutate({ code: value });
   };
+
+  const isPending = disableMutation.isPending || verifyTotpMutation.isPending;
 
   return (
     <>
@@ -136,12 +104,9 @@ function DisableTwoFaForm({
         <div className="flex flex-col gap-4">
           <OtpInput
             onChange={handleOtpComplete}
-            disabled={isPending || isRateLimited}
+            disabled={isPending}
             autoFocus
           />
-          {rateLimitMessage && (
-            <p className="text-sm text-destructive">{rateLimitMessage}</p>
-          )}
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
       )}

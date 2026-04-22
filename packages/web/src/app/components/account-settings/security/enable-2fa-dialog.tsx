@@ -18,12 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { OtpInput } from '@/components/ui/otp-input';
-import {
-  use2faRateLimit,
-  isSessionExpiredError,
-  getSessionExpiredMessage,
-} from '@/features/authentication';
-import { authClient } from '@/lib/better-auth';
+import { twoFactorMutations, twoFactorUtils } from '@/features/authentication';
 import { downloadTxt } from '@/lib/utils';
 
 type Step = 'password' | 'verify' | 'backup';
@@ -42,85 +37,55 @@ function EnableTwoFaForm({
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [enableError, setEnableError] = useState<string | null>(null);
-  const [isPending, setIsPending] = useState(false);
   const [savedChecked, setSavedChecked] = useState(false);
-  const { isRateLimited, rateLimitMessage, handleRateLimitOrError } =
-    use2faRateLimit();
+
+  const enableMutation = twoFactorMutations.useEnable({
+    onSuccess: (data) => {
+      setTotpUri(data.totpURI);
+      setBackupCodes(data.backupCodes ?? []);
+      if (hasPassword) {
+        setStep('verify');
+      }
+    },
+    onError: (error) => {
+      setEnableError(twoFactorUtils.extractErrorMessage(error));
+    },
+  });
+
+  const verifyTotpMutation = twoFactorMutations.useVerifyTotp({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['2fa-status'] });
+      toast.success(t('Two-factor authentication has been enabled'));
+      setStep('backup');
+    },
+    onError: (error) => {
+      setVerifyError(twoFactorUtils.extractErrorMessage(error));
+    },
+  });
 
   // For social (passwordless) users, call enable immediately on open
   useEffect(() => {
     if (hasPassword) return;
-    const enable = async () => {
-      setIsPending(true);
-      try {
-        const { data, error } = await authClient.twoFactor.enable({});
-        if (error || !data) {
-          setEnableError(
-            isSessionExpiredError(error)
-              ? getSessionExpiredMessage()
-              : t('Failed to initialize 2FA. Please try again.'),
-          );
-          return;
-        }
-        setTotpUri(data.totpURI);
-        setBackupCodes(data.backupCodes ?? []);
-      } catch {
-        setEnableError(t('Failed to initialize 2FA. Please try again.'));
-      } finally {
-        setIsPending(false);
-      }
-    };
-    enable();
+    enableMutation.mutate({});
   }, [hasPassword]);
 
   const manualSecret = totpUri
     ? new URL(totpUri).searchParams.get('secret') ?? undefined
     : undefined;
 
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
+  const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!password) return;
     setEnableError(null);
-    setIsPending(true);
-    try {
-      const { data, error } = await authClient.twoFactor.enable({ password });
-      if (error || !data) {
-        setEnableError(
-          isSessionExpiredError(error)
-            ? getSessionExpiredMessage()
-            : error?.message ?? t('Invalid password. Please try again.'),
-        );
-        return;
-      }
-      setTotpUri(data.totpURI);
-      setBackupCodes(data.backupCodes ?? []);
-      setStep('verify');
-    } catch {
-      setEnableError(t('Invalid password. Please try again.'));
-    } finally {
-      setIsPending(false);
-    }
+    enableMutation.mutate({ password });
   };
 
-  const handleOtpComplete = async ({ value }: { value: string }) => {
-    if (isRateLimited) return;
+  const handleOtpComplete = ({ value }: { value: string }) => {
     setVerifyError(null);
-    setIsPending(true);
-    try {
-      const { error } = await authClient.twoFactor.verifyTotp({ code: value });
-      if (error) {
-        handleRateLimitOrError(error, setVerifyError);
-        return;
-      }
-      await queryClient.invalidateQueries({ queryKey: ['2fa-status'] });
-      toast.success(t('Two-factor authentication has been enabled'));
-      setStep('backup');
-    } catch {
-      setVerifyError(t('Invalid code. Please try again.'));
-    } finally {
-      setIsPending(false);
-    }
+    verifyTotpMutation.mutate({ code: value });
   };
+
+  const isPending = enableMutation.isPending || verifyTotpMutation.isPending;
 
   return (
     <>
@@ -190,13 +155,10 @@ function EnableTwoFaForm({
           <div className="flex justify-center">
             <OtpInput
               onChange={handleOtpComplete}
-              disabled={isPending || isRateLimited}
+              disabled={isPending}
               autoFocus
             />
           </div>
-          {rateLimitMessage && (
-            <p className="text-sm text-destructive">{rateLimitMessage}</p>
-          )}
           {verifyError && (
             <p className="text-sm text-destructive">{verifyError}</p>
           )}

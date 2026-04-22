@@ -1,75 +1,59 @@
-import { isMfaChallenge } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { OtpInput } from '@/components/ui/otp-input';
-import { AuthLayout, use2faRateLimit } from '@/features/authentication';
+import {
+  AuthLayout,
+  twoFactorMutations,
+  twoFactorUtils,
+} from '@/features/authentication';
 import { authenticationSession } from '@/lib/authentication-session';
-import { authClient } from '@/lib/better-auth';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
 const TwoFactorVerifyPage: React.FC = () => {
   const [useBackupCode, setUseBackupCode] = useState(false);
   const [backupCode, setBackupCode] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isPending, setIsPending] = useState(false);
 
   const redirectAfterLogin = useRedirectAfterLogin();
-  const { isRateLimited, rateLimitMessage, handleRateLimitOrError } =
-    use2faRateLimit();
 
-  const handleVerifyTotp = async ({ value }: { value: string }) => {
-    if (isRateLimited) return;
+  const verifyTotpMutation = twoFactorMutations.useVerifyTotp({
+    onSuccess: (data) => {
+      authenticationSession.saveResponse(data, false);
+      redirectAfterLogin();
+    },
+    onError: (error) => {
+      setErrorMessage(twoFactorUtils.extractErrorMessage(error));
+    },
+  });
+
+  const verifyBackupCodeMutation = twoFactorMutations.useVerifyBackupCode({
+    onSuccess: (data) => {
+      authenticationSession.saveResponse(data, false);
+      redirectAfterLogin();
+    },
+    onError: (error) => {
+      setErrorMessage(twoFactorUtils.extractErrorMessage(error));
+    },
+  });
+
+  const handleVerifyTotp = ({ value }: { value: string }) => {
     setErrorMessage(null);
-    setIsPending(true);
-    try {
-      const { error } = await authClient.twoFactor.verifyTotp({ code: value });
-      if (error) {
-        handleRateLimitOrError(error, setErrorMessage);
-        return;
-      }
-      const data = await authenticationApi.exchangeSession();
-      if (!isMfaChallenge(data)) {
-        authenticationSession.saveResponse(data, false);
-        redirectAfterLogin();
-      }
-    } catch {
-      setErrorMessage(t('Invalid code. Please try again.'));
-    } finally {
-      setIsPending(false);
-    }
+    verifyTotpMutation.mutate({ code: value });
   };
 
-  const handleBackupCodeSubmit = async (e: React.FormEvent) => {
+  const handleBackupCodeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!backupCode.trim() || isRateLimited) return;
+    if (!backupCode.trim()) return;
     setErrorMessage(null);
-    setIsPending(true);
-    try {
-      const { error } = await authClient.twoFactor.verifyBackupCode({
-        code: backupCode.trim(),
-      });
-      if (error) {
-        handleRateLimitOrError(error, setErrorMessage);
-        return;
-      }
-      const data = await authenticationApi.exchangeSession();
-      if (!isMfaChallenge(data)) {
-        authenticationSession.saveResponse(data, false);
-        redirectAfterLogin();
-      }
-    } catch {
-      setErrorMessage(t('Invalid code. Please try again.'));
-    } finally {
-      setIsPending(false);
-    }
+    verifyBackupCodeMutation.mutate({ code: backupCode.trim() });
   };
 
-  const isDisabled = isPending || isRateLimited;
+  const isPending =
+    verifyTotpMutation.isPending || verifyBackupCodeMutation.isPending;
 
   return (
     <AuthLayout>
@@ -92,12 +76,9 @@ const TwoFactorVerifyPage: React.FC = () => {
           <>
             <OtpInput
               onChange={handleVerifyTotp}
-              disabled={isDisabled}
+              disabled={isPending}
               autoFocus
             />
-            {rateLimitMessage && (
-              <p className="text-sm text-destructive">{rateLimitMessage}</p>
-            )}
             {errorMessage && (
               <p className="text-sm text-destructive">{errorMessage}</p>
             )}
@@ -122,19 +103,16 @@ const TwoFactorVerifyPage: React.FC = () => {
               placeholder="xxxxxxxx"
               value={backupCode}
               onChange={(e) => setBackupCode(e.target.value)}
-              disabled={isDisabled}
+              disabled={isPending}
               autoFocus
             />
-            {rateLimitMessage && (
-              <p className="text-sm text-destructive">{rateLimitMessage}</p>
-            )}
             {errorMessage && (
               <p className="text-sm text-destructive">{errorMessage}</p>
             )}
             <Button
               type="submit"
               loading={isPending}
-              disabled={!backupCode.trim() || isRateLimited}
+              disabled={!backupCode.trim()}
             >
               {t('Confirm')}
             </Button>

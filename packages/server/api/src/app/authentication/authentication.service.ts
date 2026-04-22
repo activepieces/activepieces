@@ -1,6 +1,5 @@
 import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, MfaChallengeResponse, PlatformRole, PlatformWithoutSensitiveData, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { databaseConnection } from '../database/database-connection'
 import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
@@ -100,8 +99,8 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         })
         return { result: authResponse, responseHeaders }
     },
-    async exchangeSession(params: ExchangeSessionParams): Promise<AuthenticationResponse | MfaChallengeResponse> {
-        const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformIdForFederatedAuthn(params.identityId, log) : params.predefinedPlatformId
+    async exchangeSessionPostMfa(params: ExchangeSessionPostMfaParams): Promise<AuthenticationResponse> {
+        const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformId(params.identityId, log) : params.predefinedPlatformId
         if (isNil(platformId)) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHENTICATION,
@@ -109,11 +108,6 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                     message: 'No platform found for identity',
                 },
             })
-        }
-        const identity = await userIdentityService(log).getOneOrFail({ id: params.identityId })
-        const platform = await platformService(log).getOneOrThrow(platformId)
-        if (platform.enforceTotp && !identity.twoFactorEnabled) {
-            return { mfaRequired: true as const, setupRequired: true }
         }
         const user = await userService(log).getOneByIdentityAndPlatform({
             identityId: params.identityId,
@@ -125,16 +119,6 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             platformId,
             projectId: null,
         })
-    },
-    async get2faStatus(params: Get2faStatusParams): Promise<{ enabled: boolean, backupCodesRemaining: number, hasPassword: boolean }> {
-        const user = await userService(log).getOneOrFail({ id: params.userId })
-        const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
-        const backupCodesRemaining = await countRemainingBackupCodes(identity.id)
-        return {
-            enabled: identity.twoFactorEnabled ?? false,
-            backupCodesRemaining,
-            hasPassword: identity.provider === UserIdentityProvider.EMAIL,
-        }
     },
     async socialSignIn(params: SocialSigninParams): Promise<AuthenticationResponse | MfaChallengeResponse> {
         const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformIdForFederatedAuthn(params.identityId, log) : params.predefinedPlatformId
@@ -301,23 +285,6 @@ async function getPreferredPlatformId(identityId: string, log: FastifyBaseLogger
     return null
 }
 
-async function countRemainingBackupCodes(identityId: string): Promise<number> {
-    const rows = await databaseConnection().query(
-        'SELECT "backupCodes" FROM "twoFactor" WHERE "userId" = $1 LIMIT 1',
-        [identityId],
-    ) as Array<{ backupCodes: string | null }>
-    if (!rows.length || !rows[0].backupCodes) {
-        return 0
-    }
-    try {
-        const codes = JSON.parse(rows[0].backupCodes) as unknown[]
-        return Array.isArray(codes) ? codes.length : 0
-    }
-    catch {
-        return 0
-    }
-}
-
 async function assertCanSignup(log: FastifyBaseLogger, params: AssertSignupParams): Promise<void> {
     await authenticationUtils(log).assertEmailAuthIsEnabled({
         platformId: params.platformId,
@@ -340,8 +307,27 @@ async function mfaSetupResponse(log: FastifyBaseLogger, params: MfaSetupResponse
         password: params.password,
     })
     const platform = params.platformId ? await platformService(log).getOneOrThrow(params.platformId) : null
+
+    let authResponse: AuthenticationResponse | undefined
+    if (params.platformId) {
+        const identity = await userIdentityService(log).getIdentityByEmail(params.email)
+        if (identity) {
+            const user = await userService(log).getOneByIdentityAndPlatform({
+                identityId: identity.id,
+                platformId: params.platformId,
+            })
+            if (user) {
+                authResponse = await authenticationUtils(log).getProjectAndToken({
+                    userId: user.id,
+                    platformId: params.platformId,
+                    projectId: null,
+                })
+            }
+        }
+    }
+
     return {
-        result: { mfaRequired: true as const, setupRequired: true, enforced: platform?.enforceTotp ?? false },
+        result: { mfaRequired: true as const, setupRequired: true, enforced: platform?.enforceTotp ?? false, authResponse },
         responseHeaders,
     }
 }
@@ -381,13 +367,9 @@ type AssertSignupParams = {
     provider: UserIdentityProvider
 }
 
-type ExchangeSessionParams = {
+type ExchangeSessionPostMfaParams = {
     identityId: string
     predefinedPlatformId: string | null
-}
-
-type Get2faStatusParams = {
-    userId: string
 }
 
 type MfaSetupResponseParams = {

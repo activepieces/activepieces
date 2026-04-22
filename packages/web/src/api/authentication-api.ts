@@ -45,19 +45,6 @@ export const authenticationApi = {
       request,
     );
   },
-  exchangeSession() {
-    return api.post<AuthenticationResponse | MfaChallengeResponse>(
-      '/v1/authentication/exchange-session',
-      {},
-    );
-  },
-  get2faStatus() {
-    return api.get<{
-      enabled: boolean;
-      backupCodesRemaining: number;
-      hasPassword: boolean;
-    }>('/v1/authentication/2fa-status');
-  },
   getFederatedProviderId({ providerName }: { providerName: string }) {
     return api.get<{ providerId: string | null }>(
       '/v1/authentication/federated-provider-id',

@@ -1,5 +1,5 @@
 import { cryptoUtils } from '@activepieces/server-utils'
-import { apId, assertNotNullOrUndefined, isNil, RATE_LIMIT_WINDOW_SECONDS } from '@activepieces/shared'
+import { apId, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { sso } from '@better-auth/sso'
 import { betterAuth } from 'better-auth'
 import { createAuthMiddleware } from 'better-auth/api'
@@ -38,12 +38,6 @@ async function createBetterAuth(log: FastifyBaseLogger) {
             window: 60,
             max: 10,
             storage: 'database',
-            customRules: {
-                '/two-factor/*': {
-                    window: RATE_LIMIT_WINDOW_SECONDS,
-                    max: 3,
-                },
-            },
         },
         advanced: {
             database: {
@@ -141,11 +135,13 @@ async function createBetterAuth(log: FastifyBaseLogger) {
 let authInstance: Awaited<ReturnType<typeof createBetterAuth>> | null = null
 
 export const betterAuthInstance = {
-    init: async (log: FastifyBaseLogger) => {
+    init: async (log: FastifyBaseLogger, runMigration: boolean = false) => {
         if (!isNil(authInstance)) return
         authInstance = await createBetterAuth(log)
-        const ctx = await authInstance.$context
-        await ctx.runMigrations()
+        if (runMigration) {
+            const ctx = await authInstance.$context
+            await ctx.runMigrations()
+        }
     },
     get: () => {
         assertNotNullOrUndefined(authInstance, 'better-auth not initialized')

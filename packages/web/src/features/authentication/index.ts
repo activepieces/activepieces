@@ -1,10 +1,11 @@
 export { managedAuthApi } from './api/managed-auth-api';
-export { authMutations } from './hooks/auth-hooks';
+export { twoFactorApi } from './api/two-factor-api';
 export {
-  use2faRateLimit,
-  isSessionExpiredError,
-  getSessionExpiredMessage,
-} from './hooks/use-2fa-rate-limit';
+  twoFactorMutations,
+  twoFactorQueries,
+  twoFactorUtils,
+} from './hooks/two-factor-hooks';
+export { authMutations } from './hooks/auth-hooks';
 export { AuthFormTemplate, AuthLayout } from './components/auth-form-template';
 export { ChangePasswordForm } from './components/change-password';
 export { CheckEmailNote } from './components/check-email-note';
