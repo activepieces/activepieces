@@ -57,7 +57,7 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
 
     await authClient.signIn.sso({
       providerId: providerId,
-      callbackURL: `/redirect?providerId=${providerId}`,
+      callbackURL: `/redirect?providerId=${providerId}`, // overriden by better auth service afterHook . but needed to read providerId
     });
   };
 

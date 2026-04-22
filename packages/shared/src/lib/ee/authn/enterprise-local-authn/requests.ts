@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { SignUpRequest } from '../../../core/authentication/dto/sign-up-request'
+import { ApId } from '../../../core/common/id-generator'
 
 export enum OtpType {
     EMAIL_VERIFICATION = 'EMAIL_VERIFICATION',
@@ -13,13 +14,13 @@ export const CreateOtpRequestBody = z.object({
 export type CreateOtpRequestBody = z.infer<typeof CreateOtpRequestBody>
 
 export const VerifyEmailRequestBody = z.object({
-    identityId: z.string().min(1),
+    identityId: ApId,
     otp: z.string(),
 })
 export type VerifyEmailRequestBody = z.infer<typeof VerifyEmailRequestBody>
 
 export const ResetPasswordRequestBody = z.object({
-    identityId: z.string().min(1),
+    identityId: ApId,
     otp: z.string(),
     newPassword: z.string(),
 })

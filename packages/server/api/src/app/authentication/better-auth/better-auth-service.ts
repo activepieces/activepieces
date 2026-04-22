@@ -82,8 +82,6 @@ export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService =>
         log.info('[registerDefaultSsoProviders] Default Google SSO provider registered/updated')
     },
     beforeHook: async (ctx) => {
-        log.info({ ctx }, '[beforeHook] ')
-
         return
     },
     afterHook: async (ctx) => {

@@ -7,9 +7,4 @@ import { API_URL } from './api';
 export const authClient = createAuthClient({
   baseURL: `${API_URL}/v1/better-auth`,
   plugins: [twoFactorClient(), ssoClient()],
-  fetchOptions: {
-    headers: {
-      authorization: ``,
-    },
-  },
 });
