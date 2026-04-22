@@ -203,11 +203,9 @@ function ChatBoxContent({
           {!isStreaming &&
             !wasCancelled &&
             messages.length > 0 &&
-            messages[messages.length - 1]?.role === 'assistant' &&
-            !parseAutomationProposal(messages[messages.length - 1].content)
-              .proposal && (
+            messages[messages.length - 1]?.role === 'assistant' && (
               <QuickReplies
-                content={messages[messages.length - 1].content}
+                replies={parseQuickReplies(messages[messages.length - 1].content).replies}
                 onSend={handleSend}
               />
             )}
@@ -439,40 +437,29 @@ function ToolCallGroup({
   );
 }
 
-function extractQuickReplies(content: string): string[] {
-  if (!content.includes('?')) return [];
+function parseQuickReplies(content: string): {
+  replies: string[];
+  cleanContent: string;
+} {
+  const { block, cleanContent } = parseCodeBlock(content, 'quick-replies');
+  if (!block) return { replies: [], cleanContent: content };
 
-  const lines = content.split('\n');
-  const lastQuestion = lines.reverse().find((l) => l.includes('?')) ?? '';
+  const replies = block
+    .split('\n')
+    .filter((line) => line.startsWith('- '))
+    .map((line) => line.replace(/^-\s+/, '').trim())
+    .filter((line) => line.length > 0 && line.length < 80);
 
-  const inlineMatch = lastQuestion.match(/[—–-]\s*(.+?)\?/);
-  if (inlineMatch) {
-    const choices = inlineMatch[1]
-      .split(/\s+or\s+|,\s*/i)
-      .map((c) => c.replace(/\*\*/g, '').trim())
-      .filter((c) => c.length > 0 && c.length < 60);
-    if (choices.length >= 2 && choices.length <= 4) return choices;
-  }
-
-  const isConfirmation =
-    /\b(shall i|should i|want me to|would you like|do you want|ready to|proceed|go ahead|confirm)\b/i.test(
-      lastQuestion,
-    );
-  if (isConfirmation) {
-    return [t('Yes, go ahead'), t('No')];
-  }
-
-  return [];
+  return { replies, cleanContent };
 }
 
 function QuickReplies({
-  content,
+  replies,
   onSend,
 }: {
-  content: string;
+  replies: string[];
   onSend: (text: string) => void;
 }) {
-  const replies = extractQuickReplies(content);
   if (replies.length === 0) return null;
 
   return (
@@ -711,8 +698,10 @@ function MessageContentWithAuth({
 
   const { proposal, cleanContent: afterProposal } =
     parseAutomationProposal(content);
-  const { connection, cleanContent: finalContent } =
+  const { connection, cleanContent: afterConnection } =
     parseConnectionRequired(afterProposal);
+  const { cleanContent: finalContent } =
+    parseQuickReplies(afterConnection);
 
   return (
     <div className="space-y-2">
