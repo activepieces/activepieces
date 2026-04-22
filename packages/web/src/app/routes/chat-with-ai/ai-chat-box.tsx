@@ -448,23 +448,6 @@ type QuickReply = {
 function extractQuickReplies(content: string): QuickReply[] {
   if (!content.includes('?')) return [];
 
-  const lastQuestion =
-    content
-      .split('\n')
-      .reverse()
-      .find((l) => l.includes('?')) ?? '';
-
-  const isConfirmation =
-    /\b(shall i|should i|want me to|would you like|do you want|ready to|proceed|go ahead|confirm)\b/i.test(
-      lastQuestion,
-    );
-  if (isConfirmation) {
-    return [
-      { label: t('Yes, go ahead'), value: 'Yes, go ahead' },
-      { label: t('No'), value: 'No', variant: 'muted' },
-    ];
-  }
-
   const orMatch = content.match(
     /(?:which|what|choose|pick|select)[^?]*?[—–-]\s*(.+?)\?/i,
   );
@@ -494,6 +477,22 @@ function extractQuickReplies(content: string): QuickReply[] {
   }
   if (bulletChoices.length >= 2 && bulletChoices.length <= 4) {
     return bulletChoices.map((c) => ({ label: c, value: c }));
+  }
+
+  const lastQuestion =
+    content
+      .split('\n')
+      .reverse()
+      .find((l) => l.includes('?')) ?? '';
+  const isConfirmation =
+    /\b(shall i|should i|want me to|would you like|do you want|ready to|proceed|go ahead|confirm)\b/i.test(
+      lastQuestion,
+    );
+  if (isConfirmation) {
+    return [
+      { label: t('Yes, go ahead'), value: 'Yes, go ahead' },
+      { label: t('No'), value: 'No', variant: 'muted' },
+    ];
   }
 
   return [];
