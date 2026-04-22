@@ -235,3 +235,4 @@ const GetAssetRequest = {
         }),
     },
 }
+

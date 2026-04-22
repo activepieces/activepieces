@@ -58,8 +58,6 @@ async function cleanDatabase(): Promise<void> {
     if (tableNames.length > 0) {
         await ds.query(`TRUNCATE TABLE ${tableNames} CASCADE`)
     }
-    // better-auth tables are not TypeORM entities — truncate them explicitly
-    // await ds.query('TRUNCATE TABLE "session", "account", "verification", "rateLimit" CASCADE')
     await databaseSeeds.run()
 }
 
