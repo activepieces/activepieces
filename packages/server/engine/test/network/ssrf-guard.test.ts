@@ -1,7 +1,11 @@
 import dns from 'node:dns'
+import http from 'node:http'
+import https from 'node:https'
 import { Socket, createServer, Server } from 'node:net'
 import { SSRFBlockedError } from '@activepieces/shared'
-import { EnvHttpProxyAgent, getGlobalDispatcher, setGlobalDispatcher } from 'undici'
+import { HttpProxyAgent } from 'http-proxy-agent'
+import { HttpsProxyAgent } from 'https-proxy-agent'
+import { getGlobalDispatcher, ProxyAgent, setGlobalDispatcher } from 'undici'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ssrfGuard } from '../../src/lib/network/ssrf-guard'
 
@@ -231,30 +235,50 @@ describe('ssrf-guard', () => {
         })
     })
 
-    describe('undici global dispatcher', () => {
-        const originalHttpsProxy = process.env['HTTPS_PROXY']
+    describe('egress proxy wiring', () => {
+        const originalEgressProxy = process.env['AP_EGRESS_PROXY_URL']
         const originalDispatcher = getGlobalDispatcher()
+        const originalHttpAgent = http.globalAgent
+        const originalHttpsAgent = https.globalAgent
 
         afterEach(() => {
-            if (originalHttpsProxy === undefined) delete process.env['HTTPS_PROXY']
-            else process.env['HTTPS_PROXY'] = originalHttpsProxy
+            ssrfGuard.uninstall()
+            if (originalEgressProxy === undefined) delete process.env['AP_EGRESS_PROXY_URL']
+            else process.env['AP_EGRESS_PROXY_URL'] = originalEgressProxy
             setGlobalDispatcher(originalDispatcher)
+            http.globalAgent = originalHttpAgent
+            https.globalAgent = originalHttpsAgent
         })
 
-        it('replaces the global dispatcher with an EnvHttpProxyAgent when HTTPS_PROXY is set', () => {
-            process.env['HTTPS_PROXY'] = 'http://127.0.0.1:4444'
+        it('installs http/https globalAgent and undici ProxyAgent when AP_EGRESS_PROXY_URL is set', () => {
+            process.env['AP_EGRESS_PROXY_URL'] = 'http://127.0.0.1:4444'
             ssrfGuard.install({ enabled: true, allowList: [] })
-            expect(getGlobalDispatcher()).toBeInstanceOf(EnvHttpProxyAgent)
+            expect(http.globalAgent).toBeInstanceOf(HttpProxyAgent)
+            expect(https.globalAgent).toBeInstanceOf(HttpsProxyAgent)
+            expect(getGlobalDispatcher()).toBeInstanceOf(ProxyAgent)
         })
 
-        it('leaves dispatcher untouched when no proxy env is set', () => {
-            delete process.env['HTTPS_PROXY']
-            delete process.env['HTTP_PROXY']
-            delete process.env['https_proxy']
-            delete process.env['http_proxy']
-            const before = getGlobalDispatcher()
+        it('leaves agents and dispatcher untouched when no egress proxy env is set', () => {
+            delete process.env['AP_EGRESS_PROXY_URL']
+            const beforeDispatcher = getGlobalDispatcher()
+            const beforeHttp = http.globalAgent
+            const beforeHttps = https.globalAgent
             ssrfGuard.install({ enabled: true, allowList: [] })
-            expect(getGlobalDispatcher()).toBe(before)
+            expect(getGlobalDispatcher()).toBe(beforeDispatcher)
+            expect(http.globalAgent).toBe(beforeHttp)
+            expect(https.globalAgent).toBe(beforeHttps)
+        })
+
+        it('restores original agents and dispatcher on uninstall', () => {
+            process.env['AP_EGRESS_PROXY_URL'] = 'http://127.0.0.1:4444'
+            const beforeDispatcher = getGlobalDispatcher()
+            const beforeHttp = http.globalAgent
+            const beforeHttps = https.globalAgent
+            ssrfGuard.install({ enabled: true, allowList: [] })
+            ssrfGuard.uninstall()
+            expect(getGlobalDispatcher()).toBe(beforeDispatcher)
+            expect(http.globalAgent).toBe(beforeHttp)
+            expect(https.globalAgent).toBe(beforeHttps)
         })
     })
 

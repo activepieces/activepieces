@@ -101,6 +101,7 @@ export interface ActivepiecesVendorInit {
     hideFlowNameInBuilder?: boolean;
     disableNavigationInBuilder: boolean | 'keep_home_button_only';
     hideFolders?: boolean;
+    hideTables?: boolean;
     sdkVersion?: string;
     jwtToken: string;
     initialRoute?: string 
@@ -149,6 +150,7 @@ type EmbeddingParam = {
   hideExportAndImportFlow?: boolean;
   hideDuplicateFlow?: boolean;
   hideFolders?: boolean;
+  hideTables?: boolean;
   navigation?: {
     handler?: (data: { route: string }) => void;
   }
@@ -162,7 +164,7 @@ type ConfigureParams = {
 
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.8.1";
+  readonly _sdkVersion = "0.9.0";
   //used for  Automatically Sync URL feature i.e /org/1234
   _prefix = '/';
   _instanceUrl = '';
@@ -256,6 +258,7 @@ class ActivepiecesEmbedded {
                 hideFlowsPageNavbar: this._embeddingState?.dashboard?.hideFlowsPageNavbar ?? false,
                 disableNavigationInBuilder: this._embeddingState?.builder?.disableNavigation ?? false,
                 hideFolders: this._embeddingState?.hideFolders ?? false,
+                hideTables: this._embeddingState?.hideTables ?? false,
                 hideFlowNameInBuilder: this._embeddingState?.builder?.hideFlowName ?? false,
                 jwtToken: this._jwtToken,
                 initialRoute,

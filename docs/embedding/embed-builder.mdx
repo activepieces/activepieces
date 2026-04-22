@@ -21,7 +21,7 @@ These steps assume you have already generated a JWT token from the backend. If n
 </Tip>
 
 ```html
-<script src="https://cdn.activepieces.com/sdk/embed/0.8.1.js">
+<script src="https://cdn.activepieces.com/sdk/embed/0.9.0.js">
 </script>
 <script>
 const instanceUrl = 'YOUR_INSTANCE_URL';
@@ -76,6 +76,7 @@ Please check the [navigation](./navigation) section, as it's very important to u
 | embedding.dashboard.hideFlowsPageNavbar | ❌ | boolean | Controls the visibility of the navbar showing flows,issues and runs above the flows table in the dashboard, by default it is false. (added in [0.6.0](./sdk-changelog#07%2F07%2F2025-0-6-0)) |
 | embedding.dashboard.hidePageHeader | ❌ | boolean | Hides the page header in the dashboard by default it is false. (added in [0.8.0](./sdk-changelog#09%2F21%2F2025-0-8-0)) |
 | embedding.hideFolders | ❌ | boolean | Hides all things related to folders in both the flows table and builder by default it is false. |
+| embedding.hideTables | ❌ | boolean | Hides the Tables UI in the dashboard (tree, filters, create/import buttons) and blocks direct access to the table editor route. The Tables piece used inside flows is unaffected. By default it is false. (added in [0.9.0](./sdk-changelog#04%2F21%2F2026-0-9-0)) |
 | embedding.styling.fontUrl | ❌ | string | The url of the font to be used in the embedding, by default it is `https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap`. |
 | embedding.styling.fontFamily | ❌ | string | The font family to be used in the embedding, by default it is `Roboto`. |
 | embedding.styling.mode | ❌ | `light` \| `dark` | Controls light/dark mode (added in [0.5.0](./sdk-changelog#03%2F07%2F2025-0-5-0))|

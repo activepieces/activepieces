@@ -1,5 +1,6 @@
 import { NetworkMode, ssrfIpClassifier, tryCatchSync } from '@activepieces/shared'
 import { installDnsLookupGuard } from './dns-lookup-guard'
+import { EGRESS_PROXY_URL_ENV, installGlobalProxyAgents } from './global-agent-proxy'
 import { installEnvProxyDispatcher } from './proxy-dispatcher'
 import { installSocketConnectGuard } from './socket-connect-guard'
 
@@ -17,11 +18,15 @@ export const ssrfGuard = {
 
         const policy = buildGuardPolicy(options)
         // Install order matters: DNS first so hostname targets fail at resolve time
-        // before Socket.connect ever sees them; proxy dispatcher last because it reads
-        // HTTP(S)_PROXY env on construction.
+        // before Socket.connect ever sees them; the http/https globalAgent and undici
+        // dispatcher are installed last so every HTTP client (axios, fetch, raw
+        // http.request) that doesn't pass its own agent routes through the egress
+        // proxy via CONNECT for HTTPS — instead of relying on HTTP_PROXY env vars,
+        // which trip axios's proxy-from-env path and break HTTPS targets.
         const uninstalls = [
             installDnsLookupGuard(policy),
             installSocketConnectGuard(policy),
+            installGlobalProxyAgents(),
             installEnvProxyDispatcher(),
         ]
         currentGuard = {
@@ -62,16 +67,14 @@ function readSandboxRpcPortFromEnv(): number[] {
 }
 
 function readProxyListenPortsFromEnv(): number[] {
-    return PROXY_ENV_KEYS.flatMap((key) => {
-        const raw = process.env[key]
-        if (!raw) return []
-        const { data: url } = tryCatchSync(() => new URL(raw))
-        if (!url || !LOOPBACK_HOSTS.has(url.hostname)) return []
-        if (url.port) return [parseInt(url.port, 10)]
-        if (url.protocol === 'http:') return [80]
-        if (url.protocol === 'https:') return [443]
-        return []
-    })
+    const raw = process.env[EGRESS_PROXY_URL_ENV]
+    if (!raw) return []
+    const { data: url } = tryCatchSync(() => new URL(raw))
+    if (!url || !LOOPBACK_HOSTS.has(url.hostname)) return []
+    if (url.port) return [parseInt(url.port, 10)]
+    if (url.protocol === 'http:') return [80]
+    if (url.protocol === 'https:') return [443]
+    return []
 }
 
 function splitCsv(raw: string | undefined): string[] {
@@ -79,7 +82,6 @@ function splitCsv(raw: string | undefined): string[] {
     return raw.split(',').map((s) => s.trim()).filter(Boolean)
 }
 
-const PROXY_ENV_KEYS = ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy'] as const
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '::1'])
 const DISABLED_POLICY: GuardPolicy = { allowList: [], allowedLoopbackPorts: new Set() }
 
