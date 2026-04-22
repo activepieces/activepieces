@@ -1,6 +1,7 @@
 services:
   app:
     image: ghcr.io/sameerzahiddd/activepieces:latest
+    platform: linux/amd64
     container_name: activepieces-app
     restart: unless-stopped
     ports:
@@ -21,6 +22,7 @@ services:
       - activepieces
   worker:
     image: ghcr.io/sameerzahiddd/activepieces:latest
+    platform: linux/amd64
     restart: unless-stopped
     depends_on:
       - app
