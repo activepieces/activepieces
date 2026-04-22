@@ -657,6 +657,7 @@ export const mockBasicUser = async ({ userIdentity, user }: { userIdentity?: Par
         ...userIdentity,
     })
     await databaseConnection().getRepository('user_identity').save(mockUserIdentity)
+    await saveBetterAuthAccount(mockUserIdentity)
     const mockUser = createMockUser({
         ...user,
         identityId: mockUserIdentity.id,
@@ -673,6 +674,7 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
         ...params?.userIdentity,
     })
     await databaseConnection().getRepository('user_identity').save(mockUserIdentity)
+    await saveBetterAuthAccount(mockUserIdentity)
 
     const mockOwner = createMockUser({
         ...params?.user,
@@ -846,6 +848,18 @@ export const createMockEventDestination = (eventDestination?: Partial<{
         url: eventDestination?.url ?? faker.internet.url(),
         scope: eventDestination?.scope ?? EventDestinationScope.PLATFORM,
     }
+}
+
+async function saveBetterAuthAccount(identity: UserIdentity): Promise<void> {
+    const hasAccountTable = await databaseConnection().query(
+        `SELECT to_regclass('"account"') AS exists`,
+    ).then((rows: Array<{ exists: string | null }>) => rows[0]?.exists !== null)
+    if (!hasAccountTable) return
+    await databaseConnection().query(
+        `INSERT INTO "account" ("id", "userId", "providerId", "accountId", "password", "createdAt", "updatedAt")
+         VALUES ($1, $2, 'credential', $3, $4, NOW(), NOW())`,
+        [apId(), identity.id, identity.id, identity.password],
+    )
 }
 
 type CreateMockPlatformWithOwnerParams = {

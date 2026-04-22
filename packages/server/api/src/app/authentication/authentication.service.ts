@@ -24,6 +24,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
 
             await userInvitationsService(log).provisionUserInvitation({ email: params.email })
             const preferredPlatformId = await getPreferredPlatformId(userIdentity.id, log)
+            const authResponse = await createUserAndPlatform(userIdentity, log)
 
             if (!isNil(preferredPlatformId)) {
                 const user = await userService(log).getOneByIdentityAndPlatform({
@@ -37,7 +38,6 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             }
             log.info({ email: params.email, provider: params.provider }, 'User signed up and platform created')
 
-            const authResponse = await createUserAndPlatform(userIdentity, log)
             if (!userIdentity.emailVerified) {
                 return { result: authResponse, responseHeaders: null }
             }

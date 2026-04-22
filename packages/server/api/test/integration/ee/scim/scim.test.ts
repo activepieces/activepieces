@@ -10,17 +10,20 @@ import {
     createMockApiKey,
     mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment({ fresh: true })
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
+})
+
+beforeEach(async () => {
+    await databaseConnection().query('TRUNCATE TABLE "session", "account", "verification", "rateLimit" CASCADE')
 })
 
 // Helper: set up a platform with SSO enabled, API key, and return the bearer token

@@ -38,20 +38,22 @@ type IBetterAuthService = {
 }
 
 export const betterAuthService = (log: FastifyBaseLogger): IBetterAuthService => ({
-    sendResetPassword: async (data, request) => {
+    sendResetPassword: async (data, _request) => {
+        const platformId = await findPlatformIdByIdentity(log, data.user.id)
         await emailService(log).sendOtp({
             userIdentity: data.user,
-            platformId: platformIdFromRequestQuery(request),
+            platformId,
             otp: encodeURIComponent(data.token),
             type: OtpType.PASSWORD_RESET,
         })
     },
 
-    sendVerificationEmail: async (data, request) => {
+    sendVerificationEmail: async (data, _request) => {
         if (data.user.emailVerified) return
+        const platformId = await findPlatformIdByIdentity(log, data.user.id)
         await emailService(log).sendOtp({
             userIdentity: data.user,
-            platformId: platformIdFromRequestQuery(request),
+            platformId,
             otp: encodeURIComponent(data.token),
             type: OtpType.EMAIL_VERIFICATION,
         })
@@ -176,14 +178,7 @@ function extractPlatformIdFromProviderId(providerId: string): string | undefined
     return undefined
 }
 
-const platformIdFromRequestQuery = (request: Request | undefined) => {
-    if (request) {
-        try {
-            return new URL(request.url).searchParams.get('platformId')
-        }
-        catch {
-            return null
-        }
-    }
-    return null
+async function findPlatformIdByIdentity(log: FastifyBaseLogger, identityId: string): Promise<string | null> {
+    const users = await userService(log).getByIdentityId({ identityId })
+    return users[0]?.platformId ?? null
 }

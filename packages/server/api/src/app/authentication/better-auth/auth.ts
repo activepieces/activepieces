@@ -144,6 +144,8 @@ export const betterAuthInstance = {
     init: async (log: FastifyBaseLogger) => {
         if (!isNil(authInstance)) return
         authInstance = await createBetterAuth(log)
+        const ctx = await authInstance.$context
+        await ctx.runMigrations()
     },
     get: () => {
         assertNotNullOrUndefined(authInstance, 'better-auth not initialized')

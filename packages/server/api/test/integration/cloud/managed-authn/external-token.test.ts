@@ -39,7 +39,9 @@ beforeEach(async () => {
     const redis = await redisConnections.useExisting()
     await deleteKeysByPattern(redis, 'concurrency-pool:limit:*')
     await deleteKeysByPattern(redis, 'project:concurrency-pool:*')
+    await databaseConnection().query('TRUNCATE TABLE "session", "account", "verification", "rateLimit", "twoFactor" CASCADE')
 })
+
 describe('Managed Authentication API', () => {
     describe('External token endpoint', () => {
         it('Signs up new users', async () => {

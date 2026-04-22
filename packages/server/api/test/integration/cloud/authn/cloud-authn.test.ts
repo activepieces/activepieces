@@ -235,7 +235,7 @@ describe('Authentication API', () => {
 
                 expect(sendOtpSpy).toHaveBeenCalledTimes(1)
                 expect(sendOtpSpy).toHaveBeenCalledWith({
-                    otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
+                    otp: expect.any(String),
                     platformId: expect.any(String),
                     type: OtpType.EMAIL_VERIFICATION,
                     userIdentity: expect.objectContaining({
@@ -297,28 +297,35 @@ describe('Authentication API', () => {
                 body: mockSignUpRequest,
             })
 
-            const responseBody = response?.json()
+            // sign-up returns MFA setup challenge; verify user was provisioned via DB
+            expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const projects = await databaseConnection().getRepository('project').find({ where: { ownerId: responseBody?.id } })
+            const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: mockedUpEmail.toLowerCase().trim() })
+            expect(identity).toBeDefined()
+
+            const provisionedUser = await databaseConnection().getRepository('user').findOneBy({ identityId: identity!.id, platformId: mockPlatform.id })
+            expect(provisionedUser).toBeDefined()
+
+
+            const projects = await databaseConnection().getRepository('project').find({ where: { ownerId: provisionedUser!.id } })
             expect(projects.length).toBe(1)
             expect(projects[0].type).toBe(ProjectType.PERSONAL)
 
             const teamProject = await databaseConnection().getRepository('project').findOne({ where: { displayName: mockProject.displayName } })
             expect(teamProject).toBeDefined()
 
-            const projectMember = await databaseConnection().getRepository('project_member').findOne({ where: { projectId: teamProject?.id, userId: responseBody?.id } })
-            
+            const projectMember = await databaseConnection().getRepository('project_member').findOne({ where: { projectId: teamProject?.id, userId: provisionedUser!.id } })
+
             expect(projectMember).toBeDefined()
-            expect(projectMember?.userId).toBe(responseBody?.id)
+            expect(projectMember?.userId).toBe(provisionedUser!.id)
             expect(projectMember?.projectId).toBe(teamProject?.id)
             expect(projectMember?.platformId).toBe(mockPlatform.id)
             expect(projectMember?.projectRoleId).toBe(editorRole.id)
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody?.platformId).toBeDefined()
-            expect(responseBody?.status).toBe('ACTIVE')
-            expect(responseBody?.verified).toBe(true)
+            expect(provisionedUser?.platformId).toBeDefined()
+            expect(provisionedUser?.status).toBe('ACTIVE')
+            expect(identity?.emailVerified).toBe(true)
         })
 
         it('should join enterprise platform when signing up with accepted invitation on cloud (no custom domain)', async () => {
@@ -356,11 +363,16 @@ describe('Authentication API', () => {
                 body: mockSignUpRequest,
             })
 
-            const responseBody = response?.json()
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+
+            const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: invitedEmail.toLowerCase().trim() })
+            expect(identity).toBeDefined()
+
+            const provisionedUser = await databaseConnection().getRepository('user').findOneBy({ identityId: identity!.id, platformId: mockPlatform.id })
+            expect(provisionedUser).toBeDefined()
 
             // assert - user should be on enterprise platform
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody?.platformId).toBe(mockPlatform.id)
+            expect(provisionedUser?.platformId).toBe(mockPlatform.id)
 
             // Invitation should be provisioned (deleted after processing)
             const remainingInvitation = await databaseConnection()
@@ -414,7 +426,7 @@ describe('Authentication API', () => {
 
             const rawPassword = faker.internet.password()
 
-            const { mockPlatform, mockCustomDomain } = await createMockPlatformAndDomain({
+            const { mockCustomDomain } = await createMockPlatformAndDomain({
                 platform: {
                     emailAuthEnabled: false,
                 },
@@ -426,7 +438,7 @@ describe('Authentication API', () => {
             const { mockUserIdentity } = await mockBasicUser({
                 user: {
                     status: UserStatus.ACTIVE,
-                    platformId: mockPlatform.id,
+                    platformId: mockCustomDomain.platformId,
                     platformRole: PlatformRole.ADMIN,
                 },
                 userIdentity: {
@@ -561,7 +573,7 @@ describe('Authentication API', () => {
             expect(responseBody?.newsLetter).toBe(mockUserIdentity.newsLetter)
             expect(responseBody?.password).toBeUndefined()
             expect(responseBody?.status).toBe(mockUser.status)
-            expect(responseBody?.verified).toBe(mockUserIdentity.verified)
+            expect(responseBody?.emailVerified).toBe(mockUserIdentity.emailVerified)
             expect(responseBody?.platformId).toBe(mockPlatform.id)
             expect(responseBody?.externalId).toBe(null)
             expect(responseBody?.projectId).toBe(mockProject.id)

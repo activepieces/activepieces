@@ -55,7 +55,7 @@ export const NewOAuth2Dialog = ({
 }: NewOAuth2DialogProps) => {
   const [open, setOpen] = useState(false);
   const { data: redirectUrl } = flagsHooks.useFlag<string>(
-    ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL
+    ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
   const form = useForm<OAuth2FormValues>({
     resolver: zodResolver(OAuth2FormValues),
