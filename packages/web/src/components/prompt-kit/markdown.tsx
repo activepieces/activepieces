@@ -27,6 +27,19 @@ function extractLanguage(className?: string): string {
 }
 
 const INITIAL_COMPONENTS: Partial<Components> = {
+  a: function LinkComponent({ href, children, ...props }) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
+        {...props}
+      >
+        {children}
+      </a>
+    );
+  },
   code: function CodeComponent({ className, children, ...props }) {
     const isInline =
       !props.node?.position?.start.line ||
