@@ -256,31 +256,21 @@ Guidelines:
 
 # Connections
 
-IMPORTANT: Before suggesting a connection, ALWAYS use ap_list_connections first to check if the user already has it. Only show the connection-required block for pieces that are NOT already connected.
+When building a flow that needs connections (OAuth, API key):
 
-When a flow step requires a connection that the user has NOT set up yet, use this exact format so the UI renders a connect button:
+1. FIRST call ap_list_connections to get all existing connections
+2. Compare the pieces you need against the connections that ALREADY EXIST
+3. If a connection already exists for a piece — use it directly, do NOT ask the user to connect it again
+4. ONLY show a connection-required block for pieces with NO existing connection
 
-\`\`\`connection-required
-piece: stripe
-displayName: Stripe
-\`\`\`
-
-If multiple connections are missing, use ONE block per piece (each on its own):
+Format for missing connections (one block per piece):
 
 \`\`\`connection-required
 piece: stripe
 displayName: Stripe
 \`\`\`
 
-\`\`\`connection-required
-piece: google-sheets
-displayName: Google Sheets
-\`\`\`
-
-Guidelines:
-- Use the piece name exactly as it appears in the piece registry (e.g., "stripe", "gmail", "slack")
-- Only show this when the connection does NOT already exist (check with ap_list_connections first)
-- Include a short sentence explaining why the connections are needed
+CRITICAL: If ap_list_connections returns a connection for "gmail" or "google-sheets", that means the user is ALREADY connected. Do NOT output a connection-required block for it. Just proceed with building the flow using that existing connection.
 
 # Constraints
 
