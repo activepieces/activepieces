@@ -45,6 +45,7 @@ import {
 } from '@/components/ui/collapsible';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlanCard } from '@/features/chat/components/plan-card';
+import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { ToolCallCard } from '@/features/chat/components/tool-call-card';
 import {
   useAgentChat,
@@ -638,13 +639,19 @@ function ConnectionRequiredCard({
   connection: ConnectionRequired;
 }) {
   const navigate = useNavigate();
+  const pieceName = connection.piece.startsWith('@activepieces/')
+    ? connection.piece
+    : `@activepieces/piece-${connection.piece}`;
 
   return (
     <div className="rounded-xl border bg-background shadow-sm overflow-hidden my-2">
       <div className="p-4 flex items-center gap-3">
-        <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-amber-500/10 shrink-0">
-          <Cable className="h-4.5 w-4.5 text-amber-600" />
-        </div>
+        <PieceIconWithPieceName
+          pieceName={pieceName}
+          size="sm"
+          border={false}
+          showTooltip={false}
+        />
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-sm">
             {t('Connect {name}', { name: connection.displayName })}
@@ -661,7 +668,6 @@ function ConnectionRequiredCard({
           className="gap-1.5 shrink-0"
           onClick={() => navigate('/connections')}
         >
-          <Cable className="h-3.5 w-3.5" />
           {t('Connect')}
         </Button>
       </div>
