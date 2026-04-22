@@ -19,6 +19,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import {
   ChatContainerContent,
   ChatContainerRoot,
@@ -45,12 +46,13 @@ import {
 } from '@/components/ui/collapsible';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlanCard } from '@/features/chat/components/plan-card';
-import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { ToolCallCard } from '@/features/chat/components/tool-call-card';
 import {
   useAgentChat,
   type ChatMessageItem,
 } from '@/features/chat/lib/use-chat';
+import { piecesHooks } from '@/features/pieces';
+import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { cn } from '@/lib/utils';
 
@@ -638,40 +640,52 @@ function ConnectionRequiredCard({
 }: {
   connection: ConnectionRequired;
 }) {
-  const navigate = useNavigate();
+  const [dialogOpen, setDialogOpen] = useState(false);
   const pieceName = connection.piece.startsWith('@activepieces/')
     ? connection.piece
     : `@activepieces/piece-${connection.piece}`;
+  const { pieceModel } = piecesHooks.usePiece({ name: pieceName });
 
   return (
-    <div className="rounded-xl border bg-background shadow-sm overflow-hidden my-2">
-      <div className="p-4 flex items-center gap-3">
-        <PieceIconWithPieceName
-          pieceName={pieceName}
-          size="sm"
-          border={false}
-          showTooltip={false}
-        />
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-sm">
-            {t('Connect {name}', { name: connection.displayName })}
-          </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {t('This automation needs a {name} connection to work', {
-              name: connection.displayName,
-            })}
-          </p>
+    <>
+      <div className="rounded-xl border bg-background shadow-sm overflow-hidden my-2">
+        <div className="p-4 flex items-center gap-3">
+          <PieceIconWithPieceName
+            pieceName={pieceName}
+            size="sm"
+            border={false}
+            showTooltip={false}
+          />
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm">
+              {t('Connect {name}', { name: connection.displayName })}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {t('This automation needs a {name} connection to work', {
+                name: connection.displayName,
+              })}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 shrink-0"
+            onClick={() => setDialogOpen(true)}
+          >
+            {t('Connect')}
+          </Button>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1.5 shrink-0"
-          onClick={() => navigate('/connections')}
-        >
-          {t('Connect')}
-        </Button>
       </div>
-    </div>
+      {pieceModel && (
+        <CreateOrEditConnectionDialog
+          piece={pieceModel}
+          open={dialogOpen}
+          setOpen={(open) => setDialogOpen(open)}
+          reconnectConnection={null}
+          isGlobalConnection={false}
+        />
+      )}
+    </>
   );
 }
 
