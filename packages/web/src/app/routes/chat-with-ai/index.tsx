@@ -55,7 +55,7 @@ export function ChatWithAIPage() {
         />
       </div>
       <AIChatBox
-        key={chatKey}
+        key={`${projectId}-${chatKey}`}
         incognito={false}
         conversationId={selectedConversationId}
         onTitleUpdate={handleTitleUpdate}
