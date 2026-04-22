@@ -376,7 +376,7 @@ function AssistantMessage({
       <div className="min-w-0 overflow-hidden space-y-2">
         {isWaiting && (
           <ThinkingBar
-            text={t('Reasoning')}
+            text={t('Thinking')}
             onStop={onCancel}
             stopLabel={t('Stop')}
           />
@@ -385,7 +385,7 @@ function AssistantMessage({
         {hasThoughts && (
           <Reasoning isStreaming={isThinkingOnly} className="">
             <ReasoningTrigger className="text-sm text-muted-foreground">
-              {t('Reasoned for a few seconds')}
+              {t('Thought for a few seconds')}
             </ReasoningTrigger>
             <ReasoningContent markdown contentClassName="text-xs">
               {message.thoughts}
@@ -393,18 +393,19 @@ function AssistantMessage({
           </Reasoning>
         )}
 
-        {hasToolCalls && <ToolCallGroup toolCalls={message.toolCalls} />}
-
-        {message.plan && <PlanCard entries={message.plan} />}
-
         {hasContent && (
           <MessageContentWithAuth
             content={message.content}
             onSend={onSend}
+            isStreaming={isStreaming}
             connectedPieces={connectedPieces}
             onPieceConnected={onPieceConnected}
           />
         )}
+
+        {hasToolCalls && <ToolCallGroup toolCalls={message.toolCalls} />}
+
+        {message.plan && <PlanCard entries={message.plan} />}
 
         {hasContent && !isStreaming && (
           <MessageActions className="mt-2">
@@ -437,18 +438,35 @@ function AssistantMessage({
   );
 }
 
+function describeToolCalls(toolCalls: ChatMessageItem['toolCalls']): string {
+  const names = toolCalls.map((tc) => (tc.title || tc.name).toLowerCase());
+  const has = (keyword: string) => names.some((n) => n.includes(keyword));
+
+  if (has('build_flow') || has('create_flow'))
+    return t('Building your automation');
+  if (has('add_step') || has('update_step') || has('update_trigger'))
+    return t('Setting up the steps');
+  if (has('test_flow') || has('test_step')) return t('Testing your flow');
+  if (has('list_pieces') || has('get_piece_props'))
+    return t('Exploring available integrations');
+  if (has('list_connections')) return t('Checking your connections');
+  if (has('list_flows') || has('flow_structure'))
+    return t('Looking at your flows');
+  if (has('list_tables') || has('find_records'))
+    return t('Looking at your data');
+  if (has('lock_and_publish') || has('change_flow_status'))
+    return t('Publishing your flow');
+  return t('Working on it');
+}
+
 function ToolCallGroup({
   toolCalls,
 }: {
   toolCalls: ChatMessageItem['toolCalls'];
 }) {
   const allDone = toolCalls.every((tc) => tc.status !== 'running');
-  const runningCount = toolCalls.filter((tc) => tc.status === 'running').length;
 
-  const count = allDone ? toolCalls.length : runningCount || toolCalls.length;
-  const summary = allDone
-    ? t('Used {count} tools', { count })
-    : t('Running {count} tools...', { count });
+  const summary = allDone ? describeToolCalls(toolCalls) : t('Working...');
 
   return (
     <Collapsible defaultOpen={!allDone}>
@@ -722,11 +740,13 @@ function ConnectionRequiredCard({
 function MessageContentWithAuth({
   content,
   onSend,
+  isStreaming = false,
   connectedPieces,
   onPieceConnected,
 }: {
   content: string;
   onSend?: (text: string) => void;
+  isStreaming?: boolean;
   connectedPieces?: Set<string>;
   onPieceConnected?: (piece: string) => void;
 }) {
@@ -747,7 +767,7 @@ function MessageContentWithAuth({
     return (
       <div className="space-y-3">
         {cleanContent && (
-          <div className="prose prose-sm dark:prose-invert max-w-none break-words">
+          <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:my-2 prose-headings:mt-4 prose-headings:mb-2 prose-li:my-0.5 prose-pre:my-2">
             <Markdown>{cleanContent}</Markdown>
           </div>
         )}
@@ -763,6 +783,14 @@ function MessageContentWithAuth({
     );
   }
 
+  if (isStreaming) {
+    return (
+      <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:my-2 prose-headings:mt-4 prose-headings:mb-2 prose-li:my-0.5 prose-pre:my-2">
+        <Markdown>{content}</Markdown>
+      </div>
+    );
+  }
+
   const { proposal, cleanContent: afterProposal } =
     parseAutomationProposal(content);
   const { connections, cleanContent: afterConnection } =
@@ -772,7 +800,7 @@ function MessageContentWithAuth({
   return (
     <div className="space-y-2">
       {finalContent && (
-        <div className="prose prose-sm dark:prose-invert max-w-none break-words">
+        <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:my-2 prose-headings:mt-4 prose-headings:mb-2 prose-li:my-0.5 prose-pre:my-2">
           <Markdown>{finalContent}</Markdown>
         </div>
       )}
