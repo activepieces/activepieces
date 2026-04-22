@@ -265,6 +265,7 @@ export function useAgentChat({
   const setConversationId = useCallback(
     async (conversationId: string) => {
       cancelStream();
+      setWasCancelled(false);
       setConversation({ id: conversationId });
       setMessages([]);
       setError(null);

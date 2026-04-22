@@ -24,12 +24,10 @@ function isYesterday(dateStr: string) {
 
 export function ConversationList({
   onSelect,
-  newChat,
   onNewChat,
   selectedId,
 }: {
   onSelect?: (id: string) => void;
-  newChat?: { title: string; key: number } | null;
   onNewChat?: () => void;
   selectedId?: string | null;
 }) {
@@ -67,14 +65,6 @@ export function ConversationList({
   useEffect(() => {
     checkFades();
   }, [collapsed, conversations, checkFades]);
-
-  useEffect(() => {
-    if (newChat) {
-      void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations', projectId],
-      });
-    }
-  }, [newChat, queryClient, projectId]);
 
   const today = conversations.filter((c) => isToday(c.created));
   const yesterdayList = conversations.filter((c) => isYesterday(c.created));

@@ -23,10 +23,6 @@ export function ChatWithAIPage() {
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(null);
-  const [newChat] = useState<{
-    title: string;
-    key: number;
-  } | null>(null);
   const [chatKey, setChatKey] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [incognito, setIncognito] = useState(false);
@@ -125,7 +121,6 @@ export function ChatWithAIPage() {
         {!incognito && (
           <div className="shrink-0 border-r overflow-hidden">
             <ConversationList
-              newChat={newChat}
               onNewChat={handleNewChat}
               onSelect={handleSelectConversation}
               selectedId={selectedConversationId}

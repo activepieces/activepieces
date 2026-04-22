@@ -439,48 +439,26 @@ function ToolCallGroup({
   );
 }
 
-function extractInlineChoices(content: string): string[] {
-  const choiceMatch = content.match(
-    /[—–-]\s*(.+?)\?/,
-  );
-  if (!choiceMatch) return [];
-
-  return choiceMatch[1]
-    .split(/\s+or\s+|,\s*/i)
-    .map((c) => c.replace(/\*\*/g, '').trim())
-    .filter((c) => c.length > 0 && c.length < 60);
-}
-
-function extractBulletChoices(content: string): string[] {
-  const choices: string[] = [];
-  const bulletRegex = /^[-•*]\s+\*?\*?(.+?)\*?\*?\s*$/gm;
-  let match = bulletRegex.exec(content);
-  while (match) {
-    choices.push(match[1].trim());
-    match = bulletRegex.exec(content);
-  }
-  return choices;
-}
-
-function lastLineIsConfirmation(content: string): boolean {
-  const lastQuestion = content.split('\n').reverse().find((l) => l.includes('?')) ?? '';
-  return /\b(shall i|should i|want me to|would you like|do you want|ready to|proceed|go ahead|confirm)\b/i.test(lastQuestion);
-}
-
 function extractQuickReplies(content: string): string[] {
   if (!content.includes('?')) return [];
 
-  const inlineChoices = extractInlineChoices(content);
-  if (inlineChoices.length >= 2 && inlineChoices.length <= 4) {
-    return [...inlineChoices, t('All of them')];
+  const lines = content.split('\n');
+  const lastQuestion = lines.reverse().find((l) => l.includes('?')) ?? '';
+
+  const inlineMatch = lastQuestion.match(/[—–-]\s*(.+?)\?/);
+  if (inlineMatch) {
+    const choices = inlineMatch[1]
+      .split(/\s+or\s+|,\s*/i)
+      .map((c) => c.replace(/\*\*/g, '').trim())
+      .filter((c) => c.length > 0 && c.length < 60);
+    if (choices.length >= 2 && choices.length <= 4) return choices;
   }
 
-  const bulletChoices = extractBulletChoices(content);
-  if (bulletChoices.length >= 2 && bulletChoices.length <= 4) {
-    return bulletChoices;
-  }
-
-  if (lastLineIsConfirmation(content)) {
+  const isConfirmation =
+    /\b(shall i|should i|want me to|would you like|do you want|ready to|proceed|go ahead|confirm)\b/i.test(
+      lastQuestion,
+    );
+  if (isConfirmation) {
     return [t('Yes, go ahead'), t('No')];
   }
 
@@ -513,6 +491,19 @@ function QuickReplies({
   );
 }
 
+function parseCodeBlock(
+  content: string,
+  fence: string,
+): { block: string | null; cleanContent: string } {
+  const regex = new RegExp(`\`\`\`${fence}\\n([\\s\\S]*?)\`\`\``);
+  const match = regex.exec(content);
+  if (!match) return { block: null, cleanContent: content };
+  return {
+    block: match[1],
+    cleanContent: content.replace(match[0], '').trim(),
+  };
+}
+
 type AutomationProposal = {
   title: string;
   description: string;
@@ -523,11 +514,12 @@ function parseAutomationProposal(content: string): {
   proposal: AutomationProposal | null;
   cleanContent: string;
 } {
-  const regex = /```automation-proposal\n([\s\S]*?)```/;
-  const match = regex.exec(content);
-  if (!match) return { proposal: null, cleanContent: content };
+  const { block, cleanContent } = parseCodeBlock(
+    content,
+    'automation-proposal',
+  );
+  if (!block) return { proposal: null, cleanContent };
 
-  const block = match[1];
   const titleMatch = /^title:\s*(.+)$/m.exec(block);
   const descMatch = /^description:\s*(.+)$/m.exec(block);
   const stepsMatch = block.match(/^-\s+.+$/gm);
@@ -542,7 +534,7 @@ function parseAutomationProposal(content: string): {
       description: descMatch?.[1].trim() ?? '',
       steps: stepsMatch.map((s) => s.replace(/^-\s+/, '').trim()),
     },
-    cleanContent: content.replace(regex, '').trim(),
+    cleanContent,
   };
 }
 
@@ -601,11 +593,12 @@ function parseConnectionRequired(content: string): {
   connection: ConnectionRequired | null;
   cleanContent: string;
 } {
-  const regex = /```connection-required\n([\s\S]*?)```/;
-  const match = regex.exec(content);
-  if (!match) return { connection: null, cleanContent: content };
+  const { block, cleanContent } = parseCodeBlock(
+    content,
+    'connection-required',
+  );
+  if (!block) return { connection: null, cleanContent };
 
-  const block = match[1];
   const pieceMatch = /^piece:\s*(.+)$/m.exec(block);
   const nameMatch = /^displayName:\s*(.+)$/m.exec(block);
 
@@ -616,7 +609,7 @@ function parseConnectionRequired(content: string): {
       piece: pieceMatch[1].trim(),
       displayName: nameMatch?.[1].trim() ?? pieceMatch[1].trim(),
     },
-    cleanContent: content.replace(regex, '').trim(),
+    cleanContent,
   };
 }
 
@@ -626,10 +619,11 @@ function ConnectionRequiredCard({
   connection: ConnectionRequired;
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const shortName = connection.piece.replace(/[^a-z0-9-]/gi, '');
   const pieceName = connection.piece.startsWith('@activepieces/')
     ? connection.piece
-    : `@activepieces/piece-${connection.piece}`;
-  const { pieceModel } = piecesHooks.usePiece({ name: pieceName });
+    : `@activepieces/piece-${shortName}`;
+  const { pieceModel, isLoading } = piecesHooks.usePiece({ name: pieceName });
 
   return (
     <>
@@ -655,6 +649,7 @@ function ConnectionRequiredCard({
             size="sm"
             variant="outline"
             className="gap-1.5 shrink-0"
+            disabled={isLoading}
             onClick={() => setDialogOpen(true)}
           >
             {t('Connect')}

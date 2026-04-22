@@ -177,17 +177,22 @@ async function getAnthropicApiKey({ platformId, log }: { platformId: string, log
     return config.auth.apiKey
 }
 
+function sanitizeProjectName(name: string): string {
+    return name.replace(/["`<>\\]/g, '').slice(0, 64)
+}
+
 function buildAgentSystemPrompt(projectNames: string[]): string {
-    const isSingleProject = projectNames.length === 1
+    const safeNames = projectNames.map(sanitizeProjectName)
+    const isSingleProject = safeNames.length === 1
 
     const projectSection = isSingleProject
-        ? `You are working in **"${projectNames[0]}"**. All tools operate on this project — no need to ask which project.`
-        : `The user has **${projectNames.length} projects**: ${projectNames.join(', ')}.
+        ? `You are working in a project called "${safeNames[0]}". All tools operate on this project — no need to ask which project.`
+        : `The user has ${safeNames.length} projects: ${safeNames.join(', ')}.
 
 **Project rules (strict):**
 - User names a project → use that project's tools immediately.
 - User says "all projects" → query every project, combine results with project labels.
-- User doesn't specify a project → **always ask**: "Which project — ${projectNames.join(' or ')}?" Do NOT guess. Do NOT default to the first project.`
+- User doesn't specify a project → **always ask**: "Which project — ${safeNames.join(' or ')}?" Do NOT guess. Do NOT default to the first project.`
 
     return `You are an automation assistant for Activepieces. You have direct access to the user's projects and can take real actions — listing flows, building automations, managing tables, querying data, and troubleshooting issues.
 
