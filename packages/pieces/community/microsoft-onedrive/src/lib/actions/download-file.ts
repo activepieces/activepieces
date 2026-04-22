@@ -39,12 +39,13 @@ export const downloadFile = createAction({
     let fileId: string;
 
     if (lookupBy === 'name') {
+      const escapedName = fileIdentifier.replace(/'/g, "''");
       const searchRes = await httpClient.sendRequest<{
         value: { id: string; name: string }[];
       }>({
         method: HttpMethod.GET,
-        url: `${baseUrl}/root/search(q='${encodeURIComponent(fileIdentifier)}')`,
-        queryParams: { $select: 'id,name', $top: '10' },
+        url: `${baseUrl}/root/search(q='${encodeURIComponent(escapedName)}')`,
+        queryParams: { $select: 'id,name', $top: '999' },
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: context.auth.access_token,
