@@ -306,6 +306,54 @@ describe('Props resolver', () => {
         )
     })
 
+    test('AP formula: evaluates a pure formula expression', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: 'uppercase({{trigger.name}})',
+            executionState,
+        })
+        expect(resolvedInput).toEqual('JOHN')
+    })
+
+    test('AP formula: natural-language text embedding a function name is not treated as a formula', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: 'sum(contributions) for Q1',
+            executionState,
+        })
+        expect(resolvedInput).toEqual('sum(contributions) for Q1')
+    })
+
+    test('AP formula: leading text before a formula-shaped phrase is not treated as a formula', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: 'Please trim(spaces)',
+            executionState,
+        })
+        expect(resolvedInput).toEqual('Please trim(spaces)')
+    })
+
+    test('AP formula: top-level comma disambiguates natural prose from a formula', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: 'min(qty, limit) reached',
+            executionState,
+        })
+        expect(resolvedInput).toEqual('min(qty, limit) reached')
+    })
+
+    test('AP formula: variable substitution inside a pure formula', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: 'combine({{trigger.name}};"!")',
+            executionState,
+        })
+        expect(resolvedInput).toEqual('John!')
+    })
+
+    test('AP formula: invalid formula falls through to variable resolution without leaking unresolved templates', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: 'trim({{trigger.unknown}} + broken syntax $$)',
+            executionState,
+        })
+        expect(resolvedInput).not.toContain('{{')
+    })
+
     it('should not compress memory file in native value in non-logs mode', async () => {
         const input = {
             base64: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',

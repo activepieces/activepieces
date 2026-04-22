@@ -101,16 +101,16 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
     const { input, currentState, engineToken, projectId, apiUrl, censoredInput } = params
 
     if (isFormulaExpression(input)) {
-        const resolveOptions = { engineToken, projectId, apiUrl, currentState, censoredInput, contextVersion: params.contextVersion }
-        const { expression: preResolvedExpr, vars: preResolvedVars } = await preResolveFormulaVars(input, resolveOptions)
+        const formulaOptions = { engineToken, projectId, apiUrl, currentState, censoredInput, contextVersion: params.contextVersion }
+        const { expression: preResolvedExpr, vars: preResolvedVars } = await preResolveFormulaVars(input, formulaOptions)
         const { result, error } = evaluateExpression(preResolvedExpr, preResolvedVars)
-        if (error) {
-            // Don't silently swallow the value — preserve the original input so user data
-            // that happens to resemble a formula (e.g. `min(qty, limit) reached`) is not lost.
-            console.warn('[resolveInputAsync] Formula evaluation error:', error)
-            return input
+        if (!error) {
+            return result ?? ''
         }
-        return result ?? ''
+        // Fall through to normal variable resolution: a false-positive match (e.g. an
+        // expression with AP-unsupported syntax) must not be returned raw with
+        // unresolved {{...}} templates or leak uncensored secrets.
+        console.warn('[resolveInputAsync] Formula evaluation error, falling back to variable resolution:', error)
     }
 
     const tokensThatNeedResolving = input.match(VARIABLE_PATTERN)
@@ -278,36 +278,32 @@ const AP_FUNCTION_CALL_REGEX = new RegExp(
 /**
  * Detect whether the input is an AP formula expression.
  *
- * Function names like `min`, `trim`, `round`, `replace`, `contains` collide with
- * common words, so a bare name-match would false-positive on arbitrary user data
- * (e.g. `"min(qty, limit) reached"`, `"Please trim(spaces)"`). We require:
+ * Function names (`min`, `trim`, `round`, `replace`, `contains`, …) collide
+ * with common words, so a bare name-match would false-positive on arbitrary
+ * user data (`"Please trim(spaces)"`, `"min(qty, limit) reached"`). We require:
  *
- * 1. A known function name followed by `(`.
- * 2. A matching closing `)` (balanced parens, string-delimiter aware).
- * 3. Multi-argument calls use `;` as the separator (AP formula syntax). Natural
- *    language uses `,` as the English list separator, so a top-level `,` inside
- *    the parens is a strong signal this is NOT a formula.
+ * 1. The entire trimmed input is a single AP function call — no leading or
+ *    trailing text outside the outermost `(...)`. Natural-language strings
+ *    that embed a function-shaped phrase ("sum(contributions) for Q1") are
+ *    rejected, which is the dominant false-positive class.
+ * 2. The function body contains no top-level `,`. AP formulas use `;` as the
+ *    argument separator; a top-level comma is a strong signal of prose.
  */
 function isFormulaExpression(input: string): boolean {
-    if (!AP_FUNCTION_CALL_REGEX.test(input)) return false
+    const trimmed = input.trim()
+    if (trimmed.length === 0) return false
+    if (!AP_FUNCTION_CALL_REGEX.test(trimmed)) return false
 
-    let pos = 0
-    while (pos < input.length) {
-        const next = findNextApFunctionCall(input, pos)
-        if (next === null) return false
+    const firstCall = findNextApFunctionCall(trimmed, 0)
+    if (firstCall === null || firstCall.start !== 0) return false
 
-        const closePos = findMatchingParen(input, next.openParen)
-        if (closePos === -1) {
-            pos = next.openParen + 1
-            continue
-        }
+    const closePos = findMatchingParen(trimmed, firstCall.openParen)
+    if (closePos !== trimmed.length - 1) return false
 
-        const argsContent = input.slice(next.openParen + 1, closePos)
-        if (!hasTopLevelComma(argsContent)) return true
+    const argsContent = trimmed.slice(firstCall.openParen + 1, closePos)
+    if (hasTopLevelComma(argsContent)) return false
 
-        pos = closePos + 1
-    }
-    return false
+    return true
 }
 
 function findNextApFunctionCall(text: string, fromPos: number): { start: number, openParen: number } | null {
