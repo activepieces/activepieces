@@ -62,7 +62,7 @@
     "fuse.js": "7.0.0",
     "i18next": "23.13.0",
     "i18next-browser-languagedetector": "8.0.0",
-    "i18next-http-backend": "2.5.2",
+    "i18next-http-backend": "3.0.5",
     "i18next-icu": "2.3.0",
     "jszip": "3.10.1",
     "jwt-decode": "4.0.0",
