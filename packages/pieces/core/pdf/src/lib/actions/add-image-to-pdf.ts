@@ -88,7 +88,7 @@ export const addImageToPdf = createAction({
         
         const mimeType = item.imageFile.extension
           ? mime.lookup(item.imageFile.extension) || 'application/octet-stream'
-          : 'application/octet-stream';
+          : mime.lookup(item.imageFile.filename || '') || 'application/octet-stream';
 
         let embeddedImage;
         if (mimeType === 'image/png') {
@@ -140,10 +140,9 @@ export const addImageToPdf = createAction({
       }
 
       const pdfBytes = await pdfDoc.save();
-      const base64Pdf = Buffer.from(pdfBytes).toString('base64');
 
       return context.files.write({
-        data: Buffer.from(base64Pdf, 'base64'),
+        data: Buffer.from(pdfBytes),
         fileName: `image_stamped_${file.filename}`,
       });
 

@@ -161,10 +161,9 @@ export const addTextToPdf = createAction({
       }
 
       const pdfBytes = await pdfDoc.save();
-      const base64Pdf = Buffer.from(pdfBytes).toString('base64');
 
       return context.files.write({
-        data: Buffer.from(base64Pdf, 'base64'),
+        data: Buffer.from(pdfBytes),
         fileName: `text_stamped_${file.filename}`,
       });
 

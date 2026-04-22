@@ -375,7 +375,7 @@
     },
     "packages/ee/embed-sdk": {
       "name": "ee-embed-sdk",
-      "version": "0.8.1",
+      "version": "0.9.0",
       "dependencies": {
         "tslib": "2.6.2",
       },
@@ -7736,7 +7736,7 @@
     },
     "packages/pieces/core/pdf": {
       "name": "@activepieces/piece-pdf",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7748,6 +7748,7 @@
         "unpdf": "1.4.0",
       },
       "devDependencies": {
+        "@types/mime-types": "2.1.1",
         "vitest": "3.0.8",
       },
     },
