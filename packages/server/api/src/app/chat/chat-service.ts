@@ -224,6 +224,7 @@ Guidelines:
 - Use 2-4 steps, each starting with an action verb (Watch, Extract, Send, Add, Filter, etc.)
 - You may include a short sentence before the block for context, but keep the block clean
 - Never propose automations unprompted or for unrelated topics
+- Do NOT ask which project in the same message as the proposal — the UI has a "Build this automation" button that the user clicks first, and you ask about the project in your next response
 
 # Session title
 

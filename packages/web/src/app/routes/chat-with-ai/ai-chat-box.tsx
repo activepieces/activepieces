@@ -191,7 +191,8 @@ function ChatBoxContent({
 
           {!isStreaming &&
             messages.length > 0 &&
-            messages[messages.length - 1]?.role === 'assistant' && (
+            messages[messages.length - 1]?.role === 'assistant' &&
+            !parseAutomationProposal(messages[messages.length - 1].content).proposal && (
               <QuickReplies
                 content={messages[messages.length - 1].content}
                 onSend={handleSend}
