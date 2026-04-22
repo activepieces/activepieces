@@ -23,6 +23,9 @@ export type SidebarItemType = {
   show?: boolean;
   hasPermission?: boolean;
   onClick?: () => void;
+  badge?: string;
+  iconClassName?: string;
+  highlight?: boolean;
 };
 
 export const ApSidebarItem = (item: SidebarItemType) => {
@@ -43,36 +46,52 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     }
   }, [isHovered]);
 
+  const button = (
+    <SidebarMenuButton
+      className={cn(
+        { 'bg-sidebar-accent hover:bg-sidebar-accent!': isLinkActive },
+        item.highlight && 'relative bg-background hover:bg-background/80',
+      )}
+      onClick={() => {
+        item.onClick?.();
+        navigate(item.to);
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {item.icon && renderIcon(item.icon, iconRef, item.iconClassName)}
+      {!isCollapsed && (
+        <span className={cn('text-sm', { 'font-semibold': isLinkActive })}>
+          {item.label}
+        </span>
+      )}
+      {!isCollapsed && item.badge && (
+        <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+          {item.badge}
+        </span>
+      )}
+      {!isCollapsed && item.locked && !item.badge && (
+        <LockKeyhole className="size-3.5! ml-auto" />
+      )}
+      {item.notification && !item.locked && (
+        <Dot
+          variant="destructive"
+          className="absolute right-1 top-2 transform -translate-y-1/2 size-2 rounded-full"
+        />
+      )}
+    </SidebarMenuButton>
+  );
+
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton
-        className={cn(
-          { 'bg-sidebar-accent hover:bg-sidebar-accent!': isLinkActive },
-          '',
-        )}
-        onClick={() => {
-          item.onClick?.();
-          navigate(item.to);
-        }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {item.icon && renderIcon(item.icon, iconRef)}
-        {!isCollapsed && (
-          <span className={cn('text-sm', { 'font-semibold': isLinkActive })}>
-            {item.label}
-          </span>
-        )}
-        {!isCollapsed && item.locked && (
-          <LockKeyhole className="size-3.5! ml-auto" />
-        )}
-        {item.notification && !item.locked && (
-          <Dot
-            variant="destructive"
-            className="absolute right-1 top-2 transform -translate-y-1/2 size-2 rounded-full"
-          />
-        )}
-      </SidebarMenuButton>
+      {item.highlight ? (
+        <div className="relative rounded-md p-[1px] overflow-hidden">
+          <div className="absolute inset-0 rounded-md bg-[length:200%_200%] animate-[gradient-rotate_3s_linear_infinite] bg-gradient-to-r from-violet-500 via-amber-400 to-rose-500" />
+          <div className="relative rounded-[5px] bg-sidebar">{button}</div>
+        </div>
+      ) : (
+        button
+      )}
     </SidebarMenuItem>
   );
 };
@@ -80,9 +99,10 @@ export const ApSidebarItem = (item: SidebarItemType) => {
 function renderIcon(
   Icon: ComponentType<{ className?: string }>,
   ref: React.RefObject<AnimatedIconHandle | null>,
+  iconClassName?: string,
 ) {
   return React.createElement(Icon, {
-    className: 'size-4 pointer-events-none',
+    className: cn('size-4 pointer-events-none', iconClassName),
     ref,
   } as { className: string });
 }

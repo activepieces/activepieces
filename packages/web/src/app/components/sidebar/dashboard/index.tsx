@@ -7,7 +7,7 @@ import {
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Search, MessageSquare } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
@@ -16,6 +16,7 @@ import { SearchInput } from '@/components/custom/search-input';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
 import { ShieldIcon } from '@/components/icons/shield';
+import { SparklesIcon } from '@/components/icons/sparkles';
 import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -149,11 +150,14 @@ export function ProjectDashboardSidebar({
   const chatWithAILink: SidebarItemType = {
     type: 'link',
     to: '/chat-with-ai',
-    label: t('AI Piecer'),
+    label: t('Spark'),
     show: platform.plan.chatEnabled,
-    icon: MessageSquare,
+    icon: SparklesIcon,
+    iconClassName: 'text-amber-500',
     hasPermission: platform.plan.chatEnabled,
     isSubItem: false,
+    badge: t('Beta'),
+    highlight: true,
   };
 
   const exploreLink: SidebarItemType = {

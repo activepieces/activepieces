@@ -548,7 +548,7 @@ function ChatInput({
       className="rounded-2xl border shadow-sm"
     >
       <PromptInputTextarea
-        placeholder={t('Message AI Piecer...')}
+        placeholder={t('Message Spark...')}
         className="min-h-[44px] text-sm"
       />
       <PromptInputActions className="justify-between px-1">
