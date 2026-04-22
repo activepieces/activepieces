@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { PDFDocument, rgb, StandardFonts, PDFFont, degrees } from 'pdf-lib';
-import { getTargetPages, mapVisualToIntrinsic, savePdfToContext } from '../common';
+import { getTargetPages, mapVisualToIntrinsic } from '../common';
 
 const fontOptions = Object.entries(StandardFonts).map(([key, value]) => {
   const formattedLabel = key.replace(/([A-Z])/g, ' $1').trim();
@@ -160,7 +160,13 @@ export const addTextToPdf = createAction({
         }
       }
 
-      return await savePdfToContext(pdfDoc, file.filename, 'text_stamped', context);
+      const pdfBytes = await pdfDoc.save();
+      const base64Pdf = Buffer.from(pdfBytes).toString('base64');
+
+      return context.files.write({
+        data: Buffer.from(base64Pdf, 'base64'),
+        fileName: `text_stamped_${file.filename}`,
+      });
 
     } catch (error) {
       throw new Error(`Failed to add text to PDF: ${(error as Error).message}`);

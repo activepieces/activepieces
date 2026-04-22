@@ -11,11 +11,11 @@
     "nanoid": "3.3.8",
     "pdf-lib": "1.17.1",
     "unpdf": "1.4.0",
-    "tslib": "2.6.2",
-    "@types/mime-types": "2.1.1"
+    "tslib": "2.6.2"
   },
   "devDependencies": {
-    "vitest": "3.0.8"
+    "vitest": "3.0.8",
+    "@types/mime-types": "2.1.1"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",

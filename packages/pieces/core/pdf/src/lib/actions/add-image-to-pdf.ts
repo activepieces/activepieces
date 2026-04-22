@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { PDFDocument, degrees } from 'pdf-lib';
-import { getTargetPages, mapVisualToIntrinsic, savePdfToContext } from '../common';
+import { getTargetPages, mapVisualToIntrinsic } from '../common';
 import mime from 'mime-types';
 
 export const addImageToPdf = createAction({
@@ -139,7 +139,13 @@ export const addImageToPdf = createAction({
         }
       }
 
-      return await savePdfToContext(pdfDoc, file.filename, 'image_stamped', context);
+      const pdfBytes = await pdfDoc.save();
+      const base64Pdf = Buffer.from(pdfBytes).toString('base64');
+
+      return context.files.write({
+        data: Buffer.from(base64Pdf, 'base64'),
+        fileName: `image_stamped_${file.filename}`,
+      });
 
     } catch (error) {
       throw new Error(`Failed to add image to PDF: ${(error as Error).message}`);

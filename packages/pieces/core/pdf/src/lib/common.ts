@@ -1,4 +1,4 @@
-import { PDFPage, PDFDocument } from 'pdf-lib';
+import { PDFPage } from 'pdf-lib';
 
 /**
  * Resolves which pages to apply the stamp to based on user input.
@@ -57,22 +57,4 @@ export function mapVisualToIntrinsic(
   }
 
   return { iX, iY, mappedRotation };
-}
-
-/**
- * Saves the PDF and writes it to the Activepieces file system.
- */
-export async function savePdfToContext(
-  pdfDoc: PDFDocument,
-  originalFilename: string,
-  prefix: string,
-  context: any 
-) {
-  const pdfBytes = await pdfDoc.save();
-  const base64Pdf = Buffer.from(pdfBytes).toString('base64');
-
-  return context.files.write({
-    data: Buffer.from(base64Pdf, 'base64'),
-    fileName: `${prefix}_${originalFilename}`,
-  });
 }
