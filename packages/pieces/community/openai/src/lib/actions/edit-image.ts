@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import OpenAI, { toFile } from 'openai';
 import { randomBytes } from 'node:crypto';
 import { kebabCase } from '@activepieces/shared';
+import mime from 'mime-types';
 import { openaiAuth } from '../auth';
 
 export const editImage = createAction({
@@ -59,8 +60,9 @@ export const editImage = createAction({
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { image, prompt, mask, size, quality } = context.propsValue;
 
+    const imageMimeType = mime.lookup(image.extension ?? '') || 'image/png';
     const imageFile = await toFile(image.data, image.filename ?? 'image.png', {
-      type: `image/${image.extension ?? 'png'}`,
+      type: imageMimeType,
     });
 
     const params = {
@@ -71,7 +73,7 @@ export const editImage = createAction({
       ...(quality && { quality }),
       ...(mask && {
         mask: await toFile(mask.data, mask.filename ?? 'mask.png', {
-          type: `image/${mask.extension ?? 'png'}`,
+          type: mime.lookup(mask.extension ?? '') || 'image/png',
         }),
       }),
     };

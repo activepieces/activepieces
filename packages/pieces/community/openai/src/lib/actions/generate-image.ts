@@ -73,7 +73,7 @@ export const generateImage = createAction({
       displayName: 'Quality',
       required: false,
       description: 'Image quality level.',
-      defaultValue: 'standard',
+      defaultValue: 'auto',
       refreshers: ['model'],
       options: async ({ model }) => {
         if (model === 'gpt-image-2') {
@@ -99,12 +99,18 @@ export const generateImage = createAction({
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { quality, resolution, model, prompt } = context.propsValue;
 
+    const dalleQualities = new Set(['standard', 'hd']);
+    const effectiveQuality = model !== 'gpt-image-2' && !dalleQualities.has(quality ?? '')
+      ? undefined
+      : quality;
+
+    // quality and size include gpt-image-2 values not yet in SDK types
     const response = await openai.images.generate({
       model,
       prompt,
-      quality: quality as 'standard' | 'hd',
-      size: resolution as '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792',
-    });
+      quality: effectiveQuality,
+      size: resolution,
+    } as Parameters<typeof openai.images.generate>[0]);
 
     const images = response.data ?? [];
     const savedImages = await Promise.all(
