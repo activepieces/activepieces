@@ -10,7 +10,6 @@ import { google } from 'googleapis';
 import { googleDriveAuth, GoogleDriveAuthValue, getAccessToken, createGoogleClient } from '../auth';
 
 const FOLDER_DROPDOWN_PAGE_SIZE = 1000;
-const FOLDER_DROPDOWN_MAX_PAGES = 1;
 
 const escapeDriveQueryLiteral = (value: string): string =>
   value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -43,47 +42,33 @@ export const common = {
         if (searchValue.length > 0) {
           qParts.push(`name contains '${escapeDriveQueryLiteral(searchValue)}'`);
         }
-        const folders: { id: string; name: string }[] = [];
-        let pageToken: string | null = null;
-        let pagesFetched = 0;
+        const request: HttpRequest = {
+          method: HttpMethod.GET,
+          url: `https://www.googleapis.com/drive/v3/files`,
+          queryParams: {
+            q: qParts.join(' and '),
+            includeItemsFromAllDrives: include_team_drives ? 'true' : 'false',
+            supportsAllDrives: 'true',
+            pageSize: String(FOLDER_DROPDOWN_PAGE_SIZE),
+            fields: 'nextPageToken, files(id, name)',
+          },
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: accessToken,
+          },
+        };
+        let folders: { id: string; name: string }[] = [];
         let truncated = false;
-        do {
-          const request: HttpRequest = {
-            method: HttpMethod.GET,
-            url: `https://www.googleapis.com/drive/v3/files`,
-            queryParams: {
-              q: qParts.join(' and '),
-              includeItemsFromAllDrives: include_team_drives ? 'true' : 'false',
-              supportsAllDrives: 'true',
-              pageSize: String(FOLDER_DROPDOWN_PAGE_SIZE),
-              fields: 'nextPageToken, files(id, name)',
-            },
-            authentication: {
-              type: AuthenticationType.BEARER_TOKEN,
-              token: accessToken,
-            },
-          };
-          if (pageToken) {
-            if (request.queryParams !== undefined) {
-              request.queryParams['pageToken'] = pageToken;
-            }
-          }
-          try {
-            const response = await httpClient.sendRequest<{
-              files: { id: string; name: string }[];
-              nextPageToken?: string;
-            }>(request);
-            folders.push(...(response.body.files ?? []));
-            pageToken = response.body.nextPageToken ?? null;
-            pagesFetched += 1;
-          } catch (e) {
-            throw new Error(`Failed to get folders\nError:${e}`);
-          }
-          if (pageToken && pagesFetched >= FOLDER_DROPDOWN_MAX_PAGES) {
-            truncated = true;
-            break;
-          }
-        } while (pageToken);
+        try {
+          const response = await httpClient.sendRequest<{
+            files: { id: string; name: string }[];
+            nextPageToken?: string;
+          }>(request);
+          folders = response.body.files ?? [];
+          truncated = Boolean(response.body.nextPageToken);
+        } catch (e) {
+          throw new Error(`Failed to get folders\nError:${e}`);
+        }
 
         return {
           disabled: false,
