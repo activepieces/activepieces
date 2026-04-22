@@ -115,7 +115,7 @@ async function createBetterAuth(log: FastifyBaseLogger) {
         plugins: [
             twoFactor({ issuer: 'Activepieces', allowPasswordless: true }),
             sso({
-                redirectURI: `${system.getOrThrow(AppSystemProp.FRONTEND_URL)}/api/v1/better-auth/sso/callback`,
+                redirectURI: `${system.getOrThrow(AppSystemProp.FRONTEND_URL)}/redirect`,
                 trustEmailVerified: true,
                 provisionUser: async ({ user, userInfo }) => {
                     const nameParts = (userInfo.name ?? '').split(' ')

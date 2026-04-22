@@ -73,6 +73,8 @@ beforeEach(async () => {
     await databaseConnection().getRepository('user_identity').createQueryBuilder().delete().execute()
     await databaseConnection().getRepository('custom_domain').createQueryBuilder().delete().execute()
     await databaseConnection().getRepository('user_invitation').createQueryBuilder().delete().execute()
+    // better-auth tables are not TypeORM entities — clean them explicitly
+    await databaseConnection().query('TRUNCATE TABLE "session", "account", "verification", "rateLimit" CASCADE')
 })
 describe('Authentication API', () => {
     describe('Sign up Endpoint', () => {

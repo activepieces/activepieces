@@ -103,6 +103,7 @@ export const createMockUserIdentity = (userIdentity?: Partial<UserIdentity>): Us
         trackEvents: userIdentity?.trackEvents ?? faker.datatype.boolean(),
         newsLetter: userIdentity?.newsLetter ?? faker.datatype.boolean(),
         verified: userIdentity?.verified ?? faker.datatype.boolean(),
+        emailVerified: userIdentity?.emailVerified ?? true,
         provider: userIdentity?.provider ?? UserIdentityProvider.EMAIL,
     }
 }

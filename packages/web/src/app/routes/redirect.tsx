@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 import { LoadingScreen } from '@/components/custom/loading-screen';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { api } from '@/lib/api';
+import { api, API_URL } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   ERROR_QUERY_PARAM,
@@ -27,6 +27,18 @@ const RedirectPage: React.FC = React.memo(() => {
     hasCheckedParams.current = true;
     const params = new URLSearchParams(location.search);
     const code = params.get('code');
+
+    // SSO callback: has code + state but no response/error — forward to Better Auth
+    const isSsoCallback =
+      code &&
+      params.has('state') &&
+      !params.has(RESPONSE_QUERY_PARAM) &&
+      !params.has(ERROR_QUERY_PARAM) &&
+      !window.opener;
+    if (isSsoCallback) {
+      window.location.href = `${API_URL}/v1/better-auth/sso/callback?${params.toString()}`;
+      return;
+    }
 
     const response = tryParseState(params.get(RESPONSE_QUERY_PARAM));
     const state = tryParseState(params.get(STATE_QUERY_PARAM));

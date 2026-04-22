@@ -57,7 +57,7 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     serverAdapter.setBasePath(`/api${QUEUE_BASE_PATH}`)
     app.addHook('onRequest', (req, reply, next) => {
         const routerPath = req.routeOptions.url
-        assertNotNullOrUndefined(routerPath, 'routerPath is undefined'  )
+        assertNotNullOrUndefined(routerPath, 'routerPath is undefined'  )    
         if (!routerPath.startsWith(QUEUE_BASE_PATH)) {
             next()
         }
