@@ -122,6 +122,9 @@
       "@activepieces/piece-avoma": [
         "packages/pieces/community/avoma/src/index.ts"
       ],
+      "@activepieces/piece-azure-ad": [
+        "packages/pieces/community/azure-ad/src/index.ts"
+      ],
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
       ],
