@@ -613,10 +613,10 @@ function EmptyState({
   };
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      <Sparkles className="h-8 w-8 animate-[color-cycle_3s_ease-in-out_infinite]" />
+    <div className="flex items-center gap-3">
+      <Sparkles className="h-7 w-7 text-primary shrink-0" />
       <h2
-        className="text-[32px] font-bold text-center leading-tight bg-gradient-to-r from-foreground via-foreground/80 to-primary bg-clip-text text-transparent"
+        className="text-[32px] font-bold leading-tight bg-gradient-to-r from-foreground via-foreground/80 to-primary bg-clip-text text-transparent"
         style={{ textWrap: 'balance' }}
       >
         {getGreeting()}
