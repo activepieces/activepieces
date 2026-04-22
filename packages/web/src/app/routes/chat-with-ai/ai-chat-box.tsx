@@ -631,10 +631,10 @@ function EmptyState({
 
 function SuggestionCards({ onSend }: { onSend: (text: string) => void }) {
   const suggestions = [
-    { icon: Zap, text: t('List all my flows and their status') },
-    { icon: Table2, text: t('Show me my tables and record counts') },
-    { icon: Workflow, text: t('Build a flow that sends Slack messages on new form submissions') },
-    { icon: Cable, text: t('Which of my flows are failing?') },
+    { icon: Zap, text: t('What can I automate today?') },
+    { icon: Workflow, text: t('Show me what I have running') },
+    { icon: Table2, text: t('I keep doing something manually...') },
+    { icon: Cable, text: t('Help me connect two apps') },
   ];
 
   return (
