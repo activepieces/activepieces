@@ -10,15 +10,17 @@ These tools are always available (locked) and read-only. They help AI agents und
 
 ### ap_list_flows
 
-List all flows in the current project.
+List flows in the current project with status, trigger type, and published state.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
-| — | — | — | No inputs required |
+| `limit` | number | No | Max flows to return (default 100, max 500) |
+| `status` | string | No | Filter by status: `ENABLED` or `DISABLED` |
+| `name` | string | No | Filter by flow name (partial match) |
 
 ### ap_flow_structure
 
-Get the structure of a flow: step tree, configuration status, and valid insert locations.
+Get the full structure of a flow: step tree, configuration status, step input values, router branch conditions, and valid insert locations. Shows the actual configured inputs for each step (URL, body, headers, etc.) so the AI can read and edit existing configurations.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -151,6 +153,19 @@ Create a new empty flow.
 |-------|------|----------|-------------|
 | `flowName` | string | Yes | Display name for the flow |
 
+### ap_duplicate_flow
+
+Duplicate an existing flow. Creates a new copy with all steps, configuration, and canvas notes. Connections and sample data are not copied.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID to duplicate |
+| `name` | string | No | Name for the copy (defaults to "Copy of \{original name\}") |
+
+<Tip>
+After duplicating, use `ap_flow_structure` on the new flow to check configuration status. Steps that reference connections will need to be re-configured with `ap_update_step`.
+</Tip>
+
 ### ap_rename_flow
 
 Rename an existing flow.
@@ -268,26 +283,50 @@ Delete a step from a flow.
 
 ## Router & Branching
 
-Manage conditional branches in router steps.
+Manage conditional branches in router steps. Use `ap_flow_structure` to see existing branch conditions and indices.
 
 ### ap_add_branch
 
-Add a conditional branch to a router step.
+Add a conditional branch to a router step. The branch is inserted before the fallback (Otherwise) branch.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
-| `stepName` | string | Yes | The router step name |
+| `routerStepName` | string | Yes | The router step name |
+| `branchName` | string | Yes | Display name for the branch |
+| `conditions` | array | No | Conditions array (see below) |
+
+**Conditions format:** Outer array = OR groups, inner array = AND conditions. Each condition has:
+- `firstValue` (string) — left-hand value, can use `{{step_1.field}}` template syntax
+- `operator` (string) — e.g. `TEXT_CONTAINS`, `NUMBER_IS_GREATER_THAN`, `EXISTS`, `BOOLEAN_IS_TRUE`
+- `secondValue` (string, optional) — right-hand value (not needed for single-value operators)
+- `caseSensitive` (boolean, optional) — for text operators
+
+### ap_update_branch
+
+Update the conditions and/or name of an existing router branch without affecting the steps inside it.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+| `routerStepName` | string | Yes | The router step name |
+| `branchIndex` | number | Yes | Branch index (0-based) |
+| `branchName` | string | No | New display name |
+| `conditions` | array | No | New conditions (same format as `ap_add_branch`). Replaces existing conditions entirely. |
+
+<Warning>
+Cannot set conditions on the fallback branch — only `branchName` can be updated for fallback branches.
+</Warning>
 
 ### ap_delete_branch
 
-Delete a branch from a router step.
+Delete a branch from a router step. Cannot delete the fallback (last) branch.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|
 | `flowId` | string | Yes | The flow ID |
-| `stepName` | string | Yes | The router step name |
-| `branchIndex` | number | Yes | Which branch to delete |
+| `routerStepName` | string | Yes | The router step name |
+| `branchIndex` | number | Yes | Branch index to delete (0-based) |
 
 ---
 
