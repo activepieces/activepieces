@@ -918,6 +918,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/azure-ad": {
+      "name": "@activepieces/piece-azure-ad",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/azure-blob-storage": {
       "name": "@activepieces/piece-azure-blob-storage",
       "version": "0.1.4",
@@ -8400,6 +8410,8 @@
     "@activepieces/piece-autocalls": ["@activepieces/piece-autocalls@workspace:packages/pieces/community/autocalls"],
 
     "@activepieces/piece-avoma": ["@activepieces/piece-avoma@workspace:packages/pieces/community/avoma"],
+
+    "@activepieces/piece-azure-ad": ["@activepieces/piece-azure-ad@workspace:packages/pieces/community/azure-ad"],
 
     "@activepieces/piece-azure-blob-storage": ["@activepieces/piece-azure-blob-storage@workspace:packages/pieces/community/azure-blob-storage"],
 
