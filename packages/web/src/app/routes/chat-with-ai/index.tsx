@@ -15,6 +15,11 @@ export function ChatWithAIPage() {
   >(null);
   const [chatKey, setChatKey] = useState(0);
 
+  useEffect(() => {
+    setSelectedConversationId(null);
+    setChatKey((k) => k + 1);
+  }, [projectId]);
+
   const handleNewChat = useCallback(() => {
     setChatKey((k) => k + 1);
     setSelectedConversationId(null);
