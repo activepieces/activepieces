@@ -882,7 +882,9 @@ function EmptyState({
 
   const greeting = incognito
     ? t('Private Chat')
-    : t('What would you like to work on?');
+    : t('What would you like to do in {projectName}?', {
+        projectName: project.displayName,
+      });
 
   return (
     <div className="flex items-center gap-3">
