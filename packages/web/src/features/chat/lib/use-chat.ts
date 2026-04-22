@@ -46,7 +46,11 @@ function mapHistoryToMessages({
 
 export function useAgentChat({
   onTitleUpdate,
-}: { onTitleUpdate?: (title: string) => void } = {}) {
+  onConversationCreated,
+}: {
+  onTitleUpdate?: (title: string) => void;
+  onConversationCreated?: () => void;
+} = {}) {
   const [conversation, setConversation] = useState<
     ChatConversation | { id: string } | null
   >(null);
@@ -57,6 +61,8 @@ export function useAgentChat({
   const messageIdCounter = useRef(0);
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
+  const onConversationCreatedRef = useRef(onConversationCreated);
+  onConversationCreatedRef.current = onConversationCreated;
 
   useEffect(() => {
     return () => {
@@ -204,6 +210,7 @@ export function useAgentChat({
       if (!conv) {
         try {
           conv = await createConversation(content.slice(0, 100));
+          onConversationCreatedRef.current?.();
         } catch (err) {
           setError(
             err instanceof Error ? err.message : 'Failed to start conversation',

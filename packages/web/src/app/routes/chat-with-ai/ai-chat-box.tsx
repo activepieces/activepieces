@@ -57,6 +57,7 @@ type AIChatBoxProps = {
   incognito: boolean;
   conversationId?: string | null;
   onFirstMessage: (text: string) => void;
+  onConversationCreated?: () => void;
   onTitleUpdate?: (title: string) => void;
 };
 
@@ -65,6 +66,7 @@ export function AIChatBox({
   conversationId,
   onFirstMessage,
   onTitleUpdate,
+  onConversationCreated,
 }: AIChatBoxProps) {
   const { data: providers, isLoading: isLoadingProviders } =
     aiProviderQueries.useAiProviders();
@@ -91,6 +93,7 @@ export function AIChatBox({
       conversationId={conversationId}
       onFirstMessage={onFirstMessage}
       onTitleUpdate={onTitleUpdate}
+      onConversationCreated={onConversationCreated}
     />
   );
 }
@@ -100,6 +103,7 @@ function ChatBoxContent({
   conversationId: initialConversationId,
   onFirstMessage,
   onTitleUpdate,
+  onConversationCreated,
 }: AIChatBoxProps) {
   const {
     messages,
@@ -109,7 +113,7 @@ function ChatBoxContent({
     sendMessage,
     cancelStream,
     setConversationId,
-  } = useAgentChat({ onTitleUpdate });
+  } = useAgentChat({ onTitleUpdate, onConversationCreated });
   const hasSentFirst = useRef(false);
 
   useEffect(() => {

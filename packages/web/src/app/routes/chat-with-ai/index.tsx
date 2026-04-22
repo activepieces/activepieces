@@ -139,12 +139,8 @@ export function ChatWithAIPage() {
           incognito={incognito}
           conversationId={selectedConversationId}
           onTitleUpdate={handleTitleUpdate}
+          onConversationCreated={handleTitleUpdate}
           onFirstMessage={(text) => {
-            if (!incognito) {
-              const nextKey = msgCounter + 1;
-              setMsgCounter(nextKey);
-              setNewChat({ title: text, key: nextKey });
-            }
             setChatStarted(true);
           }}
         />
