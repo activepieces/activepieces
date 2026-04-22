@@ -1,15 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 
-import { projectCollectionUtils } from '@/features/projects';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { AIChatBox } from './ai-chat-box';
 import { ConversationList } from './conversation-list';
 
 export function ChatWithAIPage() {
   const queryClient = useQueryClient();
-  const { project } = projectCollectionUtils.useCurrentProject();
-  const projectId = project.id;
+  const { projectId: routeProjectId } = useParams<{ projectId: string }>();
+  const projectId = routeProjectId ?? authenticationSession.getProjectId() ?? '';
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(null);
