@@ -15,13 +15,49 @@ export type MarkdownProps = {
 };
 
 function normalizeMarkdownSpacing(markdown: string): string {
-  return markdown
-    .replace(/\n(?!\n)/g, (match, offset, str) => {
-      const before = str.slice(Math.max(0, offset - 3), offset);
-      if (/[|`-]/.test(before)) return match;
-      if (/^\s*[-*+\d.]/.test(str.slice(offset + 1, offset + 10))) return match;
-      return '\n\n';
-    });
+  let text = markdown;
+
+  // Ensure headings have a newline before them (fixes "text.## Heading" streaming artifact)
+  text = text.replace(/([^\n])(#{1,6}\s)/g, '$1\n\n$2');
+
+  // Ensure blank lines between non-empty content lines (except inside tables/code/lists)
+  const lines = text.split('\n');
+  const result: string[] = [];
+  let inCodeBlock = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
+      result.push(line);
+      continue;
+    }
+
+    if (inCodeBlock) {
+      result.push(line);
+      continue;
+    }
+
+    // Preserve tables and lists as-is
+    if (trimmed.startsWith('|') || /^\s*[-*+]\s/.test(trimmed) || /^\s*\d+[.)]\s/.test(trimmed)) {
+      result.push(line);
+      continue;
+    }
+
+    // Add blank line before non-empty content if previous line was also non-empty
+    const prevLine = result[result.length - 1]?.trim() ?? '';
+    const prevIsTableOrList = prevLine.startsWith('|') || /^\s*[-*+]\s/.test(prevLine) || /^\s*\d+[.)]\s/.test(prevLine);
+
+    if (i > 0 && prevLine !== '' && trimmed !== '' && !prevIsTableOrList) {
+      result.push('');
+    }
+
+    result.push(line);
+  }
+
+  return result.join('\n');
 }
 
 function parseMarkdownIntoBlocks(markdown: string): string[] {
