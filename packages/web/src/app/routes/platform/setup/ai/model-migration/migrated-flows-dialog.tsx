@@ -2,6 +2,7 @@ import { FlowMigration, PopulatedFlow } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CheckCircle2, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import {
   Dialog,
@@ -57,11 +58,25 @@ function MigratedFlowsDialogContent({
           >
             <CheckCircle2 className="size-4 shrink-0 text-success mt-0.5" />
             <div className="flex flex-col gap-1 min-w-0">
-              <span className="text-sm font-medium truncate">
-                {group.flowDisplayName}
-              </span>
+              {group.projectId ? (
+                <Link
+                  to={`/projects/${group.projectId}/flows/${group.flowId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm font-medium truncate hover:underline"
+                >
+                  {group.flowDisplayName}
+                </Link>
+              ) : (
+                <span className="text-sm font-medium truncate">
+                  {group.flowDisplayName}
+                </span>
+              )}
               <p className="text-xs text-muted-foreground">
-                {formatMigrationMessage(group.versionCount)}
+                {formatMigrationMessage({
+                  draftMigrated: group.draftMigrated,
+                  publishedMigrated: group.publishedMigrated,
+                })}
               </p>
             </div>
           </li>
@@ -102,15 +117,18 @@ function groupByFlowId({
   for (const version of migratedVersions) {
     const existing = groups.get(version.flowId);
     if (existing) {
-      existing.versionCount++;
+      existing.draftMigrated = existing.draftMigrated || version.draft;
+      existing.publishedMigrated = existing.publishedMigrated || !version.draft;
     } else {
       const flow = flowMap.get(version.flowId);
       groups.set(version.flowId, {
         flowId: version.flowId,
+        projectId: flow?.projectId,
         flowDisplayName: flow
           ? flow.version.displayName
           : t('Deleted flow ({flowId})', { flowId: version.flowId }),
-        versionCount: 1,
+        draftMigrated: version.draft,
+        publishedMigrated: !version.draft,
       });
     }
   }
@@ -118,17 +136,28 @@ function groupByFlowId({
   return [...groups.values()];
 }
 
-function formatMigrationMessage(versionCount: number): string {
-  if (versionCount >= 2) {
+function formatMigrationMessage({
+  draftMigrated,
+  publishedMigrated,
+}: {
+  draftMigrated: boolean;
+  publishedMigrated: boolean;
+}): string {
+  if (draftMigrated && publishedMigrated) {
     return t('Both draft and published versions were migrated.');
   }
-  return t('1 version migrated.');
+  if (publishedMigrated) {
+    return t('Published version was migrated.');
+  }
+  return t('Draft version was migrated.');
 }
 
 type GroupedMigration = {
   flowId: string;
+  projectId: string | undefined;
   flowDisplayName: string;
-  versionCount: number;
+  draftMigrated: boolean;
+  publishedMigrated: boolean;
 };
 
 type MigratedFlowsDialogProps = {
