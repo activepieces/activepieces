@@ -18,20 +18,19 @@ export const findCandidateAction = createAction({
   async run(context) {
     const { email } = context.propsValue;
 
-    const response = await greenhouseApiCall<{ candidates: GreenhouseCandidate[] } | GreenhouseCandidate[]>({
+    const response = await greenhouseApiCall<GreenhouseCandidate[]>({
       auth: context.auth.props,
       method: HttpMethod.GET,
       endpoint: '/candidates',
       queryParams: { email },
     });
 
-    const raw = response.body;
-    const candidates = Array.isArray(raw) ? raw : (raw as { candidates: GreenhouseCandidate[] }).candidates ?? [];
+    const candidates = Array.isArray(response.body) ? response.body : [];
 
     if (candidates.length === 0) {
-      return { found: false, candidate: null };
+      return { found: false };
     }
 
-    return { found: true, candidate: shapeCandidate(candidates[0]) };
+    return { found: true, ...shapeCandidate(candidates[0]) };
   },
 });

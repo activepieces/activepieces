@@ -101,15 +101,14 @@ export const findOrCreateCandidateAction = createAction({
       tags,
     } = context.propsValue;
 
-    const searchResponse = await greenhouseApiCall<GreenhouseCandidate[] | { candidates: GreenhouseCandidate[] }>({
+    const searchResponse = await greenhouseApiCall<GreenhouseCandidate[]>({
       auth: context.auth.props,
       method: HttpMethod.GET,
       endpoint: '/candidates',
       queryParams: { email },
     });
 
-    const raw = searchResponse.body;
-    const existing = Array.isArray(raw) ? raw : (raw as { candidates: GreenhouseCandidate[] }).candidates ?? [];
+    const existing = Array.isArray(searchResponse.body) ? searchResponse.body : [];
 
     if (existing.length > 0) {
       return { created: false, ...shapeCandidate(existing[0]) };

@@ -18,7 +18,7 @@ Your credentials are exchanged for a short-lived JWT on every flow run — they 
       description: 'The OAuth2 Client ID from your Greenhouse API application.',
       required: true,
     }),
-    client_secret: Property.ShortText({
+    client_secret: PieceAuth.SecretText({
       displayName: 'Client Secret',
       description: 'The OAuth2 Client Secret from your Greenhouse API application.',
       required: true,
