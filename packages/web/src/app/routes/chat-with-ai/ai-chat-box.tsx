@@ -108,6 +108,7 @@ function ChatBoxContent({
   const {
     messages,
     isStreaming,
+    wasCancelled,
     isLoadingHistory,
     error,
     sendMessage,
@@ -189,10 +190,19 @@ function ChatBoxContent({
             );
           })}
 
+          {wasCancelled && (
+            <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground animate-in fade-in duration-200">
+              <Square className="h-3 w-3 fill-current" />
+              <span>{t('Response stopped')}</span>
+            </div>
+          )}
+
           {!isStreaming &&
+            !wasCancelled &&
             messages.length > 0 &&
             messages[messages.length - 1]?.role === 'assistant' &&
-            !parseAutomationProposal(messages[messages.length - 1].content).proposal && (
+            !parseAutomationProposal(messages[messages.length - 1].content)
+              .proposal && (
               <QuickReplies
                 content={messages[messages.length - 1].content}
                 onSend={handleSend}
@@ -426,19 +436,50 @@ function ToolCallGroup({
   );
 }
 
-function extractChoices(content: string): string[] {
+type QuickReply = {
+  label: string;
+  value: string;
+  variant?: 'default' | 'muted';
+};
+
+function extractQuickReplies(content: string): QuickReply[] {
   if (!content.includes('?')) return [];
+
+  const lastQuestion =
+    content
+      .split('\n')
+      .reverse()
+      .find((l) => l.includes('?')) ?? '';
+
+  const isConfirmation =
+    /\b(shall i|should i|want me to|would you like|do you want|ready to|proceed|go ahead|confirm)\b/i.test(
+      lastQuestion,
+    );
+  if (isConfirmation) {
+    return [
+      { label: t('Yes, go ahead'), value: 'Yes, go ahead' },
+      { label: t('No'), value: 'No', variant: 'muted' },
+    ];
+  }
 
   const orMatch = content.match(
     /(?:which|what|choose|pick|select)[^?]*?[—–-]\s*(.+?)\?/i,
   );
   if (orMatch) {
-    const choiceStr = orMatch[1];
-    const choices = choiceStr
+    const choices = orMatch[1]
       .split(/\s+or\s+|,\s*/i)
       .map((c) => c.replace(/\*\*/g, '').trim())
       .filter((c) => c.length > 0 && c.length < 60);
-    if (choices.length >= 2 && choices.length <= 4) return choices;
+    if (choices.length >= 2 && choices.length <= 4) {
+      return [
+        ...choices.map((c) => ({ label: c, value: c })),
+        {
+          label: t('All of them'),
+          value: 'All of them',
+          variant: 'muted' as const,
+        },
+      ];
+    }
   }
 
   const bulletChoices: string[] = [];
@@ -449,7 +490,7 @@ function extractChoices(content: string): string[] {
     match = bulletRegex.exec(content);
   }
   if (bulletChoices.length >= 2 && bulletChoices.length <= 4) {
-    return bulletChoices;
+    return bulletChoices.map((c) => ({ label: c, value: c }));
   }
 
   return [];
@@ -462,30 +503,24 @@ function QuickReplies({
   content: string;
   onSend: (text: string) => void;
 }) {
-  const choices = extractChoices(content);
-  if (choices.length === 0) return null;
-
-  const visibleChoices = choices.slice(0, 3);
+  const replies = extractQuickReplies(content);
+  if (replies.length === 0) return null;
 
   return (
     <div className="flex flex-wrap gap-2 py-2 animate-in fade-in duration-300">
-      {visibleChoices.map((choice) => (
+      {replies.map((reply) => (
         <button
-          key={choice}
+          key={reply.value}
           type="button"
-          onClick={() => onSend(choice)}
-          className="px-3 py-1.5 text-sm rounded-full border bg-background hover:bg-muted transition-colors cursor-pointer"
+          onClick={() => onSend(reply.value)}
+          className={cn(
+            'px-3 py-1.5 text-sm rounded-full border bg-background hover:bg-muted transition-colors cursor-pointer',
+            reply.variant === 'muted' && 'text-muted-foreground',
+          )}
         >
-          {choice}
+          {reply.label}
         </button>
       ))}
-      <button
-        type="button"
-        onClick={() => onSend(t('All of them'))}
-        className="px-3 py-1.5 text-sm rounded-full border bg-background hover:bg-muted transition-colors cursor-pointer text-muted-foreground"
-      >
-        {t('All of them')}
-      </button>
     </div>
   );
 }
@@ -569,6 +604,71 @@ function AutomationProposalCard({
   );
 }
 
+type ConnectionRequired = {
+  piece: string;
+  displayName: string;
+};
+
+function parseConnectionRequired(content: string): {
+  connection: ConnectionRequired | null;
+  cleanContent: string;
+} {
+  const regex = /```connection-required\n([\s\S]*?)```/;
+  const match = regex.exec(content);
+  if (!match) return { connection: null, cleanContent: content };
+
+  const block = match[1];
+  const pieceMatch = /^piece:\s*(.+)$/m.exec(block);
+  const nameMatch = /^displayName:\s*(.+)$/m.exec(block);
+
+  if (!pieceMatch) return { connection: null, cleanContent: content };
+
+  return {
+    connection: {
+      piece: pieceMatch[1].trim(),
+      displayName: nameMatch?.[1].trim() ?? pieceMatch[1].trim(),
+    },
+    cleanContent: content.replace(regex, '').trim(),
+  };
+}
+
+function ConnectionRequiredCard({
+  connection,
+}: {
+  connection: ConnectionRequired;
+}) {
+  const navigate = useNavigate();
+
+  return (
+    <div className="rounded-xl border bg-background shadow-sm overflow-hidden my-2">
+      <div className="p-4 flex items-center gap-3">
+        <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-amber-500/10 shrink-0">
+          <Cable className="h-4.5 w-4.5 text-amber-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-sm">
+            {t('Connect {name}', { name: connection.displayName })}
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {t('This automation needs a {name} connection to work', {
+              name: connection.displayName,
+            })}
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5 shrink-0"
+          onClick={() => navigate('/connections')}
+        >
+          <Cable className="h-3.5 w-3.5" />
+          {t('Connect')}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function MessageContentWithAuth({
   content,
   onSend,
@@ -609,15 +709,19 @@ function MessageContentWithAuth({
     );
   }
 
-  const { proposal, cleanContent } = parseAutomationProposal(content);
+  const { proposal, cleanContent: afterProposal } =
+    parseAutomationProposal(content);
+  const { connection, cleanContent: finalContent } =
+    parseConnectionRequired(afterProposal);
 
   return (
     <div className="space-y-2">
-      {cleanContent && (
+      {finalContent && (
         <div className="prose prose-sm dark:prose-invert max-w-none break-words">
-          <Markdown>{cleanContent}</Markdown>
+          <Markdown>{finalContent}</Markdown>
         </div>
       )}
+      {connection && <ConnectionRequiredCard connection={connection} />}
       {proposal && (
         <AutomationProposalCard
           proposal={proposal}

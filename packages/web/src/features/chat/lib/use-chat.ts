@@ -56,6 +56,7 @@ export function useAgentChat({
   >(null);
   const [messages, setMessages] = useState<ChatMessageItem[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [wasCancelled, setWasCancelled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const messageIdCounter = useRef(0);
@@ -181,6 +182,7 @@ export function useAgentChat({
   const sendMessage = useCallback(
     async (content: string) => {
       setError(null);
+      setWasCancelled(false);
 
       const userMessage: ChatMessageItem = {
         id: nextMessageId(),
@@ -246,6 +248,7 @@ export function useAgentChat({
       abortRef.current.abort();
       abortRef.current = null;
       setIsStreaming(false);
+      setWasCancelled(true);
     }
   }, []);
 
@@ -284,6 +287,7 @@ export function useAgentChat({
     conversation,
     messages,
     isStreaming,
+    wasCancelled,
     isLoadingHistory,
     error,
     sendMessage,
