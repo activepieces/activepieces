@@ -51,11 +51,9 @@ import {
   useAgentChat,
   type ChatMessageItem,
 } from '@/features/chat/lib/use-chat';
-import { appConnectionsQueries } from '@/features/connections/hooks/app-connections-hooks';
 import { piecesHooks } from '@/features/pieces';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { aiProviderQueries } from '@/features/platform-admin';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 type AIChatBoxProps = {
@@ -618,23 +616,12 @@ function ConnectionRequiredCard({
   onSend?: (text: string) => void;
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [justConnected, setJustConnected] = useState(false);
+  const [connected, setConnected] = useState(false);
   const shortName = connection.piece.replace(/[^a-z0-9-]/gi, '');
   const pieceName = connection.piece.startsWith('@activepieces/')
     ? connection.piece
     : `@activepieces/piece-${shortName}`;
   const { pieceModel, isLoading } = piecesHooks.usePiece({ name: pieceName });
-
-  const projectId = authenticationSession.getProjectId() ?? '';
-  const { data: existingConnections } = appConnectionsQueries.useAppConnections(
-    {
-      request: { projectId, pieceName, limit: 1 },
-      extraKeys: [pieceName],
-      enabled: !justConnected && projectId.length > 0,
-    },
-  );
-  const alreadyConnected =
-    justConnected || (existingConnections?.data?.length ?? 0) > 0;
 
   return (
     <>
@@ -648,19 +635,19 @@ function ConnectionRequiredCard({
           />
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-sm">
-              {alreadyConnected
+              {connected
                 ? t('{name} connected', { name: connection.displayName })
                 : t('Connect {name}', { name: connection.displayName })}
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {alreadyConnected
+              {connected
                 ? t('Ready to use')
                 : t('This automation needs a {name} connection to work', {
                     name: connection.displayName,
                   })}
             </p>
           </div>
-          {alreadyConnected ? (
+          {connected ? (
             <Check className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
           ) : (
             <Button
@@ -682,7 +669,7 @@ function ConnectionRequiredCard({
           setOpen={(open, createdConnection) => {
             setDialogOpen(open);
             if (createdConnection) {
-              setJustConnected(true);
+              setConnected(true);
               onSend?.(`I connected ${connection.displayName}, continue`);
             }
           }}
