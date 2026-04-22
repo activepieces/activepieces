@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { PDFDocument, degrees } from 'pdf-lib';
+import { getTargetPages, mapVisualToIntrinsic, savePdfToContext } from '../common';
 
 export const addImageToPdf = createAction({
   name: 'addImageToPdf',
@@ -73,7 +74,6 @@ export const addImageToPdf = createAction({
 
       const pdfDoc = await PDFDocument.load(file.data as any); 
       const pages = pdfDoc.getPages();
-      const totalPages = pages.length;
 
       for (let i = 0; i < imageItems.length; i++) {
         const item = imageItems[i];
@@ -82,7 +82,6 @@ export const addImageToPdf = createAction({
           throw new Error(`Scale must be a positive number. You provided ${item.scale} for image item ${i + 1}.`);
         }
 
-        // Detect and embed image (pdf-lib requires different methods for PNG vs JPG)
         let embeddedImage;
         const imageData = item.imageFile.data;
         try {
@@ -99,21 +98,7 @@ export const addImageToPdf = createAction({
         const scaledWidth = imgDims.width;
         const scaledHeight = imgDims.height;
 
-        const targetPages = [];
-        
-        if (item.applyToAllPages) {
-          targetPages.push(...pages);
-        } else {
-          if (item.pageNumber === undefined) {
-            throw new Error(`Page Number is required when "Apply to all pages?" is not checked for image item ${i + 1}.`);
-          }
-          const pageIndex = Number(item.pageNumber) - 1;
-          
-          if (pageIndex < 0 || pageIndex >= totalPages) {
-            throw new Error(`You requested Page ${item.pageNumber} for image item ${i + 1}, but this document only has ${totalPages} page(s).`);
-          }
-          targetPages.push(pages[pageIndex]);
-        }
+        const targetPages = getTargetPages(pages, item.applyToAllPages, item.pageNumber, `image item ${i + 1}`);
 
         for (const targetPage of targetPages) {
           const { width, height } = targetPage.getSize();
@@ -126,64 +111,29 @@ export const addImageToPdf = createAction({
           const vX = item.distanceFromLeft;
           const vY = vHeight - item.distanceFromTop;
           
-          // Check Left Edge
-          if (vX < 0 || vX > vWidth) {
-            throw new Error(`The Left distance (${item.distanceFromLeft}pts) for image item ${i + 1} is outside the page width.`);
-          }
+          // Boundary Checks
+          if (vX < 0 || vX > vWidth) throw new Error(`The Left distance (${item.distanceFromLeft}pts) for image item ${i + 1} is outside the page width.`);
+          if (vX + scaledWidth > vWidth) throw new Error(`Image item ${i + 1} is too wide and runs off the right edge.`);
+          if (vY < 0 || vY > vHeight) throw new Error(`The Top distance (${item.distanceFromTop}pts) for image item ${i + 1} is outside the page height.`);
+          if (vY - scaledHeight < 0) throw new Error(`Image item ${i + 1} is too tall and runs off the bottom edge.`);
 
-          // Check Right Edge
-          if (vX + scaledWidth > vWidth) {
-              throw new Error(`Image item ${i + 1} is too wide and runs off the right edge. Reduce the Left distance or Scale.`);
-          }
-
-          // Check Top Edge
-          if (vY < 0 || vY > vHeight) {
-            throw new Error(`The Top distance (${item.distanceFromTop}pts) for image item ${i + 1} is outside the page height.`);
-          }
-
-          // Check Bottom Edge
-          if (vY - scaledHeight < 0) {
-            throw new Error(`Image item ${i + 1} is too tall and runs off the bottom edge. Reduce the Top distance or Scale.`);
-          }
-
-          // Map Visual coordinates back to Intrinsic coordinates for pdf-lib
-          // Note: pdf-lib draws images from the bottom-left corner, not the top-left.
-          // Therefore, the visual Y anchor is `vY - scaledHeight`.
-          let iX = vX;
-          let iY = vY - scaledHeight;
-          let imageRotation = 0;
-
-          if (rotationAngle === 90) {
-            iX = vHeight - (vY - scaledHeight); 
-            iY = vX;
-            imageRotation = 90;
-          } else if (rotationAngle === 180) {
-            iX = vWidth - vX;
-            iY = vHeight - (vY - scaledHeight);
-            imageRotation = 180;
-          } else if (rotationAngle === 270) {
-            iX = vY - scaledHeight;
-            iY = vWidth - vX;
-            imageRotation = -90;
-          }
+          // Use helper to calculate rotated mapping
+          // (pdf-lib draws images from bottom-left corner, so anchor is vY - scaledHeight)
+          const anchorY = vY - scaledHeight;
+          const { iX, iY, mappedRotation } = mapVisualToIntrinsic(vX, anchorY, vWidth, vHeight, rotationAngle);
 
           targetPage.drawImage(embeddedImage, {
             x: iX,
             y: iY,
             width: scaledWidth,
             height: scaledHeight,
-            rotate: degrees(imageRotation),
+            rotate: degrees(mappedRotation),
           });
         }
       }
 
-      const pdfBytes = await pdfDoc.save();
-      const base64Pdf = Buffer.from(pdfBytes).toString('base64');
+      return await savePdfToContext(pdfDoc, file.filename, 'image_stamped', context);
 
-      return context.files.write({
-        data: Buffer.from(base64Pdf, 'base64'),
-        fileName: `image_stamped_${file.filename}`,
-      });
     } catch (error) {
       throw new Error(`Failed to add image to PDF: ${(error as Error).message}`);
     }
