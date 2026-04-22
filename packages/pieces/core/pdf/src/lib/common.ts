@@ -76,22 +76,3 @@ export async function savePdfToContext(
     fileName: `${prefix}_${originalFilename}`,
   });
 }
-
-/**
- * Detects if a buffer is a PNG or JPG based on its magic numbers.
- */
-export function detectImageType(buffer: Buffer, itemIdentifier: string): 'png' | 'jpg' {
-  if (buffer.length >= 8) {
-    // PNG signature: 89 50 4E 47
-    if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
-      return 'png';
-    }
-
-    // JPG/JPEG signature: FF D8 FF
-    if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
-      return 'jpg';
-    }
-  }
-
-  throw new Error(`Unable to detect image type for ${itemIdentifier}. Ensure the buffer is a valid PNG or JPG.`);
-}

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { PDFDocument, degrees } from 'pdf-lib';
-import { getTargetPages, mapVisualToIntrinsic, savePdfToContext, detectImageType } from '../common';
+import { getTargetPages, mapVisualToIntrinsic, savePdfToContext } from '../common';
 
 export const addImageToPdf = createAction({
   name: 'addImageToPdf',
@@ -83,17 +83,18 @@ export const addImageToPdf = createAction({
         }
 
         const imageData = item.imageFile.data;
-        const filename = item.imageFile.filename || `item ${i + 1}`;
-        
-        const imageType = detectImageType(imageData, `"${filename}"`);
+        const filename = item.imageFile.filename || '';
+        const extension = filename.split('.').pop()?.toLowerCase();
 
         let embeddedImage;
-        if (imageType === 'png') {
+        if (extension === 'png') {
           embeddedImage = await pdfDoc.embedPng(imageData);
-        } else if (imageType === 'jpg') {
+        } else if (extension === 'jpg' || extension === 'jpeg') {
           embeddedImage = await pdfDoc.embedJpg(imageData);
         } else {
-          throw new Error(`Unsupported image type "${imageType}" for image item ${i + 1}. Only PNG and JPG are supported.`);
+          throw new Error(
+            `Unsupported image format for item ${i + 1}. The file "${filename}" must have a .png, .jpg, or .jpeg extension.`
+          );
         }
 
         const imgDims = embeddedImage.scale(item.scale);
