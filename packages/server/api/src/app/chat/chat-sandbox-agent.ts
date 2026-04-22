@@ -134,8 +134,9 @@ async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionPa
                 currentToolCalls = []
                 inAssistantMessage = false
             }
-            const text = payload.params?.prompt?.[0]?.text
-            if (typeof text === 'string' && text.length > 0) {
+            const rawText = payload.params?.prompt?.[0]?.text
+            const text = typeof rawText === 'string' ? stripSystemInstructions(rawText) : ''
+            if (text.length > 0) {
                 messages.push({ role: 'user', content: text })
             }
         }
@@ -202,6 +203,13 @@ function pushAssistantMessage(
         ...(thoughts ? { thoughts } : {}),
         ...(toolCalls.length > 0 ? { toolCalls } : {}),
     })
+}
+
+function stripSystemInstructions(text: string): string {
+    return text
+        .replace(/<system_instructions>[\s\S]*?<\/system_instructions>\s*/g, '')
+        .replace(/^User message:\s*/i, '')
+        .trim()
 }
 
 function extractHistoryToolOutput(update: Record<string, unknown>): string | undefined {

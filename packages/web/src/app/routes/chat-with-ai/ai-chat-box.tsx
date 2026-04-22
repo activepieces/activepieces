@@ -2,16 +2,18 @@ import { AIProviderName } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowUp,
+  Cable,
   Check,
+  ChevronDown,
   Copy,
+  Loader2,
   Plus,
   RefreshCw,
   Settings,
   Square,
-  Zap,
   Table2,
   Workflow,
-  Cable,
+  Zap,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -35,6 +37,11 @@ import {
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { ThinkingBar } from '@/components/prompt-kit/thinking-bar';
 import { Button } from '@/components/ui/button';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlanCard } from '@/features/chat/components/plan-card';
 import { ToolCallCard } from '@/features/chat/components/tool-call-card';
@@ -122,14 +129,7 @@ function ChatBoxContent({
     [sendMessage, onFirstMessage],
   );
 
-  const lastMsg = messages[messages.length - 1];
-  const isThinking =
-    isStreaming &&
-    messages.length > 0 &&
-    lastMsg?.role === 'assistant' &&
-    lastMsg?.content === '' &&
-    lastMsg?.thoughts === '' &&
-    lastMsg?.toolCalls.length === 0;
+  // no separate isThinking — handled inside AssistantMessage
 
   const isEmpty =
     messages.length === 0 && !initialConversationId && !isLoadingHistory;
@@ -139,7 +139,7 @@ function ChatBoxContent({
       <div className="flex flex-col h-full flex-1 min-w-0 items-center justify-center px-6 pb-8">
         <div className="flex-1" />
         <EmptyState onSend={handleSend} incognito={incognito} />
-        <div className="w-full max-w-2xl mt-6">
+        <div className="w-full max-w-4xl mt-6">
           <ChatInput
             isStreaming={isStreaming}
             onSend={handleSend}
@@ -158,7 +158,7 @@ function ChatBoxContent({
   return (
     <div className="flex flex-col h-full flex-1 min-w-0">
       <ChatContainerRoot className="flex-1">
-        <ChatContainerContent className="max-w-2xl mx-auto px-6 py-8 gap-0">
+        <ChatContainerContent className="max-w-4xl mx-auto px-6 py-8 gap-0">
           {isLoadingHistory && <MessageSkeletons />}
 
           {messages.map((msg, idx) => {
@@ -166,19 +166,13 @@ function ChatBoxContent({
               isStreaming &&
               idx === messages.length - 1 &&
               msg.role === 'assistant';
-            const isEmptyAssistant =
-              isLastStreamingAssistant &&
-              msg.content === '' &&
-              msg.thoughts === '' &&
-              msg.toolCalls.length === 0;
-
-            if (isEmptyAssistant) return null;
 
             return (
               <ChatMessage
                 key={msg.id}
                 message={msg}
                 isStreaming={isLastStreamingAssistant}
+                onCancel={cancelStream}
                 onRetry={() => {
                   const lastUser = [...messages]
                     .reverse()
@@ -188,8 +182,6 @@ function ChatBoxContent({
               />
             );
           })}
-
-          {isThinking && <ThinkingIndicator onCancel={cancelStream} />}
 
           {error && (
             <div className="flex items-center gap-3 py-4 text-destructive text-sm animate-in fade-in duration-200">
@@ -217,7 +209,7 @@ function ChatBoxContent({
       </ChatContainerRoot>
 
       <div className="pb-4 px-6">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <ChatInput
             isStreaming={isStreaming}
             onSend={handleSend}
@@ -232,30 +224,18 @@ function ChatBoxContent({
   );
 }
 
-function ThinkingIndicator({ onCancel }: { onCancel: () => void }) {
-  return (
-    <div className="py-4 animate-in fade-in duration-300">
-      <ThinkingBar
-        text={t('Thinking')}
-        onStop={onCancel}
-        stopLabel={t('Stop')}
-      />
-    </div>
-  );
-}
-
 function ChatMessage({
   message,
   isStreaming,
+  onCancel,
   onRetry,
 }: {
   message: ChatMessageItem;
   isStreaming: boolean;
+  onCancel: () => void;
   onRetry: () => void;
 }) {
-  const isUser = message.role === 'user';
-
-  if (isUser) {
+  if (message.role === 'user') {
     return <UserMessage message={message} />;
   }
 
@@ -263,6 +243,7 @@ function ChatMessage({
     <AssistantMessage
       message={message}
       isStreaming={isStreaming}
+      onCancel={onCancel}
       onRetry={onRetry}
     />
   );
@@ -309,15 +290,20 @@ function UserMessage({ message }: { message: ChatMessageItem }) {
 function AssistantMessage({
   message,
   isStreaming,
+  onCancel,
   onRetry,
 }: {
   message: ChatMessageItem;
   isStreaming: boolean;
+  onCancel: () => void;
   onRetry: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   const hasThoughts = message.thoughts.length > 0;
-  const isThinkingOnly = hasThoughts && !message.content && isStreaming;
+  const hasContent = message.content.length > 0;
+  const hasToolCalls = message.toolCalls.length > 0;
+  const isWaiting = isStreaming && !hasThoughts && !hasContent && !hasToolCalls;
+  const isThinkingOnly = isStreaming && hasThoughts && !hasContent;
 
   const handleCopy = useCallback(() => {
     void navigator.clipboard.writeText(message.content);
@@ -326,12 +312,20 @@ function AssistantMessage({
   }, [message.content]);
 
   return (
-    <div className="flex items-start gap-3 py-4 animate-in fade-in slide-in-from-bottom-1 duration-200">
-      <div className="flex-1 min-w-0 overflow-hidden">
+    <div className="py-3 animate-in fade-in duration-200">
+      <div className="min-w-0 overflow-hidden space-y-2">
+        {isWaiting && (
+          <ThinkingBar
+            text={t('Reasoning')}
+            onStop={onCancel}
+            stopLabel={t('Stop')}
+          />
+        )}
+
         {hasThoughts && (
-          <Reasoning isStreaming={isThinkingOnly} className="mb-2">
+          <Reasoning isStreaming={isThinkingOnly} className="">
             <ReasoningTrigger className="text-sm text-muted-foreground">
-              {t('Thinking')}
+              {t('Reasoned for a few seconds')}
             </ReasoningTrigger>
             <ReasoningContent markdown contentClassName="text-xs">
               {message.thoughts}
@@ -339,22 +333,14 @@ function AssistantMessage({
           </Reasoning>
         )}
 
+        {hasToolCalls && <ToolCallGroup toolCalls={message.toolCalls} />}
+
         {message.plan && <PlanCard entries={message.plan} />}
 
-        {message.content && (
-          <MessageContentWithAuth content={message.content} />
-        )}
+        {hasContent && <MessageContentWithAuth content={message.content} />}
 
-        {message.toolCalls.length > 0 && (
-          <div className="mt-1 space-y-0.5">
-            {message.toolCalls.map((tc) => (
-              <ToolCallCard key={tc.id} toolCall={tc} />
-            ))}
-          </div>
-        )}
-
-        {message.content && !isStreaming && (
-          <div className="flex items-center gap-1 mt-3 text-muted-foreground">
+        {hasContent && !isStreaming && (
+          <div className="flex items-center gap-1 mt-2 text-muted-foreground">
             <button
               type="button"
               onClick={handleCopy}
@@ -379,6 +365,41 @@ function AssistantMessage({
         )}
       </div>
     </div>
+  );
+}
+
+function ToolCallGroup({
+  toolCalls,
+}: {
+  toolCalls: ChatMessageItem['toolCalls'];
+}) {
+  const allDone = toolCalls.every((tc) => tc.status !== 'running');
+  const runningCount = toolCalls.filter((tc) => tc.status === 'running').length;
+
+  const count = allDone ? toolCalls.length : (runningCount || toolCalls.length);
+  const summary = allDone
+    ? t('Used {count} tools', { count })
+    : t('Running {count} tools...', { count });
+
+  return (
+    <Collapsible defaultOpen={!allDone}>
+      <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer py-0.5">
+        {allDone ? (
+          <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+        ) : (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        )}
+        <span>{summary}</span>
+        <ChevronDown className="h-3 w-3" />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
+        <div className="ml-5 mt-1 space-y-0.5">
+          {toolCalls.map((tc) => (
+            <ToolCallCard key={tc.id} toolCall={tc} />
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -417,7 +438,7 @@ function MessageContentWithAuth({ content }: { content: string }) {
   }
 
   return (
-    <div className="prose prose-sm dark:prose-invert max-w-none break-words [&_pre]:overflow-x-auto [&_pre]:max-w-full">
+    <div className="prose prose-sm dark:prose-invert max-w-none break-words [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:w-full [&_table]:text-sm [&_th]:text-left [&_th]:p-2 [&_td]:p-2 [&_table]:border-collapse [&_th]:border-b [&_td]:border-b [&_th]:border-border [&_td]:border-border">
       <Markdown>{content}</Markdown>
     </div>
   );
