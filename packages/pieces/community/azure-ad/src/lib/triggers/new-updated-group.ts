@@ -1,66 +1,60 @@
-import { randomBytes } from 'crypto';
-import { createTrigger, TriggerStrategy, WebhookRenewStrategy } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { azureAdAuth } from '../auth';
-import { createGraphSubscription, deleteGraphSubscription, flattenNotificationItem } from '../common';
+import { callGraphApi, fetchGraphDeltaChanges } from '../common';
 
-const STORE_KEY = '_subscription_new_updated_group';
-
-type SubscriptionStore = { id: string; clientState: string };
+const STORE_KEY = '_delta_link_new_updated_group';
+const GROUP_SELECT =
+    'id,displayName,description,mail,mailNickname,visibility,groupTypes,securityEnabled,mailEnabled,createdDateTime';
 
 export const newUpdatedGroupTrigger = createTrigger({
     auth: azureAdAuth,
     name: 'new_updated_group',
     displayName: 'New/Updated Group',
-    description: 'New or updated group in Microsoft Entra ID',
-    type: TriggerStrategy.WEBHOOK,
+    description:
+        'Triggers when a group is created or updated in Microsoft Entra ID (e.g. name or description changes).',
+    type: TriggerStrategy.POLLING,
     props: {},
     sampleData: {
-        change_type: 'updated',
-        resource: 'Groups/12345-xxxx',
-        id: '12345-xxxx',
-    },
-    renewConfiguration: {
-        strategy: WebhookRenewStrategy.CRON,
-        cronExpression: '0 0 */1 * *',
+        id: 'abcdefab-1234-5678-9abc-def012345678',
+        displayName: 'Engineering',
+        description: 'Engineering department',
+        mail: 'engineering@contoso.com',
+        mailNickname: 'engineering',
+        visibility: 'Private',
+        groupTypes: ['Unified'],
+        securityEnabled: false,
+        mailEnabled: true,
+        createdDateTime: '2026-04-22T10:15:30Z',
     },
     async onEnable(context) {
-        const token = (context.auth as { access_token: string }).access_token;
-        const clientState = randomBytes(32).toString('hex');
-        const id = await createGraphSubscription(token, {
-            resource: 'groups',
-            changeType: 'created,updated',
-            notificationUrl: context.webhookUrl!,
-            clientState,
+        await fetchGraphDeltaChanges({
+            accessToken: context.auth.access_token,
+            store: context.store,
+            storeKey: STORE_KEY,
+            deltaPath: '/groups/delta',
+            select: GROUP_SELECT,
         });
-        await context.store.put(STORE_KEY, { id, clientState } satisfies SubscriptionStore);
     },
     async onDisable(context) {
-        const data = await context.store.get<SubscriptionStore>(STORE_KEY);
-        if (data?.id) {
-            const token = (context.auth as { access_token: string }).access_token;
-            await deleteGraphSubscription(token, data.id);
-        }
         await context.store.delete(STORE_KEY);
     },
-    async onRenew(context) {
-        const data = await context.store.get<SubscriptionStore>(STORE_KEY);
-        if (!data?.clientState) return;
-        const token = (context.auth as { access_token: string }).access_token;
-        if (data.id) await deleteGraphSubscription(token, data.id);
-        const newId = await createGraphSubscription(token, {
-            resource: 'groups',
-            changeType: 'created,updated',
-            notificationUrl: context.webhookUrl!,
-            clientState: data.clientState,
+    async test(context) {
+        // https://learn.microsoft.com/en-us/graph/api/group-list?view=graph-rest-1.0&tabs=http
+        const res = await callGraphApi<{ value?: unknown[] }>(context.auth.access_token, {
+            method: HttpMethod.GET,
+            url: '/groups',
+            query: { $select: GROUP_SELECT, $top: '3' },
         });
-        await context.store.put(STORE_KEY, { id: newId, clientState: data.clientState } satisfies SubscriptionStore);
+        return res.value ?? [];
     },
     async run(context) {
-        const data = await context.store.get<SubscriptionStore>(STORE_KEY);
-        if (!data?.clientState) return [];
-        const body = context.payload.body as { value?: Array<{ clientState?: string; changeType?: string; resource?: string; resourceData?: unknown }> };
-        const list = body?.value ?? [];
-        const valid = list.filter((n) => n.clientState === data.clientState);
-        return valid.map((n) => flattenNotificationItem(n));
+        return await fetchGraphDeltaChanges({
+            accessToken: context.auth.access_token,
+            store: context.store,
+            storeKey: STORE_KEY,
+            deltaPath: '/groups/delta',
+            select: GROUP_SELECT,
+        });
     },
 });

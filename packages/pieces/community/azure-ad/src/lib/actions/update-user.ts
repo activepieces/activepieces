@@ -41,7 +41,7 @@ export const updateUserAction = createAction({
         }),
     },
     async run(context) {
-        const token = (context.auth as { access_token: string }).access_token;
+        const token = context.auth.access_token;
         const props = context.propsValue;
         const userId = props.userId;
         const body: Record<string, unknown> = {};
@@ -53,13 +53,15 @@ export const updateUserAction = createAction({
         if (props['mobilePhone'] !== undefined && props['mobilePhone'] !== '') body['mobilePhone'] = props['mobilePhone'];
         if (props['accountEnabled'] !== undefined) body['accountEnabled'] = props['accountEnabled'];
         if (Object.keys(body).length === 0) {
-            return { success: false, message: 'No fields to update were provided.' };
+            throw new Error('Provide at least one field to update.');
         }
+        // https://learn.microsoft.com/en-us/graph/api/user-update?view=graph-rest-1.0&tabs=http
         await callGraphApi(token, {
             method: HttpMethod.PATCH,
             url: `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(String(userId))}`,
             body,
         });
+        // https://learn.microsoft.com/en-us/graph/api/user-get?view=graph-rest-1.0&tabs=http
         const user = await callGraphApi<Record<string, unknown>>(token, {
             method: HttpMethod.GET,
             url: `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(String(userId))}`,

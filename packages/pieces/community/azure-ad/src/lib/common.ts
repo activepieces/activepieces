@@ -1,10 +1,8 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property, Store } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 import { azureAdAuth } from './auth';
 
 const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
-
-type OAuth2Auth = { access_token: string };
 
 export async function callGraphApi<T>(
     accessToken: string,
@@ -86,7 +84,7 @@ export const userDropdown = Property.Dropdown({
     options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect your account first.' };
         try {
-            const token = (auth as OAuth2Auth).access_token;
+            const token = auth.access_token;
             const list = await fetchUsersForDropdown(token);
             return {
                 disabled: false,
@@ -111,7 +109,7 @@ export const groupDropdown = Property.Dropdown({
     options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect your account first.' };
         try {
-            const token = (auth as OAuth2Auth).access_token;
+            const token = auth.access_token;
             const list = await fetchGroupsForDropdown(token);
             return {
                 disabled: false,
@@ -150,7 +148,7 @@ export const directoryObjectDropdown = Property.Dropdown({
     options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect your account first.' };
         try {
-            const token = (auth as OAuth2Auth).access_token;
+            const token = auth.access_token;
             const options = await getUsersAndGroupsForDropdown(token);
             return {
                 disabled: false,
@@ -192,51 +190,61 @@ export function flattenGroup(obj: Record<string, unknown>): Record<string, unkno
     return flattenObject(obj);
 }
 
-/** Flattens a Graph webhook notification item for table-ready trigger output. */
-export function flattenNotificationItem(item: {
-    clientState?: string;
-    changeType?: string;
-    resource?: string;
-    resourceData?: unknown;
-}): Record<string, unknown> {
-    const data =
-        typeof item.resourceData === 'object' && item.resourceData !== null
-            ? flattenObject(item.resourceData as Record<string, unknown>)
-            : {};
-    return {
-        change_type: item.changeType ?? null,
-        resource: item.resource ?? null,
-        client_state: item.clientState ?? null,
-        ...data,
-    };
-}
+/**
+ * Fetches incremental changes from a Microsoft Graph delta endpoint.
+ *
+ * Microsoft Graph change notifications (webhooks) cannot be used here because Graph
+ * requires the notification URL to respond 200 OK to a synchronous validation request
+ * during `POST /subscriptions`. In Activepieces, `onEnable` runs *before* the flow's
+ * status is saved as ENABLED, so the webhook endpoint returns 404 for the validation
+ * probe and subscription creation fails. Delta queries avoid this entirely.
+ *
+ * On the first call (no stored deltaLink) this seeds using `$deltaToken=latest`, which
+ * skips the initial full enumeration and returns a deltaLink representing "right now",
+ * so future polls only surface changes after the trigger was enabled.
+ *
+ * Docs: https://learn.microsoft.com/en-us/graph/delta-query-overview
+ */
+export async function fetchGraphDeltaChanges<T extends { '@removed'?: unknown }>(params: {
+    accessToken: string;
+    store: Store;
+    storeKey: string;
+    deltaPath: string;
+    select?: string;
+}): Promise<T[]> {
+    const storedDeltaLink = await params.store.get<string>(params.storeKey);
+    const hasStoredLink = Boolean(storedDeltaLink);
 
-const SUBSCRIPTION_MAX_MINUTES = 2880; // 2 days (Graph allows up to 4230 for some resources)
+    let nextUrl: string | null;
+    if (hasStoredLink) {
+        nextUrl = storedDeltaLink;
+    } else {
+        const query = new URLSearchParams({ $deltaToken: 'latest' });
+        if (params.select) query.set('$select', params.select);
+        nextUrl = `${params.deltaPath}?${query.toString()}`;
+    }
 
-export async function createGraphSubscription(
-    accessToken: string,
-    params: { resource: string; changeType: string; notificationUrl: string; clientState: string },
-): Promise<string> {
-    const expiration = new Date();
-    expiration.setMinutes(expiration.getMinutes() + SUBSCRIPTION_MAX_MINUTES);
-    const body = {
-        changeType: params.changeType,
-        notificationUrl: params.notificationUrl,
-        resource: params.resource,
-        expirationDateTime: expiration.toISOString(),
-        clientState: params.clientState,
-    };
-    const sub = await callGraphApi<{ id: string }>(accessToken, {
-        method: HttpMethod.POST,
-        url: `${GRAPH_BASE}/subscriptions`,
-        body,
-    });
-    return sub.id;
-}
+    const collected: T[] = [];
+    while (nextUrl) {
+        const res = await callGraphApi<{
+            value?: T[];
+            '@odata.nextLink'?: string;
+            '@odata.deltaLink'?: string;
+        }>(params.accessToken, { method: HttpMethod.GET, url: nextUrl });
 
-export async function deleteGraphSubscription(accessToken: string, subscriptionId: string): Promise<void> {
-    await callGraphApi(accessToken, {
-        method: HttpMethod.DELETE,
-        url: `${GRAPH_BASE}/subscriptions/${subscriptionId}`,
-    });
+        if (hasStoredLink && res.value) {
+            for (const item of res.value) {
+                if (!item['@removed']) {
+                    collected.push(item);
+                }
+            }
+        }
+
+        if (res['@odata.deltaLink']) {
+            await params.store.put(params.storeKey, res['@odata.deltaLink']);
+            break;
+        }
+        nextUrl = res['@odata.nextLink'] ?? null;
+    }
+    return collected;
 }

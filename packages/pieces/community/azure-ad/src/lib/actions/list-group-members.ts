@@ -18,8 +18,9 @@ export const listGroupMembersAction = createAction({
         }),
     },
     async run(context) {
-        const token = (context.auth as { access_token: string }).access_token;
+        const token = context.auth.access_token;
         const { groupId, top = 100 } = context.propsValue;
+        // https://learn.microsoft.com/en-us/graph/api/group-list-members?view=graph-rest-1.0&tabs=http
         const result = await callGraphApi<{ value?: Record<string, unknown>[] }>(token, {
             method: HttpMethod.GET,
             url: `https://graph.microsoft.com/v1.0/groups/${groupId}/members`,

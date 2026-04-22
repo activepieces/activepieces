@@ -12,8 +12,9 @@ export const deleteUserAction = createAction({
         userId: userDropdown,
     },
     async run(context) {
-        const token = (context.auth as { access_token: string }).access_token;
+        const token = context.auth.access_token;
         const { userId } = context.propsValue;
+        // https://learn.microsoft.com/en-us/graph/api/user-delete?view=graph-rest-1.0&tabs=http
         await callGraphApi(token, {
             method: HttpMethod.DELETE,
             url: `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(String(userId))}`,

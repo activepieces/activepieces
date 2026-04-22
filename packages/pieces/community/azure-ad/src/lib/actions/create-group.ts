@@ -38,7 +38,7 @@ export const createGroupAction = createAction({
         }),
     },
     async run(context) {
-        const token = (context.auth as { access_token: string }).access_token;
+        const token = context.auth.access_token;
         const props = context.propsValue;
         const body: Record<string, unknown> = {
             displayName: props.displayName,
@@ -47,6 +47,7 @@ export const createGroupAction = createAction({
         };
         if (props['description']) body['description'] = props['description'];
         body['mailNickname'] = props['mailNickname'];
+        // https://learn.microsoft.com/en-us/graph/api/group-post-groups?view=graph-rest-1.0&tabs=http
         const group = await callGraphApi<Record<string, unknown>>(token, {
             method: HttpMethod.POST,
             url: 'https://graph.microsoft.com/v1.0/groups',

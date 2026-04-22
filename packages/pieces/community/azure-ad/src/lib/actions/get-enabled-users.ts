@@ -17,8 +17,9 @@ export const getEnabledUsersAction = createAction({
         }),
     },
     async run(context) {
-        const token = (context.auth as { access_token: string }).access_token;
+        const token = context.auth.access_token;
         const top = context.propsValue.top ?? 100;
+        // https://learn.microsoft.com/en-us/graph/api/user-list?view=graph-rest-1.0&tabs=http
         const result = await callGraphApi<{ value?: Record<string, unknown>[] }>(token, {
             method: HttpMethod.GET,
             url: 'https://graph.microsoft.com/v1.0/users',

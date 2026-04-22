@@ -17,10 +17,11 @@ export const listEnabledUsersAction = createAction({
         }),
     },
     async run(context) {
-        const token = (context.auth as { access_token: string }).access_token;
+        const token = context.auth.access_token;
         const pageSize = Math.min(999, Math.max(1, context.propsValue.pageSize ?? 100));
         const all: Record<string, unknown>[] = [];
         type Page = { value?: Record<string, unknown>[]; '@odata.nextLink'?: string };
+        // https://learn.microsoft.com/en-us/graph/api/user-list?view=graph-rest-1.0&tabs=http
         let url: string | null = `https://graph.microsoft.com/v1.0/users?$filter=accountEnabled eq true&$top=${pageSize}`;
         while (url) {
             const result: Page = await callGraphApi<Page>(token, {

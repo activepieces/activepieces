@@ -22,10 +22,11 @@ export const listUsersAction = createAction({
         }),
     },
     async run(context) {
-        const token = (context.auth as { access_token: string }).access_token;
+        const token = context.auth.access_token;
         const { top = 100, filter } = context.propsValue;
         const query: Record<string, string> = { $top: String(Math.min(999, Math.max(1, top ?? 100))) };
         if (filter) query['$filter'] = filter;
+        // https://learn.microsoft.com/en-us/graph/api/user-list?view=graph-rest-1.0&tabs=http
         const result = await callGraphApi<{ value?: Record<string, unknown>[] }>(token, {
             method: HttpMethod.GET,
             url: 'https://graph.microsoft.com/v1.0/users',

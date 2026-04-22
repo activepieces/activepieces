@@ -1,66 +1,89 @@
-import { randomBytes } from 'crypto';
-import { createTrigger, TriggerStrategy, WebhookRenewStrategy } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import {
+    AppConnectionValueForAuthProperty,
+    TriggerStrategy,
+    createTrigger,
+} from '@activepieces/pieces-framework';
+import dayjs from 'dayjs';
 import { azureAdAuth } from '../auth';
-import { createGraphSubscription, deleteGraphSubscription, flattenNotificationItem } from '../common';
+import { callGraphApi } from '../common';
 
-const STORE_KEY = '_subscription_new_group';
-
-type SubscriptionStore = { id: string; clientState: string };
+const GROUP_SELECT =
+    'id,displayName,description,mail,mailNickname,visibility,groupTypes,securityEnabled,mailEnabled,createdDateTime';
 
 export const newGroupTrigger = createTrigger({
     auth: azureAdAuth,
     name: 'new_group',
     displayName: 'New Group',
-    description: 'New group in Microsoft Entra ID',
-    type: TriggerStrategy.WEBHOOK,
+    description: 'Triggers when a new group is created in Microsoft Entra ID.',
+    type: TriggerStrategy.POLLING,
     props: {},
     sampleData: {
-        change_type: 'created',
-        resource: 'Groups/12345-xxxx',
-        id: '12345-xxxx',
-    },
-    renewConfiguration: {
-        strategy: WebhookRenewStrategy.CRON,
-        cronExpression: '0 0 */1 * *',
+        id: 'abcdefab-1234-5678-9abc-def012345678',
+        displayName: 'Engineering',
+        description: 'Engineering department',
+        mail: 'engineering@contoso.com',
+        mailNickname: 'engineering',
+        visibility: 'Private',
+        groupTypes: ['Unified'],
+        securityEnabled: false,
+        mailEnabled: true,
+        createdDateTime: '2026-04-22T10:15:30Z',
     },
     async onEnable(context) {
-        const token = (context.auth as { access_token: string }).access_token;
-        const clientState = randomBytes(32).toString('hex');
-        const id = await createGraphSubscription(token, {
-            resource: 'groups',
-            changeType: 'created',
-            notificationUrl: context.webhookUrl!,
-            clientState,
+        await pollingHelper.onEnable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
         });
-        await context.store.put(STORE_KEY, { id, clientState } satisfies SubscriptionStore);
     },
     async onDisable(context) {
-        const data = await context.store.get<SubscriptionStore>(STORE_KEY);
-        if (data?.id) {
-            const token = (context.auth as { access_token: string }).access_token;
-            await deleteGraphSubscription(token, data.id);
-        }
-        await context.store.delete(STORE_KEY);
-    },
-    async onRenew(context) {
-        const data = await context.store.get<SubscriptionStore>(STORE_KEY);
-        if (!data?.clientState) return;
-        const token = (context.auth as { access_token: string }).access_token;
-        if (data.id) await deleteGraphSubscription(token, data.id);
-        const newId = await createGraphSubscription(token, {
-            resource: 'groups',
-            changeType: 'created',
-            notificationUrl: context.webhookUrl!,
-            clientState: data.clientState,
+        await pollingHelper.onDisable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
         });
-        await context.store.put(STORE_KEY, { id: newId, clientState: data.clientState } satisfies SubscriptionStore);
+    },
+    async test(context) {
+        return await pollingHelper.test(polling, context);
     },
     async run(context) {
-        const data = await context.store.get<SubscriptionStore>(STORE_KEY);
-        if (!data?.clientState) return [];
-        const body = context.payload.body as { value?: Array<{ clientState?: string; changeType?: string; resource?: string; resourceData?: unknown }> };
-        const list = body?.value ?? [];
-        const valid = list.filter((n) => n.clientState === data.clientState);
-        return valid.map((n) => flattenNotificationItem(n));
+        return await pollingHelper.poll(polling, context);
     },
 });
+
+const polling: Polling<
+    AppConnectionValueForAuthProperty<typeof azureAdAuth>,
+    Record<string, never>
+> = {
+    strategy: DedupeStrategy.TIMEBASED,
+    async items({ auth, lastFetchEpochMS }) {
+        const query: Record<string, string> = {
+            $select: GROUP_SELECT,
+            $orderby: 'createdDateTime desc',
+            $top: '50',
+        };
+        if (lastFetchEpochMS !== 0) {
+            query['$filter'] = `createdDateTime gt ${dayjs(lastFetchEpochMS).toISOString()}`;
+        }
+        // https://learn.microsoft.com/en-us/graph/api/group-list?view=graph-rest-1.0&tabs=http
+        const res = await callGraphApi<{ value?: GraphGroup[] }>(auth.access_token, {
+            method: HttpMethod.GET,
+            url: '/groups',
+            query,
+        });
+        return (res.value ?? [])
+            .filter((g) => g.createdDateTime)
+            .map((group) => ({
+                epochMilliSeconds: dayjs(group.createdDateTime).valueOf(),
+                data: group,
+            }));
+    },
+};
+
+type GraphGroup = {
+    id: string;
+    createdDateTime?: string;
+    [key: string]: unknown;
+};

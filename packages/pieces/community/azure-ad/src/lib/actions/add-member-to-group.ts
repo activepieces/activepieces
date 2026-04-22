@@ -13,8 +13,10 @@ export const addMemberToGroupAction = createAction({
         memberId: directoryObjectDropdown,
     },
     async run(context) {
-        const token = (context.auth as { access_token: string }).access_token;
+        const token = context.auth.access_token;
         const { groupId, memberId } = context.propsValue;
+
+        // https://learn.microsoft.com/en-us/graph/api/group-post-members?view=graph-rest-1.0&tabs=http
         await callGraphApi(token, {
             method: HttpMethod.POST,
             url: `https://graph.microsoft.com/v1.0/groups/${groupId}/members/$ref`,

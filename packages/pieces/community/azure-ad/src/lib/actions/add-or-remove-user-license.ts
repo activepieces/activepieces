@@ -24,10 +24,13 @@ export const addOrRemoveUserLicenseAction = createAction({
         }),
     },
     async run(context) {
-        const token = (context.auth as { access_token: string }).access_token;
+        const token = context.auth.access_token;
         const { userId, addLicenses, removeLicenses } = context.propsValue;
         const add = Array.isArray(addLicenses) ? addLicenses : [];
         const remove = Array.isArray(removeLicenses) ? removeLicenses : [];
+        if (add.length === 0 && remove.length === 0) {
+            throw new Error('Provide at least one entry in Add Licenses or Remove Licenses.');
+        }
         const body = {
             addLicenses: add.map((a: { skuId: string; disabledPlans?: string[] }) => ({
                 skuId: a.skuId,
@@ -35,6 +38,7 @@ export const addOrRemoveUserLicenseAction = createAction({
             })),
             removeLicenses: remove,
         };
+        // https://learn.microsoft.com/en-us/graph/api/user-assignlicense?view=graph-rest-1.0&tabs=http
         const user = await callGraphApi<Record<string, unknown>>(token, {
             method: HttpMethod.POST,
             url: `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(String(userId))}/assignLicense`,

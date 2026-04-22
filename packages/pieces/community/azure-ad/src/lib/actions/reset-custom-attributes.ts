@@ -32,7 +32,7 @@ export const resetCustomAttributesAction = createAction({
                 const type = resourceType as string;
                 if (!type) return { disabled: true, options: [], placeholder: 'Select resource type first.' };
                 try {
-                    const token = (auth as { access_token: string }).access_token;
+                    const token = auth.access_token;
                     const options = await getResourceOptionsForType(token, type);
                     return {
                         disabled: false,
@@ -51,11 +51,13 @@ export const resetCustomAttributesAction = createAction({
         }),
     },
     async run(context) {
-        const token = (context.auth as { access_token: string }).access_token;
+        const token = context.auth.access_token;
         const { resourceType, resourceId, extensionNames } = context.propsValue;
         const resource = resourceType as string;
         const id = resourceId as string;
         const getUrl = `https://graph.microsoft.com/v1.0/${resource}/${encodeURIComponent(id)}`;
+        // https://learn.microsoft.com/en-us/graph/api/user-get?view=graph-rest-1.0&tabs=http
+        // https://learn.microsoft.com/en-us/graph/api/group-get?view=graph-rest-1.0&tabs=http
         const existing = await callGraphApi<Record<string, unknown>>(token, {
             method: HttpMethod.GET,
             url: getUrl,
@@ -70,6 +72,8 @@ export const resetCustomAttributesAction = createAction({
         if (Object.keys(patchBody).length === 0) {
             return { success: true, message: 'No extension attributes to reset.' };
         }
+        // https://learn.microsoft.com/en-us/graph/api/user-update?view=graph-rest-1.0&tabs=http
+        // https://learn.microsoft.com/en-us/graph/api/group-update?view=graph-rest-1.0&tabs=http
         await callGraphApi(token, {
             method: HttpMethod.PATCH,
             url: getUrl,

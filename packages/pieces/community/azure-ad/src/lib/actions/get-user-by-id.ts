@@ -12,8 +12,9 @@ export const getUserByIdAction = createAction({
         userId: userDropdown,
     },
     async run(context) {
-        const token = (context.auth as { access_token: string }).access_token;
+        const token = context.auth.access_token;
         const { userId } = context.propsValue;
+        // https://learn.microsoft.com/en-us/graph/api/user-get?view=graph-rest-1.0&tabs=http
         const user = await callGraphApi<Record<string, unknown>>(token, {
             method: HttpMethod.GET,
             url: `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(String(userId))}`,

@@ -20,7 +20,7 @@ import { updateUserAction } from './lib/actions/update-user';
 import { newDeletedUserTrigger } from './lib/triggers/new-deleted-user';
 import { newGroupTrigger } from './lib/triggers/new-group';
 import { newUpdatedGroupTrigger } from './lib/triggers/new-updated-group';
-import { newUpdatedMemberRealtimeTrigger } from './lib/triggers/new-updated-member-realtime';
+import { newUpdatedMemberTrigger } from './lib/triggers/new-updated-member';
 import { newUpdatedUserTrigger } from './lib/triggers/new-updated-user';
 import { newUserTrigger } from './lib/triggers/new-user';
 
@@ -30,7 +30,7 @@ export const azureAd = createPiece({
     minimumSupportedRelease: '0.36.1',
     logoUrl: 'https://cdn.activepieces.com/pieces/azure-ad.png',
     categories: [PieceCategory.SALES_AND_CRM],
-    authors: ['maurivan'],
+    authors: ['maurivan', 'sanket-a11y'],
     auth: azureAdAuth,
     actions: [
         addMemberToGroupAction,
@@ -60,7 +60,7 @@ export const azureAd = createPiece({
         newDeletedUserTrigger,
         newGroupTrigger,
         newUpdatedGroupTrigger,
-        newUpdatedMemberRealtimeTrigger,
+        newUpdatedMemberTrigger,
         newUpdatedUserTrigger,
         newUserTrigger,
     ],

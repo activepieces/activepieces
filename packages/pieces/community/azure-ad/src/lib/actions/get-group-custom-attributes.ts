@@ -12,8 +12,9 @@ export const getGroupCustomAttributesAction = createAction({
         groupId: groupDropdown,
     },
     async run(context) {
-        const token = (context.auth as { access_token: string }).access_token;
+        const token = context.auth.access_token;
         const { groupId } = context.propsValue;
+        // https://learn.microsoft.com/en-us/graph/api/group-get?view=graph-rest-1.0&tabs=http
         const group = await callGraphApi<Record<string, unknown>>(token, {
             method: HttpMethod.GET,
             url: `https://graph.microsoft.com/v1.0/groups/${groupId}`,
