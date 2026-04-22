@@ -10,7 +10,7 @@ export const googleDocsScopes = [
 ];
 
 export const googleDocsAuth = [PieceAuth.OAuth2({
-	description: '',
+	description: 'Sign in with your Google account. On self-hosted installs, create OAuth 2.0 credentials in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials) with the **Google Docs API** and **Google Drive API** enabled, then paste the client ID/secret in your Activepieces app credentials settings.',
 	authUrl: 'https://accounts.google.com/o/oauth2/auth',
 	tokenUrl: 'https://oauth2.googleapis.com/token',
 	required: true,

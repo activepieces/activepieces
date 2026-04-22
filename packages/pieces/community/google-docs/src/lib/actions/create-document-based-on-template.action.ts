@@ -2,101 +2,136 @@
 import { googleDocsAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
-
-const PLACEHOLDER_FORMATS: Record<string, string> = {
-  'curly_braces': '{{KEY}}',
-  'square_brackets': '[[KEY]]',
-  'single_curly': '{KEY}',
-  'single_square': '[KEY]',
-  '{{KEY}}': '{{KEY}}',
-  '[[KEY]]': '[[KEY]]',
-  '{KEY}': '{KEY}',
-  '[KEY]': '[KEY]',
-};
+import { flattenDoc, moveFileToFolder } from '../common';
+import { documentIdProp, folderIdProp } from '../common/props';
 
 export const createDocumentBasedOnTemplate = createAction({
   auth: googleDocsAuth,
   name: 'create_document_based_on_template',
   description:
-    'Edit a template file and replace the values with the ones provided',
-  displayName: 'Edit template file',
+    'Copy a template document and replace placeholder variables (and optionally images) with your values.',
+  displayName: 'Create Document from Template',
   props: {
-    template: Property.ShortText({
-      displayName: 'Destination File',
-      description: 'The ID of the file to replace the values',
+    template: documentIdProp('Template Document', 'The Google Doc to use as the template.'),
+    copyTemplate: Property.Checkbox({
+      displayName: 'Copy template before editing?',
+      description:
+        'When enabled (recommended), the template is duplicated and placeholders are replaced on the copy — leaving your template untouched. Disable to edit the template document in place (legacy behavior).',
+      required: false,
+      defaultValue: true,
+    }),
+    newDocumentTitle: Property.ShortText({
+      displayName: 'New Document Title',
+      description: 'Title for the new document (only used when copying the template).',
+      required: false,
+    }),
+    folderId: folderIdProp,
+    placeholder_format: Property.StaticDropdown({
+      displayName: 'Placeholder Format',
+      description:
+        'The format placeholders use in your template. Pick this before filling in Variables so the keys below match what is in the document.',
       required: true,
+      defaultValue: 'square_brackets',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Curly Braces {{KEY}}', value: 'curly_braces' },
+          { label: 'Square Brackets [[KEY]]', value: 'square_brackets' },
+          { label: 'Single Curly Braces {KEY}', value: 'single_curly' },
+          { label: 'Single Square Brackets [KEY]', value: 'single_square' },
+        ],
+      },
     }),
     values: Property.Object({
       displayName: 'Variables',
-      description: 'Dont include the placeholder format "[[]]" or "{{}}", only the key name and its value',
+      description:
+        'Keys are placeholder names without the format markers. For example, use `name` (not `[[name]]` or `{{name}}`). Values are what the placeholders are replaced with.',
       required: true,
     }),
     images: Property.Object({
       displayName: 'Images',
       description:
-        'Key: Image ID (get it manually from the Read File Action), Value: Image URL',
-      required: true,
+        'Key: image object ID (obtain from the Read Document action), Value: new image URL. Leave empty if you do not want to replace images.',
+      required: false,
     }),
-    placeholder_format: Property.StaticDropdown({
-      displayName: 'Placeholder Format',
-      description: 'Choose the format of placeholders in your template',
-      required: true,
-      defaultValue: 'square_brackets',
-      options: {
-          disabled: false,
-          options: [
-              { label: 'Curly Braces {{}}', value: 'curly_braces' },
-              { label: 'Square Brackets [[]]', value: 'square_brackets' },
-              { label: 'Single Curly Braces {}', value: 'single_curly' },
-              { label: 'Single Square Brackets []', value: 'single_square' }
-          ],
-        },
-  }),
   },
   async run(context) {
-    const documentId: string = context.propsValue.template;
-    const values = context.propsValue.values;
-    const placeholderType = context.propsValue.placeholder_format;
-    const placeholder_format = PLACEHOLDER_FORMATS[placeholderType] || '[[KEY]]';
+    const {
+      template,
+      copyTemplate = true,
+      newDocumentTitle,
+      folderId,
+      values,
+      images,
+      placeholder_format,
+    } = context.propsValue;
 
     const authClient = await createGoogleClient(context.auth);
-    const docs = google.docs('v1');
+    const docs = google.docs({ version: 'v1', auth: authClient });
+    const drive = google.drive({ version: 'v3', auth: authClient });
 
-    const requests = [];
+    let targetDocumentId = template;
+
+    if (copyTemplate) {
+      const copied = await drive.files.copy({
+        fileId: template,
+        supportsAllDrives: true,
+        requestBody: {
+          name: newDocumentTitle || undefined,
+        },
+      });
+      if (!copied.data.id) {
+        throw new Error('Failed to copy template document.');
+      }
+      targetDocumentId = copied.data.id;
+
+      if (folderId) {
+        await moveFileToFolder({ drive, fileId: targetDocumentId, folderId });
+      }
+    }
+
+    const placeholderTemplate = PLACEHOLDER_FORMATS[placeholder_format] ?? '[[KEY]]';
+    const requests: any[] = [];
 
     for (const key in values) {
       const value = values[key];
-      const new_key = placeholder_format.replace('KEY', key);
-
       requests.push({
         replaceAllText: {
           containsText: {
-            text: new_key,
+            text: placeholderTemplate.replace('KEY', key),
             matchCase: true,
           },
-          replaceText: String(value),
+          replaceText: value == null ? '' : String(value),
         },
       });
     }
 
-    for (const key in context.propsValue.images) {
-      const value = context.propsValue.images[key];
-      requests.push({
-        replaceImage: {
-          imageObjectId: key,
-          uri: String(value),
-        },
+    if (images) {
+      for (const key in images) {
+        requests.push({
+          replaceImage: {
+            imageObjectId: key,
+            uri: String(images[key]),
+          },
+        });
+      }
+    }
+
+    if (requests.length > 0) {
+      await docs.documents.batchUpdate({
+        documentId: targetDocumentId,
+        requestBody: { requests },
       });
     }
 
-    const res = await docs.documents.batchUpdate({
-      auth: authClient,
-      documentId,
-      requestBody: {
-        requests: requests,
-      },
-    });
-
-    return res;
+    const finalDoc = await docs.documents.get({ documentId: targetDocumentId });
+    return flattenDoc(finalDoc.data);
   },
 });
+
+const PLACEHOLDER_FORMATS: Record<string, string> = {
+  curly_braces: '{{KEY}}',
+  square_brackets: '[[KEY]]',
+  single_curly: '{KEY}',
+  single_square: '[KEY]',
+};

@@ -7,7 +7,15 @@ import { createDocumentBasedOnTemplate } from './lib/actions/create-document-bas
 import { readDocument } from './lib/actions/read-document.action';
 import { appendText } from './lib/actions/append-text';
 import { findDocumentAction } from './lib/actions/find-document';
+import { findAndReplaceText } from './lib/actions/find-and-replace-text';
+import { insertText } from './lib/actions/insert-text';
+import { insertImage } from './lib/actions/insert-image';
+import { replaceImage } from './lib/actions/replace-image';
+import { copyDocument } from './lib/actions/copy-document';
+import { shareDocument } from './lib/actions/share-document';
+import { exportDocument } from './lib/actions/export-document';
 import { newDocumentTrigger } from './lib/triggers/new-document';
+import { updatedDocumentTrigger } from './lib/triggers/updated-document';
 import { googleDocsAuth, getAccessToken, GoogleDocsAuthValue } from './lib/auth';
 
 export { googleDocsAuth, getAccessToken, GoogleDocsAuthValue } from './lib/auth';
@@ -25,14 +33,22 @@ export const googleDocs = createPiece({
 		'khaledmashaly',
 		'abuaboud',
 		'AbdullahBitar',
-		'Kevinyu-alan'
+		'Kevinyu-alan',
 	],
 	auth: googleDocsAuth,
 	actions: [
 		createDocument,
 		createDocumentBasedOnTemplate,
+		copyDocument,
 		readDocument,
 		findDocumentAction,
+		appendText,
+		insertText,
+		findAndReplaceText,
+		insertImage,
+		replaceImage,
+		shareDocument,
+		exportDocument,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://docs.googleapis.com/v1',
 			auth: googleDocsAuth,
@@ -40,7 +56,6 @@ export const googleDocs = createPiece({
 				Authorization: `Bearer ${await getAccessToken(auth as GoogleDocsAuthValue)}`,
 			}),
 		}),
-		appendText,
 	],
-	triggers: [newDocumentTrigger],
+	triggers: [newDocumentTrigger, updatedDocumentTrigger],
 });

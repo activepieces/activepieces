@@ -6,15 +6,17 @@ import {
 } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
 import { folderIdProp } from '../common/props';
+import { flattenDriveFile, moveFileToFolder } from '../common';
 
 export const findDocumentAction = createAction({
 	auth: googleDocsAuth,
 	name: 'google-docs-find-document',
 	displayName: 'Find Document',
-	description: 'Search for document by name.',
+	description: 'Search for a Google Doc by name, optionally within a specific folder. Can create a new document if none is found.',
 	props: {
 		name: Property.ShortText({
 			displayName: 'Document Name',
+			description: 'Search by document name (uses a "contains" match).',
 			required: true,
 		}),
 		folderId: folderIdProp,
@@ -33,34 +35,29 @@ export const findDocumentAction = createAction({
 				if (!createIfNotFound) return {};
 
 				const props: DynamicPropsValue = {};
-
-				if (createIfNotFound) {
-					props['content'] = Property.LongText({
-						displayName: 'Document Content',
-						required: true,
-					});
-				}
-
+				props['content'] = Property.LongText({
+					displayName: 'Document Content',
+					description: 'Initial content for the new document.',
+					required: true,
+				});
 				return props;
 			},
 		}),
 	},
 	async run(context) {
 		const { name: documentName, folderId, createIfNotFound, newDocumentProps } = context.propsValue;
-		const newDocumentContent = newDocumentProps?.['content'] as string;
+		const newDocumentContent = newDocumentProps?.['content'] as string | undefined;
 
 		const authClient = await createGoogleClient(context.auth);
-
 		const drive = google.drive({ version: 'v3', auth: authClient });
 		const docs = google.docs({ version: 'v1', auth: authClient });
 
-		// Search for the document in Google Drive
+		const sanitizedName = documentName.replace(/'/g, "\\'");
 		const query: string[] = [
-			`name contains '${documentName}'`,
+			`name contains '${sanitizedName}'`,
 			`mimeType='application/vnd.google-apps.document'`,
 			'trashed=false',
 		];
-
 		if (folderId) query.push(`'${folderId}' in parents`);
 
 		const response = await drive.files.list({
@@ -72,23 +69,19 @@ export const findDocumentAction = createAction({
 		});
 
 		const existingFile = response.data.files?.[0];
-
 		if (existingFile) {
-			return { found: true, file: existingFile };
+			return { found: true, ...flattenDriveFile(existingFile) };
 		}
 
-		// Create a new document if not found
-		if (!createIfNotFound) return { found: false, file: {} };
+		if (!createIfNotFound) {
+			return { found: false, id: null, name: null, url: null };
+		}
 
-		//creating new Document
 		const createdDoc = await docs.documents.create({ requestBody: { title: documentName } });
 		const documentId = createdDoc.data.documentId;
+		if (!documentId) throw new Error('Failed to create document.');
 
-		if (!documentId) throw new Error('Failed to create document');
-
-		// Insert content into the new document
 		if (newDocumentContent) {
-			// appending text
 			await docs.documents.batchUpdate({
 				documentId,
 				requestBody: {
@@ -97,30 +90,16 @@ export const findDocumentAction = createAction({
 			});
 		}
 
-		// Move the document to the specified folder
 		if (folderId) {
-			const fileData = await drive.files.get({
-				fileId: documentId,
-				supportsAllDrives: true,
-				fields: 'id, parents',
-			});
-
-			await drive.files.update({
-				fileId: documentId,
-				fields: 'id, name, parents',
-				removeParents: fileData.data.parents?.join(','),
-				addParents: folderId,
-				supportsAllDrives: true,
-			});
+			await moveFileToFolder({ drive, fileId: documentId, folderId });
 		}
 
-		// Fetch document details
 		const finalFile = await drive.files.get({
 			fileId: documentId,
 			supportsAllDrives: true,
 			fields: '*',
 		});
 
-		return { found: false, file: finalFile.data };
+		return { found: false, created: true, ...flattenDriveFile(finalFile.data) };
 	},
 });
