@@ -107,12 +107,17 @@ export const generateImage = createAction({
         ? undefined
         : quality;
 
+    const dalleResolutions = new Set(['256x256', '512x512', '1024x1024', '1024x1792', '1792x1024']);
+    const gptImageResolutions = new Set(['auto', '1024x1024', '1536x1024', '1024x1536']);
+    const validResolutions = model === 'gpt-image-2' ? gptImageResolutions : dalleResolutions;
+    const effectiveSize = resolution && validResolutions.has(resolution) ? resolution : undefined;
+
     // quality and size include gpt-image-2 values not yet in SDK types
     const response = await openai.images.generate({
       model,
       prompt,
       quality: effectiveQuality,
-      size: resolution,
+      size: effectiveSize,
     } as Parameters<typeof openai.images.generate>[0]);
 
     const images = response.data ?? [];
