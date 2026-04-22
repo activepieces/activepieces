@@ -30,7 +30,7 @@ services:
     networks:
       - activepieces
   postgres:
-    image: 'pgvector/pgvector:pg14'
+    image: 'pgvector/pgvector:0.8.0-pg14'
     container_name: postgres
     restart: unless-stopped
     env_file: .env
