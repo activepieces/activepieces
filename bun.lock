@@ -3033,7 +3033,7 @@
     },
     "packages/pieces/community/google-drive": {
       "name": "@activepieces/piece-google-drive",
-      "version": "0.7.2",
+      "version": "0.7.3",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7748,7 +7748,7 @@
     },
     "packages/pieces/core/pdf": {
       "name": "@activepieces/piece-pdf",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7760,6 +7760,7 @@
         "unpdf": "1.4.0",
       },
       "devDependencies": {
+        "@types/mime-types": "2.1.1",
         "vitest": "3.0.8",
       },
     },
@@ -8164,7 +8165,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.66.0",
+      "version": "0.66.1",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
