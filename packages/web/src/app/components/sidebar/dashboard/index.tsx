@@ -153,7 +153,7 @@ export function ProjectDashboardSidebar({
     label: t('Spark'),
     show: platform.plan.chatEnabled,
     icon: SparklesIcon,
-    iconClassName: 'text-amber-500',
+    iconClassName: 'text-primary',
     hasPermission: platform.plan.chatEnabled,
     isSubItem: false,
     badge: t('Beta'),

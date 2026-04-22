@@ -614,7 +614,7 @@ function EmptyState({
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <Sparkles className="h-8 w-8 text-amber-500" />
+      <Sparkles className="h-8 w-8 text-primary" />
       <h2
         className="text-[32px] font-bold text-center leading-tight bg-gradient-to-r from-foreground via-foreground/80 to-primary bg-clip-text text-transparent"
         style={{ textWrap: 'balance' }}
