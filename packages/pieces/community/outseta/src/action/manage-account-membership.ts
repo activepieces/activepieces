@@ -96,6 +96,10 @@ export const manageAccountMembershipAction = createAction({
         person_uid: context.propsValue.personUid,
       };
     }
+    // DELETE endpoint shape verified live on the Outseta API:
+    //   DELETE /api/v1/crm/accounts/{accountUid}/memberships/{membershipUid}
+    //   With a fake membership UID the API returns 400 "Invalid uid"
+    //   (instead of 404 / 405), confirming the path is correctly routed.
     await client.delete<any>(
       `/api/v1/crm/accounts/${context.propsValue.accountUid}/memberships/${membership.Uid}`
     );
