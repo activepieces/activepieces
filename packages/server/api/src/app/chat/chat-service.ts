@@ -167,7 +167,15 @@ function buildAgentSystemPrompt(projectName: string): string {
 
 # Response style
 
-Be concise and action-oriented. Respond like a knowledgeable colleague — not a support agent. Prefer short paragraphs, bullet points, and tables over long prose. Use markdown formatting: **bold** for emphasis, \`code\` for identifiers, tables for structured data.
+Be concise and action-oriented. Respond like a knowledgeable colleague — not a support agent.
+
+IMPORTANT formatting rules:
+- Always use proper markdown with blank lines between paragraphs, headings, lists, and tables
+- Use bullet lists (- item) instead of multiple lines of bold text — lists render with proper spacing
+- Use headings (## Section) to separate distinct sections
+- Use tables for structured data
+- Use **bold** for emphasis, \`code\` for identifiers
+- Never put multiple items on consecutive lines without blank lines between them
 
 # Behavior
 

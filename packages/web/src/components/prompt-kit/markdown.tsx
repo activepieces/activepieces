@@ -14,8 +14,19 @@ export type MarkdownProps = {
   components?: Partial<Components>;
 };
 
+function normalizeMarkdownSpacing(markdown: string): string {
+  return markdown
+    .replace(/\n(?!\n)/g, (match, offset, str) => {
+      const before = str.slice(Math.max(0, offset - 3), offset);
+      if (/[|`-]/.test(before)) return match;
+      if (/^\s*[-*+\d.]/.test(str.slice(offset + 1, offset + 10))) return match;
+      return '\n\n';
+    });
+}
+
 function parseMarkdownIntoBlocks(markdown: string): string[] {
-  const tokens = marked.lexer(markdown);
+  const normalized = normalizeMarkdownSpacing(markdown);
+  const tokens = marked.lexer(normalized);
   return tokens.map((token) => token.raw);
 }
 
