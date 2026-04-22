@@ -133,6 +133,11 @@ export const newEventTrigger = createTrigger({
     const body = context.payload.body as { type: string; payload: SavvyCalEvent };
     if (!body?.payload) return [];
 
+    // Guard: only handle the 7 pure event.* types — checkout/attendee/poll/workflow
+    // payloads have different structures and are handled by their own dedicated triggers.
+    const PURE_EVENT_VALUES = EVENT_TYPES.map((t) => t.value);
+    if (!PURE_EVENT_VALUES.includes(body.type)) return [];
+
     const selectedTypes = context.propsValue.event_types as string[] | undefined;
     if (selectedTypes && selectedTypes.length > 0 && !selectedTypes.includes(body.type)) return [];
 
@@ -145,9 +150,10 @@ export const newEventTrigger = createTrigger({
   },
 
   async test(context) {
+    const PURE_EVENT_VALUES = EVENT_TYPES.map((t) => t.value);
     const selectedTypes = context.propsValue.event_types as string[] | undefined;
-    const hasOnlyNonEventTypes = selectedTypes && selectedTypes.length > 0 && selectedTypes.every((t) => !t.startsWith('event.'));
-    if (hasOnlyNonEventTypes) return [];
+    const hasOnlyNonPureTypes = selectedTypes && selectedTypes.length > 0 && selectedTypes.every((t) => !PURE_EVENT_VALUES.includes(t));
+    if (hasOnlyNonPureTypes) return [];
 
     const selectedLinkIds = context.propsValue.link_ids as string[] | undefined;
     const queryParams: Record<string, string> = { limit: '10' };
