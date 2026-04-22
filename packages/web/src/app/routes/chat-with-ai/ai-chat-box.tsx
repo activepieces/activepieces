@@ -553,7 +553,7 @@ function ChatInput({
       className="rounded-2xl border shadow-sm"
     >
       <PromptInputTextarea
-        placeholder={t('Message Spark...')}
+        placeholder={t('Message...')}
         className="min-h-[44px] text-sm"
       />
       <PromptInputActions className="justify-between px-1">

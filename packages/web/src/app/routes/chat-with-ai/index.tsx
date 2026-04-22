@@ -72,7 +72,7 @@ export function ChatWithAIPage() {
     <div className="flex flex-col h-full">
       <div className="px-4 py-2 flex items-center justify-between">
         <PageHeader
-          title={t('Spark')}
+          title={t('Chat')}
           showSidebarToggle={true}
           className="flex-1 !p-0"
         />

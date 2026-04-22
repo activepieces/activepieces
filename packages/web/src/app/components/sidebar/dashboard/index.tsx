@@ -150,7 +150,7 @@ export function ProjectDashboardSidebar({
   const chatWithAILink: SidebarItemType = {
     type: 'link',
     to: '/chat-with-ai',
-    label: t('Spark'),
+    label: t('Chat'),
     show: platform.plan.chatEnabled,
     icon: SparklesIcon,
     iconClassName: 'animate-[color-cycle_3s_ease-in-out_infinite]',

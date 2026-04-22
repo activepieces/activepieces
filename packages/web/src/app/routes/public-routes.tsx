@@ -47,7 +47,7 @@ export const publicRoutes = [
     path: '/chat-with-ai',
     element: (
       <ProjectDashboardLayout>
-        <PageTitle title="Spark">
+        <PageTitle title="Chat">
           <SuspenseWrapper>
             <ChatWithAIPage />
           </SuspenseWrapper>
