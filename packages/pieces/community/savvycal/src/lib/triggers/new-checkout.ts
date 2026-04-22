@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { savvyCalApiCall, verifyWebhookSignature } from '../common';
+import { savvyCalApiCall, verifyWebhookSignature, flattenEvent, buildTeamOptions, buildLinkOptions, SavvyCalEvent } from '../common';
 import { savvyCalAuth } from '../../';
 
 const CHECKOUT_TYPES = [
@@ -11,10 +11,18 @@ const CHECKOUT_TYPES = [
 
 const SAMPLE_DATA = {
   event_type: 'event.checkout.completed',
-  id: 'chk_abc123',
-  state: 'completed',
-  amount_total: 5000,
-  currency: 'usd',
+  id: 'evt_abc123',
+  uuid: '550e8400-e29b-41d4-a716-446655440000',
+  state: 'confirmed',
+  start_at: '2024-06-01T10:00:00Z',
+  end_at: '2024-06-01T10:30:00Z',
+  duration_minutes: 30,
+  scheduling_link_id: 'lnk_xyz789',
+  scheduling_link_name: '30-Minute Meeting',
+  scheduling_link_slug: '30min',
+  attendee_email: 'jane@example.com',
+  payment_state: 'paid',
+  payment_amount_total_cents: 5000,
 };
 
 export const newCheckoutTrigger = createTrigger({
@@ -28,6 +36,38 @@ export const newCheckoutTrigger = createTrigger({
       description: 'Select which checkout event types to trigger on. Leave empty to trigger on all checkout types.',
       required: false,
       options: { options: CHECKOUT_TYPES },
+    }),
+    team_id: Property.Dropdown({
+      auth: savvyCalAuth,
+      displayName: 'Team',
+      description: 'Filter scheduling links by team. Leave empty to show all teams.',
+      refreshers: [],
+      required: false,
+      options: async ({ auth }) => {
+        if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
+        try {
+          const options = await buildTeamOptions(auth.secret_text);
+          return { disabled: false, options };
+        } catch {
+          return { disabled: true, options: [], placeholder: 'Failed to load teams.' };
+        }
+      },
+    }),
+    link_ids: Property.MultiSelectDropdown({
+      auth: savvyCalAuth,
+      displayName: 'Scheduling Links',
+      description: 'Only trigger for events on the selected scheduling links. Leave empty to trigger for all links.',
+      refreshers: ['team_id'],
+      required: false,
+      options: async ({ auth, team_id }) => {
+        if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
+        try {
+          const options = await buildLinkOptions(auth.secret_text, team_id as string | null);
+          return { disabled: false, options };
+        } catch {
+          return { disabled: true, options: [], placeholder: 'Failed to load scheduling links.' };
+        }
+      },
     }),
   },
   sampleData: SAMPLE_DATA,
@@ -62,7 +102,7 @@ export const newCheckoutTrigger = createTrigger({
       return [];
     }
 
-    const body = context.payload.body as { type: string; payload: Record<string, unknown> };
+    const body = context.payload.body as { type: string; payload: SavvyCalEvent };
     if (!body?.payload) return [];
 
     if (!CHECKOUT_TYPES.some((t) => t.value === body.type)) return [];
@@ -70,7 +110,11 @@ export const newCheckoutTrigger = createTrigger({
     const selectedTypes = context.propsValue.event_types as string[] | undefined;
     if (selectedTypes && selectedTypes.length > 0 && !selectedTypes.includes(body.type)) return [];
 
-    return [{ event_type: body.type, ...body.payload }];
+    const selectedLinkIds = context.propsValue.link_ids as string[] | undefined;
+    const linkId = body.payload?.link?.id;
+    if (selectedLinkIds && selectedLinkIds.length > 0 && linkId != null && !selectedLinkIds.includes(linkId)) return [];
+
+    return [{ event_type: body.type, ...flattenEvent(body.payload) }];
   },
 
   async test(_context) {
