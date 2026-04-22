@@ -767,7 +767,7 @@ function MessageContentWithAuth({
     return (
       <div className="space-y-3">
         {cleanContent && (
-          <div className="prose dark:prose-invert max-w-none break-words text-sm">
+          <div className="prose dark:prose-invert max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_h1]:mt-6 [&_h2]:mt-5 [&_h3]:mt-4 [&_ul]:mb-4 [&_ol]:mb-4 [&_table]:mb-4">
             <Markdown>{cleanContent}</Markdown>
           </div>
         )}
@@ -785,7 +785,7 @@ function MessageContentWithAuth({
 
   if (isStreaming) {
     return (
-      <div className="prose dark:prose-invert max-w-none break-words text-sm">
+      <div className="prose dark:prose-invert max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_h1]:mt-6 [&_h2]:mt-5 [&_h3]:mt-4 [&_ul]:mb-4 [&_ol]:mb-4 [&_table]:mb-4">
         <Markdown>{content}</Markdown>
       </div>
     );
@@ -800,7 +800,7 @@ function MessageContentWithAuth({
   return (
     <div className="space-y-2">
       {finalContent && (
-        <div className="prose dark:prose-invert max-w-none break-words text-sm">
+        <div className="prose dark:prose-invert max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_h1]:mt-6 [&_h2]:mt-5 [&_h3]:mt-4 [&_ul]:mb-4 [&_ol]:mb-4 [&_table]:mb-4">
           <Markdown>{finalContent}</Markdown>
         </div>
       )}
