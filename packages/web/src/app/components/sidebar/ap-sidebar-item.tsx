@@ -50,7 +50,8 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     <SidebarMenuButton
       className={cn(
         { 'bg-sidebar-accent hover:bg-sidebar-accent!': isLinkActive },
-        item.highlight && 'relative bg-background hover:bg-background/80',
+        item.highlight &&
+          'bg-gradient-to-r from-violet-500/10 via-amber-400/10 to-rose-500/10 hover:from-violet-500/20 hover:via-amber-400/20 hover:to-rose-500/20',
       )}
       onClick={() => {
         item.onClick?.();
@@ -66,7 +67,14 @@ export const ApSidebarItem = (item: SidebarItemType) => {
         </span>
       )}
       {!isCollapsed && item.badge && (
-        <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+        <span
+          className={cn(
+            'ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-full',
+            item.highlight
+              ? 'bg-gradient-to-r from-violet-500 to-rose-500 text-white'
+              : 'bg-primary/10 text-primary',
+          )}
+        >
           {item.badge}
         </span>
       )}
@@ -84,14 +92,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
 
   return (
     <SidebarMenuItem>
-      {item.highlight ? (
-        <div className="relative rounded-md p-[1px] overflow-hidden">
-          <div className="absolute inset-0 rounded-md bg-[length:200%_200%] animate-[gradient-rotate_3s_linear_infinite] bg-gradient-to-r from-violet-500 via-amber-400 to-rose-500" />
-          <div className="relative rounded-[5px] bg-sidebar">{button}</div>
-        </div>
-      ) : (
-        button
-      )}
+      {button}
     </SidebarMenuItem>
   );
 };
