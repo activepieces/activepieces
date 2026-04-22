@@ -9,6 +9,7 @@ import {
 import {
     BedrockClient,
     ListFoundationModelsCommand,
+    ListInferenceProfilesCommand,
     ModelModality,
 } from '@aws-sdk/client-bedrock'
 
@@ -41,11 +42,12 @@ BedrockProviderConfig
             },
         })
 
-        const response = await client.send(
-            new ListFoundationModelsCommand({}),
-        )
+        const [foundationResponse, profileByModelArn] = await Promise.all([
+            client.send(new ListFoundationModelsCommand({})),
+            listSystemInferenceProfiles(client),
+        ])
 
-        const summaries = response.modelSummaries ?? []
+        const summaries = foundationResponse.modelSummaries ?? []
 
         const models = summaries
             .filter(
@@ -56,18 +58,23 @@ BedrockProviderConfig
                 const isImage = outputs.includes(ModelModality.IMAGE)
                 const isText = outputs.includes(ModelModality.TEXT)
 
+                const foundationId = m.modelId as string
+                const profileId = m.modelArn ? profileByModelArn.get(m.modelArn) : undefined
+                const invocationId = profileId ?? foundationId
+                const displayName = m.modelName ?? foundationId
+
                 if (isImage) {
                     return {
-                        id: m.modelId,
-                        name: m.modelName ?? m.modelId,
+                        id: invocationId,
+                        name: displayName,
                         type: AIProviderModelType.IMAGE,
                     }
                 }
 
                 if (isText && m.responseStreamingSupported === true) {
                     return {
-                        id: m.modelId,
-                        name: m.modelName ?? m.modelId,
+                        id: invocationId,
+                        name: displayName,
                         type: AIProviderModelType.TEXT,
                     }
                 }
@@ -78,4 +85,25 @@ BedrockProviderConfig
 
         return models
     },
+}
+
+async function listSystemInferenceProfiles(client: BedrockClient): Promise<Map<string, string>> {
+    const profileByModelArn = new Map<string, string>()
+    try {
+        const response = await client.send(new ListInferenceProfilesCommand({
+            typeEquals: 'SYSTEM_DEFINED',
+        }))
+        for (const profile of response.inferenceProfileSummaries ?? []) {
+            if (profile.status !== 'ACTIVE' || !profile.inferenceProfileId) continue
+            for (const model of profile.models ?? []) {
+                if (model.modelArn && !profileByModelArn.has(model.modelArn)) {
+                    profileByModelArn.set(model.modelArn, profile.inferenceProfileId)
+                }
+            }
+        }
+    }
+    catch {
+        // Missing bedrock:ListInferenceProfiles permission falls through to foundation IDs.
+    }
+    return profileByModelArn
 }
