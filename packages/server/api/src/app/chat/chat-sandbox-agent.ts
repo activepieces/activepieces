@@ -77,18 +77,15 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
     return initPromise
 }
 
-async function createSession({ anthropicApiKey, mcpServerUrl, mcpToken }: CreateSessionParams): Promise<SandboxSession> {
+async function createSession({ anthropicApiKey, mcpProjects }: CreateSessionParams): Promise<SandboxSession> {
     const sdk = await getOrCreateSdk({ anthropicApiKey })
 
-    const mcpServers: unknown[] = []
-    if (mcpServerUrl && mcpToken) {
-        mcpServers.push({
-            type: 'http',
-            name: 'activepieces',
-            url: mcpServerUrl,
-            headers: [{ name: 'Authorization', value: `Bearer ${mcpToken}` }],
-        })
-    }
+    const mcpServers: unknown[] = mcpProjects.map((p) => ({
+        type: 'http',
+        name: p.projectName || 'default-project',
+        url: p.mcpServerUrl,
+        headers: [{ name: 'Authorization', value: `Bearer ${p.mcpToken}` }],
+    }))
 
     const session = await sdk.createSession({
         agent: 'claude',
@@ -105,8 +102,11 @@ async function createSession({ anthropicApiKey, mcpServerUrl, mcpToken }: Create
     return session
 }
 
-async function sendPrompt({ session, text }: SendPromptParams): Promise<void> {
-    await session.prompt([{ type: 'text', text }])
+async function sendPrompt({ session, text, systemPrompt }: SendPromptParams): Promise<void> {
+    const fullText = systemPrompt
+        ? `<system_instructions>\n${systemPrompt}\n</system_instructions>\n\nUser message: ${text}`
+        : text
+    await session.prompt([{ type: 'text', text: fullText }])
 }
 
 async function destroySession({ sessionId, anthropicApiKey }: DestroySessionParams): Promise<void> {
@@ -237,13 +237,19 @@ async function dispose(): Promise<void> {
 
 type CreateSessionParams = {
     anthropicApiKey: string
-    mcpServerUrl: string | null
-    mcpToken: string | null
+    mcpProjects: McpProjectConfig[]
+}
+
+export type McpProjectConfig = {
+    projectName: string
+    mcpServerUrl: string
+    mcpToken: string
 }
 
 type SendPromptParams = {
     session: SandboxSession
     text: string
+    systemPrompt?: string
 }
 
 type DestroySessionParams = {

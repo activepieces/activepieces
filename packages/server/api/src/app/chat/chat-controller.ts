@@ -165,7 +165,11 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 })
             })
 
-            await chatSandboxAgent.sendPrompt({ session, text: content })
+            const systemPrompt = await chatService(log).buildSystemPrompt({
+                userId: request.principal.id,
+                platformId,
+            })
+            await chatSandboxAgent.sendPrompt({ session, text: content, systemPrompt })
 
             if (!cleaned) {
                 writeSseEvent(reply.raw, {

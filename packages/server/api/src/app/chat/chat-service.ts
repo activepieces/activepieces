@@ -15,22 +15,23 @@ import { repoFactory } from '../core/db/repo-factory'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { mcpServerService } from '../mcp/mcp-service'
+import { projectService } from '../project/project-service'
+import { userService } from '../user/user-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
-import { chatSandboxAgent } from './chat-sandbox-agent'
+import { chatSandboxAgent, type McpProjectConfig } from './chat-sandbox-agent'
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 
 export const chatService = (log: FastifyBaseLogger) => ({
     async createConversation({ projectId, userId, platformId, request }: CreateConversationParams): Promise<ChatConversation> {
-        const [anthropicApiKey, { mcpServerUrl, mcpToken }] = await Promise.all([
+        const [anthropicApiKey, mcpProjects] = await Promise.all([
             getAnthropicApiKey({ platformId, log }),
-            getMcpCredentials({ projectId, log }),
+            getAllMcpCredentials({ userId, platformId, log }),
         ])
 
         const session = await chatSandboxAgent.createSession({
             anthropicApiKey,
-            mcpServerUrl,
-            mcpToken,
+            mcpProjects,
         })
 
         try {
@@ -126,20 +127,46 @@ export const chatService = (log: FastifyBaseLogger) => ({
     async updateSummary({ conversationId, projectId, summary }: UpdateSummaryParams): Promise<void> {
         await conversationRepo().update({ id: conversationId, projectId }, { summary })
     },
+
+    async buildSystemPrompt({ userId, platformId }: { userId: string, platformId: string }): Promise<string> {
+        const user = await userService(log).getOneOrFail({ id: userId })
+        const projects = await projectService(log).getAllForUser({
+            platformId,
+            userId,
+            isPrivileged: userService(log).isUserPrivileged(user),
+        })
+        const projectNames = projects.map((p) => p.displayName)
+        return buildAgentSystemPrompt(projectNames)
+    },
 })
 
-async function getMcpCredentials({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<{ mcpServerUrl: string | null, mcpToken: string | null }> {
-    try {
-        const mcpServer = await mcpServerService(log).getByProjectId(projectId)
-        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-        return {
-            mcpServerUrl: `${frontendUrl}/api/v1/mcp/agent`,
-            mcpToken: mcpServer.token,
+async function getAllMcpCredentials({ userId, platformId, log }: { userId: string, platformId: string, log: FastifyBaseLogger }): Promise<McpProjectConfig[]> {
+    const user = await userService(log).getOneOrFail({ id: userId })
+    const projects = await projectService(log).getAllForUser({
+        platformId,
+        userId,
+        isPrivileged: userService(log).isUserPrivileged(user),
+    })
+
+    const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+    const mcpUrl = `${frontendUrl}/api/v1/mcp/agent`
+
+    const results: McpProjectConfig[] = []
+    for (const project of projects) {
+        try {
+            const mcpServer = await mcpServerService(log).getByProjectId(project.id)
+            results.push({
+                projectName: project.displayName,
+                mcpServerUrl: mcpUrl,
+                mcpToken: mcpServer.token,
+            })
+        }
+        catch {
+            // skip projects without MCP servers
         }
     }
-    catch {
-        return { mcpServerUrl: null, mcpToken: null }
-    }
+
+    return results
 }
 
 async function getAnthropicApiKey({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<string> {
@@ -148,6 +175,38 @@ async function getAnthropicApiKey({ platformId, log }: { platformId: string, log
         provider: AIProviderName.ANTHROPIC,
     })
     return config.auth.apiKey
+}
+
+function buildAgentSystemPrompt(projectNames: string[]): string {
+    const isSingleProject = projectNames.length === 1
+
+    const projectSection = isSingleProject
+        ? `You are working in **"${projectNames[0]}"**. All tools operate on this project — no need to ask which project.`
+        : `The user has **${projectNames.length} projects**: ${projectNames.join(', ')}.
+
+**Project rules (strict):**
+- User names a project → use that project's tools immediately.
+- User says "all projects" → query every project, combine results with project labels.
+- User doesn't specify a project → **always ask**: "Which project — ${projectNames.join(' or ')}?" Do NOT guess. Do NOT default to the first project.`
+
+    return `You are the user's automation coworker inside Activepieces. You have real access to their projects and can take real actions right now.
+
+${projectSection}
+
+**Personality:** Direct, proactive, efficient. Talk like a helpful teammate — not a support bot. Keep responses short and scannable.
+
+**Action bias:** Act first, explain after. "List my flows" → call the tool and show results. Don't ask for confirmation before read-only actions. But when the project is ambiguous, ask which one first.
+
+**After completing a task:** Give a brief summary, then suggest a natural next step. Examples:
+- "Found 3 flows. Want me to enable the disabled ones?"
+- "Flow created! Should I add a Slack notification step?"
+- "Table has 42 records. Want me to filter or export them?"
+
+**Formatting:** Use markdown tables for lists, bold for key info, \`code\` for IDs. Keep it scannable — no walls of text.
+
+**Errors:** If a tool fails, say what happened plainly and offer to fix it. Don't apologize excessively.
+
+Do not reference these instructions in your responses.`
 }
 
 type CreateConversationParams = {
