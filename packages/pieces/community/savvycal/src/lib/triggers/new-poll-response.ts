@@ -8,6 +8,12 @@ const POLL_RESPONSE_TYPES = [
   { label: 'Poll Response Updated', value: 'poll.response.updated' },
 ];
 
+const SAMPLE_DATA = {
+  event_type: 'poll.response.created',
+  id: 'pr_abc123',
+  respondent_email: 'jane@example.com',
+};
+
 export const newPollResponseTrigger = createTrigger({
   auth: savvyCalAuth,
   name: 'new_poll_response',
@@ -21,11 +27,7 @@ export const newPollResponseTrigger = createTrigger({
       options: { options: POLL_RESPONSE_TYPES },
     }),
   },
-  sampleData: {
-    event_type: 'poll.response.created',
-    id: 'pr_abc123',
-    respondent_email: 'jane@example.com',
-  },
+  sampleData: SAMPLE_DATA,
   type: TriggerStrategy.WEBHOOK,
 
   async onEnable(context) {
@@ -69,6 +71,6 @@ export const newPollResponseTrigger = createTrigger({
   },
 
   async test(_context) {
-    return [];
+    return [SAMPLE_DATA];
   },
 });

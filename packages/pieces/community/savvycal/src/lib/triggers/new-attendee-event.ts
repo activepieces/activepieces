@@ -9,6 +9,13 @@ const ATTENDEE_EVENT_TYPES = [
   { label: 'Attendee Rescheduled', value: 'event.attendee.rescheduled' },
 ];
 
+const SAMPLE_DATA = {
+  event_type: 'event.attendee.added',
+  id: 'att_abc123',
+  display_name: 'Jane Doe',
+  email: 'jane@example.com',
+};
+
 export const newAttendeeEventTrigger = createTrigger({
   auth: savvyCalAuth,
   name: 'new_attendee_event',
@@ -54,12 +61,7 @@ export const newAttendeeEventTrigger = createTrigger({
       },
     }),
   },
-  sampleData: {
-    event_type: 'event.attendee.added',
-    id: 'att_abc123',
-    display_name: 'Jane Doe',
-    email: 'jane@example.com',
-  },
+  sampleData: SAMPLE_DATA,
   type: TriggerStrategy.WEBHOOK,
 
   async onEnable(context) {
@@ -101,12 +103,12 @@ export const newAttendeeEventTrigger = createTrigger({
 
     const selectedLinkIds = context.propsValue.link_ids as string[] | undefined;
     const linkId = body.payload?.link?.id;
-    if (selectedLinkIds && selectedLinkIds.length > 0 && linkId !== undefined && !selectedLinkIds.includes(linkId)) return [];
+    if (selectedLinkIds && selectedLinkIds.length > 0 && linkId != null && !selectedLinkIds.includes(linkId)) return [];
 
     return [{ event_type: body.type, ...body.payload }];
   },
 
   async test(_context) {
-    return [];
+    return [SAMPLE_DATA];
   },
 });

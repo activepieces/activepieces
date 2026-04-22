@@ -3,17 +3,19 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { savvyCalApiCall, verifyWebhookSignature } from '../common';
 import { savvyCalAuth } from '../../';
 
+const SAMPLE_DATA = {
+  event_type: 'workflow.action.triggered',
+  id: 'wf_abc123',
+  action: 'send_email',
+};
+
 export const workflowActionTriggeredTrigger = createTrigger({
   auth: savvyCalAuth,
   name: 'workflow_action_triggered',
   displayName: 'Workflow Action Triggered',
   description: 'Triggers when a workflow action is triggered in SavvyCal.',
   props: {},
-  sampleData: {
-    event_type: 'workflow.action.triggered',
-    id: 'wf_abc123',
-    action: 'send_email',
-  },
+  sampleData: SAMPLE_DATA,
   type: TriggerStrategy.WEBHOOK,
 
   async onEnable(context) {
@@ -52,6 +54,6 @@ export const workflowActionTriggeredTrigger = createTrigger({
   },
 
   async test(_context) {
-    return [];
+    return [SAMPLE_DATA];
   },
 });

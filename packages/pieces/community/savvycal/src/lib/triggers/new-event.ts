@@ -143,7 +143,7 @@ export const newEventTrigger = createTrigger({
 
     const selectedLinkIds = context.propsValue.link_ids as string[] | undefined;
     const linkId = body.payload?.link?.id;
-    if (selectedLinkIds && selectedLinkIds.length > 0 && linkId !== undefined && !selectedLinkIds.includes(linkId)) return [];
+    if (selectedLinkIds && selectedLinkIds.length > 0 && linkId != null && !selectedLinkIds.includes(linkId)) return [];
 
     const payload = flattenEvent(body.payload);
     return [{ event_type: body.type, ...payload }];

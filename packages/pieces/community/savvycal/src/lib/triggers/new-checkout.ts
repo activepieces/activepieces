@@ -9,6 +9,14 @@ const CHECKOUT_TYPES = [
   { label: 'Checkout Completed', value: 'event.checkout.completed' },
 ];
 
+const SAMPLE_DATA = {
+  event_type: 'event.checkout.completed',
+  id: 'chk_abc123',
+  state: 'completed',
+  amount_total: 5000,
+  currency: 'usd',
+};
+
 export const newCheckoutTrigger = createTrigger({
   auth: savvyCalAuth,
   name: 'new_checkout',
@@ -22,13 +30,7 @@ export const newCheckoutTrigger = createTrigger({
       options: { options: CHECKOUT_TYPES },
     }),
   },
-  sampleData: {
-    event_type: 'event.checkout.completed',
-    id: 'chk_abc123',
-    state: 'completed',
-    amount_total: 5000,
-    currency: 'usd',
-  },
+  sampleData: SAMPLE_DATA,
   type: TriggerStrategy.WEBHOOK,
 
   async onEnable(context) {
@@ -72,6 +74,6 @@ export const newCheckoutTrigger = createTrigger({
   },
 
   async test(_context) {
-    return [];
+    return [SAMPLE_DATA];
   },
 });
