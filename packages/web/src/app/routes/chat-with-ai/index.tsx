@@ -23,12 +23,11 @@ export function ChatWithAIPage() {
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(null);
-  const [newChat, setNewChat] = useState<{
+  const [newChat] = useState<{
     title: string;
     key: number;
   } | null>(null);
   const [chatKey, setChatKey] = useState(0);
-  const [msgCounter, setMsgCounter] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [incognito, setIncognito] = useState(false);
   const [chatStarted, setChatStarted] = useState(false);
@@ -36,7 +35,6 @@ export function ChatWithAIPage() {
   const handleNewChat = useCallback(() => {
     setChatKey((k) => k + 1);
     setSelectedConversationId(null);
-    setNewChat(null);
     setChatStarted(false);
     setIncognito(false);
   }, []);
@@ -140,7 +138,7 @@ export function ChatWithAIPage() {
           conversationId={selectedConversationId}
           onTitleUpdate={handleTitleUpdate}
           onConversationCreated={handleTitleUpdate}
-          onFirstMessage={(text) => {
+          onFirstMessage={() => {
             setChatStarted(true);
           }}
         />

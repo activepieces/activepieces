@@ -178,6 +178,7 @@ function ChatBoxContent({
                 message={msg}
                 isStreaming={isLastStreamingAssistant}
                 onCancel={cancelStream}
+                onSend={handleSend}
                 onRetry={() => {
                   const lastUser = [...messages]
                     .reverse()
@@ -243,11 +244,13 @@ function ChatMessage({
   isStreaming,
   onCancel,
   onRetry,
+  onSend,
 }: {
   message: ChatMessageItem;
   isStreaming: boolean;
   onCancel: () => void;
   onRetry: () => void;
+  onSend: (text: string) => void;
 }) {
   if (message.role === 'user') {
     return <UserMessage message={message} />;
@@ -259,6 +262,7 @@ function ChatMessage({
       isStreaming={isStreaming}
       onCancel={onCancel}
       onRetry={onRetry}
+      onSend={onSend}
     />
   );
 }
@@ -306,11 +310,13 @@ function AssistantMessage({
   isStreaming,
   onCancel,
   onRetry,
+  onSend,
 }: {
   message: ChatMessageItem;
   isStreaming: boolean;
   onCancel: () => void;
   onRetry: () => void;
+  onSend: (text: string) => void;
 }) {
   const [copied, setCopied] = useState(false);
   const hasThoughts = message.thoughts.length > 0;
@@ -351,7 +357,9 @@ function AssistantMessage({
 
         {message.plan && <PlanCard entries={message.plan} />}
 
-        {hasContent && <MessageContentWithAuth content={message.content} />}
+        {hasContent && (
+          <MessageContentWithAuth content={message.content} onSend={onSend} />
+        )}
 
         {hasContent && !isStreaming && (
           <div className="flex items-center gap-1 mt-2 text-muted-foreground">
@@ -481,7 +489,92 @@ function QuickReplies({
   );
 }
 
-function MessageContentWithAuth({ content }: { content: string }) {
+type AutomationProposal = {
+  title: string;
+  description: string;
+  steps: string[];
+};
+
+function parseAutomationProposal(content: string): {
+  proposal: AutomationProposal | null;
+  cleanContent: string;
+} {
+  const regex = /```automation-proposal\n([\s\S]*?)```/;
+  const match = regex.exec(content);
+  if (!match) return { proposal: null, cleanContent: content };
+
+  const block = match[1];
+  const titleMatch = /^title:\s*(.+)$/m.exec(block);
+  const descMatch = /^description:\s*(.+)$/m.exec(block);
+  const stepsMatch = block.match(/^-\s+.+$/gm);
+
+  if (!titleMatch || !stepsMatch || stepsMatch.length === 0) {
+    return { proposal: null, cleanContent: content };
+  }
+
+  return {
+    proposal: {
+      title: titleMatch[1].trim(),
+      description: descMatch?.[1].trim() ?? '',
+      steps: stepsMatch.map((s) => s.replace(/^-\s+/, '').trim()),
+    },
+    cleanContent: content.replace(regex, '').trim(),
+  };
+}
+
+function AutomationProposalCard({
+  proposal,
+  onBuild,
+}: {
+  proposal: AutomationProposal;
+  onBuild: () => void;
+}) {
+  return (
+    <div className="rounded-xl border bg-background shadow-sm overflow-hidden my-2">
+      <div className="p-4 space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-primary/10 shrink-0">
+            <Zap className="h-4.5 w-4.5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm">{proposal.title}</h3>
+            {proposal.description && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {proposal.description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-1.5 ml-12">
+          {proposal.steps.map((step, i) => (
+            <div key={i} className="flex items-start gap-2 text-sm">
+              <span className="text-xs font-medium text-muted-foreground bg-muted rounded-full h-5 w-5 flex items-center justify-center shrink-0 mt-0.5">
+                {i + 1}
+              </span>
+              <span className="text-foreground/80">{step}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="border-t px-4 py-3 bg-muted/30">
+        <Button size="sm" className="gap-1.5" onClick={onBuild}>
+          <Zap className="h-3.5 w-3.5" />
+          {t('Build this automation')}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function MessageContentWithAuth({
+  content,
+  onSend,
+}: {
+  content: string;
+  onSend?: (text: string) => void;
+}) {
   const hasAuthUrl = /https?:\/\/[^\s]*\/authorize\?[^\s]*/.test(content);
 
   if (hasAuthUrl) {
@@ -515,9 +608,23 @@ function MessageContentWithAuth({ content }: { content: string }) {
     );
   }
 
+  const { proposal, cleanContent } = parseAutomationProposal(content);
+
   return (
-    <div className="prose prose-sm dark:prose-invert max-w-none break-words">
-      <Markdown>{content}</Markdown>
+    <div className="space-y-2">
+      {cleanContent && (
+        <div className="prose prose-sm dark:prose-invert max-w-none break-words">
+          <Markdown>{cleanContent}</Markdown>
+        </div>
+      )}
+      {proposal && (
+        <AutomationProposalCard
+          proposal={proposal}
+          onBuild={() =>
+            onSend?.(`Yes, build the "${proposal.title}" automation`)
+          }
+        />
+      )}
     </div>
   );
 }
