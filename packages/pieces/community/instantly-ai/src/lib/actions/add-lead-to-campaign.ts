@@ -5,8 +5,8 @@ import { instantlyClient } from '../common/client';
 import { instantlyProps } from '../common/props';
 import { InstantlyBackgroundJob } from '../common/types';
 
-const MAX_POLL_ATTEMPTS = 60;
-const POLL_INTERVAL_MS = 3000;
+const MAX_POLL_ATTEMPTS = 100;
+const POLL_INTERVAL_MS = 5000;
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

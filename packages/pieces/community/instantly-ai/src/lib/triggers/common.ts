@@ -73,11 +73,13 @@ function createGroupedWebhookTrigger({
       }
     },
     async test(context) {
+      const campaignId = context.propsValue.campaign_id ?? undefined;
       const { data: leads } = await tryCatch(() =>
         instantlyClient.listAllPages<InstantlyLead>({
           auth: context.auth.secret_text,
           path: 'leads/list',
           method: HttpMethod.POST,
+          body: campaignId ? { campaign_id: campaignId } : undefined,
           maxPages: 1,
         }),
       );
