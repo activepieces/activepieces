@@ -1,34 +1,56 @@
 import {
     ActivepiecesError,
+    AIProviderName,
     apId,
     ChatConversation,
-    ChatMessage,
-    ChatMessageRole,
     CreateChatConversationRequest,
     ErrorCode,
     isNil,
     SeekPage,
-    TokenUsage,
-    ToolCallRecord,
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
-import { ChatConversationEntity, ChatMessageEntity } from './chat-entity'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
+import { mcpServerService } from '../mcp/mcp-service'
+import { ChatConversationEntity } from './chat-conversation-entity'
+import { chatSandboxAgent } from './chat-sandbox-agent'
 
 const conversationRepo = repoFactory(ChatConversationEntity)
-const messageRepo = repoFactory(ChatMessageEntity)
 
-export const chatService = (_log: FastifyBaseLogger) => ({
-    async createConversation({ projectId, userId, request }: CreateConversationParams): Promise<ChatConversation> {
-        return conversationRepo().save({
-            id: apId(),
-            projectId,
-            userId,
-            title: request.title ?? null,
-            modelProvider: request.modelProvider ?? null,
-            modelName: request.modelName ?? null,
-        }) as Promise<ChatConversation>
+export const chatService = (log: FastifyBaseLogger) => ({
+    async createConversation({ projectId, userId, platformId, request }: CreateConversationParams): Promise<ChatConversation> {
+        const [anthropicApiKey, { mcpServerUrl, mcpToken }] = await Promise.all([
+            getAnthropicApiKey({ platformId, log }),
+            getMcpCredentials({ projectId, log }),
+        ])
+
+        const session = await chatSandboxAgent.createSession({
+            anthropicApiKey,
+            mcpServerUrl,
+            mcpToken,
+        })
+
+        try {
+            const saved = await conversationRepo().save({
+                id: apId(),
+                projectId,
+                userId,
+                title: request.title ?? null,
+                sandboxSessionId: session.id,
+                modelName: request.modelName ?? null,
+                totalInputTokens: 0,
+                totalOutputTokens: 0,
+                summary: null,
+            })
+            return saved
+        }
+        catch (err) {
+            await chatSandboxAgent.destroySession({ sessionId: session.id, anthropicApiKey }).catch(() => { /* best-effort cleanup */ })
+            throw err
+        }
     },
 
     async listConversations({ projectId, userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<ChatConversation>> {
@@ -40,7 +62,7 @@ export const chatService = (_log: FastifyBaseLogger) => ({
             .take(limit + 1)
 
         if (!isNil(cursor)) {
-            queryBuilder.andWhere('c.created < (SELECT cc.created FROM chat_conversation cc WHERE cc.id = :cursor)', { cursor })
+            queryBuilder.andWhere('c.created < (SELECT cc.created FROM chat_conversation cc WHERE cc.id = :cursor AND cc.projectId = :projectId AND cc.userId = :userId)', { cursor })
         }
 
         const results = await queryBuilder.getMany()
@@ -48,18 +70,14 @@ export const chatService = (_log: FastifyBaseLogger) => ({
         const data = hasMore ? results.slice(0, limit) : results
 
         return {
-            data: data as ChatConversation[],
+            data,
             next: hasMore ? data[data.length - 1].id : null,
             previous: null,
         }
     },
 
-    async getConversation({ id, projectId }: GetConversationParams): Promise<ChatConversation | null> {
-        return conversationRepo().findOneBy({ id, projectId }) as Promise<ChatConversation | null>
-    },
-
-    async getConversationOrThrow({ id, projectId }: GetConversationParams): Promise<ChatConversation> {
-        const conversation = await this.getConversation({ id, projectId })
+    async getConversationOrThrow({ id, projectId, userId }: GetConversationParams): Promise<ChatConversation> {
+        const conversation = await conversationRepo().findOneBy({ id, projectId, userId })
         if (isNil(conversation)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -69,11 +87,10 @@ export const chatService = (_log: FastifyBaseLogger) => ({
         return conversation
     },
 
-    async updateConversation({ id, projectId, request }: UpdateConversationParams): Promise<ChatConversation> {
-        const conversation = await this.getConversationOrThrow({ id, projectId })
-        const updates: Partial<Pick<ChatConversation, 'title' | 'modelProvider' | 'modelName'>> = {}
+    async updateConversation({ id, projectId, userId, request }: UpdateConversationParams): Promise<ChatConversation> {
+        const conversation = await this.getConversationOrThrow({ id, projectId, userId })
+        const updates: Partial<Pick<ChatConversation, 'title' | 'modelName'>> = {}
         if (request.title !== undefined) updates.title = request.title
-        if (request.modelProvider !== undefined) updates.modelProvider = request.modelProvider
         if (request.modelName !== undefined) updates.modelName = request.modelName
 
         if (Object.keys(updates).length > 0) {
@@ -82,59 +99,61 @@ export const chatService = (_log: FastifyBaseLogger) => ({
         return { ...conversation, ...updates }
     },
 
-    async deleteConversation({ id, projectId }: GetConversationParams): Promise<void> {
-        await this.getConversationOrThrow({ id, projectId })
+    async deleteConversation({ id, projectId, userId, platformId }: DeleteConversationParams): Promise<void> {
+        const conversation = await this.getConversationOrThrow({ id, projectId, userId })
+        if (conversation.sandboxSessionId) {
+            const anthropicApiKey = await getAnthropicApiKey({ platformId, log })
+            await chatSandboxAgent.destroySession({ sessionId: conversation.sandboxSessionId, anthropicApiKey }).catch(() => { /* session may already be gone */ })
+        }
         await conversationRepo().delete({ id, projectId })
     },
 
-    async saveMessage({ conversationId, role, content, toolCalls, fileUrls, tokenUsage }: SaveMessageParams): Promise<ChatMessage> {
-        return messageRepo().save({
-            id: apId(),
-            conversationId,
-            role,
-            content,
-            toolCalls: toolCalls ?? null,
-            fileUrls: fileUrls ?? null,
-            tokenUsage: tokenUsage ?? null,
-        }) as Promise<ChatMessage>
+    async updateTokenUsage({ conversationId, projectId, inputTokens, outputTokens }: UpdateTokenUsageParams): Promise<void> {
+        const safeInput = Number.isFinite(inputTokens) ? inputTokens : 0
+        const safeOutput = Number.isFinite(outputTokens) ? outputTokens : 0
+        await conversationRepo()
+            .createQueryBuilder()
+            .update()
+            .set({
+                totalInputTokens: () => '"totalInputTokens" + :safeInput',
+                totalOutputTokens: () => '"totalOutputTokens" + :safeOutput',
+            })
+            .setParameters({ safeInput, safeOutput })
+            .where('id = :id AND "projectId" = :projectId', { id: conversationId, projectId })
+            .execute()
     },
 
-    async listMessages({ conversationId, cursor, limit }: ListMessagesParams): Promise<SeekPage<ChatMessage>> {
-        const queryBuilder = messageRepo()
-            .createQueryBuilder('m')
-            .where('m.conversationId = :conversationId', { conversationId })
-            .orderBy('m.created', 'ASC')
-            .take(limit + 1)
-
-        if (!isNil(cursor)) {
-            queryBuilder.andWhere('m.created > (SELECT cm.created FROM chat_message cm WHERE cm.id = :cursor)', { cursor })
-        }
-
-        const results = await queryBuilder.getMany()
-        const hasMore = results.length > limit
-        const data = hasMore ? results.slice(0, limit) : results
-
-        return {
-            data: data as ChatMessage[],
-            next: hasMore ? data[data.length - 1].id : null,
-            previous: null,
-        }
-    },
-
-    async getRecentMessages({ conversationId, limit }: { conversationId: string, limit: number }): Promise<ChatMessage[]> {
-        const messages = await messageRepo()
-            .createQueryBuilder('m')
-            .where('m.conversationId = :conversationId', { conversationId })
-            .orderBy('m.created', 'DESC')
-            .take(limit)
-            .getMany()
-        return (messages as ChatMessage[]).reverse()
+    async updateSummary({ conversationId, projectId, summary }: UpdateSummaryParams): Promise<void> {
+        await conversationRepo().update({ id: conversationId, projectId }, { summary })
     },
 })
+
+async function getMcpCredentials({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<{ mcpServerUrl: string | null, mcpToken: string | null }> {
+    try {
+        const mcpServer = await mcpServerService(log).getByProjectId(projectId)
+        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+        return {
+            mcpServerUrl: `${frontendUrl}/api/v1/projects/${projectId}/mcp-server/http`,
+            mcpToken: mcpServer.token,
+        }
+    }
+    catch {
+        return { mcpServerUrl: null, mcpToken: null }
+    }
+}
+
+async function getAnthropicApiKey({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<string> {
+    const config = await aiProviderService(log).getConfigOrThrow({
+        platformId,
+        provider: AIProviderName.ANTHROPIC,
+    })
+    return config.auth.apiKey
+}
 
 type CreateConversationParams = {
     projectId: string
     userId: string
+    platformId: string
     request: CreateChatConversationRequest
 }
 
@@ -148,25 +167,32 @@ type ListConversationsParams = {
 type GetConversationParams = {
     id: string
     projectId: string
+    userId: string
 }
 
 type UpdateConversationParams = {
     id: string
     projectId: string
+    userId: string
     request: UpdateChatConversationRequest
 }
 
-type SaveMessageParams = {
-    conversationId: string
-    role: ChatMessageRole
-    content: string
-    toolCalls?: ToolCallRecord[]
-    fileUrls?: string[]
-    tokenUsage?: TokenUsage
+type DeleteConversationParams = {
+    id: string
+    projectId: string
+    userId: string
+    platformId: string
 }
 
-type ListMessagesParams = {
+type UpdateTokenUsageParams = {
     conversationId: string
-    cursor?: string
-    limit: number
+    projectId: string
+    inputTokens: number
+    outputTokens: number
+}
+
+type UpdateSummaryParams = {
+    conversationId: string
+    projectId: string
+    summary: string
 }

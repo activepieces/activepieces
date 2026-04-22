@@ -16,8 +16,11 @@ export class AddChatTables1776200000000 implements Migration {
                 "projectId" character varying(21) NOT NULL,
                 "userId" character varying(21) NOT NULL,
                 "title" character varying,
-                "modelProvider" character varying,
+                "sandboxSessionId" character varying,
                 "modelName" character varying,
+                "totalInputTokens" integer NOT NULL DEFAULT 0,
+                "totalOutputTokens" integer NOT NULL DEFAULT 0,
+                "summary" text,
                 CONSTRAINT "pk_chat_conversation" PRIMARY KEY ("id"),
                 CONSTRAINT "fk_chat_conversation_project_id" FOREIGN KEY ("projectId")
                     REFERENCES "project" ("id") ON DELETE CASCADE,
@@ -30,32 +33,9 @@ export class AddChatTables1776200000000 implements Migration {
             CREATE INDEX "idx_chat_conversation_project_user_created"
             ON "chat_conversation" ("projectId", "userId", "created" DESC)
         `)
-
-        await queryRunner.query(`
-            CREATE TABLE "chat_message" (
-                "id" character varying(21) NOT NULL,
-                "created" timestamp with time zone NOT NULL DEFAULT now(),
-                "updated" timestamp with time zone NOT NULL DEFAULT now(),
-                "conversationId" character varying(21) NOT NULL,
-                "role" character varying NOT NULL,
-                "content" text NOT NULL,
-                "toolCalls" jsonb,
-                "fileUrls" text[],
-                "tokenUsage" jsonb,
-                CONSTRAINT "pk_chat_message" PRIMARY KEY ("id"),
-                CONSTRAINT "fk_chat_message_conversation_id" FOREIGN KEY ("conversationId")
-                    REFERENCES "chat_conversation" ("id") ON DELETE CASCADE
-            )
-        `)
-
-        await queryRunner.query(`
-            CREATE INDEX "idx_chat_message_conversation_created"
-            ON "chat_message" ("conversationId", "created")
-        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query('DROP TABLE IF EXISTS "chat_message"')
         await queryRunner.query('DROP TABLE IF EXISTS "chat_conversation"')
     }
 }

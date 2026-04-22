@@ -1,37 +1,46 @@
 import { t } from 'i18next';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { EyeOff, Settings } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { PageHeader } from '@/components/custom/page-header';
-import { GhostIcon } from '@/components/icons/ghost';
-import type { GhostIconHandle } from '@/components/icons/ghost';
-import { SlidersHorizontalIcon } from '@/components/icons/sliders-horizontal';
-import type { SlidersHorizontalIconHandle } from '@/components/icons/sliders-horizontal';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 import { AIChatBox } from './ai-chat-box';
 import { ChatSettingsDialog } from './chat-settings-dialog';
 import { ConversationList } from './conversation-list';
-import { DelayedTooltip } from './delayed-tooltip';
 
 export function ChatWithAIPage() {
-  const [newChat, setNewChat] = useState<{ title: string; key: number } | null>(
-    null,
-  );
+  const [selectedConversationId, setSelectedConversationId] = useState<
+    string | null
+  >(null);
+  const [newChat, setNewChat] = useState<{
+    title: string;
+    key: number;
+  } | null>(null);
   const [chatKey, setChatKey] = useState(0);
   const [msgCounter, setMsgCounter] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [incognito, setIncognito] = useState(false);
   const [chatStarted, setChatStarted] = useState(false);
-  const ghostRef = useRef<GhostIconHandle>(null);
-  const settingsRef = useRef<SlidersHorizontalIconHandle>(null);
 
   const handleNewChat = useCallback(() => {
     setChatKey((k) => k + 1);
+    setSelectedConversationId(null);
     setNewChat(null);
     setChatStarted(false);
     setIncognito(false);
+  }, []);
+
+  const handleSelectConversation = useCallback((conversationId: string) => {
+    setSelectedConversationId(conversationId);
+    setChatKey((k) => k + 1);
+    setChatStarted(true);
   }, []);
 
   useEffect(() => {
@@ -59,88 +68,71 @@ export function ChatWithAIPage() {
         />
         <div className="flex items-center gap-1 shrink-0">
           {incognito ? (
-            <DelayedTooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={handleNewChat}
-                  onMouseEnter={() => ghostRef.current?.startAnimation()}
-                  onMouseLeave={() => ghostRef.current?.stopAnimation()}
-                  className="flex items-center gap-1.5 h-7 px-2 rounded-md border-none cursor-pointer shrink-0 transition-colors text-xs font-medium bg-primary/10 dark:bg-primary/20 text-primary"
-                >
-                  <GhostIcon ref={ghostRef} size={16} />
-                  Close Private Chat
-                </button>
-              </TooltipTrigger>
-              <TooltipContent
-                side="bottom"
-                align="center"
-                className="pointer-events-none"
-              >
-                Switch to Default Chat
-              </TooltipContent>
-            </DelayedTooltip>
-          ) : !chatStarted ? (
-            <DelayedTooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setIncognito(true)}
-                  onMouseEnter={() => ghostRef.current?.startAnimation()}
-                  onMouseLeave={() => ghostRef.current?.stopAnimation()}
-                  className="flex items-center gap-1.5 h-7 px-2 rounded-md border-none cursor-pointer shrink-0 transition-colors text-xs font-medium bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
-                >
-                  <GhostIcon ref={ghostRef} size={16} />
-                  Private
-                </button>
-              </TooltipTrigger>
-              <TooltipContent
-                side="bottom"
-                align="center"
-                className="pointer-events-none"
-              >
-                Switch to Private Chat
-              </TooltipContent>
-            </DelayedTooltip>
-          ) : null}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleNewChat}
+              className="text-xs gap-1.5 bg-primary/10 text-primary hover:bg-primary/20"
+            >
+              <EyeOff className="h-3.5 w-3.5" />
+              {t('Close Private Chat')}
+            </Button>
+          ) : (
+            !chatStarted && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIncognito(true)}
+                    className="text-xs gap-1.5 text-muted-foreground"
+                  >
+                    <EyeOff className="h-3.5 w-3.5" />
+                    {t('Private')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('Switch to Private Chat')}</TooltipContent>
+              </Tooltip>
+            )
+          )}
           {!incognito && (
-            <DelayedTooltip>
+            <Tooltip>
               <TooltipTrigger asChild>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
                   onClick={() => setSettingsOpen(true)}
-                  onMouseEnter={() => settingsRef.current?.startAnimation()}
-                  onMouseLeave={() => settingsRef.current?.stopAnimation()}
-                  className="flex items-center justify-center w-7 h-7 rounded-md border-none bg-transparent cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
                 >
-                  <SlidersHorizontalIcon ref={settingsRef} size={16} />
-                </button>
+                  <Settings className="h-4 w-4" />
+                </Button>
               </TooltipTrigger>
-              <TooltipContent
-                side="bottom"
-                align="end"
-                className="pointer-events-none"
-              >
-                Settings
-              </TooltipContent>
-            </DelayedTooltip>
+              <TooltipContent>{t('Settings')}</TooltipContent>
+            </Tooltip>
           )}
         </div>
       </div>
       <Separator />
-      <div className="flex-1 overflow-hidden relative">
-        <div
-          className={cn(
-            'absolute top-0 left-0 bottom-[140px] z-10 transition-transform duration-300 ease-in-out',
-            incognito && '-translate-x-full',
-          )}
-        >
-          <ConversationList newChat={newChat} onNewChat={handleNewChat} />
-        </div>
+      <div className="flex-1 overflow-hidden flex">
+        {!incognito && (
+          <div className="shrink-0 border-r overflow-hidden">
+            <ConversationList
+              newChat={newChat}
+              onNewChat={handleNewChat}
+              onSelect={handleSelectConversation}
+              selectedId={selectedConversationId}
+            />
+          </div>
+        )}
         <AIChatBox
           key={chatKey}
           incognito={incognito}
+          conversationId={selectedConversationId}
           onFirstMessage={(text) => {
             if (!incognito) {
-              setMsgCounter((c) => c + 1);
-              setNewChat({ title: text, key: msgCounter + 1 });
+              const nextKey = msgCounter + 1;
+              setMsgCounter(nextKey);
+              setNewChat({ title: text, key: nextKey });
             }
             setChatStarted(true);
           }}

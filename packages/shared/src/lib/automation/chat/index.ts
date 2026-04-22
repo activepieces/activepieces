@@ -1,64 +1,64 @@
 import { z } from 'zod'
-import { BaseModelSchema } from '../../core/common/base-model'
+import { BaseModelSchema, Nullable } from '../../core/common'
 
-export const ChatMessageRole = {
-    USER: 'USER',
-    ASSISTANT: 'ASSISTANT',
-    TOOL: 'TOOL',
+function buildChatConversationSchema() {
+    return z.object({
+        ...BaseModelSchema,
+        projectId: z.string(),
+        userId: z.string(),
+        title: Nullable(z.string()),
+        sandboxSessionId: Nullable(z.string()),
+        modelName: Nullable(z.string()),
+        totalInputTokens: z.number(),
+        totalOutputTokens: z.number(),
+        summary: Nullable(z.string()),
+    })
+}
+
+function buildCreateChatConversationRequestSchema() {
+    return z.object({
+        title: Nullable(z.string()).optional(),
+        modelName: Nullable(z.string()).optional(),
+    })
+}
+
+function buildUpdateChatConversationRequestSchema() {
+    return z.object({
+        title: Nullable(z.string()).optional(),
+        modelName: Nullable(z.string()).optional(),
+    })
+}
+
+function buildSendChatMessageRequestSchema() {
+    return z.object({
+        content: z.string().min(1).max(51200),
+    })
+}
+
+export const ChatStreamEventType = {
+    TEXT_CHUNK: 'TEXT_CHUNK',
+    TOOL_CALL_START: 'TOOL_CALL_START',
+    TOOL_CALL_UPDATE: 'TOOL_CALL_UPDATE',
+    TOOL_CALL_COMPLETE: 'TOOL_CALL_COMPLETE',
+    USAGE_UPDATE: 'USAGE_UPDATE',
+    ERROR: 'ERROR',
+    DONE: 'DONE',
 } as const
+export type ChatStreamEventType = (typeof ChatStreamEventType)[keyof typeof ChatStreamEventType]
 
-export type ChatMessageRole = (typeof ChatMessageRole)[keyof typeof ChatMessageRole]
-
-export const ToolCallRecord = z.object({
-    toolName: z.string(),
-    toolCallId: z.string(),
-    input: z.unknown(),
-})
-export type ToolCallRecord = z.infer<typeof ToolCallRecord>
-
-export const TokenUsage = z.object({
-    inputTokens: z.number(),
-    outputTokens: z.number(),
-})
-export type TokenUsage = z.infer<typeof TokenUsage>
-
-export const ChatConversation = z.object({
-    ...BaseModelSchema,
-    projectId: z.string(),
-    userId: z.string(),
-    title: z.string().nullable(),
-    modelProvider: z.string().nullable(),
-    modelName: z.string().nullable(),
-})
+export const ChatConversation = buildChatConversationSchema()
 export type ChatConversation = z.infer<typeof ChatConversation>
 
-export const ChatMessage = z.object({
-    ...BaseModelSchema,
-    conversationId: z.string(),
-    role: z.enum([ChatMessageRole.USER, ChatMessageRole.ASSISTANT, ChatMessageRole.TOOL]),
-    content: z.string(),
-    toolCalls: z.array(ToolCallRecord).nullable(),
-    fileUrls: z.array(z.string()).nullable(),
-    tokenUsage: TokenUsage.nullable(),
-})
-export type ChatMessage = z.infer<typeof ChatMessage>
-
-export const CreateChatConversationRequest = z.object({
-    title: z.string().nullable().optional(),
-    modelProvider: z.string().nullable().optional(),
-    modelName: z.string().nullable().optional(),
-})
+export const CreateChatConversationRequest = buildCreateChatConversationRequestSchema()
 export type CreateChatConversationRequest = z.infer<typeof CreateChatConversationRequest>
 
-export const UpdateChatConversationRequest = z.object({
-    title: z.string().nullable().optional(),
-    modelProvider: z.string().nullable().optional(),
-    modelName: z.string().nullable().optional(),
-})
+export const UpdateChatConversationRequest = buildUpdateChatConversationRequestSchema()
 export type UpdateChatConversationRequest = z.infer<typeof UpdateChatConversationRequest>
 
-export const SendChatMessageRequest = z.object({
-    content: z.string().min(1).max(51200),
-    fileUrls: z.array(z.string()).optional(),
-})
+export const SendChatMessageRequest = buildSendChatMessageRequestSchema()
 export type SendChatMessageRequest = z.infer<typeof SendChatMessageRequest>
+
+export type ChatStreamEvent = {
+    type: ChatStreamEventType
+    data: Record<string, unknown>
+}

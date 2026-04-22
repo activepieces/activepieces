@@ -69,6 +69,7 @@
     "jszip": "3.10.1",
     "jwt-decode": "4.0.0",
     "lucide-react": "0.576.0",
+    "marked": "18.0.2",
     "motion": "12.35.0",
     "nanoid": "3.3.8",
     "openai": "6.33.0",
@@ -96,6 +97,7 @@
     "remark-breaks": "4.0.0",
     "remark-gfm": "4.0.0",
     "semver": "7.6.0",
+    "shiki": "4.0.2",
     "socket.io-client": "4.8.1",
     "sonner": "2.0.7",
     "tailwind-merge": "2.4.0",
@@ -105,6 +107,7 @@
     "use-debounce": "10.0.1",
     "use-deep-compare-effect": "1.8.1",
     "use-ripple-hook": "1.0.24",
+    "use-stick-to-bottom": "1.1.3",
     "vaul": "1.1.2",
     "zod": "4.3.6",
     "zustand": "4.5.4"
