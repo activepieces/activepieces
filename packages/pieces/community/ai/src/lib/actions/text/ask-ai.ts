@@ -43,7 +43,10 @@ export const askAI = createAction({
         'Whether to use web search to find information for the AI to use in its response.',
     }),
     webSearchOptions: buildWebSearchOptionsProperty(
-      (propsValue) => propsValue['provider'] as unknown as string,
+      (propsValue) => ({
+        provider: propsValue['provider'] as string | undefined,
+        model: propsValue['model'] as string | undefined,
+      }),
       ['webSearch', 'provider', 'model'],
     ),
   },
@@ -55,6 +58,7 @@ export const askAI = createAction({
 
     const { tools: webSearchTools, providerOptions } = buildWebSearchConfig({
       provider,
+      model: modelId,
       webSearchEnabled: !!context.propsValue.webSearch,
       webSearchOptions,
     });
