@@ -1,4 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { kebabCase } from '@activepieces/shared';
+import { randomBytes } from 'node:crypto';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 
@@ -9,7 +12,7 @@ export const generateImage = createAction({
   description: 'Generate an image using text-to-image models',
   props: {
     model: Property.Dropdown({
-  auth: openaiAuth,
+      auth: openaiAuth,
       displayName: 'Model',
       required: true,
       description: 'The model which will generate the image.',
@@ -18,14 +21,9 @@ export const generateImage = createAction({
       options: async () => {
         return {
           options: [
-            {
-              label: 'dall-e-3',
-              value: 'dall-e-3',
-            },
-            {
-              label: 'dall-e-2',
-              value: 'dall-e-2',
-            },
+            { label: 'GPT Image 2', value: 'gpt-image-2' },
+            { label: 'DALL-E 3', value: 'dall-e-3' },
+            { label: 'DALL-E 2', value: 'dall-e-2' },
           ],
         };
       },
@@ -35,85 +33,105 @@ export const generateImage = createAction({
       required: true,
     }),
     resolution: Property.Dropdown({
-  auth: openaiAuth,
+      auth: openaiAuth,
       displayName: 'Resolution',
       description: 'The resolution to generate the image in.',
       required: false,
       refreshers: ['model'],
       defaultValue: '1024x1024',
       options: async ({ model }) => {
-        let options = [
-          {
-            label: '1024x1024',
-            value: '1024x1024',
-          },
-          {
-            label: '512x512',
-            value: '512x512',
-          },
-          {
-            label: '256x256',
-            value: '256x256',
-          },
-        ];
-        if (model == 'dall-e-3')
-          options = [
-            {
-              label: '1024x1024',
-              value: '1024x1024',
-            },
-            {
-              label: '1024x1792',
-              value: '1024x1792',
-            },
-            {
-              label: '1792x1024',
-              value: '1792x1024',
-            },
-          ];
-
+        if (model === 'gpt-image-2') {
+          return {
+            options: [
+              { label: 'Auto', value: 'auto' },
+              { label: '1024x1024', value: '1024x1024' },
+              { label: '1536x1024 (landscape)', value: '1536x1024' },
+              { label: '1024x1536 (portrait)', value: '1024x1536' },
+            ],
+          };
+        }
+        if (model === 'dall-e-3') {
+          return {
+            options: [
+              { label: '1024x1024', value: '1024x1024' },
+              { label: '1024x1792', value: '1024x1792' },
+              { label: '1792x1024', value: '1792x1024' },
+            ],
+          };
+        }
         return {
-          options: options,
+          options: [
+            { label: '1024x1024', value: '1024x1024' },
+            { label: '512x512', value: '512x512' },
+            { label: '256x256', value: '256x256' },
+          ],
         };
       },
     }),
     quality: Property.Dropdown({
-  auth: openaiAuth,
+      auth: openaiAuth,
       displayName: 'Quality',
       required: false,
-      description: 'Standard is faster, HD has better details.',
+      description: 'Image quality level.',
       defaultValue: 'standard',
-      refreshers: [],
-      options: async () => {
+      refreshers: ['model'],
+      options: async ({ model }) => {
+        if (model === 'gpt-image-2') {
+          return {
+            options: [
+              { label: 'Auto', value: 'auto' },
+              { label: 'Low', value: 'low' },
+              { label: 'Medium', value: 'medium' },
+              { label: 'High', value: 'high' },
+            ],
+          };
+        }
         return {
           options: [
-            {
-              label: 'standard',
-              value: 'standard',
-            },
-            {
-              label: 'hd',
-              value: 'hd',
-            },
+            { label: 'Standard', value: 'standard' },
+            { label: 'HD', value: 'hd' },
           ],
         };
       },
     }),
   },
-  async run({ auth, propsValue }) {
-    const openai = new OpenAI({
-      apiKey: auth.secret_text,
+  async run(context) {
+    const openai = new OpenAI({ apiKey: context.auth.secret_text });
+    const { quality, resolution, model, prompt } = context.propsValue;
+
+    const response = await openai.images.generate({
+      model,
+      prompt,
+      quality: quality as 'standard' | 'hd',
+      size: resolution as '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792',
     });
 
-    const { quality, resolution, model, prompt } = propsValue;
+    const images = response.data ?? [];
+    const savedImages = await Promise.all(
+      images.map(async (img, index) => {
+        let imageBuffer: Buffer;
+        let ext = 'png';
 
-    const image = await openai.images.generate({
-      model: model,
-      prompt: prompt,
-      quality: quality as any,
-      size: resolution as any,
-    });
+        if (img.b64_json) {
+          imageBuffer = Buffer.from(img.b64_json, 'base64');
+        } else if (img.url) {
+          const downloaded = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: img.url,
+            responseType: 'arraybuffer',
+          });
+          imageBuffer = Buffer.from(downloaded.body);
+          ext = img.url.split('.').pop()?.split('?')[0] ?? 'png';
+        } else {
+          throw new Error(`Image ${index + 1} has no URL or base64 data`);
+        }
 
-    return image;
+        const fileName = `${randomBytes(8).toString('hex')}-${kebabCase(prompt).slice(0, 40)}-${index + 1}.${ext}`;
+        const fileUrl = await context.files.write({ fileName, data: imageBuffer });
+        return { url: fileUrl, fileName, revised_prompt: img.revised_prompt };
+      })
+    );
+
+    return { ...response, images: savedImages };
   },
 });
