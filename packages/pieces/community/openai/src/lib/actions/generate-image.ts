@@ -100,9 +100,12 @@ export const generateImage = createAction({
     const { quality, resolution, model, prompt } = context.propsValue;
 
     const dalleQualities = new Set(['standard', 'hd']);
-    const effectiveQuality = model !== 'gpt-image-2' && !dalleQualities.has(quality ?? '')
-      ? undefined
-      : quality;
+    const gptImageQualities = new Set(['auto', 'low', 'medium', 'high']);
+    const effectiveQuality =
+      (model === 'gpt-image-2' && !gptImageQualities.has(quality ?? '')) ||
+      (model !== 'gpt-image-2' && !dalleQualities.has(quality ?? ''))
+        ? undefined
+        : quality;
 
     // quality and size include gpt-image-2 values not yet in SDK types
     const response = await openai.images.generate({
