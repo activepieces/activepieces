@@ -126,6 +126,10 @@ function ChatBoxContent({
     setConversationId,
   } = useAgentChat({ onTitleUpdate, onConversationCreated });
   const hasSentFirst = useRef(false);
+  const [connectedPieces, setConnectedPieces] = useState<Set<string>>(new Set());
+  const markPieceConnected = useCallback((piece: string) => {
+    setConnectedPieces((prev) => new Set(prev).add(piece));
+  }, []);
 
   useEffect(() => {
     if (initialConversationId) {
@@ -190,6 +194,8 @@ function ChatBoxContent({
                 isStreaming={isLastStreamingAssistant}
                 onCancel={cancelStream}
                 onSend={handleSend}
+                connectedPieces={connectedPieces}
+                onPieceConnected={markPieceConnected}
                 onRetry={() => {
                   const lastUser = [...messages]
                     .reverse()
@@ -267,12 +273,16 @@ function ChatMessage({
   onCancel,
   onRetry,
   onSend,
+  connectedPieces,
+  onPieceConnected,
 }: {
   message: ChatMessageItem;
   isStreaming: boolean;
   onCancel: () => void;
   onRetry: () => void;
   onSend: (text: string) => void;
+  connectedPieces: Set<string>;
+  onPieceConnected: (piece: string) => void;
 }) {
   if (message.role === 'user') {
     return <UserMessage message={message} />;
@@ -285,6 +295,8 @@ function ChatMessage({
       onCancel={onCancel}
       onRetry={onRetry}
       onSend={onSend}
+      connectedPieces={connectedPieces}
+      onPieceConnected={onPieceConnected}
     />
   );
 }
@@ -332,12 +344,16 @@ function AssistantMessage({
   onCancel,
   onRetry,
   onSend,
+  connectedPieces,
+  onPieceConnected,
 }: {
   message: ChatMessageItem;
   isStreaming: boolean;
   onCancel: () => void;
   onRetry: () => void;
   onSend: (text: string) => void;
+  connectedPieces: Set<string>;
+  onPieceConnected: (piece: string) => void;
 }) {
   const [copied, setCopied] = useState(false);
   const hasThoughts = message.thoughts.length > 0;
@@ -379,7 +395,7 @@ function AssistantMessage({
         {message.plan && <PlanCard entries={message.plan} />}
 
         {hasContent && (
-          <MessageContentWithAuth content={message.content} onSend={onSend} />
+          <MessageContentWithAuth content={message.content} onSend={onSend} connectedPieces={connectedPieces} onPieceConnected={onPieceConnected} />
         )}
 
         {hasContent && !isStreaming && (
@@ -619,12 +635,16 @@ function parseAllConnectionsRequired(content: string): {
 function ConnectionRequiredCard({
   connection,
   onSend,
+  connectedPieces,
+  onPieceConnected,
 }: {
   connection: ConnectionRequired;
   onSend?: (text: string) => void;
+  connectedPieces?: Set<string>;
+  onPieceConnected?: (piece: string) => void;
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [connected, setConnected] = useState(false);
+  const connected = connectedPieces?.has(connection.piece) ?? false;
   const shortName = connection.piece.replace(/[^a-z0-9-]/gi, '');
   const pieceName = connection.piece.startsWith('@activepieces/')
     ? connection.piece
@@ -677,7 +697,7 @@ function ConnectionRequiredCard({
           setOpen={(open, createdConnection) => {
             setDialogOpen(open);
             if (createdConnection) {
-              setConnected(true);
+              onPieceConnected?.(connection.piece);
               onSend?.(`I connected ${connection.displayName}, continue`);
             }
           }}
@@ -692,9 +712,13 @@ function ConnectionRequiredCard({
 function MessageContentWithAuth({
   content,
   onSend,
+  connectedPieces,
+  onPieceConnected,
 }: {
   content: string;
   onSend?: (text: string) => void;
+  connectedPieces?: Set<string>;
+  onPieceConnected?: (piece: string) => void;
 }) {
   const hasAuthUrl = /https?:\/\/[^\s]*\/authorize\?[^\s]*/.test(content);
 
@@ -747,6 +771,8 @@ function MessageContentWithAuth({
           key={conn.piece}
           connection={conn}
           onSend={onSend}
+          connectedPieces={connectedPieces}
+          onPieceConnected={onPieceConnected}
         />
       ))}
       {proposal && (
