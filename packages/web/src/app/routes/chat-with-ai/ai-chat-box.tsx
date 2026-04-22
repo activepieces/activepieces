@@ -767,7 +767,7 @@ function MessageContentWithAuth({
     return (
       <div className="space-y-3">
         {cleanContent && (
-          <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:my-2 prose-headings:mt-4 prose-headings:mb-2 prose-li:my-0.5 prose-pre:my-2">
+          <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:my-3 prose-headings:mt-5 prose-headings:mb-3 prose-li:my-1 prose-pre:my-3 prose-table:my-3 prose-hr:my-4 leading-relaxed">
             <Markdown>{cleanContent}</Markdown>
           </div>
         )}
@@ -785,7 +785,7 @@ function MessageContentWithAuth({
 
   if (isStreaming) {
     return (
-      <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:my-2 prose-headings:mt-4 prose-headings:mb-2 prose-li:my-0.5 prose-pre:my-2">
+      <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:my-3 prose-headings:mt-5 prose-headings:mb-3 prose-li:my-1 prose-pre:my-3 prose-table:my-3 prose-hr:my-4 leading-relaxed">
         <Markdown>{content}</Markdown>
       </div>
     );
@@ -800,7 +800,7 @@ function MessageContentWithAuth({
   return (
     <div className="space-y-2">
       {finalContent && (
-        <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:my-2 prose-headings:mt-4 prose-headings:mb-2 prose-li:my-0.5 prose-pre:my-2">
+        <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:my-3 prose-headings:mt-5 prose-headings:mb-3 prose-li:my-1 prose-pre:my-3 prose-table:my-3 prose-hr:my-4 leading-relaxed">
           <Markdown>{finalContent}</Markdown>
         </div>
       )}
