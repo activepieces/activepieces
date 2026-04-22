@@ -59,9 +59,22 @@ export const downloadFile = createAction({
       fileId = fileIdentifier;
     }
 
-    const fileDetails = await httpClient.sendRequest<{ name: string }>({
+    const fileDetails = await httpClient.sendRequest<{
+      id: string;
+      name: string;
+      size: number;
+      createdDateTime: string;
+      lastModifiedDateTime: string;
+      webUrl: string;
+      file?: { mimeType: string };
+      parentReference?: { path: string; driveId: string };
+    }>({
       method: HttpMethod.GET,
-      url: `${baseUrl}/items/${fileId}?$select=name`,
+      url: `${baseUrl}/items/${fileId}`,
+      queryParams: {
+        $select:
+          'id,name,size,createdDateTime,lastModifiedDateTime,webUrl,file,parentReference',
+      },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
@@ -78,24 +91,21 @@ export const downloadFile = createAction({
       responseType: 'arraybuffer',
     });
 
-    const desiredHeaders = [
-      'content-length',
-      'content-type',
-      'content-location',
-      'expires',
-    ];
-    const filteredHeaders: Record<string, unknown> = {};
-
-    if (result.headers) {
-      for (const key of desiredHeaders) {
-        filteredHeaders[key] = result.headers[key];
-      }
-    }
+    const { id, name, size, createdDateTime, lastModifiedDateTime, webUrl, file, parentReference } =
+      fileDetails.body;
 
     return {
-      ...filteredHeaders,
+      id,
+      name,
+      size,
+      mimeType: file?.mimeType,
+      createdDateTime,
+      lastModifiedDateTime,
+      webUrl,
+      folderPath: parentReference?.path,
+      driveId: parentReference?.driveId,
       data: await context.files.write({
-        fileName: fileDetails.body.name,
+        fileName: name,
         data: Buffer.from(result.body),
       }),
     };
