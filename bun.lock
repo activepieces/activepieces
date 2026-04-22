@@ -375,7 +375,7 @@
     },
     "packages/ee/embed-sdk": {
       "name": "ee-embed-sdk",
-      "version": "0.9.0",
+      "version": "0.8.1",
       "dependencies": {
         "tslib": "2.6.2",
       },
@@ -4468,7 +4468,7 @@
     },
     "packages/pieces/community/microsoft-onedrive": {
       "name": "@activepieces/piece-microsoft-onedrive",
-      "version": "0.3.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
