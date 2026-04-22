@@ -11,7 +11,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { authenticationSession } from '@/lib/authentication-session';
 
 import { AIChatBox } from './ai-chat-box';
 import { ChatSettingsDialog } from './chat-settings-dialog';
@@ -19,7 +18,6 @@ import { ConversationList } from './conversation-list';
 
 export function ChatWithAIPage() {
   const queryClient = useQueryClient();
-  const projectId = authenticationSession.getProjectId();
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(null);
@@ -43,9 +41,9 @@ export function ChatWithAIPage() {
 
   const handleTitleUpdate = useCallback(() => {
     void queryClient.invalidateQueries({
-      queryKey: ['chat-conversations', projectId],
+      queryKey: ['chat-conversations'],
     });
-  }, [queryClient, projectId]);
+  }, [queryClient]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

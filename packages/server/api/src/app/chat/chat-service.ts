@@ -54,16 +54,15 @@ export const chatService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async listConversations({ projectId, userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<ChatConversation>> {
+    async listConversations({ userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<ChatConversation>> {
         const queryBuilder = conversationRepo()
             .createQueryBuilder('c')
-            .where('c.projectId = :projectId', { projectId })
-            .andWhere('c.userId = :userId', { userId })
+            .where('c.userId = :userId', { userId })
             .orderBy('c.created', 'DESC')
             .take(limit + 1)
 
         if (!isNil(cursor)) {
-            queryBuilder.andWhere('c.created < (SELECT cc.created FROM chat_conversation cc WHERE cc.id = :cursor AND cc.projectId = :projectId AND cc.userId = :userId)', { cursor })
+            queryBuilder.andWhere('c.created < (SELECT cc.created FROM chat_conversation cc WHERE cc.id = :cursor AND cc.userId = :userId)', { cursor })
         }
 
         const results = await queryBuilder.getMany()
@@ -77,8 +76,8 @@ export const chatService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async getConversationOrThrow({ id, projectId, userId }: GetConversationParams): Promise<ChatConversation> {
-        const conversation = await conversationRepo().findOneBy({ id, projectId, userId })
+    async getConversationOrThrow({ id, userId }: GetConversationParams): Promise<ChatConversation> {
+        const conversation = await conversationRepo().findOneBy({ id, userId })
         if (isNil(conversation)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -88,8 +87,8 @@ export const chatService = (log: FastifyBaseLogger) => ({
         return conversation
     },
 
-    async updateConversation({ id, projectId, userId, request }: UpdateConversationParams): Promise<ChatConversation> {
-        const conversation = await this.getConversationOrThrow({ id, projectId, userId })
+    async updateConversation({ id, userId, request }: UpdateConversationParams): Promise<ChatConversation> {
+        const conversation = await this.getConversationOrThrow({ id, userId })
         const updates: Partial<Pick<ChatConversation, 'title' | 'modelName'>> = {}
         if (request.title !== undefined) updates.title = request.title
         if (request.modelName !== undefined) updates.modelName = request.modelName
@@ -100,13 +99,13 @@ export const chatService = (log: FastifyBaseLogger) => ({
         return { ...conversation, ...updates }
     },
 
-    async deleteConversation({ id, projectId, userId, platformId }: DeleteConversationParams): Promise<void> {
-        const conversation = await this.getConversationOrThrow({ id, projectId, userId })
+    async deleteConversation({ id, userId, platformId }: DeleteConversationParams): Promise<void> {
+        const conversation = await this.getConversationOrThrow({ id, userId })
         if (conversation.sandboxSessionId) {
             const anthropicApiKey = await getAnthropicApiKey({ platformId, log })
             await chatSandboxAgent.destroySession({ sessionId: conversation.sandboxSessionId, anthropicApiKey }).catch(() => { /* session may already be gone */ })
         }
-        await conversationRepo().delete({ id, projectId })
+        await conversationRepo().delete({ id })
     },
 
     async updateTokenUsage({ conversationId, projectId, inputTokens, outputTokens }: UpdateTokenUsageParams): Promise<void> {
@@ -287,7 +286,6 @@ type CreateConversationParams = {
 }
 
 type ListConversationsParams = {
-    projectId: string
     userId: string
     cursor?: string
     limit: number
@@ -295,20 +293,17 @@ type ListConversationsParams = {
 
 type GetConversationParams = {
     id: string
-    projectId: string
     userId: string
 }
 
 type UpdateConversationParams = {
     id: string
-    projectId: string
     userId: string
     request: UpdateChatConversationRequest
 }
 
 type DeleteConversationParams = {
     id: string
-    projectId: string
     userId: string
     platformId: string
 }
