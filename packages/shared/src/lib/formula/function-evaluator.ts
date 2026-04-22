@@ -86,8 +86,11 @@ parser.functions.ap_round = (n: unknown, decimals: unknown = 0) =>
 parser.functions.round_up = (n: unknown) => Math.ceil(Number(n))
 parser.functions.round_down = (n: unknown) => Math.floor(Number(n))
 parser.functions.absolute = (n: unknown) => Math.abs(Number(n))
-parser.functions.percentage = (n: unknown, total: unknown) =>
-    (Number(n) / Number(total)) * 100
+parser.functions.percentage = (n: unknown, total: unknown) => {
+    const divisor = Number(total)
+    if (divisor === 0) throw new Error('Division by zero')
+    return (Number(n) / divisor) * 100
+}
 parser.functions.format_number = (n: unknown, decimals: unknown = 0) => {
     const d = Number(decimals)
     return Number(n).toLocaleString('en-US', {
@@ -185,10 +188,14 @@ parser.functions.filter_list = (list: unknown, field: unknown, value: unknown) =
     )
 parser.functions.sort_list = (list: unknown, field: unknown, order: unknown = 'asc') => {
     const arr = [...toArray(list)]
+    const fieldName = String(field)
     const ord = String(order)
     return arr.sort((a, b) => {
-        const av = (a as Record<string, unknown>)[String(field)] as string | number
-        const bv = (b as Record<string, unknown>)[String(field)] as string | number
+        const av = readField(a, fieldName)
+        const bv = readField(b, fieldName)
+        if (av == null && bv == null) return 0
+        if (av == null) return 1
+        if (bv == null) return -1
         const cmp = av < bv ? -1 : av > bv ? 1 : 0
         return ord === 'desc' ? -cmp : cmp
     })
@@ -230,26 +237,14 @@ parser.functions.average = (list: unknown, field: unknown) => {
     }, 0)
     return total / arr.length
 }
-parser.functions.max_in_list = (list: unknown, field: unknown) =>
-    Math.max(
-        ...toArray(list).map((item) =>
-            Number(
-                typeof item === 'object' && item !== null
-                    ? (item as Record<string, unknown>)[String(field)]
-                    : NaN,
-            ),
-        ),
-    )
-parser.functions.min_in_list = (list: unknown, field: unknown) =>
-    Math.min(
-        ...toArray(list).map((item) =>
-            Number(
-                typeof item === 'object' && item !== null
-                    ? (item as Record<string, unknown>)[String(field)]
-                    : NaN,
-            ),
-        ),
-    )
+parser.functions.max_in_list = (list: unknown, field: unknown) => {
+    const nums = toNumericFieldValues(list, field)
+    return nums.length === 0 ? null : Math.max(...nums)
+}
+parser.functions.min_in_list = (list: unknown, field: unknown) => {
+    const nums = toNumericFieldValues(list, field)
+    return nums.length === 0 ? null : Math.min(...nums)
+}
 parser.functions.deduplicate = (list: unknown, field: unknown) => {
     const seen = new Set<unknown>()
     return toArray(list).filter((item) => {
@@ -325,7 +320,12 @@ function evaluateSingleFormula(
 
     const { processed, vars } = preprocessExpression(expression, sampleData)
     try {
-        const result = parser.evaluate(processed, vars as Record<string, number>)
+        // expr-eval's published `Values` type is narrower than what the library
+        // accepts at runtime — arrays, null, and mixed-type objects all flow
+        // through fine. Ignore the library-type mismatch here rather than
+        // forcing a misleading cast like `as Record<string, number>`.
+        // @ts-expect-error narrow third-party type; runtime accepts unknown values
+        const result = parser.evaluate(processed, vars)
         return { result, error: null }
     }
     catch (e) {
@@ -712,7 +712,24 @@ function toArray(value: unknown): unknown[] {
     return [value]
 }
 
-export { DAY_NAMES, MONTH_NAMES }
+function readField(item: unknown, field: string): unknown {
+    if (item !== null && typeof item === 'object') {
+        return (item as Record<string, unknown>)[field]
+    }
+    return undefined
+}
+
+function toNumericFieldValues(list: unknown, field: unknown): number[] {
+    const fieldName = String(field)
+    const result: number[] = []
+    for (const item of toArray(list)) {
+        const raw = readField(item, fieldName)
+        if (raw == null) continue
+        const num = Number(raw)
+        if (Number.isFinite(num)) result.push(num)
+    }
+    return result
+}
 
 const MONTH_NAMES = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -720,3 +737,5 @@ const MONTH_NAMES = [
 ]
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+export { DAY_NAMES, MONTH_NAMES }

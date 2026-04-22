@@ -105,8 +105,10 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         const { expression: preResolvedExpr, vars: preResolvedVars } = await preResolveFormulaVars(input, resolveOptions)
         const { result, error } = evaluateExpression(preResolvedExpr, preResolvedVars)
         if (error) {
+            // Don't silently swallow the value — preserve the original input so user data
+            // that happens to resemble a formula (e.g. `min(qty, limit) reached`) is not lost.
             console.warn('[resolveInputAsync] Formula evaluation error:', error)
-            return ''
+            return input
         }
         return result ?? ''
     }
@@ -268,12 +270,103 @@ async function preResolveFormulaVars(
     return { expression: rewritten, vars }
 }
 
+const AP_FUNCTION_NAMES = new Set(AP_FUNCTIONS.map((fn) => fn.name))
 const AP_FUNCTION_CALL_REGEX = new RegExp(
     `(?<!\\.)\\b(${AP_FUNCTIONS.map((fn) => fn.name).join('|')})\\s*\\(`,
 )
 
+/**
+ * Detect whether the input is an AP formula expression.
+ *
+ * Function names like `min`, `trim`, `round`, `replace`, `contains` collide with
+ * common words, so a bare name-match would false-positive on arbitrary user data
+ * (e.g. `"min(qty, limit) reached"`, `"Please trim(spaces)"`). We require:
+ *
+ * 1. A known function name followed by `(`.
+ * 2. A matching closing `)` (balanced parens, string-delimiter aware).
+ * 3. Multi-argument calls use `;` as the separator (AP formula syntax). Natural
+ *    language uses `,` as the English list separator, so a top-level `,` inside
+ *    the parens is a strong signal this is NOT a formula.
+ */
 function isFormulaExpression(input: string): boolean {
-    return AP_FUNCTION_CALL_REGEX.test(input)
+    if (!AP_FUNCTION_CALL_REGEX.test(input)) return false
+
+    let pos = 0
+    while (pos < input.length) {
+        const next = findNextApFunctionCall(input, pos)
+        if (next === null) return false
+
+        const closePos = findMatchingParen(input, next.openParen)
+        if (closePos === -1) {
+            pos = next.openParen + 1
+            continue
+        }
+
+        const argsContent = input.slice(next.openParen + 1, closePos)
+        if (!hasTopLevelComma(argsContent)) return true
+
+        pos = closePos + 1
+    }
+    return false
+}
+
+function findNextApFunctionCall(text: string, fromPos: number): { start: number, openParen: number } | null {
+    for (let i = fromPos; i < text.length; i++) {
+        if (!/[a-z_]/i.test(text[i])) continue
+        if (i > 0 && text[i - 1] === '.') continue
+        const wordMatch = text.slice(i).match(/^([a-z_][a-z0-9_]*)\s*\(/i)
+        if (wordMatch && AP_FUNCTION_NAMES.has(wordMatch[1])) {
+            return { start: i, openParen: i + wordMatch[0].length - 1 }
+        }
+    }
+    return null
+}
+
+function findMatchingParen(text: string, openPos: number): number {
+    let depth = 0
+    let inString: '"' | '\'' | null = null
+    for (let i = openPos; i < text.length; i++) {
+        const ch = text[i]
+        if (inString) {
+            if (ch === inString && text[i - 1] !== '\\') inString = null
+        }
+        else if (ch === '"' || ch === '\'') {
+            inString = ch
+        }
+        else if (ch === '(') {
+            depth++
+        }
+        else if (ch === ')') {
+            depth--
+            if (depth === 0) return i
+        }
+    }
+    return -1
+}
+
+function hasTopLevelComma(content: string): boolean {
+    let depth = 0
+    let inString: '"' | '\'' | null = null
+    for (let i = 0; i < content.length; i++) {
+        const ch = content[i]
+        if (inString) {
+            if (ch === inString && content[i - 1] !== '\\') inString = null
+            continue
+        }
+        if (ch === '"' || ch === '\'') {
+            inString = ch
+        }
+        else if (ch === '(' || ch === '[') {
+            depth++
+        }
+        else if (ch === ')' || ch === ']') {
+            depth--
+        }
+        else if (ch === ',' && depth === 0) {
+            return true
+        }
+    }
+    return false
 }
 
 type ResolveSingleTokenParams = {

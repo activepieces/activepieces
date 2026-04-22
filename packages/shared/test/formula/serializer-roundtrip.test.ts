@@ -66,4 +66,16 @@ describe('variable interpolation round-trip', () => {
         const { result } = evaluateExpression('Score: add({{score}};8)', DATA)
         expect(result).toBe('Score: 50')
     })
+
+    it('literal `)` inside a quoted string arg does not break the call', () => {
+        const { result, error } = evaluateExpression('prefix("hi";"(CEO) ")', DATA)
+        expect(error).toBeNull()
+        expect(result).toBe('(CEO) hi')
+    })
+
+    it('literal `;` inside a quoted string arg is not treated as separator', () => {
+        const { result, error } = evaluateExpression('combine("a;b";"c;d";" | ")', DATA)
+        expect(error).toBeNull()
+        expect(result).toBe('a;b | c;d')
+    })
 })

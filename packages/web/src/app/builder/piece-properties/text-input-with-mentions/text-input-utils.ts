@@ -109,15 +109,32 @@ function tokenizeExpression(expr: string): ExprToken[] {
       continue;
     }
 
+    // Accumulate plain text, tracking string literals so that `)` / `;` / function
+    // names inside quoted arguments don't prematurely close a function node
+    // (e.g. `prefix("(CEO)"; ...)` must round-trip losslessly).
     let text = '';
+    let inString: '"' | "'" | null = null;
     while (i < expr.length) {
-      if (expr[i] === '{' && expr[i + 1] === '{') break;
-      if (expr[i] === '\n') break;
-      if (expr[i] === ')') break;
-      if (expr[i] === ';' && fnDepth > 0) break;
+      const ch = expr[i];
+      if (inString) {
+        if (ch === inString && expr[i - 1] !== '\\') inString = null;
+        text += ch;
+        i++;
+        continue;
+      }
+      if (ch === '"' || ch === "'") {
+        inString = ch;
+        text += ch;
+        i++;
+        continue;
+      }
+      if (ch === '{' && expr[i + 1] === '{') break;
+      if (ch === '\n') break;
+      if (ch === ')') break;
+      if (ch === ';' && fnDepth > 0) break;
       const ahead = expr.slice(i).match(/^([a-z_][a-z0-9_]*)\(/i);
       if (ahead && fnNames.has(ahead[1])) break;
-      text += expr[i];
+      text += ch;
       i++;
     }
     if (text) tokens.push({ kind: 'text', value: text });

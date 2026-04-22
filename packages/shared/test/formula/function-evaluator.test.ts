@@ -134,6 +134,10 @@ describe('absolute', () => {
 
 describe('percentage', () => {
     it('calculates percentage', () => expect(result('percentage(25;200)')).toBe(12.5))
+    it('errors on zero total instead of returning Infinity', () => {
+        expect(result('percentage(5;0)')).toBeNull()
+        expect(error('percentage(5;0)')).toMatch(/divide by zero/i)
+    })
 })
 
 describe('format_number', () => {
@@ -340,6 +344,12 @@ describe('max_in_list / min_in_list', () => {
         expect(result('max_in_list({{items}};"score")', LIST_DATA)).toBe(90))
     it('min_in_list', () =>
         expect(result('min_in_list({{items}};"score")', LIST_DATA)).toBe(60))
+    it('returns null instead of -Infinity when list is empty', () =>
+        expect(result('max_in_list({{items}};"score")', { items: [] })).toBeNull())
+    it('returns null instead of Infinity when list is empty', () =>
+        expect(result('min_in_list({{items}};"score")', { items: [] })).toBeNull())
+    it('returns null when no item has the field', () =>
+        expect(result('max_in_list({{items}};"missing")', LIST_DATA)).toBeNull())
 })
 
 describe('deduplicate', () => {
