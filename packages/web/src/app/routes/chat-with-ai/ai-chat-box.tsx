@@ -882,7 +882,7 @@ function EmptyState({
 
   const greeting = incognito
     ? t('Private Chat')
-    : t('What should we work on in {projectName}?', {
+    : t('Ready to automate {projectName}', {
         projectName: project.displayName,
       });
 
