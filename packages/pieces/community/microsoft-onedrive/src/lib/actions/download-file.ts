@@ -7,6 +7,23 @@ import {
 import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
 
+type SearchItem = {
+  id: string;
+  name: string;
+  file?: { mimeType: string };
+};
+
+type DriveItem = {
+  id: string;
+  name: string;
+  size: number;
+  createdDateTime: string;
+  lastModifiedDateTime: string;
+  webUrl: string;
+  file?: { mimeType: string };
+  parentReference?: { path: string; driveId: string };
+};
+
 export const downloadFile = createAction({
   auth: oneDriveAuth,
   name: 'download_file',
@@ -40,18 +57,19 @@ export const downloadFile = createAction({
 
     if (lookupBy === 'name') {
       const escapedName = fileIdentifier.replace(/'/g, "''");
-      const searchRes = await httpClient.sendRequest<{
-        value: { id: string; name: string }[];
-      }>({
+      const searchRes = await httpClient.sendRequest<{ value: SearchItem[] }>({
         method: HttpMethod.GET,
         url: `${baseUrl}/root/search(q='${encodeURIComponent(escapedName)}')`,
-        queryParams: { $select: 'id,name', $top: '999' },
+        queryParams: { $select: 'id,name,file', $top: '999' },
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: context.auth.access_token,
         },
       });
-      const match = searchRes.body.value.find((f) => f.name === fileIdentifier);
+
+      const match = searchRes.body.value.find(
+        (item) => item.name === fileIdentifier && item.file !== undefined,
+      );
       if (!match) {
         throw new Error(`No file found with name "${fileIdentifier}"`);
       }
@@ -60,16 +78,7 @@ export const downloadFile = createAction({
       fileId = fileIdentifier;
     }
 
-    const fileDetails = await httpClient.sendRequest<{
-      id: string;
-      name: string;
-      size: number;
-      createdDateTime: string;
-      lastModifiedDateTime: string;
-      webUrl: string;
-      file?: { mimeType: string };
-      parentReference?: { path: string; driveId: string };
-    }>({
+    const fileDetails = await httpClient.sendRequest<DriveItem>({
       method: HttpMethod.GET,
       url: `${baseUrl}/items/${fileId}`,
       queryParams: {
