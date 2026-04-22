@@ -255,7 +255,7 @@ export function buildWebSearchConfig(params: {
 
   const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model });
   const resolvedProvider = effectiveProvider ?? provider;
-  console.log('resolvedProvider', resolvedProvider);
+  
   const isOpenRouter =
     resolvedProvider === AIProviderName.OPENROUTER ||
     resolvedProvider === AIProviderName.ACTIVEPIECES;
