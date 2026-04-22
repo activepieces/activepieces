@@ -89,6 +89,7 @@ async function createSession({ anthropicApiKey, mcpProjects }: CreateSessionPara
 
     const session = await sdk.createSession({
         agent: 'claude',
+        model: 'opus[1m]',
         mode: 'bypassPermissions',
         sessionInit: {
             cwd: process.cwd(),
