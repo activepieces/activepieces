@@ -50,12 +50,24 @@ async function ensureDir(dir: string): Promise<void> {
     await fs.mkdir(dir, { recursive: true })
 }
 
+function assertSafePath(resolved: string, base: string): void {
+    const normalizedResolved = path.resolve(resolved)
+    const normalizedBase = path.resolve(base)
+    if (!normalizedResolved.startsWith(normalizedBase + path.sep) && normalizedResolved !== normalizedBase) {
+        throw new Error('Path traversal detected')
+    }
+}
+
 function sessionPath(id: string): string {
-    return path.join(SESSIONS_DIR, `${id}.json`)
+    const p = path.join(SESSIONS_DIR, `${id}.json`)
+    assertSafePath(p, SESSIONS_DIR)
+    return p
 }
 
 function eventsDir(sessionId: string): string {
-    return path.join(EVENTS_DIR, sessionId)
+    const p = path.join(EVENTS_DIR, sessionId)
+    assertSafePath(p, EVENTS_DIR)
+    return p
 }
 
 function eventPath(sessionId: string, eventIndex: number): string {

@@ -308,18 +308,26 @@ function extractContentText(update: Record<string, unknown>): string | undefined
     return typeof update.content.text === 'string' ? update.content.text : undefined
 }
 
+const MAX_TOOL_OUTPUT_SIZE = 64 * 1024
+
 function extractToolOutput(update: Record<string, unknown>): string | undefined {
-    if (typeof update.rawOutput === 'string') return update.rawOutput
-    if (Array.isArray(update.content)) {
+    let result: string | undefined
+    if (typeof update.rawOutput === 'string') {
+        result = update.rawOutput
+    }
+    else if (Array.isArray(update.content)) {
         const parts: string[] = []
         for (const block of update.content) {
             if (isPlainObject(block) && block.type === 'text' && typeof block.text === 'string') {
                 parts.push(block.text)
             }
         }
-        if (parts.length > 0) return parts.join('\n')
+        if (parts.length > 0) result = parts.join('\n')
     }
-    return undefined
+    if (result && result.length > MAX_TOOL_OUTPUT_SIZE) {
+        return result.slice(0, MAX_TOOL_OUTPUT_SIZE) + '... (truncated)'
+    }
+    return result
 }
 
 function writeSseEvent(raw: NodeJS.WritableStream, event: { type: ChatStreamEventType, data: Record<string, unknown> }): void {

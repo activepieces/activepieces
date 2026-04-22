@@ -105,7 +105,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
             const anthropicApiKey = await getAnthropicApiKey({ platformId, log })
             await chatSandboxAgent.destroySession({ sessionId: conversation.sandboxSessionId, anthropicApiKey }).catch(() => { /* session may already be gone */ })
         }
-        await conversationRepo().delete({ id })
+        await conversationRepo().delete({ id, userId })
     },
 
     async updateTokenUsage({ conversationId, projectId, inputTokens, outputTokens }: UpdateTokenUsageParams): Promise<void> {
