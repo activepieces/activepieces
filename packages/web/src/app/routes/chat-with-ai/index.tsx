@@ -10,7 +10,8 @@ import { ConversationList } from './conversation-list';
 export function ChatWithAIPage() {
   const queryClient = useQueryClient();
   const { projectId: routeProjectId } = useParams<{ projectId: string }>();
-  const projectId = routeProjectId ?? authenticationSession.getProjectId() ?? '';
+  const projectId =
+    routeProjectId ?? authenticationSession.getProjectId() ?? '';
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(null);
