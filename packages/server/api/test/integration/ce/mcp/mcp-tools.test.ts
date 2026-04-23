@@ -2520,6 +2520,9 @@ describe('MCP Tools integration', () => {
             searchQuery: 'private-only-b',
         })
 
+        // Require the call to have succeeded — otherwise an error response
+        // (which also wouldn't contain the piece name) would falsely pass.
+        expect(text(result)).toContain('✅')
         expect(text(result)).not.toContain('@activepieces/piece-private-only-b')
     })
 })
