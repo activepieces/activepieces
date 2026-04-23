@@ -1820,11 +1820,12 @@
     },
     "packages/pieces/community/confluence": {
       "name": "@activepieces/piece-confluence",
-      "version": "0.2.4",
+      "version": "0.2.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
+        "form-data": "4.0.4",
         "tslib": "2.6.2",
         "xml2js": "0.6.2",
       },
