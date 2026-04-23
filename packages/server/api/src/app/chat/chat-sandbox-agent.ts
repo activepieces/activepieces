@@ -6,6 +6,8 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { type ChatHistoryMessage, type ChatHistoryToolCall } from '@activepieces/shared'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 
 type SandboxSession = {
     id: string
@@ -53,7 +55,7 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
         return pending
     }
     const promise = (async () => {
-        const providerType = process.env.AP_SANDBOX_PROVIDER ?? 'local'
+        const providerType = system.get(AppSystemProp.SANDBOX_PROVIDER) ?? 'local'
         let sandbox: unknown
 
         if (providerType === 'local') {
