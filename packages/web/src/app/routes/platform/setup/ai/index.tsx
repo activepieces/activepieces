@@ -57,7 +57,7 @@ export default function AIProvidersPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/platform/setup/ai/migrations')}
+              onClick={() => navigate('/platform/setup/ai/model-migrations')}
             >
               <ArrowLeftRight className="w-4 h-4 mr-2" />
               {t('Migrations')}

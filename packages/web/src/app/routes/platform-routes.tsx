@@ -43,7 +43,7 @@ const SSOPage = React.lazy(() =>
 );
 const AIProvidersPage = React.lazy(() => import('./platform/setup/ai'));
 const AiProviderMigrationsPage = React.lazy(
-  () => import('./platform/setup/ai/migrations'),
+  () => import('./platform/setup/ai/model-migrations'),
 );
 const BrandingPage = React.lazy(() =>
   import('./platform/setup/branding').then((m) => ({
@@ -129,7 +129,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/ai/migrations',
+    path: '/platform/setup/ai/model-migrations',
     element: (
       <PlatformLayout>
         <PageTitle title="AI Migrations">

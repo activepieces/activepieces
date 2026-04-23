@@ -5,9 +5,11 @@ import {
   ArrowLeftRight,
   ArrowRight,
   Clock,
+  FlaskConical,
   Layers,
   ListChecks,
   Loader2,
+  Play,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -22,20 +24,18 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-import { useAiProviderMigrations } from './ai-provider-migrations-hooks';
+import { useAiProviderMigrations } from '../hooks/ai-provider-migration-hooks';
+
 import { FailedMigrationsDialog } from './failed-migrations-dialog';
 import { MigratedFlowsDialog } from './migrated-flows-dialog';
 
 export function AiProviderMigrationsTable({
   onMigrateClick,
+  onRunForReal,
   showMigrateButton,
 }: AiProviderMigrationsTableProps) {
   const { data, isLoading } = useAiProviderMigrations({ limit: 10 });
-  const [failedMigration, setFailedMigration] = useState<FlowMigration | null>(
-    null,
-  );
-  const [migratedMigration, setMigratedMigration] =
-    useState<FlowMigration | null>(null);
+  const [rowDialog, setRowDialog] = useState<RowDialog | null>(null);
 
   const columns: ColumnDef<RowDataWithActions<FlowMigration>, unknown>[] = [
     {
@@ -76,12 +76,20 @@ export function AiProviderMigrationsTable({
           icon={ListChecks}
         />
       ),
-      size: 100,
+      size: 140,
       cell: ({ row }) => (
-        <StatusBadge
-          status={row.original.status}
-          failedCount={row.original.failedFlowVersions.length}
-        />
+        <div className="flex items-center gap-1.5">
+          <StatusBadge
+            status={row.original.status}
+            failedCount={row.original.failedFlowVersions.length}
+          />
+          {row.original.params.dryCheck && (
+            <Badge variant="secondary">
+              <FlaskConical className="size-3 mr-1" />
+              {t('Dry-check')}
+            </Badge>
+          )}
+        </div>
       ),
     },
     {
@@ -90,11 +98,13 @@ export function AiProviderMigrationsTable({
         <DataTableColumnHeader column={column} title={t('Progress')} />
       ),
       cell: ({ row }) => {
-        const { migratedVersions, failedFlowVersions } = row.original;
+        const { migratedVersions, failedFlowVersions, params } = row.original;
         const migratedFlowCount = new Set(migratedVersions.map((v) => v.flowId))
           .size;
         const failedFlowCount = new Set(failedFlowVersions.map((v) => v.flowId))
           .size;
+        const migratedLabel = params.dryCheck ? t('planned') : t('migrated');
+        const failedLabel = params.dryCheck ? t('blocked') : t('failed');
         return (
           <div
             className="flex flex-col gap-1.5"
@@ -103,21 +113,25 @@ export function AiProviderMigrationsTable({
             {migratedFlowCount > 0 ? (
               <button
                 className="text-sm text-primary hover:underline cursor-pointer text-left"
-                onClick={() => setMigratedMigration(row.original)}
+                onClick={() =>
+                  setRowDialog({ kind: 'migrated', migration: row.original })
+                }
               >
-                {migratedFlowCount} {t('migrated')}
+                {migratedFlowCount} {migratedLabel}
               </button>
             ) : (
               <span className="text-sm text-muted-foreground">
-                {migratedFlowCount} {t('migrated')}
+                {migratedFlowCount} {migratedLabel}
               </span>
             )}
             {failedFlowCount > 0 && (
               <button
                 className="text-sm text-destructive hover:underline cursor-pointer text-left"
-                onClick={() => setFailedMigration(row.original)}
+                onClick={() =>
+                  setRowDialog({ kind: 'failed', migration: row.original })
+                }
               >
-                {failedFlowCount} {t('failed')}
+                {failedFlowCount} {failedLabel}
               </button>
             )}
           </div>
@@ -132,6 +146,34 @@ export function AiProviderMigrationsTable({
       cell: ({ row }) => (
         <FormattedDate date={new Date(row.original.created)} />
       ),
+    },
+    {
+      id: 'actions',
+      header: () => null,
+      size: 150,
+      cell: ({ row }) => {
+        if (
+          !row.original.params.dryCheck ||
+          row.original.status !== FlowMigrationStatus.COMPLETED
+        ) {
+          return null;
+        }
+        return (
+          <div
+            className="flex justify-end"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onRunForReal(row.original)}
+            >
+              <Play className="size-3 mr-1" />
+              {t('Run for real')}
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -157,22 +199,23 @@ export function AiProviderMigrationsTable({
             : []
         }
       />
-      {failedMigration && (
+      {rowDialog?.kind === 'failed' && (
         <FailedMigrationsDialog
-          open={!!failedMigration}
+          open
           onOpenChange={(open: boolean) => {
-            if (!open) setFailedMigration(null);
+            if (!open) setRowDialog(null);
           }}
-          failedFlowVersions={failedMigration.failedFlowVersions}
+          failedFlowVersions={rowDialog.migration.failedFlowVersions}
         />
       )}
-      {migratedMigration && (
+      {rowDialog?.kind === 'migrated' && (
         <MigratedFlowsDialog
-          open={!!migratedMigration}
+          open
           onOpenChange={(open: boolean) => {
-            if (!open) setMigratedMigration(null);
+            if (!open) setRowDialog(null);
           }}
-          migratedVersions={migratedMigration.migratedVersions}
+          migratedVersions={rowDialog.migration.migratedVersions}
+          isDryCheck={rowDialog.migration.params.dryCheck}
         />
       )}
     </>
@@ -204,7 +247,13 @@ function StatusBadge({
   }
 }
 
+type RowDialog = {
+  kind: 'failed' | 'migrated';
+  migration: FlowMigration;
+};
+
 type AiProviderMigrationsTableProps = {
   onMigrateClick: () => void;
+  onRunForReal: (dryCheckMigration: FlowMigration) => void;
   showMigrateButton: boolean;
 };
