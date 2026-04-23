@@ -30,6 +30,9 @@ jobs:
       - name: Build shared package
         run: bun run --cwd packages/shared build
 
+      - name: Build server-utils package
+        run: bun run --cwd packages/server/utils build
+
       - name: Set version from package.json
         id: version
         run: |
@@ -38,6 +41,10 @@ jobs:
 
       - name: Fail if Docker tag already exists
         run: '! docker manifest inspect activepieces/activepieces:${{ steps.version.outputs.release }}'
+
+      - name: Check for breaking migrations
+        id: migration-check
+        run: bunx tsx tools/scripts/check-release-migrations.ts ${{ steps.version.outputs.release }}
 
       - name: Create or update changelog via release-drafter
         uses: release-drafter/release-drafter@v5
@@ -78,10 +85,6 @@ jobs:
             --tag ghcr.io/activepieces/activepieces:${{ steps.version.outputs.release }} \
             --tag ghcr.io/activepieces/activepieces:latest \
             ghcr.io/activepieces/activepieces-cloud:release-candidate
-
-      - name: Check for breaking migrations
-        id: migration-check
-        run: bunx tsx tools/scripts/check-release-migrations.ts ${{ steps.version.outputs.release }}
 
       - name: Add breaking migration note to release
         if: steps.migration-check.outputs.has_breaking == 'true'
