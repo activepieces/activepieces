@@ -72,19 +72,25 @@ export const chatService = (log: FastifyBaseLogger) => ({
             .where('c.projectId = :projectId', { projectId })
             .andWhere('c.userId = :userId', { userId })
             .orderBy('c.created', 'DESC')
+            .addOrderBy('c.id', 'DESC')
             .take(limit + 1)
 
         if (!isNil(cursor)) {
-            queryBuilder.andWhere('c.created < :cursor', { cursor })
+            const [cursorDate, cursorId] = cursor.split('|')
+            queryBuilder.andWhere(
+                '(c.created < :cursorDate OR (c.created = :cursorDate AND c.id < :cursorId))',
+                { cursorDate, cursorId },
+            )
         }
 
         const results = await queryBuilder.getMany()
         const hasMore = results.length > limit
         const data = hasMore ? results.slice(0, limit) : results
+        const last = data[data.length - 1]
 
         return {
             data,
-            next: hasMore ? data[data.length - 1].created : null,
+            next: hasMore && last ? `${last.created}|${last.id}` : null,
             previous: null,
         }
     },
