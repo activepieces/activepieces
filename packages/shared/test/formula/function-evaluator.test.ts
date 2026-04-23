@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { containsApFunctionCall, evaluateExpression } from '../../src/lib/formula/function-evaluator'
 
 const ok = (expr: string, data: Record<string, unknown> = {}) =>
-    evaluateExpression(expr, data)
+    evaluateExpression({ expression: expr, sampleData: data })
 
 const result = (expr: string, data: Record<string, unknown> = {}) =>
     ok(expr, data).result

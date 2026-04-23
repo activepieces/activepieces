@@ -161,12 +161,12 @@ export const TiptapEditor = ({
   const handleFunctionSelect = useCallback((fn: ApFunction) => {
     const editor = editorRef.current;
     if (!editor) return;
-    insertFunctionAtPos(
+    insertFunctionAtPos({
       editor,
       fn,
-      slashStateRef.current.from,
-      slashStateRef.current.query,
-    );
+      from: slashStateRef.current.from,
+      query: slashStateRef.current.query,
+    });
     setSlashState(INITIAL_SLASH_STATE);
   }, []);
 
@@ -401,19 +401,25 @@ export const TiptapEditor = ({
 
   useEffect(() => {
     if (!editor) return;
-    setSlashCommandHandler(editor, {
-      getState: () => slashStateRef.current,
-      setState: setSlashState,
+    setSlashCommandHandler({
+      editor,
+      handler: {
+        getState: () => slashStateRef.current,
+        setState: setSlashState,
+      },
     });
     return () => {
-      setSlashCommandHandler(editor, null);
+      setSlashCommandHandler({ editor, handler: null });
     };
   }, [editor]);
 
   const updatePreview = useCallback(
     (expression: string) => {
       const flatData = flattenSampleData(sampleData ?? {});
-      const { result, error } = evaluateExpression(expression, flatData);
+      const { result, error } = evaluateExpression({
+        expression,
+        sampleData: flatData,
+      });
       setPreviewErrorMsg(error);
       setPreviewResult(result != null ? formatPreviewResult(result) : '');
     },

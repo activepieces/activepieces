@@ -39,7 +39,7 @@ describe('expression round-trip through evaluator', () => {
 
     cases.forEach(([expr, expected]) => {
         it(`${expr}  →  ${JSON.stringify(expected)}`, () => {
-            const { result, error } = evaluateExpression(expr, DATA)
+            const { result, error } = evaluateExpression({ expression: expr, sampleData: DATA })
             expect(error).toBeNull()
             expect(result).toEqual(expected)
         })
@@ -48,33 +48,33 @@ describe('expression round-trip through evaluator', () => {
 
 describe('variable interpolation round-trip', () => {
     it('single variable resolves', () => {
-        const { result } = evaluateExpression('uppercase({{name}})', DATA)
+        const { result } = evaluateExpression({ expression: 'uppercase({{name}})', sampleData: DATA })
         expect(result).toBe('ALICE')
     })
 
     it('variable in nested call', () => {
-        const { result } = evaluateExpression('trim(uppercase({{name}}))', DATA)
+        const { result } = evaluateExpression({ expression: 'trim(uppercase({{name}}))', sampleData: DATA })
         expect(result).toBe('ALICE')
     })
 
     it('mixed text and variable', () => {
-        const { result } = evaluateExpression('Hello {{name}}', DATA)
+        const { result } = evaluateExpression({ expression: 'Hello {{name}}', sampleData: DATA })
         expect(result).toBe('Hello alice')
     })
 
     it('function result mixed with plain text', () => {
-        const { result } = evaluateExpression('Score: add({{score}};8)', DATA)
+        const { result } = evaluateExpression({ expression: 'Score: add({{score}};8)', sampleData: DATA })
         expect(result).toBe('Score: 50')
     })
 
     it('literal `)` inside a quoted string arg does not break the call', () => {
-        const { result, error } = evaluateExpression('prefix("hi";"(CEO) ")', DATA)
+        const { result, error } = evaluateExpression({ expression: 'prefix("hi";"(CEO) ")', sampleData: DATA })
         expect(error).toBeNull()
         expect(result).toBe('(CEO) hi')
     })
 
     it('literal `;` inside a quoted string arg is not treated as separator', () => {
-        const { result, error } = evaluateExpression('combine("a;b";"c;d";" | ")', DATA)
+        const { result, error } = evaluateExpression({ expression: 'combine("a;b";"c;d";" | ")', sampleData: DATA })
         expect(error).toBeNull()
         expect(result).toBe('a;b | c;d')
     })

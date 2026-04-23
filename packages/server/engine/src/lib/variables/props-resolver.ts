@@ -102,8 +102,8 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
 
     if (containsApFunctionCall(input)) {
         const formulaOptions = { engineToken, projectId, apiUrl, currentState, censoredInput, contextVersion: params.contextVersion }
-        const { expression: preResolvedExpr, vars: preResolvedVars } = await preResolveFormulaVars(input, formulaOptions)
-        const { result, error } = evaluateExpression(preResolvedExpr, preResolvedVars)
+        const { expression: preResolvedExpr, vars: preResolvedVars } = await preResolveFormulaVars({ expression: input, resolveOptions: formulaOptions })
+        const { result, error } = evaluateExpression({ expression: preResolvedExpr, sampleData: preResolvedVars })
         if (!error) {
             return result ?? ''
         }
@@ -247,10 +247,10 @@ function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
 
 type PreResolveOptions = Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput' | 'contextVersion'>
 
-async function preResolveFormulaVars(
-    expression: string,
-    resolveOptions: PreResolveOptions,
-): Promise<{ expression: string, vars: Record<string, unknown> }> {
+async function preResolveFormulaVars({ expression, resolveOptions }: {
+    expression: string
+    resolveOptions: PreResolveOptions
+}): Promise<{ expression: string, vars: Record<string, unknown> }> {
     const tokenPattern = /\{\{([^}]+)\}\}/g
     const matches: Array<{ original: string, variableName: string, key: string }> = []
     let idx = 0

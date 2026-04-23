@@ -22,23 +22,23 @@ export type SlashCommandHandler = {
 
 const handlerMap = new WeakMap<Editor, SlashCommandHandler>();
 
-export const setSlashCommandHandler = (
-  editor: Editor,
-  h: SlashCommandHandler | null,
-) => {
-  if (h === null) {
+export const setSlashCommandHandler = ({
+  editor,
+  handler,
+}: SetSlashCommandHandlerParams) => {
+  if (handler === null) {
     handlerMap.delete(editor);
   } else {
-    handlerMap.set(editor, h);
+    handlerMap.set(editor, handler);
   }
 };
 
-export function insertFunctionAtPos(
-  editor: Editor,
-  fn: ApFunction,
-  from: number,
-  query: string,
-) {
+export function insertFunctionAtPos({
+  editor,
+  fn,
+  from,
+  query,
+}: InsertFunctionAtPosParams) {
   const deleteLen = 1 + query.length;
   const startPos = Math.max(0, from);
 
@@ -124,3 +124,15 @@ export const FunctionSlashExtension = Extension.create({
     });
   },
 });
+
+export type SetSlashCommandHandlerParams = {
+  editor: Editor;
+  handler: SlashCommandHandler | null;
+};
+
+export type InsertFunctionAtPosParams = {
+  editor: Editor;
+  fn: ApFunction;
+  from: number;
+  query: string;
+};

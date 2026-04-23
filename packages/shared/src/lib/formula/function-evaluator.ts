@@ -287,17 +287,14 @@ parser.functions.ap_not = (a: unknown) => !a
 parser.functions.coalesce = (...args: unknown[]) =>
     args.find((a) => a !== '' && a != null) ?? ''
 
-export function evaluateExpression(
-    expression: string,
-    sampleData: Record<string, unknown>,
-): { result: unknown, error: string | null } {
+export function evaluateExpression({ expression, sampleData }: EvaluateExpressionParams): EvaluateExpressionResult {
     const trimmed = expression.trim()
     if (!trimmed) return { result: '', error: null }
 
     const segments = tokenizeFormulaTemplate(trimmed)
 
     if (segments.length === 1 && segments[0].type === 'formula') {
-        return evaluateSingleFormula(segments[0].value, sampleData)
+        return evaluateSingleFormula({ expression: segments[0].value, sampleData })
     }
 
     const parts: string[] = []
@@ -306,7 +303,7 @@ export function evaluateExpression(
             parts.push(resolveTextVars(seg.value, sampleData))
         }
         else {
-            const { result, error } = evaluateSingleFormula(seg.value, sampleData)
+            const { result, error } = evaluateSingleFormula({ expression: seg.value, sampleData })
             if (error) return { result: null, error }
             parts.push(result != null ? (typeof result === 'object' ? JSON.stringify(result) : String(result)) : '')
         }
@@ -338,14 +335,11 @@ export function containsApFunctionCall(input: string): boolean {
     return VARIABLE_TEMPLATE_REGEX.test(input)
 }
 
-function evaluateSingleFormula(
-    expression: string,
-    sampleData: Record<string, unknown>,
-): { result: unknown, error: string | null } {
+function evaluateSingleFormula({ expression, sampleData }: EvaluateExpressionParams): EvaluateExpressionResult {
     const emptyArgError = validateFunctionArgs(expression)
     if (emptyArgError) return { result: null, error: emptyArgError }
 
-    const { processed, vars } = preprocessExpression(expression, sampleData)
+    const { processed, vars } = preprocessExpression({ expression, sampleData })
     try {
         // expr-eval's published `Values` type is narrower than what the library
         // accepts at runtime — arrays, null, and mixed-type objects all flow
@@ -497,10 +491,7 @@ function friendlyError(e: unknown): string {
     return 'Could not evaluate this formula — check all values are filled in correctly'
 }
 
-function preprocessExpression(
-    expression: string,
-    sampleData: Record<string, unknown>,
-): { processed: string, vars: Record<string, unknown> } {
+function preprocessExpression({ expression, sampleData }: EvaluateExpressionParams): { processed: string, vars: Record<string, unknown> } {
     const vars: Record<string, unknown> = {}
     let idx = 0
     const withVars = expression.replace(/\{\{([^}]+)\}\}/g, (_, path: string) => {
@@ -808,5 +799,15 @@ const AP_FUNCTION_CALL_REGEX = new RegExp(
     `(?<!\\.)\\b(${AP_FUNCTIONS.map((fn) => fn.name).join('|')})\\s*\\(`,
 )
 const VARIABLE_TEMPLATE_REGEX = /\{\{[^}]+\}\}/
+
+export type EvaluateExpressionParams = {
+    expression: string
+    sampleData: Record<string, unknown>
+}
+
+export type EvaluateExpressionResult = {
+    result: unknown
+    error: string | null
+}
 
 export { DAY_NAMES, MONTH_NAMES }
