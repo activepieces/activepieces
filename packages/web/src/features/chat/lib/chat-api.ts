@@ -16,11 +16,9 @@ function projectId(): string {
 async function createConversation(
   request: CreateChatConversationRequest,
 ): Promise<ChatConversation> {
-  return api.post<ChatConversation>(
-    '/v1/chat/conversations',
-    request,
-    { projectId: projectId() },
-  );
+  return api.post<ChatConversation>('/v1/chat/conversations', request, {
+    projectId: projectId(),
+  });
 }
 
 async function listConversations({
@@ -50,18 +48,15 @@ async function updateConversation(
   id: string,
   request: UpdateChatConversationRequest,
 ): Promise<ChatConversation> {
-  return api.post<ChatConversation>(
-    `/v1/chat/conversations/${id}`,
-    request,
-    { projectId: projectId() },
-  );
+  return api.post<ChatConversation>(`/v1/chat/conversations/${id}`, request, {
+    projectId: projectId(),
+  });
 }
 
 async function deleteConversation(id: string): Promise<void> {
-  return api.delete<void>(
-    `/v1/chat/conversations/${id}`,
-    { projectId: projectId() },
-  );
+  return api.delete<void>(`/v1/chat/conversations/${id}`, {
+    projectId: projectId(),
+  });
 }
 
 async function warm(): Promise<void> {

@@ -17,8 +17,9 @@ import {
 import { ThinkingBar } from '@/components/prompt-kit/thinking-bar';
 import { PlanCard } from '@/features/chat/components/plan-card';
 
-import { MessageContentWithAuth } from './message-content';
 import { getTextFromBlocks } from '../lib/message-parsers';
+
+import { MessageContentWithAuth } from './message-content';
 import { ToolCallGroup } from './tool-call-group';
 
 export function ChatMessage({

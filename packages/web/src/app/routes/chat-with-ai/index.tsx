@@ -2,12 +2,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { chatApi } from '@/features/chat/lib/chat-api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { AIChatBox } from './ai-chat-box';
 import { ConversationList } from './conversation-list';
-
-import { chatApi } from '@/features/chat/lib/chat-api';
 
 export function ChatWithAIPage() {
   const queryClient = useQueryClient();

@@ -170,7 +170,13 @@ function mapHistoryToUIMessages(data: ChatHistoryMessage[]): UIMessage[] {
   });
 }
 
-function createUserMessageItem({ content, fileNames }: { content: string, fileNames: string[] }): ChatMessageItem {
+function createUserMessageItem({
+  content,
+  fileNames,
+}: {
+  content: string;
+  fileNames: string[];
+}): ChatMessageItem {
   return {
     id: `pending-user`,
     role: 'user',
@@ -275,7 +281,8 @@ export function useAgentChat({
   const sdkIsStreaming = status === 'streaming' || status === 'submitted';
   const liveMessages = convertUIMessagesToItems(uiMessages);
   const lastLiveMessage = liveMessages[liveMessages.length - 1];
-  const sdkHasAssistantContent = lastLiveMessage?.role === 'assistant' && lastLiveMessage.blocks.length > 0;
+  const sdkHasAssistantContent =
+    lastLiveMessage?.role === 'assistant' && lastLiveMessage.blocks.length > 0;
   const hasPending = pendingMessages.length > 0 && !sdkHasAssistantContent;
   const isStreaming = sdkIsStreaming || hasPending;
 
@@ -330,7 +337,10 @@ export function useAgentChat({
       setWasCancelled(false);
 
       setPendingMessages([
-        createUserMessageItem({ content, fileNames: files?.map((f) => f.name) ?? [] }),
+        createUserMessageItem({
+          content,
+          fileNames: files?.map((f) => f.name) ?? [],
+        }),
         createThinkingMessageItem(),
       ]);
 
@@ -382,8 +392,8 @@ export function useAgentChat({
       pendingFilesRef.current = undefined;
 
       setIsLoadingHistory(true);
-      const { data: history, error: historyError } = await tryCatch(
-        async () => chatApi.getMessages(id),
+      const { data: history, error: historyError } = await tryCatch(async () =>
+        chatApi.getMessages(id),
       );
       if (historyError) {
         setLocalError('Failed to load conversation history');
