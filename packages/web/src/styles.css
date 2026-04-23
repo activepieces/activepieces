@@ -3,6 +3,14 @@
 @import './styles/globals.css';
 @custom-variant dark (&:is(.dark *));
 
+/* Sentient Variable Font */
+@font-face {
+  font-family: 'Sentient';
+  src: url('/fonts/Sentient-Variable.woff2') format('woff2-variations');
+  font-weight: 200 700;
+  font-display: swap;
+}
+
 /* inter-regular - latin */
 @font-face {
   font-display: swap;
@@ -237,6 +245,62 @@
       transform: translateX(400%);
     }
   }
+
+  @keyframes gradient-flow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes rise-from-bottom {
+    0% {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slide-up-fade {
+    0% {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes blur-in {
+    0% {
+      opacity: 0;
+      filter: blur(8px);
+    }
+    100% {
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+
+  @keyframes fade-in-up {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes dash {
+    to {
+      stroke-dashoffset: -20;
+    }
+  }
 }
 
 /*
@@ -255,6 +319,14 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
+}
+
+@utility animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out;
+}
+
+@utility animate-dash {
+  animation: dash 2s linear infinite;
 }
 
 @utility scrollbar-none {
@@ -629,4 +701,122 @@
 .tiptap h5,
 .tiptap h6 {
   font-size: 1rem;
+}
+
+/* ── Auth Animation (auth-anim-*) ── */
+
+/* Canvas scaling: wrapper fills parent height, canvas scales to fit */
+.auth-anim-scale-wrapper {
+  height: 100%;
+}
+.auth-anim-canvas {
+  transform: scale(0.71);
+  width: 140.85%; /* 1/0.71 */
+}
+@media (min-width: 640px) {
+  .auth-anim-canvas {
+    transform: scale(0.85);
+    width: 117.65%; /* 1/0.85 */
+  }
+}
+@media (min-width: 768px) {
+  .auth-anim-canvas {
+    transform: scale(1);
+    width: 100%;
+  }
+}
+
+/* Agent element with spring-based staggered transitions */
+.auth-anim-agent {
+  transition:
+    top 800ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    left 800ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    width 700ms cubic-bezier(0.22, 1, 0.36, 1) 80ms,
+    height 700ms cubic-bezier(0.22, 1, 0.36, 1) 80ms;
+  will-change: top, left, width, height;
+}
+
+/* Animated AI gradient border */
+.auth-anim-gradient-border {
+  position: relative;
+  background: linear-gradient(90deg, #8b5cf6, #a855f7, #c084fc, #a855f7, #8b5cf6);
+  background-size: 300% 100%;
+  animation: auth-anim-gradient-flow 4s ease-in-out infinite;
+  transition: transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Enhanced during morphing/movement */
+.auth-anim-gradient-morphing {
+  animation: auth-anim-gradient-flow 2s ease-in-out infinite;
+  transform: scale(1.005);
+}
+
+@keyframes auth-anim-gradient-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Particle dots with percentage-based animation */
+.auth-anim-particle-dot {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  animation: auth-anim-particle-right 1s linear infinite;
+}
+
+.auth-anim-particle-dot-reverse {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  animation: auth-anim-particle-left 1s linear infinite;
+}
+
+@keyframes auth-anim-particle-right {
+  0% { left: 0%; }
+  100% { left: 100%; }
+}
+
+@keyframes auth-anim-particle-left {
+  0% { left: 100%; }
+  100% { left: 0%; }
+}
+
+/* Vertical particle dots */
+.auth-anim-particle-dot-vertical {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  animation: auth-anim-particle-down 2s linear infinite;
+}
+
+.auth-anim-particle-dot-vertical-reverse {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  animation: auth-anim-particle-up 2s linear infinite;
+}
+
+@keyframes auth-anim-particle-down {
+  0% { top: -5%; opacity: 0; }
+  5% { opacity: 1; }
+  95% { opacity: 1; }
+  100% { top: 105%; opacity: 0; }
+}
+
+@keyframes auth-anim-particle-up {
+  0% { top: 105%; opacity: 0; }
+  5% { opacity: 1; }
+  95% { opacity: 1; }
+  100% { top: -5%; opacity: 0; }
+}
+
+/* ── Password strength bolt glow ── */
+@keyframes boltGlow {
+  0%   { filter: drop-shadow(0 0 4px rgba(196, 167, 255, 0.5)); }
+  100% { filter: drop-shadow(0 0 10px rgb(110, 65, 226)); }
 }
