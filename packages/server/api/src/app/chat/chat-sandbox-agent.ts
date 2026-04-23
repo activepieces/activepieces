@@ -53,7 +53,7 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
         return pending
     }
     const promise = (async () => {
-        const providerType = process.env.AP_SANDBOX_PROVIDER ?? 'cloudflare'
+        const providerType = process.env.AP_SANDBOX_PROVIDER ?? 'local'
         let sandbox: unknown
 
         if (providerType === 'local') {
