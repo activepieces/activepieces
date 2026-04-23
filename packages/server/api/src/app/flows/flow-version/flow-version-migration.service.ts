@@ -1,23 +1,20 @@
 import { onCallService } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
-    AgentPieceProps,
-    AgentProviderModelSchema,
     apId,
     ErrorCode,
-    FlowActionType,
+    FailedFlowVersionEntry,
     FlowMigration,
     FlowMigrationStatus,
     FlowMigrationType,
-    FlowOperationRequest,
     flowOperations,
-    FlowOperationType,
-    flowStructureUtil,
     FlowVersion,
     FlowVersionState,
     isNil,
     LATEST_FLOW_SCHEMA_VERSION,
+    MigratedVersionEntry,
     MigrateFlowsModelRequest,
+    PieceVersionChange,
     PlatformId,
     ProjectId,
     sanitizeObjectForPostgresql,
@@ -38,6 +35,7 @@ import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { flowExecutionCache } from '../flow/flow-execution-cache'
 import { flowRepo } from '../flow/flow.repo'
+import { planFlowVersionChanges, PlannedStepChange } from './ai-migration-planner'
 import { FlowMigrationEntity } from './flow-migration.entity'
 import { flowVersionBackupService } from './flow-version-backup.service'
 import { flowVersionRepo } from './flow-version.service'
@@ -46,15 +44,16 @@ import { flowMigrations } from './migrations'
 const migrationRepo = repoFactory(FlowMigrationEntity)
 
 export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
-    async migrate(flowVersion: FlowVersion, projectId?: ProjectId): Promise<FlowVersion> {
+    async migrate(flowVersion: FlowVersion, projectId?: ProjectId, options?: { noPersistence?: boolean }): Promise<FlowVersion> {
         if (flowVersion.schemaVersion === LATEST_FLOW_SCHEMA_VERSION) {
             return flowVersion
         }
 
         log.info('Starting flow version migration')
 
+        const noPersistence = options?.noPersistence === true
         const backupFiles = flowVersion.backupFiles ?? {}
-        if (!isNil(flowVersion.schemaVersion)) {
+        if (!isNil(flowVersion.schemaVersion) && !noPersistence) {
             backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService(log).store(flowVersion)
         }
 
@@ -70,13 +69,15 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
             throw migrationError
         }
 
-        await flowVersionRepo().update(flowVersion.id, {
-            schemaVersion: migratedFlowVersion.schemaVersion,
-            ...spreadIfDefined('trigger', migratedFlowVersion.trigger),
-            connectionIds: migratedFlowVersion.connectionIds,
-            agentIds: migratedFlowVersion.agentIds,
-            backupFiles,
-        })
+        if (!noPersistence) {
+            await flowVersionRepo().update(flowVersion.id, {
+                schemaVersion: migratedFlowVersion.schemaVersion,
+                ...spreadIfDefined('trigger', migratedFlowVersion.trigger),
+                connectionIds: migratedFlowVersion.connectionIds,
+                agentIds: migratedFlowVersion.agentIds,
+                backupFiles,
+            })
+        }
         log.info('Flow version migration completed')
         return migratedFlowVersion
     },
@@ -96,7 +97,6 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                 params: { jobId },
             })
         }
-        const projectIds = isNil(request.projectIds) || request.projectIds.length === 0 ? null : request.projectIds
         const migrationId = apId()
         const migration = await migrationRepo().save({
             id: migrationId,
@@ -109,7 +109,9 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
             params: {
                 sourceModel: request.sourceModel,
                 targetModel: request.targetModel,
-                projectIds,
+                aiProviderModelType: request.aiProviderModelType,
+                dryCheck: request.dryCheck,
+                projectIds: request.projectIds,
             },
         })
 
@@ -133,25 +135,29 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
     },
 
     async migrateFlowsModelHandler(data: SystemJobData<SystemJobName.MIGRATE_FLOWS_MODEL>): Promise<void> {
-        const { migrationId, platformId, request: { projectIds, sourceModel, targetModel } } = data
+        const { migrationId, platformId, request } = data
+        const { projectIds, sourceModel, targetModel, aiProviderModelType, dryCheck } = request
         const BATCH_SIZE = 100
-        const migratedVersions: FlowMigration['migratedVersions'] = []
-        const failedFlowVersions: FlowMigration['failedFlowVersions'] = []
+        const migratedVersions: MigratedVersionEntry[] = []
+        const failedFlowVersions: FailedFlowVersionEntry[] = []
+
         const { error: handlerError } = await tryCatch(async () => {
-            const idsQueryBuilder = flowVersionRepo()
+            const targetRows = await flowVersionRepo()
                 .createQueryBuilder('fv')
-                .select('fv.id')
+                .select('fv.id', 'flow_version_id')
+                .addSelect('f."projectId"', 'project_id')
                 .innerJoin('flow', 'f', 'f.id = fv."flowId"')
                 .innerJoin('project', 'p', 'p.id = f."projectId"')
                 .where('p."platformId" = :platformId', { platformId })
                 .andWhere('(fv.id = f."publishedVersionId" OR fv.state = :draftState)',
                     { draftState: FlowVersionState.DRAFT })
+                .andWhere('f."projectId" IN (:...projectIds)', { projectIds })
+                .orderBy('fv.state', 'DESC')
+                .addOrderBy('fv.id', 'ASC')
+                .getRawMany<{ flow_version_id: string, project_id: string }>()
 
-            if (!isNil(projectIds) && projectIds.length > 0) {
-                idsQueryBuilder.andWhere('f."projectId" IN (:...projectIds)', { projectIds })
-            }
-
-            const allIds = (await idsQueryBuilder.orderBy('fv.state', 'DESC').getMany()).map((fv) => fv.id)
+            const projectIdByFlowVersionId = new Map(targetRows.map((r) => [r.flow_version_id, r.project_id]))
+            const allIds = targetRows.map((r) => r.flow_version_id)
 
             for (let i = 0; i < allIds.length; i += BATCH_SIZE) {
                 const batchIds = allIds.slice(i, i + BATCH_SIZE)
@@ -162,17 +168,74 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                     .getMany()
 
                 for (const flowVersion of flowVersions) {
-                    const operations = buildMigrationOperations({ flowVersion, sourceModel, targetModel })
-
-                    if (operations.length === 0) {
+                    const projectId = projectIdByFlowVersionId.get(flowVersion.id)
+                    if (isNil(projectId)) {
                         continue
                     }
                     const isDraft = flowVersion.state === FlowVersionState.DRAFT
-                    const { error } = await tryCatch(async () => {
+
+                    const { data: migratedFv, error: schemaErr } = await tryCatch(() =>
+                        flowVersionMigrationService(log).migrate(flowVersion, projectId, dryCheck ? { noPersistence: true } : undefined),
+                    )
+                    if (schemaErr) {
+                        log.error({ flowVersionId: flowVersion.id, error: schemaErr }, 'Schema-chain migration failed during AI provider migration')
+                        failedFlowVersions.push({
+                            draft: isDraft,
+                            flowVersionId: flowVersion.id,
+                            flowId: flowVersion.flowId,
+                            projectId,
+                            error: schemaErr.message,
+                        })
+                        continue
+                    }
+
+                    const changes = await planFlowVersionChanges({
+                        flowVersion: migratedFv,
+                        sourceModel,
+                        targetModel,
+                        aiProviderModelType,
+                        platformId,
+                        projectId,
+                        log,
+                    })
+
+                    const blockedChanges = changes.filter((c): c is Extract<PlannedStepChange, { error: string }> => 'error' in c && !isNil(c.error))
+                    const applicableChanges = changes.filter((c): c is Extract<PlannedStepChange, { operation: unknown }> => 'operation' in c && !isNil(c.operation))
+
+                    if (blockedChanges.length > 0) {
+                        failedFlowVersions.push({
+                            draft: isDraft,
+                            flowVersionId: flowVersion.id,
+                            flowId: flowVersion.flowId,
+                            projectId,
+                            error: blockedChanges.map((c) => c.error).join('\n'),
+                        })
+                        continue
+                    }
+
+                    if (applicableChanges.length === 0) {
+                        continue
+                    }
+
+                    const pieceVersionChanges = dedupePieceVersionChanges(applicableChanges.map((c) => ({
+                        from: c.diff.pieceVersionFrom,
+                        to: c.diff.pieceVersionTo,
+                    })))
+                    const changedFields: NonNullable<MigratedVersionEntry['changedFields']> = {}
+                    for (const change of applicableChanges) {
+                        if (change.diff.clearedAdvancedOptions) changedFields.clearedAdvancedOptions = true
+                        if (change.diff.disabledWebSearch) changedFields.disabledWebSearch = true
+                    }
+
+                    const { error: applyError, data: newFlowVersionId } = await tryCatch(async () => {
+                        if (dryCheck) {
+                            return undefined
+                        }
+                        let newId: string | undefined
                         await transaction(async (entityManager) => {
-                            let updatedVersion: FlowVersion = flowVersion
-                            for (const operation of operations) {
-                                updatedVersion = flowOperations.apply(updatedVersion, operation)
+                            let updatedVersion: FlowVersion = migratedFv
+                            for (const change of applicableChanges) {
+                                updatedVersion = flowOperations.apply(updatedVersion, change.operation)
                             }
                             const newVersion = sanitizeObjectForPostgresql({
                                 ...updatedVersion,
@@ -188,15 +251,33 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                             else {
                                 await flowRepo(entityManager).update(newVersion.flowId, { publishedVersionId: newVersion.id })
                             }
+                            newId = newVersion.id
                         })
                         await flowExecutionCache(log).invalidate(flowVersion.flowId)
-                        migratedVersions.push({ draft: isDraft, flowVersionId: flowVersion.id, flowId: flowVersion.flowId })
+                        return newId
                     })
 
-                    if (error) {
-                        log.error({ flowVersionId: flowVersion.id, error }, 'Failed to migrate flow version')
-                        failedFlowVersions.push({ draft: isDraft, flowVersionId: flowVersion.id, flowId: flowVersion.flowId, error: error.message })
+                    if (applyError) {
+                        log.error({ flowVersionId: flowVersion.id, error: applyError }, 'Failed to migrate flow version')
+                        failedFlowVersions.push({
+                            draft: isDraft,
+                            flowVersionId: flowVersion.id,
+                            flowId: flowVersion.flowId,
+                            projectId,
+                            error: applyError.message,
+                        })
+                        continue
                     }
+
+                    migratedVersions.push({
+                        draft: isDraft,
+                        flowVersionId: flowVersion.id,
+                        flowId: flowVersion.flowId,
+                        projectId,
+                        ...(dryCheck ? {} : { newFlowVersionId }),
+                        ...(pieceVersionChanges.length > 0 ? { pieceVersionChanges } : {}),
+                        ...(Object.keys(changedFields).length > 0 ? { changedFields } : {}),
+                    })
                 }
 
                 await migrationRepo().update(migrationId, {
@@ -221,7 +302,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
             migratedVersions,
             failedFlowVersions,
         })
-        log.info({ platformId, migratedFlows: new Set(migratedVersions.map((v) => v.flowId)).size, failedCount: failedFlowVersions.length }, 'Flow model migration completed')
+        log.info({ platformId, dryCheck, migratedFlows: new Set(migratedVersions.map((v) => v.flowId)).size, failedCount: failedFlowVersions.length }, 'Flow model migration completed')
     },
 
     async getMigration({ id, platformId }: { id: string, platformId: PlatformId }): Promise<FlowMigration> {
@@ -258,53 +339,15 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
     },
 })
 
-function buildMigrationOperations({ flowVersion, sourceModel, targetModel }: {
-    flowVersion: FlowVersion
-    sourceModel: AgentProviderModelSchema
-    targetModel: AgentProviderModelSchema
-}): FlowOperationRequest[] {
-    const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
-    const operations: FlowOperationRequest[] = []
-
-    for (const step of allSteps) {
-        if (!flowStructureUtil.isAgentPiece(step) || step.type !== FlowActionType.PIECE) {
-            continue
+function dedupePieceVersionChanges(changes: PieceVersionChange[]): PieceVersionChange[] {
+    const seen = new Map<string, PieceVersionChange>()
+    for (const change of changes) {
+        const key = `${change.from}→${change.to}`
+        if (!seen.has(key)) {
+            seen.set(key, change)
         }
-        const input = step.settings?.input as Record<string, unknown> | undefined
-        let model = input?.model as string | undefined
-        let provider = input?.provider as string | undefined
-
-        if (step.settings.actionName === 'run_agent') {
-            const runAgentObject = input?.[AgentPieceProps.AI_PROVIDER_MODEL] as AgentProviderModelSchema | undefined
-            model = runAgentObject?.model
-            provider = runAgentObject?.provider
-        }
-
-        if (provider !== sourceModel.provider || model !== sourceModel.model) {
-            continue
-        }
-
-        const updatedInput = { ...input }
-        if (step.settings.actionName === 'run_agent') {
-            updatedInput[AgentPieceProps.AI_PROVIDER_MODEL] = targetModel
-        }
-        else {
-            updatedInput['model'] = targetModel.model
-            updatedInput['provider'] = targetModel.provider
-        }
-
-        const { sampleData: _sampleData, ...settingsWithoutSampleData } = step.settings
-        operations.push({
-            type: FlowOperationType.UPDATE_ACTION,
-            request: {
-                ...step,
-                settings: {
-                    ...settingsWithoutSampleData,
-                    input: updatedInput,
-                },
-            },
-        })
     }
-
-    return operations
+    return [...seen.values()]
 }
+
+
