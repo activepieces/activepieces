@@ -130,37 +130,44 @@ export function createStreamWriter({ writer, textPartId, reasoningPartId, onSess
 export function createHistoryReplayFilter(): { shouldSuppress: (update: Record<string, unknown>) => boolean } {
     let state: 'detecting' | 'suppressing' | 'passthrough' = 'detecting'
     let buffer = ''
+    let suppressedChunks = 0
 
     return {
         shouldSuppress(update: Record<string, unknown>): boolean {
             if (state === 'passthrough') return false
 
-            const updateType = getString(update, 'sessionUpdate')
-            if (updateType !== SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK) return false
-
-            const text = chatEventUtils.extractContentText(update)
-            if (!text) return false
-
-            if (state === 'detecting') {
-                buffer += text
-                if (chatEventUtils.isHistoryReplayContent(buffer)) {
-                    state = 'suppressing'
-                    buffer = ''
-                    return true
+            if (state === 'suppressing') {
+                const updateType = getString(update, 'sessionUpdate')
+                if (updateType === SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK) {
+                    const text = chatEventUtils.extractContentText(update)
+                    if (text && !chatEventUtils.isHistoryReplayContent(text)) {
+                        suppressedChunks++
+                        if (suppressedChunks > 3) {
+                            state = 'passthrough'
+                            return false
+                        }
+                    }
                 }
-                if (buffer.length > 500) {
-                    state = 'passthrough'
-                    buffer = ''
-                }
-                return false
-            }
-
-            if (chatEventUtils.isHistoryReplayContent(text)) {
                 return true
             }
 
-            state = 'passthrough'
-            return false
+            const updateType = getString(update, 'sessionUpdate')
+            if (updateType !== SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK) return true
+
+            const text = chatEventUtils.extractContentText(update)
+            if (!text) return true
+
+            buffer += text
+            if (chatEventUtils.isHistoryReplayContent(buffer)) {
+                state = 'suppressing'
+                buffer = ''
+                return true
+            }
+            if (buffer.length > 500) {
+                state = 'passthrough'
+                buffer = ''
+            }
+            return true
         },
     }
 }

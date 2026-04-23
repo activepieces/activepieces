@@ -53,7 +53,16 @@ export const chatService = (log: FastifyBaseLogger) => ({
             mcpServerUrl: mcpCredentials.mcpServerUrl,
             mcpToken: mcpCredentials.mcpToken,
         })
-        await conversationRepo().update(id, { sandboxSessionId: session.id })
+        const result = await conversationRepo()
+            .createQueryBuilder()
+            .update()
+            .set({ sandboxSessionId: session.id })
+            .where('id = :id AND "sandboxSessionId" IS NULL', { id })
+            .execute()
+        if (result.affected === 0) {
+            await chatSandboxAgent.destroySession({ sessionId: session.id, anthropicApiKey }).catch(() => { /* best-effort */ })
+            return this.getConversationOrThrow({ id, projectId, userId })
+        }
         return { ...conversation, sandboxSessionId: session.id }
     },
 

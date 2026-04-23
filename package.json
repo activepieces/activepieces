@@ -60,7 +60,6 @@
     "@babel/runtime": "7.26.10",
     "@bull-board/api": "6.10.1",
     "@bull-board/fastify": "6.10.1",
-    "@cloudflare/sandbox": "0.8.11",
     "@codemirror/lang-javascript": "6.2.2",
     "@codemirror/lang-json": "6.0.1",
     "@datastructures-js/queue": "4.2.3",

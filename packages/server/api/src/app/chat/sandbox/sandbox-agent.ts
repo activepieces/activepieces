@@ -10,20 +10,15 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { chatEventUtils } from './ai-event-utils'
 
-const sdksByKey = new Map<string, SandboxAgent>()
-const initPromises = new Map<string, Promise<SandboxAgent>>()
+let cachedSdk: SandboxAgent | null = null
+let cachedSdkPromise: Promise<SandboxAgent> | null = null
 
 async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }): Promise<SandboxAgent> {
+    if (cachedSdk) return cachedSdk
+    if (cachedSdkPromise) return cachedSdkPromise
+
     const e2bApiKey = system.getOrThrow(AppSystemProp.E2B_API_KEY)
-    const existing = sdksByKey.get(anthropicApiKey)
-    if (existing) {
-        return existing
-    }
-    const pending = initPromises.get(anthropicApiKey)
-    if (pending) {
-        return pending
-    }
-    const promise = (async () => {
+    cachedSdkPromise = (async () => {
         const { e2b } = await import('sandbox-agent/e2b')
         const sandbox = e2b({
             create: {
@@ -37,15 +32,14 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
         const { PostgresSessionPersistDriver } = await import('./postgres-persist-driver')
         const persist = new PostgresSessionPersistDriver()
         const agent = await SandboxAgentClass.start({ sandbox, persist: persist as unknown as SessionPersistDriver })
-        sdksByKey.set(anthropicApiKey, agent)
-        initPromises.delete(anthropicApiKey)
+        cachedSdk = agent
+        cachedSdkPromise = null
         return agent
     })().catch((err: unknown) => {
-        initPromises.delete(anthropicApiKey)
+        cachedSdkPromise = null
         throw err
     })
-    initPromises.set(anthropicApiKey, promise)
-    return promise
+    return cachedSdkPromise
 }
 
 async function createSession({ anthropicApiKey, mcpServerUrl, mcpToken }: CreateSessionParams): Promise<Session> {
@@ -83,18 +77,27 @@ function isImageMimeType(mimeType: string): boolean {
     return mimeType.startsWith('image/')
 }
 
+const TEXT_MIME_TYPES = new Set([
+    'text/plain', 'text/csv', 'text/markdown',
+    'application/json',
+])
+
+function isTextMimeType(mimeType: string): boolean {
+    return TEXT_MIME_TYPES.has(mimeType)
+}
+
 async function sendPrompt({ session, text, systemPrompt, files }: SendPromptParams): Promise<void> {
     let userText = text
     const contentBlocks: Array<{ type: 'text', text: string } | { type: 'image', data: string, mimeType: string }> = []
 
     if (files && files.length > 0) {
-        const nonImageFiles = files.filter((f) => !isImageMimeType(f.mimeType))
+        const textFiles = files.filter((f) => isTextMimeType(f.mimeType))
         const imageFiles = files.filter((f) => isImageMimeType(f.mimeType))
 
-        if (nonImageFiles.length > 0) {
-            const fileDescriptions = nonImageFiles.map((f) => `- ${f.name} (${f.mimeType}, ${Math.ceil((f.data.length * 3) / 4)} bytes)`).join('\n')
+        if (textFiles.length > 0) {
+            const fileDescriptions = textFiles.map((f) => `- ${f.name} (${f.mimeType})`).join('\n')
             userText += `\n\n[Attached files — content provided inline below]\n${fileDescriptions}`
-            for (const file of nonImageFiles) {
+            for (const file of textFiles) {
                 contentBlocks.push({
                     type: 'text',
                     text: `\n--- File: ${file.name} ---\n${Buffer.from(file.data, 'base64').toString('utf-8')}`,
@@ -244,13 +247,12 @@ async function resumeSession({ sessionId, anthropicApiKey }: ResumeSessionParams
 }
 
 async function dispose(): Promise<void> {
-    const instances = [...sdksByKey.values()]
-    sdksByKey.clear()
-    initPromises.clear()
-    for (const sdk of instances) {
-        await sdk.destroySandbox().catch(() => undefined)
-        await sdk.dispose().catch(() => undefined)
+    if (cachedSdk) {
+        await cachedSdk.destroySandbox().catch(() => undefined)
+        await cachedSdk.dispose().catch(() => undefined)
+        cachedSdk = null
     }
+    cachedSdkPromise = null
 }
 
 export const SandboxSessionUpdateType = {

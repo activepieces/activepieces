@@ -133,7 +133,6 @@
     "@types/node-cache": "4.2.5",
     "@types/node-cron": "3.0.11",
     "@types/nodemailer": "6.4.9",
-    "@types/pg": "8.15.5",
     "@types/qs": "6.9.7",
     "@types/semver": "7.5.6",
     "@types/tinycolor2": "1.4.5",

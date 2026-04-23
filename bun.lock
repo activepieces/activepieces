@@ -22,7 +22,6 @@
         "@babel/runtime": "7.26.10",
         "@bull-board/api": "6.10.1",
         "@bull-board/fastify": "6.10.1",
-        "@cloudflare/sandbox": "0.8.11",
         "@codemirror/lang-javascript": "6.2.2",
         "@codemirror/lang-json": "6.0.1",
         "@datastructures-js/queue": "4.2.3",
@@ -8060,7 +8059,6 @@
         "@types/node-cache": "4.2.5",
         "@types/node-cron": "3.0.11",
         "@types/nodemailer": "6.4.9",
-        "@types/pg": "8.15.5",
         "@types/qs": "6.9.7",
         "@types/semver": "7.5.6",
         "@types/tinycolor2": "1.4.5",
@@ -16863,8 +16861,6 @@
     "api/@types/deep-equal": ["@types/deep-equal@1.0.1", "", {}, "sha512-mMUu4nWHLBlHtxXY17Fg6+ucS/MnndyOWyOe7MmwkoMYxvfQU2ajtRaEvqSUv+aVkMqH/C0NCI8UoVfRNQ10yg=="],
 
     "api/@types/nodemailer": ["@types/nodemailer@6.4.9", "", { "dependencies": { "@types/node": "*" } }, "sha512-XYG8Gv+sHjaOtUpiuytahMy2mM3rectgroNbs6R3djZEKmPNiIJwe9KqOJBGzKKnNZNKvnuvmugBgpq3w/S0ig=="],
-
-    "api/@types/pg": ["@types/pg@8.15.5", "", { "dependencies": { "@types/node": "*", "pg-protocol": "*", "pg-types": "^2.2.0" } }, "sha512-LF7lF6zWEKxuT3/OR8wAZGzkg4ENGXFNyiV/JeOt9z5B+0ZVwbql9McqX5c/WStFq1GaGso7H1AzP/qSzmlCKQ=="],
 
     "api/@types/qs": ["@types/qs@6.9.7", "", {}, "sha512-FGa1F62FT09qcrueBA6qYTrJPVDzah9a+493+o2PCXsesWHIn27G98TsSMs3WPNbZIEj4+VJf6saSFpvD+3Zsw=="],
 
