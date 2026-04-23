@@ -78,37 +78,8 @@ jobs:
       always() &&
       github.event_name != 'workflow_dispatch' &&
       needs.build-image.result == 'skipped'
-    runs-on: ubuntu-latest
-    environment:
-      name: canary
-    concurrency:
-      group: canary-deploy
-      cancel-in-progress: false
-    steps:
-      - name: Configure SSH
-        run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/ops.key
-          chmod 600 ~/.ssh/ops.key
-          cat >>~/.ssh/config <<END
-          Host ops
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/ops.key
-            StrictHostKeyChecking no
-          END
-        env:
-          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
-          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
-
-      - name: Deploy canary app
-        run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version release-candidate --config-file=config/app-canary.yml --skip-push; exit"'
-
-      - name: Deploy canary workers
-        run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version release-candidate --config-file=config/worker-canary.yml --skip-push; exit"'
+    uses: ./.github/workflows/continuous-delivery-canary.yml
+    secrets: inherit
 
   promote-to-production:
     needs: [build-image, deploy-canary]
