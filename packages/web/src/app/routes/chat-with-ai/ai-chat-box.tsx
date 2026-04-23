@@ -438,24 +438,46 @@ function AssistantMessage({
   );
 }
 
-function describeToolCalls(toolCalls: ChatMessageItem['toolCalls']): string {
-  const names = toolCalls.map((tc) => (tc.title || tc.name).toLowerCase());
-  const has = (keyword: string) => names.some((n) => n.includes(keyword));
+function extractPieceName(input?: Record<string, unknown>): string | null {
+  if (!input) return null;
+  const raw = typeof input.pieceName === 'string' ? input.pieceName : null;
+  if (!raw) return null;
+  return raw.replace(/^@activepieces\/piece-/, '').replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
-  if (has('build_flow') || has('create_flow'))
-    return t('Building your automation');
-  if (has('add_step') || has('update_step') || has('update_trigger'))
-    return t('Setting up the steps');
-  if (has('test_flow') || has('test_step')) return t('Testing your flow');
-  if (has('list_pieces') || has('get_piece_props'))
-    return t('Exploring available integrations');
-  if (has('list_connections')) return t('Checking your connections');
-  if (has('list_flows') || has('flow_structure'))
-    return t('Looking at your flows');
-  if (has('list_tables') || has('find_records'))
-    return t('Looking at your data');
-  if (has('lock_and_publish') || has('change_flow_status'))
-    return t('Publishing your flow');
+function describeToolCalls(toolCalls: ChatMessageItem['toolCalls']): string {
+  const pieces = new Set<string>();
+  const actions = new Set<string>();
+
+  for (const tc of toolCalls) {
+    const name = (tc.title || tc.name).toLowerCase();
+    const piece = extractPieceName(tc.input);
+    if (piece) pieces.add(piece);
+
+    if (name.includes('build_flow') || name.includes('create_flow')) actions.add('build');
+    else if (name.includes('update_trigger')) actions.add('trigger');
+    else if (name.includes('add_step')) actions.add('add_step');
+    else if (name.includes('update_step')) actions.add('update_step');
+    else if (name.includes('test_flow') || name.includes('test_step')) actions.add('test');
+    else if (name.includes('list_pieces') || name.includes('get_piece_props')) actions.add('explore');
+    else if (name.includes('list_connections')) actions.add('connections');
+    else if (name.includes('list_flows') || name.includes('flow_structure')) actions.add('flows');
+    else if (name.includes('list_tables') || name.includes('find_records')) actions.add('data');
+    else if (name.includes('lock_and_publish') || name.includes('change_flow_status')) actions.add('publish');
+  }
+
+  const pieceList = Array.from(pieces).slice(0, 2).join(' & ');
+
+  if (actions.has('build')) return pieceList ? t('Creating {pieces} flow', { pieces: pieceList }) : t('Creating the flow');
+  if (actions.has('trigger')) return pieceList ? t('Setting up {pieces} trigger', { pieces: pieceList }) : t('Setting up the trigger');
+  if (actions.has('add_step')) return pieceList ? t('Adding {pieces} step', { pieces: pieceList }) : t('Adding steps');
+  if (actions.has('update_step')) return pieceList ? t('Configuring {pieces}', { pieces: pieceList }) : t('Configuring steps');
+  if (actions.has('test')) return pieceList ? t('Testing {pieces}', { pieces: pieceList }) : t('Testing the flow');
+  if (actions.has('explore')) return pieceList ? t('Looking up {pieces}', { pieces: pieceList }) : t('Exploring integrations');
+  if (actions.has('connections')) return t('Checking connections');
+  if (actions.has('flows')) return t('Looking at your flows');
+  if (actions.has('data')) return t('Looking at your data');
+  if (actions.has('publish')) return t('Publishing the flow');
   return t('Working on it');
 }
 
