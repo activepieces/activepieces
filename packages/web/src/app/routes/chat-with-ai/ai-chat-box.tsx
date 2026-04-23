@@ -459,34 +459,72 @@ function describeToolCalls(toolCalls: ChatMessageItem['toolCalls']): string {
   return t('Working on it');
 }
 
+function isUtilityTool(name: string): boolean {
+  const lower = name.toLowerCase();
+  return lower.includes('toolsearch') || lower.includes('tool_search');
+}
+
+function groupToolCallsByPhase(toolCalls: ChatMessageItem['toolCalls']): Array<{ label: string; tools: ChatMessageItem['toolCalls'] }> {
+  const visible = toolCalls.filter((tc) => !isUtilityTool(tc.title || tc.name));
+  if (visible.length === 0) return [];
+
+  if (visible.length <= 4) {
+    return [{ label: describeToolCalls(visible), tools: visible }];
+  }
+
+  const groups: Array<{ label: string; tools: ChatMessageItem['toolCalls'] }> = [];
+  let current: ChatMessageItem['toolCalls'] = [];
+
+  for (const tc of visible) {
+    current.push(tc);
+    if (current.length >= 4) {
+      groups.push({ label: describeToolCalls(current), tools: [...current] });
+      current = [];
+    }
+  }
+  if (current.length > 0) {
+    groups.push({ label: describeToolCalls(current), tools: current });
+  }
+
+  return groups;
+}
+
 function ToolCallGroup({
   toolCalls,
 }: {
   toolCalls: ChatMessageItem['toolCalls'];
 }) {
   const allDone = toolCalls.every((tc) => tc.status !== 'running');
+  const groups = groupToolCallsByPhase(toolCalls);
 
-  const summary = allDone ? describeToolCalls(toolCalls) : t('Working...');
+  if (groups.length === 0) return null;
 
   return (
-    <Collapsible defaultOpen={!allDone}>
-      <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer py-0.5">
-        {allDone ? (
-          <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
-        ) : (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        )}
-        <span>{summary}</span>
-        <ChevronDown className="h-3 w-3" />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-        <div className="ml-5 mt-1 space-y-0.5">
-          {toolCalls.map((tc) => (
-            <ToolCallCard key={tc.id} toolCall={tc} />
-          ))}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+    <div className="space-y-1">
+      {groups.map((group, i) => {
+        const groupDone = group.tools.every((tc) => tc.status !== 'running');
+        return (
+          <Collapsible key={i} defaultOpen={!allDone && !groupDone}>
+            <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer py-0.5">
+              {groupDone ? (
+                <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+              ) : (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              )}
+              <span>{groupDone ? group.label : t('Working...')}</span>
+              <ChevronDown className="h-3 w-3" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
+              <div className="ml-5 mt-1 space-y-0.5">
+                {group.tools.map((tc) => (
+                  <ToolCallCard key={tc.id} toolCall={tc} />
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        );
+      })}
+    </div>
   );
 }
 
