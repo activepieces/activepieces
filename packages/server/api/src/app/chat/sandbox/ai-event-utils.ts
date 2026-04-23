@@ -10,6 +10,7 @@ function isHistoryReplayContent(text: string): boolean {
     return (text.includes('"jsonrpc"') && text.includes('"session/update"'))
         || text.includes('Previous session history is replayed below')
         || text.includes('[history truncated]')
+        || (text.includes('"createdAt"') && text.includes('"sender"') && text.includes('"payload"'))
 }
 
 function extractToolOutput(update: Record<string, unknown>): string | undefined {

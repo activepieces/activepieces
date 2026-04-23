@@ -209,13 +209,19 @@ async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionPa
 }
 
 function stripHistoryReplay(text: string): string {
-    if (!chatEventUtils.isHistoryReplayContent(text)) {
-        const marker = 'Previous session history is replayed below'
-        const idx = text.indexOf(marker)
-        if (idx === -1) return text
+    if (chatEventUtils.isHistoryReplayContent(text)) {
+        return ''
+    }
+    const marker = 'Previous session history is replayed below'
+    const idx = text.indexOf(marker)
+    if (idx !== -1) {
         return text.slice(0, idx).trim()
     }
-    return ''
+    const jsonRpcStart = text.indexOf('{"createdAt":')
+    if (jsonRpcStart > 0) {
+        return text.slice(0, jsonRpcStart).trim()
+    }
+    return text
 }
 
 function pushAssistantMessage(
