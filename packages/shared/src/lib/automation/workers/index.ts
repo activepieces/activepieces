@@ -13,6 +13,11 @@ export enum WorkerMachineType {
     DEDICATED = 'DEDICATED',
 }
 
+export enum NetworkMode {
+    UNRESTRICTED = 'UNRESTRICTED',
+    STRICT = 'STRICT',
+}
+
 
 export const MachineInformation = z.object({
     cpuUsagePercentage: z.number(),
@@ -101,7 +106,7 @@ export const WorkerSettingsResponse = z.object({
     EVENT_DESTINATION_TIMEOUT_SECONDS: z.number(),
     WORKER_GROUP_ID: z.string().optional(),
     EDITION: z.string(),
-    SSRF_PROTECTION_ENABLED: z.boolean(),
+    NETWORK_MODE: z.enum(NetworkMode),
     SSRF_ALLOW_LIST: z.array(z.string()),
     PAGE_ONCALL_WEBHOOK: z.string().optional(),
 })
