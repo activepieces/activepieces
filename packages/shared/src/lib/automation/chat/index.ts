@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { BaseModelSchema, isObject, isString, Nullable } from '../../core/common'
+import { BaseModelSchema, Nullable } from '../../core/common'
 import { formErrors } from '../../form-errors'
 
 function buildChatConversationSchema() {
@@ -63,56 +63,6 @@ function buildSendChatMessageRequestSchema() {
     )
 }
 
-function extractToolOutput(update: Record<string, unknown>): string | undefined {
-    if (isString(update['rawOutput'])) return update['rawOutput']
-    if (Array.isArray(update['content'])) {
-        const parts: string[] = []
-        for (const block of update['content']) {
-            if (isObject(block) && block['type'] === 'text' && isString(block['text'])) {
-                parts.push(block['text'])
-            }
-        }
-        if (parts.length > 0) return parts.join('\n')
-    }
-    return undefined
-}
-
-function isHistoryReplayContent(text: string): boolean {
-    return (text.includes('"jsonrpc"') && text.includes('"session/update"'))
-        || text.includes('Previous session history is replayed below')
-        || text.includes('[history truncated]')
-}
-
-export const SandboxSessionUpdateType = {
-    AGENT_MESSAGE_CHUNK: 'agent_message_chunk',
-    AGENT_THOUGHT_CHUNK: 'agent_thought_chunk',
-    TOOL_CALL: 'tool_call',
-    TOOL_CALL_UPDATE: 'tool_call_update',
-    PLAN: 'plan',
-    SESSION_INFO_UPDATE: 'session_info_update',
-    USAGE_UPDATE: 'usage_update',
-} as const
-
-export const ChatStreamEventType = {
-    TEXT_CHUNK: 'TEXT_CHUNK',
-    THOUGHT_CHUNK: 'THOUGHT_CHUNK',
-    TOOL_CALL_START: 'TOOL_CALL_START',
-    TOOL_CALL_UPDATE: 'TOOL_CALL_UPDATE',
-    TOOL_CALL_COMPLETE: 'TOOL_CALL_COMPLETE',
-    PLAN_UPDATE: 'PLAN_UPDATE',
-    SESSION_TITLE_UPDATE: 'SESSION_TITLE_UPDATE',
-    USAGE_UPDATE: 'USAGE_UPDATE',
-    ERROR: 'ERROR',
-    DONE: 'DONE',
-} as const
-export type ChatStreamEventType = (typeof ChatStreamEventType)[keyof typeof ChatStreamEventType]
-
-export const chatEventUtils = {
-    isObject,
-    extractToolOutput,
-    isHistoryReplayContent,
-}
-
 export const ChatConversation = buildChatConversationSchema()
 export type ChatConversation = z.infer<typeof ChatConversation>
 
@@ -124,11 +74,6 @@ export type UpdateChatConversationRequest = z.infer<typeof UpdateChatConversatio
 
 export const SendChatMessageRequest = buildSendChatMessageRequestSchema()
 export type SendChatMessageRequest = z.infer<typeof SendChatMessageRequest>
-
-export type ChatStreamEvent = {
-    type: ChatStreamEventType
-    data: Record<string, unknown>
-}
 
 export type ChatHistoryToolCall = {
     toolCallId: string

@@ -108,7 +108,7 @@ function decodeSessionRow(row: SessionRow): SessionRecord {
         destroyedAt: row.destroyed_at === null ? undefined : parseInteger(row.destroyed_at),
         sandboxId: row.sandbox_id ?? undefined,
         sessionInit: row.session_init_json ?? undefined,
-        configOptions: row.config_options_json ? (row.config_options_json as unknown[]) : undefined,
+        configOptions: Array.isArray(row.config_options_json) ? row.config_options_json : undefined,
         modes: row.modes_json ?? undefined,
     }
 }
@@ -126,10 +126,10 @@ function decodeEventRow(row: EventRow): SessionEvent {
 }
 
 function normalizeLimit(limit: number | undefined): number {
-    if (!Number.isFinite(limit) || (limit ?? 0) < 1) {
+    if (limit === undefined || !Number.isFinite(limit) || limit < 1) {
         return DEFAULT_LIST_LIMIT
     }
-    return Math.floor(limit as number)
+    return Math.floor(limit)
 }
 
 function parseCursor(cursor: string | undefined): number {
