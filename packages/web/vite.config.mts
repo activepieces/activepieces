@@ -60,7 +60,6 @@ export default defineConfig(({ command, mode }) => {
           secure: false,
           changeOrigin: true,
         },
-
       },
       port: 4200,
       host: '0.0.0.0',
