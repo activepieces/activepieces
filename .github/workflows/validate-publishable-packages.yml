@@ -17,25 +17,23 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock', 'package.json') }}
+          restore-keys: bun-
+
       - uses: actions/setup-node@v3
         with:
           node-version: 24
 
-      - name: Cache dependencies
-        id: cache-npm
-        uses: actions/cache@v3
+      - uses: oven-sh/setup-bun@v2
         with:
-          path: ~/.npm
-          key: npm-${{ hashFiles('package-lock.json') }}
-          restore-keys: npm-
-
-      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
-        name: List the state of node modules
-        continue-on-error: true
-        run: npm list
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm install -g bun && bun install
+        run: bun install
 
       - name: validate publishable packages
         run: npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/validate-publishable-packages.ts
