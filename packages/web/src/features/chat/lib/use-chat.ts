@@ -6,6 +6,7 @@ import {
   isObject,
   MessageBlock,
   ToolCallItem,
+  tryCatch,
 } from '@activepieces/shared';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, UIMessage } from 'ai';
@@ -304,28 +305,25 @@ export function useAgentChat({
           setLocalError(`File "${oversized.name}" exceeds 10 MB limit`);
           return;
         }
-        try {
-          pendingFilesRef.current = await Promise.all(files.map(fileToBase64));
-        } catch (err) {
-          setLocalError(
-            err instanceof Error
-              ? err.message
-              : 'Failed to read attached files',
-          );
+        const { data: encodedFiles, error: fileError } = await tryCatch(
+          async () => Promise.all(files.map(fileToBase64)),
+        );
+        if (fileError) {
+          setLocalError(fileError.message ?? 'Failed to read attached files');
           return;
         }
+        pendingFilesRef.current = encodedFiles;
       } else {
         pendingFilesRef.current = undefined;
       }
 
       if (!conversationIdRef.current) {
-        try {
+        const { error: convError } = await tryCatch(async () => {
           await createConversation({ title: content.slice(0, 100) });
           onConversationCreatedRef.current?.();
-        } catch (err) {
-          setLocalError(
-            err instanceof Error ? err.message : 'Failed to start conversation',
-          );
+        });
+        if (convError) {
+          setLocalError(convError.message ?? 'Failed to start conversation');
           return;
         }
       }
@@ -345,14 +343,15 @@ export function useAgentChat({
       pendingFilesRef.current = undefined;
 
       setIsLoadingHistory(true);
-      try {
-        const { data } = await chatApi.getMessages(id);
-        setUiMessages(mapHistoryToUIMessages(data));
-      } catch {
+      const { data: history, error: historyError } = await tryCatch(
+        async () => chatApi.getMessages(id),
+      );
+      if (historyError) {
         setLocalError('Failed to load conversation history');
-      } finally {
-        setIsLoadingHistory(false);
+      } else {
+        setUiMessages(mapHistoryToUIMessages(history.data));
       }
+      setIsLoadingHistory(false);
     },
     [stop, setUiMessages],
   );

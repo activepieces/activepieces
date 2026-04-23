@@ -46,7 +46,7 @@ export class AddChatTables1776200000000 implements Migration {
         `)
         await queryRunner.query(`
             UPDATE "platform_plan"
-            SET "chatEnabled" = true
+            SET "chatEnabled" = false
         `)
         await queryRunner.query(`
             ALTER TABLE "platform_plan"

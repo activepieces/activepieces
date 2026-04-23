@@ -9,6 +9,7 @@ import {
     isNil,
     SeekPage,
     spreadIfDefined,
+    tryCatch,
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -36,24 +37,22 @@ export const chatService = (log: FastifyBaseLogger) => ({
             mcpToken: mcpCredentials.mcpToken,
         })
 
-        try {
-            const saved = await conversationRepo().save({
-                id: apId(),
-                projectId,
-                userId,
-                title: request.title ?? null,
-                sandboxSessionId: session.id,
-                modelName: request.modelName ?? null,
-                totalInputTokens: 0,
-                totalOutputTokens: 0,
-                summary: null,
-            })
-            return saved
-        }
-        catch (err) {
+        const { data: saved, error } = await tryCatch(async () => conversationRepo().save({
+            id: apId(),
+            projectId,
+            userId,
+            title: request.title ?? null,
+            sandboxSessionId: session.id,
+            modelName: request.modelName ?? null,
+            totalInputTokens: 0,
+            totalOutputTokens: 0,
+            summary: null,
+        }))
+        if (error) {
             await chatSandboxAgent.destroySession({ sessionId: session.id, anthropicApiKey }).catch(() => { /* best-effort cleanup */ })
-            throw err
+            throw error
         }
+        return saved
     },
 
     async listConversations({ projectId, userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<ChatConversation>> {
@@ -140,16 +139,14 @@ export const chatService = (log: FastifyBaseLogger) => ({
 })
 
 async function getMcpCredentials({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<{ mcpServerUrl: string | null, mcpToken: string | null }> {
-    try {
-        const mcpServer = await mcpServerService(log).getByProjectId(projectId)
-        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-        return {
-            mcpServerUrl: `${frontendUrl}/api/v1/mcp/agent`,
-            mcpToken: mcpServer.token,
-        }
-    }
-    catch {
+    const { data: mcpServer, error } = await tryCatch(async () => mcpServerService(log).getByProjectId(projectId))
+    if (error) {
         return { mcpServerUrl: null, mcpToken: null }
+    }
+    const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+    return {
+        mcpServerUrl: `${frontendUrl}/api/v1/mcp/agent`,
+        mcpToken: mcpServer.token,
     }
 }
 
