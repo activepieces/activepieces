@@ -8,7 +8,7 @@ import {
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
-import { jwtUtils } from '../../helper/jwt-utils'
+import { JwtAudience, jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { fileService } from '../file.service'
@@ -53,6 +53,7 @@ async function constructDownloadUrl(platformId: string, file: File): Promise<str
         },
         expiresInSeconds: dayjs.duration(executionRetentionInDays, 'days').asSeconds(),
         key: await jwtUtils.getJwtSecret(),
+        audience: JwtAudience.FLOW_RUN_LOG,
     })
     return domainHelper.getPublicApiUrl({
         path: `v1/step-files/signed?token=${accessToken}`,

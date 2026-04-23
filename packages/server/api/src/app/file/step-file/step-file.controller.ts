@@ -5,13 +5,14 @@ import {
     FileLocation,
     FileType,
     StepFileUpsertRequest,
+    tryCatch,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { jwtUtils } from '../../helper/jwt-utils'
+import { JwtAudience, jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
@@ -65,24 +66,35 @@ type FileToken = {
 }
 
 async function getFileByToken(token: string, log: FastifyBaseLogger): Promise<Omit<File, 'data'>> {
-    try {
-        const decodedToken = await jwtUtils.decodeAndVerify<FileToken>({
+    const key = await jwtUtils.getJwtSecret()
+    // Try with audience first, fall back without for legacy tokens signed before audience was added
+    const withAudience = await tryCatch(jwtUtils.decodeAndVerify<FileToken>({
+        jwt: token,
+        key,
+        audience: JwtAudience.FLOW_RUN_LOG,
+    }))
+    if (withAudience.error) {
+        const withoutAudience = await tryCatch(jwtUtils.decodeAndVerify<FileToken>({
             jwt: token,
-            key: await jwtUtils.getJwtSecret(),
-        })
-        return await fileService(log).getFileOrThrow({
-            fileId: decodedToken.fileId,
+            key,
+        }))
+        if (withoutAudience.error) {
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'invalid token or expired for the step file',
+                },
+            })
+        }
+        return fileService(log).getFileOrThrow({
+            fileId: withoutAudience.data.fileId,
             type: FileType.FLOW_STEP_FILE,
         })
     }
-    catch (e) {
-        throw new ActivepiecesError({
-            code: ErrorCode.INVALID_BEARER_TOKEN,
-            params: {
-                message: 'invalid token or expired for the step file',
-            },
-        })
-    }
+    return fileService(log).getFileOrThrow({
+        fileId: withAudience.data.fileId,
+        type: FileType.FLOW_STEP_FILE,
+    })
 }
 
 function extractBufferOrUndefined(value: unknown): Buffer | undefined {
