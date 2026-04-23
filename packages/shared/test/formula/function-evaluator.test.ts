@@ -378,6 +378,21 @@ describe('split_text_to_list', () => {
 describe('if', () => {
     it('returns first branch when true', () => expect(result('if(1;"yes";"no")')).toBe('yes'))
     it('returns second branch when false', () => expect(result('if(0;"yes";"no")')).toBe('no'))
+    it('is lazy: untaken branch with divide-by-zero does not throw', () => {
+        const r = ok('if(is_empty({{x}}); "safe"; divide({{x}}; 0))', { x: '' })
+        expect(r.error).toBeNull()
+        expect(r.result).toBe('safe')
+    })
+    it('is lazy: nested untaken branch is not evaluated', () => {
+        const r = ok('if(1; "taken"; divide(1; 0))')
+        expect(r.error).toBeNull()
+        expect(r.result).toBe('taken')
+    })
+    it('nested if still short-circuits', () => {
+        const r = ok('if(1; if(0; "inner-true"; "inner-false"); divide(1; 0))')
+        expect(r.error).toBeNull()
+        expect(r.result).toBe('inner-false')
+    })
 })
 
 describe('if_empty', () => {

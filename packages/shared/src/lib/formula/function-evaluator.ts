@@ -261,7 +261,10 @@ parser.functions.flatten = (list: unknown) => toArray(list).flat()
 parser.functions.split_text_to_list = (s: unknown, sep: unknown = ',') =>
     String(s ?? '').split(String(sep)).map((x) => x.trim())
 
-parser.functions.if = (cond: unknown, a: unknown, b: unknown) => (cond ? a : b)
+// `if` intentionally NOT registered as a JS function. Eager arg evaluation
+// would break short-circuit semantics (e.g. `if(is_empty(x); "safe"; divide(x; 0))`
+// would throw when x is empty). `rewriteLazyIf` transforms `if(c; a; b)` into
+// expr-eval's lazy ternary `((c) ? (a) : (b))` before evaluation.
 parser.functions.if_empty = (val: unknown, fallback: unknown) =>
     val === '' || val == null || val === 'undefined' ? fallback : val
 parser.functions.if_null = (val: unknown, fallback: unknown) =>
@@ -507,7 +510,36 @@ function preprocessExpression(
         return key
     })
     const withJsonVars = replaceInlineJsonArrays(withVars, vars, { value: idx })
-    return { processed: normalizeExpression(wrapStringArgs(withJsonVars)), vars }
+    return { processed: normalizeExpression(rewriteLazyIf(wrapStringArgs(withJsonVars))), vars }
+}
+
+function rewriteLazyIf(expr: string): string {
+    const ifOnly = new Set(['if'])
+    let result = ''
+    let pos = 0
+    while (pos < expr.length) {
+        const next = findNextFunctionCall(expr, pos, ifOnly)
+        if (next === null) {
+            result += expr.slice(pos)
+            break
+        }
+        result += expr.slice(pos, next.start)
+        const closePos = findMatchingParen(expr, next.openParen)
+        if (closePos === -1) {
+            result += expr.slice(next.start)
+            break
+        }
+        const argsContent = expr.slice(next.openParen + 1, closePos)
+        const args = splitArgsBySemicolon(argsContent).map((a) => rewriteLazyIf(a))
+        if (args.length === 3) {
+            result += `((${args[0]}) ? (${args[1]}) : (${args[2]}))`
+        }
+        else {
+            result += 'if(' + args.join(';') + ')'
+        }
+        pos = closePos + 1
+    }
+    return result
 }
 
 function replaceInlineJsonArrays(
