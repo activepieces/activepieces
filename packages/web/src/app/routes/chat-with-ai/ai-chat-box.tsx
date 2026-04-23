@@ -945,7 +945,7 @@ function ChatInput({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 gap-1.5 rounded-lg bg-foreground text-background hover:bg-foreground/90 text-xs px-3"
+              className="h-7 gap-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-xs px-3"
               onClick={onCancel}
             >
               <Square className="h-3 w-3 fill-current" />
@@ -958,7 +958,7 @@ function ChatInput({
               className={cn(
                 'h-8 w-8 rounded-lg transition-all',
                 canSend
-                  ? 'bg-foreground text-background hover:bg-foreground/90 shadow-sm'
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm'
                   : 'bg-muted text-muted-foreground cursor-not-allowed',
               )}
               onClick={handleSubmit}
