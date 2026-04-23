@@ -319,7 +319,7 @@ function AgentCard({
               <span
                 className={cn(
                   'transition-all duration-300',
-                  isLarge ? 'text-sm' : 'text-sm',
+                  isLarge ? 'text-sm' : 'text-xs',
                 )}
               >
                 {'🤖'}

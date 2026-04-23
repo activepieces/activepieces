@@ -117,7 +117,7 @@ const SignUpForm = ({
           case ErrorCode.INVITATION_ONLY_SIGN_UP: {
             form.setError('root.serverError', {
               message: t(
-                'Sign up is restricted. You need an invitation to join. Please contact the administrator.'
+                'Sign up is restricted. You need an invitation to join. Please contact the administrator.',
               ),
             });
             break;
