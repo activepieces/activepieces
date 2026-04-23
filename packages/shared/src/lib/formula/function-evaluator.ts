@@ -431,7 +431,7 @@ function resolveTextVars(text: string, sampleData: Record<string, unknown>): str
     })
 }
 
-function isPureApFunctionCall(input: string): boolean {
+export function isPureApFunctionCall(input: string): boolean {
     const trimmed = input.trim()
     if (trimmed.length === 0) return false
     const fnNames = new Set(AP_FUNCTIONS.map((f) => f.name))

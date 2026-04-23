@@ -346,9 +346,18 @@ describe('Props resolver', () => {
         expect(resolvedInput).toEqual('John!')
     })
 
-    test('AP formula: invalid formula falls through to variable resolution without leaking unresolved templates', async () => {
+    test('AP formula: pure formula failure throws FormulaEvaluationError instead of returning garbage', async () => {
+        await expect(
+            propsResolverService.resolve({
+                unresolvedInput: 'divide({{trigger.price}}; 0)',
+                executionState,
+            }),
+        ).rejects.toThrow(/Formula error/)
+    })
+
+    test('AP formula: mixed-content failure still falls back to variable resolution (no unresolved templates leaked)', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: 'trim({{trigger.unknown}} + broken syntax $$)',
+            unresolvedInput: 'Fallback for {{trigger.unknown}}: trim({{trigger.unknown}} + broken $$)',
             executionState,
         })
         expect(resolvedInput).not.toContain('{{')

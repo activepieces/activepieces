@@ -1,5 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { applyFunctionToValues, containsApFunctionCall, evaluateExpression, isNil, isString } from '@activepieces/shared'
+import { applyFunctionToValues, containsApFunctionCall, evaluateExpression, FormulaEvaluationError, isNil, isPureApFunctionCall, isString } from '@activepieces/shared'
 
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -107,11 +107,16 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         if (!error) {
             return result ?? ''
         }
-        // Fall through to normal variable resolution: detection is permissive so
-        // mixed-content fields (`"Dear uppercase({{name}}),"`) evaluate. When the
-        // value is not actually a formula (`"Please trim(spaces)"`) evaluation
-        // fails and the raw string must still go through variable resolution so
-        // unresolved {{...}} templates don't leak and secrets stay censored.
+        // A pure formula is intentional — surface the error rather than returning
+        // a partially-resolved garbage string like `"divide( 10 ; 0 )"`.
+        if (isPureApFunctionCall(input)) {
+            throw new FormulaEvaluationError({ expression: input, message: error })
+        }
+        // Mixed-content fallthrough: detection is permissive so
+        // `"Dear uppercase({{name}}),"` evaluates. When the value is not actually
+        // a formula (`"Please trim(spaces)"`) evaluation fails and the raw string
+        // must still go through variable resolution so unresolved {{...}}
+        // templates don't leak and secrets stay censored.
         console.warn('[resolveInputAsync] Formula evaluation error, falling back to variable resolution:', error)
     }
 
