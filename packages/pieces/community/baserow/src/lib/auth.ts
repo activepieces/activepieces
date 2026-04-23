@@ -88,13 +88,8 @@ function isDatabaseToken(
 }
 
 export const baserowAuth = [databaseTokenAuth, jwtAuth];
-export const baserowJwtAuth = jwtAuth;
 export const isDatabaseTokenAuth = isDatabaseToken;
 
 export type BaserowAuthValue = AppConnectionValueForAuthProperty<
   typeof baserowAuth
->;
-
-export type BaserowJwtAuthValue = AppConnectionValueForAuthProperty<
-  typeof baserowJwtAuth
 >;
