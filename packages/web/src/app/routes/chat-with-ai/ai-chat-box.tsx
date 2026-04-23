@@ -6,6 +6,7 @@ import {
   Check,
   Copy,
   Loader2,
+  Paperclip,
   Plus,
   Sparkles,
   RefreshCw,
@@ -944,21 +945,27 @@ function ChatInput({
   onCancel,
 }: {
   isStreaming: boolean;
-  onSend: (text: string) => void;
+  onSend: (text: string, files?: File[]) => void;
   onCancel: () => void;
 }) {
   const [value, setValue] = useState('');
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = useCallback(() => {
     if (isStreaming) {
       onCancel();
-    } else if (value.trim()) {
-      onSend(value.trim());
+    } else if (value.trim() || attachedFiles.length > 0) {
+      onSend(
+        value.trim(),
+        attachedFiles.length > 0 ? attachedFiles : undefined,
+      );
       setValue('');
+      setAttachedFiles([]);
     }
-  }, [isStreaming, value, onSend, onCancel]);
+  }, [isStreaming, value, attachedFiles, onSend, onCancel]);
 
-  const canSend = value.trim().length > 0;
+  const canSend = value.trim().length > 0 || attachedFiles.length > 0;
 
   return (
     <PromptInput
@@ -968,18 +975,58 @@ function ChatInput({
       onSubmit={handleSubmit}
       className="rounded-2xl border shadow-sm"
     >
+      {attachedFiles.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 px-3 pt-2">
+          {attachedFiles.map((file, i) => (
+            <span
+              key={i}
+              className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs"
+            >
+              <Paperclip className="h-3 w-3 text-muted-foreground" />
+              <span className="max-w-[120px] truncate">{file.name}</span>
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground ml-0.5"
+                onClick={() =>
+                  setAttachedFiles((prev) => prev.filter((_, idx) => idx !== i))
+                }
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
       <PromptInputTextarea
         placeholder={t('Message...')}
         className="min-h-[44px] text-sm"
       />
       <PromptInputActions className="justify-between px-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 rounded-full text-muted-foreground"
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files) {
+                setAttachedFiles((prev) => [
+                  ...prev,
+                  ...Array.from(e.target.files!),
+                ]);
+                e.target.value = '';
+              }
+            }}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-full text-muted-foreground"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
         <div className="flex items-center gap-1">
           {isStreaming ? (
             <Button

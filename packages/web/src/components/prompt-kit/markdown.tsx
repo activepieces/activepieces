@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { cn } from '@/lib/utils';
 
 import { CodeBlock, CodeBlockCode } from './code-block';
+import { Source } from './source';
 
 export type MarkdownProps = {
   children: string;
@@ -80,14 +81,20 @@ function extractLanguage(className?: string): string {
 }
 
 const INITIAL_COMPONENTS: Partial<Components> = {
-  a: function LinkComponent({ href, children, ...props }) {
+  a: function LinkComponent({ href, children }) {
+    const text = typeof children === 'string' ? children : '';
+    const isStandaloneUrl = href && (text === href || text.startsWith('http'));
+
+    if (isStandaloneUrl && href) {
+      return <Source href={href} title={text !== href ? text : undefined} />;
+    }
+
     return (
       <a
         href={href}
         target="_blank"
         rel="noopener noreferrer"
         className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
-        {...props}
       >
         {children}
       </a>
