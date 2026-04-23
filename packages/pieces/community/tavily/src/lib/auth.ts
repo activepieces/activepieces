@@ -18,9 +18,6 @@ export const tavilyAuth = PieceAuth.SecretText({
 			await httpClient.sendRequest({
 				method: HttpMethod.GET,
 				url: 'https://api.tavily.com/usage',
-				headers: {
-					'Content-Type': 'application/json',
-				},
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
 					token: auth
