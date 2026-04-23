@@ -80,13 +80,17 @@ const CredentialsTab = () => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
                     if (insertMention) {
-                      insertMention(`connections['${secret.externalId}'].secret_text`);
+                      insertMention(
+                        `connections['${secret.externalId}'].secret_text`,
+                      );
                     }
                   }
                 }}
                 onClick={() => {
                   if (insertMention) {
-                    insertMention(`connections['${secret.externalId}'].secret_text`);
+                    insertMention(
+                      `connections['${secret.externalId}'].secret_text`,
+                    );
                   }
                 }}
                 className={cn(
