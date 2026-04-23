@@ -228,6 +228,50 @@ describe('concurrencyPoolRedis Lua primitives', () => {
             const waiters = await redis.lrange(getConcurrencyPoolWaitlistKey(poolId), 0, -1)
             expect(waiters).toEqual(['p:w1', 'p:w2'])
         })
+
+        it('A12: new acquire after rollback does not skip ahead of queued waiters', async () => {
+            const poolId = `a12-${crypto.randomUUID()}`
+            const redis = await redisConnections.useExisting()
+
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'a'), maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'w1'), maxJobs: 1, timeoutMs: TIMEOUT_MS })
+
+            const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: member('p', 'a'), timeoutMs: TIMEOUT_MS })
+            if (popped === null) throw new Error('expected popped waiter')
+            await concurrencyPoolRedis.rollbackPromotion({ poolId, member: popped, timeoutMs: TIMEOUT_MS })
+
+            const result = await concurrencyPoolRedis.acquireSlotOrEnqueue({
+                poolId,
+                member: member('p', 'newcomer'),
+                maxJobs: 1,
+                timeoutMs: TIMEOUT_MS,
+            })
+
+            expect(result).toBe('queued')
+            expect(await redis.zcard(getConcurrencyPoolSetKey(poolId))).toBe(0)
+            const waiters = await redis.lrange(getConcurrencyPoolWaitlistKey(poolId), 0, -1)
+            expect(waiters).toEqual(['p:w1', 'p:newcomer'])
+        })
+
+        it('A13: new acquire is queued when capacity exists but waitlist is non-empty', async () => {
+            const poolId = `a13-${crypto.randomUUID()}`
+            const redis = await redisConnections.useExisting()
+            const waitlistKey = getConcurrencyPoolWaitlistKey(poolId)
+
+            await redis.rpush(waitlistKey, 'p:orphan')
+
+            const result = await concurrencyPoolRedis.acquireSlotOrEnqueue({
+                poolId,
+                member: member('p', 'newcomer'),
+                maxJobs: 5,
+                timeoutMs: TIMEOUT_MS,
+            })
+
+            expect(result).toBe('queued')
+            expect(await redis.zcard(getConcurrencyPoolSetKey(poolId))).toBe(0)
+            const waiters = await redis.lrange(waitlistKey, 0, -1)
+            expect(waiters).toEqual(['p:orphan', 'p:newcomer'])
+        })
     })
 
     describe('Suite B — concurrent / race-condition correctness', () => {

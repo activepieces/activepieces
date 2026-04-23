@@ -72,7 +72,7 @@ if redis.call('ZSCORE', activeKey, member) then
     return 'acquired'
 end
 
-if redis.call('ZCARD', activeKey) >= maxJobs then
+if redis.call('ZCARD', activeKey) >= maxJobs or redis.call('LLEN', waitlistKey) > 0 then
     redis.call('RPUSH', waitlistKey, member)
     redis.call('EXPIRE', waitlistKey, ttlSeconds)
     return 'queued'

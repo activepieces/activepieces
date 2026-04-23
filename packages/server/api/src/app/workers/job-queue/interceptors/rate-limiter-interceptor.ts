@@ -22,7 +22,7 @@ export const rateLimiterInterceptor: JobInterceptor = {
             poolId: effectivePoolId,
             member: concurrencyPoolRedis.buildMember({ projectId: jobData.projectId, jobId }),
             maxJobs: maxConcurrentJobs,
-            timeoutMs: getFlowTimeoutMs(),
+            timeoutMs: getStaleEntryThresholdMs(),
         })
 
         if (outcome === 'acquired') {
@@ -45,7 +45,7 @@ export const rateLimiterInterceptor: JobInterceptor = {
         }
 
         const { effectivePoolId } = await resolveEffectivePoolId({ projectId: jobData.projectId, log })
-        const timeoutMs = getFlowTimeoutMs()
+        const timeoutMs = getStaleEntryThresholdMs()
         const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({
             poolId: effectivePoolId,
             member: concurrencyPoolRedis.buildMember({ projectId: jobData.projectId, jobId }),
@@ -72,7 +72,7 @@ export const rateLimiterInterceptor: JobInterceptor = {
             return
         }
 
-        log.info({ popped, poolId: effectivePoolId }, '[rateLimiterInterceptor] Waiter promotion failed, rolling back slot')
+        log.warn({ popped, poolId: effectivePoolId }, '[rateLimiterInterceptor] Waiter promotion failed, rolling back slot')
         await concurrencyPoolRedis.rollbackPromotion({ poolId: effectivePoolId, member: popped, timeoutMs })
     },
 }
@@ -116,11 +116,16 @@ async function getMaxConcurrentJobs({ poolId, platformId, log }: { poolId: strin
 }
 
 function getFlowTimeoutMs(): number {
-    return apDayjsDuration(system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS), 'seconds').add(1, 'minute').asMilliseconds()
+    return apDayjsDuration(system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS), 'seconds').asMilliseconds()
+}
+
+function getStaleEntryThresholdMs(): number {
+    return getFlowTimeoutMs() + STALE_ENTRY_GRACE_MS
 }
 
 const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
-const SAFETY_NET_DELAY_BUFFER_MS = apDayjsDuration(60, 'seconds').asMilliseconds()
+const STALE_ENTRY_GRACE_MS = apDayjsDuration(60, 'seconds').asMilliseconds()
+const SAFETY_NET_DELAY_BUFFER_MS = apDayjsDuration(120, 'seconds').asMilliseconds()
 
 const PLAN_CONCURRENT_JOBS_LIMITS: Record<string, number> = {
     [PlanName.STANDARD]: 5,
