@@ -146,6 +146,12 @@ export const chatService = (log: FastifyBaseLogger) => ({
             platformId,
             provider: AIProviderName.ANTHROPIC,
         })
+        if (!('apiKey' in config.auth)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: platformId, entityType: 'AnthropicApiKey' },
+            })
+        }
         return config.auth.apiKey
     },
 
