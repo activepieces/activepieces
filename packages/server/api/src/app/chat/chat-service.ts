@@ -3,10 +3,12 @@ import {
     AIProviderName,
     apId,
     ChatConversation,
+    ChatHistoryMessage,
     CreateChatConversationRequest,
     ErrorCode,
     isNil,
     SeekPage,
+    spreadIfDefined,
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -24,7 +26,7 @@ const conversationRepo = repoFactory(ChatConversationEntity)
 export const chatService = (log: FastifyBaseLogger) => ({
     async createConversation({ projectId, userId, platformId, request }: CreateConversationParams): Promise<ChatConversation> {
         const [anthropicApiKey, mcpCredentials] = await Promise.all([
-            getAnthropicApiKey({ platformId, log }),
+            this.getAnthropicApiKey({ platformId }),
             getMcpCredentials({ projectId, log }),
         ])
 
@@ -90,9 +92,10 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
     async updateConversation({ id, projectId, userId, request }: UpdateConversationParams): Promise<ChatConversation> {
         const conversation = await this.getConversationOrThrow({ id, projectId, userId })
-        const updates: Partial<Pick<ChatConversation, 'title' | 'modelName'>> = {}
-        if (request.title !== undefined) updates.title = request.title
-        if (request.modelName !== undefined) updates.modelName = request.modelName
+        const updates = {
+            ...spreadIfDefined('title', request.title),
+            ...spreadIfDefined('modelName', request.modelName),
+        }
 
         if (Object.keys(updates).length > 0) {
             await conversationRepo().update(conversation.id, updates)
@@ -103,10 +106,31 @@ export const chatService = (log: FastifyBaseLogger) => ({
     async deleteConversation({ id, projectId, userId, platformId }: DeleteConversationParams): Promise<void> {
         const conversation = await this.getConversationOrThrow({ id, projectId, userId })
         if (conversation.sandboxSessionId) {
-            const anthropicApiKey = await getAnthropicApiKey({ platformId, log })
+            const anthropicApiKey = await this.getAnthropicApiKey({ platformId })
             await chatSandboxAgent.destroySession({ sessionId: conversation.sandboxSessionId, anthropicApiKey }).catch(() => { /* session may already be gone */ })
         }
         await conversationRepo().delete({ id, projectId, userId })
+    },
+
+    async getMessages({ id, projectId, userId, platformId }: GetMessagesParams): Promise<{ data: ChatHistoryMessage[] }> {
+        const conversation = await this.getConversationOrThrow({ id, projectId, userId })
+        if (!conversation.sandboxSessionId) {
+            return { data: [] }
+        }
+        const anthropicApiKey = await this.getAnthropicApiKey({ platformId })
+        const messages = await chatSandboxAgent.getSessionHistory({
+            sessionId: conversation.sandboxSessionId,
+            anthropicApiKey,
+        })
+        return { data: messages }
+    },
+
+    async getAnthropicApiKey({ platformId }: { platformId: string }): Promise<string> {
+        const config = await aiProviderService(log).getConfigOrThrow({
+            platformId,
+            provider: AIProviderName.ANTHROPIC,
+        })
+        return config.auth.apiKey
     },
 
     async buildSystemPrompt({ projectId }: { projectId: string }): Promise<string> {
@@ -127,14 +151,6 @@ async function getMcpCredentials({ projectId, log }: { projectId: string, log: F
     catch {
         return { mcpServerUrl: null, mcpToken: null }
     }
-}
-
-async function getAnthropicApiKey({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<string> {
-    const config = await aiProviderService(log).getConfigOrThrow({
-        platformId,
-        provider: AIProviderName.ANTHROPIC,
-    })
-    return config.auth.apiKey
 }
 
 function sanitizeProjectName(name: string): string {
@@ -288,3 +304,9 @@ type DeleteConversationParams = {
     platformId: string
 }
 
+type GetMessagesParams = {
+    id: string
+    projectId: string
+    userId: string
+    platformId: string
+}

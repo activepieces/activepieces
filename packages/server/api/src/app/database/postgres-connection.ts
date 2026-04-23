@@ -359,7 +359,6 @@ import { AddWaitpointTable1775747638323 } from './migration/postgres/17757476383
 import { AddConcurrencyPoolTable1775800000000 } from './migration/postgres/1775800000000-AddConcurrencyPoolTable'
 import { AddDefaultToAiProvidersEnabled1776000000000 } from './migration/postgres/1776000000000-AddDefaultToAiProvidersEnabled'
 import { AddChatTables1776200000000 } from './migration/postgres/1776200000000-AddChatTables'
-import { AddChatEnabled1776300000000 } from './migration/postgres/1776300000000-AddChatEnabled'
 import { DropWaitpointTimeoutSeconds1776342514732 } from './migration/postgres/1776342514732-DropWaitpointTimeoutSeconds'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -736,7 +735,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddDefaultToAiProvidersEnabled1776000000000,
         DropWaitpointTimeoutSeconds1776342514732,
         AddChatTables1776200000000,
-        AddChatEnabled1776300000000,
     ]
     return migrations
 }

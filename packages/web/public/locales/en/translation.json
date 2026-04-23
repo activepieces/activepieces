@@ -1281,6 +1281,8 @@
   "invalidGitRepoBranch": "Branch name must not start with a dash and may only contain letters, numbers, dot, dash, slash and underscore",
   "invalidGitRepoRemoteUrl": "Remote URL must be in the form git@host:path",
   "invalidExternalId": "External ID may only contain letters, numbers, dot, dash and underscore (up to 128 characters)",
+  "invalidFileName": "File name contains invalid characters",
+  "messageRequiresContentOrFiles": "Message must have content or files",
   "Your submission was successfully received.": "Your submission was successfully received.",
   "The flow you are trying to submit to does not exist.": "The flow you are trying to submit to does not exist.",
   "The flow failed to execute.": "The flow failed to execute.",

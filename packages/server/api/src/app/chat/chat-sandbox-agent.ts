@@ -1,11 +1,10 @@
-/**
- * All sandbox-agent imports are dynamic because the package is ESM-only
- * and this server uses CommonJS module resolution.
- */
-import fs from 'node:fs/promises'
-import os from 'node:os'
-import path from 'node:path'
-import { type ChatHistoryMessage, type ChatHistoryToolCall } from '@activepieces/shared'
+// Dynamic imports: sandbox-agent is ESM-only; this server is CJS.
+import {
+    chatEventUtils,
+    type ChatHistoryMessage,
+    type ChatHistoryToolCall,
+    SandboxSessionUpdateType,
+} from '@activepieces/shared'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 
@@ -73,11 +72,12 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
         }
 
         const mod = await import('sandbox-agent')
-        const { FileSessionPersistDriver } = await import('./file-session-persist-driver')
-        const persist = new FileSessionPersistDriver()
+        const { PostgresSessionPersistDriver } = await import('./postgres-session-persist-driver')
+        const persist = new PostgresSessionPersistDriver()
         const startFn = mod.SandboxAgent.start as (opts: { sandbox: unknown, persist: unknown }) => Promise<SandboxAgentSdk>
         const sdk = await startFn({ sandbox, persist })
         sdksByKey.set(anthropicApiKey, sdk)
+        initPromises.delete(anthropicApiKey)
         return sdk
     })().catch((err: unknown) => {
         initPromises.delete(anthropicApiKey)
@@ -100,12 +100,11 @@ async function createSession({ anthropicApiKey, mcpServerUrl, mcpToken }: Create
         })
     }
 
-    const sandboxCwd = await fs.mkdtemp(path.join(os.tmpdir(), 'ap-sandbox-'))
     const session = await sdk.createSession({
         agent: 'claude',
         model: 'opus[1m]',
         sessionInit: {
-            cwd: sandboxCwd,
+            cwd: '/tmp',
             mcpServers,
         },
     })
@@ -121,64 +120,40 @@ function isImageMimeType(mimeType: string): boolean {
     return mimeType.startsWith('image/')
 }
 
-function sanitizeFileName(name: string): string {
-    const base = path.basename(name).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 255)
-    if (!base || base === '.' || base === '..') {
-        return '_unnamed'
-    }
-    return base
-}
-
-async function writeFilesToDisk(files: Array<{ name: string, mimeType: string, data: string }>): Promise<{ dir: string, paths: string[] }> {
-    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ap-chat-'))
-    const paths: string[] = []
-    for (const file of files) {
-        const safeName = sanitizeFileName(file.name)
-        const filePath = path.join(dir, safeName)
-        await fs.writeFile(filePath, Buffer.from(file.data, 'base64'))
-        paths.push(filePath)
-    }
-    return { dir, paths }
-}
-
 async function sendPrompt({ session, text, systemPrompt, files }: SendPromptParams): Promise<void> {
     let userText = text
     const contentBlocks: Array<Record<string, unknown>> = []
-    let tempDir: string | undefined
 
-    try {
-        if (files && files.length > 0) {
-            const nonImageFiles = files.filter((f) => !isImageMimeType(f.mimeType))
-            const imageFiles = files.filter((f) => isImageMimeType(f.mimeType))
+    if (files && files.length > 0) {
+        const nonImageFiles = files.filter((f) => !isImageMimeType(f.mimeType))
+        const imageFiles = files.filter((f) => isImageMimeType(f.mimeType))
 
-            if (nonImageFiles.length > 0) {
-                const result = await writeFilesToDisk(nonImageFiles)
-                tempDir = result.dir
-                const fileList = result.paths.map((p) => `- ${path.basename(p)}: ${p}`).join('\n')
-                userText += `\n\n[Attached files saved to disk — read them with your tools]\n${fileList}`
-            }
-
-            for (const file of imageFiles) {
+        if (nonImageFiles.length > 0) {
+            const fileDescriptions = nonImageFiles.map((f) => `- ${f.name} (${f.mimeType}, ${Math.ceil((f.data.length * 3) / 4)} bytes)`).join('\n')
+            userText += `\n\n[Attached files — content provided inline below]\n${fileDescriptions}`
+            for (const file of nonImageFiles) {
                 contentBlocks.push({
-                    type: 'image',
-                    data: file.data,
-                    mimeType: file.mimeType,
+                    type: 'text',
+                    text: `\n--- File: ${file.name} ---\n${Buffer.from(file.data, 'base64').toString('utf-8')}`,
                 })
             }
         }
 
-        const fullText = systemPrompt
-            ? `<system_instructions>\n${systemPrompt}\n</system_instructions>\n\nUser message: ${userText}`
-            : userText
-
-        contentBlocks.unshift({ type: 'text', text: fullText })
-        await session.prompt(contentBlocks as Array<{ type: string, text: string }>)
-    }
-    finally {
-        if (tempDir) {
-            await fs.rm(tempDir, { recursive: true, force: true }).catch(() => undefined)
+        for (const file of imageFiles) {
+            contentBlocks.push({
+                type: 'image',
+                data: file.data,
+                mimeType: file.mimeType,
+            })
         }
     }
+
+    const fullText = systemPrompt
+        ? `<system_instructions>\n${systemPrompt}\n</system_instructions>\n\nUser message: ${userText}`
+        : userText
+
+    contentBlocks.unshift({ type: 'text', text: fullText })
+    await session.prompt(contentBlocks as Array<{ type: string, text: string }>)
 }
 
 async function destroySession({ sessionId, anthropicApiKey }: DestroySessionParams): Promise<void> {
@@ -218,37 +193,37 @@ async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionPa
 
             const updateType = update.sessionUpdate as string | undefined
 
-            if (updateType === 'agent_message_chunk') {
+            if (updateType === SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK) {
                 const content = update.content as Record<string, unknown> | undefined
                 if (content && typeof content.text === 'string') {
                     inAssistantMessage = true
                     currentAssistantText += content.text
                 }
             }
-            else if (updateType === 'agent_thought_chunk') {
+            else if (updateType === SandboxSessionUpdateType.AGENT_THOUGHT_CHUNK) {
                 const content = update.content as Record<string, unknown> | undefined
                 if (content && typeof content.text === 'string') {
                     inAssistantMessage = true
                     currentThoughts += content.text
                 }
             }
-            else if (updateType === 'tool_call') {
+            else if (updateType === SandboxSessionUpdateType.TOOL_CALL) {
                 inAssistantMessage = true
                 const toolCallId = typeof update.toolCallId === 'string' ? update.toolCallId : `tc-${Date.now()}`
                 const title = typeof update.title === 'string' ? update.title : 'Unknown tool'
-                const rawInput = typeof update.rawInput === 'object' && update.rawInput !== null && !Array.isArray(update.rawInput)
-                    ? update.rawInput as Record<string, unknown>
+                const rawInput = chatEventUtils.isObject(update.rawInput)
+                    ? update.rawInput
                     : undefined
                 currentToolCalls.push({ toolCallId, title, status: 'in_progress', input: rawInput })
             }
-            else if (updateType === 'tool_call_update') {
+            else if (updateType === SandboxSessionUpdateType.TOOL_CALL_UPDATE) {
                 const toolCallId = typeof update.toolCallId === 'string' ? update.toolCallId : undefined
                 if (toolCallId) {
                     const existing = currentToolCalls.find((tc) => tc.toolCallId === toolCallId)
                     if (existing) {
                         const status = typeof update.status === 'string' ? update.status : existing.status
                         existing.status = status
-                        existing.output = extractHistoryToolOutput(update) ?? existing.output
+                        existing.output = chatEventUtils.extractToolOutput(update) ?? existing.output
                     }
                 }
             }
@@ -262,12 +237,8 @@ async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionPa
     return messages
 }
 
-function isHistoryReplayDump(text: string): boolean {
-    return text.includes('"jsonrpc"') && text.includes('"session/update"') && text.includes('"createdAt"')
-}
-
 function stripHistoryReplay(text: string): string {
-    if (!isHistoryReplayDump(text)) {
+    if (!chatEventUtils.isHistoryReplayContent(text)) {
         const marker = 'Previous session history is replayed below'
         const idx = text.indexOf(marker)
         if (idx === -1) return text
@@ -297,23 +268,6 @@ function stripSystemInstructions(text: string): string {
         .replace(/<system_instructions>[\s\S]*?<\/system_instructions>\s*/g, '')
         .replace(/^User message:\s*/i, '')
         .trim()
-}
-
-function extractHistoryToolOutput(update: Record<string, unknown>): string | undefined {
-    if (typeof update.rawOutput === 'string') return update.rawOutput
-    if (Array.isArray(update.content)) {
-        const parts: string[] = []
-        for (const block of update.content) {
-            if (typeof block === 'object' && block !== null && !Array.isArray(block)) {
-                const b = block as Record<string, unknown>
-                if (b.type === 'text' && typeof b.text === 'string') {
-                    parts.push(b.text)
-                }
-            }
-        }
-        if (parts.length > 0) return parts.join('\n')
-    }
-    return undefined
 }
 
 async function resumeSession({ sessionId, anthropicApiKey }: ResumeSessionParams): Promise<SandboxSession> {

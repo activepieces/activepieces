@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { BaseModelSchema, Nullable } from '../../core/common'
+import { BaseModelSchema, isObject, isString, Nullable } from '../../core/common'
+import { formErrors } from '../../form-errors'
 
 function buildChatConversationSchema() {
     return z.object({
@@ -46,7 +47,7 @@ const SAFE_FILENAME = /^[^\x00-\x1f\r\n]*$/
 const ChatMessageFile = z.object({
     name: z.string().min(1).max(255).refine(
         (v) => SAFE_FILENAME.test(v),
-        { message: 'File name contains invalid characters' },
+        { message: formErrors.invalidFileName },
     ),
     mimeType: z.enum(CHAT_ALLOWED_MIME_TYPES),
     data: z.string().max(MAX_FILE_BASE64_CHARS),
@@ -58,9 +59,39 @@ function buildSendChatMessageRequestSchema() {
         files: z.array(ChatMessageFile).max(10).optional(),
     }).refine(
         (val) => val.content.length > 0 || (val.files && val.files.length > 0),
-        { message: 'Message must have content or files' },
+        { message: formErrors.messageRequiresContentOrFiles },
     )
 }
+
+function extractToolOutput(update: Record<string, unknown>): string | undefined {
+    if (isString(update['rawOutput'])) return update['rawOutput']
+    if (Array.isArray(update['content'])) {
+        const parts: string[] = []
+        for (const block of update['content']) {
+            if (isObject(block) && block['type'] === 'text' && isString(block['text'])) {
+                parts.push(block['text'])
+            }
+        }
+        if (parts.length > 0) return parts.join('\n')
+    }
+    return undefined
+}
+
+function isHistoryReplayContent(text: string): boolean {
+    return (text.includes('"jsonrpc"') && text.includes('"session/update"'))
+        || text.includes('Previous session history is replayed below')
+        || text.includes('[history truncated]')
+}
+
+export const SandboxSessionUpdateType = {
+    AGENT_MESSAGE_CHUNK: 'agent_message_chunk',
+    AGENT_THOUGHT_CHUNK: 'agent_thought_chunk',
+    TOOL_CALL: 'tool_call',
+    TOOL_CALL_UPDATE: 'tool_call_update',
+    PLAN: 'plan',
+    SESSION_INFO_UPDATE: 'session_info_update',
+    USAGE_UPDATE: 'usage_update',
+} as const
 
 export const ChatStreamEventType = {
     TEXT_CHUNK: 'TEXT_CHUNK',
@@ -75,6 +106,12 @@ export const ChatStreamEventType = {
     DONE: 'DONE',
 } as const
 export type ChatStreamEventType = (typeof ChatStreamEventType)[keyof typeof ChatStreamEventType]
+
+export const chatEventUtils = {
+    isObject,
+    extractToolOutput,
+    isHistoryReplayContent,
+}
 
 export const ChatConversation = buildChatConversationSchema()
 export type ChatConversation = z.infer<typeof ChatConversation>

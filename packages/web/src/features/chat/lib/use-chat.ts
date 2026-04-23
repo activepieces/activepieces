@@ -1,20 +1,18 @@
 import {
+  chatEventUtils,
   CHAT_ALLOWED_MIME_TYPES,
   type ChatAllowedMimeType,
   type ChatConversation,
   type ChatHistoryMessage,
+  type ChatStreamEvent,
   ChatStreamEventType,
 } from '@activepieces/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { chatApi, type ChatStreamEvent } from './chat-api';
+import { chatApi } from './chat-api';
 
 function safeString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function mapHistoryToMessages({
@@ -223,7 +221,7 @@ export function useAgentChat({
                 title: safeString(event.data.title),
                 status: 'running' as const,
                 kind: safeString(event.data.kind) || undefined,
-                input: isRecord(event.data.rawInput)
+                input: chatEventUtils.isObject(event.data.rawInput)
                   ? (event.data.rawInput as Record<string, unknown>)
                   : undefined,
               };

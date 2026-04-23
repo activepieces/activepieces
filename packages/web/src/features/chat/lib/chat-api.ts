@@ -91,13 +91,9 @@ async function updateConversation(
 }
 
 async function deleteConversation(id: string): Promise<void> {
-  const token = authenticationSession.getToken();
-  assertNotNullOrUndefined(token, 'token');
   const res = await fetch(conversationUrl(id), {
     method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to delete conversation: ${res.status}`);
 }
@@ -190,11 +186,6 @@ const KNOWN_EVENT_TYPES = new Set<string>(Object.values(ChatStreamEventType));
 function isKnownEventType(value: string): value is ChatStreamEventType {
   return KNOWN_EVENT_TYPES.has(value);
 }
-
-export type ChatStreamEvent = {
-  type: ChatStreamEventType;
-  data: Record<string, unknown>;
-};
 
 export const chatApi = {
   createConversation,

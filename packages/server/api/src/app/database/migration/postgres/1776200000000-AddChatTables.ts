@@ -1,4 +1,6 @@
+import { ApEdition } from '@activepieces/shared'
 import { QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 import { Migration } from '../../migration'
 
 export class AddChatTables1776200000000 implements Migration {
@@ -33,9 +35,73 @@ export class AddChatTables1776200000000 implements Migration {
             CREATE INDEX "idx_chat_conversation_project_user_created"
             ON "chat_conversation" ("projectId", "userId", "created" DESC)
         `)
+
+        await queryRunner.query(`
+            CREATE TABLE "sandbox_session" (
+                "id" character varying NOT NULL,
+                "agent" character varying NOT NULL,
+                "agentSessionId" character varying NOT NULL,
+                "lastConnectionId" character varying NOT NULL,
+                "createdAt" bigint NOT NULL,
+                "destroyedAt" bigint,
+                "sandboxId" character varying,
+                "sessionInit" jsonb,
+                "configOptions" jsonb,
+                "modes" jsonb,
+                CONSTRAINT "pk_sandbox_session" PRIMARY KEY ("id")
+            )
+        `)
+
+        await queryRunner.query(`
+            CREATE TABLE "sandbox_session_event" (
+                "id" character varying NOT NULL,
+                "eventIndex" integer NOT NULL,
+                "sessionId" character varying NOT NULL,
+                "createdAt" bigint NOT NULL,
+                "connectionId" character varying NOT NULL,
+                "sender" character varying NOT NULL,
+                "payload" jsonb NOT NULL,
+                CONSTRAINT "pk_sandbox_session_event" PRIMARY KEY ("id")
+            )
+        `)
+
+        await queryRunner.query(`
+            CREATE INDEX "idx_sandbox_session_event_session_id"
+            ON "sandbox_session_event" ("sessionId")
+        `)
+
+        await queryRunner.query(`
+            CREATE INDEX "idx_sandbox_session_event_session_index"
+            ON "sandbox_session_event" ("sessionId", "eventIndex")
+        `)
+
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
+
+        await queryRunner.query(`
+            ALTER TABLE "platform_plan"
+            ADD "chatEnabled" boolean
+        `)
+        await queryRunner.query(`
+            UPDATE "platform_plan"
+            SET "chatEnabled" = true
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "platform_plan"
+            ALTER COLUMN "chatEnabled"
+            SET NOT NULL
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query('DROP TABLE IF EXISTS "sandbox_session_event"')
+        await queryRunner.query('DROP TABLE IF EXISTS "sandbox_session"')
         await queryRunner.query('DROP TABLE IF EXISTS "chat_conversation"')
+
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
+        await queryRunner.query('ALTER TABLE "platform_plan" DROP COLUMN "chatEnabled"')
     }
 }

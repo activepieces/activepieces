@@ -1,9 +1,10 @@
 import {
-    AIProviderName,
+    chatEventUtils,
     ChatStreamEventType,
     CreateChatConversationRequest,
     Permission,
     PrincipalType,
+    SandboxSessionUpdateType,
     SendChatMessageRequest,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdateChatConversationRequest,
@@ -11,13 +12,13 @@ import {
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
-import { aiProviderService } from '../ai/ai-provider-service'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { chatSandboxAgent } from './chat-sandbox-agent'
 import { chatService } from './chat-service'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
+const MAX_TOOL_OUTPUT_SIZE = 64 * 1024
 
 export const chatController: FastifyPluginAsyncZod = async (app) => {
 
@@ -68,27 +69,12 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get('/conversations/:id/messages', GetMessagesRoute, async (request) => {
-        const conversation = await chatService(request.log).getConversationOrThrow({
+        return chatService(request.log).getMessages({
             id: request.params.id,
             projectId: request.projectId,
             userId: request.principal.id,
-        })
-
-        if (!conversation.sandboxSessionId) {
-            return { data: [] }
-        }
-
-        const config = await aiProviderService(request.log).getConfigOrThrow({
             platformId: request.principal.platform.id,
-            provider: AIProviderName.ANTHROPIC,
         })
-
-        const messages = await chatSandboxAgent.getSessionHistory({
-            sessionId: conversation.sandboxSessionId,
-            anthropicApiKey: config.auth.apiKey,
-        })
-
-        return { data: messages }
     })
 
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
@@ -108,6 +94,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const log = request.log
         const platformId = request.principal.platform.id
 
+        await reply.hijack()
         reply.raw.writeHead(200, {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache',
@@ -122,13 +109,17 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             if (cleaned) return
             cleaned = true
             unsubscribeEvent?.()
+            request.raw.off('close', cleanup)
         }
 
         request.raw.on('close', cleanup)
 
         try {
-            const config = await aiProviderService(log).getConfigOrThrow({ platformId, provider: AIProviderName.ANTHROPIC })
-            const anthropicApiKey = config.auth.apiKey
+            const [anthropicApiKey, systemPrompt] = await Promise.all([
+                chatService(log).getAnthropicApiKey({ platformId }),
+                chatService(log).buildSystemPrompt({ projectId: request.projectId }),
+            ])
+
             const session = await chatSandboxAgent.resumeSession({
                 sessionId: conversation.sandboxSessionId,
                 anthropicApiKey,
@@ -136,7 +127,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
             if (cleaned) {
                 reply.raw.end()
-                return await reply
+                return
             }
 
             const historyReplayFilter = createHistoryReplayFilter()
@@ -146,12 +137,12 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 if (event.sender !== 'agent') return
 
                 const payload: unknown = event.payload
-                if (!isPlainObject(payload)) return
+                if (!chatEventUtils.isObject(payload)) return
                 if (payload.method !== 'session/update') return
-                if (!isPlainObject(payload.params)) return
+                if (!chatEventUtils.isObject(payload.params)) return
 
                 const update = payload.params.update
-                if (!isPlainObject(update)) return
+                if (!chatEventUtils.isObject(update)) return
 
                 if (historyReplayFilter.shouldSuppress(update)) return
 
@@ -169,9 +160,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 })
             })
 
-            const systemPrompt = await chatService(log).buildSystemPrompt({
-                projectId: request.projectId,
-            })
             await chatSandboxAgent.sendPrompt({ session, text: content, systemPrompt, files })
 
             if (!cleaned) {
@@ -194,13 +182,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             cleanup()
             reply.raw.end()
         }
-
-        return reply
     })
-}
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function getString(obj: Record<string, unknown>, key: string): string | undefined {
@@ -221,21 +203,21 @@ function handleSessionUpdate({ raw, update, onSessionTitle }: {
     const updateType = getString(update, 'sessionUpdate')
 
     switch (updateType) {
-        case 'agent_message_chunk': {
+        case SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK: {
             const text = extractContentText(update)
             if (text) {
                 writeSseEvent(raw, { type: ChatStreamEventType.TEXT_CHUNK, data: { text } })
             }
             break
         }
-        case 'agent_thought_chunk': {
+        case SandboxSessionUpdateType.AGENT_THOUGHT_CHUNK: {
             const text = extractContentText(update)
             if (text) {
                 writeSseEvent(raw, { type: ChatStreamEventType.THOUGHT_CHUNK, data: { text } })
             }
             break
         }
-        case 'tool_call': {
+        case SandboxSessionUpdateType.TOOL_CALL: {
             const title = getString(update, 'title') ?? 'Unknown tool'
             writeSseEvent(raw, {
                 type: ChatStreamEventType.TOOL_CALL_START,
@@ -245,14 +227,14 @@ function handleSessionUpdate({ raw, update, onSessionTitle }: {
                     title,
                     status: getString(update, 'status'),
                     kind: getString(update, 'kind'),
-                    rawInput: isPlainObject(update.rawInput) ? update.rawInput : undefined,
+                    rawInput: chatEventUtils.isObject(update.rawInput) ? update.rawInput : undefined,
                 },
             })
             break
         }
-        case 'tool_call_update': {
+        case SandboxSessionUpdateType.TOOL_CALL_UPDATE: {
             const status = getString(update, 'status')
-            const output = extractToolOutput(update)
+            const output = truncateToolOutput(chatEventUtils.extractToolOutput(update))
             const eventType = status === 'completed'
                 ? ChatStreamEventType.TOOL_CALL_COMPLETE
                 : ChatStreamEventType.TOOL_CALL_UPDATE
@@ -267,14 +249,14 @@ function handleSessionUpdate({ raw, update, onSessionTitle }: {
             })
             break
         }
-        case 'plan': {
+        case SandboxSessionUpdateType.PLAN: {
             const entries = update.entries
             if (Array.isArray(entries)) {
                 writeSseEvent(raw, {
                     type: ChatStreamEventType.PLAN_UPDATE,
                     data: {
                         entries: entries
-                            .filter(isPlainObject)
+                            .filter(chatEventUtils.isObject)
                             .map((entry) => ({
                                 content: getString(entry, 'content') ?? '',
                                 status: getString(entry, 'status') ?? 'pending',
@@ -284,7 +266,7 @@ function handleSessionUpdate({ raw, update, onSessionTitle }: {
             }
             break
         }
-        case 'session_info_update': {
+        case SandboxSessionUpdateType.SESSION_INFO_UPDATE: {
             const title = getString(update, 'title')
             if (title) {
                 writeSseEvent(raw, {
@@ -295,7 +277,7 @@ function handleSessionUpdate({ raw, update, onSessionTitle }: {
             }
             break
         }
-        case 'usage_update': {
+        case SandboxSessionUpdateType.USAGE_UPDATE: {
             writeSseEvent(raw, {
                 type: ChatStreamEventType.USAGE_UPDATE,
                 data: {
@@ -313,37 +295,16 @@ function handleSessionUpdate({ raw, update, onSessionTitle }: {
 }
 
 function extractContentText(update: Record<string, unknown>): string | undefined {
-    if (!isPlainObject(update.content)) return undefined
+    if (!chatEventUtils.isObject(update.content)) return undefined
     if (update.content.type !== 'text') return undefined
     return typeof update.content.text === 'string' ? update.content.text : undefined
 }
 
-const MAX_TOOL_OUTPUT_SIZE = 64 * 1024
-
-function extractToolOutput(update: Record<string, unknown>): string | undefined {
-    let result: string | undefined
-    if (typeof update.rawOutput === 'string') {
-        result = update.rawOutput
+function truncateToolOutput(output: string | undefined): string | undefined {
+    if (output && output.length > MAX_TOOL_OUTPUT_SIZE) {
+        return output.slice(0, MAX_TOOL_OUTPUT_SIZE) + '... (truncated)'
     }
-    else if (Array.isArray(update.content)) {
-        const parts: string[] = []
-        for (const block of update.content) {
-            if (isPlainObject(block) && block.type === 'text' && typeof block.text === 'string') {
-                parts.push(block.text)
-            }
-        }
-        if (parts.length > 0) result = parts.join('\n')
-    }
-    if (result && result.length > MAX_TOOL_OUTPUT_SIZE) {
-        return result.slice(0, MAX_TOOL_OUTPUT_SIZE) + '... (truncated)'
-    }
-    return result
-}
-
-function isHistoryReplayContent(text: string): boolean {
-    return (text.includes('"jsonrpc"') && text.includes('"session/update"'))
-        || text.includes('Previous session history is replayed below')
-        || text.includes('[history truncated]')
+    return output
 }
 
 function createHistoryReplayFilter(): { shouldSuppress: (update: Record<string, unknown>) => boolean } {
@@ -355,14 +316,14 @@ function createHistoryReplayFilter(): { shouldSuppress: (update: Record<string, 
             if (state === 'passthrough') return false
 
             const updateType = getString(update, 'sessionUpdate')
-            if (updateType !== 'agent_message_chunk') return false
+            if (updateType !== SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK) return false
 
             const text = extractContentText(update)
             if (!text) return false
 
             if (state === 'detecting') {
                 buffer += text
-                if (isHistoryReplayContent(buffer)) {
+                if (chatEventUtils.isHistoryReplayContent(buffer)) {
                     state = 'suppressing'
                     buffer = ''
                     return true
@@ -374,7 +335,7 @@ function createHistoryReplayFilter(): { shouldSuppress: (update: Record<string, 
                 return false
             }
 
-            if (isHistoryReplayContent(text)) {
+            if (chatEventUtils.isHistoryReplayContent(text)) {
                 return true
             }
 
