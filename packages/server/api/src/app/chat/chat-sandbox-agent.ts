@@ -40,44 +40,49 @@ type SandboxAgentSdk = {
     dispose(): Promise<void>
 }
 
-let sdkInstance: SandboxAgentSdk | null = null
-let initPromise: Promise<SandboxAgentSdk> | null = null
+const sdksByKey = new Map<string, SandboxAgentSdk>()
+const initPromises = new Map<string, Promise<SandboxAgentSdk>>()
 
 async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }): Promise<SandboxAgentSdk> {
-    if (sdkInstance) {
-        return sdkInstance
+    const existing = sdksByKey.get(anthropicApiKey)
+    if (existing) {
+        return existing
     }
-    if (!initPromise) {
-        initPromise = (async () => {
-            const providerType = process.env.AP_SANDBOX_PROVIDER ?? 'local'
-            let sandbox: unknown
-
-            if (providerType === 'cloudflare') {
-                const { cloudflare } = await import('sandbox-agent/cloudflare')
-                const { Sandbox } = await import('@cloudflare/sandbox')
-                sandbox = cloudflare({ sdk: new Sandbox() })
-            }
-            else {
-                const { local } = await import('sandbox-agent/local')
-                sandbox = local({
-                    env: {
-                        ANTHROPIC_API_KEY: anthropicApiKey,
-                    },
-                })
-            }
-
-            const mod = await import('sandbox-agent')
-            const { FileSessionPersistDriver } = await import('./file-session-persist-driver')
-            const persist = new FileSessionPersistDriver()
-            const startFn = mod.SandboxAgent.start as (opts: { sandbox: unknown, persist: unknown }) => Promise<SandboxAgentSdk>
-            sdkInstance = await startFn({ sandbox, persist })
-            return sdkInstance
-        })().catch((err: unknown) => {
-            initPromise = null
-            throw err
-        })
+    const pending = initPromises.get(anthropicApiKey)
+    if (pending) {
+        return pending
     }
-    return initPromise
+    const promise = (async () => {
+        const providerType = process.env.AP_SANDBOX_PROVIDER ?? 'local'
+        let sandbox: unknown
+
+        if (providerType === 'cloudflare') {
+            const { cloudflare } = await import('sandbox-agent/cloudflare')
+            const { Sandbox } = await import('@cloudflare/sandbox')
+            sandbox = cloudflare({ sdk: new Sandbox() })
+        }
+        else {
+            const { local } = await import('sandbox-agent/local')
+            sandbox = local({
+                env: {
+                    ANTHROPIC_API_KEY: anthropicApiKey,
+                },
+            })
+        }
+
+        const mod = await import('sandbox-agent')
+        const { FileSessionPersistDriver } = await import('./file-session-persist-driver')
+        const persist = new FileSessionPersistDriver()
+        const startFn = mod.SandboxAgent.start as (opts: { sandbox: unknown, persist: unknown }) => Promise<SandboxAgentSdk>
+        const sdk = await startFn({ sandbox, persist })
+        sdksByKey.set(anthropicApiKey, sdk)
+        return sdk
+    })().catch((err: unknown) => {
+        initPromises.delete(anthropicApiKey)
+        throw err
+    })
+    initPromises.set(anthropicApiKey, promise)
+    return promise
 }
 
 async function createSession({ anthropicApiKey, mcpServerUrl, mcpToken }: CreateSessionParams): Promise<SandboxSession> {
@@ -314,11 +319,12 @@ async function resumeSession({ sessionId, anthropicApiKey }: ResumeSessionParams
 }
 
 async function dispose(): Promise<void> {
-    if (sdkInstance) {
-        await sdkInstance.destroySandbox()
-        await sdkInstance.dispose()
-        sdkInstance = null
-        initPromise = null
+    const instances = [...sdksByKey.values()]
+    sdksByKey.clear()
+    initPromises.clear()
+    for (const sdk of instances) {
+        await sdk.destroySandbox().catch(() => undefined)
+        await sdk.dispose().catch(() => undefined)
     }
 }
 
