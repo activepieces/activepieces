@@ -4,7 +4,6 @@ import { AiCreditsAutoTopUpState, PlanName, PlatformPlanWithOnlyLimits, Platform
 import { PiecesFilterType } from '../../management/project'
 
 export const PRICE_PER_EXTRA_ACTIVE_FLOWS = 5
-export const AI_CREDITS_USAGE_THRESHOLD = 15000
 
 export type ProjectPlanLimits = {
     nickname?: string

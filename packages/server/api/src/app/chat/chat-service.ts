@@ -109,25 +109,6 @@ export const chatService = (log: FastifyBaseLogger) => ({
         await conversationRepo().delete({ id, projectId, userId })
     },
 
-    async updateTokenUsage({ conversationId, projectId, inputTokens, outputTokens }: UpdateTokenUsageParams): Promise<void> {
-        const safeInput = Number.isFinite(inputTokens) ? inputTokens : 0
-        const safeOutput = Number.isFinite(outputTokens) ? outputTokens : 0
-        await conversationRepo()
-            .createQueryBuilder()
-            .update()
-            .set({
-                totalInputTokens: () => '"totalInputTokens" + :safeInput',
-                totalOutputTokens: () => '"totalOutputTokens" + :safeOutput',
-            })
-            .setParameters({ safeInput, safeOutput })
-            .where('id = :id AND "projectId" = :projectId', { id: conversationId, projectId })
-            .execute()
-    },
-
-    async updateSummary({ conversationId, projectId, summary }: UpdateSummaryParams): Promise<void> {
-        await conversationRepo().update({ id: conversationId, projectId }, { summary })
-    },
-
     async buildSystemPrompt({ projectId }: { projectId: string }): Promise<string> {
         const project = await projectService(log).getOneOrThrow(projectId)
         return buildAgentSystemPrompt(project.displayName)
@@ -307,15 +288,3 @@ type DeleteConversationParams = {
     platformId: string
 }
 
-type UpdateTokenUsageParams = {
-    conversationId: string
-    projectId: string
-    inputTokens: number
-    outputTokens: number
-}
-
-type UpdateSummaryParams = {
-    conversationId: string
-    projectId: string
-    summary: string
-}

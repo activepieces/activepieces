@@ -176,7 +176,7 @@ function ChatBoxContent({
     return (
       <div className="flex flex-col h-full flex-1 min-w-0 items-center justify-center px-6 pb-8">
         <div className="flex-1" />
-        <EmptyState onSend={handleSend} incognito={incognito} />
+        <EmptyState incognito={incognito} />
         <div className="w-full max-w-4xl mt-6">
           <ChatInput
             isStreaming={isStreaming}
@@ -1101,12 +1101,7 @@ function ChatInput({
   );
 }
 
-function EmptyState({
-  incognito,
-}: {
-  onSend: (text: string, files?: File[]) => void;
-  incognito: boolean;
-}) {
+function EmptyState({ incognito }: { incognito: boolean }) {
   const { project } = projectCollectionUtils.useCurrentProject();
 
   const greeting = incognito

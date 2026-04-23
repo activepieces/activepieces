@@ -3,10 +3,10 @@ import { memo, useId, useMemo } from 'react';
 import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { cn } from '@/lib/utils';
+
 import { CodeBlock, CodeBlockCode } from './code-block';
 import { Source } from './source';
-
-import { cn } from '@/lib/utils';
 
 export type MarkdownProps = {
   children: string;
@@ -137,13 +137,17 @@ const INITIAL_COMPONENTS: Partial<Components> = {
   a: function LinkComponent({ href, children, node }) {
     if (!href) return <>{children}</>;
     const isWebUrl = href.startsWith('http://') || href.startsWith('https://');
-    const isSafeProtocol = isWebUrl || href.startsWith('mailto:') || href.startsWith('tel:');
+    const isSafeProtocol =
+      isWebUrl || href.startsWith('mailto:') || href.startsWith('tel:');
     if (!isSafeProtocol) {
       return <span>{children}</span>;
     }
     if (!isWebUrl) {
       return (
-        <a href={href} className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors">
+        <a
+          href={href}
+          className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
+        >
           {children}
         </a>
       );
