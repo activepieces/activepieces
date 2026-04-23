@@ -5,10 +5,23 @@ import {
     isString,
 } from '@activepieces/shared'
 import type { SandboxAgent, Session, SessionCreateRequest, SessionEvent, SessionPersistDriver } from 'sandbox-agent'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { chatEventUtils } from './ai-event-utils'
 
 const sdksByKey = new Map<string, SandboxAgent>()
 const initPromises = new Map<string, Promise<SandboxAgent>>()
+
+async function createSandboxProvider({ anthropicApiKey }: { anthropicApiKey: string }): Promise<unknown> {
+    const providerType = system.get(AppSystemProp.SANDBOX_PROVIDER) ?? 'local'
+    if (providerType === 'cloudflare') {
+        const { cloudflare } = await import('sandbox-agent/cloudflare')
+        const { Sandbox } = await import('@cloudflare/sandbox')
+        return cloudflare({ sdk: new Sandbox() })
+    }
+    const { local } = await import('sandbox-agent/local')
+    return local({ env: { ANTHROPIC_API_KEY: anthropicApiKey } })
+}
 
 async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }): Promise<SandboxAgent> {
     const existing = sdksByKey.get(anthropicApiKey)
@@ -20,9 +33,7 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
         return pending
     }
     const promise = (async () => {
-        const { cloudflare } = await import('sandbox-agent/cloudflare')
-        const { Sandbox } = await import('@cloudflare/sandbox')
-        const sandbox = cloudflare({ sdk: new Sandbox() })
+        const sandbox = await createSandboxProvider({ anthropicApiKey })
 
         const { SandboxAgent: SandboxAgentClass } = await import('sandbox-agent')
         const { PostgresSessionPersistDriver } = await import('./postgres-persist-driver')
