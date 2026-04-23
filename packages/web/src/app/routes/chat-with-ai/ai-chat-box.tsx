@@ -7,13 +7,13 @@ import {
   Copy,
   Loader2,
   Paperclip,
-  Plus,
   Sparkles,
   RefreshCw,
   Settings,
   Square,
   Table2,
   Workflow,
+  X,
   Zap,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -31,6 +31,11 @@ import {
   ChatContainerRoot,
   ChatContainerScrollAnchor,
 } from '@/components/prompt-kit/chat-container';
+import {
+  FileUpload,
+  FileUploadContent,
+  FileUploadTrigger,
+} from '@/components/prompt-kit/file-upload';
 import { Markdown } from '@/components/prompt-kit/markdown';
 import {
   Message,
@@ -40,6 +45,7 @@ import {
 } from '@/components/prompt-kit/message';
 import {
   PromptInput,
+  PromptInputAction,
   PromptInputActions,
   PromptInputTextarea,
 } from '@/components/prompt-kit/prompt-input';
@@ -63,7 +69,6 @@ import { piecesHooks } from '@/features/pieces';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
-import { cn } from '@/lib/utils';
 
 type AIChatBoxProps = {
   incognito: boolean;
@@ -142,13 +147,13 @@ function ChatBoxContent({
   }, [initialConversationId, setConversationId]);
 
   const handleSend = useCallback(
-    async (text: string) => {
-      if (!text.trim()) return;
+    async (text: string, files?: File[]) => {
+      if (!text.trim() && (!files || files.length === 0)) return;
       if (!hasSentFirst.current) {
         hasSentFirst.current = true;
         onFirstMessage(text.trim().slice(0, 100));
       }
-      await sendMessage(text.trim());
+      await sendMessage(text.trim(), files);
     },
     [sendMessage, onFirstMessage],
   );
@@ -284,7 +289,7 @@ function ChatMessage({
   isStreaming: boolean;
   onCancel: () => void;
   onRetry: () => void;
-  onSend: (text: string) => void;
+  onSend: (text: string, files?: File[]) => void;
   connectedPieces: Set<string>;
   onPieceConnected: (piece: string) => void;
 }) {
@@ -318,9 +323,24 @@ function UserMessage({ message }: { message: ChatMessageItem }) {
     <div className="flex justify-end py-3 animate-in fade-in duration-200">
       <div className="max-w-[80%]">
         <Message className="flex-row-reverse">
-          <MessageContent className="bg-muted rounded-2xl rounded-br-md px-4 py-2.5 prose-sm">
-            {message.content}
-          </MessageContent>
+          <div className="bg-muted rounded-2xl rounded-br-md px-4 py-2.5">
+            {message.fileNames.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-1.5">
+                {message.fileNames.map((name, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1 rounded-md bg-background/60 px-2 py-0.5 text-xs text-muted-foreground"
+                  >
+                    <Paperclip className="size-3" />
+                    <span className="max-w-[150px] truncate">{name}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+            <MessageContent className="prose-sm">
+              {message.content}
+            </MessageContent>
+          </div>
         </Message>
         <MessageActions className="justify-end mt-1">
           <MessageAction tooltip={t('Copy')}>
@@ -355,7 +375,7 @@ function AssistantMessage({
   isStreaming: boolean;
   onCancel: () => void;
   onRetry: () => void;
-  onSend: (text: string) => void;
+  onSend: (text: string, files?: File[]) => void;
   connectedPieces: Set<string>;
   onPieceConnected: (piece: string) => void;
 }) {
@@ -625,7 +645,7 @@ function QuickReplies({
   onSend,
 }: {
   replies: string[];
-  onSend: (text: string) => void;
+  onSend: (text: string, files?: File[]) => void;
 }) {
   if (replies.length === 0) return null;
 
@@ -950,7 +970,6 @@ function ChatInput({
 }) {
   const [value, setValue] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = useCallback(() => {
     if (isStreaming) {
@@ -965,105 +984,111 @@ function ChatInput({
     }
   }, [isStreaming, value, attachedFiles, onSend, onCancel]);
 
+  const handleFilesAdded = useCallback((files: File[]) => {
+    setAttachedFiles((prev) => [...prev, ...files]);
+  }, []);
+
   const canSend = value.trim().length > 0 || attachedFiles.length > 0;
 
   return (
-    <PromptInput
-      isLoading={isStreaming}
-      value={value}
-      onValueChange={setValue}
-      onSubmit={handleSubmit}
-      className="rounded-2xl border shadow-sm"
-    >
-      {attachedFiles.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 px-3 pt-2">
-          {attachedFiles.map((file, i) => (
-            <span
-              key={i}
-              className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs"
-            >
-              <Paperclip className="h-3 w-3 text-muted-foreground" />
-              <span className="max-w-[120px] truncate">{file.name}</span>
-              <button
-                type="button"
-                className="text-muted-foreground hover:text-foreground ml-0.5"
-                onClick={() =>
-                  setAttachedFiles((prev) => prev.filter((_, idx) => idx !== i))
-                }
+    <FileUpload onFilesAdded={handleFilesAdded} multiple>
+      <PromptInput
+        isLoading={isStreaming}
+        value={value}
+        onValueChange={setValue}
+        onSubmit={handleSubmit}
+        className="rounded-2xl border shadow-sm"
+      >
+        {attachedFiles.length > 0 && (
+          <div className="flex flex-wrap gap-2 px-3 pt-2">
+            {attachedFiles.map((file, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-sm"
+                onClick={(e) => e.stopPropagation()}
               >
-                ×
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-      <PromptInputTextarea
-        placeholder={t('Message...')}
-        className="min-h-[44px] text-sm"
-      />
-      <PromptInputActions className="justify-between px-1">
-        <div className="flex items-center gap-1">
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files) {
-                setAttachedFiles((prev) => [
-                  ...prev,
-                  ...Array.from(e.target.files!),
-                ]);
-                e.target.value = '';
-              }
-            }}
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 rounded-full text-muted-foreground"
-            onClick={() => fileInputRef.current?.click()}
+                <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
+                <span className="max-w-[150px] truncate text-foreground/80">
+                  {file.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAttachedFiles((prev) =>
+                      prev.filter((_, idx) => idx !== i),
+                    )
+                  }
+                  className="text-muted-foreground hover:text-foreground rounded-full p-0.5 transition-colors"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <PromptInputTextarea
+          placeholder={t('Message...')}
+          className="min-h-[44px] text-sm"
+        />
+        <PromptInputActions className="flex items-center justify-between px-1">
+          <PromptInputAction tooltip={t('Attach files')}>
+            <FileUploadTrigger asChild>
+              <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                <Paperclip className="size-4" />
+              </div>
+            </FileUploadTrigger>
+          </PromptInputAction>
+          <PromptInputAction
+            tooltip={isStreaming ? t('Stop') : t('Send message')}
           >
-            <Plus className="h-4 w-4" />
-          </Button>
+            {isStreaming ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1.5 rounded-lg bg-destructive text-white hover:bg-destructive/90 hover:text-white text-xs px-3"
+                onClick={onCancel}
+              >
+                <Square className="h-3 w-3 fill-current" />
+                {t('Stop')}
+              </Button>
+            ) : (
+              <Button
+                variant="default"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={handleSubmit}
+                disabled={!canSend}
+              >
+                <ArrowUp className="size-5" />
+              </Button>
+            )}
+          </PromptInputAction>
+        </PromptInputActions>
+      </PromptInput>
+
+      <FileUploadContent>
+        <div className="flex min-h-[200px] w-full items-center justify-center backdrop-blur-sm">
+          <div className="bg-background/90 m-4 w-full max-w-md rounded-lg border p-8 shadow-lg">
+            <div className="mb-4 flex justify-center">
+              <Paperclip className="text-muted-foreground size-8" />
+            </div>
+            <h3 className="mb-2 text-center text-base font-medium">
+              {t('Drop files here')}
+            </h3>
+            <p className="text-muted-foreground text-center text-sm">
+              {t('Release to add files to your message')}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          {isStreaming ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1.5 rounded-lg bg-destructive text-white hover:bg-destructive/90 hover:text-white text-xs px-3"
-              onClick={onCancel}
-            >
-              <Square className="h-3 w-3 fill-current" />
-              {t('Stop')}
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                'h-8 w-8 rounded-lg transition-all',
-                canSend
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground shadow-sm'
-                  : 'bg-muted text-muted-foreground cursor-not-allowed',
-              )}
-              onClick={handleSubmit}
-              disabled={!canSend}
-            >
-              <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
-            </Button>
-          )}
-        </div>
-      </PromptInputActions>
-    </PromptInput>
+      </FileUploadContent>
+    </FileUpload>
   );
 }
 
 function EmptyState({
   incognito,
 }: {
-  onSend: (text: string) => void;
+  onSend: (text: string, files?: File[]) => void;
   incognito: boolean;
 }) {
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -1087,7 +1112,11 @@ function EmptyState({
   );
 }
 
-function SuggestionCards({ onSend }: { onSend: (text: string) => void }) {
+function SuggestionCards({
+  onSend,
+}: {
+  onSend: (text: string, files?: File[]) => void;
+}) {
   const suggestions = [
     { icon: Zap, text: t('What can I automate today?') },
     { icon: Workflow, text: t('Show me what I have running') },

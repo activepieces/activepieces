@@ -3,10 +3,10 @@ import { memo, useId, useMemo } from 'react';
 import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import { cn } from '@/lib/utils';
-
 import { CodeBlock, CodeBlockCode } from './code-block';
 import { Source } from './source';
+
+import { cn } from '@/lib/utils';
 
 export type MarkdownProps = {
   children: string;
@@ -80,11 +80,90 @@ function extractLanguage(className?: string): string {
   return match ? match[1] : 'plaintext';
 }
 
+type HastNode = {
+  type: string;
+  tagName?: string;
+  value?: string;
+  children?: HastNode[];
+};
+
+function isLinkOnlyItem(node: HastNode): boolean {
+  const significant =
+    node.children?.filter((c) => !(c.type === 'text' && !c.value?.trim())) ??
+    [];
+  if (significant.length !== 1) return false;
+  const first = significant[0];
+  if (first.type === 'element' && first.tagName === 'a') return true;
+  if (first.type === 'element' && first.tagName === 'p') {
+    const pChildren =
+      first.children?.filter((c) => !(c.type === 'text' && !c.value?.trim())) ??
+      [];
+    return (
+      pChildren.length === 1 &&
+      pChildren[0].type === 'element' &&
+      pChildren[0].tagName === 'a'
+    );
+  }
+  return false;
+}
+
+function isLinkOnlyList(node: HastNode | undefined): boolean {
+  if (!node?.children) return false;
+  const items = node.children.filter(
+    (c) => c.type === 'element' && c.tagName === 'li',
+  );
+  return items.length > 0 && items.every(isLinkOnlyItem);
+}
+
 const INITIAL_COMPONENTS: Partial<Components> = {
-  a: function LinkComponent({ href, children }) {
+  ul: function UlComponent({ children, node }) {
+    if (isLinkOnlyList(node as HastNode | undefined)) {
+      return <div className="flex flex-wrap gap-1.5 my-2">{children}</div>;
+    }
+    return <ul>{children}</ul>;
+  },
+  ol: function OlComponent({ children, node }) {
+    if (isLinkOnlyList(node as HastNode | undefined)) {
+      return <div className="flex flex-wrap gap-1.5 my-2">{children}</div>;
+    }
+    return <ol>{children}</ol>;
+  },
+  li: function LiComponent({ children, node }) {
+    if (node && isLinkOnlyItem(node as HastNode)) {
+      return <>{children}</>;
+    }
+    return <li>{children}</li>;
+  },
+  a: function LinkComponent({ href, children, node }) {
     if (!href) return <>{children}</>;
+    const isWebUrl = href.startsWith('http://') || href.startsWith('https://');
+    if (!isWebUrl) {
+      return (
+        <a href={href} className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors">
+          {children}
+        </a>
+      );
+    }
     const text = typeof children === 'string' ? children : '';
-    return <Source href={href} title={text || undefined} />;
+
+    const isInListItem =
+      node?.position?.start.column && node.position.start.column > 1;
+    const isStandaloneLink = !isInListItem && text.startsWith('http');
+
+    if (isStandaloneLink || isInListItem) {
+      return <Source href={href} title={text !== href ? text : undefined} />;
+    }
+
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
+      >
+        {children}
+      </a>
+    );
   },
   code: function CodeComponent({ className, children, ...props }) {
     const isInline =

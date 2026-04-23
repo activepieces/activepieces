@@ -1495,5 +1495,9 @@
   "Team": "Team",
   "+{count} more": "+{count} more",
   "Platform members get instant access to this project. New members get access after accepting the invitation.": "Platform members get instant access to this project. New members get access after accepting the invitation.",
-  "Email addresses that already have access are skipped.": "Email addresses that already have access are skipped."
+  "Email addresses that already have access are skipped.": "Email addresses that already have access are skipped.",
+  "Drop files here": "Drop files here",
+  "Attach files": "Attach files",
+  "Release to add files to your message": "Release to add files to your message",
+  "Send message": "Send message"
 }

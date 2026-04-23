@@ -29,10 +29,37 @@ function buildUpdateChatConversationRequestSchema() {
     })
 }
 
+const MAX_FILE_BINARY_SIZE = 10 * 1024 * 1024
+const MAX_FILE_BASE64_CHARS = Math.ceil(MAX_FILE_BINARY_SIZE * 4 / 3)
+
+const CHAT_ALLOWED_MIME_TYPES = [
+    'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml',
+    'application/pdf',
+    'text/plain', 'text/csv', 'text/markdown',
+    'application/json',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+] as const
+
+const SAFE_FILENAME = /^[^\x00-\x1f\r\n]*$/
+
+const ChatMessageFile = z.object({
+    name: z.string().min(1).max(255).refine(
+        (v) => SAFE_FILENAME.test(v),
+        { message: 'File name contains invalid characters' },
+    ),
+    mimeType: z.enum(CHAT_ALLOWED_MIME_TYPES),
+    data: z.string().max(MAX_FILE_BASE64_CHARS),
+})
+
 function buildSendChatMessageRequestSchema() {
     return z.object({
-        content: z.string().min(1).max(51200),
-    })
+        content: z.string().max(51200),
+        files: z.array(ChatMessageFile).max(10).optional(),
+    }).refine(
+        (val) => val.content.length > 0 || (val.files && val.files.length > 0),
+        { message: 'Message must have content or files' },
+    )
 }
 
 export const ChatStreamEventType = {
@@ -80,3 +107,6 @@ export type ChatHistoryMessage = {
     toolCalls?: ChatHistoryToolCall[]
     thoughts?: string
 }
+
+export type ChatAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
+export { CHAT_ALLOWED_MIME_TYPES }

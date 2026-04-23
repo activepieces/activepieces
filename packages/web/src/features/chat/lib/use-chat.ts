@@ -1,4 +1,6 @@
 import {
+  CHAT_ALLOWED_MIME_TYPES,
+  type ChatAllowedMimeType,
   type ChatConversation,
   type ChatHistoryMessage,
   ChatStreamEventType,
@@ -28,6 +30,7 @@ function mapHistoryToMessages({
     content: msg.content,
     thoughts: msg.thoughts ?? '',
     plan: null,
+    fileNames: [],
     toolCalls:
       msg.toolCalls?.map((tc) => ({
         id: tc.toolCallId,
@@ -42,6 +45,34 @@ function mapHistoryToMessages({
       })) ?? [],
     timestamp: Date.now(),
   }));
+}
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
+
+function isAllowedMimeType(value: string): value is ChatAllowedMimeType {
+  return ALLOWED_MIME_SET.has(value);
+}
+
+function fileToBase64(
+  file: File,
+): Promise<{ name: string; mimeType: ChatAllowedMimeType; data: string }> {
+  return new Promise((resolve, reject) => {
+    const mimeType = file.type || 'application/octet-stream';
+    if (!isAllowedMimeType(mimeType)) {
+      reject(new Error(`Unsupported file type: ${mimeType}`));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.split(',')[1];
+      resolve({ name: file.name, mimeType, data: base64 });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 export function useAgentChat({
@@ -180,7 +211,7 @@ export function useAgentChat({
   );
 
   const sendMessage = useCallback(
-    async (content: string) => {
+    async (content: string, files?: File[]) => {
       setError(null);
       setWasCancelled(false);
 
@@ -191,6 +222,7 @@ export function useAgentChat({
         thoughts: '',
         plan: null,
         toolCalls: [],
+        fileNames: files?.map((f) => f.name) ?? [],
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, userMessage]);
@@ -203,6 +235,7 @@ export function useAgentChat({
         thoughts: '',
         plan: null,
         toolCalls: [],
+        fileNames: [],
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
@@ -223,9 +256,32 @@ export function useAgentChat({
         }
       }
 
+      let encodedFiles:
+        | { name: string; mimeType: ChatAllowedMimeType; data: string }[]
+        | undefined;
+      if (files && files.length > 0) {
+        const oversized = files.find((f) => f.size > MAX_FILE_SIZE);
+        if (oversized) {
+          setError(`File "${oversized.name}" exceeds 10 MB limit`);
+          setIsStreaming(false);
+          setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+          return;
+        }
+        try {
+          encodedFiles = await Promise.all(files.map(fileToBase64));
+        } catch (err) {
+          setError(
+            err instanceof Error ? err.message : 'Failed to read attached files',
+          );
+          setIsStreaming(false);
+          setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+          return;
+        }
+      }
+
       const controller = chatApi.sendMessage(
         conv.id,
-        { content },
+        { content, files: encodedFiles },
         (event: ChatStreamEvent) => {
           handleStreamEvent(assistantId, event);
         },
@@ -253,7 +309,9 @@ export function useAgentChat({
         prev.map((msg) => ({
           ...msg,
           toolCalls: msg.toolCalls.map((tc) =>
-            tc.status === 'running' ? { ...tc, status: 'failed' as const } : tc,
+            tc.status === 'running'
+              ? { ...tc, status: 'stopped' as const }
+              : tc,
           ),
         })),
       );
@@ -314,6 +372,7 @@ export type ChatMessageItem = {
   thoughts: string;
   plan: PlanItem[] | null;
   toolCalls: ToolCallItem[];
+  fileNames: string[];
   timestamp: number;
 };
 
@@ -321,7 +380,7 @@ export type ToolCallItem = {
   id: string;
   name: string;
   title: string;
-  status: 'running' | 'completed' | 'failed';
+  status: 'running' | 'completed' | 'failed' | 'stopped';
   kind?: string;
   input?: Record<string, unknown>;
   output?: string;

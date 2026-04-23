@@ -2,6 +2,9 @@
  * All sandbox-agent imports are dynamic because the package is ESM-only
  * and this server uses CommonJS module resolution.
  */
+import fs from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
 import { type ChatHistoryMessage, type ChatHistoryToolCall } from '@activepieces/shared'
 
 type SandboxSession = {
@@ -106,11 +109,68 @@ async function createSession({ anthropicApiKey, mcpServerUrl, mcpToken }: Create
     return session
 }
 
-async function sendPrompt({ session, text, systemPrompt }: SendPromptParams): Promise<void> {
-    const fullText = systemPrompt
-        ? `<system_instructions>\n${systemPrompt}\n</system_instructions>\n\nUser message: ${text}`
-        : text
-    await session.prompt([{ type: 'text', text: fullText }])
+function isImageMimeType(mimeType: string): boolean {
+    return mimeType.startsWith('image/')
+}
+
+function sanitizeFileName(name: string): string {
+    const base = path.basename(name).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 255)
+    if (!base || base === '.' || base === '..') {
+        return '_unnamed'
+    }
+    return base
+}
+
+async function writeFilesToDisk(files: Array<{ name: string, mimeType: string, data: string }>): Promise<{ dir: string, paths: string[] }> {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ap-chat-'))
+    const paths: string[] = []
+    for (const file of files) {
+        const safeName = sanitizeFileName(file.name)
+        const filePath = path.join(dir, safeName)
+        await fs.writeFile(filePath, Buffer.from(file.data, 'base64'))
+        paths.push(filePath)
+    }
+    return { dir, paths }
+}
+
+async function sendPrompt({ session, text, systemPrompt, files }: SendPromptParams): Promise<void> {
+    let userText = text
+    const contentBlocks: Array<Record<string, unknown>> = []
+    let tempDir: string | undefined
+
+    try {
+        if (files && files.length > 0) {
+            const nonImageFiles = files.filter((f) => !isImageMimeType(f.mimeType))
+            const imageFiles = files.filter((f) => isImageMimeType(f.mimeType))
+
+            if (nonImageFiles.length > 0) {
+                const result = await writeFilesToDisk(nonImageFiles)
+                tempDir = result.dir
+                const fileList = result.paths.map((p) => `- ${path.basename(p)}: ${p}`).join('\n')
+                userText += `\n\n[Attached files saved to disk — read them with your tools]\n${fileList}`
+            }
+
+            for (const file of imageFiles) {
+                contentBlocks.push({
+                    type: 'image',
+                    data: file.data,
+                    mimeType: file.mimeType,
+                })
+            }
+        }
+
+        const fullText = systemPrompt
+            ? `<system_instructions>\n${systemPrompt}\n</system_instructions>\n\nUser message: ${userText}`
+            : userText
+
+        contentBlocks.unshift({ type: 'text', text: fullText })
+        await session.prompt(contentBlocks as Array<{ type: string, text: string }>)
+    }
+    finally {
+        if (tempDir) {
+            await fs.rm(tempDir, { recursive: true, force: true }).catch(() => undefined)
+        }
+    }
 }
 
 async function destroySession({ sessionId, anthropicApiKey }: DestroySessionParams): Promise<void> {
@@ -257,6 +317,7 @@ type SendPromptParams = {
     session: SandboxSession
     text: string
     systemPrompt?: string
+    files?: Array<{ name: string, mimeType: string, data: string }>
 }
 
 type DestroySessionParams = {
