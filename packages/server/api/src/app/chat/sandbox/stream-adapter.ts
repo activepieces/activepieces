@@ -130,7 +130,7 @@ export function createStreamWriter({ writer, textPartId, reasoningPartId, onSess
 export function createHistoryReplayFilter(): { shouldSuppress: (update: Record<string, unknown>) => boolean } {
     let state: 'detecting' | 'suppressing' | 'passthrough' = 'detecting'
     let buffer = ''
-    let suppressedChunks = 0
+    let nonReplayCount = 0
 
     return {
         shouldSuppress(update: Record<string, unknown>): boolean {
@@ -141,8 +141,8 @@ export function createHistoryReplayFilter(): { shouldSuppress: (update: Record<s
                 if (updateType === SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK) {
                     const text = chatEventUtils.extractContentText(update)
                     if (text && !chatEventUtils.isHistoryReplayContent(text)) {
-                        suppressedChunks++
-                        if (suppressedChunks > 3) {
+                        nonReplayCount++
+                        if (nonReplayCount > 3) {
                             state = 'passthrough'
                             return false
                         }
@@ -151,23 +151,24 @@ export function createHistoryReplayFilter(): { shouldSuppress: (update: Record<s
                 return true
             }
 
+            // detecting: let everything through, but watch text for replay markers
             const updateType = getString(update, 'sessionUpdate')
-            if (updateType !== SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK) return true
-
-            const text = chatEventUtils.extractContentText(update)
-            if (!text) return true
-
-            buffer += text
-            if (chatEventUtils.isHistoryReplayContent(buffer)) {
-                state = 'suppressing'
-                buffer = ''
-                return true
+            if (updateType === SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK) {
+                const text = chatEventUtils.extractContentText(update)
+                if (text) {
+                    buffer += text
+                    if (chatEventUtils.isHistoryReplayContent(buffer)) {
+                        state = 'suppressing'
+                        buffer = ''
+                        return true
+                    }
+                    if (buffer.length > 500) {
+                        state = 'passthrough'
+                        buffer = ''
+                    }
+                }
             }
-            if (buffer.length > 500) {
-                state = 'passthrough'
-                buffer = ''
-            }
-            return true
+            return false
         },
     }
 }
