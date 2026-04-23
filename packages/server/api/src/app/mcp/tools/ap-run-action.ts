@@ -18,7 +18,9 @@ export const apRunActionTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
         permission: Permission.WRITE_RUN,
         description: 'Execute a single piece action once, without building or saving a flow. Use this for one-shot tasks like "check my inbox" or "send one Slack message". For recurring/triggered work, build a flow with ap_build_flow instead.',
         inputSchema: runActionInput.shape,
-        annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: true },
+        // destructiveHint: true — ap_run_action can invoke any piece action, including irreversible
+        // ones (send email, post message, delete record). Clients that honor this hint should prompt.
+        annotations: { destructiveHint: true, idempotentHint: false, openWorldHint: true },
         execute: async (args) => {
             try {
                 const { pieceName, actionName, input, connectionExternalId, pieceVersion } = runActionInput.parse(args)

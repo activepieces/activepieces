@@ -247,6 +247,15 @@ export async function executeAdhocAction({
             }
         }
 
+        if (completedRun.status === FlowRunStatus.INTERNAL_ERROR && isNil(completedRun.steps)) {
+            return {
+                content: [{
+                    type: 'text',
+                    text: `❌ ${action.displayName} failed with INTERNAL_ERROR (no step data) — the engine crashed while loading or executing the piece. Run ID: ${completedRun.id}.`,
+                }],
+            }
+        }
+
         return { content: [{ type: 'text', text: formatAdhocActionResult(completedRun, stepName, action.displayName) }] }
     }
     catch (err) {
