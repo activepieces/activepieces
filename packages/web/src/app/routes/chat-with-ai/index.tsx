@@ -2,7 +2,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { chatApi } from '@/features/chat/lib/chat-api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { AIChatBox } from './ai-chat-box';
@@ -17,10 +16,6 @@ export function ChatWithAIPage() {
     routeProjectId ?? authenticationSession.getProjectId() ?? '';
 
   const selectedConversationId = urlConversationId ?? null;
-
-  useEffect(() => {
-    void chatApi.warm();
-  }, []);
 
   const handleNewChat = useCallback(() => {
     navigate(`/projects/${projectId}/chat`, { replace: true });

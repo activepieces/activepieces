@@ -11,6 +11,7 @@ import {
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { chatApi } from '@/features/chat/lib/chat-api';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { aiProviderQueries } from '@/features/platform-admin';
 
@@ -60,12 +61,19 @@ export function AIChatBox({
   );
 }
 
+let sandboxWarmed = false;
+
 function ChatBoxContent({
   incognito,
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
 }: AIChatBoxProps) {
+  if (!sandboxWarmed) {
+    sandboxWarmed = true;
+    void chatApi.warm();
+  }
+
   const {
     messages,
     isStreaming,
