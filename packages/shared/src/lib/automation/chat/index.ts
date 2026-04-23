@@ -7,11 +7,8 @@ const MAX_FILE_BASE64_CHARS = Math.ceil(MAX_FILE_BINARY_SIZE * 4 / 3)
 
 const CHAT_ALLOWED_MIME_TYPES = [
     'image/png', 'image/jpeg', 'image/gif', 'image/webp',
-    'application/pdf',
     'text/plain', 'text/csv', 'text/markdown',
     'application/json',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ] as const
 
 const SAFE_FILENAME = /^[^\x00-\x1f\r\n]*$/
