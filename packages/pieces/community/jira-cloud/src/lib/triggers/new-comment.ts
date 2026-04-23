@@ -5,13 +5,12 @@ import {
 } from '@activepieces/pieces-framework';
 import {
 	DedupeStrategy,
-	HttpMethod,
 	Polling,
 	pollingHelper,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { JiraAuth, jiraCloudAuth } from '../../auth';
-import { jiraApiCall, searchIssuesByJql } from '../common';
+import { searchIssuesByJql } from '../common';
 
 type JiraComment = {
 	id: string;
@@ -23,17 +22,18 @@ type JiraComment = {
 	updateAuthor?: { accountId: string; displayName: string };
 };
 
-type CommentListResponse = {
-	comments: JiraComment[];
-	startAt: number;
-	maxResults: number;
-	total: number;
-};
-
-type MinimalIssue = {
+type IssueWithComments = {
 	id: string;
 	key: string;
-	fields?: { summary?: string };
+	fields?: {
+		summary?: string;
+		comment?: {
+			comments: JiraComment[];
+			startAt: number;
+			maxResults: number;
+			total: number;
+		};
+	};
 };
 
 const polling: Polling<JiraAuth, { jql?: string; sanitizeJql?: boolean }> = {
@@ -50,25 +50,17 @@ const polling: Polling<JiraAuth, { jql?: string; sanitizeJql?: boolean }> = {
 			jql: searchQuery,
 			maxResults: 50,
 			sanitizeJql: sanitizeJql ?? false,
-			fields: ['summary'],
+			fields: ['summary', 'comment'],
 		});
 
-		const issues = searchResponse.issues as MinimalIssue[];
+		const issues = searchResponse.issues as IssueWithComments[];
 		const results: Array<{ epochMilliSeconds: number; data: unknown }> = [];
 
 		for (const issue of issues) {
-			const commentsResponse = await jiraApiCall<CommentListResponse>({
-				auth,
-				method: HttpMethod.GET,
-				resourceUri: `/issue/${issue.id}/comment`,
-				query: { orderBy: '-created', maxResults: 100 },
-			});
-
-			for (const comment of commentsResponse.comments) {
+			const comments = issue.fields?.comment?.comments ?? [];
+			for (const comment of comments) {
 				const createdMS = Date.parse(comment.created);
-				if (Number.isNaN(createdMS) || createdMS <= lastFetchEpochMS) {
-					break;
-				}
+				if (Number.isNaN(createdMS) || createdMS <= lastFetchEpochMS) continue;
 				results.push({
 					epochMilliSeconds: createdMS,
 					data: {
