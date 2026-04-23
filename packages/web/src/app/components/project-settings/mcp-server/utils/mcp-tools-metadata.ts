@@ -197,6 +197,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         name: 'ap_retry_run',
         description: 'Retry a failed flow run',
       },
+      {
+        name: 'ap_run_action',
+        description:
+          'Run a single piece action once without saving a flow — for one-shot tasks like "check my inbox"',
+      },
     ],
   },
 ];

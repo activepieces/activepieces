@@ -31,6 +31,7 @@ import { apValidateFlowTool } from '../../../../src/app/mcp/tools/ap-validate-fl
 import { apUpdateTriggerTool } from '../../../../src/app/mcp/tools/ap-update-trigger'
 import { apDuplicateFlowTool } from '../../../../src/app/mcp/tools/ap-duplicate-flow'
 import { apUpdateBranchTool } from '../../../../src/app/mcp/tools/ap-update-branch'
+import { apRunActionTool } from '../../../../src/app/mcp/tools/ap-run-action'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
 
 let app: FastifyInstance
@@ -2039,5 +2040,106 @@ describe('MCP Tools integration', () => {
         expect(output).not.toContain('.bun/')
         expect(output).toContain('<sandbox>')
         expect(output).toContain('<internal>')
+    })
+
+    // ── ap_run_action ────────────────────────────────────────────────
+    // These tests cover the validation paths that short-circuit before
+    // dispatching a run to the engine (piece lookup, input diagnosis,
+    // auth sanitization). Actually executing an ad-hoc run requires a
+    // live worker/engine and is out of scope for this harness — those
+    // paths are verified via manual MCP-client testing on the dev stack.
+
+    it('74. ap_run_action — returns error for non-existent piece', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apRunActionTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-nonexistent',
+            actionName: 'any_action',
+            input: {},
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('not found')
+        expect(text(result)).toContain('ap_list_pieces')
+    })
+
+    it('75. ap_run_action — returns error for non-existent action on a valid piece', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apRunActionTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-test-array',
+            actionName: 'action_that_does_not_exist',
+            input: {},
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('not found')
+        expect(text(result)).toContain('action_with_array')
+    })
+
+    it('76. ap_run_action — returns error when required input is missing', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apRunActionTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-test-array',
+            actionName: 'action_with_array',
+            input: {},
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('Missing required inputs')
+        expect(text(result)).toContain('items')
+    })
+
+    it('77. ap_run_action — returns error when auth-required action has no connection', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apRunActionTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-test-email',
+            actionName: 'send_email',
+            input: { to: 'x@y.z', subject: 'hi' },
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('auth')
+        expect(text(result)).toContain('ap_list_connections')
+    })
+
+    it('78. ap_run_action — rejects connectionExternalId containing special characters', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        // Single quotes in externalId would break the {{connections['...']}}
+        // template wrapping — validateAuth must reject before any DB writes.
+        const result = await apRunActionTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-test-email',
+            actionName: 'send_email',
+            input: { to: 'x@y.z', subject: 'hi' },
+            connectionExternalId: "bad'; evil",
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('special characters')
+    })
+
+    it('79. ap_run_action — accepts a plain connectionExternalId without validation error', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        // No actual connection exists, so this will fail downstream — but it
+        // must get past the auth-shape validator first. We assert the error
+        // we see is NOT about "special characters".
+        const result = await apRunActionTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-test-email',
+            actionName: 'send_email',
+            input: { to: 'x@y.z', subject: 'hi' },
+            connectionExternalId: 'valid_external_id_123',
+        })
+
+        expect(text(result)).not.toContain('special characters')
     })
 })

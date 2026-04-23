@@ -451,3 +451,23 @@ Retry a failed flow run.
 
 - **FROM_FAILED_STEP**: Resume from where it failed, keeping previous step outputs
 - **ON_LATEST_VERSION**: Re-run the entire flow with the current published version
+
+### ap_run_action
+
+Execute a single piece action once without building or saving a flow. Designed for one-shot tasks like *"check my inbox"* or *"send one Slack message"* where building a full automation would be overkill. Under the hood the tool creates a disposable flow, runs the action, returns the output, and cleans the flow up — the user never sees it in their flow list.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `pieceName` | string | Yes | Piece name (e.g. `slack` or `@activepieces/piece-slack`). Use `ap_list_pieces` to discover. |
+| `actionName` | string | Yes | Action to run (e.g. `send_channel_message`). Use `ap_get_piece_props` for the input shape. |
+| `input` | object | No | Fully-resolved input for the action. Keys must match the piece action's props. Pass raw values — do **not** wrap them in `{{…}}`. Omit entirely if the action has no props. |
+| `connectionExternalId` | string | No | `externalId` from `ap_list_connections`. Required if the piece needs auth. Auto-wrapped server-side as `{{connections['externalId']}}`. Must be a plain ID — special characters are rejected. |
+| `pieceVersion` | string | No | Defaults to the latest installed version. Use `~X.Y.Z` to pin the minor version. |
+
+<Info>
+When to pick this vs. `ap_build_flow`:
+- **`ap_run_action`** — one-off, throwaway, returns a result now.
+- **`ap_build_flow`** — persistent automation that should repeat, run on a schedule, or trigger on external events.
+</Info>
+
+Prefer calling `ap_list_connections` and `ap_get_piece_props` first so you know the exact `actionName`, the expected props, and the right `connectionExternalId` before invoking. Missing required inputs or unknown actions produce a friendly error before dispatch — no run is created and nothing is billed.
