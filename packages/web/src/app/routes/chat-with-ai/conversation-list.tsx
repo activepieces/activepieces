@@ -10,7 +10,7 @@ import { chatApi } from '@/features/chat/lib/chat-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
-import { DelayedTooltip } from './delayed-tooltip';
+import { DelayedTooltip } from './components/delayed-tooltip';
 
 function isToday(dateStr: string) {
   return new Date(dateStr).toDateString() === new Date().toDateString();
