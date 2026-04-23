@@ -39,15 +39,42 @@ jobs:
           RELEASE=$(node --print "require('./package.json').version")
           echo "release=$RELEASE" >> $GITHUB_OUTPUT
 
-      - name: Fail if Docker tag already exists
-        run: '! docker manifest inspect activepieces/activepieces:${{ steps.version.outputs.release }}'
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fail if Docker tag already exists with a different digest
+        run: |
+          VERSION=${{ steps.version.outputs.release }}
+          CANDIDATE_DIGEST=$(docker buildx imagetools inspect --raw ghcr.io/activepieces/activepieces-cloud:release-candidate | sha256sum | awk '{print $1}')
+          EXISTING_RAW=$(docker buildx imagetools inspect --raw activepieces/activepieces:$VERSION 2>/dev/null || true)
+          if [[ -z "$EXISTING_RAW" ]]; then
+            echo "Tag $VERSION does not exist yet — proceeding."
+            exit 0
+          fi
+          EXISTING_DIGEST=$(echo "$EXISTING_RAW" | sha256sum | awk '{print $1}')
+          if [[ "$EXISTING_DIGEST" == "$CANDIDATE_DIGEST" ]]; then
+            echo "Tag $VERSION already exists and matches release-candidate digest — idempotent rerun, proceeding."
+            exit 0
+          fi
+          echo "Tag $VERSION already exists with a different digest — refusing to overwrite."
+          exit 1
 
       - name: Check for breaking migrations
         id: migration-check
         run: bunx tsx tools/scripts/check-release-migrations.ts ${{ steps.version.outputs.release }}
 
       - name: Create or update changelog via release-drafter
-        uses: release-drafter/release-drafter@v5
+        uses: release-drafter/release-drafter@v7
         with:
           commitish: main
           prerelease: false
@@ -63,19 +90,6 @@ jobs:
         run: |
           git tag -f ${{ steps.version.outputs.release }}
           git push origin ${{ steps.version.outputs.release }} --force
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish release images
         run: |
