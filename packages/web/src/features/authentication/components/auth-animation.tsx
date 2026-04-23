@@ -8,7 +8,6 @@ const TICK_INTERVAL_MS = 100;
 const TICKS_PER_SCENE = SCENE_DURATION_MS / TICK_INTERVAL_MS;
 const TYPING_INTERVAL_MS = 20;
 const MORPHING_DURATION_MS = 800;
-const _CANVAS_HEIGHT = 520;
 
 const CDN = 'https://cdn.activepieces.com/pieces';
 
@@ -1007,45 +1006,6 @@ const SCENE_LABELS = [
   'Agent Data',
 ] as const;
 
-function _ProgressDots({
-  activeScene,
-  progress,
-}: {
-  activeScene: SceneIndex;
-  progress: number;
-}) {
-  return (
-    <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-3 z-50">
-      {SCENE_LABELS.map((label, i) => (
-        <div key={label} className="flex flex-col items-center gap-1.5">
-          <span
-            className={cn(
-              'text-xs font-medium transition-colors duration-300',
-              activeScene === i ? 'text-gray-800' : 'text-gray-400',
-            )}
-          >
-            {label}
-          </span>
-          <div className="w-12 h-1 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gray-800 rounded-full"
-              style={{
-                transition: 'none',
-                width:
-                  activeScene === i
-                    ? `${progress}%`
-                    : i < activeScene
-                    ? '100%'
-                    : '0%',
-              }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ── Measure slot position relative to canvas (accounting for CSS scale) ──
 
 function measureSlotPosition(
@@ -1073,7 +1033,6 @@ function AuthAnimation() {
   const [isMorphing, setIsMorphing] = useState(false);
   const [typedPrompt, setTypedPrompt] = useState('');
   const [isTypingAnim, setIsTypingAnim] = useState(false);
-  const [_isInitialLoad, _setIsInitialLoad] = useState(false);
   const [agentPos, setAgentPos] = useState<AgentPosition>({
     top: 0,
     left: 0,
@@ -1167,12 +1126,8 @@ function AuthAnimation() {
       localProgress += 100 / TICKS_PER_SCENE;
       if (localProgress >= 100) {
         localProgress = 0;
-        setActiveIndex((prev) => {
-          const next = ((prev + 1) % SCENE_COUNT) as SceneIndex;
-          // Trigger side effects for the new scene
-          handleSceneChange(next);
-          return next;
-        });
+        const next = ((activeIndexRef.current + 1) % SCENE_COUNT) as SceneIndex;
+        handleSceneChange(next);
       }
       setProgress(localProgress);
     }, TICK_INTERVAL_MS);
