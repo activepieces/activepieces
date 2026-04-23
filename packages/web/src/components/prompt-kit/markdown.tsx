@@ -41,14 +41,21 @@ function normalizeMarkdownSpacing(markdown: string): string {
     }
 
     // Preserve tables and lists as-is
-    if (trimmed.startsWith('|') || /^\s*[-*+]\s/.test(trimmed) || /^\s*\d+[.)]\s/.test(trimmed)) {
+    if (
+      trimmed.startsWith('|') ||
+      /^\s*[-*+]\s/.test(trimmed) ||
+      /^\s*\d+[.)]\s/.test(trimmed)
+    ) {
       result.push(line);
       continue;
     }
 
     // Add blank line before non-empty content if previous line was also non-empty
     const prevLine = result[result.length - 1]?.trim() ?? '';
-    const prevIsTableOrList = prevLine.startsWith('|') || /^\s*[-*+]\s/.test(prevLine) || /^\s*\d+[.)]\s/.test(prevLine);
+    const prevIsTableOrList =
+      prevLine.startsWith('|') ||
+      /^\s*[-*+]\s/.test(prevLine) ||
+      /^\s*\d+[.)]\s/.test(prevLine);
 
     if (i > 0 && prevLine !== '' && trimmed !== '' && !prevIsTableOrList) {
       result.push('');
@@ -127,10 +134,7 @@ const MemoizedMarkdownBlock = memo(
     components?: Partial<Components>;
   }) {
     return (
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={components}
-      >
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
         {content}
       </ReactMarkdown>
     );
