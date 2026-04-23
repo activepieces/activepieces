@@ -945,7 +945,7 @@ function ChatInput({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 gap-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground text-xs px-3"
+              className="h-7 gap-1.5 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground text-xs px-3"
               onClick={onCancel}
             >
               <Square className="h-3 w-3 fill-current" />
