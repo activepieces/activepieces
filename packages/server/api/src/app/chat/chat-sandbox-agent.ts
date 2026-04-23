@@ -34,7 +34,7 @@ type SessionEvent = {
 }
 
 type SandboxAgentSdk = {
-    createSession(request: { agent: string, sessionInit?: { cwd: string, mcpServers: unknown[] } }): Promise<SandboxSession>
+    createSession(request: { agent: string, model?: string, sessionInit?: { cwd: string, mcpServers: unknown[] } }): Promise<SandboxSession>
     getEvents(request: { sessionId: string }): Promise<{ items: SessionEvent[] }>
     destroySession(sessionId: string): Promise<unknown>
     destroySandbox(): Promise<void>
