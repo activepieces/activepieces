@@ -1,8 +1,10 @@
 import { apDayjs } from '@activepieces/server-utils'
 import {
+    ActivepiecesError,
     apId,
     AppConnectionScope,
     Cursor,
+    ErrorCode,
     isNil,
     Metadata,
     PiecesFilterType,
@@ -290,6 +292,12 @@ async function enrichProjects(
 async function resolveAccessFilterUser({ platformId, externalUserId, callerUserId, callerIsPrivileged, log }: ResolveAccessFilterUserParams): Promise<{ userId: string, isPrivileged: boolean } | null> {
     if (isNil(externalUserId)) {
         return { userId: callerUserId, isPrivileged: callerIsPrivileged }
+    }
+    if (!callerIsPrivileged) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {},
+        })
     }
     const user = await userService(log).getByPlatformAndExternalId({ platformId, externalId: externalUserId })
     if (isNil(user)) {

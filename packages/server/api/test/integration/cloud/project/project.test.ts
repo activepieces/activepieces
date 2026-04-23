@@ -869,6 +869,195 @@ describe('Project API', () => {
             expect(ids).toEqual([targetPersonal.id])
             expect(ids).not.toContain(adminOnlyTeam.id)
         })
+
+        it('MEMBER USER passing externalUserId of another user is forbidden', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+
+            const { mockUser: attacker } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, externalId: 'ext-attacker' },
+            })
+            const { mockUser: victim } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, externalId: 'ext-victim' },
+            })
+            const victimPersonal = createMockProject({
+                ownerId: victim.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.PERSONAL,
+                displayName: 'Victim Personal',
+            })
+            await db.save('project', victimPersonal)
+
+            const attackerToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: attacker.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects?externalUserId=ext-victim',
+                headers: { authorization: `Bearer ${attackerToken}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('MEMBER USER passing own externalUserId is forbidden (privileged-only filter)', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+
+            const { mockUser: member } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, externalId: 'ext-self' },
+            })
+            const ownPersonal = createMockProject({
+                ownerId: member.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.PERSONAL,
+            })
+            await db.save('project', ownPersonal)
+
+            const memberToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: member.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects?externalUserId=ext-self',
+                headers: { authorization: `Bearer ${memberToken}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('OPERATOR USER with externalUserId is allowed (OPERATOR is privileged)', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+
+            const { mockUser: operator } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.OPERATOR },
+            })
+            const { mockUser: targetUser } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, externalId: 'ext-target-op' },
+            })
+            const targetPersonal = createMockProject({
+                ownerId: targetUser.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.PERSONAL,
+            })
+            await db.save('project', targetPersonal)
+
+            const operatorToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: operator.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects?externalUserId=ext-target-op',
+                headers: { authorization: `Bearer ${operatorToken}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const ids = response?.json().data.map((p: Project) => p.id)
+            expect(ids).toEqual([targetPersonal.id])
+        })
+
+        it('MEMBER USER without externalUserId only sees own + team-membership projects', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const { mockUser: member } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, externalId: 'ext-member-own' },
+            })
+            const memberPersonal = createMockProject({
+                ownerId: member.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.PERSONAL,
+            })
+            const sharedTeam = createMockProject({
+                ownerId: mockOwner.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.TEAM,
+                displayName: 'Shared With Member',
+            })
+            const unrelatedTeam = createMockProject({
+                ownerId: mockOwner.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.TEAM,
+                displayName: 'Off-Limits',
+            })
+            await db.save('project', [memberPersonal, sharedTeam, unrelatedTeam])
+
+            const role = createMockProjectRole({
+                platformId: mockPlatform.id,
+                type: RoleType.DEFAULT,
+                name: DefaultProjectRole.EDITOR,
+                permissions: [Permission.READ_PROJECT],
+            })
+            await db.save('project_role', role)
+            const membership = createMockProjectMember({
+                platformId: mockPlatform.id,
+                projectId: sharedTeam.id,
+                userId: member.id,
+                projectRoleId: role.id,
+            })
+            await db.save('project_member', membership)
+
+            const memberToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: member.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects',
+                headers: { authorization: `Bearer ${memberToken}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const ids = response?.json().data.map((p: Project) => p.id).sort()
+            expect(ids).toEqual([memberPersonal.id, sharedTeam.id].sort())
+            expect(ids).not.toContain(unrelatedTeam.id)
+        })
+
+        it('Admin USER on platform A cannot resolve externalUserId from platform B', async () => {
+            const { mockOwner: ownerA, mockPlatform: platformA } = await mockAndSaveBasicSetup()
+            const { mockPlatform: platformB } = await mockAndSaveBasicSetup()
+
+            const { mockUser: userOnB } = await mockBasicUser({
+                user: { platformId: platformB.id, platformRole: PlatformRole.MEMBER, externalId: 'shared-ext' },
+            })
+            const personalOnB = createMockProject({
+                ownerId: userOnB.id,
+                platformId: platformB.id,
+                type: ProjectType.PERSONAL,
+            })
+            await db.save('project', personalOnB)
+
+            const adminTokenOnA = await generateMockToken({
+                type: PrincipalType.USER,
+                id: ownerA.id,
+                platform: { id: platformA.id },
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects?externalUserId=shared-ext',
+                headers: { authorization: `Bearer ${adminTokenOnA}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().data).toEqual([])
+        })
+
+        it('Unauthenticated request to /v1/projects is rejected', async () => {
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects?externalUserId=anything',
+            })
+            expect([StatusCodes.UNAUTHORIZED, StatusCodes.FORBIDDEN]).toContain(response?.statusCode)
+        })
     })
 
     describe('GET /v1/platforms (identity-wide switcher)', () => {
