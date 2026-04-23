@@ -32,9 +32,9 @@ export const UpdatePlatformRequestBody = z.object({
 export type UpdatePlatformRequestBody = z.infer<typeof UpdatePlatformRequestBody>
 
 export const AdminRetryRunsRequestBody = z.object({
-    runIds: z.array(ApId).optional(),
-    createdAfter: z.string(),
-    createdBefore: z.string(),
+    runIds: z.array(ApId).min(1),
+    createdAfter: z.string().optional(),
+    createdBefore: z.string().optional(),
 })
 
 export type AdminRetryRunsRequestBody = z.infer<typeof AdminRetryRunsRequestBody>
@@ -52,4 +52,3 @@ export const IncreaseAICreditsForPlatformRequestBody = z.object({
 })
 
 export type IncreaseAICreditsForPlatformRequestBody = z.infer<typeof IncreaseAICreditsForPlatformRequestBody>
-
