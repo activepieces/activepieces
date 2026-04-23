@@ -248,6 +248,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         embeddingEnabled: platformPlan?.embeddingEnabled ?? false,
         agentsEnabled: platformPlan?.agentsEnabled ?? false,
         aiProvidersEnabled: platformPlan?.aiProvidersEnabled ?? false,
+        chatEnabled: platformPlan?.chatEnabled ?? false,
         teamProjectsLimit: platformPlan?.teamProjectsLimit ?? TeamProjectsLimit.NONE,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
         customDomainsEnabled: platformPlan?.customDomainsEnabled ?? false,
