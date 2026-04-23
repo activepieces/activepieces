@@ -131,7 +131,7 @@ function ChatBoxContent({
 
   return (
     <div className="flex flex-col h-full flex-1 min-w-0">
-      <ChatContainerRoot className="flex-1">
+      <ChatContainerRoot className="flex-1 relative">
         <ChatContainerContent className="max-w-4xl mx-auto px-6 py-8 gap-0">
           {isLoadingHistory && <MessageSkeletons />}
 
@@ -205,7 +205,7 @@ function ChatBoxContent({
 
           <ChatContainerScrollAnchor />
         </ChatContainerContent>
-        <ScrollButton />
+        <ScrollButton className="absolute bottom-4 right-1/2 translate-x-1/2" />
       </ChatContainerRoot>
 
       <div className="pb-4 px-6">
