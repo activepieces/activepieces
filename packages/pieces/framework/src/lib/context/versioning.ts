@@ -6,9 +6,11 @@ export enum ContextVersion {
     V1 = '1',
     V2 = '2',
 }
-//bump these two constants after creating a new context version
+// When introducing a new context version:
+// 1. add it to the switch in backwardCompatabilityContextUtils below
+// 2. pieces that use APIs exclusive to the new version must manually declare
+//    a matching `minimumSupportedRelease` — the SDK no longer enforces a floor
 export const LATEST_CONTEXT_VERSION = ContextVersion.V2;
-export const MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION = '0.82.0';
 
 export const backwardCompatabilityContextUtils = {
     makeActionContextBackwardCompatible({ context, contextVersion }: MakeActionContextBackwardCompatibleParams): ActionContext<PieceAuthProperty, InputPropertyMap> {

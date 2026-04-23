@@ -12,14 +12,11 @@ import Paginator from '../../helper/pagination/paginator'
 import { platformService } from '../../platform/platform.service'
 import { platformUtils } from '../../platform/platform.utils'
 import { userService } from '../../user/user-service'
-import { platformProjectService } from './platform-project-service'
+import { platformProjectService } from '../projects/platform-project-service'
 
-export const usersProjectController: FastifyPluginAsyncZod = async (
-    fastify,
-) => {
+export const platformListController: FastifyPluginAsyncZod = async (app) => {
 
-
-    fastify.get('/platforms', ListProjectsForPlatforms, async (request) => {
+    app.get('/', ListProjectsForPlatforms, async (request) => {
         const loggedInUser = await userService(request.log).getOneOrFail({ id: request.principal.id })
         const platforms = await getPlatformsForUser(loggedInUser.identityId, request.principal.platform.id, request.log)
         const projects = await Promise.all(platforms.map(async (platform) => {
@@ -40,7 +37,6 @@ export const usersProjectController: FastifyPluginAsyncZod = async (
         }))
         return projects.flat()
     })
-
 }
 
 async function getPlatformsForUser(identityId: string, platformId: string, log: FastifyBaseLogger) {

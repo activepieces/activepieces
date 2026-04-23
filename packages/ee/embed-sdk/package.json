@@ -1,11 +1,12 @@
 {
   "name": "ee-embed-sdk",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "type": "commonjs",
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
+    "bundle": "NODE_ENV=production webpack --config webpack.config.js",
     "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {

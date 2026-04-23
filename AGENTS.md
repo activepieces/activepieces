@@ -50,6 +50,7 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 - **File order**: Imports → Exported functions/constants → Helper functions → Types
 - **Comments** — Only comment to explain *why* something is done, never *what* the code is doing. Code should be self-explanatory; comments that restate the code add noise and rot.
 - **Util file exports** — When a util file exposes multiple plain functions or constants (non-React), do not export them individually. Instead, group them into a single named `const` and export that one object (e.g. `export const myUtils = { fn1, fn2 }`). Callers use `myUtils.fn1()` at the call site. **React components** in the same file should be **named exports** (e.g. `export function MyAlert()` or `export const MyAlert = …`) and imported by name — do not bundle them into a wrapper object for the sake of this rule.
+- **Safe outbound HTTP (SSRF)** — For any outbound HTTP in `packages/server/{api,worker,utils}`, use `safeHttp.axios` / `safeHttp.createAxios({ ... })` from `@activepieces/server-utils`. Never use raw `fetch` or `axios.create` for URLs that come from user input, admin config, OAuth endpoints, or third-party integrations — they bypass the SSRF filter (private/loopback/metadata IPs). See `.claude/rules/safe-http.md`.
 
 ## Query Error Handling
 
@@ -87,7 +88,9 @@ npm run lint-dev      # Lint with auto-fix (ALWAYS before done)
   - **`feature`** — new functionality
   - **`bug`** — bug fix
   - **`skip-changelog`** — changes that should not appear in the changelog (docs, CI tweaks, internal refactors, etc.)
-- If the PR includes any contributions to pieces (integrations under `packages/pieces`), also add the **`pieces`** label (in addition to the primary label above).
+- If the PR includes any contributions to pieces (integrations under `packages/pieces`), also add the appropriate pieces label (in addition to the primary label above):
+  - **`area/third-party-pieces`** — for third-party integrations (most pieces under `packages/pieces/community/`)
+  - **`area/core-pieces`** — for core pieces (under `packages/pieces/core/`)
 
 ## Database Migrations
 

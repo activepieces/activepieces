@@ -4,6 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { ApTableStateProvider } from '@/features/tables';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 
@@ -52,6 +53,14 @@ const SettingsRerouter = () => {
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
+}
+
+function HideTablesGuard({ children }: { children: React.ReactNode }) {
+  const { embedState } = useEmbedding();
+  if (embedState.hideTables) {
+    return <Navigate to={routesThatRequireProjectId.automations} replace />;
+  }
+  return <>{children}</>;
 }
 
 const automationsPagePermissions = [
@@ -168,17 +177,19 @@ export const projectRoutes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleTable,
     element: (
-      <RoutePermissionGuard requiredPermissions={Permission.READ_TABLE}>
-        <PageTitle title="Table">
-          <BuilderLayout>
-            <ApTableStateProvider>
-              <SuspenseWrapper>
-                <ApTableEditorPage />
-              </SuspenseWrapper>
-            </ApTableStateProvider>
-          </BuilderLayout>
-        </PageTitle>
-      </RoutePermissionGuard>
+      <HideTablesGuard>
+        <RoutePermissionGuard requiredPermissions={Permission.READ_TABLE}>
+          <PageTitle title="Table">
+            <BuilderLayout>
+              <ApTableStateProvider>
+                <SuspenseWrapper>
+                  <ApTableEditorPage />
+                </SuspenseWrapper>
+              </ApTableStateProvider>
+            </BuilderLayout>
+          </PageTitle>
+        </RoutePermissionGuard>
+      </HideTablesGuard>
     ),
   }),
   ...ProjectRouterWrapper({

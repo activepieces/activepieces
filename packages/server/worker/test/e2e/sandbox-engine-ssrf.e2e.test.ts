@@ -48,6 +48,7 @@ describe.skipIf(skip)('sandbox engine ssrf-guard — real hooks under real proxy
             wsRpcPortRange: { first: wsRpcListener.port, last: wsRpcListener.port },
             firstBoxUid: SANDBOX_UID,
             numBoxes: 1,
+            nameservers: [],
         })
 
         const plan: ProbePlanItem[] = [
@@ -141,10 +142,7 @@ async function runProbe({ commonDir, plan, proxyPort, wsRpcPort }: {
             SANDBOX_ID: 'e2e-engine-ssrf',
             AP_NETWORK_MODE: 'STRICT',
             AP_SSRF_ALLOW_LIST: '',
-            HTTP_PROXY: proxyUrl,
-            HTTPS_PROXY: proxyUrl,
-            http_proxy: proxyUrl,
-            https_proxy: proxyUrl,
+            AP_EGRESS_PROXY_URL: proxyUrl,
             AP_PROBE_PLAN: JSON.stringify(plan),
         },
         resourceLimits: { memoryLimitMb: 256, cpuMsPerSec: 1000, timeLimitSeconds: 30 },

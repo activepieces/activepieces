@@ -48,6 +48,7 @@ describe.skipIf(skip)('sandbox egress — full stack (proxy + iptables + isolate
             proxyPort: proxy.port,
             firstBoxUid: SANDBOX_UID,
             numBoxes: 1,
+            nameservers: [],
         })
     })
 
@@ -118,10 +119,7 @@ async function runProbeInSandbox({ commonDir, plan, proxyPort }: {
             AP_SANDBOX_WS_PORT: '0',
             AP_BASE_CODE_DIRECTORY: '/root/codes',
             SANDBOX_ID: 'e2e-probe',
-            HTTP_PROXY: proxyUrl,
-            HTTPS_PROXY: proxyUrl,
-            http_proxy: proxyUrl,
-            https_proxy: proxyUrl,
+            AP_EGRESS_PROXY_URL: proxyUrl,
             AP_PROBE_PLAN: JSON.stringify(plan),
         },
         resourceLimits: { memoryLimitMb: 256, cpuMsPerSec: 1000, timeLimitSeconds: 30 },

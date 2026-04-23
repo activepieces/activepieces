@@ -116,16 +116,22 @@ function proxyEnv({ settings, proxyPort }: {
     if (settings.NETWORK_MODE !== NetworkMode.STRICT || proxyPort === null) {
         return {}
     }
-    const proxyUrl = `http://127.0.0.1:${proxyPort}`
+    // Never export standard HTTP_PROXY / HTTPS_PROXY env vars: axios's built-in
+    // proxy-from-env path sends `GET https://…` absolute-URL requests to an HTTP
+    // proxy instead of issuing CONNECT, which proxy-chain rejects with 400
+    // "Only HTTP protocol is supported". AP_EGRESS_PROXY_URL is a private signal
+    // read by the engine to install http/https globalAgent + undici ProxyAgent.
     return {
-        ...Object.fromEntries(PROXY_URL_ENV_KEYS.map((k) => [k, proxyUrl])),
-        ...Object.fromEntries(NO_PROXY_ENV_KEYS.map((k) => [k, ''])),
+        AP_EGRESS_PROXY_URL: `http://127.0.0.1:${proxyPort}`,
     }
 }
 
 function propagatedEnv(settings: WorkerSettings): Record<string, string> {
     const env: Record<string, string> = {}
     for (const key of settings.SANDBOX_PROPAGATED_ENV_VARS) {
+        if (STRICT_MODE_BLOCKED_PROPAGATED_KEYS.has(key) && settings.NETWORK_MODE === NetworkMode.STRICT) {
+            continue
+        }
         if (process.env[key]) {
             env[key] = process.env[key]!
         }
@@ -133,7 +139,8 @@ function propagatedEnv(settings: WorkerSettings): Record<string, string> {
     return env
 }
 
-const PROXY_URL_ENV_KEYS = ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy'] as const
-const NO_PROXY_ENV_KEYS = ['NO_PROXY', 'no_proxy'] as const
+const STRICT_MODE_BLOCKED_PROPAGATED_KEYS = new Set([
+    'HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy', 'NO_PROXY', 'no_proxy',
+])
 
 type WorkerSettings = ReturnType<typeof workerSettings.getSettings>
