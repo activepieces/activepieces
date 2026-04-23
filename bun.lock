@@ -480,7 +480,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.3.6",
+      "version": "0.3.7",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4834,6 +4834,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/ninjapipe": {
+      "name": "@activepieces/piece-ninjapipe",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/ninox": {
       "name": "@activepieces/piece-ninox",
       "version": "0.1.4",
@@ -8159,7 +8169,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.66.1",
+      "version": "0.67.0",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -9155,6 +9165,8 @@
     "@activepieces/piece-neverbounce": ["@activepieces/piece-neverbounce@workspace:packages/pieces/community/neverbounce"],
 
     "@activepieces/piece-nifty": ["@activepieces/piece-nifty@workspace:packages/pieces/community/nifty"],
+
+    "@activepieces/piece-ninjapipe": ["@activepieces/piece-ninjapipe@workspace:packages/pieces/community/ninjapipe"],
 
     "@activepieces/piece-ninox": ["@activepieces/piece-ninox@workspace:packages/pieces/community/ninox"],
 
