@@ -1,6 +1,7 @@
+import dnsSync from 'node:dns'
 import { ExecutionMode, NetworkMode, WorkerSettingsResponse } from '@activepieces/shared'
 import pino from 'pino'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const log = pino({ level: 'silent' })
 
@@ -46,9 +47,14 @@ function stubSettings({ network, execution }: { network: NetworkMode, execution:
 }
 
 describe('startEgressStack', () => {
+    beforeEach(() => {
+        vi.spyOn(dnsSync, 'getServers').mockReturnValue(['10.0.0.2'])
+    })
+
     afterEach(() => {
         vi.mocked(startEgressProxy).mockClear()
         vi.mocked(iptablesLockdown.apply).mockClear()
+        vi.restoreAllMocks()
     })
 
     it('UNRESTRICTED + isolate: skips proxy and kernel lockdown (no crash)', async () => {
@@ -76,6 +82,33 @@ describe('startEgressStack', () => {
         expect(startEgressProxy).toHaveBeenCalledTimes(1)
         expect(iptablesLockdown.apply).toHaveBeenCalledTimes(1)
         await stack.shutdown()
+    })
+
+    it('STRICT + isolate: passes host DNS nameservers to the lockdown', async () => {
+        vi.mocked(dnsSync.getServers).mockReturnValue(['10.0.0.2', '169.254.169.253'])
+        stubSettings({ network: NetworkMode.STRICT, execution: ExecutionMode.SANDBOX_PROCESS })
+        const stack = await startEgressStack({ log, apiUrl: 'http://127.0.0.1:3000' })
+        expect(iptablesLockdown.apply).toHaveBeenCalledWith(
+            expect.objectContaining({ nameservers: ['10.0.0.2', '169.254.169.253'] }),
+        )
+        await stack.shutdown()
+    })
+
+    it('STRICT + isolate: strips port suffixes from dns.getServers() entries', async () => {
+        vi.mocked(dnsSync.getServers).mockReturnValue(['8.8.8.8:53', '[2001:4860:4860::8888]:53'])
+        stubSettings({ network: NetworkMode.STRICT, execution: ExecutionMode.SANDBOX_PROCESS })
+        const stack = await startEgressStack({ log, apiUrl: 'http://127.0.0.1:3000' })
+        expect(iptablesLockdown.apply).toHaveBeenCalledWith(
+            expect.objectContaining({ nameservers: ['8.8.8.8', '2001:4860:4860::8888'] }),
+        )
+        await stack.shutdown()
+    })
+
+    it('STRICT + isolate: throws fail-fast when no nameservers are configured', async () => {
+        vi.mocked(dnsSync.getServers).mockReturnValue([])
+        stubSettings({ network: NetworkMode.STRICT, execution: ExecutionMode.SANDBOX_PROCESS })
+        await expect(startEgressStack({ log, apiUrl: 'http://127.0.0.1:3000' })).rejects.toThrow(/No DNS nameservers configured/)
+        expect(iptablesLockdown.apply).not.toHaveBeenCalled()
     })
 
     it('STRICT + unsandboxed: starts proxy but does NOT apply kernel lockdown', async () => {

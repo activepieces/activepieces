@@ -1,3 +1,4 @@
+import dnsSync from 'node:dns'
 import dns from 'node:dns/promises'
 import net from 'node:net'
 import { ActivepiecesError, ErrorCode, ExecutionMode, NetworkMode, tryCatch, WorkerSettingsResponse } from '@activepieces/shared'
@@ -54,17 +55,28 @@ async function maybeApplyIptablesLockdown({ log, proxy, settings }: ApplyLockdow
             },
         })
     }
+    const nameservers = listDnsNameservers()
+    if (nameservers.length === 0) {
+        const message = 'No DNS nameservers configured on the worker host — refusing to apply kernel lockdown that would starve the sandbox of name resolution. ' +
+            'Ensure /etc/resolv.conf has at least one valid nameserver, or inspect dns.getServers() output.'
+        throw new ActivepiecesError(
+            { code: ErrorCode.ENGINE_OPERATION_FAILURE, params: { message } },
+            message,
+        )
+    }
     const lockdown = await iptablesLockdown.apply({
         log,
         proxyPort: proxy.port,
         wsRpcPortRange: sandboxCapacity.wsRpcPortRange,
         firstBoxUid: sandboxCapacity.firstBoxUid,
         numBoxes: sandboxCapacity.numBoxes,
+        nameservers,
     })
     log.info({
         proxyPort: proxy.port,
         firstBoxUid: sandboxCapacity.firstBoxUid,
         numBoxes: sandboxCapacity.numBoxes,
+        nameservers,
     }, 'Kernel-level SSRF lockdown applied')
     return lockdown
 }
@@ -85,6 +97,19 @@ async function resolveHostToIps({ rawUrl }: ResolveHostParams): Promise<string[]
     if (net.isIP(hostname) > 0) return [hostname]
     const addresses = await dns.lookup(hostname, { all: true })
     return addresses.map((a) => a.address)
+}
+
+function listDnsNameservers(): string[] {
+    return dnsSync.getServers().map(extractNameserverIp).filter((ip): ip is string => ip !== null)
+}
+
+function extractNameserverIp(server: string): string | null {
+    if (net.isIP(server) > 0) return server
+    const bracketed = server.match(/^\[([^\]]+)\](?::\d+)?$/)
+    if (bracketed && net.isIP(bracketed[1]) > 0) return bracketed[1]
+    const v4WithPort = server.match(/^(\d+\.\d+\.\d+\.\d+):\d+$/)
+    if (v4WithPort && net.isIP(v4WithPort[1]) === 4) return v4WithPort[1]
+    return null
 }
 
 type StartParams = {

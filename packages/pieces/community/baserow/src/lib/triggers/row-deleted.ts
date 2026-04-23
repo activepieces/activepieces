@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { baserowJwtAuth } from '../auth';
+import { baserowAuth } from '../auth';
 import { baserowCommon } from '../common';
 import { createWebhookTriggerHooks } from '../common/webhook-trigger';
 
@@ -7,7 +7,7 @@ const webhookHooks = createWebhookTriggerHooks('rows.deleted', 'baserow_row_dele
 
 export const rowDeletedTrigger = createTrigger({
   name: 'baserow_row_deleted',
-  auth: baserowJwtAuth,
+  auth: baserowAuth,
   displayName: 'Row Deleted',
   description: 'Triggers when a row is deleted from a Baserow table.',
   type: TriggerStrategy.WEBHOOK,
