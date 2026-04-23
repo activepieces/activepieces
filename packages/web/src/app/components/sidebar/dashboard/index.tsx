@@ -120,14 +120,14 @@ export function ProjectDashboardSidebar({
           id: `project-${projectId}`,
           type: 'project',
           label: name,
-          href: `/projects/${projectId}/chat`,
+          href: `/projects/${projectId}/automations`,
           iconBgColor: palette?.color,
           iconTextColor: palette?.textColor,
           iconLetter: name.charAt(0).toUpperCase(),
         });
       }
       projectCollectionUtils.setCurrentProject(projectId);
-      navigate(`/projects/${projectId}/chat`);
+      navigate(`/projects/${projectId}/automations`);
       setSearchOpen(false);
     },
     [navigate, projects],
