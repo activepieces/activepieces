@@ -137,6 +137,10 @@ const INITIAL_COMPONENTS: Partial<Components> = {
   a: function LinkComponent({ href, children, node }) {
     if (!href) return <>{children}</>;
     const isWebUrl = href.startsWith('http://') || href.startsWith('https://');
+    const isSafeProtocol = isWebUrl || href.startsWith('mailto:') || href.startsWith('tel:');
+    if (!isSafeProtocol) {
+      return <span>{children}</span>;
+    }
     if (!isWebUrl) {
       return (
         <a href={href} className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors">

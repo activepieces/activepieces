@@ -33,7 +33,7 @@ const MAX_FILE_BINARY_SIZE = 10 * 1024 * 1024
 const MAX_FILE_BASE64_CHARS = Math.ceil(MAX_FILE_BINARY_SIZE * 4 / 3)
 
 const CHAT_ALLOWED_MIME_TYPES = [
-    'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml',
+    'image/png', 'image/jpeg', 'image/gif', 'image/webp',
     'application/pdf',
     'text/plain', 'text/csv', 'text/markdown',
     'application/json',

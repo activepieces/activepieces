@@ -340,14 +340,10 @@ function extractToolOutput(update: Record<string, unknown>): string | undefined 
     return result
 }
 
-const HISTORY_REPLAY_MARKERS = [
-    'Previous session history is replayed below',
-    '"jsonrpc"',
-    '"session/update"',
-]
-
-function looksLikeJsonRpcDump(text: string): boolean {
-    return text.includes('"jsonrpc"') || text.includes('"createdAt"') || text.includes('"session/update"')
+function isHistoryReplayContent(text: string): boolean {
+    return (text.includes('"jsonrpc"') && text.includes('"session/update"'))
+        || text.includes('Previous session history is replayed below')
+        || text.includes('[history truncated]')
 }
 
 function createHistoryReplayFilter(): { shouldSuppress: (update: Record<string, unknown>) => boolean } {
@@ -366,8 +362,7 @@ function createHistoryReplayFilter(): { shouldSuppress: (update: Record<string, 
 
             if (state === 'detecting') {
                 buffer += text
-                const isDump = HISTORY_REPLAY_MARKERS.some((m) => buffer.includes(m))
-                if (isDump) {
+                if (isHistoryReplayContent(buffer)) {
                     state = 'suppressing'
                     buffer = ''
                     return true
@@ -379,7 +374,7 @@ function createHistoryReplayFilter(): { shouldSuppress: (update: Record<string, 
                 return false
             }
 
-            if (looksLikeJsonRpcDump(text) || text.includes('[history truncated]')) {
+            if (isHistoryReplayContent(text)) {
                 return true
             }
 

@@ -157,7 +157,7 @@ async function getAnthropicApiKey({ platformId, log }: { platformId: string, log
 }
 
 function sanitizeProjectName(name: string): string {
-    return name.replace(/["`<>\\]/g, '').slice(0, 64)
+    return name.replace(/["`<>\\\r\n]/g, '').slice(0, 64)
 }
 
 function buildAgentSystemPrompt(projectName: string): string {
