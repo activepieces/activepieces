@@ -120,7 +120,7 @@ export const updateCandidateAction = createAction({
     if (linkedin_url) body['social_media_addresses'] = [{ value: linkedin_url }];
 
     const response = await greenhouseApiCall<{ candidate: GreenhouseCandidate }>({
-      auth: context.auth.props,
+      accessToken: context.auth.access_token,
       method: HttpMethod.PATCH,
       endpoint: `/candidates/${candidate_id}`,
       body,

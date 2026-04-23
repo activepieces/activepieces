@@ -82,7 +82,7 @@ export const createCandidateNoteAction = createAction({
     if (user_id) noteBody['user_id'] = Number(user_id);
 
     const response = await greenhouseApiCall<GreenhouseNote>({
-      auth: context.auth.props,
+      accessToken: context.auth.access_token,
       method: HttpMethod.POST,
       endpoint: '/notes',
       body: noteBody,

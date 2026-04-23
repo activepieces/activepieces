@@ -6,44 +6,25 @@ import {
 } from '@activepieces/pieces-common';
 
 const BASE_URL = 'https://harvest.greenhouse.io/v3';
-const TOKEN_URL = 'https://auth.greenhouse.io/token';
-
-export async function getAccessToken(clientId: string, clientSecret: string): Promise<string> {
-  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-  const response = await httpClient.sendRequest<{ access_token: string }>({
-    method: HttpMethod.POST,
-    url: TOKEN_URL,
-    queryParams: { grant_type: 'client_credentials' },
-    headers: {
-      Authorization: `Basic ${credentials}`,
-      'Content-Type': 'application/json',
-    },
-  });
-  return response.body.access_token;
-}
 
 export async function greenhouseApiCall<T extends HttpMessageBody>({
-  auth,
+  accessToken,
   method,
   endpoint,
   body,
   queryParams,
-  onBehalfOf,
 }: {
-  auth: { client_id: string; client_secret: string };
+  accessToken: string;
   method: HttpMethod;
   endpoint: string;
   body?: Record<string, unknown>;
   queryParams?: QueryParams;
-  onBehalfOf?: string;
 }) {
-  const token = await getAccessToken(auth.client_id, auth.client_secret);
   return httpClient.sendRequest<T>({
     method,
     url: `${BASE_URL}${endpoint}`,
     headers: {
-      Authorization: `Bearer ${token}`,
-      ...(onBehalfOf ? { 'On-Behalf-Of': onBehalfOf } : {}),
+      Authorization: `Bearer ${accessToken}`,
     },
     body,
     queryParams,
@@ -91,4 +72,3 @@ export function shapeCandidate(c: GreenhouseCandidate) {
     tags: (c.tags ?? []).join(', '),
   };
 }
-

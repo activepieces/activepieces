@@ -102,7 +102,7 @@ export const findOrCreateCandidateAction = createAction({
     } = context.propsValue;
 
     const searchResponse = await greenhouseApiCall<GreenhouseCandidate[]>({
-      auth: context.auth.props,
+      accessToken: context.auth.access_token,
       method: HttpMethod.GET,
       endpoint: '/candidates',
       queryParams: { email },
@@ -125,7 +125,7 @@ export const findOrCreateCandidateAction = createAction({
     if (linkedin_url) body['social_media_addresses'] = [{ value: linkedin_url }];
 
     const createResponse = await greenhouseApiCall<{ candidate: GreenhouseCandidate }>({
-      auth: context.auth.props,
+      accessToken: context.auth.access_token,
       method: HttpMethod.POST,
       endpoint: '/candidates',
       body,

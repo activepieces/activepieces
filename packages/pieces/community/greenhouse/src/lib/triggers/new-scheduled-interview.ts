@@ -35,7 +35,6 @@ type GreenhouseAuth = AppConnectionValueForAuthProperty<typeof greenhouseAuth>;
 const polling: Polling<GreenhouseAuth, TriggerProps> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const { client_id, client_secret } = auth.props;
     const daysAhead = propsValue.days_ahead ?? 7;
 
     const createdAfter =
@@ -46,7 +45,7 @@ const polling: Polling<GreenhouseAuth, TriggerProps> = {
     const startsBefore = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000).toISOString();
 
     const response = await greenhouseApiCall<GreenhouseInterview[]>({
-      auth: { client_id, client_secret },
+      accessToken: auth.access_token,
       method: HttpMethod.GET,
       endpoint: '/interviews',
       queryParams: {

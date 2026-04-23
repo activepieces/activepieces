@@ -19,7 +19,7 @@ export const findCandidateAction = createAction({
     const { email } = context.propsValue;
 
     const response = await greenhouseApiCall<GreenhouseCandidate[]>({
-      auth: context.auth.props,
+      accessToken: context.auth.access_token,
       method: HttpMethod.GET,
       endpoint: '/candidates',
       queryParams: { email },

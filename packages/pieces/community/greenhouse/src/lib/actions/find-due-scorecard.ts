@@ -38,7 +38,7 @@ export const findDueScorecardAction = createAction({
     const { scorecard_id } = context.propsValue;
 
     const response = await greenhouseApiCall<GreenhouseScorecard[]>({
-      auth: context.auth.props,
+      accessToken: context.auth.access_token,
       method: HttpMethod.GET,
       endpoint: '/scorecards',
       queryParams: { ids: scorecard_id },

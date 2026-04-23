@@ -42,15 +42,13 @@ type GreenhouseAuth = AppConnectionValueForAuthProperty<typeof greenhouseAuth>;
 const polling: Polling<GreenhouseAuth, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const { client_id, client_secret } = auth.props;
-
     const updatedAfter =
       lastFetchEpochMS > 0
         ? new Date(lastFetchEpochMS).toISOString()
         : new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     const response = await greenhouseApiCall<GreenhouseJob[]>({
-      auth: { client_id, client_secret },
+      accessToken: auth.access_token,
       method: HttpMethod.GET,
       endpoint: '/jobs',
       queryParams: {
