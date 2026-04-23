@@ -36,6 +36,40 @@ export class AddChatTables1776200000000 implements Migration {
             ON "chat_conversation" ("projectId", "userId", "created" DESC)
         `)
 
+        await queryRunner.query(`
+            CREATE TABLE IF NOT EXISTS "sandbox_sessions" (
+                "id" text NOT NULL,
+                "agent" text NOT NULL,
+                "agent_session_id" text NOT NULL,
+                "last_connection_id" text NOT NULL,
+                "created_at" bigint NOT NULL,
+                "destroyed_at" bigint,
+                "sandbox_id" text,
+                "session_init_json" jsonb,
+                "config_options_json" jsonb,
+                "modes_json" jsonb,
+                CONSTRAINT "pk_sandbox_sessions" PRIMARY KEY ("id")
+            )
+        `)
+
+        await queryRunner.query(`
+            CREATE TABLE IF NOT EXISTS "sandbox_events" (
+                "id" text NOT NULL,
+                "event_index" bigint NOT NULL,
+                "session_id" text NOT NULL,
+                "created_at" bigint NOT NULL,
+                "connection_id" text NOT NULL,
+                "sender" text NOT NULL,
+                "payload_json" jsonb NOT NULL,
+                CONSTRAINT "pk_sandbox_events" PRIMARY KEY ("id")
+            )
+        `)
+
+        await queryRunner.query(`
+            CREATE INDEX IF NOT EXISTS "idx_sandbox_events_session_order"
+            ON "sandbox_events" ("session_id", "event_index", "id")
+        `)
+
         if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
             return
         }
@@ -56,6 +90,8 @@ export class AddChatTables1776200000000 implements Migration {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query('DROP TABLE IF EXISTS "sandbox_events"')
+        await queryRunner.query('DROP TABLE IF EXISTS "sandbox_sessions"')
         await queryRunner.query('DROP TABLE IF EXISTS "chat_conversation"')
 
         if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
