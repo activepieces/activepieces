@@ -79,8 +79,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
 
         await applyProjectsAccessFilters(queryBuilder, {
             platformId,
-            userId: accessFilterUser.userId,
-            isPrivileged: accessFilterUser.isPrivileged,
+            ...accessFilterUser,
         })
 
         const { data, cursor } = await paginator.paginate(queryBuilder)
@@ -290,7 +289,7 @@ async function enrichProjects(
     })
 }
 
-async function resolveAccessFilterUser({ platformId, externalUserId, callerUserId, callerIsPrivileged, principalType, log }: ResolveAccessFilterUserParams): Promise<{ userId: string, isPrivileged: boolean } | null> {
+async function resolveAccessFilterUser({ platformId, externalUserId, callerUserId, callerIsPrivileged, principalType, log }: ResolveAccessFilterUserParams): Promise<AccessFilterUser | null> {
     if (isNil(externalUserId)) {
         return { userId: callerUserId, isPrivileged: callerIsPrivileged }
     }
@@ -329,12 +328,17 @@ type ResolvePoolIdParams = {
     log: FastifyBaseLogger
 }
 
+type AccessFilterUser = {
+    userId: string
+    isPrivileged: boolean
+}
+
 type ResolveAccessFilterUserParams = {
     platformId: string
     externalUserId: string | undefined
     callerUserId: string
     callerIsPrivileged: boolean
-    principalType: PrincipalType
+    principalType?: PrincipalType
     log: FastifyBaseLogger
 }
 
@@ -348,7 +352,7 @@ type GetAllForParamsAndUser = {
     limit: number
     types?: ProjectType[]
     isPrivileged: boolean
-    principalType: PrincipalType
+    principalType?: PrincipalType
 }
 
 type DeletePersonalProjectForUserParams = {
