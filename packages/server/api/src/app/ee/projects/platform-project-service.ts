@@ -9,6 +9,7 @@ import {
     Metadata,
     PiecesFilterType,
     PlatformId,
+    PrincipalType,
     Project,
     ProjectId,
     ProjectType,
@@ -43,8 +44,8 @@ const projectPlanRepo = repoFactory(ProjectPlanEntity)
 
 export const platformProjectService = (log: FastifyBaseLogger) => ({
     async getForPlatform(params: GetAllForParamsAndUser): Promise<SeekPage<ProjectWithLimits>> {
-        const { cursorRequest, limit, platformId, displayName, externalId, externalUserId, userId, types, isPrivileged } = params
-        const accessFilterUser = await resolveAccessFilterUser({ platformId, externalUserId, callerUserId: userId, callerIsPrivileged: isPrivileged, log })
+        const { cursorRequest, limit, platformId, displayName, externalId, externalUserId, userId, types, isPrivileged, principalType } = params
+        const accessFilterUser = await resolveAccessFilterUser({ platformId, externalUserId, callerUserId: userId, callerIsPrivileged: isPrivileged, principalType, log })
         if (isNil(accessFilterUser)) {
             return paginationHelper.createPage<ProjectWithLimits>([], null)
         }
@@ -289,11 +290,11 @@ async function enrichProjects(
     })
 }
 
-async function resolveAccessFilterUser({ platformId, externalUserId, callerUserId, callerIsPrivileged, log }: ResolveAccessFilterUserParams): Promise<{ userId: string, isPrivileged: boolean } | null> {
+async function resolveAccessFilterUser({ platformId, externalUserId, callerUserId, callerIsPrivileged, principalType, log }: ResolveAccessFilterUserParams): Promise<{ userId: string, isPrivileged: boolean } | null> {
     if (isNil(externalUserId)) {
         return { userId: callerUserId, isPrivileged: callerIsPrivileged }
     }
-    if (!callerIsPrivileged) {
+    if (principalType !== PrincipalType.SERVICE) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: {},
@@ -333,6 +334,7 @@ type ResolveAccessFilterUserParams = {
     externalUserId: string | undefined
     callerUserId: string
     callerIsPrivileged: boolean
+    principalType: PrincipalType
     log: FastifyBaseLogger
 }
 
@@ -346,6 +348,7 @@ type GetAllForParamsAndUser = {
     limit: number
     types?: ProjectType[]
     isPrivileged: boolean
+    principalType: PrincipalType
 }
 
 type DeletePersonalProjectForUserParams = {

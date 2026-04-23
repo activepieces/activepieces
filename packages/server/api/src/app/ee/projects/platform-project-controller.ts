@@ -63,6 +63,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
             userId,
             isPrivileged: userService(request.log).isUserPrivileged(user),
+            principalType: request.principal.type,
         })
     })
 

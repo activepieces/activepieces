@@ -833,7 +833,7 @@ describe('Project API', () => {
             expect(ids).toEqual([mockProject.id, extraProject.id].sort())
         })
 
-        it('USER token with externalUserId scopes results to the targeted user', async () => {
+        it('ADMIN USER with externalUserId is forbidden (API-key-only filter)', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const { mockUser: targetUser } = await mockBasicUser({
@@ -844,13 +844,7 @@ describe('Project API', () => {
                 platformId: mockPlatform.id,
                 type: ProjectType.PERSONAL,
             })
-            const adminOnlyTeam = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
-                type: ProjectType.TEAM,
-                displayName: 'Admin Only',
-            })
-            await db.save('project', [targetPersonal, adminOnlyTeam])
+            await db.save('project', targetPersonal)
 
             const adminToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -864,10 +858,7 @@ describe('Project API', () => {
                 headers: { authorization: `Bearer ${adminToken}` },
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const ids = response?.json().data.map((p: Project) => p.id)
-            expect(ids).toEqual([targetPersonal.id])
-            expect(ids).not.toContain(adminOnlyTeam.id)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
         it('MEMBER USER passing externalUserId of another user is forbidden', async () => {
@@ -930,21 +921,15 @@ describe('Project API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
-        it('OPERATOR USER with externalUserId is allowed (OPERATOR is privileged)', async () => {
+        it('OPERATOR USER with externalUserId is forbidden (API-key-only filter)', async () => {
             const { mockPlatform } = await mockAndSaveBasicSetup()
 
             const { mockUser: operator } = await mockBasicUser({
                 user: { platformId: mockPlatform.id, platformRole: PlatformRole.OPERATOR },
             })
-            const { mockUser: targetUser } = await mockBasicUser({
+            await mockBasicUser({
                 user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, externalId: 'ext-target-op' },
             })
-            const targetPersonal = createMockProject({
-                ownerId: targetUser.id,
-                platformId: mockPlatform.id,
-                type: ProjectType.PERSONAL,
-            })
-            await db.save('project', targetPersonal)
 
             const operatorToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -958,9 +943,7 @@ describe('Project API', () => {
                 headers: { authorization: `Bearer ${operatorToken}` },
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const ids = response?.json().data.map((p: Project) => p.id)
-            expect(ids).toEqual([targetPersonal.id])
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
         it('MEMBER USER without externalUserId only sees own + team-membership projects', async () => {
@@ -1021,7 +1004,7 @@ describe('Project API', () => {
             expect(ids).not.toContain(unrelatedTeam.id)
         })
 
-        it('Admin USER on platform A cannot resolve externalUserId from platform B', async () => {
+        it('Admin USER on platform A is forbidden before cross-platform lookup even runs', async () => {
             const { mockOwner: ownerA, mockPlatform: platformA } = await mockAndSaveBasicSetup()
             const { mockPlatform: platformB } = await mockAndSaveBasicSetup()
 
@@ -1047,8 +1030,7 @@ describe('Project API', () => {
                 headers: { authorization: `Bearer ${adminTokenOnA}` },
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(response?.json().data).toEqual([])
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
         it('Unauthenticated request to /v1/projects is rejected', async () => {

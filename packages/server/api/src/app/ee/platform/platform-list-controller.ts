@@ -29,6 +29,7 @@ export const platformListController: FastifyPluginAsyncZod = async (app) => {
                 displayName: undefined,
                 limit: Paginator.NO_LIMIT,
                 isPrivileged: userService(request.log).isUserPrivileged(platformUser),
+                principalType: request.principal.type,
             }).then((projects) => projects.data)
             return {
                 platformName: platform.name,
