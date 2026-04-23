@@ -30,6 +30,9 @@ jobs:
       - name: Build shared package
         run: bun run --cwd packages/shared build
 
+      - name: Build server-utils package
+        run: bun run --cwd packages/server/utils build
+
       - name: Check for breaking migrations
         id: migration-check
         run: bunx tsx tools/scripts/check-release-migrations.ts ${{ steps.version.outputs.release }}
