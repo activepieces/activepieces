@@ -19,7 +19,7 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { mcpServerService } from '../mcp/mcp-service'
 import { projectService } from '../project/project-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
-import { chatSandboxAgent } from './chat-sandbox-agent'
+import { chatSandboxAgent } from './sandbox/sandbox-agent'
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 

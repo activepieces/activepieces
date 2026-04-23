@@ -5,6 +5,7 @@ import {
     isString,
 } from '@activepieces/shared'
 import type { SandboxAgent, Session, SessionCreateRequest, SessionEvent, SessionPersistDriver } from 'sandbox-agent'
+import { chatEventUtils } from './ai-event-utils'
 
 const sdksByKey = new Map<string, SandboxAgent>()
 const initPromises = new Map<string, Promise<SandboxAgent>>()
@@ -24,7 +25,7 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
         const sandbox = cloudflare({ sdk: new Sandbox() })
 
         const { SandboxAgent: SandboxAgentClass } = await import('sandbox-agent')
-        const { PostgresSessionPersistDriver } = await import('./postgres-session-persist-driver')
+        const { PostgresSessionPersistDriver } = await import('./postgres-persist-driver')
         const persist = new PostgresSessionPersistDriver()
         const agent = await SandboxAgentClass.start({ sandbox, persist: persist as unknown as SessionPersistDriver })
         sdksByKey.set(anthropicApiKey, agent)
@@ -177,7 +178,7 @@ async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionPa
                     if (existing) {
                         const status = isString(update.status) ? update.status : existing.status
                         existing.status = status
-                        existing.output = extractToolOutput(update) ?? existing.output
+                        existing.output = chatEventUtils.extractToolOutput(update) ?? existing.output
                     }
                 }
             }
@@ -192,7 +193,7 @@ async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionPa
 }
 
 function stripHistoryReplay(text: string): string {
-    if (!isHistoryReplayContent(text)) {
+    if (!chatEventUtils.isHistoryReplayContent(text)) {
         const marker = 'Previous session history is replayed below'
         const idx = text.indexOf(marker)
         if (idx === -1) return text
@@ -237,32 +238,6 @@ async function dispose(): Promise<void> {
         await sdk.destroySandbox().catch(() => undefined)
         await sdk.dispose().catch(() => undefined)
     }
-}
-
-export function extractContentText(update: Record<string, unknown>): string | undefined {
-    if (!isObject(update.content)) return undefined
-    if (update.content.type !== 'text') return undefined
-    return isString(update.content.text) ? update.content.text : undefined
-}
-
-export function isHistoryReplayContent(text: string): boolean {
-    return (text.includes('"jsonrpc"') && text.includes('"session/update"'))
-        || text.includes('Previous session history is replayed below')
-        || text.includes('[history truncated]')
-}
-
-export function extractToolOutput(update: Record<string, unknown>): string | undefined {
-    if (isString(update['rawOutput'])) return update['rawOutput']
-    if (Array.isArray(update['content'])) {
-        const parts: string[] = []
-        for (const block of update['content']) {
-            if (isObject(block) && block['type'] === 'text' && isString(block['text'])) {
-                parts.push(block['text'])
-            }
-        }
-        if (parts.length > 0) return parts.join('\n')
-    }
-    return undefined
 }
 
 export const SandboxSessionUpdateType = {

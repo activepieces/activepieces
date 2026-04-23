@@ -13,9 +13,9 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { chatSandboxAgent } from './chat-sandbox-agent'
+import { chatSandboxAgent } from './sandbox/sandbox-agent'
+import { ChatUIMessage, createHistoryReplayFilter, writeSandboxEventToStream } from './sandbox/stream-adapter'
 import { chatService } from './chat-service'
-import { ChatUIMessage, createHistoryReplayFilter, writeSandboxEventToStream } from './chat-stream-adapter'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
 

@@ -1,6 +1,7 @@
 import { isObject, isString } from '@activepieces/shared'
 import { UIMessage, UIMessageStreamWriter } from 'ai'
-import { extractContentText, extractToolOutput, isHistoryReplayContent, SandboxSessionUpdateType } from './chat-sandbox-agent'
+import { chatEventUtils } from './ai-event-utils'
+import { SandboxSessionUpdateType } from './sandbox-agent'
 
 const MAX_TOOL_OUTPUT_SIZE = 64 * 1024
 
@@ -24,14 +25,14 @@ export function writeSandboxEventToStream({ update, writer, textPartId, reasonin
 
     switch (updateType) {
         case SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK: {
-            const text = extractContentText(update)
+            const text = chatEventUtils.extractContentText(update)
             if (text) {
                 writer.write({ type: 'text-delta', id: textPartId, delta: text })
             }
             break
         }
         case SandboxSessionUpdateType.AGENT_THOUGHT_CHUNK: {
-            const text = extractContentText(update)
+            const text = chatEventUtils.extractContentText(update)
             if (text) {
                 writer.write({ type: 'reasoning-delta', id: reasoningPartId, delta: text })
             }
@@ -62,7 +63,7 @@ export function writeSandboxEventToStream({ update, writer, textPartId, reasonin
             const status = getString(update, 'status')
             if (status === 'completed') {
                 const toolCallId = getString(update, 'toolCallId') ?? 'unknown'
-                const rawOutput = truncateToolOutput(extractToolOutput(update))
+                const rawOutput = truncateToolOutput(chatEventUtils.extractToolOutput(update))
                 writer.write({
                     type: 'tool-output-available',
                     toolCallId,
@@ -115,12 +116,12 @@ export function createHistoryReplayFilter(): { shouldSuppress: (update: Record<s
             const updateType = getString(update, 'sessionUpdate')
             if (updateType !== SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK) return false
 
-            const text = extractContentText(update)
+            const text = chatEventUtils.extractContentText(update)
             if (!text) return false
 
             if (state === 'detecting') {
                 buffer += text
-                if (isHistoryReplayContent(buffer)) {
+                if (chatEventUtils.isHistoryReplayContent(buffer)) {
                     state = 'suppressing'
                     buffer = ''
                     return true
@@ -132,7 +133,7 @@ export function createHistoryReplayFilter(): { shouldSuppress: (update: Record<s
                 return false
             }
 
-            if (isHistoryReplayContent(text)) {
+            if (chatEventUtils.isHistoryReplayContent(text)) {
                 return true
             }
 
