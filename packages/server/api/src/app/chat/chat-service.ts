@@ -90,7 +90,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
         return {
             data,
-            next: hasMore && last ? `${last.created}|${last.id}` : null,
+            next: hasMore && last ? `${new Date(last.created).toISOString()}|${last.id}` : null,
             previous: null,
         }
     },
