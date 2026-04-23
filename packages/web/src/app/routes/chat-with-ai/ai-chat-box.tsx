@@ -84,7 +84,7 @@ type AIChatBoxProps = {
   conversationId?: string | null;
   onFirstMessage: (text: string) => void;
   onConversationCreated?: () => void;
-  onTitleUpdate?: (title: string) => void;
+  onTitleUpdate?: (title: string, conversationId?: string) => void;
 };
 
 export function AIChatBox({
@@ -605,7 +605,6 @@ function groupToolCallsByPhase(
 }
 
 function ToolCallGroup({ toolCalls }: { toolCalls: ToolCallItem[] }) {
-  const allDone = toolCalls.every((tc) => tc.status !== 'running');
   const groups = groupToolCallsByPhase(toolCalls);
 
   if (groups.length === 0) return null;

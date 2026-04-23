@@ -144,7 +144,7 @@ export function useAgentChat({
   onTitleUpdate,
   onConversationCreated,
 }: {
-  onTitleUpdate?: (title: string) => void;
+  onTitleUpdate?: (title: string, conversationId?: string) => void;
   onConversationCreated?: () => void;
 } = {}) {
   const [conversation, setConversation] = useState<
@@ -160,6 +160,7 @@ export function useAgentChat({
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
   onConversationCreatedRef.current = onConversationCreated;
+  const conversationIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     return () => {
@@ -179,6 +180,7 @@ export function useAgentChat({
         modelName: modelName ?? null,
       });
       setConversation(conv);
+      conversationIdRef.current = conv.id;
       return conv;
     },
     [],
@@ -189,7 +191,7 @@ export function useAgentChat({
       if (event.type === ChatStreamEventType.SESSION_TITLE_UPDATE) {
         const title = safeString(event.data.title);
         if (title) {
-          onTitleUpdateRef.current?.(title);
+          onTitleUpdateRef.current?.(title, conversationIdRef.current);
         }
         return;
       }
@@ -380,6 +382,7 @@ export function useAgentChat({
   const resetChat = useCallback(() => {
     cancelStream();
     setConversation(null);
+    conversationIdRef.current = undefined;
     setMessages([]);
     setError(null);
     messageIdCounter.current = 0;
@@ -392,6 +395,7 @@ export function useAgentChat({
       cancelStream();
       setWasCancelled(false);
       setConversation({ id: conversationId });
+      conversationIdRef.current = conversationId;
       setMessages([]);
       setError(null);
       messageIdCounter.current = 0;

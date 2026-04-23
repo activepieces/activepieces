@@ -1,42 +1,61 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
-
-import { authenticationSession } from '@/lib/authentication-session';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { AIChatBox } from './ai-chat-box';
 import { ConversationList } from './conversation-list';
 
+import { authenticationSession } from '@/lib/authentication-session';
+
 export function ChatWithAIPage() {
   const queryClient = useQueryClient();
-  const { projectId: routeProjectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
+  const { projectId: routeProjectId, conversationId: urlConversationId } =
+    useParams<{ projectId: string; conversationId: string }>();
   const projectId =
     routeProjectId ?? authenticationSession.getProjectId() ?? '';
-  const [selectedConversationId, setSelectedConversationId] = useState<
-    string | null
-  >(null);
   const [chatKey, setChatKey] = useState(0);
 
+  const selectedConversationId = urlConversationId ?? null;
+
   useEffect(() => {
-    setSelectedConversationId(null);
     setChatKey((k) => k + 1);
   }, [projectId]);
 
   const handleNewChat = useCallback(() => {
     setChatKey((k) => k + 1);
-    setSelectedConversationId(null);
-  }, []);
+    navigate(`/projects/${projectId}/chat`, { replace: true });
+  }, [navigate, projectId]);
 
-  const handleSelectConversation = useCallback((conversationId: string) => {
-    setSelectedConversationId(conversationId);
-    setChatKey((k) => k + 1);
-  }, []);
+  const handleSelectConversation = useCallback(
+    (conversationId: string) => {
+      setChatKey((k) => k + 1);
+      navigate(`/projects/${projectId}/chat/${conversationId}`, {
+        replace: true,
+      });
+    },
+    [navigate, projectId],
+  );
 
-  const handleTitleUpdate = useCallback(() => {
+  const handleConversationCreated = useCallback(() => {
     void queryClient.invalidateQueries({
       queryKey: ['chat-conversations', projectId],
     });
   }, [queryClient, projectId]);
+
+  const handleTitleUpdate = useCallback(
+    (title: string, conversationId?: string) => {
+      void queryClient.invalidateQueries({
+        queryKey: ['chat-conversations', projectId],
+      });
+      if (conversationId && !selectedConversationId) {
+        navigate(`/projects/${projectId}/chat/${conversationId}`, {
+          replace: true,
+        });
+      }
+    },
+    [queryClient, projectId, selectedConversationId, navigate],
+  );
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -67,7 +86,7 @@ export function ChatWithAIPage() {
         incognito={false}
         conversationId={selectedConversationId}
         onTitleUpdate={handleTitleUpdate}
-        onConversationCreated={handleTitleUpdate}
+        onConversationCreated={handleConversationCreated}
         onFirstMessage={() => {}}
       />
     </div>
