@@ -72,7 +72,7 @@ function Input({
 function handleFileChange(
   event: React.ChangeEvent<HTMLInputElement>,
   setFileName: React.Dispatch<React.SetStateAction<string | null>>,
-  onChange?: React.ChangeEventHandler<HTMLInputElement>
+  onChange?: React.ChangeEventHandler<HTMLInputElement>,
 ) {
   const file = event.target.files?.[0];
   setFileName(file ? file.name : null);

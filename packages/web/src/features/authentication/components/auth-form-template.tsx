@@ -49,10 +49,10 @@ const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
 
 const TermsFooter = () => {
   const { data: termsOfServiceUrl } = flagsHooks.useFlag<string>(
-    ApFlagId.TERMS_OF_SERVICE_URL
+    ApFlagId.TERMS_OF_SERVICE_URL,
   );
   const { data: privacyPolicyUrl } = flagsHooks.useFlag<string>(
-    ApFlagId.PRIVACY_POLICY_URL
+    ApFlagId.PRIVACY_POLICY_URL,
   );
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
@@ -97,7 +97,7 @@ const AuthSeparator = ({
 }) => {
   const { data: thirdPartyAuthProviders } =
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
-      ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP
+      ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
     );
 
   return (thirdPartyAuthProviders?.google || thirdPartyAuthProviders?.saml) &&
@@ -119,7 +119,7 @@ const AuthImage = () => {
       onLoad={onLoad}
       className={cn(
         'absolute inset-0 w-full h-full object-cover transition-opacity duration-300',
-        loaded ? 'opacity-100' : 'opacity-0'
+        loaded ? 'opacity-100' : 'opacity-0',
       )}
     />
   );
@@ -166,7 +166,7 @@ const AuthFormTemplate = React.memo(
     const redirectAfterLogin = useRedirectAfterLogin();
     const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
     const { data: isEmailAuthEnabled } = flagsHooks.useFlag<boolean>(
-      ApFlagId.EMAIL_AUTH_ENABLED
+      ApFlagId.EMAIL_AUTH_ENABLED,
     );
     const data = {
       signin: {
@@ -223,7 +223,7 @@ const AuthFormTemplate = React.memo(
         <BottomNote isSignup={isSignUp} />
       </AuthLayout>
     );
-  }
+  },
 );
 
 AuthFormTemplate.displayName = 'AuthFormTemplate';
