@@ -5,8 +5,6 @@ import {
     type ChatHistoryToolCall,
     SandboxSessionUpdateType,
 } from '@activepieces/shared'
-import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-props'
 
 type SandboxSession = {
     id: string
@@ -54,22 +52,9 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
         return pending
     }
     const promise = (async () => {
-        const providerType = system.get(AppSystemProp.SANDBOX_PROVIDER) ?? 'local'
-        let sandbox: unknown
-
-        if (providerType === 'local') {
-            const { local } = await import('sandbox-agent/local')
-            sandbox = local({
-                env: {
-                    ANTHROPIC_API_KEY: anthropicApiKey,
-                },
-            })
-        }
-        else {
-            const { cloudflare } = await import('sandbox-agent/cloudflare')
-            const { Sandbox } = await import('@cloudflare/sandbox')
-            sandbox = cloudflare({ sdk: new Sandbox() })
-        }
+        const { cloudflare } = await import('sandbox-agent/cloudflare')
+        const { Sandbox } = await import('@cloudflare/sandbox')
+        const sandbox = cloudflare({ sdk: new Sandbox() })
 
         const mod = await import('sandbox-agent')
         const { PostgresSessionPersistDriver } = await import('./postgres-session-persist-driver')
