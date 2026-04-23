@@ -14,18 +14,22 @@ import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { chatSandboxAgent } from './sandbox/sandbox-agent'
-import { ChatUIMessage, createHistoryReplayFilter, writeSandboxEventToStream } from './sandbox/stream-adapter'
+import { ChatUIMessage, createHistoryReplayFilter, createStreamWriter } from './sandbox/stream-adapter'
 import { chatService } from './chat-service'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
 
 export const chatController: FastifyPluginAsyncZod = async (app) => {
 
+    app.post('/warm', WarmRoute, async (request, reply) => {
+        void chatService(request.log).warmSandbox({ platformId: request.principal.platform.id })
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
     app.post('/conversations', CreateConversationRoute, async (request, reply) => {
         const conversation = await chatService(request.log).createConversation({
             projectId: request.projectId,
             userId: request.principal.id,
-            platformId: request.principal.platform.id,
             request: request.body,
         })
         return reply.status(StatusCodes.CREATED).send(conversation)
@@ -77,19 +81,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
-        const conversation = await chatService(request.log).getConversationOrThrow({
-            id: request.params.id,
-            projectId: request.projectId,
-            userId: request.principal.id,
-        })
-
-        if (!conversation.sandboxSessionId) {
-            return reply.status(StatusCodes.BAD_REQUEST).send({
-                error: 'Conversation has no active session',
-            })
-        }
-
-        const sandboxSessionId = conversation.sandboxSessionId
         const { content, files } = request.body
         const log = request.log
         const platformId = request.principal.platform.id
@@ -97,10 +88,25 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const projectId = request.projectId
         const userId = request.principal.id
 
+        const conversation = await chatService(log).ensureSession({
+            id: conversationId,
+            projectId,
+            userId,
+            platformId,
+        })
+        if (!conversation.sandboxSessionId) {
+            return reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+                error: 'Failed to create sandbox session',
+            })
+        }
+        const sandboxSessionId = conversation.sandboxSessionId
+
         await reply.hijack()
 
         const stream = createUIMessageStream<ChatUIMessage>({
             execute: async ({ writer }) => {
+                writer.write({ type: 'start' })
+
                 const [anthropicApiKey, systemPrompt] = await Promise.all([
                     chatService(log).getAnthropicApiKey({ platformId }),
                     chatService(log).buildSystemPrompt({ projectId }),
@@ -112,6 +118,19 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 })
 
                 const historyReplayFilter = createHistoryReplayFilter()
+                const streamWriter = createStreamWriter({
+                    writer,
+                    textPartId: 'text',
+                    reasoningPartId: 'reasoning',
+                    onSessionTitle: (title) => {
+                        void chatService(log).updateConversation({
+                            id: conversationId,
+                            projectId,
+                            userId,
+                            request: { title },
+                        })
+                    },
+                })
                 let unsubscribe: (() => void) | undefined
 
                 try {
@@ -128,20 +147,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
                             if (historyReplayFilter.shouldSuppress(update)) return
 
-                            writeSandboxEventToStream({
-                                update,
-                                writer,
-                                textPartId: 'text',
-                                reasoningPartId: 'reasoning',
-                                onSessionTitle: (title) => {
-                                    void chatService(log).updateConversation({
-                                        id: conversationId,
-                                        projectId,
-                                        userId,
-                                        request: { title },
-                                    })
-                                },
-                            })
+                            streamWriter.write(update)
                         })
 
                         chatSandboxAgent.sendPrompt({ session, text: content, systemPrompt, files })
@@ -169,6 +175,17 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             },
         })
     })
+}
+
+const WarmRoute = {
+    config: {
+        security: securityAccess.project(CHAT_PRINCIPALS, Permission.READ_CHAT, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        querystring: z.object({ projectId: z.string() }),
+    },
 }
 
 const CreateConversationRoute = {

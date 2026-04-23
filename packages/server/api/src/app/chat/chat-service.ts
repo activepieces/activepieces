@@ -25,34 +25,36 @@ import { chatSandboxAgent } from './sandbox/sandbox-agent'
 const conversationRepo = repoFactory(ChatConversationEntity)
 
 export const chatService = (log: FastifyBaseLogger) => ({
-    async createConversation({ projectId, userId, platformId, request }: CreateConversationParams): Promise<ChatConversation> {
+    async createConversation({ projectId, userId, request }: CreateConversationParams): Promise<ChatConversation> {
+        return conversationRepo().save({
+            id: apId(),
+            projectId,
+            userId,
+            title: request.title ?? null,
+            sandboxSessionId: null,
+            modelName: request.modelName ?? null,
+            totalInputTokens: 0,
+            totalOutputTokens: 0,
+            summary: null,
+        })
+    },
+
+    async ensureSession({ id, projectId, userId, platformId }: EnsureSessionParams): Promise<ChatConversation> {
+        const conversation = await this.getConversationOrThrow({ id, projectId, userId })
+        if (conversation.sandboxSessionId) {
+            return conversation
+        }
         const [anthropicApiKey, mcpCredentials] = await Promise.all([
             this.getAnthropicApiKey({ platformId }),
             getMcpCredentials({ projectId, log }),
         ])
-
         const session = await chatSandboxAgent.createSession({
             anthropicApiKey,
             mcpServerUrl: mcpCredentials.mcpServerUrl,
             mcpToken: mcpCredentials.mcpToken,
         })
-
-        const { data: saved, error } = await tryCatch(async () => conversationRepo().save({
-            id: apId(),
-            projectId,
-            userId,
-            title: request.title ?? null,
-            sandboxSessionId: session.id,
-            modelName: request.modelName ?? null,
-            totalInputTokens: 0,
-            totalOutputTokens: 0,
-            summary: null,
-        }))
-        if (error) {
-            await chatSandboxAgent.destroySession({ sessionId: session.id, anthropicApiKey }).catch(() => { /* best-effort cleanup */ })
-            throw error
-        }
-        return saved
+        await conversationRepo().update(id, { sandboxSessionId: session.id })
+        return { ...conversation, sandboxSessionId: session.id }
     },
 
     async listConversations({ projectId, userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<ChatConversation>> {
@@ -132,6 +134,11 @@ export const chatService = (log: FastifyBaseLogger) => ({
         return config.auth.apiKey
     },
 
+    async warmSandbox({ platformId }: { platformId: string }): Promise<void> {
+        const anthropicApiKey = await this.getAnthropicApiKey({ platformId })
+        await chatSandboxAgent.warmSdk({ anthropicApiKey })
+    },
+
     async buildSystemPrompt({ projectId }: { projectId: string }): Promise<string> {
         const project = await projectService(log).getOneOrThrow(projectId)
         return buildAgentSystemPrompt(project.displayName)
@@ -144,8 +151,12 @@ async function getMcpCredentials({ projectId, log }: { projectId: string, log: F
         return { mcpServerUrl: null, mcpToken: null }
     }
     const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+    const mcpServerUrl = `${frontendUrl}/mcp`
+    if (frontendUrl.includes('localhost') || frontendUrl.includes('127.0.0.1')) {
+        log.warn({ mcpServerUrl }, 'MCP server URL points to localhost — the sandbox agent (E2B) cannot reach it. Set AP_FRONTEND_URL to a public URL (e.g. ngrok tunnel) for MCP tools to work.')
+    }
     return {
-        mcpServerUrl: `${frontendUrl}/mcp`,
+        mcpServerUrl,
         mcpToken: mcpServer.token,
     }
 }
@@ -270,7 +281,6 @@ When the user connects via the UI, they will send a message like: "Done — X is
 type CreateConversationParams = {
     projectId: string
     userId: string
-    platformId: string
     request: CreateChatConversationRequest
 }
 
@@ -292,6 +302,13 @@ type UpdateConversationParams = {
     projectId: string
     userId: string
     request: UpdateChatConversationRequest
+}
+
+type EnsureSessionParams = {
+    id: string
+    projectId: string
+    userId: string
+    platformId: string
 }
 
 type DeleteConversationParams = {

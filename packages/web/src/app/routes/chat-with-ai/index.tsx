@@ -7,6 +7,8 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { AIChatBox } from './ai-chat-box';
 import { ConversationList } from './conversation-list';
 
+import { chatApi } from '@/features/chat/lib/chat-api';
+
 export function ChatWithAIPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -21,6 +23,10 @@ export function ChatWithAIPage() {
   useEffect(() => {
     setChatKey((k) => k + 1);
   }, [projectId]);
+
+  useEffect(() => {
+    void chatApi.warm();
+  }, []);
 
   const handleNewChat = useCallback(() => {
     setChatKey((k) => k + 1);

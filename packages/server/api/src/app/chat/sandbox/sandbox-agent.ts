@@ -1,10 +1,11 @@
 import {
+    apId,
     ChatHistoryMessage,
     ChatHistoryToolCall,
     isObject,
     isString,
 } from '@activepieces/shared'
-import type { SandboxAgent, Session, SessionCreateRequest, SessionEvent, SessionPersistDriver } from 'sandbox-agent'
+import type { SandboxAgent, Session, SessionCreateRequest, SessionPersistDriver } from 'sandbox-agent'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { chatEventUtils } from './ai-event-utils'
@@ -12,18 +13,8 @@ import { chatEventUtils } from './ai-event-utils'
 const sdksByKey = new Map<string, SandboxAgent>()
 const initPromises = new Map<string, Promise<SandboxAgent>>()
 
-async function createSandboxProvider({ anthropicApiKey }: { anthropicApiKey: string }): Promise<unknown> {
-    const providerType = system.get(AppSystemProp.SANDBOX_PROVIDER) ?? 'local'
-    if (providerType === 'cloudflare') {
-        const { cloudflare } = await import('sandbox-agent/cloudflare')
-        const { Sandbox } = await import('@cloudflare/sandbox')
-        return cloudflare({ sdk: new Sandbox() })
-    }
-    const { local } = await import('sandbox-agent/local')
-    return local({ env: { ANTHROPIC_API_KEY: anthropicApiKey } })
-}
-
 async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }): Promise<SandboxAgent> {
+    const e2bApiKey = system.getOrThrow(AppSystemProp.E2B_API_KEY)
     const existing = sdksByKey.get(anthropicApiKey)
     if (existing) {
         return existing
@@ -33,7 +24,14 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
         return pending
     }
     const promise = (async () => {
-        const sandbox = await createSandboxProvider({ anthropicApiKey })
+        const { e2b } = await import('sandbox-agent/e2b')
+        const sandbox = e2b({
+            create: {
+                apiKey: e2bApiKey,
+                envs: { ANTHROPIC_API_KEY: anthropicApiKey },
+            },
+            connect: { apiKey: e2bApiKey },
+        })
 
         const { SandboxAgent: SandboxAgentClass } = await import('sandbox-agent')
         const { PostgresSessionPersistDriver } = await import('./postgres-persist-driver')
@@ -59,7 +57,15 @@ async function createSession({ anthropicApiKey, mcpServerUrl, mcpToken }: Create
         sessionInit: {
             cwd: '/tmp',
             mcpServers: mcpServerUrl && mcpToken
-                ? [{ type: 'http' as const, name: 'activepieces', url: mcpServerUrl, headers: [{ name: 'Authorization', value: `Bearer ${mcpToken}` }] }]
+                ? [{
+                    type: 'http' as const,
+                    name: 'activepieces',
+                    url: mcpServerUrl,
+                    headers: [
+                        { name: 'Authorization', value: `Bearer ${mcpToken}` },
+                        { name: 'ngrok-skip-browser-warning', value: 'true' },
+                    ],
+                }]
                 : [],
         },
     }
@@ -118,11 +124,6 @@ async function destroySession({ sessionId, anthropicApiKey }: DestroySessionPara
     await sdk.destroySession(sessionId)
 }
 
-function getPayloadFields(event: SessionEvent): Record<string, unknown> | undefined {
-    const raw: unknown = event.payload
-    return isObject(raw) ? raw : undefined
-}
-
 async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionParams): Promise<ChatHistoryMessage[]> {
     const sdk = await getOrCreateSdk({ anthropicApiKey })
     const { items } = await sdk.getEvents({ sessionId })
@@ -134,8 +135,9 @@ async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionPa
     let inAssistantMessage = false
 
     for (const event of items) {
-        const payload = getPayloadFields(event)
-        if (!payload) continue
+        const raw: unknown = event.payload
+        if (!isObject(raw)) continue
+        const payload = raw
 
         if (event.sender === 'client' && payload.method === 'session/prompt') {
             if (inAssistantMessage) {
@@ -177,7 +179,7 @@ async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionPa
             }
             else if (updateType === SandboxSessionUpdateType.TOOL_CALL) {
                 inAssistantMessage = true
-                const toolCallId = isString(update.toolCallId) ? update.toolCallId : `tc-${Date.now()}`
+                const toolCallId = isString(update.toolCallId) ? update.toolCallId : apId()
                 const title = isString(update.title) ? update.title : 'Unknown tool'
                 const rawInput = isObject(update.rawInput) ? update.rawInput : undefined
                 currentToolCalls.push({ toolCallId, title, status: 'in_progress', input: rawInput })
@@ -284,11 +286,16 @@ type ResumeSessionParams = {
     anthropicApiKey: string
 }
 
+async function warmSdk({ anthropicApiKey }: { anthropicApiKey: string }): Promise<void> {
+    await getOrCreateSdk({ anthropicApiKey })
+}
+
 export const chatSandboxAgent = {
     createSession,
     sendPrompt,
     destroySession,
     resumeSession,
     getSessionHistory,
+    warmSdk,
     dispose,
 }

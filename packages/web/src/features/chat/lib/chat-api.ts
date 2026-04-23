@@ -64,10 +64,15 @@ async function deleteConversation(id: string): Promise<void> {
   );
 }
 
+async function warm(): Promise<void> {
+  await api.post<void>('/v1/chat/warm', undefined, { projectId: projectId() });
+}
+
 export const chatApi = {
   createConversation,
   listConversations,
   getMessages,
   updateConversation,
   deleteConversation,
+  warm,
 };

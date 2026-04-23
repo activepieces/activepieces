@@ -55,11 +55,6 @@ function deriveToolStatus(state: string): ToolCallItem['status'] {
   return 'running';
 }
 
-function deriveHistoryToolStatus(status: string): ToolCallItem['status'] {
-  if (status === 'completed') return 'completed';
-  return 'failed';
-}
-
 function extractDynamicToolOutput(part: {
   state: string;
   output?: unknown;
@@ -134,19 +129,15 @@ function convertUIMessagesToItems(messages: UIMessage[]): ChatMessageItem[] {
 function mapHistoryToUIMessages(data: ChatHistoryMessage[]): UIMessage[] {
   return data.map((msg, idx) => {
     const parts: UIMessage['parts'] = [];
-
     if (msg.thoughts) {
       parts.push({ type: 'reasoning', text: msg.thoughts });
     }
-
     if (msg.content) {
       parts.push({ type: 'text', text: msg.content });
     }
-
-    if (msg.toolCalls && msg.toolCalls.length > 0) {
+    if (msg.toolCalls) {
       for (const tc of msg.toolCalls) {
-        const isCompleted = deriveHistoryToolStatus(tc.status) === 'completed';
-        if (isCompleted) {
+        if (tc.status === 'completed') {
           parts.push({
             type: 'dynamic-tool',
             toolCallId: tc.toolCallId,
@@ -179,6 +170,30 @@ function mapHistoryToUIMessages(data: ChatHistoryMessage[]): UIMessage[] {
   });
 }
 
+function createUserMessageItem({ content, fileNames }: { content: string, fileNames: string[] }): ChatMessageItem {
+  return {
+    id: `pending-user`,
+    role: 'user',
+    blocks: [{ type: 'text', text: content }],
+    thoughts: '',
+    plan: null,
+    fileNames,
+    timestamp: Date.now(),
+  };
+}
+
+function createThinkingMessageItem(): ChatMessageItem {
+  return {
+    id: `pending-assistant`,
+    role: 'assistant',
+    blocks: [],
+    thoughts: '',
+    plan: null,
+    fileNames: [],
+    timestamp: Date.now(),
+  };
+}
+
 export function useAgentChat({
   onTitleUpdate,
   onConversationCreated,
@@ -192,6 +207,7 @@ export function useAgentChat({
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [wasCancelled, setWasCancelled] = useState(false);
+  const [pendingMessages, setPendingMessages] = useState<ChatMessageItem[]>([]);
 
   const pendingFilesRef = useRef<
     { name: string; mimeType: ChatAllowedMimeType; data: string }[] | undefined
@@ -222,7 +238,6 @@ export function useAgentChat({
         return {
           api: `${API_URL}/v1/chat/conversations/${convId}/messages?projectId=${projectId}`,
           headers: {
-            'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
           body: {
@@ -257,15 +272,29 @@ export function useAgentChat({
     },
   });
 
-  const isStreaming = status === 'streaming' || status === 'submitted';
+  const sdkIsStreaming = status === 'streaming' || status === 'submitted';
+  const liveMessages = convertUIMessagesToItems(uiMessages);
+  const lastLiveMessage = liveMessages[liveMessages.length - 1];
+  const sdkHasAssistantContent = lastLiveMessage?.role === 'assistant' && lastLiveMessage.blocks.length > 0;
+  const hasPending = pendingMessages.length > 0 && !sdkHasAssistantContent;
+  const isStreaming = sdkIsStreaming || hasPending;
 
-  const messages = convertUIMessagesToItems(uiMessages);
+  function buildMessages(): ChatMessageItem[] {
+    if (!hasPending) return liveMessages;
+    if (liveMessages.length === 0) return pendingMessages;
+    const withoutEmptyAssistant = liveMessages.filter(
+      (m) => !(m.role === 'assistant' && m.blocks.length === 0),
+    );
+    return [...withoutEmptyAssistant, createThinkingMessageItem()];
+  }
+  const messages = buildMessages();
 
   const error = localError ?? (useChatError ? useChatError.message : null);
 
   const cancelStream = useCallback(() => {
     void stop();
     setWasCancelled(true);
+    setPendingMessages([]);
   }, [stop]);
 
   const resetChat = useCallback(() => {
@@ -275,6 +304,7 @@ export function useAgentChat({
     setUiMessages([]);
     setLocalError(null);
     setWasCancelled(false);
+    setPendingMessages([]);
     pendingFilesRef.current = undefined;
   }, [stop, setUiMessages]);
 
@@ -299,10 +329,16 @@ export function useAgentChat({
       setLocalError(null);
       setWasCancelled(false);
 
+      setPendingMessages([
+        createUserMessageItem({ content, fileNames: files?.map((f) => f.name) ?? [] }),
+        createThinkingMessageItem(),
+      ]);
+
       if (files && files.length > 0) {
         const oversized = files.find((f) => f.size > MAX_FILE_SIZE);
         if (oversized) {
           setLocalError(`File "${oversized.name}" exceeds 10 MB limit`);
+          setPendingMessages([]);
           return;
         }
         const { data: encodedFiles, error: fileError } = await tryCatch(
@@ -310,6 +346,7 @@ export function useAgentChat({
         );
         if (fileError) {
           setLocalError(fileError.message ?? 'Failed to read attached files');
+          setPendingMessages([]);
           return;
         }
         pendingFilesRef.current = encodedFiles;
@@ -324,6 +361,7 @@ export function useAgentChat({
         });
         if (convError) {
           setLocalError(convError.message ?? 'Failed to start conversation');
+          setPendingMessages([]);
           return;
         }
       }
@@ -340,6 +378,7 @@ export function useAgentChat({
       conversationIdRef.current = id;
       setConversationIdState(id);
       setLocalError(null);
+      setPendingMessages([]);
       pendingFilesRef.current = undefined;
 
       setIsLoadingHistory(true);

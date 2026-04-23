@@ -190,6 +190,9 @@ const systemPropValidators: {
 
     // On-call
     [AppSystemProp.PAGE_ONCALL_WEBHOOK]: urlValidator,
+
+    // Chat sandbox (E2B)
+    [AppSystemProp.E2B_API_KEY]: stringValidator,
 }
 
 

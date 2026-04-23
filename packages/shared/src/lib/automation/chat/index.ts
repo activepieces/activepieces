@@ -2,34 +2,6 @@ import { z } from 'zod'
 import { BaseModelSchema, Nullable } from '../../core/common'
 import { formErrors } from '../../form-errors'
 
-function buildChatConversationSchema() {
-    return z.object({
-        ...BaseModelSchema,
-        projectId: z.string(),
-        userId: z.string(),
-        title: Nullable(z.string()),
-        sandboxSessionId: Nullable(z.string()),
-        modelName: Nullable(z.string()),
-        totalInputTokens: z.number(),
-        totalOutputTokens: z.number(),
-        summary: Nullable(z.string()),
-    })
-}
-
-function buildCreateChatConversationRequestSchema() {
-    return z.object({
-        title: Nullable(z.string()).optional(),
-        modelName: Nullable(z.string()).optional(),
-    })
-}
-
-function buildUpdateChatConversationRequestSchema() {
-    return z.object({
-        title: Nullable(z.string()).optional(),
-        modelName: Nullable(z.string()).optional(),
-    })
-}
-
 const MAX_FILE_BINARY_SIZE = 10 * 1024 * 1024
 const MAX_FILE_BASE64_CHARS = Math.ceil(MAX_FILE_BINARY_SIZE * 4 / 3)
 
@@ -53,26 +25,38 @@ const ChatMessageFile = z.object({
     data: z.string().max(MAX_FILE_BASE64_CHARS),
 })
 
-function buildSendChatMessageRequestSchema() {
-    return z.object({
-        content: z.string().max(51200),
-        files: z.array(ChatMessageFile).max(10).optional(),
-    }).refine(
-        (val) => val.content.length > 0 || (val.files && val.files.length > 0),
-        { message: formErrors.messageRequiresContentOrFiles },
-    )
-}
-
-export const ChatConversation = buildChatConversationSchema()
+export const ChatConversation = z.object({
+    ...BaseModelSchema,
+    projectId: z.string(),
+    userId: z.string(),
+    title: Nullable(z.string()),
+    sandboxSessionId: Nullable(z.string()),
+    modelName: Nullable(z.string()),
+    totalInputTokens: z.number(),
+    totalOutputTokens: z.number(),
+    summary: Nullable(z.string()),
+})
 export type ChatConversation = z.infer<typeof ChatConversation>
 
-export const CreateChatConversationRequest = buildCreateChatConversationRequestSchema()
+export const CreateChatConversationRequest = z.object({
+    title: Nullable(z.string()).optional(),
+    modelName: Nullable(z.string()).optional(),
+})
 export type CreateChatConversationRequest = z.infer<typeof CreateChatConversationRequest>
 
-export const UpdateChatConversationRequest = buildUpdateChatConversationRequestSchema()
+export const UpdateChatConversationRequest = z.object({
+    title: Nullable(z.string()).optional(),
+    modelName: Nullable(z.string()).optional(),
+})
 export type UpdateChatConversationRequest = z.infer<typeof UpdateChatConversationRequest>
 
-export const SendChatMessageRequest = buildSendChatMessageRequestSchema()
+export const SendChatMessageRequest = z.object({
+    content: z.string().max(51200),
+    files: z.array(ChatMessageFile).max(10).optional(),
+}).refine(
+    (val) => val.content.length > 0 || (val.files && val.files.length > 0),
+    { message: formErrors.messageRequiresContentOrFiles },
+)
 export type SendChatMessageRequest = z.infer<typeof SendChatMessageRequest>
 
 export type ChatHistoryToolCall = {
