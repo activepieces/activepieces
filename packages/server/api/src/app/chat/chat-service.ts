@@ -145,7 +145,7 @@ async function getMcpCredentials({ projectId, log }: { projectId: string, log: F
     }
     const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
     return {
-        mcpServerUrl: `${frontendUrl}/api/v1/mcp/agent`,
+        mcpServerUrl: `${frontendUrl}/mcp`,
         mcpToken: mcpServer.token,
     }
 }
