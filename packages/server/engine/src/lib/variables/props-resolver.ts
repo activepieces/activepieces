@@ -1,5 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { AP_FUNCTIONS, applyFunctionToValues, evaluateExpression, isNil, isString } from '@activepieces/shared'
+import { applyFunctionToValues, containsApFunctionCall, evaluateExpression, isNil, isString } from '@activepieces/shared'
 
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -100,16 +100,18 @@ function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<st
 async function resolveInputAsync(params: ResolveInputInternalParams): Promise<unknown> {
     const { input, currentState, engineToken, projectId, apiUrl, censoredInput } = params
 
-    if (isFormulaExpression(input)) {
+    if (containsApFunctionCall(input)) {
         const formulaOptions = { engineToken, projectId, apiUrl, currentState, censoredInput, contextVersion: params.contextVersion }
         const { expression: preResolvedExpr, vars: preResolvedVars } = await preResolveFormulaVars(input, formulaOptions)
         const { result, error } = evaluateExpression(preResolvedExpr, preResolvedVars)
         if (!error) {
             return result ?? ''
         }
-        // Fall through to normal variable resolution: a false-positive match (e.g. an
-        // expression with AP-unsupported syntax) must not be returned raw with
-        // unresolved {{...}} templates or leak uncensored secrets.
+        // Fall through to normal variable resolution: detection is permissive so
+        // mixed-content fields (`"Dear uppercase({{name}}),"`) evaluate. When the
+        // value is not actually a formula (`"Please trim(spaces)"`) evaluation
+        // fails and the raw string must still go through variable resolution so
+        // unresolved {{...}} templates don't leak and secrets stay censored.
         console.warn('[resolveInputAsync] Formula evaluation error, falling back to variable resolution:', error)
     }
 
@@ -268,101 +270,6 @@ async function preResolveFormulaVars(
     }
 
     return { expression: rewritten, vars }
-}
-
-const AP_FUNCTION_NAMES = new Set(AP_FUNCTIONS.map((fn) => fn.name))
-const AP_FUNCTION_CALL_REGEX = new RegExp(
-    `(?<!\\.)\\b(${AP_FUNCTIONS.map((fn) => fn.name).join('|')})\\s*\\(`,
-)
-
-/**
- * Detect whether the input is an AP formula expression.
- *
- * Function names (`min`, `trim`, `round`, `replace`, `contains`, …) collide
- * with common words, so a bare name-match would false-positive on arbitrary
- * user data (`"Please trim(spaces)"`, `"min(qty, limit) reached"`). We require:
- *
- * 1. The entire trimmed input is a single AP function call — no leading or
- *    trailing text outside the outermost `(...)`. Natural-language strings
- *    that embed a function-shaped phrase ("sum(contributions) for Q1") are
- *    rejected, which is the dominant false-positive class.
- * 2. The function body contains no top-level `,`. AP formulas use `;` as the
- *    argument separator; a top-level comma is a strong signal of prose.
- */
-function isFormulaExpression(input: string): boolean {
-    const trimmed = input.trim()
-    if (trimmed.length === 0) return false
-    if (!AP_FUNCTION_CALL_REGEX.test(trimmed)) return false
-
-    const firstCall = findNextApFunctionCall(trimmed, 0)
-    if (firstCall === null || firstCall.start !== 0) return false
-
-    const closePos = findMatchingParen(trimmed, firstCall.openParen)
-    if (closePos !== trimmed.length - 1) return false
-
-    const argsContent = trimmed.slice(firstCall.openParen + 1, closePos)
-    if (hasTopLevelComma(argsContent)) return false
-
-    return true
-}
-
-function findNextApFunctionCall(text: string, fromPos: number): { start: number, openParen: number } | null {
-    for (let i = fromPos; i < text.length; i++) {
-        if (!/[a-z_]/i.test(text[i])) continue
-        if (i > 0 && text[i - 1] === '.') continue
-        const wordMatch = text.slice(i).match(/^([a-z_][a-z0-9_]*)\s*\(/i)
-        if (wordMatch && AP_FUNCTION_NAMES.has(wordMatch[1])) {
-            return { start: i, openParen: i + wordMatch[0].length - 1 }
-        }
-    }
-    return null
-}
-
-function findMatchingParen(text: string, openPos: number): number {
-    let depth = 0
-    let inString: '"' | '\'' | null = null
-    for (let i = openPos; i < text.length; i++) {
-        const ch = text[i]
-        if (inString) {
-            if (ch === inString && text[i - 1] !== '\\') inString = null
-        }
-        else if (ch === '"' || ch === '\'') {
-            inString = ch
-        }
-        else if (ch === '(') {
-            depth++
-        }
-        else if (ch === ')') {
-            depth--
-            if (depth === 0) return i
-        }
-    }
-    return -1
-}
-
-function hasTopLevelComma(content: string): boolean {
-    let depth = 0
-    let inString: '"' | '\'' | null = null
-    for (let i = 0; i < content.length; i++) {
-        const ch = content[i]
-        if (inString) {
-            if (ch === inString && content[i - 1] !== '\\') inString = null
-            continue
-        }
-        if (ch === '"' || ch === '\'') {
-            inString = ch
-        }
-        else if (ch === '(' || ch === '[') {
-            depth++
-        }
-        else if (ch === ')' || ch === ']') {
-            depth--
-        }
-        else if (ch === ',' && depth === 0) {
-            return true
-        }
-    }
-    return false
 }
 
 type ResolveSingleTokenParams = {

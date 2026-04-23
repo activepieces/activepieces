@@ -311,6 +311,30 @@ export function evaluateExpression(
     return { result: parts.join(''), error: null }
 }
 
+/**
+ * True when `input` should be routed through {@link evaluateExpression}.
+ *
+ * Two cases qualify:
+ *   1. The entire trimmed input is a single top-level AP function call
+ *      (`trim('hi')`, `uppercase({{trigger.name}})`). This is what the slash
+ *      picker produces and the common case.
+ *   2. The input mixes text with an AP function call AND contains at least
+ *      one `{{variable}}` reference (`"Dear uppercase({{name}}),"`). The
+ *      `{{...}}` marker is the signal that the user built this via the editor
+ *      rather than typing natural prose that happens to include a
+ *      function-shaped phrase ("Please trim(spaces)", "sum(contributions) for Q1").
+ *
+ * Detection is intentionally conservative on the prose side because
+ * `quoteIfBare` in `wrapStringArgs` auto-quotes bare identifiers, so a
+ * false-positive like `trim(spaces)` would silently succeed and produce
+ * `"spaces"` instead of being left untouched.
+ */
+export function containsApFunctionCall(input: string): boolean {
+    if (!AP_FUNCTION_CALL_REGEX.test(input)) return false
+    if (isPureApFunctionCall(input)) return true
+    return VARIABLE_TEMPLATE_REGEX.test(input)
+}
+
 function evaluateSingleFormula(
     expression: string,
     sampleData: Record<string, unknown>,
@@ -408,6 +432,16 @@ function resolveTextVars(text: string, sampleData: Record<string, unknown>): str
         const resolved = resolveVariable(path.trim(), sampleData)
         return resolved != null ? String(resolved) : ''
     })
+}
+
+function isPureApFunctionCall(input: string): boolean {
+    const trimmed = input.trim()
+    if (trimmed.length === 0) return false
+    const fnNames = new Set(AP_FUNCTIONS.map((f) => f.name))
+    const first = findNextFunctionCall(trimmed, 0, fnNames)
+    if (first === null || first.start !== 0) return false
+    const closePos = findMatchingParen(trimmed, first.openParen)
+    return closePos === trimmed.length - 1
 }
 
 function validateFunctionArgs(expr: string): string | null {
@@ -737,5 +771,10 @@ const MONTH_NAMES = [
 ]
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+const AP_FUNCTION_CALL_REGEX = new RegExp(
+    `(?<!\\.)\\b(${AP_FUNCTIONS.map((fn) => fn.name).join('|')})\\s*\\(`,
+)
+const VARIABLE_TEMPLATE_REGEX = /\{\{[^}]+\}\}/
 
 export { DAY_NAMES, MONTH_NAMES }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { evaluateExpression } from '../../src/lib/formula/function-evaluator'
+import { containsApFunctionCall, evaluateExpression } from '../../src/lib/formula/function-evaluator'
 
 const ok = (expr: string, data: Record<string, unknown> = {}) =>
     evaluateExpression(expr, data)
@@ -550,4 +550,27 @@ describe('implicit string quoting', () => {
 
     it('multi-word bare string preserved', () =>
         expect(result('contains(the quick brown fox; quick brown)')).toBe(true))
+})
+
+describe('containsApFunctionCall', () => {
+    it('pure function call is detected', () =>
+        expect(containsApFunctionCall('trim("hi")')).toBe(true))
+
+    it('pure function call with surrounding whitespace is detected', () =>
+        expect(containsApFunctionCall('  uppercase({{x}})  ')).toBe(true))
+
+    it('mixed content with a variable reference is detected', () =>
+        expect(containsApFunctionCall('Dear uppercase({{trigger.name}}),')).toBe(true))
+
+    it('natural-language prose with a function-shaped phrase is NOT detected', () =>
+        expect(containsApFunctionCall('Please trim(spaces)')).toBe(false))
+
+    it('prose embedding a formula fragment but no variable is NOT detected', () =>
+        expect(containsApFunctionCall('sum(contributions) for Q1')).toBe(false))
+
+    it('plain text without any function name returns false', () =>
+        expect(containsApFunctionCall('hello world')).toBe(false))
+
+    it('dotted member access (e.g. trigger.min) is not detected as a call', () =>
+        expect(containsApFunctionCall('Here is {{trigger.min}} without parens')).toBe(false))
 })

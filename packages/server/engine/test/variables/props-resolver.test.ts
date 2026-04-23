@@ -314,7 +314,15 @@ describe('Props resolver', () => {
         expect(resolvedInput).toEqual('JOHN')
     })
 
-    test('AP formula: natural-language text embedding a function name is not treated as a formula', async () => {
+    test('AP formula: mixed-content field evaluates formulas embedded in text (preview/runtime parity)', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: 'Dear uppercase({{trigger.name}}),',
+            executionState,
+        })
+        expect(resolvedInput).toEqual('Dear JOHN,')
+    })
+
+    test('AP formula: natural-language text embedding a function name falls back to variable resolution', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput: 'sum(contributions) for Q1',
             executionState,
@@ -322,20 +330,12 @@ describe('Props resolver', () => {
         expect(resolvedInput).toEqual('sum(contributions) for Q1')
     })
 
-    test('AP formula: leading text before a formula-shaped phrase is not treated as a formula', async () => {
+    test('AP formula: leading text before a formula-shaped phrase falls back to variable resolution', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput: 'Please trim(spaces)',
             executionState,
         })
         expect(resolvedInput).toEqual('Please trim(spaces)')
-    })
-
-    test('AP formula: top-level comma disambiguates natural prose from a formula', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: 'min(qty, limit) reached',
-            executionState,
-        })
-        expect(resolvedInput).toEqual('min(qty, limit) reached')
     })
 
     test('AP formula: variable substitution inside a pure formula', async () => {
