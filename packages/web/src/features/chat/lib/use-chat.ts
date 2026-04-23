@@ -24,27 +24,37 @@ function mapHistoryToMessages({
   data: ChatHistoryMessage[];
   nextMessageId: () => string;
 }): ChatMessageItem[] {
-  return data.map((msg) => ({
-    id: nextMessageId(),
-    role: msg.role,
-    content: msg.content,
-    thoughts: msg.thoughts ?? '',
-    plan: null,
-    fileNames: [],
-    toolCalls:
-      msg.toolCalls?.map((tc) => ({
-        id: tc.toolCallId,
-        name: tc.title,
-        title: tc.title,
-        status: (tc.status === 'completed' ? 'completed' : 'failed') as
-          | 'running'
-          | 'completed'
-          | 'failed',
-        input: tc.input,
-        output: tc.output,
-      })) ?? [],
-    timestamp: Date.now(),
-  }));
+  return data.map((msg) => {
+    const blocks: MessageBlock[] = [];
+    if (msg.content) {
+      blocks.push({ type: 'text', text: msg.content });
+    }
+    if (msg.toolCalls && msg.toolCalls.length > 0) {
+      blocks.push({
+        type: 'tool_calls',
+        calls: msg.toolCalls.map((tc) => ({
+          id: tc.toolCallId,
+          name: tc.title,
+          title: tc.title,
+          status: (tc.status === 'completed' ? 'completed' : 'failed') as
+            | 'running'
+            | 'completed'
+            | 'failed',
+          input: tc.input,
+          output: tc.output,
+        })),
+      });
+    }
+    return {
+      id: nextMessageId(),
+      role: msg.role,
+      blocks,
+      thoughts: msg.thoughts ?? '',
+      plan: null,
+      fileNames: [],
+      timestamp: Date.now(),
+    };
+  });
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -72,6 +82,61 @@ function fileToBase64(
     };
     reader.onerror = reject;
     reader.readAsDataURL(file);
+  });
+}
+
+function appendTextToBlocks(
+  blocks: MessageBlock[],
+  text: string,
+): MessageBlock[] {
+  const last = blocks[blocks.length - 1];
+  if (last && last.type === 'text') {
+    return [...blocks.slice(0, -1), { type: 'text', text: last.text + text }];
+  }
+  return [...blocks, { type: 'text', text }];
+}
+
+function appendToolCallToBlocks(
+  blocks: MessageBlock[],
+  call: ToolCallItem,
+): MessageBlock[] {
+  const last = blocks[blocks.length - 1];
+  if (last && last.type === 'tool_calls') {
+    return [
+      ...blocks.slice(0, -1),
+      { type: 'tool_calls', calls: [...last.calls, call] },
+    ];
+  }
+  return [...blocks, { type: 'tool_calls', calls: [call] }];
+}
+
+function updateToolCallInBlocks(
+  blocks: MessageBlock[],
+  toolCallId: string,
+  updater: (tc: ToolCallItem) => ToolCallItem,
+): MessageBlock[] {
+  return blocks.map((block) => {
+    if (block.type !== 'tool_calls') return block;
+    const hasMatch = block.calls.some((tc) => tc.id === toolCallId);
+    if (!hasMatch) return block;
+    return {
+      ...block,
+      calls: block.calls.map((tc) => (tc.id === toolCallId ? updater(tc) : tc)),
+    };
+  });
+}
+
+function stopRunningToolsInBlocks(blocks: MessageBlock[]): MessageBlock[] {
+  return blocks.map((block) => {
+    if (block.type !== 'tool_calls') return block;
+    const hasRunning = block.calls.some((tc) => tc.status === 'running');
+    if (!hasRunning) return block;
+    return {
+      ...block,
+      calls: block.calls.map((tc) =>
+        tc.status === 'running' ? { ...tc, status: 'stopped' as const } : tc,
+      ),
+    };
   });
 }
 
@@ -134,11 +199,14 @@ export function useAgentChat({
           if (msg.id !== assistantId) return msg;
 
           switch (event.type) {
-            case ChatStreamEventType.TEXT_CHUNK:
+            case ChatStreamEventType.TEXT_CHUNK: {
+              const text = safeString(event.data.text);
+              if (!text) return msg;
               return {
                 ...msg,
-                content: msg.content + safeString(event.data.text),
+                blocks: appendTextToBlocks(msg.blocks, text),
               };
+            }
 
             case ChatStreamEventType.THOUGHT_CHUNK:
               return {
@@ -146,23 +214,22 @@ export function useAgentChat({
                 thoughts: msg.thoughts + safeString(event.data.text),
               };
 
-            case ChatStreamEventType.TOOL_CALL_START:
+            case ChatStreamEventType.TOOL_CALL_START: {
+              const newCall: ToolCallItem = {
+                id: safeString(event.data.toolCallId) || `tc-${Date.now()}`,
+                name: safeString(event.data.toolName) || 'Unknown tool',
+                title: safeString(event.data.title),
+                status: 'running' as const,
+                kind: safeString(event.data.kind) || undefined,
+                input: isRecord(event.data.rawInput)
+                  ? (event.data.rawInput as Record<string, unknown>)
+                  : undefined,
+              };
               return {
                 ...msg,
-                toolCalls: [
-                  ...msg.toolCalls,
-                  {
-                    id: safeString(event.data.toolCallId) || `tc-${Date.now()}`,
-                    name: safeString(event.data.toolName) || 'Unknown tool',
-                    title: safeString(event.data.title),
-                    status: 'running' as const,
-                    kind: safeString(event.data.kind) || undefined,
-                    input: isRecord(event.data.rawInput)
-                      ? (event.data.rawInput as Record<string, unknown>)
-                      : undefined,
-                  },
-                ],
+                blocks: appendToolCallToBlocks(msg.blocks, newCall),
               };
+            }
 
             case ChatStreamEventType.TOOL_CALL_UPDATE:
             case ChatStreamEventType.TOOL_CALL_COMPLETE: {
@@ -170,19 +237,15 @@ export function useAgentChat({
               if (!tcId) return msg;
               return {
                 ...msg,
-                toolCalls: msg.toolCalls.map((tc) =>
-                  tc.id === tcId
-                    ? {
-                        ...tc,
-                        status:
-                          event.type === ChatStreamEventType.TOOL_CALL_COMPLETE
-                            ? ('completed' as const)
-                            : tc.status,
-                        output: safeString(event.data.output) || tc.output,
-                        title: safeString(event.data.title) || tc.title,
-                      }
-                    : tc,
-                ),
+                blocks: updateToolCallInBlocks(msg.blocks, tcId, (tc) => ({
+                  ...tc,
+                  status:
+                    event.type === ChatStreamEventType.TOOL_CALL_COMPLETE
+                      ? ('completed' as const)
+                      : tc.status,
+                  output: safeString(event.data.output) || tc.output,
+                  title: safeString(event.data.title) || tc.title,
+                })),
               };
             }
 
@@ -218,10 +281,9 @@ export function useAgentChat({
       const userMessage: ChatMessageItem = {
         id: nextMessageId(),
         role: 'user',
-        content,
+        blocks: [{ type: 'text', text: content }],
         thoughts: '',
         plan: null,
-        toolCalls: [],
         fileNames: files?.map((f) => f.name) ?? [],
         timestamp: Date.now(),
       };
@@ -231,10 +293,9 @@ export function useAgentChat({
       const assistantMessage: ChatMessageItem = {
         id: assistantId,
         role: 'assistant',
-        content: '',
+        blocks: [],
         thoughts: '',
         plan: null,
-        toolCalls: [],
         fileNames: [],
         timestamp: Date.now(),
       };
@@ -271,7 +332,9 @@ export function useAgentChat({
           encodedFiles = await Promise.all(files.map(fileToBase64));
         } catch (err) {
           setError(
-            err instanceof Error ? err.message : 'Failed to read attached files',
+            err instanceof Error
+              ? err.message
+              : 'Failed to read attached files',
           );
           setIsStreaming(false);
           setMessages((prev) => prev.filter((m) => m.id !== assistantId));
@@ -308,11 +371,7 @@ export function useAgentChat({
       setMessages((prev) =>
         prev.map((msg) => ({
           ...msg,
-          toolCalls: msg.toolCalls.map((tc) =>
-            tc.status === 'running'
-              ? { ...tc, status: 'stopped' as const }
-              : tc,
-          ),
+          blocks: stopRunningToolsInBlocks(msg.blocks),
         })),
       );
     }
@@ -365,13 +424,16 @@ export function useAgentChat({
   };
 }
 
+export type MessageBlock =
+  | { type: 'text'; text: string }
+  | { type: 'tool_calls'; calls: ToolCallItem[] };
+
 export type ChatMessageItem = {
   id: string;
   role: 'user' | 'assistant';
-  content: string;
+  blocks: MessageBlock[];
   thoughts: string;
   plan: PlanItem[] | null;
-  toolCalls: ToolCallItem[];
   fileNames: string[];
   timestamp: number;
 };

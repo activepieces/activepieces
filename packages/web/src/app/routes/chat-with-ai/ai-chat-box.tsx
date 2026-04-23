@@ -64,11 +64,20 @@ import { ToolCallCard } from '@/features/chat/components/tool-call-card';
 import {
   useAgentChat,
   type ChatMessageItem,
+  type MessageBlock,
+  type ToolCallItem,
 } from '@/features/chat/lib/use-chat';
 import { piecesHooks } from '@/features/pieces';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
+
+function getTextFromBlocks(blocks: MessageBlock[]): string {
+  return blocks
+    .filter((b): b is MessageBlock & { type: 'text' } => b.type === 'text')
+    .map((b) => b.text)
+    .join('');
+}
 
 type AIChatBoxProps = {
   incognito: boolean;
@@ -209,7 +218,8 @@ function ChatBoxContent({
                   const lastUser = [...messages]
                     .reverse()
                     .find((m) => m.role === 'user');
-                  if (lastUser) void sendMessage(lastUser.content);
+                  if (lastUser)
+                    void sendMessage(getTextFromBlocks(lastUser.blocks));
                 }}
               />
             );
@@ -228,8 +238,9 @@ function ChatBoxContent({
             messages[messages.length - 1]?.role === 'assistant' && (
               <QuickReplies
                 replies={
-                  parseQuickReplies(messages[messages.length - 1].content)
-                    .replies
+                  parseQuickReplies(
+                    getTextFromBlocks(messages[messages.length - 1].blocks),
+                  ).replies
                 }
                 onSend={handleSend}
               />
@@ -246,7 +257,8 @@ function ChatBoxContent({
                   const lastUser = [...messages]
                     .reverse()
                     .find((m) => m.role === 'user');
-                  if (lastUser) void sendMessage(lastUser.content);
+                  if (lastUser)
+                    void sendMessage(getTextFromBlocks(lastUser.blocks));
                 }}
               >
                 <RefreshCw className="h-3 w-3" />
@@ -312,12 +324,13 @@ function ChatMessage({
 
 function UserMessage({ message }: { message: ChatMessageItem }) {
   const [copied, setCopied] = useState(false);
+  const content = getTextFromBlocks(message.blocks);
 
   const handleCopy = useCallback(() => {
-    void navigator.clipboard.writeText(message.content);
+    void navigator.clipboard.writeText(content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [message.content]);
+  }, [content]);
 
   return (
     <div className="flex justify-end py-3 animate-in fade-in duration-200">
@@ -337,9 +350,7 @@ function UserMessage({ message }: { message: ChatMessageItem }) {
                 ))}
               </div>
             )}
-            <MessageContent className="prose-sm">
-              {message.content}
-            </MessageContent>
+            <MessageContent className="prose-sm">{content}</MessageContent>
           </div>
         </Message>
         <MessageActions className="justify-end mt-1">
@@ -381,16 +392,20 @@ function AssistantMessage({
 }) {
   const [copied, setCopied] = useState(false);
   const hasThoughts = message.thoughts.length > 0;
-  const hasContent = message.content.length > 0;
-  const hasToolCalls = message.toolCalls.length > 0;
-  const isWaiting = isStreaming && !hasThoughts && !hasContent && !hasToolCalls;
-  const isThinkingOnly = isStreaming && hasThoughts && !hasContent;
+  const hasBlocks = message.blocks.length > 0;
+  const hasContent = message.blocks.some(
+    (b) => b.type === 'text' && b.text.length > 0,
+  );
+  const isWaiting = isStreaming && !hasThoughts && !hasBlocks;
+  const isThinkingOnly = isStreaming && hasThoughts && !hasBlocks;
+  const fullText = getTextFromBlocks(message.blocks);
+  const isLastBlock = (idx: number) => idx === message.blocks.length - 1;
 
   const handleCopy = useCallback(() => {
-    void navigator.clipboard.writeText(message.content);
+    void navigator.clipboard.writeText(fullText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [message.content]);
+  }, [fullText]);
 
   return (
     <div className="py-3 animate-in fade-in duration-200">
@@ -414,17 +429,24 @@ function AssistantMessage({
           </Reasoning>
         )}
 
-        {hasContent && (
-          <MessageContentWithAuth
-            content={message.content}
-            onSend={onSend}
-            isStreaming={isStreaming}
-            connectedPieces={connectedPieces}
-            onPieceConnected={onPieceConnected}
-          />
-        )}
-
-        {hasToolCalls && <ToolCallGroup toolCalls={message.toolCalls} />}
+        {message.blocks.map((block, idx) => {
+          if (block.type === 'text' && block.text.length > 0) {
+            return (
+              <MessageContentWithAuth
+                key={idx}
+                content={block.text}
+                onSend={onSend}
+                isStreaming={isStreaming && isLastBlock(idx)}
+                connectedPieces={connectedPieces}
+                onPieceConnected={onPieceConnected}
+              />
+            );
+          }
+          if (block.type === 'tool_calls') {
+            return <ToolCallGroup key={idx} toolCalls={block.calls} />;
+          }
+          return null;
+        })}
 
         {message.plan && <PlanCard entries={message.plan} />}
 
@@ -459,7 +481,7 @@ function AssistantMessage({
   );
 }
 
-function extractContext(tc: ChatMessageItem['toolCalls'][0]): string | null {
+function extractContext(tc: ToolCallItem): string | null {
   const input = tc.input;
   if (!input) return null;
 
@@ -480,7 +502,7 @@ function extractContext(tc: ChatMessageItem['toolCalls'][0]): string | null {
   return null;
 }
 
-function describeToolCalls(toolCalls: ChatMessageItem['toolCalls']): string {
+function describeToolCalls(toolCalls: ToolCallItem[]): string {
   const contexts: string[] = [];
   let primaryAction = '';
 
@@ -556,8 +578,8 @@ function isUtilityTool(name: string): boolean {
 }
 
 function groupToolCallsByPhase(
-  toolCalls: ChatMessageItem['toolCalls'],
-): Array<{ label: string; tools: ChatMessageItem['toolCalls'] }> {
+  toolCalls: ToolCallItem[],
+): Array<{ label: string; tools: ToolCallItem[] }> {
   const visible = toolCalls.filter((tc) => !isUtilityTool(tc.title || tc.name));
   if (visible.length === 0) return [];
 
@@ -565,9 +587,8 @@ function groupToolCallsByPhase(
     return [{ label: describeToolCalls(visible), tools: visible }];
   }
 
-  const groups: Array<{ label: string; tools: ChatMessageItem['toolCalls'] }> =
-    [];
-  let current: ChatMessageItem['toolCalls'] = [];
+  const groups: Array<{ label: string; tools: ToolCallItem[] }> = [];
+  let current: ToolCallItem[] = [];
 
   for (const tc of visible) {
     current.push(tc);
@@ -583,11 +604,7 @@ function groupToolCallsByPhase(
   return groups;
 }
 
-function ToolCallGroup({
-  toolCalls,
-}: {
-  toolCalls: ChatMessageItem['toolCalls'];
-}) {
+function ToolCallGroup({ toolCalls }: { toolCalls: ToolCallItem[] }) {
   const allDone = toolCalls.every((tc) => tc.status !== 'running');
   const groups = groupToolCallsByPhase(toolCalls);
 
@@ -598,7 +615,7 @@ function ToolCallGroup({
       {groups.map((group, i) => {
         const groupDone = group.tools.every((tc) => tc.status !== 'running');
         return (
-          <ChainOfThoughtStep key={i} defaultOpen={!allDone && !groupDone}>
+          <ChainOfThoughtStep key={i} defaultOpen={false}>
             <ChainOfThoughtTrigger
               leftIcon={
                 groupDone ? (
