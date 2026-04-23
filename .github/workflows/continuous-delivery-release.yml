@@ -56,21 +56,18 @@ jobs:
         run: |
           VERSION=${{ steps.version.outputs.release }}
           CANDIDATE_DIGEST=$(docker buildx imagetools inspect --raw ghcr.io/activepieces/activepieces-cloud:release-candidate | sha256sum | awk '{print $1}')
-          EXISTING_DIGEST=$(docker buildx imagetools inspect --raw activepieces/activepieces:$VERSION 2>/dev/null | sha256sum | awk '{print $1}' || echo "")
-          if [[ -z "$EXISTING_DIGEST" ]]; then
+          EXISTING_RAW=$(docker buildx imagetools inspect --raw activepieces/activepieces:$VERSION 2>/dev/null || true)
+          if [[ -z "$EXISTING_RAW" ]]; then
             echo "Tag $VERSION does not exist yet — proceeding."
             exit 0
           fi
+          EXISTING_DIGEST=$(echo "$EXISTING_RAW" | sha256sum | awk '{print $1}')
           if [[ "$EXISTING_DIGEST" == "$CANDIDATE_DIGEST" ]]; then
             echo "Tag $VERSION already exists and matches release-candidate digest — idempotent rerun, proceeding."
             exit 0
           fi
           echo "Tag $VERSION already exists with a different digest — refusing to overwrite."
           exit 1
-
-      - name: Check for breaking migrations
-        id: migration-check
-        run: bunx tsx tools/scripts/check-release-migrations.ts ${{ steps.version.outputs.release }}
 
       - name: Check for breaking migrations
         id: migration-check
