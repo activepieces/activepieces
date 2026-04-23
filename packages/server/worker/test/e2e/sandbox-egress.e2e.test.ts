@@ -48,6 +48,7 @@ describe.skipIf(skip)('sandbox egress — full stack (proxy + iptables + isolate
             proxyPort: proxy.port,
             firstBoxUid: SANDBOX_UID,
             numBoxes: 1,
+            nameservers: [],
         })
     })
 
