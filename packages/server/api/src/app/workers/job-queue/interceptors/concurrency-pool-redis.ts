@@ -43,6 +43,11 @@ export const concurrencyPoolRedis = {
         )
     },
 
+    async dropPromotedMember({ poolId, member }: { poolId: string, member: string }): Promise<void> {
+        const redis = await redisConnections.useExisting()
+        await redis.zrem(getConcurrencyPoolSetKey(poolId), member)
+    },
+
     buildMember({ projectId, jobId }: { projectId: string, jobId: string }): string {
         return `${projectId}:${jobId}`
     },

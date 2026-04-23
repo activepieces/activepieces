@@ -58,7 +58,7 @@ export const rateLimiterInterceptor: JobInterceptor = {
         const parsed = concurrencyPoolRedis.parseMember(popped)
         if (isNil(parsed)) {
             log.warn({ popped }, '[rateLimiterInterceptor] popped waiter has invalid format, dropping')
-            await concurrencyPoolRedis.rollbackPromotion({ poolId: effectivePoolId, member: popped, timeoutMs })
+            await concurrencyPoolRedis.dropPromotedMember({ poolId: effectivePoolId, member: popped })
             return
         }
 

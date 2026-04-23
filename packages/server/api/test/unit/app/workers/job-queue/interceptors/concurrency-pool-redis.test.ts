@@ -272,6 +272,22 @@ describe('concurrencyPoolRedis Lua primitives', () => {
             const waiters = await redis.lrange(waitlistKey, 0, -1)
             expect(waiters).toEqual(['p:orphan', 'p:newcomer'])
         })
+
+        it('A14: dropPromotedMember removes the member from the active set without re-queueing', async () => {
+            const poolId = `a14-${crypto.randomUUID()}`
+            const redis = await redisConnections.useExisting()
+            const setKey = getConcurrencyPoolSetKey(poolId)
+            const waitlistKey = getConcurrencyPoolWaitlistKey(poolId)
+
+            await redis.zadd(setKey, Date.now(), 'bogus-member')
+            await redis.rpush(waitlistKey, 'p:next-valid-waiter')
+
+            await concurrencyPoolRedis.dropPromotedMember({ poolId, member: 'bogus-member' })
+
+            expect(await redis.zcard(setKey)).toBe(0)
+            const waiters = await redis.lrange(waitlistKey, 0, -1)
+            expect(waiters).toEqual(['p:next-valid-waiter'])
+        })
     })
 
     describe('Suite B — concurrent / race-condition correctness', () => {

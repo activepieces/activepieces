@@ -502,6 +502,34 @@ describe('rateLimiterInterceptor', () => {
             expect(promoteJob).not.toHaveBeenCalled()
         })
 
+        it('drops invalid waitlist member without re-queueing it, unblocking the pool', async () => {
+            vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
+                if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return FLOW_TIMEOUT_SECONDS
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 1
+                return 0
+            })
+            const promoteJob = installPromoteJobMock(true)
+            const jobData = createFlowJobData()
+
+            await rateLimiterInterceptor.preDispatch({ jobId: 'active', jobData, job: createMockJob(), log: mockLog })
+            await rateLimiterInterceptor.preDispatch({ jobId: 'valid-waiter', jobData, job: createMockJob(), log: mockLog })
+
+            const redis = await redisConnections.useExisting()
+            await redis.lpush(getConcurrencyPoolWaitlistKey(jobData.projectId), 'invalid-no-colon')
+
+            await rateLimiterInterceptor.onJobFinished({ jobId: 'active', jobData, failed: false, log: mockLog })
+
+            expect(promoteJob).not.toHaveBeenCalled()
+            const activeMembers = await redis.zrange(getConcurrencyPoolSetKey(jobData.projectId), 0, -1)
+            expect(activeMembers).toHaveLength(0)
+            const waiters = await redis.lrange(getConcurrencyPoolWaitlistKey(jobData.projectId), 0, -1)
+            expect(waiters).toEqual([`${jobData.projectId}:valid-waiter`])
+
+            await rateLimiterInterceptor.onJobFinished({ jobId: 'filler', jobData, failed: false, log: mockLog })
+            expect(promoteJob).toHaveBeenCalledTimes(1)
+            expect(promoteJob).toHaveBeenCalledWith({ jobId: 'valid-waiter', platformId: jobData.platformId })
+        })
+
         it('releases slot + promotes in single atomic step across two back-to-back finishes', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return FLOW_TIMEOUT_SECONDS
