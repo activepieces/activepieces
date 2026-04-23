@@ -121,11 +121,13 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
     async deleteConversation({ id, projectId, userId, platformId }: DeleteConversationParams): Promise<void> {
         const conversation = await this.getConversationOrThrow({ id, projectId, userId })
-        if (conversation.sandboxSessionId) {
-            const anthropicApiKey = await this.getAnthropicApiKey({ platformId })
-            await chatSandboxAgent.destroySession({ sessionId: conversation.sandboxSessionId, anthropicApiKey }).catch(() => { /* session may already be gone */ })
-        }
+        const sandboxSessionId = conversation.sandboxSessionId
         await conversationRepo().delete({ id, projectId, userId })
+        if (sandboxSessionId) {
+            void this.getAnthropicApiKey({ platformId }).then((anthropicApiKey) =>
+                chatSandboxAgent.destroySession({ sessionId: sandboxSessionId, anthropicApiKey }),
+            ).catch(() => undefined)
+        }
     },
 
     async getMessages({ id, projectId, userId, platformId }: GetMessagesParams): Promise<{ data: ChatHistoryMessage[] }> {
