@@ -1,24 +1,80 @@
 import { apDayjsDuration } from '@activepieces/server-utils'
 import { ApEdition, ExecuteFlowJobData, isNil, JOB_PRIORITY, JobData, PlanName, PlatformId, RATE_LIMIT_PRIORITY, RunEnvironment, tryCatch, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { getConcurrencyPoolSetKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
-import { distributedStore, redisConnections } from '../../../database/redis-connections'
+import { getPlatformPlanNameKey } from '../../../database/redis/keys'
+import { distributedStore } from '../../../database/redis-connections'
 import { concurrencyPoolService } from '../../../ee/platform/concurrency-pool/concurrency-pool.service'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { InterceptorResult, InterceptorVerdict, JobInterceptor } from '../job-interceptor'
+import { jobQueue } from '../job-queue'
+import { concurrencyPoolRedis } from './concurrency-pool-redis'
 
-const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
+export const rateLimiterInterceptor: JobInterceptor = {
+    async preDispatch({ jobId, jobData, log }): Promise<InterceptorResult> {
+        if (!shouldContinue(jobData)) {
+            return { verdict: InterceptorVerdict.ALLOW }
+        }
 
-const PLAN_CONCURRENT_JOBS_LIMITS: Record<string, number> = {
-    [PlanName.STANDARD]: 5,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER1]: 5,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER2]: 5,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER3]: 10,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER4]: 15,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER5]: 20,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER6]: 25,
-    [PlanName.ENTERPRISE]: 30,
+        const { poolId, effectivePoolId } = await resolveEffectivePoolId({ projectId: jobData.projectId, log })
+        const maxConcurrentJobs = await getMaxConcurrentJobs({ poolId, platformId: jobData.platformId, log })
+        const outcome = await concurrencyPoolRedis.acquireSlotOrEnqueue({
+            poolId: effectivePoolId,
+            member: concurrencyPoolRedis.buildMember({ projectId: jobData.projectId, jobId }),
+            maxJobs: maxConcurrentJobs,
+            timeoutMs: getFlowTimeoutMs(),
+        })
+
+        if (outcome === 'acquired') {
+            log.debug({ jobId, projectId: jobData.projectId }, '[rateLimiterInterceptor] Job allowed')
+            return { verdict: InterceptorVerdict.ALLOW }
+        }
+
+        const delayInMs = getFlowTimeoutMs() + SAFETY_NET_DELAY_BUFFER_MS
+        log.info({ jobId, projectId: jobData.projectId, delayInMs }, '[rateLimiterInterceptor] Job enqueued to waitlist')
+        return {
+            verdict: InterceptorVerdict.REJECT,
+            delayInMs,
+            priority: JOB_PRIORITY[RATE_LIMIT_PRIORITY],
+        }
+    },
+
+    async onJobFinished({ jobId, jobData, log }): Promise<void> {
+        if (!shouldContinue(jobData)) {
+            return
+        }
+
+        const { effectivePoolId } = await resolveEffectivePoolId({ projectId: jobData.projectId, log })
+        const timeoutMs = getFlowTimeoutMs()
+        const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({
+            poolId: effectivePoolId,
+            member: concurrencyPoolRedis.buildMember({ projectId: jobData.projectId, jobId }),
+            timeoutMs,
+        })
+        if (isNil(popped)) {
+            return
+        }
+
+        const parsed = concurrencyPoolRedis.parseMember(popped)
+        if (isNil(parsed)) {
+            log.warn({ popped }, '[rateLimiterInterceptor] popped waiter has invalid format, dropping')
+            await concurrencyPoolRedis.rollbackPromotion({ poolId: effectivePoolId, member: popped, timeoutMs })
+            return
+        }
+
+        const promoted = await jobQueue(log).promoteJob({
+            jobId: parsed.jobId,
+            platformId: jobData.platformId,
+        })
+
+        if (promoted) {
+            log.debug({ promotedJobId: parsed.jobId, poolId: effectivePoolId }, '[rateLimiterInterceptor] Waiter promoted')
+            return
+        }
+
+        log.info({ popped, poolId: effectivePoolId }, '[rateLimiterInterceptor] Waiter promotion failed, rolling back slot')
+        await concurrencyPoolRedis.rollbackPromotion({ poolId: effectivePoolId, member: popped, timeoutMs })
+    },
 }
 
 function shouldContinue(jobData: JobData): jobData is ExecuteFlowJobData {
@@ -35,8 +91,19 @@ function shouldContinue(jobData: JobData): jobData is ExecuteFlowJobData {
     return true
 }
 
+async function resolveEffectivePoolId({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<{ poolId: string | null, effectivePoolId: string }> {
+    const { data: poolId } = await tryCatch(() => concurrencyPoolService(log).getProjectPoolId(projectId))
+    const effectivePoolId = poolId ?? projectId
+    return { poolId: poolId ?? null, effectivePoolId }
+}
 
-async function getMaxConcurrentJobsForPlatformPlan({ platformId }: { platformId: PlatformId }): Promise<number> {
+async function getMaxConcurrentJobs({ poolId, platformId, log }: { poolId: string | null, platformId: PlatformId, log: FastifyBaseLogger }): Promise<number> {
+    if (!isNil(poolId)) {
+        const { data: value, error } = await tryCatch(() => concurrencyPoolService(log).getPoolLimit(poolId))
+        if (error === null && !isNil(value)) {
+            return value
+        }
+    }
     if (system.getEdition() !== ApEdition.CLOUD) {
         return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
     }
@@ -48,111 +115,20 @@ async function getMaxConcurrentJobsForPlatformPlan({ platformId }: { platformId:
     return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
 }
 
-async function getMaxConcurrentJobs({ poolId, platformId, log }: { poolId: string | null, platformId: PlatformId, log: FastifyBaseLogger }): Promise<number> {
-    if (!isNil(poolId)) {
-        const { data: value, error } = await tryCatch(() => concurrencyPoolService(log).getPoolLimit(poolId))
-        if (error === null && !isNil(value)) {
-            return value
-        }
-    }
-    return getMaxConcurrentJobsForPlatformPlan({ platformId })
+function getFlowTimeoutMs(): number {
+    return apDayjsDuration(system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS), 'seconds').add(1, 'minute').asMilliseconds()
 }
 
-async function tryAcquireSlot({ jobId, jobData, log }: { jobId: string, jobData: ExecuteFlowJobData, log: FastifyBaseLogger }): Promise<boolean> {
-    const flowTimeoutInMilliseconds = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS), 'seconds').add(1, 'minute').asMilliseconds()
-    const { data: poolId } = await tryCatch(() => concurrencyPoolService(log).getProjectPoolId(jobData.projectId))
-    const effectivePoolId = poolId ?? jobData.projectId
-    const maxConcurrentJobs = await getMaxConcurrentJobs({
-        poolId,
-        platformId: jobData.platformId,
-        log,
-    })
-    const setKey = getConcurrencyPoolSetKey(effectivePoolId)
-    const currentTime = Date.now()
-    const member = `${jobData.projectId}:${jobId}`
-    const redisConnection = await redisConnections.useExisting()
+const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
+const SAFETY_NET_DELAY_BUFFER_MS = apDayjsDuration(60, 'seconds').asMilliseconds()
 
-    const result = await redisConnection.eval(
-        `
-local setKey = KEYS[1]
-local currentTime = tonumber(ARGV[1])
-local timeoutMs = tonumber(ARGV[2])
-local maxJobs = tonumber(ARGV[3])
-local member = ARGV[4]
-
-redis.call('ZREMRANGEBYSCORE', setKey, '-inf', currentTime - timeoutMs)
-
-local existingScore = redis.call('ZSCORE', setKey, member)
-if existingScore then
-    return 0
-end
-
-local currentSize = redis.call('ZCARD', setKey)
-if currentSize >= maxJobs then
-    return 1
-end
-
-redis.call('ZADD', setKey, currentTime, member)
-redis.call('EXPIRE', setKey, math.ceil(timeoutMs / 1000))
-
-return 0
-`,
-        1,
-        setKey,
-        currentTime.toString(),
-        flowTimeoutInMilliseconds.toString(),
-        maxConcurrentJobs.toString(),
-        member,
-    ) as number
-
-    return result === 0
-}
-
-async function releaseSlot({ jobId, jobData, log }: { jobId: string, jobData: ExecuteFlowJobData, log: FastifyBaseLogger }): Promise<void> {
-    const { data: poolId } = await tryCatch(() => concurrencyPoolService(log).getProjectPoolId(jobData.projectId))
-    const effectivePoolId = poolId ?? jobData.projectId
-    const setKey = getConcurrencyPoolSetKey(effectivePoolId)
-    const member = `${jobData.projectId}:${jobId}`
-    const redisConnection = await redisConnections.useExisting()
-    await redisConnection.eval(
-        `
-local setKey = KEYS[1]
-local member = ARGV[1]
-redis.call('ZREM', setKey, member)
-return 1
-`,
-        1,
-        setKey,
-        member,
-    )
-}
-
-export const rateLimiterInterceptor: JobInterceptor = {
-    async preDispatch({ jobId, jobData, job, log }): Promise<InterceptorResult> {
-        if (!shouldContinue(jobData)) {
-            return { verdict: InterceptorVerdict.ALLOW }
-        }
-
-        const allowed = await tryAcquireSlot({ jobId, jobData, log })
-        if (allowed) {
-            log.debug({ jobId, projectId: jobData.projectId }, '[rateLimiterInterceptor] Job allowed')
-            return { verdict: InterceptorVerdict.ALLOW }
-        }
-
-        const delayInMs = Math.min(600_000, 20_000 * Math.pow(2, job.attemptsMade))
-        log.info({ jobId, projectId: jobData.projectId, delayInMs }, '[rateLimiterInterceptor] Job rate limited')
-        return {
-            verdict: InterceptorVerdict.REJECT,
-            delayInMs,
-            priority: JOB_PRIORITY[RATE_LIMIT_PRIORITY],
-        }
-    },
-
-    async onJobFinished({ jobId, jobData, log }): Promise<void> {
-        if (!shouldContinue(jobData)) {
-            return
-        }
-        await releaseSlot({ jobId, jobData, log })
-        log.debug({ jobId, projectId: jobData.projectId }, '[rateLimiterInterceptor] Slot released')
-    },
+const PLAN_CONCURRENT_JOBS_LIMITS: Record<string, number> = {
+    [PlanName.STANDARD]: 5,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER1]: 5,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER2]: 5,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER3]: 10,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER4]: 15,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER5]: 20,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER6]: 25,
+    [PlanName.ENTERPRISE]: 30,
 }
