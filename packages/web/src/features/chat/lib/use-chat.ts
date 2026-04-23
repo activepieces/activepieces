@@ -249,6 +249,14 @@ export function useAgentChat({
       abortRef.current = null;
       setIsStreaming(false);
       setWasCancelled(true);
+      setMessages((prev) =>
+        prev.map((msg) => ({
+          ...msg,
+          toolCalls: msg.toolCalls.map((tc) =>
+            tc.status === 'running' ? { ...tc, status: 'failed' as const } : tc,
+          ),
+        })),
+      );
     }
   }, []);
 
