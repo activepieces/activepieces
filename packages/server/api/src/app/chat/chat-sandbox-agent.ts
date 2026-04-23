@@ -254,16 +254,31 @@ async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionPa
     return messages
 }
 
+function isHistoryReplayDump(text: string): boolean {
+    return text.includes('"jsonrpc"') && text.includes('"session/update"') && text.includes('"createdAt"')
+}
+
+function stripHistoryReplay(text: string): string {
+    if (!isHistoryReplayDump(text)) {
+        const marker = 'Previous session history is replayed below'
+        const idx = text.indexOf(marker)
+        if (idx === -1) return text
+        return text.slice(0, idx).trim()
+    }
+    return ''
+}
+
 function pushAssistantMessage(
     messages: ChatHistoryMessage[],
     content: string,
     thoughts: string,
     toolCalls: ChatHistoryToolCall[],
 ): void {
-    if (!content && !thoughts && toolCalls.length === 0) return
+    const cleaned = stripHistoryReplay(content)
+    if (!cleaned && !thoughts && toolCalls.length === 0) return
     messages.push({
         role: 'assistant',
-        content,
+        content: cleaned,
         ...(thoughts ? { thoughts } : {}),
         ...(toolCalls.length > 0 ? { toolCalls } : {}),
     })

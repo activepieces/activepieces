@@ -139,6 +139,8 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 return await reply
             }
 
+            const historyReplayFilter = createHistoryReplayFilter()
+
             unsubscribeEvent = session.onEvent((event) => {
                 if (cleaned) return
                 if (event.sender !== 'agent') return
@@ -150,6 +152,8 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
                 const update = payload.params.update
                 if (!isPlainObject(update)) return
+
+                if (historyReplayFilter.shouldSuppress(update)) return
 
                 handleSessionUpdate({
                     raw: reply.raw,
@@ -334,6 +338,55 @@ function extractToolOutput(update: Record<string, unknown>): string | undefined 
         return result.slice(0, MAX_TOOL_OUTPUT_SIZE) + '... (truncated)'
     }
     return result
+}
+
+const HISTORY_REPLAY_MARKERS = [
+    'Previous session history is replayed below',
+    '"jsonrpc"',
+    '"session/update"',
+]
+
+function looksLikeJsonRpcDump(text: string): boolean {
+    return text.includes('"jsonrpc"') || text.includes('"createdAt"') || text.includes('"session/update"')
+}
+
+function createHistoryReplayFilter(): { shouldSuppress: (update: Record<string, unknown>) => boolean } {
+    let state: 'detecting' | 'suppressing' | 'passthrough' = 'detecting'
+    let buffer = ''
+
+    return {
+        shouldSuppress(update: Record<string, unknown>): boolean {
+            if (state === 'passthrough') return false
+
+            const updateType = getString(update, 'sessionUpdate')
+            if (updateType !== 'agent_message_chunk') return false
+
+            const text = extractContentText(update)
+            if (!text) return false
+
+            if (state === 'detecting') {
+                buffer += text
+                const isDump = HISTORY_REPLAY_MARKERS.some((m) => buffer.includes(m))
+                if (isDump) {
+                    state = 'suppressing'
+                    buffer = ''
+                    return true
+                }
+                if (buffer.length > 500) {
+                    state = 'passthrough'
+                    buffer = ''
+                }
+                return false
+            }
+
+            if (looksLikeJsonRpcDump(text) || text.includes('[history truncated]')) {
+                return true
+            }
+
+            state = 'passthrough'
+            return false
+        },
+    }
 }
 
 function writeSseEvent(raw: NodeJS.WritableStream, event: { type: ChatStreamEventType, data: Record<string, unknown> }): void {
