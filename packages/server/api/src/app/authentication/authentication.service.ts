@@ -9,6 +9,7 @@ import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { authenticationUtils } from './authentication-utils'
 import { userIdentityService } from './user-identity/user-identity-service'
+import { accessTokenManager } from './lib/access-token-manager'
 
 export const authenticationService = (log: FastifyBaseLogger) => ({
     async signUp(params: SignUpParams): Promise<{ result: AuthenticationResponse | MfaChallengeResponse, responseHeaders: Headers | null }> {
@@ -32,7 +33,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 })
                 if (!isNil(user)) {
                     log.info({ email: params.email, provider: params.provider, preferredPlatformId }, 'User signed up with invitation, returning preferred platform token')
-                    return mfaSetupResponse(log, { email: params.email, password: params.password, platformId: preferredPlatformId })
+                    return mfaSetupResponse(log, { email: params.email, password: params.password, platformId: preferredPlatformId, authResponse })
                 }
             }
             log.info({ email: params.email, provider: params.provider }, 'User signed up and platform created')
@@ -40,7 +41,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             if (!userIdentity.emailVerified) {
                 return { result: authResponse, responseHeaders: null }
             }
-            return mfaSetupResponse(log, { email: params.email, password: params.password })
+            return mfaSetupResponse(log, { email: params.email, password: params.password, authResponse })
         }
 
         await assertCanSignup(log, {
@@ -49,13 +50,20 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             email: params.email,
         })
 
-        await userIdentityService(log).create({ ...params, emailVerified: true })
+        const identity = await userIdentityService(log).create({ ...params, emailVerified: true })
+        const user = await userService(log).getOneByIdAndPlatformIdOrThrow({ id: identity.id, platformId: params.platformId })
 
         await userInvitationsService(log).provisionUserInvitation({ email: params.email })
 
         log.info({ email: params.email, platformId: params.platformId }, 'User signed up to existing platform')
 
-        return mfaSetupResponse(log, { email: params.email, password: params.password, platformId: params.platformId })
+        const authResponse = await authenticationUtils(log).getProjectAndToken({
+            userId: user.id,
+            platformId: params.platformId ,
+            projectId: null,
+        })
+
+        return mfaSetupResponse(log, { email: params.email, password: params.password, platformId: params.platformId, authResponse })
     },
     async signInWithPassword(params: SignInWithPasswordParams): Promise<{ result: AuthenticationResponse | MfaChallengeResponse, responseHeaders: Headers | null }> {
         const { identity, responseHeaders, twoFactorRedirect } = await userIdentityService(log).verifyIdentityPassword(params)
@@ -307,25 +315,7 @@ async function mfaSetupResponse(log: FastifyBaseLogger, params: MfaSetupResponse
         password: params.password,
     })
     const platform = params.platformId ? await platformService(log).getOneOrThrow(params.platformId) : null
-
-    let authResponse: AuthenticationResponse | undefined
-    if (params.platformId) {
-        const identity = await userIdentityService(log).getIdentityByEmail(params.email)
-        if (identity) {
-            const user = await userService(log).getOneByIdentityAndPlatform({
-                identityId: identity.id,
-                platformId: params.platformId,
-            })
-            if (user) {
-                authResponse = await authenticationUtils(log).getProjectAndToken({
-                    userId: user.id,
-                    platformId: params.platformId,
-                    projectId: null,
-                })
-            }
-        }
-    }
-
+    const authResponse = platform?.enforceTotp === false ? params.authResponse :  undefined
     return {
         result: { mfaRequired: true as const, setupRequired: true, enforced: platform?.enforceTotp ?? false, authResponse },
         responseHeaders,
@@ -376,4 +366,5 @@ type MfaSetupResponseParams = {
     email: string
     password: string
     platformId?: string
+    authResponse?: AuthenticationResponse
 }
