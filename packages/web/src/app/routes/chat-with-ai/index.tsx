@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { chatApi } from '@/features/chat/lib/chat-api';
@@ -15,26 +15,19 @@ export function ChatWithAIPage() {
     useParams<{ projectId: string; conversationId: string }>();
   const projectId =
     routeProjectId ?? authenticationSession.getProjectId() ?? '';
-  const [chatKey, setChatKey] = useState(0);
 
   const selectedConversationId = urlConversationId ?? null;
-
-  useEffect(() => {
-    setChatKey((k) => k + 1);
-  }, [projectId]);
 
   useEffect(() => {
     void chatApi.warm();
   }, []);
 
   const handleNewChat = useCallback(() => {
-    setChatKey((k) => k + 1);
     navigate(`/projects/${projectId}/chat`, { replace: true });
   }, [navigate, projectId]);
 
   const handleSelectConversation = useCallback(
     (conversationId: string) => {
-      setChatKey((k) => k + 1);
       navigate(`/projects/${projectId}/chat/${conversationId}`, {
         replace: true,
       });
@@ -87,12 +80,11 @@ export function ChatWithAIPage() {
         />
       </div>
       <AIChatBox
-        key={`${projectId}-${chatKey}`}
+        key={`${projectId}-${selectedConversationId ?? 'new'}`}
         incognito={false}
         conversationId={selectedConversationId}
         onTitleUpdate={handleTitleUpdate}
         onConversationCreated={handleConversationCreated}
-        onFirstMessage={() => {}}
       />
     </div>
   );

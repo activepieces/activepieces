@@ -70,6 +70,11 @@ export class AddChatTables1776200000000 implements Migration {
             ON "sandbox_events" ("session_id", "event_index", "id")
         `)
 
+        await queryRunner.query(`
+            CREATE INDEX IF NOT EXISTS "idx_sandbox_sessions_created_at"
+            ON "sandbox_sessions" ("created_at")
+        `)
+
         if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
             return
         }

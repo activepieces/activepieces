@@ -14,6 +14,12 @@ export const SandboxSessionEntity = new EntitySchema<SandboxSessionRow>({
         config_options_json: { type: 'jsonb', nullable: true },
         modes_json: { type: 'jsonb', nullable: true },
     },
+    indices: [
+        {
+            name: 'idx_sandbox_sessions_created_at',
+            columns: ['created_at'],
+        },
+    ],
 })
 
 export const SandboxSessionEventEntity = new EntitySchema<SandboxSessionEventRow>({

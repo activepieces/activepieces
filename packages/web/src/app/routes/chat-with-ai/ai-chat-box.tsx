@@ -1,7 +1,7 @@
 import { AIProviderName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { RefreshCw, Square } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import {
   ChatContainerContent,
@@ -28,7 +28,6 @@ import { getTextFromBlocks, parseQuickReplies } from './lib/message-parsers';
 export function AIChatBox({
   incognito,
   conversationId,
-  onFirstMessage,
   onTitleUpdate,
   onConversationCreated,
 }: AIChatBoxProps) {
@@ -55,7 +54,6 @@ export function AIChatBox({
     <ChatBoxContent
       incognito={incognito}
       conversationId={conversationId}
-      onFirstMessage={onFirstMessage}
       onTitleUpdate={onTitleUpdate}
       onConversationCreated={onConversationCreated}
     />
@@ -65,7 +63,6 @@ export function AIChatBox({
 function ChatBoxContent({
   incognito,
   conversationId: initialConversationId,
-  onFirstMessage,
   onTitleUpdate,
   onConversationCreated,
 }: AIChatBoxProps) {
@@ -79,7 +76,6 @@ function ChatBoxContent({
     cancelStream,
     setConversationId,
   } = useAgentChat({ onTitleUpdate, onConversationCreated });
-  const hasSentFirst = useRef(false);
   const [connectedPieces, setConnectedPieces] = useState<Set<string>>(
     new Set(),
   );
@@ -96,16 +92,10 @@ function ChatBoxContent({
   const handleSend = useCallback(
     async (text: string, files?: File[]) => {
       if (!text.trim() && (!files || files.length === 0)) return;
-      if (!hasSentFirst.current) {
-        hasSentFirst.current = true;
-        onFirstMessage(text.trim().slice(0, 100));
-      }
       await sendMessage(text.trim(), files);
     },
-    [sendMessage, onFirstMessage],
+    [sendMessage],
   );
-
-  // no separate isThinking — handled inside AssistantMessage
 
   const isEmpty =
     messages.length === 0 && !initialConversationId && !isLoadingHistory;
@@ -229,7 +219,6 @@ function ChatBoxContent({
 type AIChatBoxProps = {
   incognito: boolean;
   conversationId?: string | null;
-  onFirstMessage: (text: string) => void;
   onConversationCreated?: () => void;
   onTitleUpdate?: (title: string, conversationId?: string) => void;
 };

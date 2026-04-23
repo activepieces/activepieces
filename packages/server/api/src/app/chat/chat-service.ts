@@ -75,7 +75,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
             .take(limit + 1)
 
         if (!isNil(cursor)) {
-            queryBuilder.andWhere('c.created < (SELECT cc.created FROM chat_conversation cc WHERE cc.id = :cursor AND cc.projectId = :projectId AND cc.userId = :userId)', { cursor })
+            queryBuilder.andWhere('c.created < :cursor', { cursor })
         }
 
         const results = await queryBuilder.getMany()
@@ -84,7 +84,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
         return {
             data,
-            next: hasMore ? data[data.length - 1].id : null,
+            next: hasMore ? data[data.length - 1].created : null,
             previous: null,
         }
     },
