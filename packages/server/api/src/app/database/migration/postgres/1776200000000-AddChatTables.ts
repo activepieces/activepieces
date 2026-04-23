@@ -81,11 +81,12 @@ export class AddChatTables1776200000000 implements Migration {
 
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
-            ADD "chatEnabled" boolean
+            ADD COLUMN IF NOT EXISTS "chatEnabled" boolean
         `)
         await queryRunner.query(`
             UPDATE "platform_plan"
             SET "chatEnabled" = false
+            WHERE "chatEnabled" IS NULL
         `)
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
