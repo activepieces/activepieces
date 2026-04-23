@@ -67,6 +67,7 @@
   "Timeout (in seconds)": "Timeout (in Sekunden)",
   "Follow redirects": "Weiterleitungen folgen",
   "The name of the new folder": "Der Name des neuen Ordners",
+  "The Drive folder to target. Leave empty to use the root of My Drive. Type in the box to search your Drive by folder name. If the folder still isn't listed, switch this field to 'Dynamic value' (the toggle next to the field) and paste the folder ID — you can copy it from the folder's URL in Drive, after /folders/ (e.g. https://drive.google.com/drive/folders/<FOLDER_ID>).": "Der Laufwerksordner zum Ziel. Lassen Sie leer, um das Stammverzeichnis von Mein Laufwerk zu verwenden. Geben Sie das Feld ein, um Ihr Laufwerk nach dem Ordnernamen zu durchsuchen. Wenn der Ordner noch nicht aufgelistet ist, dieses Feld auf 'Dynamischen Wert' umschalten (neben dem Feld) und die Ordner-ID einfügen — Sie können es von der Ordner-URL in Laufwerk kopieren, hinter /folders/ (e. . https://drive.google.com/drive/folders/<FOLDER_ID>).",
   "Determines if folders from Team Drives should be included in the results.": "Legt fest, ob Ordner von Team-Laufwerken in die Ergebnisse aufgenommen werden sollen.",
   "The name of the new text file": "Der Name der neuen Textdatei",
   "The text content to add to file": "Der Textinhalt zum Hinzufügen in die Datei",
