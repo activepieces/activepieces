@@ -438,47 +438,60 @@ function AssistantMessage({
   );
 }
 
-function extractPieceName(input?: Record<string, unknown>): string | null {
+function extractContext(tc: ChatMessageItem['toolCalls'][0]): string | null {
+  const input = tc.input;
   if (!input) return null;
-  const raw = typeof input.pieceName === 'string' ? input.pieceName : null;
-  if (!raw) return null;
-  return raw.replace(/^@activepieces\/piece-/, '').replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+  if (typeof input.pieceName === 'string') {
+    return input.pieceName.replace(/^@activepieces\/piece-/, '').replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  if (typeof input.actionName === 'string') {
+    return input.actionName.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  if (typeof input.displayName === 'string') {
+    return input.displayName;
+  }
+  return null;
 }
 
 function describeToolCalls(toolCalls: ChatMessageItem['toolCalls']): string {
-  const pieces = new Set<string>();
-  const actions = new Set<string>();
+  const contexts: string[] = [];
+  let primaryAction = '';
 
   for (const tc of toolCalls) {
     const name = (tc.title || tc.name).toLowerCase();
-    const piece = extractPieceName(tc.input);
-    if (piece) pieces.add(piece);
+    const ctx = extractContext(tc);
+    if (ctx && !contexts.includes(ctx)) contexts.push(ctx);
 
-    if (name.includes('build_flow') || name.includes('create_flow')) actions.add('build');
-    else if (name.includes('update_trigger')) actions.add('trigger');
-    else if (name.includes('add_step')) actions.add('add_step');
-    else if (name.includes('update_step')) actions.add('update_step');
-    else if (name.includes('test_flow') || name.includes('test_step')) actions.add('test');
-    else if (name.includes('list_pieces') || name.includes('get_piece_props')) actions.add('explore');
-    else if (name.includes('list_connections')) actions.add('connections');
-    else if (name.includes('list_flows') || name.includes('flow_structure')) actions.add('flows');
-    else if (name.includes('list_tables') || name.includes('find_records')) actions.add('data');
-    else if (name.includes('lock_and_publish') || name.includes('change_flow_status')) actions.add('publish');
+    if (!primaryAction) {
+      if (name.includes('build_flow') || name.includes('create_flow')) primaryAction = 'build';
+      else if (name.includes('update_trigger')) primaryAction = 'trigger';
+      else if (name.includes('add_step')) primaryAction = 'add';
+      else if (name.includes('update_step') || name.includes('test_step')) primaryAction = 'configure';
+      else if (name.includes('test_flow')) primaryAction = 'test';
+      else if (name.includes('list_pieces') || name.includes('get_piece_props')) primaryAction = 'explore';
+      else if (name.includes('list_connections')) primaryAction = 'connections';
+      else if (name.includes('list_flows') || name.includes('flow_structure')) primaryAction = 'flows';
+      else if (name.includes('list_tables') || name.includes('find_records')) primaryAction = 'data';
+      else if (name.includes('lock_and_publish') || name.includes('change_flow_status')) primaryAction = 'publish';
+    }
   }
 
-  const pieceList = Array.from(pieces).slice(0, 2).join(' & ');
+  const subject = contexts.slice(0, 2).join(' & ');
 
-  if (actions.has('build')) return pieceList ? t('Creating {pieces} flow', { pieces: pieceList }) : t('Creating the flow');
-  if (actions.has('trigger')) return pieceList ? t('Setting up {pieces} trigger', { pieces: pieceList }) : t('Setting up the trigger');
-  if (actions.has('add_step')) return pieceList ? t('Adding {pieces} step', { pieces: pieceList }) : t('Adding steps');
-  if (actions.has('update_step')) return pieceList ? t('Configuring {pieces}', { pieces: pieceList }) : t('Configuring steps');
-  if (actions.has('test')) return pieceList ? t('Testing {pieces}', { pieces: pieceList }) : t('Testing the flow');
-  if (actions.has('explore')) return pieceList ? t('Looking up {pieces}', { pieces: pieceList }) : t('Exploring integrations');
-  if (actions.has('connections')) return t('Checking connections');
-  if (actions.has('flows')) return t('Looking at your flows');
-  if (actions.has('data')) return t('Looking at your data');
-  if (actions.has('publish')) return t('Publishing the flow');
-  return t('Working on it');
+  switch (primaryAction) {
+    case 'build': return subject ? t('Creating {subject} flow', { subject }) : t('Creating the flow');
+    case 'trigger': return subject ? t('Setting up {subject} trigger', { subject }) : t('Setting up the trigger');
+    case 'add': return subject ? t('Adding {subject} step', { subject }) : t('Adding a new step');
+    case 'configure': return subject ? t('Configuring {subject}', { subject }) : t('Wiring up the steps');
+    case 'test': return subject ? t('Testing {subject}', { subject }) : t('Running tests');
+    case 'explore': return subject ? t('Looking up {subject}', { subject }) : t('Exploring integrations');
+    case 'connections': return t('Checking connections');
+    case 'flows': return t('Reviewing your flows');
+    case 'data': return t('Querying your data');
+    case 'publish': return t('Publishing the flow');
+    default: return t('Working on it');
+  }
 }
 
 function isUtilityTool(name: string): boolean {
