@@ -88,7 +88,9 @@ npm run lint-dev      # Lint with auto-fix (ALWAYS before done)
   - **`feature`** — new functionality
   - **`bug`** — bug fix
   - **`skip-changelog`** — changes that should not appear in the changelog (docs, CI tweaks, internal refactors, etc.)
-- If the PR includes any contributions to pieces (integrations under `packages/pieces`), also add the **`pieces`** label (in addition to the primary label above).
+- If the PR includes any contributions to pieces (integrations under `packages/pieces`), also add the appropriate pieces label (in addition to the primary label above):
+  - **`area/third-party-pieces`** — for third-party integrations (most pieces under `packages/pieces/community/`)
+  - **`area/core-pieces`** — for core pieces (under `packages/pieces/core/`)
 
 ## Database Migrations
 

@@ -1,5 +1,5 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 const markdownDescription = `
 Follow these steps to obtain your Tavily API Key:
@@ -16,16 +16,12 @@ export const tavilyAuth = PieceAuth.SecretText({
 	validate: async ({ auth }) => {
 		try {
 			await httpClient.sendRequest({
-				method: HttpMethod.POST,
-				url: 'https://api.tavily.com/search',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: {
-					api_key: auth,
-					query: 'test',
-					search_depth: 'basic',
-				},
+				method: HttpMethod.GET,
+				url: 'https://api.tavily.com/usage',
+				authentication: {
+					type: AuthenticationType.BEARER_TOKEN,
+					token: auth
+				}
 			});
 			return {
 				valid: true,
