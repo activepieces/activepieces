@@ -53,21 +53,21 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
         return pending
     }
     const promise = (async () => {
-        const providerType = process.env.AP_SANDBOX_PROVIDER ?? 'local'
+        const providerType = process.env.AP_SANDBOX_PROVIDER ?? 'cloudflare'
         let sandbox: unknown
 
-        if (providerType === 'cloudflare') {
-            const { cloudflare } = await import('sandbox-agent/cloudflare')
-            const { Sandbox } = await import('@cloudflare/sandbox')
-            sandbox = cloudflare({ sdk: new Sandbox() })
-        }
-        else {
+        if (providerType === 'local') {
             const { local } = await import('sandbox-agent/local')
             sandbox = local({
                 env: {
                     ANTHROPIC_API_KEY: anthropicApiKey,
                 },
             })
+        }
+        else {
+            const { cloudflare } = await import('sandbox-agent/cloudflare')
+            const { Sandbox } = await import('@cloudflare/sandbox')
+            sandbox = cloudflare({ sdk: new Sandbox() })
         }
 
         const mod = await import('sandbox-agent')
@@ -98,11 +98,12 @@ async function createSession({ anthropicApiKey, mcpServerUrl, mcpToken }: Create
         })
     }
 
+    const sandboxCwd = await fs.mkdtemp(path.join(os.tmpdir(), 'ap-sandbox-'))
     const session = await sdk.createSession({
         agent: 'claude',
         model: 'opus[1m]',
         sessionInit: {
-            cwd: process.cwd(),
+            cwd: sandboxCwd,
             mcpServers,
         },
     })
