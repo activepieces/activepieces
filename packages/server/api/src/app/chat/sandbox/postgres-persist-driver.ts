@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/shared'
 import { Pool } from 'pg'
-import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-props'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 
 type SessionRecord = {
     id: string
