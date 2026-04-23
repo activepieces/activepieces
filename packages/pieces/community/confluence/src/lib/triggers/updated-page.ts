@@ -4,9 +4,9 @@ import {
 	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
+import { isNil } from '@activepieces/shared';
 import { confluenceAuth, confluenceAuthValue } from '../auth';
 import { confluenceApiCall, PaginatedResponse } from '../common';
-import { isNil } from '@activepieces/shared';
 import { spaceIdProp } from '../common/props';
 
 interface ConfluencePage {
@@ -27,7 +27,10 @@ const props = {
 
 const PAGE_FETCH_LIMIT = 100;
 
-const polling: Polling<confluenceAuthValue,  { spaceId?: string,pageId?: string }> = {
+const polling: Polling<
+  confluenceAuthValue,
+  { spaceId?: string }
+> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue }) {
 		const response = await confluenceApiCall<PaginatedResponse<ConfluencePage>>({
@@ -39,25 +42,25 @@ const polling: Polling<confluenceAuthValue,  { spaceId?: string,pageId?: string 
 			resourceUri: `/spaces/${propsValue.spaceId}/pages`,
 			query: {
 				limit: String(PAGE_FETCH_LIMIT),
-				sort: '-created-date',
+				sort: '-modified-date',
 			},
 		});
 
-		if (isNil(response.results)) {
-			return [];
-		}
+		if (isNil(response.results)) return [];
 
-		return response.results.map((page) => ({
-			epochMilliSeconds: new Date(page.createdAt).getTime(),
-			data: page,
-		}));
+		return response.results
+			.filter((page) => page.version.number > 1)
+			.map((page) => ({
+				epochMilliSeconds: new Date(page.version.createdAt).getTime(),
+				data: page,
+			}));
 	},
 };
 
-export const newPageTrigger = createTrigger({
-	name: 'new-page',
-	displayName: 'New Page',
-	description: 'Triggers when a new page is created.',
+export const updatedPageTrigger = createTrigger({
+	name: 'updated-page',
+	displayName: 'Updated Page',
+	description: 'Triggers when an existing page is updated (version > 1).',
 	auth: confluenceAuth,
 	type: TriggerStrategy.POLLING,
 	props,
@@ -74,30 +77,25 @@ export const newPageTrigger = createTrigger({
 		return await pollingHelper.test(polling, context);
 	},
 	sampleData: {
-		parentType: 'page',
-		parentId: '123456',
-		spaceId: 'SAMPLE123',
-		ownerId: '12345678abcd',
-		lastOwnerId: null,
-		createdAt: '2024-01-01T12:00:00.000Z',
-		authorId: '12345678abcd',
-		position: 1000,
-		version: {
-			number: 1,
-			message: 'Initial version',
-			minorEdit: false,
-			authorId: '12345678abcd',
-			createdAt: '2024-01-01T12:00:00.000Z',
-		},
-		body: {},
+		id: '987654321',
 		status: 'current',
 		title: 'Sample Confluence Page',
-		id: '987654321',
+		spaceId: 'SAMPLE123',
+		parentId: '123456',
+		parentType: 'page',
+		authorId: '12345678abcd',
+		ownerId: '12345678abcd',
+		createdAt: '2024-01-01T12:00:00.000Z',
+		version: {
+			number: 2,
+			message: 'Edited title',
+			minorEdit: false,
+			authorId: '12345678abcd',
+			createdAt: '2024-01-02T09:00:00.000Z',
+		},
+		body: {},
 		_links: {
-			editui: '/pages/resumedraft.action?draftId=987654321',
 			webui: '/spaces/SAMPLE/pages/987654321/Sample+Confluence+Page',
-			edituiv2: '/spaces/SAMPLE/pages/edit-v2/987654321',
-			tinyui: '/x/abcd123',
 		},
 	},
 });

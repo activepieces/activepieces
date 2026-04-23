@@ -4,60 +4,52 @@ import {
 	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
+import { isNil } from '@activepieces/shared';
 import { confluenceAuth, confluenceAuthValue } from '../auth';
 import { confluenceApiCall, PaginatedResponse } from '../common';
-import { isNil } from '@activepieces/shared';
 import { spaceIdProp } from '../common/props';
 
-interface ConfluencePage {
+interface ConfluenceBlogPost {
 	id: string;
 	status: string;
 	title: string;
 	spaceId: string;
 	createdAt: string;
-	version: {
-		number: number;
-		createdAt: string;
-	};
+	version: { number: number; createdAt: string };
 }
 
 const props = {
 	spaceId: spaceIdProp,
 };
-
-const PAGE_FETCH_LIMIT = 100;
-
-const polling: Polling<confluenceAuthValue,  { spaceId?: string,pageId?: string }> = {
+const polling: Polling<confluenceAuthValue, { spaceId?: string }>  = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue }) {
-		const response = await confluenceApiCall<PaginatedResponse<ConfluencePage>>({
+		const response = await confluenceApiCall<PaginatedResponse<ConfluenceBlogPost>>({
 			domain: auth.props.confluenceDomain,
 			username: auth.props.username,
 			password: auth.props.password,
 			version: 'v2',
 			method: HttpMethod.GET,
-			resourceUri: `/spaces/${propsValue.spaceId}/pages`,
+			resourceUri: `/spaces/${propsValue.spaceId}/blogposts`,
 			query: {
-				limit: String(PAGE_FETCH_LIMIT),
+				limit: '100',
 				sort: '-created-date',
 			},
 		});
 
-		if (isNil(response.results)) {
-			return [];
-		}
+		if (isNil(response.results)) return [];
 
-		return response.results.map((page) => ({
-			epochMilliSeconds: new Date(page.createdAt).getTime(),
-			data: page,
+		return response.results.map((post) => ({
+			epochMilliSeconds: new Date(post.createdAt).getTime(),
+			data: post,
 		}));
 	},
 };
 
-export const newPageTrigger = createTrigger({
-	name: 'new-page',
-	displayName: 'New Page',
-	description: 'Triggers when a new page is created.',
+export const newBlogPostTrigger = createTrigger({
+	name: 'new-blog-post',
+	displayName: 'New Blog Post',
+	description: 'Triggers when a new blog post is published in the selected space.',
 	auth: confluenceAuth,
 	type: TriggerStrategy.POLLING,
 	props,
@@ -74,30 +66,19 @@ export const newPageTrigger = createTrigger({
 		return await pollingHelper.test(polling, context);
 	},
 	sampleData: {
-		parentType: 'page',
-		parentId: '123456',
+		id: 'bp-1234',
+		status: 'current',
+		title: 'Sample Blog Post',
 		spaceId: 'SAMPLE123',
-		ownerId: '12345678abcd',
-		lastOwnerId: null,
-		createdAt: '2024-01-01T12:00:00.000Z',
 		authorId: '12345678abcd',
-		position: 1000,
+		createdAt: '2024-01-03T12:00:00.000Z',
 		version: {
 			number: 1,
-			message: 'Initial version',
-			minorEdit: false,
+			createdAt: '2024-01-03T12:00:00.000Z',
 			authorId: '12345678abcd',
-			createdAt: '2024-01-01T12:00:00.000Z',
+			message: '',
+			minorEdit: false,
 		},
 		body: {},
-		status: 'current',
-		title: 'Sample Confluence Page',
-		id: '987654321',
-		_links: {
-			editui: '/pages/resumedraft.action?draftId=987654321',
-			webui: '/spaces/SAMPLE/pages/987654321/Sample+Confluence+Page',
-			edituiv2: '/spaces/SAMPLE/pages/edit-v2/987654321',
-			tinyui: '/x/abcd123',
-		},
 	},
 });
