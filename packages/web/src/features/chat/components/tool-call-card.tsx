@@ -1,3 +1,4 @@
+import { ToolCallItem } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, ChevronDown, Loader2, Square, XCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -9,8 +10,6 @@ import {
 } from '@/components/ui/collapsible';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
-
-import type { ToolCallItem } from '../lib/use-chat';
 
 function formatToolName(raw: string): string {
   const mcpMatch = /^mcp__[^_]+__(.+)$/.exec(raw);

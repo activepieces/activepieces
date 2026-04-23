@@ -1,9 +1,8 @@
+import { PlanItem } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Circle, Loader2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-
-import type { PlanItem } from '../lib/use-chat';
 
 function PlanStatusIcon({ status }: { status: PlanItem['status'] }) {
   switch (status) {

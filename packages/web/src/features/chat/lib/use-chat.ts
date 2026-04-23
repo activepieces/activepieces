@@ -1,11 +1,15 @@
 import {
   chatEventUtils,
+  ChatAllowedMimeType,
   CHAT_ALLOWED_MIME_TYPES,
-  type ChatAllowedMimeType,
-  type ChatConversation,
-  type ChatHistoryMessage,
-  type ChatStreamEvent,
+  ChatConversation,
+  ChatHistoryMessage,
+  ChatMessageItem,
+  ChatStreamEvent,
   ChatStreamEventType,
+  MessageBlock,
+  PlanItem,
+  ToolCallItem,
 } from '@activepieces/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -425,32 +429,3 @@ export function useAgentChat({
     setConversationId,
   };
 }
-
-export type MessageBlock =
-  | { type: 'text'; text: string }
-  | { type: 'tool_calls'; calls: ToolCallItem[] };
-
-export type ChatMessageItem = {
-  id: string;
-  role: 'user' | 'assistant';
-  blocks: MessageBlock[];
-  thoughts: string;
-  plan: PlanItem[] | null;
-  fileNames: string[];
-  timestamp: number;
-};
-
-export type ToolCallItem = {
-  id: string;
-  name: string;
-  title: string;
-  status: 'running' | 'completed' | 'failed' | 'stopped';
-  kind?: string;
-  input?: Record<string, unknown>;
-  output?: string;
-};
-
-export type PlanItem = {
-  content: string;
-  status: 'pending' | 'in_progress' | 'completed';
-};

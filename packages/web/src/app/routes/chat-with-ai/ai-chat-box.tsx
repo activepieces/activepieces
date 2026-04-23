@@ -1,4 +1,9 @@
-import { AIProviderName } from '@activepieces/shared';
+import {
+  AIProviderName,
+  ChatMessageItem,
+  MessageBlock,
+  ToolCallItem,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowUp,
@@ -61,12 +66,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlanCard } from '@/features/chat/components/plan-card';
 import { ToolCallCard } from '@/features/chat/components/tool-call-card';
-import {
-  useAgentChat,
-  type ChatMessageItem,
-  type MessageBlock,
-  type ToolCallItem,
-} from '@/features/chat/lib/use-chat';
+import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { piecesHooks } from '@/features/pieces';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { aiProviderQueries } from '@/features/platform-admin';

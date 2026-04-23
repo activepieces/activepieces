@@ -1,8 +1,8 @@
 // Dynamic imports: sandbox-agent is ESM-only; this server is CJS.
 import {
     chatEventUtils,
-    type ChatHistoryMessage,
-    type ChatHistoryToolCall,
+    ChatHistoryMessage,
+    ChatHistoryToolCall,
     SandboxSessionUpdateType,
 } from '@activepieces/shared'
 

@@ -8,8 +8,6 @@ import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-r
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { ChatConversationEntity } from '../chat/chat-conversation-entity'
-import { SandboxSessionEntity } from '../chat/sandbox-session-entity'
-import { SandboxSessionEventEntity } from '../chat/sandbox-session-event-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
@@ -104,8 +102,6 @@ function getEntities(): EntitySchema<unknown>[] {
         KnowledgeBaseFileEntity,
         KnowledgeBaseChunkEntity,
         ChatConversationEntity,
-        SandboxSessionEntity,
-        SandboxSessionEventEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
         WaitpointEntity,
