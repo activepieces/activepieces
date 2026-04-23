@@ -72,6 +72,10 @@ jobs:
         id: migration-check
         run: bunx tsx tools/scripts/check-release-migrations.ts ${{ steps.version.outputs.release }}
 
+      - name: Check for breaking migrations
+        id: migration-check
+        run: bunx tsx tools/scripts/check-release-migrations.ts ${{ steps.version.outputs.release }}
+
       - name: Create or update changelog via release-drafter
         uses: release-drafter/release-drafter@v7
         with:

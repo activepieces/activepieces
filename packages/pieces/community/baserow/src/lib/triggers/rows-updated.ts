@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { baserowJwtAuth } from '../auth';
+import { baserowAuth } from '../auth';
 import { baserowCommon } from '../common';
 import { createWebhookTriggerHooks } from '../common/webhook-trigger';
 
@@ -7,7 +7,7 @@ const webhookHooks = createWebhookTriggerHooks('rows.updated', 'baserow_rows_upd
 
 export const rowsUpdatedTrigger = createTrigger({
   name: 'baserow_rows_updated',
-  auth: baserowJwtAuth,
+  auth: baserowAuth,
   displayName: 'Rows Updated (Batch)',
   description:
     'Triggers when existing rows are updated in a Baserow table. Returns all rows from the event as a single batch.',

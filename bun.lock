@@ -375,7 +375,7 @@
     },
     "packages/ee/embed-sdk": {
       "name": "ee-embed-sdk",
-      "version": "0.8.1",
+      "version": "0.9.0",
       "dependencies": {
         "tslib": "2.6.2",
       },
@@ -480,7 +480,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.3.6",
+      "version": "0.3.7",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -918,6 +918,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/azure-ad": {
+      "name": "@activepieces/piece-azure-ad",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/azure-blob-storage": {
       "name": "@activepieces/piece-azure-blob-storage",
       "version": "0.1.4",
@@ -1019,7 +1029,7 @@
     },
     "packages/pieces/community/baserow": {
       "name": "@activepieces/piece-baserow",
-      "version": "0.4.1",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3021,7 +3031,7 @@
     },
     "packages/pieces/community/google-drive": {
       "name": "@activepieces/piece-google-drive",
-      "version": "0.7.2",
+      "version": "0.7.3",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3624,7 +3634,7 @@
     },
     "packages/pieces/community/jira-cloud": {
       "name": "@activepieces/piece-jira-cloud",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4468,7 +4478,7 @@
     },
     "packages/pieces/community/microsoft-onedrive": {
       "name": "@activepieces/piece-microsoft-onedrive",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4996,7 +5006,7 @@
     },
     "packages/pieces/community/openai": {
       "name": "@activepieces/piece-openai",
-      "version": "0.7.5",
+      "version": "0.8.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6570,7 +6580,7 @@
     },
     "packages/pieces/community/tavily": {
       "name": "@activepieces/piece-tavily",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7736,7 +7746,7 @@
     },
     "packages/pieces/core/pdf": {
       "name": "@activepieces/piece-pdf",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7748,6 +7758,7 @@
         "unpdf": "1.4.0",
       },
       "devDependencies": {
+        "@types/mime-types": "2.1.1",
         "vitest": "3.0.8",
       },
     },
@@ -8148,7 +8159,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.66.0",
+      "version": "0.67.0",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -8400,6 +8411,8 @@
     "@activepieces/piece-autocalls": ["@activepieces/piece-autocalls@workspace:packages/pieces/community/autocalls"],
 
     "@activepieces/piece-avoma": ["@activepieces/piece-avoma@workspace:packages/pieces/community/avoma"],
+
+    "@activepieces/piece-azure-ad": ["@activepieces/piece-azure-ad@workspace:packages/pieces/community/azure-ad"],
 
     "@activepieces/piece-azure-blob-storage": ["@activepieces/piece-azure-blob-storage@workspace:packages/pieces/community/azure-blob-storage"],
 
