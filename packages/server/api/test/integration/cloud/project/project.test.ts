@@ -1,12 +1,16 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     ApiKeyResponseWithValue,
+    DefaultProjectRole,
     FlowStatus,
 
+    Permission,
     Platform,
     PlatformRole,
     PrincipalType,
     Project,
+    ProjectType,
+    RoleType,
     UpdateProjectPlatformRequest,
     User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
@@ -19,6 +23,10 @@ import {
     createMockApiKey,
     createMockFlow,
     createMockProject,
+    createMockProjectMember,
+    createMockProjectRole,
+    createMockUser,
+    createMockUserIdentity,
     mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
@@ -611,6 +619,344 @@ describe('Project API', () => {
         })
     })
 
+    describe('List Projects - externalUserId filter', () => {
+        it('returns only the personal project of the targeted user', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+
+            const { mockUser: targetUser } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, externalId: 'ext-user-a' },
+            })
+            const targetPersonal = createMockProject({
+                ownerId: targetUser.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.PERSONAL,
+                displayName: 'Alice Personal',
+            })
+            await db.save('project', targetPersonal)
+
+            const apiKey = createMockApiKey({ platformId: mockPlatform.id })
+            await db.save('api_key', apiKey)
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects?externalUserId=ext-user-a',
+                headers: { authorization: `Bearer ${apiKey.value}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            const ids = body.data.map((p: Project) => p.id)
+            expect(ids).toEqual([targetPersonal.id])
+        })
+
+        it('returns personal + team projects the user is a member of', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const { mockUser: targetUser } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, externalId: 'ext-user-b' },
+            })
+            const targetPersonal = createMockProject({
+                ownerId: targetUser.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.PERSONAL,
+            })
+            const teamProject = createMockProject({
+                ownerId: mockOwner.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.TEAM,
+                displayName: 'Shared Team',
+            })
+            const unrelatedTeam = createMockProject({
+                ownerId: mockOwner.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.TEAM,
+                displayName: 'Unrelated Team',
+            })
+            await db.save('project', [targetPersonal, teamProject, unrelatedTeam])
+
+            const role = createMockProjectRole({
+                platformId: mockPlatform.id,
+                type: RoleType.DEFAULT,
+                name: DefaultProjectRole.EDITOR,
+                permissions: [Permission.READ_PROJECT],
+            })
+            await db.save('project_role', role)
+
+            const membership = createMockProjectMember({
+                platformId: mockPlatform.id,
+                projectId: teamProject.id,
+                userId: targetUser.id,
+                projectRoleId: role.id,
+            })
+            await db.save('project_member', membership)
+
+            const apiKey = createMockApiKey({ platformId: mockPlatform.id })
+            await db.save('api_key', apiKey)
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects?externalUserId=ext-user-b',
+                headers: { authorization: `Bearer ${apiKey.value}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            const ids = body.data.map((p: Project) => p.id).sort()
+            expect(ids).toEqual([targetPersonal.id, teamProject.id].sort())
+            expect(ids).not.toContain(unrelatedTeam.id)
+        })
+
+        it('excludes team projects the user is NOT a member of', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+
+            await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, externalId: 'ext-user-c' },
+            })
+            const restrictedTeam = createMockProject({
+                ownerId: mockOwner.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.TEAM,
+                displayName: 'Restricted',
+            })
+            await db.save('project', restrictedTeam)
+
+            const apiKey = createMockApiKey({ platformId: mockPlatform.id })
+            await db.save('api_key', apiKey)
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects?externalUserId=ext-user-c',
+                headers: { authorization: `Bearer ${apiKey.value}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.data).toHaveLength(0)
+        })
+
+        it('returns empty page (not 404) for unknown externalUserId', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const apiKey = createMockApiKey({ platformId: mockPlatform.id })
+            await db.save('api_key', apiKey)
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects?externalUserId=does-not-exist',
+                headers: { authorization: `Bearer ${apiKey.value}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().data).toEqual([])
+        })
+
+        it('is isolated across platforms (externalId on another platform returns empty)', async () => {
+            const { mockPlatform: platformOne } = await mockAndSaveBasicSetup()
+            const { mockPlatform: platformTwo } = await mockAndSaveBasicSetup()
+
+            const { mockUser: userOnTwo } = await mockBasicUser({
+                user: { platformId: platformTwo.id, platformRole: PlatformRole.MEMBER, externalId: 'shared-ext-id' },
+            })
+            const personalOnTwo = createMockProject({
+                ownerId: userOnTwo.id,
+                platformId: platformTwo.id,
+                type: ProjectType.PERSONAL,
+            })
+            await db.save('project', personalOnTwo)
+
+            const apiKeyForPlatformOne = createMockApiKey({ platformId: platformOne.id })
+            await db.save('api_key', apiKeyForPlatformOne)
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects?externalUserId=shared-ext-id',
+                headers: { authorization: `Bearer ${apiKeyForPlatformOne.value}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().data).toEqual([])
+        })
+
+        it('combines externalUserId with displayName filter', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+
+            const { mockUser: targetUser } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, externalId: 'ext-user-d' },
+            })
+            const matching = createMockProject({
+                ownerId: targetUser.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.PERSONAL,
+                displayName: 'MatchingPersonal',
+            })
+            await db.save('project', matching)
+
+            const apiKey = createMockApiKey({ platformId: mockPlatform.id })
+            await db.save('api_key', apiKey)
+
+            const matchResponse = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects?externalUserId=ext-user-d&displayName=Matching',
+                headers: { authorization: `Bearer ${apiKey.value}` },
+            })
+            expect(matchResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(matchResponse?.json().data.map((p: Project) => p.id)).toEqual([matching.id])
+
+            const missResponse = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects?externalUserId=ext-user-d&displayName=Nonexistent',
+                headers: { authorization: `Bearer ${apiKey.value}` },
+            })
+            expect(missResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(missResponse?.json().data).toEqual([])
+        })
+
+        it('without externalUserId, API key still sees every project on the platform', async () => {
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const extraProject = createMockProject({
+                ownerId: mockOwner.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.TEAM,
+            })
+            await db.save('project', extraProject)
+
+            const apiKey = createMockApiKey({ platformId: mockPlatform.id })
+            await db.save('api_key', apiKey)
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects',
+                headers: { authorization: `Bearer ${apiKey.value}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const ids = response?.json().data.map((p: Project) => p.id).sort()
+            expect(ids).toEqual([mockProject.id, extraProject.id].sort())
+        })
+
+        it('USER token with externalUserId scopes results to the targeted user', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const { mockUser: targetUser } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, externalId: 'ext-user-e' },
+            })
+            const targetPersonal = createMockProject({
+                ownerId: targetUser.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.PERSONAL,
+            })
+            const adminOnlyTeam = createMockProject({
+                ownerId: mockOwner.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.TEAM,
+                displayName: 'Admin Only',
+            })
+            await db.save('project', [targetPersonal, adminOnlyTeam])
+
+            const adminToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects?externalUserId=ext-user-e',
+                headers: { authorization: `Bearer ${adminToken}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const ids = response?.json().data.map((p: Project) => p.id)
+            expect(ids).toEqual([targetPersonal.id])
+            expect(ids).not.toContain(adminOnlyTeam.id)
+        })
+    })
+
+    describe('GET /v1/platforms (identity-wide switcher)', () => {
+        it('returns projects grouped by platform for the caller identity', async () => {
+            const sharedIdentity = createMockUserIdentity({ verified: true })
+            await db.save('user_identity', sharedIdentity)
+
+            const { mockPlatform: platformOne } = await mockAndSaveBasicSetup({
+                plan: { customDomainsEnabled: false },
+            })
+            const { mockPlatform: platformTwo } = await mockAndSaveBasicSetup({
+                plan: { customDomainsEnabled: false },
+            })
+
+            const userOnOne = createMockUser({
+                identityId: sharedIdentity.id,
+                platformId: platformOne.id,
+                platformRole: PlatformRole.ADMIN,
+            })
+            const userOnTwo = createMockUser({
+                identityId: sharedIdentity.id,
+                platformId: platformTwo.id,
+                platformRole: PlatformRole.ADMIN,
+            })
+            await db.save('user', [userOnOne, userOnTwo])
+
+            const projectOne = createMockProject({
+                ownerId: userOnOne.id,
+                platformId: platformOne.id,
+                type: ProjectType.PERSONAL,
+            })
+            const projectTwo = createMockProject({
+                ownerId: userOnTwo.id,
+                platformId: platformTwo.id,
+                type: ProjectType.PERSONAL,
+            })
+            await db.save('project', [projectOne, projectTwo])
+
+            const token = await generateMockToken({
+                type: PrincipalType.USER,
+                id: userOnOne.id,
+                platform: { id: platformOne.id },
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/platforms',
+                headers: { authorization: `Bearer ${token}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json() as Array<{ platformName: string, projects: Project[] }>
+            const projectIds = body.flatMap((entry) => entry.projects.map((p) => p.id))
+            expect(projectIds).toContain(projectOne.id)
+            expect(projectIds).toContain(projectTwo.id)
+        })
+
+        it('rejects API key (USER-only endpoint)', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const apiKey = createMockApiKey({ platformId: mockPlatform.id })
+            await db.save('api_key', apiKey)
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/platforms',
+                headers: { authorization: `Bearer ${apiKey.value}` },
+            })
+
+            expect([StatusCodes.UNAUTHORIZED, StatusCodes.FORBIDDEN]).toContain(response?.statusCode)
+        })
+
+        it('old URL /v1/projects/platforms is no longer registered', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const token = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/projects/platforms',
+                headers: { authorization: `Bearer ${token}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
 
 })
 

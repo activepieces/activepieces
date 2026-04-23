@@ -30,6 +30,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { applyProjectsAccessFilters, projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
 import { concurrencyPoolService } from '../platform/concurrency-pool/concurrency-pool.service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { projectMemberService } from './project-members/project-member.service'
@@ -40,7 +41,12 @@ const projectPlanRepo = repoFactory(ProjectPlanEntity)
 
 export const platformProjectService = (log: FastifyBaseLogger) => ({
     async getForPlatform(params: GetAllForParamsAndUser): Promise<SeekPage<ProjectWithLimits>> {
-        const { cursorRequest, limit, platformId, displayName, externalId, userId, types, isPrivileged } = params
+        const { cursorRequest, limit, platformId, displayName, externalId, externalUserId, userId, types, isPrivileged } = params
+        const accessFilterUser = await resolveAccessFilterUser({ platformId, externalUserId, callerUserId: userId, callerIsPrivileged: isPrivileged, log })
+        if (isNil(accessFilterUser)) {
+            return paginationHelper.createPage<ProjectWithLimits>([], null)
+        }
+
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: ProjectEntity,
@@ -68,7 +74,11 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             .createQueryBuilder('project')
             .where(filters)
 
-        await applyProjectsAccessFilters(queryBuilder, { platformId, userId, isPrivileged })
+        await applyProjectsAccessFilters(queryBuilder, {
+            platformId,
+            userId: accessFilterUser.userId,
+            isPrivileged: accessFilterUser.isPrivileged,
+        })
 
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const projects: ProjectWithLimits[] = await enrichProjects(data, log)
@@ -277,6 +287,17 @@ async function enrichProjects(
     })
 }
 
+async function resolveAccessFilterUser({ platformId, externalUserId, callerUserId, callerIsPrivileged, log }: ResolveAccessFilterUserParams): Promise<{ userId: string, isPrivileged: boolean } | null> {
+    if (isNil(externalUserId)) {
+        return { userId: callerUserId, isPrivileged: callerIsPrivileged }
+    }
+    const user = await userService(log).getByPlatformAndExternalId({ platformId, externalId: externalUserId })
+    if (isNil(user)) {
+        return null
+    }
+    return { userId: user.id, isPrivileged: false }
+}
+
 async function resolvePoolId({ platformId, projectId, maxConcurrentJobs, log }: ResolvePoolIdParams): Promise<string | null | undefined> {
     if (typeof maxConcurrentJobs === 'number') {
         const { poolId } = await concurrencyPoolService(log).upsertPool({
@@ -299,11 +320,20 @@ type ResolvePoolIdParams = {
     log: FastifyBaseLogger
 }
 
+type ResolveAccessFilterUserParams = {
+    platformId: string
+    externalUserId: string | undefined
+    callerUserId: string
+    callerIsPrivileged: boolean
+    log: FastifyBaseLogger
+}
+
 type GetAllForParamsAndUser = {
     userId: string
     platformId: string
     displayName?: string
     externalId?: string
+    externalUserId?: string
     cursorRequest: Cursor | null
     limit: number
     types?: ProjectType[]

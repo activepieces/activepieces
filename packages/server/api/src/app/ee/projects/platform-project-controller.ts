@@ -56,6 +56,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
         return platformProjectService(request.log).getForPlatform({
             platformId: request.principal.platform.id,
             externalId: request.query.externalId,
+            externalUserId: request.query.externalUserId,
             cursorRequest: request.query.cursor ?? null,
             displayName: request.query.displayName,
             types: request.query.types,
