@@ -130,30 +130,24 @@ export function createStreamWriter({ writer, textPartId, reasoningPartId, onSess
 export function createHistoryReplayFilter(): { shouldSuppress: (update: Record<string, unknown>) => boolean } {
     let state: 'detecting' | 'suppressing' | 'passthrough' = 'detecting'
     let buffer = ''
-    let nonReplayCount = 0
 
     return {
         shouldSuppress(update: Record<string, unknown>): boolean {
             if (state === 'passthrough') return false
 
+            const updateType = getString(update, 'sessionUpdate')
+            const isTextChunk = updateType === SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK
+
             if (state === 'suppressing') {
-                const updateType = getString(update, 'sessionUpdate')
-                if (updateType === SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK) {
-                    const text = chatEventUtils.extractContentText(update)
-                    if (text && !chatEventUtils.isHistoryReplayContent(text)) {
-                        nonReplayCount++
-                        if (nonReplayCount > 3) {
-                            state = 'passthrough'
-                            return false
-                        }
-                    }
-                }
-                return true
+                if (!isTextChunk) return false
+                const text = chatEventUtils.extractContentText(update)
+                if (!text) return true
+                if (chatEventUtils.isHistoryReplayContent(text)) return true
+                state = 'passthrough'
+                return false
             }
 
-            // detecting: let everything through, but watch text for replay markers
-            const updateType = getString(update, 'sessionUpdate')
-            if (updateType === SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK) {
+            if (isTextChunk) {
                 const text = chatEventUtils.extractContentText(update)
                 if (text) {
                     buffer += text
