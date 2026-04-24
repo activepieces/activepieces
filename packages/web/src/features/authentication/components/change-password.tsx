@@ -21,7 +21,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { PasswordValidator } from '@/features/authentication/components/password-validator';
+import { PasswordRequirementsList } from '@/features/authentication/components/password-validator';
 import { passwordValidation } from '@/features/authentication/utils/password-validation-utils';
 
 import { authMutations } from '../hooks/auth-hooks';
@@ -101,8 +101,9 @@ const ChangePasswordForm = () => {
                       />
                     </PopoverTrigger>
                     <PopoverContent className="absolute border-2 bg-background p-2 rounded-md right-60 -bottom-16 flex flex-col">
-                      <PasswordValidator
+                      <PasswordRequirementsList
                         password={form.getValues().newPassword}
+                        isSubmitted={form.formState.submitCount > 0}
                       />
                     </PopoverContent>
                   </Popover>
