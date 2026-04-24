@@ -196,6 +196,20 @@ export async function createAIModel({
             const openRouterProvider = createOpenRouter({ apiKey })
             return openRouterProvider.chat(modelId) as LanguageModel
         }
+        case AIProviderName.N1N_AI: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            const provider = createOpenAICompatible({
+                name: 'n1n-ai',
+                baseURL: 'https://api.n1n.ai/v1',
+                headers: {
+                    Authorization: `Bearer ${apiKey}`,
+                },
+            })
+            if (isImage) {
+                return provider.imageModel(modelId)
+            }
+            return provider.chatModel(modelId)
+        }
         default:
             throw new Error(`Provider ${provider} is not supported`)
     }
