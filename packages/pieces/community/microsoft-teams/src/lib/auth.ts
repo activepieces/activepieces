@@ -46,6 +46,7 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
     'TeamMember.Read.All',
     'User.ReadBasic.All',
     'Presence.Read.All',
+    // 'OnlineMeetings.Read',
     'OnlineMeetingTranscript.Read.All',
     'OnlineMeetingRecording.Read.All',
   ],

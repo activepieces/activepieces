@@ -1,9 +1,9 @@
 import { DropdownOption, OAuth2PropertyValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 
 import { PageCollection } from '@microsoft/microsoft-graph-client';
-import { Team, Channel, Chat, ConversationMember, OnlineMeeting, CallTranscript, CallRecording } from '@microsoft/microsoft-graph-types';
+import { Team, Channel, Chat, ConversationMember, CallTranscript, CallRecording } from '@microsoft/microsoft-graph-types';
 import { microsoftTeamsAuth } from '../auth';
-import { createGraphClient } from './graph';
+import { createGraphClient, resolveMeetingId } from './graph';
 
 export const microsoftTeamsCommon = {
 	teamId: Property.Dropdown({
@@ -80,7 +80,7 @@ export const microsoftTeamsCommon = {
 			};
 		},
 	}),
-	memberId:(isRequired=false) =>Property.Dropdown({
+	memberId: (isRequired = false) => Property.Dropdown({
 		auth: microsoftTeamsAuth,
 		displayName: 'Member',
 		refreshers: ['teamId'],
@@ -115,7 +115,7 @@ export const microsoftTeamsCommon = {
 			};
 		},
 	}),
-	memberIds:(isRequired=false) =>Property.MultiSelectDropdown({
+	memberIds: (isRequired = false) => Property.MultiSelectDropdown({
 		auth: microsoftTeamsAuth,
 		displayName: 'Member',
 		refreshers: ['teamId'],
@@ -150,46 +150,32 @@ export const microsoftTeamsCommon = {
 			};
 		},
 	}),
-	meetingId: Property.Dropdown({
-		auth: microsoftTeamsAuth,
-		displayName: 'Meeting',
-		refreshers: [],
+	// https://learn.microsoft.com/en-us/answers/questions/1858332/get-list-of-online-meetings-for-teams
+	meetingIdentifierType: Property.StaticDropdown({
+		displayName: 'Meeting Identifier Type',
+		description: 'Choose how to identify the meeting.',
 		required: true,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					placeholder: 'Please connect your account first.',
-					options: [],
-				};
-			}
-			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
-			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
-			const client = createGraphClient(authValue.access_token, cloud);
-			const options: DropdownOption<string>[] = [];
-
-			// https://learn.microsoft.com/en-us/graph/api/onlinemeeting-list?view=graph-rest-1.0
-			let response: PageCollection = await client.api('/me/onlineMeetings').get();
-			while (response.value.length > 0) {
-				for (const meeting of response.value as OnlineMeeting[]) {
-					options.push({ label: meeting.subject ?? meeting.id!, value: meeting.id! });
-				}
-				if (response['@odata.nextLink']) {
-					response = await client.api(response['@odata.nextLink']).get();
-				} else {
-					break;
-				}
-			}
-			return { disabled: false, options };
+		defaultValue: 'meetingId',
+		options: {
+			disabled: false,
+			options: [
+				{ label: 'Meeting ID', value: 'meetingId' },
+				{ label: 'Join Web URL', value: 'joinWebUrl' },
+				{ label: 'Join Meeting ID', value: 'joinMeetingId' },
+			],
 		},
+	}),
+	meetingIdentifierValue: Property.ShortText({
+		displayName: 'Meeting Identifier Value',
+		required: true,
 	}),
 	transcriptId: Property.Dropdown({
 		auth: microsoftTeamsAuth,
 		displayName: 'Transcript',
-		refreshers: ['meetingId'],
+		refreshers: ['meetingIdentifierType', 'meetingIdentifierValue'],
 		required: false,
-		options: async ({ auth, meetingId }) => {
-			if (!auth || !meetingId) {
+		options: async ({ auth, meetingIdentifierType, meetingIdentifierValue }) => {
+			if (!auth || !meetingIdentifierType || !meetingIdentifierValue) {
 				return {
 					disabled: true,
 					placeholder: 'Please connect your account first and select a meeting.',
@@ -200,6 +186,12 @@ export const microsoftTeamsCommon = {
 			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 			const client = createGraphClient(authValue.access_token, cloud);
 			const options: DropdownOption<string>[] = [];
+
+			const meetingId = await resolveMeetingId({
+				client,
+				identifierType: meetingIdentifierType as string,
+				identifierValue: meetingIdentifierValue as string,
+			});
 
 			// https://learn.microsoft.com/en-us/graph/api/onlinemeeting-list-transcripts?view=graph-rest-1.0
 			let response: PageCollection = await client.api(`/me/onlineMeetings/${meetingId}/transcripts`).get();
@@ -222,10 +214,10 @@ export const microsoftTeamsCommon = {
 	recordingId: Property.Dropdown({
 		auth: microsoftTeamsAuth,
 		displayName: 'Recording',
-		refreshers: ['meetingId'],
+		refreshers: ['meetingIdentifierType', 'meetingIdentifierValue'],
 		required: false,
-		options: async ({ auth, meetingId }) => {
-			if (!auth || !meetingId) {
+		options: async ({ auth, meetingIdentifierType, meetingIdentifierValue }) => {
+			if (!auth || !meetingIdentifierType || !meetingIdentifierValue) {
 				return {
 					disabled: true,
 					placeholder: 'Please connect your account first and select a meeting.',
@@ -236,6 +228,12 @@ export const microsoftTeamsCommon = {
 			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 			const client = createGraphClient(authValue.access_token, cloud);
 			const options: DropdownOption<string>[] = [];
+
+			const meetingId = await resolveMeetingId({
+				client,
+				identifierType: meetingIdentifierType as string,
+				identifierValue: meetingIdentifierValue as string,
+			});
 
 			// https://learn.microsoft.com/en-us/graph/api/onlinemeeting-list-recordings?view=graph-rest-1.0
 			let response: PageCollection = await client.api(`/me/onlineMeetings/${meetingId}/recordings`).get();
