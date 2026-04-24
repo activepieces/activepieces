@@ -128,82 +128,51 @@ export function createStreamWriter({ writer, textPartId, reasoningPartId, onSess
 }
 
 export function createHistoryReplayFilter(): {
-    processUpdate: (update: Record<string, unknown>, write: (u: Record<string, unknown>) => void) => void
-    flush: (write: (u: Record<string, unknown>) => void) => void
+    shouldSuppress: (update: Record<string, unknown>) => boolean
 } {
     let state: 'detecting' | 'suppressing' | 'passthrough' = 'detecting'
-    let textBuffer = ''
-    let eventQueue: Array<Record<string, unknown>> = []
+    let buffer = ''
 
     return {
-        flush(write: (u: Record<string, unknown>) => void): void {
-            if (state === 'detecting' && eventQueue.length > 0) {
-                const queued = eventQueue
-                eventQueue = []
-                for (const e of queued) {
-                    write(e)
-                }
-            }
-            state = 'passthrough'
-            textBuffer = ''
-            eventQueue = []
-        },
-        processUpdate(update: Record<string, unknown>, write: (u: Record<string, unknown>) => void): void {
-            if (state === 'passthrough') {
-                write(update)
-                return
-            }
+        shouldSuppress(update: Record<string, unknown>): boolean {
+            if (state === 'passthrough') return false
 
             const updateType = getString(update, 'sessionUpdate')
             const isTextChunk = updateType === SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK
 
-            if (state === 'detecting') {
-                if (!isTextChunk) {
-                    write(update)
-                    return
-                }
-                eventQueue.push(update)
+            if (state === 'suppressing') {
+                if (!isTextChunk) return false
                 const text = chatEventUtils.extractContentText(update)
-                if (text) {
-                    textBuffer += text
-                    if (chatEventUtils.isHistoryReplayContent(textBuffer)) {
-                        state = 'suppressing'
-                        textBuffer = ''
-                        eventQueue = []
-                        return
-                    }
-                    if (textBuffer.length > 500) {
-                        state = 'passthrough'
-                        textBuffer = ''
-                        const queued = eventQueue
-                        eventQueue = []
-                        for (const e of queued) {
-                            write(e)
-                        }
-                        return
-                    }
+                if (!text) return true
+                buffer += text
+                if (chatEventUtils.isHistoryReplayContent(buffer)) {
+                    buffer = ''
+                    return true
                 }
-                return
+                if (buffer.length > 200) {
+                    state = 'passthrough'
+                    buffer = ''
+                    return false
+                }
+                return true
             }
 
-            if (state === 'suppressing') {
-                if (!isTextChunk) {
-                    write(update)
-                    return
-                }
+            if (isTextChunk) {
                 const text = chatEventUtils.extractContentText(update)
-                if (!text) return
-                textBuffer += text
-                if (chatEventUtils.isHistoryReplayContent(textBuffer)) {
-                    textBuffer = ''
-                    return
-                }
-                if (textBuffer.length > 200) {
-                    state = 'passthrough'
-                    textBuffer = ''
-                    return
+                if (text) {
+                    buffer += text
+                    if (chatEventUtils.isHistoryReplayContent(buffer)) {
+                        state = 'suppressing'
+                        buffer = ''
+                        return true
+                    }
+                    if (buffer.length > 500) {
+                        state = 'passthrough'
+                        buffer = ''
+                    }
                 }
             }
+            return false
         },
     }
 }

@@ -145,7 +145,9 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                             const update = payload.params.update
                             if (!isObject(update)) return
 
-                            historyReplayFilter.processUpdate(update, (u) => streamWriter.write(u))
+                            if (historyReplayFilter.shouldSuppress(update)) return
+
+                            streamWriter.write(update)
                         })
 
                         chatSandboxAgent.sendPrompt({ session, text: content, systemPrompt, files })
@@ -157,7 +159,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                     unsubscribe?.()
                 }
 
-                historyReplayFilter.flush((u) => streamWriter.write(u))
                 writer.write({ type: 'finish', finishReason: 'stop' })
             },
             onError: (error) => {
