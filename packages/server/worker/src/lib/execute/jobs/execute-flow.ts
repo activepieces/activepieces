@@ -73,11 +73,6 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR, logs: result.logs }
             }
 
-            const delayInSeconds = result.delayInSeconds
-            if (delayInSeconds && delayInSeconds > 0) {
-                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds, logs: result.logs }
-            }
-
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {
@@ -116,10 +111,10 @@ async function buildFlowOperation(
         flowVersion,
         flowRunId: data.runId,
         projectId: data.projectId,
-        serverHandlerId: data.synchronousHandlerId ?? null,
+        workerHandlerId: data.workerHandlerId ?? null,
         runEnvironment: data.environment,
         httpRequestId: data.httpRequestId ?? null,
-        progressUpdateType: data.progressUpdateType,
+        streamStepProgress: data.streamStepProgress,
         stepNameToTest: data.stepNameToTest ?? null,
         logsUploadUrl: data.logsUploadUrl,
         logsFileId: data.logsFileId,
@@ -186,9 +181,7 @@ async function reportFlowStatus(
         runId: data.runId,
         status,
         projectId: data.projectId,
-        progressUpdateType: data.progressUpdateType,
-        workerHandlerId: data.synchronousHandlerId ?? null,
-        httpRequestId: data.httpRequestId ?? null,
+        streamStepProgress: data.streamStepProgress,
         finishTime: new Date().toISOString(),
     })
 

@@ -2,6 +2,7 @@ name: Continuous Delivery — Canary
 
 on:
   workflow_dispatch:
+  workflow_call:
   schedule:
     - cron: '0 9 * * *'  # Daily 9 AM UTC
 
@@ -135,5 +136,5 @@ jobs:
 
       - name: Deploy canary workers
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --config-file=config/worker.yml --roles=canary --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --config-file=config/worker-canary.yml --skip-push; exit"'
 

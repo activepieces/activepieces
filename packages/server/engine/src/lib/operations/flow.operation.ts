@@ -39,7 +39,6 @@ export const flowOperation = {
         return {
             status,
             response: undefined,
-            delayInSeconds: output.getDelayedInSeconds(),
         }
     },
 }

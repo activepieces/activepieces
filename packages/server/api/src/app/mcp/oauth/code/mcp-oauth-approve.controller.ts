@@ -3,7 +3,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../../core/security/authorization/common'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
-import { jwtUtils } from '../../../helper/jwt-utils'
+import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { mcpOAuthCodeService } from './mcp-oauth-code.service'
 
 export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
@@ -19,6 +19,7 @@ export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
             authRequest = await jwtUtils.decodeAndVerify<AuthRequestPayload>({
                 jwt: authRequestId,
                 key,
+                audience: JwtAudience.MCP_OAUTH_AUTH_REQUEST,
             })
         }
         catch {

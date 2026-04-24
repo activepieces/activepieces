@@ -1,8 +1,8 @@
 import fs from 'fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
-import { ConnectionsManager, ContextVersion, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
-import { ExecutionError, ExecutionErrorType, Result, tryCatch } from '@activepieces/shared'
+import { ConnectionsManager, ContextVersion, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
+import { ExecutionError, ExecutionErrorType, RespondResponse, Result, tryCatch } from '@activepieces/shared'
 import { createConnectionResolver } from './piece-context/connection-resolver'
 
 export type FileEntry = {
@@ -91,19 +91,17 @@ function isEngineError(error: unknown): error is ExecutionError {
 }
 
 export type HookResponse = {
-    type: 'paused'
     tags: string[]
-    response: PauseHookParams
+    responseToSend?: RespondResponse
+} & ({
+    type: 'paused'
 } | {
     type: 'stopped'
-    tags: string[]
     response: StopHookParams
 } | {
     type: 'respond'
-    tags: string[]
     response: RespondHookParams
 } | {
     type: 'none'
-    tags: string[]
-}
+})
 type CreateConnectionManagerParams = { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' | 'properties', contextVersion: ContextVersion | undefined } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse, contextVersion: ContextVersion | undefined }

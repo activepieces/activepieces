@@ -1,11 +1,12 @@
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { distributedStore } from '../../../database/redis-connections'
+import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { getWorkerGroupQueueName, QueueName } from '../../../workers/job'
 import { platformQueueMigrationService } from '../../../workers/platform-queue-migration.service'
 import { platformPlanRepo } from './platform-plan.service'
 
 export const CANARY_WORKER_GROUP_ID = 'canary'
+
 const getWorkerGroupCacheKey = (platformId: string): string => `platform:${platformId}:worker_group_id`
 
 export const workerGroupService = (log: FastifyBaseLogger) => ({
@@ -15,16 +16,27 @@ export const workerGroupService = (log: FastifyBaseLogger) => ({
             return cached
         }
 
-        const plan = await platformPlanRepo().findOne({
-            select: ['workerGroupId'],
-            where: { platformId },
-        })
+        return distributedLock(log).runExclusive({
+            key: `worker_group_lock:${platformId}`,
+            timeoutInSeconds: 10,
+            fn: async () => {
+                const cachedAfterLock = await distributedStore.get<string>(getWorkerGroupCacheKey(platformId))
+                if (!isNil(cachedAfterLock)) {
+                    return cachedAfterLock
+                }
 
-        const groupId = plan?.workerGroupId ?? null
-        if (!isNil(groupId)) {
-            await distributedStore.put(getWorkerGroupCacheKey(platformId), groupId)
-        }
-        return groupId
+                const plan = await platformPlanRepo().findOne({
+                    select: ['workerGroupId'],
+                    where: { platformId },
+                })
+
+                const groupId = plan?.workerGroupId ?? null
+                if (!isNil(groupId)) {
+                    await distributedStore.put(getWorkerGroupCacheKey(platformId), groupId)
+                }
+                return groupId
+            },
+        })
     },
 
     async isCanaryPlatform({ platformId }: { platformId: string }): Promise<boolean> {
