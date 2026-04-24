@@ -14,7 +14,7 @@ export function buildPolling(
         auth: a,
         method: HttpMethod.GET,
         path,
-        queryParams: { limit: '100', sort: timestampField, order: 'asc' },
+        queryParams: { limit: '100', sort: timestampField, order: 'desc' },
       });
       const items = extractItems(response.body);
       return items.map((item: any) => ({

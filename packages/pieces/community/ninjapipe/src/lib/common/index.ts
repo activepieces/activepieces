@@ -62,7 +62,7 @@ export function extractItems(response: unknown): unknown[] {
   for (const key of resourceKeys) {
     if (Array.isArray(r[key])) return r[key] as unknown[];
   }
-  return [r];
+  return [];
 }
 
 export function flattenObject(
@@ -92,7 +92,6 @@ export function flattenCustomFields(record: Record<string, unknown>): Record<str
   const cf = flat.custom_fields as Record<string, unknown> | undefined;
   if (cf && typeof cf === 'object' && !Array.isArray(cf)) {
     for (const [key, value] of Object.entries(cf)) {
-      if (!(key in flat)) flat[key] = value;
       flat[`cf_${key}`] = value;
     }
   }
