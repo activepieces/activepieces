@@ -139,7 +139,10 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                         })
                     },
                     onUsageUpdate: (tokens) => {
-                        accumulatedTokens = tokens
+                        accumulatedTokens = {
+                            inputTokens: accumulatedTokens.inputTokens + tokens.inputTokens,
+                            outputTokens: accumulatedTokens.outputTokens + tokens.outputTokens,
+                        }
                     },
                 })
                 let unsubscribe: (() => void) | undefined

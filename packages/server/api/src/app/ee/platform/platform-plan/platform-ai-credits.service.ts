@@ -179,12 +179,16 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             hash: auth.apiKeyHash,
             limit: Math.max(0, key.limit! - costInUsd),
         })
-        await distributedStore.delete(`openrouter_usage_${auth.apiKeyHash}`)
+        await distributedStore.delete(openRouterUsageCacheKey(auth.apiKeyHash))
     },
 })
 
+function openRouterUsageCacheKey(apiKeyHash: string): string {
+    return `openrouter_usage_${apiKeyHash}`
+}
+
 async function getOpenRouterUsageCached(apiKeyHash: string, log: FastifyBaseLogger): Promise<Pick<OpenRouterApikey, 'usage' | 'limit' | 'limit_remaining' | 'usage_monthly'>> {
-    const cacheKey = `openrouter_usage_${apiKeyHash}`
+    const cacheKey = openRouterUsageCacheKey(apiKeyHash)
 
     const cachedUsage = await distributedStore.get<OpenRouterApikey>(cacheKey)
     if (!isNil(cachedUsage)) {

@@ -182,11 +182,17 @@ export const chatService = (log: FastifyBaseLogger) => ({
     },
 
     async deductChatTokenUsage({ platformId, conversationId, inputTokens, outputTokens }: DeductTokenParams): Promise<void> {
-        if (inputTokens > 0) {
-            await conversationRepo().increment({ id: conversationId }, 'totalInputTokens', inputTokens)
-        }
-        if (outputTokens > 0) {
-            await conversationRepo().increment({ id: conversationId }, 'totalOutputTokens', outputTokens)
+        if (inputTokens > 0 || outputTokens > 0) {
+            await conversationRepo()
+                .createQueryBuilder()
+                .update()
+                .set({
+                    totalInputTokens: () => '"totalInputTokens" + :inputTokens',
+                    totalOutputTokens: () => '"totalOutputTokens" + :outputTokens',
+                })
+                .setParameters({ inputTokens, outputTokens })
+                .where('id = :id', { id: conversationId })
+                .execute()
         }
         const costInUsd = (inputTokens * ANTHROPIC_INPUT_COST_PER_MILLION + outputTokens * ANTHROPIC_OUTPUT_COST_PER_MILLION) / 1_000_000
         await platformAiCreditsService(log).deductDirectUsage({ platformId, costInUsd })

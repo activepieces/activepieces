@@ -391,9 +391,10 @@ export function useAgentChat({
         chatSendMessage({ text: content }),
       );
       if (sendError) {
-        const isCreditError = sendError.message?.includes(
-          ErrorCode.AI_CREDIT_LIMIT_EXCEEDED,
-        );
+        const status = (sendError as { status?: number }).status;
+        const isCreditError =
+          status === 402 ||
+          sendError.message?.includes(ErrorCode.AI_CREDIT_LIMIT_EXCEEDED);
         setLocalError(
           isCreditError
             ? t('chatCreditLimitExceeded')
