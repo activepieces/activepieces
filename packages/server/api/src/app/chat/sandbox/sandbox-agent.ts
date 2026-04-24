@@ -10,15 +10,17 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { chatEventUtils } from './ai-event-utils'
 
-let cachedSdk: SandboxAgent | null = null
-let cachedSdkPromise: Promise<SandboxAgent> | null = null
+const sdkCache = new Map<string, SandboxAgent>()
+const sdkPending = new Map<string, Promise<SandboxAgent>>()
 
 async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }): Promise<SandboxAgent> {
-    if (cachedSdk) return cachedSdk
-    if (cachedSdkPromise) return cachedSdkPromise
+    const cached = sdkCache.get(anthropicApiKey)
+    if (cached) return cached
+    const pending = sdkPending.get(anthropicApiKey)
+    if (pending) return pending
 
     const e2bApiKey = system.getOrThrow(AppSystemProp.E2B_API_KEY)
-    cachedSdkPromise = (async () => {
+    const promise = (async () => {
         const { e2b } = await import('sandbox-agent/e2b')
         const sandbox = e2b({
             create: {
@@ -32,14 +34,15 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
         const { PostgresSessionPersistDriver } = await import('./postgres-persist-driver')
         const persist = new PostgresSessionPersistDriver()
         const agent = await SandboxAgentClass.start({ sandbox, persist: persist as unknown as SessionPersistDriver })
-        cachedSdk = agent
-        cachedSdkPromise = null
+        sdkCache.set(anthropicApiKey, agent)
+        sdkPending.delete(anthropicApiKey)
         return agent
     })().catch((err: unknown) => {
-        cachedSdkPromise = null
+        sdkPending.delete(anthropicApiKey)
         throw err
     })
-    return cachedSdkPromise
+    sdkPending.set(anthropicApiKey, promise)
+    return promise
 }
 
 async function createSession({ anthropicApiKey, mcpServerUrl, mcpToken }: CreateSessionParams): Promise<Session> {
@@ -253,12 +256,12 @@ async function resumeSession({ sessionId, anthropicApiKey }: ResumeSessionParams
 }
 
 async function dispose(): Promise<void> {
-    if (cachedSdk) {
-        await cachedSdk.destroySandbox().catch(() => undefined)
-        await cachedSdk.dispose().catch(() => undefined)
-        cachedSdk = null
+    for (const sdk of sdkCache.values()) {
+        await sdk.destroySandbox().catch(() => undefined)
+        await sdk.dispose().catch(() => undefined)
     }
-    cachedSdkPromise = null
+    sdkCache.clear()
+    sdkPending.clear()
 }
 
 export const SandboxSessionUpdateType = {
