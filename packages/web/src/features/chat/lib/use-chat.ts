@@ -269,6 +269,16 @@ export function useAgentChat({
     error: useChatError,
   } = useChat({
     transport,
+    onError: (err) => {
+      setPendingMessages([]);
+      if (err.message?.includes(ErrorCode.AI_CREDIT_LIMIT_EXCEEDED)) {
+        setLocalError(
+          t(
+            "You've run out of AI credits. Add more credits in Settings to continue.",
+          ),
+        );
+      }
+    },
     onData: (dataPart) => {
       if (
         dataPart.type === 'data-session-title' &&
@@ -387,23 +397,9 @@ export function useAgentChat({
         }
       }
 
-      const { error: sendError } = await tryCatch(async () =>
-        chatSendMessage({ text: content }),
-      );
-      if (sendError) {
-        const status = (sendError as { status?: number }).status;
-        const isCreditError =
-          status === 402 ||
-          sendError.message?.includes(ErrorCode.AI_CREDIT_LIMIT_EXCEEDED);
-        setLocalError(
-          isCreditError
-            ? t('chatCreditLimitExceeded')
-            : sendError.message ?? t('chatSendFailed'),
-        );
-        setPendingMessages([]);
-      }
+      await chatSendMessage({ text: content });
     },
-    [createConversation, chatSendMessage, t],
+    [createConversation, chatSendMessage],
   );
 
   const setConversationId = useCallback(
