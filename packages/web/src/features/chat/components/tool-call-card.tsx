@@ -12,48 +12,32 @@ import {
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
-function formatToolLabel(toolCall: ToolCallItem): string {
-  const raw = toolCall.title || toolCall.name;
-  const mcpMatch = /^mcp__[^_]+__(.+)$/.exec(raw);
-  const name = mcpMatch ? mcpMatch[1] : raw;
-  const baseName = formatUtils.convertEnumToHumanReadable(
-    name.replace(/^ap_/, ''),
-  );
-
-  const context = extractToolContext(toolCall.input);
-  if (!context) return baseName;
-  return `${baseName} — ${context}`;
+function humanizePieceName(raw: string): string {
+  return raw
+    .replace(/^@activepieces\/piece-/, '')
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function extractToolContext(
-  input: Record<string, unknown> | undefined,
-): string | null {
+function humanizeSnakeCase(raw: string): string {
+  return raw.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export function extractToolContext(tc: ToolCallItem): string | null {
+  const input = tc.input;
   if (!input) return null;
   const parts: string[] = [];
 
   if (typeof input.pieceName === 'string') {
-    parts.push(
-      input.pieceName
-        .replace(/^@activepieces\/piece-/, '')
-        .replace(/-/g, ' ')
-        .replace(/\b\w/g, (c) => c.toUpperCase()),
-    );
+    parts.push(humanizePieceName(input.pieceName));
   }
   if (typeof input.actionName === 'string' && input.actionName) {
-    parts.push(
-      input.actionName
-        .replace(/_/g, ' ')
-        .replace(/\b\w/g, (c) => c.toUpperCase()),
-    );
+    parts.push(humanizeSnakeCase(input.actionName));
   } else if (typeof input.displayName === 'string' && input.displayName) {
     parts.push(input.displayName);
   }
   if (typeof input.triggerName === 'string' && input.triggerName) {
-    parts.push(
-      input.triggerName
-        .replace(/_/g, ' ')
-        .replace(/\b\w/g, (c) => c.toUpperCase()),
-    );
+    parts.push(humanizeSnakeCase(input.triggerName));
   }
   if (typeof input.flowId === 'string' && parts.length === 0) {
     parts.push(input.flowId.slice(0, 8));
@@ -68,15 +52,23 @@ function extractToolContext(
     typeof input.settings.pieceName === 'string' &&
     parts.length === 0
   ) {
-    parts.push(
-      input.settings.pieceName
-        .replace(/^@activepieces\/piece-/, '')
-        .replace(/-/g, ' ')
-        .replace(/\b\w/g, (c) => c.toUpperCase()),
-    );
+    parts.push(humanizePieceName(input.settings.pieceName));
   }
 
   return parts.length > 0 ? parts.join(' ') : null;
+}
+
+function formatToolLabel(toolCall: ToolCallItem): string {
+  const raw = toolCall.title || toolCall.name;
+  const mcpMatch = /^mcp__[^_]+__(.+)$/.exec(raw);
+  const name = mcpMatch ? mcpMatch[1] : raw;
+  const baseName = formatUtils.convertEnumToHumanReadable(
+    name.replace(/^ap_/, ''),
+  );
+
+  const context = extractToolContext(toolCall);
+  if (!context) return baseName;
+  return `${baseName} — ${context}`;
 }
 
 function StatusIcon({ status }: { status: ToolCallItem['status'] }) {

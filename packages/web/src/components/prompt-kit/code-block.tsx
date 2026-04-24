@@ -46,8 +46,13 @@ function CodeBlockCode({
         return;
       }
 
-      const html = await codeToHtml(code, { lang: language, theme });
-      setHighlightedHtml(html);
+      try {
+        const html = await codeToHtml(code, { lang: language, theme });
+        setHighlightedHtml(html);
+      } catch {
+        const html = await codeToHtml(code, { lang: 'plaintext', theme });
+        setHighlightedHtml(html);
+      }
     }
     highlight();
   }, [code, language, theme]);

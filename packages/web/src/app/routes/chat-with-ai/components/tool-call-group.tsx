@@ -8,7 +8,10 @@ import {
   ChainOfThoughtStep,
   ChainOfThoughtTrigger,
 } from '@/components/prompt-kit/chain-of-thought';
-import { ToolCallCard } from '@/features/chat/components/tool-call-card';
+import {
+  extractToolContext,
+  ToolCallCard,
+} from '@/features/chat/components/tool-call-card';
 
 export function ToolCallGroup({ toolCalls }: { toolCalls: ToolCallItem[] }) {
   const groups = groupToolCallsByPhase(toolCalls);
@@ -79,7 +82,7 @@ export function describeToolCalls(toolCalls: ToolCallItem[]): string {
 
   for (const tc of toolCalls) {
     const name = (tc.title || tc.name).toLowerCase();
-    const ctx = extractContext(tc);
+    const ctx = extractToolContext(tc);
     if (ctx && !contexts.includes(ctx)) contexts.push(ctx);
 
     if (!primaryAction) {
@@ -141,27 +144,6 @@ export function describeToolCalls(toolCalls: ToolCallItem[]): string {
     default:
       return t('Working on it');
   }
-}
-
-export function extractContext(tc: ToolCallItem): string | null {
-  const input = tc.input;
-  if (!input) return null;
-
-  if (typeof input.pieceName === 'string') {
-    return input.pieceName
-      .replace(/^@activepieces\/piece-/, '')
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-  }
-  if (typeof input.actionName === 'string') {
-    return input.actionName
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-  }
-  if (typeof input.displayName === 'string') {
-    return input.displayName;
-  }
-  return null;
 }
 
 export function isUtilityTool(name: string): boolean {
