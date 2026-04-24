@@ -22,7 +22,7 @@ export const updateGroupUsersAction = createAction({
     appendUsers: Property.Checkbox({
       displayName: 'Append to existing members?',
       description: 'If checked, these users will be added to the current group. If unchecked, the current group members will be completely replaced by these users.',
-      required: true,
+      required: false,
       defaultValue: true,
     }),
   },
