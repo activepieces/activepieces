@@ -145,27 +145,29 @@ export function createHistoryReplayFilter(): {
             const isTextChunk = updateType === SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK
 
             if (state === 'detecting') {
+                if (!isTextChunk) {
+                    write(update)
+                    return
+                }
                 eventQueue.push(update)
-                if (isTextChunk) {
-                    const text = chatEventUtils.extractContentText(update)
-                    if (text) {
-                        textBuffer += text
-                        if (chatEventUtils.isHistoryReplayContent(textBuffer)) {
-                            state = 'suppressing'
-                            textBuffer = ''
-                            eventQueue = []
-                            return
+                const text = chatEventUtils.extractContentText(update)
+                if (text) {
+                    textBuffer += text
+                    if (chatEventUtils.isHistoryReplayContent(textBuffer)) {
+                        state = 'suppressing'
+                        textBuffer = ''
+                        eventQueue = []
+                        return
+                    }
+                    if (textBuffer.length > 500) {
+                        state = 'passthrough'
+                        textBuffer = ''
+                        const queued = eventQueue
+                        eventQueue = []
+                        for (const e of queued) {
+                            write(e)
                         }
-                        if (textBuffer.length > 500) {
-                            state = 'passthrough'
-                            textBuffer = ''
-                            const queued = eventQueue
-                            eventQueue = []
-                            for (const e of queued) {
-                                write(e)
-                            }
-                            return
-                        }
+                        return
                     }
                 }
                 return
