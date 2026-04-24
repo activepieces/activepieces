@@ -8,8 +8,8 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {
-    "@activepieces/pieces-framework": "0.25.4",
-    "@activepieces/shared": "0.37.0",
+    "@activepieces/pieces-framework": "0.27.2",
+    "@activepieces/shared": "0.60.0",
     "axios": "1.15.0",
     "tslib": "2.6.2"
   }

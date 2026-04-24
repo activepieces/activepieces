@@ -6,8 +6,8 @@
   "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "0.12.1",
-    "@activepieces/pieces-framework": "0.27.1",
-    "@activepieces/shared": "0.58.3",
+    "@activepieces/pieces-framework": "0.27.2",
+    "@activepieces/shared": "0.60.0",
     "@aws-sdk/client-textract": "^3.0.0",
     "tslib": "^2.3.0"
   },

@@ -4,9 +4,9 @@
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-common": "0.12.3",
+    "@activepieces/pieces-common": "0.12.1",
     "@activepieces/pieces-framework": "0.27.2",
-    "@activepieces/shared": "0.66.1",
+    "@activepieces/shared": "0.60.0",
     "jimp": "^0.22.12",
     "nanoid": "3.3.8",
     "pdf-lib": "1.17.1",

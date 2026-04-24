@@ -4,9 +4,9 @@
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-common": "0.11.6",
-    "@activepieces/pieces-framework": "0.25.4",
-    "@activepieces/shared": "0.37.0",
+    "@activepieces/pieces-common": "0.12.1",
+    "@activepieces/pieces-framework": "0.27.2",
+    "@activepieces/shared": "0.60.0",
     "@anthropic-ai/sdk": "0.39.0",
     "ajv": "8.18.0",
     "mime-types": "2.1.35",
