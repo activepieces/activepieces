@@ -14,11 +14,12 @@ type ChatDataParts = {
 type ChatUIMessage = UIMessage<unknown, ChatDataParts>
 type ChatWriter = UIMessageStreamWriter<ChatUIMessage>
 
-export function createStreamWriter({ writer, textPartId, reasoningPartId, onSessionTitle }: {
+export function createStreamWriter({ writer, textPartId, reasoningPartId, onSessionTitle, onUsageUpdate }: {
     writer: ChatWriter
     textPartId: string
     reasoningPartId: string
     onSessionTitle?: (title: string) => void
+    onUsageUpdate?: (tokens: { inputTokens: number, outputTokens: number }) => void
 }): { write: (update: Record<string, unknown>) => void } {
     let textStarted = false
     let reasoningStarted = false
@@ -118,6 +119,7 @@ export function createStreamWriter({ writer, textPartId, reasoningPartId, onSess
                     const inputTokens = getNumber(update, 'inputTokens') ?? getNumber(update, 'used') ?? 0
                     const outputTokens = getNumber(update, 'outputTokens') ?? 0
                     writer.write({ type: 'data-usage', data: { inputTokens, outputTokens }, transient: true })
+                    onUsageUpdate?.({ inputTokens, outputTokens })
                     break
                 }
                 default:

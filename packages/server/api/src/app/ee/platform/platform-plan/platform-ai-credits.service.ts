@@ -1,4 +1,4 @@
-import { AiCreditsAutoTopUpState, assertNotNullOrUndefined, CreateAICreditCheckoutSessionParamsSchema, isNil, PlatformPlan, tryCatch, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
+import { ActivepiecesError, AiCreditsAutoTopUpState, assertNotNullOrUndefined, CreateAICreditCheckoutSessionParamsSchema, ErrorCode, isNil, PlatformPlan, tryCatch, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../../ai/ai-provider-service'
@@ -156,6 +156,30 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             hash: apiKeyHash,
             limit: key.limit! + amount,
         })
+    },
+
+    async assertCreditsAvailable({ platformId }: { platformId: string }): Promise<void> {
+        if (!this.isEnabled()) return
+        const usage = await this.getUsage(platformId)
+        if (usage.usageRemaining <= 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AI_CREDIT_LIMIT_EXCEEDED,
+                params: { usage: usage.usage, limit: usage.limit },
+            })
+        }
+    },
+
+    async deductDirectUsage({ platformId, costInUsd }: { platformId: string, costInUsd: number }): Promise<void> {
+        if (!this.isEnabled() || costInUsd <= 0) return
+        const auth = await aiProviderService(log).getActivepiecesProviderIfEnriched(platformId)
+        if (isNil(auth)) return
+        assertNotNullOrUndefined(auth.apiKeyHash, 'apiKeyHash')
+        const { data: key } = await openRouterApi.getKey({ hash: auth.apiKeyHash })
+        await openRouterApi.updateKey({
+            hash: auth.apiKeyHash,
+            limit: Math.max(0, key.limit! - costInUsd),
+        })
+        await distributedStore.delete(`openrouter_usage_${auth.apiKeyHash}`)
     },
 })
 

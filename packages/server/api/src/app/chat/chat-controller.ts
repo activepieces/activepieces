@@ -13,6 +13,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { platformAiCreditsService } from '../ee/platform/platform-plan/platform-ai-credits.service'
 import { chatService } from './chat-service'
 import { chatSandboxAgent } from './sandbox/sandbox-agent'
 import { ChatUIMessage, createHistoryReplayFilter, createStreamWriter } from './sandbox/stream-adapter'
@@ -91,6 +92,8 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const projectId = request.projectId
         const userId = request.principal.id
 
+        await platformAiCreditsService(log).assertCreditsAvailable({ platformId })
+
         const conversation = await chatService(log).ensureSession({
             id: conversationId,
             projectId,
@@ -120,6 +123,8 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                     anthropicApiKey,
                 })
 
+                let accumulatedTokens = { inputTokens: 0, outputTokens: 0 }
+
                 const historyReplayFilter = createHistoryReplayFilter()
                 const streamWriter = createStreamWriter({
                     writer,
@@ -132,6 +137,9 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                             userId,
                             request: { title },
                         })
+                    },
+                    onUsageUpdate: (tokens) => {
+                        accumulatedTokens = tokens
                     },
                 })
                 let unsubscribe: (() => void) | undefined
@@ -163,6 +171,13 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 }
 
                 writer.write({ type: 'finish', finishReason: 'stop' })
+
+                void chatService(log).deductChatTokenUsage({
+                    platformId,
+                    conversationId,
+                    inputTokens: accumulatedTokens.inputTokens,
+                    outputTokens: accumulatedTokens.outputTokens,
+                }).catch((err) => log.error({ err }, 'Failed to deduct chat credits'))
             },
             onError: (error) => {
                 log.error({ err: error }, 'Chat agent prompt failed')

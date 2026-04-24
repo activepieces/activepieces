@@ -3,6 +3,7 @@ import {
   CHAT_ALLOWED_MIME_TYPES,
   ChatHistoryMessage,
   ChatMessageItem,
+  ErrorCode,
   isObject,
   MessageBlock,
   ToolCallItem,
@@ -11,6 +12,7 @@ import {
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, UIMessage } from 'ai';
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { API_URL } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -208,6 +210,7 @@ export function useAgentChat({
   onTitleUpdate?: (title: string, conversationId?: string) => void;
   onConversationCreated?: () => void;
 } = {}) {
+  const { t } = useTranslation();
   const [conversationId, setConversationIdState] = useState<string | null>(
     null,
   );
@@ -384,9 +387,22 @@ export function useAgentChat({
         }
       }
 
-      await chatSendMessage({ text: content });
+      const { error: sendError } = await tryCatch(async () =>
+        chatSendMessage({ text: content }),
+      );
+      if (sendError) {
+        const isCreditError = sendError.message?.includes(
+          ErrorCode.AI_CREDIT_LIMIT_EXCEEDED,
+        );
+        setLocalError(
+          isCreditError
+            ? t('chatCreditLimitExceeded')
+            : sendError.message ?? t('chatSendFailed'),
+        );
+        setPendingMessages([]);
+      }
     },
-    [createConversation, chatSendMessage],
+    [createConversation, chatSendMessage, t],
   );
 
   const setConversationId = useCallback(

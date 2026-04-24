@@ -15,12 +15,16 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { platformAiCreditsService } from '../ee/platform/platform-plan/platform-ai-credits.service'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { mcpServerService } from '../mcp/mcp-service'
 import { projectService } from '../project/project-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
 import { chatSandboxAgent } from './sandbox/sandbox-agent'
+
+const ANTHROPIC_INPUT_COST_PER_MILLION = 3
+const ANTHROPIC_OUTPUT_COST_PER_MILLION = 15
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 
@@ -175,6 +179,17 @@ export const chatService = (log: FastifyBaseLogger) => ({
     async warmSandbox({ platformId }: { platformId: string }): Promise<void> {
         const anthropicApiKey = await this.getAnthropicApiKey({ platformId })
         await chatSandboxAgent.warmSdk({ anthropicApiKey })
+    },
+
+    async deductChatTokenUsage({ platformId, conversationId, inputTokens, outputTokens }: DeductTokenParams): Promise<void> {
+        if (inputTokens > 0) {
+            await conversationRepo().increment({ id: conversationId }, 'totalInputTokens', inputTokens)
+        }
+        if (outputTokens > 0) {
+            await conversationRepo().increment({ id: conversationId }, 'totalOutputTokens', outputTokens)
+        }
+        const costInUsd = (inputTokens * ANTHROPIC_INPUT_COST_PER_MILLION + outputTokens * ANTHROPIC_OUTPUT_COST_PER_MILLION) / 1_000_000
+        await platformAiCreditsService(log).deductDirectUsage({ platformId, costInUsd })
     },
 
     async buildSystemPrompt({ projectId }: { projectId: string }): Promise<string> {
@@ -354,6 +369,13 @@ type DeleteConversationParams = {
     projectId: string
     userId: string
     platformId: string
+}
+
+type DeductTokenParams = {
+    platformId: string
+    conversationId: string
+    inputTokens: number
+    outputTokens: number
 }
 
 type GetMessagesParams = {
