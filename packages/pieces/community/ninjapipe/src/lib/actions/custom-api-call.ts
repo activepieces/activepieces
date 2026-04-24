@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, extractItems, getAuth, safeParseJson } from '../common';
+import { ninjapipeApiCall, getAuth, safeParseJson } from '../common';
 
 export const customApiCall = createAction({
   auth: ninjapipeAuth,
@@ -57,6 +57,6 @@ export const customApiCall = createAction({
       queryParams: query,
       body: body as unknown,
     });
-    return extractItems(response.body);
+    return response.body;
   },
 });

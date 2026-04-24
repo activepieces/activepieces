@@ -62,7 +62,6 @@ import { getOrder } from './lib/actions/get-order';
 import { listOrders } from './lib/actions/list-orders';
 import { deleteOrder } from './lib/actions/delete-order';
 import { sendToDatabin } from './lib/actions/send-to-databin';
-import { customApiCall } from './lib/actions/custom-api-call';
 
 // Triggers
 import { newContact } from './lib/triggers/new-contact';
@@ -146,7 +145,6 @@ export const ninjapipe = createPiece({
     listOrders,
     deleteOrder,
     sendToDatabin,
-    customApiCall,
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as unknown as { base_url: string }).base_url,
       auth: ninjapipeAuth,

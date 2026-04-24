@@ -96,6 +96,7 @@ export function flattenCustomFields(record: Record<string, unknown>): Record<str
       flat[`cf_${key}`] = value;
     }
   }
+  delete flat.custom_fields;
   return flattenObject(flat);
 }
 

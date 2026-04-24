@@ -22,7 +22,7 @@ export const ninjapipeAuth = PieceAuth.CustomAuth({
     try {
       await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${auth.base_url}/contacts`,
+        url: `${auth.base_url.replace(/\/+$/, '')}/contacts`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: auth.api_key,
