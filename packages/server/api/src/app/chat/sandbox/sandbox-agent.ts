@@ -21,7 +21,8 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
 
     const e2bApiKey = system.getOrThrow(AppSystemProp.E2B_API_KEY)
     const promise = (async () => {
-        const { e2b } = await import('sandbox-agent/e2b')
+        const sandboxAgentPath = require.resolve('sandbox-agent').replace(/dist\/index\.js$/, '')
+        const { e2b } = await import(sandboxAgentPath + 'dist/providers/e2b.js')
         const sandbox = e2b({
             create: {
                 apiKey: e2bApiKey,
