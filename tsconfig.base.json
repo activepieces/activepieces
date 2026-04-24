@@ -359,6 +359,9 @@
         "packages/pieces/community/deepseek/src/index.ts"
       ],
       "@activepieces/piece-delay": ["packages/pieces/core/delay/src/index.ts"],
+      "@activepieces/piece-descript": [
+        "packages/pieces/community/descript/src/index.ts"
+      ],
       "@activepieces/piece-devin": [
         "packages/pieces/community/devin/src/index.ts"
       ],
