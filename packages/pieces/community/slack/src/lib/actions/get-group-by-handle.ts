@@ -7,7 +7,7 @@ export const getGroupByHandleAction = createAction({
   auth: slackAuth,
   name: 'get_group_by_handle',
   displayName: 'Get User Group by Handle',
-  description: 'Finds a Slack user group by its handle (e.g., @user-group) and returns its details, including the ID.',
+  description: 'Finds a Slack user group by its handle (e.g., @user-group) and returns its details. To mention this group in a message, map the returned ID using the syntax <!subteam^ID>. Read more: https://api.slack.com/reference/surfaces/formatting#mentioning-groups',
   props: {
     handle: Property.ShortText({
       displayName: 'Group Handle',
