@@ -5,9 +5,9 @@
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-common": "workspace:*",
-    "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
+    "@activepieces/pieces-common": "0.12.3",
+    "@activepieces/pieces-framework": "0.26.2",
+    "@activepieces/shared": "0.67.1",
     "content-disposition": "0.5.4",
     "tslib": "^2.3.0"
   },

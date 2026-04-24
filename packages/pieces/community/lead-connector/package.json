@@ -8,9 +8,9 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {
-    "@activepieces/pieces-common": "workspace:*",
-    "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
+    "@activepieces/pieces-common": "0.12.3",
+    "@activepieces/pieces-framework": "0.26.2",
+    "@activepieces/shared": "0.67.1",
     "jsonwebtoken": "9.0.1",
     "zod": "4.3.6",
     "tslib": "2.6.2"

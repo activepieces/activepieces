@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
-    "@activepieces/pieces-framework": "*",
-    "@activepieces/shared": "*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "axios": "1.15.0",
     "chalk": "4.1.2",
     "commander": "11.1.0",

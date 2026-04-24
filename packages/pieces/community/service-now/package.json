@@ -5,9 +5,9 @@
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-common": "workspace:*",
-    "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
+    "@activepieces/pieces-common": "0.12.3",
+    "@activepieces/pieces-framework": "0.26.2",
+    "@activepieces/shared": "0.67.1",
     "dayjs": "1.11.9",
     "form-data": "^4.0.0",
     "tslib": "^2.3.0",
