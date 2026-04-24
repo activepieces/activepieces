@@ -13,14 +13,9 @@ import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
 function humanizePieceName(raw: string): string {
-  return raw
-    .replace(/^@activepieces\/piece-/, '')
-    .replace(/-/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function humanizeSnakeCase(raw: string): string {
-  return raw.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  return formatUtils.convertEnumToHumanReadable(
+    raw.replace(/^@activepieces\/piece-/, '').replace(/-/g, '_'),
+  );
 }
 
 export function extractToolContext(tc: ToolCallItem): string | null {
@@ -32,12 +27,12 @@ export function extractToolContext(tc: ToolCallItem): string | null {
     parts.push(humanizePieceName(input.pieceName));
   }
   if (typeof input.actionName === 'string' && input.actionName) {
-    parts.push(humanizeSnakeCase(input.actionName));
+    parts.push(formatUtils.convertEnumToHumanReadable(input.actionName));
   } else if (typeof input.displayName === 'string' && input.displayName) {
     parts.push(input.displayName);
   }
   if (typeof input.triggerName === 'string' && input.triggerName) {
-    parts.push(humanizeSnakeCase(input.triggerName));
+    parts.push(formatUtils.convertEnumToHumanReadable(input.triggerName));
   }
   if (typeof input.flowId === 'string' && parts.length === 0) {
     parts.push(input.flowId.slice(0, 8));
