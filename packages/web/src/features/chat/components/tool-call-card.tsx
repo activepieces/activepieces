@@ -1,4 +1,4 @@
-import { ToolCallItem } from '@activepieces/shared';
+import { isObject, ToolCallItem } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, ChevronDown, Loader2, Square, XCircle } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -12,10 +12,71 @@ import {
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
-function formatToolName(raw: string): string {
+function formatToolLabel(toolCall: ToolCallItem): string {
+  const raw = toolCall.title || toolCall.name;
   const mcpMatch = /^mcp__[^_]+__(.+)$/.exec(raw);
   const name = mcpMatch ? mcpMatch[1] : raw;
-  return formatUtils.convertEnumToHumanReadable(name.replace(/^ap_/, ''));
+  const baseName = formatUtils.convertEnumToHumanReadable(
+    name.replace(/^ap_/, ''),
+  );
+
+  const context = extractToolContext(toolCall.input);
+  if (!context) return baseName;
+  return `${baseName} — ${context}`;
+}
+
+function extractToolContext(
+  input: Record<string, unknown> | undefined,
+): string | null {
+  if (!input) return null;
+  const parts: string[] = [];
+
+  if (typeof input.pieceName === 'string') {
+    parts.push(
+      input.pieceName
+        .replace(/^@activepieces\/piece-/, '')
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase()),
+    );
+  }
+  if (typeof input.actionName === 'string' && input.actionName) {
+    parts.push(
+      input.actionName
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase()),
+    );
+  } else if (typeof input.displayName === 'string' && input.displayName) {
+    parts.push(input.displayName);
+  }
+  if (typeof input.triggerName === 'string' && input.triggerName) {
+    parts.push(
+      input.triggerName
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase()),
+    );
+  }
+  if (typeof input.flowId === 'string' && parts.length === 0) {
+    parts.push(input.flowId.slice(0, 8));
+  }
+  if (typeof input.query === 'string' && parts.length === 0) {
+    parts.push(
+      `"${input.query.slice(0, 30)}${input.query.length > 30 ? '…' : ''}"`,
+    );
+  }
+  if (
+    isObject(input.settings) &&
+    typeof input.settings.pieceName === 'string' &&
+    parts.length === 0
+  ) {
+    parts.push(
+      input.settings.pieceName
+        .replace(/^@activepieces\/piece-/, '')
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase()),
+    );
+  }
+
+  return parts.length > 0 ? parts.join(' ') : null;
 }
 
 function StatusIcon({ status }: { status: ToolCallItem['status'] }) {
@@ -45,7 +106,7 @@ function StatusIcon({ status }: { status: ToolCallItem['status'] }) {
 }
 
 export function ToolCallCard({ toolCall }: { toolCall: ToolCallItem }) {
-  const displayName = formatToolName(toolCall.title || toolCall.name);
+  const displayName = formatToolLabel(toolCall);
   const hasInput = toolCall.input && Object.keys(toolCall.input).length > 0;
   const hasOutput = Boolean(toolCall.output);
   const hasContent = hasInput || hasOutput;

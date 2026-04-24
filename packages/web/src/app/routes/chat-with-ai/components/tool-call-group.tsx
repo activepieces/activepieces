@@ -30,7 +30,7 @@ export function ToolCallGroup({ toolCalls }: { toolCalls: ToolCallItem[] }) {
                 )
               }
             >
-              {groupDone ? group.label : t('Working...')}
+              {group.label}
             </ChainOfThoughtTrigger>
             <ChainOfThoughtContent>
               <div className="space-y-0.5">

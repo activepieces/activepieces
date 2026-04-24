@@ -1516,5 +1516,22 @@
   "Thought for {duration}": "Thought for {duration}",
   "Search...": "Search...",
   "No chats found": "No chats found",
-  "Start your first chat": "Start your first chat"
+  "Start your first chat": "Start your first chat",
+  "Creating {subject} flow": "Creating {subject} flow",
+  "Creating the flow": "Creating the flow",
+  "Setting up {subject} trigger": "Setting up {subject} trigger",
+  "Setting up the trigger": "Setting up the trigger",
+  "Adding {subject} step": "Adding {subject} step",
+  "Adding a new step": "Adding a new step",
+  "Configuring {subject}": "Configuring {subject}",
+  "Wiring up the steps": "Wiring up the steps",
+  "Testing {subject}": "Testing {subject}",
+  "Running tests": "Running tests",
+  "Looking up {subject}": "Looking up {subject}",
+  "Exploring integrations": "Exploring integrations",
+  "Checking connections": "Checking connections",
+  "Reviewing your flows": "Reviewing your flows",
+  "Querying your data": "Querying your data",
+  "Publishing the flow": "Publishing the flow",
+  "Working on it": "Working on it"
 }
