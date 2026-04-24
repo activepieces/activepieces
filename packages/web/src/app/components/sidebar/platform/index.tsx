@@ -1,6 +1,6 @@
 import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
 import { t } from 'i18next';
-import React, { ComponentType, useRef } from 'react';
+import { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import { BotIcon } from '@/components/icons/bot';
@@ -36,8 +36,6 @@ import {
   SidebarGroupLabel,
   SidebarSeparator,
 } from '@/components/ui/sidebar-shadcn';
-import { PlatformCopilotButton } from '@/features/platform-copilot/platform-copilot-button';
-import { PlatformCopilotSheet } from '@/features/platform-copilot/platform-copilot-sheet';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -53,7 +51,6 @@ export function PlatformSidebar() {
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
-  const [copilotOpen, setCopilotOpen] = React.useState(false);
 
   const setupItems = [
     {
@@ -206,7 +203,6 @@ export function PlatformSidebar() {
           <ChevronLeftIcon ref={chevronRef} className="size-4" size={16} />
           <span className="truncate text-sm">{t('Back to app')}</span>
         </Link>
-        <PlatformCopilotButton onClick={() => setCopilotOpen(true)} />
       </SidebarHeader>
       <div className="flex-1 overflow-y-auto">
         <SidebarContent className="gap-0">
@@ -236,7 +232,6 @@ export function PlatformSidebar() {
       <SidebarFooter>
         <SidebarUser />
       </SidebarFooter>
-      <PlatformCopilotSheet open={copilotOpen} onOpenChange={setCopilotOpen} />
     </Sidebar>
   );
 }

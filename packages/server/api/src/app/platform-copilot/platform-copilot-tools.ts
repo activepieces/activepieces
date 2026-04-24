@@ -52,14 +52,14 @@ export function createCopilotTools() {
                 }
 
 
-                console.log("******* RESEARCH ************")
+                console.log('******* RESEARCH ************')
                 console.log({
                     queries,
                     totalHits: ranked.length,
                     sources,
                     otherHits: ranked.slice(sources.length, sources.length + 5).map((h) => ({ title: h.title, url: h.url, snippet: h.snippet })),
                 })
-                console.log("******* RESEARCH ************")
+                console.log('******* RESEARCH ************')
 
                 return {
                     queries,
@@ -82,9 +82,9 @@ export function createCopilotTools() {
                 }
                 const { text, truncated } = truncateWithFlag(result.text, READ_TRUNCATE_CHARS)
 
-                console.log("******* READ URL ************")
+                console.log('******* READ URL ************')
                 console.log( { url, content: text, truncated })
-                console.log("******* READ URL ************")
+                console.log('******* READ URL ************')
 
                 return { url, content: text, truncated }
             },
@@ -115,9 +115,9 @@ export function createCopilotTools() {
                     url: `${GITHUB_BLOB}/${item.path}`,
                     fragments: (item.text_matches ?? []).map((m) => truncate(m.fragment, 300)),
                 }))
-                console.log("******* SEARCH GITGUB CODE ************")
+                console.log('******* SEARCH GITGUB CODE ************')
                 console.log({ query, total: json?.total_count ?? items.length, items })
-                console.log("******* SEARCH GITGUB CODE ************")
+                console.log('******* SEARCH GITGUB CODE ************')
                 return { query, total: json?.total_count ?? items.length, items }
             },
         }),
@@ -135,9 +135,9 @@ export function createCopilotTools() {
                 }
                 const { text, truncated } = truncateWithFlag(res.text ?? '', READ_TRUNCATE_CHARS)
 
-                console.log("******* READ GITGUB FILE ************")
+                console.log('******* READ GITGUB FILE ************')
                 console.log({ filePath, url: `${GITHUB_BLOB}/${filePath}`, content: text, lineCount: (res.text ?? '').split('\n').length, truncated })
-                console.log("******* READ GITGUB FILE ************")
+                console.log('******* READ GITGUB FILE ************')
 
                 return { filePath, url: `${GITHUB_BLOB}/${filePath}`, content: text, lineCount: (res.text ?? '').split('\n').length, truncated }
             },
@@ -160,13 +160,13 @@ export function createCopilotTools() {
                 }
                 const items = (res.json as GithubContentEntry[]) ?? []
 
-                console.log("******* LIST GITGUB DIRECTORy ************")
+                console.log('******* LIST GITGUB DIRECTORy ************')
                 console.log({
                     dirPath,
                     entries: items.map((i) => ({ name: i.name, type: i.type, path: i.path })),
                     count: items.length,
                 })
-                console.log("******* LIST GITGUB DIRECTORy ************")
+                console.log('******* LIST GITGUB DIRECTORy ************')
                 return {
                     dirPath,
                     entries: items.map((i) => ({ name: i.name, type: i.type, path: i.path })),
@@ -186,9 +186,9 @@ async function runJinaSearch(query: string): Promise<JinaHit[]> {
     const res = await safeFetch(url, { headers })
 
 
-    console.log("####################### RUN JINA SEARCH #############################3")
+    console.log('####################### RUN JINA SEARCH #############################3')
     console.log(res)
-    console.log("#######################################################3")
+    console.log('#######################################################3')
 
 
     if (!res.ok) return []
@@ -210,9 +210,9 @@ async function fetchJinaReader(url: string): Promise<JinaReadResult> {
 
     const res = await safeFetch(target, { headers })
 
-    console.log("####################### FETCH JINA READER #############################3")
+    console.log('####################### FETCH JINA READER #############################3')
     console.log(res)
-    console.log("#######################################################3")
+    console.log('#######################################################3')
 
     if (!res.ok) {
         return { ok: false, error: `Failed to read URL (HTTP ${res.status})` }

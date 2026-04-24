@@ -127,7 +127,7 @@ export enum AppSystemProp {
     PORT = 'PORT',
     OPENAI_API_KEY = 'OPENAI_API_KEY',
     JINA_API_KEY = 'JINA_API_KEY',
-    GITHUB_TOKEN = 'GITHUB_TOKEN'
+    GITHUB_TOKEN = 'GITHUB_TOKEN',
 }
 
 export enum ContainerType {

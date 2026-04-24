@@ -4,6 +4,7 @@ import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing';
+import { PlatformCopilotDock } from '@/features/platform-copilot/platform-copilot-dock';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
@@ -30,6 +31,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
                   <div className="flex flex-col flex-1 overflow-auto">
                     {children}
                   </div>
+                  <PlatformCopilotDock />
                 </div>
               </div>
             </SidebarInset>
