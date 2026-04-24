@@ -1,13 +1,13 @@
 {
   "name": "@activepieces/piece-aiprise",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-common": "workspace:*",
-    "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
+    "@activepieces/pieces-common": "0.12.1",
+    "@activepieces/pieces-framework": "0.26.2",
+    "@activepieces/shared": "0.67.1",
     "tslib": "^2.3.0"
   },
   "scripts": {
