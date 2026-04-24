@@ -1507,5 +1507,14 @@
   "Drop files here": "Drop files here",
   "Attach files": "Attach files",
   "Release to add files to your message": "Release to add files to your message",
-  "Send message": "Send message"
+  "Send message": "Send message",
+  "to send": "to send",
+  "new line": "new line",
+  "Thinking...": "Thinking...",
+  "Thought for a few seconds": "Thought for a few seconds",
+  "Thinking for {duration}...": "Thinking for {duration}...",
+  "Thought for {duration}": "Thought for {duration}",
+  "Search...": "Search...",
+  "No chats found": "No chats found",
+  "Start your first chat": "Start your first chat"
 }

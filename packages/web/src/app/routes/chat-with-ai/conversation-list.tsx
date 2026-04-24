@@ -1,9 +1,10 @@
 import { ChatConversation } from '@activepieces/shared';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, Plus, Trash2 } from 'lucide-react';
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { ChevronDown, MessageSquare, Plus, Search, Trash2 } from 'lucide-react';
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
@@ -11,16 +12,6 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { DelayedTooltip } from './components/delayed-tooltip';
-
-function isToday(dateStr: string) {
-  return new Date(dateStr).toDateString() === new Date().toDateString();
-}
-
-function isYesterday(dateStr: string) {
-  const y = new Date();
-  y.setDate(y.getDate() - 1);
-  return new Date(dateStr).toDateString() === y.toDateString();
-}
 
 export function ConversationList({
   onSelect,
@@ -36,6 +27,7 @@ export function ConversationList({
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
 
   const { data: conversationsPage, isLoading: isLoadingConversations } =
@@ -59,7 +51,15 @@ export function ConversationList({
     },
   });
 
-  const conversations = conversationsPage?.data ?? [];
+  const allConversations = conversationsPage?.data ?? [];
+
+  const conversations = useMemo(() => {
+    if (!searchQuery.trim()) return allConversations;
+    const query = searchQuery.toLowerCase();
+    return allConversations.filter((c) =>
+      (c.title ?? '').toLowerCase().includes(query),
+    );
+  }, [allConversations, searchQuery]);
 
   const checkFades = useCallback(() => {
     const el = listRef.current;
@@ -72,11 +72,29 @@ export function ConversationList({
     checkFades();
   }, [collapsed, conversations, checkFades]);
 
-  const today = conversations.filter((c) => isToday(c.created));
-  const yesterdayList = conversations.filter((c) => isYesterday(c.created));
-  const olderList = conversations.filter(
-    (c) => !isToday(c.created) && !isYesterday(c.created),
-  );
+  const { today, yesterday, older } = useMemo(() => {
+    const todayStr = new Date().toDateString();
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    const yesterdayStr = y.toDateString();
+
+    const groups: {
+      today: ChatConversation[];
+      yesterday: ChatConversation[];
+      older: ChatConversation[];
+    } = {
+      today: [],
+      yesterday: [],
+      older: [],
+    };
+    for (const c of conversations) {
+      const dateStr = new Date(c.created).toDateString();
+      if (dateStr === todayStr) groups.today.push(c);
+      else if (dateStr === yesterdayStr) groups.yesterday.push(c);
+      else groups.older.push(c);
+    }
+    return groups;
+  }, [conversations]);
 
   const handleClick = (conv: ChatConversation) => {
     onSelect?.(conv.id);
@@ -161,7 +179,7 @@ export function ConversationList({
 
   return (
     <div className="flex flex-col h-full shrink-0" style={{ width: '220px' }}>
-      <div className="px-2 pt-3 pb-2">
+      <div className="px-2 pt-3 pb-2 space-y-2">
         <button
           type="button"
           className="flex items-center justify-between gap-1.5 w-full px-2 py-1.5 rounded-md border border-border bg-transparent cursor-pointer text-xs text-foreground transition-colors hover:bg-accent"
@@ -175,6 +193,17 @@ export function ConversationList({
           </span>
           <span className="text-[11px] opacity-50">⇧⌘O</span>
         </button>
+        {allConversations.length > 5 && (
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('Search...')}
+              className="h-7 pl-7 text-xs rounded-md"
+            />
+          </div>
+        )}
       </div>
       <div className="flex-1 relative min-h-0">
         {showTopFade && (
@@ -191,11 +220,20 @@ export function ConversationList({
                 <Skeleton key={i} className="h-7 w-full rounded-md" />
               ))}
             </div>
+          ) : conversations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+              <MessageSquare className="h-8 w-8 text-muted-foreground/30 mb-2" />
+              <p className="text-xs text-muted-foreground">
+                {searchQuery.trim()
+                  ? t('No chats found')
+                  : t('Start your first chat')}
+              </p>
+            </div>
           ) : (
             <>
               {renderGroup(t('Today'), today)}
-              {renderGroup(t('Yesterday'), yesterdayList)}
-              {renderGroup(t('Older'), olderList)}
+              {renderGroup(t('Yesterday'), yesterday)}
+              {renderGroup(t('Older'), older)}
             </>
           )}
         </div>

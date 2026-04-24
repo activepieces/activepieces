@@ -17,6 +17,9 @@ import {
   parseQuickReplies,
 } from '../lib/message-parsers';
 
+const PROSE_CLASSES =
+  'prose dark:prose-invert max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_h1]:mt-6 [&_h2]:mt-5 [&_h3]:mt-4 [&_h1:first-child]:mt-0 [&_h2:first-child]:mt-0 [&_h3:first-child]:mt-0 [&_ul]:mb-4 [&_ol]:mb-4 [&_table]:mb-4';
+
 export function MessageContentWithAuth({
   content,
   onSend,
@@ -47,7 +50,7 @@ export function MessageContentWithAuth({
     return (
       <div className="space-y-3">
         {cleanContent && (
-          <div className="prose dark:prose-invert max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_h1]:mt-6 [&_h2]:mt-5 [&_h3]:mt-4 [&_ul]:mb-4 [&_ol]:mb-4 [&_table]:mb-4">
+          <div className={PROSE_CLASSES}>
             <Markdown>{cleanContent}</Markdown>
           </div>
         )}
@@ -65,7 +68,7 @@ export function MessageContentWithAuth({
 
   if (isStreaming) {
     return (
-      <div className="prose dark:prose-invert max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_h1]:mt-6 [&_h2]:mt-5 [&_h3]:mt-4 [&_ul]:mb-4 [&_ol]:mb-4 [&_table]:mb-4">
+      <div className={PROSE_CLASSES}>
         <Markdown>{content}</Markdown>
         <span className="inline-block w-[2px] h-[1em] bg-foreground align-text-bottom ml-0.5 animate-[blink-cursor_1s_step-end_infinite]" />
       </div>
@@ -81,7 +84,7 @@ export function MessageContentWithAuth({
   return (
     <div className="space-y-2">
       {finalContent && (
-        <div className="prose dark:prose-invert max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_h1]:mt-6 [&_h2]:mt-5 [&_h3]:mt-4 [&_ul]:mb-4 [&_ol]:mb-4 [&_table]:mb-4">
+        <div className={PROSE_CLASSES}>
           <Markdown>{finalContent}</Markdown>
         </div>
       )}
@@ -177,7 +180,12 @@ export function ConnectionRequiredCard({
         className="rounded-xl border bg-background shadow-sm overflow-hidden my-2"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 25 }}
+        transition={{
+          duration: 0.3,
+          type: 'spring',
+          stiffness: 300,
+          damping: 25,
+        }}
       >
         <div className="p-4 flex items-center gap-3">
           <PieceIconWithPieceName

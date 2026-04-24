@@ -1,10 +1,9 @@
-import { t } from 'i18next';
-import { Check, Copy } from 'lucide-react';
 import { marked } from 'marked';
-import { memo, useCallback, useId, useMemo, useState } from 'react';
+import React, { memo, useId, useMemo } from 'react';
 import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { cn } from '@/lib/utils';
 
 import { CodeBlock, CodeBlockCode, CodeBlockGroup } from './code-block';
@@ -73,7 +72,9 @@ function normalizeMarkdownSpacing(markdown: string): string {
 function parseMarkdownIntoBlocks(markdown: string): string[] {
   const normalized = normalizeMarkdownSpacing(markdown);
   const tokens = marked.lexer(normalized);
-  return tokens.map((token) => token.raw);
+  return tokens
+    .map((token) => token.raw)
+    .filter((block) => block.trim().length > 0);
 }
 
 function extractLanguage(className?: string): string {
@@ -117,32 +118,30 @@ function isLinkOnlyList(node: HastNode | undefined): boolean {
   return items.length > 0 && items.every(isLinkOnlyItem);
 }
 
-function CodeCopyButton({ code }: { code: string }) {
-  const [copied, setCopied] = useState(false);
+function hasTextContent(children: React.ReactNode): boolean {
+  if (typeof children === 'string') return children.trim().length > 0;
+  if (Array.isArray(children)) return children.some(hasTextContent);
+  if (React.isValidElement(children)) {
+    return hasTextContent(
+      (children.props as { children?: React.ReactNode }).children,
+    );
+  }
+  return Boolean(children);
+}
 
-  const handleCopy = useCallback(() => {
-    void navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [code]);
-
-  return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      className="p-1 rounded-md hover:bg-muted text-muted-foreground transition-colors"
-      title={t('Copy')}
-    >
-      {copied ? (
-        <Check className="h-3.5 w-3.5 text-green-500" />
-      ) : (
-        <Copy className="h-3.5 w-3.5" />
-      )}
-    </button>
-  );
+function makeHeading(Tag: 'h1' | 'h2' | 'h3') {
+  const Component = function ({ children }: { children?: React.ReactNode }) {
+    if (!hasTextContent(children)) return null;
+    return <Tag>{children}</Tag>;
+  };
+  Component.displayName = Tag.toUpperCase();
+  return Component;
 }
 
 const INITIAL_COMPONENTS: Partial<Components> = {
+  h1: makeHeading('h1'),
+  h2: makeHeading('h2'),
+  h3: makeHeading('h3'),
   ul: function UlComponent({ children, node }) {
     if (isLinkOnlyList(node as HastNode | undefined)) {
       return <div className="flex flex-wrap gap-1.5 my-2">{children}</div>;
@@ -228,7 +227,12 @@ const INITIAL_COMPONENTS: Partial<Components> = {
           <span className="text-xs text-muted-foreground font-mono">
             {language !== 'plaintext' ? language : ''}
           </span>
-          <CodeCopyButton code={code} />
+          <CopyButton
+            textToCopy={code}
+            withoutTooltip
+            variant="ghost"
+            className="h-6 w-6 p-0"
+          />
         </CodeBlockGroup>
         <CodeBlockCode code={code} language={language} />
       </CodeBlock>

@@ -106,6 +106,11 @@ function ChatBoxContent({
     [sendMessage],
   );
 
+  const handleRetry = useCallback(() => {
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+    if (lastUser) void sendMessage(getTextFromBlocks(lastUser.blocks));
+  }, [messages, sendMessage]);
+
   const isEmpty =
     messages.length === 0 && !initialConversationId && !isLoadingHistory;
 
@@ -154,13 +159,7 @@ function ChatBoxContent({
                 onSend={handleSend}
                 connectedPieces={connectedPieces}
                 onPieceConnected={markPieceConnected}
-                onRetry={() => {
-                  const lastUser = [...messages]
-                    .reverse()
-                    .find((m) => m.role === 'user');
-                  if (lastUser)
-                    void sendMessage(getTextFromBlocks(lastUser.blocks));
-                }}
+                onRetry={handleRetry}
               />
             );
           })}
@@ -198,13 +197,7 @@ function ChatBoxContent({
                 variant="ghost"
                 size="sm"
                 className="text-destructive hover:text-destructive gap-1.5 shrink-0"
-                onClick={() => {
-                  const lastUser = [...messages]
-                    .reverse()
-                    .find((m) => m.role === 'user');
-                  if (lastUser)
-                    void sendMessage(getTextFromBlocks(lastUser.blocks));
-                }}
+                onClick={handleRetry}
               >
                 <RefreshCw className="h-3 w-3" />
                 {t('Retry')}
@@ -224,9 +217,20 @@ function ChatBoxContent({
             onSend={handleSend}
             onCancel={cancelStream}
           />
-          <p className="text-[11px] text-muted-foreground text-center mt-2">
-            {t('Activepieces AI can help you automate anything.')}
-          </p>
+          <div className="flex items-center justify-center gap-3 mt-2">
+            <span className="text-[11px] text-muted-foreground">
+              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">
+                Enter
+              </kbd>{' '}
+              {t('to send')}
+            </span>
+            <span className="text-[11px] text-muted-foreground">
+              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">
+                Shift+Enter
+              </kbd>{' '}
+              {t('new line')}
+            </span>
+          </div>
         </div>
       </div>
     </div>

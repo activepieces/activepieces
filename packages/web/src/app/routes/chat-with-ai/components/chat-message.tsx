@@ -1,13 +1,15 @@
 import { ChatMessageItem } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, Copy, Paperclip, RefreshCw } from 'lucide-react';
+import { Paperclip, RefreshCw } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import {
   Message,
   MessageAction,
   MessageActions,
+  MessageAvatar,
   MessageContent,
 } from '@/components/prompt-kit/message';
 import {
@@ -16,6 +18,8 @@ import {
   ReasoningTrigger,
 } from '@/components/prompt-kit/reasoning';
 import { PlanCard } from '@/features/chat/components/plan-card';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { formatUtils } from '@/lib/format-utils';
 
 import { getTextFromBlocks } from '../lib/message-parsers';
 
@@ -58,18 +62,11 @@ export function ChatMessage({
 }
 
 export function UserMessage({ message }: { message: ChatMessageItem }) {
-  const [copied, setCopied] = useState(false);
   const content = getTextFromBlocks(message.blocks);
-
-  const handleCopy = useCallback(() => {
-    void navigator.clipboard.writeText(content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [content]);
 
   return (
     <motion.div
-      className="flex justify-end py-3"
+      className="flex justify-end py-3 group/msg"
       initial={{ opacity: 0, x: 16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25 }}
@@ -95,17 +92,12 @@ export function UserMessage({ message }: { message: ChatMessageItem }) {
         </Message>
         <MessageActions className="justify-end mt-1">
           <MessageAction tooltip={t('Copy')}>
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="p-1 rounded hover:bg-muted text-muted-foreground transition-colors"
-            >
-              {copied ? (
-                <Check className="h-3.5 w-3.5 text-green-500" />
-              ) : (
-                <Copy className="h-3.5 w-3.5" />
-              )}
-            </button>
+            <CopyButton
+              textToCopy={content}
+              withoutTooltip
+              variant="ghost"
+              className="h-6 w-6 p-0"
+            />
           </MessageAction>
         </MessageActions>
       </div>
@@ -130,7 +122,6 @@ export function AssistantMessage({
   connectedPieces: Set<string>;
   onPieceConnected: (piece: string) => void;
 }) {
-  const [copied, setCopied] = useState(false);
   const hasThoughts = message.thoughts.length > 0;
   const hasBlocks = message.blocks.length > 0;
   const hasContent = message.blocks.some(
@@ -138,96 +129,144 @@ export function AssistantMessage({
   );
   const isWaiting = isStreaming && !hasThoughts && !hasBlocks;
   const isThinkingOnly = isStreaming && hasThoughts && !hasBlocks;
+  const isThinking = isWaiting || isThinkingOnly;
+  const thinkingSeconds = useThinkingTimer(isThinking);
   const fullText = getTextFromBlocks(message.blocks);
   const isLastBlock = (idx: number) => idx === message.blocks.length - 1;
 
-  const handleCopy = useCallback(() => {
-    void navigator.clipboard.writeText(fullText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [fullText]);
-
   return (
     <motion.div
-      className="py-3"
+      className="py-3 group/msg"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="min-w-0 overflow-hidden space-y-2">
-        <AnimatePresence mode="wait">
-          {isWaiting && (
-            <motion.div
-              key="thinking"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ChatThinkingLoader onStop={onCancel} />
-            </motion.div>
+      <Message>
+        <AssistantAvatar />
+        <div className="min-w-0 space-y-2 flex-1">
+          <AnimatePresence mode="wait">
+            {isWaiting && (
+              <motion.div
+                key="thinking"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ChatThinkingLoader onStop={onCancel} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {hasThoughts && (
+            <Reasoning isStreaming={isThinkingOnly} className="">
+              <ReasoningTrigger className="text-sm text-muted-foreground">
+                {formatThinkingTime({
+                  seconds: thinkingSeconds,
+                  isActive: isThinking,
+                })}
+              </ReasoningTrigger>
+              <ReasoningContent markdown contentClassName="text-xs">
+                {message.thoughts}
+              </ReasoningContent>
+            </Reasoning>
           )}
-        </AnimatePresence>
 
-        {hasThoughts && (
-          <Reasoning isStreaming={isThinkingOnly} className="">
-            <ReasoningTrigger className="text-sm text-muted-foreground">
-              {t('Thought for a few seconds')}
-            </ReasoningTrigger>
-            <ReasoningContent markdown contentClassName="text-xs">
-              {message.thoughts}
-            </ReasoningContent>
-          </Reasoning>
-        )}
+          {message.blocks.map((block, idx) => {
+            if (block.type === 'text' && block.text.length > 0) {
+              return (
+                <MessageContentWithAuth
+                  key={idx}
+                  content={block.text}
+                  onSend={onSend}
+                  isStreaming={isStreaming && isLastBlock(idx)}
+                  connectedPieces={connectedPieces}
+                  onPieceConnected={onPieceConnected}
+                />
+              );
+            }
+            if (block.type === 'tool_calls') {
+              return <ToolCallGroup key={idx} toolCalls={block.calls} />;
+            }
+            return null;
+          })}
 
-        {message.blocks.map((block, idx) => {
-          if (block.type === 'text' && block.text.length > 0) {
-            return (
-              <MessageContentWithAuth
-                key={idx}
-                content={block.text}
-                onSend={onSend}
-                isStreaming={isStreaming && isLastBlock(idx)}
-                connectedPieces={connectedPieces}
-                onPieceConnected={onPieceConnected}
-              />
-            );
-          }
-          if (block.type === 'tool_calls') {
-            return <ToolCallGroup key={idx} toolCalls={block.calls} />;
-          }
-          return null;
-        })}
+          {message.plan && <PlanCard entries={message.plan} />}
 
-        {message.plan && <PlanCard entries={message.plan} />}
-
-        {hasContent && !isStreaming && (
-          <MessageActions className="mt-2">
-            <MessageAction tooltip={t('Copy')}>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="p-1.5 rounded-md hover:bg-muted transition-colors"
-              >
-                {copied ? (
-                  <Check className="h-4 w-4 text-green-500" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </button>
-            </MessageAction>
-            <MessageAction tooltip={t('Regenerate')}>
-              <button
-                type="button"
-                onClick={onRetry}
-                className="p-1.5 rounded-md hover:bg-muted transition-colors"
-              >
-                <RefreshCw className="h-4 w-4" />
-              </button>
-            </MessageAction>
-          </MessageActions>
-        )}
-      </div>
+          {hasContent && !isStreaming && (
+            <MessageActions className="mt-2">
+              <MessageAction tooltip={t('Copy')}>
+                <CopyButton
+                  textToCopy={fullText}
+                  withoutTooltip
+                  variant="ghost"
+                  className="h-7 w-7 p-0"
+                />
+              </MessageAction>
+              <MessageAction tooltip={t('Regenerate')}>
+                <button
+                  type="button"
+                  onClick={onRetry}
+                  className="p-1.5 rounded-md hover:bg-muted transition-colors"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </button>
+              </MessageAction>
+            </MessageActions>
+          )}
+        </div>
+      </Message>
     </motion.div>
   );
 }
+
+function useThinkingTimer(isActive: boolean): number {
+  const [seconds, setSeconds] = useState(0);
+  const startRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!isActive) {
+      startRef.current = null;
+      return;
+    }
+    startRef.current = Date.now();
+    setSeconds(0);
+    const interval = setInterval(() => {
+      if (startRef.current) {
+        setSeconds(Math.floor((Date.now() - startRef.current) / 1000));
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isActive]);
+
+  return seconds;
+}
+
+function formatThinkingTime({
+  seconds,
+  isActive,
+}: {
+  seconds: number;
+  isActive: boolean;
+}): string {
+  if (seconds < 1) {
+    return isActive ? t('Thinking...') : t('Thought for a few seconds');
+  }
+  const duration = formatUtils.formatToHoursAndMinutes(seconds);
+  return isActive
+    ? t('Thinking for {duration}...', { duration })
+    : t('Thought for {duration}', { duration });
+}
+
+const AssistantAvatar = memo(function AssistantAvatar() {
+  const branding = flagsHooks.useWebsiteBranding();
+
+  return (
+    <MessageAvatar
+      src={branding.logos.logoIconUrl}
+      alt=""
+      fallback="AI"
+      className="h-6 w-6 rounded-none overflow-visible"
+    />
+  );
+});

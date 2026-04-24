@@ -80,7 +80,6 @@ function convertUIMessagesToItems(messages: UIMessage[]): ChatMessageItem[] {
     .map((msg, idx) => {
       const blocks: MessageBlock[] = [];
       let thoughts = '';
-      const toolCalls: ToolCallItem[] = [];
       const fileNames: string[] = [];
 
       for (const part of msg.parts) {
@@ -97,21 +96,23 @@ function convertUIMessagesToItems(messages: UIMessage[]): ChatMessageItem[] {
         } else if (part.type === 'reasoning') {
           thoughts += part.text;
         } else if (part.type === 'dynamic-tool') {
-          toolCalls.push({
+          const toolCall: ToolCallItem = {
             id: part.toolCallId,
             name: part.toolName,
             title: part.title ?? part.toolName,
             status: deriveToolStatus(part.state),
             input: isObject(part.input) ? part.input : undefined,
             output: extractDynamicToolOutput(part),
-          });
+          };
+          const last = blocks[blocks.length - 1];
+          if (last && last.type === 'tool_calls') {
+            last.calls.push(toolCall);
+          } else {
+            blocks.push({ type: 'tool_calls', calls: [toolCall] });
+          }
         } else if (part.type === 'file' && part.filename) {
           fileNames.push(part.filename);
         }
-      }
-
-      if (toolCalls.length > 0) {
-        blocks.push({ type: 'tool_calls', calls: toolCalls });
       }
 
       return {

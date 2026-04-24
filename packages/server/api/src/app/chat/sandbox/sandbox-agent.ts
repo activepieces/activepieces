@@ -130,9 +130,25 @@ async function destroySession({ sessionId, anthropicApiKey }: DestroySessionPara
     await sdk.destroySession(sessionId)
 }
 
+async function fetchAllEvents({ sdk, sessionId }: { sdk: SandboxAgent, sessionId: string }): Promise<Array<{ sender: string, payload: unknown }>> {
+    const PAGE_SIZE = 500
+    const allEvents: Array<{ sender: string, payload: unknown }> = []
+    let cursor: string | undefined
+
+    do {
+        const page = await sdk.getEvents({ sessionId, limit: PAGE_SIZE, cursor })
+        for (const event of page.items) {
+            allEvents.push({ sender: event.sender, payload: event.payload })
+        }
+        cursor = page.nextCursor
+    } while (cursor)
+
+    return allEvents
+}
+
 async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionParams): Promise<ChatHistoryMessage[]> {
     const sdk = await getOrCreateSdk({ anthropicApiKey })
-    const { items } = await sdk.getEvents({ sessionId })
+    const allEvents = await fetchAllEvents({ sdk, sessionId })
 
     const messages: ChatHistoryMessage[] = []
     let currentAssistantText = ''
@@ -140,7 +156,7 @@ async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionPa
     let currentToolCalls: ChatHistoryToolCall[] = []
     let inAssistantMessage = false
 
-    for (const event of items) {
+    for (const event of allEvents) {
         const raw: unknown = event.payload
         if (!isObject(raw)) continue
         const payload = raw
