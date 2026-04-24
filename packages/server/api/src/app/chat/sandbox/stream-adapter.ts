@@ -129,12 +129,25 @@ export function createStreamWriter({ writer, textPartId, reasoningPartId, onSess
 
 export function createHistoryReplayFilter(): {
     processUpdate: (update: Record<string, unknown>, write: (u: Record<string, unknown>) => void) => void
+    flush: (write: (u: Record<string, unknown>) => void) => void
 } {
     let state: 'detecting' | 'suppressing' | 'passthrough' = 'detecting'
     let textBuffer = ''
     let eventQueue: Array<Record<string, unknown>> = []
 
     return {
+        flush(write: (u: Record<string, unknown>) => void): void {
+            if (state === 'detecting' && eventQueue.length > 0) {
+                const queued = eventQueue
+                eventQueue = []
+                for (const e of queued) {
+                    write(e)
+                }
+            }
+            state = 'passthrough'
+            textBuffer = ''
+            eventQueue = []
+        },
         processUpdate(update: Record<string, unknown>, write: (u: Record<string, unknown>) => void): void {
             if (state === 'passthrough') {
                 write(update)

@@ -157,6 +157,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                     unsubscribe?.()
                 }
 
+                historyReplayFilter.flush((u) => streamWriter.write(u))
                 writer.write({ type: 'finish', finishReason: 'stop' })
             },
             onError: (error) => {
