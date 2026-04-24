@@ -46,10 +46,13 @@ export function ConversationList({
 
   const { mutate: deleteConv } = useMutation({
     mutationFn: (id: string) => chatApi.deleteConversation(id),
-    onSuccess: () => {
+    onSuccess: (_data, deletedId) => {
       void queryClient.invalidateQueries({
         queryKey: ['chat-conversations', projectId],
       });
+      if (selectedId === deletedId) {
+        onNewChat?.();
+      }
     },
   });
 
@@ -79,9 +82,6 @@ export function ConversationList({
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     deleteConv(id);
-    if (selectedId === id) {
-      onNewChat?.();
-    }
   };
 
   const toggleGroup = (label: string) => {
@@ -133,9 +133,6 @@ export function ConversationList({
                       if (e.key === 'Enter') {
                         e.stopPropagation();
                         deleteConv(conv.id);
-                        if (selectedId === conv.id) {
-                          onNewChat?.();
-                        }
                       }
                     }}
                   >
