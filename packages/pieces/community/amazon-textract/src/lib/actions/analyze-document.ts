@@ -45,7 +45,7 @@ export const analyzeDocument = createAction({
             }),
             s3Key: Property.ShortText({
               displayName: 'S3 File Path',
-              description: 'The path to the file in your S3 bucket (e.g. "documents/invoice.pdf").',
+              description: 'The path to the file in your S3 bucket (e.g. "documents/invoice.pdf"). PDF and TIFF are supported for single-page documents only. For multi-page PDFs, use the Start Document Analysis action instead.',
               required: true,
             }),
           };

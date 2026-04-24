@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { baserowJwtAuth } from '../auth';
+import { baserowAuth } from '../auth';
 import { baserowCommon } from '../common';
 import { createWebhookTriggerHooks } from '../common/webhook-trigger';
 
@@ -7,7 +7,7 @@ const webhookHooks = createWebhookTriggerHooks('rows.deleted', 'baserow_rows_del
 
 export const rowsDeletedTrigger = createTrigger({
   name: 'baserow_rows_deleted',
-  auth: baserowJwtAuth,
+  auth: baserowAuth,
   displayName: 'Rows Deleted (Batch)',
   description:
     'Triggers when rows are deleted from a Baserow table. Returns all deleted row IDs from the event as a single batch.',

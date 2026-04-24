@@ -1,5 +1,5 @@
 import { findAllPiecesDirectoryInSource } from '../utils/piece-script-utils'
-import { parseBunLock, preparePieceDistForPublish } from '../../../packages/cli/src/lib/utils/prepare-piece-utils'
+import { preparePieceDistForPublish } from '../../../packages/cli/src/lib/utils/prepare-piece-utils'
 
 function getChangedPiecePaths(): string[] | null {
     const changedPieces = process.env['CHANGED_PIECES']
@@ -15,10 +15,8 @@ async function main(): Promise<void> {
 
     console.info(`[preparePieces] processing ${piecePaths.length} pieces${changedPaths ? ' (scoped to changed)' : ' (all)'}`)
 
-    const parsedBunLock = parseBunLock()
-
     for (const piecePath of piecePaths) {
-        preparePieceDistForPublish(piecePath, parsedBunLock)
+        preparePieceDistForPublish(piecePath)
     }
 
     console.info(`[preparePieces] done, prepared ${piecePaths.length} pieces`)

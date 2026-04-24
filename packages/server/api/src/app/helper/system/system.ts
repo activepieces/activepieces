@@ -8,6 +8,7 @@ import {
     ExecutionMode,
     FileLocation,
     isNil,
+    NetworkMode,
     PieceSyncMode,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -58,7 +59,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
     [AppSystemProp.REDIS_TYPE]: RedisType.STANDALONE,
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
-    [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '100',
+    [AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT]: '5',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: '10000',
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: '100',
@@ -66,6 +67,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: '300000',
     [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: DefaultProjectRole.EDITOR,
+    [AppSystemProp.NETWORK_MODE]: NetworkMode.UNRESTRICTED,
 }
 
 let globalLogger: FastifyBaseLogger

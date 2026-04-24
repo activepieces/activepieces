@@ -20,6 +20,7 @@ jobs:
     timeout-minutes: 20
     env:
       AP_EXECUTION_MODE: SANDBOX_CODE_ONLY
+      AP_WORKER_CONCURRENCY: 1
 
     steps:
       - name: Checkout
@@ -49,6 +50,11 @@ jobs:
         run: |
           chmod +x smoke-test/verify.sh
           smoke-test/verify.sh "${{ steps.setup.outputs.flow_id }}"
+
+      - name: Run memory stability test
+        run: |
+          chmod +x smoke-test/verify-memory.sh
+          smoke-test/verify-memory.sh "${{ steps.setup.outputs.flow_id }}"
 
       - name: Run delay flow smoke test
         run: |

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-imap",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
@@ -9,7 +9,7 @@
     "@activepieces/shared": "workspace:*",
     "dayjs": "1.11.9",
     "imapflow": "1.0.200",
-    "mailparser": "3.7.5",
+    "mailparser": "3.9.3",
     "tslib": "2.6.2"
   },
   "scripts": {

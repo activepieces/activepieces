@@ -90,4 +90,4 @@ jobs:
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy \
             --version ${{ steps.target.outputs.image_tag }} \
-            --config-file=config/worker.yml --roles=canary --skip-push; exit"'
+            --config-file=config/worker-canary.yml --skip-push; exit"'

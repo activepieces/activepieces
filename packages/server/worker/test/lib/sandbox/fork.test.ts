@@ -24,7 +24,7 @@ describe('simpleProcess', () => {
             mounts: [],
             env: { CUSTOM_VAR: 'hello', AP_SANDBOX_WS_PORT: '9999' },
             resourceLimits: {
-                memoryBytes: 512 * 1024 * 1024,
+                memoryLimitMb: 512,
                 cpuMsPerSec: 1000,
                 timeLimitSeconds: 300,
             },
@@ -32,20 +32,21 @@ describe('simpleProcess', () => {
         children.push(child)
 
         const msg = await new Promise<{ env: Record<string, string>, execArgv: string[] }>((resolve, reject) => {
-            child.on('message', (m) => resolve(m as any))
+            child.on('message', (m) => resolve(m as { env: Record<string, string>, execArgv: string[] }))
             child.on('error', reject)
-            setTimeout(() => reject(new Error('timeout waiting for child message')), 5000)
+            setTimeout(() => reject(new Error('timeout waiting for child message')), 10000)
         })
 
         expect(msg.execArgv).toContain('--no-node-snapshot')
+        expect(msg.execArgv).toContain('--expose-gc')
         expect(msg.execArgv).toContain('--max-old-space-size=512')
         expect(msg.env.AP_BASE_CODE_DIRECTORY).toBe('/code-dir')
         expect(msg.env.SANDBOX_ID).toBe('sb-fork-1')
         expect(msg.env.CUSTOM_VAR).toBe('hello')
         expect(msg.env.AP_SANDBOX_WS_PORT).toBe('9999')
-    })
+    }, 15000)
 
-    it('calculates memoryLimitMb correctly from non-round bytes', async () => {
+    it('passes through integer memoryLimitMb to --max-old-space-size', async () => {
         const maker = simpleProcess(fixturePath, '/code')
 
         const child = await maker.create({
@@ -54,7 +55,7 @@ describe('simpleProcess', () => {
             mounts: [],
             env: {},
             resourceLimits: {
-                memoryBytes: 300 * 1024 * 1024 + 500000,
+                memoryLimitMb: 300,
                 cpuMsPerSec: 1000,
                 timeLimitSeconds: 60,
             },
@@ -62,12 +63,11 @@ describe('simpleProcess', () => {
         children.push(child)
 
         const msg = await new Promise<{ env: Record<string, string>, execArgv: string[] }>((resolve, reject) => {
-            child.on('message', (m) => resolve(m as any))
+            child.on('message', (m) => resolve(m as { env: Record<string, string>, execArgv: string[] }))
             child.on('error', reject)
-            setTimeout(() => reject(new Error('timeout waiting for child message')), 5000)
+            setTimeout(() => reject(new Error('timeout waiting for child message')), 10000)
         })
 
-        // Math.floor((300 * 1024 * 1024 + 500000) / (1024 * 1024)) = 300
         expect(msg.execArgv).toContain('--max-old-space-size=300')
-    })
+    }, 15000)
 })

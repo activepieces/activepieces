@@ -51,8 +51,7 @@ Dedicated workers that connect to the canary app instead of the primary app:
 
 | Env var | Value |
 |---|---|
-| `AP_FRONTEND_URL` | canary app's URL |
-| `AP_IS_CANARY_WORKER` | `true` |
+| `AP_WORKER_GROUP_ID` | `canary` |
 
 Workers use `AP_FRONTEND_URL` for their Socket.IO RPC channel and for posting engine results back to the app. Canary workers are registered with the canary app, so the RPC path is fully isolated.
 
@@ -86,7 +85,7 @@ Jobs for canary platforms are enqueued to `canaryWorkerJobs`, which only canary 
 
 ## Deploying a New Canary Build
 
-The **Continuous Delivery — Canary** workflow (`continuous-delivery-canary.yml`) runs automatically every day at 9 AM UTC, building from the latest `main`.
+The **Continuous Delivery — Canary** workflow (`continuous-delivery-canary.yml`) runs automatically every day at 9 AM UTC, building from the latest `main`. It is also invoked as a reusable workflow from `continuous-delivery-cloud.yml` on the Sunday promotion, so the canary is always refreshed from the latest `main` immediately before production is updated.
 
 The workflow:
 1. Builds and pushes a new image tagged `<version>.<sha>.canary`

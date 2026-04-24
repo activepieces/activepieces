@@ -4,7 +4,6 @@ import { slackAuth } from '../auth';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
-  PauseType,
 } from '@activepieces/shared';
 import {
   autoAddBot,
@@ -42,6 +41,10 @@ export const requestSendApprovalMessageAction = createAction({
       assertNotNullOrUndefined(text, 'text');
       assertNotNullOrUndefined(channel, 'channel');
 
+      const waitpoint = await context.run.createWaitpoint({
+        type: 'WEBHOOK',
+      });
+
       if (shouldAddBot) {
         await tryAddBotToChannel({
           botToken: token,
@@ -59,10 +62,10 @@ export const requestSendApprovalMessageAction = createAction({
       });
       const messageTs = (postMessage as ChatPostMessageResponse).ts as string;
 
-      const approvalLink = context.generateResumeUrl({
+      const approvalLink = waitpoint.buildResumeUrl({
         queryParams: { action: 'approve', channel, messageTs },
       });
-      const disapprovalLink = context.generateResumeUrl({
+      const disapprovalLink = waitpoint.buildResumeUrl({
         queryParams: { action: 'disapprove', channel, messageTs },
       });
 
@@ -103,12 +106,7 @@ export const requestSendApprovalMessageAction = createAction({
         ],
       });
 
-      context.run.pause({
-        pauseMetadata: {
-          type: PauseType.WEBHOOK,
-          response: {},
-        },
-      });
+      context.run.waitForWaitpoint(waitpoint.id);
 
       return {
         approved: false,

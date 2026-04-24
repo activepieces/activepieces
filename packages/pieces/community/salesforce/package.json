@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-salesforce",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -12,7 +12,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "dayjs": "1.11.9",
-    "fast-xml-parser": "5.3.7",
+    "fast-xml-parser": "5.5.7",
     "tslib": "2.6.2"
   }
 }

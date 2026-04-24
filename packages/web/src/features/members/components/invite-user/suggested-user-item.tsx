@@ -1,5 +1,4 @@
 import { t } from 'i18next';
-import { Mail } from 'lucide-react';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { Badge } from '@/components/ui/badge';
@@ -9,18 +8,6 @@ import { cn } from '@/lib/utils';
 
 import { EmailStatusType } from './types';
 import { SuggestedUser } from './use-user-suggestions';
-
-type SuggestedUserItemProps =
-  | {
-      type: 'platform-user';
-      user: SuggestedUser;
-      onSelect: (email: string) => void;
-    }
-  | {
-      type: 'email-status';
-      emailStatus: EmailStatusType;
-      onSelect: (email: string) => void;
-    };
 
 export function SuggestedUserItem(props: SuggestedUserItemProps) {
   if (props.type === 'platform-user') {
@@ -59,7 +46,7 @@ function PlatformUserItem({
   return (
     <CommandItem
       key={user.id}
-      value={`${user.email} ${user.firstName} ${user.lastName}`}
+      value={user.email}
       onSelect={() => !isDisabled && onSelect(user.email)}
       disabled={isDisabled}
       className={cn('cursor-pointer', isDisabled && 'opacity-60')}
@@ -94,16 +81,19 @@ function PlatformUserItem({
 function EmailStatusSuggestionItem({
   emailStatus,
   onSelect,
+  isPlatformInvite,
 }: {
   emailStatus: EmailStatusType;
   onSelect: (email: string) => void;
+  isPlatformInvite?: boolean;
 }) {
   const getBadgeAndState = () => {
     switch (emailStatus.type) {
-      case 'external':
+      case 'new-user':
         return {
-          label: t('External'),
-          className: 'text-muted-foreground bg-muted-foreground/15',
+          label: isPlatformInvite ? t('New User') : t('New Member'),
+          className:
+            'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-900',
           disabled: false,
         };
       case 'has-access':
@@ -138,7 +128,7 @@ function EmailStatusSuggestionItem({
       className={cn('cursor-pointer', disabled && 'opacity-60')}
     >
       <div className="flex items-center gap-2 w-full">
-        {user ? (
+        {user && (
           <UserAvatar
             name={`${user.firstName} ${user.lastName}`}
             email={user.email}
@@ -146,10 +136,6 @@ function EmailStatusSuggestionItem({
             disableTooltip={true}
             imageUrl={user.imageUrl}
           />
-        ) : (
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
-            <Mail className="w-4 h-4 text-muted-foreground" />
-          </div>
         )}
         <div className="flex flex-col flex-1 min-w-0">
           <span className="text-sm font-medium truncate">
@@ -171,3 +157,16 @@ function EmailStatusSuggestionItem({
     </CommandItem>
   );
 }
+
+type SuggestedUserItemProps =
+  | {
+      type: 'platform-user';
+      user: SuggestedUser;
+      onSelect: (email: string) => void;
+    }
+  | {
+      type: 'email-status';
+      emailStatus: EmailStatusType;
+      onSelect: (email: string) => void;
+      isPlatformInvite?: boolean;
+    };

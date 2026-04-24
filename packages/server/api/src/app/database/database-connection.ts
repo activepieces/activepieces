@@ -16,6 +16,7 @@ import { OtpEntity } from '../ee/authentication/otp/otp-entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
+import { ConcurrencyPoolEntity } from '../ee/platform/concurrency-pool/concurrency-pool.entity'
 import { PlatformPlanEntity } from '../ee/platform/platform-plan/platform-plan.entity'
 import { ProjectMemberEntity } from '../ee/projects/project-members/project-member.entity'
 import { ProjectPlanEntity } from '../ee/projects/project-plan/project-plan.entity'
@@ -29,6 +30,7 @@ import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
+import { WaitpointEntity } from '../flows/flow-run/waitpoint/waitpoint-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { system } from '../helper/system/system'
@@ -100,7 +102,9 @@ function getEntities(): EntitySchema<unknown>[] {
         KnowledgeBaseChunkEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
+        WaitpointEntity,
         // Enterprise
+        ConcurrencyPoolEntity,
         ProjectMemberEntity,
         ProjectPlanEntity,
         CustomDomainEntity,

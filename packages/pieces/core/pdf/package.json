@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-pdf",
-  "version": "0.5.0",
+  "version": "0.5.2",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
@@ -14,7 +14,8 @@
     "tslib": "2.6.2"
   },
   "devDependencies": {
-    "vitest": "3.0.8"
+    "vitest": "3.0.8",
+    "@types/mime-types": "2.1.1"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
