@@ -60,7 +60,9 @@ async function deleteConversation(id: string): Promise<void> {
 }
 
 async function warm(): Promise<{ configured: boolean }> {
-  return api.post<{ configured: boolean }>('/v1/chat/warm', undefined, { projectId: projectId() });
+  return api.post<{ configured: boolean }>('/v1/chat/warm', undefined, {
+    projectId: projectId(),
+  });
 }
 
 export const chatApi = {

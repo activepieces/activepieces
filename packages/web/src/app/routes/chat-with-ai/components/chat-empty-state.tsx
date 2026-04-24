@@ -1,5 +1,13 @@
 import { t } from 'i18next';
-import { AlertTriangle, Cable, Settings, Sparkles, Table2, Workflow, Zap } from 'lucide-react';
+import {
+  AlertTriangle,
+  Cable,
+  Settings,
+  Sparkles,
+  Table2,
+  Workflow,
+  Zap,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 
@@ -99,9 +107,7 @@ export function SandboxNotConfiguredState() {
         <AlertTriangle className="h-8 w-8 text-destructive" />
       </div>
       <div className="space-y-2">
-        <h2 className="text-xl font-semibold">
-          {t('Sandbox not configured')}
-        </h2>
+        <h2 className="text-xl font-semibold">{t('Sandbox not configured')}</h2>
         <p className="text-muted-foreground text-sm max-w-md">
           {t(
             'AI Chat requires an E2B sandbox to run. Ask your admin to set the AP_E2B_API_KEY environment variable.',
