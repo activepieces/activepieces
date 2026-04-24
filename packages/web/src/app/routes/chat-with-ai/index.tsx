@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { authenticationSession } from '@/lib/authentication-session';
@@ -14,10 +14,12 @@ export function ChatWithAIPage() {
     useParams<{ projectId: string; conversationId: string }>();
   const projectId =
     routeProjectId ?? authenticationSession.getProjectId() ?? '';
+  const [resetKey, setResetKey] = useState(0);
 
   const selectedConversationId = urlConversationId ?? null;
 
   const handleNewChat = useCallback(() => {
+    setResetKey((k) => k + 1);
     navigate(`/projects/${projectId}/chat`, { replace: true });
   }, [navigate, projectId]);
 
@@ -75,7 +77,7 @@ export function ChatWithAIPage() {
         />
       </div>
       <AIChatBox
-        key={`${projectId}-${selectedConversationId ?? 'new'}`}
+        key={`${projectId}-${selectedConversationId ?? 'new'}-${resetKey}`}
         incognito={false}
         conversationId={selectedConversationId}
         onTitleUpdate={handleTitleUpdate}

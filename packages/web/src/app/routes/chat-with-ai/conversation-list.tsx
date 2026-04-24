@@ -44,13 +44,16 @@ export function ConversationList({
       queryFn: () => chatApi.listConversations({ limit: 100 }),
     });
 
+  const selectedIdRef = useRef(selectedId);
+  selectedIdRef.current = selectedId;
+
   const { mutate: deleteConv } = useMutation({
     mutationFn: (id: string) => chatApi.deleteConversation(id),
     onSuccess: (_data, deletedId) => {
       void queryClient.invalidateQueries({
         queryKey: ['chat-conversations', projectId],
       });
-      if (selectedId === deletedId) {
+      if (selectedIdRef.current === deletedId) {
         onNewChat?.();
       }
     },
