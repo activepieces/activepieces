@@ -11,7 +11,7 @@ export const getGroupByHandleAction = createAction({
   props: {
     handle: Property.ShortText({
       displayName: 'Group Handle',
-      description: 'Group handle, without the leading @',
+      description: 'Group handle without the leading @',
       required: true,
     }),
   },
