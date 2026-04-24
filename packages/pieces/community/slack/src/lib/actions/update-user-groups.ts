@@ -51,7 +51,7 @@ export const updateGroupUsersAction = createAction({
       finalUserIds = Array.from(new Set([...existingUsers, ...userIds]));
     }
 
-    const usersString = finalUserIds.join(',');
+    const usersString = finalUserIds.join(', ');
 
     const updateResponse = await client.usergroups.users.update({
       usergroup: group.id,
