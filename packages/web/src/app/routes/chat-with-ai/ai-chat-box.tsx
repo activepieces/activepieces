@@ -133,7 +133,7 @@ function ChatBoxContent({
     <div className="flex flex-col h-full flex-1 min-w-0">
       <ChatContainerRoot className="flex-1 relative">
         <ChatContainerContent className="max-w-4xl mx-auto px-6 py-8 gap-0">
-          {isLoadingHistory && <MessageSkeletons />}
+          {(isLoadingHistory || (initialConversationId && messages.length === 0 && !isStreaming)) && <MessageSkeletons />}
 
           {messages.map((msg, idx) => {
             const isLastStreamingAssistant =
