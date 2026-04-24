@@ -54,6 +54,11 @@ const AnimatedTab = ({
     >
       <IconComponent ref={iconRef} size={16} className="mr-2" />
       {tab.label}
+      {tab.beta && (
+        <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium leading-none text-primary">
+          Beta
+        </span>
+      )}
     </TabsTrigger>
   );
 };
@@ -74,6 +79,7 @@ export const ProjectDashboardLayoutHeader = () => {
       icon: SendIcon,
       hasPermission: checkAccess(Permission.READ_CHAT),
       show: platform.plan.chatEnabled,
+      beta: true,
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/automations'),
