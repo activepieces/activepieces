@@ -5,9 +5,9 @@
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-common": "workspace:*",
-    "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
+    "@activepieces/pieces-common": "0.12.3",
+    "@activepieces/pieces-framework": "0.27.2",
+    "@activepieces/shared": "0.67.0",
     "@ai-sdk/amazon-bedrock": "3.0.97",
     "@ai-sdk/anthropic": "3.0.67",
     "@ai-sdk/azure": "3.0.52",

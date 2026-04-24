@@ -8,9 +8,9 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {
-    "@activepieces/pieces-common": "workspace:*",
-    "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
+    "@activepieces/pieces-common": "0.11.7",
+    "@activepieces/pieces-framework": "0.25.6",
+    "@activepieces/shared": "0.39.0",
     "mime-types": "2.1.35",
     "nodemailer": "8.0.5",
     "tslib": "2.6.2"
