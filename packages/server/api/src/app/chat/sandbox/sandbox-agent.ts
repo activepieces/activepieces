@@ -21,7 +21,7 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
 
     const e2bApiKey = system.getOrThrow(AppSystemProp.E2B_API_KEY)
     const promise = (async () => {
-        const { e2b } = await import('sandbox-agent/e2b')
+        const { e2b } = await esmImport<typeof import('sandbox-agent/e2b')>('sandbox-agent/e2b')
         const sandbox = e2b({
             create: {
                 apiKey: e2bApiKey,
@@ -30,7 +30,7 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
             connect: { apiKey: e2bApiKey },
         })
 
-        const { SandboxAgent: SandboxAgentClass } = await import('sandbox-agent')
+        const { SandboxAgent: SandboxAgentClass } = await esmImport<typeof import('sandbox-agent')>('sandbox-agent')
         const { PostgresSessionPersistDriver } = await import('./postgres-persist-driver')
         const persist = new PostgresSessionPersistDriver()
         const agent = await SandboxAgentClass.start({ sandbox, persist: persist as unknown as SessionPersistDriver })
@@ -267,6 +267,10 @@ async function dispose(): Promise<void> {
     sdkCache.clear()
     sdkPending.clear()
 }
+
+// sandbox-agent only exports ESM (no CJS). TypeScript compiles import() to require() which breaks it.
+// eslint-disable-next-line @typescript-eslint/no-implied-eval
+const esmImport = new Function('specifier', 'return import(specifier)') as <T>(specifier: string) => Promise<T>
 
 export const SandboxSessionUpdateType = {
     AGENT_MESSAGE_CHUNK: 'agent_message_chunk',
