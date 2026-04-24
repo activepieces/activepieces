@@ -21,9 +21,12 @@ const CHAT_PRINCIPALS = [PrincipalType.USER] as const
 
 export const chatController: FastifyPluginAsyncZod = async (app) => {
 
-    app.post('/warm', WarmRoute, async (request, reply) => {
-        void chatService(request.log).warmSandbox({ platformId: request.principal.platform.id })
-        return reply.status(StatusCodes.NO_CONTENT).send()
+    app.post('/warm', WarmRoute, async (request) => {
+        const configured = chatService(request.log).isSandboxConfigured()
+        if (configured) {
+            void chatService(request.log).warmSandbox({ platformId: request.principal.platform.id })
+        }
+        return { configured }
     })
 
     app.post('/conversations', CreateConversationRoute, async (request, reply) => {

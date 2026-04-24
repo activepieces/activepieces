@@ -1,6 +1,7 @@
 import { AIProviderName } from '@activepieces/shared';
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { RefreshCw, Square } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -19,6 +20,7 @@ import { aiProviderQueries } from '@/features/platform-admin';
 import {
   EmptyState,
   MessageSkeletons,
+  SandboxNotConfiguredState,
   SetupRequiredState,
   SuggestionCards,
 } from './components/chat-empty-state';
@@ -40,7 +42,14 @@ export function AIChatBox({
     (p) => p.provider === AIProviderName.ANTHROPIC,
   );
 
-  if (isLoadingProviders) {
+  const { data: warmResult, isLoading: isLoadingWarm } = useQuery({
+    queryKey: ['chat-warm'],
+    queryFn: () => chatApi.warm(),
+    enabled: Boolean(hasAnthropic),
+    staleTime: Infinity,
+  });
+
+  if (isLoadingProviders || (hasAnthropic && isLoadingWarm)) {
     return (
       <div className="flex items-center justify-center h-full flex-1 min-w-0">
         <Skeleton className="h-8 w-48" />
@@ -50,6 +59,10 @@ export function AIChatBox({
 
   if (!hasAnthropic) {
     return <SetupRequiredState />;
+  }
+
+  if (!warmResult?.configured) {
+    return <SandboxNotConfiguredState />;
   }
 
   return (
@@ -62,19 +75,12 @@ export function AIChatBox({
   );
 }
 
-let sandboxWarmed = false;
-
 function ChatBoxContent({
   incognito,
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
 }: AIChatBoxProps) {
-  if (!sandboxWarmed) {
-    sandboxWarmed = true;
-    void chatApi.warm();
-  }
-
   const {
     messages,
     isStreaming,
@@ -187,16 +193,17 @@ function ChatBoxContent({
 
           {error && (
             <motion.div
-              className="flex items-center gap-3 py-4 text-destructive text-sm"
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: [0, -6, 5, -4, 3, 0] }}
-              transition={{ duration: 0.4 }}
+              className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-destructive text-sm"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
             >
+              <AlertTriangle className="h-4 w-4 shrink-0" />
               <span className="flex-1">{error}</span>
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-destructive hover:text-destructive gap-1.5 shrink-0"
+                className="text-destructive hover:text-destructive gap-1.5 shrink-0 h-7 px-2"
                 onClick={handleRetry}
               >
                 <RefreshCw className="h-3 w-3" />

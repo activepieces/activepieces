@@ -135,11 +135,22 @@ export const chatService = (log: FastifyBaseLogger) => ({
         if (!conversation.sandboxSessionId) {
             return { data: [] }
         }
-        const anthropicApiKey = await this.getAnthropicApiKey({ platformId })
-        const messages = await chatSandboxAgent.getSessionHistory({
-            sessionId: conversation.sandboxSessionId,
-            anthropicApiKey,
-        })
+        const { data: anthropicApiKey, error: keyError } = await tryCatch(
+            async () => this.getAnthropicApiKey({ platformId }),
+        )
+        if (keyError) {
+            return { data: [] }
+        }
+        const { data: messages, error: historyError } = await tryCatch(
+            async () => chatSandboxAgent.getSessionHistory({
+                sessionId: conversation.sandboxSessionId!,
+                anthropicApiKey,
+            }),
+        )
+        if (historyError) {
+            log.warn({ err: historyError, conversationId: id }, 'Failed to load session history')
+            return { data: [] }
+        }
         return { data: messages }
     },
 
@@ -155,6 +166,10 @@ export const chatService = (log: FastifyBaseLogger) => ({
             })
         }
         return config.auth.apiKey
+    },
+
+    isSandboxConfigured(): boolean {
+        return Boolean(system.get(AppSystemProp.E2B_API_KEY))
     },
 
     async warmSandbox({ platformId }: { platformId: string }): Promise<void> {
