@@ -6,7 +6,14 @@ export enum ContextVersion {
     V1 = '1',
     V2 = '2',
 }
-//bump these two constants after creating a new context version
+// When introducing a new context version, bump BOTH constants together.
+// The floor is load-bearing: older engines bundle an older framework whose
+// switch below only knows the older ContextVersion cases. A piece compiled
+// against a newer framework reports the new version via getContextInfo(),
+// the switch falls through, returns undefined, and the engine then invokes
+// run(undefined) — surfacing as "Cannot read properties of undefined".
+// Enforcing the floor in piece.ts keeps such pieces out of the registry on
+// incompatible servers instead of crashing at execution time.
 export const LATEST_CONTEXT_VERSION = ContextVersion.V2;
 export const MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION = '0.82.0';
 

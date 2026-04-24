@@ -14,7 +14,8 @@ Merge to main (Mon–Thu) ──→ Deploy to staging
                                     │
                           Fri–Sat: canary runs daily from main
                                     │
-                          Sun 9 AM UTC: release-candidate → production
+                          Sun 9 AM UTC: canary rebuilt from main
+                                    │                → release-candidate promoted to production
                                     │                + deploy/cloud/YYYY-MM-DD branch created
                           Mon 9 AM UTC: self-hosted release published
 ```
@@ -29,9 +30,9 @@ Merges to `main` after 5 PM UTC on Thursday are **not deployed to staging**. At 
 
 ### Promotion — Sunday 9 AM UTC
 
-At 9 AM UTC on Sunday, the cloud workflow promotes Thursday's `release-candidate` to production.
+At 9 AM UTC on Sunday, the cloud workflow first refreshes the canary environment by invoking `continuous-delivery-canary.yml` as a reusable workflow, then promotes Thursday's `release-candidate` to production.
 
-**Why**: By Sunday, the release candidate has soaked in the canary environment (Fri–Sat). If something is broken, we catch it before it reaches all customers.
+**Why**: By Sunday, the release candidate has soaked in the canary environment (Fri–Sat). Refreshing canary again right before promotion ensures it is running the latest `main` when production is updated. If something is broken, we catch it before it reaches all customers.
 
 After promotion, a `deploy/cloud/YYYY-MM-DD` branch is created.
 
@@ -49,7 +50,7 @@ On Monday at 9 AM UTC, the self-hosted release is published: git tag, GitHub rel
 | Mon–Thu, 5 PM–9 AM UTC | Merge to `main` → code in `main` only, staging frozen |
 | **Thu 5 PM UTC** | Staging image + commit tagged as `release-candidate` |
 | Fri–Sat | Canary deploys daily from `main`; cloud is quiet |
-| **Sun 9 AM UTC** | `release-candidate` promoted to cloud production; `deploy/cloud/YYYY-MM-DD` branch created |
+| **Sun 9 AM UTC** | Canary rebuilt from latest `main`; `release-candidate` promoted to cloud production; `deploy/cloud/YYYY-MM-DD` branch created |
 | **Mon 9 AM UTC** | Self-hosted release published (re-tags cloud RC image) |
 
 ## Overrides

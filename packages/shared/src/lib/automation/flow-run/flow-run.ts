@@ -39,8 +39,8 @@ export const FlowRun = z.object({
     }).optional(),
     logsFileId: Nullable(z.string()),
     status: z.nativeEnum(FlowRunStatus),
-    startTime: z.string().optional(),
-    finishTime: z.string().optional(),
+    startTime: z.string().nullish(),
+    finishTime: z.string().nullish(),
     environment: z.nativeEnum(RunEnvironment),
     // The steps data may be missing if the flow has not started yet,
     // or if the run is older than AP_EXECUTION_DATA_RETENTION_DAYS and its execution data has been purged.
