@@ -21,8 +21,13 @@ export const getAccountAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
+    // The leading `*` is required: when ?fields= is provided, Outseta returns
+    // ONLY the listed fields. Without `*`, top-level scalar fields like Name,
+    // AccountStage, BillingAddress, etc. would all come back null. Verified
+    // live: without *, response only contains CurrentSubscription; with *, the
+    // full Account is returned.
     const account = await client.get<any>(
-      `/api/v1/crm/accounts/${context.propsValue.accountUid}?fields=CurrentSubscription.*,CurrentSubscription.Plan.*,CurrentSubscription.Plan.PlanFamily.*,CurrentSubscription.SubscriptionAddOns.*,CurrentSubscription.SubscriptionAddOns.AddOn.*`
+      `/api/v1/crm/accounts/${context.propsValue.accountUid}?fields=*,BillingAddress.*,MailingAddress.*,PrimaryContact.*,CurrentSubscription.*,CurrentSubscription.Plan.*,CurrentSubscription.Plan.PlanFamily.*,CurrentSubscription.SubscriptionAddOns.*,CurrentSubscription.SubscriptionAddOns.AddOn.*`
     );
 
     const sub = account.CurrentSubscription;

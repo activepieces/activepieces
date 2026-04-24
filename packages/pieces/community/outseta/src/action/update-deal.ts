@@ -91,8 +91,15 @@ export const updateDealAction = createAction({
         (dp: any) => dp.Person?.Uid === context.propsValue.personUid
       );
       if (!alreadyLinked) {
+        // Preserve the existing DealPeople join records' Uid so the server
+        // treats them as the same entities. Without this, Outseta may delete
+        // the old join records and create new ones (changing all the
+        // PersonAccount-style references downstream).
         deal.DealPeople = [
-          ...existing.map((dp: any) => ({ Person: { Uid: dp.Person?.Uid } })),
+          ...existing.map((dp: any) => ({
+            Uid: dp.Uid,
+            Person: { Uid: dp.Person?.Uid },
+          })),
           { Person: { Uid: context.propsValue.personUid } },
         ];
         changed = true;
