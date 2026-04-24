@@ -11,7 +11,7 @@ export const updateGroupUsersAction = createAction({
   props: {
     handle: Property.ShortText({
       displayName: 'Group Handle',
-      description: 'Group handle (display user group name), without the leading @',
+      description: 'Group handle, without the leading @',
       required: true,
     }),
     userIds: Property.Array({
