@@ -4,9 +4,9 @@
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-common": "0.12.1",
-    "@activepieces/pieces-framework": "0.27.2",
-    "@activepieces/shared": "0.60.0",
+    "@activepieces/pieces-common": "0.12.3",
+    "@activepieces/pieces-framework": "0.26.2",
+    "@activepieces/shared": "0.67.1",
     "axios": "1.15.0",
     "dayjs": "1.11.9",
     "feedparser": "2.2.10",
