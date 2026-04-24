@@ -184,7 +184,9 @@ export const ProjectDashboardPageHeader = ({
         showSidebarToggle={true}
         className="min-w-full"
       />
-      <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
+      {showInviteUserButton && (
+        <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
+      )}
       <ProjectSettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}

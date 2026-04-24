@@ -25,10 +25,10 @@ export const platformUserKeys = {
 export const platformUserHooks = {
   useUsers: () => {
     const { data: currentUser } = userHooks.useCurrentUser();
-    const { checkAccess, isFetchingProjectRole } = useAuthorization();
+    const { checkAccess, isCheckAccessReady } = useAuthorization();
     const hasInvitePermission = checkAccess(Permission.WRITE_INVITATION);
     const canListUsers =
-      !isNil(currentUser) && hasInvitePermission && !isFetchingProjectRole;
+      !isNil(currentUser) && hasInvitePermission && isCheckAccessReady;
     return useQuery<SeekPage<UserWithMetaInformation>, Error>({
       queryKey: platformUserKeys.users,
       meta: { showErrorDialog: true, loadSubsetOptions: {} },

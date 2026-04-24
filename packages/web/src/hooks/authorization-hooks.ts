@@ -38,11 +38,10 @@ export const useAuthorization = () => {
     if (isLoading || edition === ApEdition.COMMUNITY) {
       return true;
     }
-
     return projectRole?.permissions?.includes(permission) ?? true;
   };
 
-  return { checkAccess, isFetchingProjectRole: isLoading };
+  return { checkAccess, isCheckAccessReady: !isLoading && !isNil(projectRole) };
 };
 
 export const useIsPlatformAdmin = () => {
