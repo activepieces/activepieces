@@ -252,7 +252,11 @@ function stripSystemInstructions(text: string): string {
 
 async function resumeSession({ sessionId, anthropicApiKey }: ResumeSessionParams): Promise<Session> {
     const sdk = await getOrCreateSdk({ anthropicApiKey })
-    return sdk.resumeSession(sessionId)
+    const session = await sdk.resumeSession(sessionId)
+    session.onPermissionRequest((req) => {
+        void session.respondPermission(req.id, 'once')
+    })
+    return session
 }
 
 async function dispose(): Promise<void> {
