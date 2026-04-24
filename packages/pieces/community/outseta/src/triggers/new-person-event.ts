@@ -21,12 +21,16 @@ export const newPersonEventTrigger = createTrigger({
       required: true,
       options: {
         disabled: false,
+        // Mirrors the Outseta admin dropdown verbatim (Settings → Notifications →
+        // Add Notification → Activity Type), so users can match each option here
+        // 1:1 with the notifications they configure on the Outseta side.
         options: [
           { label: 'Person Created', value: 'person_created' },
           { label: 'Person Updated', value: 'person_updated' },
           { label: 'Person Deleted', value: 'person_deleted' },
           { label: 'Person Login', value: 'person_login' },
           { label: 'Person List Subscribed', value: 'person_list_subscribed' },
+          { label: 'Person List Confirmed', value: 'person_list_confirmed' },
           { label: 'Person List Unsubscribed', value: 'person_list_unsubscribed' },
           { label: 'Person Segment Added', value: 'person_segment_added' },
           { label: 'Person Segment Removed', value: 'person_segment_removed' },
@@ -34,8 +38,12 @@ export const newPersonEventTrigger = createTrigger({
           { label: 'Person Email Clicked', value: 'person_email_clicked' },
           { label: 'Person Email Bounce', value: 'person_email_bounce' },
           { label: 'Person Email Spam', value: 'person_email_spam' },
+          { label: 'Person Email Subscribed', value: 'person_email_subscribed' },
+          { label: 'Person Email Unsubscribed', value: 'person_email_unsubscribed' },
           { label: 'Person Support Ticket Created', value: 'person_support_ticket_created' },
           { label: 'Person Support Ticket Updated', value: 'person_support_ticket_updated' },
+          { label: 'Person Support Ticket Closed', value: 'person_support_ticket_closed' },
+          { label: 'Person Lead Form Submitted', value: 'person_lead_form_submitted' },
         ],
       },
     }),

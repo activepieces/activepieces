@@ -21,11 +21,16 @@ export const newDealEventTrigger = createTrigger({
       required: true,
       options: {
         disabled: false,
+        // Mirrors the Outseta admin dropdown verbatim (Settings → Notifications →
+        // Add Notification → Activity Type), so users can match each option here
+        // 1:1 with the notifications they configure on the Outseta side.
         options: [
           { label: 'Deal Created', value: 'deal_created' },
           { label: 'Deal Updated', value: 'deal_updated' },
           { label: 'Deal Add Person', value: 'deal_add_person' },
           { label: 'Deal Add Account', value: 'deal_add_account' },
+          { label: 'Deal Deleted', value: 'deal_deleted' },
+          { label: 'Deal Due Date', value: 'deal_due_date' },
         ],
       },
     }),
