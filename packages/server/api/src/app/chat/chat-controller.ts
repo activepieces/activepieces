@@ -145,9 +145,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                             const update = payload.params.update
                             if (!isObject(update)) return
 
-                            if (historyReplayFilter.shouldSuppress(update)) return
-
-                            streamWriter.write(update)
+                            historyReplayFilter.processUpdate(update, (u) => streamWriter.write(u))
                         })
 
                         chatSandboxAgent.sendPrompt({ session, text: content, systemPrompt, files })

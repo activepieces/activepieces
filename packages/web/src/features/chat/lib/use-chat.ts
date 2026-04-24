@@ -220,6 +220,7 @@ export function useAgentChat({
     { name: string; mimeType: ChatAllowedMimeType; data: string }[] | undefined
   >(undefined);
   const conversationIdRef = useRef<string | null>(null);
+  const cancelledRef = useRef(false);
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
@@ -300,6 +301,7 @@ export function useAgentChat({
   const error = localError ?? (useChatError ? useChatError.message : null);
 
   const cancelStream = useCallback(() => {
+    cancelledRef.current = true;
     void stop();
     setWasCancelled(true);
     setPendingMessages([]);
@@ -334,6 +336,7 @@ export function useAgentChat({
 
   const sendMessage = useCallback(
     async (content: string, files?: File[]) => {
+      cancelledRef.current = false;
       setLocalError(null);
       setWasCancelled(false);
 
@@ -372,6 +375,10 @@ export function useAgentChat({
         });
         if (convError) {
           setLocalError(convError.message ?? 'Failed to start conversation');
+          setPendingMessages([]);
+          return;
+        }
+        if (cancelledRef.current) {
           setPendingMessages([]);
           return;
         }

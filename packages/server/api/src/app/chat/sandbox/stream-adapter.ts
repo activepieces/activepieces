@@ -127,42 +127,68 @@ export function createStreamWriter({ writer, textPartId, reasoningPartId, onSess
     }
 }
 
-export function createHistoryReplayFilter(): { shouldSuppress: (update: Record<string, unknown>) => boolean } {
+export function createHistoryReplayFilter(): {
+    processUpdate: (update: Record<string, unknown>, write: (u: Record<string, unknown>) => void) => void
+} {
     let state: 'detecting' | 'suppressing' | 'passthrough' = 'detecting'
-    let buffer = ''
+    let textBuffer = ''
+    let eventQueue: Array<Record<string, unknown>> = []
 
     return {
-        shouldSuppress(update: Record<string, unknown>): boolean {
-            if (state === 'passthrough') return false
+        processUpdate(update: Record<string, unknown>, write: (u: Record<string, unknown>) => void): void {
+            if (state === 'passthrough') {
+                write(update)
+                return
+            }
 
             const updateType = getString(update, 'sessionUpdate')
             const isTextChunk = updateType === SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK
 
-            if (state === 'suppressing') {
-                if (!isTextChunk) return false
-                const text = chatEventUtils.extractContentText(update)
-                if (!text) return true
-                if (chatEventUtils.isHistoryReplayContent(text)) return true
-                state = 'passthrough'
-                return false
-            }
-
-            if (isTextChunk) {
-                const text = chatEventUtils.extractContentText(update)
-                if (text) {
-                    buffer += text
-                    if (chatEventUtils.isHistoryReplayContent(buffer)) {
-                        state = 'suppressing'
-                        buffer = ''
-                        return true
-                    }
-                    if (buffer.length > 500) {
-                        state = 'passthrough'
-                        buffer = ''
+            if (state === 'detecting') {
+                eventQueue.push(update)
+                if (isTextChunk) {
+                    const text = chatEventUtils.extractContentText(update)
+                    if (text) {
+                        textBuffer += text
+                        if (chatEventUtils.isHistoryReplayContent(textBuffer)) {
+                            state = 'suppressing'
+                            textBuffer = ''
+                            eventQueue = []
+                            return
+                        }
+                        if (textBuffer.length > 500) {
+                            state = 'passthrough'
+                            textBuffer = ''
+                            const queued = eventQueue
+                            eventQueue = []
+                            for (const e of queued) {
+                                write(e)
+                            }
+                            return
+                        }
                     }
                 }
+                return
             }
-            return false
+
+            if (state === 'suppressing') {
+                if (!isTextChunk) {
+                    write(update)
+                    return
+                }
+                const text = chatEventUtils.extractContentText(update)
+                if (!text) return
+                textBuffer += text
+                if (chatEventUtils.isHistoryReplayContent(textBuffer)) {
+                    textBuffer = ''
+                    return
+                }
+                if (textBuffer.length > 200) {
+                    state = 'passthrough'
+                    textBuffer = ''
+                    return
+                }
+            }
         },
     }
 }
