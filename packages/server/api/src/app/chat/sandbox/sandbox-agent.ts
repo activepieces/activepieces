@@ -70,7 +70,7 @@ async function createSession({ anthropicApiKey, mcpServerUrl, mcpToken }: Create
     const session = await sdk.createSession(request)
 
     session.onPermissionRequest((req) => {
-        void session.respondPermission(req.id, 'once')
+        void session.respondPermission(req.id, 'once').catch(() => undefined)
     })
 
     return session
@@ -254,7 +254,7 @@ async function resumeSession({ sessionId, anthropicApiKey }: ResumeSessionParams
     const sdk = await getOrCreateSdk({ anthropicApiKey })
     const session = await sdk.resumeSession(sessionId)
     session.onPermissionRequest((req) => {
-        void session.respondPermission(req.id, 'once')
+        void session.respondPermission(req.id, 'once').catch(() => undefined)
     })
     return session
 }

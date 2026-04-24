@@ -1,6 +1,7 @@
 import { ChatMessageItem } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Copy, Paperclip, RefreshCw } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useState } from 'react';
 
 import {
@@ -14,11 +15,11 @@ import {
   ReasoningContent,
   ReasoningTrigger,
 } from '@/components/prompt-kit/reasoning';
-import { ThinkingBar } from '@/components/prompt-kit/thinking-bar';
 import { PlanCard } from '@/features/chat/components/plan-card';
 
 import { getTextFromBlocks } from '../lib/message-parsers';
 
+import { ChatThinkingLoader } from './chat-thinking-loader';
 import { MessageContentWithAuth } from './message-content';
 import { ToolCallGroup } from './tool-call-group';
 
@@ -67,7 +68,12 @@ export function UserMessage({ message }: { message: ChatMessageItem }) {
   }, [content]);
 
   return (
-    <div className="flex justify-end py-3 animate-in fade-in duration-200">
+    <motion.div
+      className="flex justify-end py-3"
+      initial={{ opacity: 0, x: 16 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.25 }}
+    >
       <div className="max-w-[80%]">
         <Message className="flex-row-reverse">
           <div className="bg-muted rounded-2xl rounded-br-md px-4 py-2.5">
@@ -103,7 +109,7 @@ export function UserMessage({ message }: { message: ChatMessageItem }) {
           </MessageAction>
         </MessageActions>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -142,15 +148,26 @@ export function AssistantMessage({
   }, [fullText]);
 
   return (
-    <div className="py-3 animate-in fade-in duration-200">
+    <motion.div
+      className="py-3"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="min-w-0 overflow-hidden space-y-2">
-        {isWaiting && (
-          <ThinkingBar
-            text={t('Thinking')}
-            onStop={onCancel}
-            stopLabel={t('Stop')}
-          />
-        )}
+        <AnimatePresence mode="wait">
+          {isWaiting && (
+            <motion.div
+              key="thinking"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChatThinkingLoader onStop={onCancel} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {hasThoughts && (
           <Reasoning isStreaming={isThinkingOnly} className="">
@@ -211,6 +228,6 @@ export function AssistantMessage({
           </MessageActions>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

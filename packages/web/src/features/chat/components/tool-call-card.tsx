@@ -1,6 +1,7 @@
 import { ToolCallItem } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, ChevronDown, Loader2, Square, XCircle } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useState } from 'react';
 
 import {
@@ -25,7 +26,14 @@ function StatusIcon({ status }: { status: ToolCallItem['status'] }) {
       );
     case 'completed':
       return (
-        <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400 shrink-0" />
+        <motion.span
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+          className="shrink-0 flex items-center justify-center"
+        >
+          <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+        </motion.span>
       );
     case 'failed':
       return <XCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />;

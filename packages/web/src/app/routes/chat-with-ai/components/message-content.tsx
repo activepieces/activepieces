@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 import { Check, Zap } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useState } from 'react';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
@@ -66,6 +67,7 @@ export function MessageContentWithAuth({
     return (
       <div className="prose dark:prose-invert max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_h1]:mt-6 [&_h2]:mt-5 [&_h3]:mt-4 [&_ul]:mb-4 [&_ol]:mb-4 [&_table]:mb-4">
         <Markdown>{content}</Markdown>
+        <span className="inline-block w-[2px] h-[1em] bg-foreground align-text-bottom ml-0.5 animate-[blink-cursor_1s_step-end_infinite]" />
       </div>
     );
   }
@@ -171,7 +173,12 @@ export function ConnectionRequiredCard({
 
   return (
     <>
-      <div className="rounded-xl border bg-background shadow-sm overflow-hidden my-2">
+      <motion.div
+        className="rounded-xl border bg-background shadow-sm overflow-hidden my-2"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 25 }}
+      >
         <div className="p-4 flex items-center gap-3">
           <PieceIconWithPieceName
             pieceName={pieceName}
@@ -194,7 +201,14 @@ export function ConnectionRequiredCard({
             </p>
           </div>
           {connected ? (
-            <Check className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+              className="shrink-0 flex items-center justify-center"
+            >
+              <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+            </motion.span>
           ) : (
             <Button
               size="sm"
@@ -207,7 +221,7 @@ export function ConnectionRequiredCard({
             </Button>
           )}
         </div>
-      </div>
+      </motion.div>
       {pieceModel && (
         <CreateOrEditConnectionDialog
           piece={pieceModel}
@@ -239,16 +253,19 @@ export function QuickReplies({
   if (replies.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 py-2 animate-in fade-in duration-300">
-      {replies.map((reply) => (
-        <button
+    <div className="flex flex-wrap gap-2 py-2">
+      {replies.map((reply, i) => (
+        <motion.button
           key={reply}
           type="button"
           onClick={() => onSend(reply)}
           className="px-3 py-1.5 text-sm rounded-full border bg-background hover:bg-muted transition-colors cursor-pointer"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: i * 0.06 }}
         >
           {reply}
-        </button>
+        </motion.button>
       ))}
     </div>
   );

@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 import { Cable, Settings, Sparkles, Table2, Workflow, Zap } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 
 import { PromptSuggestion } from '@/components/prompt-kit/prompt-suggestion';
@@ -17,15 +18,20 @@ export function EmptyState({ incognito }: { incognito: boolean }) {
       });
 
   return (
-    <div className="flex items-center gap-3">
+    <motion.div
+      className="flex items-center gap-3"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
       <Sparkles className="h-7 w-7 text-primary shrink-0" />
       <h2
-        className="text-[28px] font-bold leading-tight bg-gradient-to-r from-foreground via-foreground/80 to-primary bg-clip-text text-transparent"
+        className="text-[28px] font-bold leading-tight bg-[length:200%_100%] animate-[shimmer_3s_ease-in-out_infinite] bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent"
         style={{ textWrap: 'balance' }}
       >
         {greeting}
       </h2>
-    </div>
+    </motion.div>
   );
 }
 
@@ -43,11 +49,18 @@ export function SuggestionCards({
 
   return (
     <div className="flex flex-wrap justify-center gap-2 mt-3">
-      {suggestions.map((s) => (
-        <PromptSuggestion key={s.text} onClick={() => onSend(s.text)}>
-          <s.icon className="h-3.5 w-3.5" />
-          {s.text}
-        </PromptSuggestion>
+      {suggestions.map((s, i) => (
+        <motion.div
+          key={s.text}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3 + i * 0.08 }}
+        >
+          <PromptSuggestion onClick={() => onSend(s.text)}>
+            <s.icon className="h-3.5 w-3.5" />
+            {s.text}
+          </PromptSuggestion>
+        </motion.div>
       ))}
     </div>
   );

@@ -265,6 +265,12 @@
     }
   }
 
+  @keyframes blink-cursor {
+    50% {
+      opacity: 0;
+    }
+  }
+
   @keyframes collapsible-down {
     from {
       height: 0;

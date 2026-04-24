@@ -1,6 +1,7 @@
 import { AIProviderName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { RefreshCw, Square } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useCallback, useEffect, useState } from 'react';
 
 import {
@@ -186,7 +187,12 @@ function ChatBoxContent({
             )}
 
           {error && (
-            <div className="flex items-center gap-3 py-4 text-destructive text-sm animate-in fade-in duration-200">
+            <motion.div
+              className="flex items-center gap-3 py-4 text-destructive text-sm"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: [0, -6, 5, -4, 3, 0] }}
+              transition={{ duration: 0.4 }}
+            >
               <span className="flex-1">{error}</span>
               <Button
                 variant="ghost"
@@ -203,7 +209,7 @@ function ChatBoxContent({
                 <RefreshCw className="h-3 w-3" />
                 {t('Retry')}
               </Button>
-            </div>
+            </motion.div>
           )}
 
           <ChatContainerScrollAnchor />

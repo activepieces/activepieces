@@ -1,11 +1,13 @@
+import { t } from 'i18next';
+import { Check, Copy } from 'lucide-react';
 import { marked } from 'marked';
-import { memo, useId, useMemo } from 'react';
+import { memo, useCallback, useId, useMemo, useState } from 'react';
 import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { cn } from '@/lib/utils';
 
-import { CodeBlock, CodeBlockCode } from './code-block';
+import { CodeBlock, CodeBlockCode, CodeBlockGroup } from './code-block';
 import { Source } from './source';
 
 export type MarkdownProps = {
@@ -115,6 +117,31 @@ function isLinkOnlyList(node: HastNode | undefined): boolean {
   return items.length > 0 && items.every(isLinkOnlyItem);
 }
 
+function CodeCopyButton({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    void navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [code]);
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="p-1 rounded-md hover:bg-muted text-muted-foreground transition-colors"
+      title={t('Copy')}
+    >
+      {copied ? (
+        <Check className="h-3.5 w-3.5 text-green-500" />
+      ) : (
+        <Copy className="h-3.5 w-3.5" />
+      )}
+    </button>
+  );
+}
+
 const INITIAL_COMPONENTS: Partial<Components> = {
   ul: function UlComponent({ children, node }) {
     if (isLinkOnlyList(node as HastNode | undefined)) {
@@ -193,10 +220,17 @@ const INITIAL_COMPONENTS: Partial<Components> = {
     }
 
     const language = extractLanguage(className);
+    const code = children as string;
 
     return (
       <CodeBlock className={className}>
-        <CodeBlockCode code={children as string} language={language} />
+        <CodeBlockGroup className="border-b px-3 py-1.5">
+          <span className="text-xs text-muted-foreground font-mono">
+            {language !== 'plaintext' ? language : ''}
+          </span>
+          <CodeCopyButton code={code} />
+        </CodeBlockGroup>
+        <CodeBlockCode code={code} language={language} />
       </CodeBlock>
     );
   },
