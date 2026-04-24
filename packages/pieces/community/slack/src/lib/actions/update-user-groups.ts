@@ -11,7 +11,7 @@ export const updateGroupUsersAction = createAction({
   props: {
     handle: Property.ShortText({
       displayName: 'Group Handle',
-      description: 'The handle of the user group to update (e.g., @user-group)',
+      description: 'Group handle (display user group name), without the leading @',
       required: true,
     }),
     userIds: Property.Array({
@@ -22,7 +22,7 @@ export const updateGroupUsersAction = createAction({
     appendUsers: Property.Checkbox({
       displayName: 'Append to existing members?',
       description: 'If checked, these users will be added to the current group. If unchecked, the current group members will be completely replaced by these users.',
-      required: false,
+      required: true,
       defaultValue: true,
     }),
   },
@@ -32,7 +32,7 @@ export const updateGroupUsersAction = createAction({
     const searchHandle = context.propsValue.handle.replace('@', '').toLowerCase();
     const rawUserIds = (context.propsValue.userIds || []) as string[];
     const userIds = rawUserIds.filter((id) => id && id.trim() !== '');
-    const appendUsers = context.propsValue.appendUsers ?? true;
+    const appendUsers = context.propsValue.appendUsers;
 
     const listResponse = await client.usergroups.list({ include_users: true });
 
@@ -58,6 +58,6 @@ export const updateGroupUsersAction = createAction({
       users: usersString,
     });
 
-    return updateResponse.usergroup;
+    return updateResponse;
   },
 });
