@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { slackAuth } from '../auth';
+import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const updateGroupUsersAction = createAction({
@@ -11,42 +11,36 @@ export const updateGroupUsersAction = createAction({
   props: {
     handle: Property.ShortText({
       displayName: 'Group Handle',
-      description: 'The handle of the user group to update (e.g., @ap-support)',
+      description: 'The handle of the user group to update (e.g., @user-group)',
       required: true,
     }),
     userIds: Property.Array({
       displayName: 'User IDs',
-      description: 'The list of Slack User IDs to update this group with.',
+      description: 'The list of Slack User IDs to update this group with. Leave empty to clear the group (if not appending).',
       required: false,
     }),
     appendUsers: Property.Checkbox({
       displayName: 'Append to existing members?',
       description: 'If checked, these users will be added to the current group. If unchecked, the current group members will be completely replaced by these users.',
-      required: false,
+      required: true,
       defaultValue: true,
     }),
   },
   async run(context) {
     const token = getBotToken(context.auth as SlackAuthValue);
+    const client = new WebClient(token);
     const searchHandle = context.propsValue.handle.replace('@', '').toLowerCase();
-    const userIds = (context.propsValue.userIds as string[]).filter((id) => id && id.trim() !== '');
-    const appendUsers = context.propsValue.appendUsers;
+    const rawUserIds = (context.propsValue.userIds || []) as string[];
+    const userIds = rawUserIds.filter((id) => id && id.trim() !== '');
+    const appendUsers = context.propsValue.appendUsers ?? true;
 
-    const listResponse = await httpClient.sendRequest<{ ok: boolean; usergroups: any[]; error?: string }>({
-      method: HttpMethod.GET,
-      url: 'https://slack.com/api/usergroups.list?include_users=true',
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const listResponse = await client.usergroups.list({ include_users: true });
 
-    if (!listResponse.body.ok) {
-      throw new Error(`Slack API error fetching groups: ${listResponse.body.error}`);
-    }
-
-    const group = listResponse.body.usergroups.find(
+    const group = listResponse.usergroups?.find(
       (g) => g.handle && g.handle.toLowerCase() === searchHandle
     );
 
-    if (!group) {
+    if (!group || !group.id) {
       throw new Error(`User group with handle '@${searchHandle}' not found.`);
     }
 
@@ -59,23 +53,11 @@ export const updateGroupUsersAction = createAction({
 
     const usersString = finalUserIds.join(',');
 
-    const updateResponse = await httpClient.sendRequest<{ ok: boolean; usergroup: any; error?: string }>({
-      method: HttpMethod.POST,
-      url: 'https://slack.com/api/usergroups.users.update',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json; charset=utf-8',
-      },
-      body: {
-        usergroup: group.id,
-        users: usersString,
-      },
+    const updateResponse = await client.usergroups.users.update({
+      usergroup: group.id,
+      users: usersString,
     });
 
-    if (!updateResponse.body.ok) {
-      throw new Error(`Slack API error updating users: ${updateResponse.body.error}`);
-    }
-
-    return updateResponse.body.usergroup;
+    return updateResponse.usergroup;
   },
 });

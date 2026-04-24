@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { slackAuth } from '../auth';
+import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const getGroupByHandleAction = createAction({
@@ -17,21 +17,12 @@ export const getGroupByHandleAction = createAction({
   },
   async run(context) {
     const token = getBotToken(context.auth as SlackAuthValue);
+    const client = new WebClient(token);
     const searchHandle = context.propsValue.handle.replace('@', '').toLowerCase();
 
-    const response = await httpClient.sendRequest<{ ok: boolean; usergroups: any[]; error?: string }>({
-      method: HttpMethod.GET,
-      url: 'https://slack.com/api/usergroups.list',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await client.usergroups.list();
 
-    if (!response.body.ok) {
-      throw new Error(`Slack API error: ${response.body.error}`);
-    }
-
-    const group = response.body.usergroups.find(
+    const group = response.usergroups?.find(
       (g) => g.handle && g.handle.toLowerCase() === searchHandle
     );
 
@@ -39,6 +30,6 @@ export const getGroupByHandleAction = createAction({
       throw new Error(`User group with handle '@${searchHandle}' not found.`);
     }
 
-    return group;
+    return group; 
   },
 });
