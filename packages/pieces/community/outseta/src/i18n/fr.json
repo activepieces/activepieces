@@ -317,6 +317,8 @@
   "Maximum number of persons to return (default 100).": "Nombre maximum de personnes à retourner (défaut 100).",
   "Maximum number of deals to return (default 100).": "Nombre maximum de deals à retourner (défaut 100).",
   "Number of records to skip (default 0).": "Nombre d'enregistrements à ignorer (défaut 0).",
+  "Page": "Page",
+  "Page number to fetch (0 = first page, 1 = second page, ...). Outseta uses page-based pagination, not record-based.": "Numéro de page à récupérer (0 = première page, 1 = deuxième page, ...). Outseta utilise une pagination par page, pas par enregistrement.",
   "Pipeline stage for the deal.": "Étape du pipeline pour le deal.",
   "Pipeline stage for the deal (required when creating).": "Étape du pipeline pour le deal (obligatoire lors de la création).",
   "Pipeline stage for the deal (only required when creating a new one).": "Étape du pipeline pour le deal (obligatoire uniquement lors de la création d'un nouveau deal).",
