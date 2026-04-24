@@ -7,25 +7,35 @@ export const newPersonEventTrigger = createTrigger({
   auth: outsetaAuth,
   displayName: 'New Person Event',
   description:
-    "Triggers on person lifecycle events. Configure a matching notification in Outseta → Settings → Notifications pointing to this trigger's webhook URL.",
+    "Triggers on any person-scoped event (lifecycle, login, email engagement, list subscription, segment, support ticket). The webhook payload is always a Person object — event-specific details such as the email message, list, segment or ticket are in the Person's ActivityEventData field.",
   type: TriggerStrategy.WEBHOOK,
   props: {
     setup: Property.MarkDown({
       value:
-        '**Setup:** Copy this trigger\'s webhook URL `{{webhookUrl}}`. In Outseta go to **Settings → Notifications → Add Notification**, select the event you chose below and paste the URL as the callback. If you selected multiple events, create one notification per event — all pointing to this same URL.\n\n**Filtering:** Outseta webhook payloads do not include event-type metadata, so the flow fires on every webhook hitting this URL. The selection below drives the test() sample data and tells you which Outseta notifications to configure — it is not a runtime filter. Configure only the Outseta notifications you actually want for this URL.',
+        "**Setup:** Copy this trigger's webhook URL `{{webhookUrl}}`. In Outseta go to **Settings → Notifications → Add Notification**, select each event you chose below, and paste the URL as the callback. If you selected multiple events, create one notification per event — all pointing to this same URL.\n\n**Payload shape:** every person-scoped event in Outseta sends a **Person** object as the webhook body, regardless of the specific event. Email engagement, list, segment, login and support-ticket details for the triggering event are nested in `ActivityEventData`.\n\n**Filtering:** Outseta payloads do not include event-type metadata, so the flow fires on every webhook hitting this URL. The selection below drives the test() sample data and tells you which Outseta notifications to configure — it is not a runtime filter. Configure only the Outseta notifications you actually want for this URL.",
     }),
     eventSubTypes: Property.StaticMultiSelectDropdown({
       displayName: 'Events',
       description:
-        'Select one or more person events to listen for. Configure a matching notification in Outseta for each selected event, all pointing to this webhook URL.',
+        'Select one or more person-scoped events to listen for. Configure a matching Outseta notification for each, all pointing to this webhook URL.',
       required: true,
       options: {
         disabled: false,
         options: [
-          { label: 'Person Created', value: 'created' },
-          { label: 'Person Updated', value: 'updated' },
-          { label: 'Person Deleted', value: 'deleted' },
-          { label: 'Person Login', value: 'login' },
+          { label: 'Person Created', value: 'person_created' },
+          { label: 'Person Updated', value: 'person_updated' },
+          { label: 'Person Deleted', value: 'person_deleted' },
+          { label: 'Person Login', value: 'person_login' },
+          { label: 'Person List Subscribed', value: 'person_list_subscribed' },
+          { label: 'Person List Unsubscribed', value: 'person_list_unsubscribed' },
+          { label: 'Person Segment Added', value: 'person_segment_added' },
+          { label: 'Person Segment Removed', value: 'person_segment_removed' },
+          { label: 'Person Email Opened', value: 'person_email_opened' },
+          { label: 'Person Email Clicked', value: 'person_email_clicked' },
+          { label: 'Person Email Bounce', value: 'person_email_bounce' },
+          { label: 'Person Email Spam', value: 'person_email_spam' },
+          { label: 'Person Support Ticket Created', value: 'person_support_ticket_created' },
+          { label: 'Person Support Ticket Updated', value: 'person_support_ticket_updated' },
         ],
       },
     }),
@@ -38,6 +48,7 @@ export const newPersonEventTrigger = createTrigger({
     FullName: 'Jane Doe',
     MailingAddress: null,
     Account: null,
+    ActivityEventData: null,
     Created: '2024-01-10T00:00:00Z',
     Updated: '2024-01-10T00:00:00Z',
   },
@@ -58,9 +69,10 @@ export const newPersonEventTrigger = createTrigger({
     });
 
     const selected = (context.propsValue.eventSubTypes ?? []) as string[];
-    const orderBy = selected.includes('created') ? 'Created' : 'Updated';
+    const onlyCreate = selected.length > 0 && selected.every((s) => s.endsWith('_created'));
+    const orderProperty = onlyCreate ? 'Created' : 'Updated';
     const res = await client.get<{ items?: Record<string, unknown>[]; Items?: Record<string, unknown>[] }>(
-      `/api/v1/crm/people?limit=5&orderBy=${orderBy}&orderDirection=desc`
+      `/api/v1/crm/people?limit=5&orderBy=${orderProperty}%20DESC`
     );
     return res?.items ?? res?.Items ?? [];
   },

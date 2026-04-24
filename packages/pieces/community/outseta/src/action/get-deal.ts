@@ -26,11 +26,13 @@ export const getDealAction = createAction({
     const contactEmail = context.propsValue.contactEmail.toLowerCase();
     const pipelineUid = context.propsValue.pipelineUid;
 
-    // Outseta does not support nested filters on /crm/deals (DealPipelineStage.*
-    // returns "Invalid filter specification"), so fetch all deals with the
-    // pipeline expanded and filter client-side on pipelineUid.
+    // Outseta supports server-side nested filters on /crm/deals — confirmed
+    // by Outseta support. Note: passing a UID that doesn't exist returns
+    // "Invalid filter specification" (400), but a real but unmatched UID
+    // returns an empty list. We let the OutsetaClient surface the 400 if
+    // the user picks a stale pipeline UID.
     const items = await client.getAllPages<any>(
-      `/api/v1/crm/deals?fields=Uid,Name,Amount,DueDate,Created,Updated,AssignedToPersonClientIdentifier,DealPipelineStage.Uid,DealPipelineStage.Name,DealPipelineStage.DealPipeline.Uid,DealPeople.Person.Uid,DealPeople.Person.Email,Account.Uid,Account.Name`
+      `/api/v1/crm/deals?DealPipelineStage.DealPipeline.Uid=${encodeURIComponent(pipelineUid)}&fields=Uid,Name,Amount,DueDate,Created,Updated,AssignedToPersonClientIdentifier,DealPipelineStage.Uid,DealPipelineStage.Name,DealPipelineStage.DealPipeline.Uid,DealPeople.Person.Uid,DealPeople.Person.Email,Account.Uid,Account.Name`
     );
 
     const match = items.find((deal: any) => {

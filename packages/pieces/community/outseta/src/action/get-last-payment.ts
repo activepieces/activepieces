@@ -22,16 +22,13 @@ export const getLastPaymentAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // Endpoint shape verified live on the Outseta API:
-    //   GET /api/v1/billing/transactions/{accountUid} → 200 OK
-    //   Returns {metadata, items: [Transaction]} where each Transaction has
-    //   BillingTransactionType (1=Invoice, 2=Payment, ...). Filter param
-    //   `?BillingTransactionType=2` is honoured server-side.
-    // The endpoint ignores orderBy/orderDirection and returns transactions in
-    // ascending Created order, so we fetch all payments and pick the last one.
-    const items = await client.getAllPages<any>(
-      `/api/v1/billing/transactions/${context.propsValue.accountUid}?BillingTransactionType=${PAYMENT_TRANSACTION_TYPE}&fields=*,Invoice.*`
+    // GET /api/v1/billing/transactions/{accountUid} returns transactions for the
+    // account. Filter to BillingTransactionType=2 (= Payment) and sort by
+    // Created DESC to get the most recent payment in a single request.
+    const res = await client.get<{ items?: Record<string, unknown>[]; Items?: Record<string, unknown>[] }>(
+      `/api/v1/billing/transactions/${context.propsValue.accountUid}?BillingTransactionType=${PAYMENT_TRANSACTION_TYPE}&limit=1&orderBy=Created%20DESC&fields=*,Invoice.*`
     );
+    const items = res?.items ?? res?.Items ?? [];
     if (items.length === 0) {
       return {
         found: false,
@@ -44,7 +41,7 @@ export const getLastPaymentAction = createAction({
       };
     }
 
-    const payment = items[items.length - 1];
+    const payment = items[0] as any;
     return {
       found: true,
       uid: payment.Uid ?? null,

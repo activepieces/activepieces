@@ -57,9 +57,6 @@ import { addReplyAction } from './action/add-reply';
 import { newAccountEventTrigger } from './triggers/new-account-event';
 import { newPersonEventTrigger } from './triggers/new-person-event';
 import { newDealEventTrigger } from './triggers/new-deal-event';
-import { newSubscriptionEventTrigger } from './triggers/new-subscription-event';
-import { newInvoiceEventTrigger } from './triggers/new-invoice-event';
-import { newSupportTicketEventTrigger } from './triggers/new-support-ticket-event';
 
 export const outseta = createPiece({
   displayName: 'Outseta',
@@ -73,9 +70,6 @@ export const outseta = createPiece({
     newAccountEventTrigger,
     newPersonEventTrigger,
     newDealEventTrigger,
-    newSubscriptionEventTrigger,
-    newInvoiceEventTrigger,
-    newSupportTicketEventTrigger,
   ],
   actions: [
     // Retrieve
