@@ -15,10 +15,10 @@ export const listPersonsAction = createAction({
       description: 'Maximum number of persons to return (default 100).',
     }),
     offset: Property.Number({
-      displayName: 'Offset',
+      displayName: 'Page',
       required: false,
       defaultValue: 0,
-      description: 'Number of records to skip (default 0).',
+      description: 'Page number to fetch (0 = first page, 1 = second page, ...). Outseta uses page-based pagination, not record-based.',
     }),
   },
   async run(context) {
