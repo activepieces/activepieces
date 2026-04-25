@@ -81,7 +81,11 @@ export const newSubscription = createTrigger({
     if (event.type !== 'Subscription') {
       return [];
     }
+    if (event.is_first_subscription_payment !== true) {
+      return [];
+    }
 
-    return [event];
+    const { verification_token: _omit, ...payload } = event;
+    return [payload as KoFiSubscriptionEvent];
   },
 });

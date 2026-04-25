@@ -91,6 +91,7 @@ export const newCommission = createTrigger({
       return [];
     }
 
-    return [event];
+    const { verification_token: _omit, ...payload } = event;
+    return [payload as KoFiCommissionEvent];
   },
 });

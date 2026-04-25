@@ -80,6 +80,7 @@ export const newDonation = createTrigger({
       return [];
     }
 
-    return [event];
+    const { verification_token: _omit, ...payload } = event;
+    return [payload as KoFiDonationEvent];
   },
 });
