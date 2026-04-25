@@ -22,7 +22,7 @@ export const n1nAIProvider: AIProviderStrategy<BaseAIProviderAuthConfig, Record<
 
         return data.map((model: N1NModel) => ({
             id: model.id,
-            name: model.id,
+            name: model.name ?? model.id,
             type: AIProviderModelType.TEXT,
         }))
     },
@@ -30,4 +30,5 @@ export const n1nAIProvider: AIProviderStrategy<BaseAIProviderAuthConfig, Record<
 
 type N1NModel = {
     id: string
+    name?: string
 }

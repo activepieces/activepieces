@@ -205,9 +205,6 @@ export async function createAIModel({
                     Authorization: `Bearer ${apiKey}`,
                 },
             })
-            if (isImage) {
-                return provider.imageModel(modelId)
-            }
             return provider.chatModel(modelId)
         }
         default:
