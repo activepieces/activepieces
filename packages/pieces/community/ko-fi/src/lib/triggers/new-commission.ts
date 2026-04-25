@@ -40,7 +40,7 @@ export const newCommission = createTrigger({
   auth: koFiAuth,
   name: 'new_commission',
   displayName: 'New Commission',
-  description: 'Triggers when a new commission is received via Ko-fi webhook.',
+  description: 'Triggers when a new commission is received on Ko-fi.',
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

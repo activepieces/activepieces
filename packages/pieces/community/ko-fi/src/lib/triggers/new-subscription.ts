@@ -31,7 +31,7 @@ export const newSubscription = createTrigger({
   auth: koFiAuth,
   name: 'new_subscription',
   displayName: 'New Subscription',
-  description: 'Triggers when a new subscription is received via Ko-fi webhook.',
+  description: 'Triggers when a new subscription is received on Ko-fi.',
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

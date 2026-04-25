@@ -48,7 +48,7 @@ export const newShopOrder = createTrigger({
   auth: koFiAuth,
   name: 'new_shop_order',
   displayName: 'New Shop Order',
-  description: 'Triggers when a new shop order is received via Ko-fi webhook.',
+  description: 'Triggers when a new shop order is received on Ko-fi.',
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
