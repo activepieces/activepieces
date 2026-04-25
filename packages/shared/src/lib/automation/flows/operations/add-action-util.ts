@@ -50,11 +50,13 @@ function replaceInBranchConditions(
             const newCondition = { ...condition }
             Object.keys(oldNameToNewName).forEach((oldName) => {
                 const newStepName = oldNameToNewName[oldName]
-                newCondition.firstValue = replaceOldStepNameWithNewOne({
-                    input: newCondition.firstValue,
-                    oldStepName: oldName,
-                    newStepName,
-                })
+                newCondition.firstValue = newCondition.firstValue
+                    ? replaceOldStepNameWithNewOne({
+                        input: newCondition.firstValue,
+                        oldStepName: oldName,
+                        newStepName,
+                    })
+                    : newCondition.firstValue
                 if ('secondValue' in newCondition) {
                     newCondition.secondValue = replaceOldStepNameWithNewOne({
                         input: newCondition.secondValue,
