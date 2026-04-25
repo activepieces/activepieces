@@ -1,0 +1,7 @@
+{
+  "Receive triggers for donations, subscriptions, commissions, and shop orders from Ko-fi.": "Receive triggers for donations, subscriptions, commissions, and shop orders from Ko-fi.",
+  "Your Ko-fi webhook verification token. Find it in Ko-fi Dashboard > Settings > API/Webhooks.": "Your Ko-fi webhook verification token. Find it in Ko-fi Dashboard > Settings > API/Webhooks.",
+  "Verification Token": "Verification Token",
+  "New Donation": "New Donation",
+  "Triggers when a new one-time donation is received on Ko-fi.": "Triggers when a new one-time donation is received on Ko-fi."
+}

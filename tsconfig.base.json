@@ -645,6 +645,9 @@
       "@activepieces/piece-klenty": [
         "packages/pieces/community/klenty/src/index.ts"
       ],
+      "@activepieces/piece-ko-fi": [
+        "packages/pieces/community/ko-fi/src/index.ts"
+      ],
       "@activepieces/piece-knack": [
         "packages/pieces/community/knack/src/index.ts"
       ],
