@@ -52,7 +52,6 @@ export const newShopOrder = createTrigger({
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
-    verification_token: 'abc123-uuid',
     message_id: '3a1fac0c-f960-4506-a60e-2e3f3d09e6e0',
     timestamp: '2026-04-24T19:15:00Z',
     type: 'Shop Order',
