@@ -1,6 +1,8 @@
 import { ShortcutProps } from '@/components/custom/shortcut';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
 
+import { ApButtonData } from '../utils/types';
+
 import { CanvasContextMenuContent } from './canvas-context-menu-content';
 
 export type CanvasShortcutsProps = Record<
@@ -15,16 +17,19 @@ export enum ContextMenuType {
 export type CanvasContextMenuProps = {
   children?: React.ReactNode;
   contextMenuType: ContextMenuType;
+  bigAddButtonData?: ApButtonData | null;
 };
 export const CanvasContextMenu = ({
   contextMenuType,
   children,
+  bigAddButtonData,
 }: CanvasContextMenuProps) => {
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <CanvasContextMenuContent
         contextMenuType={contextMenuType}
+        bigAddButtonData={bigAddButtonData}
       ></CanvasContextMenuContent>
     </ContextMenu>
   );

@@ -121,6 +121,7 @@ export const flowCanvasConsts = {
   NOTE_CREATION_OVERLAY_WIDTH,
   NOTE_CREATION_OVERLAY_HEIGHT,
   STEP_CONTEXT_MENU_ATTRIBUTE: 'step-context-menu',
+  BIG_ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE: 'big-add-button',
   SELECTION_RECT_CHEVRON_ATTRIBUTE: 'selection-rect-chevron',
   NODE_SELECTION_RECT_CLASS_NAME: 'react-flow__nodesselection-rect',
   SIDEBAR_ANIMATION_DURATION: 200,

@@ -3,6 +3,8 @@ import {
   FlowActionType,
   FlowOperationType,
   flowStructureUtil,
+  FlowTrigger,
+  isNil,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -36,6 +38,7 @@ import {
   pasteNodes,
   toggleSkipSelectedNodes,
 } from '../utils/bulk-actions';
+import { ApButtonData } from '../utils/types';
 
 import { CanvasContextMenuProps, ContextMenuType } from './canvas-context-menu';
 
@@ -54,8 +57,41 @@ const ShortcutWrapper = ({
   );
 };
 
+function getBigAddButtonPasteLabel(
+  bigAddButtonData: ApButtonData | null | undefined,
+  trigger: FlowTrigger,
+) {
+  if (!bigAddButtonData) {
+    return '';
+  }
+  if (
+    bigAddButtonData.stepLocationRelativeToParent ===
+    StepLocationRelativeToParent.INSIDE_LOOP
+  ) {
+    return t('Paste Inside Loop');
+  }
+  if (
+    bigAddButtonData.stepLocationRelativeToParent ===
+    StepLocationRelativeToParent.INSIDE_BRANCH
+  ) {
+    const parentRouter = flowStructureUtil.getStep(
+      bigAddButtonData.parentStepName,
+      trigger,
+    );
+    const branchName =
+      parentRouter?.type === FlowActionType.ROUTER
+        ? parentRouter.settings.branches[bigAddButtonData.branchIndex]
+            ?.branchName ?? ''
+        : '';
+    return t('Paste Inside {branchName}', { branchName });
+  }
+  // Big add buttons are never created with AFTER (only INSIDE_LOOP and INSIDE_BRANCH)
+  return t('Paste After');
+}
+
 export const CanvasContextMenuContent = ({
   contextMenuType,
+  bigAddButtonData,
 }: CanvasContextMenuProps) => {
   const [
     selectedNodes,
@@ -89,7 +125,13 @@ export const CanvasContextMenuContent = ({
     flowVersion.trigger,
   );
   const showPasteAfterLastStep =
-    !readonly && contextMenuType === ContextMenuType.CANVAS;
+    !readonly &&
+    contextMenuType === ContextMenuType.CANVAS &&
+    isNil(bigAddButtonData);
+  const showPasteAsBigAddButtonAction =
+    !readonly &&
+    contextMenuType === ContextMenuType.CANVAS &&
+    !isNil(bigAddButtonData);
   const showPasteAsFirstLoopAction =
     selectedNodes.length === 1 &&
     firstSelectedStep?.type === FlowActionType.LOOP_ON_ITEMS &&
@@ -143,6 +185,7 @@ export const CanvasContextMenuContent = ({
     showPasteAsBranchChild ||
     showPasteAfterCurrentStep ||
     showPasteAfterLastStep ||
+    showPasteAsBigAddButtonAction ||
     showDelete;
   if (!showContextMenuContent) {
     return null;
@@ -224,6 +267,20 @@ export const CanvasContextMenuContent = ({
           >
             <ClipboardPlus className="w-4 h-4"></ClipboardPlus>{' '}
             {t('Paste After Last Step')}
+          </ContextMenuItem>
+        )}
+
+        {showPasteAsBigAddButtonAction && (
+          <ContextMenuItem
+            onClick={() => {
+              if (bigAddButtonData) {
+                pasteNodes(flowVersion, bigAddButtonData, applyOperation);
+              }
+            }}
+            className="flex items-center gap-2"
+          >
+            <ClipboardPaste className="w-4 h-4"></ClipboardPaste>{' '}
+            {getBigAddButtonPasteLabel(bigAddButtonData, flowVersion.trigger)}
           </ContextMenuItem>
         )}
 
