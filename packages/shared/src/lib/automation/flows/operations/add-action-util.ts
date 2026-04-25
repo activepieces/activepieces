@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { applyFunctionToValuesSync, isString } from '../../../core/common'
-import { FlowAction } from '../actions/action'
+import { BranchCondition, BranchExecutionType, FlowAction, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 
@@ -41,6 +41,32 @@ function replaceOldStepNameWithNewOne({
     })
 }
 
+function replaceInBranchConditions(
+    conditions: BranchCondition[][],
+    oldNameToNewName: Record<string, string>,
+): BranchCondition[][] {
+    return conditions.map(group =>
+        group.map((condition) => {
+            const newCondition = { ...condition }
+            Object.keys(oldNameToNewName).forEach((oldName) => {
+                const newStepName = oldNameToNewName[oldName]
+                newCondition.firstValue = replaceOldStepNameWithNewOne({
+                    input: newCondition.firstValue,
+                    oldStepName: oldName,
+                    newStepName,
+                })
+                if ('secondValue' in newCondition) {
+                    newCondition.secondValue = replaceOldStepNameWithNewOne({
+                        input: newCondition.secondValue,
+                        oldStepName: oldName,
+                        newStepName,
+                    })
+                }
+            })
+            return newCondition
+        }),
+    )
+}
 
 function clone(step: FlowAction, oldNameToNewName: Record<string, string>): FlowAction {
     step.displayName = `${step.displayName} Copy`
@@ -63,6 +89,17 @@ function clone(step: FlowAction, oldNameToNewName: Record<string, string>): Flow
             )
         })
     }
+    if (step.type === FlowActionType.ROUTER && step.settings.branches) {
+        step.settings.branches = step.settings.branches.map((branch) => {
+            if (branch.branchType !== BranchExecutionType.CONDITION || !branch.conditions) {
+                return branch
+            }
+            return {
+                ...branch,
+                conditions: replaceInBranchConditions(branch.conditions, oldNameToNewName),
+            }
+        })
+    }
     if (step.settings.sampleData) {
         step.settings = {
             ...step.settings,
@@ -76,4 +113,5 @@ function clone(step: FlowAction, oldNameToNewName: Record<string, string>): Flow
 export const addActionUtils = {
     mapToNewNames,
     clone,
+    replaceInBranchConditions,
 }

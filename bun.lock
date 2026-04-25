@@ -8160,7 +8160,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.67.1",
+      "version": "0.67.2",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -15271,6 +15271,8 @@
 
     "@activepieces/piece-ai/@activepieces/pieces-framework": ["@activepieces/pieces-framework@0.26.2", "", { "dependencies": { "@activepieces/shared": "0.53.2", "ai": "^6.0.0", "semver": "7.6.0", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-1u835arkO4TKGKfKuz9jeT7Ua1exCeSFCR0+stzB5fqQgtqWgACRFKBNpfPdKcTZK4zTuVeungMe0Hvayq6FqA=="],
 
+    "@activepieces/piece-ai/@activepieces/shared": ["@activepieces/shared@0.67.1", "", { "dependencies": { "dayjs": "1.11.9", "deepmerge-ts": "7.1.0", "ipaddr.js": "2.3.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-2CBOmqkL3niZoZj4VsbfBO6aVFbwZyBx4/1oGkxJ2SF7slebpqCgwxgvVSexaNNgS4vMMSfxMxfzvEbi1iptDQ=="],
+
     "@activepieces/piece-ai/@ai-sdk/anthropic": ["@ai-sdk/anthropic@3.0.67", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.23" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-FFX4P5Fd6lcQJc2OLngZQkbbJHa0IDDZi087Edb8qRZx6h90krtM61ArbMUL8us/7ZUwojCXnyJ/wQ2Eflx2jQ=="],
 
     "@activepieces/piece-ai/@ai-sdk/azure": ["@ai-sdk/azure@3.0.52", "", { "dependencies": { "@ai-sdk/openai": "3.0.51", "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.23" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-SsRR97cT6QpGeFzt5kEnFz8aRCu09TGksjMtS2b48f7dQJ4dDvsMi5J29CkrjvTQWyFVajZpH+iHvYUHCcEdig=="],
@@ -15286,6 +15288,8 @@
     "@activepieces/piece-aiprise/@activepieces/pieces-common": ["@activepieces/pieces-common@0.12.1", "", { "dependencies": { "@activepieces/pieces-framework": "0.26.2", "@activepieces/shared": "0.53.2", "axios": "1.13.5", "axios-retry": "4.4.1", "form-data": "4.0.4", "mime-types": "2.1.35", "request-filtering-agent": "2.0.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-2ptt9o8igQxHMuNWBkrX8eInkFDbeQLFg4wO1FlnC1b67jxdGtFjXZQ9zeMPB9PgPWxNUow6koAn0ttL3LPZgg=="],
 
     "@activepieces/piece-aiprise/@activepieces/pieces-framework": ["@activepieces/pieces-framework@0.26.2", "", { "dependencies": { "@activepieces/shared": "0.53.2", "ai": "^6.0.0", "semver": "7.6.0", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-1u835arkO4TKGKfKuz9jeT7Ua1exCeSFCR0+stzB5fqQgtqWgACRFKBNpfPdKcTZK4zTuVeungMe0Hvayq6FqA=="],
+
+    "@activepieces/piece-aiprise/@activepieces/shared": ["@activepieces/shared@0.67.1", "", { "dependencies": { "dayjs": "1.11.9", "deepmerge-ts": "7.1.0", "ipaddr.js": "2.3.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-2CBOmqkL3niZoZj4VsbfBO6aVFbwZyBx4/1oGkxJ2SF7slebpqCgwxgvVSexaNNgS4vMMSfxMxfzvEbi1iptDQ=="],
 
     "@activepieces/piece-aiprise/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
@@ -15322,6 +15326,8 @@
     "@activepieces/piece-pagerduty/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
     "@activepieces/piece-pdf/@activepieces/pieces-framework": ["@activepieces/pieces-framework@0.26.2", "", { "dependencies": { "@activepieces/shared": "0.53.2", "ai": "^6.0.0", "semver": "7.6.0", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-1u835arkO4TKGKfKuz9jeT7Ua1exCeSFCR0+stzB5fqQgtqWgACRFKBNpfPdKcTZK4zTuVeungMe0Hvayq6FqA=="],
+
+    "@activepieces/piece-pdf/@activepieces/shared": ["@activepieces/shared@0.67.1", "", { "dependencies": { "dayjs": "1.11.9", "deepmerge-ts": "7.1.0", "ipaddr.js": "2.3.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2", "zod": "4.3.6" } }, "sha512-2CBOmqkL3niZoZj4VsbfBO6aVFbwZyBx4/1oGkxJ2SF7slebpqCgwxgvVSexaNNgS4vMMSfxMxfzvEbi1iptDQ=="],
 
     "@activepieces/piece-postiz/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
@@ -17936,6 +17942,8 @@
     "@activepieces/piece-aiprise/@activepieces/pieces-framework/ai": ["ai@6.0.149", "", { "dependencies": { "@ai-sdk/gateway": "3.0.91", "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.23", "@opentelemetry/api": "1.9.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-3asRb/m3ZGH7H4+VTuTgj8eQYJZ9IJUmV0ljLslY92mQp6Zj+NVn4SmFj0TBr2Y/wFBWC3xgn++47tSGOXxdbw=="],
 
     "@activepieces/piece-aiprise/@activepieces/pieces-framework/tslib": ["tslib@2.6.2", "", {}, "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q=="],
+
+    "@activepieces/piece-aiprise/@activepieces/shared/tslib": ["tslib@2.6.2", "", {}, "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q=="],
 
     "@activepieces/piece-amazon-secrets-manager/@aws-sdk/client-secrets-manager/@aws-sdk/util-endpoints": ["@aws-sdk/util-endpoints@3.989.0", "", { "dependencies": { "@aws-sdk/types": "^3.973.1", "@smithy/types": "^4.12.0", "@smithy/url-parser": "^4.2.8", "@smithy/util-endpoints": "^3.2.8", "tslib": "^2.6.2" } }, "sha512-eKmAOeQM4Qusq0jtcbZPiNWky8XaojByKC/n+THbJ8vJf7t4ys8LlcZ4PrBSHZISe9cC484mQsPVOQh6iySjqw=="],
 
