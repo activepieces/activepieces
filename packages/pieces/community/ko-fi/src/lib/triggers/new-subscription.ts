@@ -2,8 +2,8 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 
 import { koFiAuth } from '../auth';
 
-/** Shape of the Ko-fi `Donation` event after URL-decoding and JSON-parsing the form-post body. */
-type KoFiDonationEvent = {
+/** Shape of the Ko-fi `Subscription` event after URL-decoding and JSON-parsing the form-post body. */
+type KoFiSubscriptionEvent = {
   verification_token: string;
   message_id: string;
   timestamp: string;
@@ -18,6 +18,7 @@ type KoFiDonationEvent = {
   is_subscription_payment: boolean;
   is_first_subscription_payment: boolean;
   kofi_transaction_id: string;
+  tier_name: string;
 };
 
 /** Shape of the URL-encoded form-post body Ko-fi sends to the webhook URL. */
@@ -25,19 +26,19 @@ type KoFiWebhookBody = {
   data: string;
 };
 
-/** Trigger emitted when a one-time tip lands on the configured Ko-fi creator account. */
-export const newDonation = createTrigger({
+/** Trigger emitted when a new subscription is received via Ko-fi webhook. */
+export const newSubscription = createTrigger({
   auth: koFiAuth,
-  name: 'new_donation',
-  displayName: 'New Donation',
-  description: 'Triggers when a new one-time donation is received on Ko-fi.',
+  name: 'new_subscription',
+  displayName: 'New Subscription',
+  description: 'Triggers when a new subscription is received via Ko-fi webhook.',
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
     verification_token: 'abc123-uuid',
     message_id: '3a1fac0c-f960-4506-a60e-2e3f3d09e6e0',
     timestamp: '2026-04-24T19:15:00Z',
-    type: 'Donation',
+    type: 'Subscription',
     is_public: true,
     from_name: 'Supporter Name',
     message: 'Thanks for the work you do!',
@@ -45,9 +46,10 @@ export const newDonation = createTrigger({
     url: 'https://ko-fi.com/Home/CoffeeShop?txid=00000000-1111-2222-3333-444444444444',
     email: 'supporter@example.com',
     currency: 'USD',
-    is_subscription_payment: false,
-    is_first_subscription_payment: false,
+    is_subscription_payment: true,
+    is_first_subscription_payment: true,
     kofi_transaction_id: '00000000-1111-2222-3333-444444444444',
+    tier_name: 'Gold Tier',
   },
 
   /** No-op: Ko-fi has no API to register the webhook URL — the user pastes it into Ko-fi Dashboard manually. */
@@ -60,15 +62,15 @@ export const newDonation = createTrigger({
     return;
   },
 
-  async run(context): Promise<KoFiDonationEvent[]> {
+  async run(context): Promise<KoFiSubscriptionEvent[]> {
     const body = context.payload.body as KoFiWebhookBody;
     if (typeof body?.data !== 'string') {
       return [];
     }
 
-    let event: KoFiDonationEvent;
+    let event: KoFiSubscriptionEvent;
     try {
-      event = JSON.parse(body.data) as KoFiDonationEvent;
+      event = JSON.parse(body.data) as KoFiSubscriptionEvent;
     } catch {
       return [];
     }
@@ -76,7 +78,7 @@ export const newDonation = createTrigger({
     if (event.verification_token !== context.auth.secret_text) {
       return [];
     }
-    if (event.type !== 'Donation') {
+    if (event.type !== 'Subscription') {
       return [];
     }
 
