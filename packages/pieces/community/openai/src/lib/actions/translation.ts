@@ -7,7 +7,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { openaiAuth } from '../auth';
 import FormData from 'form-data';
 import mime from 'mime-types';
-import { baseUrl } from '../common/common';
+import { DEFAULT_BASE_URL } from '../common/common';
 
 export const translateAction = createAction({
   name: 'translate',
@@ -37,7 +37,7 @@ export const translateAction = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${context.auth.baseUrl.replace(/\/+$/, '')}/audio/translations`,
+      url: `${(context.auth.baseUrl?.trim() || DEFAULT_BASE_URL).replace(/\/+$/, '')}/audio/translations`,
       body: form,
       headers: {
         ...form.getHeaders(),

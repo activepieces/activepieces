@@ -4,6 +4,7 @@ import { kebabCase } from '@activepieces/shared';
 import { randomBytes } from 'node:crypto';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
+import { DEFAULT_BASE_URL } from '../common/common';
 
 export const generateImage = createAction({
   auth: openaiAuth,
@@ -132,13 +133,23 @@ export const generateImage = createAction({
         if (img.b64_json) {
           imageBuffer = Buffer.from(img.b64_json, 'base64');
         } else if (img.url) {
-          const headers = {
-            Authorization: `Bearer ${context.auth.apiKey}`,
-          };
+          // Only forward auth when the image URL lives on the user-configured
+          // base-URL host (e.g. a self-hosted OpenAI-compatible server).
+          // For standard OpenAI / CDN presigned URLs the auth header must NOT
+          // be sent – those URLs are already time-limited and any third-party
+          // host should never receive the user's API key.
+          const configuredHost = new URL(
+            context.auth.baseUrl?.trim() || DEFAULT_BASE_URL
+          ).host;
+          const imageHost = new URL(img.url).host;
+          const downloadHeaders: Record<string, string> =
+            imageHost === configuredHost
+              ? { Authorization: `Bearer ${context.auth.apiKey}` }
+              : {};
           const downloaded = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: img.url,
-            headers,
+            headers: downloadHeaders,
             responseType: 'arraybuffer',
           });
           imageBuffer = Buffer.from(downloaded.body);
