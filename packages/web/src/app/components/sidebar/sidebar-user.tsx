@@ -1,42 +1,61 @@
-import { Permission } from '@activepieces/shared';
 import {
-  OrganizationSwitcher,
-  UserButton,
+  CreateOrganization,
+  OrganizationProfile,
+  useClerk,
   useOrganization,
+  useOrganizationList,
   useUser,
 } from '@clerk/clerk-react';
 import { t } from 'i18next';
-import { UserPlus } from 'lucide-react';
+import {
+  Building2,
+  ChevronsUpDown,
+  LogOut,
+  Plus,
+  Settings,
+  Users,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { AccountSettingsDialog } from '@/app/components/account-settings';
 import { useEmbedding } from '@/components/providers/embed-provider';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   SidebarMenu,
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
-import { InviteUserDialog } from '@/features/members';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { otom8ClerkAppearance } from '@/lib/otom8-clerk-appearance';
 import { OTOM8_SITE_URL } from '@/lib/otom8-site-url';
 
-// Replaces AP's native sidebar user dropdown with Clerk's <UserButton /> and
-// exposes org switching via <OrganizationSwitcher />. When the active Clerk
-// org changes, we bounce through /api/ap-sso on the otom8 site so AP
-// re-authenticates under the new org's externalProjectId (see
-// site/api/ap-sso/route.ts). OTOM8_SITE_URL comes from lib/deploy-env.ts
-// (localhost → local site; prod build on app host → otom8.us).
 export function SidebarUser() {
-  const [inviteUserOpen, setInviteUserOpen] = useState(false);
   const { embedState } = useEmbedding();
   const { state } = useSidebar();
   const { user, isLoaded: userLoaded } = useUser();
   const { organization } = useOrganization();
-  const { checkAccess } = useAuthorization();
-  const canInviteUsers = checkAccess(Permission.WRITE_INVITATION);
+  const { userMemberships } = useOrganizationList({ userMemberships: true });
+  const { signOut, setActive } = useClerk();
   const isCollapsed = state === 'collapsed';
 
-  // Re-run SSO whenever the active Clerk org changes, so AP's project context
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [teamOpen, setTeamOpen] = useState(false);
+  const [createOrgOpen, setCreateOrgOpen] = useState(false);
+
+  // Re-run SSO whenever the active Clerk org changes so AP's project context
   // moves with the user. We skip the first render (baseline value).
   const lastOrgRef = useRef<string | null | undefined>(undefined);
   useEffect(() => {
@@ -58,58 +77,173 @@ export function SidebarUser() {
   const displayName =
     user.firstName && user.lastName
       ? `${user.firstName} ${user.lastName}`
-      : user.primaryEmailAddress?.emailAddress ?? '';
+      : (user.primaryEmailAddress?.emailAddress ?? '');
+  const initials =
+    [user.firstName?.[0], user.lastName?.[0]].filter(Boolean).join('') || '?';
+  const workspaceName = organization?.name ?? t('Personal');
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <div className="px-2 pt-1 pb-2">
-          <OrganizationSwitcher
+    <>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="flex w-full items-center gap-3 rounded-md px-2 py-2 hover:bg-accent transition-colors text-left outline-none"
+                data-testid="sidebar-user"
+              >
+                <Avatar className="h-9 w-9 shrink-0">
+                  <AvatarImage src={user.imageUrl} alt={displayName} />
+                  <AvatarFallback>{initials}</AvatarFallback>
+                </Avatar>
+                {!isCollapsed && (
+                  <>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium leading-tight">
+                        {displayName}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground mt-0.5">
+                        {workspaceName}
+                      </p>
+                    </div>
+                    <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  </>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              side="top"
+              align="start"
+              className="w-64"
+              sideOffset={4}
+            >
+              {/* User info header — non-interactive */}
+              <div className="px-2 py-1.5">
+                <p className="text-sm font-medium truncate">{displayName}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {user.primaryEmailAddress?.emailAddress}
+                </p>
+              </div>
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem onClick={() => setAccountOpen(true)}>
+                <Settings className="mr-2 h-4 w-4" />
+                {t('Account Settings')}
+              </DropdownMenuItem>
+
+              {organization && (
+                <DropdownMenuItem onClick={() => setTeamOpen(true)}>
+                  <Users className="mr-2 h-4 w-4" />
+                  {t('Team Settings')}
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                {t('Workspaces')}
+              </DropdownMenuLabel>
+
+              {/* Personal workspace */}
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={() => setActive({ organization: null })}
+              >
+                <div className="h-4 w-4 shrink-0 rounded-sm bg-muted flex items-center justify-center text-[10px] font-medium">
+                  {user.firstName?.[0] ?? '?'}
+                </div>
+                <span className="flex-1 truncate">{t('Personal')}</span>
+                {!organization && (
+                  <span className="text-xs text-muted-foreground">✓</span>
+                )}
+              </DropdownMenuItem>
+
+              {/* Org memberships */}
+              {userMemberships?.data?.map((m) => (
+                <DropdownMenuItem
+                  key={m.organization.id}
+                  className="gap-2"
+                  onClick={() =>
+                    setActive({ organization: m.organization.id })
+                  }
+                >
+                  <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="flex-1 truncate">{m.organization.name}</span>
+                  {organization?.id === m.organization.id && (
+                    <span className="text-xs text-muted-foreground">✓</span>
+                  )}
+                </DropdownMenuItem>
+              ))}
+
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={() => setCreateOrgOpen(true)}
+              >
+                <Plus className="h-4 w-4 shrink-0" />
+                {t('Create Workspace')}
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive gap-2"
+                onClick={() =>
+                  signOut({ redirectUrl: `${OTOM8_SITE_URL}/auth/signout` })
+                }
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                {t('Sign out')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      </SidebarMenu>
+
+      {/* Account Settings — Clerk UserProfile */}
+      <AccountSettingsDialog
+        open={accountOpen}
+        onClose={() => setAccountOpen(false)}
+      />
+
+      {/* Team Settings — Clerk OrganizationProfile */}
+      <Dialog open={teamOpen} onOpenChange={setTeamOpen}>
+        <DialogContent className="max-w-4xl w-full h-[85vh] p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle className="font-semibold">
+              {t('Team Settings')}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto">
+            <OrganizationProfile
+              appearance={{
+                ...otom8ClerkAppearance,
+                elements: {
+                  ...otom8ClerkAppearance.elements,
+                  rootBox: { width: '100%', height: '100%' },
+                  cardBox: {
+                    width: '100%',
+                    boxShadow: 'none',
+                    border: 'none',
+                    borderRadius: 0,
+                  },
+                },
+              }}
+              routing="hash"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Workspace — Clerk CreateOrganization */}
+      <Dialog open={createOrgOpen} onOpenChange={setCreateOrgOpen}>
+        <DialogContent className="max-w-lg p-0 overflow-hidden">
+          <CreateOrganization
             appearance={otom8ClerkAppearance}
-            hidePersonal={false}
             afterCreateOrganizationUrl={`${OTOM8_SITE_URL}/api/ap-sso`}
-            afterLeaveOrganizationUrl={`${OTOM8_SITE_URL}/api/ap-sso`}
-            afterSelectOrganizationUrl={`${OTOM8_SITE_URL}/api/ap-sso`}
-            afterSelectPersonalUrl={`${OTOM8_SITE_URL}/api/ap-sso`}
           />
-        </div>
-      </SidebarMenuItem>
-
-      <SidebarMenuItem>
-        <div
-          className="flex items-center gap-2 px-2 py-2 w-full"
-          data-testid="sidebar-user"
-        >
-          <UserButton
-            appearance={{
-              ...otom8ClerkAppearance,
-              elements: {
-                ...otom8ClerkAppearance.elements,
-                avatarBox: { width: '24px', height: '24px' },
-              },
-            }}
-            afterSignOutUrl={`${OTOM8_SITE_URL}/auth/signout`}
-            userProfileMode="modal"
-          >
-            {canInviteUsers && (
-              <UserButton.MenuItems>
-                <UserButton.Action
-                  label={t('Invite User')}
-                  labelIcon={<UserPlus className="w-4 h-4" />}
-                  onClick={() => setInviteUserOpen(true)}
-                />
-              </UserButton.MenuItems>
-            )}
-          </UserButton>
-          {!isCollapsed && (
-            <span className="truncate text-sm text-foreground">
-              {displayName}
-            </span>
-          )}
-        </div>
-      </SidebarMenuItem>
-
-      <InviteUserDialog open={inviteUserOpen} setOpen={setInviteUserOpen} />
-    </SidebarMenu>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
