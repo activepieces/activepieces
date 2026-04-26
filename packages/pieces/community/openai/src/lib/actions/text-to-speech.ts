@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
-import { streamToBuffer } from '../common/common';
+import { streamToBuffer, DEFAULT_BASE_URL } from '../common/common';
 
 type Voice = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
 type ResponseFormat = 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
@@ -85,7 +85,7 @@ export const textToSpeech = createAction({
 	async run({ auth, propsValue, files }) {
 		const openai = new OpenAI({
 			apiKey: auth.apiKey,
-			baseURL: auth.baseUrl,
+			baseURL: auth.baseUrl?.trim() || DEFAULT_BASE_URL,
 		});
 
 		const { voice, format, model, text, speed, fileName } = propsValue;

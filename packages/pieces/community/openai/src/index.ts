@@ -10,7 +10,7 @@ import { textToSpeech } from './lib/actions/text-to-speech';
 import { transcribeAction } from './lib/actions/transcriptions';
 import { translateAction } from './lib/actions/translation';
 import { visionPrompt } from './lib/actions/vision-prompt';
-import { baseUrl } from './lib/common/common';
+import { DEFAULT_BASE_URL } from './lib/common/common';
 import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
 import { editImage } from './lib/actions/edit-image';
 import { openaiAuth } from './lib/auth';
@@ -35,7 +35,7 @@ export const openai = createPiece({
     createCustomApiCallAction({
       auth: openaiAuth,
       baseUrl: (auth) => {
-        return (auth as any)?.baseUrl?.replace(/\/+$/, '') ?? baseUrl;
+        return (auth as any)?.baseUrl?.trim() || DEFAULT_BASE_URL;
       },
       authMapping: async (auth) => {
         return {

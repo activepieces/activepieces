@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
-import { sleep } from '../common/common';
+import { sleep, DEFAULT_BASE_URL } from '../common/common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
@@ -32,7 +32,7 @@ export const askAssistant = createAction({
         try {
           const openai = new OpenAI({
             apiKey: auth.apiKey,
-            baseURL: auth.baseUrl,
+            baseURL: auth.baseUrl?.trim() || DEFAULT_BASE_URL,
           });
           const assistants = await openai.beta.assistants.list();
 
@@ -72,7 +72,7 @@ export const askAssistant = createAction({
 
     const openai = new OpenAI({
       apiKey: auth.apiKey,
-      baseURL: auth.baseUrl,
+      baseURL: auth.baseUrl?.trim() || DEFAULT_BASE_URL,
     });
     const { assistant, prompt, memoryKey } = propsValue;
     const runCheckDelay = 1000;

@@ -4,6 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { kebabCase } from '@activepieces/shared';
 import mime from 'mime-types';
 import { openaiAuth } from '../auth';
+import { DEFAULT_BASE_URL } from '../common/common';
 
 export const editImage = createAction({
   auth: openaiAuth,
@@ -59,7 +60,7 @@ export const editImage = createAction({
   async run(context) {
     const openai = new OpenAI({ 
       apiKey: context.auth.apiKey,
-      baseURL: context.auth.baseUrl,
+      baseURL: context.auth.baseUrl?.trim() || DEFAULT_BASE_URL,
     });
     const { image, prompt, mask, size, quality } = context.propsValue;
 

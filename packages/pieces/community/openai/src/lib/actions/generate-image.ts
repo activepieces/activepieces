@@ -99,7 +99,7 @@ export const generateImage = createAction({
   async run(context) {
     const openai = new OpenAI({ 
       apiKey: context.auth.apiKey,
-      baseURL: context.auth.baseUrl,
+      baseURL: context.auth.baseUrl?.trim() || DEFAULT_BASE_URL,
     });
     const { quality, resolution, model, prompt } = context.propsValue;
 
