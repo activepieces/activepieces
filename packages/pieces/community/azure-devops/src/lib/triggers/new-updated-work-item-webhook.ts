@@ -96,9 +96,8 @@ export const newUpdatedWorkItemWebhookTrigger = createTrigger({
         basicAuthPassword: token,
       });
       subscriptionIds.push(subscription.id);
+      await context.store.put<string[]>(TRIGGER_STORE_KEY, subscriptionIds);
     }
-
-    await context.store.put<string[]>(TRIGGER_STORE_KEY, subscriptionIds);
   },
 
   async onDisable(context) {
