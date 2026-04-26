@@ -179,8 +179,7 @@ function ChatBoxContent({
             </div>
           )}
 
-          {!isStreaming &&
-            !wasCancelled &&
+          {!wasCancelled &&
             messages.length > 0 &&
             messages[messages.length - 1]?.role === 'assistant' && (
               <QuickReplies

@@ -244,6 +244,9 @@ const INITIAL_COMPONENTS: Partial<Components> = {
       </CodeBlock>
     );
   },
+  hr: function HrComponent() {
+    return <hr className="my-6 border-t border-border/50" />;
+  },
   pre: function PreComponent({ children }) {
     return <>{children}</>;
   },

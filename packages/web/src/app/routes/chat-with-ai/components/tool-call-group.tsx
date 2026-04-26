@@ -1,6 +1,6 @@
 import { ToolCallItem } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, Pause } from 'lucide-react';
 
 import {
   ChainOfThought,
@@ -13,23 +13,37 @@ import {
   ToolCallCard,
 } from '@/features/chat/components/tool-call-card';
 
-export function ToolCallGroup({ toolCalls }: { toolCalls: ToolCallItem[] }) {
-  const groups = groupToolCallsByPhase(toolCalls);
+export function ToolCallGroup({
+  toolCalls,
+  isStreaming = false,
+}: {
+  toolCalls: ToolCallItem[];
+  isStreaming?: boolean;
+}) {
+  const resolvedCalls = isStreaming
+    ? toolCalls
+    : toolCalls.map((tc) =>
+        tc.status === 'running' ? { ...tc, status: 'stopped' as const } : tc,
+      );
+  const groups = groupToolCallsByPhase(resolvedCalls);
 
   if (groups.length === 0) return null;
 
   return (
     <ChainOfThought>
       {groups.map((group, i) => {
-        const groupDone = group.tools.every((tc) => tc.status !== 'running');
+        const hasRunning = group.tools.some((tc) => tc.status === 'running');
+        const hasStopped = group.tools.some((tc) => tc.status === 'stopped');
         return (
           <ChainOfThoughtStep key={i} defaultOpen={false}>
             <ChainOfThoughtTrigger
               leftIcon={
-                groupDone ? (
-                  <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
-                ) : (
+                hasRunning ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : hasStopped ? (
+                  <Pause className="h-3.5 w-3.5 fill-muted-foreground text-muted-foreground" />
+                ) : (
+                  <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
                 )
               }
             >

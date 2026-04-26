@@ -72,15 +72,6 @@ export function MessageContentWithAuth({
     );
   }
 
-  if (isStreaming) {
-    return (
-      <div className={PROSE_CLASSES}>
-        <Markdown>{content}</Markdown>
-        <span className="inline-block w-[2px] h-[1em] bg-foreground align-text-bottom ml-0.5 animate-[blink-cursor_1s_step-end_infinite]" />
-      </div>
-    );
-  }
-
   const { proposal, cleanContent: afterProposal } =
     parseAutomationProposal(content);
   const { connections, cleanContent: afterConnection } =
@@ -92,6 +83,9 @@ export function MessageContentWithAuth({
       {finalContent && (
         <div className={PROSE_CLASSES}>
           <Markdown>{finalContent}</Markdown>
+          {isStreaming && (
+            <span className="inline-block w-[2px] h-[1em] bg-foreground align-text-bottom ml-0.5 animate-[blink-cursor_1s_step-end_infinite]" />
+          )}
         </div>
       )}
       {connections.map((conn) => (

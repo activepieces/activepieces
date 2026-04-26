@@ -1,6 +1,6 @@
 import { isObject, ToolCallItem } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, ChevronDown, Loader2, Square, XCircle } from 'lucide-react';
+import { Check, ChevronDown, Loader2, Pause, XCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
@@ -87,7 +87,7 @@ function StatusIcon({ status }: { status: ToolCallItem['status'] }) {
       return <XCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />;
     case 'stopped':
       return (
-        <Square className="h-3 w-3 text-muted-foreground shrink-0 fill-current" />
+        <Pause className="h-3.5 w-3.5 text-muted-foreground shrink-0 fill-current" />
       );
   }
 }

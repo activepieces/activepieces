@@ -162,6 +162,10 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                             streamWriter.write(update)
                         })
 
+                        reply.raw.on('close', () => {
+                            resolve()
+                        })
+
                         chatSandboxAgent.sendPrompt({ session, text: content, systemPrompt, files })
                             .then(resolve)
                             .catch(reject)

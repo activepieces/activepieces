@@ -186,7 +186,13 @@ export function AssistantMessage({
               );
             }
             if (block.type === 'tool_calls') {
-              return <ToolCallGroup key={idx} toolCalls={block.calls} />;
+              return (
+                <ToolCallGroup
+                  key={idx}
+                  toolCalls={block.calls}
+                  isStreaming={isStreaming}
+                />
+              );
             }
             return null;
           })}
