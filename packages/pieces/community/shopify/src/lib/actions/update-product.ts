@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../..';
 import { updateProduct } from '../common';
-import { ShopifyImage, ShopifyProductStatuses } from '../common/types';
+import { ShopifyProduct, ShopifyProductStatuses } from '../common/types';
 
 export const updateProductAction = createAction({
   auth: shopifyAuth,
@@ -69,24 +69,20 @@ export const updateProductAction = createAction({
     const { id, title, bodyHtml, vendor, productType, tags, productImage } =
       propsValue;
 
-    const images: Partial<ShopifyImage>[] = [];
+    const updatePayload: Partial<ShopifyProduct> = {
+      title,
+      body_html: bodyHtml,
+      vendor,
+      product_type: productType,
+      tags,
+    };
+
+    // Only include images when a new image is explicitly provided.
+    // Sending an empty images array to Shopify would delete all existing images.
     if (productImage) {
-      images.push({
-        attachment: productImage.base64,
-      });
+      updatePayload.images = [{ attachment: productImage.base64 }];
     }
 
-    return await updateProduct(
-      +id,
-      {
-        title,
-        body_html: bodyHtml,
-        vendor,
-        product_type: productType,
-        tags,
-        images,
-      },
-      auth
-    );
+    return await updateProduct(+id, updatePayload, auth);
   },
 });
