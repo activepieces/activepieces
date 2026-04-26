@@ -111,8 +111,12 @@ export const agentUtils = {
       const toolDescription = triggerSettings.input?.toolDescription
       const returnsResponse = triggerSettings.input?.returnsResponse
 
+      const propList = triggerSettings.input?.inputSchema ?? []
+      const sanitizedToOriginal = new Map<string, string>(
+        propList.map(prop => [fixProperty(prop.name), prop.name]),
+      )
       const inputSchema = Object.fromEntries(
-        triggerSettings.input?.inputSchema.map(prop => [
+        propList.map(prop => [
           fixProperty(prop.name),
           mcpPropertyToSchema(prop),
         ]),
@@ -123,12 +127,13 @@ export const agentUtils = {
         description: toolDescription,
         inputSchema: z.object(inputSchema),
         execute: async (inputs: unknown) => {
+          const remappedInputs = remapInputKeys(inputs, sanitizedToOriginal)
           return callMcpFlowTool({
             flowId: tool.flow.id,
             publicUrl: params.publicUrl,
             token: params.token,
             async: !returnsResponse,
-            inputs,
+            inputs: remappedInputs,
           })
         }
       }
@@ -182,6 +187,21 @@ async function callMcpFlowTool(params: CallMcpFlowToolParams): Promise<ExecuteTo
 
 function fixProperty(schemaName: string) {
   return schemaName.replace(/[\s/@-]+/g, '_')
+}
+
+function remapInputKeys(
+  inputs: unknown,
+  sanitizedToOriginal: Map<string, string>,
+): unknown {
+  if (typeof inputs !== 'object' || inputs === null || Array.isArray(inputs)) {
+    return inputs
+  }
+  return Object.fromEntries(
+    Object.entries(inputs as Record<string, unknown>).map(([key, value]) => [
+      sanitizedToOriginal.get(key) ?? key,
+      value,
+    ]),
+  )
 }
 
 function mcpPropertyToSchema(property: McpProperty): z.ZodTypeAny {
