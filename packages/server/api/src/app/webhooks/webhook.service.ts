@@ -13,7 +13,7 @@ import { triggerSourceService } from '../trigger/trigger-source/trigger-source-s
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue, JobType } from '../workers/job-queue/job-queue'
 import { payloadOffloader } from '../workers/payload-offloader'
-import { webhookHandshake } from './webhook-handshake'
+import { isHandshakeRequest, webhookHandshake } from './webhook-handshake'
 
 const tracer = trace.getTracer('webhook-service')
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
@@ -84,7 +84,18 @@ export const webhookService = {
                     }
                 }
                 const { flow } = flowExecutionResult
-                if (flow.status === FlowStatus.DISABLED && !saveSampleData) {
+                span.setAttribute('webhook.flowFound', true)
+                span.setAttribute('webhook.projectId', flow.projectId)
+                const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(flowVersionToRun, flow)
+                span.setAttribute('webhook.flowVersionId', flowVersionIdToRun)
+
+                const resolvedPayload = payload ?? await data(flow.projectId)
+                const handshakeConfiguration = flowExecutionResult.handshakeConfiguration ?? null
+
+                // Handshake validation requests must be processed even when the flow is still
+                // DISABLED — third-party services (e.g. Trello) send a HEAD/POST to verify the
+                // webhook URL during onEnable before the flow transitions to ENABLED.
+                if (flow.status === FlowStatus.DISABLED && !saveSampleData && !isHandshakeRequest({ payload: resolvedPayload as TriggerPayload, handshakeConfiguration })) {
                     pinoLogger.warn({ flowId }, 'Webhook received for disabled flow')
                     span.setAttribute('webhook.triggerSourceFound', false)
                     return {
@@ -96,14 +107,9 @@ export const webhookService = {
                     }
                 }
 
-                span.setAttribute('webhook.flowFound', true)
-                span.setAttribute('webhook.projectId', flow.projectId)
-                const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(flowVersionToRun, flow)
-                span.setAttribute('webhook.flowVersionId', flowVersionIdToRun)
-
                 const response = await webhookHandshake.handleHandshakeRequest({
-                    payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
-                    handshakeConfiguration: flowExecutionResult.handshakeConfiguration ?? null,
+                    payload: resolvedPayload as TriggerPayload,
+                    handshakeConfiguration,
                     flowId: flow.id,
                     flowVersionId: flowVersionIdToRun,
                     projectId: flow.projectId,
@@ -124,8 +130,6 @@ export const webhookService = {
                 }
 
                 pinoLogger.info('Adding webhook job to queue')
-
-                const resolvedPayload = payload ?? await data(flow.projectId)
 
                 const payloadSize = payloadOffloader.getPayloadSizeInBytes(resolvedPayload)
                 if (payloadSize > MAX_PAYLOAD_SIZE_BYTES) {
