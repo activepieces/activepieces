@@ -9,8 +9,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-import { useMigrationFlowsGroupedByProject } from '../hooks/ai-provider-migration-hooks';
-
 import { FlowLink, ProjectGroupedFlowList } from './project-grouped-flow-list';
 
 type MigratedVersion = FlowMigration['migratedVersions'][number];
@@ -47,15 +45,9 @@ function MigratedFlowsDialogContent({
   migratedVersions: MigratedVersion[];
   isDryCheck: boolean;
 }) {
-  const { groups, isLoading } = useMigrationFlowsGroupedByProject({
-    entries: migratedVersions,
-  });
-
   return (
     <ProjectGroupedFlowList
       entries={migratedVersions}
-      groups={groups}
-      isLoading={isLoading}
       renderRow={({ flowId, entries, displayName, projectId }) => {
         const migrationSummary = summarizeMigratedVersionsForFlow(entries);
         const detailLines = buildFlowMigrationDetailLines({

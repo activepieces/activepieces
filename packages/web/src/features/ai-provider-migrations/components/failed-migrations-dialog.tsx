@@ -9,8 +9,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-import { useMigrationFlowsGroupedByProject } from '../hooks/ai-provider-migration-hooks';
-
 import { FlowLink, ProjectGroupedFlowList } from './project-grouped-flow-list';
 
 type FailedFlowVersion = FlowMigration['failedFlowVersions'][number];
@@ -41,15 +39,9 @@ function FailedMigrationsDialogContent({
 }: {
   failedFlowVersions: FailedFlowVersion[];
 }) {
-  const { groups, isLoading } = useMigrationFlowsGroupedByProject({
-    entries: failedFlowVersions,
-  });
-
   return (
     <ProjectGroupedFlowList
       entries={failedFlowVersions}
-      groups={groups}
-      isLoading={isLoading}
       renderRow={({ flowId, entries, displayName, projectId }) => (
         <li
           key={flowId}

@@ -19,7 +19,6 @@ import { toast } from 'sonner';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { flowsApi } from '@/features/flows';
 import { aiProviderApi } from '@/features/platform-admin';
-import { projectCollectionUtils } from '@/features/projects';
 
 export const AI_PROVIDER_MIGRATE_MODELS_QUERY_KEY_PREFIX =
   'ai-models-for-migrate' as const;
@@ -114,65 +113,18 @@ export function migrationProjectFlowsQueryKey(projectId: string) {
   return [MIGRATION_PROJECT_FLOWS_QUERY_KEY_PREFIX, projectId] as const;
 }
 
-export type MigrationFlowProjectGroup = {
-  projectId: string;
-  projectName: string;
-  flowsById: Map<string, PopulatedFlow>;
-};
-
-export function useMigrationFlowsGroupedByProject({
-  entries,
-}: {
-  entries: Array<{ flowId: string; projectId: string }>;
-}): { groups: MigrationFlowProjectGroup[]; isLoading: boolean } {
-  const { data: projects = [] } =
-    projectCollectionUtils.useAllPlatformProjects();
-
-  const uniqueProjectIds = useMemo(
-    () => [...new Set(entries.map((e) => e.projectId))],
-    [entries],
-  );
-  const queries = useQueries({
-    queries: uniqueProjectIds.map((projectId) => ({
-      queryKey: migrationProjectFlowsQueryKey(projectId),
-      queryFn: () =>
-        flowsApi.list({ projectId, cursor: undefined, limit: 100 }),
-    })),
-  });
-
-  const projectNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const project of projects) {
-      map.set(project.id, project.displayName);
-    }
-    return map;
-  }, [projects]);
-
-  const groups = useMemo<MigrationFlowProjectGroup[]>(() => {
-    return uniqueProjectIds.map((projectId, idx) => {
-      const projectFlows = queries[idx]?.data?.data ?? [];
-      const flowIdsInProject = new Set(
-        entries.filter((e) => e.projectId === projectId).map((e) => e.flowId),
-      );
-      const flowsById = new Map<string, PopulatedFlow>();
-      for (const flow of projectFlows) {
-        if (flowIdsInProject.has(flow.id)) {
-          flowsById.set(flow.id, flow);
-        }
-      }
-      return {
-        projectId,
-        projectName:
-          projectNameById.get(projectId) ??
-          t('Deleted project ({projectId})', { projectId }),
-        flowsById,
-      };
-    });
-  }, [uniqueProjectIds, queries, entries, projectNameById]);
-
-  const isLoading = queries.some((q) => q.isLoading);
-
-  return { groups, isLoading };
+export async function fetchAllFlowsForProject(
+  projectId: string,
+): Promise<PopulatedFlow[]> {
+  const PAGE_SIZE = 1000;
+  const all: PopulatedFlow[] = [];
+  let cursor: string | undefined = undefined;
+  do {
+    const page = await flowsApi.list({ projectId, cursor, limit: PAGE_SIZE });
+    all.push(...page.data);
+    cursor = page.next ?? undefined;
+  } while (cursor);
+  return all;
 }
 
 export function useMigrateFlowsMutation({
