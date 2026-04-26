@@ -95,7 +95,7 @@ export const flowRunQueries = {
     const { data, isLoading } = useQuery({
       queryKey: ['flow-run-count-by-status', projectId],
       queryFn: () => {
-        const range = useMemo(() => getDefaultRange(DEFAULT_DATE_PRESET), []);
+        const range = getDefaultRange(DEFAULT_DATE_PRESET);
         return flowRunsApi.countByStatus({
           projectId,
           createdAfter: range.from.toISOString(),

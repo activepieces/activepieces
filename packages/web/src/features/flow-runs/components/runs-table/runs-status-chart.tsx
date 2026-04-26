@@ -58,7 +58,6 @@ function MiniDonut({
 
 function RunsStatusChart() {
   const { categories, total, isLoading } = flowRunQueries.useRunStats();
-  const showPlaceholder = isLoading || categories.length === 0;
 
   if (isLoading || categories.length === 0) return;
   return (
