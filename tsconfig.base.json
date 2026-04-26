@@ -418,6 +418,9 @@
       "@activepieces/piece-fathom-analytics": [
         "packages/pieces/community/fathom-analytics/src/index.ts"
       ],
+      "@activepieces/piece-canva": [
+        "packages/pieces/community/canva/src/index.ts"
+      ],
       "@activepieces/piece-figma": [
         "packages/pieces/community/figma/src/index.ts"
       ],
