@@ -42,9 +42,11 @@ export const updateDatabaseItem = createAction({
         value !== null &&
         !(Array.isArray(value) && value.length === 0)
       ) {
-        const fieldType: string = properties[key].type;
-        notionFields[key] =
-          NotionFieldMapping[fieldType].buildNotionType(value);
+        const fieldType: string = properties[key]?.type;
+        if (fieldType && NotionFieldMapping[fieldType]) {
+          notionFields[key] =
+            NotionFieldMapping[fieldType].buildNotionType(value);
+        }
       }
     });
     return await notion.pages.update({

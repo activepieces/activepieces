@@ -117,9 +117,7 @@ export const findDatabaseItem = createAction({
 
     const { results } = await notion.databases.query({
       database_id: databaseId as string,
-      filter: {
-        and: filterArray,
-      },
+      ...(filterArray.length > 0 ? { filter: { and: filterArray } } : {}),
     });
 
     return {
