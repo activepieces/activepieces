@@ -1,4 +1,8 @@
-import { FlowMigration, FlowMigrationStatus } from '@activepieces/shared';
+import {
+  FlowMigration,
+  FlowMigrationStatus,
+  FlowMigrationType,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -10,11 +14,14 @@ import {
   ListChecks,
   Loader2,
   Play,
+  Undo2,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,7 +31,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-import { useAiProviderMigrations } from '../hooks/ai-provider-migration-hooks';
+import { flowMigrationHooks } from '../hooks/ai-provider-migration-hooks';
 
 import { FailedMigrationsDialog } from './failed-migrations-dialog';
 import { MigratedFlowsDialog } from './migrated-flows-dialog';
@@ -34,8 +41,16 @@ export function AiProviderMigrationsTable({
   onRunForReal,
   showMigrateButton,
 }: AiProviderMigrationsTableProps) {
-  const { data, isLoading } = useAiProviderMigrations({ limit: 10 });
+  const { data, isLoading } = flowMigrationHooks.useAiProviderMigrations({
+    limit: 10,
+  });
   const [rowDialog, setRowDialog] = useState<RowDialog | null>(null);
+  const revertMutation = flowMigrationHooks.useMigrateFlowsMutation({
+    onError: () => toast.error(t('Failed to start revert. Please try again.')),
+  });
+  const migrationsById = flowMigrationHooks.useMigrationsByIdWithRevertOrigins({
+    rows: data?.data,
+  });
 
   const columns: ColumnDef<RowDataWithActions<FlowMigration>, unknown>[] = [
     {
@@ -47,25 +62,70 @@ export function AiProviderMigrationsTable({
           icon={Layers}
         />
       ),
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2 text-sm">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-2 text-sm">
-                <span>{row.original.params.sourceModel.model}</span>
-                <ArrowRight className="w-3 h-3 text-muted-foreground shrink-0" />
-                <span>{row.original.params.targetModel.model}</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" align="start">
-              {row.original.params.sourceModel.provider}/
-              {row.original.params.sourceModel.model} →{' '}
-              {row.original.params.targetModel.provider}/
-              {row.original.params.targetModel.model}
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      ),
+      cell: ({ row }) => {
+        if (row.original.type === FlowMigrationType.AI_PROVIDER_MODEL_REVERT) {
+          const original = migrationsById.get(
+            row.original.params.revertOfMigrationId,
+          );
+          if (
+            original &&
+            original.type === FlowMigrationType.AI_PROVIDER_MODEL
+          ) {
+            return (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden whitespace-nowrap text-sm">
+                    <Undo2 className="size-3.5 text-muted-foreground shrink-0" />
+                    <span className="min-w-0 truncate">
+                      {original.params.sourceModel.model}
+                    </span>
+                    <ArrowRight className="w-3 h-3 text-muted-foreground shrink-0" />
+                    <span className="min-w-0 truncate">
+                      {original.params.targetModel.model}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="start">
+                  {t('Revert of migration')}:{' '}
+                  {original.params.sourceModel.provider}/
+                  {original.params.sourceModel.model} →{' '}
+                  {original.params.targetModel.provider}/
+                  {original.params.targetModel.model}
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
+          return (
+            <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden whitespace-nowrap text-sm">
+              <Undo2 className="size-3.5 text-muted-foreground shrink-0" />
+              <span>{t('Revert of AI provider migration')}</span>
+            </div>
+          );
+        }
+        return (
+          <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden whitespace-nowrap text-sm">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden whitespace-nowrap text-sm">
+                  <span className="min-w-0 truncate">
+                    {row.original.params.sourceModel.model}
+                  </span>
+                  <ArrowRight className="w-3 h-3 text-muted-foreground shrink-0" />
+                  <span className="min-w-0 truncate">
+                    {row.original.params.targetModel.model}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" align="start">
+                {row.original.params.sourceModel.provider}/
+                {row.original.params.sourceModel.model} →{' '}
+                {row.original.params.targetModel.provider}/
+                {row.original.params.targetModel.model}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'status',
@@ -83,12 +143,13 @@ export function AiProviderMigrationsTable({
             status={row.original.status}
             failedCount={row.original.failedFlowVersions.length}
           />
-          {row.original.params.dryCheck && (
-            <Badge variant="secondary">
-              <FlaskConical className="size-3 mr-1" />
-              {t('Dry-check')}
-            </Badge>
-          )}
+          {row.original.type === FlowMigrationType.AI_PROVIDER_MODEL &&
+            row.original.params.dryCheck && (
+              <Badge variant="secondary">
+                <FlaskConical className="size-3 mr-1" />
+                {t('Dry-check')}
+              </Badge>
+            )}
         </div>
       ),
     },
@@ -98,13 +159,25 @@ export function AiProviderMigrationsTable({
         <DataTableColumnHeader column={column} title={t('Progress')} />
       ),
       cell: ({ row }) => {
-        const { migratedVersions, failedFlowVersions, params } = row.original;
+        const { migratedVersions, failedFlowVersions, type, params } =
+          row.original;
         const migratedFlowCount = new Set(migratedVersions.map((v) => v.flowId))
           .size;
         const failedFlowCount = new Set(failedFlowVersions.map((v) => v.flowId))
           .size;
-        const migratedLabel = params.dryCheck ? t('planned') : t('migrated');
-        const failedLabel = params.dryCheck ? t('blocked') : t('failed');
+        const isDryCheck =
+          type === FlowMigrationType.AI_PROVIDER_MODEL && params.dryCheck;
+        const isRevert = type === FlowMigrationType.AI_PROVIDER_MODEL_REVERT;
+        const migratedLabel = isDryCheck
+          ? t('planned')
+          : isRevert
+          ? t('reverted')
+          : t('migrated');
+        const failedLabel = isDryCheck
+          ? t('blocked')
+          : isRevert
+          ? t('skipped')
+          : t('failed');
         return (
           <div
             className="flex flex-col gap-1.5"
@@ -152,25 +225,56 @@ export function AiProviderMigrationsTable({
       header: () => null,
       size: 150,
       cell: ({ row }) => {
+        const migration = row.original;
         if (
-          !row.original.params.dryCheck ||
-          row.original.status !== FlowMigrationStatus.COMPLETED
+          migration.status !== FlowMigrationStatus.COMPLETED ||
+          migration.type !== FlowMigrationType.AI_PROVIDER_MODEL
         ) {
           return null;
         }
+        if (migration.params.dryCheck) {
+          return (
+            <div
+              className="flex justify-end"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onRunForReal(migration)}
+              >
+                <Play className="size-3 mr-1" />
+                {t('Run for real')}
+              </Button>
+            </div>
+          );
+        }
+        const revertableCount = migration.migratedVersions.length;
         return (
           <div
             className="flex justify-end"
             onClick={(e) => e.stopPropagation()}
           >
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onRunForReal(row.original)}
+            <ConfirmationDeleteDialog
+              title={t('Revert this migration?')}
+              message={t(
+                'Creates a new version with the pre-migration content for each migrated flow and makes it the current draft or published version. Nothing is deleted, but any changes made after this migration will be overwritten.',
+              )}
+              entityName={t('Migration')}
+              buttonText={t('Revert {count} flows', { count: revertableCount })}
+              showToast={false}
+              mutationFn={async () => {
+                await revertMutation.mutateAsync({
+                  type: FlowMigrationType.AI_PROVIDER_MODEL_REVERT,
+                  revertOfMigrationId: migration.id,
+                });
+              }}
             >
-              <Play className="size-3 mr-1" />
-              {t('Run for real')}
-            </Button>
+              <Button variant="outline" size="sm">
+                <Undo2 className="size-3 mr-1" />
+                {t('Revert')}
+              </Button>
+            </ConfirmationDeleteDialog>
           </div>
         );
       },
@@ -215,7 +319,10 @@ export function AiProviderMigrationsTable({
             if (!open) setRowDialog(null);
           }}
           migratedVersions={rowDialog.migration.migratedVersions}
-          isDryCheck={rowDialog.migration.params.dryCheck}
+          isDryCheck={
+            rowDialog.migration.type === FlowMigrationType.AI_PROVIDER_MODEL &&
+            rowDialog.migration.params.dryCheck
+          }
         />
       )}
     </>

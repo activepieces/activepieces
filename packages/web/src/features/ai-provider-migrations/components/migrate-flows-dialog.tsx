@@ -1,11 +1,12 @@
 import {
+  AiProviderModelMigrationRequest,
   AIProviderModelType,
   AIProviderName,
   AIProviderWithoutSensitiveData,
   ErrorCode,
   FlowMigration,
+  FlowMigrationType,
   isNil,
-  MigrateFlowsModelRequest,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
@@ -36,11 +37,7 @@ import { Label } from '@/components/ui/label';
 import { projectCollectionUtils } from '@/features/projects';
 import { api } from '@/lib/api';
 
-import {
-  useAiProviderModelsForMigrateSelect,
-  useFilteredProviderOptions,
-  useMigrateFlowsMutation,
-} from '../hooks/ai-provider-migration-hooks';
+import { flowMigrationHooks } from '../hooks/ai-provider-migration-hooks';
 
 export function MigrateFlowsDialog({
   providers,
@@ -74,18 +71,24 @@ function MigrateFlowsForm({
   const isConfirmMode = !isNil(confirmFromDryCheck);
 
   const form = useForm<
-    MigrateFlowsModelRequest,
+    AiProviderModelMigrationRequest,
     unknown,
-    MigrateFlowsModelRequest
+    AiProviderModelMigrationRequest
   >({
-    resolver: zodResolver(MigrateFlowsModelRequest),
-    defaultValues: confirmFromDryCheck
-      ? { ...confirmFromDryCheck.params, dryCheck: false }
-      : {
-          projectIds: [],
-          aiProviderModelType: AIProviderModelType.TEXT,
-          dryCheck: true,
-        },
+    resolver: zodResolver(AiProviderModelMigrationRequest),
+    defaultValues:
+      confirmFromDryCheck?.type === FlowMigrationType.AI_PROVIDER_MODEL
+        ? {
+            type: FlowMigrationType.AI_PROVIDER_MODEL,
+            ...confirmFromDryCheck.params,
+            dryCheck: false,
+          }
+        : {
+            type: FlowMigrationType.AI_PROVIDER_MODEL,
+            projectIds: [],
+            aiProviderModelType: AIProviderModelType.TEXT,
+            dryCheck: true,
+          },
     mode: 'onChange',
   });
 
@@ -93,12 +96,12 @@ function MigrateFlowsForm({
 
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
 
-  const providerOptions = useFilteredProviderOptions({
+  const providerOptions = flowMigrationHooks.useFilteredProviderOptions({
     providers,
     aiProviderModelType,
   });
 
-  const { mutate, isPending } = useMigrateFlowsMutation({
+  const { mutate, isPending } = flowMigrationHooks.useMigrateFlowsMutation({
     onClose,
     onError: (error) => {
       form.setError('root.serverError', {
@@ -415,10 +418,11 @@ function ModelSelect({
   onChange: (model: string) => void;
   disabled?: boolean;
 }) {
-  const { options, isLoading } = useAiProviderModelsForMigrateSelect({
-    provider,
-    modelType,
-  });
+  const { options, isLoading } =
+    flowMigrationHooks.useAiProviderModelsForMigrateSelect({
+      provider,
+      modelType,
+    });
 
   return (
     <SearchableSelect

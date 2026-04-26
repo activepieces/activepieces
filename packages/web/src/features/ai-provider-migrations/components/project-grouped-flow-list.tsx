@@ -86,10 +86,9 @@ export function ProjectGroupedFlowList<
                     {group.projectName}
                   </span>
                   <span className="text-xs text-muted-foreground shrink-0">
-                    {t(
-                      '{count, plural, =1 {1 flow} other {# flows}}',
-                      { count: flowsInProject.length },
-                    )}
+                    {t('{count, plural, =1 {1 flow} other {# flows}}', {
+                      count: flowsInProject.length,
+                    })}
                   </span>
                 </div>
               </AccordionTrigger>

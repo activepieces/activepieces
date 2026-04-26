@@ -11,6 +11,7 @@ export enum FlowMigrationStatus {
 
 export enum FlowMigrationType {
     AI_PROVIDER_MODEL = 'AI_PROVIDER_MODEL',
+    AI_PROVIDER_MODEL_REVERT = 'AI_PROVIDER_MODEL_REVERT',
 }
 
 const PieceVersionChange = z.object({
@@ -23,7 +24,7 @@ const MigratedVersionEntry = z.object({
     flowId: z.string(),
     projectId: z.string(),
     draft: z.boolean(),
-    newFlowVersionId: z.string().optional(),
+    newFlowVersionId: z.string(),
     pieceVersionChanges: z.array(PieceVersionChange).optional(),
     changedFields: z.object({
         clearedAdvancedOptions: z.boolean().optional(),
@@ -64,15 +65,25 @@ export const AiProviderModelMigrationData = z.object({
     projectIds: z.array(z.string()),
 })
 
+export const AiProviderModelRevertMigrationData = z.object({
+    revertOfMigrationId: z.string(),
+})
+
 export const FlowMigration = z.discriminatedUnion('type', [
     z.object({
         ...FlowMigrationBase,
         type: z.literal(FlowMigrationType.AI_PROVIDER_MODEL),
         params: AiProviderModelMigrationData,
     }),
+    z.object({
+        ...FlowMigrationBase,
+        type: z.literal(FlowMigrationType.AI_PROVIDER_MODEL_REVERT),
+        params: AiProviderModelRevertMigrationData,
+    }),
 ])
 
 export type AiProviderModelMigrationData = z.infer<typeof AiProviderModelMigrationData>
+export type AiProviderModelRevertMigrationData = z.infer<typeof AiProviderModelRevertMigrationData>
 export type MigratedVersionEntry = z.infer<typeof MigratedVersionEntry>
 export type PieceVersionChange = z.infer<typeof PieceVersionChange>
 export type FailedFlowVersionEntry = z.infer<typeof FailedFlowVersionEntry>

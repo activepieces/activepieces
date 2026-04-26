@@ -2,7 +2,9 @@ import {
   AIProviderModelType,
   AIProviderName,
   AIProviderWithoutSensitiveData,
+  FlowMigration,
   FlowMigrationStatus,
+  FlowMigrationType,
   MigrateFlowsModelRequest,
   PopulatedFlow,
 } from '@activepieces/shared';
@@ -20,18 +22,7 @@ import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { flowsApi } from '@/features/flows';
 import { aiProviderApi } from '@/features/platform-admin';
 
-export const AI_PROVIDER_MIGRATE_MODELS_QUERY_KEY_PREFIX =
-  'ai-models-for-migrate' as const;
-
-export function aiProviderMigrateModelsQueryKey(provider: string) {
-  return [AI_PROVIDER_MIGRATE_MODELS_QUERY_KEY_PREFIX, provider] as const;
-}
-
-export const aiProviderMigrationKeys = {
-  list: (cursor?: string) => ['ai-provider-migrations', cursor] as const,
-};
-
-export function useAiProviderMigrations({
+function useAiProviderMigrations({
   cursor,
   limit = 10,
 }: {
@@ -50,7 +41,7 @@ export function useAiProviderMigrations({
   });
 }
 
-export function useFilteredProviderOptions({
+function useFilteredProviderOptions({
   providers,
   aiProviderModelType,
 }: {
@@ -82,7 +73,7 @@ export function useFilteredProviderOptions({
   );
 }
 
-export function useAiProviderModelsForMigrateSelect({
+function useAiProviderModelsForMigrateSelect({
   provider,
   modelType,
 }: {
@@ -106,11 +97,80 @@ export function useAiProviderModelsForMigrateSelect({
   return { options, isLoading };
 }
 
-export const MIGRATION_PROJECT_FLOWS_QUERY_KEY_PREFIX =
-  'migration-project-flows' as const;
+function useMigrateFlowsMutation({
+  onClose,
+  onError,
+}: {
+  onClose?: () => void;
+  onError?: (error: unknown) => void;
+} = {}) {
+  const queryClient = useQueryClient();
 
-export function migrationProjectFlowsQueryKey(projectId: string) {
-  return [MIGRATION_PROJECT_FLOWS_QUERY_KEY_PREFIX, projectId] as const;
+  return useMutation({
+    mutationFn: (data: MigrateFlowsModelRequest) =>
+      aiProviderApi.migrateFlows(data),
+    onSuccess: (migration) => {
+      queryClient.invalidateQueries({
+        queryKey: aiProviderMigrationKeys.list(),
+      });
+      onClose?.();
+      toast.success(migrationStartedToast(migration));
+    },
+    onError,
+  });
+}
+
+function useMigrationsByIdWithRevertOrigins({
+  rows,
+}: {
+  rows: FlowMigration[] | undefined;
+}): Map<string, FlowMigration> {
+  const inPageById = useMemo(() => {
+    const map = new Map<string, FlowMigration>();
+    for (const m of rows ?? []) map.set(m.id, m);
+    return map;
+  }, [rows]);
+
+  const missingOriginalIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const m of rows ?? []) {
+      if (
+        m.type === FlowMigrationType.AI_PROVIDER_MODEL_REVERT &&
+        !inPageById.has(m.params.revertOfMigrationId)
+      ) {
+        ids.add(m.params.revertOfMigrationId);
+      }
+    }
+    return [...ids];
+  }, [rows, inPageById]);
+
+  const fetched = useQueries({
+    queries: missingOriginalIds.map((id) => ({
+      queryKey: flowMigrationByIdQueryKey(id),
+      queryFn: () => aiProviderApi.getMigration(id),
+      staleTime: Infinity,
+    })),
+  });
+
+  return useMemo(() => {
+    const map = new Map<string, FlowMigration>(inPageById);
+    for (const q of fetched) {
+      if (q.data) map.set(q.data.id, q.data);
+    }
+    return map;
+  }, [inPageById, fetched]);
+}
+
+function migrationStartedToast(migration: FlowMigration): string {
+  if (migration.type === FlowMigrationType.AI_PROVIDER_MODEL_REVERT) {
+    return t('Revert started. Track progress in the migrations table.');
+  }
+  if (migration.params.dryCheck) {
+    return t(
+      'Dry-check started. Results will appear in the migrations table when ready.',
+    );
+  }
+  return t('Migration started.');
 }
 
 export async function fetchAllFlowsForProject(
@@ -127,31 +187,32 @@ export async function fetchAllFlowsForProject(
   return all;
 }
 
-export function useMigrateFlowsMutation({
-  onClose,
-  onError,
-}: {
-  onClose: () => void;
-  onError: (error: unknown) => void;
-}) {
-  const queryClient = useQueryClient();
+export const flowMigrationHooks = {
+  useAiProviderMigrations,
+  useFilteredProviderOptions,
+  useAiProviderModelsForMigrateSelect,
+  useMigrateFlowsMutation,
+  useMigrationsByIdWithRevertOrigins,
+};
 
-  return useMutation({
-    mutationFn: (data: MigrateFlowsModelRequest) =>
-      aiProviderApi.migrateFlows(data),
-    onSuccess: (migration) => {
-      queryClient.invalidateQueries({
-        queryKey: aiProviderMigrationKeys.list(),
-      });
-      onClose();
-      toast.success(
-        migration.params.dryCheck
-          ? t(
-              'Dry-check started. Results will appear in the migrations table when ready.',
-            )
-          : t('Migration started.'),
-      );
-    },
-    onError,
-  });
+export const AI_PROVIDER_MIGRATE_MODELS_QUERY_KEY_PREFIX =
+  'ai-models-for-migrate' as const;
+
+export const MIGRATION_PROJECT_FLOWS_QUERY_KEY_PREFIX =
+  'migration-project-flows' as const;
+
+export function aiProviderMigrateModelsQueryKey(provider: string) {
+  return [AI_PROVIDER_MIGRATE_MODELS_QUERY_KEY_PREFIX, provider] as const;
 }
+
+export function migrationProjectFlowsQueryKey(projectId: string) {
+  return [MIGRATION_PROJECT_FLOWS_QUERY_KEY_PREFIX, projectId] as const;
+}
+
+export function flowMigrationByIdQueryKey(id: string) {
+  return ['flow-migration', id] as const;
+}
+
+export const aiProviderMigrationKeys = {
+  list: (cursor?: string) => ['ai-provider-migrations', cursor] as const,
+};

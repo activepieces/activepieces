@@ -1,6 +1,7 @@
 import { onCallService } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
+    AiProviderModelMigrationRequest,
     apId,
     ErrorCode,
     FailedFlowVersionEntry,
@@ -25,6 +26,7 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -82,59 +84,36 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         return migratedFlowVersion
     },
 
-    async enqueueMigrateFlowsModel({ platformId, userId, request, reqLog }: {
+    async enqueueMigration({ platformId, userId, request, reqLog }: {
         platformId: PlatformId
         userId: UserId
         request: MigrateFlowsModelRequest
         reqLog: FastifyBaseLogger
     }): Promise<FlowMigration> {
-        const jobId = `migrate-flow-model-${platformId}`
-        const existingJob = await systemJobsSchedule(reqLog).getJob<SystemJobName.MIGRATE_FLOWS_MODEL>(jobId)
-        const SKIP_JOB_STATES = ['active', 'delayed', 'waiting']
-        if (existingJob && SKIP_JOB_STATES.includes(await existingJob.getState())) {
-            throw new ActivepiecesError({
-                code: ErrorCode.MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS,
-                params: { jobId },
-            })
+        switch (request.type) {
+            case 'AI_PROVIDER_MODEL_REVERT':
+                return enqueueAiProviderModelRevert({
+                    platformId,
+                    userId,
+                    revertOfMigrationId: request.revertOfMigrationId,
+                    reqLog,
+                })
+            case 'AI_PROVIDER_MODEL':
+                await assertModelTypeMatches({ log: reqLog, platformId, request })
+                return enqueueAiProviderModelMigration({
+                    platformId,
+                    userId,
+                    request,
+                    reqLog,
+                })
         }
-        const migrationId = apId()
-        const migration = await migrationRepo().save({
-            id: migrationId,
-            platformId,
-            userId,
-            type: FlowMigrationType.AI_PROVIDER_MODEL,
-            status: FlowMigrationStatus.RUNNING,
-            migratedVersions: [],
-            failedFlowVersions: [],
-            params: {
-                sourceModel: request.sourceModel,
-                targetModel: request.targetModel,
-                aiProviderModelType: request.aiProviderModelType,
-                dryCheck: request.dryCheck,
-                projectIds: request.projectIds,
-            },
-        })
-
-        await systemJobsSchedule(reqLog).upsertJob({
-            job: {
-                name: SystemJobName.MIGRATE_FLOWS_MODEL,
-                data: { jobId, migrationId, platformId, userId, request },
-                jobId,
-            },
-            schedule: {
-                type: 'one-time',
-                date: dayjs(),
-            },
-            customConfig: {
-                removeOnComplete: true,
-                removeOnFail: true,
-            },
-        })
-
-        return migration
     },
 
     async migrateFlowsModelHandler(data: SystemJobData<SystemJobName.MIGRATE_FLOWS_MODEL>): Promise<void> {
+        if (data.request.type === FlowMigrationType.AI_PROVIDER_MODEL_REVERT) {
+            await flowVersionMigrationService(log).revertMigrationHandler(data)
+            return
+        }
         const { migrationId, platformId, request } = data
         const { projectIds, sourceModel, targetModel, aiProviderModelType, dryCheck } = request
         const BATCH_SIZE = 100
@@ -227,11 +206,12 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                         if (change.diff.disabledWebSearch) changedFields.disabledWebSearch = true
                     }
 
-                    const { error: applyError, data: newFlowVersionId } = await tryCatch(async () => {
+                    const newFlowVersionId = apId()
+
+                    const { error: applyError } = await tryCatch(async () => {
                         if (dryCheck) {
-                            return undefined
+                            return
                         }
-                        let newId: string | undefined
                         await transaction(async (entityManager) => {
                             let updatedVersion: FlowVersion = migratedFv
                             for (const change of applicableChanges) {
@@ -239,7 +219,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                             }
                             const newVersion = sanitizeObjectForPostgresql({
                                 ...updatedVersion,
-                                id: apId(),
+                                id: newFlowVersionId,
                                 state: isDraft ? FlowVersionState.DRAFT : FlowVersionState.LOCKED,
                                 created: dayjs().toISOString(),
                                 updated: dayjs().toISOString(),
@@ -251,10 +231,8 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                             else {
                                 await flowRepo(entityManager).update(newVersion.flowId, { publishedVersionId: newVersion.id })
                             }
-                            newId = newVersion.id
                         })
                         await flowExecutionCache(log).invalidate(flowVersion.flowId)
-                        return newId
                     })
 
                     if (applyError) {
@@ -274,7 +252,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                         flowVersionId: flowVersion.id,
                         flowId: flowVersion.flowId,
                         projectId,
-                        ...(dryCheck ? {} : { newFlowVersionId }),
+                        newFlowVersionId,
                         ...(pieceVersionChanges.length > 0 ? { pieceVersionChanges } : {}),
                         ...(Object.keys(changedFields).length > 0 ? { changedFields } : {}),
                     })
@@ -303,6 +281,109 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
             failedFlowVersions,
         })
         log.info({ platformId, dryCheck, migratedFlows: new Set(migratedVersions.map((v) => v.flowId)).size, failedCount: failedFlowVersions.length }, 'Flow model migration completed')
+    },
+
+    async revertMigrationHandler(data: SystemJobData<SystemJobName.MIGRATE_FLOWS_MODEL>): Promise<void> {
+        const { migrationId, platformId, request } = data
+        if (request.type !== FlowMigrationType.AI_PROVIDER_MODEL_REVERT) {
+            return
+        }
+        const migratedVersions: MigratedVersionEntry[] = []
+        const failedFlowVersions: FailedFlowVersionEntry[] = []
+
+        const { error: handlerError } = await tryCatch(async () => {
+            const original = await migrationRepo().findOneBy({ id: request.revertOfMigrationId, platformId })
+            if (isNil(original) || original.type !== FlowMigrationType.AI_PROVIDER_MODEL) {
+                throw new Error('Original migration not found or not an AI provider model migration')
+            }
+
+            for (const entry of original.migratedVersions) {
+                const flow = await flowRepo().findOneBy({ id: entry.flowId, projectId: entry.projectId })
+                if (isNil(flow)) {
+                    failedFlowVersions.push({
+                        draft: entry.draft,
+                        flowVersionId: entry.newFlowVersionId,
+                        flowId: entry.flowId,
+                        projectId: entry.projectId,
+                        error: 'flow deleted',
+                    })
+                    continue
+                }
+
+                const sourceVersionRow = await flowVersionRepo().findOneBy({ id: entry.flowVersionId })
+                if (isNil(sourceVersionRow)) {
+                    failedFlowVersions.push({
+                        draft: entry.draft,
+                        flowVersionId: entry.newFlowVersionId,
+                        flowId: entry.flowId,
+                        projectId: entry.projectId,
+                        error: 'pre-migration version row missing',
+                    })
+                    continue
+                }
+
+                const newRevertVersionId = apId()
+                const { error: revertError } = await tryCatch(async () => {
+                    await transaction(async (entityManager) => {
+                        const revertVersion = sanitizeObjectForPostgresql({
+                            ...sourceVersionRow,
+                            id: newRevertVersionId,
+                            state: entry.draft ? FlowVersionState.DRAFT : FlowVersionState.LOCKED,
+                            created: dayjs().toISOString(),
+                            updated: dayjs().toISOString(),
+                        })
+                        if (entry.draft) {
+                            await flowVersionRepo(entityManager).update(
+                                { flowId: entry.flowId, state: FlowVersionState.DRAFT },
+                                { state: FlowVersionState.LOCKED },
+                            )
+                        }
+                        await flowVersionRepo(entityManager).save(revertVersion)
+                        if (!entry.draft) {
+                            await flowRepo(entityManager).update(entry.flowId, { publishedVersionId: revertVersion.id })
+                        }
+                    })
+                    await flowExecutionCache(log).invalidate(entry.flowId)
+                })
+
+                if (revertError) {
+                    log.error({ flowId: entry.flowId, error: revertError }, 'Failed to revert flow')
+                    failedFlowVersions.push({
+                        draft: entry.draft,
+                        flowVersionId: entry.newFlowVersionId,
+                        flowId: entry.flowId,
+                        projectId: entry.projectId,
+                        error: revertError.message,
+                    })
+                    continue
+                }
+
+                migratedVersions.push({
+                    draft: entry.draft,
+                    flowVersionId: entry.newFlowVersionId,
+                    flowId: entry.flowId,
+                    projectId: entry.projectId,
+                    newFlowVersionId: newRevertVersionId,
+                })
+            }
+        })
+
+        if (handlerError) {
+            log.error({ migrationId, error: handlerError }, 'Flow migration revert failed unexpectedly')
+            await migrationRepo().update(migrationId, {
+                status: FlowMigrationStatus.FAILED,
+                migratedVersions,
+                failedFlowVersions,
+            })
+            return
+        }
+
+        await migrationRepo().update(migrationId, {
+            status: FlowMigrationStatus.COMPLETED,
+            migratedVersions,
+            failedFlowVersions,
+        })
+        log.info({ platformId, migrationId, reverted: migratedVersions.length, skipped: failedFlowVersions.length }, 'Flow migration revert completed')
     },
 
     async getMigration({ id, platformId }: { id: string, platformId: PlatformId }): Promise<FlowMigration> {
@@ -338,6 +419,164 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         return paginationHelper.createPage<FlowMigration>(data, pageCursor)
     },
 })
+
+async function enqueueAiProviderModelMigration({ platformId, userId, request, reqLog }: {
+    platformId: PlatformId
+    userId: UserId
+    request: AiProviderModelMigrationRequest
+    reqLog: FastifyBaseLogger
+}): Promise<FlowMigration> {
+    const jobId = `migrate-flow-model-${platformId}`
+    await assertNoActiveMigrationJob({ jobId, reqLog })
+    const migrationId = apId()
+    const migration = await migrationRepo().save({
+        id: migrationId,
+        platformId,
+        userId,
+        type: FlowMigrationType.AI_PROVIDER_MODEL,
+        status: FlowMigrationStatus.RUNNING,
+        migratedVersions: [],
+        failedFlowVersions: [],
+        params: {
+            sourceModel: request.sourceModel,
+            targetModel: request.targetModel,
+            aiProviderModelType: request.aiProviderModelType,
+            dryCheck: request.dryCheck,
+            projectIds: request.projectIds,
+        },
+    })
+
+    await systemJobsSchedule(reqLog).upsertJob({
+        job: {
+            name: SystemJobName.MIGRATE_FLOWS_MODEL,
+            data: { jobId, migrationId, platformId, userId, request },
+            jobId,
+        },
+        schedule: {
+            type: 'one-time',
+            date: dayjs(),
+        },
+        customConfig: {
+            removeOnComplete: true,
+            removeOnFail: true,
+        },
+    })
+
+    return migration
+}
+
+async function enqueueAiProviderModelRevert({ platformId, userId, revertOfMigrationId, reqLog }: {
+    platformId: PlatformId
+    userId: UserId
+    revertOfMigrationId: string
+    reqLog: FastifyBaseLogger
+}): Promise<FlowMigration> {
+    const original = await migrationRepo().findOneBy({ id: revertOfMigrationId, platformId })
+    if (isNil(original)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityType: 'FlowMigration', entityId: revertOfMigrationId },
+        })
+    }
+    if (original.type !== FlowMigrationType.AI_PROVIDER_MODEL) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'Only AI provider model migrations can be reverted' },
+        })
+    }
+    if (original.status !== FlowMigrationStatus.COMPLETED) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'Only completed migrations can be reverted' },
+        })
+    }
+    if (original.params.dryCheck) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'Dry-check migrations have nothing to revert' },
+        })
+    }
+
+    const jobId = `migrate-flow-model-${platformId}`
+    await assertNoActiveMigrationJob({ jobId, reqLog })
+
+    const migrationId = apId()
+    const request: MigrateFlowsModelRequest = {
+        type: FlowMigrationType.AI_PROVIDER_MODEL_REVERT,
+        revertOfMigrationId,
+    }
+    const migration = await migrationRepo().save({
+        id: migrationId,
+        platformId,
+        userId,
+        type: FlowMigrationType.AI_PROVIDER_MODEL_REVERT,
+        status: FlowMigrationStatus.RUNNING,
+        migratedVersions: [],
+        failedFlowVersions: [],
+        params: { revertOfMigrationId },
+    })
+
+    await systemJobsSchedule(reqLog).upsertJob({
+        job: {
+            name: SystemJobName.MIGRATE_FLOWS_MODEL,
+            data: { jobId, migrationId, platformId, userId, request },
+            jobId,
+        },
+        schedule: {
+            type: 'one-time',
+            date: dayjs(),
+        },
+        customConfig: {
+            removeOnComplete: true,
+            removeOnFail: true,
+        },
+    })
+
+    return migration
+}
+
+async function assertNoActiveMigrationJob({ jobId, reqLog }: {
+    jobId: string
+    reqLog: FastifyBaseLogger
+}): Promise<void> {
+    const existingJob = await systemJobsSchedule(reqLog).getJob<SystemJobName.MIGRATE_FLOWS_MODEL>(jobId)
+    const SKIP_JOB_STATES = ['active', 'delayed', 'waiting']
+    if (existingJob && SKIP_JOB_STATES.includes(await existingJob.getState())) {
+        throw new ActivepiecesError({
+            code: ErrorCode.MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS,
+            params: { jobId },
+        })
+    }
+}
+
+async function assertModelTypeMatches({ log, platformId, request }: {
+    log: FastifyBaseLogger
+    platformId: PlatformId
+    request: AiProviderModelMigrationRequest
+}): Promise<void> {
+    const { sourceModel, targetModel } = request
+    const sourceProviderModels = await aiProviderService(log).listModels(platformId, sourceModel.provider)
+    const targetProviderModels = await aiProviderService(log).listModels(platformId, targetModel.provider)
+    const sourceProviderModel = sourceProviderModels.find((m) => m.id === sourceModel.model)
+    const targetProviderModel = targetProviderModels.find((m) => m.id === targetModel.model)
+    if (!sourceProviderModel) {
+        throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: {
+            entityType: 'AIProviderModel',
+            entityId: `${sourceModel.provider}/${sourceModel.model}`,
+        } })
+    }
+    if (!targetProviderModel) {
+        throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: {
+            entityType: 'AIProviderModel',
+            entityId: `${targetModel.provider}/${targetModel.model}`,
+        } })
+    }
+    if (sourceProviderModel.type !== targetProviderModel.type || sourceProviderModel.type !== request.aiProviderModelType) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: {
+            message: 'Source and target models must be from the same type and the same aiProviderModelType',
+        } })
+    }
+}
 
 function dedupePieceVersionChanges(changes: PieceVersionChange[]): PieceVersionChange[] {
     const seen = new Map<string, PieceVersionChange>()
