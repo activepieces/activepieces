@@ -62,14 +62,14 @@ const MultiSelectPieceProperty = ({
       return option.label?.toLowerCase()?.includes(searchTerm?.toLowerCase());
     });
 
+  // `items` is built from `options` alone, so indices must reference the same
+  // array. Searching [...cachedOptions, ...options] shifts indices when a
+  // value appears in cachedOptions first, causing MultiSelectValue to resolve
+  // to the wrong item and show the raw index string instead of the label.
   const selectedIndicies =
     initialValues && Array.isArray(initialValues)
       ? initialValues
-          .map((value) =>
-            [...cachedOptions, ...options].findIndex((option) =>
-              deepEqual(option.value, value),
-            ),
-          )
+          .map((value) => options.findIndex((option) => deepEqual(option.value, value)))
           .filter((index) => index > -1)
           .map((index) => String(index))
       : [];
