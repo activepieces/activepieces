@@ -1,5 +1,4 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
 import { uptimeRobotAuth } from './lib/auth';
 import { getMonitorsAction } from './lib/actions/get-monitors';
@@ -25,15 +24,6 @@ export const uptimeRobot = createPiece({
     editMonitorAction,
     deleteMonitorAction,
     pauseResumeMonitorAction,
-    createCustomApiCallAction({
-      baseUrl: () => 'https://api.uptimerobot.com/v2',
-      auth: uptimeRobotAuth,
-      authLocation: 'queryParams',
-      authMapping: async (auth) => ({
-        api_key: auth.secret_text,
-        format: 'json',
-      }),
-    }),
   ],
   triggers: [monitorStatusChangeTrigger],
 });

@@ -61,4 +61,4 @@ Currently only **HTTP(s)** monitors are supported (create, edit, list, delete, p
 
 ## API Reference
 
-This piece uses the [UptimeRobot API v2](https://uptimerobot.com/api/). For advanced use cases, the **Custom API Call** action lets you call any endpoint directly.
+This piece uses the [UptimeRobot API v2](https://uptimerobot.com/api/).
