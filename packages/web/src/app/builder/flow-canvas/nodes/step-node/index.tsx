@@ -181,6 +181,7 @@ const ApStepCanvasNode = React.memo(
                   stepDisplayName={step.displayName}
                   stepIndex={stepIndex}
                   isSkipped={isSkipped}
+                  isTrigger={isTrigger}
                   pieceDisplayName={stepMetadata?.displayName ?? ''}
                   stepName={step.name}
                 />

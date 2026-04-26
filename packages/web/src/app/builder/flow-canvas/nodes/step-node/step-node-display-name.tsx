@@ -7,12 +7,14 @@ const StepNodeDisplayName = ({
   stepDisplayName,
   stepIndex,
   isSkipped,
+  isTrigger,
   pieceDisplayName,
   stepName,
 }: {
   stepDisplayName: string;
   stepIndex: number;
   isSkipped: boolean;
+  isTrigger: boolean;
   pieceDisplayName: string;
   stepName: string;
 }) => {
@@ -25,7 +27,7 @@ const StepNodeDisplayName = ({
               'text-accent-foreground/70': isSkipped,
             })}
           >
-            {stepIndex}. {stepDisplayName}
+            {!isTrigger && `${stepIndex}. `}{stepDisplayName}
           </div>
         </TextWithTooltip>
       </div>
