@@ -30,8 +30,8 @@ export class AddChatTables1776200000000 implements Migration {
         `)
 
         await queryRunner.query(`
-            CREATE INDEX IF NOT EXISTS "idx_chat_conversation_project_user_created"
-            ON "chat_conversation" ("projectId", "userId", "created" DESC)
+            CREATE INDEX IF NOT EXISTS "idx_chat_conversation_project_user_created_id"
+            ON "chat_conversation" ("projectId", "userId", "created" DESC, "id" DESC)
         `)
 
         await queryRunner.query(`

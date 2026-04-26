@@ -46,8 +46,8 @@ export const ChatConversationEntity = new EntitySchema<ChatConversationWithRelat
     },
     indices: [
         {
-            name: 'idx_chat_conversation_project_user_created',
-            columns: ['projectId', 'userId', 'created'],
+            name: 'idx_chat_conversation_project_user_created_id',
+            columns: ['projectId', 'userId', 'created', 'id'],
         },
     ],
     relations: {

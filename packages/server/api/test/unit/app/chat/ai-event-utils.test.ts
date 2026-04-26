@@ -74,18 +74,18 @@ describe('chatEventUtils.isHistoryReplayContent', () => {
         expect(chatEventUtils.isHistoryReplayContent(text)).toBe(true)
     })
 
-    it('returns true for text containing all three of "createdAt", "sender", and "payload"', () => {
-        const text = '{"createdAt":"2024-01-01","sender":"agent","payload":{}}'
+    it('returns true for text containing "createdAt", "sender", "payload", and "method"', () => {
+        const text = '{"createdAt":"2024-01-01","sender":"agent","payload":{},"method":"session/update"}'
         expect(chatEventUtils.isHistoryReplayContent(text)).toBe(true)
     })
 
-    it('returns false when only "createdAt" and "sender" are present without "payload"', () => {
-        const text = '{"createdAt":"2024-01-01","sender":"agent"}'
+    it('returns false for "createdAt", "sender", "payload" WITHOUT "method"', () => {
+        const text = '{"createdAt":"2024-01-01","sender":"agent","payload":{}}'
         expect(chatEventUtils.isHistoryReplayContent(text)).toBe(false)
     })
 
-    it('returns false when only "createdAt" and "payload" are present without "sender"', () => {
-        const text = '{"createdAt":"2024-01-01","payload":{}}'
+    it('returns false when only "createdAt" and "sender" are present', () => {
+        const text = '{"createdAt":"2024-01-01","sender":"agent"}'
         expect(chatEventUtils.isHistoryReplayContent(text)).toBe(false)
     })
 

@@ -1,17 +1,28 @@
-import { QueryRunner } from 'typeorm'
-import { Migration } from '../../migration'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
+import { DatabaseType } from '../../database-type'
 
-export class AddMcpServerTokenIndex1776400000000 implements Migration {
+const databaseType = system.get(AppSystemProp.DB_TYPE)
+const isPGlite = databaseType === DatabaseType.PGLITE
+
+export class AddMcpServerTokenIndex1776400000000 implements MigrationInterface {
     name = 'AddMcpServerTokenIndex1776400000000'
-    breaking = false
-    release = '0.83.0'
-    transaction = true
+    transaction = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            CREATE UNIQUE INDEX IF NOT EXISTS "idx_mcp_server_token"
-            ON "mcp_server" ("token")
-        `)
+        if (isPGlite) {
+            await queryRunner.query(`
+                CREATE UNIQUE INDEX IF NOT EXISTS "idx_mcp_server_token"
+                ON "mcp_server" ("token")
+            `)
+        }
+        else {
+            await queryRunner.query(`
+                CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "idx_mcp_server_token"
+                ON "mcp_server" ("token")
+            `)
+        }
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
