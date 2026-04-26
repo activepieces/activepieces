@@ -18,7 +18,7 @@ export const submitWorkflowRunAction = createAction({
     webhook:Property.ShortText({
         displayName:'Webhook',
         required:false,
-        description:'Webhook URL to recieve run status.'
+        description:'Webhook URL to receive run status.'
     })
   },
   async run(context) {
