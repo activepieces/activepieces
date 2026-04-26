@@ -25,7 +25,7 @@ export default defineConfig(({ command, mode }) => {
       // allowedHosts: ['wozcsvaint.loclx.io'],
       proxy: {
         '/api': {
-          target: 'http://127.0.0.1:3000',
+          target: process.env.VITE_API_PROXY_TARGET ?? 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
           headers: {
