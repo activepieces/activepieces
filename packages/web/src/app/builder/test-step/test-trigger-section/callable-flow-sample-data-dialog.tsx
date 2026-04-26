@@ -92,7 +92,19 @@ const CallableFlowSampleDataForm = ({
           'Define the data this flow expects to receive when another flow calls it.',
         )}
       </p>
-      <Tabs value={tab} onValueChange={(v) => setTab(v as 'fields' | 'json')}>
+      <Tabs
+        value={tab}
+        onValueChange={(v) => {
+          const next = v as 'fields' | 'json';
+          if (next === tab) return;
+          if (next === 'json') {
+            setJsonValue(fieldsValue);
+          } else {
+            setFieldsValue(flattenStrings(jsonValue));
+          }
+          setTab(next);
+        }}
+      >
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="fields">{t('Fields')}</TabsTrigger>
           <TabsTrigger value="json">{t('JSON')}</TabsTrigger>
