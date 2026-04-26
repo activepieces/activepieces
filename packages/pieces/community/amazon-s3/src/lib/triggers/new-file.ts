@@ -8,6 +8,10 @@ import dayjs from 'dayjs';
 import { ListObjectsV2CommandInput } from '@aws-sdk/client-s3';
 import { MarkdownVariant } from '@activepieces/shared';
 
+const TEST_SAMPLE_SIZE = 10;
+const TEST_SCAN_LIMIT = 1000;
+const MAX_TOTAL_FILES = 10000;
+
 const polling: Polling<AppConnectionValueForAuthProperty<typeof amazonS3Auth>, { folderPath?: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, lastFetchEpochMS, propsValue }) => {
@@ -17,7 +21,6 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof amazonS3Auth>, {
 
 		const bucketFiles = [];
 
-		const MAX_TOTAL_FILES = 10000;
 		let totalFetched = 0;
 
 		let hasMore = true;
@@ -26,7 +29,10 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof amazonS3Auth>, {
 		do {
 			const params: ListObjectsV2CommandInput = {
 				Bucket: auth.props.bucket,
-				MaxKeys: isTest ? 10 : 1000,
+				// During test, scan up to TEST_SCAN_LIMIT objects so we can sort by
+				// LastModified and return the most recently modified files rather than
+				// whichever 10 happen to sort first alphabetically.
+				MaxKeys: isTest ? TEST_SCAN_LIMIT : 1000,
 				ContinuationToken: nextToken,
 			};
 
@@ -57,10 +63,19 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof amazonS3Auth>, {
 			nextToken = response.NextContinuationToken ?? undefined;
 		} while (hasMore);
 
-		return bucketFiles.map((file) => ({
+		const mapped = bucketFiles.map((file) => ({
 			epochMilliSeconds: dayjs(file.LastModified).valueOf(),
 			data: file,
 		}));
+
+		if (isTest) {
+			// Return only the most recently modified files so sample data is useful.
+			return mapped
+				.sort((a, b) => b.epochMilliSeconds - a.epochMilliSeconds)
+				.slice(0, TEST_SAMPLE_SIZE);
+		}
+
+		return mapped;
 	},
 };
 
