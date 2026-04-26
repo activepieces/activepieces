@@ -1,6 +1,7 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { useMemo, useState } from 'react';
-import { ControllerRenderProps } from 'react-hook-form';
+import { ControllerRenderProps, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { DictionaryInput } from '@/components/custom/dictionary-input';
@@ -14,7 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Form, FormField, FormItem } from '@/components/ui/form';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type CallableFlowSampleDataDialogProps = {
   open: boolean;
@@ -56,114 +58,113 @@ const CallableFlowSampleDataForm = ({
     state.updateSampleData,
     state.outputSampleData[stepName],
   ]);
-  const initialValue = useMemo(
-    () => coerceToRecord(existingOutput),
-    [existingOutput],
-  );
-  const [tab, setTab] = useState<'fields' | 'json'>('fields');
-  const [fieldsValue, setFieldsValue] = useState<Record<string, string>>(
-    flattenStrings(initialValue),
-  );
-  const [jsonValue, setJsonValue] =
-    useState<Record<string, unknown>>(initialValue);
+  const form = useForm<SampleDataFormValues>({
+    resolver: zodResolver(SampleDataSchema),
+    mode: 'onChange',
+    defaultValues: {
+      mode: SampleDataMode.FIELDS,
+      value: isPlainObject(existingOutput) ? existingOutput : {},
+    },
+  });
 
-  const onSave = () => {
-    const output = tab === 'fields' ? fieldsValue : jsonValue;
-    updateSampleData({ stepName, output });
+  const handleSubmit = (data: SampleDataFormValues) => {
+    updateSampleData({ stepName, output: data.value });
     onOpenChange(false);
   };
 
-  const jsonField: ControllerRenderProps<Record<string, unknown>, string> = {
-    value: jsonValue,
-    onChange: (next) => {
-      if (next && typeof next === 'object' && !Array.isArray(next)) {
-        setJsonValue(next as Record<string, unknown>);
-      }
-    },
-    onBlur: () => undefined,
-    name: 'sampleData',
-    ref: () => undefined,
-  };
+  const mode = form.watch('mode');
 
   return (
-    <div className="flex flex-col gap-4">
-      <p className="text-sm text-muted-foreground">
-        {t(
-          'Define the data this flow expects to receive when another flow calls it.',
-        )}
-      </p>
-      <Tabs
-        value={tab}
-        onValueChange={(v) => {
-          const next = v as 'fields' | 'json';
-          if (next === tab) return;
-          if (next === 'json') {
-            setJsonValue(fieldsValue);
-          } else {
-            setFieldsValue(flattenStrings(jsonValue));
-          }
-          setTab(next);
-        }}
+    <Form {...form}>
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={form.handleSubmit(handleSubmit)}
       >
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="fields">{t('Fields')}</TabsTrigger>
-          <TabsTrigger value="json">{t('JSON')}</TabsTrigger>
-        </TabsList>
-        <TabsContent value="fields">
-          <DictionaryInput
-            values={fieldsValue}
-            onChange={(record) => setFieldsValue(unwrapDictionaryEvent(record))}
-            keyPlaceholder={t('Field name')}
-            valuePlaceholder={t('Sample value')}
-          />
-        </TabsContent>
-        <TabsContent value="json">
-          <JsonEditor field={jsonField} readonly={false} />
-        </TabsContent>
-      </Tabs>
-      <DialogFooter>
-        <DialogClose asChild>
-          <Button type="button" variant="outline">
-            {t('Cancel')}
-          </Button>
-        </DialogClose>
-        <Button type="button" onClick={onSave}>
-          {t('Save as Sample Data')}
-        </Button>
-      </DialogFooter>
-    </div>
+        <p className="text-sm text-muted-foreground">
+          {t(
+            'Define the data this flow expects to receive when another flow calls it.',
+          )}
+        </p>
+        <FormField
+          control={form.control}
+          name="mode"
+          render={({ field }) => (
+            <FormItem>
+              <Tabs
+                value={field.value}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  form.setValue('value', {});
+                }}
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value={SampleDataMode.FIELDS}>
+                    {t('Fields')}
+                  </TabsTrigger>
+                  <TabsTrigger value={SampleDataMode.JSON}>
+                    {t('JSON')}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="value"
+          render={({ field }) => (
+            <FormItem>
+              <SampleDataInput mode={mode} field={field} />
+            </FormItem>
+          )}
+        />
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              {t('Cancel')}
+            </Button>
+          </DialogClose>
+          <Button type="submit">{t('Save as Sample Data')}</Button>
+        </DialogFooter>
+      </form>
+    </Form>
   );
 };
 
-const coerceToRecord = (value: unknown): Record<string, unknown> => {
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
+const SampleDataInput = ({
+  mode,
+  field,
+}: {
+  mode: SampleDataMode;
+  field: ControllerRenderProps<any>;
+}) => {
+  switch (mode) {
+    case SampleDataMode.FIELDS:
+      return (
+        <DictionaryInput
+          values={field.value}
+          onChange={field.onChange}
+          keyPlaceholder={t('Field name')}
+          valuePlaceholder={t('Sample value')}
+        />
+      );
+    case SampleDataMode.JSON:
+      return <JsonEditor field={field} readonly={false} />;
   }
-  return {};
 };
 
-const flattenStrings = (
-  obj: Record<string, unknown>,
-): Record<string, string> => {
-  return Object.fromEntries(
-    Object.entries(obj).map(([k, v]) => [
-      k,
-      typeof v === 'string' ? v : JSON.stringify(v),
-    ]),
-  );
+const isPlainObject = (value: unknown): value is Record<string, unknown> => {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
 };
 
-const unwrapDictionaryEvent = (
-  input: Record<string, string>,
-): Record<string, string> => {
-  const maybeEvent = input as unknown as {
-    target?: { value?: Record<string, string> };
-  };
-  if (
-    maybeEvent?.target?.value &&
-    typeof maybeEvent.target.value === 'object'
-  ) {
-    return maybeEvent.target.value;
-  }
-  return input;
-};
+enum SampleDataMode {
+  FIELDS = 'fields',
+  JSON = 'json',
+}
+
+const SampleDataSchema = z.object({
+  mode: z.enum(SampleDataMode),
+  value: z.record(z.string(), z.unknown()),
+});
+
+type SampleDataFormValues = z.infer<typeof SampleDataSchema>;
