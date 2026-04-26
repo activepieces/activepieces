@@ -1,5 +1,4 @@
 import {
-  PiecePropValueSchema,
   Property,
   TriggerStrategy,
   createTrigger,
@@ -46,8 +45,6 @@ export const formBricksRegisterTrigger = ({
             };
           }
 
-          const authValue = auth;
-
           const response = await httpClient.sendRequest<{ data: Survey[] }>({
             method: HttpMethod.GET,
             url: `${auth.props.appUrl}/api/v1/management/surveys`,
@@ -79,6 +76,15 @@ export const formBricksRegisterTrigger = ({
     sampleData,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
+      const meResponse = await httpClient.sendRequest<{ data: { environmentId: string } }>({
+        method: HttpMethod.GET,
+        url: `${context.auth.props.appUrl}/api/v1/management/me`,
+        headers: {
+          'x-api-key': context.auth.props.apiKey,
+        },
+      });
+      const environmentId = meResponse.body.data.environmentId;
+
       const response = await httpClient.sendRequest<WebhookInformation>({
         method: HttpMethod.POST,
         url: `${context.auth.props.appUrl}/api/v1/webhooks`,
@@ -86,6 +92,7 @@ export const formBricksRegisterTrigger = ({
           url: context.webhookUrl,
           triggers: [eventType],
           surveyIds: context.propsValue.survey_id ?? [],
+          environmentId,
         },
         headers: {
           'x-api-key': context.auth.props.apiKey,
