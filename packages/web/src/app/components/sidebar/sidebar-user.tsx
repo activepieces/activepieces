@@ -39,16 +39,19 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
+import { userHooks } from '@/hooks/user-hooks';
 import { otom8ClerkAppearance } from '@/lib/otom8-clerk-appearance';
 import { OTOM8_SITE_URL } from '@/lib/otom8-site-url';
 
 export function SidebarUser() {
   const { embedState } = useEmbedding();
   const { state } = useSidebar();
-  const { user, isLoaded: userLoaded } = useUser();
+  // Clerk session may not be present on app.otom8.us — always fall back to AP user
+  const { user: clerkUser } = useUser();
   const { organization } = useOrganization();
   const { userMemberships } = useOrganizationList({ userMemberships: true });
   const { signOut, setActive } = useClerk();
+  const { data: apUser } = userHooks.useCurrentUser();
   const isCollapsed = state === 'collapsed';
 
   const [accountOpen, setAccountOpen] = useState(false);
@@ -70,17 +73,25 @@ export function SidebarUser() {
     }
   }, [organization?.id]);
 
-  if (!userLoaded || !user || embedState.isEmbedded) {
+  if (!apUser || embedState.isEmbedded) {
     return null;
   }
 
-  const displayName =
-    user.firstName && user.lastName
-      ? `${user.firstName} ${user.lastName}`
-      : (user.primaryEmailAddress?.emailAddress ?? '');
-  const initials =
-    [user.firstName?.[0], user.lastName?.[0]].filter(Boolean).join('') || '?';
+  const firstName = apUser.firstName ?? clerkUser?.firstName ?? '';
+  const lastName = apUser.lastName ?? clerkUser?.lastName ?? '';
+  const email = apUser.email ?? clerkUser?.primaryEmailAddress?.emailAddress ?? '';
+  const imageUrl = clerkUser?.imageUrl ?? apUser.imageUrl ?? undefined;
+  const displayName = firstName && lastName ? `${firstName} ${lastName}` : email;
+  const initials = [firstName[0], lastName[0]].filter(Boolean).join('') || '?';
   const workspaceName = organization?.name ?? t('Personal');
+
+  const handleSignOut = () => {
+    if (clerkUser) {
+      signOut({ redirectUrl: `${OTOM8_SITE_URL}/auth/signout` });
+    } else {
+      window.location.replace(`${OTOM8_SITE_URL}/auth/signout`);
+    }
+  };
 
   return (
     <>
@@ -93,7 +104,7 @@ export function SidebarUser() {
                 data-testid="sidebar-user"
               >
                 <Avatar className="h-9 w-9 shrink-0">
-                  <AvatarImage src={user.imageUrl} alt={displayName} />
+                  <AvatarImage src={imageUrl} alt={displayName} />
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
                 {!isCollapsed && (
@@ -121,9 +132,7 @@ export function SidebarUser() {
               {/* User info header — non-interactive */}
               <div className="px-2 py-1.5">
                 <p className="text-sm font-medium truncate">{displayName}</p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {user.primaryEmailAddress?.emailAddress}
-                </p>
+                <p className="text-xs text-muted-foreground truncate">{email}</p>
               </div>
               <DropdownMenuSeparator />
 
@@ -148,10 +157,10 @@ export function SidebarUser() {
               {/* Personal workspace */}
               <DropdownMenuItem
                 className="gap-2"
-                onClick={() => setActive({ organization: null })}
+                onClick={() => clerkUser && setActive({ organization: null })}
               >
                 <div className="h-4 w-4 shrink-0 rounded-sm bg-muted flex items-center justify-center text-[10px] font-medium">
-                  {user.firstName?.[0] ?? '?'}
+                  {firstName[0] ?? '?'}
                 </div>
                 <span className="flex-1 truncate">{t('Personal')}</span>
                 {!organization && (
@@ -165,7 +174,7 @@ export function SidebarUser() {
                   key={m.organization.id}
                   className="gap-2"
                   onClick={() =>
-                    setActive({ organization: m.organization.id })
+                    clerkUser && setActive({ organization: m.organization.id })
                   }
                 >
                   <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -188,9 +197,7 @@ export function SidebarUser() {
 
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive gap-2"
-                onClick={() =>
-                  signOut({ redirectUrl: `${OTOM8_SITE_URL}/auth/signout` })
-                }
+                onClick={handleSignOut}
               >
                 <LogOut className="h-4 w-4 shrink-0" />
                 {t('Sign out')}
