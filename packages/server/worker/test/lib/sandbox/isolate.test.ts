@@ -264,7 +264,6 @@ describe('isolateProcess', () => {
         })
 
         it.each([
-            ['lowercase', 'home'],
             ['starts with digit', '9HOME'],
             ['contains hyphen', 'MY-VAR'],
             ['contains space', 'MY VAR'],
@@ -274,6 +273,13 @@ describe('isolateProcess', () => {
             await expect(callCreate({ env })).rejects.toThrow(/Invalid sandbox env key/)
             expect(execPromiseMock).not.toHaveBeenCalled()
             expect(spawnMock).not.toHaveBeenCalled()
+        })
+
+        it('accepts lowercase env keys (e.g. http_proxy honored by curl/wget)', async () => {
+            const env = { ...BASE_ENV, http_proxy: 'http://127.0.0.1:1080' }
+            const result = await callCreate({ env })
+            expect(result).toBeDefined()
+            expect(spawnMock).toHaveBeenCalledTimes(1)
         })
 
         it.each([

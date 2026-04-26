@@ -7,12 +7,11 @@ import {
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Search, Plus } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
-import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
 import { SearchInput } from '@/components/custom/search-input';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
@@ -36,13 +35,12 @@ import {
   SidebarGroupLabel,
   SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
-import { projectCollectionUtils, getProjectName } from '@/features/projects';
+import {
+  CreateProjectButton,
+  projectCollectionUtils,
+  getProjectName,
+} from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -68,7 +66,6 @@ export function ProjectDashboardSidebar({
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
-
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
   const { data: currentUser } = userHooks.useCurrentUser();
@@ -94,15 +91,11 @@ export function ProjectDashboardSidebar({
     return true;
   }, [platform.plan.teamProjectsLimit]);
 
-  const shouldDisableNewProjectButton = useMemo(() => {
-    if (platform.plan.teamProjectsLimit === TeamProjectsLimit.ONE) {
-      const teamProjects = projects.filter(
-        (project) => project.type === ProjectType.TEAM,
-      );
-      return teamProjects.length >= 1;
-    }
-    return false;
-  }, [platform.plan.teamProjectsLimit, projects]);
+  const shouldShowInlineAddButton =
+    platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE &&
+    currentUser?.platformRole === PlatformRole.ADMIN &&
+    projects.filter((project) => project.type === ProjectType.TEAM).length ===
+      0;
 
   const isSearchMode = debouncedSearchQuery.length > 0;
 
@@ -115,7 +108,6 @@ export function ProjectDashboardSidebar({
     }
     return projects;
   }, [isSearchMode, debouncedSearchQuery, projects]);
-
   const handleProjectSelect = useCallback(
     async (projectId: string) => {
       const project = projects.find((p) => p.id === projectId);
@@ -221,165 +213,131 @@ export function ProjectDashboardSidebar({
 
   return (
     !embedState.hideSideNav && (
-      <>
-        <Sidebar
-          collapsible="icon"
-          id={SIDEBAR_ID}
-          className={cn('max-h-[100vh]', className)}
-        >
-          <AppSidebarHeader />
+      <Sidebar
+        collapsible="icon"
+        id={SIDEBAR_ID}
+        className={cn('max-h-screen', className)}
+      >
+        <AppSidebarHeader />
 
-          <SidebarContent className="overflow-x-hidden">
-            <SidebarGroup>
-              <div className="mb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
-                <GlobalSearchCommand />
-              </div>
-              <SidebarMenu>
-                {items.map((item) => (
-                  <ApSidebarItem key={item.label} {...item} />
-                ))}
-              </SidebarMenu>
-            </SidebarGroup>
+        <SidebarContent className="overflow-x-hidden">
+          <SidebarGroup>
+            <div className="mb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+              <GlobalSearchCommand />
+            </div>
+            <SidebarMenu>
+              {items.map((item) => (
+                <ApSidebarItem key={item.label} {...item} />
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
 
-            <SidebarSeparator />
+          <SidebarSeparator />
 
-            <SidebarGroup className="flex-1 overflow-hidden">
-              <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
-                <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
-                <div className="flex items-center justify-center gap-2">
-                  {shouldShowNewProjectButton && (
-                    <>
-                      {!shouldDisableNewProjectButton ? (
-                        <NewProjectDialog
-                          onCreate={(project) => {
-                            navigate(`/projects/${project.id}/flows`);
-                          }}
-                        >
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 hover:bg-accent"
-                          >
-                            <Plus />
-                          </Button>
-                        </NewProjectDialog>
-                      ) : (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                disabled
-                                className="h-6 w-6"
-                              >
-                                <Plus />
-                              </Button>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-[250px]">
-                            <p className="text-xs mb-1">
-                              {t(
-                                'Upgrade your plan to create additional team projects.',
-                              )}{' '}
-                              <button
-                                className="text-xs text-primary underline hover:no-underline"
-                                onClick={() =>
-                                  window.open(
-                                    'https://www.activepieces.com/pricing',
-                                    '_blank',
-                                  )
-                                }
-                              >
-                                {t('View Plans')}
-                              </button>
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                    </>
-                  )}
-                  {shouldShowSearchButton && (
-                    <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 hover:bg-accent"
-                        >
-                          <Search />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        className="w-[280px] p-3"
-                        align="start"
-                        side="right"
-                        sideOffset={8}
+          <SidebarGroup className="flex-1 overflow-hidden">
+            <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
+              <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
+              <div className="flex items-center justify-center gap-2">
+                {shouldShowNewProjectButton && (
+                  <CreateProjectButton
+                    variant="icon"
+                    projects={projects ?? []}
+                    onCreate={(project) => {
+                      navigate(`/projects/${project.id}/flows`);
+                    }}
+                  />
+                )}
+                {shouldShowSearchButton && (
+                  <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-accent"
                       >
-                        <SearchInput
-                          placeholder={t('Search projects...')}
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e)}
-                          className="h-8"
-                          autoFocus
+                        <Search />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-[280px] p-3"
+                      align="start"
+                      side="right"
+                      sideOffset={8}
+                    >
+                      <SearchInput
+                        placeholder={t('Search projects...')}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e)}
+                        className="h-8"
+                        autoFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+            </div>
+            <div
+              className="flex-1 grow min-h-0 flex flex-col overflow-hidden"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              <div className="flex max-h-full">
+                {displayProjects.length > 0 ? (
+                  <VirtualizedScrollArea
+                    className={cn(
+                      'flex-1',
+                      state === 'collapsed'
+                        ? 'flex flex-col items-center scrollbar-none'
+                        : '',
+                    )}
+                    items={displayProjects}
+                    estimateSize={() => 35}
+                    getItemKey={(index) => displayProjects[index]?.id ?? index}
+                    overscan={10}
+                    renderItem={(project) => (
+                      <SidebarMenuItem className="w-full">
+                        <ProjectSideBarItem
+                          key={project.id}
+                          project={project}
+                          isCurrentProject={location.pathname.includes(
+                            `/projects/${project.id}`,
+                          )}
+                          handleProjectSelect={handleProjectSelect}
                         />
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                </div>
+                      </SidebarMenuItem>
+                    )}
+                  />
+                ) : (
+                  isSearchMode && (
+                    <div className="px-2 py-2 text-sm text-muted-foreground">
+                      {state === 'expanded' && t('No projects found.')}
+                    </div>
+                  )
+                )}
               </div>
-              <div
-                className="flex-1 grow min-h-0 flex flex-col overflow-hidden"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-              >
-                <div className="flex grow max-h-[100%]">
-                  {displayProjects.length > 0 ? (
-                    <VirtualizedScrollArea
-                      className={cn(
-                        'flex-1',
-                        state === 'collapsed'
-                          ? 'flex flex-col items-center scrollbar-none'
-                          : '',
-                      )}
-                      items={displayProjects}
-                      estimateSize={() => 35}
-                      getItemKey={(index) =>
-                        displayProjects[index]?.id ?? index
-                      }
-                      overscan={10}
-                      renderItem={(project) => (
-                        <SidebarMenuItem className="w-full">
-                          <ProjectSideBarItem
-                            key={project.id}
-                            project={project}
-                            isCurrentProject={location.pathname.includes(
-                              `/projects/${project.id}`,
-                            )}
-                            handleProjectSelect={handleProjectSelect}
-                          />
-                        </SidebarMenuItem>
-                      )}
+              {shouldShowInlineAddButton && state === 'expanded' && (
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <CreateProjectButton
+                      variant="sidebar-menu"
+                      projects={projects ?? []}
+                      onCreate={(project) => {
+                        navigate(`/projects/${project.id}/flows`);
+                      }}
                     />
-                  ) : (
-                    isSearchMode && (
-                      <div className="px-2 py-2 text-sm text-muted-foreground">
-                        {state === 'expanded' && t('No projects found.')}
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
-            </SidebarGroup>
-          </SidebarContent>
-          <SidebarFooter>
-            {state === 'expanded' && <DelayedSidebarUsageLimits />}
-            <SidebarPlatformAdminLink />
-            <SidebarUser />
-          </SidebarFooter>
-        </Sidebar>
-      </>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              )}
+            </div>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter>
+          {state === 'expanded' && <DelayedSidebarUsageLimits />}
+          <SidebarPlatformAdminLink />
+          <SidebarUser />
+        </SidebarFooter>
+      </Sidebar>
     )
   );
 }

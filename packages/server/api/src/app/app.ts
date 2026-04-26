@@ -4,6 +4,7 @@ import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
+import { agentsModule } from './agents/agents-module'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
@@ -81,7 +82,6 @@ import { platformBackgroundJobs } from './platform/platform-jobs'
 import { platformModule } from './platform/platform.module'
 import { platformCopilotModule } from './platform-copilot/platform-copilot.module'
 import { projectHooks } from './project/project-hooks'
-import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
 import { templateModule } from './template/template.module'
@@ -217,6 +217,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(tagsModule)
     await app.register(mcpServerModule)
     await app.register(mcpOAuthApproveController)
+    await app.register(agentsModule)
     await app.register(platformUserModule)
     await app.register(alertsModule)
     await app.register(invitationModule)
@@ -325,7 +326,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flagHooks.set(enterpriseFlagsHooks)
             break
         case ApEdition.COMMUNITY:
-            await app.register(projectModule)
+            await app.register(platformProjectModule)
             await app.register(communityPiecesModule)
             break
     }

@@ -21,6 +21,13 @@ You are working in the Activepieces web application (`packages/web`).
 - `src/features/` — Feature-based folders (flows, pieces, tables, auth, billing, etc.)
 - `src/lib/` — Shared utilities and helpers
 - `src/app/` — App-level routing and layout
+- `test/` — Unit tests (see **Testing** below)
+
+## Testing
+
+- **Tests live under `packages/web/test/`, never under `src/`.** Mirror the source path so the test for `src/features/foo/bar.ts` lives at `test/features/foo/bar.test.ts`. Keeping tests out of `src/` stops them from being shipped in the app bundle and keeps the production source tree free of test noise.
+- Import the subject under test via the `@/` alias (e.g. `import { x } from '@/features/foo/bar';`), not a relative path, so moving a file doesn't require updating tests.
+- Run with `cd packages/web && npm test` (vitest, node environment).
 
 ## Tailwind / Styling
 
@@ -31,6 +38,8 @@ You are working in the Activepieces web application (`packages/web`).
 
 - **Reuse existing components before creating new ones.** Before building a new component, search the repo for something that already covers the use case. Creating near-duplicate components for minor variations adds maintenance burden and visual inconsistency.
 - **If an existing component isn't a perfect fit**, do not create a parallel one. Instead, propose extending the existing component (e.g. adding an optional prop) in a backwards-compatible way so existing usages are unaffected. Explain the trade-off to the user before making the change.
+- **Overflowing text must use `TextWithTooltip`** (from `@/components/custom/text-with-tooltip`). Wrap any text that may overflow its container (emails, IDs, long names) in `<TextWithTooltip tooltipMessage={text}><p className="...">{text}</p></TextWithTooltip>`. It auto-detects truncation and only shows the tooltip when the text actually overflows. Ensure parent flex containers have `min-w-0` so `truncate` works correctly.
+- **Copy-to-clipboard UI must use `CopyToClipboardInput`** (from `@/components/custom/clipboard/copy-to-clipboard`). Never hand-roll a readonly `<Input>` glued to a copy `<Button>` with `navigator.clipboard.writeText`. `CopyToClipboardInput` handles the copied-state toggle, tooltip, styling, and optional download button. Pass `useInput={true}` for single-line values (links, keys) or `useInput={false}` for multi-line content (textarea). Use `fileName` only when the value should also be downloadable.
 
 ## React Hook Form
 
@@ -97,6 +106,9 @@ return useQuery({
 - If the query already has an `enabled` condition, combine them: `enabled: !!existing && platform.plan.<flag>`.
 - For pages with plan-gated content, also wrap with `LockedFeatureGuard` so users see an upgrade prompt instead of a broken/empty page.
 
+## F-Pattern Layout
+
+All user-facing layouts — pages, dialogs, cards, email templates — follow the **F-pattern reading model**. Content is left-aligned so users scan left-to-right then down the left edge. Avoid centering text blocks, headings, or body copy. CTAs (buttons) may be full-width but should not cause surrounding text to be centered.
 ## i18n / Translation Strings
 
 This project uses **ICU MessageFormat** via `i18next-icu` (configured in `src/i18n.ts`). All translation strings in `packages/web/public/locales/en/translation.json` must follow ICU syntax, **not** default i18next syntax.
