@@ -15,9 +15,9 @@ export function usePlatformCopilot() {
     messages: initialMessages,
     transport: new DefaultChatTransport({
       api: `${API_URL}/v1/platform-copilot/chat`,
-      headers: {
+      headers: () => ({
         Authorization: `Bearer ${authenticationSession.getToken() ?? ''}`,
-      },
+      }),
       prepareSendMessagesRequest: ({ messages }) => {
         const lastMessage = messages[messages.length - 1];
         const conversationHistory = messages.slice(0, -1).map((m) => ({
