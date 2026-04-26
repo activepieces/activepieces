@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { applyFunctionToValuesSync, isString } from '../../../core/common'
-import { FlowAction } from '../actions/action'
+import { BranchExecutionType, FlowAction, FlowActionType, RouterActionSettings } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 
@@ -45,8 +45,8 @@ function replaceOldStepNameWithNewOne({
 function clone(step: FlowAction, oldNameToNewName: Record<string, string>): FlowAction {
     step.displayName = `${step.displayName} Copy`
     step.name = oldNameToNewName[step.name]
-    if ('input' in step.settings) {
-        Object.keys(oldNameToNewName).forEach((oldName) => {
+    Object.keys(oldNameToNewName).forEach((oldName) => {
+        if ('input' in step.settings) {
             const settings = step.settings as { input: unknown }
             settings.input = applyFunctionToValuesSync(
                 settings.input,
@@ -61,8 +61,45 @@ function clone(step: FlowAction, oldNameToNewName: Record<string, string>): Flow
                     return value
                 },
             )
-        })
-    }
+        }
+        if (step.type === FlowActionType.LOOP_ON_ITEMS) {
+            step.settings.items = replaceOldStepNameWithNewOne({
+                input: step.settings.items,
+                oldStepName: oldName,
+                newStepName: oldNameToNewName[oldName],
+            })
+        }
+        if (step.type === FlowActionType.ROUTER) {
+            const routerSettings = step.settings as RouterActionSettings
+            routerSettings.branches = routerSettings.branches.map((branch) => {
+                if (branch.branchType !== BranchExecutionType.CONDITION) {
+                    return branch
+                }
+                return {
+                    ...branch,
+                    conditions: branch.conditions.map((conditionGroup) =>
+                        conditionGroup.map((condition) => ({
+                            ...condition,
+                            firstValue: replaceOldStepNameWithNewOne({
+                                input: condition.firstValue,
+                                oldStepName: oldName,
+                                newStepName: oldNameToNewName[oldName],
+                            }),
+                            ...('secondValue' in condition
+                                ? {
+                                    secondValue: replaceOldStepNameWithNewOne({
+                                        input: condition.secondValue,
+                                        oldStepName: oldName,
+                                        newStepName: oldNameToNewName[oldName],
+                                    }),
+                                }
+                                : {}),
+                        })),
+                    ),
+                }
+            })
+        }
+    })
     if (step.settings.sampleData) {
         step.settings = {
             ...step.settings,
