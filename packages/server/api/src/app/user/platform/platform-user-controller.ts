@@ -1,7 +1,10 @@
 import {
+    ActivepiecesError,
     ApId,
     assertNotNullOrUndefined,
+    ErrorCode,
     ListUsersRequestBody,
+    PlatformRole,
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
@@ -31,6 +34,18 @@ export const platformUserController: FastifyPluginAsyncZod = async (app) => {
     app.post('/:id', UpdateUserRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
+
+        const isSelf = req.params.id === req.principal.id
+        const isDemotingOwnRole = isSelf && req.body.platformRole !== undefined && req.body.platformRole !== PlatformRole.ADMIN
+
+        if (isDemotingOwnRole) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Admins cannot remove their own admin role',
+                },
+            })
+        }
 
         return userService(req.log).update({
             id: req.params.id,
