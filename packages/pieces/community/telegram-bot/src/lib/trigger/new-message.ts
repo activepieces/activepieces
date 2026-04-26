@@ -48,10 +48,40 @@ export const telegramNewMessage = createTrigger({
     return [context.payload.body];
   },
   async test(context) {
-    const messages = await getLastFiveMessages(context.auth.secret_text)
-    return messages.result
+    const botToken = context.auth.secret_text;
+    const webhookUrl = context.webhookUrl;
+
+    const webhookInfo = await getWebhookInfo(botToken);
+    const hasActiveWebhook = !!webhookInfo.result?.url;
+
+    if (hasActiveWebhook) {
+      await telegramCommons.unsubscribeWebhook(botToken);
+    }
+
+    let updates: unknown[] = [];
+    try {
+      const messages = await getLastFiveMessages(botToken);
+      updates = messages.result ?? [];
+    } finally {
+      if (hasActiveWebhook) {
+        await telegramCommons.subscribeWebhook(botToken, webhookUrl, {
+          allowed_updates: [],
+        });
+      }
+    }
+
+    return updates;
   },
 });
+
+const getWebhookInfo = async (botToken: string) => {
+  const request: HttpRequest = {
+    method: HttpMethod.GET,
+    url: `https://api.telegram.org/bot${botToken}/getWebhookInfo`,
+  };
+  const response = await httpClient.sendRequest<{ result: { url: string } }>(request);
+  return response.body;
+};
 
 const getLastFiveMessages = async (botToken: string) => {
   const request: HttpRequest = {
