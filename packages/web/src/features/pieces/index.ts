@@ -8,6 +8,7 @@ export { PiecesSearchInput } from './components/piece-selector-search';
 export { PieceSelectorTabs } from './components/piece-selector-tabs';
 export { piecesHooks, piecesMutations } from './hooks/pieces-hooks';
 export { stepsHooks } from './hooks/steps-hooks';
+export { usePieceOutputHints } from './hooks/use-piece-output-hints';
 export {
   usePieceSearchContext,
   PieceSearchProvider,

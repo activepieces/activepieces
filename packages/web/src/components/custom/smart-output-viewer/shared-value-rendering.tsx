@@ -1,0 +1,146 @@
+import { isNil } from '@activepieces/shared';
+import { t } from 'i18next';
+import { ChevronDown, ChevronRight, Copy } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/ui/button';
+
+import { FieldTypeIcon } from './field-type-icon';
+
+function formatKey(key: string): string {
+  return key
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_-]/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function truncateValue(value: unknown): string {
+  if (isNil(value) || value === '') return '';
+  if (Array.isArray(value)) return `${value.length} ${t('items')}`;
+  if (typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>);
+    const preview = entries
+      .slice(0, 2)
+      .map(([k, v]) => {
+        const vs = isNil(v) || typeof v === 'object' ? '…' : String(v);
+        return `${k}: ${vs}`;
+      })
+      .join(', ');
+    return preview || `${entries.length} fields`;
+  }
+  const str = String(value);
+  return str.length > 50 ? str.slice(0, 50) + '...' : str;
+}
+
+function CopyButton({ value }: { value: unknown }) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="opacity-0 group-hover:opacity-100 shrink-0 h-6 w-6 p-0"
+      onClick={(e) => {
+        e.stopPropagation();
+        const text =
+          typeof value === 'object'
+            ? JSON.stringify(value, null, 2)
+            : String(value ?? '');
+        navigator.clipboard.writeText(text);
+        toast.success(t('Copied'), { duration: 1000 });
+      }}
+    >
+      <Copy className="h-3.5 w-3.5" />
+    </Button>
+  );
+}
+
+type ValueRowProps = {
+  label: string;
+  value: unknown;
+  depth: number;
+};
+
+function ValueRow({ label, value, depth }: ValueRowProps) {
+  const [expanded, setExpanded] = useState(false);
+  const paddingLeft = 16 + depth * 24;
+
+  const isNestedObject =
+    !isNil(value) && typeof value === 'object' && !Array.isArray(value);
+
+  if (isNestedObject) {
+    const nestedEntries = Object.entries(value as Record<string, unknown>);
+    return (
+      <div>
+        <div
+          onClick={() => setExpanded(!expanded)}
+          className="group flex items-center gap-3 py-1.5 hover:bg-accent/50 cursor-pointer"
+          style={{ paddingLeft, paddingRight: 16 }}
+        >
+          <div className="shrink-0 w-4 h-4 flex items-center justify-center text-muted-foreground">
+            {expanded ? (
+              <ChevronDown className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5" />
+            )}
+          </div>
+          <FieldTypeIcon value={value} />
+          <span className="text-sm text-muted-foreground min-w-[100px] max-w-[160px] shrink-0 truncate">
+            {label}
+          </span>
+          <span
+            className="text-sm text-foreground/50 truncate flex-1 min-w-0"
+            title={JSON.stringify(value)}
+          >
+            {truncateValue(value)}
+          </span>
+          <CopyButton value={value} />
+        </div>
+        {expanded && (
+          <div>
+            {nestedEntries.map(([key, childValue]) => (
+              <ValueRow
+                key={key}
+                label={formatKey(key)}
+                value={childValue}
+                depth={depth + 1}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="group flex items-center gap-3 py-1.5 hover:bg-accent/50"
+      style={{ paddingLeft: paddingLeft + 24, paddingRight: 16 }}
+    >
+      <FieldTypeIcon value={value} />
+      <span className="text-sm text-muted-foreground min-w-[100px] max-w-[160px] shrink-0 truncate">
+        {label}
+      </span>
+      <span
+        className="text-sm text-foreground/70 truncate flex-1 min-w-0"
+        title={
+          isNil(value) || value === ''
+            ? undefined
+            : typeof value === 'object'
+            ? JSON.stringify(value)
+            : String(value)
+        }
+      >
+        {isNil(value) || value === '' ? (
+          <span className="text-muted-foreground/40 italic">{t('empty')}</span>
+        ) : Array.isArray(value) ? (
+          `${value.length} ${t('items')}`
+        ) : (
+          String(value)
+        )}
+      </span>
+      <CopyButton value={value} />
+    </div>
+  );
+}
+
+export { ValueRow, CopyButton, formatKey, truncateValue };

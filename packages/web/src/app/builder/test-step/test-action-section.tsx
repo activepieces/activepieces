@@ -10,6 +10,7 @@ import React, { useContext, useState } from 'react';
 
 import { Dot } from '@/components/custom/dot';
 import { Button } from '@/components/ui/button';
+import { usePieceOutputHints } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
@@ -45,6 +46,20 @@ const TestStepSectionImplementation = React.memo(
     const [activeDialog, setActiveDialog] = useState<DialogType>(
       DialogType.NONE,
     );
+    const pieceHints = usePieceOutputHints({
+      pieceName:
+        currentStep.type === 'PIECE'
+          ? currentStep.settings.pieceName
+          : undefined,
+      pieceVersion:
+        currentStep.type === 'PIECE'
+          ? currentStep.settings.pieceVersion
+          : undefined,
+      stepName:
+        currentStep.type === 'PIECE'
+          ? currentStep.settings.actionName
+          : undefined,
+    });
     const [
       sampleData,
       sampleDataInput,
@@ -128,6 +143,17 @@ const TestStepSectionImplementation = React.memo(
             onRetest={onTestButtonClick}
             errorMessage={errorMessage}
             consoleLogs={consoleLogs}
+            pieceName={
+              currentStep.type === 'PIECE'
+                ? currentStep.settings.pieceName
+                : undefined
+            }
+            stepName={
+              currentStep.type === 'PIECE'
+                ? currentStep.settings.actionName
+                : undefined
+            }
+            pieceHints={pieceHints}
             onCancelTesting={() => {
               removeStepTestListener(currentStep.name);
               revertSampleDataLocally?.();

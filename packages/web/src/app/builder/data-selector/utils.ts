@@ -7,6 +7,10 @@ import {
   FlowTriggerType,
 } from '@activepieces/shared';
 
+import {
+  HintField,
+  OutputDisplayHints,
+} from '@/components/custom/smart-output-viewer/types';
 import { pieceSelectorUtils } from '@/features/pieces';
 
 import {
@@ -388,11 +392,445 @@ function filterBy(
   return res;
 }
 
+function convertValuePathToPropertyPath(
+  stepName: string,
+  valuePath: string,
+): string {
+  const segments = parsePath(valuePath);
+  return segments.reduce<string>((acc, segment) => {
+    if (typeof segment === 'number') {
+      return `${acc}[${segment}]`;
+    }
+    return `${acc}['${escapeMentionKey(segment)}']`;
+  }, stepName);
+}
+
+function parsePath(path: string): Array<string | number> {
+  const segments: Array<string | number> = [];
+  let i = 0;
+  let buf = '';
+  const flushBuf = () => {
+    if (buf.length > 0) {
+      segments.push(buf);
+      buf = '';
+    }
+  };
+  while (i < path.length) {
+    const ch = path[i];
+    if (ch === '.') {
+      flushBuf();
+      i++;
+    } else if (ch === '[') {
+      flushBuf();
+      i++;
+      if (path[i] === '"' || path[i] === "'") {
+        const quote = path[i];
+        i++;
+        let key = '';
+        while (i < path.length && path[i] !== quote) {
+          if (path[i] === '\\' && i + 1 < path.length) {
+            key += path[i + 1];
+            i += 2;
+          } else {
+            key += path[i];
+            i++;
+          }
+        }
+        i++;
+        while (i < path.length && path[i] !== ']') i++;
+        i++;
+        segments.push(key);
+      } else {
+        let num = '';
+        while (i < path.length && path[i] !== ']') {
+          num += path[i];
+          i++;
+        }
+        i++;
+        const n = parseInt(num, 10);
+        segments.push(isNaN(n) ? num : n);
+      }
+    } else {
+      buf += ch;
+      i++;
+    }
+  }
+  flushBuf();
+  return segments;
+}
+
+const COMMON_WRAPPERS_FOR_FALLBACK = [
+  'properties',
+  'data',
+  'body',
+  'payload',
+  'result',
+  'response',
+  'value',
+  'attributes',
+  'fields',
+];
+
+function resolveSegments(
+  obj: unknown,
+  segments: Array<string | number>,
+): unknown {
+  let current: unknown = obj;
+  for (const segment of segments) {
+    if (isNil(current) || typeof current !== 'object') return undefined;
+    if (Array.isArray(current)) {
+      const idx =
+        typeof segment === 'number' ? segment : parseInt(String(segment), 10);
+      current = current[idx];
+    } else {
+      current = (current as Record<string, unknown>)[String(segment)];
+    }
+  }
+  return current;
+}
+
+function resolvePathWithFallback(
+  obj: unknown,
+  path: string,
+): { value: unknown; resolvedPath: string } {
+  if (isNil(obj) || typeof obj !== 'object') {
+    return { value: undefined, resolvedPath: path };
+  }
+  const segments = parsePath(path);
+  const direct = resolveSegments(obj, segments);
+  if (!isNil(direct)) return { value: direct, resolvedPath: path };
+
+  if (segments.length === 0) return { value: direct, resolvedPath: path };
+  const rootKeys = Object.keys(obj as Record<string, unknown>);
+  for (const wrapper of COMMON_WRAPPERS_FOR_FALLBACK) {
+    if (!rootKeys.includes(wrapper)) continue;
+    if (segments[0] === wrapper) continue;
+    const fallbackSegments = [wrapper, ...segments];
+    const fallback = resolveSegments(obj, fallbackSegments);
+    if (!isNil(fallback)) {
+      return {
+        value: fallback,
+        resolvedPath: `${wrapper}.${path}`,
+      };
+    }
+  }
+  return { value: direct, resolvedPath: path };
+}
+
+function resolveLabel(field: HintField): string {
+  if (field.l) return field.l;
+  return field.k
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_-]/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function resolveChildPath(child: HintField, parentPath: string): string {
+  if (child.v) return child.v;
+  return `${parentPath}.${child.k}`;
+}
+
+function resolveItemChildPath(child: HintField): string {
+  return child.v ?? child.k;
+}
+
+function buildFieldChildNode(
+  stepName: string,
+  child: HintField,
+  sampleData: unknown,
+  parentPath: string,
+): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
+  const rawPath = resolveChildPath(child, parentPath);
+  const { value, resolvedPath } = resolvePathWithFallback(sampleData, rawPath);
+  const propertyPath = convertValuePathToPropertyPath(stepName, resolvedPath);
+
+  return {
+    key: propertyPath,
+    data: {
+      type: 'value',
+      value,
+      displayName: resolveLabel(child),
+      propertyPath,
+      insertable: true,
+    },
+  };
+}
+
+function buildItemChildNode(
+  stepName: string,
+  child: HintField,
+  parentArrayPath: string,
+  itemIndex: number,
+  sampleData: unknown,
+): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
+  const relativePath = resolveItemChildPath(child);
+  const fullPath = `${parentArrayPath}[${itemIndex}].${relativePath}`;
+  const { value, resolvedPath } = resolvePathWithFallback(sampleData, fullPath);
+  const propertyPath = convertValuePathToPropertyPath(stepName, resolvedPath);
+
+  return {
+    key: propertyPath,
+    data: {
+      type: 'value',
+      value,
+      displayName: resolveLabel(child),
+      propertyPath,
+      insertable: true,
+    },
+  };
+}
+
+function buildFieldNode(
+  stepName: string,
+  field: HintField,
+  sampleData: unknown,
+): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
+  const rawValuePath = field.v ?? field.k;
+  const { value, resolvedPath: valuePath } = resolvePathWithFallback(
+    sampleData,
+    rawValuePath,
+  );
+  const propertyPath = convertValuePathToPropertyPath(stepName, valuePath);
+  const label = resolveLabel(field);
+
+  if (field.li && field.li.length > 0 && Array.isArray(value)) {
+    const listChildren = value.map((_, idx) => {
+      const itemLabel = `${label} ${idx + 1}`;
+      const itemChildren = field.li!.map((child) =>
+        buildItemChildNode(stepName, child, valuePath, idx, sampleData),
+      );
+      return {
+        key: `${propertyPath}_item_${idx}`,
+        data: {
+          type: 'value' as const,
+          value: '',
+          displayName: itemLabel,
+          propertyPath: convertValuePathToPropertyPath(
+            stepName,
+            `${valuePath}[${idx}]`,
+          ),
+          insertable: false,
+        },
+        children: itemChildren,
+      };
+    });
+    return {
+      key: propertyPath,
+      data: {
+        type: 'value' as const,
+        value: `${value.length} items`,
+        displayName: label,
+        propertyPath,
+        insertable: false,
+      },
+      children: listChildren,
+    };
+  }
+
+  if (
+    field.dk === true &&
+    !isNil(value) &&
+    typeof value === 'object' &&
+    !Array.isArray(value)
+  ) {
+    const dynamicChildren: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] =
+      Object.entries(value as Record<string, unknown>).map(
+        ([key, childValue]) => {
+          const childPath = `${propertyPath}['${escapeMentionKey(key)}']`;
+          return {
+            key: childPath,
+            data: {
+              type: 'value' as const,
+              value: childValue,
+              displayName: key,
+              propertyPath: childPath,
+              insertable: true,
+            },
+          };
+        },
+      );
+    return {
+      key: propertyPath,
+      data: {
+        type: 'value' as const,
+        value,
+        displayName: label,
+        propertyPath,
+        insertable: true,
+      },
+      children: dynamicChildren,
+    };
+  }
+
+  if (field.c && field.c.length > 0) {
+    const childNodes = field.c.map((child) =>
+      buildFieldChildNode(stepName, child, sampleData, valuePath),
+    );
+    return {
+      key: propertyPath,
+      data: {
+        type: 'value' as const,
+        value,
+        displayName: label,
+        propertyPath,
+        insertable: true,
+      },
+      children: childNodes,
+    };
+  }
+
+  return {
+    key: propertyPath,
+    data: {
+      type: 'value' as const,
+      value,
+      displayName: label,
+      propertyPath,
+      insertable: true,
+    },
+  };
+}
+
+function buildTreeFromHints({
+  stepName,
+  displayName,
+  hints,
+  sampleData,
+}: {
+  stepName: string;
+  displayName: string;
+  hints: OutputDisplayHints;
+  sampleData: unknown;
+}): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
+  const allFields = [...(hints.hero ?? []), ...(hints.secondary ?? [])];
+  const children = allFields.map((field) =>
+    buildFieldNode(stepName, field, sampleData),
+  );
+
+  return {
+    key: stepName,
+    data: {
+      type: 'value',
+      value: '',
+      displayName,
+      propertyPath: stepName,
+      insertable: false,
+    },
+    children,
+  };
+}
+
+function formatKeyLabel(key: string): string {
+  return key
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_-]/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function buildTreeFromArray({
+  stepName,
+  displayName,
+  items,
+}: {
+  stepName: string;
+  displayName: string;
+  items: unknown[];
+}): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
+  const children: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] =
+    items.map((item, idx) => {
+      const itemPath = `${stepName}[${idx}]`;
+
+      if (isNil(item) || typeof item !== 'object' || Array.isArray(item)) {
+        return {
+          key: itemPath,
+          data: {
+            type: 'value' as const,
+            value: item,
+            displayName: `Item ${idx + 1}`,
+            propertyPath: itemPath,
+            insertable: true,
+          },
+        };
+      }
+
+      const itemChildren: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] =
+        Object.entries(item as Record<string, unknown>).map(([key, value]) => {
+          const childPath = `${itemPath}['${escapeMentionKey(key)}']`;
+          const nestedChildren =
+            !isNil(value) && typeof value === 'object' && !Array.isArray(value)
+              ? Object.entries(value as Record<string, unknown>).map(
+                  ([nestedKey, nestedValue]) => {
+                    const nestedPath = `${childPath}['${escapeMentionKey(
+                      nestedKey,
+                    )}']`;
+                    return {
+                      key: nestedPath,
+                      data: {
+                        type: 'value' as const,
+                        value: nestedValue,
+                        displayName: formatKeyLabel(nestedKey),
+                        propertyPath: nestedPath,
+                        insertable: true,
+                      },
+                    };
+                  },
+                )
+              : undefined;
+          return {
+            key: childPath,
+            data: {
+              type: 'value' as const,
+              value: nestedChildren ? '' : value,
+              displayName: formatKeyLabel(key),
+              propertyPath: childPath,
+              insertable: true,
+            },
+            children: nestedChildren,
+          };
+        });
+
+      const preview = Object.values(item as Record<string, unknown>)
+        .filter((v) => !isNil(v) && v !== '' && typeof v !== 'object')
+        .slice(0, 3)
+        .map((v) => {
+          const s = String(v);
+          return s.length > 20 ? s.slice(0, 20) + '...' : s;
+        })
+        .join(' · ');
+
+      return {
+        key: itemPath,
+        data: {
+          type: 'value' as const,
+          value: preview,
+          displayName: `Item ${idx + 1}`,
+          propertyPath: itemPath,
+          insertable: true,
+        },
+        children: itemChildren,
+      };
+    });
+
+  return {
+    key: stepName,
+    data: {
+      type: 'value',
+      value: `${items.length} items`,
+      displayName,
+      propertyPath: stepName,
+      insertable: false,
+    },
+    children,
+  };
+}
+
 export const dataSelectorUtils = {
   isTestStepNode: (
     node: DataSelectorTreeNode,
   ): node is DataSelectorTreeNode<DataSelectorTestNodeData> =>
     node.data.type === 'test',
   traverseStep,
+  buildTreeFromHints,
+  buildTreeFromArray,
   filterBy,
 };

@@ -14,10 +14,12 @@ import { useMemo } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
 import { JsonViewer } from '@/components/custom/json-viewer';
+import { SmartOutputViewer } from '@/components/custom/smart-output-viewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents';
 import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
+import { usePieceOutputHints } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
@@ -53,6 +55,21 @@ export const FlowStepInputOutput = () => {
     selectedStepOutput?.errorMessage ??
     selectedStepOutput?.output ??
     'No output';
+
+  const selectedStepSettings = selectedStep?.settings as
+    | {
+        pieceName?: string;
+        pieceVersion?: string;
+        actionName?: string;
+        triggerName?: string;
+      }
+    | undefined;
+  const pieceHints = usePieceOutputHints({
+    pieceName: selectedStepSettings?.pieceName,
+    pieceVersion: selectedStepSettings?.pieceVersion,
+    stepName:
+      selectedStepSettings?.actionName ?? selectedStepSettings?.triggerName,
+  });
 
   const tabCount = isAgent ? 3 : 2;
   const gridCols = tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2';
@@ -138,7 +155,26 @@ export const FlowStepInputOutput = () => {
             {isStepRunning ? (
               <StepOutputSkeleton className="p-4" />
             ) : (
-              <JsonViewer json={parsedOutput} title={t('Output')} />
+              <SmartOutputViewer
+                json={parsedOutput}
+                title={t('Output')}
+                pieceName={
+                  'pieceName' in (selectedStep?.settings ?? {})
+                    ? (selectedStep?.settings as { pieceName?: string })
+                        .pieceName
+                    : undefined
+                }
+                stepName={
+                  'actionName' in (selectedStep?.settings ?? {})
+                    ? (selectedStep?.settings as { actionName?: string })
+                        .actionName
+                    : 'triggerName' in (selectedStep?.settings ?? {})
+                    ? (selectedStep?.settings as { triggerName?: string })
+                        .triggerName
+                    : undefined
+                }
+                pieceHints={pieceHints}
+              />
             )}
           </TabsContent>
         </Tabs>

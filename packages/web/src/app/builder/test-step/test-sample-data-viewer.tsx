@@ -10,6 +10,8 @@ import React, { useContext } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
 import { JsonViewer } from '@/components/custom/json-viewer';
+import { SmartOutputViewer } from '@/components/custom/smart-output-viewer';
+import type { OutputDisplayHints } from '@/components/custom/smart-output-viewer/types';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,6 +34,10 @@ type TestSampleDataViewerProps = {
   lastTestDate: string | undefined;
   children?: React.ReactNode;
   consoleLogs: string | null;
+  pieceName?: string;
+  stepName?: string;
+  pieceVersion?: string;
+  pieceHints?: OutputDisplayHints | null;
 } & (
   | {
       hideCancel: true;
@@ -194,6 +200,9 @@ const TestSampleDataViewerContent = ({
   errorMessage,
   currentStep,
   isTesting,
+  pieceName,
+  stepName,
+  pieceHints,
 }: TestSampleDataViewerProps) => {
   if (isTesting && !isRunAgent(currentStep)) {
     return <StepOutputSkeleton className="px-1 " />;
@@ -206,8 +215,19 @@ const TestSampleDataViewerContent = ({
       />
     );
   }
+  const outputViewer = errorMessage ? (
+    <JsonViewer json={errorMessage} title={t('Output')} />
+  ) : (
+    <SmartOutputViewer
+      json={sampleData}
+      title={t('Output')}
+      pieceName={pieceName}
+      stepName={stepName}
+      pieceHints={pieceHints}
+    />
+  );
   if (isNil(sampleDataInput) && !isConsoleLogsValid(consoleLogs)) {
-    return <JsonViewer json={errorMessage ?? sampleData} title={t('Output')} />;
+    return outputViewer;
   } else {
     return (
       <Tabs defaultValue="Output">
@@ -233,9 +253,7 @@ const TestSampleDataViewerContent = ({
           </TabsContent>
         )}
 
-        <TabsContent value="Output">
-          <JsonViewer json={errorMessage ?? sampleData} title={t('Output')} />
-        </TabsContent>
+        <TabsContent value="Output">{outputViewer}</TabsContent>
 
         {isConsoleLogsValid(consoleLogs) && (
           <TabsContent value="Logs">
