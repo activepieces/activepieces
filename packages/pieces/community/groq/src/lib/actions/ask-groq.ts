@@ -24,12 +24,13 @@ export const askGroq = createAction({
 					};
 				}
 				try {
+					const url = (auth.baseUrl?.trim() || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
 					const response = await httpClient.sendRequest({
-						url: 'https://api.groq.com/openai/v1/models',
+						url: `${url}/models`,
 						method: HttpMethod.GET,
 						authentication: {
 							type: AuthenticationType.BEARER_TOKEN,
-							token: auth.secret_text,
+							token: auth.apiKey,
 						},
 					});
 					// Filter out audio models
@@ -145,12 +146,13 @@ export const askGroq = createAction({
 		});
 
 		// Send prompt
+		const url = (auth.baseUrl?.trim() || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
 		const completion = await httpClient.sendRequest({
 			method: HttpMethod.POST,
-			url: 'https://api.groq.com/openai/v1/chat/completions',
+			url: `${url}/chat/completions`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth.secret_text,
+				token: auth.apiKey,
 			},
 			body: {
 				model: model,

@@ -30,12 +30,13 @@ export const translateAudio = createAction({
 					};
 				}
 				try {
+					const url = (auth.baseUrl?.trim() || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
 					const response = await httpClient.sendRequest({
-						url: 'https://api.groq.com/openai/v1/models',
+						url: `${url}/models`,
 						method: HttpMethod.GET,
 						authentication: {
 							type: AuthenticationType.BEARER_TOKEN,
-							token: auth.secret_text
+							token: auth.apiKey
 						},
 					});
 					// Filter for whisper models only
@@ -101,12 +102,13 @@ export const translateAudio = createAction({
 		if (responseFormat) formData.append('response_format', responseFormat);
 
 		// Send request
+		const url = (auth.baseUrl?.trim() || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
 		const response = await httpClient.sendRequest({
 			method: HttpMethod.POST,
-			url: 'https://api.groq.com/openai/v1/audio/translations',
+			url: `${url}/audio/translations`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth.secret_text
+				token: auth.apiKey
 			},
 			headers: {
 				'Content-Type': 'multipart/form-data',
