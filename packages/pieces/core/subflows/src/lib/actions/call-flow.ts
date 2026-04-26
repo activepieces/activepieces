@@ -159,10 +159,16 @@ async function resolveDefaultPayload({
   externalId: string;
   context: PropertyContext;
 }): Promise<Record<string, unknown>> {
-  const flow = await findFlowByExternalIdOrThrow({
-    flowsContext: context.flows,
-    externalId,
-  });
+  let flow;
+  try {
+    flow = await findFlowByExternalIdOrThrow({
+      flowsContext: context.flows,
+      externalId,
+    });
+  }
+  catch {
+    return {};
+  }
   const triggerSampleDataFileId = flow.version.trigger.settings.sampleData?.sampleDataFileId;
   if (isNil(triggerSampleDataFileId)) {
     return {};
