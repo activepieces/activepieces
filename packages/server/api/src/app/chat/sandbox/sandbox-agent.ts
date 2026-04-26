@@ -13,10 +13,10 @@ import { chatEventUtils } from './ai-event-utils'
 const sdkCache = new Map<string, SandboxAgent>()
 const sdkPending = new Map<string, Promise<SandboxAgent>>()
 
-async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }): Promise<SandboxAgent> {
-    const cached = sdkCache.get(anthropicApiKey)
+async function getOrCreateSdk({ aiConfig }: { aiConfig: ChatAiConfig }): Promise<SandboxAgent> {
+    const cached = sdkCache.get(aiConfig.cacheKey)
     if (cached) return cached
-    const pending = sdkPending.get(anthropicApiKey)
+    const pending = sdkPending.get(aiConfig.cacheKey)
     if (pending) return pending
 
     const e2bApiKey = system.getOrThrow(AppSystemProp.E2B_API_KEY)
@@ -25,7 +25,7 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
         const sandbox = e2b({
             create: {
                 apiKey: e2bApiKey,
-                envs: { ANTHROPIC_API_KEY: anthropicApiKey },
+                envs: aiConfig.envs,
             },
             connect: { apiKey: e2bApiKey },
         })
@@ -34,23 +34,23 @@ async function getOrCreateSdk({ anthropicApiKey }: { anthropicApiKey: string }):
         const { PostgresSessionPersistDriver } = await import('./postgres-persist-driver')
         const persist = new PostgresSessionPersistDriver()
         const agent = await SandboxAgentClass.start({ sandbox, persist: persist as unknown as SessionPersistDriver })
-        sdkCache.set(anthropicApiKey, agent)
-        sdkPending.delete(anthropicApiKey)
+        sdkCache.set(aiConfig.cacheKey, agent)
+        sdkPending.delete(aiConfig.cacheKey)
         return agent
     })().catch((err: unknown) => {
-        sdkPending.delete(anthropicApiKey)
+        sdkPending.delete(aiConfig.cacheKey)
         throw err
     })
-    sdkPending.set(anthropicApiKey, promise)
+    sdkPending.set(aiConfig.cacheKey, promise)
     return promise
 }
 
-async function createSession({ anthropicApiKey, mcpServerUrl, mcpToken }: CreateSessionParams): Promise<Session> {
-    const sdk = await getOrCreateSdk({ anthropicApiKey })
+async function createSession({ aiConfig, mcpServerUrl, mcpToken }: CreateSessionParams): Promise<Session> {
+    const sdk = await getOrCreateSdk({ aiConfig })
 
     const request: SessionCreateRequest = {
-        agent: 'claude',
-        model: 'opus[1m]',
+        agent: aiConfig.agent,
+        model: aiConfig.model,
         sessionInit: {
             cwd: '/tmp',
             mcpServers: mcpServerUrl && mcpToken
@@ -131,8 +131,8 @@ async function sendPrompt({ session, text, systemPrompt, files }: SendPromptPara
     await session.prompt(contentBlocks)
 }
 
-async function destroySession({ sessionId, anthropicApiKey }: DestroySessionParams): Promise<void> {
-    const sdk = await getOrCreateSdk({ anthropicApiKey })
+async function destroySession({ sessionId, aiConfig }: DestroySessionParams): Promise<void> {
+    const sdk = await getOrCreateSdk({ aiConfig })
     await sdk.destroySession(sessionId)
 }
 
@@ -155,8 +155,8 @@ async function fetchAllEvents({ sdk, sessionId }: { sdk: SandboxAgent, sessionId
     return allEvents
 }
 
-async function getSessionHistory({ sessionId, anthropicApiKey }: ResumeSessionParams): Promise<ChatHistoryMessage[]> {
-    const sdk = await getOrCreateSdk({ anthropicApiKey })
+async function getSessionHistory({ sessionId, aiConfig }: SessionParams): Promise<ChatHistoryMessage[]> {
+    const sdk = await getOrCreateSdk({ aiConfig })
     const allEvents = await fetchAllEvents({ sdk, sessionId })
 
     const messages: ChatHistoryMessage[] = []
@@ -275,8 +275,8 @@ function stripSystemInstructions(text: string): string {
         .trim()
 }
 
-async function resumeSession({ sessionId, anthropicApiKey }: ResumeSessionParams): Promise<Session> {
-    const sdk = await getOrCreateSdk({ anthropicApiKey })
+async function resumeSession({ sessionId, aiConfig }: SessionParams): Promise<Session> {
+    const sdk = await getOrCreateSdk({ aiConfig })
     const session = await sdk.resumeSession(sessionId)
     session.onPermissionRequest((req) => {
         void session.respondPermission(req.id, 'once').catch(() => undefined)
@@ -308,7 +308,7 @@ export const SandboxSessionUpdateType = {
 } as const
 
 type CreateSessionParams = {
-    anthropicApiKey: string
+    aiConfig: ChatAiConfig
     mcpServerUrl: string | null
     mcpToken: string | null
 }
@@ -322,16 +322,16 @@ type SendPromptParams = {
 
 type DestroySessionParams = {
     sessionId: string
-    anthropicApiKey: string
+    aiConfig: ChatAiConfig
 }
 
-type ResumeSessionParams = {
+type SessionParams = {
     sessionId: string
-    anthropicApiKey: string
+    aiConfig: ChatAiConfig
 }
 
-async function warmSdk({ anthropicApiKey }: { anthropicApiKey: string }): Promise<void> {
-    await getOrCreateSdk({ anthropicApiKey })
+async function warmSdk({ aiConfig }: { aiConfig: ChatAiConfig }): Promise<void> {
+    await getOrCreateSdk({ aiConfig })
 }
 
 export const chatSandboxAgent = {
@@ -342,4 +342,17 @@ export const chatSandboxAgent = {
     getSessionHistory,
     warmSdk,
     dispose,
+}
+
+export const ChatSandboxConfig = {
+    agent: { CLAUDE: 'claude' },
+    model: { DEFAULT: 'default' },
+    envVar: { ANTHROPIC_API_KEY: 'ANTHROPIC_API_KEY', ANTHROPIC_BASE_URL: 'ANTHROPIC_BASE_URL' },
+} as const
+
+export type ChatAiConfig = {
+    cacheKey: string
+    agent: string
+    model: string
+    envs: Record<string, string>
 }

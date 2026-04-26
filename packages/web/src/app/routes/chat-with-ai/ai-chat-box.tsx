@@ -38,18 +38,20 @@ export function AIChatBox({
   const { data: providers, isLoading: isLoadingProviders } =
     aiProviderQueries.useAiProviders();
 
-  const hasAnthropic = providers?.some(
-    (p) => p.provider === AIProviderName.ANTHROPIC,
+  const hasChatProvider = providers?.some(
+    (p) =>
+      p.provider === AIProviderName.ACTIVEPIECES ||
+      p.provider === AIProviderName.ANTHROPIC,
   );
 
   const { data: warmResult, isLoading: isLoadingWarm } = useQuery({
     queryKey: ['chat-warm'],
     queryFn: () => chatApi.warm(),
-    enabled: Boolean(hasAnthropic),
+    enabled: Boolean(hasChatProvider),
     staleTime: Infinity,
   });
 
-  if (isLoadingProviders || (hasAnthropic && isLoadingWarm)) {
+  if (isLoadingProviders || (hasChatProvider && isLoadingWarm)) {
     return (
       <div className="flex items-center justify-center h-full flex-1 min-w-0">
         <Skeleton className="h-8 w-48" />
@@ -57,7 +59,7 @@ export function AIChatBox({
     );
   }
 
-  if (!hasAnthropic) {
+  if (!hasChatProvider) {
     return <SetupRequiredState />;
   }
 

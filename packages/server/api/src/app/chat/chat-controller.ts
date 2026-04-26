@@ -110,14 +110,14 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             execute: async ({ writer }) => {
                 writer.write({ type: 'start' })
 
-                const [anthropicApiKey, systemPrompt] = await Promise.all([
-                    chatService(log).getAnthropicApiKey({ platformId }),
+                const [aiConfig, systemPrompt] = await Promise.all([
+                    chatService(log).getChatAiConfig({ platformId }),
                     chatService(log).buildSystemPrompt({ projectId }),
                 ])
 
                 const session = await chatSandboxAgent.resumeSession({
                     sessionId: sandboxSessionId,
-                    anthropicApiKey,
+                    aiConfig,
                 })
 
                 const historyReplayFilter = createHistoryReplayFilter()
