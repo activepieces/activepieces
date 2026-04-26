@@ -17,7 +17,7 @@ const addBranchInput = z.object({
     flowId: z.string(),
     routerStepName: z.string(),
     branchName: z.string(),
-    conditions: z.array(z.array(BranchCondition)).optional(),
+    conditions: mcpUtils.BRANCH_CONDITIONS_INPUT_SCHEMA.optional(),
 })
 
 export const apAddBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -33,48 +33,55 @@ export const apAddBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
         },
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, routerStepName, branchName, conditions } = addBranchInput.parse(args)
-
-            const [flow, project] = await Promise.all([
-                flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
-                projectService(log).getOneOrThrow(mcp.projectId),
-            ])
-            if (isNil(flow)) {
-                return { content: [{ type: 'text', text: '❌ Flow not found' }] }
-            }
-
-            const resolved = mcpUtils.resolveRouterStep({ stepName: routerStepName, trigger: flow.version.trigger })
-            if (resolved.error) {
-                return resolved.error
-            }
-            const routerStep = resolved.routerStep
-
-            const routerSettings = (routerStep as { settings: { branches: unknown[] } }).settings
-            // Insert before the last (fallback) branch
-            const branchIndex = Math.max(0, routerSettings.branches.length - 1)
-
-            const operation: FlowOperationRequest = {
-                type: FlowOperationType.ADD_BRANCH,
-                request: {
-                    stepName: routerStepName,
-                    branchIndex,
-                    branchName,
-                    conditions: conditions ?? [[]],
-                },
-            }
-
             try {
-                await flowService(log).update({
+                const { flowId, routerStepName, branchName, conditions } = addBranchInput.parse(args)
+
+                const [flow, project] = await Promise.all([
+                    flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
+                    projectService(log).getOneOrThrow(mcp.projectId),
+                ])
+                if (isNil(flow)) {
+                    return { content: [{ type: 'text', text: '❌ Flow not found' }] }
+                }
+
+                const resolved = mcpUtils.resolveRouterStep({ stepName: routerStepName, trigger: flow.version.trigger })
+                if (resolved.error) {
+                    return resolved.error
+                }
+                const routerStep = resolved.routerStep
+
+                const routerSettings = (routerStep as { settings: { branches: unknown[] } }).settings
+                // Insert before the last (fallback) branch
+                const branchIndex = Math.max(0, routerSettings.branches.length - 1)
+
+                // The MCP input schema (BRANCH_CONDITIONS_INPUT_SCHEMA) is a single
+                // shape with optional fields, while shared's BranchCondition is a
+                // discriminated union. The .min(1) and .superRefine on the input
+                // schema guarantee the runtime data matches one of the union's
+                // members, so the cast is sound.
+                const operation: FlowOperationRequest = {
+                    type: FlowOperationType.ADD_BRANCH,
+                    request: {
+                        stepName: routerStepName,
+                        branchIndex,
+                        branchName,
+                        conditions: (conditions ?? [[]]) as BranchCondition[][],
+                    },
+                }
+
+                const updatedFlow = await flowService(log).update({
                     id: flow.id,
                     projectId: mcp.projectId,
                     userId: null,
                     platformId: project.platformId,
                     operation,
                 })
+
+                const invalidWarning = mcpUtils.routerInvalidWarning({ stepName: routerStepName, trigger: updatedFlow.version.trigger })
                 return {
                     content: [{
                         type: 'text',
-                        text: `✅ Branch "${branchName}" added at index ${branchIndex} in router "${routerStepName}". Use ap_add_step with stepLocationRelativeToParent=INSIDE_BRANCH and branchIndex=${branchIndex} to add steps inside this branch.`,
+                        text: `✅ Branch "${branchName}" added at index ${branchIndex} in router "${routerStepName}". Use ap_add_step with stepLocationRelativeToParent=INSIDE_BRANCH and branchIndex=${branchIndex} to add steps inside this branch.${invalidWarning}`,
                     }],
                 }
             }
