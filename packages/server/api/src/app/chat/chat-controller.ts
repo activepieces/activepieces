@@ -110,6 +110,11 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             execute: async ({ writer }) => {
                 writer.write({ type: 'start' })
 
+                const KEEPALIVE_INTERVAL_MS = 25_000
+                const keepalive = setInterval(() => {
+                    writer.write({ type: 'data-usage', data: { inputTokens: 0, outputTokens: 0 }, transient: true })
+                }, KEEPALIVE_INTERVAL_MS)
+
                 const [aiConfig, systemPrompt] = await Promise.all([
                     chatService(log).getChatAiConfig({ platformId }),
                     chatService(log).buildSystemPrompt({ projectId }),
@@ -159,6 +164,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                     })
                 }
                 finally {
+                    clearInterval(keepalive)
                     unsubscribe?.()
                 }
 

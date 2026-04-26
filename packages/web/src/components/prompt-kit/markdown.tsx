@@ -129,10 +129,16 @@ function hasTextContent(children: React.ReactNode): boolean {
   return Boolean(children);
 }
 
+const HEADING_CLASSES: Record<'h1' | 'h2' | 'h3', string> = {
+  h1: 'text-2xl font-bold mt-6 first:mt-0 mb-3',
+  h2: 'text-xl font-semibold mt-5 first:mt-0 mb-2',
+  h3: 'text-lg font-semibold mt-4 first:mt-0 mb-2',
+};
+
 function makeHeading(Tag: 'h1' | 'h2' | 'h3') {
   const Component = function ({ children }: { children?: React.ReactNode }) {
     if (!hasTextContent(children)) return null;
-    return <Tag>{children}</Tag>;
+    return <Tag className={HEADING_CLASSES[Tag]}>{children}</Tag>;
   };
   Component.displayName = Tag.toUpperCase();
   return Component;
@@ -146,19 +152,19 @@ const INITIAL_COMPONENTS: Partial<Components> = {
     if (isLinkOnlyList(node as HastNode | undefined)) {
       return <div className="flex flex-wrap gap-1.5 my-2">{children}</div>;
     }
-    return <ul>{children}</ul>;
+    return <ul className="list-disc pl-6 my-2 space-y-1">{children}</ul>;
   },
   ol: function OlComponent({ children, node }) {
     if (isLinkOnlyList(node as HastNode | undefined)) {
       return <div className="flex flex-wrap gap-1.5 my-2">{children}</div>;
     }
-    return <ol>{children}</ol>;
+    return <ol className="list-decimal pl-6 my-2 space-y-1">{children}</ol>;
   },
   li: function LiComponent({ children, node }) {
     if (node && isLinkOnlyItem(node as HastNode)) {
       return <>{children}</>;
     }
-    return <li>{children}</li>;
+    return <li className="pl-1">{children}</li>;
   },
   a: function LinkComponent({ href, children, node }) {
     if (!href) return <>{children}</>;

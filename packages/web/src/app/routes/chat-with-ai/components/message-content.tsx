@@ -18,7 +18,7 @@ import {
 } from '../lib/message-parsers';
 
 const PROSE_CLASSES =
-  'prose dark:prose-invert max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_h1]:mt-6 [&_h2]:mt-5 [&_h3]:mt-4 [&_h1:first-child]:mt-0 [&_h2:first-child]:mt-0 [&_h3:first-child]:mt-0 [&_ul]:mb-4 [&_ol]:mb-4 [&_table]:mb-4';
+  'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4';
 
 export function MessageContentWithAuth({
   content,

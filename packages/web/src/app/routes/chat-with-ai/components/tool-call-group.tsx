@@ -73,7 +73,23 @@ export function groupToolCallsByPhase(
     groups.push({ label: describeToolCalls(current), tools: current });
   }
 
-  return groups;
+  return mergeConsecutiveGroups(groups);
+}
+
+function mergeConsecutiveGroups(
+  groups: Array<{ label: string; tools: ToolCallItem[] }>,
+): Array<{ label: string; tools: ToolCallItem[] }> {
+  if (groups.length <= 1) return groups;
+  const merged: Array<{ label: string; tools: ToolCallItem[] }> = [groups[0]];
+  for (let i = 1; i < groups.length; i++) {
+    const prev = merged[merged.length - 1];
+    if (groups[i].label === prev.label) {
+      prev.tools.push(...groups[i].tools);
+    } else {
+      merged.push(groups[i]);
+    }
+  }
+  return merged;
 }
 
 export function describeToolCalls(toolCalls: ToolCallItem[]): string {

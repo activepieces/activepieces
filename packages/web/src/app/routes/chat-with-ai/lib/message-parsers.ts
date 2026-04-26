@@ -11,7 +11,9 @@ export function parseCodeBlock(
   content: string,
   fence: string,
 ): { block: string | null; cleanContent: string } {
-  const regex = new RegExp(`\`\`\`${fence}\\n([\\s\\S]*?)\`\`\``);
+  const regex = new RegExp(
+    `\`\`\`\\s*${fence}\\s*\\r?\\n([\\s\\S]*?)\\r?\\n?\\s*\`\`\``,
+  );
   const match = regex.exec(content);
   if (!match) return { block: null, cleanContent: content };
   return {
@@ -72,7 +74,7 @@ export function parseAllConnectionsRequired(content: string): {
   cleanContent: string;
 } {
   const connections: ConnectionRequired[] = [];
-  const regex = /```connection-required\n([\s\S]*?)```/g;
+  const regex = /```\s*connection-required\s*\r?\n([\s\S]*?)\r?\n?\s*```/g;
   let cleaned = content;
   let match = regex.exec(content);
 
