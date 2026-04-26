@@ -203,7 +203,10 @@ function constructContainerKey({
     step?.type != FlowTriggerType.EMPTY &&
     step?.type != FlowTriggerType.PIECE &&
     step?.skip;
-  return `${flowVersionId}-${stepName ?? ''}-${triggerOrActionName ?? ''}-${
+  // include step type so that replacing a step with a different type (e.g. PIECE → CODE)
+  // always forces a remount and prevents stale form values from being written back
+  const stepType = step?.type ?? '';
+  return `${flowVersionId}-${stepName ?? ''}-${stepType}-${triggerOrActionName ?? ''}-${
     pieceName ?? ''
   }-${pieceVersion ?? ''}-${'skipped-' + !!isSkipped}-${
     hasPieceModelLoaded ? 'loaded' : 'not-loaded'
