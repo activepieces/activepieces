@@ -5,8 +5,8 @@ import { response } from './lib/actions/respond';
 import { PieceCategory } from '@activepieces/shared';
 
 export const flows = createPiece({
-  displayName: 'Sub Flows',
-  description: 'Trigger and call another sub flow.',
+  displayName: 'Subflow',
+  description: 'Call another flow and optionally wait for a response.',
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.82.0',
   categories: [PieceCategory.CORE, PieceCategory.FLOW_CONTROL],

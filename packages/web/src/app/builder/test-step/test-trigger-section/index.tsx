@@ -12,6 +12,7 @@ import { McpToolTestingDialog } from '../custom-test-step/mcp-tool-testing-dialo
 import { TestSampleDataViewer } from '../test-sample-data-viewer';
 import { testStepHooks } from '../utils/test-step-hooks';
 
+import { CallableFlowSampleDataDialog } from './callable-flow-sample-data-dialog';
 import { FirstTimeTestingSection } from './first-time-testing-section';
 import { ManualWebhookTestButton } from './manual-webhook-test-button';
 import { SimulationNote } from './simulation-section';
@@ -32,6 +33,8 @@ const TestTriggerSection = React.memo(
     const isValid = form.formState.isValid;
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const [isTestingDialogOpen, setIsTestingDialogOpen] = useState(false);
+    const [isCallableFlowDialogOpen, setIsCallableFlowDialogOpen] =
+      useState(false);
     const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
       name: formValues.settings.pieceName,
       version: formValues.settings.pieceVersion,
@@ -127,6 +130,9 @@ const TestTriggerSection = React.memo(
         case 'mcp-tool':
           setIsTestingDialogOpen(true);
           break;
+        case 'callable-flow':
+          setIsCallableFlowDialogOpen(true);
+          break;
       }
     };
     const getSimulationNote = () => {
@@ -179,6 +185,7 @@ const TestTriggerSection = React.memo(
             }}
             onPollTrigger={pollTrigger}
             onMcpToolTesting={() => setIsTestingDialogOpen(true)}
+            onCallableFlowSetup={() => setIsCallableFlowDialogOpen(true)}
             onSaveMockAsSampleData={saveMockAsSampleData}
           />
         )}
@@ -220,6 +227,13 @@ const TestTriggerSection = React.memo(
             open={isTestingDialogOpen}
             onOpenChange={setIsTestingDialogOpen}
             onTestingSuccess={onTestSuccess}
+          />
+        )}
+        {testType === 'callable-flow' && (
+          <CallableFlowSampleDataDialog
+            open={isCallableFlowDialogOpen}
+            onOpenChange={setIsCallableFlowDialogOpen}
+            stepName={formValues.name}
           />
         )}
       </div>

@@ -5,24 +5,24 @@ import { isNil } from '@activepieces/shared';
 
 export const response = createAction({
   name: 'returnResponse',
-  displayName: 'Return Response',
-  description: 'Return response to the original flow',
+  displayName: 'Return Response to Caller',
+  description: 'Sends data back to the flow that called this one.',
   props: {
     mode: Property.StaticDropdown({
-      displayName: 'Mode',
-      description: 'Choose Simple for key-value or Advanced for JSON.',
+      displayName: 'Response format',
+      description: 'Use "Fields" to define named keys, or "JSON" to pass a free-form object.',
       required: true,
       defaultValue: 'simple',
       options: {
         disabled: false,
         options: [
           {
-            label: 'Simple',
+            label: 'Fields',
             value: 'simple',
           },
           {
 
-            label: 'Advanced',
+            label: 'JSON',
             value: 'advanced',
           },
         ],
@@ -31,6 +31,7 @@ export const response = createAction({
     response: Property.DynamicProperties({
       auth: PieceAuth.None(),
       displayName: 'Response',
+      description: 'The data to return to the calling flow. Only used when the caller has "Wait for Response" enabled.',
       required: true,
       refreshers: ['mode'],
       props: async (propsValue) => {

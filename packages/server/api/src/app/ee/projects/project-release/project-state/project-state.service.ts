@@ -220,7 +220,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         })
     },
     async getFlowState(flow: PopulatedFlow): Promise<FlowState> {
-        const migratedVersion = await flowMigrations.apply(flow.version)
+        const migratedVersion = await flowMigrations.apply(flow.version, { log, projectId: flow.projectId })
         const flowState: FlowState = {
             ...flow,
             operationStatus: flow.operationStatus ?? FlowOperationStatus.NONE,

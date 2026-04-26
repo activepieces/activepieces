@@ -19,6 +19,7 @@ type FirstTimeTestingSectionProps = {
   onSimulateTrigger: () => void;
   onPollTrigger: () => void;
   onMcpToolTesting: () => void;
+  onCallableFlowSetup: () => void;
   onSaveMockAsSampleData: (mockData: unknown) => void;
 };
 
@@ -31,9 +32,31 @@ export const FirstTimeTestingSection = ({
   onSimulateTrigger,
   onPollTrigger,
   onMcpToolTesting,
+  onCallableFlowSetup,
   onSaveMockAsSampleData,
 }: FirstTimeTestingSectionProps) => {
   const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
+  if (testType === 'callable-flow') {
+    return (
+      <div className="flex justify-center">
+        <TestButtonTooltip saving={isSaving} invalid={!isValid}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onCallableFlowSetup}
+            keyboardShortcut="G"
+            onKeyboardShortcut={onCallableFlowSetup}
+            disabled={!isValid || isLoadingDynamicProperties}
+            loading={isSaving}
+            data-testid="callable-flow-sample-data-button"
+          >
+            <Dot animation={true} variant={'primary'}></Dot>
+            {t('Provide Sample Input')}
+          </Button>
+        </TestButtonTooltip>
+      </div>
+    );
+  }
   if (
     testType === 'simulation' ||
     testType === 'webhook' ||
