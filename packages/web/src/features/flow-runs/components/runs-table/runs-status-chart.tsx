@@ -1,5 +1,4 @@
 import { t } from 'i18next';
-import { BarChart3 } from 'lucide-react';
 
 import {
   HoverCard,
@@ -61,15 +60,13 @@ function RunsStatusChart() {
   const { categories, total, isLoading } = flowRunQueries.useRunStats();
   const showPlaceholder = isLoading || categories.length === 0;
 
+  if (isLoading || categories.length === 0) return;
   return (
     <HoverCard openDelay={200}>
       <HoverCardTrigger asChild>
-        <button className="flex items-center justify-center size-8 rounded-md hover:bg-accent transition-colors">
-          {showPlaceholder ? (
-            <BarChart3 className="size-5 text-muted-foreground" />
-          ) : (
-            <MiniDonut categories={categories} total={total} />
-          )}
+        <button className="flex items-center gap-2 px-3 h-8 rounded-md hover:bg-accent transition-colors text-sm text-accent-foreground">
+          <MiniDonut categories={categories} total={total} />
+          {t('Statistics')}
         </button>
       </HoverCardTrigger>
       <HoverCardContent align="end" className="w-72 p-4">

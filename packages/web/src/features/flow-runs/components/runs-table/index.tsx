@@ -40,7 +40,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
-import { flowRunMutations } from '@/features/flow-runs/hooks/flow-run-hooks';
+import {
+  DEFAULT_DATE_PRESET,
+  flowRunMutations,
+} from '@/features/flow-runs/hooks/flow-run-hooks';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -575,5 +578,3 @@ export const RunsTable = () => {
     </div>
   );
 };
-
-const DEFAULT_DATE_PRESET = '7days' as const;

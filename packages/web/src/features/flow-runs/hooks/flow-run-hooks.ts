@@ -80,6 +80,8 @@ function groupByCategory(data: FlowRunCountByStatus[]) {
   })).filter((cat) => cat.count > 0);
 }
 
+export const DEFAULT_DATE_PRESET = '7days' as const;
+
 export const flowRunQueries = {
   useFlowRun: (runId: string) =>
     useQuery({
@@ -89,16 +91,17 @@ export const flowRunQueries = {
     }),
   useRunStats: () => {
     const projectId = authenticationSession.getProjectId()!;
-    const range = useMemo(() => getDefaultRange('7days'), []);
 
     const { data, isLoading } = useQuery({
       queryKey: ['flow-run-count-by-status', projectId],
-      queryFn: () =>
-        flowRunsApi.countByStatus({
+      queryFn: () => {
+        const range = useMemo(() => getDefaultRange(DEFAULT_DATE_PRESET), []);
+        return flowRunsApi.countByStatus({
           projectId,
           createdAfter: range.from.toISOString(),
           createdBefore: range.to.toISOString(),
-        }),
+        });
+      },
       refetchInterval: 5000,
     });
 
