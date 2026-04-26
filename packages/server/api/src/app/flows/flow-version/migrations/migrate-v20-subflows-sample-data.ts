@@ -1,4 +1,5 @@
 import {
+    DATA_TYPE_KEY_IN_FILE_METADATA,
     FileCompression,
     FileType,
     FlowActionType,
@@ -9,7 +10,6 @@ import {
     ProjectId,
     SampleDataDataType,
     Step,
-    DATA_TYPE_KEY_IN_FILE_METADATA,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import pino from 'pino'
