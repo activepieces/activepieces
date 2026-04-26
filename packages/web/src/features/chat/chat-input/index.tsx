@@ -56,7 +56,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      if ((!input && files.length === 0) || disabled) return;
+      if (!input || disabled) return;
 
       onSendMessage({
         textContent: input,
@@ -71,7 +71,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        if (!disabled && (input || files.length > 0)) {
+        if (!disabled && input) {
           handleSubmit(e as unknown as React.FormEvent);
         }
       }
@@ -153,7 +153,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
                 className="hidden"
               />
               <Button
-                disabled={(!input && files.length === 0) || disabled}
+                disabled={!input || disabled}
                 type="submit"
                 size="icon"
                 variant="default"
