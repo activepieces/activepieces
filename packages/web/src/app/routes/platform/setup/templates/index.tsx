@@ -37,9 +37,11 @@ const PlatformTemplatesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const [searchParams] = useSearchParams();
+  const isEnabled = platform.plan.manageTemplatesEnabled;
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['templates', searchParams.toString()],
     staleTime: 0,
+    enabled: isEnabled,
     meta: { showErrorDialog: true, loadSubsetOptions: {} },
     queryFn: () => {
       return templatesApi.list({
@@ -205,7 +207,6 @@ const PlatformTemplatesPage = () => {
     [refetch],
   );
 
-  const isEnabled = platform.plan.manageTemplatesEnabled;
   return (
     <LockedFeatureGuard
       featureKey="TEMPLATES"
