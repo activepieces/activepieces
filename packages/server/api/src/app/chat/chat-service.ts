@@ -20,9 +20,13 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { mcpServerService } from '../mcp/mcp-service'
 import { projectService } from '../project/project-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
+import { chatSessionCleanup } from './sandbox/postgres-persist-driver'
 import { ChatAiConfig, chatSandboxAgent, ChatSandboxConfig } from './sandbox/sandbox-agent'
 
 const conversationRepo = repoFactory(ChatConversationEntity)
+
+const AI_CONFIG_TTL_MS = 5 * 60 * 1000
+const aiConfigCache = new Map<string, { config: ChatAiConfig, expiresAt: number }>()
 
 export const chatService = (log: FastifyBaseLogger) => ({
     async createConversation({ projectId, userId, request }: CreateConversationParams): Promise<ChatConversation> {
@@ -124,10 +128,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
         const sandboxSessionId = conversation.sandboxSessionId
         if (!sandboxSessionId) return
         await conversationRepo().update(id, { sandboxSessionId: null })
-        const { data: aiConfig } = await tryCatch(async () => this.getChatAiConfig({ platformId }))
-        if (aiConfig) {
-            await chatSandboxAgent.destroySession({ sessionId: sandboxSessionId, aiConfig }).catch(() => undefined)
-        }
+        await destroySandboxAndCleanup({ sessionId: sandboxSessionId, getChatAiConfig: () => this.getChatAiConfig({ platformId }), log })
     },
 
     async deleteConversation({ id, projectId, userId, platformId }: DeleteConversationParams): Promise<void> {
@@ -135,29 +136,18 @@ export const chatService = (log: FastifyBaseLogger) => ({
         const sandboxSessionId = conversation.sandboxSessionId
         await conversationRepo().delete({ id, projectId, userId })
         if (sandboxSessionId) {
-            void this.getChatAiConfig({ platformId }).then((aiConfig) =>
-                chatSandboxAgent.destroySession({ sessionId: sandboxSessionId, aiConfig }),
-            ).catch(() => undefined)
+            await destroySandboxAndCleanup({ sessionId: sandboxSessionId, getChatAiConfig: () => this.getChatAiConfig({ platformId }), log })
         }
     },
 
-    async getMessages({ id, projectId, userId, platformId }: GetMessagesParams): Promise<{ data: ChatHistoryMessage[] }> {
+    async getMessages({ id, projectId, userId }: GetMessagesParams): Promise<{ data: ChatHistoryMessage[] }> {
         const conversation = await this.getConversationOrThrow({ id, projectId, userId })
         const sessionId = conversation.sandboxSessionId
         if (!sessionId) {
             return { data: [] }
         }
-        const { data: aiConfig, error: configError } = await tryCatch(
-            async () => this.getChatAiConfig({ platformId }),
-        )
-        if (configError) {
-            return { data: [] }
-        }
         const { data: messages, error: historyError } = await tryCatch(
-            async () => chatSandboxAgent.getSessionHistory({
-                sessionId,
-                aiConfig,
-            }),
+            async () => chatSandboxAgent.getSessionHistory({ sessionId }),
         )
         if (historyError) {
             log.warn({ err: historyError, conversationId: id }, 'Failed to load session history')
@@ -167,36 +157,13 @@ export const chatService = (log: FastifyBaseLogger) => ({
     },
 
     async getChatAiConfig({ platformId }: { platformId: string }): Promise<ChatAiConfig> {
-        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-        const proxyBaseUrl = `${frontendUrl}/api/v1/chat/proxy/anthropic`
-
-        const openRouterConfig = await resolveProviderApiKey({ platformId, provider: AIProviderName.ACTIVEPIECES, log })
-        if (openRouterConfig) {
-            return {
-                agent: ChatSandboxConfig.agent.CLAUDE,
-                model: ChatSandboxConfig.model.DEFAULT,
-                envs: {
-                    [ChatSandboxConfig.envVar.ANTHROPIC_API_KEY]: openRouterConfig,
-                    [ChatSandboxConfig.envVar.ANTHROPIC_BASE_URL]: proxyBaseUrl,
-                },
-            }
+        const cached = aiConfigCache.get(platformId)
+        if (cached && cached.expiresAt > Date.now()) {
+            return cached.config
         }
-
-        const anthropicApiKey = await resolveProviderApiKey({ platformId, provider: AIProviderName.ANTHROPIC, log })
-        if (anthropicApiKey) {
-            return {
-                agent: ChatSandboxConfig.agent.CLAUDE,
-                model: ChatSandboxConfig.model.DEFAULT,
-                envs: {
-                    [ChatSandboxConfig.envVar.ANTHROPIC_API_KEY]: anthropicApiKey,
-                },
-            }
-        }
-
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: { entityId: platformId, entityType: 'ChatAiProvider' },
-        })
+        const config = await resolveChatAiConfig({ platformId, log })
+        aiConfigCache.set(platformId, { config, expiresAt: Date.now() + AI_CONFIG_TTL_MS })
+        return config
     },
 
     isSandboxConfigured(): boolean {
@@ -208,6 +175,55 @@ export const chatService = (log: FastifyBaseLogger) => ({
         return buildAgentSystemPrompt(project.displayName)
     },
 })
+
+async function resolveChatAiConfig({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<ChatAiConfig> {
+    const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+    const proxyBaseUrl = `${frontendUrl}/api/v1/chat/proxy/anthropic`
+
+    const openRouterConfig = await resolveProviderApiKey({ platformId, provider: AIProviderName.ACTIVEPIECES, log })
+    if (openRouterConfig) {
+        return {
+            agent: ChatSandboxConfig.agent.CLAUDE,
+            model: ChatSandboxConfig.model.DEFAULT,
+            envs: {
+                [ChatSandboxConfig.envVar.ANTHROPIC_API_KEY]: openRouterConfig,
+                [ChatSandboxConfig.envVar.ANTHROPIC_BASE_URL]: proxyBaseUrl,
+            },
+        }
+    }
+
+    const anthropicApiKey = await resolveProviderApiKey({ platformId, provider: AIProviderName.ANTHROPIC, log })
+    if (anthropicApiKey) {
+        return {
+            agent: ChatSandboxConfig.agent.CLAUDE,
+            model: ChatSandboxConfig.model.DEFAULT,
+            envs: {
+                [ChatSandboxConfig.envVar.ANTHROPIC_API_KEY]: anthropicApiKey,
+            },
+        }
+    }
+
+    throw new ActivepiecesError({
+        code: ErrorCode.ENTITY_NOT_FOUND,
+        params: { entityId: platformId, entityType: 'ChatAiProvider' },
+    })
+}
+
+async function destroySandboxAndCleanup({ sessionId, getChatAiConfig, log }: {
+    sessionId: string
+    getChatAiConfig: () => Promise<ChatAiConfig>
+    log: FastifyBaseLogger
+}): Promise<void> {
+    const { data: aiConfig } = await tryCatch(getChatAiConfig)
+    if (aiConfig) {
+        await chatSandboxAgent.destroySession({ sessionId, aiConfig }).catch((err) => {
+            log.warn({ err, sessionId }, 'Failed to destroy E2B sandbox session')
+        })
+    }
+    await chatSessionCleanup.deleteSessionData({ sessionId }).catch((err) => {
+        log.warn({ err, sessionId }, 'Failed to clean up session data')
+    })
+}
 
 async function resolveProviderApiKey({ platformId, provider, log }: { platformId: string, provider: AIProviderName, log: FastifyBaseLogger }): Promise<string | null> {
     const { data: config } = await tryCatch(
@@ -396,5 +412,4 @@ type GetMessagesParams = {
     id: string
     projectId: string
     userId: string
-    platformId: string
 }

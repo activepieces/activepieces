@@ -9,20 +9,68 @@ import type { SandboxAgent, Session, SessionCreateRequest, SessionPersistDriver 
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { chatEventUtils } from './ai-event-utils'
+import { chatSessionEvents } from './postgres-persist-driver'
+
+const MAX_CONCURRENT_SANDBOXES = 20
+const SDK_TIMEOUT_MS = 30_000
+let activeSandboxCount = 0
+const sandboxQueue: Array<{ resolve: () => void }> = []
+
+async function acquireSandboxSlot(): Promise<void> {
+    if (activeSandboxCount < MAX_CONCURRENT_SANDBOXES) {
+        activeSandboxCount++
+        return
+    }
+    return new Promise<void>((resolve) => {
+        sandboxQueue.push({ resolve })
+    })
+}
+
+function releaseSandboxSlot(): void {
+    const next = sandboxQueue.shift()
+    if (next) {
+        next.resolve()
+    }
+    else {
+        activeSandboxCount = Math.max(0, activeSandboxCount - 1)
+    }
+}
 
 async function createSdk({ aiConfig }: { aiConfig: ChatAiConfig }): Promise<SandboxAgent> {
-    const e2bApiKey = system.getOrThrow(AppSystemProp.E2B_API_KEY)
-    const { e2b } = await esmImport<typeof import('sandbox-agent/e2b')>('sandbox-agent/e2b')
-    const sandbox = e2b({
-        create: { apiKey: e2bApiKey, envs: aiConfig.envs },
-        connect: { apiKey: e2bApiKey },
-    })
-    const { SandboxAgent: SandboxAgentClass } = await esmImport<typeof import('sandbox-agent')>('sandbox-agent')
-    const { PostgresSessionPersistDriver } = await import('./postgres-persist-driver')
-    return SandboxAgentClass.start({
-        sandbox,
-        persist: new PostgresSessionPersistDriver() as unknown as SessionPersistDriver,
-    })
+    await acquireSandboxSlot()
+    try {
+        const e2bApiKey = system.getOrThrow(AppSystemProp.E2B_API_KEY)
+        const { e2b } = await esmImport<typeof import('sandbox-agent/e2b')>('sandbox-agent/e2b')
+        const sandbox = e2b({
+            create: { apiKey: e2bApiKey, envs: aiConfig.envs },
+            connect: { apiKey: e2bApiKey },
+        })
+        const { SandboxAgent: SandboxAgentClass } = await esmImport<typeof import('sandbox-agent')>('sandbox-agent')
+        const { PostgresSessionPersistDriver } = await import('./postgres-persist-driver')
+
+        const sdkPromise = SandboxAgentClass.start({
+            sandbox,
+            persist: new PostgresSessionPersistDriver() as unknown as SessionPersistDriver,
+        })
+        let timeoutId: ReturnType<typeof setTimeout> | undefined
+        const timeout = new Promise<never>((_resolve, reject) => {
+            timeoutId = setTimeout(() => reject(new Error(`E2B sandbox creation timed out after ${SDK_TIMEOUT_MS}ms`)), SDK_TIMEOUT_MS)
+        })
+        try {
+            return await Promise.race([sdkPromise, timeout])
+        }
+        catch (err) {
+            // If timeout won, the SDK may still finish — destroy the orphaned sandbox
+            void sdkPromise.then((sdk) => sdk.destroySandbox().catch(() => undefined))
+            throw err
+        }
+        finally {
+            clearTimeout(timeoutId)
+        }
+    }
+    finally {
+        releaseSandboxSlot()
+    }
 }
 
 async function createSession({ aiConfig, mcpServerUrl, mcpToken }: CreateSessionParams): Promise<Session> {
@@ -116,39 +164,15 @@ async function destroySession({ sessionId, aiConfig }: DestroySessionParams): Pr
     await sdk.destroySession(sessionId)
 }
 
-const MAX_EVENTS = 10_000
-
-async function fetchAllEvents({ sdk, sessionId }: { sdk: SandboxAgent, sessionId: string }): Promise<Array<{ sender: string, payload: unknown }>> {
-    const PAGE_SIZE = 500
-    const allEvents: Array<{ sender: string, payload: unknown }> = []
-    let cursor: string | undefined
-
-    do {
-        const page = await sdk.getEvents({ sessionId, limit: PAGE_SIZE, cursor })
-        for (const event of page.items) {
-            allEvents.push({ sender: event.sender, payload: event.payload })
-        }
-        if (allEvents.length >= MAX_EVENTS) break
-        cursor = page.nextCursor
-    } while (cursor)
-
-    return allEvents
-}
-
-async function getSessionHistory({ sessionId, aiConfig }: SessionParams): Promise<ChatHistoryMessage[]> {
-    const sdk = await createSdk({ aiConfig })
-    const allEvents = await fetchAllEvents({ sdk, sessionId })
-
+async function getSessionHistory({ sessionId }: { sessionId: string }): Promise<ChatHistoryMessage[]> {
     const messages: ChatHistoryMessage[] = []
     let currentAssistantText = ''
     let currentThoughts = ''
     let currentToolCalls: ChatHistoryToolCall[] = []
     let inAssistantMessage = false
 
-    for (const event of allEvents) {
-        const raw: unknown = event.payload
-        if (!isObject(raw)) continue
-        const payload = raw
+    for await (const event of chatSessionEvents.streamEvents({ sessionId })) {
+        const payload = event.payload
 
         if (event.sender === 'client' && payload.method === 'session/prompt') {
             if (inAssistantMessage) {

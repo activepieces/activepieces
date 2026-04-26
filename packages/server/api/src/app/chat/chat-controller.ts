@@ -75,7 +75,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             id: request.params.id,
             projectId: request.projectId,
             userId: request.principal.id,
-            platformId: request.principal.platform.id,
         })
     })
 
@@ -122,9 +121,10 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                     writer.write({ type: 'data-usage', data: { inputTokens: 0, outputTokens: 0 }, transient: true })
                 }, KEEPALIVE_INTERVAL_MS)
 
+                const service = chatService(log)
                 const [aiConfig, systemPrompt] = await Promise.all([
-                    chatService(log).getChatAiConfig({ platformId }),
-                    chatService(log).buildSystemPrompt({ projectId }),
+                    service.getChatAiConfig({ platformId }),
+                    service.buildSystemPrompt({ projectId }),
                 ])
 
                 const session = await chatSandboxAgent.resumeSession({
@@ -133,23 +133,17 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 })
 
                 const historyReplayFilter = createHistoryReplayFilter()
-                let lastTitle = ''
+                let pendingTitle = ''
                 const streamWriter = createStreamWriter({
                     writer,
                     textPartId: 'text',
                     reasoningPartId: 'reasoning',
                     onSessionTitle: (title) => {
-                        if (title === lastTitle) return
-                        lastTitle = title
-                        void chatService(log).updateConversation({
-                            id: conversationId,
-                            projectId,
-                            userId,
-                            request: { title },
-                        })
+                        pendingTitle = title
                     },
                 })
                 let unsubscribe: (() => void) | undefined
+                let promptCompleted = false
 
                 try {
                     await new Promise<void>((resolve, reject) => {
@@ -173,13 +167,24 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                         })
 
                         chatSandboxAgent.sendPrompt({ session, text: content, systemPrompt, files })
-                            .then(resolve)
+                            .then(() => {
+                                promptCompleted = true
+                                resolve()
+                            })
                             .catch(reject)
                     })
                 }
                 finally {
                     clearInterval(keepalive)
                     unsubscribe?.()
+                    if (pendingTitle && promptCompleted) {
+                        void service.updateConversation({
+                            id: conversationId,
+                            projectId,
+                            userId,
+                            request: { title: pendingTitle },
+                        })
+                    }
                 }
 
                 writer.write({ type: 'finish', finishReason: 'stop' })

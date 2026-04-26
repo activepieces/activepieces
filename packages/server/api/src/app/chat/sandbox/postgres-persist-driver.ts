@@ -78,6 +78,7 @@ export class PostgresSessionPersistDriver {
         return row ? toSessionRecord(row) : undefined
     }
 
+    // Required by SessionPersistDriver interface but never called in our code. No tenant filter because the interface doesn't provide one.
     async listSessions(request: ListPageRequest = {}): Promise<ListPage<SessionRecord>> {
         const offset = parseCursor(request.cursor)
         const limit = normalizeLimit(request.limit)
@@ -136,6 +137,44 @@ export class PostgresSessionPersistDriver {
     async close(): Promise<void> {
     }
 }
+
+async function deleteSessionData({ sessionId }: { sessionId: string }): Promise<void> {
+    await eventRepo().delete({ session_id: sessionId })
+    await sessionRepo().delete({ id: sessionId })
+}
+
+async function* streamEvents({ sessionId, pageSize = 500, maxEvents = 10_000 }: {
+    sessionId: string
+    pageSize?: number
+    maxEvents?: number
+}): AsyncGenerator<{ sender: string, payload: Record<string, unknown> }> {
+    let lastEventIndex = -1
+    let totalYielded = 0
+
+    // eslint-disable-next-line no-constant-condition
+    for (;;) {
+        const rows = await eventRepo()
+            .createQueryBuilder('e')
+            .where('e.session_id = :sessionId', { sessionId })
+            .andWhere('e.event_index > :lastEventIndex', { lastEventIndex })
+            .orderBy('e.event_index', 'ASC')
+            .addOrderBy('e.id', 'ASC')
+            .take(pageSize)
+            .getMany()
+
+        if (rows.length === 0) break
+
+        for (const row of rows) {
+            yield { sender: row.sender, payload: row.payload_json }
+            lastEventIndex = parseInteger(row.event_index)
+            totalYielded++
+            if (totalYielded >= maxEvents) return
+        }
+    }
+}
+
+export const chatSessionCleanup = { deleteSessionData }
+export const chatSessionEvents = { streamEvents }
 
 type SessionRecord = {
     id: string
