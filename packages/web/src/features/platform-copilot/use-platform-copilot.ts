@@ -20,13 +20,16 @@ export function usePlatformCopilot() {
       }),
       prepareSendMessagesRequest: ({ messages }) => {
         const lastMessage = messages[messages.length - 1];
-        const conversationHistory = messages.slice(0, -1).map((m) => ({
-          role: m.role as 'user' | 'assistant',
-          content: getMessageText(m),
-        }));
+        const conversationHistory = messages
+          .slice(0, -1)
+          .slice(-MAX_HISTORY_MESSAGES)
+          .map((m) => ({
+            role: m.role as 'user' | 'assistant',
+            content: getMessageText(m).slice(0, MAX_HISTORY_CONTENT_CHARS),
+          }));
         return {
           body: {
-            message: getMessageText(lastMessage),
+            message: getMessageText(lastMessage).slice(0, MAX_MESSAGE_CHARS),
             conversationHistory,
           },
         };
@@ -89,3 +92,7 @@ function isValidMessage(item: unknown): boolean {
     Array.isArray(record['parts'])
   );
 }
+
+const MAX_MESSAGE_CHARS = 4000;
+const MAX_HISTORY_CONTENT_CHARS = 8000;
+const MAX_HISTORY_MESSAGES = 50;
