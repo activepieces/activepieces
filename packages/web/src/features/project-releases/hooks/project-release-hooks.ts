@@ -2,6 +2,7 @@ import { DiffReleaseRequest, ProjectSyncPlan } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { internalErrorToast } from '@/components/ui/sonner';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { projectReleaseApi } from '../api/project-release-api';
@@ -12,15 +13,18 @@ export const projectReleaseKeys = {
 };
 
 export const projectReleaseQueries = {
-  useProjectReleases: () =>
-    useQuery({
+  useProjectReleases: () => {
+    const { platform } = platformHooks.useCurrentPlatform();
+    return useQuery({
       queryKey: projectReleaseKeys.all,
       queryFn: () =>
         projectReleaseApi.list({
           projectId: authenticationSession.getProjectId()!,
         }),
+      enabled: platform.plan.environmentsEnabled,
       meta: { showErrorDialog: true, loadSubsetOptions: {} },
-    }),
+    });
+  },
   useProjectRelease: (releaseId: string, enabled: boolean) =>
     useQuery({
       queryKey: projectReleaseKeys.detail(releaseId),
