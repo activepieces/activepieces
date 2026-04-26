@@ -88,6 +88,9 @@ export const useHandleKeyPressOnCanvas = () => {
           if (readonly) {
             return;
           }
+          if (isEditingInput(e)) {
+            return;
+          }
           if (selectedNodesWithoutTrigger.length > 0) {
             canvasBulkActions.toggleSkipSelectedNodes({
               selectedNodes: selectedNodesWithoutTrigger,
@@ -152,6 +155,19 @@ export const useHandleKeyPressOnCanvas = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 };
+function isEditingInput(e: KeyboardEvent): boolean {
+  const target = e.target;
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  const tag = target.tagName.toLowerCase();
+  return (
+    tag === 'input' ||
+    tag === 'textarea' ||
+    target.isContentEditable
+  );
+}
+
 const shortcutHandler = (
   event: KeyboardEvent,
   handlers: Record<keyof CanvasShortcutsProps, () => void>,
