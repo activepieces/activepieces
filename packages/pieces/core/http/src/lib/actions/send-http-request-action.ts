@@ -10,6 +10,7 @@ import {
   ApFile,
   createAction,
   DynamicPropsValue,
+  FilesService,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
@@ -374,11 +375,13 @@ export const httpSendRequestAction = createAction({
     while (attempts < 3) {
       try {
         const response = await apiRequest();
-        return handleBinaryResponse(
+        return await handleBinaryResponse(
           response.body,
           response.status,
           response.headers,
-          response_is_binary
+          response_is_binary,
+          context.files,
+          url,
         );
       } catch (error) {
         attempts++;
@@ -422,16 +425,22 @@ export const httpSendRequestAction = createAction({
   },
 });
 
-const handleBinaryResponse = (
+const handleBinaryResponse = async (
   bodyContent: string | ArrayBuffer | Buffer,
   status: number,
   headers?: HttpHeaders,
-  isBinary?: boolean
+  isBinary?: boolean,
+  files?: FilesService,
+  requestUrl?: string,
 ) => {
   let body;
 
-  if (isBinary && isBinaryBody(bodyContent)) {
-    body = Buffer.from(bodyContent as unknown as string).toString('base64');
+  if (isBinary && isBinaryBody(bodyContent) && files) {
+    const buffer = Buffer.isBuffer(bodyContent)
+      ? bodyContent
+      : Buffer.from(bodyContent as ArrayBuffer);
+    const fileName = extractFileNameFromUrl(requestUrl ?? 'response');
+    body = await files.write({ fileName, data: buffer });
   } else {
     body = bodyContent;
   }
@@ -442,3 +451,14 @@ const handleBinaryResponse = (
 const isBinaryBody = (body: string | ArrayBuffer | Buffer) => {
   return body instanceof ArrayBuffer || Buffer.isBuffer(body);
 };
+
+function extractFileNameFromUrl(url: string): string {
+  try {
+    const pathname = new URL(url).pathname;
+    const segments = pathname.split('/').filter(Boolean);
+    const last = segments[segments.length - 1];
+    return last && last.includes('.') ? last : 'response.bin';
+  } catch {
+    return 'response.bin';
+  }
+}
