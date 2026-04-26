@@ -185,7 +185,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
         }
 
         const operator = this.getOperator()
-        const queryString = `DATE_TRUNC('second', ${this.alias}.${PAGINATION_KEY}) ${operator} DATE_TRUNC('second', :${PAGINATION_KEY}::timestamp)`
+        const queryString = `${this.alias}.${PAGINATION_KEY} ${operator} :${PAGINATION_KEY}::timestamp`
 
         where.orWhere(queryString, cursors)
     }

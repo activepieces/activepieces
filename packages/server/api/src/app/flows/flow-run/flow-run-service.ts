@@ -68,8 +68,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             entity: FlowRunEntity,
             query: {
                 limit: params.limit,
-                order: Order.DESC,
-                orderBy: 'created',
+                orderBy: [
+                    { field: 'created', order: Order.DESC },
+                    { field: 'id', order: Order.DESC },
+                ],
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
