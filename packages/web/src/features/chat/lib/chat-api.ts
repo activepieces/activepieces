@@ -59,6 +59,14 @@ async function deleteConversation(id: string): Promise<void> {
   });
 }
 
+async function cancelSession(conversationId: string): Promise<void> {
+  return api.post<void>(
+    `/v1/chat/conversations/${conversationId}/cancel`,
+    undefined,
+    { projectId: projectId() },
+  );
+}
+
 async function warm(): Promise<{ configured: boolean }> {
   return api.post<{ configured: boolean }>('/v1/chat/warm', undefined, {
     projectId: projectId(),
@@ -71,5 +79,6 @@ export const chatApi = {
   getMessages,
   updateConversation,
   deleteConversation,
+  cancelSession,
   warm,
 };

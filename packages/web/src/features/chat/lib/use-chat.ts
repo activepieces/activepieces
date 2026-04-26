@@ -311,6 +311,10 @@ export function useAgentChat({
     void stop();
     setWasCancelled(true);
     setPendingMessages([]);
+    const convId = conversationIdRef.current;
+    if (convId) {
+      void chatApi.cancelSession(convId).catch(() => undefined);
+    }
   }, [stop]);
 
   const resetChat = useCallback(() => {

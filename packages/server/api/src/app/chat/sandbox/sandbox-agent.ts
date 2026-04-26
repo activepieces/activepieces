@@ -10,43 +10,23 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { chatEventUtils } from './ai-event-utils'
 
-const sdkCache = new Map<string, SandboxAgent>()
-const sdkPending = new Map<string, Promise<SandboxAgent>>()
-
-async function getOrCreateSdk({ aiConfig }: { aiConfig: ChatAiConfig }): Promise<SandboxAgent> {
-    const cached = sdkCache.get(aiConfig.cacheKey)
-    if (cached) return cached
-    const pending = sdkPending.get(aiConfig.cacheKey)
-    if (pending) return pending
-
+async function createSdk({ aiConfig }: { aiConfig: ChatAiConfig }): Promise<SandboxAgent> {
     const e2bApiKey = system.getOrThrow(AppSystemProp.E2B_API_KEY)
-    const promise = (async () => {
-        const { e2b } = await esmImport<typeof import('sandbox-agent/e2b')>('sandbox-agent/e2b')
-        const sandbox = e2b({
-            create: {
-                apiKey: e2bApiKey,
-                envs: aiConfig.envs,
-            },
-            connect: { apiKey: e2bApiKey },
-        })
-
-        const { SandboxAgent: SandboxAgentClass } = await esmImport<typeof import('sandbox-agent')>('sandbox-agent')
-        const { PostgresSessionPersistDriver } = await import('./postgres-persist-driver')
-        const persist = new PostgresSessionPersistDriver()
-        const agent = await SandboxAgentClass.start({ sandbox, persist: persist as unknown as SessionPersistDriver })
-        sdkCache.set(aiConfig.cacheKey, agent)
-        sdkPending.delete(aiConfig.cacheKey)
-        return agent
-    })().catch((err: unknown) => {
-        sdkPending.delete(aiConfig.cacheKey)
-        throw err
+    const { e2b } = await esmImport<typeof import('sandbox-agent/e2b')>('sandbox-agent/e2b')
+    const sandbox = e2b({
+        create: { apiKey: e2bApiKey, envs: aiConfig.envs },
+        connect: { apiKey: e2bApiKey },
     })
-    sdkPending.set(aiConfig.cacheKey, promise)
-    return promise
+    const { SandboxAgent: SandboxAgentClass } = await esmImport<typeof import('sandbox-agent')>('sandbox-agent')
+    const { PostgresSessionPersistDriver } = await import('./postgres-persist-driver')
+    return SandboxAgentClass.start({
+        sandbox,
+        persist: new PostgresSessionPersistDriver() as unknown as SessionPersistDriver,
+    })
 }
 
 async function createSession({ aiConfig, mcpServerUrl, mcpToken }: CreateSessionParams): Promise<Session> {
-    const sdk = await getOrCreateSdk({ aiConfig })
+    const sdk = await createSdk({ aiConfig })
 
     const request: SessionCreateRequest = {
         agent: aiConfig.agent,
@@ -132,7 +112,7 @@ async function sendPrompt({ session, text, systemPrompt, files }: SendPromptPara
 }
 
 async function destroySession({ sessionId, aiConfig }: DestroySessionParams): Promise<void> {
-    const sdk = await getOrCreateSdk({ aiConfig })
+    const sdk = await createSdk({ aiConfig })
     await sdk.destroySession(sessionId)
 }
 
@@ -156,7 +136,7 @@ async function fetchAllEvents({ sdk, sessionId }: { sdk: SandboxAgent, sessionId
 }
 
 async function getSessionHistory({ sessionId, aiConfig }: SessionParams): Promise<ChatHistoryMessage[]> {
-    const sdk = await getOrCreateSdk({ aiConfig })
+    const sdk = await createSdk({ aiConfig })
     const allEvents = await fetchAllEvents({ sdk, sessionId })
 
     const messages: ChatHistoryMessage[] = []
@@ -276,21 +256,12 @@ function stripSystemInstructions(text: string): string {
 }
 
 async function resumeSession({ sessionId, aiConfig }: SessionParams): Promise<Session> {
-    const sdk = await getOrCreateSdk({ aiConfig })
+    const sdk = await createSdk({ aiConfig })
     const session = await sdk.resumeSession(sessionId)
     session.onPermissionRequest((req) => {
         void session.respondPermission(req.id, 'once').catch(() => undefined)
     })
     return session
-}
-
-async function dispose(): Promise<void> {
-    for (const sdk of sdkCache.values()) {
-        await sdk.destroySandbox().catch(() => undefined)
-        await sdk.dispose().catch(() => undefined)
-    }
-    sdkCache.clear()
-    sdkPending.clear()
 }
 
 // sandbox-agent only exports ESM (no CJS). TypeScript compiles import() to require() which breaks it.
@@ -330,18 +301,12 @@ type SessionParams = {
     aiConfig: ChatAiConfig
 }
 
-async function warmSdk({ aiConfig }: { aiConfig: ChatAiConfig }): Promise<void> {
-    await getOrCreateSdk({ aiConfig })
-}
-
 export const chatSandboxAgent = {
     createSession,
     sendPrompt,
     destroySession,
     resumeSession,
     getSessionHistory,
-    warmSdk,
-    dispose,
 }
 
 export const ChatSandboxConfig = {
@@ -351,7 +316,6 @@ export const ChatSandboxConfig = {
 } as const
 
 export type ChatAiConfig = {
-    cacheKey: string
     agent: string
     model: string
     envs: Record<string, string>

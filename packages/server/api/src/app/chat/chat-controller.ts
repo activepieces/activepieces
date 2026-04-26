@@ -22,11 +22,7 @@ const CHAT_PRINCIPALS = [PrincipalType.USER] as const
 export const chatController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/warm', WarmRoute, async (request) => {
-        const configured = chatService(request.log).isSandboxConfigured()
-        if (configured) {
-            void chatService(request.log).warmSandbox({ platformId: request.principal.platform.id })
-        }
-        return { configured }
+        return { configured: chatService(request.log).isSandboxConfigured() }
     })
 
     app.post('/conversations', CreateConversationRoute, async (request, reply) => {
@@ -81,6 +77,16 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             userId: request.principal.id,
             platformId: request.principal.platform.id,
         })
+    })
+
+    app.post('/conversations/:id/cancel', CancelRoute, async (request, reply) => {
+        await chatService(request.log).cancelSession({
+            id: request.params.id,
+            projectId: request.projectId,
+            userId: request.principal.id,
+            platformId: request.principal.platform.id,
+        })
+        return reply.status(StatusCodes.NO_CONTENT).send()
     })
 
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
@@ -179,9 +185,10 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 writer.write({ type: 'finish', finishReason: 'stop' })
             },
             onError: (error) => {
-                const isAbort = error instanceof Error && (error as NodeJS.ErrnoException).code === 'ECONNRESET'
-                if (isAbort) {
-                    log.debug({ err: error }, 'Chat stream closed by client')
+                const isClientDisconnect = error instanceof Error && (error as NodeJS.ErrnoException).code === 'ECONNRESET'
+                const isSandboxDestroyed = error instanceof Error && error.name === 'SandboxDestroyedError'
+                if (isClientDisconnect || isSandboxDestroyed) {
+                    log.debug({ err: error }, 'Chat stream ended (client disconnect or session cancelled)')
                 }
                 else {
                     log.error({ err: error }, 'Chat agent prompt failed')
@@ -299,6 +306,20 @@ const DeleteConversationRoute = {
 const GetMessagesRoute = {
     config: {
         security: securityAccess.project(CHAT_PRINCIPALS, Permission.READ_CHAT, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
+        querystring: CONVERSATION_QUERY,
+    },
+}
+
+const CancelRoute = {
+    config: {
+        security: securityAccess.project(CHAT_PRINCIPALS, Permission.WRITE_CHAT, {
             type: ProjectResourceType.QUERY,
         }),
     },
