@@ -32,12 +32,12 @@ export const translateAction = createAction({
     form.append('model', 'whisper-1');
 
     const headers = {
-      Authorization: `Bearer ${context.auth.secret_text}`,
+      Authorization: `Bearer ${context.auth.apiKey}`,
     };
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${baseUrl}/audio/translations`,
+      url: `${context.auth.baseUrl.replace(/\/+$/, '')}/audio/translations`,
       body: form,
       headers: {
         ...form.getHeaders(),

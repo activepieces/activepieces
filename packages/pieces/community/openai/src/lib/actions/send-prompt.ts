@@ -7,6 +7,7 @@ import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 import {
   calculateMessagesTokenSize,
+  DEFAULT_BASE_URL,
   exceedsHistoryLimit,
   notLLMs,
   reduceContextSize,
@@ -38,7 +39,8 @@ export const askOpenAI = createAction({
         }
         try {
           const openai = new OpenAI({
-            apiKey: auth.secret_text,
+            apiKey: auth.apiKey,
+            baseURL: auth.baseUrl?.trim() || DEFAULT_BASE_URL,
           });
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -122,7 +124,8 @@ export const askOpenAI = createAction({
       memoryKey: z.string().max(128).optional(),
     });
     const openai = new OpenAI({
-      apiKey: auth.secret_text,
+      apiKey: auth.apiKey,
+      baseURL: auth.baseUrl?.trim() || DEFAULT_BASE_URL,
     });
     const {
       model,

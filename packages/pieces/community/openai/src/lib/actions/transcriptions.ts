@@ -7,7 +7,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { openaiAuth } from '../auth';
 import FormData from 'form-data';
 import mime from 'mime-types';
-import { Languages, baseUrl } from '../common/common';
+import { Languages, DEFAULT_BASE_URL } from '../common/common';
 
 export const transcribeAction = createAction({
   name: 'transcribe',
@@ -48,12 +48,14 @@ export const transcribeAction = createAction({
     form.append('language', language);
 
     const headers = {
-      Authorization: `Bearer ${context.auth.secret_text}`,
+      Authorization: `Bearer ${context.auth.apiKey}`,
     };
+    const resolvedBaseUrl = (context.auth.baseUrl?.trim() || DEFAULT_BASE_URL).replace(/\/$/, '');
+
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${baseUrl}/audio/transcriptions`,
+      url: `${resolvedBaseUrl}/audio/transcriptions`,
       body: form,
       headers: {
         ...form.getHeaders(),

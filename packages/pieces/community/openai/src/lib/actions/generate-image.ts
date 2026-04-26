@@ -96,7 +96,10 @@ export const generateImage = createAction({
     }),
   },
   async run(context) {
-    const openai = new OpenAI({ apiKey: context.auth.secret_text });
+    const openai = new OpenAI({ 
+      apiKey: context.auth.apiKey,
+      baseURL: context.auth.baseUrl,
+    });
     const { quality, resolution, model, prompt } = context.propsValue;
 
     const dalleQualities = new Set(['standard', 'hd']);
@@ -129,9 +132,13 @@ export const generateImage = createAction({
         if (img.b64_json) {
           imageBuffer = Buffer.from(img.b64_json, 'base64');
         } else if (img.url) {
+          const headers = {
+            Authorization: `Bearer ${context.auth.apiKey}`,
+          };
           const downloaded = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: img.url,
+            headers,
             responseType: 'arraybuffer',
           });
           imageBuffer = Buffer.from(downloaded.body);

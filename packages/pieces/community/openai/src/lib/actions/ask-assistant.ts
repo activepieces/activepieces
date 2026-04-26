@@ -31,7 +31,8 @@ export const askAssistant = createAction({
         }
         try {
           const openai = new OpenAI({
-            apiKey: auth.secret_text,
+            apiKey: auth.apiKey,
+            baseURL: auth.baseUrl,
           });
           const assistants = await openai.beta.assistants.list();
 
@@ -70,7 +71,8 @@ export const askAssistant = createAction({
     });
 
     const openai = new OpenAI({
-      apiKey: auth.secret_text,
+      apiKey: auth.apiKey,
+      baseURL: auth.baseUrl,
     });
     const { assistant, prompt, memoryKey } = propsValue;
     const runCheckDelay = 1000;
