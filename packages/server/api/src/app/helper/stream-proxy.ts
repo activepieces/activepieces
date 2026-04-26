@@ -58,6 +58,8 @@ async function forward({ reply, hostname, path, headers, body }: StreamProxyPara
     })
 }
 
+export { filterResponseHeaders }
+
 export const streamProxy = { forward }
 
 type StreamProxyParams = {

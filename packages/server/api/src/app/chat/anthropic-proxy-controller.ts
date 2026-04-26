@@ -60,3 +60,5 @@ function rewriteModel(rawBody: string): string {
     const rewritten = `${OPENROUTER_MODEL_PREFIX}/${model}`.replace(/-(\d+)$/, '.$1')
     return rawBody.slice(0, match.index) + `"model":"${rewritten}"` + rawBody.slice(match.index + match[0].length)
 }
+
+export { rewriteModel }
