@@ -54,6 +54,7 @@ import {
   RetriedRunsSnackbar,
   RUN_IDS_QUERY_PARAM,
 } from './retried-runs-snackbar';
+import { RunsStatusChart } from './runs-status-chart';
 
 type SelectedRow = {
   id: string;
@@ -559,6 +560,7 @@ export const RunsTable = () => {
         bulkActions={bulkActions}
         onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
         customFilters={customFilters}
+        toolbarButtons={[<RunsStatusChart key="status-chart" />]}
         hidePagination={retriedRunsInQueryParams.length > 0}
       />
       <RetriedRunsSnackbar
