@@ -31,7 +31,6 @@ import { usePlatformCopilot } from './use-platform-copilot';
 export function PlatformCopilotDock() {
   const [expanded, setExpanded] = useState(false);
   const modKey = useModKey();
-  const panelRef = useRef<HTMLDivElement>(null);
 
   const open = useCallback(() => setExpanded(true), []);
   const close = useCallback(() => setExpanded(false), []);
@@ -39,7 +38,7 @@ export function PlatformCopilotDock() {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'i') {
         e.preventDefault();
         toggle();
         return;
@@ -52,19 +51,6 @@ export function PlatformCopilotDock() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [expanded, toggle, close]);
-
-  useEffect(() => {
-    if (!expanded) return;
-    const onPointerDown = (e: PointerEvent) => {
-      const target = e.target as Element | null;
-      if (!target) return;
-      if (panelRef.current && panelRef.current.contains(target)) return;
-      if (target.closest?.('[data-ap-copilot-portal]')) return;
-      close();
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    return () => document.removeEventListener('pointerdown', onPointerDown);
-  }, [expanded, close]);
 
   return (
     <div
@@ -91,7 +77,7 @@ export function PlatformCopilotDock() {
           {t('Ask Activepieces AI')}
         </span>
         <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-border/60 bg-muted/40 px-2 py-1 text-[11px] font-mono text-muted-foreground/80">
-          {modKey}K
+          {modKey}+I
         </kbd>
         <span className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm transition-transform group-hover:-translate-y-0.5 group-hover:scale-[1.04]">
           <ArrowUp className="size-[18px]" strokeWidth={2.4} />
@@ -99,7 +85,6 @@ export function PlatformCopilotDock() {
       </button>
 
       <div
-        ref={panelRef}
         aria-hidden={!expanded}
         className={cn(
           'pointer-events-auto w-full md:w-[720px] max-w-[720px] transition-all duration-150 ease-out',
@@ -214,7 +199,7 @@ function ExpandedPanel({
       <div
         ref={scrollRef}
         onScroll={onScroll}
-        className="max-h-[min(560px,calc(100vh-240px))] overflow-y-auto px-5 pb-2"
+        className="max-h-[min(560px,calc(100vh-240px))] overflow-y-auto px-5 pb-2 [scrollbar-gutter:stable]"
       >
         {showStarters ? (
           <div className="pt-3 pb-4">
@@ -302,6 +287,9 @@ const MessageRow = React.memo(
     );
   },
   (prev, next) => {
+    if (prev.message.role === 'user' && next.message.role === 'user') {
+      return prev.message.id === next.message.id;
+    }
     if (prev.isStreaming || next.isStreaming) return false;
     if (prev.message.parts.length !== next.message.parts.length) return false;
     return collectText(prev.message) === collectText(next.message);
