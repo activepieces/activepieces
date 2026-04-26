@@ -143,7 +143,7 @@ export function createHistoryReplayFilter(): {
             const isTextChunk = updateType === SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK
 
             if (state === 'suppressing') {
-                if (!isTextChunk) return false
+                if (!isTextChunk) return true
                 const text = chatEventUtils.extractContentText(update)
                 if (!text) return true
                 buffer += text

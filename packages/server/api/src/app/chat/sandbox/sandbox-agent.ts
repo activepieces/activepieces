@@ -96,6 +96,7 @@ async function sendPrompt({ session, text, systemPrompt, files }: SendPromptPara
     if (files && files.length > 0) {
         const textFiles = files.filter((f) => isTextMimeType(f.mimeType))
         const imageFiles = files.filter((f) => isImageMimeType(f.mimeType))
+        const unsupportedFiles = files.filter((f) => !isTextMimeType(f.mimeType) && !isImageMimeType(f.mimeType))
 
         if (textFiles.length > 0) {
             const fileDescriptions = textFiles.map((f) => `- ${f.name} (${f.mimeType})`).join('\n')
@@ -115,6 +116,11 @@ async function sendPrompt({ session, text, systemPrompt, files }: SendPromptPara
                 mimeType: file.mimeType,
             })
         }
+
+        if (unsupportedFiles.length > 0) {
+            const skippedNames = unsupportedFiles.map((f) => `- ${f.name} (${f.mimeType})`).join('\n')
+            userText += `\n\n[Unsupported file types — skipped]\n${skippedNames}\nOnly text (plain, CSV, Markdown, JSON) and image files are currently supported.`
+        }
     }
 
     const fullText = systemPrompt
@@ -130,6 +136,8 @@ async function destroySession({ sessionId, anthropicApiKey }: DestroySessionPara
     await sdk.destroySession(sessionId)
 }
 
+const MAX_EVENTS = 10_000
+
 async function fetchAllEvents({ sdk, sessionId }: { sdk: SandboxAgent, sessionId: string }): Promise<Array<{ sender: string, payload: unknown }>> {
     const PAGE_SIZE = 500
     const allEvents: Array<{ sender: string, payload: unknown }> = []
@@ -140,6 +148,7 @@ async function fetchAllEvents({ sdk, sessionId }: { sdk: SandboxAgent, sessionId
         for (const event of page.items) {
             allEvents.push({ sender: event.sender, payload: event.payload })
         }
+        if (allEvents.length >= MAX_EVENTS) break
         cursor = page.nextCursor
     } while (cursor)
 
