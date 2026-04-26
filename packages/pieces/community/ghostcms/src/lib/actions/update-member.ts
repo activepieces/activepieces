@@ -23,6 +23,7 @@ export const updateMember = createAction({
       displayName: 'Note',
       required: false,
     }),
+    labels: common.properties.labels(false),
     newsletters: common.properties.newsletters(false),
   },
 
@@ -40,12 +41,18 @@ export const updateMember = createAction({
       email?: string;
       name?: string;
       note?: string;
+      labels?: { name: string }[];
       newsletters?: any[];
     } = {};
 
     if (context.propsValue.email) data.email = context.propsValue.email;
     if (context.propsValue.name) data.name = context.propsValue.name;
     if (context.propsValue.note) data.note = context.propsValue.note;
+    if (context.propsValue.labels && context.propsValue.labels.length > 0) {
+      data.labels = context.propsValue.labels.map((labelName: string) => ({
+        name: labelName,
+      }));
+    }
     if (context.propsValue.newsletters)
       data.newsletters = context.propsValue.newsletters;
 

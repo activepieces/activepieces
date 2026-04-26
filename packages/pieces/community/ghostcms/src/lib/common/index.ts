@@ -6,6 +6,36 @@ import { ghostAuth } from '../..';
 
 export const common = {
   properties: {
+    labels: (required = false) => {
+      return Property.MultiSelectDropdown({
+        auth: ghostAuth,
+        displayName: 'Labels',
+        description: 'Labels to assign to the member',
+        required: required,
+        refreshers: [],
+        options: async ({ auth }) => {
+          if (!auth) {
+            return {
+              disabled: true,
+              placeholder: 'Connect your account',
+              options: [],
+            };
+          }
+
+          const labels = (
+            (await common.getLabels(auth)) as { labels: any[] }
+          ).labels.map((label: any) => {
+            return {
+              label: label.name,
+              value: label.name,
+            };
+          });
+          return {
+            options: labels,
+          };
+        },
+      });
+    },
     newsletters: (required = true) => {
       return Property.MultiSelectDropdown({
         auth: ghostAuth,
@@ -201,6 +231,18 @@ export const common = {
   async getTags(auth: any) {
     const response = await httpClient.sendRequest({
       url: `${auth.baseUrl}/ghost/api/admin/tags`,
+      method: HttpMethod.GET,
+      headers: {
+        Authorization: `Ghost ${common.jwtFromApiKey(auth.apiKey)}`,
+      },
+    });
+
+    return response.body;
+  },
+
+  async getLabels(auth: any) {
+    const response = await httpClient.sendRequest({
+      url: `${auth.baseUrl}/ghost/api/admin/labels`,
       method: HttpMethod.GET,
       headers: {
         Authorization: `Ghost ${common.jwtFromApiKey(auth.apiKey)}`,

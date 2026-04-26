@@ -22,6 +22,7 @@ export const createMember = createAction({
       displayName: 'Note',
       required: false,
     }),
+    labels: common.properties.labels(false),
     newsletters: common.properties.newsletters(false),
   },
 
@@ -32,6 +33,13 @@ export const createMember = createAction({
         newsletters.push({
           id: newsletter,
         });
+      });
+    }
+
+    const labels: { name: string }[] = [];
+    if (context.propsValue.labels) {
+      context.propsValue.labels.forEach((labelName: string) => {
+        labels.push({ name: labelName });
       });
     }
 
@@ -47,6 +55,7 @@ export const createMember = createAction({
             email: context.propsValue.email,
             name: context.propsValue.name,
             note: context.propsValue.note,
+            labels: labels,
             newsletters: newsletters,
           },
         ],
