@@ -281,22 +281,24 @@ export function useAgentChat({
   });
 
   const sdkIsStreaming = status === 'streaming' || status === 'submitted';
-  const liveMessages = convertUIMessagesToItems(uiMessages);
+  const liveMessages = useMemo(
+    () => convertUIMessagesToItems(uiMessages),
+    [uiMessages],
+  );
   const lastLiveMessage = liveMessages[liveMessages.length - 1];
   const sdkHasAssistantContent =
     lastLiveMessage?.role === 'assistant' && lastLiveMessage.blocks.length > 0;
   const hasPending = pendingMessages.length > 0 && !sdkHasAssistantContent;
   const isStreaming = sdkIsStreaming || hasPending;
 
-  function buildMessages(): ChatMessageItem[] {
+  const messages = useMemo(() => {
     if (!hasPending) return liveMessages;
     if (liveMessages.length === 0) return pendingMessages;
     const withoutEmptyAssistant = liveMessages.filter(
       (m) => !(m.role === 'assistant' && m.blocks.length === 0),
     );
     return [...withoutEmptyAssistant, createThinkingMessageItem()];
-  }
-  const messages = buildMessages();
+  }, [hasPending, liveMessages, pendingMessages]);
 
   const error = localError ?? (useChatError ? useChatError.message : null);
 

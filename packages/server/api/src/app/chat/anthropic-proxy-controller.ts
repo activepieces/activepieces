@@ -24,6 +24,9 @@ export const anthropicProxyModule: FastifyPluginAsyncZod = async (app) => {
         config: { security: securityAccess.public() },
     }, async (request, reply) => {
         const apiKey = extractHeader(request.headers[AnthropicHeader.API_KEY])
+        if (!apiKey) {
+            return reply.status(401).send({ error: 'Missing x-api-key header' })
+        }
         const version = extractHeader(request.headers[AnthropicHeader.VERSION]) ?? DEFAULT_ANTHROPIC_VERSION
 
         await streamProxy.forward({

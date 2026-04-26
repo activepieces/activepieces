@@ -5,6 +5,10 @@ import { SandboxSessionUpdateType } from './sandbox-agent'
 
 const MAX_TOOL_OUTPUT_SIZE = 64 * 1024
 
+// If text accumulated in the suppression buffer doesn't match replay markers within these limits, stop suppressing
+const SUPPRESSION_BUFFER_LIMIT = 200
+const DETECTION_BUFFER_LIMIT = 500
+
 type ChatDataParts = {
     'session-title': { title: string }
     'plan': { entries: Array<{ content: string, status: string }> }
@@ -149,7 +153,7 @@ export function createHistoryReplayFilter(): {
                     buffer = ''
                     return true
                 }
-                if (buffer.length > 200) {
+                if (buffer.length > SUPPRESSION_BUFFER_LIMIT) {
                     state = 'passthrough'
                     buffer = ''
                     return false
@@ -166,7 +170,7 @@ export function createHistoryReplayFilter(): {
                         buffer = ''
                         return true
                     }
-                    if (buffer.length > 500) {
+                    if (buffer.length > DETECTION_BUFFER_LIMIT) {
                         state = 'passthrough'
                         buffer = ''
                     }

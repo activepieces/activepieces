@@ -195,9 +195,9 @@ export const chatService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function resolveProviderApiKey({ platformId, provider, log: logger }: { platformId: string, provider: AIProviderName, log: FastifyBaseLogger }): Promise<string | null> {
+async function resolveProviderApiKey({ platformId, provider, log }: { platformId: string, provider: AIProviderName, log: FastifyBaseLogger }): Promise<string | null> {
     const { data: config } = await tryCatch(
-        async () => aiProviderService(logger).getConfigOrThrow({ platformId, provider }),
+        async () => aiProviderService(log).getConfigOrThrow({ platformId, provider }),
     )
     if (config && 'apiKey' in config.auth && config.auth.apiKey) {
         return config.auth.apiKey

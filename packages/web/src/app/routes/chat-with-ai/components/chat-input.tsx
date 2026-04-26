@@ -57,9 +57,9 @@ export function ChatInput({
       >
         {attachedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 px-3 pt-2">
-            {attachedFiles.map((file, i) => (
+            {attachedFiles.map((file) => (
               <div
-                key={i}
+                key={file.name}
                 className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-sm"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -71,7 +71,7 @@ export function ChatInput({
                   type="button"
                   onClick={() =>
                     setAttachedFiles((prev) =>
-                      prev.filter((_, idx) => idx !== i),
+                      prev.filter((f) => f.name !== file.name),
                     )
                   }
                   className="text-muted-foreground hover:text-foreground rounded-full p-0.5 transition-colors"

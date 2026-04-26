@@ -110,6 +110,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             execute: async ({ writer }) => {
                 writer.write({ type: 'start' })
 
+                // Must be shorter than common reverse-proxy idle timeouts (nginx 60s, ngrok 60s) to prevent SSE drops
                 const KEEPALIVE_INTERVAL_MS = 25_000
                 const keepalive = setInterval(() => {
                     writer.write({ type: 'data-usage', data: { inputTokens: 0, outputTokens: 0 }, transient: true })
@@ -126,11 +127,14 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 })
 
                 const historyReplayFilter = createHistoryReplayFilter()
+                let lastTitle = ''
                 const streamWriter = createStreamWriter({
                     writer,
                     textPartId: 'text',
                     reasoningPartId: 'reasoning',
                     onSessionTitle: (title) => {
+                        if (title === lastTitle) return
+                        lastTitle = title
                         void chatService(log).updateConversation({
                             id: conversationId,
                             projectId,

@@ -20,6 +20,21 @@ import {
 const PROSE_CLASSES =
   'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4';
 
+const AUTH_URL_PATTERN = /https?:\/\/[^\s]*\/authorize\?[^\s]*/;
+
+function stripAuthContent(content: string): string {
+  return content
+    .replace(/https?:\/\/[^\s]*\/authorize\?[^\s]*/g, '')
+    .replace(/Please open this URL in your browser to authorize:?\s*/gi, '')
+    .replace(/After authorizing.*$/gis, '')
+    .replace(/If the browser shows.*$/gis, '')
+    .replace(/If you see a connection error.*$/gis, '')
+    .replace(/Once you've completed.*$/gis, '')
+    .replace(/paste the full URL.*$/gis, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export function MessageContentWithAuth({
   content,
   onSend,
@@ -33,19 +48,10 @@ export function MessageContentWithAuth({
   connectedPieces?: Set<string>;
   onPieceConnected?: (piece: string) => void;
 }) {
-  const hasAuthUrl = /https?:\/\/[^\s]*\/authorize\?[^\s]*/.test(content);
+  const hasAuthUrl = AUTH_URL_PATTERN.test(content);
 
   if (hasAuthUrl) {
-    const cleanContent = content
-      .replace(/https?:\/\/[^\s]*\/authorize\?[^\s]*/g, '')
-      .replace(/Please open this URL in your browser to authorize:?\s*/gi, '')
-      .replace(/After authorizing.*$/gis, '')
-      .replace(/If the browser shows.*$/gis, '')
-      .replace(/If you see a connection error.*$/gis, '')
-      .replace(/Once you've completed.*$/gis, '')
-      .replace(/paste the full URL.*$/gis, '')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
+    const cleanContent = stripAuthContent(content);
 
     return (
       <div className="space-y-3">
