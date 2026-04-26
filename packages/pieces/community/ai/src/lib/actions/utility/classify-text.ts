@@ -41,17 +41,21 @@ export const classifyText = createAction({
       model,
       prompt: `As a text classifier, your task is to assign one of the following categories to the provided text: ${categories.join(
         ', '
-      )}. Please respond with only the selected category as a single word, and nothing else.
+      )}. Respond with only the exact category label as listed above, and nothing else.
       Text to classify: "${context.propsValue.text}"`,
     });
     const result = response.text.trim();
 
-    if (!categories.includes(result)) {
+    const matched = categories.find(
+      (c) => c.toLowerCase() === result.toLowerCase()
+    );
+
+    if (!matched) {
       throw new Error(
         'Unable to classify the text into the provided categories.'
       );
     }
 
-    return result;
+    return matched;
   },
 });
