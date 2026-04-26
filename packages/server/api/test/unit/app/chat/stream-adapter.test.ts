@@ -110,12 +110,12 @@ describe('createHistoryReplayFilter', () => {
         expect(filter.shouldSuppress(nextReplayChunk)).toBe(true)
     })
 
-    it('suppresses non-text-chunk events while in suppressing state', () => {
+    it('passes through non-text events even while in suppressing state', () => {
         const filter = createHistoryReplayFilter()
         filter.shouldSuppress(makeTextChunk(makeHistoryReplayText()))
 
         const toolCallUpdate = makeToolCallUpdate()
-        expect(filter.shouldSuppress(toolCallUpdate)).toBe(true)
+        expect(filter.shouldSuppress(toolCallUpdate)).toBe(false)
     })
 
     it('transitions from suppressing to passthrough when buffer overflows (non-replay text)', () => {
