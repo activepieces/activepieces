@@ -6,8 +6,6 @@ import {
 import {
   baserowAuth,
   BaserowAuthValue,
-  BaserowJwtAuthValue,
-  isDatabaseTokenAuth,
 } from '../auth';
 import { BaserowClient } from './client';
 import { BaserowFieldType } from './constants';
@@ -15,26 +13,7 @@ import { BaserowFieldType } from './constants';
 export async function makeClient(
   auth: BaserowAuthValue
 ): Promise<BaserowClient> {
-  if (isDatabaseTokenAuth(auth)) {
-    return new BaserowClient(auth.props.apiUrl, `Token ${auth.props.token}`);
-  }
-  const jwt = await BaserowClient.getJwtToken(
-    auth.props.apiUrl,
-    auth.props.email,
-    auth.props.password
-  );
-  return new BaserowClient(auth.props.apiUrl, `JWT ${jwt}`);
-}
-
-export async function makeJwtClient(
-  auth: BaserowJwtAuthValue
-): Promise<BaserowClient> {
-  const jwt = await BaserowClient.getJwtToken(
-    auth.props.apiUrl,
-    auth.props.email,
-    auth.props.password
-  );
-  return new BaserowClient(auth.props.apiUrl, `JWT ${jwt}`);
+  return new BaserowClient(auth.props.apiUrl, `Token ${auth.props.token}`);
 }
 
 export function formatFieldValues(
@@ -201,9 +180,7 @@ export const baserowCommon = {
                     required: false,
                     description: `Enter date in ${field.date_format} format ${
                       field.date_include_time
-                        ? 'and time in ' +
-                          field.date_time_format +
-                          ' hour format'
+                        ? 'and time in ' + field.date_time_format + ' hour format'
                         : ''
                     }.`,
                   });
