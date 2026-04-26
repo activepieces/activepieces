@@ -179,18 +179,32 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 writer.write({ type: 'finish', finishReason: 'stop' })
             },
             onError: (error) => {
-                log.error({ err: error }, 'Chat agent prompt failed')
+                const isAbort = error instanceof Error && (error as NodeJS.ErrnoException).code === 'ECONNRESET'
+                if (isAbort) {
+                    log.debug({ err: error }, 'Chat stream closed by client')
+                }
+                else {
+                    log.error({ err: error }, 'Chat agent prompt failed')
+                }
                 return 'An error occurred while processing your request'
             },
         })
 
-        pipeUIMessageStreamToResponse({
-            response: reply.raw,
-            stream,
-            headers: {
-                'X-Accel-Buffering': 'no',
-            },
-        })
+        try {
+            pipeUIMessageStreamToResponse({
+                response: reply.raw,
+                stream,
+                headers: {
+                    'X-Accel-Buffering': 'no',
+                },
+            })
+        }
+        catch (err) {
+            const isAbort = err instanceof Error && (err as NodeJS.ErrnoException).code === 'ECONNRESET'
+            if (!isAbort) {
+                log.error({ err }, 'Failed to pipe chat stream')
+            }
+        }
     })
 }
 
