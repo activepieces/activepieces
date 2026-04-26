@@ -262,6 +262,21 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
                 message: 'AP_PAUSED_FLOW_TIMEOUT_DAYS can not exceed AP_EXECUTION_DATA_RETENTION_DAYS',
             }))
         }
+
+        const frontendUrl = system.get(AppSystemProp.FRONTEND_URL)
+        if (isNil(frontendUrl)) {
+            throw new Error(JSON.stringify({
+                message: 'AP_FRONTEND_URL is required but not set. Set it to the public URL of your Activepieces instance, including the protocol (e.g. https://activepieces.example.com).',
+                docUrl: 'https://www.activepieces.com/docs/install/configuration/environment-variables',
+            }))
+        }
+        const validUrl = urlValidator(frontendUrl)
+        if (validUrl !== true) {
+            throw new Error(JSON.stringify({
+                message: `AP_FRONTEND_URL is set to "${frontendUrl}" which is not a valid URL. It must include the protocol (e.g. https://activepieces.example.com).`,
+                docUrl: 'https://www.activepieces.com/docs/install/configuration/environment-variables',
+            }))
+        }
     }
 
     const jwtSecret = await jwtUtils.getJwtSecret()
