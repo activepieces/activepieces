@@ -46,7 +46,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                     span.setAttribute('webhook.response.status', response.status)
                     await reply
                         .status(response.status)
-                        .headers(response.headers)
+                        .headers(stripCorsHeaders(response.headers))
                         .send(response.body)
                 }
                 finally {
@@ -86,7 +86,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                     span.setAttribute('webhook.response.status', response.status)
                     await reply
                         .status(response.status)
-                        .headers(response.headers)
+                        .headers(stripCorsHeaders(response.headers))
                         .send(response.body)
                 }
                 finally {
@@ -112,7 +112,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
         })
         await reply
             .status(response.status)
-            .headers(response.headers)
+            .headers(stripCorsHeaders(response.headers))
             .send(response.body)
     })
 
@@ -129,7 +129,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
         })
         await reply
             .status(response.status)
-            .headers(response.headers)
+            .headers(stripCorsHeaders(response.headers))
             .send(response.body)
     })
 
@@ -146,7 +146,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
         })
         await reply
             .status(response.status)
-            .headers(response.headers)
+            .headers(stripCorsHeaders(response.headers))
             .send(response.body)
     })
 
@@ -174,4 +174,19 @@ function extractRawPayload(request: FastifyRequest): { payload?: Record<string, 
         return { payload: request.body as Record<string, unknown> }
     }
     return {}
+}
+
+const CORS_HEADERS = new Set([
+    'access-control-allow-origin',
+    'access-control-allow-methods',
+    'access-control-allow-headers',
+    'access-control-allow-credentials',
+    'access-control-expose-headers',
+    'access-control-max-age',
+])
+
+function stripCorsHeaders(headers: Record<string, string>): Record<string, string> {
+    return Object.fromEntries(
+        Object.entries(headers).filter(([key]) => !CORS_HEADERS.has(key.toLowerCase())),
+    )
 }
