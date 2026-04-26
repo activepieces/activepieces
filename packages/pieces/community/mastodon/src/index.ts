@@ -27,7 +27,7 @@ export const mastodonAuth = PieceAuth.CustomAuth({
       defaultValue: 'https://mastodon.social/',
       required: true,
     }),
-    access_token: Property.ShortText({
+    access_token: PieceAuth.SecretText({
       displayName: 'Access Token',
       description:
         'The access token for your Mastodon account, check the documentation for how to get this',
