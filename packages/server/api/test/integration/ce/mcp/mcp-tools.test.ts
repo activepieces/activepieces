@@ -2174,4 +2174,30 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('❌')
         expect(text(result)).toContain('firstValue')
     })
+
+    it('79. ap_update_branch — rejects secondValue provided without operator', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'secondValue without operator')
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'Router',
+        })
+
+        // Both values present but no operator — ambiguous, the runtime has no
+        // comparison to perform. Reject at input.
+        const result = await apUpdateBranchTool(mcp, mockLog).execute({
+            flowId,
+            routerStepName: 'step_1',
+            branchIndex: 0,
+            conditions: [[{ firstValue: '{{trigger.subject}}', secondValue: 'urgent' }]],
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('operator')
+    })
 })

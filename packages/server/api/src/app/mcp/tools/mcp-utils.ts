@@ -180,6 +180,7 @@ const BRANCH_CONDITIONS_INPUT_SCHEMA = z.array(
             secondValue: z.string().min(1, 'secondValue must be a non-empty string when provided').optional().describe('Right-hand value — required (and non-empty) for all operators except single-value ones.'),
             caseSensitive: z.boolean().optional().describe('For text operators: whether to match case sensitively'),
         }).superRefine((cond, ctx) => {
+            // Case 1: a non-single-value operator must have a secondValue.
             if (cond.operator !== undefined
                 && !(singleValueConditions as BranchOperator[]).includes(cond.operator)
                 && cond.secondValue === undefined) {
@@ -187,6 +188,15 @@ const BRANCH_CONDITIONS_INPUT_SCHEMA = z.array(
                     code: z.ZodIssueCode.custom,
                     path: ['secondValue'],
                     message: `secondValue is required when operator is "${cond.operator}". Use a single-value operator (${SINGLE_VALUE_OPERATORS_HINT}) if you do not have a secondValue.`,
+                })
+            }
+            // Case 2: providing a secondValue without an operator is ambiguous —
+            // the runtime has no comparison to perform. Force the agent to pick one.
+            if (cond.operator === undefined && cond.secondValue !== undefined) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ['operator'],
+                    message: 'operator is required when secondValue is provided — pick a comparison operator (e.g. TEXT_CONTAINS, TEXT_EXACTLY_MATCHES, NUMBER_IS_EQUAL_TO).',
                 })
             }
         }),
@@ -221,7 +231,7 @@ function routerInvalidWarning({ stepName, trigger }: { stepName: string, trigger
     if (isNil(step) || step.valid) {
         return ''
     }
-    return `\n⚠️ The router "${stepName}" is now marked invalid (step.valid=false) — the UI will show "Incomplete" and the flow cannot be published. Inspect the branch conditions with ap_flow_structure and fix any with empty firstValue/secondValue.`
+    return `\n⚠️ The router "${stepName}" is now marked invalid (step.valid=false) — the UI will show "Incomplete" and the flow cannot be published. Inspect the branch conditions with ap_flow_structure: every condition needs a non-empty firstValue, and any non-single-value operator (TEXT_*, NUMBER_*, DATE_*, LIST_CONTAINS/LIST_DOES_NOT_CONTAIN) needs a non-empty secondValue.`
 }
 
 function publishedFlowWarning(publishedVersionId: string | null | undefined): string {
