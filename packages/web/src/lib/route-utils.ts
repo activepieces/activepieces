@@ -20,6 +20,9 @@ export const routesThatRequireProjectId = {
 export const determineDefaultRoute = (
   checkAccess: (permission: Permission) => boolean,
 ) => {
+  if (checkAccess(Permission.READ_CHAT)) {
+    return authenticationSession.appendProjectRoutePrefix('/chat');
+  }
   if (checkAccess(Permission.READ_FLOW) || checkAccess(Permission.READ_TABLE)) {
     return authenticationSession.appendProjectRoutePrefix('/automations');
   }
