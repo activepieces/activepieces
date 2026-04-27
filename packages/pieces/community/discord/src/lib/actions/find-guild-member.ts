@@ -25,7 +25,11 @@ export const discordFindGuildMemberByUsername = createAction({
   async run(configValue) {
     const request: HttpRequest<any> = {
       method: HttpMethod.GET,
-      url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/members`,
+      url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/members/search`,
+      queryParams: {
+        query: configValue.propsValue.shortText,
+        limit: '1000',
+      },
       headers: {
         authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
