@@ -1,11 +1,11 @@
+import { createOpenAI } from '@ai-sdk/openai'
+import { generateText } from 'ai'
 import { isNil, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { pieceMetadataService } from '../pieces/metadata/piece-metadata-service'
-import { createOpenAI } from '@ai-sdk/openai'
-import { generateText } from 'ai'
 
 export const aiSuggestionController: FastifyPluginAsyncZod = async (app) => {
     app.post('/suggest', SuggestAction, async (request) => {
@@ -58,11 +58,25 @@ AVAILABLE PIECES:
 
         const systemPrompt = basePrompt + piecesString + userQueryPart
 
-        const { text, usage } = await generateText({
-            model: openai('gpt-3.5-turbo-1106'),
-            prompt: systemPrompt,
-            temperature: 0.2,
-        })
+        let text = ''
+        let totalTokens = 0
+
+        try {
+            const result = await generateText({
+                model: openai('gpt-3.5-turbo-1106'),
+                prompt: systemPrompt,
+                temperature: 0.2,
+                headers: {
+                    'OpenAI-Beta': 'assistants=v1',
+                },
+            })
+            text = result.text
+            totalTokens = result.usage.totalTokens
+        }
+        catch (e) {
+            log.error(e, '[ai-suggestion.controller] AI generation failed')
+            return { suggestions: [], tokensUsed: 0, processingTimeMs: Date.now() - startTime }
+        }
 
         let suggestions: ActionSuggestion[] = []
         try {
@@ -87,7 +101,7 @@ AVAILABLE PIECES:
                 suggestedParameters: s.suggestedParameters || {},
                 reasoning: s.reasoning || '',
             })),
-            tokensUsed: usage.totalTokens,
+            tokensUsed: totalTokens,
             processingTimeMs: Date.now() - startTime,
         }
     })
