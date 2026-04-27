@@ -23,6 +23,7 @@ export const linearCreateComment = createAction({
     const comment: LinearDocument.CommentCreateInput = {
       issueId: propsValue.issue_id!,
       body: propsValue.body,
+      userId: propsValue.user_id ?? undefined,
     };
 
     const client = makeClient(auth);
