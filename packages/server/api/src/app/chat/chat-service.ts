@@ -15,6 +15,9 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { buildPaginator } from '../helper/pagination/build-paginator'
+import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { Order } from '../helper/pagination/paginator'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { mcpServerService } from '../mcp/mcp-service'
@@ -71,32 +74,26 @@ export const chatService = (log: FastifyBaseLogger) => ({
     },
 
     async listConversations({ projectId, userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<ChatConversation>> {
+        const decodedCursor = paginationHelper.decodeCursor(cursor)
+        const paginator = buildPaginator({
+            entity: ChatConversationEntity,
+            query: {
+                limit,
+                orderBy: [
+                    { field: 'created', order: Order.DESC },
+                    { field: 'id', order: Order.DESC },
+                ],
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
+        })
+
         const queryBuilder = conversationRepo()
-            .createQueryBuilder('c')
-            .where('c.projectId = :projectId', { projectId })
-            .andWhere('c.userId = :userId', { userId })
-            .orderBy('c.created', 'DESC')
-            .addOrderBy('c.id', 'DESC')
-            .take(limit + 1)
+            .createQueryBuilder('chat_conversation')
+            .where({ projectId, userId })
 
-        if (!isNil(cursor)) {
-            const [cursorDate, cursorId] = cursor.split('|')
-            queryBuilder.andWhere(
-                '(c.created < :cursorDate OR (c.created = :cursorDate AND c.id < :cursorId))',
-                { cursorDate, cursorId },
-            )
-        }
-
-        const results = await queryBuilder.getMany()
-        const hasMore = results.length > limit
-        const data = hasMore ? results.slice(0, limit) : results
-        const last = data[data.length - 1]
-
-        return {
-            data,
-            next: hasMore && last ? `${new Date(last.created).toISOString()}|${last.id}` : null,
-            previous: null,
-        }
+        const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
+        return paginationHelper.createPage(data, paginationCursor)
     },
 
     async getConversationOrThrow({ id, projectId, userId }: GetConversationParams): Promise<ChatConversation> {
