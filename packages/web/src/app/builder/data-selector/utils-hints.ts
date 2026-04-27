@@ -12,26 +12,18 @@ import { stringUtils } from '@/lib/string-utils';
 import { pathHelpers } from './path-helpers';
 import { DataSelectorTreeNode, DataSelectorTreeNodeDataUnion } from './type';
 
-function resolveLabel(field: HintField): string {
-  return field.label ?? stringUtils.titleCase(field.key);
-}
-
-function resolveChildPath(child: HintField, parentPath: string): string {
-  if (child.value) return child.value;
-  return `${parentPath}.${child.key}`;
-}
-
-function resolveItemChildPath(child: HintField): string {
-  return child.value ?? child.key;
-}
-
-function buildFieldChildNode(
-  stepName: string,
-  child: HintField,
-  sampleData: unknown,
-  parentPath: string,
-): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
-  const rawPath = resolveChildPath(child, parentPath);
+function buildFieldChildNode({
+  stepName,
+  child,
+  sampleData,
+  parentPath,
+}: {
+  stepName: string;
+  child: HintField;
+  sampleData: unknown;
+  parentPath: string;
+}): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
+  const rawPath = hintUtils.resolveFieldPath(child, parentPath);
   const { value, resolvedPath } = pathUtils.resolvePathWithWrapperFallback(
     sampleData,
     rawPath,
@@ -46,21 +38,27 @@ function buildFieldChildNode(
     data: {
       type: 'value',
       value,
-      displayName: resolveLabel(child),
+      displayName: hintUtils.resolveFieldLabel(child),
       propertyPath,
       insertable: true,
     },
   };
 }
 
-function buildItemChildNode(
-  stepName: string,
-  child: HintField,
-  parentArrayPath: string,
-  itemIndex: number,
-  sampleData: unknown,
-): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
-  const relativePath = resolveItemChildPath(child);
+function buildItemChildNode({
+  stepName,
+  child,
+  parentArrayPath,
+  itemIndex,
+  sampleData,
+}: {
+  stepName: string;
+  child: HintField;
+  parentArrayPath: string;
+  itemIndex: number;
+  sampleData: unknown;
+}): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
+  const relativePath = hintUtils.resolveItemFieldPath(child);
   const fullPath = `${parentArrayPath}[${itemIndex}].${relativePath}`;
   const { value, resolvedPath } = pathUtils.resolvePathWithWrapperFallback(
     sampleData,
@@ -76,18 +74,22 @@ function buildItemChildNode(
     data: {
       type: 'value',
       value,
-      displayName: resolveLabel(child),
+      displayName: hintUtils.resolveFieldLabel(child),
       propertyPath,
       insertable: true,
     },
   };
 }
 
-function buildFieldNode(
-  stepName: string,
-  field: HintField,
-  sampleData: unknown,
-): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
+function buildFieldNode({
+  stepName,
+  field,
+  sampleData,
+}: {
+  stepName: string;
+  field: HintField;
+  sampleData: unknown;
+}): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const rawValuePath = field.value ?? field.key;
   const { value, resolvedPath: valuePath } =
     pathUtils.resolvePathWithWrapperFallback(sampleData, rawValuePath);
@@ -95,14 +97,20 @@ function buildFieldNode(
     stepName,
     valuePath,
   );
-  const label = resolveLabel(field);
+  const label = hintUtils.resolveFieldLabel(field);
 
   if (field.listItems && field.listItems.length > 0 && Array.isArray(value)) {
     const listItems = field.listItems;
     const listChildren = value.map((_, idx) => {
       const itemLabel = `${label} ${idx + 1}`;
       const itemChildren = listItems.map((child) =>
-        buildItemChildNode(stepName, child, valuePath, idx, sampleData),
+        buildItemChildNode({
+          stepName,
+          child,
+          parentArrayPath: valuePath,
+          itemIndex: idx,
+          sampleData,
+        }),
       );
       return {
         key: `${propertyPath}_item_${idx}`,
@@ -198,7 +206,12 @@ function buildFieldNode(
 
   if (field.children && field.children.length > 0) {
     const childNodes = field.children.map((child) =>
-      buildFieldChildNode(stepName, child, sampleData, valuePath),
+      buildFieldChildNode({
+        stepName,
+        child,
+        sampleData,
+        parentPath: valuePath,
+      }),
     );
     return {
       key: propertyPath,
@@ -238,7 +251,7 @@ function buildTreeFromHints({
 }): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const allFields = [...(hints.hero ?? []), ...(hints.secondary ?? [])];
   const children = allFields.map((field) =>
-    buildFieldNode(stepName, field, sampleData),
+    buildFieldNode({ stepName, field, sampleData }),
   );
 
   return {

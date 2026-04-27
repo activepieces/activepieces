@@ -10,6 +10,7 @@ import {
   FileCode,
   Hash,
   HardDrive,
+  Image as ImageIcon,
   Link2,
   List,
   ToggleLeft,
@@ -35,6 +36,7 @@ function FieldTypeIcon({
 
   if (format === 'email') return <AtSign className={iconClass} />;
   if (format === 'url') return <Link2 className={iconClass} />;
+  if (format === 'image') return <ImageIcon className={iconClass} />;
   if (format === 'date' || format === 'datetime')
     return <Calendar className={iconClass} />;
   if (format === 'html') return <FileCode className={iconClass} />;
@@ -42,6 +44,7 @@ function FieldTypeIcon({
   if (format === 'filesize') return <HardDrive className={iconClass} />;
   if (format === 'duration') return <Clock className={iconClass} />;
   if (format === 'boolean') return <ToggleLeft className={iconClass} />;
+  if (format === 'number') return <Hash className={iconClass} />;
 
   if (isNil(value)) return <CircleHelp className={iconClass} />;
   if (Array.isArray(value)) return <List className={iconClass} />;

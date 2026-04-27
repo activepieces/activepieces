@@ -22,6 +22,7 @@ export type HintField = {
   format?: FieldFormat;
   description?: string;
   dynamicKey?: true;
+  currency?: string;
   children?: HintField[];
   listItems?: HintField[];
 };
@@ -34,6 +35,7 @@ export const HintField: z.ZodType<HintField> = z.lazy(() =>
     format: FieldFormat.optional(),
     description: z.string().optional(),
     dynamicKey: z.literal(true).optional(),
+    currency: z.string().optional(),
     children: z.array(HintField).optional(),
     listItems: z.array(HintField).optional(),
   }),

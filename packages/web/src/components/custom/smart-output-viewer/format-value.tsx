@@ -13,7 +13,6 @@ import { HintField, FieldFormat } from './types';
 
 const MAX_TEXT_LENGTH = 200;
 const SAFE_URL_PROTOCOLS = new Set(['http:', 'https:']);
-const DEFAULT_CURRENCY = 'USD';
 
 function getValueByDotPath(obj: unknown, path: string): unknown {
   return pathUtils.getValueByDotPath(obj, path);
@@ -57,9 +56,11 @@ function toFiniteNumber(value: unknown): number | undefined {
 function FormatSingleValue({
   value,
   format,
+  currency,
 }: {
   value: unknown;
   format: FieldFormat | undefined;
+  currency?: string;
 }) {
   if (isNil(value) || value === '') {
     return <span className="text-muted-foreground italic">{t('empty')}</span>;
@@ -73,7 +74,7 @@ function FormatSingleValue({
     }
     return (
       <a
-        href={`mailto:${encodeURIComponent(stringValue)}`}
+        href={`mailto:${stringValue}`}
         className="text-primary underline-offset-4 hover:underline"
         title={stringValue}
       >
@@ -132,7 +133,7 @@ function FormatSingleValue({
   }
 
   if (format === 'boolean') {
-    return <span>{value ? 'Yes' : 'No'}</span>;
+    return <span>{value ? t('Yes') : t('No')}</span>;
   }
 
   if (format === 'filesize') {
@@ -159,14 +160,13 @@ function FormatSingleValue({
   if (format === 'currency') {
     const n = toFiniteNumber(value);
     if (n !== undefined) {
-      return (
-        <span>
-          {new Intl.NumberFormat(undefined, {
+      const formatted = currency
+        ? new Intl.NumberFormat(undefined, {
             style: 'currency',
-            currency: DEFAULT_CURRENCY,
-          }).format(n)}
-        </span>
-      );
+            currency,
+          }).format(n)
+        : formatUtils.formatNumber(n);
+      return <span>{formatted}</span>;
     }
   }
 
@@ -183,9 +183,11 @@ function FormatSingleValue({
 function PrimitiveArrayPreview({
   items,
   format,
+  currency,
 }: {
   items: unknown[];
   format: FieldFormat | undefined;
+  currency?: string;
 }) {
   if (items.length === 0) {
     return <span className="text-muted-foreground italic">{t('empty')}</span>;
@@ -193,7 +195,7 @@ function PrimitiveArrayPreview({
   const parts = items.map((item, idx) => (
     <span key={`${idx}-${String(item)}`}>
       {idx > 0 && <span className="text-muted-foreground">, </span>}
-      <FormatSingleValue value={item} format={format} />
+      <FormatSingleValue value={item} format={format} currency={currency} />
     </span>
   ));
   return <span className="break-words">{parts}</span>;
@@ -208,7 +210,13 @@ function FormatValue({ value, field }: FormatValueProps) {
 
   if (Array.isArray(value) && !field.listItems) {
     if (hintUtils.isPrimitiveArray(value)) {
-      return <PrimitiveArrayPreview items={value} format={field.format} />;
+      return (
+        <PrimitiveArrayPreview
+          items={value}
+          format={field.format}
+          currency={field.currency}
+        />
+      );
     }
     return (
       <Badge variant="outline">
@@ -265,7 +273,13 @@ function FormatValue({ value, field }: FormatValueProps) {
     );
   }
 
-  return <FormatSingleValue value={value} format={field.format} />;
+  return (
+    <FormatSingleValue
+      value={value}
+      format={field.format}
+      currency={field.currency}
+    />
+  );
 }
 
 export {

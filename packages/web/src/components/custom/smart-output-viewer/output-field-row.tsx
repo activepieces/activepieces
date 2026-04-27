@@ -42,7 +42,11 @@ function ChildFieldRow({
         {isNil(childValue) || childValue === '' ? (
           <span className="text-muted-foreground italic">{t('empty')}</span>
         ) : (
-          <FormatSingleValue value={childValue} format={child.format} />
+          <FormatSingleValue
+            value={childValue}
+            format={child.format}
+            currency={child.currency}
+          />
         )}
       </span>
       <InlineCopyButton value={childValue} />
@@ -85,8 +89,9 @@ function ListItemRow({
 
   return (
     <>
-      <div
-        className="group flex items-center gap-3 py-1.5 px-3 pl-10 hover:bg-accent/50 cursor-pointer"
+      <button
+        type="button"
+        className="group flex items-center gap-3 py-1.5 px-3 pl-10 hover:bg-accent/50 cursor-pointer w-full text-left"
         onClick={() => setItemExpanded(!itemExpanded)}
       >
         <span className="flex items-center gap-1 text-sm text-muted-foreground min-w-[120px] max-w-[160px] shrink-0">
@@ -97,7 +102,7 @@ function ListItemRow({
           )}
           <span className="truncate">{itemLabel}</span>
         </span>
-      </div>
+      </button>
       {itemExpanded && (
         <div>
           {itemChildren.map((child) => {
@@ -122,6 +127,7 @@ function ListItemRow({
                     <FormatSingleValue
                       value={childValue}
                       format={child.format}
+                      currency={child.currency}
                     />
                   )}
                 </span>
@@ -226,7 +232,9 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
       {expanded && isDynamicMap && (
         <div className="pb-1">
           {dynamicEntries.map(([entryKey]) => {
-            const quotedKey = entryKey.replace(/"/g, '\\"');
+            const quotedKey = entryKey
+              .replace(/\\/g, '\\\\')
+              .replace(/"/g, '\\"');
             return (
               <ChildFieldRow
                 key={entryKey}
@@ -286,7 +294,11 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
                     {t('empty')}
                   </span>
                 ) : (
-                  <FormatSingleValue value={item} format={field.format} />
+                  <FormatSingleValue
+                    value={item}
+                    format={field.format}
+                    currency={field.currency}
+                  />
                 )}
               </span>
               <InlineCopyButton value={item} />

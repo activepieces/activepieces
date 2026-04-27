@@ -67,6 +67,18 @@ function FieldRow({
     return <TestStepSection stepName={node.data.stepName} />;
   }
 
+  if (node.data.type === 'chunk') {
+    return (
+      <div
+        className="flex items-center gap-2 min-h-[36px] text-sm text-muted-foreground/70 italic"
+        style={{ paddingLeft: 16 + depth * 20 }}
+      >
+        <div className="shrink-0 w-4" />
+        <span className="truncate">{node.data.displayName}</span>
+      </div>
+    );
+  }
+
   if (node.data.type !== 'value') return null;
 
   const hasChildren = node.children && node.children.length > 0;
@@ -129,7 +141,7 @@ function FieldRow({
                     'text-sm truncate flex-1 min-w-0',
                     isEmpty
                       ? 'text-muted-foreground/40 italic'
-                      : 'text-foreground/70',
+                      : 'text-primary',
                   )}
                   title={preview?.isTruncated ? preview.fullText : undefined}
                 >

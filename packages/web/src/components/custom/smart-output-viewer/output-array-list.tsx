@@ -36,9 +36,10 @@ function ArrayItemRow({ item, index }: { item: unknown; index: number }) {
 
   return (
     <div className="border-b border-dividers last:border-b-0">
-      <div
+      <button
+        type="button"
         onClick={() => setExpanded(!expanded)}
-        className="group flex items-center gap-3 py-2 px-4 hover:bg-accent/50 cursor-pointer"
+        className="group flex items-center gap-3 py-2 px-4 hover:bg-accent/50 cursor-pointer w-full text-left"
       >
         <div className="shrink-0 w-4 h-4 flex items-center justify-center text-muted-foreground">
           {expanded ? (
@@ -58,7 +59,7 @@ function ArrayItemRow({ item, index }: { item: unknown; index: number }) {
             {previewValues}
           </span>
         )}
-      </div>
+      </button>
       {expanded && (
         <div className="pb-1">
           {entries.map(([key, value]) => (

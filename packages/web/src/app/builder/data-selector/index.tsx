@@ -1,14 +1,18 @@
+import { PieceMetadataModel } from '@activepieces/pieces-framework';
 import {
   FlowAction,
   FlowActionType,
   FlowTrigger,
   FlowTriggerType,
+  LocalesEnum,
   flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
+import { useQueries } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { SearchXIcon } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { SearchInput } from '@/components/custom/search-input';
@@ -102,149 +106,160 @@ const doesElementHaveAnInputThatUsesMentions = (
 
 const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { i18n } = useTranslation();
   const [sizeState, setSizeState] = useState<DataSelectorSizeState>(
     DataSelectorSizeState.DOCKED,
   );
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'friendly' | 'advanced'>('friendly');
-  const [hintsMap, setHintsMap] = useState<
-    Record<string, OutputDisplayHints | null>
-  >({});
   const [showDataSelector, setShowDataSelector] = useState(false);
 
   const { steps, sampleData, isFocusInsideListMapperModeInput } =
     useBuilderStateContext(getStepsAndData);
 
-  const advancedStructure = buildAdvancedStructure(
-    steps,
-    sampleData,
-    isFocusInsideListMapperModeInput,
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-    const fetchHints = async () => {
-      const newHintsMap: Record<string, OutputDisplayHints | null> = {};
-      const pairs = steps
+  const piecePairs = useMemo(
+    () =>
+      steps
         .map((step) => {
           if (step.type === FlowActionType.PIECE) {
             return {
-              step,
+              stepName: step.name,
               pieceName: step.settings.pieceName,
+              pieceVersion: step.settings.pieceVersion,
               stepKey: step.settings.actionName,
             };
           }
           if (step.type === FlowTriggerType.PIECE) {
             return {
-              step,
+              stepName: step.name,
               pieceName: step.settings.pieceName,
+              pieceVersion: step.settings.pieceVersion,
               stepKey: step.settings.triggerName,
             };
           }
-          return { step, pieceName: undefined, stepKey: undefined };
+          return null;
         })
         .filter(
           (
             entry,
-          ): entry is typeof entry & { pieceName: string; stepKey: string } =>
-            Boolean(entry.pieceName) && Boolean(entry.stepKey),
-        );
+          ): entry is {
+            stepName: string;
+            pieceName: string;
+            pieceVersion: string;
+            stepKey: string;
+          } =>
+            entry !== null &&
+            Boolean(entry.pieceName) &&
+            Boolean(entry.stepKey),
+        ),
+    [steps],
+  );
 
-      const results = await Promise.all(
-        pairs.map(async ({ pieceName, stepKey }) => {
-          try {
-            const piece = await piecesApi.get({ name: pieceName });
-            return (
-              piece.triggers?.[stepKey]?.outputDisplayHints ??
-              piece.actions?.[stepKey]?.outputDisplayHints ??
-              null
-            );
-          } catch {
-            return null;
-          }
+  const pieceQueries = useQueries({
+    queries: piecePairs.map(({ pieceName, pieceVersion }) => ({
+      queryKey: ['piece', pieceName, pieceVersion],
+      queryFn: () =>
+        piecesApi.get({
+          name: pieceName,
+          version: pieceVersion,
+          locale: i18n.language as LocalesEnum,
         }),
-      );
+      staleTime: Infinity,
+    })),
+  });
 
-      pairs.forEach(({ step }, idx) => {
-        newHintsMap[step.name] = results[idx];
-      });
+  const hintsMap = useMemo<Record<string, OutputDisplayHints | null>>(() => {
+    const result: Record<string, OutputDisplayHints | null> = {};
+    piecePairs.forEach(({ stepName, stepKey }, idx) => {
+      const piece = pieceQueries[idx]?.data as PieceMetadataModel | undefined;
+      result[stepName] =
+        piece?.triggers?.[stepKey]?.outputDisplayHints ??
+        piece?.actions?.[stepKey]?.outputDisplayHints ??
+        null;
+    });
+    return result;
+  }, [piecePairs, pieceQueries]);
 
-      if (!cancelled) {
-        setHintsMap(newHintsMap);
-      }
-    };
-    fetchHints();
-    return () => {
-      cancelled = true;
-    };
-  }, [steps, sampleData]);
-
-  const friendlyStructure = steps.map((step) => {
-    const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
-    const stepData = sampleData[step.name];
-
-    if (
-      typeof stepData === 'string' ||
-      typeof stepData === 'number' ||
-      typeof stepData === 'boolean'
-    ) {
-      return {
-        key: step.name,
-        data: {
-          type: 'value' as const,
-          value: '',
-          displayName,
-          propertyPath: step.name,
-          insertable: false,
-        },
-        children: [
-          {
-            key: `${step.name}_value`,
-            data: {
-              type: 'value' as const,
-              value: stepData,
-              displayName: t('Result'),
-              propertyPath: step.name,
-              insertable: true,
-            },
-          },
-        ],
-      };
-    }
-
-    if (Array.isArray(stepData) && stepData.length > 0) {
-      return hintsTreeUtils.buildTreeFromArray({
-        stepName: step.name,
-        displayName,
-        items: stepData,
-      });
-    }
-
-    const hints = hintsMap[step.name];
-    if (hints) {
-      return hintsTreeUtils.buildTreeFromHints({
-        stepName: step.name,
-        displayName,
-        hints,
-        sampleData: stepData,
-      });
-    }
-    try {
-      return dataSelectorUtils.traverseStep(
-        step,
+  const advancedStructure = useMemo(
+    () =>
+      buildAdvancedStructure(
+        steps,
         sampleData,
         isFocusInsideListMapperModeInput,
-      );
-    } catch {
-      return {
-        key: `error-${step.name}`,
-        data: {
-          type: 'chunk' as const,
-          displayName: `Error loading ${step.name}`,
-        },
-      };
-    }
-  });
+      ),
+    [steps, sampleData, isFocusInsideListMapperModeInput],
+  );
+
+  const friendlyStructure = useMemo(
+    () =>
+      steps.map((step) => {
+        const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
+        const stepData = sampleData[step.name];
+
+        if (
+          typeof stepData === 'string' ||
+          typeof stepData === 'number' ||
+          typeof stepData === 'boolean'
+        ) {
+          return {
+            key: step.name,
+            data: {
+              type: 'value' as const,
+              value: '',
+              displayName,
+              propertyPath: step.name,
+              insertable: false,
+            },
+            children: [
+              {
+                key: `${step.name}_value`,
+                data: {
+                  type: 'value' as const,
+                  value: stepData,
+                  displayName: t('Result'),
+                  propertyPath: step.name,
+                  insertable: true,
+                },
+              },
+            ],
+          };
+        }
+
+        if (Array.isArray(stepData) && stepData.length > 0) {
+          return hintsTreeUtils.buildTreeFromArray({
+            stepName: step.name,
+            displayName,
+            items: stepData,
+          });
+        }
+
+        const hints = hintsMap[step.name];
+        if (hints) {
+          return hintsTreeUtils.buildTreeFromHints({
+            stepName: step.name,
+            displayName,
+            hints,
+            sampleData: stepData,
+          });
+        }
+        try {
+          return dataSelectorUtils.traverseStep(
+            step,
+            sampleData,
+            isFocusInsideListMapperModeInput,
+          );
+        } catch {
+          return {
+            key: `error-${step.name}`,
+            data: {
+              type: 'chunk' as const,
+              displayName: `Error loading ${step.name}`,
+            },
+          };
+        }
+      }),
+    [steps, sampleData, hintsMap, isFocusInsideListMapperModeInput],
+  );
 
   const currentStructure =
     viewMode === 'friendly' ? friendlyStructure : advancedStructure;

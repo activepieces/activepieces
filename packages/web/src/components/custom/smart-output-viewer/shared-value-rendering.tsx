@@ -9,6 +9,7 @@ import { stringUtils } from '@/lib/string-utils';
 import { FieldTypeIcon } from './field-type-icon';
 
 const formatKey = stringUtils.titleCase;
+const MAX_NESTED_DEPTH = 10;
 
 function truncateValue(value: unknown): string {
   if (isNil(value) || value === '') return '';
@@ -53,13 +54,25 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
 
   const isNestedObject = isObject(value);
 
+  if (isNestedObject && depth >= MAX_NESTED_DEPTH) {
+    return (
+      <div
+        className="py-1.5 text-xs text-muted-foreground italic"
+        style={{ paddingLeft, paddingRight: 16 }}
+      >
+        {label}: {t('Too deep to display')}
+      </div>
+    );
+  }
+
   if (isNestedObject) {
     const nestedEntries = Object.entries(value);
     return (
       <div>
-        <div
+        <button
+          type="button"
           onClick={() => setExpanded(!expanded)}
-          className="group flex items-center gap-3 py-1.5 hover:bg-accent/50 cursor-pointer"
+          className="group flex items-center gap-3 py-1.5 hover:bg-accent/50 cursor-pointer w-full text-left"
           style={{ paddingLeft, paddingRight: 16 }}
         >
           <div className="shrink-0 w-4 h-4 flex items-center justify-center text-muted-foreground">
@@ -80,7 +93,7 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
             {truncateValue(value)}
           </span>
           <InlineCopyButton value={value} />
-        </div>
+        </button>
         {expanded && (
           <div>
             {nestedEntries.map(([key, childValue]) => (
