@@ -75,7 +75,7 @@ export const linearNewIssue = createTrigger({
         webhookId: (await webhook.webhook).id,
       });
     } else {
-      console.error('Failed to create the webhook');
+      throw new Error('Failed to create the Linear webhook for new-issue trigger');
     }
   },
   async onDisable(context) {
