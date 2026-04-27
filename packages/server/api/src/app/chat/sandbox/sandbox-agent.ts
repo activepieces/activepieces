@@ -117,14 +117,27 @@ function isTextMimeType(mimeType: string): boolean {
     return TEXT_MIME_TYPES.has(mimeType)
 }
 
+function isPdfMimeType(mimeType: string): boolean {
+    return mimeType === 'application/pdf'
+}
+
+async function extractPdfText({ data }: { data: string }): Promise<string> {
+    const { extractText, getDocumentProxy } = await import('unpdf')
+    const buffer = Buffer.from(data, 'base64')
+    const pdf = await getDocumentProxy(new Uint8Array(buffer))
+    const { text } = await extractText(pdf, { mergePages: true })
+    return text
+}
+
 async function sendPrompt({ session, text, systemPrompt, files }: SendPromptParams): Promise<void> {
     let userText = text
     const contentBlocks: Array<{ type: 'text', text: string } | { type: 'image', data: string, mimeType: string }> = []
 
     if (files && files.length > 0) {
         const textFiles = files.filter((f) => isTextMimeType(f.mimeType))
+        const pdfFiles = files.filter((f) => isPdfMimeType(f.mimeType))
         const imageFiles = files.filter((f) => isImageMimeType(f.mimeType))
-        const unsupportedFiles = files.filter((f) => !isTextMimeType(f.mimeType) && !isImageMimeType(f.mimeType))
+        const unsupportedFiles = files.filter((f) => !isTextMimeType(f.mimeType) && !isPdfMimeType(f.mimeType) && !isImageMimeType(f.mimeType))
 
         if (textFiles.length > 0) {
             const fileDescriptions = textFiles.map((f) => `- ${f.name} (${f.mimeType})`).join('\n')
@@ -133,6 +146,18 @@ async function sendPrompt({ session, text, systemPrompt, files }: SendPromptPara
                 contentBlocks.push({
                     type: 'text',
                     text: `\n--- File: ${file.name} ---\n${Buffer.from(file.data, 'base64').toString('utf-8')}`,
+                })
+            }
+        }
+
+        if (pdfFiles.length > 0) {
+            const fileDescriptions = pdfFiles.map((f) => `- ${f.name} (PDF)`).join('\n')
+            userText += `\n\n[Attached PDF files — extracted text provided inline below]\n${fileDescriptions}`
+            for (const file of pdfFiles) {
+                const pdfText = await extractPdfText({ data: file.data })
+                contentBlocks.push({
+                    type: 'text',
+                    text: `\n--- File: ${file.name} ---\n${pdfText}`,
                 })
             }
         }
@@ -147,7 +172,7 @@ async function sendPrompt({ session, text, systemPrompt, files }: SendPromptPara
 
         if (unsupportedFiles.length > 0) {
             const skippedNames = unsupportedFiles.map((f) => `- ${f.name} (${f.mimeType})`).join('\n')
-            userText += `\n\n[Unsupported file types — skipped]\n${skippedNames}\nOnly text (plain, CSV, Markdown, JSON) and image files are currently supported.`
+            userText += `\n\n[Unsupported file types — skipped]\n${skippedNames}\nOnly text, PDF, and image files are currently supported.`
         }
     }
 

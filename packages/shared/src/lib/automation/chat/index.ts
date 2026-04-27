@@ -9,6 +9,7 @@ const CHAT_ALLOWED_MIME_TYPES = [
     'image/png', 'image/jpeg', 'image/gif', 'image/webp',
     'text/plain', 'text/csv', 'text/markdown',
     'application/json',
+    'application/pdf',
 ] as const
 
 const SAFE_FILENAME = /^[^\x00-\x1f\r\n]*$/
