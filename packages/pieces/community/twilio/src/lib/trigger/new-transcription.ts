@@ -67,10 +67,10 @@ const polling: Polling<
       for (const recording of transcriptions) {
         const ts = new Date(recording.date_created).getTime();
 
-        if (recording.status !== 'completed') continue;
-
         if (isTest || ts > lastFetchEpochMS) {
-          results.push(recording);
+          if (recording.status === 'completed') {
+            results.push(recording);
+          }
         } else {
           stop = true;
           break;
