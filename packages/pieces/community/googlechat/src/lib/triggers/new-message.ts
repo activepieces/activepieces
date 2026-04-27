@@ -30,8 +30,8 @@ export const newMessage = createTrigger({
         event_type: 'google.workspace.chat.message.v1.created',
         projectId: projectId as string,
       })
-      .catch((err) => {
-        console.log('Error cleaning up webhook resources', err);
+      .catch(() => {
+        // best-effort cleanup — ignore errors so setup can continue
       });
 
     await googleChatAPIService.createPubSubTopic({
@@ -69,8 +69,8 @@ export const newMessage = createTrigger({
         event_type: 'google.workspace.chat.message.v1.created',
         projectId: projectId as string,
       })
-      .catch((err) => {
-        console.log('Error cleaning up webhook resources during disable', err);
+      .catch(() => {
+        // best-effort cleanup — ignore errors so disable can complete
       });
   },
   async run(context) {
