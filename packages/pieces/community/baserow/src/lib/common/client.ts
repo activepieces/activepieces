@@ -247,4 +247,12 @@ export class BaserowClient {
       headers: { Authorization: this.authHeader },
     });
   }
+  async uploadFileFromUrl({ url }: { url: string }): Promise<Record<string, unknown>> {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      `/user-files/upload-via-url/`,
+      undefined,
+      { url }
+    );
+  }
 }
