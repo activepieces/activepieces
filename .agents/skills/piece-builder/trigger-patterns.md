@@ -1,5 +1,7 @@
 # Trigger Patterns
 
+> **AI Metadata is mandatory for every trigger.** Every `createTrigger` call must include an `infoForLLM` bundle with `description`, and every input property on the trigger must carry a `description` (with an example baked in where useful). See `SKILL.md` → AI Metadata section for the rules.
+
 Two main types: **Polling** (check API periodically) and **Webhook** (receive push notifications).
 
 Prefer webhooks when the API supports them -- they are instant and use fewer resources.
@@ -49,6 +51,10 @@ export const newRecordTrigger = createTrigger({
   name: 'new_record',
   displayName: 'New Record',
   description: 'Triggers when a new record is created',
+  // REQUIRED: AI metadata bundle read by LLM/MCP agents.
+  infoForLLM: {
+    description: 'Fires when a new record is created in My App. Use to start workflows when a customer, task, or document is added. Polls every ~5 minutes.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.POLLING,
@@ -123,6 +129,10 @@ export const newRecordTrigger = createTrigger({
   name: 'new_record',
   displayName: 'New Record',
   description: 'Triggers when a new record is created in a project',
+  // REQUIRED: AI metadata bundle.
+  infoForLLM: {
+    description: 'Fires when a new record is created in a specific project in My App. Use to start workflows scoped to one project (e.g. notify the project team when a task is added). Polls every ~5 minutes.',
+  },
   props,
   sampleData: {},
   type: TriggerStrategy.POLLING,
@@ -149,6 +159,10 @@ export const newRecordWebhookTrigger = createTrigger({
   name: 'new_record_webhook',
   displayName: 'New Record',
   description: 'Triggers when a new record is created',
+  // REQUIRED: AI metadata bundle.
+  infoForLLM: {
+    description: 'Fires in real time when a new record is created in My App. Use to start workflows the moment a customer, task, or document is added -- no polling delay.',
+  },
   props: {},
   sampleData: {
     id: '123',

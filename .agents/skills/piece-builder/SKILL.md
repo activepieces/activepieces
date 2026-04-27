@@ -139,8 +139,9 @@ Copy config files from an existing simple piece (e.g. `packages/pieces/core/qrco
 | HTTP client, shared helpers, pagination         | `common-patterns.md`  |
 | Every prop and dropdown **(mandatory for all)** | `ux-guidelines.md`    |
 | Every return value **(mandatory for all)**      | `output-quality.md`   |
+| **AI metadata (mandatory on every action & trigger)** | `SKILL.md` → AI Metadata section |
 
-`ux-guidelines.md` and `output-quality.md` apply to **every** action and trigger -- read them before starting, not only when unsure.
+`ux-guidelines.md`, `output-quality.md`, and the **AI Metadata** section apply to **every** action and trigger -- read them before starting, not only when unsure.
 
 ### Step 5: WIRE & VERIFY
 
@@ -288,13 +289,79 @@ Every action output must be directly mappable to Google Sheets, Excel, and Activ
 
 Full patterns and examples: read `output-quality.md`
 
+## AI Metadata: Required for Every Action & Trigger
+
+Pieces must be usable by AI agents and MCP clients. **Every action and trigger must populate the `infoForLLM` bundle** -- it is not optional.
+
+### Required on every `createAction` / `createTrigger`
+
+The `infoForLLM` bundle is a single optional object on the action/trigger params. Today it carries one field; the bundle exists so future agent-facing metadata can land here without bloating the top-level type.
+
+```typescript
+infoForLLM: {
+  description: '...',   // LLM-optimized description (see template below)
+},
+```
+
+| Inner field | Type | Purpose |
+|---|---|---|
+| `description` | `string` | LLM-optimized description. Template: `"<Verb> <what>. Use when <situation>. <Constraints>."` Max ~500 chars. |
+
+### Description writing rules
+
+-   **Verb-first:** `"Creates"`, `"Fetches"`, `"Searches"`, `"Updates"`, `"Deletes"` -- never noun-first.
+-   **Two parts:** what it does + when to use it.
+-   **State constraints:** `"Requires a repository owner"`, `"Returns up to 100 results"`, `"At least one of X or Y must be provided"`.
+-   **Under 500 characters** -- shorter wins for LLM context.
+
+**Bad:** `"Create Issue in GitHub Repository"`
+**Good:** `"Creates a new issue in a GitHub repository. Use when you need to report a bug, request a feature, or track work. Requires repository owner and name. Returns issue number and URL."`
+
+### Property `description`: required on every prop, embed example values
+
+Every input property must have a `description` (the existing field on `Property.*`). The description is the **only** signal an LLM/MCP agent has about how to fill the prop, so write it as a one-or-two-sentence spec rather than a label.
+
+When a sample value would clarify the expected format (IDs, dates, enums, URLs, structured strings), bake it into the description prose using `(e.g. ...)` or `Example: ...`. There is no separate `example` field — the description carries the whole signal.
+
+Rules:
+-   **State the format**, not just the concept. "Issue title. Max 255 characters. Example: 'Bug: Login page crashes on mobile Safari'" beats "The title".
+-   **Prefer realistic samples**: actual ID formats (`'cus_abc123xyz'`), real ISO 8601 dates (`'2026-04-17T10:30:00Z'`), full URLs with protocol (`'https://example.com/file.pdf'`).
+-   **Skip examples** when the prop is self-explanatory (e.g. a boolean checkbox), when values come from an API at runtime (`Property.Dropdown`), or when shape is determined at runtime (`Property.DynamicProperties`).
+-   **Avoid placeholder-only examples**: never write `'string'`, `'value'`, `'<your API key>'`, `'example'`, empty `{}` / `[]`, or mismatched enum values.
+
+**Bad:** `description: "The status"`
+**Good:** `description: "Current status of the record. One of: 'open', 'in_progress', 'closed'."`
+
+**Bad:** `description: "Issue body"`
+**Good:** `description: "Markdown-formatted issue body. Example: '## Steps to reproduce\\n1. Open the app\\n2. ...'"`
+
+### Optional but recommended: `ActionResult<T>` return type
+
+For new actions, wrap the return in the `ActionResult<T>` type exported from `@activepieces/pieces-framework`:
+
+```typescript
+import { ActionResult } from '@activepieces/pieces-framework';
+
+async run(context): Promise<ActionResult<{ number: number; html_url: string }>> {
+  try {
+    const issue = await createIssue(context.propsValue);
+    return { success: true, data: { number: issue.number, html_url: issue.html_url } };
+  } catch (e) {
+    return { success: false, error: (e as Error).message };
+  }
+}
+```
+
+This gives agents a predictable success/error shape instead of raw API responses.
+
 ## Critical Reminders
 
-1. **Register in tsconfig.base.json** -- Alphabetically in `compilerOptions.paths`. Build fails without this.
-2. **Action names are permanent** -- The `name` field in `createAction`/`createTrigger` must never change after publishing.
-3. **Export auth from index.ts** -- Actions and triggers import auth via `import { myAppAuth } from '../../'`.
-4. **Always provide sampleData** on triggers -- Even if it's just `{}`.
-5. **ux-guidelines.md and output-quality.md are mandatory** -- Read them before implementing any action or trigger.
+1. **AI Metadata is MANDATORY** -- every action/trigger must have an `infoForLLM` bundle with `description`, AND every input property must have a `description` (with an example baked in where useful). See the AI Metadata section above.
+2. **Register in tsconfig.base.json** -- Alphabetically in `compilerOptions.paths`. Build fails without this.
+3. **Action names are permanent** -- The `name` field in `createAction`/`createTrigger` must never change after publishing.
+4. **Export auth from index.ts** -- Actions and triggers import auth via `import { myAppAuth } from '../../'`.
+5. **Always provide sampleData** on triggers -- Even if it's just `{}`.
+6. **ux-guidelines.md and output-quality.md are mandatory** -- Read them before implementing any action or trigger.
 
 ## When to Ask the User
 
