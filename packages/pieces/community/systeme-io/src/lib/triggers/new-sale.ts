@@ -74,7 +74,6 @@ export const newSale = createTrigger({
         const rawBody = context.payload.rawBody;
 
         if (!systemeIoCommon.verifyWebhookSignature(webhookSecret || undefined, webhookSignatureHeader, rawBody)) {
-            console.warn('Systeme.io webhook signature verification failed');
             return [];
         }
 
