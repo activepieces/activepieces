@@ -146,8 +146,10 @@ export class SpotifyWebApi {
         limit: 50,
         offset: playlists.length,
       });
-      total = res.total;
-      res.items.forEach((item) => playlists.push(item));
+      total = res.total ?? 0;
+      const items = res.items ?? [];
+      if (items.length === 0) break;
+      items.forEach((item) => playlists.push(item));
     }
     return playlists;
   }
@@ -196,8 +198,10 @@ export class SpotifyWebApi {
         limit: 50,
         offset: items.length,
       });
-      total = res.total;
-      res.items.forEach((item) => items.push(item));
+      total = res.total ?? 0;
+      const page = res.items ?? [];
+      if (page.length === 0) break;
+      page.forEach((item) => items.push(item));
     }
     return items;
   }
@@ -220,8 +224,10 @@ export class SpotifyWebApi {
         limit: 50,
         offset: items.length,
       });
-      total = res.total;
-      res.items.forEach((item) => items.push(item));
+      total = res.total ?? 0;
+      const page = res.items ?? [];
+      if (page.length === 0) break;
+      page.forEach((item) => items.push(item));
     }
     return items;
   }
