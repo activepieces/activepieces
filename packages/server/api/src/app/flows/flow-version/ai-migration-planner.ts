@@ -1,4 +1,4 @@
-import { PropertyType } from '@activepieces/pieces-framework'
+import { PieceMetadataModel, PropertyType } from '@activepieces/pieces-framework'
 import {
     AgentPieceProps,
     AgentProviderModelSchema,
@@ -10,13 +10,22 @@ import {
     flowStructureUtil,
     FlowVersion,
     isNil,
+    PiecePackage,
     PlatformId,
     ProjectId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
-import { findCompatiblePieceVersion } from './ai-piece-version-resolver'
+import { findCompatiblePieceVersion, FindCompatiblePieceVersionResult } from './ai-piece-version-resolver'
 import { DynamicSchemaCache, dynamicSchemaResolver } from './dynamic-schema-resolver'
+
+export function createPieceLookupCache(): PieceLookupCache {
+    return {
+        versionResolutions: new Map(),
+        piecePackages: new Map(),
+        pieceMetadata: new Map(),
+    }
+}
 
 export async function planFlowVersionChanges({
     flowVersion,
@@ -26,6 +35,7 @@ export async function planFlowVersionChanges({
     platformId,
     projectId,
     cache,
+    pieceLookupCache,
     log,
 }: PlanFlowVersionChangesParams): Promise<PlannedStepChange[]> {
     const scopedActionNames = aiProviderModelType === AIProviderModelType.IMAGE
@@ -51,7 +61,8 @@ export async function planFlowVersionChanges({
         }
 
         const currentPieceVersion = step.settings.pieceVersion
-        const resolved = await findCompatiblePieceVersion({
+        const resolved = await getCachedVersionResolution({
+            cache: pieceLookupCache,
             platformId,
             projectId,
             targetProvider: targetModel.provider,
@@ -69,14 +80,19 @@ export async function planFlowVersionChanges({
             continue
         }
 
-        const piecePackage = await getPiecePackageWithoutArchive(log, platformId, {
+        const piecePackage = await getCachedPiecePackage({
+            cache: pieceLookupCache,
+            log,
+            platformId,
             pieceName: step.settings.pieceName,
             pieceVersion: resolved.pieceVersion,
         })
-        const targetMetadata = await pieceMetadataService(log).getOrThrow({
-            name: step.settings.pieceName,
-            version: resolved.pieceVersion,
+        const targetMetadata = await getCachedPieceMetadata({
+            cache: pieceLookupCache,
+            log,
             platformId,
+            pieceName: step.settings.pieceName,
+            pieceVersion: resolved.pieceVersion,
         })
         const targetActionProps = targetMetadata.actions[actionName]?.props ?? {}
         const isWebSearchAware = AgentPieceProps.WEB_SEARCH in targetActionProps
@@ -219,6 +235,77 @@ function refreshersIntersect(refreshers: string[], fieldsTouched: Set<string>): 
     return refreshers.some((r) => fieldsTouched.has(r))
 }
 
+async function getCachedVersionResolution({
+    cache,
+    platformId,
+    projectId,
+    targetProvider,
+    targetModel,
+    log,
+}: {
+    cache: PieceLookupCache
+    platformId: PlatformId
+    projectId: ProjectId
+    targetProvider: string
+    targetModel: string
+    log: FastifyBaseLogger
+}): Promise<FindCompatiblePieceVersionResult> {
+    const key = `${projectId}::${targetProvider}::${targetModel}`
+    const cached = cache.versionResolutions.get(key)
+    if (!isNil(cached)) {
+        return cached
+    }
+    const result = await findCompatiblePieceVersion({ platformId, projectId, targetProvider, targetModel, log })
+    cache.versionResolutions.set(key, result)
+    return result
+}
+
+async function getCachedPiecePackage({
+    cache,
+    log,
+    platformId,
+    pieceName,
+    pieceVersion,
+}: {
+    cache: PieceLookupCache
+    log: FastifyBaseLogger
+    platformId: PlatformId
+    pieceName: string
+    pieceVersion: string
+}): Promise<PiecePackage> {
+    const key = `${pieceName}@${pieceVersion}`
+    const cached = cache.piecePackages.get(key)
+    if (!isNil(cached)) {
+        return cached
+    }
+    const piecePackage = await getPiecePackageWithoutArchive(log, platformId, { pieceName, pieceVersion })
+    cache.piecePackages.set(key, piecePackage)
+    return piecePackage
+}
+
+async function getCachedPieceMetadata({
+    cache,
+    log,
+    platformId,
+    pieceName,
+    pieceVersion,
+}: {
+    cache: PieceLookupCache
+    log: FastifyBaseLogger
+    platformId: PlatformId
+    pieceName: string
+    pieceVersion: string
+}): Promise<PieceMetadataModel> {
+    const key = `${pieceName}@${pieceVersion}`
+    const cached = cache.pieceMetadata.get(key)
+    if (!isNil(cached)) {
+        return cached
+    }
+    const metadata = await pieceMetadataService(log).getOrThrow({ name: pieceName, version: pieceVersion, platformId })
+    cache.pieceMetadata.set(key, metadata)
+    return metadata
+}
+
 export type PlannedStepChange =
     | { stepName: string, operation: FlowOperationRequest, diff: StepDiff, error?: never }
     | { stepName: string, error: string, operation?: never, diff?: never }
@@ -238,7 +325,14 @@ export type PlanFlowVersionChangesParams = {
     platformId: PlatformId
     projectId: ProjectId
     cache: DynamicSchemaCache
+    pieceLookupCache: PieceLookupCache
     log: FastifyBaseLogger
+}
+
+export type PieceLookupCache = {
+    versionResolutions: Map<string, FindCompatiblePieceVersionResult>
+    piecePackages: Map<string, PiecePackage>
+    pieceMetadata: Map<string, PieceMetadataModel>
 }
 
 const RUN_AGENT_ACTION = 'run_agent'

@@ -39,7 +39,7 @@ import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { flowExecutionCache } from '../flow/flow-execution-cache'
 import { flowRepo } from '../flow/flow.repo'
-import { planFlowVersionChanges, PlannedStepChange } from './ai-migration-planner'
+import { createPieceLookupCache, planFlowVersionChanges, PlannedStepChange } from './ai-migration-planner'
 import { dynamicSchemaResolver } from './dynamic-schema-resolver'
 import { FlowMigrationEntity } from './flow-migration.entity'
 import { flowVersionBackupService } from './flow-version-backup.service'
@@ -137,6 +137,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         }
 
         const cache = dynamicSchemaResolver.createCache()
+        const pieceLookupCache = createPieceLookupCache()
 
         const { error: handlerError } = await tryCatch(async () => {
             const targetRows = await flowVersionRepo()
@@ -149,8 +150,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                 .andWhere('(fv.id = f."publishedVersionId" OR fv.state = :draftState)',
                     { draftState: FlowVersionState.DRAFT })
                 .andWhere('f."projectId" IN (:...projectIds)', { projectIds })
-                .orderBy('fv.state', 'DESC')
-                .addOrderBy('fv.id', 'ASC')
+                .orderBy('fv.id', 'ASC')
                 .getRawMany<{ flow_version_id: string, project_id: string }>()
 
             const projectIdByFlowVersionId = new Map(targetRows.map((r) => [r.flow_version_id, r.project_id]))
@@ -161,7 +161,6 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                 const flowVersions = await flowVersionRepo()
                     .createQueryBuilder('fv')
                     .where('fv.id IN (:...batchIds)', { batchIds })
-                    .orderBy('fv.state', 'DESC')
                     .getMany()
 
                 for (const flowVersion of flowVersions) {
@@ -194,6 +193,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                         platformId,
                         projectId,
                         cache,
+                        pieceLookupCache,
                         log,
                     })
 
