@@ -123,10 +123,6 @@ export const getGraphQuestion = createAction({
         iframeUrl,
       };
     } catch (error) {
-      console.error(
-        'Please verify that either your embedding key and question id are valid or that the question is embedded and published.'
-      );
-      console.error('Error capturing Metabase chart:', error);
       throw error;
     } finally {
       await browser.close();
