@@ -92,7 +92,7 @@ export const wooCreateCustomer = createAction({
     };
 
     const request: HttpRequest = {
-      url: `${trimmedBaseUrl}//wp-json/wc/v3/customers`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/customers`,
       method: HttpMethod.POST,
       authentication: {
         type: AuthenticationType.BASIC,
