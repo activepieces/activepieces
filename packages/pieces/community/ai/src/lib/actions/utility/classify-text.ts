@@ -37,21 +37,33 @@ export const classifyText = createAction({
       runId: context.run.id,
     });
 
+    const numberedCategories = categories
+      .map((cat, i) => `${i + 1}. ${cat}`)
+      .join('\n');
+
     const response = await generateText({
       model,
-      prompt: `As a text classifier, your task is to assign one of the following categories to the provided text: ${categories.join(
-        ', '
-      )}. Please respond with only the selected category as a single word, and nothing else.
-      Text to classify: "${context.propsValue.text}"`,
+      prompt: `As a text classifier, your task is to assign one of the following categories to the provided text.
+
+Categories:
+${numberedCategories}
+
+Respond with ONLY the exact category text — nothing else, no numbering, no quotes, no explanation.
+
+Text to classify: "${context.propsValue.text}"`,
     });
     const result = response.text.trim();
 
-    if (!categories.includes(result)) {
+    const matched = categories.find(
+      (cat) => cat.toLowerCase() === result.toLowerCase()
+    );
+
+    if (!matched) {
       throw new Error(
-        'Unable to classify the text into the provided categories.'
+        `Unable to classify the text into the provided categories. The model responded with "${result}", which did not match any of: ${categories.join(', ')}.`
       );
     }
 
-    return result;
+    return matched;
   },
 });
