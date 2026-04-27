@@ -1,83 +1,43 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
-export const BUTTONDOWN_BASE_URL = 'https://api.buttondown.com/v1';
+export const BUTTONDOWN_BASE_URL = 'https://api.buttondown.email/v1';
 
-type QueryValue =
-  | string
-  | number
-  | boolean
-  | Array<string | number | boolean>
-  | undefined;
-
-export interface ButtondownRequest {
-  auth: string;
-  method: HttpMethod;
-  path: string;
-  query?: Record<string, QueryValue>;
-  body?: unknown;
-  headers?: Record<string, string | undefined>;
-}
-
-export interface ButtondownPagedResponse<T> {
-  results: T[];
-  count: number;
-  next?: string | null;
-  previous?: string | null;
-}
-
-const sanitizeHeaders = (headers: Record<string, string | undefined> = {}) =>
-  Object.fromEntries(
-    Object.entries(headers).filter(([, value]) => value !== undefined)
-  );
-
-const serializeQueryParams = (
-  query?: Record<string, QueryValue>
-): Record<string, string> | undefined => {
-  if (!query) {
-    return undefined;
-  }
-
-  const result: Record<string, string> = {};
-
-  for (const [key, value] of Object.entries(query)) {
-    if (value === undefined) {
-      continue;
-    }
-
-    if (Array.isArray(value)) {
-      if (value.length === 0) {
-        continue;
-      }
-      result[key] = value.map((item) => String(item)).join(',');
-      continue;
-    }
-
-    result[key] = String(value);
-  }
-
-  return Object.keys(result).length > 0 ? result : undefined;
-};
-
-export const buttondownRequest = async <TResponse>({
-  auth,
-  method,
-  path,
-  query,
-  body,
-  headers,
-}: ButtondownRequest): Promise<TResponse> => {
-  const response = await httpClient.sendRequest<TResponse>({
+export async function buttondownRequest<T>(
+  apiKey: string,
+  method: HttpMethod,
+  path: string,
+  body?: Record<string, unknown>
+): Promise<T> {
+  const response = await httpClient.sendRequest<T>({
     method,
     url: `${BUTTONDOWN_BASE_URL}${path}`,
     headers: {
-      Authorization: `Token ${auth}`,
-      Accept: 'application/json',
+      Authorization: `Token ${apiKey}`,
       'Content-Type': 'application/json',
-      ...sanitizeHeaders(headers),
     },
-    queryParams: serializeQueryParams(query),
     body,
   });
-
   return response.body;
-};
+}
+
+export interface ButtondownSubscriber {
+  id: string;
+  email: string;
+  creation_date: string;
+  secondary_id: number;
+  subscriber_type: string;
+  source: string;
+  tags: string[];
+  utm_campaign: string;
+  utm_medium: string;
+  utm_source: string;
+  referrer_url: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface ButtondownPaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
