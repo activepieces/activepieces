@@ -3,17 +3,32 @@ import {
     AIProviderModelType,
     AIProviderName,
     apId,
+    EngineResponseStatus,
     FlowActionType,
     FlowMigrationStatus,
     FlowMigrationType,
-    FlowTriggerType,
-    FlowVersionState,
     flowStructureUtil,
+    FlowTriggerType,
+    FlowVersion,
+    FlowVersionState,
+    LATEST_FLOW_SCHEMA_VERSION,
+    PackageType,
+    PieceType,
     PlatformRole,
     PrincipalType,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { vi } from 'vitest'
+
+vi.mock('../../../../src/app/workers/user-interaction-watcher', () => ({
+    userInteractionWatcher: {
+        submitAndWaitForResponse: vi.fn().mockResolvedValue({
+            status: EngineResponseStatus.OK,
+            response: {},
+        }),
+    },
+}))
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { flowVersionMigrationService } from '../../../../src/app/flows/flow-version/flow-version-migration.service'
@@ -21,15 +36,48 @@ import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockFlow,
-    createMockFlowVersion,
+    createMockFlowVersion as createMockFlowVersionRaw,
+    createMockPieceMetadata,
     mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
+
+function createMockFlowVersion(flowVersion?: Partial<FlowVersion>): FlowVersion {
+    return createMockFlowVersionRaw({
+        schemaVersion: LATEST_FLOW_SCHEMA_VERSION,
+        ...flowVersion,
+    })
+}
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
+    await databaseConnection().getRepository('piece_metadata').save(
+        createMockPieceMetadata({
+            name: '@activepieces/piece-ai',
+            version: '0.5.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            platformId: undefined,
+            actions: {
+                run_agent: {
+                    name: 'run_agent',
+                    displayName: 'Run agent',
+                    description: 'Test',
+                    requireAuth: false,
+                    props: {},
+                },
+                askAi: {
+                    name: 'askAi',
+                    displayName: 'Ask AI',
+                    description: 'Test',
+                    requireAuth: false,
+                    props: {},
+                },
+            },
+        }),
+    )
 })
 
 afterAll(async () => {
@@ -155,7 +203,7 @@ describe('Flow Version API', () => {
                 status: FlowMigrationStatus.RUNNING,
                 migratedVersions: [],
                 failedFlowVersions: [],
-                params: buildAiMigrationRequest({ projectIds: [], sourceModel, targetModel }),
+                params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
             await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
@@ -219,7 +267,7 @@ describe('Flow Version API', () => {
                 status: FlowMigrationStatus.RUNNING,
                 migratedVersions: [],
                 failedFlowVersions: [],
-                params: buildAiMigrationRequest({ projectIds: [], sourceModel, targetModel }),
+                params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
             await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
@@ -306,7 +354,7 @@ describe('Flow Version API', () => {
                 status: FlowMigrationStatus.RUNNING,
                 migratedVersions: [],
                 failedFlowVersions: [],
-                params: buildAiMigrationRequest({ projectIds: [], sourceModel, targetModel }),
+                params: buildAiMigrationRequest({ projectIds: [projectB.id], sourceModel, targetModel }),
             })
 
             // Run handler as platformA — should not touch platformB's flows
@@ -347,7 +395,7 @@ describe('Flow Version API', () => {
                 status: FlowMigrationStatus.RUNNING,
                 migratedVersions: [],
                 failedFlowVersions: [],
-                params: buildAiMigrationRequest({ projectIds: [], sourceModel, targetModel }),
+                params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
             await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
@@ -382,7 +430,6 @@ describe('Flow Version API', () => {
             })
             const mockFlow = createMockFlow({
                 projectId: mockProject.id,
-                publishedVersionId: publishedVersion.id,
             })
             publishedVersion.flowId = mockFlow.id
 
@@ -392,8 +439,13 @@ describe('Flow Version API', () => {
                 trigger: makeAiTriggerWithStep(sourceModel) as never,
             })
 
-            await databaseConnection().getRepository('flow').save(mockFlow)
+            await databaseConnection()
+                .getRepository('flow')
+                .save({ ...mockFlow, publishedVersionId: null })
             await databaseConnection().getRepository('flow_version').save([publishedVersion, draftVersion])
+            await databaseConnection()
+                .getRepository('flow')
+                .update(mockFlow.id, { publishedVersionId: publishedVersion.id })
 
             const migrationId = apId()
             await databaseConnection().getRepository('flow_migration').save({
@@ -404,7 +456,7 @@ describe('Flow Version API', () => {
                 status: FlowMigrationStatus.RUNNING,
                 migratedVersions: [],
                 failedFlowVersions: [],
-                params: buildAiMigrationRequest({ projectIds: [], sourceModel, targetModel }),
+                params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
             await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
@@ -465,7 +517,7 @@ describe('Flow Version API', () => {
                 status: FlowMigrationStatus.RUNNING,
                 migratedVersions: [],
                 failedFlowVersions: [],
-                params: buildAiMigrationRequest({ projectIds: [], sourceModel, targetModel }),
+                params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
             await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
@@ -490,7 +542,7 @@ describe('Flow Version API', () => {
                 status: FlowMigrationStatus.RUNNING,
                 migratedVersions: [],
                 failedFlowVersions: [],
-                params: buildAiMigrationRequest({ projectIds: [], sourceModel, targetModel }),
+                params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
             await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
@@ -522,12 +574,16 @@ describe('Flow Version API', () => {
             })
             const mockFlow = createMockFlow({
                 projectId: mockProject.id,
-                publishedVersionId: publishedVersion.id,
             })
             publishedVersion.flowId = mockFlow.id
 
-            await databaseConnection().getRepository('flow').save(mockFlow)
+            await databaseConnection()
+                .getRepository('flow')
+                .save({ ...mockFlow, publishedVersionId: null })
             await databaseConnection().getRepository('flow_version').save(publishedVersion)
+            await databaseConnection()
+                .getRepository('flow')
+                .update(mockFlow.id, { publishedVersionId: publishedVersion.id })
 
             const migrationId = apId()
             await databaseConnection().getRepository('flow_migration').save({
@@ -538,7 +594,7 @@ describe('Flow Version API', () => {
                 status: FlowMigrationStatus.RUNNING,
                 migratedVersions: [],
                 failedFlowVersions: [],
-                params: buildAiMigrationRequest({ projectIds: [], sourceModel, targetModel }),
+                params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
             await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
@@ -595,7 +651,7 @@ describe('Flow Version API', () => {
                 status: FlowMigrationStatus.RUNNING,
                 migratedVersions: [],
                 failedFlowVersions: [],
-                params: buildAiMigrationRequest({ projectIds: [], sourceModel, targetModel }),
+                params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
             await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
@@ -663,7 +719,7 @@ describe('Flow Version API', () => {
                 status: FlowMigrationStatus.RUNNING,
                 migratedVersions: [],
                 failedFlowVersions: [],
-                params: buildAiMigrationRequest({ projectIds: [], sourceModel, targetModel }),
+                params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
             await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
@@ -717,7 +773,7 @@ describe('Flow Version API', () => {
                 status: FlowMigrationStatus.RUNNING,
                 migratedVersions: [],
                 failedFlowVersions: [],
-                params: buildAiMigrationRequest({ projectIds: [], sourceModel, targetModel }),
+                params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
             await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({
@@ -743,7 +799,9 @@ describe('Flow Version API', () => {
             const targetModel = { provider: AIProviderName.ANTHROPIC, model: 'claude-3-opus' }
 
             const mockFlow = createMockFlow({ projectId: mockProject.id })
-            await databaseConnection().getRepository('flow').save(mockFlow)
+            await databaseConnection()
+                .getRepository('flow')
+                .save({ ...mockFlow, publishedVersionId: null })
 
             // Older version with a different model
             const olderVersion = createMockFlowVersion({
@@ -752,7 +810,8 @@ describe('Flow Version API', () => {
                 created: new Date(Date.now() - 10000).toISOString(),
                 trigger: makeAiTriggerWithStep({ provider: AIProviderName.GOOGLE, model: 'gemini-pro' }) as never,
             })
-            // Latest version with the matching model
+            // Latest (published) version with the matching model — must be the flow’s published version
+            // to be a migration target when LOCKED, since the job only processes drafts or published.
             const latestVersion = createMockFlowVersion({
                 flowId: mockFlow.id,
                 state: FlowVersionState.LOCKED,
@@ -760,6 +819,9 @@ describe('Flow Version API', () => {
                 trigger: makeAiTriggerWithStep(sourceModel) as never,
             })
             await databaseConnection().getRepository('flow_version').save([olderVersion, latestVersion])
+            await databaseConnection()
+                .getRepository('flow')
+                .update(mockFlow.id, { publishedVersionId: latestVersion.id })
 
             const migrationId = apId()
             await databaseConnection().getRepository('flow_migration').save({
@@ -770,7 +832,7 @@ describe('Flow Version API', () => {
                 status: FlowMigrationStatus.RUNNING,
                 migratedVersions: [],
                 failedFlowVersions: [],
-                params: buildAiMigrationRequest({ projectIds: [], sourceModel, targetModel }),
+                params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
             await flowVersionMigrationService(app!.log).migrateFlowsModelHandler({

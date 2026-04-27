@@ -93,7 +93,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         request: MigrateFlowsModelRequest
         reqLog: FastifyBaseLogger
     }): Promise<FlowMigration> {
-        await assertNoActiveMigrationJob({ jobId: `migrate-flow-model-${platformId}`, reqLog })
+        await assertNoActiveMigrationJob({ platformId, jobId: `migrate-flow-model-${platformId}`, reqLog })
         switch (request.type) {
             case FlowMigrationType.AI_PROVIDER_MODEL_REVERT:
                 return enqueueAiProviderModelRevert({
@@ -581,10 +581,18 @@ async function enqueueAiProviderModelRevert({ platformId, userId, revertOfMigrat
     return migration
 }
 
-async function assertNoActiveMigrationJob({ jobId, reqLog }: {
+async function assertNoActiveMigrationJob({ platformId, jobId, reqLog }: {
+    platformId: PlatformId
     jobId: string
     reqLog: FastifyBaseLogger
 }): Promise<void> {
+    const existingRunning = await migrationRepo().findOneBy({ platformId, status: FlowMigrationStatus.RUNNING })
+    if (!isNil(existingRunning)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS,
+            params: { jobId },
+        })
+    }
     const existingJob = await systemJobsSchedule(reqLog).getJob<SystemJobName.MIGRATE_FLOWS_MODEL>(jobId)
     const SKIP_JOB_STATES = ['active', 'delayed', 'waiting']
     if (existingJob && SKIP_JOB_STATES.includes(await existingJob.getState())) {
