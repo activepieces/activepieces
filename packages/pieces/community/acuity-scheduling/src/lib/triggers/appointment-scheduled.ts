@@ -96,18 +96,12 @@ export const appointmentScheduledTrigger = createTrigger({
 			(!calendarId || calendarId === payload.calendarID) &&
 			(!appointmentTypeId || appointmentTypeId === payload.appointmentTypeID)
 		) {
-			try {
-				const appointmentDetails = await getAppointmentDetails(
-					payload.id.toString(),
-					context.auth.access_token,
-				);
-				return [appointmentDetails];
-			} catch (error) {
-				console.error(`Failed to fetch appointment details for ID ${payload.id}:`, error);
-				return [];
-			}
+			const appointmentDetails = await getAppointmentDetails(
+				payload.id.toString(),
+				context.auth.access_token,
+			);
+			return [appointmentDetails];
 		} else {
-			console.log('Received webhook for non-scheduled event or missing ID:', payload.action);
 			return [];
 		}
 	},
