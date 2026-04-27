@@ -77,12 +77,8 @@ export const newTask = createTrigger({
         },
       };
 
-      try {
-        await httpClient.sendRequest(request);
-        await context.store.delete('webhook_id');
-      } catch (error) {
-        console.warn('Failed to unregister webhook:', error);
-      }
+      await httpClient.sendRequest(request);
+      await context.store.delete('webhook_id');
     }
   },
 
