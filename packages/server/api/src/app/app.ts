@@ -248,7 +248,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             }
             return reply
                 .type('text/html')
-                .header('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'")
+                .header('Content-Security-Policy', 'default-src \'none\'; script-src \'unsafe-inline\'')
                 .header('X-Content-Type-Options', 'nosniff')
                 .send(Mustache.render(REDIRECT_HTML_TEMPLATE, { code }))
         },
