@@ -22,7 +22,6 @@ export const sendEmail = createAction({
         Mailchain.fromSecretRecoveryPhrase(secretRecoveryPhrase.secret_text);
 
       const user = await mailchain.user();
-      console.log(`username: ${user.username}, address: ${user.address}`);
 
       const { data, error } = await mailchain.sendMail({
         from: user.address, // sender address
@@ -34,12 +33,10 @@ export const sendEmail = createAction({
         },
       });
       if (error) {
-        console.error('Error sending email (mailchain)', error);
         throw error;
       }
       return data;
     } catch (error) {
-      console.error('Error sending email (mailchain)', error);
       throw error;
     }
   },
