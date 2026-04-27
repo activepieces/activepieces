@@ -15,7 +15,7 @@ async function executeStorageRemoveFromList(context: ActionContext<PieceAuthProp
   key: ShortTextProperty<true>;
   value: ShortTextProperty<true>;
   store_scope: StaticDropdownProperty<PieceStoreScope, true>;
-}>, isTestMode = false) {
+}>) {
   await propsValidation.validateZod(context.propsValue, {
     key: z.string().max(128),
   });
@@ -24,7 +24,6 @@ async function executeStorageRemoveFromList(context: ActionContext<PieceAuthProp
     runId: context.run.id,
     key: context.propsValue['key'],
     scope: context.propsValue.store_scope,
-    isTestMode,
   });
   const items =
     (await context.store.get(
@@ -78,9 +77,9 @@ export const storageRemoveFromList = createAction({
     store_scope: common.store_scope,
   },
   async run(context) {
-    return await executeStorageRemoveFromList(context, false);
+    return await executeStorageRemoveFromList(context);
   },
   async test(context) {
-    return await executeStorageRemoveFromList(context, true);
+    return await executeStorageRemoveFromList(context);
   },
 });

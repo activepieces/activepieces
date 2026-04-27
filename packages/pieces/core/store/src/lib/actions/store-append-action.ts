@@ -16,7 +16,7 @@ async function executeStorageAppend(context: ActionContext<PieceAuthProperty | u
   value: ShortTextProperty<true>;
   separator: ShortTextProperty<false>;
   store_scope: StaticDropdownProperty<PieceStoreScope, true>;
-}>, isTestMode = false) {
+}>) {
   await propsValidation.validateZod(context.propsValue, {
     key: z.string().max(128),
   });
@@ -25,7 +25,6 @@ async function executeStorageAppend(context: ActionContext<PieceAuthProperty | u
     runId: context.run.id,
     key: context.propsValue['key'],
     scope: context.propsValue.store_scope,
-    isTestMode,
   });
   const oldValue = (await context.store.get(key, scope)) || '';
   if (typeof oldValue !== 'string') {
@@ -71,9 +70,9 @@ export const storageAppendAction = createAction({
     store_scope: common.store_scope,
   },
   async run(context) {
-    return await executeStorageAppend(context, false);
+    return await executeStorageAppend(context);
   },
   async test(context) {
-    return await executeStorageAppend(context, true);
+    return await executeStorageAppend(context);
   },
 });

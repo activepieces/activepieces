@@ -9,7 +9,7 @@ import { common, getScopeAndKey, PieceStoreScope } from './common';
 	value: ArrayProperty<true>;
 	ignore_if_exists: CheckboxProperty<false>;
 	store_scope: StaticDropdownProperty<PieceStoreScope, true>;
-}>, isTestMode = false) {
+}>) {
 	await propsValidation.validateZod(context.propsValue, {
 		key: z.string().max(128),
 	});
@@ -17,7 +17,6 @@ import { common, getScopeAndKey, PieceStoreScope } from './common';
 		runId: context.run.id,
 		key: context.propsValue['key'],
 		scope: context.propsValue.store_scope,
-		isTestMode,
 	});
 	const inputItems = context.propsValue.value ?? [];
 	let parsedInputItems: unknown[] = [];
@@ -82,9 +81,9 @@ export const storageAddtoList = createAction({
 		store_scope: common.store_scope,
 	},
 	async run(context) {
-		return await executeStorageAddToList(context, false);
+		return await executeStorageAddToList(context);
 	},
 	async test(context) {
-		return await executeStorageAddToList(context, true);
+		return await executeStorageAddToList(context);
 	},
 });

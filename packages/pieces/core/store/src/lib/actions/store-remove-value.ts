@@ -13,7 +13,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 async function executeStorageRemoveValue(context: ActionContext<PieceAuthProperty | undefined, {
   key: ShortTextProperty<true>;
   store_scope: StaticDropdownProperty<PieceStoreScope, true>;
-}>, isTestMode = false) {
+}>) {
   await propsValidation.validateZod(context.propsValue, {
     key: z.string().max(128),
   });
@@ -22,7 +22,6 @@ async function executeStorageRemoveValue(context: ActionContext<PieceAuthPropert
     runId: context.run.id,
     key: context.propsValue['key'],
     scope: context.propsValue.store_scope,
-    isTestMode,
   });
   await context.store.delete(key, scope);
   return {
@@ -50,9 +49,9 @@ export const storageRemoveValue = createAction({
     store_scope: common.store_scope,
   },
   async run(context) {
-    return await executeStorageRemoveValue(context, false);
+    return await executeStorageRemoveValue(context);
   },
   async test(context) {
-    return await executeStorageRemoveValue(context, true);
+    return await executeStorageRemoveValue(context);
   },
 });

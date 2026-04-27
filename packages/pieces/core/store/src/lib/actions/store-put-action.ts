@@ -14,7 +14,7 @@ async function executeStoragePut(context: ActionContext<PieceAuthProperty | unde
   key: ShortTextProperty<true>;
   value: ShortTextProperty<true>;
   store_scope: StaticDropdownProperty<PieceStoreScope, true>;
-}>, isTestMode = false) {
+}>) {
   await propsValidation.validateZod(context.propsValue, {
     key: z.string().max(128),
   });
@@ -23,7 +23,6 @@ async function executeStoragePut(context: ActionContext<PieceAuthProperty | unde
     runId: context.run.id,
     key: context.propsValue['key'],
     scope: context.propsValue.store_scope,
-    isTestMode,
   });
   return await context.store.put(
     key,
@@ -56,9 +55,9 @@ export const storagePutAction = createAction({
     store_scope: common.store_scope,
   },
   async run(context) {
-    return await executeStoragePut(context, false);
+    return await executeStoragePut(context);
   },
   async test(context) {
-    return await executeStoragePut(context, true);
+    return await executeStoragePut(context);
   },
 });

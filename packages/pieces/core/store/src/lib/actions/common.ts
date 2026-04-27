@@ -6,7 +6,6 @@ export enum PieceStoreScope {
     RUN = 'RUN',
 }
 
-const testRunId = 'test-run-id-CbVidYfEuCRpUanfEb3RU';
 export function getScopeAndKey(params: Params): { scope: StoreScope, key: string } {
     switch (params.scope) {
         case PieceStoreScope.PROJECT:
@@ -14,11 +13,12 @@ export function getScopeAndKey(params: Params): { scope: StoreScope, key: string
         case PieceStoreScope.FLOW:
             return { scope: StoreScope.FLOW, key: params.key }
         case PieceStoreScope.RUN:
-            // Use a consistent test run ID when testing to allow store operations to work together
-            {
-                const runId = params.isTestMode ? testRunId : params.runId
-                return { scope: StoreScope.FLOW, key: `run_${runId}/${params.key}` }
-            }
+            // Prefix the key with the run ID so that storage is isolated per run.
+            // Using context.run.id (the real flowRunId) keeps all steps in the same
+            // test execution — whether triggered by "Test step" or "Generate sample
+            // data" — on the same key, so a Put step and a later Get step always
+            // share the same run-scoped storage bucket during a single test run.
+            return { scope: StoreScope.FLOW, key: `run_${params.runId}/${params.key}` }
     }
 }
 
@@ -26,7 +26,6 @@ type Params = {
     runId: string
     key: string
     scope: PieceStoreScope
-    isTestMode: boolean
 }
 
 export const common = {

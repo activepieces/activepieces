@@ -15,7 +15,7 @@ async function executeStorageGet(context: ActionContext<PieceAuthProperty | unde
   key: ShortTextProperty<true>;
   defaultValue: ShortTextProperty<false>;
   store_scope: StaticDropdownProperty<PieceStoreScope, true>;
-}>, isTestMode = false) {
+}>) {
   await propsValidation.validateZod(context.propsValue, {
     key: z.string().max(128),
   });
@@ -24,7 +24,6 @@ async function executeStorageGet(context: ActionContext<PieceAuthProperty | unde
     runId: context.run.id,
     key: context.propsValue['key'],
     scope: context.propsValue.store_scope,
-    isTestMode,
   });
   return (
     (await context.store.get(key, scope)) ?? context.propsValue['defaultValue']
@@ -76,9 +75,9 @@ export const storageGetAction = createAction({
     }),
   },
   async run(context) {
-    return await executeStorageGet(context, false);
+    return await executeStorageGet(context);
   },
   async test(context) {
-    return await executeStorageGet(context, true);
+    return await executeStorageGet(context);
   },
 });
