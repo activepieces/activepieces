@@ -82,6 +82,7 @@ import { pieceSyncService } from './pieces/piece-sync-service'
 import { tagsModule } from './pieces/tags/tags-module'
 import { platformBackgroundJobs } from './platform/platform-jobs'
 import { platformModule } from './platform/platform.module'
+import { platformCopilotModule } from './platform-copilot/platform-copilot.module'
 import { projectHooks } from './project/project-hooks'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
@@ -229,6 +230,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(tablesModule)
     await app.register(knowledgeBaseModule)
     await app.register(chatModule)
+    await app.register(platformCopilotModule)
     await app.register(userModule)
     await app.register(templateModule)
     await app.register(userBadgeModule)

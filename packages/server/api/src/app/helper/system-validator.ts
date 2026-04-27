@@ -163,6 +163,16 @@ const systemPropValidators: {
     // Secret Manager
     [AppSystemProp.SECRET_MANAGER_API_KEY]: stringValidator,
 
+    [AppSystemProp.OPENAI_API_KEY]: stringValidator,
+    [AppSystemProp.JINA_API_KEY]: stringValidator,
+    [AppSystemProp.GITHUB_TOKEN]: stringValidator,
+
+    // Platform copilot
+    [AppSystemProp.CLOUD_API_URL]: urlValidator,
+    [AppSystemProp.COPILOT_PER_PLATFORM_MESSAGES_PER_DAY]: numberValidator,
+    [AppSystemProp.COPILOT_PER_PLATFORM_TOKENS_PER_DAY]: numberValidator,
+    [AppSystemProp.COPILOT_DAILY_GLOBAL_USD_CAP]: numberValidator,
+
     // Tables
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,

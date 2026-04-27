@@ -68,6 +68,10 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: '300000',
     [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: DefaultProjectRole.EDITOR,
     [AppSystemProp.NETWORK_MODE]: NetworkMode.UNRESTRICTED,
+    [AppSystemProp.CLOUD_API_URL]: 'https://cloud.activepieces.com/api',
+    [AppSystemProp.COPILOT_PER_PLATFORM_MESSAGES_PER_DAY]: '200',
+    [AppSystemProp.COPILOT_PER_PLATFORM_TOKENS_PER_DAY]: '200000',
+    [AppSystemProp.COPILOT_DAILY_GLOBAL_USD_CAP]: '50',
 }
 
 let globalLogger: FastifyBaseLogger

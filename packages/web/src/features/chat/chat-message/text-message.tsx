@@ -33,76 +33,83 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
 
     return (
       <>
-        <Markdown
-          remarkPlugins={[remarkGfm]}
-          className="bg-inherit"
-          components={{
-            code({ node: _node, inline, className, children, ...props }: any) {
-              if (role === 'user') {
-                return <div className="font-mono text-sm">{children}</div>;
-              }
-              const match = /language-(\w+)/.exec(className || '');
+        <div className="bg-inherit">
+          <Markdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              code({
+                node: _node,
+                inline,
+                className,
+                children,
+                ...props
+              }: any) {
+                if (role === 'user') {
+                  return <div className="font-mono text-sm">{children}</div>;
+                }
+                const match = /language-(\w+)/.exec(className || '');
 
-              return !inline && match && match[1] ? (
-                <div
-                  className={cn(
-                    'relative border rounded-md p-4 pt-12',
-                    theme === 'dark' ? 'bg-[#0E1117]' : 'bg-background',
-                  )}
-                >
-                  <ReactCodeMirror
-                    value={String(children).trim()}
-                    className="border-none"
-                    width="100%"
-                    minWidth="100%"
-                    maxWidth="100%"
-                    minHeight="50px"
-                    basicSetup={{
-                      syntaxHighlighting: true,
-                      foldGutter: false,
-                      lineNumbers: false,
-                      searchKeymap: true,
-                      lintKeymap: true,
-                      autocompletion: false,
-                      highlightActiveLine: false,
-                      highlightActiveLineGutter: false,
-                      highlightSpecialChars: false,
-                      indentOnInput: false,
-                      bracketMatching: false,
-                      closeBrackets: false,
-                    }}
-                    lang={match[1]}
-                    theme={theme === 'dark' ? githubDark : githubLight}
-                    readOnly={true}
-                    extensions={extensions}
-                  />
-                  <div className="absolute top-4 left-5 text-xs text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <CodeIcon className="size-3" />
-                      <span>{match[1]}</span>
+                return !inline && match && match[1] ? (
+                  <div
+                    className={cn(
+                      'relative border rounded-md p-4 pt-12',
+                      theme === 'dark' ? 'bg-[#0E1117]' : 'bg-background',
+                    )}
+                  >
+                    <ReactCodeMirror
+                      value={String(children).trim()}
+                      className="border-none"
+                      width="100%"
+                      minWidth="100%"
+                      maxWidth="100%"
+                      minHeight="50px"
+                      basicSetup={{
+                        syntaxHighlighting: true,
+                        foldGutter: false,
+                        lineNumbers: false,
+                        searchKeymap: true,
+                        lintKeymap: true,
+                        autocompletion: false,
+                        highlightActiveLine: false,
+                        highlightActiveLineGutter: false,
+                        highlightSpecialChars: false,
+                        indentOnInput: false,
+                        bracketMatching: false,
+                        closeBrackets: false,
+                      }}
+                      lang={match[1]}
+                      theme={theme === 'dark' ? githubDark : githubLight}
+                      readOnly={true}
+                      extensions={extensions}
+                    />
+                    <div className="absolute top-4 left-5 text-xs text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <CodeIcon className="size-3" />
+                        <span>{match[1]}</span>
+                      </div>
                     </div>
+                    <CopyCode
+                      textToCopy={String(children).trim()}
+                      className="absolute top-2 right-2 text-xs text-gray-500"
+                    />
                   </div>
-                  <CopyCode
-                    textToCopy={String(children).trim()}
-                    className="absolute top-2 right-2 text-xs text-gray-500"
-                  />
-                </div>
-              ) : (
-                <code
-                  className={cn(
-                    className,
-                    'bg-gray-200 px-[6px] py-[2px] rounded-xs font-mono text-sm',
-                  )}
-                  {...props}
-                >
-                  {String(children).trim()}
-                </code>
-              );
-            },
-          }}
-        >
-          {content}
-        </Markdown>
+                ) : (
+                  <code
+                    className={cn(
+                      className,
+                      'bg-gray-200 px-[6px] py-[2px] rounded-xs font-mono text-sm',
+                    )}
+                    {...props}
+                  >
+                    {String(children).trim()}
+                  </code>
+                );
+              },
+            }}
+          >
+            {content}
+          </Markdown>
+        </div>
         {role === 'bot' && (
           <CopyButton
             textToCopy={content}

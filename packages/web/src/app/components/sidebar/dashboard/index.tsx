@@ -216,7 +216,7 @@ export function ProjectDashboardSidebar({
       <Sidebar
         collapsible="icon"
         id={SIDEBAR_ID}
-        className={cn('max-h-[100vh]', className)}
+        className={cn('max-h-screen', className)}
       >
         <AppSidebarHeader />
 
@@ -282,7 +282,7 @@ export function ProjectDashboardSidebar({
                 e.stopPropagation();
               }}
             >
-              <div className="flex max-h-[100%]">
+              <div className="flex max-h-full">
                 {displayProjects.length > 0 ? (
                   <VirtualizedScrollArea
                     className={cn(

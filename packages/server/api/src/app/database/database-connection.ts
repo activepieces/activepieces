@@ -47,6 +47,8 @@ import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
 import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
 import { TagEntity } from '../pieces/tags/tag-entity'
 import { PlatformEntity } from '../platform/platform.entity'
+import { CopilotPlatformRegistryEntity } from '../platform-copilot/copilot-platform-registry.entity'
+import { PlatformCopilotCredentialsEntity } from '../platform-copilot/platform-copilot-credentials.entity'
 import { ProjectEntity } from '../project/project-entity'
 import { StoreEntryEntity } from '../store-entry/store-entry-entity'
 import { FieldEntity } from '../tables/field/field.entity'
@@ -108,6 +110,8 @@ function getEntities(): EntitySchema<unknown>[] {
         TriggerSourceEntity,
         UserBadgeEntity,
         WaitpointEntity,
+        PlatformCopilotCredentialsEntity,
+        CopilotPlatformRegistryEntity,
         // Enterprise
         ConcurrencyPoolEntity,
         ProjectMemberEntity,
