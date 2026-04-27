@@ -89,7 +89,7 @@ export const newFolder = createTrigger({
     const payload = context.payload.body as any;
 
     if (payload && payload.eventType === 'FolderCreated') {
-      return payload;
+      return [payload];
     }
 
     return [];
