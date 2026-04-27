@@ -41,8 +41,7 @@ describe('Bulk retry flow runs (POST /v1/flow-runs/retry)', () => {
 
         expect(response.statusCode).toBe(200)
 
-        const totalRuns = await countRunsForProject(projectId)
-        expect(totalRuns).toBe(5)
+        await waitForRunCountForProject({ projectId, expected: 5 })
 
         const oldStatus = await readStatus(oldRun.id)
         expect(oldStatus).toBe(FlowRunStatus.FAILED)
@@ -65,8 +64,7 @@ describe('Bulk retry flow runs (POST /v1/flow-runs/retry)', () => {
         })
 
         expect(response.statusCode).toBe(200)
-        const totalRuns = await countRunsForProject(projectId)
-        expect(totalRuns).toBe(6)
+        await waitForRunCountForProject({ projectId, expected: 6 })
     })
 
     it('scopes retry to the status filter', async () => {
@@ -84,8 +82,7 @@ describe('Bulk retry flow runs (POST /v1/flow-runs/retry)', () => {
         })
 
         expect(response.statusCode).toBe(200)
-        const totalRuns = await countRunsForProject(projectId)
-        expect(totalRuns).toBe(3)
+        await waitForRunCountForProject({ projectId, expected: 3 })
         expect(await readStatus(failed.id)).toBe(FlowRunStatus.FAILED)
         expect(await readStatus(succeeded.id)).toBe(FlowRunStatus.SUCCEEDED)
     })
@@ -102,8 +99,7 @@ describe('Bulk retry flow runs (POST /v1/flow-runs/retry)', () => {
         })
 
         expect(response.statusCode).toBe(200)
-        const runsForFlowA = await countRunsForFlow(flowA.id)
-        expect(runsForFlowA).toBe(2)
+        await waitForRunCountForFlow({ flowId: flowA.id, expected: 2 })
         expect(await readStatus(runA.id)).toBe(FlowRunStatus.FAILED)
         expect(await readStatus(runB.id)).toBe(FlowRunStatus.FAILED)
     })
@@ -121,8 +117,7 @@ describe('Bulk retry flow runs (POST /v1/flow-runs/retry)', () => {
         })
 
         expect(response.statusCode).toBe(200)
-        const totalRuns = await countRunsForProject(projectId)
-        expect(totalRuns).toBe(5)
+        await waitForRunCountForProject({ projectId, expected: 5 })
         expect(await readStatus(run1.id)).toBe(FlowRunStatus.FAILED)
         expect(await readStatus(run2.id)).toBe(FlowRunStatus.FAILED)
         expect(await readStatus(run3.id)).toBe(FlowRunStatus.FAILED)
@@ -141,6 +136,7 @@ describe('Bulk retry flow runs (POST /v1/flow-runs/retry)', () => {
         })
 
         expect(response.statusCode).toBe(200)
+        await waitForRunCountForProject({ projectId, expected: 2 })
         expect(await countRunsForProject(otherProject.id)).toBe(1)
         expect(await readStatus(otherRun.id)).toBe(FlowRunStatus.FAILED)
     })
@@ -196,4 +192,30 @@ async function countRunsForFlow(flowId: string): Promise<number> {
 async function readStatus(runId: string): Promise<FlowRunStatus> {
     const row = await db.findOneByOrFail<{ status: FlowRunStatus }>('flow_run', { id: runId })
     return row.status
+}
+
+async function waitForCount({
+    read,
+    expected,
+    timeoutMs = 10_000,
+}: {
+    read: () => Promise<number>
+    expected: number
+    timeoutMs?: number
+}): Promise<void> {
+    const start = Date.now()
+    let last = await read()
+    while (last !== expected && Date.now() - start < timeoutMs) {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        last = await read()
+    }
+    expect(last).toBe(expected)
+}
+
+async function waitForRunCountForProject({ projectId, expected }: { projectId: string, expected: number }): Promise<void> {
+    await waitForCount({ read: async () => countRunsForProject(projectId), expected })
+}
+
+async function waitForRunCountForFlow({ flowId, expected }: { flowId: string, expected: number }): Promise<void> {
+    await waitForCount({ read: async () => countRunsForFlow(flowId), expected })
 }
