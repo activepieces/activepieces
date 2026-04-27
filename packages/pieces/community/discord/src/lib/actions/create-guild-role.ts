@@ -19,9 +19,9 @@ export const discordCreateGuildRole = createAction({
       description: 'The name of the role',
       required: true,
     }),
-    role_color: Property.ShortText({
+    role_color: Property.Number({
       displayName: 'Role Color',
-      description: `The RGB color of the role (may be better to set manually on the server)`,
+      description: `The color of the role as a decimal integer (e.g. 16711680 for red #FF0000). Convert hex to decimal: parseInt("FF0000", 16).`,
       required: false,
     }),
     display_separated: Property.Checkbox({
