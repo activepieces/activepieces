@@ -68,11 +68,9 @@ export const updatePersonAction = createAction({
     });
 
     // Fetch full person first to avoid wiping fields with a partial PUT
-    // const person = await client.get<any>(
-    //   `/api/v1/crm/people/${context.propsValue.personUid}`
-    // );
-    const person: any = {};
-     console.log('Fetched person:', person);
+    const person = await client.get<any>(
+      `/api/v1/crm/people/${context.propsValue.personUid}`
+    );
     let changed = false;
     if (context.propsValue.email) {
       person.Email = context.propsValue.email;
