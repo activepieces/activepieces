@@ -1,5 +1,5 @@
 import { ApFile, LATEST_CONTEXT_VERSION, PieceAuth, Property } from '@activepieces/pieces-framework'
-import { FlowActionType, FlowTriggerType, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
+import { FlowActionType, FlowTriggerType, formulaEvaluator, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
@@ -304,6 +304,72 @@ describe('Props resolver', () => {
         expect(resolvedInput).toEqual(
             8.4,
         )
+    })
+
+    test('AP formula: evaluates a wrapped pure formula expression', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: formulaEvaluator.wrap('uppercase({{trigger.name}})'),
+            executionState,
+        })
+        expect(resolvedInput).toEqual('JOHN')
+    })
+
+    test('AP formula: mixed-content field with wrapped formula evaluates and concatenates with text', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: `Dear ${formulaEvaluator.wrap('uppercase({{trigger.name}})')},`,
+            executionState,
+        })
+        expect(resolvedInput).toEqual('Dear JOHN,')
+    })
+
+    test('AP formula: function-shaped text without the wrapper passes through unchanged', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: 'sum(contributions) for Q1',
+            executionState,
+        })
+        expect(resolvedInput).toEqual('sum(contributions) for Q1')
+    })
+
+    test('AP formula: natural-language prose without the wrapper passes through unchanged', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: 'Please trim(spaces)',
+            executionState,
+        })
+        expect(resolvedInput).toEqual('Please trim(spaces)')
+    })
+
+    test('AP formula: variable substitution inside a wrapped pure formula', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: formulaEvaluator.wrap('combine({{trigger.name}};"!")'),
+            executionState,
+        })
+        expect(resolvedInput).toEqual('John!')
+    })
+
+    test('AP formula: wrapped formula failure throws FormulaEvaluationError', async () => {
+        await expect(
+            propsResolverService.resolve({
+                unresolvedInput: formulaEvaluator.wrap('divide({{trigger.price}}; 0)'),
+                executionState,
+            }),
+        ).rejects.toThrow(/Formula error/)
+    })
+
+    test('AP formula: wrapped formula failure inside mixed content also throws (no silent fallback)', async () => {
+        await expect(
+            propsResolverService.resolve({
+                unresolvedInput: `Score: ${formulaEvaluator.wrap('divide({{trigger.price}}; 0)')}`,
+                executionState,
+            }),
+        ).rejects.toThrow(/Formula error/)
+    })
+
+    test('AP formula: duplicate variables in a single formula resolve to the same value (one resolution per unique token)', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: formulaEvaluator.wrap('combine({{trigger.name}};{{trigger.name}};" + ")'),
+            executionState,
+        })
+        expect(resolvedInput).toEqual('John + John')
     })
 
     it('should not compress memory file in native value in non-logs mode', async () => {

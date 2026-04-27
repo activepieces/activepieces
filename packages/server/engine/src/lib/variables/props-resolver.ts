@@ -1,5 +1,6 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { applyFunctionToValues, isNil, isString } from '@activepieces/shared'
+import { applyFunctionToValues, FormulaEvaluationError, formulaEvaluator, isNil, isString } from '@activepieces/shared'
+
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionResolver } from '../piece-context/connection-resolver'
@@ -98,6 +99,17 @@ function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<st
  */
 async function resolveInputAsync(params: ResolveInputInternalParams): Promise<unknown> {
     const { input, currentState, engineToken, projectId, apiUrl, censoredInput } = params
+
+    if (formulaEvaluator.containsWrapper(input)) {
+        const formulaOptions = { engineToken, projectId, apiUrl, currentState, censoredInput, contextVersion: params.contextVersion }
+        const { expression: preResolvedExpr, vars: preResolvedVars } = await preResolveFormulaVars({ expression: input, resolveOptions: formulaOptions })
+        const { result, error } = formulaEvaluator.evaluate({ expression: preResolvedExpr, sampleData: preResolvedVars })
+        if (error) {
+            throw new FormulaEvaluationError({ expression: input, message: error })
+        }
+        return result ?? ''
+    }
+
     const tokensThatNeedResolving = input.match(VARIABLE_PATTERN)
     const inputContainsOnlyOneTokenToResolve = tokensThatNeedResolving !== null && tokensThatNeedResolving.length === 1 && tokensThatNeedResolving[0] === input
     const resolveOptions = {
@@ -226,6 +238,37 @@ function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
         return [data]
     }
     return []
+}
+
+type PreResolveOptions = Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput' | 'contextVersion'>
+
+async function preResolveFormulaVars({ expression, resolveOptions }: {
+    expression: string
+    resolveOptions: PreResolveOptions
+}): Promise<{ expression: string, vars: Record<string, unknown> }> {
+    // Single-pass regex substitution with dedup: identical tokens map to the
+    // same key and resolve once. The previous split/join loop created one key
+    // per occurrence then replaced ALL occurrences with the first key,
+    // leaving later keys orphaned in `vars`.
+    const variableNameToKey = new Map<string, string>()
+    const rewritten = expression.replace(/\{\{([^}]+)\}\}/g, (_, raw: string) => {
+        const variableName = raw.trim()
+        let key = variableNameToKey.get(variableName)
+        if (key === undefined) {
+            key = `__ap_pv${variableNameToKey.size}__`
+            variableNameToKey.set(variableName, key)
+        }
+        return `{{${key}}}`
+    })
+
+    const vars: Record<string, unknown> = {}
+    await Promise.all(
+        Array.from(variableNameToKey.entries()).map(async ([variableName, key]) => {
+            vars[key] = await resolveSingleToken({ variableName, ...resolveOptions })
+        }),
+    )
+
+    return { expression: rewritten, vars }
 }
 
 type ResolveSingleTokenParams = {
