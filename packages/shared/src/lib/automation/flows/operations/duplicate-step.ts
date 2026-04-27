@@ -39,36 +39,52 @@ function _duplicateBranch(
 ): FlowOperationRequest[] {
     const router = flowStructureUtil.getActionOrThrow(routerName, flowVersion.trigger)
     const clonedRouter: RouterAction = JSON.parse(JSON.stringify(router))
-    const operations: FlowOperationRequest[] = [{
-        type: FlowOperationType.ADD_BRANCH,
-        request: {
-            branchName: `${clonedRouter.settings.branches[childIndex].branchName} Copy`,
-            branchIndex: childIndex + 1,
-            stepName: routerName,
-            conditions: clonedRouter.settings.branches[childIndex].branchType === BranchExecutionType.CONDITION ? clonedRouter.settings.branches[childIndex].conditions : undefined,
-        },
-    }]
-
     const childRouter = clonedRouter.children[childIndex]
+    const originalConditions = clonedRouter.settings.branches[childIndex].branchType === BranchExecutionType.CONDITION ? clonedRouter.settings.branches[childIndex].conditions : undefined
+    let conditions = originalConditions
     if (!isNil(childRouter)) {
         const oldNameToNewName = addActionUtils.mapToNewNames(flowVersion, [childRouter])
+        if (conditions) {
+            conditions = addActionUtils.replaceInBranchConditions(conditions, oldNameToNewName)
+        }
         const clonedSubflow = flowStructureUtil.transferStep(childRouter, (step: FlowAction) => {
             return addActionUtils.clone(step, oldNameToNewName)
         })
         const importOperations = _getImportOperations(clonedSubflow)
-        operations.push({
-            type: FlowOperationType.ADD_ACTION,
-            request: {
-                stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH,
-                action: clonedSubflow as FlowAction,
-                parentStep: routerName,
-                branchIndex: childIndex + 1,
+        return [
+            {
+                type: FlowOperationType.ADD_BRANCH,
+                request: {
+                    branchName: `${clonedRouter.settings.branches[childIndex].branchName} Copy`,
+                    branchIndex: childIndex + 1,
+                    stepName: routerName,
+                    conditions,
+                },
             },
-        })
-        operations.push(...importOperations)
+            {
+                type: FlowOperationType.ADD_ACTION,
+                request: {
+                    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH,
+                    action: clonedSubflow as FlowAction,
+                    parentStep: routerName,
+                    branchIndex: childIndex + 1,
+                },
+            },
+            ...importOperations,
+        ]
     }
 
-    return operations
+    return [
+        {
+            type: FlowOperationType.ADD_BRANCH,
+            request: {
+                branchName: `${clonedRouter.settings.branches[childIndex].branchName} Copy`,
+                branchIndex: childIndex + 1,
+                stepName: routerName,
+                conditions,
+            },
+        },
+    ]
 }
 
 export { _duplicateStep, _duplicateBranch }
