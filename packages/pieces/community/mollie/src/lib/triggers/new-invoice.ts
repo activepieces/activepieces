@@ -72,15 +72,11 @@ export const mollieNewInvoice = createTrigger({
     const webhookId = await context.store.get<string>(TRIGGER_KEY);
 
     if (webhookId) {
-      try {
-        await mollieCommon.makeRequest(
-          context.auth,
-          HttpMethod.DELETE,
-          `/webhooks/${webhookId}`
-        );
-      } catch (error) {
-        console.warn(`Failed to delete Mollie webhook ${webhookId}:`, error);
-      }
+      await mollieCommon.makeRequest(
+        context.auth,
+        HttpMethod.DELETE,
+        `/webhooks/${webhookId}`
+      );
     }
 
     await context.store.delete(TRIGGER_KEY);
@@ -124,7 +120,7 @@ export const mollieNewInvoice = createTrigger({
         return invoices._embedded.invoices;
       }
     } catch (error) {
-      console.error('Failed to fetch invoices:', error);
+      throw error;
     }
 
     return [
