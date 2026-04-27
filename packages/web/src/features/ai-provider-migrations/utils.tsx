@@ -1,8 +1,9 @@
-import { ErrorCode } from '@activepieces/shared';
+import { AgentProviderModelSchema, ErrorCode } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowRight } from 'lucide-react';
 import { ReactNode } from 'react';
 
+import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { api } from '@/lib/api';
 
 import { FlowLink } from './components/project-grouped-flow-list';
@@ -13,16 +14,38 @@ export function ModelArrowDisplay({
   to,
 }: {
   prefixIcon?: ReactNode;
-  from: string;
-  to: string;
+  from: AgentProviderModelSchema;
+  to: AgentProviderModelSchema;
 }) {
   return (
     <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden whitespace-nowrap text-sm">
       {prefixIcon}
-      <span className="min-w-0 truncate">{from}</span>
+      <ProviderModelChip providerModel={from} />
       <ArrowRight className="w-3 h-3 text-muted-foreground shrink-0" />
-      <span className="min-w-0 truncate">{to}</span>
+      <ProviderModelChip providerModel={to} />
     </div>
+  );
+}
+
+function ProviderModelChip({
+  providerModel,
+}: {
+  providerModel: AgentProviderModelSchema;
+}) {
+  const logoUrl = SUPPORTED_AI_PROVIDERS.find(
+    (p) => p.provider === providerModel.provider,
+  )?.logoUrl;
+  return (
+    <span className="flex min-w-0 items-center gap-1.5">
+      {logoUrl && (
+        <img
+          src={logoUrl}
+          alt=""
+          className="size-4 shrink-0 rounded-sm object-contain"
+        />
+      )}
+      <span className="min-w-0 truncate">{providerModel.model}</span>
+    </span>
   );
 }
 

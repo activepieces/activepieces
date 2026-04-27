@@ -85,8 +85,8 @@ export function AiProviderMigrationsTable({
                       prefixIcon={
                         <Undo2 className="size-3.5 text-muted-foreground shrink-0" />
                       }
-                      from={sourceModel.model}
-                      to={targetModel.model}
+                      from={sourceModel}
+                      to={targetModel}
                     />
                   </div>
                 </TooltipTrigger>
@@ -110,10 +110,7 @@ export function AiProviderMigrationsTable({
           <Tooltip>
             <TooltipTrigger asChild>
               <div>
-                <ModelArrowDisplay
-                  from={sourceModel.model}
-                  to={targetModel.model}
-                />
+                <ModelArrowDisplay from={sourceModel} to={targetModel} />
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom" align="start">
