@@ -236,6 +236,6 @@ function ChatBoxContent({
 type AIChatBoxProps = {
   incognito: boolean;
   conversationId?: string | null;
-  onConversationCreated?: () => void;
+  onConversationCreated?: (conversationId: string) => void;
   onTitleUpdate?: (title: string, conversationId?: string) => void;
 };
