@@ -65,7 +65,6 @@ export const createFile = createAction({
             };
         } catch (err) {
             if (err instanceof FTPError) {
-                console.error(getSftpError(err.code));
                 return {
                     status: 'error',
                     error: getSftpError(err.code),

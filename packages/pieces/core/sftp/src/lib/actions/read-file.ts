@@ -62,7 +62,6 @@ export const readFileContent = createAction({
     } 
     catch (err) {
       if (err instanceof FTPError) {
-        console.error(getSftpError(err.code));
         return {
           status: 'error',
           content: null,
