@@ -40,7 +40,7 @@ export const kizeoFormsCommon = {
           };
         }
       } catch (e) {
-        console.debug(e);
+
 
         return {
           disabled: true,
@@ -84,7 +84,7 @@ export const kizeoFormsCommon = {
           };
         }
       } catch (e) {
-        console.debug(e);
+
 
         return {
           disabled: true,
@@ -135,7 +135,7 @@ export const kizeoFormsCommon = {
           };
         }
       } catch (e) {
-        console.debug(e);
+
 
         return {
           disabled: true,
@@ -181,7 +181,7 @@ export const kizeoFormsCommon = {
           }
         }
       } catch (e) {
-        console.debug(e);
+
       }
 
       return fields;
@@ -216,7 +216,7 @@ export const kizeoFormsCommon = {
           };
         }
       } catch (e) {
-        console.debug(e);
+
 
         return {
           disabled: true,
@@ -267,7 +267,7 @@ export const kizeoFormsCommon = {
           }
         }
       } catch (e) {
-        console.debug(e);
+
       }
 
       return properties;
