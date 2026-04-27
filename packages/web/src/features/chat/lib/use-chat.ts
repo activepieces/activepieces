@@ -130,6 +130,31 @@ function hasAssistantContent(msg: ChatUIMessage): boolean {
   );
 }
 
+function injectFilePartsIntoLastUserMessage({
+  messages,
+  fileNames,
+}: {
+  messages: ChatUIMessage[];
+  fileNames: string[];
+}): ChatUIMessage[] {
+  if (fileNames.length === 0) return messages;
+  const lastUserIdx = messages.findLastIndex((m) => m.role === 'user');
+  if (lastUserIdx === -1) return messages;
+  const lastUser = messages[lastUserIdx];
+  const alreadyHasFiles = lastUser.parts.some((p) => p.type === 'file');
+  if (alreadyHasFiles) return messages;
+  const fileParts: ChatUIMessage['parts'] = fileNames.map((name) => ({
+    type: 'file' as const,
+    mediaType: 'text/plain' as const,
+    url: '',
+    filename: name,
+  }));
+  const patched = { ...lastUser, parts: [...lastUser.parts, ...fileParts] };
+  const result = [...messages];
+  result[lastUserIdx] = patched;
+  return result;
+}
+
 export function useAgentChat({
   onTitleUpdate,
   onConversationCreated,
@@ -148,6 +173,7 @@ export function useAgentChat({
   const pendingFilesRef = useRef<
     { name: string; mimeType: ChatAllowedMimeType; data: string }[] | undefined
   >(undefined);
+  const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
   const cancelledRef = useRef(false);
   const onTitleUpdateRef = useRef(onTitleUpdate);
@@ -219,12 +245,20 @@ export function useAgentChat({
   const isStreaming = sdkIsStreaming || hasPending;
 
   const messages: ChatUIMessage[] = useMemo(() => {
+    const fileNames = lastSentFileNamesRef.current;
     const liveMessages = uiMessages as ChatUIMessage[];
-    if (!hasPending) return liveMessages;
+    if (!hasPending)
+      return injectFilePartsIntoLastUserMessage({
+        messages: liveMessages,
+        fileNames,
+      });
     if (liveMessages.length === 0) return pendingMessages;
-    const withoutEmptyAssistant = liveMessages.filter(
-      (m) => !(m.role === 'assistant' && !hasAssistantContent(m)),
-    );
+    const withoutEmptyAssistant = injectFilePartsIntoLastUserMessage({
+      messages: liveMessages.filter(
+        (m) => !(m.role === 'assistant' && !hasAssistantContent(m)),
+      ),
+      fileNames,
+    });
     return [...withoutEmptyAssistant, createPendingAssistantMessage()];
   }, [hasPending, uiMessages, pendingMessages]);
 
@@ -250,6 +284,7 @@ export function useAgentChat({
     setWasCancelled(false);
     setPendingMessages([]);
     pendingFilesRef.current = undefined;
+    lastSentFileNamesRef.current = [];
   }, [stop, setUiMessages]);
 
   const createConversation = useCallback(
@@ -274,10 +309,13 @@ export function useAgentChat({
       setLocalError(null);
       setWasCancelled(false);
 
+      const fileNames = files?.map((f) => f.name) ?? [];
+      lastSentFileNamesRef.current = fileNames;
+
       setPendingMessages([
         createPendingUserMessage({
           content,
-          fileNames: files?.map((f) => f.name) ?? [],
+          fileNames,
         }),
         createPendingAssistantMessage(),
       ]);
@@ -332,6 +370,7 @@ export function useAgentChat({
       setLocalError(null);
       setPendingMessages([]);
       pendingFilesRef.current = undefined;
+      lastSentFileNamesRef.current = [];
 
       setIsLoadingHistory(true);
       const { data: history, error: historyError } = await tryCatch(async () =>
