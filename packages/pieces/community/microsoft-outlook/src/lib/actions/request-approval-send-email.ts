@@ -100,10 +100,6 @@ export const requestApprovalInMail = createAction({
           approved: false, // default approval is false
         };
       } catch (error) {
-        console.error(
-          '[RequestApprovalEmail] Error during BEGIN execution:',
-          error
-        );
         throw error;
       }
     } else {
