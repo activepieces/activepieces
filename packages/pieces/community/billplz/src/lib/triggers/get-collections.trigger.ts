@@ -23,8 +23,7 @@ const polling: Polling<BillplzAuth, StaticPropsValue<Record<string, never>>> = {
         data: collection
       }));
     } catch (error) {
-      console.error('Failed to fetch collections:', error);
-      return [];
+      throw error;
     }
   },
 };
