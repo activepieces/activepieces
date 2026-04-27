@@ -187,12 +187,17 @@ export class BaserowClient {
       { type: aggregation_type }
     );
   }
-  async createWebhook(
-    tableId: number,
-    url: string,
-    events: string[],
-    name: string
-  ): Promise<{ id: number }> {
+  async createWebhook({
+    tableId,
+    url,
+    events,
+    name,
+  }: {
+    tableId: number;
+    url: string;
+    events: string[];
+    name: string;
+  }): Promise<{ id: number }> {
     return await this.makeRequest<{ id: number }>(
       HttpMethod.POST,
       `/database/webhooks/table/${tableId}/`,

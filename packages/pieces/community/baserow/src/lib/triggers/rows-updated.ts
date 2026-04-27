@@ -1,6 +1,13 @@
-import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/shared';
 import { baserowAuth } from '../auth';
+import { baserowCommon } from '../common';
+import { createWebhookTriggerHooks } from '../common/webhook-trigger';
+
+const triggerHooks = createWebhookTriggerHooks({
+  events: ['rows.updated'],
+  storeKey: 'baserow_rows_updated_trigger',
+});
 
 export const rowsUpdatedTrigger = createTrigger({
   name: 'baserow_rows_updated',
@@ -10,9 +17,9 @@ export const rowsUpdatedTrigger = createTrigger({
     'Triggers when existing rows are updated in a Baserow table. Returns all rows from the event as a single batch.',
   type: TriggerStrategy.WEBHOOK,
   props: {
+    table_id: baserowCommon.tableId(),
     instructions: Property.MarkDown({
-      value: `
-## Setup Instructions
+      value: `If you authenticated with **Database Token**, the webhook must be created manually:
 
 1. In Baserow, click the **···** menu beside your table and select **Webhooks**.
 2. Click **Create webhook +**.
@@ -23,7 +30,8 @@ export const rowsUpdatedTrigger = createTrigger({
 \`\`\`
 5. Under events, select **Rows updated**.
 6. Click **Save**.
-`,
+
+If you authenticated with **Email & Password (JWT)**, the webhook is registered automatically — you can ignore the steps above.`,
       variant: MarkdownVariant.INFO,
     }),
   },
@@ -36,12 +44,8 @@ export const rowsUpdatedTrigger = createTrigger({
     ],
     count: 1,
   },
-  async onEnable() {
-    // Manual setup required — user registers the webhook URL in Baserow UI.
-  },
-  async onDisable() {
-    // Manual cleanup — user deletes the webhook in Baserow UI.
-  },
+  onEnable: triggerHooks.onEnable,
+  onDisable: triggerHooks.onDisable,
   async run(context) {
     const body = context.payload.body as {
       items?: Record<string, unknown>[];

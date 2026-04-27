@@ -1,10 +1,13 @@
-import { BaserowAuthValue } from '../auth';
+import { BaserowAuthValue, baserowAuthHelpers } from '../auth';
 import { makeClient } from './index';
 
-export function createWebhookTriggerHooks(
-  eventType: string,
-  storeKey: string
-) {
+export function createWebhookTriggerHooks({
+  events,
+  storeKey,
+}: {
+  events: string[];
+  storeKey: string;
+}) {
   return {
     async onEnable(context: {
       auth: BaserowAuthValue;
@@ -14,14 +17,15 @@ export function createWebhookTriggerHooks(
         put: <T>(key: string, value: T) => Promise<T>;
       };
     }): Promise<void> {
+      if (!baserowAuthHelpers.isJwtAuth(context.auth)) return;
       if (!context.propsValue.table_id) return;
       const client = await makeClient(context.auth);
-      const webhook = await client.createWebhook(
-        context.propsValue.table_id,
-        context.webhookUrl,
-        [eventType],
-        `Activepieces – ${storeKey}`
-      );
+      const webhook = await client.createWebhook({
+        tableId: context.propsValue.table_id,
+        url: context.webhookUrl,
+        events,
+        name: `Activepieces – ${storeKey}`,
+      });
       await context.store.put(storeKey, { webhookId: webhook.id });
     },
     async onDisable(context: {
@@ -31,6 +35,7 @@ export function createWebhookTriggerHooks(
         delete: (key: string) => Promise<void>;
       };
     }): Promise<void> {
+      if (!baserowAuthHelpers.isJwtAuth(context.auth)) return;
       const data = await context.store.get<{ webhookId: number }>(storeKey);
       if (!data?.webhookId) return;
       const client = await makeClient(context.auth);
