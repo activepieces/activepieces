@@ -10,6 +10,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, Navigate } from 'react-router-dom';
@@ -37,6 +38,7 @@ type SignInSchema = z.infer<typeof SignInSchema>;
 
 const SignInForm: React.FC = () => {
   const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const form = useForm<SignInSchema>({
     resolver: zodResolver(SignInSchema),
     defaultValues: {
@@ -160,22 +162,39 @@ const SignInForm: React.FC = () => {
                   {edition !== ApEdition.COMMUNITY && (
                     <Link
                       to="/forget-password"
-                      className="text-muted-foreground text-sm hover:text-primary transition-all duration-200"
+                      className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
                     >
                       {t('Forgot your password?')}
                     </Link>
                   )}
                 </div>
-                <Input
-                  {...field}
-                  required
-                  id="password"
-                  type="password"
-                  placeholder={'********'}
-                  className="rounded-sm"
-                  tabIndex={2}
-                  data-testid="sign-in-password"
-                />
+                <div className="relative">
+                  <Input
+                    {...field}
+                    required
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder={'********'}
+                    className="rounded-sm pr-10"
+                    tabIndex={2}
+                    data-testid="sign-in-password"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    tabIndex={-1}
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+
                 <FormMessage />
               </FormItem>
             )}

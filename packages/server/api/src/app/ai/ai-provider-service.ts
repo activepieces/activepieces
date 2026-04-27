@@ -1,6 +1,9 @@
 import {
     ActivepiecesError, ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
     apId,
+    BaseAIProviderAuthConfig,
+    BedrockProviderAuthConfig,
+    BedrockProviderConfig,
     CreateAIProviderRequest,
     ErrorCode,
     GetProviderConfigResponse,
@@ -68,7 +71,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async listModels(platformId: PlatformId, provider: AIProviderName): Promise<AIProviderModel[]> {
         const { config, auth } = await this.getConfigOrThrow({ platformId, provider })
 
-        const cacheKey = `${provider}-${auth.apiKey}`
+        const cacheKey = `${provider}-${getAuthCacheFingerprint({ provider, auth, config })}`
         if (modelsCache.has(cacheKey) && !('models' in config)) {
             return modelsCache.get(cacheKey)!
         }
@@ -168,7 +171,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         let auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(aiProvider.auth)
 
         if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
-            const doesHaveKeys = !isNil(auth) && !isNil(auth.apiKey) && auth.apiKey !== ''
+            const doesHaveKeys = !isNil(auth) && 'apiKey' in auth && !isNil(auth.apiKey) && auth.apiKey !== ''
             if (!doesHaveKeys) {
                 const { auth: activePiecesAuth } = await enrichWithKeysIfNeeded(aiProvider, platformId, log)
 
@@ -284,4 +287,18 @@ async function doesActivepiecesProviderHasKeys(aiProvider: AIProviderSchema): Pr
     }
     const decryptedAuth = await encryptUtils.decryptObject<ActivePiecesProviderAuthConfig>(aiProvider.auth)
     return !isNil(decryptedAuth) && !isNil(decryptedAuth.apiKey) && decryptedAuth.apiKey !== ''
+}
+
+function getAuthCacheFingerprint({ provider, auth, config }: { provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig }): string {
+    switch (provider) {
+        case AIProviderName.BEDROCK: {
+            const { accessKeyId, secretAccessKey } = auth as BedrockProviderAuthConfig
+            const { region } = config as BedrockProviderConfig
+            return `${accessKeyId}-${secretAccessKey}-${region}`
+        }
+        default: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return apiKey
+        }
+    }
 }

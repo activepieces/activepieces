@@ -12,6 +12,7 @@ type Provider =
   | 'cloudflare-gateway'
   | 'custom'
   | 'azure'
+  | 'bedrock'
   | 'x-ai';
 
 type AIModelType = 'text' | 'image';

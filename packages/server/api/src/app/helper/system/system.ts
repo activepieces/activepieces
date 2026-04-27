@@ -8,6 +8,7 @@ import {
     ExecutionMode,
     FileLocation,
     isNil,
+    NetworkMode,
     PieceSyncMode,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -66,6 +67,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: '300000',
     [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: DefaultProjectRole.EDITOR,
+    [AppSystemProp.NETWORK_MODE]: NetworkMode.UNRESTRICTED,
 }
 
 let globalLogger: FastifyBaseLogger

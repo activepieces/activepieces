@@ -1,9 +1,7 @@
 import {
     BranchCondition,
-    FlowActionType,
     FlowOperationRequest,
     FlowOperationType,
-    flowStructureUtil,
     isNil,
     McpServer,
     McpToolDefinition,
@@ -31,16 +29,7 @@ export const apAddBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
             flowId: z.string().describe('The id of the flow'),
             routerStepName: z.string().describe('The name of the ROUTER step to add a branch to. Use ap_flow_structure to get valid values.'),
             branchName: z.string().describe('Display name for the new branch (e.g. "Branch 1")'),
-            conditions: z.array(
-                z.array(
-                    z.object({
-                        firstValue: z.string().describe('Left-hand value (can be a template expression like {{step_1.output}})'),
-                        operator: z.string().optional().describe('Comparison operator (e.g. TEXT_CONTAINS, NUMBER_IS_GREATER_THAN, EXISTS)'),
-                        secondValue: z.string().optional().describe('Right-hand value (not needed for single-value operators like EXISTS, BOOLEAN_IS_TRUE)'),
-                        caseSensitive: z.boolean().optional().describe('For text operators: whether to match case sensitively'),
-                    }),
-                ),
-            ).optional().describe('Conditions array (outer array = OR groups, inner array = AND conditions). Required for condition-type branches; omit to use an empty condition group.'),
+            conditions: mcpUtils.BRANCH_CONDITIONS_INPUT_SCHEMA.optional().describe('Conditions array (outer array = OR groups, inner array = AND conditions). Required for condition-type branches; omit to use an empty condition group.'),
         },
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
@@ -54,19 +43,11 @@ export const apAddBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
             }
 
-            const routerStep = flowStructureUtil.getStep(routerStepName, flow.version.trigger)
-            if (isNil(routerStep) || routerStep.type !== FlowActionType.ROUTER) {
-                const routers = flowStructureUtil.getAllSteps(flow.version.trigger)
-                    .filter(s => s.type === FlowActionType.ROUTER)
-                    .map(s => s.name)
-                    .join(', ')
-                return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Step "${routerStepName}" is not a ROUTER step. Available routers: ${routers || 'none'}`,
-                    }],
-                }
+            const resolved = mcpUtils.resolveRouterStep({ stepName: routerStepName, trigger: flow.version.trigger })
+            if (resolved.error) {
+                return resolved.error
             }
+            const routerStep = resolved.routerStep
 
             const routerSettings = (routerStep as { settings: { branches: unknown[] } }).settings
             // Insert before the last (fallback) branch

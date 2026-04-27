@@ -1,6 +1,5 @@
-import { URL } from 'url'
-import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, InputPropertyMap, PauseHook, PauseHookParams, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
+import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import type { ToolSet } from 'ai'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
@@ -8,11 +7,13 @@ import { pieceLoader } from '../helper/piece-loader'
 import { createFileUploader } from '../piece-context/file-uploader'
 import { createFlowsContext } from '../piece-context/flows'
 import { createContextStore } from '../piece-context/store'
+import { waitpointClient } from '../piece-context/waitpoint-client'
 import { agentTools } from '../tools'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { workerSocket } from '../worker-socket'
 import { ActionHandler, BaseExecutor } from './base-executor'
+import { EngineConstants } from './context/engine-constants'
 import { runProgressService } from './run-progress'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
@@ -43,7 +44,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         if (isNil(action.settings.actionName)) {
             throw new EngineGenericError('ActionNameNotSetError', 'Action name is not set')
         }
-        
+
         const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
             pieceName: action.settings.pieceName,
             pieceVersion: action.settings.pieceVersion,
@@ -57,7 +58,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         })
 
         stepOutput.input = censoredInput
-    
+
         const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.propertySettings)
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors, null, 2))
@@ -138,17 +139,13 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(params),
-                pause: createPauseHook(params, executionState.pauseRequestId, constants.httpRequestId),
                 respond: createRespondHook(params),
+                createWaitpoint: createWaitpointHook({ constants, stepName: action.name, hookParams: params }),
+                waitForWaitpoint: createWaitForWaitpointHook({ hookParams: params }),
             },
             project: {
                 id: constants.projectId,
                 externalId: constants.externalProjectId,
-            },
-            generateResumeUrl: (params) => {
-                const url = new URL(`${constants.publicApiUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}${params.sync ? '/sync' : ''}`)
-                url.search = new URLSearchParams(params.queryParams).toString()
-                return url.toString()
             },
         }
         const backwardCompatibleContext = backwardCompatabilityContextUtils.makeActionContextBackwardCompatible({
@@ -162,9 +159,9 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         const webhookResponse = getResponse(params.hookResponse)
         const isSamePiece = constants.triggerPieceName === action.settings.pieceName
-        if (!isNil(webhookResponse) && !isNil(constants.serverHandlerId) && !isNil(constants.httpRequestId) && isSamePiece) {
+        if (!isNil(webhookResponse) && !isNil(constants.workerHandlerId) && !isNil(constants.httpRequestId) && isSamePiece) {
             await workerSocket.getWorkerClient().sendFlowResponse({
-                workerHandlerId: constants.serverHandlerId,
+                workerHandlerId: constants.workerHandlerId,
                 httpRequestId: constants.httpRequestId,
                 runResponse: {
                     status: webhookResponse.status ?? 200,
@@ -186,15 +183,10 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             })
         }
         if (params.hookResponse.type === 'paused') {
-            if (isNil(params.hookResponse.response)) {
-                throw new EngineGenericError('PauseResponseNotSetError', 'Pause response is not set')
-            }
-
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted()
-                .setVerdict({
-                    status: FlowRunStatus.PAUSED,
-                    pauseMetadata: (params.hookResponse.response as PauseHookParams).pauseMetadata,
-                })
+            return newExecutionContext
+                .upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime))
+                .incrementStepsExecuted()
+                .setVerdict({ status: FlowRunStatus.PAUSED })
         }
         return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
 
@@ -226,12 +218,7 @@ function getResponse(hookResponse: HookResponse): RespondResponse | undefined {
         case 'respond':
             return hookResponse.response.response
         case 'paused':
-            if (hookResponse.response.pauseMetadata.type === PauseType.WEBHOOK) {
-                return hookResponse.response.pauseMetadata.response
-            }
-            else {
-                return undefined
-            }
+            return hookResponse.responseToSend
         case 'none':
             return undefined
     }
@@ -282,44 +269,51 @@ type CreateRespondHookParams = {
     hookResponse: HookResponse
 }
 
-function createPauseHook(params: CreatePauseHookParams, pauseId: string, requestIdToReply: string | null): PauseHook {
-    return (req) => {
-        switch (req.pauseMetadata.type) {
-            case PauseType.DELAY: {
-                const diffInDays = dayjs(req.pauseMetadata.resumeDateTime).diff(dayjs(), 'days')
-                if (diffInDays > AP_PAUSED_FLOW_TIMEOUT_DAYS) {
-                    throw new PausedFlowTimeoutError(undefined, AP_PAUSED_FLOW_TIMEOUT_DAYS)
-                }
-                params.hookResponse = {
-                    ...params.hookResponse,
-                    type: 'paused',
-                    response: {
-                        pauseMetadata: {
-                            ...req.pauseMetadata,
-                            requestIdToReply: requestIdToReply ?? undefined,
-                        },
-                    },
-                }
-                break
-            }
-            case PauseType.WEBHOOK:
-                params.hookResponse = {
-                    ...params.hookResponse,
-                    type: 'paused',
-                    response: {
-                        pauseMetadata: {
-                            ...req.pauseMetadata,
-                            requestId: pauseId,
-                            requestIdToReply: requestIdToReply ?? undefined,
-                            response: req.pauseMetadata.response ?? {},
-                        },
-                    },
-                }
-                break
+function createWaitpointHook({ constants, stepName, hookParams }: { constants: EngineConstants, stepName: string, hookParams: { hookResponse: HookResponse } }): CreateWaitpointHook {
+    return async (req: CreateWaitpointParams): Promise<CreateWaitpointResult> => {
+        assertDelayWithinTimeout(req.resumeDateTime)
+        if (!isNil(req.responseToSend)) {
+            hookParams.hookResponse = { ...hookParams.hookResponse, responseToSend: req.responseToSend }
+        }
+        const result = await waitpointClient.create({
+            apiUrl: constants.internalApiUrl,
+            engineToken: constants.engineToken,
+            flowRunId: constants.flowRunId,
+            projectId: constants.projectId,
+            stepName,
+            type: req.type,
+            version: req.version ?? 'V1',
+            resumeDateTime: req.resumeDateTime,
+            responseToSend: req.responseToSend,
+            workerHandlerId: constants.workerHandlerId ?? undefined,
+            httpRequestId: constants.httpRequestId ?? undefined,
+        })
+        return {
+            ...result,
+            buildResumeUrl: (params: { queryParams: Record<string, string>, sync?: boolean }): string => {
+                const url = new URL(`${result.resumeUrl}${params.sync ? '/sync' : ''}`)
+                url.search = new URLSearchParams(params.queryParams).toString()
+                return url.toString()
+            },
         }
     }
 }
 
-type CreatePauseHookParams = {
-    hookResponse: HookResponse
+function createWaitForWaitpointHook({ hookParams }: { hookParams: { hookResponse: HookResponse } }): WaitForWaitpointHook {
+    return (_waitpointId: string) => {
+        hookParams.hookResponse = {
+            ...hookParams.hookResponse,
+            type: 'paused',
+        }
+    }
+}
+
+function assertDelayWithinTimeout(resumeDateTime?: string): void {
+    if (isNil(resumeDateTime)) {
+        return
+    }
+    const diffInDays = dayjs(resumeDateTime).diff(dayjs(), 'days')
+    if (diffInDays > AP_PAUSED_FLOW_TIMEOUT_DAYS) {
+        throw new PausedFlowTimeoutError(undefined, AP_PAUSED_FLOW_TIMEOUT_DAYS)
+    }
 }

@@ -9,9 +9,6 @@ import {
     GetPieceRequestWithScopeParams,
     isNil,
     ListPiecesRequestQuery,
-    ListPieceVersionsRequestParams,
-    ListPieceVersionsResponse,
-    ListPieceVersionsWithScopeRequestParams,
     LocalesEnum,
     PieceCategory,
     PieceOptionRequest,
@@ -81,35 +78,6 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get(
-        '/:scope/:name/versions',
-        ListPieceVersionsWithScopeRequest,
-        async (req): Promise<ListPieceVersionsResponse> => {
-            const { name, scope } = req.params
-            const decodeScope = decodeURIComponent(scope)
-            const decodedName = decodeURIComponent(name)
-            return pieceMetadataService(req.log).listVersions({
-                name: `${decodeScope}/${decodedName}`,
-                platformId: req.principal.platform.id,
-                projectId: req.projectId,
-            })
-        },
-    )
-
-    app.get(
-        '/:name/versions',
-        ListPieceVersionsRequest,
-        async (req): Promise<ListPieceVersionsResponse> => {
-            const { name } = req.params
-            const decodedName = decodeURIComponent(name)
-            return pieceMetadataService(req.log).listVersions({
-                name: decodedName,
-                platformId: req.principal.platform.id,
-                projectId: req.projectId,
-            })
-        },
-    )
-
-    app.get(
         '/:scope/:name',
         GetPieceParamsWithScopeRequest,
         async (req) => {
@@ -148,6 +116,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
     app.get('/registry', RegistryPiecesRequest, async (req) => {
         const pieces = await pieceMetadataService(req.log).registry({
             release: req.query.release,
+            platformId: getPlatformId(req.principal),
         })
         return pieces
     })
@@ -244,28 +213,6 @@ const OptionsPieceRequest = {
         security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.BODY,
         }),
-    },
-}
-
-const ListPieceVersionsRequest = {
-    config: {
-        security: securityAccess.project([PrincipalType.USER], undefined, {
-            type: ProjectResourceType.QUERY,
-        }),
-    },
-    schema: {
-        params: ListPieceVersionsRequestParams,
-    },
-}
-
-const ListPieceVersionsWithScopeRequest = {
-    config: {
-        security: securityAccess.project([PrincipalType.USER], undefined, {
-            type: ProjectResourceType.QUERY,
-        }),
-    },
-    schema: {
-        params: ListPieceVersionsWithScopeRequestParams,
     },
 }
 
