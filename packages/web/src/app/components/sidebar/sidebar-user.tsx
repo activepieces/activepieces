@@ -20,12 +20,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AccountSettingsDialog } from '@/app/components/account-settings';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,7 +36,6 @@ import {
 } from '@/components/ui/sidebar-shadcn';
 import { userHooks } from '@/hooks/user-hooks';
 import { otom8ClerkAppearance } from '@/lib/otom8-clerk-appearance';
-import { OTOM8_SITE_URL } from '@/lib/otom8-site-url';
 
 export function SidebarUser() {
   const { embedState } = useEmbedding();
@@ -69,7 +63,7 @@ export function SidebarUser() {
     }
     if (lastOrgRef.current !== current) {
       lastOrgRef.current = current;
-      window.location.replace(`${OTOM8_SITE_URL}/api/ap-sso`);
+      window.location.replace('/api/ap-sso');
     }
   }, [organization?.id]);
 
@@ -87,9 +81,9 @@ export function SidebarUser() {
 
   const handleSignOut = () => {
     if (clerkUser) {
-      signOut({ redirectUrl: `${OTOM8_SITE_URL}/auth/signout` });
+      signOut({ redirectUrl: '/login' });
     } else {
-      window.location.replace(`${OTOM8_SITE_URL}/auth/signout`);
+      window.location.replace('/login');
     }
   };
 
@@ -136,7 +130,13 @@ export function SidebarUser() {
               </div>
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem onClick={() => setAccountOpen(true)}>
+              <DropdownMenuItem
+                onClick={() =>
+                  clerkUser
+                    ? setAccountOpen(true)
+                    : window.location.replace('/login')
+                }
+              >
                 <Settings className="mr-2 h-4 w-4" />
                 {t('Account Settings')}
               </DropdownMenuItem>
@@ -207,50 +207,49 @@ export function SidebarUser() {
         </SidebarMenuItem>
       </SidebarMenu>
 
-      {/* Account Settings — Clerk UserProfile */}
-      <AccountSettingsDialog
-        open={accountOpen}
-        onClose={() => setAccountOpen(false)}
-      />
+      {/* Account Settings — only mount when Clerk session exists */}
+      {clerkUser && (
+        <AccountSettingsDialog
+          open={accountOpen}
+          onClose={() => setAccountOpen(false)}
+        />
+      )}
 
       {/* Team Settings — Clerk OrganizationProfile */}
       <Dialog open={teamOpen} onOpenChange={setTeamOpen}>
-        <DialogContent className="max-w-4xl w-full h-[85vh] p-0 overflow-hidden flex flex-col">
-          <DialogHeader className="px-6 py-4 border-b">
-            <DialogTitle className="font-semibold">
-              {t('Team Settings')}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-auto">
-            <OrganizationProfile
-              appearance={{
-                ...otom8ClerkAppearance,
-                elements: {
-                  ...otom8ClerkAppearance.elements,
-                  rootBox: { width: '100%', height: '100%' },
-                  cardBox: {
-                    width: '100%',
-                    boxShadow: 'none',
-                    border: 'none',
-                    borderRadius: 0,
-                  },
+        <DialogContent className="max-w-4xl w-full h-[85vh] p-0 overflow-hidden bg-[#111111] border-white/8">
+          <OrganizationProfile
+            appearance={{
+              ...otom8ClerkAppearance,
+              elements: {
+                ...otom8ClerkAppearance.elements,
+                rootBox: { width: '100%', height: '100%' },
+                cardBox: {
+                  width: '100%',
+                  height: '100%',
+                  boxShadow: 'none',
+                  border: 'none',
+                  borderRadius: 0,
+                  backgroundColor: '#111111',
                 },
-              }}
-              routing="hash"
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Create Workspace — Clerk CreateOrganization */}
-      <Dialog open={createOrgOpen} onOpenChange={setCreateOrgOpen}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden">
-          <CreateOrganization
-            appearance={otom8ClerkAppearance}
-            afterCreateOrganizationUrl={`${OTOM8_SITE_URL}/api/ap-sso`}
+              },
+            }}
+            routing="hash"
           />
         </DialogContent>
       </Dialog>
+
+      {/* Create Workspace — only mount when Clerk session exists */}
+      {clerkUser && (
+        <Dialog open={createOrgOpen} onOpenChange={setCreateOrgOpen}>
+          <DialogContent className="max-w-lg p-0 overflow-hidden">
+            <CreateOrganization
+              appearance={otom8ClerkAppearance}
+              afterCreateOrganizationUrl="/api/ap-sso"
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }

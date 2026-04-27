@@ -15,17 +15,14 @@ http {
         root /usr/share/nginx/html;
         index index.html;
 
-        # OTOM8_SITE_URL is substituted by scripts/render-nginx-conf.sh (local: http://localhost:3000, prod: https://otom8.us)
-        # /sign-in is hit both when AP logs a user out and when an unauthed user
-        # lands on AP. Route it through the portal's signout flow so Clerk's
-        # session is cleared before showing the login page — otherwise Clerk
-        # sees a live session and auto-SSOs the user right back into AP.
+        # AP's legacy auth routes redirect to the local /login page.
+        # Clerk's signOut() clears the session in-browser before this redirect fires.
         location ^~ /sign-in {
-            return 302 ${OTOM8_SITE_URL}/auth/signout;
+            return 302 /login;
         }
 
         location ^~ /sign-up {
-            return 302 ${OTOM8_SITE_URL}/login;
+            return 302 /login;
         }
 
         error_page 404 /404.html;

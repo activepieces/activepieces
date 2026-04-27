@@ -8,6 +8,7 @@ import { TemplateDetailsWrapper } from '../guards/template-details-wrapper';
 
 import NotFoundPage from './404-page';
 import AuthenticatePage from './authenticate';
+import { LoginPage } from './login';
 import { EmbedPage } from './embed';
 import { EmbeddedConnectionDialog } from './embed/embedded-connection-dialog';
 import { RedirectPage } from './redirect';
@@ -38,6 +39,10 @@ export const publicRoutes = [
   {
     path: '/authenticate',
     element: <AuthenticatePage />,
+  },
+  {
+    path: '/login',
+    element: <LoginPage />,
   },
   {
     path: '/templates',
