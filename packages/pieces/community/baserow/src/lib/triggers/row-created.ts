@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { baserowJwtAuth } from '../auth';
+import { baserowAuth } from '../auth';
 import { baserowCommon } from '../common';
 import { createWebhookTriggerHooks } from '../common/webhook-trigger';
 
@@ -7,7 +7,7 @@ const webhookHooks = createWebhookTriggerHooks('rows.created', 'baserow_row_crea
 
 export const rowCreatedTrigger = createTrigger({
   name: 'baserow_row_created',
-  auth: baserowJwtAuth,
+  auth: baserowAuth,
   displayName: 'Row Created',
   description: 'Triggers when a new row is created in a Baserow table.',
   type: TriggerStrategy.WEBHOOK,

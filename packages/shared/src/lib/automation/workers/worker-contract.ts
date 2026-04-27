@@ -1,4 +1,4 @@
-import { ProgressUpdateType } from '../engine/engine-operation'
+import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
@@ -11,7 +11,7 @@ export type SubmitPayloadsRequest = {
     payloads: unknown[]
     httpRequestId?: string
     environment: RunEnvironment
-    progressUpdateType: ProgressUpdateType
+    streamStepProgress: StreamStepProgress
     parentRunId?: string
     failParentOnFailure?: boolean
 }

@@ -192,13 +192,14 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                     operation,
                 })
 
+                const draftWarning = mcpUtils.publishedFlowWarning(flow.publishedVersionId)
                 const hasConfig = input !== undefined || auth !== undefined || sourceCode !== undefined || loopItems !== undefined
                 const addedStep = flowStructureUtil.getStep(stepName, updatedFlow.version.trigger)
                 if (hasConfig && addedStep && !addedStep.valid) {
                     return {
                         content: [{
                             type: 'text',
-                            text: `⚠️ Step "${displayName}" (${stepName}) added but still invalid. Use ap_get_piece_props to check required fields, then ap_update_step to fix.`,
+                            text: `⚠️ Step "${displayName}" (${stepName}) added but still invalid. Use ap_get_piece_props to check required fields, then ap_update_step to fix.${draftWarning}`,
                         }],
                     }
                 }
@@ -206,14 +207,14 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                     return {
                         content: [{
                             type: 'text',
-                            text: `✅ Step "${displayName}" (${stepName}) added and configured.`,
+                            text: `✅ Step "${displayName}" (${stepName}) added and configured.${draftWarning}`,
                         }],
                     }
                 }
                 return {
                     content: [{
                         type: 'text',
-                        text: `✅ Step "${displayName}" (${stepName}) added. Now use ap_update_step with stepName="${stepName}" to configure its settings.`,
+                        text: `✅ Step "${displayName}" (${stepName}) added. Now use ap_update_step with stepName="${stepName}" to configure its settings.${draftWarning}`,
                     }],
                 }
             }

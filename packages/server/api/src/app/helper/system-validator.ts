@@ -1,5 +1,5 @@
 import { inspect } from 'util'
-import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, isNil, NetworkMode, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../database/database-type'
 import { RedisType } from '../database/redis/types'
@@ -186,7 +186,7 @@ const systemPropValidators: {
     [AppSystemProp.CANARY_APP_URL]: urlValidator,
     // SSRF protection
     [AppSystemProp.SSRF_ALLOW_LIST]: stringValidator,
-    [AppSystemProp.SSRF_PROTECTION_ENABLED]: booleanValidator,
+    [AppSystemProp.NETWORK_MODE]: enumValidator(Object.values(NetworkMode)),
 
     // On-call
     [AppSystemProp.PAGE_ONCALL_WEBHOOK]: urlValidator,

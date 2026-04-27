@@ -1,4 +1,4 @@
-import { ConsumeJobRequest, ConsumeJobResponse, EngineResponseStatus, ExecutionType, isNil, JobData, tryCatch } from '@activepieces/shared'
+import { ConsumeJobRequest, ConsumeJobResponse, EngineResponseStatus, isNil, JobData, tryCatch } from '@activepieces/shared'
 import { Worker as BullMQWorker, Job } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -205,12 +205,6 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         const userJobData = isUserInteractionJobData(jobData) ? jobData : null
 
         const { error } = await tryCatch(async () => {
-            if (input.delayInSeconds && input.delayInSeconds > 0) {
-                await job.updateData({ ...job.data, executionType: ExecutionType.RESUME })
-                await job.moveToDelayed(Date.now() + input.delayInSeconds * 1000, input.token)
-                return
-            }
-
             if (input.status === EngineResponseStatus.INTERNAL_ERROR) {
                 await job.moveToFailed(new Error(buildFailedReason(input.errorMessage ?? 'Internal error', input.logs)), input.token)
                 if (userJobData) {

@@ -19,7 +19,7 @@ Before generating, identify:
 
 ### Step 2: UPDATE THE ENTITY
 
-Update the TypeORM entity file in `packages/server/api/src/app/` to reflect the new schema. This ensures the generation command can diff against the current state.
+Update the TypeORM entity file in `packages/server/api/src/app/` to reflect the new schema. This ensures the CLI generation command can diff against the current state.
 
 Array columns always use this pattern:
 ```ts
@@ -30,16 +30,34 @@ columnName: {
 }
 ```
 
-### Step 2: CREATE THE MIGRATION FILE
+### Step 3: GENERATE THE MIGRATION USING THE CLI
 
+Run from `packages/server/api/`:
+```bash
+npm run db-migration -- src/app/database/migration/postgres/MigrationName
+```
+
+This diffs the current entity state against the database and generates the migration file with correct SQL and timestamp.
+
+### Step 4: PATCH THE GENERATED FILE
+
+The CLI generates a file using `MigrationInterface`. You **must** patch it to use the project's `Migration` interface and add required fields:
+
+1. Replace `import { MigrationInterface, QueryRunner } from "typeorm"` with `import { QueryRunner } from 'typeorm'` and add `import { Migration } from '../../migration'`
+2. Replace `implements MigrationInterface` with `implements Migration`
+3. Add `breaking = false` (or `true` if destructive)
+4. Add `release = '<version>'` matching the upcoming release version from root `package.json`
+5. Verify `down()` correctly reverses `up()`
+
+Example result:
 ```ts
 import { QueryRunner } from 'typeorm'
-import { Migration } from '../../migration' // ← must import from ../.. 
+import { Migration } from '../../migration'
 
 export class AddMyColumn1234567890 implements Migration {
     name = 'AddMyColumn1234567890'
     breaking = false 
-    release = '0.78.0'   // ← match the upcoming release version from root package.json
+    release = '0.78.0'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "project" ADD COLUMN "description" text`)
@@ -58,7 +76,7 @@ export class AddMyColumn1234567890 implements Migration {
 
 CI fails if any of these are missing.
 
-### Step 3: REGISTER THE MIGRATION
+### Step 5: REGISTER THE MIGRATION
 
 Open `packages/server/api/src/app/database/postgres-connection.ts` and add the new migration class to the `getMigrations()` array (at the end, in chronological order):
 
@@ -71,6 +89,10 @@ return [
     AddMyColumn1234567890,
 ]
 ```
+
+### Step 6: UPDATE TYPES AND SERVICE CODE
+
+After the migration is generated and registered, update any TypeScript types, service files, or other code that references the changed columns to stay in sync with the new schema.
 
 
 ## Note:
@@ -128,11 +150,13 @@ Set `transaction = false` whenever using `CONCURRENTLY` — PostgreSQL requires 
 | Migration files | `packages/server/api/src/app/database/migration/postgres/` |
 | Registration | `packages/server/api/src/app/database/postgres-connection.ts` |
 | `Migration` import | `import { Migration } from '../../migration'` |
+| Generate command | `npm run db-migration -- src/app/database/migration/postgres/MigrationName` (run from `packages/server/api/`) |
 
 
 ## Critical Reminders
 
-1. **Never use `MigrationInterface`** — always use `Migration` from `../../migration`
-2. **`breaking`, `release`, and `down()` are mandatory** — CI will reject the migration without them
-3. **Register in `postgres-connection.ts`** — migration won't run without this
-4. **PGlite + CONCURRENTLY** — always guard with `isPGlite` and set `transaction = false`
+1. **Always generate via CLI** — never write migration SQL by hand; use `npm run db-migration` to generate from the entity diff
+2. **Never use `MigrationInterface`** — always patch the generated file to use `Migration` from `../../migration`
+3. **`breaking`, `release`, and `down()` are mandatory** — CI will reject the migration without them
+4. **Register in `postgres-connection.ts`** — migration won't run without this
+5. **PGlite + CONCURRENTLY** — always guard with `isPGlite` and set `transaction = false`

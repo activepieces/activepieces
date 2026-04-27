@@ -178,7 +178,7 @@ describe('worker integration', () => {
     }
 
     it('polls for a job, executes it, and reports completion', async () => {
-        const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds: 10 }
+        const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         mockGetHandler.mockReturnValue({
             jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
             execute: vi.fn().mockResolvedValue(expectedResult),
@@ -192,7 +192,6 @@ describe('worker integration', () => {
         expect(completeJobCalls[0].token).toBe('token-123')
         expect(completeJobCalls[0].queueName).toBe('workerJobs')
         expect(completeJobCalls[0].status).toBe(EngineResponseStatus.OK)
-        expect(completeJobCalls[0].delayInSeconds).toBe(10)
         expect(mockGetHandler).toHaveBeenCalledWith(WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION)
     }, 15_000)
 
@@ -311,7 +310,7 @@ describe('worker integration', () => {
 
     describe('resilience to invalid job data', () => {
         it('survives a job with invalid jobData fields and continues processing', async () => {
-            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds: 5 }
+            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
             mockGetHandler.mockReturnValue({
                 jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
                 execute: vi.fn().mockResolvedValue(expectedResult),
@@ -334,7 +333,7 @@ describe('worker integration', () => {
         }, 15_000)
 
         it('survives a job with an unrecognized jobType and continues polling', async () => {
-            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds: 5 }
+            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
             mockGetHandler.mockReturnValue({
                 jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
                 execute: vi.fn().mockResolvedValue(expectedResult),
@@ -398,7 +397,7 @@ describe('worker integration', () => {
         }, 15_000)
 
         it('survives multiple consecutive invalid jobs and still processes a valid one', async () => {
-            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds: 7 }
+            const expectedResult = { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
             mockGetHandler.mockReturnValue({
                 jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
                 execute: vi.fn().mockResolvedValue(expectedResult),
@@ -420,7 +419,6 @@ describe('worker integration', () => {
             expect(completeJobCalls[2].status).toBe(EngineResponseStatus.INTERNAL_ERROR)
             expect(completeJobCalls[3].jobId).toBe('job-valid')
             expect(completeJobCalls[3].status).toBe(EngineResponseStatus.OK)
-            expect(completeJobCalls[3].delayInSeconds).toBe(7)
             expect(mockGetHandler).toHaveBeenCalledTimes(1)
         }, 15_000)
 
@@ -432,7 +430,7 @@ describe('worker integration', () => {
                 })
                 .mockReturnValueOnce({
                     jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-                    execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, delayInSeconds: 5 }),
+                    execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }),
                 })
 
             const job1 = buildConsumeJobRequest({ jobId: 'job-crash' })
@@ -446,7 +444,6 @@ describe('worker integration', () => {
             expect(completeJobCalls[0].errorMessage).toBe('handler crashed')
             expect(completeJobCalls[1].jobId).toBe('job-ok')
             expect(completeJobCalls[1].status).toBe(EngineResponseStatus.OK)
-            expect(completeJobCalls[1].delayInSeconds).toBe(5)
         }, 15_000)
 
         it('handles interleaved nulls, invalid jobs, and valid jobs', async () => {
@@ -545,6 +542,5 @@ type CompleteJobCall = {
     status: string
     errorMessage?: string
     logs?: string
-    delayInSeconds?: number
     response?: unknown
 }

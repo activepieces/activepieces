@@ -29,6 +29,7 @@ export {
   aiProviderQueries,
   aiProviderMutations,
   aiProviderKeys,
+  hasAnyAuthFieldFilled,
 } from './hooks/ai-provider-hooks';
 export {
   piecesTagQueries,

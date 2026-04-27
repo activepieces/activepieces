@@ -21,7 +21,7 @@ export {
 } from './lib/auth';
 
 export const gmail = createPiece({
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.82.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/gmail.png',
   categories: [
     PieceCategory.COMMUNICATION,

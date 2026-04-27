@@ -158,6 +158,7 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                     operation,
                 })
                 const updatedStep = flowStructureUtil.getStep(stepName, updatedFlow.version.trigger)
+                const draftWarning = mcpUtils.publishedFlowWarning(flow.publishedVersionId)
                 if (updatedStep && !updatedStep.valid) {
                     const diagnosis = updatedStep.type === FlowActionType.PIECE
                         ? await diagnoseMissingInputs({ settings: updatedStep.settings, platformId: project.platformId, log })
@@ -169,12 +170,12 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                     return {
                         content: [{
                             type: 'text',
-                            text: `⚠️ Step "${stepName}" updated but still invalid. ${hint}`,
+                            text: `⚠️ Step "${stepName}" updated but still invalid. ${hint}${draftWarning}`,
                         }],
                     }
                 }
                 return {
-                    content: [{ type: 'text', text: `✅ Successfully updated step "${stepName}".` }],
+                    content: [{ type: 'text', text: `✅ Successfully updated step "${stepName}".${draftWarning}` }],
                 }
             }
             catch (err) {

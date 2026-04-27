@@ -1,4 +1,4 @@
-import { ExecuteFlowJobData, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, StreamStepProgress, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
@@ -6,7 +6,7 @@ import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { projectService } from '../../project/project-service'
 import { jobQueue, JobType } from '../job-queue/job-queue'
 
-type LegacyOneTimeJobData = Pick<ExecuteFlowJobData, 'runId' | 'projectId' | 'flowVersionId' | 'environment' | 'synchronousHandlerId' | 'httpRequestId' | 'payload' | 'executeTrigger' | 'executionType' | 'progressUpdateType' | 'stepNameToTest' | 'sampleData'>
+type LegacyOneTimeJobData = Pick<ExecuteFlowJobData, 'runId' | 'projectId' | 'flowVersionId' | 'environment' | 'workerHandlerId' | 'httpRequestId' | 'payload' | 'executeTrigger' | 'executionType' | 'stepNameToTest' | 'sampleData'> & { progressUpdateType: string }
 type LegacyWebhookJobData = Pick<WebhookJobData, 'projectId' | 'schemaVersion' | 'requestId' | 'payload' | 'runEnvironment' | 'flowId' | 'saveSampleData' | 'flowVersionIdToRun' | 'execute' | 'parentRunId' | 'failParentOnFailure'>
 const migratedKey = 'unified_queue_migrated'
 
@@ -62,11 +62,13 @@ async function migrateOneTimeJobs(log: FastifyBaseLogger): Promise<boolean> {
             },
         })
         if (!isNil(flowVersion?.flowId)) {
+            const { progressUpdateType: legacyProgressUpdateType, ...restCasedData } = casedData
             await jobQueue(log).add({
                 id: job.id!,
                 type: JobType.ONE_TIME,
                 data: {
-                    ...casedData,
+                    ...restCasedData,
+                    streamStepProgress: legacyProgressUpdateType === 'TEST_FLOW' ? StreamStepProgress.WEBSOCKET : StreamStepProgress.NONE,
                     flowId: flowVersion.flowId,
                     platformId: await projectService(log).getPlatformId(casedData.projectId),
                     schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,

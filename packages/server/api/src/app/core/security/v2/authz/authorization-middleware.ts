@@ -45,6 +45,7 @@ export async function convertToSecurityAccessRequest(request: FastifyRequest): P
                 kind: RouteKind.AUTHENTICATED,
                 authorization: {
                     adminOnly: security.authorization.adminOnly,
+                    nonEmbedUsersOnly: security.authorization.nonEmbedUsersOnly,
                     type: AuthorizationType.PLATFORM,
                     allowedPrincipals: security.authorization.allowedPrincipals,
                 },

@@ -1,10 +1,9 @@
-import { ActivepiecesError, AnalyticsReportRequest, ErrorCode, LeaderboardRequest, PrincipalType, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, AnalyticsReportRequest, ErrorCode, LeaderboardRequest, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
-import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
-import { userService } from '../user/user-service'
+import { userIdentityHelper } from '../helper/user-identity-helper'
 import { piecesAnalyticsService } from './pieces-analytics.service'
 import { platformAnalyticsReportService } from './platform-analytics-report.service'
 
@@ -52,9 +51,8 @@ const platformAnalyticsController: FastifyPluginAsyncZod = async (app) => {
 }
 
 async function assertUserIsNotEmbedded(userId: string, log: FastifyBaseLogger): Promise<void> {
-    const user = await userService(log).getOneOrFail({ id: userId })
-    const userIdentity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
-    if (userIdentity.provider === UserIdentityProvider.JWT) {
+    const isEmbedded = await userIdentityHelper(log).isUserEmbedded(userId)
+    if (isEmbedded) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: { message: 'User is not allowed to access this resource' },

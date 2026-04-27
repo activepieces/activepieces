@@ -3,10 +3,9 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { AppConnectionType } from '@activepieces/shared';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-const databaseTokenAuth = PieceAuth.CustomAuth({
+export const baserowAuth = PieceAuth.CustomAuth({
   displayName: 'Database Token',
   description: `
   1. Log in to your Baserow Account.
@@ -40,61 +39,6 @@ const databaseTokenAuth = PieceAuth.CustomAuth({
   },
 });
 
-const jwtAuth = PieceAuth.CustomAuth({
-  displayName: 'Email & Password (JWT)',
-  description: `Authenticate with your Baserow email and password. This mode enables automatic webhook registration for triggers — no manual setup needed.\n\n**Note:** Two-factor authentication (2FA) is not supported. If your Baserow account has 2FA enabled, use the Database Token authentication instead.`,
-  required: true,
-  props: {
-    apiUrl: Property.ShortText({
-      displayName: 'API URL',
-      required: true,
-      defaultValue: 'https://api.baserow.io',
-    }),
-    email: Property.ShortText({
-      displayName: 'Email',
-      required: true,
-    }),
-    password: PieceAuth.SecretText({
-      displayName: 'Password',
-      required: true,
-    }),
-  },
-  validate: async ({ auth }) => {
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: `${auth.apiUrl}/api/user/token-auth/`,
-        body: { email: auth.email, password: auth.password },
-      });
-      return { valid: true };
-    } catch {
-      return {
-        valid: false,
-        error: 'Invalid email, password, or API URL.',
-      };
-    }
-  },
-});
-
-function isDatabaseToken(
-  auth: BaserowAuthValue
-): auth is BaserowAuthValue & {
-  type: typeof AppConnectionType.CUSTOM_AUTH;
-  props: { apiUrl: string; token: string };
-} {
-  return (
-    auth.type === AppConnectionType.CUSTOM_AUTH && 'token' in auth.props
-  );
-}
-
-export const baserowAuth = [databaseTokenAuth, jwtAuth];
-export const baserowJwtAuth = jwtAuth;
-export const isDatabaseTokenAuth = isDatabaseToken;
-
 export type BaserowAuthValue = AppConnectionValueForAuthProperty<
   typeof baserowAuth
->;
-
-export type BaserowJwtAuthValue = AppConnectionValueForAuthProperty<
-  typeof baserowJwtAuth
 >;

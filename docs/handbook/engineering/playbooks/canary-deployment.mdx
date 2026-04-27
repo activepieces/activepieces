@@ -85,7 +85,7 @@ Jobs for canary platforms are enqueued to `canaryWorkerJobs`, which only canary 
 
 ## Deploying a New Canary Build
 
-The **Continuous Delivery — Canary** workflow (`continuous-delivery-canary.yml`) runs automatically every day at 9 AM UTC, building from the latest `main`.
+The **Continuous Delivery — Canary** workflow (`continuous-delivery-canary.yml`) runs automatically every day at 9 AM UTC, building from the latest `main`. It is also invoked as a reusable workflow from `continuous-delivery-cloud.yml` on the Sunday promotion, so the canary is always refreshed from the latest `main` immediately before production is updated.
 
 The workflow:
 1. Builds and pushes a new image tagged `<version>.<sha>.canary`
