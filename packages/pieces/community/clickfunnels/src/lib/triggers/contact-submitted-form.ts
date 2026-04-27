@@ -39,7 +39,6 @@ export const contactSubmittedForm = createTrigger({
 
       await store.put(CACHE_KEY, { webhookId });
     } catch (error) {
-      console.error('Failed to create ClickFunnels webhook:', error);
       throw new Error(
         `Failed to create webhook: ${
           error instanceof Error ? error.message : 'Unknown error'
