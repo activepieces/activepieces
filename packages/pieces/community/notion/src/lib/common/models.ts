@@ -417,12 +417,12 @@ export const NotionFieldMapping: Record<string, any> = {
   },
   phone_number: {
     buildActivepieceType: (property: PhoneNumberDatabaseProperty) =>
-      Property.Number({
+      Property.ShortText({
         displayName: property.name,
         required: false,
       }),
     buildNotionType: (property: DynamicPropsValue) => ({
-      phone_number: property,
+      phone_number: String(property),
     }),
   },
   rich_text: {
