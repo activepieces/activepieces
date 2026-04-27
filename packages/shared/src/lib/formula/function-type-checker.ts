@@ -202,15 +202,20 @@ function inferArgType(argNodes: DocNode[]): ApFunctionArgType | null {
     }
 
     if (!hasFunctionOrMention) {
+        // Strip zero-width spaces — the editor inserts them as cursor anchors
+        // between function brackets, but `String.trim()` does not remove them
+        // (ZWS isn't ECMA whitespace), so a literal `3` in an arg slot reads
+        // as `​3` here and gets misclassified as a string.
         const text = argNodes
             .filter((n) => n.type === 'text')
             .map((n) => n.text ?? '')
             .join('')
+            .replaceAll('​', '')
             .trim()
 
         if (!text) return null
         if (text === 'true' || text === 'false') return 'boolean'
-        if (text !== '' && !Number.isNaN(Number(text))) return 'number'
+        if (!Number.isNaN(Number(text))) return 'number'
         return 'string'
     }
 

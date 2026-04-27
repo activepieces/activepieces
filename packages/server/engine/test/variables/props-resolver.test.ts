@@ -1,5 +1,5 @@
 import { ApFile, LATEST_CONTEXT_VERSION, PieceAuth, Property } from '@activepieces/pieces-framework'
-import { FlowActionType, FlowTriggerType, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
+import { FlowActionType, FlowTriggerType, formulaEvaluator, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
@@ -306,23 +306,23 @@ describe('Props resolver', () => {
         )
     })
 
-    test('AP formula: evaluates a pure formula expression', async () => {
+    test('AP formula: evaluates a wrapped pure formula expression', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: 'uppercase({{trigger.name}})',
+            unresolvedInput: formulaEvaluator.wrap('uppercase({{trigger.name}})'),
             executionState,
         })
         expect(resolvedInput).toEqual('JOHN')
     })
 
-    test('AP formula: mixed-content field evaluates formulas embedded in text (preview/runtime parity)', async () => {
+    test('AP formula: mixed-content field with wrapped formula evaluates and concatenates with text', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: 'Dear uppercase({{trigger.name}}),',
+            unresolvedInput: `Dear ${formulaEvaluator.wrap('uppercase({{trigger.name}})')},`,
             executionState,
         })
         expect(resolvedInput).toEqual('Dear JOHN,')
     })
 
-    test('AP formula: natural-language text embedding a function name falls back to variable resolution', async () => {
+    test('AP formula: function-shaped text without the wrapper passes through unchanged', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput: 'sum(contributions) for Q1',
             executionState,
@@ -330,7 +330,7 @@ describe('Props resolver', () => {
         expect(resolvedInput).toEqual('sum(contributions) for Q1')
     })
 
-    test('AP formula: leading text before a formula-shaped phrase falls back to variable resolution', async () => {
+    test('AP formula: natural-language prose without the wrapper passes through unchanged', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput: 'Please trim(spaces)',
             executionState,
@@ -338,29 +338,30 @@ describe('Props resolver', () => {
         expect(resolvedInput).toEqual('Please trim(spaces)')
     })
 
-    test('AP formula: variable substitution inside a pure formula', async () => {
+    test('AP formula: variable substitution inside a wrapped pure formula', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: 'combine({{trigger.name}};"!")',
+            unresolvedInput: formulaEvaluator.wrap('combine({{trigger.name}};"!")'),
             executionState,
         })
         expect(resolvedInput).toEqual('John!')
     })
 
-    test('AP formula: pure formula failure throws FormulaEvaluationError instead of returning garbage', async () => {
+    test('AP formula: wrapped formula failure throws FormulaEvaluationError', async () => {
         await expect(
             propsResolverService.resolve({
-                unresolvedInput: 'divide({{trigger.price}}; 0)',
+                unresolvedInput: formulaEvaluator.wrap('divide({{trigger.price}}; 0)'),
                 executionState,
             }),
         ).rejects.toThrow(/Formula error/)
     })
 
-    test('AP formula: mixed-content failure still falls back to variable resolution (no unresolved templates leaked)', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: 'Fallback for {{trigger.unknown}}: trim({{trigger.unknown}} + broken $$)',
-            executionState,
-        })
-        expect(resolvedInput).not.toContain('{{')
+    test('AP formula: wrapped formula failure inside mixed content also throws (no silent fallback)', async () => {
+        await expect(
+            propsResolverService.resolve({
+                unresolvedInput: `Score: ${formulaEvaluator.wrap('divide({{trigger.price}}; 0)')}`,
+                executionState,
+            }),
+        ).rejects.toThrow(/Formula error/)
     })
 
     it('should not compress memory file in native value in non-logs mode', async () => {

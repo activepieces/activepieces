@@ -1,5 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { applyFunctionToValues, containsApFunctionCall, evaluateExpression, FormulaEvaluationError, isNil, isPureApFunctionCall, isString } from '@activepieces/shared'
+import { applyFunctionToValues, FormulaEvaluationError, formulaEvaluator, isNil, isString } from '@activepieces/shared'
 
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -100,24 +100,14 @@ function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<st
 async function resolveInputAsync(params: ResolveInputInternalParams): Promise<unknown> {
     const { input, currentState, engineToken, projectId, apiUrl, censoredInput } = params
 
-    if (containsApFunctionCall(input)) {
+    if (formulaEvaluator.containsWrapper(input)) {
         const formulaOptions = { engineToken, projectId, apiUrl, currentState, censoredInput, contextVersion: params.contextVersion }
         const { expression: preResolvedExpr, vars: preResolvedVars } = await preResolveFormulaVars({ expression: input, resolveOptions: formulaOptions })
-        const { result, error } = evaluateExpression({ expression: preResolvedExpr, sampleData: preResolvedVars })
-        if (!error) {
-            return result ?? ''
-        }
-        // A pure formula is intentional — surface the error rather than returning
-        // a partially-resolved garbage string like `"divide( 10 ; 0 )"`.
-        if (isPureApFunctionCall(input)) {
+        const { result, error } = formulaEvaluator.evaluate({ expression: preResolvedExpr, sampleData: preResolvedVars })
+        if (error) {
             throw new FormulaEvaluationError({ expression: input, message: error })
         }
-        // Mixed-content fallthrough: detection is permissive so
-        // `"Dear uppercase({{name}}),"` evaluates. When the value is not actually
-        // a formula (`"Please trim(spaces)"`) evaluation fails and the raw string
-        // must still go through variable resolution so unresolved {{...}}
-        // templates don't leak and secrets stay censored.
-        console.warn('[resolveInputAsync] Formula evaluation error, falling back to variable resolution:', error)
+        return result ?? ''
     }
 
     const tokensThatNeedResolving = input.match(VARIABLE_PATTERN)

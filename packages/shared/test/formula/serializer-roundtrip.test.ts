@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { evaluateExpression } from '../../src/lib/formula/function-evaluator'
+import { formulaEvaluator } from '../../src/lib/formula/formula-evaluator'
 
 /**
  * These tests verify that expression strings survive a full round-trip through
@@ -39,7 +39,7 @@ describe('expression round-trip through evaluator', () => {
 
     cases.forEach(([expr, expected]) => {
         it(`${expr}  →  ${JSON.stringify(expected)}`, () => {
-            const { result, error } = evaluateExpression({ expression: expr, sampleData: DATA })
+            const { result, error } = formulaEvaluator.evaluate({ expression: formulaEvaluator.wrap(expr), sampleData: DATA })
             expect(error).toBeNull()
             expect(result).toEqual(expected)
         })
@@ -48,33 +48,36 @@ describe('expression round-trip through evaluator', () => {
 
 describe('variable interpolation round-trip', () => {
     it('single variable resolves', () => {
-        const { result } = evaluateExpression({ expression: 'uppercase({{name}})', sampleData: DATA })
+        const { result } = formulaEvaluator.evaluate({ expression: formulaEvaluator.wrap('uppercase({{name}})'), sampleData: DATA })
         expect(result).toBe('ALICE')
     })
 
     it('variable in nested call', () => {
-        const { result } = evaluateExpression({ expression: 'trim(uppercase({{name}}))', sampleData: DATA })
+        const { result } = formulaEvaluator.evaluate({ expression: formulaEvaluator.wrap('trim(uppercase({{name}}))'), sampleData: DATA })
         expect(result).toBe('ALICE')
     })
 
-    it('mixed text and variable', () => {
-        const { result } = evaluateExpression({ expression: 'Hello {{name}}', sampleData: DATA })
+    it('mixed text and variable (no wrapper)', () => {
+        const { result } = formulaEvaluator.evaluate({ expression: 'Hello {{name}}', sampleData: DATA })
         expect(result).toBe('Hello alice')
     })
 
-    it('function result mixed with plain text', () => {
-        const { result } = evaluateExpression({ expression: 'Score: add({{score}};8)', sampleData: DATA })
+    it('wrapped function result mixed with plain text', () => {
+        const { result } = formulaEvaluator.evaluate({
+            expression: `Score: ${formulaEvaluator.wrap('add({{score}};8)')}`,
+            sampleData: DATA,
+        })
         expect(result).toBe('Score: 50')
     })
 
     it('literal `)` inside a quoted string arg does not break the call', () => {
-        const { result, error } = evaluateExpression({ expression: 'prefix("hi";"(CEO) ")', sampleData: DATA })
+        const { result, error } = formulaEvaluator.evaluate({ expression: formulaEvaluator.wrap('prefix("hi";"(CEO) ")'), sampleData: DATA })
         expect(error).toBeNull()
         expect(result).toBe('(CEO) hi')
     })
 
     it('literal `;` inside a quoted string arg is not treated as separator', () => {
-        const { result, error } = evaluateExpression({ expression: 'combine("a;b";"c;d";" | ")', sampleData: DATA })
+        const { result, error } = formulaEvaluator.evaluate({ expression: formulaEvaluator.wrap('combine("a;b";"c;d";" | ")'), sampleData: DATA })
         expect(error).toBeNull()
         expect(result).toBe('a;b | c;d')
     })

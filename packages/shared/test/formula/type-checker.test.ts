@@ -161,3 +161,36 @@ describe('multiple independent functions', () => {
         expect(errors.get('bad')).toMatch(/at most/)
     })
 })
+
+// ---------------------------------------------------------------------------
+// Zero-width space handling — the editor wraps user text with ZWS cursor
+// anchors which String.trim() does not strip.
+// ---------------------------------------------------------------------------
+
+describe('zero-width space stripping', () => {
+    const ZWS = '​'
+
+    it('numeric arg surrounded by ZWS still classifies as number — last_n("hello"; 3)', () => {
+        const d = doc([
+            fnStart('last_n', 'f1'),
+            text(`${ZWS}"hello"${ZWS}`),
+            fnSep('f1'),
+            text(`${ZWS}3${ZWS}`),
+            fnEnd('f1'),
+        ])
+        expect(typeCheckTiptapDoc(d).size).toBe(0)
+    })
+
+    it('boolean arg surrounded by ZWS still classifies as boolean', () => {
+        const d = doc([
+            fnStart('if', 'f1'),
+            text(`${ZWS}true${ZWS}`),
+            fnSep('f1'),
+            text(`${ZWS}"a"${ZWS}`),
+            fnSep('f1'),
+            text(`${ZWS}"b"${ZWS}`),
+            fnEnd('f1'),
+        ])
+        expect(typeCheckTiptapDoc(d).size).toBe(0)
+    })
+})

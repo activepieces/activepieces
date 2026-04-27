@@ -1,7 +1,7 @@
 import {
   ApFunction,
-  evaluateExpression,
   flowStructureUtil,
+  formulaEvaluator,
   isNil,
   typeCheckTiptapDoc,
 } from '@activepieces/shared';
@@ -416,7 +416,7 @@ export const TiptapEditor = ({
   const updatePreview = useCallback(
     (expression: string) => {
       const flatData = flattenSampleData(sampleData ?? {});
-      const { result, error } = evaluateExpression({
+      const { result, error } = formulaEvaluator.evaluate({
         expression,
         sampleData: flatData,
       });

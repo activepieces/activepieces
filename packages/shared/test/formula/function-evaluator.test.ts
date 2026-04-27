@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { containsApFunctionCall, evaluateExpression } from '../../src/lib/formula/function-evaluator'
+import { formulaEvaluator } from '../../src/lib/formula/formula-evaluator'
 
 const ok = (expr: string, data: Record<string, unknown> = {}) =>
-    evaluateExpression({ expression: expr, sampleData: data })
+    formulaEvaluator.evaluate({ expression: formulaEvaluator.wrap(expr), sampleData: data })
+
+const okMixed = (template: string, data: Record<string, unknown> = {}) =>
+    formulaEvaluator.evaluate({ expression: template, sampleData: data })
 
 const result = (expr: string, data: Record<string, unknown> = {}) =>
     ok(expr, data).result
@@ -485,11 +488,21 @@ describe('nested functions', () => {
 // ---------------------------------------------------------------------------
 
 describe('mixed template', () => {
-    it('text before function', () =>
-        expect(result('Hello trim(" world ")', {})).toBe('Hello world'))
+    it('text before wrapped function', () =>
+        expect(
+            okMixed(`Hello ${formulaEvaluator.wrap('trim(" world ")')}`).result,
+        ).toBe('Hello world'))
 
-    it('function result embedded in string', () =>
-        expect(result('Name: uppercase({{name}})', { name: 'alice' })).toBe('Name: ALICE'))
+    it('wrapped function result embedded in string', () =>
+        expect(
+            okMixed(
+                `Name: ${formulaEvaluator.wrap('uppercase({{name}})')}`,
+                { name: 'alice' },
+            ).result,
+        ).toBe('Name: ALICE'))
+
+    it('plain text without wrapper passes through unchanged', () =>
+        expect(okMixed('Please trim(spaces)').result).toBe('Please trim(spaces)'))
 })
 
 // ---------------------------------------------------------------------------
@@ -503,8 +516,8 @@ describe('error handling', () => {
     it('empty expression returns empty string', () =>
         expect(result('')).toBe(''))
 
-    it('unknown identifier treated as plain text', () =>
-        expect(result('unknownfunc("x")')).toBeTruthy())
+    it('unknown identifier inside a wrapper surfaces an error', () =>
+        expect(error('unknownfunc("x")')).toBeTruthy())
 })
 
 // ---------------------------------------------------------------------------
@@ -567,25 +580,27 @@ describe('implicit string quoting', () => {
         expect(result('contains(the quick brown fox; quick brown)')).toBe(true))
 })
 
-describe('containsApFunctionCall', () => {
-    it('pure function call is detected', () =>
-        expect(containsApFunctionCall('trim("hi")')).toBe(true))
+describe('formulaEvaluator wrapper detection', () => {
+    it('wrapped pure formula is detected', () =>
+        expect(formulaEvaluator.containsWrapper(formulaEvaluator.wrap('trim("hi")'))).toBe(true))
 
-    it('pure function call with surrounding whitespace is detected', () =>
-        expect(containsApFunctionCall('  uppercase({{x}})  ')).toBe(true))
-
-    it('mixed content with a variable reference is detected', () =>
-        expect(containsApFunctionCall('Dear uppercase({{trigger.name}}),')).toBe(true))
+    it('mixed content with one wrapped formula is detected', () =>
+        expect(formulaEvaluator.containsWrapper(`Dear ${formulaEvaluator.wrap('uppercase({{trigger.name}})')},`)).toBe(true))
 
     it('natural-language prose with a function-shaped phrase is NOT detected', () =>
-        expect(containsApFunctionCall('Please trim(spaces)')).toBe(false))
+        expect(formulaEvaluator.containsWrapper('Please trim(spaces)')).toBe(false))
 
-    it('prose embedding a formula fragment but no variable is NOT detected', () =>
-        expect(containsApFunctionCall('sum(contributions) for Q1')).toBe(false))
+    it('prose embedding a formula fragment without wrapper is NOT detected', () =>
+        expect(formulaEvaluator.containsWrapper('sum(contributions) for Q1')).toBe(false))
 
     it('plain text without any function name returns false', () =>
-        expect(containsApFunctionCall('hello world')).toBe(false))
+        expect(formulaEvaluator.containsWrapper('hello world')).toBe(false))
 
-    it('dotted member access (e.g. trigger.min) is not detected as a call', () =>
-        expect(containsApFunctionCall('Here is {{trigger.min}} without parens')).toBe(false))
+    it('variable template alone (no wrapper) is NOT detected as formula', () =>
+        expect(formulaEvaluator.containsWrapper('Here is {{trigger.min}} without parens')).toBe(false))
+
+    it('wrapped formula nested inside plain text', () => {
+        const input = `Score: ${formulaEvaluator.wrap('add({{score}};8)')}`
+        expect(formulaEvaluator.containsWrapper(input)).toBe(true)
+    })
 })

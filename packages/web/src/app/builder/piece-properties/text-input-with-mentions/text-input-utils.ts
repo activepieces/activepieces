@@ -3,6 +3,7 @@ import {
   FlowAction,
   FlowTrigger,
   assertNotNullOrUndefined,
+  formulaEvaluator,
   isNil,
 } from '@activepieces/shared';
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
@@ -148,7 +149,10 @@ function convertTextToTipTapJsonContent(
   steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ): { type: TipTapNodeTypes.paragraph; content: JSONContent[] }[] {
-  const tokens = tokenizeExpression(userInputText);
+  // Strip ap-formula-v1::{...} wrappers before tokenizing so the editor can
+  // reconstruct function nodes from the inner expression. Saved values use the
+  // wrapper; the editor's internal tree does not.
+  const tokens = tokenizeExpression(formulaEvaluator.unwrap(userInputText));
   const paragraphs: {
     type: TipTapNodeTypes.paragraph;
     content: JSONContent[];
@@ -304,7 +308,10 @@ function createMentionNodeFromText(
   };
 }
 
-function convertTiptapJsonToText(nodes: JSONContent[]): string {
+function convertTiptapJsonToText(
+  nodes: JSONContent[],
+  state: { fnDepth: number } = { fnDepth: 0 },
+): string {
   const res = nodes.map((node, index) => {
     switch (node.type) {
       case TipTapNodeTypes.hardBreak:
@@ -321,17 +328,24 @@ function convertTiptapJsonToText(nodes: JSONContent[]): string {
       }
       case FUNCTION_START_NODE_TYPE: {
         const attrs = node.attrs as { functionName?: string } | undefined;
-        return `${attrs?.functionName ?? ''}(`;
+        const isTopLevel = state.fnDepth === 0;
+        state.fnDepth++;
+        const prefix = isTopLevel ? formulaEvaluator.PREFIX : '';
+        return `${prefix}${attrs?.functionName ?? ''}(`;
       }
       case FUNCTION_END_NODE_TYPE: {
-        return ')';
+        state.fnDepth--;
+        const suffix = state.fnDepth === 0 ? formulaEvaluator.SUFFIX : '';
+        return `)${suffix}`;
       }
       case FUNCTION_SEP_NODE_TYPE: {
         return ';';
       }
       case TipTapNodeTypes.paragraph: {
         return `${
-          isNil(node.content) ? '' : convertTiptapJsonToText(node.content)
+          isNil(node.content)
+            ? ''
+            : convertTiptapJsonToText(node.content, state)
         }${index < nodes.length - 1 ? '\n' : ''}`;
       }
       default:
