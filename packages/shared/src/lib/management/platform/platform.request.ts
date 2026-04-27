@@ -13,6 +13,12 @@ export const Base64EncodedFile = z.object({
 
 export type Base64EncodedFile = z.infer<typeof Base64EncodedFile>
 
+export const CreatePlatformRequest = z.object({
+    name: z.string().min(1).max(100),
+})
+
+export type CreatePlatformRequest = z.infer<typeof CreatePlatformRequest>
+
 export const UpdatePlatformRequestBody = z.object({
     name: z.string().regex(new RegExp(SAFE_STRING_PATTERN)).optional(),
     primaryColor: z.string().optional(),

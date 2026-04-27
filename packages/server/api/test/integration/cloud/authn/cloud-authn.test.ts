@@ -234,7 +234,7 @@ describe('Authentication API', () => {
                 expect(sendOtpSpy).toHaveBeenCalledTimes(1)
                 expect(sendOtpSpy).toHaveBeenCalledWith({
                     otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
-                    platformId: expect.any(String),
+                    platformId: null,
                     type: OtpType.EMAIL_VERIFICATION,
                     userIdentity: expect.objectContaining({
                         email: mockSignUpRequest.email.trim().toLocaleLowerCase(),
@@ -366,9 +366,9 @@ describe('Authentication API', () => {
                 .findOneBy({ id: mockUserInvitation.id })
             expect(remainingInvitation).toBeNull()
 
-            // A personal platform was also created for the user
+            // No personal platform is auto-created; only the enterprise platform exists
             const allPlatforms = await databaseConnection().getRepository('platform').find()
-            expect(allPlatforms.length).toBe(2)
+            expect(allPlatforms.length).toBe(1)
         })
 
         it('fails to sign up invited user platform if no project exist', async () => {

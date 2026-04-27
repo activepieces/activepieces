@@ -187,9 +187,11 @@ export const userService = (log: FastifyBaseLogger) => ({
             userId: id,
             platformId,
         })
-        await userRepo().delete({
+        await userRepo().update({
             id,
             platformId,
+        }, {
+            platformId: null,
         })
     },
 

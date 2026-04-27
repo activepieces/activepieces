@@ -84,7 +84,7 @@ export const accessTokenManager = (log: FastifyBaseLogger) => ({
 })
 
 async function assertUserSession(log: FastifyBaseLogger, decoded: Principal | Principal): Promise<void> {
-    if (decoded.type !== PrincipalType.USER) return
+    if (decoded.type !== PrincipalType.USER && decoded.type !== PrincipalType.ONBOARDING) return
 
     const user = await userService(log).getOneOrFail({ id: decoded.id })
     const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })

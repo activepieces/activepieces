@@ -1,6 +1,7 @@
 import { ActivepiecesError,
     ApEdition,
     apId,
+    AuthenticationResponse,
     ErrorCode,
     FederatedAuthnProviderConfig,
     FederatedAuthnProviderConfigWithoutSensitiveData,
@@ -12,12 +13,14 @@ import { ActivepiecesError,
     PlatformPlanLimits,
     PlatformUsage,
     PlatformWithoutSensitiveData,
+    ProjectType,
     spreadIfDefined,
     UpdatePlatformRequestBody,
     UserId,
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { authenticationUtils } from '../authentication/authentication-utils'
 import { repoFactory } from '../core/db/repo-factory'
 import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-client'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -84,6 +87,20 @@ export const platformService = (log: FastifyBaseLogger) => ({
 
         log.info({ platformId: savedPlatform.id, ownerId }, 'Platform created')
         return savedPlatform
+    },
+    async createPlatformWithProject({ userId, name }: CreatePlatformWithProjectParams): Promise<AuthenticationResponse> {
+        const platform = await this.create({ ownerId: userId, name })
+        const defaultProject = await projectService(log).create({
+            displayName: `${name}'s Project`,
+            ownerId: userId,
+            platformId: platform.id,
+            type: ProjectType.PERSONAL,
+        })
+        return authenticationUtils(log).getProjectAndToken({
+            userId,
+            platformId: platform.id,
+            projectId: defaultProject.id,
+        })
     },
     async getAll(): Promise<Platform[]> {
         return platformRepo().find()
@@ -236,6 +253,11 @@ type UpdateParams = UpdatePlatformRequestBody & {
     logoIconUrl?: string
     fullLogoUrl?: string
     favIconUrl?: string
+}
+
+type CreatePlatformWithProjectParams = {
+    userId: string
+    name: string
 }
 
 type ListPlatformsForIdentityParams = {

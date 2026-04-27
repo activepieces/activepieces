@@ -1,12 +1,11 @@
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, OtpType, PlatformRole, PlatformWithoutSensitiveData, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, OtpType, PlatformRole, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
-import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { authenticationUtils } from './authentication-utils'
@@ -32,7 +31,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 ...params,
                 verified: hasInvitations || isFederatedProvider,
             })
-            const response = await createUserAndPlatform(userIdentity, log)
+            const response = await createUserWithoutPlatform(userIdentity, log)
             await userInvitationsService(log).provisionUserInvitation({ email: params.email })
             const preferredPlatformId = await getPreferredPlatformId(userIdentity.id, log)
             if (!isNil(preferredPlatformId)) {
@@ -49,7 +48,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                     })
                 }
             }
-            log.info({ email: params.email, provider: params.provider }, 'User signed up and platform created')
+            log.info({ email: params.email, provider: params.provider }, 'User signed up without platform')
             return response
         }
 
@@ -78,11 +77,11 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         const identity = await userIdentityService(log).verifyIdentityPassword(params)
         const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformId(identity.id, log) : params.predefinedPlatformId
         if (isNil(platformId)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHENTICATION,
-                params: {
-                    message: 'No platform found for identity',
-                },
+            const user = await userService(log).getOneByIdentityIdOnly({ identityId: identity.id })
+            assertNotNullOrUndefined(user, 'User not found')
+            log.info({ email: params.email }, 'User signed in without platform, returning onboarding token')
+            return authenticationUtils(log).getOnboardingResponse({
+                userId: user.id,
             })
         }
         await authenticationUtils(log).assertEmailAuthIsEnabled({
@@ -111,10 +110,13 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
 
         if (isNil(platformId)) {
             if (!isNil(userIdentity)) {
-                // User already exists, create a new personal platform and return token
-                return createUserAndPlatform(userIdentity, log)
+                const user = await userService(log).getOneByIdentityIdOnly({ identityId: userIdentity.id })
+                assertNotNullOrUndefined(user, 'User not found')
+                return authenticationUtils(log).getOnboardingResponse({
+                    userId: user.id,
+                })
             }
-            // Create New Identity and Platform
+            // Create new identity and user without platform
             return authenticationService(log).signUp({
                 email: params.email,
                 firstName: params.firstName,
@@ -204,34 +206,20 @@ async function getUserForPlatform(identityId: string, platform: PlatformWithoutS
     return user
 }
 
-async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBaseLogger): Promise<AuthenticationResponse> {
+async function createUserWithoutPlatform(userIdentity: UserIdentity, log: FastifyBaseLogger): Promise<AuthenticationResponse> {
     const user = await userService(log).create({
         identityId: userIdentity.id,
         platformRole: PlatformRole.ADMIN,
         platformId: null,
     })
-    const platform = await platformService(log).create({
-        ownerId: user.id,
-        name: userIdentity.firstName + '\'s Platform',
-    })
-    await userService(log).addOwnerToPlatform({
-        platformId: platform.id,
-        id: user.id,
-    })
-    const defaultProject = await projectService(log).create({
-        displayName: userIdentity.firstName + '\'s Project',
-        ownerId: user.id,
-        platformId: platform.id,
-        type: ProjectType.PERSONAL,
-    })
 
-    const cloudEdition = system.getEdition()
+    const edition = system.getEdition()
 
-    switch (cloudEdition) {
+    switch (edition) {
         case ApEdition.CLOUD:
             if (!userIdentity.verified) {
                 await otpService(log).createAndSend({
-                    platformId: platform.id,
+                    platformId: null,
                     email: userIdentity.email,
                     type: OtpType.EMAIL_VERIFICATION,
                 })
@@ -250,14 +238,11 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
     await authenticationUtils(log).sendTelemetry({
         identity: userIdentity,
         user,
-        project: defaultProject,
     })
-    await authenticationUtils(log).saveNewsLetterSubscriber(user, platform.id, userIdentity)
+    await authenticationUtils(log).saveNewsLetterSubscriber(userIdentity)
 
-    return authenticationUtils(log).getProjectAndToken({
+    return authenticationUtils(log).getOnboardingResponse({
         userId: user.id,
-        platformId: platform.id,
-        projectId: defaultProject.id,
     })
 }
 

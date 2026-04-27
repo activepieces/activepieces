@@ -1,4 +1,3 @@
-import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronsUpDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -40,8 +39,7 @@ function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
 
 export const AppSidebarHeader = () => {
   const { embedState } = useEmbedding();
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const showSwitcher = edition === ApEdition.CLOUD && !embedState.isEmbedded;
+  const showSwitcher = !embedState.isEmbedded;
   const { state } = useSidebar();
   const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
