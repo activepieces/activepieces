@@ -52,7 +52,7 @@ const FlowMigrationBase = {
     ...BaseModelSchema,
     platformId: z.string(),
     userId: z.string(),
-    status: z.nativeEnum(FlowMigrationStatus),
+    status: z.enum(FlowMigrationStatus),
     migratedVersions: z.array(MigratedVersionEntry),
     failedFlowVersions: z.array(FailedFlowVersionEntry),
 }
