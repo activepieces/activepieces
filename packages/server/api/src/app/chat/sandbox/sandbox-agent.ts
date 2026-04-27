@@ -335,7 +335,7 @@ export const chatSandboxAgent = {
 
 export const ChatSandboxConfig = {
     agent: { CLAUDE: 'claude' },
-    model: { DEFAULT: 'default' },
+    model: { OPUS_1M: 'opus[1m]' },
     envVar: { ANTHROPIC_API_KEY: 'ANTHROPIC_API_KEY', ANTHROPIC_BASE_URL: 'ANTHROPIC_BASE_URL' },
 } as const
 
