@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const FieldFormat = z.enum([
+export const FieldFormat = z.enum([
   'email',
   'url',
   'date',
@@ -15,29 +15,29 @@ const FieldFormat = z.enum([
 ]);
 export type FieldFormat = z.infer<typeof FieldFormat>;
 
-const HintField: z.ZodType<HintField> = z.lazy(() =>
+export type HintField = {
+  key: string;
+  label?: string;
+  value?: string;
+  format?: FieldFormat;
+  description?: string;
+  dynamicKey?: true;
+  children?: HintField[];
+  listItems?: HintField[];
+};
+
+export const HintField: z.ZodType<HintField> = z.lazy(() =>
   z.object({
-    k: z.string(),
-    l: z.string().optional(),
-    v: z.string().optional(),
-    f: FieldFormat.optional(),
-    d: z.string().optional(),
-    dk: z.literal(true).optional(),
-    c: z.array(HintField).optional(),
-    li: z.array(HintField).optional(),
+    key: z.string(),
+    label: z.string().optional(),
+    value: z.string().optional(),
+    format: FieldFormat.optional(),
+    description: z.string().optional(),
+    dynamicKey: z.literal(true).optional(),
+    children: z.array(HintField).optional(),
+    listItems: z.array(HintField).optional(),
   }),
 );
-
-export type HintField = {
-  k: string;
-  l?: string;
-  v?: string;
-  f?: FieldFormat;
-  d?: string;
-  dk?: true;
-  c?: HintField[];
-  li?: HintField[];
-};
 
 export const OutputDisplayHints = z.object({
   hero: z.array(HintField),

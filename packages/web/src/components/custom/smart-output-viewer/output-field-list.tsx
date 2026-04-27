@@ -16,7 +16,7 @@ function OutputFieldList({ json, hints }: OutputFieldListProps) {
   return (
     <div className="divide-y divide-dividers">
       {allFields.map((field) => (
-        <OutputFieldRow key={field.k} field={field} json={json} />
+        <OutputFieldRow key={field.key} field={field} json={json} />
       ))}
     </div>
   );

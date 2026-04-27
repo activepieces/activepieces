@@ -1,10 +1,8 @@
-import { isNil } from '@activepieces/shared';
+import { isNil, isObject } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronRight, Copy, Info } from 'lucide-react';
+import { ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
-import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
@@ -19,35 +17,8 @@ import {
   getValueByDotPath,
 } from './format-value';
 import { hintUtils } from './resolve-hints';
-import { truncateValue } from './shared-value-rendering';
+import { InlineCopyButton, truncateValue } from './shared-value-rendering';
 import { HintField } from './types';
-
-type OutputFieldRowProps = {
-  field: HintField;
-  json: unknown;
-};
-
-function CopyButton({ value }: { value: unknown }) {
-  const handleCopy = () => {
-    const text =
-      typeof value === 'object'
-        ? JSON.stringify(value, null, 2)
-        : String(value ?? '');
-    navigator.clipboard.writeText(text);
-    toast.success(t('Copied'), { duration: 1000 });
-  };
-
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="opacity-0 group-hover:opacity-100 shrink-0 h-6 w-6 p-0"
-      onClick={handleCopy}
-    >
-      <Copy className="h-3.5 w-3.5" />
-    </Button>
-  );
-}
 
 function ChildFieldRow({
   child,
@@ -63,7 +34,7 @@ function ChildFieldRow({
 
   return (
     <div className="group flex items-center gap-3 py-1.5 px-3 pl-10 hover:bg-accent/50">
-      <FieldTypeIcon value={childValue} format={child.f} />
+      <FieldTypeIcon value={childValue} format={child.format} />
       <span className="text-sm text-muted-foreground min-w-[120px] max-w-[160px] shrink-0 truncate">
         {hintUtils.resolveFieldLabel(child)}
       </span>
@@ -71,20 +42,22 @@ function ChildFieldRow({
         {isNil(childValue) || childValue === '' ? (
           <span className="text-muted-foreground italic">{t('empty')}</span>
         ) : (
-          <FormatSingleValue value={childValue} format={child.f} />
+          <FormatSingleValue value={childValue} format={child.format} />
         )}
       </span>
-      <CopyButton value={childValue} />
+      <InlineCopyButton value={childValue} />
     </div>
   );
 }
 
 function ListItemRow({
   item,
+  itemKey,
   itemLabel,
   itemChildren,
 }: {
   item: unknown;
+  itemKey: string;
   itemLabel: string;
   itemChildren: HintField[];
 }) {
@@ -105,7 +78,7 @@ function ListItemRow({
             String(item)
           )}
         </span>
-        <CopyButton value={item} />
+        <InlineCopyButton value={item} />
       </div>
     );
   }
@@ -134,7 +107,7 @@ function ListItemRow({
             );
             return (
               <div
-                key={child.k}
+                key={`${itemKey}-${child.key}`}
                 className="group flex items-center gap-3 py-1.5 px-3 pl-16 hover:bg-accent/50"
               >
                 <span className="text-sm text-muted-foreground min-w-[100px] max-w-[140px] shrink-0 truncate">
@@ -146,10 +119,13 @@ function ListItemRow({
                       {t('empty')}
                     </span>
                   ) : (
-                    <FormatSingleValue value={childValue} format={child.f} />
+                    <FormatSingleValue
+                      value={childValue}
+                      format={child.format}
+                    />
                   )}
                 </span>
-                <CopyButton value={childValue} />
+                <InlineCopyButton value={childValue} />
               </div>
             );
           })}
@@ -166,21 +142,16 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
   const path = hintUtils.resolveFieldPath(field);
   const value = getValueByDotPath(json, path);
 
-  const isDynamicMap =
-    field.dk === true &&
-    !isNil(value) &&
-    typeof value === 'object' &&
-    !Array.isArray(value);
-  const dynamicEntries = isDynamicMap
-    ? Object.entries(value as Record<string, unknown>)
-    : [];
+  const isDynamicMap = field.dynamicKey === true && isObject(value);
+  const dynamicEntries =
+    isDynamicMap && isObject(value) ? Object.entries(value) : [];
 
-  const children = field.c ?? [];
-  const itemChildren = field.li ?? [];
+  const children = field.children ?? [];
+  const itemChildren = field.listItems ?? [];
   const hasChildren = children.length > 0 || dynamicEntries.length > 0;
   const isList = itemChildren.length > 0 && Array.isArray(value);
   const isExpandable = hasChildren || isList;
-  const listItems = isList ? (value as unknown[]) : [];
+  const listItems: unknown[] = isList && Array.isArray(value) ? value : [];
 
   return (
     <div className="border-b border-dividers last:border-b-0">
@@ -197,23 +168,23 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
               ) : (
                 <ChevronRight className="h-3.5 w-3.5 shrink-0" />
               )}
-              <FieldTypeIcon value={value} format={field.f} />
+              <FieldTypeIcon value={value} format={field.format} />
               <span className="truncate">{label}</span>
             </button>
           ) : (
             <span className="flex items-center gap-1 text-sm font-medium text-muted-foreground truncate">
-              <FieldTypeIcon value={value} format={field.f} />
+              <FieldTypeIcon value={value} format={field.format} />
               {label}
             </span>
           )}
-          {field.d && (
+          {field.description && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Info className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0 cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-[300px]">
-                  {field.d}
+                  {field.description}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -241,20 +212,20 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
             <FormatValue value={value} field={field} />
           )}
         </div>
-        {!isExpandable && <CopyButton value={value} />}
+        {!isExpandable && <InlineCopyButton value={value} />}
       </div>
 
       {expanded && isDynamicMap && (
         <div className="pb-1">
-          {dynamicEntries.map(([key]) => {
-            const quotedKey = key.replace(/"/g, '\\"');
+          {dynamicEntries.map(([entryKey]) => {
+            const quotedKey = entryKey.replace(/"/g, '\\"');
             return (
               <ChildFieldRow
-                key={key}
+                key={entryKey}
                 child={{
-                  k: key,
-                  l: key,
-                  v: `${path}["${quotedKey}"]`,
+                  key: entryKey,
+                  label: entryKey,
+                  value: `${path}["${quotedKey}"]`,
                 }}
                 json={json}
               />
@@ -267,7 +238,7 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
         <div className="pb-1">
           {children.map((child) => (
             <ChildFieldRow
-              key={child.k}
+              key={child.key}
               child={child}
               json={json}
               parentPath={path}
@@ -280,7 +251,8 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
         <div className="pb-1">
           {listItems.map((item, idx) => (
             <ListItemRow
-              key={idx}
+              key={`${path}-${idx}`}
+              itemKey={`${path}-${idx}`}
               item={item}
               itemLabel={`${label} ${idx + 1}`}
               itemChildren={itemChildren}
@@ -293,3 +265,8 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
 }
 
 export { OutputFieldRow };
+
+type OutputFieldRowProps = {
+  field: HintField;
+  json: unknown;
+};

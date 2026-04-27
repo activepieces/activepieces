@@ -1,10 +1,9 @@
-import { isNil } from '@activepieces/shared';
+import { isNil, isObject } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronRight, Copy } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
-import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 
 import { FieldTypeIcon } from './field-type-icon';
 
@@ -18,8 +17,8 @@ function formatKey(key: string): string {
 function truncateValue(value: unknown): string {
   if (isNil(value) || value === '') return '';
   if (Array.isArray(value)) return `${value.length} ${t('items')}`;
-  if (typeof value === 'object') {
-    const entries = Object.entries(value as Record<string, unknown>);
+  if (isObject(value)) {
+    const entries = Object.entries(value);
     const preview = entries
       .slice(0, 2)
       .map(([k, v]) => {
@@ -27,48 +26,39 @@ function truncateValue(value: unknown): string {
         return `${k}: ${vs}`;
       })
       .join(', ');
-    return preview || `${entries.length} fields`;
+    return preview || `${entries.length} ${t('fields')}`;
   }
   const str = String(value);
   return str.length > 50 ? str.slice(0, 50) + '...' : str;
 }
 
-function CopyButton({ value }: { value: unknown }) {
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="opacity-0 group-hover:opacity-100 shrink-0 h-6 w-6 p-0"
-      onClick={(e) => {
-        e.stopPropagation();
-        const text =
-          typeof value === 'object'
-            ? JSON.stringify(value, null, 2)
-            : String(value ?? '');
-        navigator.clipboard.writeText(text);
-        toast.success(t('Copied'), { duration: 1000 });
-      }}
-    >
-      <Copy className="h-3.5 w-3.5" />
-    </Button>
-  );
+function valueAsCopyText(value: unknown): string {
+  if (typeof value === 'object' && value !== null) {
+    return JSON.stringify(value, null, 2);
+  }
+  return String(value ?? '');
 }
 
-type ValueRowProps = {
-  label: string;
-  value: unknown;
-  depth: number;
-};
+function InlineCopyButton({ value }: { value: unknown }) {
+  return (
+    <CopyButton
+      textToCopy={valueAsCopyText(value)}
+      variant="ghost"
+      withoutTooltip
+      className="opacity-0 group-hover:opacity-100 shrink-0 h-6 w-6 p-0"
+      onClick={(e) => e.stopPropagation()}
+    />
+  );
+}
 
 function ValueRow({ label, value, depth }: ValueRowProps) {
   const [expanded, setExpanded] = useState(false);
   const paddingLeft = 16 + depth * 24;
 
-  const isNestedObject =
-    !isNil(value) && typeof value === 'object' && !Array.isArray(value);
+  const isNestedObject = isObject(value);
 
   if (isNestedObject) {
-    const nestedEntries = Object.entries(value as Record<string, unknown>);
+    const nestedEntries = Object.entries(value);
     return (
       <div>
         <div
@@ -93,7 +83,7 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
           >
             {truncateValue(value)}
           </span>
-          <CopyButton value={value} />
+          <InlineCopyButton value={value} />
         </div>
         {expanded && (
           <div>
@@ -138,9 +128,15 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
           String(value)
         )}
       </span>
-      <CopyButton value={value} />
+      <InlineCopyButton value={value} />
     </div>
   );
 }
 
-export { ValueRow, CopyButton, formatKey, truncateValue };
+export { ValueRow, InlineCopyButton, formatKey, truncateValue };
+
+type ValueRowProps = {
+  label: string;
+  value: unknown;
+  depth: number;
+};

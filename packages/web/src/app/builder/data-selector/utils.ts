@@ -6,6 +6,7 @@ import {
   FlowTrigger,
   FlowTriggerType,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 
 import {
   HintField,
@@ -477,13 +478,14 @@ function resolveSegments(
 ): unknown {
   let current: unknown = obj;
   for (const segment of segments) {
-    if (isNil(current) || typeof current !== 'object') return undefined;
     if (Array.isArray(current)) {
       const idx =
         typeof segment === 'number' ? segment : parseInt(String(segment), 10);
       current = current[idx];
+    } else if (isObject(current)) {
+      current = current[String(segment)];
     } else {
-      current = (current as Record<string, unknown>)[String(segment)];
+      return undefined;
     }
   }
   return current;
@@ -493,15 +495,17 @@ function resolvePathWithFallback(
   obj: unknown,
   path: string,
 ): { value: unknown; resolvedPath: string } {
-  if (isNil(obj) || typeof obj !== 'object') {
+  if (!isObject(obj) && !Array.isArray(obj)) {
     return { value: undefined, resolvedPath: path };
   }
   const segments = parsePath(path);
   const direct = resolveSegments(obj, segments);
   if (!isNil(direct)) return { value: direct, resolvedPath: path };
 
-  if (segments.length === 0) return { value: direct, resolvedPath: path };
-  const rootKeys = Object.keys(obj as Record<string, unknown>);
+  if (segments.length === 0 || !isObject(obj)) {
+    return { value: direct, resolvedPath: path };
+  }
+  const rootKeys = Object.keys(obj);
   for (const wrapper of COMMON_WRAPPERS_FOR_FALLBACK) {
     if (!rootKeys.includes(wrapper)) continue;
     if (segments[0] === wrapper) continue;
@@ -518,20 +522,17 @@ function resolvePathWithFallback(
 }
 
 function resolveLabel(field: HintField): string {
-  if (field.l) return field.l;
-  return field.k
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/[_-]/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  if (field.label) return field.label;
+  return formatKeyLabel(field.key);
 }
 
 function resolveChildPath(child: HintField, parentPath: string): string {
-  if (child.v) return child.v;
-  return `${parentPath}.${child.k}`;
+  if (child.value) return child.value;
+  return `${parentPath}.${child.key}`;
 }
 
 function resolveItemChildPath(child: HintField): string {
-  return child.v ?? child.k;
+  return child.value ?? child.key;
 }
 
 function buildFieldChildNode(
@@ -585,7 +586,7 @@ function buildFieldNode(
   field: HintField,
   sampleData: unknown,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
-  const rawValuePath = field.v ?? field.k;
+  const rawValuePath = field.value ?? field.key;
   const { value, resolvedPath: valuePath } = resolvePathWithFallback(
     sampleData,
     rawValuePath,
@@ -593,10 +594,11 @@ function buildFieldNode(
   const propertyPath = convertValuePathToPropertyPath(stepName, valuePath);
   const label = resolveLabel(field);
 
-  if (field.li && field.li.length > 0 && Array.isArray(value)) {
+  if (field.listItems && field.listItems.length > 0 && Array.isArray(value)) {
+    const listItems = field.listItems;
     const listChildren = value.map((_, idx) => {
       const itemLabel = `${label} ${idx + 1}`;
-      const itemChildren = field.li!.map((child) =>
+      const itemChildren = listItems.map((child) =>
         buildItemChildNode(stepName, child, valuePath, idx, sampleData),
       );
       return {
@@ -618,7 +620,7 @@ function buildFieldNode(
       key: propertyPath,
       data: {
         type: 'value' as const,
-        value: `${value.length} items`,
+        value: `${value.length} ${t('items')}`,
         displayName: label,
         propertyPath,
         insertable: false,
@@ -627,28 +629,21 @@ function buildFieldNode(
     };
   }
 
-  if (
-    field.dk === true &&
-    !isNil(value) &&
-    typeof value === 'object' &&
-    !Array.isArray(value)
-  ) {
+  if (field.dynamicKey === true && isObject(value)) {
     const dynamicChildren: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] =
-      Object.entries(value as Record<string, unknown>).map(
-        ([key, childValue]) => {
-          const childPath = `${propertyPath}['${escapeMentionKey(key)}']`;
-          return {
-            key: childPath,
-            data: {
-              type: 'value' as const,
-              value: childValue,
-              displayName: key,
-              propertyPath: childPath,
-              insertable: true,
-            },
-          };
-        },
-      );
+      Object.entries(value).map(([key, childValue]) => {
+        const childPath = `${propertyPath}['${escapeMentionKey(key)}']`;
+        return {
+          key: childPath,
+          data: {
+            type: 'value' as const,
+            value: childValue,
+            displayName: key,
+            propertyPath: childPath,
+            insertable: true,
+          },
+        };
+      });
     return {
       key: propertyPath,
       data: {
@@ -662,8 +657,8 @@ function buildFieldNode(
     };
   }
 
-  if (field.c && field.c.length > 0) {
-    const childNodes = field.c.map((child) =>
+  if (field.children && field.children.length > 0) {
+    const childNodes = field.children.map((child) =>
       buildFieldChildNode(stepName, child, sampleData, valuePath),
     );
     return {
@@ -740,13 +735,13 @@ function buildTreeFromArray({
     items.map((item, idx) => {
       const itemPath = `${stepName}[${idx}]`;
 
-      if (isNil(item) || typeof item !== 'object' || Array.isArray(item)) {
+      if (!isObject(item)) {
         return {
           key: itemPath,
           data: {
             type: 'value' as const,
             value: item,
-            displayName: `Item ${idx + 1}`,
+            displayName: `${t('Item')} ${idx + 1}`,
             propertyPath: itemPath,
             insertable: true,
           },
@@ -754,28 +749,25 @@ function buildTreeFromArray({
       }
 
       const itemChildren: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] =
-        Object.entries(item as Record<string, unknown>).map(([key, value]) => {
+        Object.entries(item).map(([key, value]) => {
           const childPath = `${itemPath}['${escapeMentionKey(key)}']`;
-          const nestedChildren =
-            !isNil(value) && typeof value === 'object' && !Array.isArray(value)
-              ? Object.entries(value as Record<string, unknown>).map(
-                  ([nestedKey, nestedValue]) => {
-                    const nestedPath = `${childPath}['${escapeMentionKey(
-                      nestedKey,
-                    )}']`;
-                    return {
-                      key: nestedPath,
-                      data: {
-                        type: 'value' as const,
-                        value: nestedValue,
-                        displayName: formatKeyLabel(nestedKey),
-                        propertyPath: nestedPath,
-                        insertable: true,
-                      },
-                    };
+          const nestedChildren = isObject(value)
+            ? Object.entries(value).map(([nestedKey, nestedValue]) => {
+                const nestedPath = `${childPath}['${escapeMentionKey(
+                  nestedKey,
+                )}']`;
+                return {
+                  key: nestedPath,
+                  data: {
+                    type: 'value' as const,
+                    value: nestedValue,
+                    displayName: formatKeyLabel(nestedKey),
+                    propertyPath: nestedPath,
+                    insertable: true,
                   },
-                )
-              : undefined;
+                };
+              })
+            : undefined;
           return {
             key: childPath,
             data: {
@@ -789,7 +781,7 @@ function buildTreeFromArray({
           };
         });
 
-      const preview = Object.values(item as Record<string, unknown>)
+      const preview = Object.values(item)
         .filter((v) => !isNil(v) && v !== '' && typeof v !== 'object')
         .slice(0, 3)
         .map((v) => {
@@ -803,7 +795,7 @@ function buildTreeFromArray({
         data: {
           type: 'value' as const,
           value: preview,
-          displayName: `Item ${idx + 1}`,
+          displayName: `${t('Item')} ${idx + 1}`,
           propertyPath: itemPath,
           insertable: true,
         },
@@ -815,7 +807,7 @@ function buildTreeFromArray({
     key: stepName,
     data: {
       type: 'value',
-      value: `${items.length} items`,
+      value: `${items.length} ${t('items')}`,
       displayName,
       propertyPath: stepName,
       insertable: false,

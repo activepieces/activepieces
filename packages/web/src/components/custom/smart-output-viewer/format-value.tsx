@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared';
+import { isNil, isObject } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { HintField, FieldFormat } from './types';
 
 const MAX_TEXT_LENGTH = 200;
+const SAFE_URL_PROTOCOLS = new Set(['http:', 'https:']);
 
 function parsePath(path: string): Array<string | number> {
   const segments: Array<string | number> = [];
@@ -88,8 +89,10 @@ function resolveSegments(
       const idx =
         typeof segment === 'number' ? segment : parseInt(String(segment), 10);
       current = current[idx];
+    } else if (isObject(current)) {
+      current = current[String(segment)];
     } else {
-      current = (current as Record<string, unknown>)[String(segment)];
+      return undefined;
     }
   }
   return current;
@@ -97,13 +100,13 @@ function resolveSegments(
 
 function getValueByDotPath(obj: unknown, path: string): unknown {
   if (path === '') return obj;
-  if (isNil(obj) || typeof obj !== 'object') return undefined;
+  if (!isObject(obj) && !Array.isArray(obj)) return undefined;
   const segments = parsePath(path);
   const direct = resolveSegments(obj, segments);
   if (!isNil(direct)) return direct;
 
-  if (segments.length === 0 || !obj || typeof obj !== 'object') return direct;
-  const rootKeys = Object.keys(obj as Record<string, unknown>);
+  if (segments.length === 0 || !isObject(obj)) return direct;
+  const rootKeys = Object.keys(obj);
   for (const wrapper of COMMON_WRAPPERS) {
     if (!rootKeys.includes(wrapper)) continue;
     if (segments[0] === wrapper) continue;
@@ -114,7 +117,7 @@ function getValueByDotPath(obj: unknown, path: string): unknown {
 }
 
 function resolveValue(json: unknown, field: HintField): unknown {
-  const path = field.v ?? field.k;
+  const path = field.value ?? field.key;
   return getValueByDotPath(json, path);
 }
 
@@ -124,6 +127,19 @@ function formatFileSize(bytes: number): string {
   if (bytes < 1024 * 1024 * 1024)
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
+function isSafeUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return SAFE_URL_PROTOCOLS.has(parsed.protocol);
+  } catch {
+    return false;
+  }
+}
+
+function isSafeEmail(value: string): boolean {
+  return !/[\r\n]/.test(value);
 }
 
 function FormatSingleValue({
@@ -140,9 +156,12 @@ function FormatSingleValue({
   const stringValue = String(value);
 
   if (format === 'email') {
+    if (!isSafeEmail(stringValue)) {
+      return <span className="break-all">{stringValue}</span>;
+    }
     return (
       <a
-        href={`mailto:${stringValue}`}
+        href={`mailto:${encodeURIComponent(stringValue)}`}
         className="text-primary underline-offset-4 hover:underline"
         title={stringValue}
       >
@@ -152,6 +171,9 @@ function FormatSingleValue({
   }
 
   if (format === 'url') {
+    if (!isSafeUrl(stringValue)) {
+      return <span className="break-all">{stringValue}</span>;
+    }
     const displayUrl =
       stringValue.length > 60 ? stringValue.slice(0, 57) + '...' : stringValue;
     return (
@@ -200,11 +222,6 @@ function FormatSingleValue({
   );
 }
 
-type FormatValueProps = {
-  value: unknown;
-  field: HintField;
-};
-
 function FormatValue({ value, field }: FormatValueProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -212,7 +229,7 @@ function FormatValue({ value, field }: FormatValueProps) {
     return <span className="text-muted-foreground italic">{t('empty')}</span>;
   }
 
-  const isArrayWithItems = Array.isArray(value) && !field.li;
+  const isArrayWithItems = Array.isArray(value) && !field.listItems;
 
   if (isArrayWithItems) {
     return (
@@ -222,8 +239,12 @@ function FormatValue({ value, field }: FormatValueProps) {
     );
   }
 
-  if (typeof value === 'object' && !Array.isArray(value)) {
-    return <Badge variant="outline">{Object.keys(value).length} fields</Badge>;
+  if (isObject(value)) {
+    return (
+      <Badge variant="outline">
+        {Object.keys(value).length} {t('fields')}
+      </Badge>
+    );
   }
 
   const stringValue = String(value);
@@ -266,7 +287,20 @@ function FormatValue({ value, field }: FormatValueProps) {
     );
   }
 
-  return <FormatSingleValue value={value} format={field.f} />;
+  return <FormatSingleValue value={value} format={field.format} />;
 }
 
-export { FormatValue, FormatSingleValue, resolveValue, getValueByDotPath };
+export {
+  FormatValue,
+  FormatSingleValue,
+  resolveValue,
+  getValueByDotPath,
+  parsePath,
+  isSafeUrl,
+  isSafeEmail,
+};
+
+type FormatValueProps = {
+  value: unknown;
+  field: HintField;
+};

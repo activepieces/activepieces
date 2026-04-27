@@ -1,6 +1,8 @@
 import {
   FlowAction,
+  FlowActionType,
   FlowTrigger,
+  FlowTriggerType,
   flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
@@ -124,14 +126,21 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
       const newHintsMap: Record<string, OutputDisplayHints | null> = {};
       const pairs = steps
         .map((step) => {
-          const settings = step.settings as {
-            pieceName?: string;
-            actionName?: string;
-            triggerName?: string;
-          };
-          const pieceName = settings?.pieceName;
-          const stepKey = settings?.actionName ?? settings?.triggerName;
-          return { step, pieceName, stepKey };
+          if (step.type === FlowActionType.PIECE) {
+            return {
+              step,
+              pieceName: step.settings.pieceName,
+              stepKey: step.settings.actionName,
+            };
+          }
+          if (step.type === FlowTriggerType.PIECE) {
+            return {
+              step,
+              pieceName: step.settings.pieceName,
+              stepKey: step.settings.triggerName,
+            };
+          }
+          return { step, pieceName: undefined, stepKey: undefined };
         })
         .filter(
           (
@@ -315,7 +324,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
           </Tabs>
         </div>
 
-        <ScrollArea className="transition-all h-[calc(100%-52px)] w-full h-full [mask-image:linear-gradient(to_bottom,transparent_0px,black_8px)]">
+        <ScrollArea className="transition-all h-[calc(100%-52px)] w-full [mask-image:linear-gradient(to_bottom,transparent_0px,black_8px)]">
           {filteredNodes.map((node) => (
             <FriendlyDataSelectorNode
               key={node.key}

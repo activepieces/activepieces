@@ -1,4 +1,5 @@
 import type { OutputDisplayHints } from '@activepieces/pieces-framework';
+import { isNil } from '@activepieces/shared';
 
 import { piecesHooks } from './pieces-hooks';
 
@@ -12,8 +13,9 @@ function usePieceOutputHints({
   stepName?: string;
 }): OutputDisplayHints | null {
   const { pieceModel } = piecesHooks.usePiece({
-    name: pieceName,
+    name: pieceName ?? '',
     version: pieceVersion,
+    enabled: !isNil(pieceName) && !isNil(stepName),
   });
 
   if (!pieceModel || !stepName) return null;

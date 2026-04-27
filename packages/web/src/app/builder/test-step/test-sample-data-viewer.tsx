@@ -35,7 +35,6 @@ type TestSampleDataViewerProps = {
   children?: React.ReactNode;
   consoleLogs: string | null;
   pieceName?: string;
-  stepName?: string;
   pieceVersion?: string;
   pieceHints?: OutputDisplayHints | null;
 } & (
@@ -201,7 +200,6 @@ const TestSampleDataViewerContent = ({
   currentStep,
   isTesting,
   pieceName,
-  stepName,
   pieceHints,
 }: TestSampleDataViewerProps) => {
   if (isTesting && !isRunAgent(currentStep)) {
@@ -222,7 +220,6 @@ const TestSampleDataViewerContent = ({
       json={sampleData}
       title={t('Output')}
       pieceName={pieceName}
-      stepName={stepName}
       pieceHints={pieceHints}
     />
   );

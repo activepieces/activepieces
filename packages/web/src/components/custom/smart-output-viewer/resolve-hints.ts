@@ -8,17 +8,17 @@ function titleCase(key: string): string {
 }
 
 function resolveFieldLabel(field: HintField): string {
-  return field.l ?? titleCase(field.k);
+  return field.label ?? titleCase(field.key);
 }
 
 function resolveFieldPath(field: HintField, parentPath?: string): string {
-  if (field.v) return field.v;
-  if (parentPath) return `${parentPath}.${field.k}`;
-  return field.k;
+  if (field.value) return field.value;
+  if (parentPath) return `${parentPath}.${field.key}`;
+  return field.key;
 }
 
 function resolveItemFieldPath(field: HintField): string {
-  return field.v ?? field.k;
+  return field.value ?? field.key;
 }
 
 function visibleFields(hints: OutputDisplayHints): {

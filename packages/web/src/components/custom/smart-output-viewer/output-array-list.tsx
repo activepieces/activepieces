@@ -1,10 +1,10 @@
-import { isNil } from '@activepieces/shared';
+import { isObject } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 import {
-  CopyButton,
+  InlineCopyButton,
   formatKey,
   truncateValue,
   ValueRow,
@@ -13,7 +13,7 @@ import {
 function ArrayItemRow({ item, index }: { item: unknown; index: number }) {
   const [expanded, setExpanded] = useState(false);
 
-  if (isNil(item) || typeof item !== 'object' || Array.isArray(item)) {
+  if (!isObject(item)) {
     return (
       <div className="group flex items-center gap-3 py-2 px-4 hover:bg-accent/50 border-b border-dividers last:border-b-0">
         <span className="text-sm font-medium text-muted-foreground shrink-0">
@@ -22,12 +22,12 @@ function ArrayItemRow({ item, index }: { item: unknown; index: number }) {
         <span className="text-sm text-foreground/70 truncate flex-1">
           {truncateValue(item)}
         </span>
-        <CopyButton value={item} />
+        <InlineCopyButton value={item} />
       </div>
     );
   }
 
-  const entries = Object.entries(item as Record<string, unknown>);
+  const entries = Object.entries(item);
   const previewValues = entries
     .slice(0, 3)
     .map(([, v]) => truncateValue(v))

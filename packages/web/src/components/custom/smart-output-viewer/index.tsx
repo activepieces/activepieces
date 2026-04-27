@@ -1,9 +1,9 @@
-import { isNil } from '@activepieces/shared';
+import { isObject } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Copy, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { JsonViewer } from '@/components/custom/json-viewer';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,14 +20,6 @@ import { OutputGenericFieldList } from './output-generic-field-list';
 import { isTabularArray, OutputTableView } from './output-table-view';
 import { OutputDisplayHints } from './types';
 import { isUserDefinedPiece } from './user-defined-pieces';
-
-type SmartOutputViewerProps = {
-  json: unknown;
-  title: string;
-  pieceName?: string;
-  stepName?: string;
-  pieceHints?: OutputDisplayHints | null;
-};
 
 const MAX_TEXT_DISPLAY_LENGTH = 500;
 
@@ -73,21 +65,16 @@ function OutputViewerShell({
   title: string;
   friendlyContent: React.ReactNode;
 }) {
+  const serializedJson = useMemo(() => JSON.stringify(json, null, 2), [json]);
+
   const handleDownload = () => {
-    const blob = new Blob([JSON.stringify(json, null, 2)], {
-      type: 'application/json',
-    });
+    const blob = new Blob([serializedJson], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = `${title}.json`;
     link.click();
     URL.revokeObjectURL(url);
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(JSON.stringify(json, null, 2));
-    toast.success(t('Copied to clipboard'), { duration: 1000 });
   };
 
   return (
@@ -108,18 +95,11 @@ function OutputViewerShell({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" onClick={handleCopy}>
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {t('Copy to clipboard')}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <CopyButton
+              textToCopy={serializedJson}
+              variant="ghost"
+              tooltipSide="bottom"
+            />
           </div>
           <TabsList className="h-8">
             <TabsTrigger value="friendly" className="text-xs px-2 h-6">
@@ -153,14 +133,8 @@ function SmartOutputViewer({
   pieceHints,
 }: SmartOutputViewerProps) {
   const pieceDefinedHints = pieceHints ?? null;
-
-  const isArray = Array.isArray(json);
-  const isJsonObject = useMemo(
-    () => !isNil(json) && typeof json === 'object' && !isArray,
-    [json, isArray],
-  );
-
   const isUserDefined = isUserDefinedPiece(pieceName);
+  const isJsonObject = isObject(json);
 
   if (typeof json === 'string') {
     return (
@@ -172,36 +146,29 @@ function SmartOutputViewer({
     );
   }
 
-  if (isArray && (json as unknown[]).length > 0) {
-    const items = json as unknown[];
-    const tabular = isTabularArray(items);
+  if (Array.isArray(json) && json.length > 0) {
+    const tabular = isTabularArray(json);
     return (
       <OutputViewerShell
         json={json}
         title={title}
         friendlyContent={
           tabular ? (
-            <OutputTableView items={items} />
+            <OutputTableView items={json} />
           ) : (
-            <OutputArrayList items={items} />
+            <OutputArrayList items={json} />
           )
         }
       />
     );
   }
 
-  if (
-    isUserDefined &&
-    isJsonObject &&
-    Object.keys(json as Record<string, unknown>).length > 0
-  ) {
+  if (isUserDefined && isJsonObject && Object.keys(json).length > 0) {
     return (
       <OutputViewerShell
         json={json}
         title={title}
-        friendlyContent={
-          <OutputGenericFieldList json={json as Record<string, unknown>} />
-        }
+        friendlyContent={<OutputGenericFieldList json={json} />}
       />
     );
   }
@@ -212,10 +179,7 @@ function SmartOutputViewer({
         json={json}
         title={title}
         friendlyContent={
-          <OutputFieldList
-            json={json as Record<string, unknown>}
-            hints={pieceDefinedHints}
-          />
+          <OutputFieldList json={json} hints={pieceDefinedHints} />
         }
       />
     );
@@ -225,3 +189,10 @@ function SmartOutputViewer({
 }
 
 export { SmartOutputViewer };
+
+type SmartOutputViewerProps = {
+  json: unknown;
+  title: string;
+  pieceName?: string;
+  pieceHints?: OutputDisplayHints | null;
+};

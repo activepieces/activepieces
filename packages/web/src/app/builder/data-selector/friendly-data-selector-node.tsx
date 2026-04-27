@@ -1,4 +1,4 @@
-import { flowStructureUtil, isNil } from '@activepieces/shared';
+import { flowStructureUtil, isNil, isObject } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -34,9 +34,9 @@ function truncatePreview(value: unknown): {
       isTruncated: false,
       fullText: '',
     };
-  if (typeof value === 'object')
+  if (isObject(value))
     return {
-      text: `${Object.keys(value).length} fields`,
+      text: `${Object.keys(value).length} ${t('fields')}`,
       isTruncated: false,
       fullText: '',
     };
@@ -194,9 +194,7 @@ function StepHeader({ node }: { node: DataSelectorTreeNode }) {
     node.data.type === 'value'
       ? flowStructureUtil.getStep(node.data.propertyPath, flowVersion.trigger)
       : undefined;
-  const stepMetadata = step
-    ? stepsHooks.useStepMetadata({ step }).stepMetadata
-    : undefined;
+  const { stepMetadata } = stepsHooks.useStepMetadata({ step });
 
   return (
     <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/30">

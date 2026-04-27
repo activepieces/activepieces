@@ -2,6 +2,10 @@ import {
   StepOutputStatus,
   flowStructureUtil,
   AgentResult,
+  FlowAction,
+  FlowActionType,
+  FlowTrigger,
+  FlowTriggerType,
   isFlowRunStateTerminal,
   FlowRun,
   FlowRunStatus,
@@ -56,19 +60,11 @@ export const FlowStepInputOutput = () => {
     selectedStepOutput?.output ??
     'No output';
 
-  const selectedStepSettings = selectedStep?.settings as
-    | {
-        pieceName?: string;
-        pieceVersion?: string;
-        actionName?: string;
-        triggerName?: string;
-      }
-    | undefined;
+  const pieceContext = extractPieceContext(selectedStep);
   const pieceHints = usePieceOutputHints({
-    pieceName: selectedStepSettings?.pieceName,
-    pieceVersion: selectedStepSettings?.pieceVersion,
-    stepName:
-      selectedStepSettings?.actionName ?? selectedStepSettings?.triggerName,
+    pieceName: pieceContext.pieceName,
+    pieceVersion: pieceContext.pieceVersion,
+    stepName: pieceContext.actionName ?? pieceContext.triggerName,
   });
 
   const tabCount = isAgent ? 3 : 2;
@@ -158,21 +154,7 @@ export const FlowStepInputOutput = () => {
               <SmartOutputViewer
                 json={parsedOutput}
                 title={t('Output')}
-                pieceName={
-                  'pieceName' in (selectedStep?.settings ?? {})
-                    ? (selectedStep?.settings as { pieceName?: string })
-                        .pieceName
-                    : undefined
-                }
-                stepName={
-                  'actionName' in (selectedStep?.settings ?? {})
-                    ? (selectedStep?.settings as { actionName?: string })
-                        .actionName
-                    : 'triggerName' in (selectedStep?.settings ?? {})
-                    ? (selectedStep?.settings as { triggerName?: string })
-                        .triggerName
-                    : undefined
-                }
+                pieceName={pieceContext.pieceName}
                 pieceHints={pieceHints}
               />
             )}
@@ -182,6 +164,30 @@ export const FlowStepInputOutput = () => {
     </ScrollArea>
   );
 };
+
+function extractPieceContext(step: FlowAction | FlowTrigger | null): {
+  pieceName?: string;
+  pieceVersion?: string;
+  actionName?: string;
+  triggerName?: string;
+} {
+  if (!step) return {};
+  if (step.type === FlowActionType.PIECE) {
+    return {
+      pieceName: step.settings.pieceName,
+      pieceVersion: step.settings.pieceVersion,
+      actionName: step.settings.actionName,
+    };
+  }
+  if (step.type === FlowTriggerType.PIECE) {
+    return {
+      pieceName: step.settings.pieceName,
+      pieceVersion: step.settings.pieceVersion,
+      triggerName: step.settings.triggerName,
+    };
+  }
+  return {};
+}
 
 function handleRunFailureOrEmptyLog(
   run: FlowRun | null,

@@ -1,18 +1,10 @@
-import { isNil } from '@activepieces/shared';
+import { isObject } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Copy } from 'lucide-react';
-import { toast } from 'sonner';
 
-import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { cn } from '@/lib/utils';
 
 const MAX_CELL_LENGTH = 50;
-
-type Column = {
-  key: string;
-  label: string;
-  path: string[];
-};
 
 function formatColumnName(key: string): string {
   return key
@@ -22,13 +14,12 @@ function formatColumnName(key: string): string {
 }
 
 function isFlat(value: unknown): boolean {
-  return isNil(value) || typeof value !== 'object';
+  return value === null || typeof value !== 'object';
 }
 
 function isFlatObject(value: unknown): boolean {
-  if (isNil(value) || typeof value !== 'object' || Array.isArray(value))
-    return false;
-  return Object.values(value as Record<string, unknown>).every(isFlat);
+  if (!isObject(value)) return false;
+  return Object.values(value).every(isFlat);
 }
 
 function buildColumns(first: Record<string, unknown>): Column[] | null {
@@ -41,8 +32,8 @@ function buildColumns(first: Record<string, unknown>): Column[] | null {
         label: formatColumnName(key),
         path: [key],
       });
-    } else if (isFlatObject(value)) {
-      for (const nestedKey of Object.keys(value as Record<string, unknown>)) {
+    } else if (isObject(value) && isFlatObject(value)) {
+      for (const nestedKey of Object.keys(value)) {
         columns.push({
           key: `${key}.${nestedKey}`,
           label: nestedKey,
@@ -61,19 +52,17 @@ function isTabularArray(items: unknown[]): boolean {
   if (items.length === 0) return false;
 
   const first = items[0];
-  if (isNil(first) || typeof first !== 'object' || Array.isArray(first))
-    return false;
+  if (!isObject(first)) return false;
 
-  const columns = buildColumns(first as Record<string, unknown>);
+  const columns = buildColumns(first);
   if (!columns) return false;
 
-  const firstKeys = Object.keys(first as Record<string, unknown>).sort();
+  const firstKeys = Object.keys(first).sort();
   const sampleSize = Math.min(items.length, 5);
   for (let i = 1; i < sampleSize; i++) {
     const item = items[i];
-    if (isNil(item) || typeof item !== 'object' || Array.isArray(item))
-      return false;
-    const keys = Object.keys(item as Record<string, unknown>).sort();
+    if (!isObject(item)) return false;
+    const keys = Object.keys(item).sort();
     if (keys.join(',') !== firstKeys.join(',')) return false;
   }
 
@@ -83,14 +72,14 @@ function isTabularArray(items: unknown[]): boolean {
 function getCellValue(row: Record<string, unknown>, path: string[]): unknown {
   let current: unknown = row;
   for (const segment of path) {
-    if (isNil(current) || typeof current !== 'object') return undefined;
-    current = (current as Record<string, unknown>)[segment];
+    if (!isObject(current)) return undefined;
+    current = current[segment];
   }
   return current;
 }
 
 function CellValue({ value }: { value: unknown }) {
-  if (isNil(value) || value === '') {
+  if (value === null || value === undefined || value === '') {
     return (
       <span className="text-muted-foreground/40 italic">{t('empty')}</span>
     );
@@ -107,10 +96,6 @@ function CellValue({ value }: { value: unknown }) {
   );
 }
 
-type OutputTableViewProps = {
-  items: unknown[];
-};
-
 function OutputTableView({ items }: OutputTableViewProps) {
   if (items.length === 0) {
     return (
@@ -120,10 +105,12 @@ function OutputTableView({ items }: OutputTableViewProps) {
     );
   }
 
-  const columns = buildColumns(items[0] as Record<string, unknown>);
+  const firstRow = items[0];
+  if (!isObject(firstRow)) return null;
+  const columns = buildColumns(firstRow);
   if (!columns) return null;
 
-  const rows = items as Record<string, unknown>[];
+  const rows: Record<string, unknown>[] = items.filter(isObject);
 
   return (
     <div className="p-3">
@@ -152,26 +139,22 @@ function OutputTableView({ items }: OutputTableViewProps) {
                   'border-b border-dividers last:border-b-0 hover:bg-accent/30 transition-colors',
                 )}
               >
-                {columns.map((col) => (
-                  <td key={col.key} className="px-3 py-2 group relative">
-                    <div className="flex items-center gap-1">
-                      <CellValue value={getCellValue(row, col.path)} />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 shrink-0 h-5 w-5 p-0"
-                        onClick={() => {
-                          navigator.clipboard.writeText(
-                            String(getCellValue(row, col.path) ?? ''),
-                          );
-                          toast.success(t('Copied'), { duration: 1000 });
-                        }}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </td>
-                ))}
+                {columns.map((col) => {
+                  const cellValue = getCellValue(row, col.path);
+                  return (
+                    <td key={col.key} className="px-3 py-2 group relative">
+                      <div className="flex items-center gap-1">
+                        <CellValue value={cellValue} />
+                        <CopyButton
+                          textToCopy={String(cellValue ?? '')}
+                          variant="ghost"
+                          withoutTooltip
+                          className="opacity-0 group-hover:opacity-100 shrink-0 h-5 w-5 p-0"
+                        />
+                      </div>
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
@@ -181,4 +164,14 @@ function OutputTableView({ items }: OutputTableViewProps) {
   );
 }
 
-export { OutputTableView, isTabularArray };
+export { OutputTableView, isTabularArray, buildColumns };
+
+type Column = {
+  key: string;
+  label: string;
+  path: string[];
+};
+
+type OutputTableViewProps = {
+  items: unknown[];
+};
