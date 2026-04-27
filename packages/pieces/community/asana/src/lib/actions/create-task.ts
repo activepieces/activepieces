@@ -37,7 +37,7 @@ export const asanaCreateTaskAction = createAction({
     const { project, name, notes, tags, workspace, due_on, assignee } =
       configValue.propsValue;
 
-    const convertedDueAt = due_on ? dayjs(due_on).toISOString() : undefined;
+    const convertedDueAt = due_on ? dayjs(due_on).format('YYYY-MM-DD') : undefined;
 
     // User can provide tags name as dynamic value, we need to convert them to tags gids
     const userTags = tags ?? [];
@@ -72,7 +72,7 @@ export const asanaCreateTaskAction = createAction({
             projects: [project],
             notes,
             assignee,
-            due_at: convertedDueAt,
+            due_on: convertedDueAt,
             tags: tagsGids,
           },
         }
