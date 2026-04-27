@@ -223,7 +223,7 @@ async function findRecord({
     },
     queryParams: {
       filterByFormula: `FIND("${searchValue}",{${searchField}})`,
-      view: limitToView ?? '',
+      ...(limitToView ? { view: limitToView } : {}),
     },
   };
 
