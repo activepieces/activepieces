@@ -69,12 +69,10 @@ export const newRowAddedTrigger = createTrigger({
 	async onDisable(context) {
 		const webhook = await context.store.get<WebhookInformation>(`googlesheets_new_row_added`);
 		if (webhook != null && webhook.id != null && webhook.resourceId != null) {
-			try
-			{
-			await deleteFileNotification(context.auth, webhook.id, webhook.resourceId);
-			}
-			catch(err){
-  				console.debug("deleteFileNotification failed :",JSON.stringify(err));
+			try {
+				await deleteFileNotification(context.auth, webhook.id, webhook.resourceId);
+			} catch (_err) {
+				// Cleanup failure is non-fatal; the trigger is being disabled regardless
 			}
 		}
 	},
