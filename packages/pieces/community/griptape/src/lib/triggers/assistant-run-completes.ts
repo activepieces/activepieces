@@ -44,8 +44,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof griptapeAuth>, S
         data: run,
       }));
     } catch (error) {
-      console.error('Error fetching assistant runs:', error);
-      return [];
+      throw new Error(`Error fetching assistant runs: ${error}`);
     }
   },
 };
