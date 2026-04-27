@@ -72,12 +72,23 @@ jobs:
           no-cache: true
           tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
 
-  promote-to-production:
+  deploy-canary:
     needs: [build-image]
     if: |
       always() &&
-      (needs.build-image.result == 'success' ||
-       (needs.build-image.result == 'skipped' && github.event_name != 'workflow_dispatch'))
+      github.event_name != 'workflow_dispatch' &&
+      needs.build-image.result == 'skipped'
+    uses: ./.github/workflows/continuous-delivery-canary.yml
+    secrets: inherit
+
+  promote-to-production:
+    needs: [build-image, deploy-canary]
+    if: |
+      always() &&
+      (
+        (needs.build-image.result == 'success' && github.event_name == 'workflow_dispatch') ||
+        (needs.deploy-canary.result == 'success')
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: write
