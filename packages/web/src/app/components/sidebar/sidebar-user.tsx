@@ -136,7 +136,13 @@ export function SidebarUser() {
               </div>
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem onClick={() => setAccountOpen(true)}>
+              <DropdownMenuItem
+                onClick={() =>
+                  clerkUser
+                    ? setAccountOpen(true)
+                    : window.location.replace(`${OTOM8_SITE_URL}/login`)
+                }
+              >
                 <Settings className="mr-2 h-4 w-4" />
                 {t('Account Settings')}
               </DropdownMenuItem>
@@ -207,11 +213,13 @@ export function SidebarUser() {
         </SidebarMenuItem>
       </SidebarMenu>
 
-      {/* Account Settings — Clerk UserProfile */}
-      <AccountSettingsDialog
-        open={accountOpen}
-        onClose={() => setAccountOpen(false)}
-      />
+      {/* Account Settings — only mount when Clerk session exists */}
+      {clerkUser && (
+        <AccountSettingsDialog
+          open={accountOpen}
+          onClose={() => setAccountOpen(false)}
+        />
+      )}
 
       {/* Team Settings — Clerk OrganizationProfile */}
       <Dialog open={teamOpen} onOpenChange={setTeamOpen}>
@@ -242,15 +250,17 @@ export function SidebarUser() {
         </DialogContent>
       </Dialog>
 
-      {/* Create Workspace — Clerk CreateOrganization */}
-      <Dialog open={createOrgOpen} onOpenChange={setCreateOrgOpen}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden">
-          <CreateOrganization
-            appearance={otom8ClerkAppearance}
-            afterCreateOrganizationUrl={`${OTOM8_SITE_URL}/api/ap-sso`}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Create Workspace — only mount when Clerk session exists */}
+      {clerkUser && (
+        <Dialog open={createOrgOpen} onOpenChange={setCreateOrgOpen}>
+          <DialogContent className="max-w-lg p-0 overflow-hidden">
+            <CreateOrganization
+              appearance={otom8ClerkAppearance}
+              afterCreateOrganizationUrl={`${OTOM8_SITE_URL}/api/ap-sso`}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }
