@@ -26,7 +26,7 @@ import {
 } from './components/chat-empty-state';
 import { ChatInput } from './components/chat-input';
 import { ChatMessage } from './components/chat-message';
-import { QuickReplies } from './components/message-content';
+import { QuickReplies } from './components/quick-replies';
 import { getTextFromParts, parseQuickReplies } from './lib/message-parsers';
 
 export function AIChatBox({
