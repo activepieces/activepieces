@@ -90,7 +90,7 @@ export const newTask = createTrigger({
     const payload = context.payload.body as any;
 
     if (payload && payload.eventType === 'TaskCreated') {
-      return payload.data;
+      return [payload];
     }
     return [];
   },

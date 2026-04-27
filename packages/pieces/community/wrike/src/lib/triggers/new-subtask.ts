@@ -90,7 +90,7 @@ export const newSubtask = createTrigger({
     const payload = context.payload.body as any;
 
     if (payload && payload.eventType === 'TaskParentsAdded') {
-      return payload;
+      return [payload];
     }
 
     return [payload];
