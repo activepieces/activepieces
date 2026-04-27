@@ -153,8 +153,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof smooveAuth>, {
                 }
             }));
             
-        } catch (error: any) {
-            console.error('Error fetching new subscribers:', error);
+        } catch {
             return [];
         }
     }

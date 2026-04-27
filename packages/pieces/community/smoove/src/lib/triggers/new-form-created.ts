@@ -47,8 +47,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof smooveAuth>, { f
                 };
             });
             
-        } catch (error: any) {
-            console.error('Error fetching landing pages:', error);
+        } catch {
             return [];
         }
     }

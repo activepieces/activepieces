@@ -68,8 +68,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof smooveAuth>, any
                     const allPageSubmissions = await Promise.all(pagePromises);
                     allSubmissions = allPageSubmissions.flat();
                     
-                } catch (error) {
-                    console.error('Error fetching all landing pages:', error);
+                } catch {
                     return [];
                 }
             }
@@ -85,8 +84,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof smooveAuth>, any
                 data: submission
             }));
             
-        } catch (error: any) {
-            console.error('Error fetching lead submissions:', error);
+        } catch {
             return [];
         }
     }
@@ -141,8 +139,7 @@ async function fetchSubmissionsForPage(
             ...(includeCustomFields && item.customFields ? { customFields: item.customFields } : {})
         }));
         
-    } catch (error: any) {
-        console.error(`Error fetching submissions for page ${pageId}:`, error);
+    } catch {
         return [];
     }
 }

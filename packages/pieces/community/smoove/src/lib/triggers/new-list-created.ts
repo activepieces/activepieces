@@ -62,8 +62,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof smooveAuth>, {
                 data: item,
             }));
             
-        } catch (error: any) {
-            console.error('Error fetching lists:', error);
+        } catch {
             return [];
         }
     }
