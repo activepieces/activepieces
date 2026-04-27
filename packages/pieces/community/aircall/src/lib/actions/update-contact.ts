@@ -43,7 +43,7 @@ export const updateContact = createAction({
     if (information) requestBody['information'] = information;
     const response = await makeRequest(
        context.auth,
-      HttpMethod.POST,
+      HttpMethod.PUT,
       `/contacts/${contactId}`,
       requestBody
     );
