@@ -160,7 +160,7 @@ export function useAgentChat({
   onConversationCreated,
 }: {
   onTitleUpdate?: (title: string, conversationId?: string) => void;
-  onConversationCreated?: () => void;
+  onConversationCreated?: (conversationId: string) => void;
 } = {}) {
   const [conversationId, setConversationIdState] = useState<string | null>(
     null,
@@ -372,8 +372,10 @@ export function useAgentChat({
 
       if (!conversationIdRef.current) {
         const { error: convError } = await tryCatch(async () => {
-          await createConversation({ title: content.slice(0, 100) });
-          onConversationCreatedRef.current?.();
+          const conv = await createConversation({
+            title: content.slice(0, 100),
+          });
+          onConversationCreatedRef.current?.(conv.id);
         });
         if (convError) {
           setLocalError(convError.message ?? 'Failed to start conversation');
