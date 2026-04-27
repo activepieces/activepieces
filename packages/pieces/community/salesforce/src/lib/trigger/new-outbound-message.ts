@@ -65,6 +65,6 @@ export const newOutboundMessage = createTrigger({
         const notifications = parsedData?.['soapenv:Envelope']?.['soapenv:Body']?.['notifications']?.['Notification'] || [];
 
 
-        return [notifications];
+        return notifications;
     },
 });
