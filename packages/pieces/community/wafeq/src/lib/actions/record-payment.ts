@@ -57,7 +57,7 @@ export const recordPayment = createAction({
             allocations: Property.Array({
               displayName: 'Allocations',
               description:
-                'Add one row per document you\'re paying. The amounts should add up to the total Amount below.',
+                "Add one row per document you're paying. The amounts should add up to the total Amount below.",
               required: true,
               properties: {
                 type: Property.StaticDropdown({
@@ -81,10 +81,9 @@ export const recordPayment = createAction({
                 amount: Property.Number({
                   displayName: 'Amount Applied',
                   description:
-                    'How much of the payment goes to this document, in the document\'s own currency.',
+                    "How much of the payment goes to this document, in the document's own currency.",
                   required: true,
                 }),
-                
               },
             }),
           };
@@ -98,7 +97,14 @@ export const recordPayment = createAction({
         'The full amount of the payment, including any fees. For a simple single-document payment, this should match the unpaid balance.',
       required: true,
     }),
+    amount_to_pcy: Property.Number({
+      displayName: 'Amount in Company Currency',
+      description:
+        'The amount in the payment currency. Must be greater than zero.',
+      required: true,
+    }),
     currency: wafeqProps.currency(),
+
     date: Property.DateTime({
       displayName: 'Payment Date',
       description:
@@ -150,18 +156,26 @@ export const recordPayment = createAction({
 
     if (paymentFor === 'invoice' && target['invoice']) {
       invoicePayments = [
-        { invoice: target['invoice'], amount: p.amount, amount_to_pcy: p.amount },
+        {
+          invoice: target['invoice'],
+          amount: p.amount,
+          amount_to_pcy: p.amount_to_pcy,
+        },
       ];
     } else if (paymentFor === 'bill' && target['bill']) {
       billPayments = [
-        { bill: target['bill'], amount: p.amount, amount_to_pcy: p.amount },
+        {
+          bill: target['bill'],
+          amount: p.amount,
+          amount_to_pcy: p.amount_to_pcy,
+        },
       ];
     } else if (paymentFor === 'credit_note' && target['credit_note']) {
       creditNotePayments = [
         {
           credit_note: target['credit_note'],
           amount: p.amount,
-          amount_to_pcy: p.amount,
+          amount_to_pcy: p.amount_to_pcy,
         },
       ];
     } else if (paymentFor === 'advanced') {
@@ -286,7 +300,7 @@ async function buildCreditNoteDropdown(authKey: string) {
 
 function buildAllocationList(
   allocations: AdvancedAllocation[],
-  type: 'invoice' | 'bill' | 'credit_note',
+  type: 'invoice' | 'bill' | 'credit_note'
 ): Record<string, unknown>[] | undefined {
   const matches = allocations
     .filter((a) => a.type === type && a.target_id && a.amount != null)
