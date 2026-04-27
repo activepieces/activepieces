@@ -89,7 +89,7 @@ export const updateLeadAction = createAction({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/v1/dealFields',
+			resourceUri: '/v1/leadFields',
 		});
 
 		const transformedLeadProperties = pipedriveTransformV1CustomFields(
