@@ -9,14 +9,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { ChatUIMessage } from '@/features/chat/lib/chat-types';
+import { DynamicToolPart } from '@/features/chat/lib/chat-types';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
-
-type DynamicToolPart = Extract<
-  ChatUIMessage['parts'][number],
-  { type: 'dynamic-tool' }
->;
 
 type ToolStatus = 'running' | 'completed' | 'failed' | 'stopped';
 

@@ -122,11 +122,10 @@ export function UserMessage({ message }: { message: ChatUIMessage }) {
 function extractPlanEntries(
   parts: ChatUIMessage['parts'],
 ): Array<{ content: string; status: string }> {
-  const planParts = parts.filter(
+  const last = parts.findLast(
     (p): p is Extract<typeof p, { type: 'data-plan' }> =>
       isDataUIPart<ChatDataParts>(p) && p.type === 'data-plan',
   );
-  const last = planParts[planParts.length - 1];
   return last ? last.data.entries : [];
 }
 

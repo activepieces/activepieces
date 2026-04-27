@@ -90,6 +90,15 @@ function mapHistoryToUIMessages(data: ChatHistoryMessage[]): ChatUIMessage[] {
   });
 }
 
+function fileNamesToFileParts(fileNames: string[]): ChatUIMessage['parts'] {
+  return fileNames.map((name) => ({
+    type: 'file' as const,
+    mediaType: 'text/plain' as const,
+    url: '',
+    filename: name,
+  }));
+}
+
 function createPendingUserMessage({
   content,
   fileNames,
@@ -97,19 +106,13 @@ function createPendingUserMessage({
   content: string;
   fileNames: string[];
 }): ChatUIMessage {
-  const parts: ChatUIMessage['parts'] = [{ type: 'text', text: content }];
-  for (const name of fileNames) {
-    parts.push({
-      type: 'file',
-      mediaType: 'text/plain',
-      url: '',
-      filename: name,
-    });
-  }
   return {
     id: 'pending-user',
     role: 'user',
-    parts,
+    parts: [
+      { type: 'text', text: content },
+      ...fileNamesToFileParts(fileNames),
+    ],
   };
 }
 
@@ -143,13 +146,10 @@ function injectFilePartsIntoLastUserMessage({
   const lastUser = messages[lastUserIdx];
   const alreadyHasFiles = lastUser.parts.some((p) => p.type === 'file');
   if (alreadyHasFiles) return messages;
-  const fileParts: ChatUIMessage['parts'] = fileNames.map((name) => ({
-    type: 'file' as const,
-    mediaType: 'text/plain' as const,
-    url: '',
-    filename: name,
-  }));
-  const patched = { ...lastUser, parts: [...lastUser.parts, ...fileParts] };
+  const patched = {
+    ...lastUser,
+    parts: [...lastUser.parts, ...fileNamesToFileParts(fileNames)],
+  };
   const result = [...messages];
   result[lastUserIdx] = patched;
   return result;

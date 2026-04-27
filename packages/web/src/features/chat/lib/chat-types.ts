@@ -7,3 +7,8 @@ export type ChatDataParts = {
 };
 
 export type ChatUIMessage = UIMessage<unknown, ChatDataParts>;
+
+export type DynamicToolPart = Extract<
+  ChatUIMessage['parts'][number],
+  { type: 'dynamic-tool' }
+>;

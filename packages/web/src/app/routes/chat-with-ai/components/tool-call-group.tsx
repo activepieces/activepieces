@@ -12,12 +12,7 @@ import {
   extractToolContext,
   ToolCallCard,
 } from '@/features/chat/components/tool-call-card';
-import { ChatUIMessage } from '@/features/chat/lib/chat-types';
-
-type DynamicToolPart = Extract<
-  ChatUIMessage['parts'][number],
-  { type: 'dynamic-tool' }
->;
+import { ChatUIMessage, DynamicToolPart } from '@/features/chat/lib/chat-types';
 
 const PENDING_STATES = new Set([
   'input-streaming',
