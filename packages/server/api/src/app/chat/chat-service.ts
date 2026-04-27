@@ -70,7 +70,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
             .where('id = :id AND "sandboxSessionId" IS NULL', { id })
             .execute()
         if (result.affected === 0) {
-            await chatSandboxAgent.destroySession({ sessionId: session.id, sandboxId, aiConfig }).catch(() => undefined)
+            await chatSandboxAgent.destroySession({ sessionId: session.id, sandboxId }).catch(() => undefined)
             return { conversation: await this.getConversationOrThrow({ id, projectId, userId }) }
         }
         return {
@@ -126,22 +126,22 @@ export const chatService = (log: FastifyBaseLogger) => ({
         return { ...conversation, ...updates }
     },
 
-    async cancelSession({ id, projectId, userId, platformId }: DeleteConversationParams): Promise<void> {
+    async cancelSession({ id, projectId, userId }: DeleteConversationParams): Promise<void> {
         const conversation = await this.getConversationOrThrow({ id, projectId, userId })
         const sandboxSessionId = conversation.sandboxSessionId
         if (!sandboxSessionId) return
         await conversationRepo().update(id, { sandboxSessionId: null })
-        void destroySessionAndCleanup({ sessionId: sandboxSessionId, userId, getChatAiConfig: () => this.getChatAiConfig({ platformId }), log }).catch((err) => {
+        void destroySessionAndCleanup({ sessionId: sandboxSessionId, userId, log }).catch((err) => {
             log.warn({ err, sessionId: sandboxSessionId }, 'Background session cleanup failed')
         })
     },
 
-    async deleteConversation({ id, projectId, userId, platformId }: DeleteConversationParams): Promise<void> {
+    async deleteConversation({ id, projectId, userId }: DeleteConversationParams): Promise<void> {
         const conversation = await this.getConversationOrThrow({ id, projectId, userId })
         const sandboxSessionId = conversation.sandboxSessionId
         await conversationRepo().delete({ id, projectId, userId })
         if (sandboxSessionId) {
-            void destroySessionAndCleanup({ sessionId: sandboxSessionId, userId, getChatAiConfig: () => this.getChatAiConfig({ platformId }), log }).catch((err) => {
+            void destroySessionAndCleanup({ sessionId: sandboxSessionId, userId, log }).catch((err) => {
                 log.warn({ err, sessionId: sandboxSessionId }, 'Background session cleanup failed')
             })
         }
@@ -217,18 +217,14 @@ async function resolveChatAiConfig({ platformId, modelName, log }: { platformId:
     })
 }
 
-async function destroySessionAndCleanup({ sessionId, userId, getChatAiConfig, log }: {
+async function destroySessionAndCleanup({ sessionId, userId, log }: {
     sessionId: string
     userId: string
-    getChatAiConfig: () => Promise<ChatAiConfig>
     log: FastifyBaseLogger
 }): Promise<void> {
-    const [{ data: aiConfig }, sandboxId] = await Promise.all([
-        tryCatch(getChatAiConfig),
-        userSandboxService.getSandboxId({ userId }),
-    ])
-    if (aiConfig && sandboxId) {
-        await chatSandboxAgent.destroySession({ sessionId, sandboxId, aiConfig }).catch((err) => {
+    const sandboxId = await userSandboxService.getSandboxId({ userId })
+    if (sandboxId) {
+        await chatSandboxAgent.destroySession({ sessionId, sandboxId }).catch((err) => {
             log.warn({ err, sessionId }, 'Failed to destroy E2B session')
         })
     }

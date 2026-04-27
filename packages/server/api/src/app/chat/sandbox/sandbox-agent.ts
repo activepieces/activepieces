@@ -22,7 +22,6 @@ const SDK_CACHE_TTL_MS = 10 * 60 * 1000
 let activeSandboxCount = 0
 const slotQueue: Array<{ resolve: () => void, reject: (err: Error) => void }> = []
 const sdkCache = new Map<string, { sdk: SandboxAgent, expiresAt: number }>()
-const sessionCache = new Map<string, { session: Session, lastUsedAt: number }>()
 
 async function acquireSandboxSlot(): Promise<void> {
     if (activeSandboxCount < MAX_CONCURRENT_SANDBOXES) {
@@ -147,7 +146,6 @@ async function createSession({ aiConfig, sandboxId, mcpServerUrl, mcpToken }: Cr
         void session.respondPermission(req.id, 'once').catch(() => undefined)
     })
 
-    sessionCache.set(session.id, { session, lastUsedAt: Date.now() })
     const resolvedSandboxId = sdk.sandboxId ?? sandboxId
     sdkCache.set(resolvedSandboxId, { sdk, expiresAt: Date.now() + SDK_CACHE_TTL_MS })
 
@@ -238,10 +236,11 @@ async function sendPrompt({ session, text, systemPrompt, files }: SendPromptPara
     await session.prompt(contentBlocks)
 }
 
-async function destroySession({ sessionId, sandboxId, aiConfig }: DestroySessionParams): Promise<void> {
-    sessionCache.delete(sessionId)
-    const sdk = await getOrCreateSdk({ aiConfig, sandboxId })
-    await sdk.destroySession(sessionId)
+async function destroySession({ sessionId, sandboxId }: { sessionId: string, sandboxId: string }): Promise<void> {
+    const cached = sdkCache.get(sandboxId)
+    if (cached && cached.expiresAt > Date.now()) {
+        await cached.sdk.destroySession(sessionId)
+    }
 }
 
 async function getSessionHistory({ sessionId }: { sessionId: string }): Promise<ChatHistoryMessage[]> {
@@ -367,11 +366,6 @@ function evictStaleCacheEntries(): void {
             sdkCache.delete(key)
         }
     }
-    for (const [key, entry] of sessionCache) {
-        if (now - entry.lastUsedAt > SDK_CACHE_TTL_MS) {
-            sessionCache.delete(key)
-        }
-    }
 }
 
 function evictOldestIfFull(cache: Map<string, unknown>, max: number): void {
@@ -400,20 +394,11 @@ async function getOrCreateSdk({ aiConfig, sandboxId }: { aiConfig: ChatAiConfig,
 }
 
 async function resumeSession({ sessionId, sandboxId, aiConfig }: ResumeSessionParams): Promise<ResumeSessionResult> {
-    const cached = sessionCache.get(sessionId)
-    if (cached) {
-        cached.lastUsedAt = Date.now()
-        const sdk = await getOrCreateSdk({ aiConfig, sandboxId })
-        return { session: cached.session, sdk, newSandboxId: sdk.sandboxId ?? null }
-    }
-
     const sdk = await getOrCreateSdk({ aiConfig, sandboxId })
     const session = await sdk.resumeSession(sessionId)
     session.onPermissionRequest((req) => {
         void session.respondPermission(req.id, 'once').catch(() => undefined)
     })
-    evictOldestIfFull(sessionCache, MAX_CACHED_ENTRIES)
-    sessionCache.set(sessionId, { session, lastUsedAt: Date.now() })
     return { session, sdk, newSandboxId: sdk.sandboxId ?? null }
 }
 
@@ -451,12 +436,6 @@ type SendPromptParams = {
     text: string
     systemPrompt?: string
     files?: Array<{ name: string, mimeType: string, data: string }>
-}
-
-type DestroySessionParams = {
-    sessionId: string
-    sandboxId: string
-    aiConfig: ChatAiConfig
 }
 
 type ResumeSessionParams = {
