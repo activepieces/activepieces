@@ -71,12 +71,10 @@ export const updateAccountAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // // Fetch full account first to avoid wiping fields with a partial PUT
-    // const account = await client.get<any>(
-    //   `/api/v1/crm/accounts/${context.propsValue.accountUid}`
-    // );
-    const account: any = {}; 
-    console.log('Fetched account:', account);
+    // Fetch full account first to avoid wiping fields with a partial PUT
+    const account = await client.get<any>(
+      `/api/v1/crm/accounts/${context.propsValue.accountUid}`
+    );
     let changed = false;
     if (context.propsValue.name) { account.Name = context.propsValue.name; changed = true; }
     if (context.propsValue.accountStage != null) { account.AccountStage = context.propsValue.accountStage; changed = true; }
