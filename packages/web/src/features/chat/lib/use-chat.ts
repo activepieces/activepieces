@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { API_URL } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -238,6 +238,33 @@ export function useAgentChat({
       setPendingMessages([]);
     },
   });
+
+  const statusRef = useRef(status);
+  statusRef.current = status;
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      const convId = conversationIdRef.current;
+      if (!convId) return;
+      if (
+        statusRef.current !== 'streaming' &&
+        statusRef.current !== 'submitted'
+      )
+        return;
+      void stop();
+      setPendingMessages([]);
+      void chatApi
+        .getMessages(convId)
+        .then((result) => {
+          setUiMessages(mapHistoryToUIMessages(result.data));
+        })
+        .catch(() => undefined);
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () =>
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [stop, setUiMessages]);
 
   const sdkIsStreaming = status === 'streaming' || status === 'submitted';
   const lastLiveMessage = uiMessages[uiMessages.length - 1];
