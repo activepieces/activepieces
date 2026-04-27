@@ -40,7 +40,7 @@ const polling: Polling<string, Record<string, never>> = {
       endpoint: 'getMonitors',
       body: {
         logs: 1,
-        logs_limit: 10,
+        logs_limit: 50,
       },
     });
 
@@ -63,7 +63,7 @@ const polling: Polling<string, Record<string, never>> = {
             current_status: monitor.status,
             current_status_name: MONITOR_STATUSES[monitor.status] ?? 'Unknown',
             event_type: log.type,
-            event_type_name: log.type === 1 ? 'Down' : log.type === 2 ? 'Up' : 'Paused',
+            event_type_name: { 1: 'Down', 2: 'Up', 98: 'Started', 99: 'Paused' }[log.type] ?? `Unknown (${log.type})`,
             event_datetime: new Date(log.datetime * 1000).toISOString(),
             duration_seconds: log.duration,
             reason_code: log.reason?.code ?? null,

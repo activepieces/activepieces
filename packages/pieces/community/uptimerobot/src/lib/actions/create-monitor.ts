@@ -65,9 +65,9 @@ export const createMonitorAction = createAction({
       description: 'Only if the URL requires HTTP Basic Authentication',
       required: false,
     }),
-    http_password: Property.ShortText({
+    http_password: Property.LongText({
       displayName: 'HTTP Password',
-      description: 'Only if the URL requires HTTP Basic Authentication',
+      description: 'Only if the URL requires HTTP Basic Authentication. This value is stored securely.',
       required: false,
     }),
     alert_contacts: Property.ShortText({

@@ -43,7 +43,7 @@ export const uptimerobot = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/uptimerobot.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: uptimeRobotAuth,
-  authors: [],
+  authors: ['pfeiffer-research-agent'],
   actions: [
     getMonitorsAction,
     createMonitorAction,
@@ -56,7 +56,7 @@ export const uptimerobot = createPiece({
       authMapping: async (auth) => ({
         'Content-Type': 'application/json',
       }),
-      description: 'Send a custom request to the UptimeRobot API. Note: all UptimeRobot endpoints use POST with api_key in the body.',
+      description: 'Send a custom request to the UptimeRobot API. Important: UptimeRobot uses POST with api_key in the request body (not headers). Include `"api_key": "YOUR_KEY"` in the request body for every call.',
     }),
   ],
   triggers: [monitorStatusChangeTrigger],
