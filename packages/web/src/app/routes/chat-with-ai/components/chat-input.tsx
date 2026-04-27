@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { ArrowUp, Paperclip, Square, X } from 'lucide-react';
+import { ArrowUp, Paperclip, X } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
 import {
@@ -18,19 +18,15 @@ import { Button } from '@/components/ui/button';
 export function ChatInput({
   isStreaming,
   onSend,
-  onCancel,
 }: {
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
-  onCancel: () => void;
 }) {
   const [value, setValue] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
   const handleSubmit = useCallback(() => {
-    if (isStreaming) {
-      onCancel();
-    } else if (value.trim() || attachedFiles.length > 0) {
+    if (!isStreaming && (value.trim() || attachedFiles.length > 0)) {
       onSend(
         value.trim(),
         attachedFiles.length > 0 ? attachedFiles : undefined,
@@ -38,7 +34,7 @@ export function ChatInput({
       setValue('');
       setAttachedFiles([]);
     }
-  }, [isStreaming, value, attachedFiles, onSend, onCancel]);
+  }, [isStreaming, value, attachedFiles, onSend]);
 
   const handleFilesAdded = useCallback((files: File[]) => {
     setAttachedFiles((prev) => [...prev, ...files]);
@@ -94,30 +90,16 @@ export function ChatInput({
               </div>
             </FileUploadTrigger>
           </PromptInputAction>
-          <PromptInputAction
-            tooltip={isStreaming ? t('Stop') : t('Send message')}
-          >
-            {isStreaming ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 gap-1.5 rounded-lg bg-destructive text-white hover:bg-destructive/90 hover:text-white text-xs px-3"
-                onClick={onCancel}
-              >
-                <Square className="h-3 w-3 fill-current" />
-                {t('Stop')}
-              </Button>
-            ) : (
-              <Button
-                variant="default"
-                size="icon"
-                className="h-8 w-8 rounded-full"
-                onClick={handleSubmit}
-                disabled={!canSend}
-              >
-                <ArrowUp className="size-5" />
-              </Button>
-            )}
+          <PromptInputAction tooltip={t('Send message')}>
+            <Button
+              variant="default"
+              size="icon"
+              className="h-8 w-8 rounded-full"
+              onClick={handleSubmit}
+              disabled={!canSend || isStreaming}
+            >
+              <ArrowUp className="size-5" />
+            </Button>
           </PromptInputAction>
         </PromptInputActions>
       </PromptInput>

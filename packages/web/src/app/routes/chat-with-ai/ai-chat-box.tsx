@@ -128,11 +128,7 @@ function ChatBoxContent({
         <div className="flex-1" />
         <EmptyState incognito={incognito} />
         <div className="w-full max-w-4xl mt-6">
-          <ChatInput
-            isStreaming={isStreaming}
-            onSend={handleSend}
-            onCancel={cancelStream}
-          />
+          <ChatInput isStreaming={isStreaming} onSend={handleSend} />
           <SuggestionCards onSend={handleSend} />
         </div>
         <div className="flex-1" />
@@ -220,11 +216,7 @@ function ChatBoxContent({
 
       <div className="pb-4 px-6">
         <div className="max-w-4xl mx-auto">
-          <ChatInput
-            isStreaming={isStreaming}
-            onSend={handleSend}
-            onCancel={cancelStream}
-          />
+          <ChatInput isStreaming={isStreaming} onSend={handleSend} />
           <div className="flex items-center justify-center gap-3 mt-2">
             <span className="text-[11px] text-muted-foreground">
               <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">
