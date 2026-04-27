@@ -1,7 +1,6 @@
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
-  OAuth2PropertyValue,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import {
