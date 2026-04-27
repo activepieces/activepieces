@@ -31,14 +31,6 @@ export const ChatConversationEntity = new EntitySchema<ChatConversationWithRelat
             type: String,
             nullable: true,
         },
-        totalInputTokens: {
-            type: Number,
-            default: 0,
-        },
-        totalOutputTokens: {
-            type: Number,
-            default: 0,
-        },
         summary: {
             type: 'text',
             nullable: true,

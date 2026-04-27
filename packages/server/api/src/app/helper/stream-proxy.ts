@@ -1,13 +1,31 @@
-import * as https from 'node:https'
+import { safeHttp } from '@activepieces/server-utils'
 import { FastifyReply } from 'fastify'
 
-const ALLOWED_RESPONSE_HEADERS = new Set([
-    'content-type',
-    'content-length',
-    'transfer-encoding',
-    'cache-control',
-    'date',
-])
+async function forward({ reply, hostname, path, headers, body }: StreamProxyParams): Promise<void> {
+    await reply.hijack()
+    const response = await safeHttp.axios.request<NodeJS.ReadableStream>({
+        method: 'POST',
+        url: `https://${hostname}${path}`,
+        headers,
+        data: body,
+        responseType: 'stream',
+        validateStatus: () => true,
+        maxRedirects: 0,
+    })
+    reply.raw.writeHead(
+        response.status,
+        filterResponseHeaders(response.headers as Record<string, string | string[] | undefined>),
+    )
+    response.data.pipe(reply.raw)
+    return new Promise<void>((resolve, reject) => {
+        reply.raw.on('finish', resolve)
+        reply.raw.on('error', reject)
+        response.data.on('error', (err: Error) => {
+            if (!reply.raw.writableEnded) reply.raw.end()
+            reject(err)
+        })
+    })
+}
 
 function filterResponseHeaders(raw: Record<string, string | string[] | undefined>): Record<string, string | string[]> {
     const filtered: Record<string, string | string[]> = {}
@@ -19,48 +37,16 @@ function filterResponseHeaders(raw: Record<string, string | string[] | undefined
     return filtered
 }
 
-async function forward({ reply, hostname, path, headers, body }: StreamProxyParams): Promise<void> {
-    const bodyBuffer = Buffer.from(body, 'utf-8')
-
-    await reply.hijack()
-
-    return new Promise<void>((resolve, reject) => {
-        const proxyReq = https.request({
-            hostname,
-            path,
-            method: 'POST',
-            headers: { ...headers, 'content-length': String(bodyBuffer.byteLength) },
-        })
-
-        proxyReq.on('response', (proxyRes) => {
-            const safeHeaders = filterResponseHeaders(proxyRes.headers as Record<string, string | string[] | undefined>)
-            reply.raw.writeHead(proxyRes.statusCode ?? 502, safeHeaders)
-            proxyRes.pipe(reply.raw)
-            proxyRes.on('error', (err) => {
-                if (!reply.raw.writableEnded) {
-                    reply.raw.end()
-                }
-                reject(err)
-            })
-            reply.raw.on('finish', resolve)
-            reply.raw.on('error', reject)
-        })
-
-        proxyReq.on('error', (err) => {
-            if (!reply.raw.headersSent) {
-                reply.raw.writeHead(502)
-            }
-            reply.raw.end()
-            reject(err)
-        })
-
-        proxyReq.end(bodyBuffer)
-    })
-}
-
 export { filterResponseHeaders }
-
 export const streamProxy = { forward }
+
+const ALLOWED_RESPONSE_HEADERS = new Set([
+    'content-type',
+    'content-length',
+    'transfer-encoding',
+    'cache-control',
+    'date',
+])
 
 type StreamProxyParams = {
     reply: FastifyReply
