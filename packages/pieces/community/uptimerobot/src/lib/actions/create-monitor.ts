@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { uptimeRobotAuth } from '../../';
 import { uptimeRobotApiCall, flattenMonitor } from '../common';
 
@@ -65,9 +65,9 @@ export const createMonitorAction = createAction({
       description: 'Only if the URL requires HTTP Basic Authentication',
       required: false,
     }),
-    http_password: Property.LongText({
+    http_password: Property.SecretText({
       displayName: 'HTTP Password',
-      description: 'Only if the URL requires HTTP Basic Authentication. This value is stored securely.',
+      description: 'Only if the URL requires HTTP Basic Authentication',
       required: false,
     }),
     alert_contacts: Property.ShortText({
