@@ -42,8 +42,7 @@ export const tenzoCommon = {
               value: location.id.toString(),
             })),
           };
-        } catch (error) {
-          console.error('Failed to fetch locations:', error);
+        } catch {
           return {
             disabled: true,
             options: [],
@@ -90,8 +89,7 @@ export const tenzoCommon = {
               value: area.id.toString(),
             })),
           };
-        } catch (error) {
-          console.error('Failed to fetch areas:', error);
+        } catch {
           return {
             disabled: true,
             options: [],
