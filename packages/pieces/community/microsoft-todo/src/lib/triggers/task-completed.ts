@@ -75,8 +75,8 @@ export const taskCompletedTrigger = createTrigger({
                 await context.store.delete('subscriptionId');
                 await context.store.delete('clientState');
             }
-        } catch (error: any) {
-            console.warn(`Failed to delete subscription: ${error?.message || error}`);
+        } catch {
+            // Silently ignore — subscription may have already expired or been deleted
         }
     },
 
