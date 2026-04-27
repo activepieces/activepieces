@@ -1,7 +1,7 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/shared';
 import { baserowAuth } from '../auth';
-import { baserowCommon } from '../common';
+import { baserowCommon, makeClient } from '../common';
 import { createWebhookTriggerHooks } from '../common/webhook-trigger';
 
 const triggerHooks = createWebhookTriggerHooks({
@@ -63,5 +63,14 @@ If you authenticated with **Email & Password (JWT)**, the webhook is registered 
         if (!previous) return true;
         return JSON.stringify(row) !== JSON.stringify(previous);
       });
+  },
+  async test(context) {
+    const tableId = context.propsValue.table_id;
+    if (!tableId) return [];
+    const client = await makeClient(context.auth);
+    const response = (await client.listRows(tableId, 1, 5)) as {
+      results: Record<string, unknown>[];
+    };
+    return response.results.map((row) => ({ row, previous: null }));
   },
 });
