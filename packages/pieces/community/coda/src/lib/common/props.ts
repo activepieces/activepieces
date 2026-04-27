@@ -187,8 +187,7 @@ export const tableRowsDynamicProps = Property.DynamicProperties({
 				}
 			}
 			return fields;
-		} catch (error) {
-			console.error('Coda: Failed to fetch table columns for dynamic properties:', error);
+		} catch (_error) {
 			return {};
 		}
 	},
