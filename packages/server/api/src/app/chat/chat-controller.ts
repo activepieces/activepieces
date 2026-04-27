@@ -116,17 +116,12 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         })
 
         const service = chatService(log)
-        const [aiConfig, systemPrompt, sandboxId] = await Promise.all([
+        const [aiConfig, systemPrompt] = await Promise.all([
             service.getChatAiConfig({ platformId, modelName: conversation.modelName }),
             service.buildSystemPrompt({ projectId }),
-            userSandboxService.getSandboxId({ userId }),
         ])
-
-        if (!sandboxId) {
-            return reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
-                error: 'User sandbox not found',
-            })
-        }
+        const sandboxId = await userSandboxService.getSandboxId({ userId })
+            ?? await userSandboxService.getOrCreate({ userId, platformId, aiConfig })
 
         await chatSandboxAgent.acquireSandboxSlot()
 

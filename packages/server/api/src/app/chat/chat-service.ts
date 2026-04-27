@@ -57,12 +57,16 @@ export const chatService = (log: FastifyBaseLogger) => ({
             getMcpCredentials({ projectId, log }),
         ])
         const sandboxId = await userSandboxService.getOrCreate({ userId, platformId, aiConfig })
-        const { session } = await chatSandboxAgent.createSession({
+        const { session, sdk } = await chatSandboxAgent.createSession({
             aiConfig,
             sandboxId,
             mcpServerUrl: mcpCredentials.mcpServerUrl,
             mcpToken: mcpCredentials.mcpToken,
         })
+        const resolvedSandboxId = sdk.sandboxId ?? sandboxId
+        if (resolvedSandboxId !== sandboxId) {
+            void userSandboxService.updateSandboxId({ userId, sandboxId: resolvedSandboxId }).catch(() => undefined)
+        }
         const result = await conversationRepo()
             .createQueryBuilder()
             .update()
@@ -70,12 +74,12 @@ export const chatService = (log: FastifyBaseLogger) => ({
             .where('id = :id AND "sandboxSessionId" IS NULL', { id })
             .execute()
         if (result.affected === 0) {
-            await chatSandboxAgent.destroySession({ sessionId: session.id, sandboxId }).catch(() => undefined)
+            await chatSandboxAgent.destroySession({ sessionId: session.id, sandboxId: resolvedSandboxId }).catch(() => undefined)
             return { conversation: await this.getConversationOrThrow({ id, projectId, userId }) }
         }
         return {
             conversation: { ...conversation, sandboxSessionId: session.id },
-            liveSession: { session, sandboxId },
+            liveSession: { session, sandboxId: resolvedSandboxId },
         }
     },
 
