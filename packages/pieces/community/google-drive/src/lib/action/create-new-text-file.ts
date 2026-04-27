@@ -28,12 +28,12 @@ export const googleDriveCreateNewTextFile = createAction({
       displayName: 'Content type',
       description: 'Select file type',
       required: true,
-      defaultValue: 'plain/text',
+      defaultValue: 'text/plain',
       options: {
         options: [
           {
             label: 'Text',
-            value: 'plain/text',
+            value: 'text/plain',
           },
           {
             label: 'CSV',
