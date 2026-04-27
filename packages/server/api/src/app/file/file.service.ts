@@ -94,7 +94,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
         return file
     },
     async getFileOrThrow(params: GetOneParams): Promise<File> {
-        const file = await this.getFile(params)
+        const file = !isNil(params.fileId) ? await this.getFile(params) : undefined
         if (isNil(file)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -195,11 +195,11 @@ export const fileService = (log: FastifyBaseLogger) => ({
     },
     async uploadPublicAsset(params: UploadPublicAssetParams): Promise<string | undefined> {
         const { file, type, platformId, allowedMimeTypes = IMAGE_MIME_TYPES, maxFileSizeInBytes, metadata } = params
-        
+
         if (isNil(file)) {
             return undefined
         }
-        
+
         if (!isMultipartFile(file)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -293,7 +293,7 @@ type SaveParams = {
 }
 
 type GetOneParams = {
-    fileId: FileId
+    fileId?: FileId
     projectId?: ProjectId
     type?: FileType
 }

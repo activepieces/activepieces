@@ -31,7 +31,6 @@ export const platformUserHooks = {
       !isNil(currentUser) && hasInvitePermission && !isFetchingProjectRole;
     return useQuery<SeekPage<UserWithMetaInformation>, Error>({
       queryKey: platformUserKeys.users,
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
       queryFn: async () => {
         const results = await platformUserApi.list({
           limit: 2000,
