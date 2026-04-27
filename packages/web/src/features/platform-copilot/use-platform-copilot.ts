@@ -1,9 +1,11 @@
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, isTextUIPart, UIMessage } from 'ai';
 import { useEffect, useMemo } from 'react';
+import { toast } from 'sonner';
 
 import { API_URL } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { PlatformCopilotErrorCode } from '@activepieces/shared';
 
 export function usePlatformCopilot() {
   const storageKey = `ap-copilot-${
@@ -13,6 +15,10 @@ export function usePlatformCopilot() {
 
   const chat = useChat({
     messages: initialMessages,
+    onError: (error) => {
+      const message = friendlyErrorMessage(error);
+      if (message) toast.error(message);
+    },
     transport: new DefaultChatTransport({
       api: `${API_URL}/v1/platform-copilot/chat`,
       headers: () => ({
@@ -91,6 +97,35 @@ function isValidMessage(item: unknown): boolean {
     typeof record['role'] === 'string' &&
     Array.isArray(record['parts'])
   );
+}
+
+function friendlyErrorMessage(error: Error): string | null {
+  const code = parseCopilotErrorCode(error.message);
+  switch (code) {
+    case PlatformCopilotErrorCode.USER_DAILY_LIMIT_REACHED:
+      return "You're going a bit fast. Try again in a few minutes.";
+    case PlatformCopilotErrorCode.PLATFORM_DAILY_LIMIT_REACHED:
+      return "Your platform has reached today's copilot limit. It resets at midnight UTC.";
+    case PlatformCopilotErrorCode.SERVICE_PAUSED:
+      return "Activepieces copilot is taking a quick break. We'll be back shortly.";
+    case PlatformCopilotErrorCode.PLATFORM_UNAVAILABLE:
+      return "Activepieces copilot isn't available for your workspace right now. Please contact support.";
+    case PlatformCopilotErrorCode.COPILOT_UNREACHABLE:
+      return "Can't reach the Activepieces copilot service. Check your network and try again.";
+    case PlatformCopilotErrorCode.CONTENT_POLICY:
+      return "That message can't be processed. Please rephrase and try again.";
+    default:
+      return 'Something went wrong sending your message. Please try again.';
+  }
+}
+
+function parseCopilotErrorCode(message: string): string | null {
+  try {
+    const parsed = JSON.parse(message) as { error?: unknown };
+    return typeof parsed.error === 'string' ? parsed.error : null;
+  } catch {
+    return null;
+  }
 }
 
 const MAX_MESSAGE_CHARS = 4000;
