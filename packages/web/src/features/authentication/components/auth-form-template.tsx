@@ -7,6 +7,7 @@ import { t } from 'i18next';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
+import { useTheme } from '@/components/providers/theme-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
@@ -131,31 +132,38 @@ const AuthLayout = ({
 }: {
   children: React.ReactNode;
   isSignUp?: boolean;
-}) => (
-  <div className="h-screen w-full overflow-hidden flex bg-white relative">
-    {/* Form — left side */}
-    <div className="flex flex-col w-full lg:w-1/2 p-5 lg:px-[100px]">
-      <div className="pt-3 flex justify-center">
-        <FullLogo />
-      </div>
-      <div className="flex-1 flex items-center justify-center">
-        <div className="w-full max-w-xs overflow-y-auto px-1">{children}</div>
-      </div>
-      {isSignUp && (
-        <div className="pb-4">
-          <TermsFooter />
+}) => {
+  const { setForceLightMode } = useTheme();
+  useEffect(() => {
+    setForceLightMode(true);
+    return () => setForceLightMode(false);
+  }, [setForceLightMode]);
+  return (
+    <div className="h-screen w-full overflow-hidden flex bg-white relative">
+      {/* Form — left side */}
+      <div className="flex flex-col w-full lg:w-1/2 p-5 lg:px-[100px]">
+        <div className="pt-3 flex justify-center">
+          <FullLogo />
         </div>
-      )}
-    </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-full max-w-xs overflow-y-auto px-1">{children}</div>
+        </div>
+        {isSignUp && (
+          <div className="pb-4">
+            <TermsFooter />
+          </div>
+        )}
+      </div>
 
-    {/* Right side — animation for sign-up, image for sign-in */}
-    <div className="hidden lg:flex w-1/2 py-5 pr-5">
-      <div className="relative w-full h-full rounded-2xl overflow-hidden bg-muted">
-        {isSignUp ? <AuthAnimation /> : <AuthImage />}
+      {/* Right side — animation for sign-up, image for sign-in */}
+      <div className="hidden lg:flex w-1/2 py-5 pr-5">
+        <div className="relative w-full h-full rounded-2xl overflow-hidden bg-muted">
+          {isSignUp ? <AuthAnimation /> : <AuthImage />}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 AuthLayout.displayName = 'AuthLayout';
 

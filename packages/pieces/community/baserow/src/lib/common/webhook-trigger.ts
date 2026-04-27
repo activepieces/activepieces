@@ -1,4 +1,4 @@
-import { BaserowAuthValue, isDatabaseTokenAuth } from '../auth';
+import { BaserowAuthValue } from '../auth';
 import { makeClient } from './index';
 
 export function createWebhookTriggerHooks(
@@ -14,11 +14,6 @@ export function createWebhookTriggerHooks(
         put: <T>(key: string, value: T) => Promise<T>;
       };
     }): Promise<void> {
-      if (isDatabaseTokenAuth(context.auth)) {
-        throw new Error(
-          'Baserow triggers require Email & Password (JWT) authentication. Please reconnect using the "Email & Password (JWT)" option.'
-        );
-      }
       if (!context.propsValue.table_id) return;
       const client = await makeClient(context.auth);
       const webhook = await client.createWebhook(
@@ -36,7 +31,6 @@ export function createWebhookTriggerHooks(
         delete: (key: string) => Promise<void>;
       };
     }): Promise<void> {
-      if (isDatabaseTokenAuth(context.auth)) return;
       const data = await context.store.get<{ webhookId: number }>(storeKey);
       if (!data?.webhookId) return;
       const client = await makeClient(context.auth);

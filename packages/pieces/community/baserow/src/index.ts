@@ -20,8 +20,7 @@ import { rowDeletedTrigger } from './lib/triggers/row-deleted';
 import { rowsCreatedTrigger } from './lib/triggers/rows-created';
 import { rowsUpdatedTrigger } from './lib/triggers/rows-updated';
 import { rowsDeletedTrigger } from './lib/triggers/rows-deleted';
-import { baserowAuth, isDatabaseTokenAuth } from './lib/auth';
-import { BaserowClient } from './lib/common/client';
+import { baserowAuth } from './lib/auth';
 
 export const baserow = createPiece({
   displayName: 'Baserow',
@@ -30,7 +29,7 @@ export const baserow = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/baserow.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ["kishanprmr","MoShizzle","abuaboud",'bst1n','sanket-a11y'],
+  authors: ["kishanprmr", "MoShizzle", "abuaboud", 'bst1n', 'sanket-a11y'],
   actions: [
     createRowAction,
     deleteRowAction,
@@ -52,15 +51,7 @@ export const baserow = createPiece({
       },
       auth: baserowAuth,
       authMapping: async (auth) => {
-        if (isDatabaseTokenAuth(auth)) {
-          return { Authorization: `Token ${auth.props.token}` };
-        }
-        const jwt = await BaserowClient.getJwtToken(
-          auth.props.apiUrl,
-          auth.props.email,
-          auth.props.password
-        );
-        return { Authorization: `JWT ${jwt}` };
+        return { Authorization: `Token ${auth.props.token}` };
       },
     }),
   ],
