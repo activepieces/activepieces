@@ -2041,15 +2041,7 @@ describe('MCP Tools integration', () => {
         expect(output).toContain('<internal>')
     })
 
-    // ── Router branch condition validation (regression for "Incomplete" router) ────
-    //
-    // Background: the strict server validator (RouterActionSettingsWithValidation)
-    // requires firstValue/secondValue to be non-empty (.min(1)) and requires
-    // secondValue when the operator is not single-value (TEXT_*, NUMBER_*, etc.).
-    // The MCP input schema used to be looser, so an agent could submit shapes that
-    // passed input validation but caused step.valid=false on the router — surfacing
-    // as the "Incomplete" badge in the UI and blocking publish. These tests pin the
-    // tightened input schema so future drift is caught.
+    // ── Router branch condition validation ───────────────────────────
 
     it('74. ap_update_branch — rejects empty firstValue', async () => {
         const ctx = await createTestContext(app)
@@ -2116,7 +2108,6 @@ describe('MCP Tools integration', () => {
             flowId,
             routerStepName: 'step_1',
             branchIndex: 0,
-            // No secondValue, but operator is TEXT_CONTAINS (needs one)
             conditions: [[{ firstValue: '{{trigger.subject}}', operator: 'TEXT_CONTAINS' }]],
         })
 
@@ -2142,7 +2133,6 @@ describe('MCP Tools integration', () => {
             flowId,
             routerStepName: 'step_1',
             branchIndex: 0,
-            // Single-value operator: secondValue not needed
             conditions: [[{ firstValue: '{{trigger.subject}}', operator: 'EXISTS' }]],
         })
 
@@ -2188,8 +2178,6 @@ describe('MCP Tools integration', () => {
             displayName: 'Router',
         })
 
-        // Both values present but no operator — ambiguous, the runtime has no
-        // comparison to perform. Reject at input.
         const result = await apUpdateBranchTool(mcp, mockLog).execute({
             flowId,
             routerStepName: 'step_1',

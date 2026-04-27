@@ -166,11 +166,6 @@ function findResolvableProps({ props, componentProps, auth, providedInput }: Fin
     })
 }
 
-// Match the server-side strict validator (RouterActionSettingsWithValidation):
-// firstValue must be non-empty; secondValue must be non-empty when present and is required
-// for any non-single-value operator. Catching this at the input layer ensures the agent
-// gets a field-level error instead of a silent step.valid=false (which surfaces as the
-// "Incomplete" badge in the UI and blocks publish).
 const SINGLE_VALUE_OPERATORS_HINT = singleValueConditions.join(', ')
 const BRANCH_CONDITIONS_INPUT_SCHEMA = z.array(
     z.array(
@@ -180,7 +175,6 @@ const BRANCH_CONDITIONS_INPUT_SCHEMA = z.array(
             secondValue: z.string().min(1, 'secondValue must be a non-empty string when provided').optional().describe('Right-hand value — required (and non-empty) for all operators except single-value ones.'),
             caseSensitive: z.boolean().optional().describe('For text operators: whether to match case sensitively'),
         }).superRefine((cond, ctx) => {
-            // Case 1: a non-single-value operator must have a secondValue.
             if (cond.operator !== undefined
                 && !(singleValueConditions as BranchOperator[]).includes(cond.operator)
                 && cond.secondValue === undefined) {
@@ -190,8 +184,6 @@ const BRANCH_CONDITIONS_INPUT_SCHEMA = z.array(
                     message: `secondValue is required when operator is "${cond.operator}". Use a single-value operator (${SINGLE_VALUE_OPERATORS_HINT}) if you do not have a secondValue.`,
                 })
             }
-            // Case 2: providing a secondValue without an operator is ambiguous —
-            // the runtime has no comparison to perform. Force the agent to pick one.
             if (cond.operator === undefined && cond.secondValue !== undefined) {
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
@@ -221,11 +213,6 @@ function resolveRouterStep({ stepName, trigger }: { stepName: string, trigger: S
     return { routerStep: step as RouterAction }
 }
 
-// Defense-in-depth: returns an empty string when the router is valid, otherwise a
-// human-readable warning suffix to append to the tool's success message. This catches
-// any path where the server-side validator drops step.valid to false (e.g. another
-// branch on the same router was already malformed) so the agent never sees a bare ✅
-// for a step that's actually showing "Incomplete" in the UI.
 function routerInvalidWarning({ stepName, trigger }: { stepName: string, trigger: Step }): string {
     const step = flowStructureUtil.getStep(stepName, trigger)
     if (isNil(step) || step.valid) {

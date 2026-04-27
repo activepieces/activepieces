@@ -88,12 +88,7 @@ export const apUpdateBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                     branches[branchIndex] = {
                         ...targetBranch,
                         ...(branchName !== undefined && { branchName }),
-                        // The MCP input schema (BRANCH_CONDITIONS_INPUT_SCHEMA) is a
-                        // single object shape with optional fields, while shared's
-                        // BranchCondition is a discriminated union. The .min(1) and
-                        // .superRefine on the input schema guarantee the runtime
-                        // data matches one of the union's members, so the cast is
-                        // sound.
+                        // .min(1) and .superRefine on the input schema align the runtime shape with BranchCondition's discriminated union.
                         ...(conditions !== undefined && { conditions: conditions as BranchCondition[][] }),
                     }
                 }

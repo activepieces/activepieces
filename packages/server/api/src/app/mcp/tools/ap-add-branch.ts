@@ -54,17 +54,13 @@ export const apAddBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
                 // Insert before the last (fallback) branch
                 const branchIndex = Math.max(0, routerSettings.branches.length - 1)
 
-                // The MCP input schema (BRANCH_CONDITIONS_INPUT_SCHEMA) is a single
-                // shape with optional fields, while shared's BranchCondition is a
-                // discriminated union. The .min(1) and .superRefine on the input
-                // schema guarantee the runtime data matches one of the union's
-                // members, so the cast is sound.
                 const operation: FlowOperationRequest = {
                     type: FlowOperationType.ADD_BRANCH,
                     request: {
                         stepName: routerStepName,
                         branchIndex,
                         branchName,
+                        // .min(1) and .superRefine on the input schema align the runtime shape with BranchCondition's discriminated union.
                         conditions: (conditions ?? [[]]) as BranchCondition[][],
                     },
                 }
