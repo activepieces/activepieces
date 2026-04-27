@@ -2,20 +2,17 @@ import {
   ChatAllowedMimeType,
   CHAT_ALLOWED_MIME_TYPES,
   ChatHistoryMessage,
-  ChatMessageItem,
-  isObject,
-  MessageBlock,
-  ToolCallItem,
   tryCatch,
 } from '@activepieces/shared';
 import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport, UIMessage } from 'ai';
+import { DefaultChatTransport } from 'ai';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { API_URL } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { chatApi } from './chat-api';
+import { ChatUIMessage } from './chat-types';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -49,87 +46,11 @@ function fileToBase64(
   });
 }
 
-function deriveToolStatus(state: string): ToolCallItem['status'] {
-  if (state === 'output-available') return 'completed';
-  if (state === 'output-error') return 'failed';
-  return 'running';
-}
-
-function extractDynamicToolOutput(part: {
-  state: string;
-  output?: unknown;
-  errorText?: string;
-}): string | undefined {
-  if (part.state === 'output-available' && part.output !== undefined) {
-    return typeof part.output === 'string'
-      ? part.output
-      : JSON.stringify(part.output);
-  }
-  if (part.state === 'output-error' && part.errorText) {
-    return part.errorText;
-  }
-  return undefined;
-}
-
-function convertUIMessagesToItems(messages: UIMessage[]): ChatMessageItem[] {
-  return messages
-    .filter(
-      (msg): msg is UIMessage & { role: 'user' | 'assistant' } =>
-        msg.role === 'user' || msg.role === 'assistant',
-    )
-    .map((msg, idx) => {
-      const blocks: MessageBlock[] = [];
-      let thoughts = '';
-      const fileNames: string[] = [];
-
-      for (const part of msg.parts) {
-        if (part.type === 'text' && part.text.length > 0) {
-          const last = blocks[blocks.length - 1];
-          if (last && last.type === 'text') {
-            blocks[blocks.length - 1] = {
-              type: 'text',
-              text: last.text + part.text,
-            };
-          } else {
-            blocks.push({ type: 'text', text: part.text });
-          }
-        } else if (part.type === 'reasoning') {
-          thoughts += part.text;
-        } else if (part.type === 'dynamic-tool') {
-          const toolCall: ToolCallItem = {
-            id: part.toolCallId,
-            name: part.toolName,
-            title: part.title ?? part.toolName,
-            status: deriveToolStatus(part.state),
-            input: isObject(part.input) ? part.input : undefined,
-            output: extractDynamicToolOutput(part),
-          };
-          const last = blocks[blocks.length - 1];
-          if (last && last.type === 'tool_calls') {
-            last.calls.push(toolCall);
-          } else {
-            blocks.push({ type: 'tool_calls', calls: [toolCall] });
-          }
-        } else if (part.type === 'file' && part.filename) {
-          fileNames.push(part.filename);
-        }
-      }
-
-      return {
-        id: `ui-${idx}-${msg.id}`,
-        role: msg.role,
-        blocks,
-        thoughts,
-        plan: null,
-        fileNames,
-        timestamp: Date.now(),
-      };
-    });
-}
-
-function mapHistoryToUIMessages(data: ChatHistoryMessage[]): UIMessage[] {
+function mapHistoryToUIMessages(
+  data: ChatHistoryMessage[],
+): ChatUIMessage[] {
   return data.map((msg, idx) => {
-    const parts: UIMessage['parts'] = [];
+    const parts: ChatUIMessage['parts'] = [];
     if (msg.thoughts) {
       parts.push({ type: 'reasoning', text: msg.thoughts });
     }
@@ -171,34 +92,39 @@ function mapHistoryToUIMessages(data: ChatHistoryMessage[]): UIMessage[] {
   });
 }
 
-function createUserMessageItem({
+function createPendingUserMessage({
   content,
   fileNames,
 }: {
   content: string;
   fileNames: string[];
-}): ChatMessageItem {
+}): ChatUIMessage {
+  const parts: ChatUIMessage['parts'] = [{ type: 'text', text: content }];
+  for (const name of fileNames) {
+    parts.push({ type: 'file', mediaType: 'text/plain', url: '', filename: name });
+  }
   return {
-    id: `pending-user`,
+    id: 'pending-user',
     role: 'user',
-    blocks: [{ type: 'text', text: content }],
-    thoughts: '',
-    plan: null,
-    fileNames,
-    timestamp: Date.now(),
+    parts,
   };
 }
 
-function createThinkingMessageItem(): ChatMessageItem {
+function createPendingAssistantMessage(): ChatUIMessage {
   return {
-    id: `pending-assistant`,
+    id: 'pending-assistant',
     role: 'assistant',
-    blocks: [],
-    thoughts: '',
-    plan: null,
-    fileNames: [],
-    timestamp: Date.now(),
+    parts: [],
   };
+}
+
+function hasAssistantContent(msg: ChatUIMessage): boolean {
+  return msg.parts.some(
+    (p) =>
+      (p.type === 'text' && p.text.length > 0) ||
+      p.type === 'reasoning' ||
+      p.type === 'dynamic-tool',
+  );
 }
 
 export function useAgentChat({
@@ -214,7 +140,7 @@ export function useAgentChat({
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [wasCancelled, setWasCancelled] = useState(false);
-  const [pendingMessages, setPendingMessages] = useState<ChatMessageItem[]>([]);
+  const [pendingMessages, setPendingMessages] = useState<ChatUIMessage[]>([]);
 
   const pendingFilesRef = useRef<
     { name: string; mimeType: ChatAllowedMimeType; data: string }[] | undefined
@@ -269,11 +195,12 @@ export function useAgentChat({
     onData: (dataPart) => {
       if (
         dataPart.type === 'data-session-title' &&
-        isObject(dataPart.data) &&
-        typeof dataPart.data['title'] === 'string'
+        typeof dataPart.data === 'object' &&
+        dataPart.data !== null &&
+        typeof (dataPart.data as Record<string, unknown>)['title'] === 'string'
       ) {
         onTitleUpdateRef.current?.(
-          dataPart.data['title'],
+          (dataPart.data as Record<string, unknown>)['title'] as string,
           conversationIdRef.current ?? undefined,
         );
       }
@@ -281,24 +208,22 @@ export function useAgentChat({
   });
 
   const sdkIsStreaming = status === 'streaming' || status === 'submitted';
-  const liveMessages = useMemo(
-    () => convertUIMessagesToItems(uiMessages),
-    [uiMessages],
-  );
-  const lastLiveMessage = liveMessages[liveMessages.length - 1];
+  const lastLiveMessage = uiMessages[uiMessages.length - 1];
   const sdkHasAssistantContent =
-    lastLiveMessage?.role === 'assistant' && lastLiveMessage.blocks.length > 0;
+    lastLiveMessage?.role === 'assistant' &&
+    hasAssistantContent(lastLiveMessage as ChatUIMessage);
   const hasPending = pendingMessages.length > 0 && !sdkHasAssistantContent;
   const isStreaming = sdkIsStreaming || hasPending;
 
-  const messages = useMemo(() => {
+  const messages: ChatUIMessage[] = useMemo(() => {
+    const liveMessages = uiMessages as ChatUIMessage[];
     if (!hasPending) return liveMessages;
     if (liveMessages.length === 0) return pendingMessages;
     const withoutEmptyAssistant = liveMessages.filter(
-      (m) => !(m.role === 'assistant' && m.blocks.length === 0),
+      (m) => !(m.role === 'assistant' && !hasAssistantContent(m)),
     );
-    return [...withoutEmptyAssistant, createThinkingMessageItem()];
-  }, [hasPending, liveMessages, pendingMessages]);
+    return [...withoutEmptyAssistant, createPendingAssistantMessage()];
+  }, [hasPending, uiMessages, pendingMessages]);
 
   const error = localError ?? (useChatError ? useChatError.message : null);
 
@@ -347,11 +272,11 @@ export function useAgentChat({
       setWasCancelled(false);
 
       setPendingMessages([
-        createUserMessageItem({
+        createPendingUserMessage({
           content,
           fileNames: files?.map((f) => f.name) ?? [],
         }),
-        createThinkingMessageItem(),
+        createPendingAssistantMessage(),
       ]);
 
       if (files && files.length > 0) {

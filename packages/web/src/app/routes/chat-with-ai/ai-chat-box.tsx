@@ -27,7 +27,7 @@ import {
 import { ChatInput } from './components/chat-input';
 import { ChatMessage } from './components/chat-message';
 import { QuickReplies } from './components/message-content';
-import { getTextFromBlocks, parseQuickReplies } from './lib/message-parsers';
+import { getTextFromParts, parseQuickReplies } from './lib/message-parsers';
 
 export function AIChatBox({
   incognito,
@@ -116,7 +116,7 @@ function ChatBoxContent({
 
   const handleRetry = useCallback(() => {
     const lastUser = [...messages].reverse().find((m) => m.role === 'user');
-    if (lastUser) void sendMessage(getTextFromBlocks(lastUser.blocks));
+    if (lastUser) void sendMessage(getTextFromParts(lastUser.parts));
   }, [messages, sendMessage]);
 
   const isEmpty =
@@ -185,7 +185,7 @@ function ChatBoxContent({
               <QuickReplies
                 replies={
                   parseQuickReplies(
-                    getTextFromBlocks(messages[messages.length - 1].blocks),
+                    getTextFromParts(messages[messages.length - 1].parts),
                   ).replies
                 }
                 onSend={handleSend}

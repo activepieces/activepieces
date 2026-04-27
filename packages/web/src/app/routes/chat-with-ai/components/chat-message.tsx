@@ -1,4 +1,4 @@
-import { ChatMessageItem } from '@activepieces/shared';
+import { isDataUIPart } from 'ai';
 import { t } from 'i18next';
 import { Paperclip, RefreshCw } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -18,10 +18,11 @@ import {
   ReasoningTrigger,
 } from '@/components/prompt-kit/reasoning';
 import { PlanCard } from '@/features/chat/components/plan-card';
+import { ChatDataParts, ChatUIMessage } from '@/features/chat/lib/chat-types';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
-import { getTextFromBlocks } from '../lib/message-parsers';
+import { getTextFromParts } from '../lib/message-parsers';
 
 import { ChatThinkingLoader } from './chat-thinking-loader';
 import { MessageContentWithAuth } from './message-content';
@@ -36,7 +37,7 @@ export function ChatMessage({
   connectedPieces,
   onPieceConnected,
 }: {
-  message: ChatMessageItem;
+  message: ChatUIMessage;
   isStreaming: boolean;
   onCancel: () => void;
   onRetry: () => void;
@@ -61,8 +62,14 @@ export function ChatMessage({
   );
 }
 
-export function UserMessage({ message }: { message: ChatMessageItem }) {
-  const content = getTextFromBlocks(message.blocks);
+export function UserMessage({ message }: { message: ChatUIMessage }) {
+  const content = getTextFromParts(message.parts);
+  const fileNames = message.parts
+    .filter(
+      (p): p is { type: 'file'; filename: string; mediaType: string; url: string } =>
+        p.type === 'file' && 'filename' in p && typeof p.filename === 'string',
+    )
+    .map((p) => p.filename);
 
   return (
     <motion.div
@@ -74,9 +81,9 @@ export function UserMessage({ message }: { message: ChatMessageItem }) {
       <div className="max-w-[80%]">
         <Message className="flex-row-reverse">
           <div className="bg-muted rounded-2xl rounded-br-md px-4 py-2.5">
-            {message.fileNames.length > 0 && (
+            {fileNames.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-1.5">
-                {message.fileNames.map((name, i) => (
+                {fileNames.map((name, i) => (
                   <span
                     key={i}
                     className="inline-flex items-center gap-1 rounded-md bg-background/60 px-2 py-0.5 text-xs text-muted-foreground"
@@ -105,6 +112,17 @@ export function UserMessage({ message }: { message: ChatMessageItem }) {
   );
 }
 
+function extractPlanEntries(
+  parts: ChatUIMessage['parts'],
+): Array<{ content: string; status: string }> {
+  return parts.flatMap((p) => {
+    if (isDataUIPart<ChatDataParts>(p) && p.type === 'data-plan') {
+      return p.data.entries;
+    }
+    return [];
+  });
+}
+
 export function AssistantMessage({
   message,
   isStreaming,
@@ -114,7 +132,7 @@ export function AssistantMessage({
   connectedPieces,
   onPieceConnected,
 }: {
-  message: ChatMessageItem;
+  message: ChatUIMessage;
   isStreaming: boolean;
   onCancel: () => void;
   onRetry: () => void;
@@ -122,17 +140,33 @@ export function AssistantMessage({
   connectedPieces: Set<string>;
   onPieceConnected: (piece: string) => void;
 }) {
-  const hasThoughts = message.thoughts.length > 0;
-  const hasBlocks = message.blocks.length > 0;
-  const hasContent = message.blocks.some(
-    (b) => b.type === 'text' && b.text.length > 0,
+  const reasoningParts = message.parts.filter(
+    (p): p is { type: 'reasoning'; text: string } => p.type === 'reasoning',
   );
-  const isWaiting = isStreaming && !hasThoughts && !hasBlocks;
-  const isThinkingOnly = isStreaming && hasThoughts && !hasBlocks;
+  const thoughts = reasoningParts.map((p) => p.text).join('');
+  const hasThoughts = thoughts.length > 0;
+
+  const dynamicToolParts = message.parts.filter(
+    (p) => p.type === 'dynamic-tool',
+  );
+  const textParts = message.parts.filter(
+    (p): p is { type: 'text'; text: string } =>
+      p.type === 'text' && p.text.length > 0,
+  );
+  const hasContent = textParts.length > 0;
+  const hasAnyParts = hasThoughts || dynamicToolParts.length > 0 || hasContent;
+
+  const isWaiting = isStreaming && !hasAnyParts;
+  const isThinkingOnly = isStreaming && hasThoughts && !hasContent && dynamicToolParts.length === 0;
   const isThinking = isWaiting || isThinkingOnly;
   const thinkingSeconds = useThinkingTimer(isThinking);
-  const fullText = getTextFromBlocks(message.blocks);
-  const isLastBlock = (idx: number) => idx === message.blocks.length - 1;
+  const fullText = getTextFromParts(message.parts);
+
+  const planEntries = extractPlanEntries(message.parts);
+
+  const renderableParts = message.parts.filter(
+    (p) => (p.type === 'text' && 'text' in p && p.text.length > 0) || p.type === 'dynamic-tool',
+  );
 
   return (
     <motion.div
@@ -167,37 +201,20 @@ export function AssistantMessage({
                 })}
               </ReasoningTrigger>
               <ReasoningContent markdown contentClassName="text-xs">
-                {message.thoughts}
+                {thoughts}
               </ReasoningContent>
             </Reasoning>
           )}
 
-          {message.blocks.map((block, idx) => {
-            if (block.type === 'text' && block.text.length > 0) {
-              return (
-                <MessageContentWithAuth
-                  key={idx}
-                  content={block.text}
-                  onSend={onSend}
-                  isStreaming={isStreaming && isLastBlock(idx)}
-                  connectedPieces={connectedPieces}
-                  onPieceConnected={onPieceConnected}
-                />
-              );
-            }
-            if (block.type === 'tool_calls') {
-              return (
-                <ToolCallGroup
-                  key={idx}
-                  toolCalls={block.calls}
-                  isStreaming={isStreaming}
-                />
-              );
-            }
-            return null;
+          {renderParts({
+            parts: renderableParts,
+            isStreaming,
+            onSend,
+            connectedPieces,
+            onPieceConnected,
           })}
 
-          {message.plan && <PlanCard entries={message.plan} />}
+          {planEntries.length > 0 && <PlanCard entries={planEntries} />}
 
           {hasContent && !isStreaming && (
             <MessageActions className="mt-2">
@@ -224,6 +241,54 @@ export function AssistantMessage({
       </Message>
     </motion.div>
   );
+}
+
+function renderParts({
+  parts,
+  isStreaming,
+  onSend,
+  connectedPieces,
+  onPieceConnected,
+}: {
+  parts: ChatUIMessage['parts'];
+  isStreaming: boolean;
+  onSend: (text: string, files?: File[]) => void;
+  connectedPieces: Set<string>;
+  onPieceConnected: (piece: string) => void;
+}): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  const toolBuffer: ChatUIMessage['parts'] = [];
+
+  function flushTools(key: string) {
+    if (toolBuffer.length === 0) return;
+    const snapshot = [...toolBuffer];
+    toolBuffer.length = 0;
+    nodes.push(
+      <ToolCallGroup key={key} toolParts={snapshot} isStreaming={isStreaming} />,
+    );
+  }
+
+  parts.forEach((part, idx) => {
+    if (part.type === 'dynamic-tool') {
+      toolBuffer.push(part);
+    } else if (part.type === 'text') {
+      flushTools(`tools-before-${idx}`);
+      const isLast = idx === parts.length - 1;
+      nodes.push(
+        <MessageContentWithAuth
+          key={idx}
+          content={part.text}
+          onSend={onSend}
+          isStreaming={isStreaming && isLast}
+          connectedPieces={connectedPieces}
+          onPieceConnected={onPieceConnected}
+        />,
+      );
+    }
+  });
+
+  flushTools('tools-end');
+  return nodes;
 }
 
 function useThinkingTimer(isActive: boolean): number {
