@@ -47,6 +47,14 @@ Custom and private pieces are managed manually — see [Manage pieces](/admin-gu
 
 Custom and private pieces are never touched by the sync job.
 
+## Server compatibility
+
+Every piece declares a `minimumSupportedRelease` (and optional `maximumSupportedRelease`) in its definition — the range of Activepieces server releases it works on. The catalog filters pieces against the running server's release, so an out-of-range piece is never listed in the builder and never served from the registry.
+
+<Warning>
+**Self-hosted: upgrade to `0.82.0` or newer.** Every new piece now declares `minimumSupportedRelease ≥ 0.82.0`, the floor that came in with the latest piece-context version. Servers below `0.82.0` will not pick up any newly published pieces or bug fixes. Cloud is always on the latest release.
+</Warning>
+
 ## Version pinning
 
 Adding a step records the exact piece version at that moment (e.g. `0.5.3`). The pin stays until a human changes it. To upgrade, open the step in the builder, click the version next to its name, and pick a new one. The dialog warns when the change crosses a minor or major boundary.
