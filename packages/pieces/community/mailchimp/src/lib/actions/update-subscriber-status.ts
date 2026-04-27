@@ -40,9 +40,10 @@ export const updateSubscriberInList = createAction({
       accessToken: access_token,
       server: mailChimpServerPrefix,
     });
+    const subscriberHash = mailchimpCommon.getMD5EmailHash(email!);
     return await mailchimp.lists.updateListMember(
       list_id as string,
-      email!,
+      subscriberHash,
       {
         status: status!,
       }
