@@ -1,0 +1,57 @@
+---
+title: "Piece syncing & versioning"
+description: "How pieces are packaged, distributed, and pinned to flow versions"
+icon: "puzzle-piece"
+---
+
+Pieces are standard [npm packages](https://www.npmjs.com/search?q=%40activepieces%2Fpiece-). Two facts follow from that:
+
+- **No server upgrade is needed for new pieces** — a sync job pulls fresh versions on its own.
+- **Each step is pinned to an exact version** — flows never auto-upgrade. Bumps are explicit, through the builder.
+
+```mermaid
+flowchart LR
+    REG["npm registry<br/>(@activepieces/piece-*)"]
+    CAT["Local piece catalog"]
+    STEP["Flow step<br/>pieceVersion: 0.5.3"]
+    UI["Builder version dialog"]
+
+    REG -- "hourly sync<br/>(OFFICIAL_AUTO)" --> CAT
+    CAT -- "exact version on add" --> STEP
+    UI -- "explicit upgrade" --> STEP
+
+    classDef src fill:#eef,stroke:#88a
+    classDef catalog fill:#efe,stroke:#7a7
+    classDef flow fill:#fee,stroke:#a77
+    class REG src
+    class CAT catalog
+    class STEP,UI flow
+```
+
+## Packaging
+
+| Type | Source | Installed by |
+|---|---|---|
+| Official | Activepieces cloud registry | Auto-sync |
+| Custom (npm) | npm registry, scoped to one platform | Platform admin |
+| Private (archive) | `.tgz` upload | Platform admin |
+
+Custom and private pieces are managed manually — see [Manage pieces](/admin-guide/guides/manage-pieces).
+
+## Auto-sync
+
+| `AP_PIECES_SYNC_MODE` | Behavior |
+|---|---|
+| `OFFICIAL_AUTO` | Hourly reconcile against the cloud registry. Default on Cloud. |
+| `NONE` | Disabled. Catalog only changes via admin actions. Use for air-gapped or change-controlled environments. |
+
+Custom and private pieces are never touched by the sync job.
+
+## Version pinning
+
+Adding a step records the exact piece version at that moment (e.g. `0.5.3`). The pin stays until a human changes it. To upgrade, open the step in the builder, click the version next to its name, and pick a new one. The dialog warns when the change crosses a minor or major boundary.
+
+## Related
+
+- [Manage pieces](/admin-guide/guides/manage-pieces) — install, hide, upload custom pieces.
+- [Piece versioning](/build-pieces/piece-reference/piece-versioning) — semver rules for piece authors.
