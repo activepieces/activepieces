@@ -29,6 +29,7 @@ export const newPersonEventTrigger = createTrigger({
           { label: 'Person Updated', value: 'person_updated' },
           { label: 'Person Deleted', value: 'person_deleted' },
           { label: 'Person Login', value: 'person_login' },
+          { label: 'Person Temporary Password Set', value: 'person_temporary_password_set' },
           { label: 'Person List Subscribed', value: 'person_list_subscribed' },
           { label: 'Person List Confirmed', value: 'person_list_confirmed' },
           { label: 'Person List Unsubscribed', value: 'person_list_unsubscribed' },
