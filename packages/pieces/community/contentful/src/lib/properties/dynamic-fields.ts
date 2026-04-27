@@ -44,7 +44,6 @@ const DynamicFields = Property.DynamicProperties({
           });
         });
     } catch (e) {
-      console.debug(e);
     }
     return dynamicFields;
   },

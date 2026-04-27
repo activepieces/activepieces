@@ -26,7 +26,6 @@ const Locale = Property.Dropdown({
         options,
       };
     } catch (e) {
-      console.debug(e);
       return {
         disabled: true,
         options: [],

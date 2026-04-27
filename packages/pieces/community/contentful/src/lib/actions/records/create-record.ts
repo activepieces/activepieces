@@ -60,7 +60,6 @@ export const ContentfulCreateRecordAction = createAction({
         ),
       };
     }
-    console.debug('Creating record with values', values);
     const record = await client.entry.create(
       { contentTypeId: model.sys.id },
       { fields: values }

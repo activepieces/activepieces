@@ -30,7 +30,6 @@ const SelectFields = Property.MultiSelectDropdown({
       searchFields.disabled = false;
       searchFields.placeholder = 'Select fields to return';
     } catch (e) {
-      console.debug(e);
     }
     return searchFields;
   },

@@ -45,7 +45,6 @@ const ContentModel = Property.Dropdown({
         ),
       };
     } catch (e) {
-      console.debug(e);
       return {
         disabled: true,
         options: [],
