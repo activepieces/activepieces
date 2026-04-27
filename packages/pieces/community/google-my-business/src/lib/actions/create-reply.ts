@@ -31,7 +31,7 @@ export const createReply = createAction({
     });
 
     const response = await httpClient.sendRequest({
-      url: ` https://mybusiness.googleapis.com/v4/${reviewName}/reply`,
+      url: `https://mybusiness.googleapis.com/v4/${reviewName}/reply`,
       method: HttpMethod.PUT,
       headers: {
         Authorization: `Bearer ${ctx.auth.access_token}`,
