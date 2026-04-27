@@ -1943,6 +1943,9 @@
       ],
       "@activepieces/piece-knock": [
         "packages/pieces/community/knock/src/index.ts"
+      ],
+      "@activepieces/piece-fakely": [
+        "packages/pieces/community/fakely/src/index.ts"
       ]
     },
     "resolveJsonModule": true
