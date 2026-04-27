@@ -172,18 +172,17 @@ export const chatService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function resolveChatAiConfig({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<ChatAiConfig> {
-    const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-    const proxyBaseUrl = `${frontendUrl}/api/v1/chat/proxy/anthropic`
+const OPENROUTER_BASE_URL = 'https://openrouter.ai/api'
 
+async function resolveChatAiConfig({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<ChatAiConfig> {
     const openRouterConfig = await resolveProviderApiKey({ platformId, provider: AIProviderName.ACTIVEPIECES, log })
     if (openRouterConfig) {
         return {
             agent: ChatSandboxConfig.agent.CLAUDE,
-            model: ChatSandboxConfig.model.DEFAULT,
+            model: ChatSandboxConfig.model.OPUS_1M,
             envs: {
                 [ChatSandboxConfig.envVar.ANTHROPIC_API_KEY]: openRouterConfig,
-                [ChatSandboxConfig.envVar.ANTHROPIC_BASE_URL]: proxyBaseUrl,
+                [ChatSandboxConfig.envVar.ANTHROPIC_BASE_URL]: OPENROUTER_BASE_URL,
             },
         }
     }
@@ -192,7 +191,7 @@ async function resolveChatAiConfig({ platformId, log }: { platformId: string, lo
     if (anthropicApiKey) {
         return {
             agent: ChatSandboxConfig.agent.CLAUDE,
-            model: ChatSandboxConfig.model.DEFAULT,
+            model: ChatSandboxConfig.model.OPUS_1M,
             envs: {
                 [ChatSandboxConfig.envVar.ANTHROPIC_API_KEY]: anthropicApiKey,
             },
