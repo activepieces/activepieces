@@ -9,6 +9,7 @@ const CHAT_ALLOWED_MIME_TYPES = [
     'image/png', 'image/jpeg', 'image/gif', 'image/webp',
     'text/plain', 'text/csv', 'text/markdown',
     'application/json',
+    'application/pdf',
 ] as const
 
 const SAFE_FILENAME = /^[^\x00-\x1f\r\n]*$/
@@ -67,30 +68,6 @@ export type ChatHistoryMessage = {
     content: string
     toolCalls?: ChatHistoryToolCall[]
     thoughts?: string
-}
-
-export type ToolCallItem = {
-    id: string
-    name: string
-    title: string
-    status: 'running' | 'completed' | 'failed' | 'stopped'
-    kind?: string
-    input?: Record<string, unknown>
-    output?: string
-}
-
-export type MessageBlock =
-    | { type: 'text', text: string }
-    | { type: 'tool_calls', calls: ToolCallItem[] }
-
-export type ChatMessageItem = {
-    id: string
-    role: 'user' | 'assistant'
-    blocks: MessageBlock[]
-    thoughts: string
-    plan: PlanItem[] | null
-    fileNames: string[]
-    timestamp: number
 }
 
 export type PlanItem = {

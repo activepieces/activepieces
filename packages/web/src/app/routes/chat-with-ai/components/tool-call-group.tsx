@@ -1,4 +1,4 @@
-import { ToolCallItem } from '@activepieces/shared';
+import { isObject } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Loader2, Pause } from 'lucide-react';
 
@@ -12,28 +12,45 @@ import {
   extractToolContext,
   ToolCallCard,
 } from '@/features/chat/components/tool-call-card';
+import { ChatUIMessage, DynamicToolPart } from '@/features/chat/lib/chat-types';
+
+const PENDING_STATES = new Set([
+  'input-streaming',
+  'input-available',
+  'approval-requested',
+  'approval-responded',
+]);
+
+function isPending(part: DynamicToolPart): boolean {
+  return PENDING_STATES.has(part.state);
+}
+
+function isStopped(part: DynamicToolPart): boolean {
+  return part.state === 'output-error' || part.state === 'output-denied';
+}
 
 export function ToolCallGroup({
-  toolCalls,
+  toolParts,
   isStreaming = false,
 }: {
-  toolCalls: ToolCallItem[];
+  toolParts: ChatUIMessage['parts'];
   isStreaming?: boolean;
 }) {
-  const resolvedCalls = isStreaming
-    ? toolCalls
-    : toolCalls.map((tc) =>
-        tc.status === 'running' ? { ...tc, status: 'stopped' as const } : tc,
-      );
-  const groups = groupToolCallsByPhase(resolvedCalls);
+  const dynamicParts = toolParts.filter(
+    (p): p is DynamicToolPart => p.type === 'dynamic-tool',
+  );
+
+  const groups = groupToolPartsByPhase(dynamicParts);
 
   if (groups.length === 0) return null;
 
   return (
     <ChainOfThought>
       {groups.map((group, i) => {
-        const hasRunning = group.tools.some((tc) => tc.status === 'running');
-        const hasStopped = group.tools.some((tc) => tc.status === 'stopped');
+        const hasPending = group.tools.some(isPending);
+        const hasError = group.tools.some(isStopped);
+        const hasRunning = isStreaming && hasPending;
+        const hasStopped = hasError || (!isStreaming && hasPending);
         return (
           <ChainOfThoughtStep key={i} defaultOpen={false}>
             <ChainOfThoughtTrigger
@@ -51,8 +68,8 @@ export function ToolCallGroup({
             </ChainOfThoughtTrigger>
             <ChainOfThoughtContent>
               <div className="space-y-0.5">
-                {group.tools.map((tc) => (
-                  <ToolCallCard key={tc.id} toolCall={tc} />
+                {group.tools.map((part) => (
+                  <ToolCallCard key={part.toolCallId} toolPart={part} />
                 ))}
               </div>
             </ChainOfThoughtContent>
@@ -63,38 +80,40 @@ export function ToolCallGroup({
   );
 }
 
-function groupToolCallsByPhase(
-  toolCalls: ToolCallItem[],
-): Array<{ label: string; tools: ToolCallItem[] }> {
-  const visible = toolCalls.filter((tc) => !isUtilityTool(tc.title || tc.name));
+function groupToolPartsByPhase(
+  parts: DynamicToolPart[],
+): Array<{ label: string; tools: DynamicToolPart[] }> {
+  const visible = parts.filter((p) => !isUtilityTool(p.title ?? p.toolName));
   if (visible.length === 0) return [];
 
   if (visible.length <= 4) {
-    return [{ label: describeToolCalls(visible), tools: visible }];
+    return [{ label: describeToolParts(visible), tools: visible }];
   }
 
-  const groups: Array<{ label: string; tools: ToolCallItem[] }> = [];
-  let current: ToolCallItem[] = [];
+  const groups: Array<{ label: string; tools: DynamicToolPart[] }> = [];
+  let current: DynamicToolPart[] = [];
 
-  for (const tc of visible) {
-    current.push(tc);
+  for (const part of visible) {
+    current.push(part);
     if (current.length >= 4) {
-      groups.push({ label: describeToolCalls(current), tools: [...current] });
+      groups.push({ label: describeToolParts(current), tools: [...current] });
       current = [];
     }
   }
   if (current.length > 0) {
-    groups.push({ label: describeToolCalls(current), tools: current });
+    groups.push({ label: describeToolParts(current), tools: current });
   }
 
   return mergeConsecutiveGroups(groups);
 }
 
 function mergeConsecutiveGroups(
-  groups: Array<{ label: string; tools: ToolCallItem[] }>,
-): Array<{ label: string; tools: ToolCallItem[] }> {
+  groups: Array<{ label: string; tools: DynamicToolPart[] }>,
+): Array<{ label: string; tools: DynamicToolPart[] }> {
   if (groups.length <= 1) return groups;
-  const merged: Array<{ label: string; tools: ToolCallItem[] }> = [groups[0]];
+  const merged: Array<{ label: string; tools: DynamicToolPart[] }> = [
+    groups[0],
+  ];
   for (let i = 1; i < groups.length; i++) {
     const prev = merged[merged.length - 1];
     if (groups[i].label === prev.label) {
@@ -106,13 +125,15 @@ function mergeConsecutiveGroups(
   return merged;
 }
 
-function describeToolCalls(toolCalls: ToolCallItem[]): string {
+function describeToolParts(parts: DynamicToolPart[]): string {
   const contexts: string[] = [];
   let primaryAction = '';
 
-  for (const tc of toolCalls) {
-    const name = (tc.title || tc.name).toLowerCase();
-    const ctx = extractToolContext(tc);
+  for (const part of parts) {
+    const name = (part.title ?? part.toolName).toLowerCase();
+    const ctx = extractToolContext({
+      input: isObject(part.input) ? part.input : undefined,
+    });
     if (ctx && !contexts.includes(ctx)) contexts.push(ctx);
 
     if (!primaryAction) {

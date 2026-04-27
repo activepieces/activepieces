@@ -1,9 +1,9 @@
-import { MessageBlock } from '@activepieces/shared';
+import { ChatUIMessage } from '@/features/chat/lib/chat-types';
 
-export function getTextFromBlocks(blocks: MessageBlock[]): string {
-  return blocks
-    .filter((b): b is MessageBlock & { type: 'text' } => b.type === 'text')
-    .map((b) => b.text)
+export function getTextFromParts(parts: ChatUIMessage['parts']): string {
+  return parts
+    .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+    .map((p) => p.text)
     .join('');
 }
 

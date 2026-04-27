@@ -1,4 +1,4 @@
-import { isObject, ToolCallItem } from '@activepieces/shared';
+import { isObject } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, ChevronDown, Loader2, Pause, XCircle } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -9,8 +9,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { DynamicToolPart } from '@/features/chat/lib/chat-types';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
+
+type ToolStatus = 'running' | 'completed' | 'failed' | 'stopped';
 
 function humanizePieceName(raw: string): string {
   return formatUtils.convertEnumToHumanReadable(
@@ -18,8 +21,11 @@ function humanizePieceName(raw: string): string {
   );
 }
 
-export function extractToolContext(tc: ToolCallItem): string | null {
-  const input = tc.input;
+export function extractToolContext({
+  input,
+}: {
+  input: Record<string, unknown> | undefined;
+}): string | null {
   if (!input) return null;
   const parts: string[] = [];
 
@@ -53,20 +59,40 @@ export function extractToolContext(tc: ToolCallItem): string | null {
   return parts.length > 0 ? parts.join(' ') : null;
 }
 
-function formatToolLabel(toolCall: ToolCallItem): string {
-  const raw = toolCall.title || toolCall.name;
+function deriveStatus(part: DynamicToolPart): ToolStatus {
+  if (part.state === 'output-available') return 'completed';
+  if (part.state === 'output-error') return 'failed';
+  if (part.state === 'output-denied') return 'stopped';
+  return 'running';
+}
+
+function extractOutput(part: DynamicToolPart): string | undefined {
+  if (part.state === 'output-available' && part.output !== undefined) {
+    return typeof part.output === 'string'
+      ? part.output
+      : JSON.stringify(part.output);
+  }
+  if (part.state === 'output-error' && part.errorText) {
+    return part.errorText;
+  }
+  return undefined;
+}
+
+function formatToolLabel({ part }: { part: DynamicToolPart }): string {
+  const raw = part.title ?? part.toolName;
   const mcpMatch = /^mcp__[^_]+__(.+)$/.exec(raw);
   const name = mcpMatch ? mcpMatch[1] : raw;
   const baseName = formatUtils.convertEnumToHumanReadable(
     name.replace(/^ap_/, ''),
   );
 
-  const context = extractToolContext(toolCall);
+  const input = isObject(part.input) ? part.input : undefined;
+  const context = extractToolContext({ input });
   if (!context) return baseName;
   return `${baseName} — ${context}`;
 }
 
-function StatusIcon({ status }: { status: ToolCallItem['status'] }) {
+function StatusIcon({ status }: { status: ToolStatus }) {
   switch (status) {
     case 'running':
       return (
@@ -92,17 +118,20 @@ function StatusIcon({ status }: { status: ToolCallItem['status'] }) {
   }
 }
 
-export function ToolCallCard({ toolCall }: { toolCall: ToolCallItem }) {
-  const displayName = formatToolLabel(toolCall);
-  const hasInput = toolCall.input && Object.keys(toolCall.input).length > 0;
-  const hasOutput = Boolean(toolCall.output);
+export function ToolCallCard({ toolPart }: { toolPart: DynamicToolPart }) {
+  const status = deriveStatus(toolPart);
+  const output = extractOutput(toolPart);
+  const input = isObject(toolPart.input) ? toolPart.input : undefined;
+  const displayName = formatToolLabel({ part: toolPart });
+  const hasInput = input && Object.keys(input).length > 0;
+  const hasOutput = Boolean(output);
   const hasContent = hasInput || hasOutput;
   const [open, setOpen] = useState(false);
 
   if (!hasContent) {
     return (
       <div className="flex items-center gap-2 py-0.5 text-xs text-muted-foreground">
-        <StatusIcon status={toolCall.status} />
+        <StatusIcon status={status} />
         <span>{displayName}</span>
       </div>
     );
@@ -111,7 +140,7 @@ export function ToolCallCard({ toolCall }: { toolCall: ToolCallItem }) {
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger className="flex w-full items-center gap-2 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-        <StatusIcon status={toolCall.status} />
+        <StatusIcon status={status} />
         <span className="flex-1 text-left">{displayName}</span>
         <ChevronDown
           className={cn('h-3 w-3 transition-transform', open && 'rotate-180')}
@@ -119,13 +148,13 @@ export function ToolCallCard({ toolCall }: { toolCall: ToolCallItem }) {
       </CollapsibleTrigger>
       <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
         <div className="ml-5 mt-1 mb-1 space-y-1.5 rounded-md bg-muted/40 p-2.5 text-xs">
-          {hasInput && toolCall.input && (
+          {hasInput && input && (
             <div>
               <p className="text-muted-foreground font-medium mb-0.5">
                 {t('Input')}
               </p>
               <pre className="font-mono whitespace-pre-wrap break-words text-foreground/80">
-                {JSON.stringify(toolCall.input, null, 2)}
+                {JSON.stringify(input, null, 2)}
               </pre>
             </div>
           )}
@@ -135,7 +164,7 @@ export function ToolCallCard({ toolCall }: { toolCall: ToolCallItem }) {
                 {t('Output')}
               </p>
               <pre className="font-mono whitespace-pre-wrap break-words text-foreground/80 max-h-48 overflow-auto">
-                {toolCall.output}
+                {output}
               </pre>
             </div>
           )}
