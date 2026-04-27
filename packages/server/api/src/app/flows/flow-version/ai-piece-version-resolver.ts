@@ -51,9 +51,7 @@ function toAIProviderName(value: string | undefined): AIProviderName | null {
     if (isNil(value)) {
         return null
     }
-    const knownValues = Object.values(AIProviderName)
-    const found = knownValues.find((v) => v === value)
-    return found ?? null
+    return Object.values(AIProviderName).find((v) => v === value) ?? null
 }
 
 export type FindCompatiblePieceVersionParams = {

@@ -48,6 +48,21 @@ import { flowMigrations } from './migrations'
 
 const migrationRepo = repoFactory(FlowMigrationEntity)
 
+const BATCH_SIZE = 100
+
+async function updateMigrationProgress({ migrationId, status, migratedVersions, failedFlowVersions }: {
+    migrationId: string
+    status?: FlowMigrationStatus
+    migratedVersions: MigratedVersionEntry[]
+    failedFlowVersions: FailedFlowVersionEntry[]
+}): Promise<void> {
+    await migrationRepo().update(migrationId, {
+        ...spreadIfDefined('status', status),
+        migratedVersions,
+        failedFlowVersions,
+    })
+}
+
 export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
     async migrate(flowVersion: FlowVersion, projectId?: ProjectId, options?: { noPersistence?: boolean }): Promise<FlowVersion> {
         if (flowVersion.schemaVersion === LATEST_FLOW_SCHEMA_VERSION) {
@@ -125,7 +140,6 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         }
         const { migrationId, platformId, request } = data
         const { projectIds, sourceModel, targetModel, aiProviderModelType, dryCheck } = request
-        const BATCH_SIZE = 100
         const migratedVersions: MigratedVersionEntry[] = []
         const failedFlowVersions: FailedFlowVersionEntry[] = []
 
@@ -283,28 +297,17 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                     })
                 }
 
-                await migrationRepo().update(migrationId, {
-                    migratedVersions,
-                    failedFlowVersions,
-                })
+                await updateMigrationProgress({ migrationId, migratedVersions, failedFlowVersions })
             }
         })
 
         if (handlerError) {
             log.error({ migrationId, error: handlerError }, 'Flow model migration failed unexpectedly')
-            await migrationRepo().update(migrationId, {
-                status: FlowMigrationStatus.FAILED,
-                migratedVersions,
-                failedFlowVersions,
-            })
+            await updateMigrationProgress({ migrationId, status: FlowMigrationStatus.FAILED, migratedVersions, failedFlowVersions })
             return
         }
 
-        await migrationRepo().update(migrationId, {
-            status: FlowMigrationStatus.COMPLETED,
-            migratedVersions,
-            failedFlowVersions,
-        })
+        await updateMigrationProgress({ migrationId, status: FlowMigrationStatus.COMPLETED, migratedVersions, failedFlowVersions })
         log.info({ platformId, dryCheck, migratedFlows: new Set(migratedVersions.map((v) => v.flowId)).size, failedCount: failedFlowVersions.length }, 'Flow model migration completed')
     },
 
@@ -315,8 +318,6 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         }
         const migratedVersions: MigratedVersionEntry[] = []
         const failedFlowVersions: FailedFlowVersionEntry[] = []
-
-        const BATCH_SIZE = 100
 
         const { error: handlerError } = await tryCatch(async () => {
             const original = await migrationRepo().findOneBy({ id: request.revertOfMigrationId, platformId })
@@ -409,28 +410,17 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                     })
                 }
 
-                await migrationRepo().update(migrationId, {
-                    migratedVersions,
-                    failedFlowVersions,
-                })
+                await updateMigrationProgress({ migrationId, migratedVersions, failedFlowVersions })
             }
         })
 
         if (handlerError) {
             log.error({ migrationId, error: handlerError }, 'Flow migration revert failed unexpectedly')
-            await migrationRepo().update(migrationId, {
-                status: FlowMigrationStatus.FAILED,
-                migratedVersions,
-                failedFlowVersions,
-            })
+            await updateMigrationProgress({ migrationId, status: FlowMigrationStatus.FAILED, migratedVersions, failedFlowVersions })
             return
         }
 
-        await migrationRepo().update(migrationId, {
-            status: FlowMigrationStatus.COMPLETED,
-            migratedVersions,
-            failedFlowVersions,
-        })
+        await updateMigrationProgress({ migrationId, status: FlowMigrationStatus.COMPLETED, migratedVersions, failedFlowVersions })
         log.info({ platformId, migrationId, reverted: migratedVersions.length, skipped: failedFlowVersions.length }, 'Flow migration revert completed')
     },
 
@@ -474,7 +464,6 @@ async function enqueueAiProviderModelMigration({ platformId, userId, request, re
     request: AiProviderModelMigrationRequest
     reqLog: FastifyBaseLogger
 }): Promise<FlowMigration> {
-    const jobId = `migrate-flow-model-${platformId}`
     const migrationId = apId()
     const migration = await migrationRepo().save({
         id: migrationId,
@@ -492,23 +481,7 @@ async function enqueueAiProviderModelMigration({ platformId, userId, request, re
             projectIds: request.projectIds,
         },
     })
-
-    await systemJobsSchedule(reqLog).upsertJob({
-        job: {
-            name: SystemJobName.MIGRATE_FLOWS_MODEL,
-            data: { jobId, migrationId, platformId, userId, request },
-            jobId,
-        },
-        schedule: {
-            type: 'one-time',
-            date: dayjs(),
-        },
-        customConfig: {
-            removeOnComplete: true,
-            removeOnFail: true,
-        },
-    })
-
+    await scheduleMigrationJob({ platformId, userId, migrationId, request, reqLog })
     return migration
 }
 
@@ -544,8 +517,6 @@ async function enqueueAiProviderModelRevert({ platformId, userId, revertOfMigrat
         })
     }
 
-    const jobId = `migrate-flow-model-${platformId}`
-
     const migrationId = apId()
     const request: MigrateFlowsModelRequest = {
         type: FlowMigrationType.AI_PROVIDER_MODEL_REVERT,
@@ -561,24 +532,27 @@ async function enqueueAiProviderModelRevert({ platformId, userId, revertOfMigrat
         failedFlowVersions: [],
         params: { revertOfMigrationId },
     })
+    await scheduleMigrationJob({ platformId, userId, migrationId, request, reqLog })
+    return migration
+}
 
+async function scheduleMigrationJob({ platformId, userId, migrationId, request, reqLog }: {
+    platformId: PlatformId
+    userId: UserId
+    migrationId: string
+    request: MigrateFlowsModelRequest
+    reqLog: FastifyBaseLogger
+}): Promise<void> {
+    const jobId = `migrate-flow-model-${platformId}`
     await systemJobsSchedule(reqLog).upsertJob({
         job: {
             name: SystemJobName.MIGRATE_FLOWS_MODEL,
             data: { jobId, migrationId, platformId, userId, request },
             jobId,
         },
-        schedule: {
-            type: 'one-time',
-            date: dayjs(),
-        },
-        customConfig: {
-            removeOnComplete: true,
-            removeOnFail: true,
-        },
+        schedule: { type: 'one-time', date: dayjs() },
+        customConfig: { removeOnComplete: true, removeOnFail: true },
     })
-
-    return migration
 }
 
 async function assertNoActiveMigrationJob({ platformId, jobId, reqLog }: {
@@ -633,14 +607,7 @@ async function assertModelTypeMatches({ log, platformId, request }: {
 }
 
 function dedupePieceVersionChanges(changes: PieceVersionChange[]): PieceVersionChange[] {
-    const seen = new Map<string, PieceVersionChange>()
-    for (const change of changes) {
-        const key = `${change.from}→${change.to}`
-        if (!seen.has(key)) {
-            seen.set(key, change)
-        }
-    }
-    return [...seen.values()]
+    return [...new Map(changes.map((c) => [`${c.from}→${c.to}`, c])).values()]
 }
 
 

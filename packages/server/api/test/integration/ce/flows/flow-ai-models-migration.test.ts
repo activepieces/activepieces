@@ -151,6 +151,26 @@ function buildAiMigrationRequest(overrides: {
     }
 }
 
+async function saveAiMigration(overrides: {
+    migrationId: string
+    platformId: string
+    params: ReturnType<typeof buildAiMigrationRequest>
+    type?: FlowMigrationType
+    migratedVersions?: unknown[]
+    failedFlowVersions?: unknown[]
+}): Promise<void> {
+    await databaseConnection().getRepository('flow_migration').save({
+        id: overrides.migrationId,
+        platformId: overrides.platformId,
+        userId: apId(),
+        type: overrides.type ?? FlowMigrationType.AI_PROVIDER_MODEL,
+        status: FlowMigrationStatus.RUNNING,
+        migratedVersions: overrides.migratedVersions ?? [],
+        failedFlowVersions: overrides.failedFlowVersions ?? [],
+        params: overrides.params,
+    })
+}
+
 describe('Flow Version API', () => {
     describe('POST /v1/flow-migrations', () => {
         it('rejects requests from non-platform-admins', async () => {
@@ -195,14 +215,9 @@ describe('Flow Version API', () => {
             )
 
             const migrationId = apId()
-            await databaseConnection().getRepository('flow_migration').save({
-                id: migrationId,
+            await saveAiMigration({
+                migrationId,
                 platformId: mockPlatform.id,
-                userId: apId(),
-                type: FlowMigrationType.AI_PROVIDER_MODEL,
-                status: FlowMigrationStatus.RUNNING,
-                migratedVersions: [],
-                failedFlowVersions: [],
                 params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
@@ -259,14 +274,9 @@ describe('Flow Version API', () => {
             )
 
             const migrationId = apId()
-            await databaseConnection().getRepository('flow_migration').save({
-                id: migrationId,
+            await saveAiMigration({
+                migrationId,
                 platformId: mockPlatform.id,
-                userId: apId(),
-                type: FlowMigrationType.AI_PROVIDER_MODEL,
-                status: FlowMigrationStatus.RUNNING,
-                migratedVersions: [],
-                failedFlowVersions: [],
                 params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
@@ -304,14 +314,9 @@ describe('Flow Version API', () => {
             ])
 
             const migrationId = apId()
-            await databaseConnection().getRepository('flow_migration').save({
-                id: migrationId,
+            await saveAiMigration({
+                migrationId,
                 platformId: mockPlatform.id,
-                userId: apId(),
-                type: FlowMigrationType.AI_PROVIDER_MODEL,
-                status: FlowMigrationStatus.RUNNING,
-                migratedVersions: [],
-                failedFlowVersions: [],
                 params: buildAiMigrationRequest({ projectIds: [projectA.id], sourceModel, targetModel }),
             })
 
@@ -346,14 +351,9 @@ describe('Flow Version API', () => {
             )
 
             const migrationId = apId()
-            await databaseConnection().getRepository('flow_migration').save({
-                id: migrationId,
+            await saveAiMigration({
+                migrationId,
                 platformId: platformA.id,
-                userId: apId(),
-                type: FlowMigrationType.AI_PROVIDER_MODEL,
-                status: FlowMigrationStatus.RUNNING,
-                migratedVersions: [],
-                failedFlowVersions: [],
                 params: buildAiMigrationRequest({ projectIds: [projectB.id], sourceModel, targetModel }),
             })
 
@@ -387,14 +387,9 @@ describe('Flow Version API', () => {
             )
 
             const migrationId = apId()
-            await databaseConnection().getRepository('flow_migration').save({
-                id: migrationId,
+            await saveAiMigration({
+                migrationId,
                 platformId: mockPlatform.id,
-                userId: apId(),
-                type: FlowMigrationType.AI_PROVIDER_MODEL,
-                status: FlowMigrationStatus.RUNNING,
-                migratedVersions: [],
-                failedFlowVersions: [],
                 params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
@@ -448,14 +443,9 @@ describe('Flow Version API', () => {
                 .update(mockFlow.id, { publishedVersionId: publishedVersion.id })
 
             const migrationId = apId()
-            await databaseConnection().getRepository('flow_migration').save({
-                id: migrationId,
+            await saveAiMigration({
+                migrationId,
                 platformId: mockPlatform.id,
-                userId: apId(),
-                type: FlowMigrationType.AI_PROVIDER_MODEL,
-                status: FlowMigrationStatus.RUNNING,
-                migratedVersions: [],
-                failedFlowVersions: [],
                 params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
@@ -509,14 +499,9 @@ describe('Flow Version API', () => {
             )
 
             const migrationId1 = apId()
-            await databaseConnection().getRepository('flow_migration').save({
-                id: migrationId1,
+            await saveAiMigration({
+                migrationId: migrationId1,
                 platformId: mockPlatform.id,
-                userId: apId(),
-                type: FlowMigrationType.AI_PROVIDER_MODEL,
-                status: FlowMigrationStatus.RUNNING,
-                migratedVersions: [],
-                failedFlowVersions: [],
                 params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
@@ -534,14 +519,9 @@ describe('Flow Version API', () => {
             expect(versionsAfterFirst).toHaveLength(2)
 
             const migrationId2 = apId()
-            await databaseConnection().getRepository('flow_migration').save({
-                id: migrationId2,
+            await saveAiMigration({
+                migrationId: migrationId2,
                 platformId: mockPlatform.id,
-                userId: apId(),
-                type: FlowMigrationType.AI_PROVIDER_MODEL,
-                status: FlowMigrationStatus.RUNNING,
-                migratedVersions: [],
-                failedFlowVersions: [],
                 params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
@@ -586,14 +566,9 @@ describe('Flow Version API', () => {
                 .update(mockFlow.id, { publishedVersionId: publishedVersion.id })
 
             const migrationId = apId()
-            await databaseConnection().getRepository('flow_migration').save({
-                id: migrationId,
+            await saveAiMigration({
+                migrationId,
                 platformId: mockPlatform.id,
-                userId: apId(),
-                type: FlowMigrationType.AI_PROVIDER_MODEL,
-                status: FlowMigrationStatus.RUNNING,
-                migratedVersions: [],
-                failedFlowVersions: [],
                 params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
@@ -643,14 +618,9 @@ describe('Flow Version API', () => {
             await databaseConnection().getRepository('flow_version').save(versions)
 
             const migrationId = apId()
-            await databaseConnection().getRepository('flow_migration').save({
-                id: migrationId,
+            await saveAiMigration({
+                migrationId,
                 platformId: mockPlatform.id,
-                userId: apId(),
-                type: FlowMigrationType.AI_PROVIDER_MODEL,
-                status: FlowMigrationStatus.RUNNING,
-                migratedVersions: [],
-                failedFlowVersions: [],
                 params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
@@ -711,14 +681,9 @@ describe('Flow Version API', () => {
             await databaseConnection().getRepository('flow_version').save([...matchingVersions, ...nonMatchingVersions])
 
             const migrationId = apId()
-            await databaseConnection().getRepository('flow_migration').save({
-                id: migrationId,
+            await saveAiMigration({
+                migrationId,
                 platformId: mockPlatform.id,
-                userId: apId(),
-                type: FlowMigrationType.AI_PROVIDER_MODEL,
-                status: FlowMigrationStatus.RUNNING,
-                migratedVersions: [],
-                failedFlowVersions: [],
                 params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
@@ -765,14 +730,9 @@ describe('Flow Version API', () => {
             await databaseConnection().getRepository('flow_version').save(versionWithNoAi)
 
             const migrationId = apId()
-            await databaseConnection().getRepository('flow_migration').save({
-                id: migrationId,
+            await saveAiMigration({
+                migrationId,
                 platformId: mockPlatform.id,
-                userId: apId(),
-                type: FlowMigrationType.AI_PROVIDER_MODEL,
-                status: FlowMigrationStatus.RUNNING,
-                migratedVersions: [],
-                failedFlowVersions: [],
                 params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 
@@ -824,14 +784,9 @@ describe('Flow Version API', () => {
                 .update(mockFlow.id, { publishedVersionId: latestVersion.id })
 
             const migrationId = apId()
-            await databaseConnection().getRepository('flow_migration').save({
-                id: migrationId,
+            await saveAiMigration({
+                migrationId,
                 platformId: mockPlatform.id,
-                userId: apId(),
-                type: FlowMigrationType.AI_PROVIDER_MODEL,
-                status: FlowMigrationStatus.RUNNING,
-                migratedVersions: [],
-                failedFlowVersions: [],
                 params: buildAiMigrationRequest({ projectIds: [mockProject.id], sourceModel, targetModel }),
             })
 

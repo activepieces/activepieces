@@ -119,7 +119,7 @@ export async function planFlowVersionChanges({
                 continue
             }
             const refreshers = propMeta.refreshers ?? []
-            if (!refreshersIntersect(refreshers, fieldsTouched)) {
+            if (!refreshers.some((r) => fieldsTouched.has(r))) {
                 continue
             }
             const resolvedSchema = await dynamicSchemaResolver.resolve({
@@ -231,18 +231,21 @@ function fieldsTouchedByMigration(actionName: string, disabledWebSearch: boolean
     return fields
 }
 
-function refreshersIntersect(refreshers: string[], fieldsTouched: Set<string>): boolean {
-    return refreshers.some((r) => fieldsTouched.has(r))
+async function getOrFetch<T>({ store, key, fetch }: {
+    store: Map<string, T>
+    key: string
+    fetch: () => Promise<T>
+}): Promise<T> {
+    const cached = store.get(key)
+    if (!isNil(cached)) {
+        return cached
+    }
+    const result = await fetch()
+    store.set(key, result)
+    return result
 }
 
-async function getCachedVersionResolution({
-    cache,
-    platformId,
-    projectId,
-    targetProvider,
-    targetModel,
-    log,
-}: {
+function getCachedVersionResolution({ cache, platformId, projectId, targetProvider, targetModel, log }: {
     cache: PieceLookupCache
     platformId: PlatformId
     projectId: ProjectId
@@ -250,60 +253,39 @@ async function getCachedVersionResolution({
     targetModel: string
     log: FastifyBaseLogger
 }): Promise<FindCompatiblePieceVersionResult> {
-    const key = `${projectId}::${targetProvider}::${targetModel}`
-    const cached = cache.versionResolutions.get(key)
-    if (!isNil(cached)) {
-        return cached
-    }
-    const result = await findCompatiblePieceVersion({ platformId, projectId, targetProvider, targetModel, log })
-    cache.versionResolutions.set(key, result)
-    return result
+    return getOrFetch({
+        store: cache.versionResolutions,
+        key: `${projectId}::${targetProvider}::${targetModel}`,
+        fetch: () => findCompatiblePieceVersion({ platformId, projectId, targetProvider, targetModel, log }),
+    })
 }
 
-async function getCachedPiecePackage({
-    cache,
-    log,
-    platformId,
-    pieceName,
-    pieceVersion,
-}: {
+function getCachedPiecePackage({ cache, log, platformId, pieceName, pieceVersion }: {
     cache: PieceLookupCache
     log: FastifyBaseLogger
     platformId: PlatformId
     pieceName: string
     pieceVersion: string
 }): Promise<PiecePackage> {
-    const key = `${pieceName}@${pieceVersion}`
-    const cached = cache.piecePackages.get(key)
-    if (!isNil(cached)) {
-        return cached
-    }
-    const piecePackage = await getPiecePackageWithoutArchive(log, platformId, { pieceName, pieceVersion })
-    cache.piecePackages.set(key, piecePackage)
-    return piecePackage
+    return getOrFetch({
+        store: cache.piecePackages,
+        key: `${pieceName}@${pieceVersion}`,
+        fetch: () => getPiecePackageWithoutArchive(log, platformId, { pieceName, pieceVersion }),
+    })
 }
 
-async function getCachedPieceMetadata({
-    cache,
-    log,
-    platformId,
-    pieceName,
-    pieceVersion,
-}: {
+function getCachedPieceMetadata({ cache, log, platformId, pieceName, pieceVersion }: {
     cache: PieceLookupCache
     log: FastifyBaseLogger
     platformId: PlatformId
     pieceName: string
     pieceVersion: string
 }): Promise<PieceMetadataModel> {
-    const key = `${pieceName}@${pieceVersion}`
-    const cached = cache.pieceMetadata.get(key)
-    if (!isNil(cached)) {
-        return cached
-    }
-    const metadata = await pieceMetadataService(log).getOrThrow({ name: pieceName, version: pieceVersion, platformId })
-    cache.pieceMetadata.set(key, metadata)
-    return metadata
+    return getOrFetch({
+        store: cache.pieceMetadata,
+        key: `${pieceName}@${pieceVersion}`,
+        fetch: () => pieceMetadataService(log).getOrThrow({ name: pieceName, version: pieceVersion, platformId }),
+    })
 }
 
 export type PlannedStepChange =

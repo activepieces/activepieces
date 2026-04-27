@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { BaseModelSchema } from '../../../core/common/base-model'
-import { AIProviderModelType } from '../../../management/ai-providers'
-import { AgentProviderModelSchema } from './migrate-flow-model-request'
+import { AiProviderModelMigrationRequest, AiProviderModelRevertMigrationRequest } from './migrate-flow-model-request'
 
 export enum FlowMigrationStatus {
     RUNNING = 'RUNNING',
@@ -57,17 +56,9 @@ const FlowMigrationBase = {
     failedFlowVersions: z.array(FailedFlowVersionEntry),
 }
 
-export const AiProviderModelMigrationData = z.object({
-    sourceModel: AgentProviderModelSchema,
-    targetModel: AgentProviderModelSchema,
-    aiProviderModelType: z.enum(AIProviderModelType),
-    dryCheck: z.boolean(),
-    projectIds: z.array(z.string()),
-})
+export const AiProviderModelMigrationData = AiProviderModelMigrationRequest.omit({ type: true })
 
-export const AiProviderModelRevertMigrationData = z.object({
-    revertOfMigrationId: z.string(),
-})
+export const AiProviderModelRevertMigrationData = AiProviderModelRevertMigrationRequest.omit({ type: true })
 
 export const FlowMigration = z.discriminatedUnion('type', [
     z.object({

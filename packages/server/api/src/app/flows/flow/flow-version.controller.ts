@@ -35,7 +35,7 @@ const ListVersionParams = {
                 paramKey: 'flowId',
                 entityField: 'id',
             },
-        }), 
+        }),
     },
     schema: {
         params: z.object({

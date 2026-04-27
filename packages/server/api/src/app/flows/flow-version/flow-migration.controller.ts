@@ -33,41 +33,33 @@ export const flowMigrationController: FastifyPluginAsyncZod = async (fastify) =>
     })
 }
 
+const ADMIN_ROUTE_CONFIG = {
+    security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+}
+
 const StartMigration = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
+    config: ADMIN_ROUTE_CONFIG,
     schema: {
         body: MigrateFlowsModelRequest,
-        response: {
-            [StatusCodes.OK]: FlowMigration,
-        },
+        response: { [StatusCodes.OK]: FlowMigration },
     },
 }
 
 const GetMigration = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
+    config: ADMIN_ROUTE_CONFIG,
     schema: {
         params: z.object({ id: z.string() }),
-        response: {
-            [StatusCodes.OK]: FlowMigration,
-        },
+        response: { [StatusCodes.OK]: FlowMigration },
     },
 }
 
 const ListMigrations = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
+    config: ADMIN_ROUTE_CONFIG,
     schema: {
         querystring: z.object({
             limit: z.coerce.number().optional(),
             cursor: z.string().optional(),
         }),
-        response: {
-            [StatusCodes.OK]: SeekPage(FlowMigration),
-        },
+        response: { [StatusCodes.OK]: SeekPage(FlowMigration) },
     },
 }
