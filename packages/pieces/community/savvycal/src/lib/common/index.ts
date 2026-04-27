@@ -4,9 +4,10 @@ import { DropdownOption } from '@activepieces/pieces-framework';
 
 export const SAVVYCAL_BASE_URL = 'https://api.savvycal.com/v1';
 
-export function verifyWebhookSignature(secret: string, signatureHeader: string, rawBody: string): boolean {
+export function verifyWebhookSignature(secret: string, signatureHeader: string, rawBody: unknown): boolean {
+  const bodyString = typeof rawBody === 'string' ? rawBody : Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : JSON.stringify(rawBody);
   // Node's digest('hex') and SavvyCal both use lowercase hex — do not uppercase either side.
-  const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+  const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(bodyString).digest('hex');
   try {
     // Normalise casing before constant-time comparison to guard against case mismatches.
     return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signatureHeader.toLowerCase()));
@@ -86,6 +87,11 @@ export async function buildTeamOptions(token: string): Promise<DropdownOption<st
   return options;
 }
 
+export async function buildWorkflowOptions(token: string): Promise<DropdownOption<string>[]> {
+  const workflows = await savvyCalPaginatedCall<{ id: string; name: string }>({ token, path: '/workflows' });
+  return workflows.map((w) => ({ label: w.name, value: w.id }));
+}
+
 export async function buildLinkOptions(token: string, teamId?: string | null): Promise<DropdownOption<string>[]> {
   const links = await savvyCalPaginatedCall<SavvyCalSchedulingLink>({ token, path: '/links' });
   const filtered = teamId
@@ -94,6 +100,21 @@ export async function buildLinkOptions(token: string, teamId?: string | null): P
       : links.filter((l) => l.scope?.id === teamId)
     : links;
   return filtered.map((l) => ({ label: `${l.name} (${l.slug})`, value: l.id }));
+}
+
+export function flattenLink(link: SavvyCalSchedulingLink): Record<string, unknown> {
+  return {
+    id: link.id,
+    name: link.name,
+    slug: link.slug,
+    url: link.url ?? null,
+    active: link.active ?? null,
+    duration_minutes: link.duration ?? null,
+    team_id: link.scope?.id ?? null,
+    team_name: link.scope?.name ?? null,
+    created_at: link.created_at,
+    updated_at: link.updated_at,
+  };
 }
 
 export function flattenEvent(event: SavvyCalEvent): Record<string, unknown> {

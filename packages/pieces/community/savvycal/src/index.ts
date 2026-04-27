@@ -9,6 +9,13 @@ import { cancelEventAction } from './lib/actions/cancel-event';
 import { createEventAction } from './lib/actions/create-event';
 import { findEventsByEmailAction } from './lib/actions/find-events-by-email';
 import { listSchedulingLinksAction } from './lib/actions/list-scheduling-links';
+import { getSchedulingLinkAction } from './lib/actions/get-scheduling-link';
+import { deleteSchedulingLinkAction } from './lib/actions/delete-scheduling-link';
+import { duplicateSchedulingLinkAction } from './lib/actions/duplicate-scheduling-link';
+import { toggleSchedulingLinkAction } from './lib/actions/toggle-scheduling-link';
+import { getLinkSlotsAction } from './lib/actions/get-link-slots';
+import { listWorkflowsAction } from './lib/actions/list-workflows';
+import { getWorkflowRulesAction } from './lib/actions/get-workflow-rules';
 
 import { newEventTrigger } from './lib/triggers/new-event';
 import { newPollResponseTrigger } from './lib/triggers/new-poll-response';
@@ -60,6 +67,13 @@ export const savvyCal = createPiece({
     createEventAction,
     findEventsByEmailAction,
     listSchedulingLinksAction,
+    getSchedulingLinkAction,
+    deleteSchedulingLinkAction,
+    duplicateSchedulingLinkAction,
+    toggleSchedulingLinkAction,
+    getLinkSlotsAction,
+    listWorkflowsAction,
+    getWorkflowRulesAction,
     createCustomApiCallAction({
       baseUrl: () => SAVVYCAL_BASE_URL,
       auth: savvyCalAuth,

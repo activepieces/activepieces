@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { savvyCalPaginatedCall, buildTeamOptions, SavvyCalSchedulingLink } from '../common';
+import { savvyCalPaginatedCall, buildTeamOptions, flattenLink, SavvyCalSchedulingLink } from '../common';
 import { savvyCalAuth } from '../../';
 
 export const listSchedulingLinksAction = createAction({
@@ -38,17 +38,6 @@ export const listSchedulingLinksAction = createAction({
         : links.filter((l) => l.scope?.id === team_id)
       : links;
 
-    return filtered.map((link) => ({
-      id: link.id,
-      name: link.name,
-      slug: link.slug,
-      url: link.url ?? null,
-      active: link.active ?? null,
-      duration_minutes: link.duration ?? null,
-      team_id: link.scope?.id ?? null,
-      team_name: link.scope?.name ?? null,
-      created_at: link.created_at,
-      updated_at: link.updated_at,
-    }));
+    return filtered.map(flattenLink);
   },
 });
