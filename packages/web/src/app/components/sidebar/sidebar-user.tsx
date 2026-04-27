@@ -20,12 +20,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AccountSettingsDialog } from '@/app/components/account-settings';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -223,30 +218,25 @@ export function SidebarUser() {
 
       {/* Team Settings — Clerk OrganizationProfile */}
       <Dialog open={teamOpen} onOpenChange={setTeamOpen}>
-        <DialogContent className="max-w-4xl w-full h-[85vh] p-0 overflow-hidden flex flex-col">
-          <DialogHeader className="px-6 py-4 border-b">
-            <DialogTitle className="font-semibold">
-              {t('Team Settings')}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-auto">
-            <OrganizationProfile
-              appearance={{
-                ...otom8ClerkAppearance,
-                elements: {
-                  ...otom8ClerkAppearance.elements,
-                  rootBox: { width: '100%', height: '100%' },
-                  cardBox: {
-                    width: '100%',
-                    boxShadow: 'none',
-                    border: 'none',
-                    borderRadius: 0,
-                  },
+        <DialogContent className="max-w-4xl w-full h-[85vh] p-0 overflow-hidden bg-[#111111] border-white/8">
+          <OrganizationProfile
+            appearance={{
+              ...otom8ClerkAppearance,
+              elements: {
+                ...otom8ClerkAppearance.elements,
+                rootBox: { width: '100%', height: '100%' },
+                cardBox: {
+                  width: '100%',
+                  height: '100%',
+                  boxShadow: 'none',
+                  border: 'none',
+                  borderRadius: 0,
+                  backgroundColor: '#111111',
                 },
-              }}
-              routing="hash"
-            />
-          </div>
+              },
+            }}
+            routing="hash"
+          />
         </DialogContent>
       </Dialog>
 
