@@ -1943,6 +1943,9 @@
       ],
       "@activepieces/piece-knock": [
         "packages/pieces/community/knock/src/index.ts"
+      ],
+      "@activepieces/piece-captcha-solver": [
+        "packages/pieces/community/captcha-solver/src/index.ts"
       ]
     },
     "resolveJsonModule": true
