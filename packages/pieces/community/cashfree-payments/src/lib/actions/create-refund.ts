@@ -280,7 +280,6 @@ export const createRefund = createAction({
         };
       }
     } catch (error) {
-      console.error('Error creating Cashfree refund:', error);
       return {
         success: false,
         error: error,

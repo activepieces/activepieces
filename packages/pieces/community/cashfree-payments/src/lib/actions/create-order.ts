@@ -460,7 +460,6 @@ export const createOrder = createAction({
         };
       }
     } catch (error) {
-      console.error('Error creating Cashfree order:', error);
       return {
         success: false,
         error: error,

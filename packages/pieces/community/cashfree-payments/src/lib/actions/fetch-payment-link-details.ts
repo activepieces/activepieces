@@ -152,7 +152,6 @@ export const fetchPaymentLinkDetails = createAction({
         }
       }
     } catch (error) {
-      console.error('Error fetching Cashfree payment link details:', error);
       return {
         success: false,
         error: error,

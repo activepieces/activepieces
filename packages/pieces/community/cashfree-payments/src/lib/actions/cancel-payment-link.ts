@@ -142,7 +142,6 @@ export const cancelPaymentLink = createAction({
         }
       }
     } catch (error) {
-      console.error('Error cancelling Cashfree payment link:', error);
       return {
         success: false,
         error: error,

@@ -223,7 +223,6 @@ export const getOrdersForPaymentLink = createAction({
         }
       }
     } catch (error) {
-      console.error('Error fetching orders for Cashfree payment link:', error);
       return {
         success: false,
         error: error,

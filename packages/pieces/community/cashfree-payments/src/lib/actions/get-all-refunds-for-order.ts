@@ -230,7 +230,6 @@ export const getAllRefundsForOrder = createAction({
         }
       }
     } catch (error) {
-      console.error('Error fetching refunds for Cashfree order:', error);
       return {
         success: false,
         error: error,

@@ -188,7 +188,6 @@ export const deactivateCashgram = createAction({
         }
       }
     } catch (error) {
-      console.error('Error deactivating Cashfree Cashgram:', error);
       return {
         success: false,
         error: error,

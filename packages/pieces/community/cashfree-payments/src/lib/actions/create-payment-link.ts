@@ -340,7 +340,6 @@ export const createPaymentLink = createAction({
         };
       }
     } catch (error) {
-      console.error('Error creating Cashfree payment link:', error);
       return {
         success: false,
         error: error,

@@ -297,7 +297,6 @@ export const createCashgram = createAction({
         }
       }
     } catch (error) {
-      console.error('Error creating Cashfree Cashgram:', error);
       return {
         success: false,
         error: error,

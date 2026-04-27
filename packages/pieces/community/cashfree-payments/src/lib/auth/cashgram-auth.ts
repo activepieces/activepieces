@@ -54,7 +54,6 @@ export async function generateCashgramToken(
       };
     }
   } catch (error) {
-    console.error('Error generating Cashgram token:', error);
     return {
       success: false,
       error: error,
