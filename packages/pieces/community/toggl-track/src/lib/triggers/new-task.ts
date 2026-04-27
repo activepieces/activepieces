@@ -71,7 +71,6 @@ export const newTask = createTrigger({
         });
         
       } catch (error) {
-        console.error('Failed to auto-validate webhook:', error);
       }
       
       return [
