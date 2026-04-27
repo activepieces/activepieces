@@ -60,8 +60,6 @@ export const createTopic = createAction({
   async run(context) {
     const { title, raw, category } = context.propsValue;
 
-    console.log('new post action');
-
     return await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${context.auth.props.website_url.trim()}/posts.json`,
