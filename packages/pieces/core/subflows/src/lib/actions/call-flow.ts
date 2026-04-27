@@ -2,26 +2,22 @@ import {
   createAction,
   DynamicPropsValue,
   PieceAuth,
+  PropertyContext,
   Property,
 } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
+import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PARENT_RUN_ID_HEADER, SampleDataFileType } from '@activepieces/shared';
 import { CallableFlowRequest, CallableFlowResponse, findFlowByExternalIdOrThrow, listEnabledFlowsWithSubflowTrigger } from '../common';
-
-type FlowValue = {
-  externalId: string;
-  exampleData: unknown;
-};
 
 export const callFlow = createAction({
   name: 'callFlow',
-  displayName: 'Call Flow',
-  description: 'Call a flow that has "Callable Flow" trigger',
+  displayName: 'Call Another Flow',
+  description: 'Run another flow and (optionally) wait for its response.',
   props: {
     flow: Property.Dropdown<FlowValue>({
       auth: PieceAuth.None(),
-      displayName: 'Flow',
-      description: 'The flow to execute',
+      displayName: 'Flow to call',
+      description: 'Only flows with the "When Called by Another Flow" trigger appear here.',
       required: true,
       options: async (_, context) => {
         const flows = await listEnabledFlowsWithSubflowTrigger({
@@ -31,7 +27,6 @@ export const callFlow = createAction({
           options: flows.map((flow) => ({
             value: {
               externalId: flow.externalId ?? flow.id,
-              exampleData: flow.version.trigger.settings.input.exampleData,
             },
             label: flow.version.displayName,
           })),
@@ -40,19 +35,19 @@ export const callFlow = createAction({
       refreshers: [],
     }),
     mode: Property.StaticDropdown({
-      displayName: 'Mode',
+      displayName: 'Input data format',
       required: true,
-      description: 'Choose Simple for key-value or Advanced for JSON.',
+      description: 'Use "Fields" to define named keys, or "JSON" to pass a free-form object.',
       defaultValue: 'simple',
       options: {
         disabled: false,
         options: [
           {
-            label: 'Simple',
+            label: 'Fields',
             value: 'simple',
           },
           {
-            label: 'Advanced',
+            label: 'JSON',
             value: 'advanced',
           },
         ],
@@ -60,39 +55,43 @@ export const callFlow = createAction({
     }),
     flowProps: Property.DynamicProperties({
       auth: PieceAuth.None(),
-      description: '',
-      displayName: '',
+      displayName: 'Input Data',
+      description: 'The data to send to the called flow. Pre-filled from the sample input saved on that flow.',
       required: true,
       refreshers: ['flow', 'mode'],
-      props: async (propsValue) => {
-        const castedFlowValue = propsValue['flow'] as unknown as FlowValue;
+      props: async (propsValue, context) => {
+        const castedFlowValue = propsValue['flow'] as unknown as FlowValue | undefined;
         const mode = propsValue['mode'] as unknown as string;
         const fields: DynamicPropsValue = {};
 
-
-        if (!isNil(castedFlowValue)) {
-          if (mode === 'simple') {
-            fields['payload'] = Property.Object({
-              displayName: 'Payload',
-              required: true,
-              defaultValue: (castedFlowValue.exampleData as unknown as { sampleData: object }).sampleData,
-            });
-          }
-          else{
-            fields['payload'] = Property.Json({
-              displayName: 'Payload',
-              description:
-                'Provide the data to be passed to the flow',
-              required: true,
-              defaultValue: (castedFlowValue.exampleData as unknown as { sampleData: object }).sampleData,
-            });
-          }
+        if (isNil(castedFlowValue)) {
+          return fields;
+        }
+        const defaultPayload = await resolveDefaultPayload({
+          externalId: castedFlowValue.externalId,
+          context,
+        });
+        if (mode === 'simple') {
+          fields['payload'] = Property.Object({
+            displayName: 'Input Data',
+            required: true,
+            defaultValue: defaultPayload,
+          });
+        }
+        else {
+          fields['payload'] = Property.Json({
+            displayName: 'Input Data',
+            description: 'The data to send to the called flow. Pre-filled from the sample input saved on that flow.',
+            required: true,
+            defaultValue: defaultPayload,
+          });
         }
         return fields;
       },
     }),
     waitForResponse: Property.Checkbox({
       displayName: 'Wait for Response',
+      description: 'If on, this step pauses until the called flow finishes and returns a response. If off, fires and forgets.',
       required: false,
       defaultValue: false,
     }),
@@ -152,3 +151,78 @@ export const callFlow = createAction({
     }
   }
 });
+
+async function resolveDefaultPayload({
+  externalId,
+  context,
+}: {
+  externalId: string;
+  context: PropertyContext;
+}): Promise<Record<string, unknown>> {
+  let flow;
+  try {
+    flow = await findFlowByExternalIdOrThrow({
+      flowsContext: context.flows,
+      externalId,
+    });
+  }
+  catch {
+    return {};
+  }
+  const triggerSampleDataFileId = flow.version.trigger.settings.sampleData?.sampleDataFileId;
+  if (isNil(triggerSampleDataFileId)) {
+    return {};
+  }
+  const fetched = await fetchTriggerSampleData({
+    context,
+    flowId: flow.id,
+    flowVersionId: flow.version.id,
+    stepName: flow.version.trigger.name,
+  });
+  return toRecordOrUndefined(fetched) ?? {};
+}
+
+function toRecordOrUndefined(value: unknown): Record<string, unknown> | undefined {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return undefined;
+}
+
+async function fetchTriggerSampleData({
+  context,
+  flowId,
+  flowVersionId,
+  stepName,
+}: {
+  context: PropertyContext;
+  flowId: string;
+  flowVersionId: string;
+  stepName: string;
+}): Promise<unknown> {
+  try {
+    const response = await httpClient.sendRequest<unknown>({
+      method: HttpMethod.GET,
+      url: `${context.server.apiUrl}v1/sample-data`,
+      queryParams: {
+        flowId,
+        flowVersionId,
+        stepName,
+        projectId: context.project.id,
+        type: SampleDataFileType.OUTPUT,
+      },
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.server.token,
+      },
+    });
+    return response.body;
+  }
+  catch {
+    return undefined;
+  }
+}
+
+type FlowValue = {
+  externalId: string;
+};

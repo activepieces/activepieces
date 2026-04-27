@@ -8,6 +8,7 @@ export type TestType =
   | 'chat-trigger'
   | 'simulation'
   | 'webhook'
+  | 'callable-flow'
   | 'polling';
 
 export const triggerEventUtils = {
@@ -31,6 +32,12 @@ export const triggerEventUtils = {
       triggerName === 'catch_webhook'
     ) {
       return 'webhook';
+    }
+    if (
+      pieceName === '@activepieces/piece-subflows' &&
+      triggerName === 'callableFlow'
+    ) {
+      return 'callable-flow';
     }
 
     if (

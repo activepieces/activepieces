@@ -36,7 +36,7 @@ export const sampleDataController: FastifyPluginAsyncZod = async (fastify) => {
 const GetSampleDataRequestParams = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE],
             undefined, {
                 type: ProjectResourceType.QUERY,
             }),
