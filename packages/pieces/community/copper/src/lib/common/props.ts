@@ -28,7 +28,6 @@ export const peopleDropdown = (refreshers: string[]) =>
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch campaigns', e);
         return {
           options: [],
           placeholder: 'Unable to load campaigns',
@@ -63,7 +62,6 @@ export const leadDropdown = (refreshers: string[]) =>
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch leads', e);
         return {
           options: [],
           placeholder: 'Unable to load leads',
@@ -104,7 +102,6 @@ export const companyDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch companies', e);
         return {
           options: [],
           placeholder: 'Unable to load companies',
@@ -145,7 +142,6 @@ export const multiCompanyDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch companies', e);
         return {
           options: [],
           placeholder: 'Unable to load companies',
@@ -186,7 +182,6 @@ export const primaryContactsDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch opportunities', e);
         return {
           options: [],
           placeholder: 'Unable to load opportunities',
@@ -227,7 +222,6 @@ export const multiPrimaryContactsDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch opportunities', e);
         return {
           options: [],
           placeholder: 'Unable to load opportunities',
@@ -268,7 +262,6 @@ export const usersDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch opportunities', e);
         return {
           options: [],
           placeholder: 'Unable to load opportunities',
@@ -309,7 +302,6 @@ export const multiUsersDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch opportunities', e);
         return {
           options: [],
           placeholder: 'Unable to load opportunities',
@@ -350,7 +342,6 @@ export const opportunityDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch opportunities', e);
         return {
           options: [],
           placeholder: 'Unable to load opportunities',
@@ -391,7 +382,6 @@ export const multiOpportunityDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch opportunities', e);
         return {
           options: [],
           placeholder: 'Unable to load opportunities',
@@ -432,7 +422,6 @@ export const pipelinesDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch pipelines', e);
         return {
           options: [],
           placeholder: 'Unable to load pipelines',
@@ -473,7 +462,6 @@ export const multiPipelinesDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch pipelines', e);
         return {
           options: [],
           placeholder: 'Unable to load pipelines',
@@ -514,7 +502,6 @@ export const projectsDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch projects', e);
         return {
           options: [],
           placeholder: 'Unable to load projects',
@@ -554,7 +541,6 @@ export const ActivityTypesDropdown = (entity?: 'user' | 'system') =>
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch activity types', e);
         return {
           options: [],
           placeholder: 'Unable to load activity types',
@@ -600,7 +586,6 @@ export const MultiActivityTypesDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch activity types', e);
         return {
           options: [],
           placeholder: 'Unable to load activity types',
@@ -639,7 +624,6 @@ export const MultiContactTypesDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch contact types', e);
         return {
           options: [],
           placeholder: 'Unable to load contact types',
@@ -678,7 +662,6 @@ export const MultiLeadStatusDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch lead statuses', e);
         return {
           options: [],
           placeholder: 'Unable to load lead statuses',
@@ -717,7 +700,6 @@ export const MultiCustomerSourceDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch customer sources', e);
         return {
           options: [],
           placeholder: 'Unable to load customer sources',
@@ -756,7 +738,6 @@ export const MultiLossReasonsDropdown = ({
           })),
         };
       } catch (e) {
-        console.error('Failed to fetch loss reasons', e);
         return {
           options: [],
           placeholder: 'Unable to load loss reasons',
