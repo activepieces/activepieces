@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './ai-suggestion-widget.css';
 
-// Define types locally for the frontend component, mirroring backend definitions
-// In a real Activepieces project, these types would likely be imported from a shared package.
 interface APActionMeta {
   name: string;
   displayName: string;
@@ -31,7 +29,7 @@ interface AISuggestionWidgetProps {
 export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
   pieces,
   onSelectSuggestion,
-  apiEndpoint = '/api/ai/suggest'
+  apiEndpoint = '/api/v1/ai-suggestions/suggest'
 }) => {
   const [query, setQuery] = useState<string>('');
   const [suggestions, setSuggestions] = useState<ActionSuggestion[]>([]);
@@ -56,7 +54,10 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
       const existingPieceNames = pieces.map(p => p.name);
       const response = await fetch(apiEndpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}` // Activepieces stores token in localStorage
+        },
         body: JSON.stringify({
           query: searchQuery,
           workloadContext: { existingPieces: existingPieceNames }
@@ -147,7 +148,6 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
       e.preventDefault();
       setActiveIndex(prev => {
         const newIndex = prev < suggestions.length - 1 ? prev + 1 : 0;
-        // Scroll to the newly selected item
         if (suggestionRefs.current[newIndex]) {
           suggestionRefs.current[newIndex]?.scrollIntoView({ block: 'nearest' });
         }
@@ -160,7 +160,6 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
       e.preventDefault();
       setActiveIndex(prev => {
         const newIndex = prev > 0 ? prev - 1 : suggestions.length - 1;
-        // Scroll to the newly selected item
         if (suggestionRefs.current[newIndex]) {
           suggestionRefs.current[newIndex]?.scrollIntoView({ block: 'nearest' });
         }

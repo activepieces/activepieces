@@ -90,8 +90,13 @@
   border-bottom: none;
 }
 
-.ai-suggestion-item:hover {
+.ai-suggestion-item:hover,
+.ai-suggestion-item.active {
   background-color: #f9fafb;
+}
+
+.ai-suggestion-item.active {
+  background-color: #eff6ff;
 }
 
 .ai-suggestion-header {
@@ -120,6 +125,7 @@
   padding: 2px 8px;
   border-radius: 12px;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .ai-suggestion-confidence.high {
@@ -161,7 +167,6 @@
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
 }
 
-/* Scrollbar styling for dropdown */
 .ai-suggestion-dropdown::-webkit-scrollbar {
   width: 8px;
 }
@@ -179,4 +184,3 @@
 .ai-suggestion-dropdown::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
-// === END ===
