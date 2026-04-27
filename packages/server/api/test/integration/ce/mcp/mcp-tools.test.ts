@@ -2040,4 +2040,152 @@ describe('MCP Tools integration', () => {
         expect(output).toContain('<sandbox>')
         expect(output).toContain('<internal>')
     })
+
+    // ── Router branch condition validation ───────────────────────────
+
+    it('74. ap_update_branch — rejects empty firstValue', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Empty firstValue')
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'Router',
+        })
+
+        const result = await apUpdateBranchTool(mcp, mockLog).execute({
+            flowId,
+            routerStepName: 'step_1',
+            branchIndex: 0,
+            conditions: [[{ firstValue: '', secondValue: 'urgent', operator: 'TEXT_CONTAINS' }]],
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('firstValue')
+    })
+
+    it('75. ap_update_branch — rejects empty secondValue with non-single-value operator', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Empty secondValue')
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'Router',
+        })
+
+        const result = await apUpdateBranchTool(mcp, mockLog).execute({
+            flowId,
+            routerStepName: 'step_1',
+            branchIndex: 0,
+            conditions: [[{ firstValue: '{{trigger.subject}}', secondValue: '', operator: 'TEXT_CONTAINS' }]],
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('secondValue')
+    })
+
+    it('76. ap_update_branch — rejects missing secondValue with non-single-value operator', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Missing secondValue')
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'Router',
+        })
+
+        const result = await apUpdateBranchTool(mcp, mockLog).execute({
+            flowId,
+            routerStepName: 'step_1',
+            branchIndex: 0,
+            conditions: [[{ firstValue: '{{trigger.subject}}', operator: 'TEXT_CONTAINS' }]],
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('secondValue')
+        expect(text(result)).toContain('TEXT_CONTAINS')
+    })
+
+    it('77. ap_update_branch — accepts single-value operator without secondValue', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'EXISTS works')
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'Router',
+        })
+
+        const result = await apUpdateBranchTool(mcp, mockLog).execute({
+            flowId,
+            routerStepName: 'step_1',
+            branchIndex: 0,
+            conditions: [[{ firstValue: '{{trigger.subject}}', operator: 'EXISTS' }]],
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).not.toContain('Incomplete')
+        expect(text(result)).not.toContain('invalid')
+    })
+
+    it('78. ap_add_branch — rejects empty firstValue at input layer', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'AddBranch firstValue')
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'Router',
+        })
+
+        const result = await apAddBranchTool(mcp, mockLog).execute({
+            flowId,
+            routerStepName: 'step_1',
+            branchName: 'New',
+            conditions: [[{ firstValue: '', operator: 'EXISTS' }]],
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('firstValue')
+    })
+
+    it('79. ap_update_branch — rejects secondValue provided without operator', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'secondValue without operator')
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'Router',
+        })
+
+        const result = await apUpdateBranchTool(mcp, mockLog).execute({
+            flowId,
+            routerStepName: 'step_1',
+            branchIndex: 0,
+            conditions: [[{ firstValue: '{{trigger.subject}}', secondValue: 'urgent' }]],
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('operator')
+    })
 })
