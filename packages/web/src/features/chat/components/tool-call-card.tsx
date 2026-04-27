@@ -64,6 +64,7 @@ export function extractToolContext({
 function deriveStatus(part: DynamicToolPart): ToolStatus {
   if (part.state === 'output-available') return 'completed';
   if (part.state === 'output-error') return 'failed';
+  if (part.state === 'output-denied') return 'stopped';
   return 'running';
 }
 
