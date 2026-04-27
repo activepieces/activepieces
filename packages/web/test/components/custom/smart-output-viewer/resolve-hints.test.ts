@@ -88,3 +88,39 @@ describe('hintUtils.visibleFields', () => {
     expect(hintUtils.visibleFields(hints).secondary).toEqual([]);
   });
 });
+
+describe('hintUtils.isPrimitiveArray', () => {
+  it('returns true for an array of strings', () => {
+    expect(hintUtils.isPrimitiveArray(['INBOX', 'UNREAD'])).toBe(true);
+  });
+
+  it('returns true for an array of numbers', () => {
+    expect(hintUtils.isPrimitiveArray([1, 2, 3])).toBe(true);
+  });
+
+  it('returns true for an array of booleans', () => {
+    expect(hintUtils.isPrimitiveArray([true, false])).toBe(true);
+  });
+
+  it('treats null entries as primitive', () => {
+    expect(hintUtils.isPrimitiveArray(['a', null])).toBe(true);
+  });
+
+  it('returns true for an empty array', () => {
+    expect(hintUtils.isPrimitiveArray([])).toBe(true);
+  });
+
+  it('returns false for an array containing an object', () => {
+    expect(hintUtils.isPrimitiveArray([{ id: 1 }])).toBe(false);
+  });
+
+  it('returns false for an array containing a nested array', () => {
+    expect(hintUtils.isPrimitiveArray([['a']])).toBe(false);
+  });
+
+  it('returns false for non-array inputs', () => {
+    expect(hintUtils.isPrimitiveArray('hello')).toBe(false);
+    expect(hintUtils.isPrimitiveArray(null)).toBe(false);
+    expect(hintUtils.isPrimitiveArray({ length: 0 })).toBe(false);
+  });
+});

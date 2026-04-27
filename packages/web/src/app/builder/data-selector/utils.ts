@@ -8,8 +8,8 @@ import {
 } from '@activepieces/shared';
 
 import { pieceSelectorUtils } from '@/features/pieces';
-import { pathUtils } from '@/lib/path-utils';
 
+import { pathHelpers } from './path-helpers';
 import {
   DataSelectorTreeNode,
   DataSelectorTestNodeData,
@@ -153,7 +153,7 @@ function buildJsonPath(propertyPath: PathSegment[]): string {
   return propertyPathWithoutStepName.reduce((acc, segment) => {
     return `${acc}[${
       typeof segment === 'string'
-        ? `'${escapeMentionKey(String(segment))}'`
+        ? `'${pathHelpers.escapeMentionKey(String(segment))}'`
         : segment
     }]`;
   }, `${propertyPath[0]}`) as string;
@@ -291,10 +291,6 @@ function traverseOutput(
   }
 }
 
-export function escapeMentionKey(key: string) {
-  return key.replaceAll(/[\\"'\n\r\t’]/g, (char) => `\\${char}`);
-}
-
 function getSearchableValue(
   item: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>,
 ) {
@@ -387,19 +383,6 @@ function filterBy(
       (f) => !isNil(f),
     ) as DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[];
   return res;
-}
-
-export function convertValuePathToPropertyPath(
-  stepName: string,
-  valuePath: string,
-): string {
-  const segments = pathUtils.parsePath(valuePath);
-  return segments.reduce<string>((acc, segment) => {
-    if (typeof segment === 'number') {
-      return `${acc}[${segment}]`;
-    }
-    return `${acc}['${escapeMentionKey(segment)}']`;
-  }, stepName);
 }
 
 export const dataSelectorUtils = {

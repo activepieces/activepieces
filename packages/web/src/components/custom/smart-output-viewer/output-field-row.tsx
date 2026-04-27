@@ -150,8 +150,16 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
   const itemChildren = field.listItems ?? [];
   const hasChildren = children.length > 0 || dynamicEntries.length > 0;
   const isList = itemChildren.length > 0 && Array.isArray(value);
-  const isExpandable = hasChildren || isList;
+  const isPrimitiveList =
+    !isList &&
+    !hasChildren &&
+    !field.listItems &&
+    Array.isArray(value) &&
+    value.length > 0 &&
+    hintUtils.isPrimitiveArray(value);
+  const isExpandable = hasChildren || isList || isPrimitiveList;
   const listItems: unknown[] = isList && Array.isArray(value) ? value : [];
+  const primitiveItems: unknown[] = isPrimitiveList ? value : [];
 
   return (
     <div className="border-b border-dividers last:border-b-0">
@@ -195,7 +203,7 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
             <span className="text-muted-foreground">
               {listItems.length} {t('items')}
             </span>
-          ) : hasChildren && !expanded ? (
+          ) : isPrimitiveList && expanded ? null : hasChildren && !expanded ? (
             <span
               className="text-muted-foreground truncate"
               title={
@@ -257,6 +265,32 @@ function OutputFieldRow({ field, json }: OutputFieldRowProps) {
               itemLabel={`${label} ${idx + 1}`}
               itemChildren={itemChildren}
             />
+          ))}
+        </div>
+      )}
+
+      {expanded && isPrimitiveList && (
+        <div className="pb-1">
+          {primitiveItems.map((item, idx) => (
+            <div
+              key={`${path}-${idx}`}
+              className="group flex items-center gap-3 py-1.5 px-3 pl-10 hover:bg-accent/50"
+            >
+              <FieldTypeIcon value={item} format={field.format} />
+              <span className="text-sm text-muted-foreground min-w-[120px] max-w-[160px] shrink-0 truncate">
+                {`${label} ${idx + 1}`}
+              </span>
+              <span className="flex-1 text-sm min-w-0 break-all">
+                {isNil(item) || item === '' ? (
+                  <span className="text-muted-foreground italic">
+                    {t('empty')}
+                  </span>
+                ) : (
+                  <FormatSingleValue value={item} format={field.format} />
+                )}
+              </span>
+              <InlineCopyButton value={item} />
+            </div>
           ))}
         </div>
       )}

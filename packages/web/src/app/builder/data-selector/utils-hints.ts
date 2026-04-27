@@ -1,6 +1,7 @@
 import { isNil, isObject } from '@activepieces/shared';
 import { t } from 'i18next';
 
+import { hintUtils } from '@/components/custom/smart-output-viewer/resolve-hints';
 import {
   HintField,
   OutputDisplayHints,
@@ -8,8 +9,8 @@ import {
 import { pathUtils } from '@/lib/path-utils';
 import { stringUtils } from '@/lib/string-utils';
 
+import { pathHelpers } from './path-helpers';
 import { DataSelectorTreeNode, DataSelectorTreeNodeDataUnion } from './type';
-import { convertValuePathToPropertyPath, escapeMentionKey } from './utils';
 
 function resolveLabel(field: HintField): string {
   return field.label ?? stringUtils.titleCase(field.key);
@@ -35,7 +36,10 @@ function buildFieldChildNode(
     sampleData,
     rawPath,
   );
-  const propertyPath = convertValuePathToPropertyPath(stepName, resolvedPath);
+  const propertyPath = pathHelpers.convertValuePathToPropertyPath(
+    stepName,
+    resolvedPath,
+  );
 
   return {
     key: propertyPath,
@@ -62,7 +66,10 @@ function buildItemChildNode(
     sampleData,
     fullPath,
   );
-  const propertyPath = convertValuePathToPropertyPath(stepName, resolvedPath);
+  const propertyPath = pathHelpers.convertValuePathToPropertyPath(
+    stepName,
+    resolvedPath,
+  );
 
   return {
     key: propertyPath,
@@ -84,7 +91,10 @@ function buildFieldNode(
   const rawValuePath = field.value ?? field.key;
   const { value, resolvedPath: valuePath } =
     pathUtils.resolvePathWithWrapperFallback(sampleData, rawValuePath);
-  const propertyPath = convertValuePathToPropertyPath(stepName, valuePath);
+  const propertyPath = pathHelpers.convertValuePathToPropertyPath(
+    stepName,
+    valuePath,
+  );
   const label = resolveLabel(field);
 
   if (field.listItems && field.listItems.length > 0 && Array.isArray(value)) {
@@ -100,7 +110,7 @@ function buildFieldNode(
           type: 'value' as const,
           value: '',
           displayName: itemLabel,
-          propertyPath: convertValuePathToPropertyPath(
+          propertyPath: pathHelpers.convertValuePathToPropertyPath(
             stepName,
             `${valuePath}[${idx}]`,
           ),
@@ -122,10 +132,46 @@ function buildFieldNode(
     };
   }
 
+  if (
+    !field.listItems &&
+    Array.isArray(value) &&
+    hintUtils.isPrimitiveArray(value)
+  ) {
+    const itemChildren = value.map((itemValue, idx) => {
+      const itemPath = pathHelpers.convertValuePathToPropertyPath(
+        stepName,
+        `${valuePath}[${idx}]`,
+      );
+      return {
+        key: itemPath,
+        data: {
+          type: 'value' as const,
+          value: itemValue,
+          displayName: `${label} ${idx + 1}`,
+          propertyPath: itemPath,
+          insertable: true,
+        },
+      };
+    });
+    return {
+      key: propertyPath,
+      data: {
+        type: 'value' as const,
+        value,
+        displayName: label,
+        propertyPath,
+        insertable: true,
+      },
+      children: itemChildren.length > 0 ? itemChildren : undefined,
+    };
+  }
+
   if (field.dynamicKey === true && isObject(value)) {
     const dynamicChildren: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] =
       Object.entries(value).map(([key, childValue]) => {
-        const childPath = `${propertyPath}['${escapeMentionKey(key)}']`;
+        const childPath = `${propertyPath}['${pathHelpers.escapeMentionKey(
+          key,
+        )}']`;
         return {
           key: childPath,
           data: {
@@ -236,10 +282,12 @@ function buildTreeFromArray({
 
       const itemChildren: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] =
         Object.entries(item).map(([key, value]) => {
-          const childPath = `${itemPath}['${escapeMentionKey(key)}']`;
+          const childPath = `${itemPath}['${pathHelpers.escapeMentionKey(
+            key,
+          )}']`;
           const nestedChildren = isObject(value)
             ? Object.entries(value).map(([nestedKey, nestedValue]) => {
-                const nestedPath = `${childPath}['${escapeMentionKey(
+                const nestedPath = `${childPath}['${pathHelpers.escapeMentionKey(
                   nestedKey,
                 )}']`;
                 return {

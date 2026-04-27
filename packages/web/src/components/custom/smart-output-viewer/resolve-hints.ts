@@ -26,9 +26,15 @@ function visibleFields(hints: OutputDisplayHints): {
   };
 }
 
+function isPrimitiveArray(value: unknown): value is Array<unknown> {
+  if (!Array.isArray(value)) return false;
+  return value.every((item) => item === null || typeof item !== 'object');
+}
+
 export const hintUtils = {
   resolveFieldLabel,
   resolveFieldPath,
   resolveItemFieldPath,
   visibleFields,
+  isPrimitiveArray,
 };

@@ -8,6 +8,7 @@ import { formatUtils } from '@/lib/format-utils';
 import { pathUtils } from '@/lib/path-utils';
 import { cn } from '@/lib/utils';
 
+import { hintUtils } from './resolve-hints';
 import { HintField, FieldFormat } from './types';
 
 const MAX_TEXT_LENGTH = 200;
@@ -179,6 +180,25 @@ function FormatSingleValue({
   );
 }
 
+function PrimitiveArrayPreview({
+  items,
+  format,
+}: {
+  items: unknown[];
+  format: FieldFormat | undefined;
+}) {
+  if (items.length === 0) {
+    return <span className="text-muted-foreground italic">{t('empty')}</span>;
+  }
+  const parts = items.map((item, idx) => (
+    <span key={`${idx}-${String(item)}`}>
+      {idx > 0 && <span className="text-muted-foreground">, </span>}
+      <FormatSingleValue value={item} format={format} />
+    </span>
+  ));
+  return <span className="break-words">{parts}</span>;
+}
+
 function FormatValue({ value, field }: FormatValueProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -186,9 +206,10 @@ function FormatValue({ value, field }: FormatValueProps) {
     return <span className="text-muted-foreground italic">{t('empty')}</span>;
   }
 
-  const isArrayWithItems = Array.isArray(value) && !field.listItems;
-
-  if (isArrayWithItems) {
+  if (Array.isArray(value) && !field.listItems) {
+    if (hintUtils.isPrimitiveArray(value)) {
+      return <PrimitiveArrayPreview items={value} format={field.format} />;
+    }
     return (
       <Badge variant="outline">
         {value.length} {t('items')}
