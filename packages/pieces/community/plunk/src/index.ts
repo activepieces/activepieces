@@ -70,7 +70,7 @@ export const plunk = createPiece({
       baseUrl: () => PLUNK_BASE_URL,
       auth: plunkAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as { props: { secretKey: string } }).props.secretKey}`,
+        Authorization: `Bearer ${auth.props.secretKey}`,
       }),
     }),
   ],
