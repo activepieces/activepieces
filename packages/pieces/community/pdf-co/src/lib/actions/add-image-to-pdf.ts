@@ -103,8 +103,6 @@ export const addImageToPdf = createAction({
 				body: requestBody,
 			});
 
-			console.log(JSON.stringify(response, null, 2));
-
 			if (response.body.error) {
 				const errorBody = response.body as PdfCoErrorResponse;
 				let errorMessage = `PDF.co API Error (Add Image): Status ${errorBody.status}.`;
