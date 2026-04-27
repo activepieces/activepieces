@@ -551,6 +551,9 @@
       "@activepieces/piece-gravityforms": [
         "packages/pieces/community/gravityforms/src/index.ts"
       ],
+      "@activepieces/piece-greenhouse": [
+        "packages/pieces/community/greenhouse/src/index.ts"
+      ],
       "@activepieces/piece-grist": [
         "packages/pieces/community/grist/src/index.ts"
       ],
