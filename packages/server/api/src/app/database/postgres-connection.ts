@@ -361,8 +361,8 @@ import { AddDefaultToAiProvidersEnabled1776000000000 } from './migration/postgre
 import { AddChatTables1776200000000 } from './migration/postgres/1776200000000-AddChatTables'
 import { DropWaitpointTimeoutSeconds1776342514732 } from './migration/postgres/1776342514732-DropWaitpointTimeoutSeconds'
 import { AddMcpServerTokenIndex1776400000000 } from './migration/postgres/1776400000000-AddMcpServerTokenIndex'
-import { DropChatTokenColumns1782000000000 } from './migration/postgres/1782000000000-DropChatTokenColumns'
 import { AddPlatformCopilotTables1776400000000 } from './migration/postgres/1776400000000-AddPlatformCopilotTables'
+import { DropChatTokenColumns1782000000000 } from './migration/postgres/1782000000000-DropChatTokenColumns'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
