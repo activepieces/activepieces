@@ -168,15 +168,11 @@ export const capsuleCrmClient = {
         return [];
       }
       
-      // Temporarily return all parties to debug
-      console.log('Parties response:', response.body.parties);
       const organisations = response.body.parties.filter(
         (party) => party.type === 'organisation'
       );
-      console.log('Filtered organisations:', organisations);
       return organisations;
     } catch (error) {
-      console.error('searchOrganisations error:', error);
       return [];
     }
   },

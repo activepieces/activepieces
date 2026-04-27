@@ -51,8 +51,8 @@ export const createContactAction = createAction({
                   label: org.name || 'Unnamed Organisation',
                   value: org.id,
                 }));
-            } catch (error) {
-              console.error('Failed to load organisations:', error);
+            } catch (_error) {
+              // ignore errors when loading organisation options for dropdown
             }
           }
           
