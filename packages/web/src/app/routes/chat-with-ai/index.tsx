@@ -32,23 +32,25 @@ export function ChatWithAIPage() {
     [navigate, projectId],
   );
 
-  const handleConversationCreated = useCallback(
-    (conversationId: string) => {
-      void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations', projectId],
-      });
-      navigate(`/projects/${projectId}/chat/${conversationId}`, {
-        replace: true,
-      });
-    },
-    [queryClient, projectId, navigate],
-  );
-
-  const handleTitleUpdate = useCallback(() => {
+  const handleConversationCreated = useCallback(() => {
     void queryClient.invalidateQueries({
       queryKey: ['chat-conversations', projectId],
     });
   }, [queryClient, projectId]);
+
+  const handleTitleUpdate = useCallback(
+    (_title: string, conversationId?: string) => {
+      void queryClient.invalidateQueries({
+        queryKey: ['chat-conversations', projectId],
+      });
+      if (conversationId && !selectedConversationId) {
+        navigate(`/projects/${projectId}/chat/${conversationId}`, {
+          replace: true,
+        });
+      }
+    },
+    [queryClient, projectId, selectedConversationId, navigate],
+  );
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
