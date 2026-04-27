@@ -3,54 +3,55 @@ import { googleDocsAuth, createGoogleClient, GoogleDocsAuthValue } from '../auth
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { google, drive_v3 } from 'googleapis';
 
-export const folderIdProp = Property.Dropdown({
-	displayName: 'Folder',
-	description: 'Restrict the list to documents inside this folder.',
-	refreshers: [],
-	auth: googleDocsAuth,
-	required: false,
-	options: async ({ auth }, { searchValue }) => {
-		if (!auth) {
-			return {
-				disabled: true,
-				placeholder: 'Please connect your Google account.',
-				options: [],
-			};
-		}
-		const authValue = auth as GoogleDocsAuthValue;
-		const authClient = await createGoogleClient(authValue);
-		const drive = google.drive({ version: 'v3', auth: authClient });
-
-		const q = ["mimeType='application/vnd.google-apps.folder'", 'trashed = false'];
-		if (searchValue) {
-			q.push(`name contains '${searchValue.replace(/'/g, "\\'")}'`);
-		}
-
-		const options: DropdownOption<string>[] = [];
-		let nextPageToken: string | undefined;
-
-		do {
-			const response: any = await drive.files.list({
-				q: q.join(' and '),
-				supportsAllDrives: true,
-				orderBy: 'createdTime desc',
-				fields: 'nextPageToken, files(id, name)',
-				includeItemsFromAllDrives: true,
-				pageToken: nextPageToken,
-			});
-
-			const fileList: drive_v3.Schema$FileList = response.data;
-			if (fileList.files) {
-				for (const file of fileList.files) {
-					options.push({ label: file.name!, value: file.id! });
-				}
+export const folderIdProp = (displayName: string, description: string, required = false) =>
+	Property.Dropdown({
+		displayName,
+		description,
+		refreshers: [],
+		auth: googleDocsAuth,
+		required,
+		options: async ({ auth }, { searchValue }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					placeholder: 'Please connect your Google account.',
+					options: [],
+				};
 			}
-			nextPageToken = response.data.nextPageToken;
-		} while (nextPageToken);
+			const authValue = auth as GoogleDocsAuthValue;
+			const authClient = await createGoogleClient(authValue);
+			const drive = google.drive({ version: 'v3', auth: authClient });
 
-		return { disabled: false, options };
-	},
-});
+			const q = ["mimeType='application/vnd.google-apps.folder'", 'trashed = false'];
+			if (searchValue) {
+				q.push(`name contains '${searchValue.replace(/'/g, "\\'")}'`);
+			}
+
+			const options: DropdownOption<string>[] = [];
+			let nextPageToken: string | undefined;
+
+			do {
+				const response: any = await drive.files.list({
+					q: q.join(' and '),
+					supportsAllDrives: true,
+					orderBy: 'createdTime desc',
+					fields: 'nextPageToken, files(id, name)',
+					includeItemsFromAllDrives: true,
+					pageToken: nextPageToken,
+				});
+
+				const fileList: drive_v3.Schema$FileList = response.data;
+				if (fileList.files) {
+					for (const file of fileList.files) {
+						options.push({ label: file.name!, value: file.id! });
+					}
+				}
+				nextPageToken = response.data.nextPageToken;
+			} while (nextPageToken);
+
+			return { disabled: false, options };
+		},
+	});
 
 export const documentImageIdProp = (displayName: string, description: string, required = true) =>
 	Property.Dropdown({

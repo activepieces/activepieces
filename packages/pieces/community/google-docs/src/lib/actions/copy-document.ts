@@ -16,7 +16,10 @@ export const copyDocument = createAction({
 			description: 'Title of the copy. Leave empty to keep the default "Copy of …" title.',
 			required: false,
 		}),
-		folderId: folderIdProp,
+		folderId: folderIdProp(
+			'Destination Folder',
+			'Move the copy into this folder. Leave empty to keep it next to the original.',
+		),
 	},
 	async run(context) {
 		const { documentId, newTitle, folderId } = context.propsValue;

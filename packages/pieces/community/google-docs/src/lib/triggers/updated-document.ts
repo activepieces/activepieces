@@ -83,7 +83,10 @@ export const updatedDocumentTrigger = createTrigger({
 			'Watch updates for a specific document. Leave empty to watch all documents.',
 			false,
 		),
-		folderId: folderIdProp,
+		folderId: folderIdProp(
+			'Folder (optional)',
+			'Watch only documents inside this folder. Leave empty to watch across Drive.',
+		),
 	},
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, {

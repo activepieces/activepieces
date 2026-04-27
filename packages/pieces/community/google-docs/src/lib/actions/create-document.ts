@@ -12,7 +12,10 @@ export const createDocument = createAction({
   props: {
     title: docsCommon.title,
     body: docsCommon.body,
-    folderId: folderIdProp,
+    folderId: folderIdProp(
+      'Folder',
+      'Place the new document inside this folder. Leave empty to use My Drive.',
+    ),
   },
   async run(context) {
     const authClient = await createGoogleClient(context.auth);

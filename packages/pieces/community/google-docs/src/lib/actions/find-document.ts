@@ -19,7 +19,10 @@ export const findDocumentAction = createAction({
 			description: 'Search by document name (uses a "contains" match).',
 			required: true,
 		}),
-		folderId: folderIdProp,
+		folderId: folderIdProp(
+			'Folder',
+			'Search only inside this folder. Leave empty to search across all of Drive.',
+		),
 		createIfNotFound: Property.Checkbox({
 			displayName: 'Create a new document if not found?',
 			defaultValue: false,

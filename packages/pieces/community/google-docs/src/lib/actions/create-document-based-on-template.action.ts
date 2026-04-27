@@ -25,7 +25,10 @@ export const createDocumentBasedOnTemplate = createAction({
       description: 'Title for the new document (only used when copying the template).',
       required: false,
     }),
-    folderId: folderIdProp,
+    folderId: folderIdProp(
+      'Folder',
+      'Place the new document inside this folder. Leave empty to keep it next to the template.',
+    ),
     placeholder_format: Property.StaticDropdown({
       displayName: 'Placeholder Format',
       description:
