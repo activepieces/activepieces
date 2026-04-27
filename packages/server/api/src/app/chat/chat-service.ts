@@ -57,7 +57,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
             getMcpCredentials({ projectId, log }),
         ])
         const sandboxId = await userSandboxService.getOrCreate({ userId, platformId, aiConfig })
-        const { session, sdk } = await chatSandboxAgent.createSession({
+        const { session } = await chatSandboxAgent.createSession({
             aiConfig,
             sandboxId,
             mcpServerUrl: mcpCredentials.mcpServerUrl,
@@ -75,7 +75,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
         }
         return {
             conversation: { ...conversation, sandboxSessionId: session.id },
-            liveSession: { session, sdk, sandboxId },
+            liveSession: { session, sandboxId },
         }
     },
 
@@ -309,7 +309,6 @@ type EnsureSessionResult = {
     conversation: ChatConversation
     liveSession?: {
         session: import('sandbox-agent').Session
-        sdk: import('sandbox-agent').SandboxAgent
         sandboxId: string
     }
 }
