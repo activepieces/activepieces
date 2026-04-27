@@ -27,6 +27,7 @@ import { projectService } from '../project/project-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
 import { chatSessionCleanup } from './sandbox/postgres-persist-driver'
 import { ChatAiConfig, chatSandboxAgent, ChatSandboxConfig } from './sandbox/sandbox-agent'
+import { userSandboxService } from './user-sandbox-service'
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 
@@ -46,20 +47,26 @@ export const chatService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async ensureSession({ id, projectId, userId, platformId }: EnsureSessionParams): Promise<ChatConversation> {
+    async ensureSession({ id, projectId, userId, platformId }: EnsureSessionParams): Promise<EnsureSessionResult> {
         const conversation = await this.getConversationOrThrow({ id, projectId, userId })
         if (conversation.sandboxSessionId) {
-            return conversation
+            return { conversation }
         }
         const [aiConfig, mcpCredentials] = await Promise.all([
-            this.getChatAiConfig({ platformId }),
+            this.getChatAiConfig({ platformId, modelName: conversation.modelName }),
             getMcpCredentials({ projectId, log }),
         ])
-        const session = await chatSandboxAgent.createSession({
+        const sandboxId = await userSandboxService.getOrCreate({ userId, platformId, aiConfig })
+        const { session, sdk } = await chatSandboxAgent.createSession({
             aiConfig,
+            sandboxId,
             mcpServerUrl: mcpCredentials.mcpServerUrl,
             mcpToken: mcpCredentials.mcpToken,
         })
+        const resolvedSandboxId = sdk.sandboxId ?? sandboxId
+        if (resolvedSandboxId !== sandboxId) {
+            void userSandboxService.updateSandboxId({ userId, sandboxId: resolvedSandboxId }).catch(() => undefined)
+        }
         const result = await conversationRepo()
             .createQueryBuilder()
             .update()
@@ -67,10 +74,13 @@ export const chatService = (log: FastifyBaseLogger) => ({
             .where('id = :id AND "sandboxSessionId" IS NULL', { id })
             .execute()
         if (result.affected === 0) {
-            await chatSandboxAgent.destroySession({ sessionId: session.id, aiConfig }).catch(() => { /* best-effort */ })
-            return this.getConversationOrThrow({ id, projectId, userId })
+            await chatSandboxAgent.destroySession({ sessionId: session.id, sandboxId: resolvedSandboxId }).catch(() => undefined)
+            return { conversation: await this.getConversationOrThrow({ id, projectId, userId }) }
         }
-        return { ...conversation, sandboxSessionId: session.id }
+        return {
+            conversation: { ...conversation, sandboxSessionId: session.id },
+            liveSession: { session, sandboxId: resolvedSandboxId },
+        }
     },
 
     async listConversations({ projectId, userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<ChatConversation>> {
@@ -120,20 +130,24 @@ export const chatService = (log: FastifyBaseLogger) => ({
         return { ...conversation, ...updates }
     },
 
-    async cancelSession({ id, projectId, userId, platformId }: DeleteConversationParams): Promise<void> {
+    async cancelSession({ id, projectId, userId }: DeleteConversationParams): Promise<void> {
         const conversation = await this.getConversationOrThrow({ id, projectId, userId })
         const sandboxSessionId = conversation.sandboxSessionId
         if (!sandboxSessionId) return
         await conversationRepo().update(id, { sandboxSessionId: null })
-        await destroySandboxAndCleanup({ sessionId: sandboxSessionId, getChatAiConfig: () => this.getChatAiConfig({ platformId }), log })
+        void destroySessionAndCleanup({ sessionId: sandboxSessionId, userId, log }).catch((err) => {
+            log.warn({ err, sessionId: sandboxSessionId }, 'Background session cleanup failed')
+        })
     },
 
-    async deleteConversation({ id, projectId, userId, platformId }: DeleteConversationParams): Promise<void> {
+    async deleteConversation({ id, projectId, userId }: DeleteConversationParams): Promise<void> {
         const conversation = await this.getConversationOrThrow({ id, projectId, userId })
         const sandboxSessionId = conversation.sandboxSessionId
         await conversationRepo().delete({ id, projectId, userId })
         if (sandboxSessionId) {
-            await destroySandboxAndCleanup({ sessionId: sandboxSessionId, getChatAiConfig: () => this.getChatAiConfig({ platformId }), log })
+            void destroySessionAndCleanup({ sessionId: sandboxSessionId, userId, log }).catch((err) => {
+                log.warn({ err, sessionId: sandboxSessionId }, 'Background session cleanup failed')
+            })
         }
     },
 
@@ -153,12 +167,12 @@ export const chatService = (log: FastifyBaseLogger) => ({
         return { data: messages }
     },
 
-    async getChatAiConfig({ platformId }: { platformId: string }): Promise<ChatAiConfig> {
+    async getChatAiConfig({ platformId, modelName }: { platformId: string, modelName?: string | null }): Promise<ChatAiConfig> {
         const cached = aiConfigCache.get(platformId)
         if (cached && cached.expiresAt > Date.now()) {
-            return cached.config
+            return { ...cached.config, model: modelName ?? ChatSandboxConfig.model.DEFAULT }
         }
-        const config = await resolveChatAiConfig({ platformId, log })
+        const config = await resolveChatAiConfig({ platformId, modelName, log })
         aiConfigCache.set(platformId, { config, expiresAt: Date.now() + AI_CONFIG_TTL_MS })
         return config
     },
@@ -175,12 +189,14 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api'
 
-async function resolveChatAiConfig({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<ChatAiConfig> {
+async function resolveChatAiConfig({ platformId, modelName, log }: { platformId: string, modelName?: string | null, log: FastifyBaseLogger }): Promise<ChatAiConfig> {
+    const model = modelName ?? ChatSandboxConfig.model.DEFAULT
+
     const openRouterConfig = await resolveProviderApiKey({ platformId, provider: AIProviderName.ACTIVEPIECES, log })
     if (openRouterConfig) {
         return {
             agent: ChatSandboxConfig.agent.CLAUDE,
-            model: ChatSandboxConfig.model.OPUS_1M,
+            model,
             envs: {
                 [ChatSandboxConfig.envVar.ANTHROPIC_API_KEY]: openRouterConfig,
                 [ChatSandboxConfig.envVar.ANTHROPIC_BASE_URL]: OPENROUTER_BASE_URL,
@@ -192,7 +208,7 @@ async function resolveChatAiConfig({ platformId, log }: { platformId: string, lo
     if (anthropicApiKey) {
         return {
             agent: ChatSandboxConfig.agent.CLAUDE,
-            model: ChatSandboxConfig.model.OPUS_1M,
+            model,
             envs: {
                 [ChatSandboxConfig.envVar.ANTHROPIC_API_KEY]: anthropicApiKey,
             },
@@ -205,15 +221,15 @@ async function resolveChatAiConfig({ platformId, log }: { platformId: string, lo
     })
 }
 
-async function destroySandboxAndCleanup({ sessionId, getChatAiConfig, log }: {
+async function destroySessionAndCleanup({ sessionId, userId, log }: {
     sessionId: string
-    getChatAiConfig: () => Promise<ChatAiConfig>
+    userId: string
     log: FastifyBaseLogger
 }): Promise<void> {
-    const { data: aiConfig } = await tryCatch(getChatAiConfig)
-    if (aiConfig) {
-        await chatSandboxAgent.destroySession({ sessionId, aiConfig }).catch((err) => {
-            log.warn({ err, sessionId }, 'Failed to destroy E2B sandbox session')
+    const sandboxId = await userSandboxService.getSandboxId({ userId })
+    if (sandboxId) {
+        await chatSandboxAgent.destroySession({ sessionId, sandboxId }).catch((err) => {
+            log.warn({ err, sessionId }, 'Failed to destroy E2B session')
         })
     }
     await chatSessionCleanup.deleteSessionData({ sessionId }).catch((err) => {
@@ -291,6 +307,14 @@ type EnsureSessionParams = {
     projectId: string
     userId: string
     platformId: string
+}
+
+type EnsureSessionResult = {
+    conversation: ChatConversation
+    liveSession?: {
+        session: import('sandbox-agent').Session
+        sandboxId: string
+    }
 }
 
 type DeleteConversationParams = {
