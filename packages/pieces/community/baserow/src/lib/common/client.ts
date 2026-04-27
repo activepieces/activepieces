@@ -36,6 +36,23 @@ export class BaserowClient {
     private authHeader: string
   ) { }
 
+  static async getJwtToken({
+    apiUrl,
+    email,
+    password,
+  }: {
+    apiUrl: string;
+    email: string;
+    password: string;
+  }): Promise<string> {
+    const res = await httpClient.sendRequest<{ token: string }>({
+      method: HttpMethod.POST,
+      url: `${apiUrl}/api/user/token-auth/`,
+      body: { email, password },
+    });
+    return res.body.token;
+  }
+
   async makeRequest<T extends HttpMessageBody>(
     method: HttpMethod,
     url: string,

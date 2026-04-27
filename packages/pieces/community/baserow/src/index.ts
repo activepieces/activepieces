@@ -20,7 +20,20 @@ import { rowDeletedTrigger } from './lib/triggers/row-deleted';
 import { rowsCreatedTrigger } from './lib/triggers/rows-created';
 import { rowsUpdatedTrigger } from './lib/triggers/rows-updated';
 import { rowsDeletedTrigger } from './lib/triggers/rows-deleted';
-import { baserowAuth } from './lib/auth';
+import { baserowAuth, baserowAuthHelpers, BaserowAuthValue } from './lib/auth';
+import { BaserowClient } from './lib/common/client';
+
+async function buildCustomApiAuthHeader(auth: BaserowAuthValue): Promise<{ Authorization: string }> {
+  if (baserowAuthHelpers.isJwtAuth(auth)) {
+    const jwt = await BaserowClient.getJwtToken({
+      apiUrl: auth.props.apiUrl,
+      email: auth.props.email,
+      password: auth.props.password,
+    });
+    return { Authorization: `JWT ${jwt}` };
+  }
+  return { Authorization: `Token ${auth.props.token}` };
+}
 
 export const baserow = createPiece({
   displayName: 'Baserow',
@@ -50,9 +63,7 @@ export const baserow = createPiece({
         return auth.props.apiUrl;
       },
       auth: baserowAuth,
-      authMapping: async (auth) => {
-        return { Authorization: `Token ${auth.props.token}` };
-      },
+      authMapping: buildCustomApiAuthHeader,
     }),
   ],
   triggers: [

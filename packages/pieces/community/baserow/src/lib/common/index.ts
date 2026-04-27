@@ -6,6 +6,7 @@ import {
 import {
   baserowAuth,
   BaserowAuthValue,
+  baserowAuthHelpers,
 } from '../auth';
 import { BaserowClient } from './client';
 import { BaserowFieldType } from './constants';
@@ -13,6 +14,14 @@ import { BaserowFieldType } from './constants';
 export async function makeClient(
   auth: BaserowAuthValue
 ): Promise<BaserowClient> {
+  if (baserowAuthHelpers.isJwtAuth(auth)) {
+    const jwt = await BaserowClient.getJwtToken({
+      apiUrl: auth.props.apiUrl,
+      email: auth.props.email,
+      password: auth.props.password,
+    });
+    return new BaserowClient(auth.props.apiUrl, `JWT ${jwt}`);
+  }
   return new BaserowClient(auth.props.apiUrl, `Token ${auth.props.token}`);
 }
 
