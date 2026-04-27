@@ -221,14 +221,11 @@ export const notionCommon = {
                 );
             }
           } catch (e) {
-            console.error(
-              'Notion: could not generate dynamic input property',
-              e
-            );
+            // skip properties that can't be mapped to an input field
           }
         }
       } catch (e) {
-        console.debug(e);
+        // return empty fields if database metadata can't be fetched
       }
       return fields;
     },
@@ -300,14 +297,11 @@ export const notionCommon = {
                 );
             }
           } catch (e) {
-            console.error(
-              'Notion: could not generate dynamic filter property',
-              e
-            );
+            // skip properties that can't be mapped to a filter field
           }
         }
       } catch (e) {
-        console.debug(e);
+        // return empty fields if database metadata can't be fetched
       }
       return fields;
     },
