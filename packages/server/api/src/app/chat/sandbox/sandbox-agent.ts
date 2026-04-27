@@ -83,7 +83,7 @@ async function createSession({ aiConfig, mcpServerUrl, mcpToken }: CreateSession
             cwd: '/tmp',
             mcpServers: mcpServerUrl && mcpToken
                 ? [{
-                    type: 'http' as const,
+                    type: 'http',
                     name: 'activepieces',
                     url: mcpServerUrl,
                     headers: [
@@ -205,7 +205,7 @@ async function getSessionHistory({ sessionId }: { sessionId: string }): Promise<
 
         if (event.sender === 'client' && payload.method === 'session/prompt') {
             if (inAssistantMessage) {
-                pushAssistantMessage(messages, currentAssistantText, currentThoughts, currentToolCalls)
+                pushAssistantMessage({ messages, content: currentAssistantText, thoughts: currentThoughts, toolCalls: currentToolCalls })
                 currentAssistantText = ''
                 currentThoughts = ''
                 currentToolCalls = []
@@ -263,7 +263,7 @@ async function getSessionHistory({ sessionId }: { sessionId: string }): Promise<
     }
 
     if (inAssistantMessage) {
-        pushAssistantMessage(messages, currentAssistantText, currentThoughts, currentToolCalls)
+        pushAssistantMessage({ messages, content: currentAssistantText, thoughts: currentThoughts, toolCalls: currentToolCalls })
     }
 
     return messages
@@ -285,12 +285,12 @@ function stripHistoryReplay(text: string): string {
     return text
 }
 
-function pushAssistantMessage(
-    messages: ChatHistoryMessage[],
-    content: string,
-    thoughts: string,
-    toolCalls: ChatHistoryToolCall[],
-): void {
+function pushAssistantMessage({ messages, content, thoughts, toolCalls }: {
+    messages: ChatHistoryMessage[]
+    content: string
+    thoughts: string
+    toolCalls: ChatHistoryToolCall[]
+}): void {
     const cleaned = stripHistoryReplay(content)
     if (!cleaned && !thoughts && toolCalls.length === 0) return
     messages.push({
@@ -319,7 +319,10 @@ async function resumeSession({ sessionId, aiConfig }: SessionParams): Promise<Se
 
 // sandbox-agent only exports ESM (no CJS). TypeScript compiles import() to require() which breaks it.
 // eslint-disable-next-line @typescript-eslint/no-implied-eval
-const esmImport = new Function('specifier', 'return import(specifier)') as <T>(specifier: string) => Promise<T>
+const rawImport = new Function('specifier', 'return import(specifier)')
+function esmImport<T>(specifier: string): Promise<T> {
+    return rawImport(specifier)
+}
 
 export const SandboxSessionUpdateType = {
     AGENT_MESSAGE_CHUNK: 'agent_message_chunk',
