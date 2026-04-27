@@ -137,7 +137,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 execute: async ({ writer }) => {
                     writer.write({ type: 'start' })
 
-                    const { session, sdk, newSandboxId } = liveSession
+                    const { session, newSandboxId } = liveSession
                         ? { ...liveSession, newSandboxId: null }
                         : await chatSandboxAgent.resumeSession({
                             sessionId: conversation.sandboxSessionId!,
