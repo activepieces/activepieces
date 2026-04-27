@@ -70,9 +70,6 @@ export const generateContentFromImageAction = createAction({
         text: response.text(),
         raw: response,
       };
-    } catch (error) {
-      console.error('Error in generate content from image:', error);
-      throw error;
     } finally {
       await fs.unlink(tempFilePath).catch(() => void 0);
     }

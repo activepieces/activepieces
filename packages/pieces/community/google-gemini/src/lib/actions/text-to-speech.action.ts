@@ -74,41 +74,35 @@ export const textToSpeechAction = createAction({
   async run(context) {
     const { text, model, voice } = context.propsValue;
 
-    try {
-      const genAI = new GoogleGenAI({ apiKey: context.auth.secret_text });
+    const genAI = new GoogleGenAI({ apiKey: context.auth.secret_text });
 
-      const response = await genAI.models.generateContent({
-        model,
-        contents: [{ parts: [{ text }] }],
-        config: {
-          responseModalities: ['AUDIO'],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: voice },
-            },
+    const response = await genAI.models.generateContent({
+      model,
+      contents: [{ parts: [{ text }] }],
+      config: {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: voice },
           },
         },
-      });
+      },
+    });
 
-      const data =
-        response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    const data =
+      response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
 
-      if (!data) {
-        throw new Error('No audio data returned from model response.');
-      }
-
-      const pcmBuffer = Buffer.from(data, 'base64');
-      const wavBuffer = await pcmToWavBuffer(pcmBuffer, 1, 24000, 2);
-
-      return await context.files.write({
-        data: wavBuffer,
-        fileName: 'audio.wav',
-      });
-
-    } catch (error) {
-      console.error('Error in generate content from image:', error);
-      throw error;
+    if (!data) {
+      throw new Error('No audio data returned from model response.');
     }
+
+    const pcmBuffer = Buffer.from(data, 'base64');
+    const wavBuffer = await pcmToWavBuffer(pcmBuffer, 1, 24000, 2);
+
+    return await context.files.write({
+      data: wavBuffer,
+      fileName: 'audio.wav',
+    });
   },
 });
 

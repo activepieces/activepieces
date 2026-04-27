@@ -81,9 +81,6 @@ export const generateContentWithFileSearchAction = createAction({
       });
 
       return response.text;
-    } catch (error) {
-      console.error('Error in generate content:', error);
-      throw error;
     } finally {
       await fs.unlink(tempFilePath).catch(() => void 0);
     }
