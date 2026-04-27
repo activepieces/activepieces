@@ -1,8 +1,9 @@
+import { PropertyType } from '@activepieces/pieces-framework'
 import {
     AgentPieceProps,
     AgentProviderModelSchema,
+    aiPieceSupportsWebSearch,
     AIProviderModelType,
-    AIProviderName,
     FlowActionType,
     FlowOperationRequest,
     FlowOperationType,
@@ -13,7 +14,9 @@ import {
     ProjectId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { findCompatiblePieceVersion } from './ai-piece-version-resolver'
+import { DynamicSchemaCache, dynamicSchemaResolver } from './dynamic-schema-resolver'
 
 export async function planFlowVersionChanges({
     flowVersion,
@@ -22,6 +25,7 @@ export async function planFlowVersionChanges({
     aiProviderModelType,
     platformId,
     projectId,
+    cache,
     log,
 }: PlanFlowVersionChangesParams): Promise<PlannedStepChange[]> {
     const scopedActionNames = aiProviderModelType === AIProviderModelType.IMAGE
@@ -65,22 +69,77 @@ export async function planFlowVersionChanges({
             continue
         }
 
+        const piecePackage = await getPiecePackageWithoutArchive(log, platformId, {
+            pieceName: step.settings.pieceName,
+            pieceVersion: resolved.pieceVersion,
+        })
+        const targetMetadata = await pieceMetadataService(log).getOrThrow({
+            name: step.settings.pieceName,
+            version: resolved.pieceVersion,
+            platformId,
+        })
+        const targetActionProps = targetMetadata.actions[actionName]?.props ?? {}
+        const isWebSearchAware = AgentPieceProps.WEB_SEARCH in targetActionProps
+
         let newInput: Record<string, unknown> = withProviderModel({ input, actionName, targetModel })
 
         let clearedAdvancedOptions = false
         let disabledWebSearch = false
 
-        if (actionName === 'generateImage' && sourceModel.provider !== targetModel.provider) {
-            newInput = { ...newInput, advancedOptions: {} }
-            clearedAdvancedOptions = true
-        }
-
-        if (WEB_SEARCH_AWARE_ACTIONS.includes(actionName)) {
-            const currentWebSearch = Boolean(newInput.webSearch)
-            if (currentWebSearch && !providerSupportsWebSearch(resolved.effectiveTargetProvider)) {
-                newInput = { ...newInput, webSearch: false, webSearchOptions: {} }
+        if (isWebSearchAware) {
+            const currentWebSearch = Boolean(newInput[AgentPieceProps.WEB_SEARCH])
+            if (currentWebSearch && !aiPieceSupportsWebSearch(resolved.effectiveTargetProvider)) {
+                newInput = { ...newInput, [AgentPieceProps.WEB_SEARCH]: false }
                 disabledWebSearch = true
             }
+        }
+
+        const fieldsTouched = fieldsTouchedByMigration(actionName, disabledWebSearch)
+        const targetLabel = `${resolved.effectiveTargetProvider}/${targetModel.model}`
+
+        let blockedReason: string | undefined
+        for (const [propName, propMeta] of Object.entries(targetActionProps)) {
+            if (propMeta.type !== PropertyType.DYNAMIC) {
+                continue
+            }
+            const refreshers = propMeta.refreshers ?? []
+            if (!refreshersIntersect(refreshers, fieldsTouched)) {
+                continue
+            }
+            const resolvedSchema = await dynamicSchemaResolver.resolve({
+                cache,
+                piece: piecePackage,
+                actionName,
+                propName,
+                refreshers,
+                input: newInput,
+                platformId,
+                projectId,
+                log,
+            })
+            const merged = dynamicSchemaResolver.merge({
+                schema: resolvedSchema,
+                oldMap: input[propName] as Record<string, unknown> | undefined,
+                propName,
+                stepName: step.name,
+                targetLabel,
+            })
+            if (merged.verdict === 'blocked') {
+                blockedReason = merged.reason
+                break
+            }
+            newInput = { ...newInput, [propName]: merged.resolved }
+            if (propName === 'advancedOptions') {
+                clearedAdvancedOptions = true
+            }
+        }
+
+        if (!isNil(blockedReason)) {
+            changes.push({
+                stepName: step.name,
+                error: blockedReason,
+            })
+            continue
         }
 
         const { sampleData: _sampleData, ...settingsWithoutSampleData } = step.settings
@@ -142,12 +201,22 @@ function withProviderModel({ input, actionName, targetModel }: {
     return { ...input, provider: targetModel.provider, model: targetModel.model }
 }
 
-function providerSupportsWebSearch(provider: AIProviderName): boolean {
-    return !PROVIDERS_WITHOUT_WEB_SEARCH.has(provider)
-}
-
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function fieldsTouchedByMigration(actionName: string, disabledWebSearch: boolean): Set<string> {
+    const fields = new Set<string>(
+        actionName === RUN_AGENT_ACTION ? [AgentPieceProps.AI_PROVIDER_MODEL] : ['provider', 'model'],
+    )
+    if (disabledWebSearch) {
+        fields.add(AgentPieceProps.WEB_SEARCH)
+    }
+    return fields
+}
+
+function refreshersIntersect(refreshers: string[], fieldsTouched: Set<string>): boolean {
+    return refreshers.some((r) => fieldsTouched.has(r))
 }
 
 export type PlannedStepChange =
@@ -168,17 +237,10 @@ export type PlanFlowVersionChangesParams = {
     aiProviderModelType: AIProviderModelType
     platformId: PlatformId
     projectId: ProjectId
+    cache: DynamicSchemaCache
     log: FastifyBaseLogger
 }
 
 const RUN_AGENT_ACTION = 'run_agent'
 const TEXT_ACTION_NAMES = ['askAi', 'summarizeText', 'classifyText', 'extractStructuredData', RUN_AGENT_ACTION]
 const IMAGE_ACTION_NAMES = ['generateImage']
-const WEB_SEARCH_AWARE_ACTIONS = ['askAi', RUN_AGENT_ACTION]
-
-const PROVIDERS_WITHOUT_WEB_SEARCH: ReadonlySet<AIProviderName> = new Set([
-    AIProviderName.AZURE,
-    AIProviderName.CUSTOM,
-    AIProviderName.BEDROCK,
-    AIProviderName.CLOUDFLARE_GATEWAY,
-])

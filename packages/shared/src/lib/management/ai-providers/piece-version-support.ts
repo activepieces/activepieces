@@ -11,3 +11,19 @@ export const AI_PIECE_PROVIDER_INTRODUCED_AT: Record<AIProviderName, string> = {
     [AIProviderName.CUSTOM]: '0.0.4',
     [AIProviderName.BEDROCK]: '0.3.6',
 }
+
+export const AI_PIECE_PROVIDERS_WITH_TOOL_BASED_WEB_SEARCH: ReadonlyArray<AIProviderName> = [
+    AIProviderName.OPENAI,
+    AIProviderName.ANTHROPIC,
+    AIProviderName.GOOGLE,
+]
+
+export const AI_PIECE_PROVIDERS_WITH_OPENROUTER_WEB_SEARCH: ReadonlyArray<AIProviderName> = [
+    AIProviderName.OPENROUTER,
+    AIProviderName.ACTIVEPIECES,
+]
+
+export function aiPieceSupportsWebSearch(provider: AIProviderName): boolean {
+    return AI_PIECE_PROVIDERS_WITH_TOOL_BASED_WEB_SEARCH.includes(provider)
+        || AI_PIECE_PROVIDERS_WITH_OPENROUTER_WEB_SEARCH.includes(provider)
+}

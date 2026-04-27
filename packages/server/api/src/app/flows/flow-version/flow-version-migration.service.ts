@@ -38,6 +38,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { flowExecutionCache } from '../flow/flow-execution-cache'
 import { flowRepo } from '../flow/flow.repo'
 import { planFlowVersionChanges, PlannedStepChange } from './ai-migration-planner'
+import { dynamicSchemaResolver } from './dynamic-schema-resolver'
 import { FlowMigrationEntity } from './flow-migration.entity'
 import { flowVersionBackupService } from './flow-version-backup.service'
 import { flowVersionRepo } from './flow-version.service'
@@ -90,21 +91,27 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         request: MigrateFlowsModelRequest
         reqLog: FastifyBaseLogger
     }): Promise<FlowMigration> {
+        await assertNoActiveMigrationJob({ jobId: `migrate-flow-model-${platformId}`, reqLog })
         switch (request.type) {
-            case 'AI_PROVIDER_MODEL_REVERT':
+            case FlowMigrationType.AI_PROVIDER_MODEL_REVERT:
                 return enqueueAiProviderModelRevert({
                     platformId,
                     userId,
                     revertOfMigrationId: request.revertOfMigrationId,
                     reqLog,
                 })
-            case 'AI_PROVIDER_MODEL':
+            case FlowMigrationType.AI_PROVIDER_MODEL:
                 await assertModelTypeMatches({ log: reqLog, platformId, request })
                 return enqueueAiProviderModelMigration({
                     platformId,
                     userId,
                     request,
                     reqLog,
+                })
+            default:
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: 'Invalid migration type' },
                 })
         }
     },
@@ -119,6 +126,8 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         const BATCH_SIZE = 100
         const migratedVersions: MigratedVersionEntry[] = []
         const failedFlowVersions: FailedFlowVersionEntry[] = []
+
+        const cache = dynamicSchemaResolver.createCache()
 
         const { error: handlerError } = await tryCatch(async () => {
             const targetRows = await flowVersionRepo()
@@ -175,6 +184,7 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                         aiProviderModelType,
                         platformId,
                         projectId,
+                        cache,
                         log,
                     })
 
@@ -427,7 +437,6 @@ async function enqueueAiProviderModelMigration({ platformId, userId, request, re
     reqLog: FastifyBaseLogger
 }): Promise<FlowMigration> {
     const jobId = `migrate-flow-model-${platformId}`
-    await assertNoActiveMigrationJob({ jobId, reqLog })
     const migrationId = apId()
     const migration = await migrationRepo().save({
         id: migrationId,
@@ -498,7 +507,6 @@ async function enqueueAiProviderModelRevert({ platformId, userId, revertOfMigrat
     }
 
     const jobId = `migrate-flow-model-${platformId}`
-    await assertNoActiveMigrationJob({ jobId, reqLog })
 
     const migrationId = apId()
     const request: MigrateFlowsModelRequest = {
