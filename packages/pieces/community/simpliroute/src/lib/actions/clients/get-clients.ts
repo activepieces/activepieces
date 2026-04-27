@@ -21,7 +21,6 @@ export const get_clients = createAction({
             queryString += (queryString ? '&' : '?') + 'key=' + context.propsValue.key;
         }
         const url = `${API_BASE_URL}/v1/accounts/clients/${queryString}`;
-        console.log(url);
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url,
