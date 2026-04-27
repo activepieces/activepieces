@@ -188,6 +188,7 @@ export const recordPayment = createAction({
 
     const body = wafeqHelpers.stripEmpty({
       amount: p.amount,
+      amount_to_pcy: p.amount_to_pcy,
       currency: p.currency,
       date: wafeqHelpers.toDate(p.date as string),
       paid_through_account: p.paid_through_account,
