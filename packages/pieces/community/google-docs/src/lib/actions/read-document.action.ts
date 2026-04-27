@@ -23,8 +23,7 @@ export const readDocument = createAction({
     });
 
     if (response.status !== 200) {
-      console.error(response);
-      throw new Error('Error reading document');
+      throw new Error(`Error reading document: status ${response.status}`);
     }
 
     return response.data;
