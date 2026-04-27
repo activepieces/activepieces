@@ -49,13 +49,13 @@ function fileToBase64(
   });
 }
 
-export function deriveToolStatus(state: string): ToolCallItem['status'] {
+function deriveToolStatus(state: string): ToolCallItem['status'] {
   if (state === 'output-available') return 'completed';
   if (state === 'output-error') return 'failed';
   return 'running';
 }
 
-export function extractDynamicToolOutput(part: {
+function extractDynamicToolOutput(part: {
   state: string;
   output?: unknown;
   errorText?: string;
@@ -71,9 +71,7 @@ export function extractDynamicToolOutput(part: {
   return undefined;
 }
 
-export function convertUIMessagesToItems(
-  messages: UIMessage[],
-): ChatMessageItem[] {
+function convertUIMessagesToItems(messages: UIMessage[]): ChatMessageItem[] {
   return messages
     .filter(
       (msg): msg is UIMessage & { role: 'user' | 'assistant' } =>
@@ -129,9 +127,7 @@ export function convertUIMessagesToItems(
     });
 }
 
-export function mapHistoryToUIMessages(
-  data: ChatHistoryMessage[],
-): UIMessage[] {
+function mapHistoryToUIMessages(data: ChatHistoryMessage[]): UIMessage[] {
   return data.map((msg, idx) => {
     const parts: UIMessage['parts'] = [];
     if (msg.thoughts) {

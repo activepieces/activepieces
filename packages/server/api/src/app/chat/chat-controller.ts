@@ -19,6 +19,11 @@ import { ChatUIMessage, createHistoryReplayFilter, createStreamWriter } from './
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
 
+function isExpectedStreamError(error: unknown): boolean {
+    if (!(error instanceof Error)) return false
+    return (error as NodeJS.ErrnoException).code === 'ECONNRESET' || error.name === 'SandboxDestroyedError'
+}
+
 export const chatController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/warm', WarmRoute, async (request) => {
@@ -190,9 +195,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 writer.write({ type: 'finish', finishReason: 'stop' })
             },
             onError: (error) => {
-                const isClientDisconnect = error instanceof Error && (error as NodeJS.ErrnoException).code === 'ECONNRESET'
-                const isSandboxDestroyed = error instanceof Error && error.name === 'SandboxDestroyedError'
-                if (isClientDisconnect || isSandboxDestroyed) {
+                if (isExpectedStreamError(error)) {
                     log.debug({ err: error }, 'Chat stream ended (client disconnect or session cancelled)')
                 }
                 else {
@@ -212,8 +215,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         catch (err) {
-            const isAbort = err instanceof Error && (err as NodeJS.ErrnoException).code === 'ECONNRESET'
-            if (!isAbort) {
+            if (!isExpectedStreamError(err)) {
                 log.error({ err }, 'Failed to pipe chat stream')
             }
         }

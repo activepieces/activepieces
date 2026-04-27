@@ -63,7 +63,7 @@ export function ToolCallGroup({
   );
 }
 
-export function groupToolCallsByPhase(
+function groupToolCallsByPhase(
   toolCalls: ToolCallItem[],
 ): Array<{ label: string; tools: ToolCallItem[] }> {
   const visible = toolCalls.filter((tc) => !isUtilityTool(tc.title || tc.name));
@@ -106,7 +106,7 @@ function mergeConsecutiveGroups(
   return merged;
 }
 
-export function describeToolCalls(toolCalls: ToolCallItem[]): string {
+function describeToolCalls(toolCalls: ToolCallItem[]): string {
   const contexts: string[] = [];
   let primaryAction = '';
 
@@ -176,7 +176,7 @@ export function describeToolCalls(toolCalls: ToolCallItem[]): string {
   }
 }
 
-export function isUtilityTool(name: string): boolean {
+function isUtilityTool(name: string): boolean {
   const lower = name.toLowerCase();
   return lower.includes('toolsearch') || lower.includes('tool_search');
 }
