@@ -23,11 +23,9 @@ root.render(
     <ClerkProvider
       publishableKey={CLERK_PUBLISHABLE_KEY}
       appearance={otom8ClerkAppearance}
-      isSatellite
-      domain={new URL(OTOM8_SITE_URL).hostname}
-      signInUrl={`${OTOM8_SITE_URL}/login`}
-      signUpUrl={`${OTOM8_SITE_URL}/login`}
-      afterSignOutUrl={`${OTOM8_SITE_URL}/auth/signout`}
+      signInUrl="/login"
+      signUpUrl="/login"
+      afterSignOutUrl="/login"
     >
       <App />
     </ClerkProvider>

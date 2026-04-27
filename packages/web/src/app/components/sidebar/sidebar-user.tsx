@@ -36,7 +36,6 @@ import {
 } from '@/components/ui/sidebar-shadcn';
 import { userHooks } from '@/hooks/user-hooks';
 import { otom8ClerkAppearance } from '@/lib/otom8-clerk-appearance';
-import { OTOM8_SITE_URL } from '@/lib/otom8-site-url';
 
 export function SidebarUser() {
   const { embedState } = useEmbedding();
@@ -64,7 +63,7 @@ export function SidebarUser() {
     }
     if (lastOrgRef.current !== current) {
       lastOrgRef.current = current;
-      window.location.replace(`${OTOM8_SITE_URL}/api/ap-sso`);
+      window.location.replace('/api/ap-sso');
     }
   }, [organization?.id]);
 
@@ -82,9 +81,9 @@ export function SidebarUser() {
 
   const handleSignOut = () => {
     if (clerkUser) {
-      signOut({ redirectUrl: `${OTOM8_SITE_URL}/auth/signout` });
+      signOut({ redirectUrl: '/login' });
     } else {
-      window.location.replace(`${OTOM8_SITE_URL}/auth/signout`);
+      window.location.replace('/login');
     }
   };
 
@@ -135,7 +134,7 @@ export function SidebarUser() {
                 onClick={() =>
                   clerkUser
                     ? setAccountOpen(true)
-                    : window.location.replace(`${OTOM8_SITE_URL}/login`)
+                    : window.location.replace('/login')
                 }
               >
                 <Settings className="mr-2 h-4 w-4" />
@@ -246,7 +245,7 @@ export function SidebarUser() {
           <DialogContent className="max-w-lg p-0 overflow-hidden">
             <CreateOrganization
               appearance={otom8ClerkAppearance}
-              afterCreateOrganizationUrl={`${OTOM8_SITE_URL}/api/ap-sso`}
+              afterCreateOrganizationUrl="/api/ap-sso"
             />
           </DialogContent>
         </Dialog>

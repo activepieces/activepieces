@@ -14,6 +14,9 @@ services:
       - AP_CONTAINER_TYPE=APP
       - OTOM8_DISABLE_NATIVE_AUTH=true
       - DEPLOY_ENV=prod
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - AP_SIGNING_KEY_ID=${AP_SIGNING_KEY_ID}
+      - AP_SIGNING_KEY_PRIVATE=${AP_SIGNING_KEY_PRIVATE}
     volumes:
       - ./cache:/usr/src/app/cache
       - ./nginx.conf:/etc/nginx/nginx.conf:ro

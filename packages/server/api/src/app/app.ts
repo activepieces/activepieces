@@ -30,6 +30,7 @@ import { domainHelper } from './ee/custom-domains/domain-helper'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
+import { apSsoModule } from './ee/ap-sso/ap-sso.module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
@@ -263,6 +264,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(signingKeyModule)
             await app.register(authnSsoSamlModule)
             await app.register(managedAuthnModule)
+            await app.register(apSsoModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
             await app.register(otpModule)
@@ -292,6 +294,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(signingKeyModule)
             await app.register(authnSsoSamlModule)
             await app.register(managedAuthnModule)
+            await app.register(apSsoModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
             await app.register(otpModule)
