@@ -46,7 +46,7 @@ export const freshdesk = createPiece({
      baseUrl: (auth) => (auth?.props.base_url ?? ''),
       auth: freshdeskAuth,
       authMapping: async (auth) => ({
-        Authorization: (auth.props.access_token),
+        Authorization: `Basic ${Buffer.from(auth.props.access_token + ':X').toString('base64')}`,
       }),
     }),
   ],

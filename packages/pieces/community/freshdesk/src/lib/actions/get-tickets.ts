@@ -13,7 +13,7 @@ export const getTickets = createAction({
     const FDapiToken = context.auth.props.access_token;
 
     const headers = {
-      Authorization: FDapiToken,
+      Authorization: `Basic ${Buffer.from(FDapiToken + ':X').toString('base64')}`,
       'Content-Type': 'application/json',
     };
 
