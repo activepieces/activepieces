@@ -8,13 +8,16 @@ import {
   ChainOfThoughtStep,
   ChainOfThoughtTrigger,
 } from '@/components/prompt-kit/chain-of-thought';
-import { ChatUIMessage } from '@/features/chat/lib/chat-types';
 import {
   extractToolContext,
   ToolCallCard,
 } from '@/features/chat/components/tool-call-card';
+import { ChatUIMessage } from '@/features/chat/lib/chat-types';
 
-type DynamicToolPart = Extract<ChatUIMessage['parts'][number], { type: 'dynamic-tool' }>;
+type DynamicToolPart = Extract<
+  ChatUIMessage['parts'][number],
+  { type: 'dynamic-tool' }
+>;
 
 const PENDING_STATES = new Set([
   'input-streaming',
@@ -39,7 +42,7 @@ export function ToolCallGroup({
   isStreaming?: boolean;
 }) {
   const dynamicParts = toolParts.filter(
-    (p): p is DynamicToolPart => p.type === 'dynamic-tool',
+    (p): p is DynamicToolPart => p.type === 'dynamic-tool'
   );
 
   const groups = groupToolPartsByPhase(dynamicParts);
@@ -83,7 +86,7 @@ export function ToolCallGroup({
 }
 
 function groupToolPartsByPhase(
-  parts: DynamicToolPart[],
+  parts: DynamicToolPart[]
 ): Array<{ label: string; tools: DynamicToolPart[] }> {
   const visible = parts.filter((p) => !isUtilityTool(p.title ?? p.toolName));
   if (visible.length === 0) return [];
@@ -110,10 +113,12 @@ function groupToolPartsByPhase(
 }
 
 function mergeConsecutiveGroups(
-  groups: Array<{ label: string; tools: DynamicToolPart[] }>,
+  groups: Array<{ label: string; tools: DynamicToolPart[] }>
 ): Array<{ label: string; tools: DynamicToolPart[] }> {
   if (groups.length <= 1) return groups;
-  const merged: Array<{ label: string; tools: DynamicToolPart[] }> = [groups[0]];
+  const merged: Array<{ label: string; tools: DynamicToolPart[] }> = [
+    groups[0],
+  ];
   for (let i = 1; i < groups.length; i++) {
     const prev = merged[merged.length - 1];
     if (groups[i].label === prev.label) {

@@ -13,13 +13,16 @@ import { ChatUIMessage } from '@/features/chat/lib/chat-types';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
-type DynamicToolPart = Extract<ChatUIMessage['parts'][number], { type: 'dynamic-tool' }>;
+type DynamicToolPart = Extract<
+  ChatUIMessage['parts'][number],
+  { type: 'dynamic-tool' }
+>;
 
 type ToolStatus = 'running' | 'completed' | 'failed' | 'stopped';
 
 function humanizePieceName(raw: string): string {
   return formatUtils.convertEnumToHumanReadable(
-    raw.replace(/^@activepieces\/piece-/, '').replace(/-/g, '_'),
+    raw.replace(/^@activepieces\/piece-/, '').replace(/-/g, '_')
   );
 }
 
@@ -47,7 +50,7 @@ export function extractToolContext({
   }
   if (typeof input.query === 'string' && parts.length === 0) {
     parts.push(
-      `"${input.query.slice(0, 30)}${input.query.length > 30 ? '…' : ''}"`,
+      `"${input.query.slice(0, 30)}${input.query.length > 30 ? '…' : ''}"`
     );
   }
   if (
@@ -85,7 +88,7 @@ function formatToolLabel({ part }: { part: DynamicToolPart }): string {
   const mcpMatch = /^mcp__[^_]+__(.+)$/.exec(raw);
   const name = mcpMatch ? mcpMatch[1] : raw;
   const baseName = formatUtils.convertEnumToHumanReadable(
-    name.replace(/^ap_/, ''),
+    name.replace(/^ap_/, '')
   );
 
   const input = isObject(part.input) ? part.input : undefined;
