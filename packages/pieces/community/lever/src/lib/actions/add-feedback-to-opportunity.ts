@@ -266,11 +266,8 @@ export const addFeedbackToOpportunity = createAction({
               mappedField.buildActivepieceType(fields, field);
             }
           );
-        } catch (e) {
-          console.error(
-            'Unexpected error while building dynamic properties',
-            e
-          );
+        } catch {
+          // Return whatever fields were built before the failure
         }
         return fields;
       },
