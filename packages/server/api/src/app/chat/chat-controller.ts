@@ -16,6 +16,7 @@ import { securityAccess } from '../core/security/authorization/fastify-security'
 import { chatService } from './chat-service'
 import { chatSandboxAgent } from './sandbox/sandbox-agent'
 import { ChatUIMessage, createHistoryReplayFilter, createStreamWriter } from './sandbox/stream-adapter'
+import { userSandboxService } from './user-sandbox-service'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
 
@@ -27,7 +28,13 @@ function isExpectedStreamError(error: unknown): boolean {
 export const chatController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/warm', WarmRoute, async (request) => {
-        return { configured: chatService(request.log).isSandboxConfigured() }
+        const configured = chatService(request.log).isSandboxConfigured()
+        if (configured) {
+            void chatService(request.log).getChatAiConfig({ platformId: request.principal.platform.id }).then((aiConfig) =>
+                userSandboxService.getOrCreate({ userId: request.principal.id, platformId: request.principal.platform.id, aiConfig }),
+            ).catch(() => undefined)
+        }
+        return { configured }
     })
 
     app.post('/conversations', CreateConversationRoute, async (request, reply) => {
@@ -107,117 +114,127 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             userId,
             platformId,
         })
-        if (!conversation.sandboxSessionId) {
+
+        const service = chatService(log)
+        const [aiConfig, systemPrompt, sandboxId] = await Promise.all([
+            service.getChatAiConfig({ platformId }),
+            service.buildSystemPrompt({ projectId }),
+            userSandboxService.getSandboxId({ userId }),
+        ])
+
+        if (!sandboxId) {
             return reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
-                error: 'Failed to create sandbox session',
+                error: 'User sandbox not found',
             })
         }
-        const sandboxSessionId = conversation.sandboxSessionId
 
-        await reply.hijack()
-
-        const stream = createUIMessageStream<ChatUIMessage>({
-            execute: async ({ writer }) => {
-                writer.write({ type: 'start' })
-
-                // Must be shorter than common reverse-proxy idle timeouts (nginx 60s, ngrok 60s) to prevent SSE drops
-                const KEEPALIVE_INTERVAL_MS = 25_000
-                const keepalive = setInterval(() => {
-                    writer.write({ type: 'data-usage', data: { inputTokens: 0, outputTokens: 0 }, transient: true })
-                }, KEEPALIVE_INTERVAL_MS)
-
-                const service = chatService(log)
-                const [aiConfig, systemPrompt] = await Promise.all([
-                    service.getChatAiConfig({ platformId }),
-                    service.buildSystemPrompt({ projectId }),
-                ])
-
-                const session = await chatSandboxAgent.resumeSession({
-                    sessionId: sandboxSessionId,
-                    aiConfig,
-                })
-
-                const historyReplayFilter = createHistoryReplayFilter()
-                let pendingTitle = ''
-                const streamWriter = createStreamWriter({
-                    writer,
-                    textPartId: 'text',
-                    reasoningPartId: 'reasoning',
-                    onSessionTitle: (title) => {
-                        pendingTitle = title
-                    },
-                })
-                let unsubscribe: (() => void) | undefined
-                let promptCompleted = false
-
-                try {
-                    await new Promise<void>((resolve, reject) => {
-                        unsubscribe = session.onEvent((event) => {
-                            if (event.sender !== 'agent') return
-
-                            const payload: unknown = event.payload
-                            if (!isObject(payload) || payload.method !== 'session/update') return
-                            if (!isObject(payload.params)) return
-
-                            const update = payload.params.update
-                            if (!isObject(update)) return
-
-                            if (historyReplayFilter.shouldSuppress(update)) return
-
-                            streamWriter.write(update)
-                        })
-
-                        reply.raw.on('close', () => {
-                            resolve()
-                        })
-
-                        chatSandboxAgent.sendPrompt({ session, text: content, systemPrompt, files })
-                            .then(() => {
-                                promptCompleted = true
-                                resolve()
-                            })
-                            .catch(reject)
-                    })
-                }
-                finally {
-                    clearInterval(keepalive)
-                    unsubscribe?.()
-                    if (pendingTitle && promptCompleted) {
-                        void service.updateConversation({
-                            id: conversationId,
-                            projectId,
-                            userId,
-                            request: { title: pendingTitle },
-                        })
-                    }
-                }
-
-                writer.write({ type: 'finish', finishReason: 'stop' })
-            },
-            onError: (error) => {
-                if (isExpectedStreamError(error)) {
-                    log.debug({ err: error }, 'Chat stream ended (client disconnect or session cancelled)')
-                }
-                else {
-                    log.error({ err: error }, 'Chat agent prompt failed')
-                }
-                return 'An error occurred while processing your request'
-            },
-        })
+        await chatSandboxAgent.acquireSandboxSlot()
 
         try {
-            pipeUIMessageStreamToResponse({
-                response: reply.raw,
-                stream,
-                headers: {
-                    'X-Accel-Buffering': 'no',
+            await reply.hijack()
+
+            const stream = createUIMessageStream<ChatUIMessage>({
+                execute: async ({ writer }) => {
+                    writer.write({ type: 'start' })
+
+                    const KEEPALIVE_INTERVAL_MS = 25_000
+                    const keepalive = setInterval(() => {
+                        writer.write({ type: 'data-usage', data: { inputTokens: 0, outputTokens: 0 }, transient: true })
+                    }, KEEPALIVE_INTERVAL_MS)
+
+                    const { session, sdk } = await chatSandboxAgent.resumeSession({
+                        sessionId: conversation.sandboxSessionId!,
+                        sandboxId,
+                        aiConfig,
+                    })
+
+                    const historyReplayFilter = createHistoryReplayFilter()
+                    let pendingTitle = ''
+                    const streamWriter = createStreamWriter({
+                        writer,
+                        textPartId: 'text',
+                        reasoningPartId: 'reasoning',
+                        onSessionTitle: (title) => {
+                            pendingTitle = title
+                        },
+                    })
+                    let unsubscribe: (() => void) | undefined
+                    let promptCompleted = false
+
+                    try {
+                        await new Promise<void>((resolve, reject) => {
+                            unsubscribe = session.onEvent((event) => {
+                                if (event.sender !== 'agent') return
+
+                                const payload: unknown = event.payload
+                                if (!isObject(payload) || payload.method !== 'session/update') return
+                                if (!isObject(payload.params)) return
+
+                                const update = payload.params.update
+                                if (!isObject(update)) return
+
+                                if (historyReplayFilter.shouldSuppress(update)) return
+
+                                streamWriter.write(update)
+                            })
+
+                            reply.raw.on('close', () => {
+                                resolve()
+                            })
+
+                            chatSandboxAgent.sendPrompt({ session, text: content, systemPrompt, files })
+                                .then(() => {
+                                    promptCompleted = true
+                                    resolve()
+                                })
+                                .catch(reject)
+                        })
+                    }
+                    finally {
+                        clearInterval(keepalive)
+                        unsubscribe?.()
+                        void sdk.pauseSandbox().catch(() => undefined)
+                        void userSandboxService.updateLastUsed({ userId }).catch(() => undefined)
+                        if (pendingTitle && promptCompleted) {
+                            void service.updateConversation({
+                                id: conversationId,
+                                projectId,
+                                userId,
+                                request: { title: pendingTitle },
+                            }).catch(() => undefined)
+                        }
+                    }
+
+                    writer.write({ type: 'finish', finishReason: 'stop' })
+                },
+                onError: (error) => {
+                    if (isExpectedStreamError(error)) {
+                        log.debug({ err: error }, 'Chat stream ended (client disconnect or session cancelled)')
+                    }
+                    else {
+                        log.error({ err: error }, 'Chat agent prompt failed')
+                    }
+                    return 'An error occurred while processing your request'
                 },
             })
-        }
-        catch (err) {
-            if (!isExpectedStreamError(err)) {
-                log.error({ err }, 'Failed to pipe chat stream')
+
+            try {
+                pipeUIMessageStreamToResponse({
+                    response: reply.raw,
+                    stream,
+                    headers: {
+                        'X-Accel-Buffering': 'no',
+                    },
+                })
             }
+            catch (err) {
+                if (!isExpectedStreamError(err)) {
+                    log.error({ err }, 'Failed to pipe chat stream')
+                }
+            }
+        }
+        finally {
+            chatSandboxAgent.releaseSandboxSlot()
         }
     })
 }

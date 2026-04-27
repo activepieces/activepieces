@@ -27,6 +27,7 @@ import { projectService } from '../project/project-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
 import { chatSessionCleanup } from './sandbox/postgres-persist-driver'
 import { ChatAiConfig, chatSandboxAgent, ChatSandboxConfig } from './sandbox/sandbox-agent'
+import { userSandboxService } from './user-sandbox-service'
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 
@@ -55,8 +56,10 @@ export const chatService = (log: FastifyBaseLogger) => ({
             this.getChatAiConfig({ platformId }),
             getMcpCredentials({ projectId, log }),
         ])
-        const session = await chatSandboxAgent.createSession({
+        const sandboxId = await userSandboxService.getOrCreate({ userId, platformId, aiConfig })
+        const { session } = await chatSandboxAgent.createSession({
             aiConfig,
+            sandboxId,
             mcpServerUrl: mcpCredentials.mcpServerUrl,
             mcpToken: mcpCredentials.mcpToken,
         })
@@ -67,7 +70,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
             .where('id = :id AND "sandboxSessionId" IS NULL', { id })
             .execute()
         if (result.affected === 0) {
-            await chatSandboxAgent.destroySession({ sessionId: session.id, aiConfig }).catch(() => { /* best-effort */ })
+            await chatSandboxAgent.destroySession({ sessionId: session.id, sandboxId, aiConfig }).catch(() => undefined)
             return this.getConversationOrThrow({ id, projectId, userId })
         }
         return { ...conversation, sandboxSessionId: session.id }
@@ -125,7 +128,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
         const sandboxSessionId = conversation.sandboxSessionId
         if (!sandboxSessionId) return
         await conversationRepo().update(id, { sandboxSessionId: null })
-        await destroySandboxAndCleanup({ sessionId: sandboxSessionId, getChatAiConfig: () => this.getChatAiConfig({ platformId }), log })
+        await destroySessionAndCleanup({ sessionId: sandboxSessionId, userId, getChatAiConfig: () => this.getChatAiConfig({ platformId }), log })
     },
 
     async deleteConversation({ id, projectId, userId, platformId }: DeleteConversationParams): Promise<void> {
@@ -133,7 +136,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
         const sandboxSessionId = conversation.sandboxSessionId
         await conversationRepo().delete({ id, projectId, userId })
         if (sandboxSessionId) {
-            await destroySandboxAndCleanup({ sessionId: sandboxSessionId, getChatAiConfig: () => this.getChatAiConfig({ platformId }), log })
+            await destroySessionAndCleanup({ sessionId: sandboxSessionId, userId, getChatAiConfig: () => this.getChatAiConfig({ platformId }), log })
         }
     },
 
@@ -205,15 +208,19 @@ async function resolveChatAiConfig({ platformId, log }: { platformId: string, lo
     })
 }
 
-async function destroySandboxAndCleanup({ sessionId, getChatAiConfig, log }: {
+async function destroySessionAndCleanup({ sessionId, userId, getChatAiConfig, log }: {
     sessionId: string
+    userId: string
     getChatAiConfig: () => Promise<ChatAiConfig>
     log: FastifyBaseLogger
 }): Promise<void> {
-    const { data: aiConfig } = await tryCatch(getChatAiConfig)
-    if (aiConfig) {
-        await chatSandboxAgent.destroySession({ sessionId, aiConfig }).catch((err) => {
-            log.warn({ err, sessionId }, 'Failed to destroy E2B sandbox session')
+    const [{ data: aiConfig }, sandboxId] = await Promise.all([
+        tryCatch(getChatAiConfig),
+        userSandboxService.getSandboxId({ userId }),
+    ])
+    if (aiConfig && sandboxId) {
+        await chatSandboxAgent.destroySession({ sessionId, sandboxId, aiConfig }).catch((err) => {
+            log.warn({ err, sessionId }, 'Failed to destroy E2B session')
         })
     }
     await chatSessionCleanup.deleteSessionData({ sessionId }).catch((err) => {
