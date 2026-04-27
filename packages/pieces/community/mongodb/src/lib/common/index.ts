@@ -45,7 +45,6 @@ export async function mongodbConnect(
     // For validation purposes, just ping the server
     await client.db('admin').command({ ping: 1 });
 
-    console.log('MongoDB connection successful');
     return client;
   } catch (error) {
     const errorMessage =
@@ -70,8 +69,7 @@ export async function getCollections(
     const collections = await db.listCollections().toArray();
     return collections.map((collection) => collection.name);
   } catch (error) {
-    console.error('Error getting collections:', error);
-    return [];
+    throw error;
   }
 }
 
