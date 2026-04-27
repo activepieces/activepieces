@@ -86,7 +86,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof airtableAuth>, S
         filterByFormula: `IS_AFTER({${
           propsValue.sortFields as string
         }},DATETIME_PARSE("${lastUpdateDate}","YYYY-MM-DD HH:mm:ss.SSS"))`,
-        view: propsValue.viewId ?? '',
+        view: propsValue.viewId || undefined,
       })
       .all();
 
