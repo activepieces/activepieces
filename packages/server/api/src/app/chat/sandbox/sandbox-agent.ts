@@ -147,6 +147,7 @@ async function createSession({ aiConfig, sandboxId, mcpServerUrl, mcpToken }: Cr
     })
 
     const resolvedSandboxId = sdk.sandboxId ?? sandboxId
+    evictOldestSdkIfFull()
     sdkCache.set(resolvedSandboxId, { sdk, expiresAt: Date.now() + SDK_CACHE_TTL_MS })
 
     return { session, sdk }
@@ -368,11 +369,12 @@ function evictStaleCacheEntries(): void {
     }
 }
 
-function evictOldestIfFull(cache: Map<string, unknown>, max: number): void {
-    if (cache.size < max) return
-    const oldest = cache.keys().next().value
+function evictOldestSdkIfFull(): void {
+    if (sdkCache.size < MAX_CACHED_ENTRIES) return
+    const oldest = sdkCache.keys().next().value
     if (oldest !== undefined) {
-        cache.delete(oldest)
+        void sdkCache.get(oldest)?.sdk.dispose().catch(() => undefined)
+        sdkCache.delete(oldest)
     }
 }
 
@@ -388,7 +390,7 @@ async function getOrCreateSdk({ aiConfig, sandboxId }: { aiConfig: ChatAiConfig,
     evictStaleCacheEntries()
     const sdk = await createSdk({ aiConfig, sandboxId })
     const resolvedId = sdk.sandboxId ?? sandboxId
-    evictOldestIfFull(sdkCache, MAX_CACHED_ENTRIES)
+    evictOldestSdkIfFull()
     sdkCache.set(resolvedId, { sdk, expiresAt: Date.now() + SDK_CACHE_TTL_MS })
     return sdk
 }
