@@ -31,6 +31,16 @@ export const memberEdited = createTrigger({
     }
   },
   async run(context) {
+    const body = context.payload.body as {
+      member?: { previous?: Record<string, unknown> };
+    };
+    // Ghost fires member.edited for brand-new members as well (signup path).
+    // In that case `member.previous` is an empty object `{}`.  Skip those so
+    // only genuine edits of existing members trigger the flow.
+    const previous = body?.member?.previous;
+    if (previous !== undefined && Object.keys(previous).length === 0) {
+      return [];
+    }
     return [context.payload.body];
   },
 
