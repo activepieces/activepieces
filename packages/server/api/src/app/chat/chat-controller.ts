@@ -1,15 +1,18 @@
 import {
+    ChatConversation,
     CreateChatConversationRequest,
     isObject,
     Permission,
     PrincipalType,
     SendChatMessageRequest,
     SERVICE_KEY_SECURITY_OPENAPI,
+    tryCatch,
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
 import { createUIMessageStream, pipeUIMessageStreamToResponse } from 'ai'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import type { Session } from 'sandbox-agent'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
@@ -23,6 +26,47 @@ const CHAT_PRINCIPALS = [PrincipalType.USER] as const
 function isExpectedStreamError(error: unknown): boolean {
     if (!(error instanceof Error)) return false
     return (error as NodeJS.ErrnoException).code === 'ECONNRESET' || error.name === 'SandboxDestroyedError'
+}
+
+async function resumeOrRecreateSession({ conversation, liveSession, sandboxId, aiConfig, userId, platformId, conversationId, projectId, service }: {
+    conversation: ChatConversation
+    liveSession: { session: Session, sandboxId: string } | undefined
+    sandboxId: string
+    aiConfig: Parameters<typeof chatSandboxAgent.resumeSession>[0]['aiConfig']
+    userId: string
+    platformId: string
+    conversationId: string
+    projectId: string
+    service: ReturnType<typeof chatService>
+}): Promise<{ session: Session }> {
+    if (liveSession) {
+        return { session: liveSession.session }
+    }
+
+    const { data: result } = await tryCatch(async () => chatSandboxAgent.resumeSession({
+        sessionId: conversation.sandboxSessionId!,
+        sandboxId,
+        aiConfig,
+    }))
+
+    if (result) {
+        if (result.newSandboxId && result.newSandboxId !== sandboxId) {
+            void userSandboxService.updateSandboxId({ userId, sandboxId: result.newSandboxId }).catch(() => undefined)
+        }
+        return { session: result.session }
+    }
+
+    await service.resetSession({ id: conversationId, projectId })
+    const fresh = await service.ensureSession({ id: conversationId, projectId, userId, platformId })
+    if (fresh.liveSession) {
+        return { session: fresh.liveSession.session }
+    }
+    const retried = await chatSandboxAgent.resumeSession({
+        sessionId: fresh.conversation.sandboxSessionId!,
+        sandboxId: await userSandboxService.getSandboxId({ userId }) ?? sandboxId,
+        aiConfig,
+    })
+    return { session: retried.session }
 }
 
 export const chatController: FastifyPluginAsyncZod = async (app) => {
@@ -133,16 +177,18 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                     try {
                         writer.write({ type: 'start' })
 
-                        const { session, newSandboxId } = liveSession
-                            ? { ...liveSession, newSandboxId: null }
-                            : await chatSandboxAgent.resumeSession({
-                                sessionId: conversation.sandboxSessionId!,
-                                sandboxId,
-                                aiConfig,
-                            })
-                        if (newSandboxId && newSandboxId !== sandboxId) {
-                            void userSandboxService.updateSandboxId({ userId, sandboxId: newSandboxId }).catch(() => undefined)
-                        }
+                        const resumed = await resumeOrRecreateSession({
+                            conversation,
+                            liveSession,
+                            sandboxId,
+                            aiConfig,
+                            userId,
+                            platformId,
+                            conversationId,
+                            projectId,
+                            service,
+                        })
+                        const session = resumed.session
 
                         const KEEPALIVE_INTERVAL_MS = 25_000
                         const keepalive = setInterval(() => {
