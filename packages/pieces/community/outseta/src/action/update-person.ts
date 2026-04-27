@@ -70,9 +70,11 @@ export const updatePersonAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // Fetch full person with nested objects expanded to avoid wiping on PUT
+    // Fetch full person with nested objects expanded to avoid wiping on PUT.
+    // PersonAccount is the collection of join records linking this person to
+    // accounts — expanding it preserves memberships when we PUT back.
     const person = await client.get<any>(
-      `/api/v1/crm/people/${context.propsValue.personUid}?fields=*,MailingAddress.*,Account.*`
+      `/api/v1/crm/people/${context.propsValue.personUid}?fields=*,MailingAddress.*,Account.*,PersonAccount.*,PersonAccount.Account.*`
     );
 
     let changed = false;
