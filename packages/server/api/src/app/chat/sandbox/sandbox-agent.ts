@@ -15,10 +15,14 @@ import { chatEventUtils } from './ai-event-utils'
 import { chatSessionEvents } from './postgres-persist-driver'
 
 const MAX_CONCURRENT_SANDBOXES = 20
+const MAX_CACHED_ENTRIES = 50
 const SLOT_WAIT_TIMEOUT_MS = 60_000
 const SDK_TIMEOUT_MS = 30_000
+const SDK_CACHE_TTL_MS = 10 * 60 * 1000
 let activeSandboxCount = 0
 const slotQueue: Array<{ resolve: () => void, reject: (err: Error) => void }> = []
+const sdkCache = new Map<string, { sdk: SandboxAgent, expiresAt: number }>()
+const sessionCache = new Map<string, { session: Session, lastUsedAt: number }>()
 
 async function acquireSandboxSlot(): Promise<void> {
     if (activeSandboxCount < MAX_CONCURRENT_SANDBOXES) {
@@ -48,12 +52,10 @@ async function acquireSandboxSlot(): Promise<void> {
 }
 
 function releaseSandboxSlot(): void {
+    activeSandboxCount = Math.max(0, activeSandboxCount - 1)
     const next = slotQueue.shift()
     if (next) {
         next.resolve()
-    }
-    else {
-        activeSandboxCount = Math.max(0, activeSandboxCount - 1)
     }
 }
 
@@ -145,6 +147,10 @@ async function createSession({ aiConfig, sandboxId, mcpServerUrl, mcpToken }: Cr
         void session.respondPermission(req.id, 'once').catch(() => undefined)
     })
 
+    sessionCache.set(session.id, { session, lastUsedAt: Date.now() })
+    const resolvedSandboxId = sdk.sandboxId ?? sandboxId
+    sdkCache.set(resolvedSandboxId, { sdk, expiresAt: Date.now() + SDK_CACHE_TTL_MS })
+
     return { session, sdk }
 }
 
@@ -233,7 +239,8 @@ async function sendPrompt({ session, text, systemPrompt, files }: SendPromptPara
 }
 
 async function destroySession({ sessionId, sandboxId, aiConfig }: DestroySessionParams): Promise<void> {
-    const sdk = await createSdk({ aiConfig, sandboxId })
+    sessionCache.delete(sessionId)
+    const sdk = await getOrCreateSdk({ aiConfig, sandboxId })
     await sdk.destroySession(sessionId)
 }
 
@@ -259,7 +266,7 @@ async function getSessionHistory({ sessionId }: { sessionId: string }): Promise<
             const prompt = Array.isArray(params?.prompt) ? params.prompt : undefined
             const firstBlock = prompt && isObject(prompt[0]) ? prompt[0] : undefined
             const rawText = firstBlock && isString(firstBlock.text) ? firstBlock.text : undefined
-            const text = rawText ? stripSystemInstructions(rawText) : ''
+            const text = rawText ? stripHistoryReplay(stripSystemInstructions(rawText)) : ''
             if (text.length > 0) {
                 messages.push({ role: 'user', content: text })
             }
@@ -352,13 +359,62 @@ function stripSystemInstructions(text: string): string {
         .trim()
 }
 
-async function resumeSession({ sessionId, sandboxId, aiConfig }: ResumeSessionParams): Promise<ResumeSessionResult> {
+function evictStaleCacheEntries(): void {
+    const now = Date.now()
+    for (const [key, entry] of sdkCache) {
+        if (entry.expiresAt <= now) {
+            void entry.sdk.dispose().catch(() => undefined)
+            sdkCache.delete(key)
+        }
+    }
+    for (const [key, entry] of sessionCache) {
+        if (now - entry.lastUsedAt > SDK_CACHE_TTL_MS) {
+            sessionCache.delete(key)
+        }
+    }
+}
+
+function evictOldestIfFull(cache: Map<string, unknown>, max: number): void {
+    if (cache.size < max) return
+    const oldest = cache.keys().next().value
+    if (oldest !== undefined) {
+        cache.delete(oldest)
+    }
+}
+
+async function getOrCreateSdk({ aiConfig, sandboxId }: { aiConfig: ChatAiConfig, sandboxId: string }): Promise<SandboxAgent> {
+    const cached = sdkCache.get(sandboxId)
+    if (cached && cached.expiresAt > Date.now()) {
+        return cached.sdk
+    }
+    if (cached) {
+        void cached.sdk.dispose().catch(() => undefined)
+        sdkCache.delete(sandboxId)
+    }
+    evictStaleCacheEntries()
     const sdk = await createSdk({ aiConfig, sandboxId })
+    const resolvedId = sdk.sandboxId ?? sandboxId
+    evictOldestIfFull(sdkCache, MAX_CACHED_ENTRIES)
+    sdkCache.set(resolvedId, { sdk, expiresAt: Date.now() + SDK_CACHE_TTL_MS })
+    return sdk
+}
+
+async function resumeSession({ sessionId, sandboxId, aiConfig }: ResumeSessionParams): Promise<ResumeSessionResult> {
+    const cached = sessionCache.get(sessionId)
+    if (cached) {
+        cached.lastUsedAt = Date.now()
+        const sdk = await getOrCreateSdk({ aiConfig, sandboxId })
+        return { session: cached.session, sdk, newSandboxId: sdk.sandboxId ?? null }
+    }
+
+    const sdk = await getOrCreateSdk({ aiConfig, sandboxId })
     const session = await sdk.resumeSession(sessionId)
     session.onPermissionRequest((req) => {
         void session.respondPermission(req.id, 'once').catch(() => undefined)
     })
-    return { session, sdk }
+    evictOldestIfFull(sessionCache, MAX_CACHED_ENTRIES)
+    sessionCache.set(sessionId, { session, lastUsedAt: Date.now() })
+    return { session, sdk, newSandboxId: sdk.sandboxId ?? null }
 }
 
 // sandbox-agent only exports ESM (no CJS). TypeScript compiles import() to require() which breaks it.
@@ -412,6 +468,7 @@ type ResumeSessionParams = {
 type ResumeSessionResult = {
     session: Session
     sdk: SandboxAgent
+    newSandboxId: string | null
 }
 
 export const chatSandboxAgent = {
@@ -428,7 +485,12 @@ export const chatSandboxAgent = {
 
 export const ChatSandboxConfig = {
     agent: { CLAUDE: 'claude' },
-    model: { OPUS_1M: 'opus[1m]' },
+    model: {
+        DEFAULT: 'default',
+        SONNET_1M: 'sonnet[1m]',
+        OPUS_1M: 'opus[1m]',
+        HAIKU: 'haiku',
+    },
     envVar: { ANTHROPIC_API_KEY: 'ANTHROPIC_API_KEY', ANTHROPIC_BASE_URL: 'ANTHROPIC_BASE_URL' },
 } as const
 

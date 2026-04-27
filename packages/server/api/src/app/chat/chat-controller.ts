@@ -108,7 +108,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const projectId = request.projectId
         const userId = request.principal.id
 
-        const conversation = await chatService(log).ensureSession({
+        const { conversation, liveSession } = await chatService(log).ensureSession({
             id: conversationId,
             projectId,
             userId,
@@ -117,7 +117,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
         const service = chatService(log)
         const [aiConfig, systemPrompt, sandboxId] = await Promise.all([
-            service.getChatAiConfig({ platformId }),
+            service.getChatAiConfig({ platformId, modelName: conversation.modelName }),
             service.buildSystemPrompt({ projectId }),
             userSandboxService.getSandboxId({ userId }),
         ])
@@ -137,16 +137,21 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 execute: async ({ writer }) => {
                     writer.write({ type: 'start' })
 
+                    const { session, sdk, newSandboxId } = liveSession
+                        ? { ...liveSession, newSandboxId: null }
+                        : await chatSandboxAgent.resumeSession({
+                            sessionId: conversation.sandboxSessionId!,
+                            sandboxId,
+                            aiConfig,
+                        })
+                    if (newSandboxId && newSandboxId !== sandboxId) {
+                        void userSandboxService.updateSandboxId({ userId, sandboxId: newSandboxId }).catch(() => undefined)
+                    }
+
                     const KEEPALIVE_INTERVAL_MS = 25_000
                     const keepalive = setInterval(() => {
                         writer.write({ type: 'data-usage', data: { inputTokens: 0, outputTokens: 0 }, transient: true })
                     }, KEEPALIVE_INTERVAL_MS)
-
-                    const { session, sdk } = await chatSandboxAgent.resumeSession({
-                        sessionId: conversation.sandboxSessionId!,
-                        sandboxId,
-                        aiConfig,
-                    })
 
                     const historyReplayFilter = createHistoryReplayFilter()
                     let pendingTitle = ''
@@ -193,7 +198,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                     finally {
                         clearInterval(keepalive)
                         unsubscribe?.()
-                        void sdk.pauseSandbox().catch(() => undefined)
                         void userSandboxService.updateLastUsed({ userId }).catch(() => undefined)
                         if (pendingTitle && promptCompleted) {
                             void service.updateConversation({

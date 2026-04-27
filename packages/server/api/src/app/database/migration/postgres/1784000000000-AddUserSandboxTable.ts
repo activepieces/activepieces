@@ -30,6 +30,7 @@ export class AddUserSandboxTable1784000000000 implements Migration {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_user_sandbox_user_id"')
         await queryRunner.query('DROP TABLE IF EXISTS "user_sandbox"')
     }
 }

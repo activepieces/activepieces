@@ -51,8 +51,13 @@ async function updateLastUsed({ userId }: { userId: string }): Promise<void> {
     await userSandboxRepo().update({ userId }, { lastUsedAt: new Date().toISOString() })
 }
 
+async function updateSandboxId({ userId, sandboxId }: { userId: string, sandboxId: string }): Promise<void> {
+    await userSandboxRepo().update({ userId }, { sandboxId })
+}
+
 export const userSandboxService = {
     getOrCreate,
     getSandboxId,
     updateLastUsed,
+    updateSandboxId,
 }

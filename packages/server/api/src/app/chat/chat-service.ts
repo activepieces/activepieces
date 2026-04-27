@@ -47,17 +47,17 @@ export const chatService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async ensureSession({ id, projectId, userId, platformId }: EnsureSessionParams): Promise<ChatConversation> {
+    async ensureSession({ id, projectId, userId, platformId }: EnsureSessionParams): Promise<EnsureSessionResult> {
         const conversation = await this.getConversationOrThrow({ id, projectId, userId })
         if (conversation.sandboxSessionId) {
-            return conversation
+            return { conversation }
         }
         const [aiConfig, mcpCredentials] = await Promise.all([
-            this.getChatAiConfig({ platformId }),
+            this.getChatAiConfig({ platformId, modelName: conversation.modelName }),
             getMcpCredentials({ projectId, log }),
         ])
         const sandboxId = await userSandboxService.getOrCreate({ userId, platformId, aiConfig })
-        const { session } = await chatSandboxAgent.createSession({
+        const { session, sdk } = await chatSandboxAgent.createSession({
             aiConfig,
             sandboxId,
             mcpServerUrl: mcpCredentials.mcpServerUrl,
@@ -71,9 +71,12 @@ export const chatService = (log: FastifyBaseLogger) => ({
             .execute()
         if (result.affected === 0) {
             await chatSandboxAgent.destroySession({ sessionId: session.id, sandboxId, aiConfig }).catch(() => undefined)
-            return this.getConversationOrThrow({ id, projectId, userId })
+            return { conversation: await this.getConversationOrThrow({ id, projectId, userId }) }
         }
-        return { ...conversation, sandboxSessionId: session.id }
+        return {
+            conversation: { ...conversation, sandboxSessionId: session.id },
+            liveSession: { session, sdk, sandboxId },
+        }
     },
 
     async listConversations({ projectId, userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<ChatConversation>> {
@@ -128,7 +131,9 @@ export const chatService = (log: FastifyBaseLogger) => ({
         const sandboxSessionId = conversation.sandboxSessionId
         if (!sandboxSessionId) return
         await conversationRepo().update(id, { sandboxSessionId: null })
-        await destroySessionAndCleanup({ sessionId: sandboxSessionId, userId, getChatAiConfig: () => this.getChatAiConfig({ platformId }), log })
+        void destroySessionAndCleanup({ sessionId: sandboxSessionId, userId, getChatAiConfig: () => this.getChatAiConfig({ platformId }), log }).catch((err) => {
+            log.warn({ err, sessionId: sandboxSessionId }, 'Background session cleanup failed')
+        })
     },
 
     async deleteConversation({ id, projectId, userId, platformId }: DeleteConversationParams): Promise<void> {
@@ -136,7 +141,9 @@ export const chatService = (log: FastifyBaseLogger) => ({
         const sandboxSessionId = conversation.sandboxSessionId
         await conversationRepo().delete({ id, projectId, userId })
         if (sandboxSessionId) {
-            await destroySessionAndCleanup({ sessionId: sandboxSessionId, userId, getChatAiConfig: () => this.getChatAiConfig({ platformId }), log })
+            void destroySessionAndCleanup({ sessionId: sandboxSessionId, userId, getChatAiConfig: () => this.getChatAiConfig({ platformId }), log }).catch((err) => {
+                log.warn({ err, sessionId: sandboxSessionId }, 'Background session cleanup failed')
+            })
         }
     },
 
@@ -156,12 +163,12 @@ export const chatService = (log: FastifyBaseLogger) => ({
         return { data: messages }
     },
 
-    async getChatAiConfig({ platformId }: { platformId: string }): Promise<ChatAiConfig> {
+    async getChatAiConfig({ platformId, modelName }: { platformId: string, modelName?: string | null }): Promise<ChatAiConfig> {
         const cached = aiConfigCache.get(platformId)
         if (cached && cached.expiresAt > Date.now()) {
-            return cached.config
+            return { ...cached.config, model: modelName ?? ChatSandboxConfig.model.DEFAULT }
         }
-        const config = await resolveChatAiConfig({ platformId, log })
+        const config = await resolveChatAiConfig({ platformId, modelName, log })
         aiConfigCache.set(platformId, { config, expiresAt: Date.now() + AI_CONFIG_TTL_MS })
         return config
     },
@@ -178,12 +185,14 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api'
 
-async function resolveChatAiConfig({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<ChatAiConfig> {
+async function resolveChatAiConfig({ platformId, modelName, log }: { platformId: string, modelName?: string | null, log: FastifyBaseLogger }): Promise<ChatAiConfig> {
+    const model = modelName ?? ChatSandboxConfig.model.DEFAULT
+
     const openRouterConfig = await resolveProviderApiKey({ platformId, provider: AIProviderName.ACTIVEPIECES, log })
     if (openRouterConfig) {
         return {
             agent: ChatSandboxConfig.agent.CLAUDE,
-            model: ChatSandboxConfig.model.OPUS_1M,
+            model,
             envs: {
                 [ChatSandboxConfig.envVar.ANTHROPIC_API_KEY]: openRouterConfig,
                 [ChatSandboxConfig.envVar.ANTHROPIC_BASE_URL]: OPENROUTER_BASE_URL,
@@ -195,7 +204,7 @@ async function resolveChatAiConfig({ platformId, log }: { platformId: string, lo
     if (anthropicApiKey) {
         return {
             agent: ChatSandboxConfig.agent.CLAUDE,
-            model: ChatSandboxConfig.model.OPUS_1M,
+            model,
             envs: {
                 [ChatSandboxConfig.envVar.ANTHROPIC_API_KEY]: anthropicApiKey,
             },
@@ -298,6 +307,15 @@ type EnsureSessionParams = {
     projectId: string
     userId: string
     platformId: string
+}
+
+type EnsureSessionResult = {
+    conversation: ChatConversation
+    liveSession?: {
+        session: import('sandbox-agent').Session
+        sdk: import('sandbox-agent').SandboxAgent
+        sandboxId: string
+    }
 }
 
 type DeleteConversationParams = {
