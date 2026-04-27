@@ -1,4 +1,5 @@
 import {
+  ErrorCode,
   FlowMigration,
   FlowMigrationStatus,
   FlowMigrationType,
@@ -30,6 +31,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { api } from '@/lib/api';
 
 import { flowMigrationHooks } from '../hooks/ai-provider-migration-hooks';
 
@@ -46,7 +48,17 @@ export function AiProviderMigrationsTable({
   });
   const [rowDialog, setRowDialog] = useState<RowDialog | null>(null);
   const revertMutation = flowMigrationHooks.useMigrateFlowsMutation({
-    onError: () => toast.error(t('Failed to start revert. Please try again.')),
+    onError: (error) => {
+      if (
+        api.isApError(error, ErrorCode.MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS)
+      ) {
+        toast.error(
+          t('A migration is already running. Try again after it completes.'),
+        );
+        return;
+      }
+      toast.error(t('Failed to start revert. Please try again.'));
+    },
   });
   const migrationsById = flowMigrationHooks.useMigrationsByIdWithRevertOrigins({
     rows: data?.data,

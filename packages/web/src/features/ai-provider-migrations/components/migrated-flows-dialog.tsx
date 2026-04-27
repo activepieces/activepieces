@@ -133,10 +133,16 @@ function buildFlowMigrationDetailLines({
     }
   }
   if (summary.clearedAdvancedOptions) {
-    lines.push(t('Image advanced options cleared'));
+    lines.push(
+      t(
+        'Some image generation step settings that depend on the provider/model (e.g. size, quality, background) will be reset to their defaults',
+      ),
+    );
   }
   if (summary.disabledWebSearch) {
-    lines.push(t('Web search disabled'));
+    lines.push(
+      t('Web search turned off (target provider does not support it)'),
+    );
   }
   return lines;
 }

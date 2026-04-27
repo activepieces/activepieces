@@ -10,7 +10,7 @@ import {
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { ImageIcon } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -23,7 +23,6 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
@@ -47,7 +46,7 @@ export function MigrateFlowsDialog({
 }: MigrateFlowsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col max-w-xl">
+      <DialogContent className="flex flex-col gap-3 max-w-xl">
         <MigrateFlowsForm
           key={confirmFromDryCheck?.id ?? 'new'}
           providers={providers}
@@ -110,9 +109,7 @@ function MigrateFlowsForm({
           error,
           ErrorCode.MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS,
         )
-          ? t(
-              'A migration job is already running. try again later after it completes.',
-            )
+          ? t('A migration is already running. Try again after it completes.')
           : t('Migration failed. Please try again.'),
       });
     },
@@ -138,16 +135,12 @@ function MigrateFlowsForm({
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>
-          {isConfirmMode ? t('Run migration') : t('Migrate AI Model')}
-        </DialogTitle>
-      </DialogHeader>
+      <DialogTitle>
+        {isConfirmMode ? t('Run migration') : t('Migrate AI Model')}
+      </DialogTitle>
       {!isConfirmMode && (
         <p className="text-sm text-muted-foreground">
-          {t(
-            'Migrate all flows on this platform from one AI provider or model to another. A dry-check previews every change without touching your flows — we recommend running one first on any migration that affects more than a handful of flows.',
-          )}
+          {t('Migrate flows from one AI provider or model to another.')}
         </p>
       )}
 
@@ -158,6 +151,45 @@ function MigrateFlowsForm({
             mutate(isConfirmMode ? { ...data, dryCheck: false } : data),
           )}
         >
+          <Alert>
+            <Info className="size-4" />
+            <AlertDescription className="flex flex-col gap-2">
+              <p>
+                {t(
+                  "Before running the migration, test the target model on a sample flow — features like web search and image generation aren't supported by every model (e.g. gpt-4 on OpenAI rejects the web search tool).",
+                )}
+              </p>
+              <p>
+                {t(
+                  'Some step settings that depend on the provider or model (e.g. image generation options like size, quality, background, or web search options) will be reset to the defaults of the target provider/model you choose. The previous version is preserved — to view it, open the flow, click the chevron next to its name, then choose (Versions).',
+                )}
+              </p>
+            </AlertDescription>
+          </Alert>
+
+          <FormField
+            control={form.control}
+            name="projectIds"
+            render={({ field }) => (
+              <FormItem className="flex flex-col gap-2">
+                <FormLabel showRequiredIndicator>{t('Projects')}</FormLabel>
+                <MultiSelectPieceProperty
+                  placeholder={t('Select at least one project')}
+                  options={projects.map((p) => ({
+                    value: p.id,
+                    label: p.displayName,
+                  }))}
+                  onChange={(value) =>
+                    field.onChange(value?.map((v) => `${v}`) ?? [])
+                  }
+                  initialValues={field.value ?? []}
+                  showDeselect={(field.value?.length ?? 0) > 0}
+                  disabled={isConfirmMode}
+                />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="aiProviderModelType"
@@ -190,41 +222,6 @@ function MigrateFlowsForm({
                     {t('Migrate Image Models')}
                   </Label>
                 </div>
-              </FormItem>
-            )}
-          />
-
-          {aiProviderModelType === AIProviderModelType.IMAGE && (
-            <Alert variant="warning">
-              <ImageIcon className="size-4" />
-              <AlertDescription>
-                {t(
-                  'When the source and target providers differ, options like (quality, size, background, input images) are cleared. The current flow version is preserved, you can always revert to it or view it  from the version history.',
-                )}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <FormField
-            control={form.control}
-            name="projectIds"
-            render={({ field }) => (
-              <FormItem className="flex flex-col gap-2">
-                <FormLabel showRequiredIndicator>{t('Projects')}</FormLabel>
-                <MultiSelectPieceProperty
-                  placeholder={t('Select at least one project')}
-                  options={projects.map((p) => ({
-                    value: p.id,
-                    label: p.displayName,
-                  }))}
-                  onChange={(value) =>
-                    field.onChange(value?.map((v) => `${v}`) ?? [])
-                  }
-                  initialValues={field.value ?? []}
-                  showDeselect={(field.value?.length ?? 0) > 0}
-                  disabled={isConfirmMode}
-                />
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -306,7 +303,7 @@ function MigrateFlowsForm({
                 setMigrationRiskAcks((s) => ({ ...s, featureLoss: v }))
               }
               label={t(
-                'I understand {count} flow(s) will lose features (image advanced options, web search).',
+                "I understand {count} flow(s) will have some step settings related to image generation or web search reset to the target provider's defaults.",
                 { count: featureAdjustedCount },
               )}
             />
