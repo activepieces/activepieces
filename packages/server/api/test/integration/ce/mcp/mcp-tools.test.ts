@@ -15,6 +15,8 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 import { createTestContext } from '../../../helpers/test-context'
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
+import { system } from '../../../../src/app/helper/system/system'
+import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
@@ -2290,9 +2292,10 @@ describe('MCP Tools integration', () => {
         await db.update('flow_run', expiredRunId, { created: '2024-01-01T00:00:00.000Z' })
 
         const result = await apGetRunTool(mcp, mockLog).execute({ flowRunId: expiredRunId })
+        const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
         expect(text(result)).toContain('purged')
-        expect(text(result)).toContain('30 days')
+        expect(text(result)).toContain(`${retentionDays} days`)
     })
 
     it('83. ap_get_run — reports "still in progress" when a non-terminal run has no step data', async () => {

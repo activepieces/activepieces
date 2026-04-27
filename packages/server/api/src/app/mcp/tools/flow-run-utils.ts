@@ -117,12 +117,14 @@ export function formatRunResult(run: FlowRun): string {
     }
 
     const steps = run.steps
-    const hasSteps = !isNil(steps) && typeof steps === 'object' && Object.keys(steps).length > 0
+    const stepEntries = !isNil(steps) && typeof steps === 'object'
+        ? Object.entries(steps as Record<string, unknown>)
+        : []
 
     lines.push('')
-    if (hasSteps) {
+    if (stepEntries.length > 0) {
         lines.push('Steps:')
-        for (const [name, step] of Object.entries(steps as Record<string, unknown>)) {
+        for (const [name, step] of stepEntries) {
             lines.push(formatStepOutput(name, step))
         }
     }
@@ -183,8 +185,8 @@ function stepDataUnavailableReason(run: FlowRun): string {
     if (!isFlowRunStateTerminal({ status: run.status, ignoreInternalError: false })) {
         return 'not yet available — run is still in progress.'
     }
-    if (isStepDataExpired(run)) {
-        const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+    const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+    if (isOutsideRetentionWindow(run.created, retentionDays)) {
         return `not available — execution data is purged after ${retentionDays} days. Re-run the flow with ap_test_flow or ap_retry_run to capture fresh step data.`
     }
     return 'not available for this run.'
