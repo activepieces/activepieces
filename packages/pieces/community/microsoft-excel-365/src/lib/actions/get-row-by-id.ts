@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
@@ -28,6 +28,7 @@ export const getRowAction = createAction({
   async run(context) {
     const { storageSource, siteId, documentId, workbookId, tableId, row_id } = context.propsValue;
     const { access_token } = context.auth;
+    const cloud = (context.auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 
     if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
       throw new Error('please select SharePoint site and document library.');
@@ -37,7 +38,7 @@ export const getRowAction = createAction({
     const maxRetries = 3;
     let attempt = 0;
 
-    const client = createMSGraphClient(access_token);
+    const client = createMSGraphClient(access_token, cloud);
 
     while (attempt < maxRetries) {
       try {

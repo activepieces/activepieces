@@ -18,6 +18,8 @@ type FlowRunSchema = FlowRun & {
     flowVersion: FlowVersion
     logsFile: File
     triggeredByUser?: User
+    /** @deprecated kept for backwards compatibility, use waitpoint table instead, remove in 0.83.0 */
+    pauseMetadata?: unknown
 }
 
 export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
@@ -64,10 +66,6 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             nullable: true,
             type: 'timestamp with time zone',
         },
-        pauseMetadata: {
-            type: 'jsonb',
-            nullable: true,
-        },
         failedStep: {
             type: 'jsonb',
             nullable: true,
@@ -85,6 +83,11 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: Number,
             nullable: false,
             default: 0,
+        },
+        // @deprecated — kept for backwards compatibility, use waitpoint table instead
+        pauseMetadata: {
+            type: 'jsonb',
+            nullable: true,
         },
     },
     indices: [
@@ -119,6 +122,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         {
             name: 'idx_run_flow_version_id',
             columns: ['flowVersionId'],
+        },
+        {
+            name: 'idx_run_triggered_by',
+            columns: ['triggeredBy'],
         },
     ],
     relations: {

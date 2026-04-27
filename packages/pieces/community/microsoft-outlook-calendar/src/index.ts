@@ -1,4 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { microsoftCloudProperty, getGraphBaseUrl, getMicrosoftCloudFromAuth } from './lib/common/microsoft-cloud';
 import {
   createPiece,
   OAuth2PropertyValue,
@@ -19,8 +20,11 @@ If you’d like to use your own custom Azure app instead of the default Activepi
 
 export const outlookCalendarAuth = PieceAuth.OAuth2({
   description: authDesc,
-  authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+  props: {
+    cloud: microsoftCloudProperty,
+  },
+  authUrl: 'https://{cloud}/common/oauth2/v2.0/authorize',
+  tokenUrl: 'https://{cloud}/common/oauth2/v2.0/token',
   required: true,
   scope: ['User.Read', 'Calendars.ReadWrite', 'offline_access'],
   prompt: 'omit',
@@ -40,8 +44,9 @@ export const microsoftOutlookCalendar = createPiece({
     listEventsAction,
     createCustomApiCallAction({
       auth: outlookCalendarAuth,
-      baseUrl() {
-        return outlookCalendarCommon.baseUrl;
+      baseUrl(auth) {
+        const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+        return outlookCalendarCommon.getBaseUrl(cloud);
       },
       authMapping: async (auth) => {
         return {

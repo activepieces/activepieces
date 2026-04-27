@@ -30,6 +30,11 @@ export const McpServerEntity = new EntitySchema<McpServerWithSchema>({
             columns: ['projectId'],
             unique: true,
         },
+        {
+            name: 'idx_mcp_server_token',
+            columns: ['token'],
+            unique: true,
+        },
     ],
     relations: {
         project: {

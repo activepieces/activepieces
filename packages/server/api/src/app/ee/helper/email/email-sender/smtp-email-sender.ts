@@ -91,21 +91,20 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
     const footer = await readFile(footerPath, 'utf-8')
     const edition = system.getEdition()
     const primaryColor = platform?.primaryColor ?? defaultTheme.colors.primary.default
+    const primaryColorLight = hexToLightTint({ hex: primaryColor, opacity: 0.08 })
     const fullLogoUrl = platform?.fullLogoUrl ?? defaultTheme.logos.fullLogoUrl
     const platformName = platform?.name ?? defaultTheme.websiteName
 
     return Mustache.render(template, {
         ...templateData.vars,
         primaryColor,
+        primaryColorLight,
         fullLogoUrl,
         platformName,
         checkIssuesEnabled() {
             return templateData.name === 'issue-created' && templateData.vars.isIssue === 'true'
         },
-        footerContent() {
-            return edition === ApEdition.CLOUD ? `   Activepieces, Inc. 398 11th Street,
-                    2nd floor, San Francisco, CA 94103` : ''
-        },
+        footerContent: edition === ApEdition.CLOUD ? 'Activepieces, Inc. 398 11th Street, 2nd floor, San Francisco, CA 94103' : '',
     },
     {
         footer,
@@ -128,17 +127,30 @@ const initSmtpClient = (): Transporter => {
 
 const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<string, string>): string => {
     const templateToSubject: Record<EmailTemplateData['name'], string> = {
-        'invitation-email': 'You have been invited to a team',
-        'project-member-added': `You've been added to ${vars.projectName}`,
-        'badge-awarded': 'You earned a new badge',
-        'verify-email': 'Verify your email address',
-        'reset-password': 'Reset your password',
-        'issue-created': `[ACTION REQUIRED] New issue in ${vars.flowName}`,
-        'trigger-failure': `[ACTION REQUIRED] ${vars.flowName} trigger is failing`,
-        'scim-user-welcome': 'Welcome! Your account has been created',
+        'invitation-email': `You have been invited to "${vars.projectName}" project ✉️`,
+        'project-member-added': `Welcome to ${vars.projectName} 🎉`,
+        'badge-awarded': 'Congratulations, you earned a new badge! 🎉',
+        'verify-email': 'Verify your email address ✅',
+        'reset-password': 'Reset your password 🔑',
+        'issue-created': `Flow has an issue "${vars.flowName}" ⚠️`,
+        'scim-user-welcome': 'Welcome! Your account has been created 🎉',
     }
 
     return templateToSubject[templateName]
+}
+
+const hexToLightTint = ({ hex, opacity }: { hex: string, opacity: number }): string => {
+    let raw = hex.replace('#', '')
+    if (raw.length === 3) {
+        raw = raw[0] + raw[0] + raw[1] + raw[1] + raw[2] + raw[2]
+    }
+    if (raw.length !== 6) {
+        return '#ffffff'
+    }
+    const r = Math.round(255 - (255 - parseInt(raw.substring(0, 2), 16)) * opacity)
+    const g = Math.round(255 - (255 - parseInt(raw.substring(2, 4), 16)) * opacity)
+    const b = Math.round(255 - (255 - parseInt(raw.substring(4, 6), 16)) * opacity)
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
 }
 
 type RenderEmailBodyArgs = {

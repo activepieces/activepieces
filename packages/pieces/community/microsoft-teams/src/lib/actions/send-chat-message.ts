@@ -1,7 +1,7 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Client } from '@microsoft/microsoft-graph-client';
 import { microsoftTeamsCommon } from '../common';
+import { createGraphClient } from '../common/graph';
 
 export const sendChatMessageAction = createAction({
 	auth: microsoftTeamsAuth,
@@ -36,11 +36,8 @@ export const sendChatMessageAction = createAction({
 	async run(context) {
 		const { chatId, contentType, content } = context.propsValue;
 
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(context.auth.access_token),
-			},
-		});
+		const cloud = context.auth.props?.['cloud'] as string | undefined;
+		const client = createGraphClient(context.auth.access_token, cloud);
 
 		const chatMessage = {
 			body: {

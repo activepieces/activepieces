@@ -23,6 +23,13 @@ export enum JwtSignAlgorithm {
     RS256 = 'RS256',
 }
 
+export enum JwtAudience {
+    FLOW_RUN_LOG = 'FLOW_RUN_LOG',
+    USER_INVITATION = 'USER_INVITATION',
+    MCP_OAUTH_ACCESS = 'MCP_OAUTH_ACCESS',
+    MCP_OAUTH_AUTH_REQUEST = 'MCP_OAUTH_AUTH_REQUEST',
+}
+
 const ONE_WEEK = 7 * 24 * 3600
 const KEY_ID = '1'
 const ISSUER = 'activepieces'
@@ -37,12 +44,14 @@ export const jwtUtils = {
         expiresInSeconds = ONE_WEEK,
         keyId = KEY_ID,
         algorithm = ALGORITHM,
+        audience,
     }: SignParams): Promise<string> {
         const signOptions: SignOptions = {
             algorithm,
             keyid: keyId,
             expiresIn: expiresInSeconds,
             issuer: ISSUER,
+            ...spreadIfDefined('audience', audience),
         }
         return new Promise((resolve, reject) => {
             jwtLibrary.sign(payload, key, signOptions, (err, token) => {
@@ -129,6 +138,7 @@ type SignParams = {
     expiresInSeconds?: number
     algorithm?: JwtSignAlgorithm
     keyId?: string
+    audience?: JwtAudience
 }
 
 type VerifyParams = {
@@ -136,7 +146,7 @@ type VerifyParams = {
     key: string
     algorithm?: JwtSignAlgorithm
     issuer?: string | string[] | null
-    audience?: string
+    audience?: JwtAudience | string
 }
 
 type DecodeParams = {

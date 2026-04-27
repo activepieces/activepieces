@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-claude",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
@@ -8,7 +8,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@anthropic-ai/sdk": "0.39.0",
-    "ajv": "8.12.0",
+    "ajv": "8.18.0",
     "mime-types": "2.1.35",
     "zod": "4.3.6",
     "tslib": "2.6.2"

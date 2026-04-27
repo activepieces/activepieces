@@ -116,6 +116,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
     app.get('/registry', RegistryPiecesRequest, async (req) => {
         const pieces = await pieceMetadataService(req.log).registry({
             release: req.query.release,
+            platformId: getPlatformId(req.principal),
         })
         return pieces
     })

@@ -1,8 +1,26 @@
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import { SardisClient } from '@sardis/sdk';
 
-export function makeSardisClient(apiKey: string): SardisClient {
-  return new SardisClient({ apiKey });
+const BASE_URL = 'https://api.sardis.sh';
+
+export async function sardisApiCall<T>(
+  apiKey: string,
+  method: HttpMethod,
+  path: string,
+  body?: unknown,
+  query?: Record<string, string>,
+): Promise<T> {
+  const response = await httpClient.sendRequest<T>({
+    method,
+    url: `${BASE_URL}${path}`,
+    headers: {
+      'X-API-Key': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body,
+    queryParams: query,
+  });
+  return response.body;
 }
 
 export const sardisCommon = {

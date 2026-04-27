@@ -7,11 +7,11 @@ import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
 import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
-import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing';
 import { projectHooks } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { cn } from '@/lib/utils';
 
 import { authenticationSession } from '../../../lib/authentication-session';
 import {
@@ -28,6 +28,7 @@ export type ProjectDashboardLayoutHeaderTab = {
   icon: ComponentType<{ className?: string; size?: number }>;
   hasPermission: boolean;
   show: boolean;
+  beta?: boolean;
 };
 
 const ProjectChangedRedirector = ({
@@ -78,6 +79,13 @@ export function ProjectDashboardLayout({
       icon: TrophyIcon,
       hasPermission: true,
     },
+    {
+      to: '/chat-with-ai',
+      label: t('Chat with AI'),
+      show: !isEmbedded,
+      icon: CompassIcon,
+      hasPermission: true,
+    },
   ];
 
   const hideHeader =
@@ -117,18 +125,24 @@ function ProjectDashboardLayoutInner({
     <SidebarProvider hoverMode={!searchOpen}>
       {!isEmbedded && <ProjectDashboardSidebar />}
       <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
-        <div className="flex-1 flex flex-col p-2 pt-3 pb-3 overflow-hidden">
-          <div className="flex flex-col h-full bg-background rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border">
-            {!hideHeader && (
-              <>
-                <ProjectDashboardLayoutHeader key={currentProjectId} />
-                <Separator className="mb-5" />
-              </>
+        <div
+          className={cn(
+            'flex-1 flex flex-col overflow-hidden',
+            !isEmbedded && 'pr-2 pt-3 pb-3',
+          )}
+        >
+          <div
+            id="dashboard-content-container"
+            className={cn(
+              'relative flex flex-col h-full bg-background overflow-clip',
+              !isEmbedded &&
+                'rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border',
             )}
-            <div className="flex-1 overflow-auto scrollbar-none px-4">
-              {' '}
-              {children}{' '}
-            </div>
+          >
+            {!hideHeader && (
+              <ProjectDashboardLayoutHeader key={currentProjectId} />
+            )}
+            <div className="flex-1 overflow-auto">{children}</div>
           </div>
         </div>
       </SidebarInset>

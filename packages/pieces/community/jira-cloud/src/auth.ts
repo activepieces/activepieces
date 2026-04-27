@@ -2,10 +2,8 @@ import {
   AppConnectionValueForAuthProperty,
   PieceAuth,
   Property,
-  ShortTextProperty,
-  StaticPropsValue,
 } from '@activepieces/pieces-framework';
-import { getUsers, sendJiraRequest } from './lib/common';
+import { sendJiraRequest } from './lib/common';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';

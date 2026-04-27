@@ -3,11 +3,11 @@ import { ApEdition, assertNotNullOrUndefined, isNil, UserWithMetaInformation } f
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp, WorkerSystemProp } from '../../../helper/system/system-props'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { ACTIVE_FLOW_PRICE_ID, platformPlanService } from './platform-plan.service'
 
 export const stripeWebhookSecret = system.get(AppSystemProp.STRIPE_WEBHOOK_SECRET)!
-const frontendUrl = system.get(WorkerSystemProp.FRONTEND_URL)
+const frontendUrl = system.get(AppSystemProp.FRONTEND_URL)
 
 export const stripeHelper = (log: FastifyBaseLogger) => ({
     getStripe: (): Stripe | undefined => {

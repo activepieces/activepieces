@@ -187,6 +187,90 @@ auth: linearAuth,
         };
       },
     }),
+  team_ids: (required = false) =>
+    Property.MultiSelectDropdown({
+      auth: linearAuth,
+      description: 'Filter by teams',
+      displayName: 'Teams',
+      required,
+      refreshers: ['auth'],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'connect your account first',
+            options: [],
+          };
+        }
+        const client = makeClient(auth);
+        const options: DropdownOption<string>[] = [];
+
+        let hasNextPage = false;
+        let cursor;
+
+        do {
+          const teams = await client.listTeams({
+            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+            first: 100,
+            after: cursor,
+          });
+
+          for (const team of teams.nodes) {
+            options.push({ label: team.name, value: team.id });
+          }
+
+          hasNextPage = teams.pageInfo.hasNextPage;
+          cursor = teams.pageInfo.endCursor;
+        } while (hasNextPage);
+
+        return {
+          disabled: false,
+          options,
+        };
+      },
+    }),
+  author_ids: (required = false) =>
+    Property.MultiSelectDropdown({
+      auth: linearAuth,
+      description: 'Filter by authors',
+      displayName: 'Authors',
+      required,
+      refreshers: ['auth'],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'connect your account first',
+            options: [],
+          };
+        }
+        const client = makeClient(auth);
+        const options: DropdownOption<string>[] = [];
+
+        let hasNextPage = false;
+        let cursor;
+
+        do {
+          const users = await client.listUsers({
+            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+            first: 100,
+            after: cursor,
+          });
+
+          for (const user of users.nodes) {
+            options.push({ label: user.name, value: user.id });
+          }
+
+          hasNextPage = users.pageInfo.hasNextPage;
+          cursor = users.pageInfo.endCursor;
+        } while (hasNextPage);
+
+        return {
+          disabled: false,
+          options,
+        };
+      },
+    }),
   assignee_id: (required = false) =>
     Property.Dropdown({
 auth: linearAuth,
@@ -337,6 +421,35 @@ auth: linearAuth,
         return {
           disabled: false,
           options,
+        };
+      },
+    }),
+  project_statuses: (required = false) =>
+    Property.Dropdown({
+      auth: linearAuth,
+      displayName: 'Project Status',
+      description: 'Filter by project status (leave empty to include all)',
+      required,
+      refreshers: ['auth'],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'connect your account first',
+            options: [],
+          };
+        }
+        const client = makeClient(auth);
+        const statuses = await client.listProjectStatuses();
+        // const seenTypes = new Set<string>();
+        // const uniqueStatuses = statuses.filter((s) => {
+        //   if (seenTypes.has(s.type)) return false;
+        //   seenTypes.add(s.type);
+        //   return true;
+        // });
+        return {
+          disabled: false,
+          options: statuses.map((s) => ({ label: s.name, value: s.name })),
         };
       },
     }),

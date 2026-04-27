@@ -2,6 +2,7 @@ import { AIProviderWithoutSensitiveData } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Pencil, Trash } from 'lucide-react';
 
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import {
   Item,
   ItemContent,
@@ -12,16 +13,14 @@ import {
 import { ItemMediaImage } from '@/components/custom/item-media-image';
 import { Button } from '@/components/ui/button';
 import { AiProviderInfo } from '@/features/agents';
-import { apHostedAssetUrl } from '@/lib/ap-hosted-asset-url';
 
 import { UpsertAIProviderDialog } from './upsert-provider-dialog';
 
 type AIProviderCardProps = {
   providerInfo: AiProviderInfo;
   providerConfig?: AIProviderWithoutSensitiveData;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
   onSave: () => void;
-  isDeleting: boolean;
   allowWrite?: boolean;
 };
 
@@ -29,18 +28,17 @@ const AIProviderCard = ({
   providerInfo,
   providerConfig,
   onDelete,
-  isDeleting,
   onSave,
   allowWrite = true,
 }: AIProviderCardProps) => {
-  const logoUrl =
-    apHostedAssetUrl(providerInfo.logoUrl) ?? providerInfo.logoUrl;
+  const logoUrl = providerInfo.logoUrl;
+  const displayName = providerConfig?.name ?? providerInfo.name;
 
   return (
     <Item variant="outline">
       {logoUrl && <ItemMediaImage src={logoUrl} alt={providerInfo.name} />}
       <ItemContent>
-        <ItemTitle>{providerConfig?.name ?? providerInfo.name}</ItemTitle>
+        <ItemTitle>{displayName}</ItemTitle>
         {allowWrite && (
           <ItemDescription>
             {t('Configure credentials for {providerName} AI provider.', {
@@ -56,7 +54,7 @@ const AIProviderCard = ({
             providerId={providerConfig?.id}
             config={providerConfig?.config}
             provider={providerInfo.provider}
-            defaultDisplayName={providerConfig?.name ?? providerInfo.name}
+            defaultDisplayName={displayName}
             onSave={onSave}
           >
             {providerConfig ? (
@@ -70,15 +68,21 @@ const AIProviderCard = ({
             )}
           </UpsertAIProviderDialog>
           {providerConfig && (
-            <Button
-              variant={'ghost'}
-              size={'sm'}
-              onClick={() => onDelete(providerConfig.id)}
-              loading={isDeleting}
-              disabled={isDeleting}
+            <ConfirmationDeleteDialog
+              title={t('Delete AI Provider')}
+              message={t('Are you sure you want to delete {providerName}?', {
+                providerName: displayName,
+              })}
+              warning={t(
+                'All steps using this AI provider will fail after deletion.',
+              )}
+              entityName={displayName}
+              mutationFn={() => onDelete(providerConfig.id)}
             >
-              <Trash className="size-4 text-destructive" />
-            </Button>
+              <Button variant={'ghost'} size={'sm'}>
+                <Trash className="size-4 text-destructive" />
+              </Button>
+            </ConfirmationDeleteDialog>
           )}
         </ItemActions>
       )}

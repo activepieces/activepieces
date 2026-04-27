@@ -1,12 +1,14 @@
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
+  PiecePackageInformation,
   PropertyType,
   ExecutePropsResult,
   InputPropertyMap,
 } from '@activepieces/pieces-framework';
 import {
   AddPieceRequestBody,
+  ApEdition,
   GetPieceRequestParams,
   GetPieceRequestQuery,
   ListPiecesRequestQuery,
@@ -86,6 +88,15 @@ export const piecesApi = {
 
     return api.post<PieceMetadataModel>('/v1/pieces', formData, undefined, {
       'Content-Type': 'multipart/form-data',
+    });
+  },
+  registry(
+    release: string,
+    edition: ApEdition,
+  ): Promise<PiecePackageInformation[]> {
+    return api.get<PiecePackageInformation[]>('/v1/pieces/registry', {
+      release,
+      edition,
     });
   },
   delete(id: string) {

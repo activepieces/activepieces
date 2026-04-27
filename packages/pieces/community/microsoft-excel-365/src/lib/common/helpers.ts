@@ -1,10 +1,12 @@
 import { Client } from '@microsoft/microsoft-graph-client';
+import { getGraphBaseUrl } from './microsoft-cloud';
 
-export function createMSGraphClient(accessToken: string): Client {
+export function createMSGraphClient(accessToken: string, cloud?: string | null): Client {
 	return Client.initWithMiddleware({
 		authProvider: {
 			getAccessToken: () => Promise.resolve(accessToken),
 		},
+		baseUrl: getGraphBaseUrl(cloud),
 	});
 }
 
@@ -22,9 +24,10 @@ export async function getLastUsedRow(
 	accessToken: string,
 	drivePath: string,
 	workbookId: string,
-	worksheetId: string
+	worksheetId: string,
+	cloud?: string | null,
 ): Promise<number> {
-	const client = createMSGraphClient(accessToken);
+	const client = createMSGraphClient(accessToken, cloud);
 
 	const response = await client
 		.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`)
@@ -52,9 +55,10 @@ export async function getHeaders(
 	accessToken: string,
 	drivePath: string,
 	workbookId: string,
-	worksheetId: string
+	worksheetId: string,
+	cloud?: string | null,
 ) {
-	const client = createMSGraphClient(accessToken);
+	const client = createMSGraphClient(accessToken, cloud);
 
 	const response = await client
 		.api(

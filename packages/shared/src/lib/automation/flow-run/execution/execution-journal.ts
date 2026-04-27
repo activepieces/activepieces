@@ -1,11 +1,11 @@
 import { isNil } from '../../../core/common'
 import { FlowActionType } from '../../flows/actions/action'
-import { LoopStepOutput, StepOutput, StepOutputStatus } from './step-output'
+import { BaseStepOutput, LoopStepOutput, StepOutput, StepOutputStatus } from './step-output'
 
 export const executionJournal = {
   
     upsertStep({ stepName, stepOutput, path, steps, createLoopIterationIfNotExists }: UpsertStepParams): Record<string, StepOutput> {
-        const target = createLoopIterationIfNotExists ? this.getOrCreateStateAtPath({ path, steps }) : this.getStateAtPath({ path, steps })
+        const target: Record<string, BaseStepOutput> = createLoopIterationIfNotExists ? this.getOrCreateStateAtPath({ path, steps }) : this.getStateAtPath({ path, steps })
         target[stepName] = stepOutput
         return steps
     },
@@ -149,7 +149,7 @@ export const executionJournal = {
 
 export type UpsertStepParams = {
     stepName: string
-    stepOutput: StepOutput
+    stepOutput: BaseStepOutput
     path: readonly [string, number][]
     steps: Record<string, StepOutput>
     createLoopIterationIfNotExists?: boolean

@@ -56,7 +56,7 @@ export function DataTableColumnHeader<TData, TValue>({
       className={`flex items-center justify-start space-x-2 whitespace-nowrap ${className}`}
     >
       {Icon && <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
-      <div className="text-xs font-medium text-foreground">{title}</div>
+      <div className="text-xs font-normal text-foreground">{title}</div>
     </div>
   );
 }

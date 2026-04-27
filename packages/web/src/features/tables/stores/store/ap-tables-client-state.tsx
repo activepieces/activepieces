@@ -78,6 +78,8 @@ export type TableState = {
   setRecords: (records: PopulatedRecord[]) => void;
   setAgentRunId: (recordId: string, agentRunId: string | null) => void;
   toggleStatus: () => void;
+  lockedByOtherUser: boolean;
+  setLockedByOtherUser: (locked: boolean) => void;
   serverFields: Field[];
   serverRecords: PopulatedRecord[];
 };
@@ -250,6 +252,9 @@ export const createApTableStore = (
           };
         });
       },
+      lockedByOtherUser: false,
+      setLockedByOtherUser: (locked: boolean) =>
+        set({ lockedByOtherUser: locked }),
       serverFields: serverState.fields,
       serverRecords: serverState.records,
     };

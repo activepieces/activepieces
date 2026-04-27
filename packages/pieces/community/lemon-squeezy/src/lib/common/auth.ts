@@ -1,7 +1,6 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
-
-const BASE_URL = 'https://api.lemonsqueezy.com/v1';
+import { LEMON_SQUEEZY_API_BASE } from './api';
 
 export const lemonSqueezyAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -25,7 +24,7 @@ To get your API Key:
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${BASE_URL}/stores`,
+        url: `${LEMON_SQUEEZY_API_BASE}/stores`,
         headers: {
           Authorization: `Bearer ${auth}`,
           'Accept': 'application/vnd.api+json',

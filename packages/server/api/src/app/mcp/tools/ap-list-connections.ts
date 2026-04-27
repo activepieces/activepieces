@@ -1,28 +1,23 @@
 import {
-    AppConnectionScope,
     AppConnectionStatus,
     McpServer,
     McpToolDefinition,
+    Permission,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { projectService } from '../../project/project-service'
+import { mcpUtils } from './mcp-utils'
 
-const statusEnum = z.nativeEnum(AppConnectionStatus)
+const statusEnum = z.enum(Object.values(AppConnectionStatus) as [AppConnectionStatus, ...AppConnectionStatus[]])
 
 const listConnectionsSchema = z.object({
-    onlyProjectConnections: z
-        .boolean()
-        .optional()
-        .describe(
-            'If true, list only connections belonging to the current project. If false or omitted, list platform-wide connections (shared across projects). Use true when need only project connections.',
-        ),
     pieceName: z
         .string()
         .optional()
         .describe(
-            'Filter by piece/app name (exact match). Examples: "google_drive", "slack", "notion". Use when you need connections for a specific integration.',
+            'Filter by piece name. Short names like "slack" or "google-drive" are auto-expanded to full format (e.g. "@activepieces/piece-slack"). You can also pass the full name directly.',
         ),
     displayName: z
         .string()
@@ -41,10 +36,10 @@ const listConnectionsSchema = z.object({
 export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_connections',
+        permission: Permission.READ_APP_CONNECTION,
         description:
-            'List OAuth/app connections in the current project or platform. Use this to discover available connections before adding steps that require auth (e.g. Google Drive, Slack). Filter by pieceName to find connections for a specific app, or by displayName to find a named connection. Use the `externalId` (not `id`) with the `auth` parameter of `ap_update_step`/`ap_update_trigger`.',
+            'List OAuth/app connections in the project. Returns externalId needed for the auth parameter on steps.',
         inputSchema: {
-            onlyProjectConnections: listConnectionsSchema.shape.onlyProjectConnections,
             pieceName: listConnectionsSchema.shape.pieceName,
             displayName: listConnectionsSchema.shape.displayName,
             status: listConnectionsSchema.shape.status,
@@ -55,17 +50,17 @@ export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): M
                 const params = listConnectionsSchema.parse(args ?? {})
                 const project = await projectService(log).getOneOrThrow(mcp.projectId)
                 const connections = await appConnectionService(log).list({
-                    projectId: params.onlyProjectConnections ? mcp.projectId : null,
+                    projectId: mcp.projectId,
                     platformId: project.platformId,
                     cursorRequest: null,
-                    scope: params.onlyProjectConnections ? AppConnectionScope.PROJECT : undefined,
+                    scope: undefined,
                     displayName: params.displayName,
                     status: params.status,
-                    pieceName: params.pieceName,
+                    pieceName: mcpUtils.normalizePieceName(params.pieceName),
                     limit: 200,
                     externalIds: undefined,
                 })
-                const lines = connections.data.map(c => `- externalId: ${c.externalId} | displayName: "${c.displayName}" | piece: ${c.pieceName} | status: ${c.status}`)
+                const lines = connections.data.map(c => `- externalId: ${c.externalId} | displayName: "${c.displayName}" | piece: ${c.pieceName} | status: ${c.status} | scope: ${c.scope}`)
                 return {
                     content: [{
                         type: 'text',
@@ -74,10 +69,7 @@ export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): M
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{ type: 'text', text: `❌ Failed to list connections: ${message}` }],
-                }
+                return mcpUtils.mcpToolError('Failed to list connections', err)
             }
         },
     }

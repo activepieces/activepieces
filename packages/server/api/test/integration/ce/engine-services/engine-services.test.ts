@@ -22,10 +22,10 @@ import {
     mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
 import { encryptUtils } from '../../../../src/app/helper/encryption'
-import { createFlowsContext } from '../../../../../engine/src/lib/services/flows.service'
-import { createConnectionService } from '../../../../../engine/src/lib/services/connections.service'
-import { createContextStore } from '../../../../../engine/src/lib/services/storage.service'
-import { createFilesService } from '../../../../../engine/src/lib/services/step-files.service'
+import { createFlowsContext } from '../../../../../engine/src/lib/piece-context/flows'
+import { createConnectionResolver } from '../../../../../engine/src/lib/piece-context/connection-resolver'
+import { createContextStore } from '../../../../../engine/src/lib/piece-context/store'
+import { createFileUploader } from '../../../../../engine/src/lib/piece-context/file-uploader'
 import { StoreScope } from '@activepieces/pieces-framework'
 
 let app: FastifyInstance | null = null
@@ -156,7 +156,7 @@ describe('Engine Services Integration', () => {
         })
     })
 
-    describe('connections.service — createConnectionService().obtain()', () => {
+    describe('connections.service — createConnectionResolver().obtain()', () => {
         it('should obtain connection value with V1 context', async () => {
             const externalId = apId()
             const secretText = 'my-super-secret'
@@ -178,7 +178,7 @@ describe('Engine Services Integration', () => {
                 value: encryptedValue,
             })
 
-            const connectionService = createConnectionService({
+            const connectionService = createConnectionResolver({
                 projectId,
                 engineToken,
                 apiUrl,
@@ -214,7 +214,7 @@ describe('Engine Services Integration', () => {
                 value: encryptedValue,
             })
 
-            const connectionService = createConnectionService({
+            const connectionService = createConnectionResolver({
                 projectId,
                 engineToken,
                 apiUrl,
@@ -227,7 +227,7 @@ describe('Engine Services Integration', () => {
         })
 
         it('should throw ConnectionNotFoundError for missing connection', async () => {
-            const connectionService = createConnectionService({
+            const connectionService = createConnectionResolver({
                 projectId,
                 engineToken,
                 apiUrl,
@@ -257,7 +257,7 @@ describe('Engine Services Integration', () => {
                 value: encryptedValue,
             })
 
-            const connectionService = createConnectionService({
+            const connectionService = createConnectionResolver({
                 projectId,
                 engineToken,
                 apiUrl,
@@ -330,13 +330,13 @@ describe('Engine Services Integration', () => {
         })
     })
 
-    describe('step-files.service — createFilesService().write()', () => {
+    describe('step-files.service — createFileUploader().write()', () => {
         it('should upload a file and return a URL', async () => {
             const originalMaxFileSize = process.env.AP_MAX_FILE_SIZE_MB
             process.env.AP_MAX_FILE_SIZE_MB = '10'
 
             try {
-                const filesService = createFilesService({
+                const filesService = createFileUploader({
                     apiUrl,
                     stepName: 'step_1',
                     flowId: apId(),
@@ -366,7 +366,7 @@ describe('Engine Services Integration', () => {
             process.env.AP_MAX_FILE_SIZE_MB = '0.000001'
 
             try {
-                const filesService = createFilesService({
+                const filesService = createFileUploader({
                     apiUrl,
                     stepName: 'step_1',
                     flowId: apId(),

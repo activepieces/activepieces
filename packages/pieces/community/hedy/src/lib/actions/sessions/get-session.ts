@@ -1,9 +1,10 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { hedyAuth } from '../../auth';
-import { HedyApiClient, unwrapResource } from '../../common/client';
+import { createClient, unwrapResource } from '../../common/client';
 import { commonProps } from '../../common/props';
 import { Session } from '../../common/types';
+import { assertIdPrefix } from '../../common/validation';
 
 export const getSession = createAction({
   auth: hedyAuth,
@@ -14,8 +15,8 @@ export const getSession = createAction({
     sessionId: commonProps.sessionId,
   },
   async run(context) {
-    const sessionId = context.propsValue.sessionId as string;
-    const client = new HedyApiClient(context.auth.secret_text);
+    const sessionId = assertIdPrefix(context.propsValue.sessionId as string, 'sess_', 'Session ID');
+    const client = createClient(context.auth);
     const response = await client.request<Session>({
       method: HttpMethod.GET,
       path: `/sessions/${sessionId}`,

@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { FileAttachment } from '@microsoft/microsoft-graph-types';
 import { microsoftOutlookAuth } from '../common/auth';
@@ -18,10 +19,12 @@ export const downloadAttachmentAction = createAction({
 	async run(context) {
 		const { messageId } = context.propsValue;
 
+		const cloud = context.auth.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(context.auth.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		const response: PageCollection = await client

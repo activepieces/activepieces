@@ -16,7 +16,7 @@ export const oracleDatabase = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/oracle-database.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ['Prabhukiran161', 'onyedikachi-david'],
+  authors: ['Prabhukiran161', 'onyedikachi-david', 'sanket-a11y'],
   actions: [
     insertRowAction,
     insertRowsAction,

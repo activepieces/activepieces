@@ -95,6 +95,8 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
                 log.debug({ pieceName: piece.name, version: piece.version }, '[pieceSyncService#installNewPieces] Piece already exists, skipping')
             }
         }))
+    }
+    if (newPiecesToFetch.length > 0) {
         const message: PieceMetadataRefreshMessage = { type: PieceMetadataRefreshType.BULK_SYNC }
         await pubsub.publish(PIECE_METADATA_REFRESH_CHANNEL, JSON.stringify(message))
     }

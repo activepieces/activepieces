@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const ServiceNowRecordSchema = z.record(z.any());
+export const ServiceNowRecordSchema = z.record(z.string(), z.any());
 export type ServiceNowRecord = z.infer<typeof ServiceNowRecordSchema>;
 
 export const AttachmentMetaSchema = z.object({
@@ -32,9 +32,9 @@ export const TriggerEventSchema = z.object({
   table: z.string(),
   sys_id: z.string(),
   operation: z.enum(['create', 'update', 'delete']),
-  fields: z.record(z.any()),
+  fields: z.record(z.string(), z.any()),
   timestamp: z.string(),
-  raw: z.record(z.any()),
+  raw: z.record(z.string(), z.any()),
 });
 export type TriggerEvent = z.infer<typeof TriggerEventSchema>;
 

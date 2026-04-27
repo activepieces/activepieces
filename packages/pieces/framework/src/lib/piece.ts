@@ -19,7 +19,7 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | u
   private readonly _actions: Record<string, Action> = {};
   private readonly _triggers: Record<string, Trigger> = {};
   // this method didn't exist in older version
-  public getContextInfo: (() => { version: ContextVersion } )| undefined = () => ({ version: LATEST_CONTEXT_VERSION }); 
+  public getContextInfo: (() => { version: ContextVersion } )| undefined = () => ({ version: LATEST_CONTEXT_VERSION });
   constructor(
     public readonly displayName: string,
     public readonly logoUrl: string,

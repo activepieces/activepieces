@@ -56,6 +56,7 @@ export type ProjectResource = ProjectTableResource | ProjectQueryResource | Proj
 export type PlatformAuthorization = {
     type: AuthorizationType.PLATFORM
     adminOnly: boolean
+    nonEmbedUsersOnly?: boolean
     allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]
     projectResource?: ProjectResource
 }

@@ -1,7 +1,6 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getTaskListsDropdown } from '../common';
+import { getTaskListsDropdown, createTodoClient } from '../common';
 import { microsoftToDoAuth } from '../auth';
-import { Client } from '@microsoft/microsoft-graph-client';
 import { TodoTaskList } from '@microsoft/microsoft-graph-types';
 
 export const updateTaskListAction = createAction({
@@ -46,11 +45,7 @@ export const updateTaskListAction = createAction({
             throw new Error('New Name cannot be empty. Please provide a valid name for the task list.');
         }
 
-        const client = Client.initWithMiddleware({
-            authProvider: {
-                getAccessToken: () => Promise.resolve(auth.access_token),
-            },
-        });
+        const client = createTodoClient(auth);
 
         try {
             const taskListBody: Partial<TodoTaskList> = {

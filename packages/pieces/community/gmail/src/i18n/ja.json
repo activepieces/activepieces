@@ -12,7 +12,7 @@
   "Reply to an existing email.": "既存のメールに返信します。",
   "Creates a draft reply to an existing email.": "既存のメールへの下書き返信を作成します。",
   "Get an email via Id.": "ID でメールを受信します。",
-  "Find emails using advanced search criteria.": "高度な検索条件を使用してメールを検索します。",
+  "Find emails using advanced search criteria. At least one search filter (from, to, subject, label, category, date, content, or attachment) is required.": "高度な検索条件を使用してメールを検索します。少なくとも1つの検索フィルタ（from、to、subject、category、date、content、またはattachment）が必要です。",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "Receiver Email (To)": "受信者メールアドレス (宛先)",
   "CC Email": "CCメール",
