@@ -585,6 +585,9 @@
       "@activepieces/piece-hubspot": [
         "packages/pieces/community/hubspot/src/index.ts"
       ],
+      "@activepieces/piece-huly": [
+        "packages/pieces/community/huly/src/index.ts"
+      ],
       "@activepieces/piece-hugging-face": [
         "packages/pieces/community/hugging-face/src/index.ts"
       ],
