@@ -11,6 +11,9 @@ export const fileCompressor = {
             case FileCompression.NONE:
                 return data
             case FileCompression.ZSTD:
+                if (!zstdCompress) {
+                    throw new Error('ZSTD compression requires Node.js >= 21')
+                }
                 return zstdCompress(data)
         }
     },
@@ -23,6 +26,9 @@ export const fileCompressor = {
                 }
                 return data
             case FileCompression.ZSTD:
+                if (!zstdDecompress) {
+                    throw new Error('ZSTD decompression requires Node.js >= 21')
+                }
                 return zstdDecompress(data)
         }
     },

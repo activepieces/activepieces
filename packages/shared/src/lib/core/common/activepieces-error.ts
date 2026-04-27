@@ -90,6 +90,7 @@ export type ApErrorParams =
     | SecretManagerGetSecretFailedParams
     | SecretManagerKeyNotSecretParams
     | InvalidAIProviderCredentialsParams
+    | MigrateFlowModelJobAlreadyExistsParams
     | FlowMigrationFailedParams
     | ResumeLogsFileMissingParams
     | ExecutionStateMissingParams
@@ -470,6 +471,9 @@ export type InvalidAIProviderCredentialsParams = BaseErrorParams<ErrorCode.INVAL
     httpErrorResponse: string
 }>
 
+export type MigrateFlowModelJobAlreadyExistsParams = BaseErrorParams<ErrorCode.MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS, {
+    jobId: string
+}>
 export type FlowMigrationFailedParams = BaseErrorParams<ErrorCode.FLOW_MIGRATION_FAILED, {
     flowVersionId: string
     message: string
@@ -555,6 +559,7 @@ export enum ErrorCode {
     SECRET_MANAGER_GET_SECRET_FAILED = 'SECRET_MANAGER_GET_SECRET_FAILED',
     SECRET_MANAGER_KEY_NOT_SECRET = 'SECRET_MANAGER_KEY_NOT_SECRET',
     INVALID_AI_PROVIDER_CREDENTIALS = 'INVALID_AI_PROVIDER_CREDENTIALS',
+    MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS = 'MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS',
     FLOW_MIGRATION_FAILED = 'FLOW_MIGRATION_FAILED',
     RESUME_LOGS_FILE_MISSING = 'RESUME_LOGS_FILE_MISSING',
     EXECUTION_STATE_MISSING = 'EXECUTION_STATE_MISSING',

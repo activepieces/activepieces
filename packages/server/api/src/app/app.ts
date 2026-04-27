@@ -60,6 +60,7 @@ import { flagHooks } from './flags/flags.hooks'
 import { flowBackgroundJobs } from './flows/flow/flow.jobs'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
+import { flowVersionMigrationService } from './flows/flow-version/flow-version-migration.service'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { exceptionHandler } from './helper/exception-handler'
@@ -232,6 +233,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(userBadgeModule)
     await app.register(platformAnalyticsModule)
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
+    systemJobHandlers.registerJobHandler(SystemJobName.MIGRATE_FLOWS_MODEL, (data) => flowVersionMigrationService(app.log).migrateFlowsModelHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
 
     app.get(

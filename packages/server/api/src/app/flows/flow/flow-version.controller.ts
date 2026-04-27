@@ -22,8 +22,8 @@ export const flowVersionController: FastifyPluginAsyncZod = async (fastify) => {
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             cursorRequest: request.query.cursor ?? null,
         })
-    },
-    )
+    })
+
 }
 
 const ListVersionParams = {

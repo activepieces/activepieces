@@ -2,6 +2,9 @@ import {
   AIProviderModel,
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
+  FlowMigration,
+  MigrateFlowsModelRequest,
+  SeekPage,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
 
@@ -22,5 +25,17 @@ export const aiProviderApi = {
   },
   delete(provider: string): Promise<void> {
     return api.delete(`/v1/ai-providers/${provider}`);
+  },
+  migrateFlows(request: MigrateFlowsModelRequest): Promise<FlowMigration> {
+    return api.post('/v1/flow-migrations', request);
+  },
+  getMigration(id: string): Promise<FlowMigration> {
+    return api.get(`/v1/flow-migrations/${id}`);
+  },
+  listMigrations(params: {
+    cursor?: string;
+    limit?: number;
+  }): Promise<SeekPage<FlowMigration>> {
+    return api.get('/v1/flow-migrations', params);
   },
 };

@@ -66,7 +66,6 @@ const getTabsList = (
     FlowOperationType.ADD_ACTION,
     FlowOperationType.UPDATE_ACTION,
   ].includes(operationType);
-
   if (replaceOrAddAction && agentsEnabled) {
     baseTabs.splice(1, 0, {
       value: PieceSelectorTabType.AI_AND_AGENTS,

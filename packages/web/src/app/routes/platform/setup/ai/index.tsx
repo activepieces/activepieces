@@ -1,7 +1,10 @@
 import { PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
+import { ArrowLeftRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import { CenteredPage } from '@/app/components/centered-page';
+import { Button } from '@/components/ui/button';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import {
   aiProviderQueries,
@@ -15,10 +18,14 @@ import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 import { AIProviderCard } from './universal-pieces/ai-provider-card';
 
 export default function AIProvidersPage() {
+  const navigate = useNavigate();
   const { data: providers, refetch } = aiProviderQueries.useAiProviders();
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const allowWrite = platform.plan.aiProvidersEnabled;
+  const {
+    platform: {
+      plan: { aiProvidersEnabled },
+    },
+  } = platformHooks.useCurrentPlatform();
 
   const { mutateAsync: deleteProvider } =
     aiProviderMutations.useDeleteAiProvider({
@@ -37,13 +44,25 @@ export default function AIProvidersPage() {
       <CenteredPage
         title={t('AI Providers')}
         description={
-          allowWrite
+          aiProvidersEnabled
             ? t(
                 'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
               )
             : t(
                 'Available AI providers that will be used by universal AI pieces, i.e Text AI.',
               )
+        }
+        actions={
+          aiProvidersEnabled && providers && providers?.length > 0 ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/platform/setup/ai/model-migrations')}
+            >
+              <ArrowLeftRight className="w-4 h-4 mr-2" />
+              {t('Migrations')}
+            </Button>
+          ) : undefined
         }
       >
         <div className="flex flex-col gap-4">
@@ -59,7 +78,7 @@ export default function AIProvidersPage() {
                 providerConfig={config}
                 onDelete={(id) => deleteProvider(id)}
                 onSave={() => refetch()}
-                allowWrite={allowWrite}
+                allowWrite={aiProvidersEnabled}
               />
             );
           })}

@@ -88,6 +88,9 @@ You are working in the Activepieces web application (`packages/web`).
 - **Transforming data for rendering** — Calculate it inline during render instead.
 - **Passing data upward to a parent** — Lift state up or use a shared store.
 
+## Data Tables
+
+- **Use the `DataTable` component** (`src/components/custom/data-table`) for any paginated or list-style data display. It handles cursor-based pagination (`SeekPage`), empty states, toolbar buttons, row actions, bulk actions, sorting, and virtual scrolling out of the box. See `src/app/routes/project-release/index.tsx` for a reference implementation. Do not build raw `<Table>` layouts for paginated data.
 ## Query Feature Guards
 
 When a server endpoint is gated by `platformMustHaveFeatureEnabled` (returns HTTP 402 `FEATURE_DISABLED` when the plan lacks the feature), the corresponding `useQuery` hook **must** include `enabled: platform.plan.<flag>` so the request never fires when the feature is off. Without this, queries with `meta: { showErrorDialog: true }` will trigger a misleading "Failed to load data" error dialog via the global `QueryCache.onError` handler in `app.tsx`.

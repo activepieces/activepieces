@@ -1,4 +1,4 @@
-import { Flow, FlowId, FlowRunId, PlatformId, ProjectId, UserId } from '@activepieces/shared'
+import { Flow, FlowId, FlowRunId, MigrateFlowsModelRequest, PlatformId, ProjectId, UserId } from '@activepieces/shared'
 import { Job, JobsOptions } from 'bullmq'
 import { Dayjs } from 'dayjs'
 
@@ -11,6 +11,7 @@ export enum SystemJobName {
     DELETE_FLOW = 'delete-flow',
     AI_CREDIT_UPDATE_CHECK = 'ai-credit-update-check',
     HARD_DELETE_PROJECT = 'hard-delete-project',
+    MIGRATE_FLOWS_MODEL = 'migrate-flows-model',
     HARD_DELETE_PLATFORM = 'hard-delete-platform',
     RESUME_DELAY_WAITPOINT = 'resume-delay-waitpoint',
 }
@@ -29,6 +30,14 @@ type HardDeleteProjectSystemJobData = {
     projectId: ProjectId
     platformId: PlatformId
     preDeletedFlowIds: FlowId[]
+}
+
+type MigrateFlowsModelSystemJobData = {
+    jobId: string
+    migrationId: string
+    platformId: PlatformId
+    userId: UserId
+    request: MigrateFlowsModelRequest
 }
 
 type HardDeletePlatformSystemJobData = {
@@ -52,6 +61,7 @@ type SystemJobDataMap = {
     [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
     [SystemJobName.AI_CREDIT_UPDATE_CHECK]: AiCreditUpdateCheckSystemJobData
     [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
+    [SystemJobName.MIGRATE_FLOWS_MODEL]: MigrateFlowsModelSystemJobData
     [SystemJobName.HARD_DELETE_PLATFORM]: HardDeletePlatformSystemJobData
     [SystemJobName.RESUME_DELAY_WAITPOINT]: ResumeDelayWaitpointSystemJobData
 }

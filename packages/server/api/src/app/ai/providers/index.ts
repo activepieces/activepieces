@@ -1,5 +1,5 @@
 import { AIProviderAuthConfig, AIProviderConfig, AIProviderName } from '@activepieces/shared'
-import { AIProviderStrategy } from './ai-provider'
+import type { AIProviderStrategy } from './ai-provider'
 import { anthropicProvider } from './anthropic-provider'
 import { azureProvider } from './azure-provider'
 import { bedrockProvider } from './bedrock-provider'
@@ -27,4 +27,4 @@ export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderAu
     },
 }
 
-export { AIProviderStrategy } from './ai-provider'
+export type { AIProviderStrategy } from './ai-provider'

@@ -5,18 +5,20 @@ import {
 } from '@activepieces/pieces-framework';
 import { ToolSet } from 'ai';
 import { ProviderOptions } from '@ai-sdk/provider-utils';
-import { spreadIfDefined, AIProviderName, getEffectiveProviderAndModel } from '@activepieces/shared';
+import {
+  AgentPieceProps,
+  AI_PIECE_PROVIDERS_WITH_OPENROUTER_WEB_SEARCH,
+  AI_PIECE_PROVIDERS_WITH_TOOL_BASED_WEB_SEARCH,
+  AIProviderName,
+  getEffectiveProviderAndModel,
+  spreadIfDefined,
+} from '@activepieces/shared';
 import { anthropicSearchTool, openaiSearchTool, googleSearchTool } from './ai-sdk';
 
 function buildWebSearchOptionsProps(provider: string, params?: { showIncludeSources?: boolean }): InputPropertyMap {
   const showIncludeSources = params?.showIncludeSources ?? true;
-  const isOpenRouterProvider =
-    provider === AIProviderName.OPENROUTER ||
-    provider === AIProviderName.ACTIVEPIECES;
-  const supportsToolBasedWebSearch =
-    provider === AIProviderName.OPENAI ||
-    provider === AIProviderName.ANTHROPIC ||
-    provider === AIProviderName.GOOGLE;
+  const isOpenRouterProvider = AI_PIECE_PROVIDERS_WITH_OPENROUTER_WEB_SEARCH.includes(provider as AIProviderName);
+  const supportsToolBasedWebSearch = AI_PIECE_PROVIDERS_WITH_TOOL_BASED_WEB_SEARCH.includes(provider as AIProviderName);
 
   let options: InputPropertyMap = {
     maxUses: Property.Number({
@@ -227,7 +229,7 @@ export function buildWebSearchOptionsProperty(
     auth: PieceAuth.None(),
     refreshers,
     props: async (propsValue) => {
-      const webSearchEnabled = propsValue['webSearch'] as unknown as boolean;
+      const webSearchEnabled = propsValue[AgentPieceProps.WEB_SEARCH] as unknown as boolean;
       if (!webSearchEnabled) {
         return {};
       }
@@ -255,12 +257,8 @@ export function buildWebSearchConfig(params: {
 
   const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model });
   const resolvedProvider = effectiveProvider ?? provider;
-  
-  const isOpenRouter =
-    resolvedProvider === AIProviderName.OPENROUTER ||
-    resolvedProvider === AIProviderName.ACTIVEPIECES;
-  
-  if (isOpenRouter) {
+
+  if (AI_PIECE_PROVIDERS_WITH_OPENROUTER_WEB_SEARCH.includes(resolvedProvider as AIProviderName)) {
     return {
       tools: undefined,
       providerOptions: {

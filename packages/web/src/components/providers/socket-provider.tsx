@@ -50,6 +50,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       socket.disconnect();
     }
+
     return () => {
       socket.off('connect');
       socket.off('disconnect');
