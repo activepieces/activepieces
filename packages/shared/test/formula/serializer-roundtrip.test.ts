@@ -81,4 +81,22 @@ describe('variable interpolation round-trip', () => {
         expect(error).toBeNull()
         expect(result).toBe('a;b | c;d')
     })
+
+    it('literal `}` inside a quoted string arg does not close the wrapper early (mirrored marker)', () => {
+        const { result, error } = formulaEvaluator.evaluate({
+            expression: formulaEvaluator.wrap('combine("hello}world";"!";"")'),
+            sampleData: DATA,
+        })
+        expect(error).toBeNull()
+        expect(result).toBe('hello}world!')
+    })
+
+    it('two adjacent wrapped formulas tokenize independently (non-greedy regex)', () => {
+        const { result, error } = formulaEvaluator.evaluate({
+            expression: `${formulaEvaluator.wrap('uppercase("a")')}-${formulaEvaluator.wrap('uppercase("b")')}`,
+            sampleData: DATA,
+        })
+        expect(error).toBeNull()
+        expect(result).toBe('A-B')
+    })
 })

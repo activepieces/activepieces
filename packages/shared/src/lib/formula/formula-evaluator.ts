@@ -1,8 +1,16 @@
-import { parser } from './function-implementations'
+import { evaluateRaw } from './function-implementations'
 import { AP_FUNCTIONS } from './function-registry'
 
 const FORMULA_PREFIX = 'ap-formula-v1::{'
-const FORMULA_SUFFIX = '}'
+const FORMULA_SUFFIX = '}::ap-formula-v1'
+// Mirrored close marker means tokenization is a plain regex split — no
+// brace-counting or string-literal tracking needed at the wrapper level.
+// `[\s\S]*?` matches any character including newlines, non-greedy so adjacent
+// formulas don't merge into one capture.
+const FORMULA_REGEX = new RegExp(
+    `${escapeRegex(FORMULA_PREFIX)}([\\s\\S]*?)${escapeRegex(FORMULA_SUFFIX)}`,
+    'g',
+)
 
 function wrap(expression: string): string {
     return `${FORMULA_PREFIX}${expression}${FORMULA_SUFFIX}`
@@ -13,25 +21,7 @@ function containsWrapper(input: string): boolean {
 }
 
 function unwrap(template: string): string {
-    let result = ''
-    let pos = 0
-    while (pos < template.length) {
-        const start = template.indexOf(FORMULA_PREFIX, pos)
-        if (start === -1) {
-            result += template.slice(pos)
-            break
-        }
-        result += template.slice(pos, start)
-        const exprStart = start + FORMULA_PREFIX.length
-        const closeBrace = findMatchingBrace(template, exprStart - 1)
-        if (closeBrace === -1) {
-            result += template.slice(start)
-            break
-        }
-        result += template.slice(exprStart, closeBrace)
-        pos = closeBrace + 1
-    }
-    return result
+    return template.replace(FORMULA_REGEX, (_, expr: string) => expr)
 }
 
 function evaluate({ expression, sampleData }: EvaluateExpressionParams): EvaluateExpressionResult {
@@ -60,27 +50,17 @@ function evaluate({ expression, sampleData }: EvaluateExpressionParams): Evaluat
 
 function tokenizeFormulaTemplate(template: string): Segment[] {
     const segments: Segment[] = []
-    let pos = 0
-    while (pos < template.length) {
-        const start = template.indexOf(FORMULA_PREFIX, pos)
-        if (start === -1) {
-            const tail = template.slice(pos)
-            if (tail) segments.push({ type: 'text', value: tail })
-            break
+    let lastIndex = 0
+    for (const match of template.matchAll(FORMULA_REGEX)) {
+        const start = match.index ?? 0
+        if (start > lastIndex) {
+            segments.push({ type: 'text', value: template.slice(lastIndex, start) })
         }
-        if (start > pos) {
-            segments.push({ type: 'text', value: template.slice(pos, start) })
-        }
-        const exprStart = start + FORMULA_PREFIX.length
-        const wrapperOpenBrace = exprStart - 1
-        const wrapperCloseBrace = findMatchingBrace(template, wrapperOpenBrace)
-        if (wrapperCloseBrace === -1) {
-            // Unclosed wrapper — emit the rest as text rather than guessing where it ends.
-            segments.push({ type: 'text', value: template.slice(start) })
-            break
-        }
-        segments.push({ type: 'formula', value: template.slice(exprStart, wrapperCloseBrace) })
-        pos = wrapperCloseBrace + 1
+        segments.push({ type: 'formula', value: match[1] })
+        lastIndex = start + match[0].length
+    }
+    if (lastIndex < template.length) {
+        segments.push({ type: 'text', value: template.slice(lastIndex) })
     }
     return segments.filter((s) => s.value !== '')
 }
@@ -93,13 +73,7 @@ function evaluateSingleFormula({ expression, sampleData }: EvaluateExpressionPar
 
     const { processed, vars } = preprocessExpression({ expression: trimmed, sampleData })
     try {
-        // expr-eval's published `Values` type is narrower than what the library
-        // accepts at runtime — arrays, null, and mixed-type objects all flow
-        // through fine. Ignore the library-type mismatch here rather than
-        // forcing a misleading cast like `as Record<string, number>`.
-        // @ts-expect-error narrow third-party type; runtime accepts unknown values
-        const result = parser.evaluate(processed, vars)
-        return { result, error: null }
+        return { result: evaluateRaw(processed, vars), error: null }
     }
     catch (e) {
         return { result: null, error: friendlyError(e) }
@@ -473,26 +447,8 @@ function findMatchingSquareBracket(text: string, openPos: number): number {
     return -1
 }
 
-function findMatchingBrace(text: string, openPos: number): number {
-    let depth = 0
-    let inString: '"' | '\'' | null = null
-    for (let i = openPos; i < text.length; i++) {
-        const ch = text[i]
-        if (inString) {
-            if (ch === inString && (i === 0 || text[i - 1] !== '\\')) inString = null
-        }
-        else if (ch === '"' || ch === '\'') {
-            inString = ch
-        }
-        else if (ch === '{') {
-            depth++
-        }
-        else if (ch === '}') {
-            depth--
-            if (depth === 0) return i
-        }
-    }
-    return -1
+function escapeRegex(s: string): string {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 export const formulaEvaluator = {

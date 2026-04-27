@@ -364,6 +364,14 @@ describe('Props resolver', () => {
         ).rejects.toThrow(/Formula error/)
     })
 
+    test('AP formula: duplicate variables in a single formula resolve to the same value (one resolution per unique token)', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: formulaEvaluator.wrap('combine({{trigger.name}};{{trigger.name}};" + ")'),
+            executionState,
+        })
+        expect(resolvedInput).toEqual('John + John')
+    })
+
     it('should not compress memory file in native value in non-logs mode', async () => {
         const input = {
             base64: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',

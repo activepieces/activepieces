@@ -8,7 +8,26 @@ dayjs.extend(relativeTimeDayjs)
 dayjs.extend(timezoneDayjs)
 dayjs.extend(utcDayjs)
 
-export const parser = new Parser()
+// expr-eval's published `Values` type is `Record<string, number>` but the
+// runtime accepts arrays, null, and mixed-type objects fine. Widen the
+// `evaluate` overload via module augmentation so consumers don't need
+// `@ts-expect-error` or `as` casts. Must be `interface` (not `type`) — only
+// interface declarations merge with the third-party class declaration.
+declare module 'expr-eval' {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+    interface Parser {
+        evaluate(expression: string, values: Record<string, unknown>): unknown
+    }
+}
+
+// Parser is a module-private singleton — exposing it would let any consumer
+// of @activepieces/shared mutate `parser.functions.X` and break formula
+// evaluation process-wide. Use `evaluateRaw` instead.
+const parser = new Parser()
+
+export function evaluateRaw(expression: string, vars: Record<string, unknown>): unknown {
+    return parser.evaluate(expression, vars)
+}
 
 parser.functions.combine = (a: unknown, b: unknown, sep: unknown = '') =>
     `${a ?? ''}${String(sep)}${b ?? ''}`

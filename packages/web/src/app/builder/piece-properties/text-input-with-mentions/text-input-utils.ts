@@ -342,10 +342,13 @@ function convertTiptapJsonToText(
         return ';';
       }
       case TipTapNodeTypes.paragraph: {
+        // Function nodes are inline atoms confined to a single paragraph, so
+        // each paragraph gets a fresh depth counter — sharing state across
+        // paragraphs would let a missing close in one leak into the next.
         return `${
           isNil(node.content)
             ? ''
-            : convertTiptapJsonToText(node.content, state)
+            : convertTiptapJsonToText(node.content, { fnDepth: 0 })
         }${index < nodes.length - 1 ? '\n' : ''}`;
       }
       default:

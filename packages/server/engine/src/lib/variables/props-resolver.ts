@@ -246,23 +246,27 @@ async function preResolveFormulaVars({ expression, resolveOptions }: {
     expression: string
     resolveOptions: PreResolveOptions
 }): Promise<{ expression: string, vars: Record<string, unknown> }> {
-    const tokenPattern = /\{\{([^}]+)\}\}/g
-    const matches: Array<{ original: string, variableName: string, key: string }> = []
-    let idx = 0
-    let match
-    while ((match = tokenPattern.exec(expression)) !== null) {
-        matches.push({ original: match[0], variableName: match[1].trim(), key: `__ap_pv${idx++}__` })
-    }
+    // Single-pass regex substitution with dedup: identical tokens map to the
+    // same key and resolve once. The previous split/join loop created one key
+    // per occurrence then replaced ALL occurrences with the first key,
+    // leaving later keys orphaned in `vars`.
+    const variableNameToKey = new Map<string, string>()
+    const rewritten = expression.replace(/\{\{([^}]+)\}\}/g, (_, raw: string) => {
+        const variableName = raw.trim()
+        let key = variableNameToKey.get(variableName)
+        if (key === undefined) {
+            key = `__ap_pv${variableNameToKey.size}__`
+            variableNameToKey.set(variableName, key)
+        }
+        return `{{${key}}}`
+    })
 
     const vars: Record<string, unknown> = {}
-    await Promise.all(matches.map(async ({ variableName, key }) => {
-        vars[key] = await resolveSingleToken({ variableName, ...resolveOptions })
-    }))
-
-    let rewritten = expression
-    for (const { original, key } of matches) {
-        rewritten = rewritten.split(original).join(`{{${key}}}`)
-    }
+    await Promise.all(
+        Array.from(variableNameToKey.entries()).map(async ([variableName, key]) => {
+            vars[key] = await resolveSingleToken({ variableName, ...resolveOptions })
+        }),
+    )
 
     return { expression: rewritten, vars }
 }
