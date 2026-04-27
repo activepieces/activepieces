@@ -20,6 +20,7 @@ import { rowDeletedTrigger } from './lib/triggers/row-deleted';
 import { rowsCreatedTrigger } from './lib/triggers/rows-created';
 import { rowsUpdatedTrigger } from './lib/triggers/rows-updated';
 import { rowsDeletedTrigger } from './lib/triggers/rows-deleted';
+import { rowEventTrigger } from './lib/triggers/row-event';
 import { baserowAuth, baserowAuthHelpers, BaserowAuthValue } from './lib/auth';
 import { BaserowClient } from './lib/common/client';
 
@@ -70,6 +71,7 @@ export const baserow = createPiece({
     rowCreatedTrigger,
     rowUpdatedTrigger,
     rowDeletedTrigger,
+    rowEventTrigger,
     rowsCreatedTrigger,
     rowsUpdatedTrigger,
     rowsDeletedTrigger,
