@@ -75,7 +75,7 @@ export const newReleaseTrigger = createTrigger({
   async run(context) {
     const payload = context.payload.body as { action?: string };
 
-    if (payload.action === 'created') {
+    if (payload.action === 'published') {
       return [context.payload.body];
     }
 
