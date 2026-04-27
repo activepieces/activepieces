@@ -84,8 +84,7 @@ export const createOrUpdateContact = createAction({
       Object.entries(contact).filter(([_, value]) => Boolean(value))
     );
 
-    console.log('Contact update request ' + identifier);
-    const updateResponse = await httpClient.sendRequest({
+    await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `https://api.sendinblue.com/v3/contacts`,
       body,
@@ -93,7 +92,6 @@ export const createOrUpdateContact = createAction({
         'api-key': context.auth.secret_text,
       },
     });
-    console.debug('Contact update response', updateResponse);
 
     const contactREsponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
