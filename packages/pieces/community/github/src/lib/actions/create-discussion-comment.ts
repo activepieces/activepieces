@@ -25,30 +25,54 @@ export const githubCreateDiscussionCommentAction = createAction({
     const { discussion_number, body } = propsValue;
     const { owner, repo } = propsValue.repository!;
 
-    // GitHub Discussions API requires GraphQL for most operations
-    const query = `
-		mutation AddDiscussionComment {
-			addDiscussionComment(input: {
-				discussionId: "${discussion_number}",
-				repositoryName: "${repo}",
-				repositoryOwner: "${owner}",
-				body: "${body.replace(/"/g, '\\"')}"
-			}) {
-				comment {
-					id
-					body
-					createdAt
-					url
-				}
-			}
-		}`;
+    // Step 1: Resolve the discussion number to its GraphQL node ID.
+    // The addDiscussionComment mutation requires a global node ID, not a discussion number.
+    const lookupQuery = `
+      query GetDiscussionId($owner: String!, $repo: String!, $number: Int!) {
+        repository(owner: $owner, name: $repo) {
+          discussion(number: $number) {
+            id
+          }
+        }
+      }`;
+
+    const lookupResponse = await githubApiCall({
+      accessToken: auth.access_token,
+      method: HttpMethod.POST,
+      resourceUri: '/graphql',
+      body: {
+        query: lookupQuery,
+        variables: { owner, repo, number: discussion_number },
+      },
+    });
+
+    const discussionId = lookupResponse?.data?.repository?.discussion?.id;
+    if (!discussionId) {
+      throw new Error(
+        `Discussion #${discussion_number} not found in ${owner}/${repo}`
+      );
+    }
+
+    // Step 2: Add the comment using the node ID.
+    const mutationQuery = `
+      mutation AddDiscussionComment($discussionId: ID!, $body: String!) {
+        addDiscussionComment(input: { discussionId: $discussionId, body: $body }) {
+          comment {
+            id
+            body
+            createdAt
+            url
+          }
+        }
+      }`;
 
     const response = await githubApiCall({
       accessToken: auth.access_token,
       method: HttpMethod.POST,
       resourceUri: '/graphql',
       body: {
-        query,
+        query: mutationQuery,
+        variables: { discussionId, body },
       },
     });
 
