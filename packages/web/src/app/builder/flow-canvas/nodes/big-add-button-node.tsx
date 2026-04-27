@@ -48,6 +48,10 @@ const ApBigAddButtonCanvasNode = React.memo(
               width: `${flowCanvasConsts.AP_NODE_SIZE.STEP.width}px`,
             }}
             className="flex justify-center items-center "
+            {...{
+              [`data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}`]:
+                data.parentStepName,
+            }}
           >
             {!readonly && (
               //we use transparent colors when opening the piece selector, so to not show the pattern of the background inside the button, we wrap the big add button in a div with the background color
