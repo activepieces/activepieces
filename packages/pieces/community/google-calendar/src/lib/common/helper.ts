@@ -222,7 +222,6 @@ export async function getEventsForDropdown(
       })
       .filter((item) => item.value !== '');
   } catch (error) {
-    console.error('Error fetching events for dropdown:', error);
     return [];
   }
 }

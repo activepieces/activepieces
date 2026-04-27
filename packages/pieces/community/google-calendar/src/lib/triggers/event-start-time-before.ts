@@ -88,7 +88,6 @@ const polling: Polling<
           events = [event];
         }
       } catch (error) {
-        console.error('Error fetching specific event:', error);
         return [];
       }
     } else {

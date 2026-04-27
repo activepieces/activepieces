@@ -72,7 +72,6 @@ const polling: Polling<
           }
         }
       } catch (error) {
-        console.error('Error fetching specific event:', error);
         return [];
       }
     } else {
