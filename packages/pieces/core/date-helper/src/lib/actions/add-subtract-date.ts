@@ -192,9 +192,8 @@ function addSubtractTime(date: Date, expression: string, timeZone?: string): day
       case timeParts.monthName:
       case timeParts.unix_time:
         break;
-      default: {
-        console.error(val, 'unhandled case was reached');
-      }
+      default:
+        throw new Error(`Unhandled time unit: ${val}`);
     }
   }
   return dayjsDate;
