@@ -58,6 +58,7 @@ export const sendImageManualAction = createAction({
       ...recipientBody,
       file: preparedUrl,
       caption: caption ?? '',
+      platform: 'activepieces',
     });
 
     return response.body;

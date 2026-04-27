@@ -36,6 +36,7 @@ export const sendVideoToContactAction = createAction({
       chatId: contact,
       file: preparedUrl,
       caption: caption ?? '',
+      platform: 'activepieces',
     });
 
     const { jobId } = sendResponse.body as { jobId: string };

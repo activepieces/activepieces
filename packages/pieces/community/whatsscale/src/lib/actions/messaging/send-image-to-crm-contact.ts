@@ -36,6 +36,7 @@ export const sendImageToCrmContactAction = createAction({
       crm_contact_id: crmContact,
       file: preparedUrl,
       caption: caption ?? '',
+      platform: 'activepieces',
     });
 
     return response.body;

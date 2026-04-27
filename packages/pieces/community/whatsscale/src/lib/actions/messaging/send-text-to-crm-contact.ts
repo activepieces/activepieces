@@ -32,7 +32,7 @@ export const sendTextToCrmContactAction = createAction({
       auth,
       HttpMethod.POST,
       '/api/sendText',
-      { ...body, text },
+      { ...body, text, platform: 'activepieces' },
     );
 
     return response.body;

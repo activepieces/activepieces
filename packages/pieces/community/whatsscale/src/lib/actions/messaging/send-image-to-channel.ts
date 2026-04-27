@@ -35,6 +35,7 @@ export const sendImageToChannelAction = createAction({
       chatId: channel,
       file: preparedUrl,
       caption: caption ?? '',
+      platform: 'activepieces',
     });
 
     return response.body;

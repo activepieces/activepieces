@@ -28,6 +28,26 @@ import { sendDocumentToContactAction } from './lib/actions/messaging/send-docume
 import { sendDocumentToGroupAction } from './lib/actions/messaging/send-document-to-group';
 import { sendDocumentToCrmContactAction } from './lib/actions/messaging/send-document-to-crm-contact';
 
+// Location actions
+import { sendLocationToContactAction } from './lib/actions/messaging/send-location-to-contact';
+import { sendLocationToGroupAction } from './lib/actions/messaging/send-location-to-group';
+import { sendLocationToCrmContactAction } from './lib/actions/messaging/send-location-to-crm-contact';
+
+// Poll actions
+import { sendPollToContactAction } from './lib/actions/messaging/send-poll-to-contact';
+import { sendPollToGroupAction } from './lib/actions/messaging/send-poll-to-group';
+import { sendPollToChannelAction } from './lib/actions/messaging/send-poll-to-channel';
+import { sendPollToCrmContactAction } from './lib/actions/messaging/send-poll-to-crm-contact';
+
+// Story actions
+import { setTextStoryAction } from './lib/actions/stories/set-text-story';
+import { setImageStoryAction } from './lib/actions/stories/set-image-story';
+import { setVideoStoryAction } from './lib/actions/stories/set-video-story';
+
+// Info actions
+import { getGroupInfoAction } from './lib/actions/info/get-group-info';
+import { getChannelInfoAction } from './lib/actions/info/get-channel-info';
+
 // CRM actions
 import { createCrmContactAction } from './lib/actions/crm/create-crm-contact';
 import { getCrmContactAction } from './lib/actions/crm/get-crm-contact';
@@ -94,6 +114,22 @@ export const whatsscale = createPiece({
     addCrmContactTagAction,
     removeCrmContactTagAction,
     listCrmContactsAction,
+    // Location actions
+    sendLocationToContactAction,
+    sendLocationToGroupAction,
+    sendLocationToCrmContactAction,
+    // Poll actions
+    sendPollToContactAction,
+    sendPollToGroupAction,
+    sendPollToChannelAction,
+    sendPollToCrmContactAction,
+    // Story actions
+    setTextStoryAction,
+    setImageStoryAction,
+    setVideoStoryAction,
+    // Info actions
+    getGroupInfoAction,
+    getChannelInfoAction,
     // Utility actions
     checkWhatsappAction,
     createCustomApiCallAction({

@@ -30,8 +30,8 @@ export const createCrmContactAction = createAction({
     const { phone, name, tags } = context.propsValue;
 
     const body: Record<string, unknown> = { phone };
-    if (name) body['name'] = name;
-    if (tags) body['tags'] = tags;
+    if (name) body.name = name;
+    if (tags) body.tags = tags;
 
     const response = await whatsscaleClient(auth, HttpMethod.POST, '/api/crm/contacts', body);
     return response.body;

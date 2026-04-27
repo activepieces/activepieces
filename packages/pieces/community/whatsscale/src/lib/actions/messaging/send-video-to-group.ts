@@ -36,6 +36,7 @@ export const sendVideoToGroupAction = createAction({
       chatId: group,
       file: preparedUrl,
       caption: caption ?? '',
+      platform: 'activepieces',
     });
 
     const { jobId } = sendResponse.body as { jobId: string };

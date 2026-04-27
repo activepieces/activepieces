@@ -44,7 +44,7 @@ export const sendDocumentToContactAction = createAction({
     };
     if (filename) body['filename'] = filename;
 
-    const sendResponse = await whatsscaleClient(apiKey, HttpMethod.POST, '/api/sendDocument', body);
+    const sendResponse = await whatsscaleClient(apiKey, HttpMethod.POST, '/api/sendDocument', { ...body, platform: 'activepieces' });
     const { jobId } = sendResponse.body as { jobId: string };
     return await pollJob(apiKey, jobId);
   },

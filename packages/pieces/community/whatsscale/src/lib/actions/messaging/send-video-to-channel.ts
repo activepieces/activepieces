@@ -36,6 +36,7 @@ export const sendVideoToChannelAction = createAction({
       chatId: channel,
       file: preparedUrl,
       caption: caption ?? '',
+      platform: 'activepieces',
     });
 
     const { jobId } = sendResponse.body as { jobId: string };
