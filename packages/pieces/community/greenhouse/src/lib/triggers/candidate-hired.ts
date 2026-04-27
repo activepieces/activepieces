@@ -44,7 +44,7 @@ const polling: Polling<GreenhouseAuth, Record<string, never>> = {
       endpoint: '/applications',
       queryParams: {
         status: 'hired',
-        'created_at[gte]': createdAfter,
+        'last_activity_at[gte]': createdAfter,
         per_page: '500',
       },
     });
