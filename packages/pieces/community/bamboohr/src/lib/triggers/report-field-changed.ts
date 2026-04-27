@@ -214,11 +214,6 @@ export const reportFieldChanged = createTrigger({
       const availableFields = new Set(fields.map((f) => f.name));
 
       if (!availableFields.has(fieldToMonitor)) {
-        console.warn(
-          `Field "${fieldToMonitor}" not found in report. Available fields: ${Array.from(
-            availableFields
-          ).join(', ')}`
-        );
         return [];
       }
 
@@ -289,7 +284,6 @@ export const reportFieldChanged = createTrigger({
       await context.store.put('lastReportState', currentState);
       return changes;
     } catch (error) {
-      console.error('Error fetching BambooHR report:', error);
       return [];
     }
   },
