@@ -1,15 +1,10 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
-export const BASE_URL = 'https://api.mixmax.com/v1';
+import { MixmaxAuth } from './auth';
 
-export function getAuthHeaders(auth: string) {
-  return {
-    'X-API-Token': auth,
-    'Content-Type': 'application/json',
-  };
-}
+export const mixmaxApiClient = { getRequest, postRequest };
 
-export async function mixmaxGetRequest(auth: string, endpoint: string, queryParams?: Record<string, string>) {
+async function getRequest({ auth, endpoint, queryParams }: GetRequestParams) {
   const url = new URL(`${BASE_URL}${endpoint}`);
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
@@ -20,15 +15,36 @@ export async function mixmaxGetRequest(auth: string, endpoint: string, queryPara
   return httpClient.sendRequest({
     method: HttpMethod.GET,
     url: url.toString(),
-    headers: getAuthHeaders(auth),
+    headers: buildHeaders(auth),
   });
 }
 
-export async function mixmaxPostRequest(auth: string, endpoint: string, body: Record<string, unknown>) {
+async function postRequest({ auth, endpoint, body }: PostRequestParams) {
   return httpClient.sendRequest({
     method: HttpMethod.POST,
     url: `${BASE_URL}${endpoint}`,
-    headers: getAuthHeaders(auth),
+    headers: buildHeaders(auth),
     body,
   });
 }
+
+function buildHeaders(auth: MixmaxAuth) {
+  return {
+    'X-API-Token': auth.secret_text,
+    'Content-Type': 'application/json',
+  };
+}
+
+const BASE_URL = 'https://api.mixmax.com/v1';
+
+type GetRequestParams = {
+  auth: MixmaxAuth;
+  endpoint: string;
+  queryParams?: Record<string, string>;
+};
+
+type PostRequestParams = {
+  auth: MixmaxAuth;
+  endpoint: string;
+  body: Record<string, unknown>;
+};
