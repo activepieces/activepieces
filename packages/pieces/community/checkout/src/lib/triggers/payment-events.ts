@@ -160,7 +160,7 @@ export const paymentEventsTrigger = createTrigger({
         });
       }
     } catch (error: any) {
-      console.error('Failed to delete payment events workflow:', error.message);
+      throw new Error(`Failed to delete payment events workflow: ${error.message}`);
     }
   },
   async run(context) {

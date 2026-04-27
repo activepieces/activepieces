@@ -154,7 +154,7 @@ export const disputeEventsTrigger = createTrigger({
         });
       }
     } catch (error: any) {
-      console.error('Failed to delete dispute events workflow:', error.message);
+      throw new Error(`Failed to delete dispute events workflow: ${error.message}`);
     }
   },
   async run(context) {
