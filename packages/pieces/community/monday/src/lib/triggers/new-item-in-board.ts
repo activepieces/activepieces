@@ -73,8 +73,8 @@ export const newItemInBoardTrigger = createTrigger({
       for (const column of item.column_values) {
         transformedValues[column.id] = parseMondayColumnValue(column);
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // Column value enrichment is best-effort; return the raw payload if it fails
     }
 
     const enriched = [
