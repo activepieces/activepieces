@@ -187,6 +187,27 @@ export class BaserowClient {
       { type: aggregation_type }
     );
   }
+  async updateFieldSelectOptions({
+    fieldId,
+    existingOptions,
+    newOptions,
+  }: {
+    fieldId: number;
+    existingOptions: { id: number; value: string; color: string }[];
+    newOptions: string[];
+  }): Promise<{ select_options: { id: number; value: string; color: string }[] }> {
+    const palette = ['blue', 'green', 'orange', 'red', 'purple', 'pink', 'cyan', 'yellow', 'gray'];
+    const additions = newOptions.map((value, i) => ({
+      value,
+      color: palette[i % palette.length],
+    }));
+    return await this.makeRequest(
+      HttpMethod.PATCH,
+      `/database/fields/${fieldId}/`,
+      undefined,
+      { select_options: [...existingOptions, ...additions] }
+    );
+  }
   async createWebhook({
     tableId,
     url,

@@ -3,6 +3,7 @@ import {
   DropdownState,
   Property,
 } from '@activepieces/pieces-framework';
+import { tryCatch, unique } from '@activepieces/shared';
 import {
   baserowAuth,
   BaserowAuthValue,
@@ -10,6 +11,7 @@ import {
 } from '../auth';
 import { BaserowClient } from './client';
 import { BaserowFieldType } from './constants';
+import { BaserowField } from './types';
 
 export async function makeClient(
   auth: BaserowAuthValue
@@ -89,6 +91,56 @@ export function formatFieldValues(
     }
   }
   return result;
+}
+
+export async function ensureSelectOptionsExist({
+  fields,
+  payload,
+  client,
+}: {
+  fields: BaserowField[];
+  payload: Record<string, unknown>;
+  client: BaserowClient;
+}): Promise<void> {
+  for (const field of fields) {
+    if (
+      field.type !== BaserowFieldType.SINGLE_SELECT &&
+      field.type !== BaserowFieldType.MULTI_SELECT
+    ) {
+      continue;
+    }
+    const value = payload[field.name];
+    if (value === undefined || value === null || value === '') continue;
+
+    const requested = collectRequestedSelectValues(value);
+    if (requested.length === 0) continue;
+
+    const existingValues = new Set(field.select_options.map((o) => o.value));
+    const missing = unique(requested.filter((v) => !existingValues.has(v)));
+    if (missing.length === 0) continue;
+
+    const result = await tryCatch(() =>
+      client.updateFieldSelectOptions({
+        fieldId: field.id,
+        existingOptions: field.select_options,
+        newOptions: missing,
+      }),
+    );
+    if (result.error) {
+      console.error(
+        `[baserow] Failed to auto-create missing select options for field "${field.name}":`,
+        result.error,
+      );
+    }
+  }
+}
+
+function collectRequestedSelectValues(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((v): v is string => typeof v === 'string' && v.length > 0);
+  }
+  if (typeof value === 'string' && value.length > 0) return [value];
+  return [];
 }
 
 export const baserowCommon = {
