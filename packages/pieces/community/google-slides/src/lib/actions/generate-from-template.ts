@@ -157,7 +157,6 @@ export const generateFromTemplate = createAction({
                 presentationUrl: `https://docs.google.com/presentation/d/${newPresentationId}/edit`
             };
         } catch (error) {
-            console.error('Error creating presentation:', error);
             throw error;
         }
     }
