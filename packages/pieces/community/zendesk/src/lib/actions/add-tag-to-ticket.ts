@@ -64,7 +64,7 @@ export const addTagToTicketAction = createAction({
     try {
       const response = await httpClient.sendRequest({
         url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}/tags.json`,
-        method: HttpMethod.PUT,
+        method: HttpMethod.POST,
         headers: {
           'Content-Type': 'application/json',
         },
