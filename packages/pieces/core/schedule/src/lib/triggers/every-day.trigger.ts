@@ -59,6 +59,6 @@ export const everyDayTrigger = createTrigger({
     ]);
   },
   onDisable: async () => {
-    console.log('onDisable');
+
   },
 });

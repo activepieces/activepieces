@@ -34,6 +34,6 @@ export const cronExpressionTrigger = createTrigger({
     return Promise.resolve([{}]);
   },
   onDisable: async () => {
-    console.log('onDisable');
+
   },
 });

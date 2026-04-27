@@ -71,6 +71,6 @@ export const everyWeekTrigger = createTrigger({
     ]);
   },
   onDisable: async () => {
-    console.log('onDisable');
+
   },
 });

@@ -71,6 +71,6 @@ export const everyMonthTrigger = createTrigger({
     ]);
   },
   onDisable: async () => {
-    console.log('onDisable');
+
   },
 });
