@@ -140,7 +140,7 @@ function statusIcon(status: FlowRunStatus): string {
     return '❌'
 }
 
-function formatDuration(startTime?: string, finishTime?: string): string {
+function formatDuration(startTime?: string | null, finishTime?: string | null): string {
     if (!startTime || !finishTime) return 'N/A'
     return `${((new Date(finishTime).getTime() - new Date(startTime).getTime()) / 1000).toFixed(1)}s`
 }

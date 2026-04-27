@@ -18,7 +18,7 @@ import {
   X,
   Archive,
 } from 'lucide-react';
-import { useMemo, useCallback, useState } from 'react';
+import { useEffect, useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -29,6 +29,7 @@ import {
   DataTable,
   DataTableFilters,
 } from '@/components/custom/data-table';
+import { getDefaultRange } from '@/components/custom/date-time-picker-range';
 import { MessageTooltip } from '@/components/custom/message-tooltip';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
@@ -70,8 +71,30 @@ export const RunsTable = () => {
     Required<FlowRunWithRetryError>[]
   >([]);
   const [failedRetryDialogOpen, setFailedRetryDialogOpen] = useState(false);
+
+  const [hasSeededDefaultRange, setHasSeededDefaultRange] = useState(() =>
+    searchParams.has('createdAfter'),
+  );
+  useEffect(() => {
+    if (hasSeededDefaultRange) return;
+    const range = getDefaultRange(DEFAULT_DATE_PRESET);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (!next.has('createdAfter')) {
+          next.set('createdAfter', range.from.toISOString());
+          next.set('createdBefore', range.to.toISOString());
+        }
+        return next;
+      },
+      { replace: true },
+    );
+    setHasSeededDefaultRange(true);
+  }, [hasSeededDefaultRange, setSearchParams]);
+
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['flow-run-table', searchParams.toString(), projectId],
+    enabled: hasSeededDefaultRange,
     staleTime: 0,
     gcTime: 0,
     meta: { showErrorDialog: true, loadSubsetOptions: {} },
@@ -165,7 +188,7 @@ export const RunsTable = () => {
         title: t('Created'),
         accessorKey: 'created',
         icon: CheckIcon,
-        defaultPresetName: '7days',
+        defaultPresetName: DEFAULT_DATE_PRESET,
       },
       {
         type: 'checkbox',
@@ -550,3 +573,5 @@ export const RunsTable = () => {
     </div>
   );
 };
+
+const DEFAULT_DATE_PRESET = '7days' as const;

@@ -107,8 +107,8 @@ export const FlowRunEvent = z.object({
     data: z.object({
         flowRun: z.object({
             id: z.string(),
-            startTime: z.string().optional(),
-            finishTime: z.string().optional(),
+            startTime: z.string().nullish(),
+            finishTime: z.string().nullish(),
             duration: z.number().optional(),
             triggeredBy: z.string().optional(),
             environment: z.string(),
