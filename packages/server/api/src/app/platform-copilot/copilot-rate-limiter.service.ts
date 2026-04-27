@@ -24,11 +24,13 @@ const readCounter = async (key: string): Promise<number> => {
 
 const incrementCounter = async ({ key, by }: { key: string, by: number }): Promise<number> => {
     const redis = await redisConnections.useExisting()
-    const updated = await redis.incrby(key, by)
-    if (updated === by) {
-        await redis.expire(key, COUNTER_TTL_SECONDS)
-    }
-    return updated
+    const results = await redis
+        .pipeline()
+        .incrby(key, by)
+        .expire(key, COUNTER_TTL_SECONDS)
+        .exec()
+    const incrResult = results?.[0]?.[1]
+    return typeof incrResult === 'number' ? incrResult : 0
 }
 
 const secondsUntilUtcMidnight = (): number => {

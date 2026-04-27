@@ -7,7 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { system } from '../helper/system/system'
-import { copilotCloudProxyService, isCloudProxyEdition } from './copilot-cloud-proxy.service'
+import { copilotCloudProxyService, isSelfHostedEdition } from './copilot-cloud-proxy.service'
 import { copilotPlatformRegistryService } from './copilot-platform-registry.service'
 import { copilotRateLimiter, estimateUsageCents } from './copilot-rate-limiter.service'
 import { runModeration } from './openai-moderation'
@@ -44,10 +44,10 @@ export const platformCopilotController: FastifyPluginAsyncZod = async (app) => {
             return reply
                 .header('Retry-After', userAllowance.retryAfterSeconds.toString())
                 .status(StatusCodes.TOO_MANY_REQUESTS)
-                .send({ error: PlatformCopilotErrorCode.USER_DAILY_LIMIT_REACHED })
+                .send({ error: PlatformCopilotErrorCode.USER_HOURLY_LIMIT_REACHED })
         }
 
-        if (isCloudProxyEdition()) {
+        if (isSelfHostedEdition()) {
             await copilotCloudProxyService.forwardChat({
                 platformId: request.principal.platform.id,
                 body: request.body,

@@ -94,9 +94,6 @@ export const copilotCloudProxyService = {
             log.error({ err: error, platformId }, '[copilotCloudProxyService] failed to forward chat')
             const axiosError = error as AxiosError
             const status = axiosError.response?.status ?? StatusCodes.BAD_GATEWAY
-    console.log("999999999999999999999999")
-    console.log(buildCloudUrl('/v1/platform-copilot/proxy-chat'))
-    console.log("999999999999999999999999")
             respondJson({
                 reply,
                 status: status >= 500 ? StatusCodes.BAD_GATEWAY : status,
@@ -110,6 +107,6 @@ export const copilotCloudProxyService = {
     },
 }
 
-export const isCloudProxyEdition = (): boolean => {
+export const isSelfHostedEdition = (): boolean => {
     return system.getEdition() !== ApEdition.CLOUD
 }

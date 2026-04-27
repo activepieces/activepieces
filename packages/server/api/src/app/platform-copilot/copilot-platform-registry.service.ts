@@ -21,12 +21,10 @@ export const copilotPlatformRegistryService = {
     async register({ platformId, edition, version }: PlatformCopilotRegisterRequest): Promise<{ copilotApiKey: string }> {
         const copilotApiKey = `apc_${crypto.randomBytes(32).toString('hex')}`
         const copilotApiKeyHash = hashKey(copilotApiKey)
-
-        const existing = await copilotRegistryRepo().findOneBy({ platformId })
         const now = dayjs().toISOString()
 
-        if (isNil(existing)) {
-            await copilotRegistryRepo().insert({
+        await copilotRegistryRepo().upsert(
+            {
                 id: apId(),
                 platformId,
                 copilotApiKeyHash,
@@ -34,16 +32,9 @@ export const copilotPlatformRegistryService = {
                 version,
                 blockedAt: null,
                 lastSeenAt: now,
-            })
-        }
-        else {
-            await copilotRegistryRepo().update({ platformId }, {
-                copilotApiKeyHash,
-                edition,
-                version,
-                lastSeenAt: now,
-            })
-        }
+            },
+            { conflictPaths: ['platformId'], skipUpdateIfNoValuesChanged: false },
+        )
 
         return { copilotApiKey }
     },

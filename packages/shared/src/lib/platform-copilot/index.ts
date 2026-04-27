@@ -16,7 +16,7 @@ export type PlatformCopilotRegisterResponse = {
 }
 
 export enum PlatformCopilotErrorCode {
-    USER_DAILY_LIMIT_REACHED = 'user_daily_limit_reached',
+    USER_HOURLY_LIMIT_REACHED = 'user_hourly_limit_reached',
     PLATFORM_DAILY_LIMIT_REACHED = 'platform_daily_limit_reached',
     PLATFORM_UNAVAILABLE = 'platform_unavailable',
     SERVICE_PAUSED = 'service_paused',

@@ -14,17 +14,14 @@ export const platformCopilotCredentialsService = {
 
     async saveApiKey({ platformId, copilotApiKey }: { platformId: string, copilotApiKey: string }): Promise<void> {
         const encrypted = await encryptUtils.encryptString(copilotApiKey)
-        const existing = await credentialsRepo().findOneBy({ platformId })
-        if (isNil(existing)) {
-            await credentialsRepo().insert({
+        await credentialsRepo().upsert(
+            {
                 id: apId(),
                 platformId,
                 copilotApiKey: encrypted,
-            })
-        }
-        else {
-            await credentialsRepo().update({ platformId }, { copilotApiKey: encrypted })
-        }
+            },
+            { conflictPaths: ['platformId'], skipUpdateIfNoValuesChanged: false },
+        )
     },
 
     async clear(platformId: string): Promise<void> {

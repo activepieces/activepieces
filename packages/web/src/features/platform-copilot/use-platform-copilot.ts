@@ -1,3 +1,4 @@
+import { PlatformCopilotErrorCode } from '@activepieces/shared';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, isTextUIPart, UIMessage } from 'ai';
 import { useEffect, useMemo } from 'react';
@@ -5,7 +6,6 @@ import { toast } from 'sonner';
 
 import { API_URL } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { PlatformCopilotErrorCode } from '@activepieces/shared';
 
 export function usePlatformCopilot() {
   const storageKey = `ap-copilot-${
@@ -102,8 +102,8 @@ function isValidMessage(item: unknown): boolean {
 function friendlyErrorMessage(error: Error): string | null {
   const code = parseCopilotErrorCode(error.message);
   switch (code) {
-    case PlatformCopilotErrorCode.USER_DAILY_LIMIT_REACHED:
-      return "You're going a bit fast. Try again in a few minutes.";
+    case PlatformCopilotErrorCode.USER_HOURLY_LIMIT_REACHED:
+      return "You're going a bit fast. Try again in an hour.";
     case PlatformCopilotErrorCode.PLATFORM_DAILY_LIMIT_REACHED:
       return "Your platform has reached today's copilot limit. It resets at midnight UTC.";
     case PlatformCopilotErrorCode.SERVICE_PAUSED:
