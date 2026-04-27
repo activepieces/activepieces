@@ -45,8 +45,7 @@ export const pushRowsToDatasetTableAction = createAction({
                             value: dataset.id
                         }))
                     };
-                } catch (error) {
-                    console.error('Error fetching datasets:', error);
+                } catch {
                     return {
                         disabled: true,
                         options: [],
@@ -88,8 +87,7 @@ export const pushRowsToDatasetTableAction = createAction({
                             value: table.name
                         }))
                     };
-                } catch (error) {
-                    console.error('Error fetching tables:', error);
+                } catch {
                     return {
                         disabled: true,
                         options: [],
@@ -139,8 +137,7 @@ export const pushRowsToDatasetTableAction = createAction({
             } else {
                 throw new Error('Rows must be either an array or an object with a rows array property');
             }
-        } catch (e) {
-            console.error('Error parsing rows:', e);
+        } catch {
             throw new Error('Invalid rows format');
         }
         
@@ -217,7 +214,6 @@ export const pushRowsToDatasetTableAction = createAction({
                 refreshAttempt: refreshResponse?.body
             };
         } catch (error) {
-            console.error('Error pushing data to Power BI:', error);
             throw error;
         }
     }
