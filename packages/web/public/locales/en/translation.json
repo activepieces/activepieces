@@ -932,6 +932,7 @@
   "Show less": "Show less",
   "empty": "empty",
   "items": "items",
+  "Showing {shown} of {total} {label}": "Showing {shown} of {total} {label}",
   "No items": "No items",
   "Previous": "Previous",
   "Last 7 Days": "",

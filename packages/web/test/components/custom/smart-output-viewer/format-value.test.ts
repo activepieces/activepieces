@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
 
 import {
-  getValueByDotPath,
   isSafeEmail,
   isSafeUrl,
-  parsePath,
 } from '@/components/custom/smart-output-viewer/format-value';
+import { pathUtils } from '@/lib/path-utils';
+
+const { parsePath, getValueByDotPath } = pathUtils;
 
 describe('parsePath', () => {
   it('parses simple dot notation', () => {

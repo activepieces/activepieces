@@ -27,6 +27,7 @@ import {
 import { FriendlyDataSelectorNode } from './friendly-data-selector-node';
 import { DataSelectorTreeNode } from './type';
 import { dataSelectorUtils } from './utils';
+import { hintsTreeUtils } from './utils-hints';
 
 type StepInfo = (FlowAction | FlowTrigger) & { dfsIndex: number };
 
@@ -212,7 +213,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
     }
 
     if (Array.isArray(stepData) && stepData.length > 0) {
-      return dataSelectorUtils.buildTreeFromArray({
+      return hintsTreeUtils.buildTreeFromArray({
         stepName: step.name,
         displayName,
         items: stepData,
@@ -221,7 +222,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
 
     const hints = hintsMap[step.name];
     if (hints) {
-      return dataSelectorUtils.buildTreeFromHints({
+      return hintsTreeUtils.buildTreeFromHints({
         stepName: step.name,
         displayName,
         hints,

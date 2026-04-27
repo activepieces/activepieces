@@ -4,15 +4,11 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { stringUtils } from '@/lib/string-utils';
 
 import { FieldTypeIcon } from './field-type-icon';
 
-function formatKey(key: string): string {
-  return key
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/[_-]/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
+const formatKey = stringUtils.titleCase;
 
 function truncateValue(value: unknown): string {
   if (isNil(value) || value === '') return '';

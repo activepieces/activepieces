@@ -2,16 +2,11 @@ import { isObject } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { stringUtils } from '@/lib/string-utils';
 import { cn } from '@/lib/utils';
 
 const MAX_CELL_LENGTH = 50;
-
-function formatColumnName(key: string): string {
-  return key
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/[_-]/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
+const MAX_TABLE_ROWS = 100;
 
 function isFlat(value: unknown): boolean {
   return value === null || typeof value !== 'object';
@@ -29,7 +24,7 @@ function buildColumns(first: Record<string, unknown>): Column[] | null {
     if (isFlat(value)) {
       columns.push({
         key,
-        label: formatColumnName(key),
+        label: stringUtils.titleCase(key),
         path: [key],
       });
     } else if (isObject(value) && isFlatObject(value)) {
@@ -110,12 +105,22 @@ function OutputTableView({ items }: OutputTableViewProps) {
   const columns = buildColumns(firstRow);
   if (!columns) return null;
 
-  const rows: Record<string, unknown>[] = items.filter(isObject);
+  const allRows: Record<string, unknown>[] = items.filter(isObject);
+  const totalRows = allRows.length;
+  const rows = allRows.slice(0, MAX_TABLE_ROWS);
+  const isTruncated = totalRows > MAX_TABLE_ROWS;
 
   return (
     <div className="p-3">
       <div className="text-xs text-muted-foreground mb-2">
-        {rows.length} {t('rows')} × {columns.length} {t('columns')}
+        {isTruncated
+          ? t('Showing {shown} of {total} {label}', {
+              shown: rows.length,
+              total: totalRows,
+              label: t('rows'),
+            })
+          : `${totalRows} ${t('rows')}`}{' '}
+        × {columns.length} {t('columns')}
       </div>
       <div className="overflow-x-auto rounded-md border border-dividers">
         <table className="w-full text-sm">

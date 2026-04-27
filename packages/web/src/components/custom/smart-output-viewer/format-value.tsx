@@ -5,115 +5,17 @@ import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { formatUtils } from '@/lib/format-utils';
+import { pathUtils } from '@/lib/path-utils';
 import { cn } from '@/lib/utils';
 
 import { HintField, FieldFormat } from './types';
 
 const MAX_TEXT_LENGTH = 200;
 const SAFE_URL_PROTOCOLS = new Set(['http:', 'https:']);
-
-function parsePath(path: string): Array<string | number> {
-  const segments: Array<string | number> = [];
-  let i = 0;
-  let buf = '';
-  const flushBuf = () => {
-    if (buf.length > 0) {
-      segments.push(buf);
-      buf = '';
-    }
-  };
-  while (i < path.length) {
-    const ch = path[i];
-    if (ch === '.') {
-      flushBuf();
-      i++;
-    } else if (ch === '[') {
-      flushBuf();
-      i++;
-      if (path[i] === '"' || path[i] === "'") {
-        const quote = path[i];
-        i++;
-        let key = '';
-        while (i < path.length && path[i] !== quote) {
-          if (path[i] === '\\' && i + 1 < path.length) {
-            key += path[i + 1];
-            i += 2;
-          } else {
-            key += path[i];
-            i++;
-          }
-        }
-        i++;
-        while (i < path.length && path[i] !== ']') i++;
-        i++;
-        segments.push(key);
-      } else {
-        let num = '';
-        while (i < path.length && path[i] !== ']') {
-          num += path[i];
-          i++;
-        }
-        i++;
-        const n = parseInt(num, 10);
-        segments.push(isNaN(n) ? num : n);
-      }
-    } else {
-      buf += ch;
-      i++;
-    }
-  }
-  flushBuf();
-  return segments;
-}
-
-const COMMON_WRAPPERS = [
-  'properties',
-  'data',
-  'body',
-  'payload',
-  'result',
-  'response',
-  'value',
-  'attributes',
-  'fields',
-];
-
-function resolveSegments(
-  obj: unknown,
-  segments: Array<string | number>,
-): unknown {
-  let current: unknown = obj;
-  for (const segment of segments) {
-    if (isNil(current) || typeof current !== 'object') return undefined;
-    if (Array.isArray(current)) {
-      const idx =
-        typeof segment === 'number' ? segment : parseInt(String(segment), 10);
-      current = current[idx];
-    } else if (isObject(current)) {
-      current = current[String(segment)];
-    } else {
-      return undefined;
-    }
-  }
-  return current;
-}
+const DEFAULT_CURRENCY = 'USD';
 
 function getValueByDotPath(obj: unknown, path: string): unknown {
-  if (path === '') return obj;
-  if (!isObject(obj) && !Array.isArray(obj)) return undefined;
-  const segments = parsePath(path);
-  const direct = resolveSegments(obj, segments);
-  if (!isNil(direct)) return direct;
-
-  if (segments.length === 0 || !isObject(obj)) return direct;
-  const rootKeys = Object.keys(obj);
-  for (const wrapper of COMMON_WRAPPERS) {
-    if (!rootKeys.includes(wrapper)) continue;
-    if (segments[0] === wrapper) continue;
-    const fallback = resolveSegments(obj, [wrapper, ...segments]);
-    if (!isNil(fallback)) return fallback;
-  }
-  return direct;
+  return pathUtils.getValueByDotPath(obj, path);
 }
 
 function resolveValue(json: unknown, field: HintField): unknown {
@@ -140,6 +42,15 @@ function isSafeUrl(value: string): boolean {
 
 function isSafeEmail(value: string): boolean {
   return !/[\r\n]/.test(value);
+}
+
+function toFiniteNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
 }
 
 function FormatSingleValue({
@@ -189,6 +100,21 @@ function FormatSingleValue({
     );
   }
 
+  if (format === 'image') {
+    if (!isSafeUrl(stringValue)) {
+      return <span className="break-all">{stringValue}</span>;
+    }
+    return (
+      <img
+        src={stringValue}
+        alt=""
+        className="max-h-32 max-w-full rounded border border-dividers object-contain"
+        loading="lazy"
+        referrerPolicy="no-referrer"
+      />
+    );
+  }
+
   if (format === 'date' || format === 'datetime') {
     const date = new Date(stringValue);
     if (!isNaN(date.getTime())) {
@@ -208,8 +134,39 @@ function FormatSingleValue({
     return <span>{value ? 'Yes' : 'No'}</span>;
   }
 
-  if (format === 'filesize' && typeof value === 'number') {
-    return <span>{formatFileSize(value)}</span>;
+  if (format === 'filesize') {
+    const bytes = toFiniteNumber(value);
+    if (bytes !== undefined) {
+      return <span>{formatFileSize(bytes)}</span>;
+    }
+  }
+
+  if (format === 'duration') {
+    const ms = toFiniteNumber(value);
+    if (ms !== undefined) {
+      return <span>{formatUtils.formatDuration(ms, false)}</span>;
+    }
+  }
+
+  if (format === 'number') {
+    const n = toFiniteNumber(value);
+    if (n !== undefined) {
+      return <span>{formatUtils.formatNumber(n)}</span>;
+    }
+  }
+
+  if (format === 'currency') {
+    const n = toFiniteNumber(value);
+    if (n !== undefined) {
+      return (
+        <span>
+          {new Intl.NumberFormat(undefined, {
+            style: 'currency',
+            currency: DEFAULT_CURRENCY,
+          }).format(n)}
+        </span>
+      );
+    }
   }
 
   return (
@@ -295,7 +252,6 @@ export {
   FormatSingleValue,
   resolveValue,
   getValueByDotPath,
-  parsePath,
   isSafeUrl,
   isSafeEmail,
 };

@@ -1,14 +1,9 @@
+import { stringUtils } from '@/lib/string-utils';
+
 import type { HintField, OutputDisplayHints } from './types';
 
-function titleCase(key: string): string {
-  return key
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/[_-]/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
 function resolveFieldLabel(field: HintField): string {
-  return field.label ?? titleCase(field.key);
+  return field.label ?? stringUtils.titleCase(field.key);
 }
 
 function resolveFieldPath(field: HintField, parentPath?: string): string {
@@ -32,7 +27,6 @@ function visibleFields(hints: OutputDisplayHints): {
 }
 
 export const hintUtils = {
-  titleCase,
   resolveFieldLabel,
   resolveFieldPath,
   resolveItemFieldPath,

@@ -5,22 +5,23 @@ import type {
   HintField,
   OutputDisplayHints,
 } from '@/components/custom/smart-output-viewer/types';
+import { stringUtils } from '@/lib/string-utils';
 
-describe('hintUtils.titleCase', () => {
+describe('stringUtils.titleCase', () => {
   it('humanises camelCase keys', () => {
-    expect(hintUtils.titleCase('firstName')).toBe('First Name');
+    expect(stringUtils.titleCase('firstName')).toBe('First Name');
   });
 
   it('humanises snake_case keys', () => {
-    expect(hintUtils.titleCase('first_name')).toBe('First Name');
+    expect(stringUtils.titleCase('first_name')).toBe('First Name');
   });
 
   it('humanises kebab-case keys', () => {
-    expect(hintUtils.titleCase('first-name')).toBe('First Name');
+    expect(stringUtils.titleCase('first-name')).toBe('First Name');
   });
 
   it('returns single-word keys capitalised', () => {
-    expect(hintUtils.titleCase('id')).toBe('Id');
+    expect(stringUtils.titleCase('id')).toBe('Id');
   });
 });
 
