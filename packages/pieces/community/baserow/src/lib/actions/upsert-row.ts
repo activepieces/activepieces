@@ -113,6 +113,14 @@ export const upsertRowAction = createAction({
       return { action: 'updated', row: updated };
     }
 
+    // Ensure the match field is present in the new row so the upsert is idempotent.
+    // The user may not have included it in table_fields.
+    const matchFieldId = parseInt(match_field!.replace('field_', ''), 10);
+    const matchFieldDef = tableSchema.find((f) => f.id === matchFieldId);
+    if (matchFieldDef) {
+      formattedFields[matchFieldDef.name] = match_value;
+    }
+
     const created = await client.createRow(table_id!, formattedFields);
     return { action: 'created', row: created };
   },
