@@ -217,8 +217,7 @@ export const smartsheetCommon = {
 					}
 				}
 				return fields;
-			} catch (error) {
-				console.error('Failed to fetch columns for dynamic properties:', error);
+			} catch {
 				return {};
 			}
 		},
@@ -801,9 +800,7 @@ export async function findOrCreateWebhook(
 
 	if (existingWebhook) {
 		if (existingWebhook.name !== webhookName) {
-			console.log(
-				`Found existing webhook ${existingWebhook.id} with different name: ${existingWebhook.name}. Expected: ${webhookName}`,
-			);
+			// Existing webhook has a different name; continue using it
 		}
 		if (!existingWebhook.enabled || existingWebhook.status !== 'ENABLED') {
 			return await enableWebhook(accessToken, existingWebhook.id.toString());
@@ -853,10 +850,8 @@ export async function getSheetRowDetails(
 		return response.body;
 	} catch (e: any) {
 		if (e.response?.status === 404) {
-			console.log(`Row ${rowId} on sheet ${sheetId} not found during detail fetch.`);
 			return null;
 		}
-		console.error(`Error fetching row ${rowId} from sheet ${sheetId}:`, e);
 		throw e;
 	}
 }
@@ -872,10 +867,8 @@ export async function getAttachmentFullDetails(accessToken: string, sheetId: str
 		return response.body;
 	} catch (e: any) {
 		if (e.response?.status === 404) {
-			console.log(`Attachment ${attachmentId} on sheet ${sheetId} not found.`);
 			return null;
 		}
-		console.error(`Error fetching attachment ${attachmentId} from sheet ${sheetId}:`, e);
 		throw e;
 	}
 }
@@ -891,10 +884,8 @@ export async function getCommentFullDetails(accessToken: string, sheetId: string
 		return response.body;
 	} catch (e: any) {
 		if (e.response?.status === 404) {
-			console.log(`Comment ${commentId} in discussion ${discussionId} on sheet ${sheetId} not found.`);
 			return null;
 		}
-		console.error(`Error fetching comment ${commentId} from sheet ${sheetId}:`, e);
 		throw e;
 	}
 }

@@ -71,8 +71,8 @@ export const updatedRowTrigger = createTrigger({
 			try {
 				await unsubscribeWebhook(context.auth.secret_text, webhookInfo.webhookId);
 			} catch (error: any) {
-				if (error.response?.status !== 404) {
-					console.error(`Error unsubscribing webhook ${webhookInfo.webhookId}: ${error.message}`);
+				if (error.response?.status === 404) {
+					// Webhook already deleted — nothing to do
 				}
 			}
 			await context.store.delete(TRIGGER_KEY);
