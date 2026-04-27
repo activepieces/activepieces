@@ -38,7 +38,7 @@ export const findCompanyAction = createAction({
 
         return {
             found: companyResponse.data.length > 0,
-            user: companyResponse.data.length > 0 ? companyResponse.data[0] : {},
+            company: companyResponse.data.length > 0 ? companyResponse.data[0] : {},
         };
     },
 });
