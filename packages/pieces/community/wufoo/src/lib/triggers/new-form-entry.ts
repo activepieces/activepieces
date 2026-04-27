@@ -73,8 +73,6 @@ export const newFormEntryTrigger = createTrigger({
       });
 
       await context.store.put<string>(TRIGGER_KEY, response.WebHookPutResult.Hash);
-
-      console.log(`Wufoo webhook successfully configured for form ${formIdentifier} with hash: ${response.WebHookPutResult.Hash}`);
     } catch (error: any) {
       if (error.response?.status === 404) {
         throw new Error(
@@ -111,11 +109,7 @@ export const newFormEntryTrigger = createTrigger({
           auth: context.auth,
           resourceUri: `/forms/${formIdentifier}/webhooks/${webhookHash}.${responseFormat || 'json'}`,
         });
-        
-        console.log(`Wufoo webhook successfully removed for form ${formIdentifier} with hash: ${webhookHash}`);
       } catch (error: any) {
-        console.warn(`Warning: Failed to clean up webhook ${webhookHash} for form ${formIdentifier}:`, error.message);
-        
         await context.store.delete(TRIGGER_KEY);
       }
     }

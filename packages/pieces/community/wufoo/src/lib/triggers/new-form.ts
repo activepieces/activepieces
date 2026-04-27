@@ -69,8 +69,6 @@ export const newFormTrigger = createTrigger({
 
       const hashes = response.Forms.map((form) => form.Hash);
       await context.store.put<string[]>(LAST_FORM_IDS_KEY, hashes);
-      
-      console.log(`Wufoo New Form trigger initialized with ${hashes.length} existing forms`);
     } catch (error: any) {
       if (error.response?.status === 401) {
         throw new Error(
@@ -90,9 +88,7 @@ export const newFormTrigger = createTrigger({
     }
   },
 
-  async onDisable() {
-    console.log('Wufoo New Form trigger disabled and cleaned up');
-  },
+  async onDisable() {},
 
   async run(context) {
     const { nameFilter, includeInactive, responseFormat } = context.propsValue;
