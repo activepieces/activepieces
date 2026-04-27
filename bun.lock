@@ -1030,7 +1030,7 @@
     },
     "packages/pieces/community/baserow": {
       "name": "@activepieces/piece-baserow",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3222,6 +3222,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/greenhouse": {
+      "name": "@activepieces/piece-greenhouse",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/greenpt": {
       "name": "@activepieces/piece-greenpt",
       "version": "0.1.4",
@@ -4629,6 +4639,16 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "form-data": "4.0.4",
+        "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/mixmax": {
+      "name": "@activepieces/piece-mixmax",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
         "tslib": "2.6.2",
       },
     },
@@ -8873,6 +8893,8 @@
 
     "@activepieces/piece-gravityforms": ["@activepieces/piece-gravityforms@workspace:packages/pieces/community/gravityforms"],
 
+    "@activepieces/piece-greenhouse": ["@activepieces/piece-greenhouse@workspace:packages/pieces/community/greenhouse"],
+
     "@activepieces/piece-greenpt": ["@activepieces/piece-greenpt@workspace:packages/pieces/community/greenpt"],
 
     "@activepieces/piece-greip": ["@activepieces/piece-greip@workspace:packages/pieces/community/greip"],
@@ -9136,6 +9158,8 @@
     "@activepieces/piece-missive": ["@activepieces/piece-missive@workspace:packages/pieces/community/missive"],
 
     "@activepieces/piece-mistral-ai": ["@activepieces/piece-mistral-ai@workspace:packages/pieces/community/mistral-ai"],
+
+    "@activepieces/piece-mixmax": ["@activepieces/piece-mixmax@workspace:packages/pieces/community/mixmax"],
 
     "@activepieces/piece-mixpanel": ["@activepieces/piece-mixpanel@workspace:packages/pieces/community/mixpanel"],
 
