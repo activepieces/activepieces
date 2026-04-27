@@ -60,13 +60,13 @@ const polling: Polling<
       for (const call of calls) {
         const ts = new Date(call.date_created).getTime();
 
-        if(call.status !== 'completed') continue;
-
-        if (isTest || ts > lastFetchEpochMS) {
-          results.push(call);
-        } else {
+        if (!isTest && ts <= lastFetchEpochMS) {
           stop = true;
           break;
+        }
+
+        if (call.status === 'completed') {
+          results.push(call);
         }
       }
 
