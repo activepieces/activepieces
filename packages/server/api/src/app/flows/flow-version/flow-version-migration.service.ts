@@ -22,10 +22,12 @@ import {
     SeekPage,
     spreadIfDefined,
     tryCatch,
+    unique,
     UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { In } from 'typeorm'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -126,6 +128,13 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         const BATCH_SIZE = 100
         const migratedVersions: MigratedVersionEntry[] = []
         const failedFlowVersions: FailedFlowVersionEntry[] = []
+
+        if (projectIds.length === 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'projectIds must contain at least one project' },
+            })
+        }
 
         const cache = dynamicSchemaResolver.createCache()
 
@@ -242,7 +251,6 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                                 await flowRepo(entityManager).update(newVersion.flowId, { publishedVersionId: newVersion.id })
                             }
                         })
-                        await flowExecutionCache(log).invalidate(flowVersion.flowId)
                     })
 
                     if (applyError) {
@@ -255,6 +263,13 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
                             error: applyError.message,
                         })
                         continue
+                    }
+
+                    if (!dryCheck) {
+                        const { error: cacheError } = await tryCatch(() => flowExecutionCache(log).invalidate(flowVersion.flowId))
+                        if (cacheError) {
+                            log.error({ flowVersionId: flowVersion.id, error: cacheError }, 'Failed to invalidate flow execution cache after migration; flow was migrated successfully')
+                        }
                     }
 
                     migratedVersions.push({
@@ -301,79 +316,102 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
         const migratedVersions: MigratedVersionEntry[] = []
         const failedFlowVersions: FailedFlowVersionEntry[] = []
 
+        const BATCH_SIZE = 100
+
         const { error: handlerError } = await tryCatch(async () => {
             const original = await migrationRepo().findOneBy({ id: request.revertOfMigrationId, platformId })
             if (isNil(original) || original.type !== FlowMigrationType.AI_PROVIDER_MODEL) {
                 throw new Error('Original migration not found or not an AI provider model migration')
             }
 
-            for (const entry of original.migratedVersions) {
-                const flow = await flowRepo().findOneBy({ id: entry.flowId, projectId: entry.projectId })
-                if (isNil(flow)) {
-                    failedFlowVersions.push({
-                        draft: entry.draft,
-                        flowVersionId: entry.newFlowVersionId,
-                        flowId: entry.flowId,
-                        projectId: entry.projectId,
-                        error: 'flow deleted',
-                    })
-                    continue
-                }
+            for (let i = 0; i < original.migratedVersions.length; i += BATCH_SIZE) {
+                const batch = original.migratedVersions.slice(i, i + BATCH_SIZE)
+                const flowIds = unique(batch.map((e) => e.flowId))
+                const versionIds = unique(batch.map((e) => e.flowVersionId))
+                const [flows, sourceVersions] = await Promise.all([
+                    flowRepo().findBy({ id: In(flowIds) }),
+                    flowVersionRepo().findBy({ id: In(versionIds) }),
+                ])
+                const flowById = new Map(flows.map((f) => [f.id, f]))
+                const versionById = new Map(sourceVersions.map((v) => [v.id, v]))
 
-                const sourceVersionRow = await flowVersionRepo().findOneBy({ id: entry.flowVersionId })
-                if (isNil(sourceVersionRow)) {
-                    failedFlowVersions.push({
-                        draft: entry.draft,
-                        flowVersionId: entry.newFlowVersionId,
-                        flowId: entry.flowId,
-                        projectId: entry.projectId,
-                        error: 'pre-migration version row missing',
-                    })
-                    continue
-                }
-
-                const newRevertVersionId = apId()
-                const { error: revertError } = await tryCatch(async () => {
-                    await transaction(async (entityManager) => {
-                        const revertVersion = sanitizeObjectForPostgresql({
-                            ...sourceVersionRow,
-                            id: newRevertVersionId,
-                            state: entry.draft ? FlowVersionState.DRAFT : FlowVersionState.LOCKED,
-                            created: dayjs().toISOString(),
-                            updated: dayjs().toISOString(),
+                for (const entry of batch) {
+                    const flow = flowById.get(entry.flowId)
+                    if (isNil(flow) || flow.projectId !== entry.projectId) {
+                        failedFlowVersions.push({
+                            draft: entry.draft,
+                            flowVersionId: entry.newFlowVersionId,
+                            flowId: entry.flowId,
+                            projectId: entry.projectId,
+                            error: 'flow deleted',
                         })
-                        if (entry.draft) {
-                            await flowVersionRepo(entityManager).update(
-                                { flowId: entry.flowId, state: FlowVersionState.DRAFT },
-                                { state: FlowVersionState.LOCKED },
-                            )
-                        }
-                        await flowVersionRepo(entityManager).save(revertVersion)
-                        if (!entry.draft) {
-                            await flowRepo(entityManager).update(entry.flowId, { publishedVersionId: revertVersion.id })
-                        }
-                    })
-                    await flowExecutionCache(log).invalidate(entry.flowId)
-                })
+                        continue
+                    }
 
-                if (revertError) {
-                    log.error({ flowId: entry.flowId, error: revertError }, 'Failed to revert flow')
-                    failedFlowVersions.push({
+                    const sourceVersionRow = versionById.get(entry.flowVersionId)
+                    if (isNil(sourceVersionRow)) {
+                        failedFlowVersions.push({
+                            draft: entry.draft,
+                            flowVersionId: entry.newFlowVersionId,
+                            flowId: entry.flowId,
+                            projectId: entry.projectId,
+                            error: 'pre-migration version row missing',
+                        })
+                        continue
+                    }
+
+                    const newRevertVersionId = apId()
+                    const { error: revertError } = await tryCatch(async () => {
+                        await transaction(async (entityManager) => {
+                            const revertVersion = sanitizeObjectForPostgresql({
+                                ...sourceVersionRow,
+                                id: newRevertVersionId,
+                                state: entry.draft ? FlowVersionState.DRAFT : FlowVersionState.LOCKED,
+                                created: dayjs().toISOString(),
+                                updated: dayjs().toISOString(),
+                            })
+                            if (entry.draft) {
+                                await flowVersionRepo(entityManager).update(
+                                    { flowId: entry.flowId, state: FlowVersionState.DRAFT },
+                                    { state: FlowVersionState.LOCKED },
+                                )
+                            }
+                            await flowVersionRepo(entityManager).save(revertVersion)
+                            if (!entry.draft) {
+                                await flowRepo(entityManager).update(entry.flowId, { publishedVersionId: revertVersion.id })
+                            }
+                        })
+                    })
+
+                    if (revertError) {
+                        log.error({ flowId: entry.flowId, error: revertError }, 'Failed to revert flow')
+                        failedFlowVersions.push({
+                            draft: entry.draft,
+                            flowVersionId: entry.newFlowVersionId,
+                            flowId: entry.flowId,
+                            projectId: entry.projectId,
+                            error: revertError.message,
+                        })
+                        continue
+                    }
+
+                    const { error: cacheError } = await tryCatch(() => flowExecutionCache(log).invalidate(entry.flowId))
+                    if (cacheError) {
+                        log.error({ flowId: entry.flowId, error: cacheError }, 'Failed to invalidate flow execution cache after revert; flow was reverted successfully')
+                    }
+
+                    migratedVersions.push({
                         draft: entry.draft,
                         flowVersionId: entry.newFlowVersionId,
                         flowId: entry.flowId,
                         projectId: entry.projectId,
-                        error: revertError.message,
+                        newFlowVersionId: newRevertVersionId,
                     })
-                    continue
                 }
 
-                migratedVersions.push({
-                    draft: entry.draft,
-                    flowVersionId: entry.newFlowVersionId,
-                    flowId: entry.flowId,
-                    projectId: entry.projectId,
-                    newFlowVersionId: newRevertVersionId,
+                await migrationRepo().update(migrationId, {
+                    migratedVersions,
+                    failedFlowVersions,
                 })
             }
         })
