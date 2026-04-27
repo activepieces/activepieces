@@ -25,7 +25,6 @@ export const conversationIdDropdown = Property.Dropdown({
         '/conversations'
       );
       const conversations = response._results || [];
-      console.log(response);
       return {
         disabled: false,
         options: conversations.map((conv: any) => ({

@@ -47,7 +47,6 @@ export const findContact = createAction({
 
     const queryString = params.length ? `?${params.join('&')}` : '';
     const path = `/contacts${queryString}`;
-    console.log("Request Path:", path);
     return await makeRequest(auth, HttpMethod.GET, path);
   },
 });
