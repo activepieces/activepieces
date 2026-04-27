@@ -8,6 +8,7 @@ import { twitterAuth } from '../..';
 import { twitterCommon } from '../common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
+import mime from 'mime-types';
 
 export const createReply = createAction({
     auth: twitterAuth,
@@ -50,7 +51,7 @@ export const createReply = createAction({
         media.forEach((m) => {
           uploadedMedia.push(
             userClient.v1.uploadMedia(Buffer.from(m.base64, 'base64'), {
-              mimeType: 'image/png',
+              mimeType: m.extension ? mime.lookup(m.extension) || 'image/png' : 'image/png',
               target: 'tweet',
             })
           );
