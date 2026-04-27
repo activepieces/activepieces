@@ -29,8 +29,6 @@ export const ChatConversation = z.object({
     title: Nullable(z.string()),
     sandboxSessionId: Nullable(z.string()),
     modelName: Nullable(z.string()),
-    totalInputTokens: z.number(),
-    totalOutputTokens: z.number(),
     summary: Nullable(z.string()),
 })
 export type ChatConversation = z.infer<typeof ChatConversation>

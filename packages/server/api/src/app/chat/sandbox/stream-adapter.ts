@@ -3,127 +3,75 @@ import { UIMessage, UIMessageStreamWriter } from 'ai'
 import { chatEventUtils } from './ai-event-utils'
 import { SandboxSessionUpdateType } from './sandbox-agent'
 
-const MAX_TOOL_OUTPUT_SIZE = 64 * 1024
-
-// If text accumulated in the suppression buffer doesn't match replay markers within these limits, stop suppressing
-const SUPPRESSION_BUFFER_LIMIT = 200
-const DETECTION_BUFFER_LIMIT = 500
-
-type ChatDataParts = {
-    'session-title': { title: string }
-    'plan': { entries: Array<{ content: string, status: string }> }
-    'usage': { inputTokens: number, outputTokens: number }
-}
-
-type ChatUIMessage = UIMessage<unknown, ChatDataParts>
-type ChatWriter = UIMessageStreamWriter<ChatUIMessage>
-
 export function createStreamWriter({ writer, textPartId, reasoningPartId, onSessionTitle }: {
     writer: ChatWriter
     textPartId: string
     reasoningPartId: string
     onSessionTitle?: (title: string) => void
 }): { write: (update: Record<string, unknown>) => void } {
-    let textStarted = false
-    let reasoningStarted = false
+    const text = chunkedPart({ writer, id: textPartId, kind: 'text' })
+    const reasoning = chunkedPart({ writer, id: reasoningPartId, kind: 'reasoning' })
 
     return {
         write(update: Record<string, unknown>): void {
-            const updateType = getString(update, 'sessionUpdate')
-
-            switch (updateType) {
-                case SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK: {
-                    const text = chatEventUtils.extractContentText(update)
-                    if (text) {
-                        if (!textStarted) {
-                            writer.write({ type: 'text-start', id: textPartId })
-                            textStarted = true
-                        }
-                        writer.write({ type: 'text-delta', id: textPartId, delta: text })
-                    }
+            switch (getString(update, 'sessionUpdate')) {
+                case SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK:
+                    text.append(chatEventUtils.extractContentText(update))
                     break
-                }
-                case SandboxSessionUpdateType.AGENT_THOUGHT_CHUNK: {
-                    const text = chatEventUtils.extractContentText(update)
-                    if (text) {
-                        if (!reasoningStarted) {
-                            writer.write({ type: 'reasoning-start', id: reasoningPartId })
-                            reasoningStarted = true
-                        }
-                        writer.write({ type: 'reasoning-delta', id: reasoningPartId, delta: text })
-                    }
+                case SandboxSessionUpdateType.AGENT_THOUGHT_CHUNK:
+                    reasoning.append(chatEventUtils.extractContentText(update))
                     break
-                }
                 case SandboxSessionUpdateType.TOOL_CALL: {
-                    if (textStarted) {
-                        writer.write({ type: 'text-end', id: textPartId })
-                        textStarted = false
-                    }
-                    if (reasoningStarted) {
-                        writer.write({ type: 'reasoning-end', id: reasoningPartId })
-                        reasoningStarted = false
-                    }
+                    text.end()
+                    reasoning.end()
                     const toolCallId = getString(update, 'toolCallId') ?? 'unknown'
                     const title = getString(update, 'title') ?? 'Unknown tool'
-                    const rawInput = isObject(update.rawInput) ? update.rawInput : {}
-                    writer.write({
-                        type: 'tool-input-start',
-                        toolCallId,
-                        toolName: title,
-                        dynamic: true,
-                        title,
-                    })
-                    writer.write({
-                        type: 'tool-input-available',
-                        toolCallId,
-                        toolName: title,
-                        input: rawInput,
-                        dynamic: true,
-                        title,
-                    })
+                    const input = isObject(update.rawInput) ? update.rawInput : {}
+                    writer.write({ type: 'tool-input-start', toolCallId, toolName: title, dynamic: true, title })
+                    writer.write({ type: 'tool-input-available', toolCallId, toolName: title, input, dynamic: true, title })
                     break
                 }
                 case SandboxSessionUpdateType.TOOL_CALL_UPDATE: {
-                    const status = getString(update, 'status')
-                    if (status === 'completed') {
-                        const toolCallId = getString(update, 'toolCallId') ?? 'unknown'
-                        const rawOutput = truncateToolOutput(chatEventUtils.extractToolOutput(update))
-                        writer.write({
-                            type: 'tool-output-available',
-                            toolCallId,
-                            output: rawOutput,
-                            dynamic: true,
-                        })
-                    }
+                    if (getString(update, 'status') !== 'completed') break
+                    writer.write({
+                        type: 'tool-output-available',
+                        toolCallId: getString(update, 'toolCallId') ?? 'unknown',
+                        output: truncateToolOutput(chatEventUtils.extractToolOutput(update)),
+                        dynamic: true,
+                    })
                     break
                 }
                 case SandboxSessionUpdateType.SESSION_INFO_UPDATE: {
                     const title = getString(update, 'title')
-                    if (title) {
-                        writer.write({ type: 'data-session-title', data: { title }, transient: true })
-                        onSessionTitle?.(title)
-                    }
+                    if (!title) break
+                    writer.write({ type: 'data-session-title', data: { title }, transient: true })
+                    onSessionTitle?.(title)
                     break
                 }
                 case SandboxSessionUpdateType.PLAN: {
                     const entries = update.entries
-                    if (Array.isArray(entries)) {
-                        const planEntries = entries
-                            .filter(isObject)
-                            .map((entry) => ({
+                    if (!Array.isArray(entries)) break
+                    writer.write({
+                        type: 'data-plan',
+                        data: {
+                            entries: entries.filter(isObject).map((entry) => ({
                                 content: getString(entry, 'content') ?? '',
                                 status: getString(entry, 'status') ?? 'pending',
-                            }))
-                        writer.write({ type: 'data-plan', data: { entries: planEntries } })
-                    }
+                            })),
+                        },
+                    })
                     break
                 }
-                case SandboxSessionUpdateType.USAGE_UPDATE: {
-                    const inputTokens = getNumber(update, 'inputTokens') ?? getNumber(update, 'used') ?? 0
-                    const outputTokens = getNumber(update, 'outputTokens') ?? 0
-                    writer.write({ type: 'data-usage', data: { inputTokens, outputTokens }, transient: true })
+                case SandboxSessionUpdateType.USAGE_UPDATE:
+                    writer.write({
+                        type: 'data-usage',
+                        data: {
+                            inputTokens: getNumber(update, 'inputTokens') ?? getNumber(update, 'used') ?? 0,
+                            outputTokens: getNumber(update, 'outputTokens') ?? 0,
+                        },
+                        transient: true,
+                    })
                     break
-                }
                 default:
                     break
             }
@@ -131,52 +79,54 @@ export function createStreamWriter({ writer, textPartId, reasoningPartId, onSess
     }
 }
 
-export function createHistoryReplayFilter(): {
-    shouldSuppress: (update: Record<string, unknown>) => boolean
-} {
+export function createHistoryReplayFilter(): { shouldSuppress: (update: Record<string, unknown>) => boolean } {
     let state: 'detecting' | 'suppressing' | 'passthrough' = 'detecting'
     let buffer = ''
 
     return {
         shouldSuppress(update: Record<string, unknown>): boolean {
             if (state === 'passthrough') return false
+            const isTextChunk = getString(update, 'sessionUpdate') === SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK
+            if (state === 'suppressing' && !isTextChunk) return false
+            if (!isTextChunk) return false
 
-            const updateType = getString(update, 'sessionUpdate')
-            const isTextChunk = updateType === SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK
-
-            if (state === 'suppressing') {
-                if (!isTextChunk) return false
-                const text = chatEventUtils.extractContentText(update)
-                if (!text) return true
-                buffer += text
-                if (chatEventUtils.isHistoryReplayContent(buffer)) {
-                    buffer = ''
-                    return true
-                }
-                if (buffer.length > SUPPRESSION_BUFFER_LIMIT) {
-                    state = 'passthrough'
-                    buffer = ''
-                    return false
-                }
+            const text = chatEventUtils.extractContentText(update)
+            if (!text) return state === 'suppressing'
+            buffer += text
+            if (chatEventUtils.isHistoryReplayContent(buffer)) {
+                buffer = ''
+                state = 'suppressing'
                 return true
             }
-
-            if (isTextChunk) {
-                const text = chatEventUtils.extractContentText(update)
-                if (text) {
-                    buffer += text
-                    if (chatEventUtils.isHistoryReplayContent(buffer)) {
-                        state = 'suppressing'
-                        buffer = ''
-                        return true
-                    }
-                    if (buffer.length > DETECTION_BUFFER_LIMIT) {
-                        state = 'passthrough'
-                        buffer = ''
-                    }
-                }
+            const limit = state === 'suppressing' ? SUPPRESSION_BUFFER_LIMIT : DETECTION_BUFFER_LIMIT
+            if (buffer.length > limit) {
+                buffer = ''
+                state = 'passthrough'
+                return false
             }
-            return false
+            return state === 'suppressing'
+        },
+    }
+}
+
+function chunkedPart({ writer, id, kind }: { writer: ChatWriter, id: string, kind: 'text' | 'reasoning' }): {
+    append: (delta: string | undefined) => void
+    end: () => void
+} {
+    let started = false
+    return {
+        append(delta: string | undefined): void {
+            if (!delta) return
+            if (!started) {
+                writer.write({ type: `${kind}-start`, id })
+                started = true
+            }
+            writer.write({ type: `${kind}-delta`, id, delta })
+        },
+        end(): void {
+            if (!started) return
+            writer.write({ type: `${kind}-end`, id })
+            started = false
         },
     }
 }
@@ -198,4 +148,15 @@ function truncateToolOutput(output: string | undefined): string | undefined {
     return output
 }
 
-export type { ChatDataParts, ChatUIMessage }
+const MAX_TOOL_OUTPUT_SIZE = 64 * 1024
+const SUPPRESSION_BUFFER_LIMIT = 200
+const DETECTION_BUFFER_LIMIT = 500
+
+export type ChatDataParts = {
+    'session-title': { title: string }
+    'plan': { entries: Array<{ content: string, status: string }> }
+    'usage': { inputTokens: number, outputTokens: number }
+}
+
+export type ChatUIMessage = UIMessage<unknown, ChatDataParts>
+type ChatWriter = UIMessageStreamWriter<ChatUIMessage>
