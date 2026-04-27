@@ -260,7 +260,7 @@ export const updateTicketAction = createAction({
 
           return dynamicProps;
         } catch (error) {
-          console.warn('Failed to load ticket fields:', error);
+          // non-fatal: continue with partial data;
           return {};
         }
       },
@@ -490,7 +490,7 @@ export const updateTicketAction = createAction({
           ticket.custom_fields = customFieldsArray;
         }
       } catch (error) {
-        console.warn('Failed to process custom fields:', error);
+        // non-fatal: continue with partial data;
       }
     }
 

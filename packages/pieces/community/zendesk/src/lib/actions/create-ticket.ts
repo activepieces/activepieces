@@ -268,7 +268,7 @@ export const createTicketAction = createAction({
 
           return dynamicProps;
         } catch (error) {
-          console.warn('Failed to load ticket fields:', error);
+          // non-fatal: continue with partial data;
           return {};
         }
       },
@@ -350,7 +350,7 @@ export const createTicketAction = createAction({
         const users = (response.body as { users: Array<{ id: number }> }).users;
         return users.length > 0 ? users[0].id : null;
       } catch (error) {
-        console.warn(`Warning: Could not resolve user with email ${email}:`, (error as Error).message);
+        // non-fatal: continue with partial data;
         return null;
       }
     };
@@ -460,7 +460,7 @@ export const createTicketAction = createAction({
           ticket.custom_fields = customFieldsArray;
         }
       } catch (error) {
-        console.warn('Failed to process custom fields:', error);
+        // non-fatal: continue with partial data;
       }
     }
 

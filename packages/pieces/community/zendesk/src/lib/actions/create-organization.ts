@@ -180,7 +180,7 @@ export const createOrganizationAction = createAction({
 
           return dynamicProps;
         } catch (error) {
-          console.warn('Failed to load organization fields:', error);
+          // non-fatal: continue with partial data;
           return {};
         }
       },
@@ -272,7 +272,7 @@ export const createOrganizationAction = createAction({
           organization.organization_fields = orgFieldsObj;
         }
       } catch (error) {
-        console.warn('Failed to process organization fields:', error);
+        // non-fatal: continue with partial data;
       }
     }
 

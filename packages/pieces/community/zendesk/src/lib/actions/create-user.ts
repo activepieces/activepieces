@@ -315,7 +315,7 @@ export const createUserAction = createAction({
           user.user_fields = mapped;
         }
       } catch (error) {
-        console.warn('Failed to process user fields:', error);
+        // non-fatal: continue with partial data;
       }
     }
 
