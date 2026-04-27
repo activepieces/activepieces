@@ -75,5 +75,14 @@ export type PlanItem = {
     status: 'pending' | 'in_progress' | 'completed'
 }
 
+export const UserSandbox = z.object({
+    ...BaseModelSchema,
+    userId: z.string(),
+    platformId: z.string(),
+    sandboxId: z.string(),
+    lastUsedAt: z.string().datetime(),
+})
+export type UserSandbox = z.infer<typeof UserSandbox>
+
 export type ChatAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
 export { CHAT_ALLOWED_MIME_TYPES }

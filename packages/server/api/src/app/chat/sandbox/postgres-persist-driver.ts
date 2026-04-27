@@ -143,33 +143,24 @@ async function deleteSessionData({ sessionId }: { sessionId: string }): Promise<
     await sessionRepo().delete({ id: sessionId })
 }
 
-async function* streamEvents({ sessionId, pageSize = 500, maxEvents = 10_000 }: {
+async function* streamEvents({ sessionId, maxEvents = 10_000 }: {
     sessionId: string
-    pageSize?: number
     maxEvents?: number
 }): AsyncGenerator<{ sender: string, payload: Record<string, unknown> }> {
-    let lastEventIndex = -1
-    let totalYielded = 0
+    const rows = await eventRepo()
+        .createQueryBuilder('e')
+        .select(['e.sender', 'e.payload_json', 'e.event_index', 'e.id'])
+        .where('e.session_id = :sessionId', { sessionId })
+        .andWhere('e.payload_json->>\'method\' IN (:...methods)', {
+            methods: ['session/prompt', 'session/update'],
+        })
+        .orderBy('e.event_index', 'ASC')
+        .addOrderBy('e.id', 'ASC')
+        .take(maxEvents)
+        .getRawMany()
 
-    // eslint-disable-next-line no-constant-condition
-    for (;;) {
-        const rows = await eventRepo()
-            .createQueryBuilder('e')
-            .where('e.session_id = :sessionId', { sessionId })
-            .andWhere('e.event_index > :lastEventIndex', { lastEventIndex })
-            .orderBy('e.event_index', 'ASC')
-            .addOrderBy('e.id', 'ASC')
-            .take(pageSize)
-            .getMany()
-
-        if (rows.length === 0) break
-
-        for (const row of rows) {
-            yield { sender: row.sender, payload: row.payload_json }
-            lastEventIndex = parseInteger(row.event_index)
-            totalYielded++
-            if (totalYielded >= maxEvents) return
-        }
+    for (const row of rows) {
+        yield { sender: row.e_sender, payload: row.e_payload_json }
     }
 }
 

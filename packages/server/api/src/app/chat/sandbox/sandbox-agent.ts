@@ -1,80 +1,125 @@
 import {
+    ActivepiecesError,
     apId,
     ChatHistoryMessage,
     ChatHistoryToolCall,
+    ErrorCode,
     isObject,
     isString,
+    tryCatch,
 } from '@activepieces/shared'
-import type { SandboxAgent, Session, SessionCreateRequest, SessionPersistDriver } from 'sandbox-agent'
+import type { SandboxAgent, SandboxProvider, Session, SessionCreateRequest, SessionPersistDriver } from 'sandbox-agent'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { chatEventUtils } from './ai-event-utils'
 import { chatSessionEvents } from './postgres-persist-driver'
 
 const MAX_CONCURRENT_SANDBOXES = 20
+const MAX_CACHED_ENTRIES = 50
+const SLOT_WAIT_TIMEOUT_MS = 60_000
 const SDK_TIMEOUT_MS = 30_000
+const SDK_CACHE_TTL_MS = 10 * 60 * 1000
 let activeSandboxCount = 0
-const sandboxQueue: Array<{ resolve: () => void }> = []
+const slotQueue: Array<{ resolve: () => void, reject: (err: Error) => void }> = []
+const sdkCache = new Map<string, { sdk: SandboxAgent, expiresAt: number }>()
 
 async function acquireSandboxSlot(): Promise<void> {
     if (activeSandboxCount < MAX_CONCURRENT_SANDBOXES) {
         activeSandboxCount++
         return
     }
-    return new Promise<void>((resolve) => {
-        sandboxQueue.push({ resolve })
+    return new Promise<void>((resolve, reject) => {
+        const entry = { resolve, reject }
+        slotQueue.push(entry)
+        const timeoutId = setTimeout(() => {
+            const idx = slotQueue.indexOf(entry)
+            if (idx !== -1) {
+                slotQueue.splice(idx, 1)
+            }
+            reject(new ActivepiecesError({
+                code: ErrorCode.SANDBOX_CAPACITY_EXCEEDED,
+                params: {},
+            }))
+        }, SLOT_WAIT_TIMEOUT_MS)
+        const originalResolve = entry.resolve
+        entry.resolve = () => {
+            clearTimeout(timeoutId)
+            activeSandboxCount++
+            originalResolve()
+        }
     })
 }
 
 function releaseSandboxSlot(): void {
-    const next = sandboxQueue.shift()
+    activeSandboxCount = Math.max(0, activeSandboxCount - 1)
+    const next = slotQueue.shift()
     if (next) {
         next.resolve()
     }
-    else {
-        activeSandboxCount = Math.max(0, activeSandboxCount - 1)
-    }
 }
 
-async function createSdk({ aiConfig }: { aiConfig: ChatAiConfig }): Promise<SandboxAgent> {
-    await acquireSandboxSlot()
+async function startSdk({ sandbox, sandboxId, persist }: {
+    sandbox: SandboxProvider
+    sandboxId?: string
+    persist: SessionPersistDriver
+}): Promise<SandboxAgent> {
+    const { SandboxAgent: SandboxAgentClass } = await esmImport<typeof import('sandbox-agent')>('sandbox-agent')
+    const sdkPromise = SandboxAgentClass.start({ sandbox, sandboxId, persist })
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+    const timeout = new Promise<never>((_resolve, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(`E2B sandbox creation timed out after ${SDK_TIMEOUT_MS}ms`)), SDK_TIMEOUT_MS)
+    })
     try {
-        const e2bApiKey = system.getOrThrow(AppSystemProp.E2B_API_KEY)
-        const { e2b } = await esmImport<typeof import('sandbox-agent/e2b')>('sandbox-agent/e2b')
-        const sandbox = e2b({
-            create: { apiKey: e2bApiKey, envs: aiConfig.envs },
-            connect: { apiKey: e2bApiKey },
-        })
-        const { SandboxAgent: SandboxAgentClass } = await esmImport<typeof import('sandbox-agent')>('sandbox-agent')
-        const { PostgresSessionPersistDriver } = await import('./postgres-persist-driver')
-
-        const sdkPromise = SandboxAgentClass.start({
-            sandbox,
-            persist: new PostgresSessionPersistDriver() as unknown as SessionPersistDriver,
-        })
-        let timeoutId: ReturnType<typeof setTimeout> | undefined
-        const timeout = new Promise<never>((_resolve, reject) => {
-            timeoutId = setTimeout(() => reject(new Error(`E2B sandbox creation timed out after ${SDK_TIMEOUT_MS}ms`)), SDK_TIMEOUT_MS)
-        })
-        try {
-            return await Promise.race([sdkPromise, timeout])
-        }
-        catch (err) {
-            // If timeout won, the SDK may still finish — destroy the orphaned sandbox
-            void sdkPromise.then((sdk) => sdk.destroySandbox().catch(() => undefined))
-            throw err
-        }
-        finally {
-            clearTimeout(timeoutId)
-        }
+        return await Promise.race([sdkPromise, timeout])
+    }
+    catch (err) {
+        void sdkPromise.then((sdk) => sdk.destroySandbox().catch(() => undefined)).catch(() => undefined)
+        throw err
     }
     finally {
-        releaseSandboxSlot()
+        clearTimeout(timeoutId)
     }
 }
 
-async function createSession({ aiConfig, mcpServerUrl, mcpToken }: CreateSessionParams): Promise<Session> {
+async function createSdk({ aiConfig, sandboxId }: { aiConfig: ChatAiConfig, sandboxId?: string }): Promise<SandboxAgent> {
+    const e2bApiKey = system.getOrThrow(AppSystemProp.E2B_API_KEY)
+    const { e2b } = await esmImport<typeof import('sandbox-agent/e2b')>('sandbox-agent/e2b')
+    const sandbox = e2b({
+        create: { apiKey: e2bApiKey, envs: aiConfig.envs },
+        connect: { apiKey: e2bApiKey },
+    })
+    const { PostgresSessionPersistDriver } = await import('./postgres-persist-driver')
+    const persist = new PostgresSessionPersistDriver() as unknown as SessionPersistDriver
+
+    if (sandboxId) {
+        const { data: sdk } = await tryCatch(async () => startSdk({ sandbox, sandboxId, persist }))
+        if (sdk) {
+            return sdk
+        }
+    }
+    return startSdk({ sandbox, persist })
+}
+
+async function createSandbox({ aiConfig }: { aiConfig: ChatAiConfig }): Promise<string> {
     const sdk = await createSdk({ aiConfig })
+    const sandboxId = sdk.sandboxId
+    if (!sandboxId) {
+        await sdk.destroySandbox().catch(() => undefined)
+        throw new Error('E2B sandbox created but returned no sandboxId')
+    }
+    await sdk.pauseSandbox().catch(() => undefined)
+    return sandboxId
+}
+
+async function destroySandbox({ sandboxId, aiConfig }: { sandboxId: string, aiConfig: ChatAiConfig }): Promise<void> {
+    const { data: sdk } = await tryCatch(async () => createSdk({ aiConfig, sandboxId }))
+    if (sdk) {
+        await sdk.killSandbox().catch(() => undefined)
+    }
+}
+
+async function createSession({ aiConfig, sandboxId, mcpServerUrl, mcpToken }: CreateSessionParams): Promise<CreateSessionResult> {
+    const sdk = await createSdk({ aiConfig, sandboxId })
 
     const request: SessionCreateRequest = {
         agent: aiConfig.agent,
@@ -101,7 +146,11 @@ async function createSession({ aiConfig, mcpServerUrl, mcpToken }: CreateSession
         void session.respondPermission(req.id, 'once').catch(() => undefined)
     })
 
-    return session
+    const resolvedSandboxId = sdk.sandboxId ?? sandboxId
+    evictOldestSdkIfFull()
+    sdkCache.set(resolvedSandboxId, { sdk, expiresAt: Date.now() + SDK_CACHE_TTL_MS })
+
+    return { session, sdk }
 }
 
 function isImageMimeType(mimeType: string): boolean {
@@ -188,9 +237,11 @@ async function sendPrompt({ session, text, systemPrompt, files }: SendPromptPara
     await session.prompt(contentBlocks)
 }
 
-async function destroySession({ sessionId, aiConfig }: DestroySessionParams): Promise<void> {
-    const sdk = await createSdk({ aiConfig })
-    await sdk.destroySession(sessionId)
+async function destroySession({ sessionId, sandboxId }: { sessionId: string, sandboxId: string }): Promise<void> {
+    const cached = sdkCache.get(sandboxId)
+    if (cached && cached.expiresAt > Date.now()) {
+        await cached.sdk.destroySession(sessionId)
+    }
 }
 
 async function getSessionHistory({ sessionId }: { sessionId: string }): Promise<ChatHistoryMessage[]> {
@@ -215,7 +266,7 @@ async function getSessionHistory({ sessionId }: { sessionId: string }): Promise<
             const prompt = Array.isArray(params?.prompt) ? params.prompt : undefined
             const firstBlock = prompt && isObject(prompt[0]) ? prompt[0] : undefined
             const rawText = firstBlock && isString(firstBlock.text) ? firstBlock.text : undefined
-            const text = rawText ? stripSystemInstructions(rawText) : ''
+            const text = rawText ? stripHistoryReplay(stripSystemInstructions(rawText)) : ''
             if (text.length > 0) {
                 messages.push({ role: 'user', content: text })
             }
@@ -308,13 +359,49 @@ function stripSystemInstructions(text: string): string {
         .trim()
 }
 
-async function resumeSession({ sessionId, aiConfig }: SessionParams): Promise<Session> {
-    const sdk = await createSdk({ aiConfig })
+function evictStaleCacheEntries(): void {
+    const now = Date.now()
+    for (const [key, entry] of sdkCache) {
+        if (entry.expiresAt <= now) {
+            void entry.sdk.dispose().catch(() => undefined)
+            sdkCache.delete(key)
+        }
+    }
+}
+
+function evictOldestSdkIfFull(): void {
+    if (sdkCache.size < MAX_CACHED_ENTRIES) return
+    const oldest = sdkCache.keys().next().value
+    if (oldest !== undefined) {
+        void sdkCache.get(oldest)?.sdk.dispose().catch(() => undefined)
+        sdkCache.delete(oldest)
+    }
+}
+
+async function getOrCreateSdk({ aiConfig, sandboxId }: { aiConfig: ChatAiConfig, sandboxId: string }): Promise<SandboxAgent> {
+    const cached = sdkCache.get(sandboxId)
+    if (cached && cached.expiresAt > Date.now()) {
+        return cached.sdk
+    }
+    if (cached) {
+        void cached.sdk.dispose().catch(() => undefined)
+        sdkCache.delete(sandboxId)
+    }
+    evictStaleCacheEntries()
+    const sdk = await createSdk({ aiConfig, sandboxId })
+    const resolvedId = sdk.sandboxId ?? sandboxId
+    evictOldestSdkIfFull()
+    sdkCache.set(resolvedId, { sdk, expiresAt: Date.now() + SDK_CACHE_TTL_MS })
+    return sdk
+}
+
+async function resumeSession({ sessionId, sandboxId, aiConfig }: ResumeSessionParams): Promise<ResumeSessionResult> {
+    const sdk = await getOrCreateSdk({ aiConfig, sandboxId })
     const session = await sdk.resumeSession(sessionId)
     session.onPermissionRequest((req) => {
         void session.respondPermission(req.id, 'once').catch(() => undefined)
     })
-    return session
+    return { session, sdk, newSandboxId: sdk.sandboxId ?? null }
 }
 
 // sandbox-agent only exports ESM (no CJS). TypeScript compiles import() to require() which breaks it.
@@ -336,8 +423,14 @@ export const SandboxSessionUpdateType = {
 
 type CreateSessionParams = {
     aiConfig: ChatAiConfig
+    sandboxId: string
     mcpServerUrl: string | null
     mcpToken: string | null
+}
+
+type CreateSessionResult = {
+    session: Session
+    sdk: SandboxAgent
 }
 
 type SendPromptParams = {
@@ -347,27 +440,38 @@ type SendPromptParams = {
     files?: Array<{ name: string, mimeType: string, data: string }>
 }
 
-type DestroySessionParams = {
+type ResumeSessionParams = {
     sessionId: string
+    sandboxId: string
     aiConfig: ChatAiConfig
 }
 
-type SessionParams = {
-    sessionId: string
-    aiConfig: ChatAiConfig
+type ResumeSessionResult = {
+    session: Session
+    sdk: SandboxAgent
+    newSandboxId: string | null
 }
 
 export const chatSandboxAgent = {
     createSession,
+    createSandbox,
+    destroySandbox,
     sendPrompt,
     destroySession,
     resumeSession,
     getSessionHistory,
+    acquireSandboxSlot,
+    releaseSandboxSlot,
 }
 
 export const ChatSandboxConfig = {
     agent: { CLAUDE: 'claude' },
-    model: { OPUS_1M: 'opus[1m]' },
+    model: {
+        DEFAULT: 'default',
+        SONNET_1M: 'sonnet[1m]',
+        OPUS_1M: 'opus[1m]',
+        HAIKU: 'haiku',
+    },
     envVar: { ANTHROPIC_API_KEY: 'ANTHROPIC_API_KEY', ANTHROPIC_BASE_URL: 'ANTHROPIC_BASE_URL' },
 } as const
 

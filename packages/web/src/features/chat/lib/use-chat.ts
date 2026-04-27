@@ -234,6 +234,9 @@ export function useAgentChat({
         );
       }
     },
+    onError: () => {
+      setPendingMessages([]);
+    },
   });
 
   const sdkIsStreaming = status === 'streaming' || status === 'submitted';
