@@ -31,7 +31,6 @@ export const signrequestSigned = createTrigger({
     );
 
     if (!webhookId) {
-      console.debug('No Signrequest webhook found in store to delete');
       return;
     }
 
