@@ -85,10 +85,12 @@ async function createSdk({ aiConfig, sandboxId }: { aiConfig: ChatAiConfig, sand
     const e2bApiKey = system.getOrThrow(AppSystemProp.E2B_API_KEY)
     const { e2b } = await esmImport<typeof import('sandbox-agent/e2b')>('sandbox-agent/e2b')
     const SANDBOX_IDLE_TIMEOUT_MS = 5 * 60 * 1000
+    const template = system.get(AppSystemProp.E2B_TEMPLATE)
     const sandbox = e2b({
         create: { apiKey: e2bApiKey, envs: aiConfig.envs },
         connect: { apiKey: e2bApiKey },
         timeoutMs: SANDBOX_IDLE_TIMEOUT_MS,
+        ...(template ? { template } : {}),
     })
     const { PostgresSessionPersistDriver } = await import('./postgres-persist-driver')
     const persist = new PostgresSessionPersistDriver() as unknown as SessionPersistDriver
