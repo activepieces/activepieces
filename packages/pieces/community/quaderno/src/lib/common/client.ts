@@ -14,7 +14,6 @@ export async function makeRequest(
     //   : `https://${account_name}.quadernoapp.com/api`;
 
     const credentials = Buffer.from(`${api_key}:x`).toString('base64');
-    console.log(`https://${account_name}.quadernoapp.com/api${path}`);
     const response = await httpClient.sendRequest({
       method,
       url: `https://${account_name}.quadernoapp.com/api${path}`,
