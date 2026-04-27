@@ -16,7 +16,7 @@ export class AddUserSandboxTable1784000000000 implements Migration {
                 "userId" character varying(21) NOT NULL,
                 "platformId" character varying(21) NOT NULL,
                 "sandboxId" character varying NOT NULL,
-                "lastUsedAt" timestamp with time zone NOT NULL DEFAULT now(),
+                "lastUsedAt" timestamp with time zone NOT NULL,
                 CONSTRAINT "pk_user_sandbox" PRIMARY KEY ("id"),
                 CONSTRAINT "fk_user_sandbox_user_id" FOREIGN KEY ("userId")
                     REFERENCES "user" ("id") ON DELETE CASCADE
