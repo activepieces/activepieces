@@ -44,6 +44,7 @@ export const newTaskCreatedTrigger = createTrigger({
     const { subdomain, apiToken } = context.auth.props as { subdomain: string; apiToken: string };
 
     const payload = context.payload.body as { task: { add: { id: number }[] } }
+    if (!payload.task?.add?.length) return [];
     const taskId = payload.task.add[0].id;
     if (!taskId) return [];
 
