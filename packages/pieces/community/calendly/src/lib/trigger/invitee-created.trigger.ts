@@ -75,7 +75,6 @@ export const calendlyInviteeCreated = createTrigger({
     const response = await context.store?.get<CalendlyWebhookInformation>(
       triggerNameInStore
     );
-    console.log(response || 'nothing');
     if (response !== null && response !== undefined) {
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
