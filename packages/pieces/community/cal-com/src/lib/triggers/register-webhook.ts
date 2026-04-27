@@ -49,11 +49,7 @@ export const registerWebhooks = ({
       );
 
       if (response.status === 200) {
-        console.debug('trigger.onEnable', response.body.webhook, context);
-        await context.store?.put(
-          `cal_com_trigger_${name}`,
-          response.body.webhook
-        );
+        await context.store?.put(`cal_com_trigger_${name}`, response.body.webhook);
       }
     },
     async onDisable(context) {
@@ -69,14 +65,10 @@ export const registerWebhooks = ({
           },
         };
 
-        const response = await httpClient.sendRequest(request);
-        console.debug('trigger.onDisable', response);
-      } else {
-        console.debug(`trigger 'cal_com_trigger_${name}' not found`);
+        await httpClient.sendRequest(request);
       }
     },
     async run(context) {
-      console.debug('trigger running', context);
       return [context.payload.body];
     },
   });
