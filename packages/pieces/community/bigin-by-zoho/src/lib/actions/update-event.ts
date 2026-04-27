@@ -515,7 +515,6 @@ export const updateEvent = createAction({
       );
       return response.data[0];
     } catch (error) {
-      console.error('Error updating event:', error);
       throw new Error(
         error instanceof Error
           ? `Failed to update event: ${error.message}`

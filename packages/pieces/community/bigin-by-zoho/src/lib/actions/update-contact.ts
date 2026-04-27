@@ -248,7 +248,6 @@ export const updateContact = createAction({
        data: resp.data[0],
      };
    } catch (error: any) {
-     console.error('Error updating contact:', error);
      throw new Error(
        error instanceof Error
          ? `Failed to update contact: ${error.message}`

@@ -413,7 +413,6 @@ export const createTask = createAction({
 
       return response.data[0];
     } catch (error) {
-      console.error('Error creating task:', error);
       throw new Error(
         error instanceof Error
           ? `Failed to create task: ${error.message}`

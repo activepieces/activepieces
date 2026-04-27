@@ -242,7 +242,6 @@ export const createPipelineRecord = createAction({
 
       return created;
     } catch (error) {
-      console.error('Error creating pipeline:', error);
       throw new Error(
         error instanceof Error
           ? `Failed to create pipeline: ${error.message}`

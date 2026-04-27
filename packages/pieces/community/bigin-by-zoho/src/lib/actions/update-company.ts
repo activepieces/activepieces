@@ -226,7 +226,6 @@ export const updateCompany = createAction({
         data: response.data[0],
       };
     } catch (error: any) {
-      console.error('Error updating company:', error);
       throw new Error(error);
     }
   },

@@ -226,7 +226,6 @@ export const updatePipelineRecord = createAction({
         pipelineRecord: response.data[0],
       };
    } catch (error: any) {
-     console.error('Error updating pipeline record:', error);
      throw new Error(error);
    }
   },

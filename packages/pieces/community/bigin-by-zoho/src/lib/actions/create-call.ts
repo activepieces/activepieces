@@ -155,7 +155,6 @@ export const createCall = createAction({
         data: response.data[0],
       };
     } catch (error: any) {
-      console.error('Error creating call log entry:', error);
       throw new Error(
         error instanceof Error
           ? `Failed to create call log entry: ${error.message}`

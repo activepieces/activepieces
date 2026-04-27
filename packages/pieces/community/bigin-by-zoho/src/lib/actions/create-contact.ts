@@ -138,7 +138,6 @@ export const createContact = createAction({
         data: response.data[0],
       };
     } catch (error: any) {
-      console.error('Error creating contact:', error);
       throw new Error(
         error instanceof Error
           ? `Failed to create contact: ${error.message}`

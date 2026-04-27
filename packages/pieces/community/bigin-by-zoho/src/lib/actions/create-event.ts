@@ -386,7 +386,6 @@ export const createEvent = createAction({
       );
       return response.data[0];
     } catch (error) {
-      console.error('Error creating event:', error);
       throw new Error(
         error instanceof Error
           ? `Failed to create event: ${error.message}`

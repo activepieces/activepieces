@@ -490,7 +490,6 @@ export const updateTask = createAction({
 
       return response.data[0];
     } catch (error: any) {
-      console.error('Error updating task:', error);
       throw new Error(error);
     }
   },

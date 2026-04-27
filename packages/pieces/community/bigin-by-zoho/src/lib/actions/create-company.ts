@@ -111,7 +111,6 @@ export const createCompany = createAction({
         data: response.data[0],
       };
     } catch (error: any) {
-      console.error('Error creating company:', error);
       throw new Error(
         error instanceof Error
           ? `Failed to create company: ${error.message}`
