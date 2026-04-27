@@ -933,6 +933,9 @@
       "@activepieces/piece-pylon": [
         "packages/pieces/community/pylon/src/index.ts"
       ],
+      "@activepieces/piece-qawafel": [
+        "packages/pieces/community/qawafel/src/index.ts"
+      ],
       "@activepieces/piece-qdrant": [
         "packages/pieces/community/qdrant/src/index.ts"
       ],
