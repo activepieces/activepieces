@@ -130,11 +130,11 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
         await chatSandboxAgent.acquireSandboxSlot()
 
-        try {
-            await reply.hijack()
+        await reply.hijack()
 
-            const stream = createUIMessageStream<ChatUIMessage>({
-                execute: async ({ writer }) => {
+        const stream = createUIMessageStream<ChatUIMessage>({
+            execute: async ({ writer }) => {
+                try {
                     writer.write({ type: 'start' })
 
                     const { session, newSandboxId } = liveSession
@@ -210,35 +210,35 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                     }
 
                     writer.write({ type: 'finish', finishReason: 'stop' })
-                },
-                onError: (error) => {
-                    if (isExpectedStreamError(error)) {
-                        log.debug({ err: error }, 'Chat stream ended (client disconnect or session cancelled)')
-                    }
-                    else {
-                        log.error({ err: error }, 'Chat agent prompt failed')
-                    }
-                    return 'An error occurred while processing your request'
+                }
+                finally {
+                    chatSandboxAgent.releaseSandboxSlot()
+                }
+            },
+            onError: (error) => {
+                if (isExpectedStreamError(error)) {
+                    log.debug({ err: error }, 'Chat stream ended (client disconnect or session cancelled)')
+                }
+                else {
+                    log.error({ err: error }, 'Chat agent prompt failed')
+                }
+                return 'An error occurred while processing your request'
+            },
+        })
+
+        try {
+            pipeUIMessageStreamToResponse({
+                response: reply.raw,
+                stream,
+                headers: {
+                    'X-Accel-Buffering': 'no',
                 },
             })
-
-            try {
-                pipeUIMessageStreamToResponse({
-                    response: reply.raw,
-                    stream,
-                    headers: {
-                        'X-Accel-Buffering': 'no',
-                    },
-                })
-            }
-            catch (err) {
-                if (!isExpectedStreamError(err)) {
-                    log.error({ err }, 'Failed to pipe chat stream')
-                }
-            }
         }
-        finally {
-            chatSandboxAgent.releaseSandboxSlot()
+        catch (err) {
+            if (!isExpectedStreamError(err)) {
+                log.error({ err }, 'Failed to pipe chat stream')
+            }
         }
     })
 }
