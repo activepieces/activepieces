@@ -68,7 +68,7 @@ export const taskStopped = createTrigger({
         });
       }
     } catch (error) {
-      console.error('Failed to delete webhook:', error);
+      throw new Error(`Failed to delete webhook: ${error}`);
     }
   },
   async run(context) {
