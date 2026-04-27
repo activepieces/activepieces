@@ -44,6 +44,7 @@ export const newContactAddedTrigger = createTrigger({
       const { subdomain, apiToken } = context.auth.props as { subdomain: string; apiToken: string };
 
     const payload = context.payload.body as { contacts: { add: { id: string }[] } }
+    if (!payload.contacts?.add?.length) return [];
     const contactId = payload.contacts.add[0].id;
     if (!contactId) return [];
 
