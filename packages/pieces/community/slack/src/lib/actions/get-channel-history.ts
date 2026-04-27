@@ -43,7 +43,6 @@ export const getChannelHistory = createAction({
   async run({ auth, propsValue }) {
     const client = new WebClient(getBotToken(auth as SlackAuthValue));
     const messages = [];
-    await client.conversations.history({ channel: propsValue.channel });
     for await (const page of client.paginate('conversations.history', {
       channel: propsValue.channel,
       oldest: propsValue.oldest,
