@@ -22225,6 +22225,14 @@
           },
           {
             "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "externalUserId",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "number"
             },
             "in": "query",

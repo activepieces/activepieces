@@ -32,6 +32,7 @@ export type CreatePlatformProjectRequest = z.infer<typeof CreatePlatformProjectR
 
 export const ListProjectRequestForPlatformQueryParams = z.object({
     externalId: z.string().optional(),
+    externalUserId: z.string().optional(),
     limit: z.coerce.number().optional(),
     cursor: z.string().optional(),
     displayName: z.string().optional(),
