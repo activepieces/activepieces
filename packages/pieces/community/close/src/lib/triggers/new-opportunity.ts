@@ -71,7 +71,7 @@ export const newOpportunityAdded = createTrigger({
 
 		const payload = context.payload.body as CloseCRMOpportunityWebhookPayload;
 
-		// Verify this is a lead creation event
+		// Verify this is an opportunity creation event
 		if (payload.event.object_type !== 'opportunity' || payload.event.action !== 'created') {
 			return [];
 		}
