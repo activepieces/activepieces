@@ -44,7 +44,7 @@ export const drupalWebhook = createTrigger({
   },
   async onDisable(context) {
     const { website_url, username, password } = context.auth.props;
-    const webhook = await context.store.get(`_drupal_webhook_trigger` + context.propsValue.id);
+    const webhook = await context.store.get(`_drupal_webhook_trigger_` + context.propsValue.id);
     if (webhook) {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
