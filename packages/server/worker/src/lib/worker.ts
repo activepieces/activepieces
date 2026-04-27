@@ -268,10 +268,26 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
                 }
             }
             workerSettings.set(response)
+            assertRootIfProcessSandbox(response.EXECUTION_MODE as ExecutionMode | undefined)
             logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE }, 'Worker settings loaded')
             resolve()
         })
     })
+}
+
+// The isolate binary checks getuid() == 0 in user-space; setcap won't bypass it.
+function assertRootIfProcessSandbox(executionMode: ExecutionMode | undefined): void {
+    const needsRoot = executionMode === ExecutionMode.SANDBOX_PROCESS
+        || executionMode === ExecutionMode.SANDBOX_CODE_AND_PROCESS
+    if (!needsRoot || process.getuid?.() === 0) return
+    logger.fatal(
+        { executionMode, uid: process.getuid?.() },
+        `AP_EXECUTION_MODE=${executionMode} requires the worker to run as root inside the container ` +
+        'because the isolate binary refuses non-root callers. ' +
+        'Set user: "root" (Docker) or securityContext.runAsUser: 0 (Kubernetes) on the worker service ' +
+        'alongside the existing privileged requirement.',
+    )
+    process.exit(1)
 }
 
 function getWorkerProps(): Record<string, string> {
