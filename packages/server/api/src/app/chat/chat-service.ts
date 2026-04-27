@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import {
     ActivepiecesError,
     AIProviderName,
@@ -251,7 +252,7 @@ function sanitizeProjectName(name: string): string {
 }
 
 const SYSTEM_PROMPT_TEMPLATE = readFileSync(
-    'packages/server/api/src/assets/prompts/chat-system-prompt.md',
+    path.resolve(__dirname, '../../assets/prompts/chat-system-prompt.md'),
     'utf8',
 )
 
