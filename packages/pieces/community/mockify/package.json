@@ -1,0 +1,31 @@
+{
+  "name": "@activepieces/piece-mockify",
+  "displayName": "Mockify",
+  "version": "0.1.0",
+  "author": "Abanoub Gerges Azer",
+  "description": "Create dynamic mock API endpoints and simulate backend responses.",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "dependencies": {
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "tslib": "^2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2"
+  },
+  "keywords": [
+    "activepieces",
+    "piece",
+    "mock",
+    "api",
+    "simulation",
+    "mockify"
+  ]
+}

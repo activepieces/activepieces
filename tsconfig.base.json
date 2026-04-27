@@ -12,14 +12,23 @@
     "importHelpers": true,
     "target": "es2015",
     "module": "esnext",
-    "lib": ["es2022", "dom"],
+    "lib": [
+      "es2022",
+      "dom"
+    ],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
-      "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
-      "@activepieces/engine": ["packages/server/engine/src/main.ts"],
+      "@activepieces/ee-auth": [
+        "packages/ee/auth/src/index.ts"
+      ],
+      "@activepieces/ee/billing/ui": [
+        "packages/ee/billing/ui/src/index.ts"
+      ],
+      "@activepieces/engine": [
+        "packages/server/engine/src/main.ts"
+      ],
       "@activepieces/piece-activecampaign": [
         "packages/pieces/community/activecampaign/src/index.ts"
       ],
@@ -176,7 +185,9 @@
       "@activepieces/piece-bonjoro": [
         "packages/pieces/community/bonjoro/src/index.ts"
       ],
-      "@activepieces/piece-box": ["packages/pieces/community/box/src/index.ts"],
+      "@activepieces/piece-box": [
+        "packages/pieces/community/box/src/index.ts"
+      ],
       "@activepieces/piece-brilliant-directories": [
         "packages/pieces/community/brilliant-directories/src/index.ts"
       ],
@@ -330,7 +341,9 @@
       "@activepieces/piece-crypto": [
         "packages/pieces/core/crypto/src/index.ts"
       ],
-      "@activepieces/piece-csv": ["packages/pieces/core/csv/src/index.ts"],
+      "@activepieces/piece-csv": [
+        "packages/pieces/core/csv/src/index.ts"
+      ],
       "@activepieces/piece-dappier": [
         "packages/pieces/community/dappier/src/index.ts"
       ],
@@ -358,7 +371,9 @@
       "@activepieces/piece-deepseek": [
         "packages/pieces/community/deepseek/src/index.ts"
       ],
-      "@activepieces/piece-delay": ["packages/pieces/core/delay/src/index.ts"],
+      "@activepieces/piece-delay": [
+        "packages/pieces/core/delay/src/index.ts"
+      ],
       "@activepieces/piece-devin": [
         "packages/pieces/community/devin/src/index.ts"
       ],
@@ -389,7 +404,9 @@
       "@activepieces/piece-drupal": [
         "packages/pieces/community/drupal/src/index.ts"
       ],
-      "@activepieces/piece-dub": ["packages/pieces/community/dub/src/index.ts"],
+      "@activepieces/piece-dub": [
+        "packages/pieces/community/dub/src/index.ts"
+      ],
       "@activepieces/piece-dumpling-ai": [
         "packages/pieces/community/dumpling-ai/src/index.ts"
       ],
@@ -408,7 +425,9 @@
       "@activepieces/piece-eth-name-service": [
         "packages/pieces/community/eth-name-service/src/index.ts"
       ],
-      "@activepieces/piece-exa": ["packages/pieces/community/exa/src/index.ts"],
+      "@activepieces/piece-exa": [
+        "packages/pieces/community/exa/src/index.ts"
+      ],
       "@activepieces/piece-facebook-leads": [
         "packages/pieces/community/facebook-leads/src/index.ts"
       ],
@@ -454,7 +473,9 @@
       "@activepieces/piece-formbricks": [
         "packages/pieces/community/formbricks/src/index.ts"
       ],
-      "@activepieces/piece-forms": ["packages/pieces/core/forms/src/index.ts"],
+      "@activepieces/piece-forms": [
+        "packages/pieces/core/forms/src/index.ts"
+      ],
       "@activepieces/piece-formstack": [
         "packages/pieces/community/formstack/src/index.ts"
       ],
@@ -578,7 +599,9 @@
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],
-      "@activepieces/piece-http": ["packages/pieces/core/http/src/index.ts"],
+      "@activepieces/piece-http": [
+        "packages/pieces/core/http/src/index.ts"
+      ],
       "@activepieces/piece-http-oauth2": [
         "packages/pieces/community/http-oauth2/src/index.ts"
       ],
@@ -726,11 +749,15 @@
       "@activepieces/piece-mautic": [
         "packages/pieces/community/mautic/src/index.ts"
       ],
-      "@activepieces/piece-mcp": ["packages/pieces/community/mcp/src/index.ts"],
+      "@activepieces/piece-mcp": [
+        "packages/pieces/community/mcp/src/index.ts"
+      ],
       "@activepieces/piece-medullar": [
         "packages/pieces/community/medullar/src/index.ts"
       ],
-      "@activepieces/piece-mem": ["packages/pieces/community/mem/src/index.ts"],
+      "@activepieces/piece-mem": [
+        "packages/pieces/community/mem/src/index.ts"
+      ],
       "@activepieces/piece-mempool-space": [
         "packages/pieces/community/mempool-space/src/index.ts"
       ],
@@ -869,7 +896,9 @@
       "@activepieces/piece-pastefy": [
         "packages/pieces/community/pastefy/src/index.ts"
       ],
-      "@activepieces/piece-pdf": ["packages/pieces/core/pdf/src/index.ts"],
+      "@activepieces/piece-pdf": [
+        "packages/pieces/core/pdf/src/index.ts"
+      ],
       "@activepieces/piece-pdf-co": [
         "packages/pieces/community/pdf-co/src/index.ts"
       ],
@@ -996,7 +1025,9 @@
       "@activepieces/piece-robolly": [
         "packages/pieces/community/robolly/src/index.ts"
       ],
-      "@activepieces/piece-rss": ["packages/pieces/community/rss/src/index.ts"],
+      "@activepieces/piece-rss": [
+        "packages/pieces/community/rss/src/index.ts"
+      ],
       "@activepieces/piece-runway": [
         "packages/pieces/community/runway/src/index.ts"
       ],
@@ -1060,7 +1091,9 @@
       "@activepieces/piece-seven": [
         "packages/pieces/community/seven/src/index.ts"
       ],
-      "@activepieces/piece-sftp": ["packages/pieces/core/sftp/src/index.ts"],
+      "@activepieces/piece-sftp": [
+        "packages/pieces/core/sftp/src/index.ts"
+      ],
       "@activepieces/piece-shopify": [
         "packages/pieces/community/shopify/src/index.ts"
       ],
@@ -1100,7 +1133,9 @@
       "@activepieces/piece-smoove": [
         "packages/pieces/community/smoove/src/index.ts"
       ],
-      "@activepieces/piece-smtp": ["packages/pieces/core/smtp/src/index.ts"],
+      "@activepieces/piece-smtp": [
+        "packages/pieces/core/smtp/src/index.ts"
+      ],
       "@activepieces/piece-soap": [
         "packages/pieces/community/soap/src/index.ts"
       ],
@@ -1128,7 +1163,9 @@
       "@activepieces/piece-stable-diffusion-webui": [
         "packages/pieces/community/stable-diffusion-webui/src/index.ts"
       ],
-      "@activepieces/piece-store": ["packages/pieces/core/store/src/index.ts"],
+      "@activepieces/piece-store": [
+        "packages/pieces/core/store/src/index.ts"
+      ],
       "@activepieces/piece-straico": [
         "packages/pieces/community/straico/src/index.ts"
       ],
@@ -1156,7 +1193,9 @@
       "@activepieces/piece-tables": [
         "packages/pieces/core/tables/src/index.ts"
       ],
-      "@activepieces/piece-tags": ["packages/pieces/core/tags/src/index.ts"],
+      "@activepieces/piece-tags": [
+        "packages/pieces/core/tags/src/index.ts"
+      ],
       "@activepieces/piece-talkable": [
         "packages/pieces/community/talkable/src/index.ts"
       ],
@@ -1334,7 +1373,9 @@
       "@activepieces/piece-xero": [
         "packages/pieces/community/xero/src/index.ts"
       ],
-      "@activepieces/piece-xml": ["packages/pieces/core/xml/src/index.ts"],
+      "@activepieces/piece-xml": [
+        "packages/pieces/core/xml/src/index.ts"
+      ],
       "@activepieces/piece-youtube": [
         "packages/pieces/community/youtube/src/index.ts"
       ],
@@ -1368,21 +1409,33 @@
       "@activepieces/piece-zoho-mail": [
         "packages/pieces/community/zoho-mail/src/index.ts"
       ],
-      "@activepieces/piece-zoo": ["packages/pieces/community/zoo/src/index.ts"],
+      "@activepieces/piece-zoo": [
+        "packages/pieces/community/zoo/src/index.ts"
+      ],
       "@activepieces/piece-zoom": [
         "packages/pieces/community/zoom/src/index.ts"
       ],
-      "@activepieces/pieces-common": ["packages/pieces/common/src/index.ts"],
+      "@activepieces/pieces-common": [
+        "packages/pieces/common/src/index.ts"
+      ],
       "@activepieces/pieces-framework": [
         "packages/pieces/framework/src/index.ts"
       ],
       "@activepieces/piece-meistertask": [
         "packages/pieces/community/meistertask/src/index.ts"
       ],
-      "@activepieces/server-utils": ["packages/server/utils/src/index.ts"],
-      "@activepieces/shared": ["packages/shared/src/index.ts"],
-      "@ee/*": ["packages/ee/*"],
-      "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
+      "@activepieces/server-utils": [
+        "packages/server/utils/src/index.ts"
+      ],
+      "@activepieces/shared": [
+        "packages/shared/src/index.ts"
+      ],
+      "@ee/*": [
+        "packages/ee/*"
+      ],
+      "Aminos": [
+        "packages/pieces/community/Aminos/src/index.ts"
+      ],
       "activepieces/piece-microsoft-dynamics-365-business-central": [
         "packages/pieces/community/microsoft-dynamics-365-business-central/src/index.ts"
       ],
@@ -1401,8 +1454,12 @@
       "activepieces/piece-cashfree-payments": [
         "packages/pieces/community/cashfree-payments/src/index.ts"
       ],
-      "ee-embed-sdk": ["packages/ee/embed-sdk/src/index.ts"],
-      "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
+      "ee-embed-sdk": [
+        "packages/ee/embed-sdk/src/index.ts"
+      ],
+      "ui-feature-forms": [
+        "packages/ui/features-forms/src/index.ts"
+      ],
       "@activepieces/piece-kissflow": [
         "packages/pieces/community/kissflow/src/index.ts"
       ],
@@ -1577,7 +1634,9 @@
       "@activepieces/piece-bookedin": [
         "packages/pieces/community/bookedin/src/index.ts"
       ],
-      "@activepieces/piece-ai": ["packages/pieces/community/ai/src/index.ts"],
+      "@activepieces/piece-ai": [
+        "packages/pieces/community/ai/src/index.ts"
+      ],
       "@activepieces/piece-customgpt": [
         "packages/pieces/community/customgpt/src/index.ts"
       ],
@@ -1943,9 +2002,15 @@
       ],
       "@activepieces/piece-knock": [
         "packages/pieces/community/knock/src/index.ts"
+      ],
+      "@activepieces/piece-mockify": [
+        "packages/pieces/community/mockify/src/index.ts"
       ]
     },
     "resolveJsonModule": true
   },
-  "exclude": ["node_modules", "tmp"]
+  "exclude": [
+    "node_modules",
+    "tmp"
+  ]
 }
