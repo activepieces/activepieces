@@ -55,8 +55,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof blueskyAuth>, Re
         .sort((a: any, b: any) => b.epochMilliSeconds - a.epochMilliSeconds);
 
     } catch (error) {
-      console.error('Error fetching followers:', error);
-      return [];
+      throw error;
     }
   }
 };
