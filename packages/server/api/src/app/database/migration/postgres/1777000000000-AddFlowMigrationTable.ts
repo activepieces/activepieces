@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddFlowMigrationTable1775100000000 implements Migration {
-    name = 'AddFlowMigrationTable1775100000000'
+export class AddFlowMigrationTable1777000000000 implements Migration {
+    name = 'AddFlowMigrationTable1777000000000'
     breaking = false
     release = '0.81.4'
 

@@ -9,6 +9,7 @@ import {
     FlowTriggerType,
     FlowVersionState,
     flowStructureUtil,
+    PlatformRole,
     PrincipalType,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
@@ -106,6 +107,9 @@ describe('Flow Version API', () => {
     describe('POST /v1/flow-migrations', () => {
         it('rejects requests from non-platform-admins', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            await databaseConnection().getRepository('user').update(mockOwner.id, {
+                platformRole: PlatformRole.MEMBER,
+            })
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,

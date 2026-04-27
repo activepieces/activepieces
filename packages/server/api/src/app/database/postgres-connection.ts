@@ -353,13 +353,13 @@ import { AddUserIdentityIdIndex1774400000000 } from './migration/postgres/177440
 import { AddUserFkIndices1774449358000 } from './migration/postgres/1774449358000-AddUserFkIndices'
 import { AddMcpOAuthTables1774500000000 } from './migration/postgres/1774500000000-AddMcpOAuthTables'
 import { AddCanaryToPlatformPlan1774600000000 } from './migration/postgres/1774600000000-AddCanaryToPlatformPlan'
-import { AddFlowMigrationTable1775100000000 } from './migration/postgres/1775100000000-AddFlowMigrationTable'
 import { MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000 } from './migration/postgres/1775656136000-MergeCanaryAndDedicatedWorkersIntoWorkerGroupId'
 import { AddAiProvidersEnabledToPlatformPlan1775728983000 } from './migration/postgres/1775728983000-AddAiProvidersEnabledToPlatformPlan'
 import { AddWaitpointTable1775747638323 } from './migration/postgres/1775747638323-AddWaitpointTable'
 import { AddConcurrencyPoolTable1775800000000 } from './migration/postgres/1775800000000-AddConcurrencyPoolTable'
 import { AddDefaultToAiProvidersEnabled1776000000000 } from './migration/postgres/1776000000000-AddDefaultToAiProvidersEnabled'
 import { DropWaitpointTimeoutSeconds1776342514732 } from './migration/postgres/1776342514732-DropWaitpointTimeoutSeconds'
+import { AddFlowMigrationTable1777000000000 } from './migration/postgres/1777000000000-AddFlowMigrationTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -728,13 +728,13 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddKnowledgeBaseChunkTable1773627989515,
         AddMcpOAuthTables1774500000000,
         AddCanaryToPlatformPlan1774600000000,
-        AddFlowMigrationTable1775100000000,
-        AddWaitpointTable1775747638323,
         MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000,
         AddAiProvidersEnabledToPlatformPlan1775728983000,
+        AddWaitpointTable1775747638323,
         AddConcurrencyPoolTable1775800000000,
         AddDefaultToAiProvidersEnabled1776000000000,
         DropWaitpointTimeoutSeconds1776342514732,
+        AddFlowMigrationTable1777000000000,
     ]
     return migrations
 }
