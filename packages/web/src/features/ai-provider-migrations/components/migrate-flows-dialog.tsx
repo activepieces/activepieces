@@ -3,7 +3,6 @@ import {
   AIProviderModelType,
   AIProviderName,
   AIProviderWithoutSensitiveData,
-  ErrorCode,
   FlowMigration,
   FlowMigrationType,
   isNil,
@@ -34,9 +33,14 @@ import {
 } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { projectCollectionUtils } from '@/features/projects';
-import { api } from '@/lib/api';
 
 import { flowMigrationHooks } from '../hooks/ai-provider-migration-hooks';
+import { resolveMigrateFlowsErrorMessage } from '../utils';
+
+const EMPTY_PROVIDER_MODEL = {
+  provider: undefined as unknown as AIProviderName,
+  model: '',
+};
 
 export function MigrateFlowsDialog({
   providers,
@@ -105,12 +109,10 @@ function MigrateFlowsForm({
     onError: (error) => {
       form.setError('root.serverError', {
         type: 'manual',
-        message: api.isApError(
+        message: resolveMigrateFlowsErrorMessage(
           error,
-          ErrorCode.MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS,
-        )
-          ? t('A migration is already running. Try again after it completes.')
-          : t('Migration failed. Please try again.'),
+          t('Migration failed. Please try again.'),
+        ),
       });
     },
   });
@@ -123,8 +125,8 @@ function MigrateFlowsForm({
   const featureAdjustedCount =
     confirmFromDryCheck?.migratedVersions.filter(
       (v) =>
-        v.changedFields?.clearedAdvancedOptions === true ||
-        v.changedFields?.disabledWebSearch === true,
+        v.changedFields?.clearedAdvancedOptions ||
+        v.changedFields?.disabledWebSearch,
     ).length ?? 0;
   const blockedCount = confirmFromDryCheck?.failedFlowVersions.length ?? 0;
 
@@ -207,14 +209,8 @@ function MigrateFlowsForm({
                           checked === true
                             ? AIProviderModelType.IMAGE
                             : AIProviderModelType.TEXT,
-                        sourceModel: {
-                          provider: undefined as unknown as AIProviderName,
-                          model: '',
-                        },
-                        targetModel: {
-                          provider: undefined as unknown as AIProviderName,
-                          model: '',
-                        },
+                        sourceModel: EMPTY_PROVIDER_MODEL,
+                        targetModel: EMPTY_PROVIDER_MODEL,
                       });
                     }}
                   />
@@ -295,31 +291,39 @@ function MigrateFlowsForm({
             />
           )}
 
-          {featureAdjustedCount > 0 && (
-            <AckCheckbox
-              id="ack-feature-loss"
-              checked={migrationRiskAcks.featureLoss}
-              onChange={(v) =>
-                setMigrationRiskAcks((s) => ({ ...s, featureLoss: v }))
-              }
-              label={t(
-                "I understand {count} flow(s) will have some step settings related to image generation or web search reset to the target provider's defaults.",
-                { count: featureAdjustedCount },
-              )}
-            />
-          )}
-          {blockedCount > 0 && (
-            <AckCheckbox
-              id="ack-blocked-skip"
-              checked={migrationRiskAcks.blockedSkip}
-              onChange={(v) =>
-                setMigrationRiskAcks((s) => ({ ...s, blockedSkip: v }))
-              }
-              label={t(
-                'I understand {count} flow(s) will be skipped because the migration failed for them.',
-                { count: blockedCount },
-              )}
-            />
+          {(
+            [
+              {
+                id: 'ack-feature-loss',
+                key: 'featureLoss',
+                count: featureAdjustedCount,
+                label: t(
+                  "I understand {count} flow(s) will have some step settings related to image generation or web search reset to the target provider's defaults.",
+                  { count: featureAdjustedCount },
+                ),
+              },
+              {
+                id: 'ack-blocked-skip',
+                key: 'blockedSkip',
+                count: blockedCount,
+                label: t(
+                  'I understand {count} flow(s) will be skipped because the migration failed for them.',
+                  { count: blockedCount },
+                ),
+              },
+            ] as const
+          ).map((ack) =>
+            ack.count > 0 ? (
+              <AckCheckbox
+                key={ack.id}
+                id={ack.id}
+                checked={migrationRiskAcks[ack.key]}
+                onChange={(v) =>
+                  setMigrationRiskAcks((s) => ({ ...s, [ack.key]: v }))
+                }
+                label={ack.label}
+              />
+            ) : null,
           )}
 
           {form.formState.errors.root?.serverError && (

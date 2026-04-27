@@ -1,5 +1,4 @@
 import {
-  ErrorCode,
   FlowMigration,
   FlowMigrationStatus,
   FlowMigrationType,
@@ -8,7 +7,6 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
   ArrowLeftRight,
-  ArrowRight,
   Clock,
   FlaskConical,
   Layers,
@@ -31,9 +29,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { api } from '@/lib/api';
 
 import { flowMigrationHooks } from '../hooks/ai-provider-migration-hooks';
+import { ModelArrowDisplay, resolveMigrateFlowsErrorMessage } from '../utils';
 
 import { FailedMigrationsDialog } from './failed-migrations-dialog';
 import { MigratedFlowsDialog } from './migrated-flows-dialog';
@@ -43,21 +41,16 @@ export function AiProviderMigrationsTable({
   onRunForReal,
   showMigrateButton,
 }: AiProviderMigrationsTableProps) {
-  const { data, isLoading } = flowMigrationHooks.useAiProviderMigrations({
-    limit: 10,
-  });
+  const { data, isLoading } = flowMigrationHooks.useAiProviderMigrations();
   const [rowDialog, setRowDialog] = useState<RowDialog | null>(null);
   const revertMutation = flowMigrationHooks.useMigrateFlowsMutation({
     onError: (error) => {
-      if (
-        api.isApError(error, ErrorCode.MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS)
-      ) {
-        toast.error(
-          t('A migration is already running. Try again after it completes.'),
-        );
-        return;
-      }
-      toast.error(t('Failed to start revert. Please try again.'));
+      toast.error(
+        resolveMigrateFlowsErrorMessage(
+          error,
+          t('Failed to start revert. Please try again.'),
+        ),
+      );
     },
   });
   const migrationsById = flowMigrationHooks.useMigrationsByIdWithRevertOrigins({
@@ -83,26 +76,24 @@ export function AiProviderMigrationsTable({
             original &&
             original.type === FlowMigrationType.AI_PROVIDER_MODEL
           ) {
+            const { sourceModel, targetModel } = original.params;
             return (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden whitespace-nowrap text-sm">
-                    <Undo2 className="size-3.5 text-muted-foreground shrink-0" />
-                    <span className="min-w-0 truncate">
-                      {original.params.sourceModel.model}
-                    </span>
-                    <ArrowRight className="w-3 h-3 text-muted-foreground shrink-0" />
-                    <span className="min-w-0 truncate">
-                      {original.params.targetModel.model}
-                    </span>
+                  <div>
+                    <ModelArrowDisplay
+                      prefixIcon={
+                        <Undo2 className="size-3.5 text-muted-foreground shrink-0" />
+                      }
+                      from={sourceModel.model}
+                      to={targetModel.model}
+                    />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" align="start">
-                  {t('Revert of migration')}:{' '}
-                  {original.params.sourceModel.provider}/
-                  {original.params.sourceModel.model} →{' '}
-                  {original.params.targetModel.provider}/
-                  {original.params.targetModel.model}
+                  {t('Revert of migration')}: {sourceModel.provider}/
+                  {sourceModel.model} → {targetModel.provider}/
+                  {targetModel.model}
                 </TooltipContent>
               </Tooltip>
             );
@@ -114,28 +105,22 @@ export function AiProviderMigrationsTable({
             </div>
           );
         }
+        const { sourceModel, targetModel } = row.original.params;
         return (
-          <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden whitespace-nowrap text-sm">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden whitespace-nowrap text-sm">
-                  <span className="min-w-0 truncate">
-                    {row.original.params.sourceModel.model}
-                  </span>
-                  <ArrowRight className="w-3 h-3 text-muted-foreground shrink-0" />
-                  <span className="min-w-0 truncate">
-                    {row.original.params.targetModel.model}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" align="start">
-                {row.original.params.sourceModel.provider}/
-                {row.original.params.sourceModel.model} →{' '}
-                {row.original.params.targetModel.provider}/
-                {row.original.params.targetModel.model}
-              </TooltipContent>
-            </Tooltip>
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <ModelArrowDisplay
+                  from={sourceModel.model}
+                  to={targetModel.model}
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="start">
+              {sourceModel.provider}/{sourceModel.model} →{' '}
+              {targetModel.provider}/{targetModel.model}
+            </TooltipContent>
+          </Tooltip>
         );
       },
     },

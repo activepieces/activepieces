@@ -15,8 +15,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { projectCollectionUtils } from '@/features/projects';
 
 import {
-  fetchAllFlowsForProject,
-  migrationProjectFlowsQueryKey,
+  aiProviderMigrationKeys,
+  migrationFlowFetchers,
 } from '../hooks/ai-provider-migration-hooks';
 
 export function ProjectGroupedFlowList<
@@ -37,29 +37,15 @@ export function ProjectGroupedFlowList<
     projectCollectionUtils.useAllPlatformProjects();
 
   const projectGroups = useMemo(() => {
-    const projectNameById = new Map<string, string>();
-    for (const project of projects) {
-      projectNameById.set(project.id, project.displayName);
-    }
-    const groupsByProject = new Map<
-      string,
-      { projectId: string; projectName: string; entries: TEntry[] }
-    >();
-    for (const entry of entries) {
-      const existing = groupsByProject.get(entry.projectId);
-      if (existing) {
-        existing.entries.push(entry);
-        continue;
-      }
-      groupsByProject.set(entry.projectId, {
-        projectId: entry.projectId,
-        projectName:
-          projectNameById.get(entry.projectId) ??
-          t('Deleted project ({projectId})', { projectId: entry.projectId }),
-        entries: [entry],
-      });
-    }
-    return [...groupsByProject.values()];
+    const projectNameById = new Map(projects.map((p) => [p.id, p.displayName]));
+    const grouped = groupBy(entries, (entry) => entry.projectId);
+    return [...grouped.entries()].map(([projectId, groupEntries]) => ({
+      projectId,
+      projectName:
+        projectNameById.get(projectId) ??
+        t('Deleted project ({projectId})', { projectId }),
+      entries: groupEntries,
+    }));
   }, [entries, projects]);
 
   const [openValues, setOpenValues] = useState<string[]>([]);
@@ -148,8 +134,8 @@ function ProjectFlowsRows<
   }) => ReactNode;
 }) {
   const { data: projectFlows, isLoading } = useQuery({
-    queryKey: migrationProjectFlowsQueryKey(projectId),
-    queryFn: () => fetchAllFlowsForProject(projectId),
+    queryKey: aiProviderMigrationKeys.projectFlows(projectId),
+    queryFn: () => migrationFlowFetchers.fetchAllFlowsForProject(projectId),
     enabled: isOpen,
     staleTime: 60_000,
   });
@@ -183,14 +169,21 @@ function ProjectFlowsRows<
 function groupByFlowId<T extends { flowId: string }>(
   entries: T[],
 ): Array<{ flowId: string; entries: T[] }> {
-  const map = new Map<string, T[]>();
-  for (const entry of entries) {
-    const existing = map.get(entry.flowId);
+  return [...groupBy(entries, (e) => e.flowId).entries()].map(
+    ([flowId, groupEntries]) => ({ flowId, entries: groupEntries }),
+  );
+}
+
+function groupBy<T, K>(items: T[], keyFn: (item: T) => K): Map<K, T[]> {
+  const map = new Map<K, T[]>();
+  for (const item of items) {
+    const key = keyFn(item);
+    const existing = map.get(key);
     if (existing) {
-      existing.push(entry);
+      existing.push(item);
     } else {
-      map.set(entry.flowId, [entry]);
+      map.set(key, [item]);
     }
   }
-  return [...map.entries()].map(([flowId, entries]) => ({ flowId, entries }));
+  return map;
 }

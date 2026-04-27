@@ -16,22 +16,29 @@ import {
 } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import {
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
+} from '@/components/custom/data-table';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { flowsApi } from '@/features/flows';
 import { aiProviderApi } from '@/features/platform-admin';
 
-function useAiProviderMigrations({
-  cursor,
-  limit = 10,
-}: {
-  cursor?: string;
-  limit?: number;
-}) {
+function useAiProviderMigrations() {
+  const [searchParams] = useSearchParams();
   return useQuery({
-    queryKey: aiProviderMigrationKeys.list(cursor),
-    queryFn: () => aiProviderApi.listMigrations({ cursor, limit }),
+    queryKey: aiProviderMigrationKeys.list(searchParams.toString()),
+    queryFn: () => {
+      const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
+      const limit = searchParams.get(LIMIT_QUERY_PARAM);
+      return aiProviderApi.listMigrations({
+        cursor,
+        limit: limit ? parseInt(limit) : 10,
+      });
+    },
     refetchInterval: (query) => {
       const hasRunning = query.state.data?.data.some(
         (m) => m.status === FlowMigrationStatus.RUNNING,
@@ -50,7 +57,7 @@ function useFilteredProviderOptions({
 }) {
   const providerModelsQueries = useQueries({
     queries: providers.map((p) => ({
-      queryKey: aiProviderMigrateModelsQueryKey(p.provider),
+      queryKey: aiProviderMigrationKeys.providerModels(p.provider),
       queryFn: () => aiProviderApi.listModelsForProvider(p.provider),
     })),
   });
@@ -81,7 +88,7 @@ function useAiProviderModelsForMigrateSelect({
   modelType: AIProviderModelType;
 }) {
   const { data: models, isLoading } = useQuery({
-    queryKey: aiProviderMigrateModelsQueryKey(provider ?? ''),
+    queryKey: aiProviderMigrationKeys.providerModels(provider ?? ''),
     queryFn: () => aiProviderApi.listModelsForProvider(provider!),
     enabled: !!provider,
   });
@@ -105,13 +112,22 @@ function useMigrateFlowsMutation({
   onError?: (error: unknown) => void;
 } = {}) {
   const queryClient = useQueryClient();
+  const [, setSearchParams] = useSearchParams();
 
   return useMutation({
     mutationFn: (data: MigrateFlowsModelRequest) =>
       aiProviderApi.migrateFlows(data),
     onSuccess: (migration) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete(CURSOR_QUERY_PARAM);
+          return next;
+        },
+        { replace: true },
+      );
       queryClient.invalidateQueries({
-        queryKey: aiProviderMigrationKeys.list(),
+        queryKey: aiProviderMigrationKeys.all,
       });
       onClose?.();
       toast.success(migrationStartedToast(migration));
@@ -146,7 +162,7 @@ function useMigrationsByIdWithRevertOrigins({
 
   const fetched = useQueries({
     queries: missingOriginalIds.map((id) => ({
-      queryKey: flowMigrationByIdQueryKey(id),
+      queryKey: aiProviderMigrationKeys.byId(id),
       queryFn: () => aiProviderApi.getMigration(id),
       staleTime: Infinity,
     })),
@@ -173,7 +189,7 @@ function migrationStartedToast(migration: FlowMigration): string {
   return t('Migration started.');
 }
 
-export async function fetchAllFlowsForProject(
+async function fetchAllFlowsForProject(
   projectId: string,
 ): Promise<PopulatedFlow[]> {
   const PAGE_SIZE = 1000;
@@ -195,24 +211,17 @@ export const flowMigrationHooks = {
   useMigrationsByIdWithRevertOrigins,
 };
 
-export const AI_PROVIDER_MIGRATE_MODELS_QUERY_KEY_PREFIX =
-  'ai-models-for-migrate' as const;
-
-export const MIGRATION_PROJECT_FLOWS_QUERY_KEY_PREFIX =
-  'migration-project-flows' as const;
-
-export function aiProviderMigrateModelsQueryKey(provider: string) {
-  return [AI_PROVIDER_MIGRATE_MODELS_QUERY_KEY_PREFIX, provider] as const;
-}
-
-export function migrationProjectFlowsQueryKey(projectId: string) {
-  return [MIGRATION_PROJECT_FLOWS_QUERY_KEY_PREFIX, projectId] as const;
-}
-
-export function flowMigrationByIdQueryKey(id: string) {
-  return ['flow-migration', id] as const;
-}
-
 export const aiProviderMigrationKeys = {
-  list: (cursor?: string) => ['ai-provider-migrations', cursor] as const,
+  all: ['ai-provider-migrations'] as const,
+  list: (searchParams?: string) =>
+    ['ai-provider-migrations', searchParams] as const,
+  byId: (id: string) => ['flow-migration', id] as const,
+  providerModels: (provider: string) =>
+    ['ai-models-for-migrate', provider] as const,
+  projectFlows: (projectId: string) =>
+    ['migration-project-flows', projectId] as const,
+};
+
+export const migrationFlowFetchers = {
+  fetchAllFlowsForProject,
 };

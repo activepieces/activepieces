@@ -2,14 +2,9 @@ import { FlowMigration, PieceVersionChange } from '@activepieces/shared';
 import { t } from 'i18next';
 import { CheckCircle2 } from 'lucide-react';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { MigrationFlowRow } from '../utils';
 
-import { FlowLink, ProjectGroupedFlowList } from './project-grouped-flow-list';
+import { FlowsListDialog } from './flows-list-dialog';
 
 type MigratedVersion = FlowMigration['migratedVersions'][number];
 
@@ -20,59 +15,32 @@ export function MigratedFlowsDialog({
   isDryCheck = false,
 }: MigratedFlowsDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            {isDryCheck ? t('Planned Migrations') : t('Migrated Flows')}
-          </DialogTitle>
-        </DialogHeader>
-        {open && (
-          <MigratedFlowsDialogContent
-            migratedVersions={migratedVersions}
-            isDryCheck={isDryCheck}
-          />
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function MigratedFlowsDialogContent({
-  migratedVersions,
-  isDryCheck,
-}: {
-  migratedVersions: MigratedVersion[];
-  isDryCheck: boolean;
-}) {
-  return (
-    <ProjectGroupedFlowList
+    <FlowsListDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isDryCheck ? t('Planned Migrations') : t('Migrated Flows')}
       entries={migratedVersions}
       renderRow={({ flowId, entries, displayName, projectId }) => {
-        const migrationSummary = summarizeMigratedVersionsForFlow(entries);
+        const summary = summarizeMigratedVersionsForFlow(entries);
         const detailLines = buildFlowMigrationDetailLines({
-          summary: migrationSummary,
+          summary,
           isDryCheck,
         });
         return (
-          <li
-            key={flowId}
-            className="flex items-start gap-3 rounded-md border p-3"
+          <MigrationFlowRow
+            icon={
+              <CheckCircle2 className="size-4 shrink-0 text-success mt-0.5" />
+            }
+            projectId={projectId}
+            flowId={flowId}
+            displayName={displayName}
           >
-            <CheckCircle2 className="size-4 shrink-0 text-success mt-0.5" />
-            <div className="flex flex-col gap-1 min-w-0">
-              <FlowLink
-                projectId={projectId}
-                flowId={flowId}
-                displayName={displayName}
-              />
-              {detailLines.map((line, idx) => (
-                <p key={idx} className="text-xs text-muted-foreground">
-                  {line}
-                </p>
-              ))}
-            </div>
-          </li>
+            {detailLines.map((line, idx) => (
+              <p key={idx} className="text-xs text-muted-foreground">
+                {line}
+              </p>
+            ))}
+          </MigrationFlowRow>
         );
       }}
     />
