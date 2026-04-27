@@ -158,7 +158,6 @@ export const bannerbearCreateImageAction = createAction({
     };
 
     const result = await httpClient.sendRequest<BannerbearTemplate>(request);
-    console.debug('Image creation complete', result);
 
     if (result.status === 200 || result.status === 202) {
       return result.body;
