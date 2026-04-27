@@ -146,7 +146,6 @@ export const createCampaign = createAction({
         _links: campaign._links || [],
       };
     } catch (error: any) {
-      console.error('Error creating campaign:', error);
       throw new Error(`Failed to create campaign: ${error.message || JSON.stringify(error)}`);
     }
   },
