@@ -75,7 +75,6 @@ export class UscreenClient {
                 query 
             );
         } catch (e) {
-            console.error("Failed to fetch Uscreen invoices", e);
             return { items: [] };
         }
     }
@@ -91,7 +90,6 @@ export class UscreenClient {
                 '/offers'
             );
         } catch (e) {
-            console.error("Failed to fetch Uscreen offers", e);
             return [];
         }
     }
@@ -106,7 +104,6 @@ export class UscreenClient {
                 '/programs'
             );
         } catch (e) {
-            console.error("Failed to fetch Uscreen programs", e);
             return [];
         }
     }
@@ -118,7 +115,6 @@ export class UscreenClient {
                 '/customers'
             );
         } catch (e) {
-            console.error("Failed to fetch Uscreen customers", e);
             return [];
         }
     }
