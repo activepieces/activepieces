@@ -3,10 +3,12 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import {
     apId,
     FlowActionType,
+    FlowRunStatus,
     McpServer,
     McpServerStatus,
     PackageType,
     PieceType,
+    RunEnvironment,
     StepLocationRelativeToParent,
 } from '@activepieces/shared'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -31,6 +33,8 @@ import { apValidateFlowTool } from '../../../../src/app/mcp/tools/ap-validate-fl
 import { apUpdateTriggerTool } from '../../../../src/app/mcp/tools/ap-update-trigger'
 import { apDuplicateFlowTool } from '../../../../src/app/mcp/tools/ap-duplicate-flow'
 import { apUpdateBranchTool } from '../../../../src/app/mcp/tools/ap-update-branch'
+import { apListRunsTool } from '../../../../src/app/mcp/tools/ap-list-runs'
+import { apGetRunTool } from '../../../../src/app/mcp/tools/ap-get-run'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
 
 let app: FastifyInstance
@@ -2187,5 +2191,131 @@ describe('MCP Tools integration', () => {
 
         expect(text(result)).toContain('❌')
         expect(text(result)).toContain('operator')
+    })
+
+    it('80. ap_list_runs — defaults environment to PRODUCTION when no flowId is given', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const flowId = await createFlowAndGetId(mcp, 'Run Listing Defaults')
+        const flowVersion = await db.findOneByOrFail<{ id: string }>('flow_version', { flowId })
+
+        const prodRunId = apId()
+        const testRunId = apId()
+        await db.save('flow_run', [
+            {
+                id: prodRunId,
+                projectId: ctx.project.id,
+                flowId,
+                flowVersionId: flowVersion.id,
+                environment: RunEnvironment.PRODUCTION,
+                status: FlowRunStatus.SUCCEEDED,
+                stepsCount: 0,
+                failParentOnFailure: true,
+            },
+            {
+                id: testRunId,
+                projectId: ctx.project.id,
+                flowId,
+                flowVersionId: flowVersion.id,
+                environment: RunEnvironment.TESTING,
+                status: FlowRunStatus.SUCCEEDED,
+                stepsCount: 0,
+                failParentOnFailure: true,
+            },
+        ])
+
+        const result = await apListRunsTool(mcp, mockLog).execute({})
+
+        expect(text(result)).toContain(prodRunId)
+        expect(text(result)).not.toContain(testRunId)
+    })
+
+    it('81. ap_list_runs — caller-supplied environment overrides the PRODUCTION default', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const flowId = await createFlowAndGetId(mcp, 'Run Listing Override')
+        const flowVersion = await db.findOneByOrFail<{ id: string }>('flow_version', { flowId })
+
+        const prodRunId = apId()
+        const testRunId = apId()
+        await db.save('flow_run', [
+            {
+                id: prodRunId,
+                projectId: ctx.project.id,
+                flowId,
+                flowVersionId: flowVersion.id,
+                environment: RunEnvironment.PRODUCTION,
+                status: FlowRunStatus.SUCCEEDED,
+                stepsCount: 0,
+                failParentOnFailure: true,
+            },
+            {
+                id: testRunId,
+                projectId: ctx.project.id,
+                flowId,
+                flowVersionId: flowVersion.id,
+                environment: RunEnvironment.TESTING,
+                status: FlowRunStatus.SUCCEEDED,
+                stepsCount: 0,
+                failParentOnFailure: true,
+            },
+        ])
+
+        const result = await apListRunsTool(mcp, mockLog).execute({ environment: RunEnvironment.TESTING })
+
+        expect(text(result)).toContain(testRunId)
+        expect(text(result)).not.toContain(prodRunId)
+    })
+
+    it('82. ap_get_run — surfaces a clear "purged" message when run is past retention', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const flowId = await createFlowAndGetId(mcp, 'Expired Run')
+        const flowVersion = await db.findOneByOrFail<{ id: string }>('flow_version', { flowId })
+
+        const expiredRunId = apId()
+        await db.save('flow_run', {
+            id: expiredRunId,
+            projectId: ctx.project.id,
+            flowId,
+            flowVersionId: flowVersion.id,
+            environment: RunEnvironment.PRODUCTION,
+            status: FlowRunStatus.SUCCEEDED,
+            stepsCount: 0,
+            failParentOnFailure: true,
+        })
+        await db.update('flow_run', expiredRunId, { created: '2024-01-01T00:00:00.000Z' })
+
+        const result = await apGetRunTool(mcp, mockLog).execute({ flowRunId: expiredRunId })
+
+        expect(text(result)).toContain('purged')
+        expect(text(result)).toContain('30 days')
+    })
+
+    it('83. ap_get_run — reports "still in progress" when a non-terminal run has no step data', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const flowId = await createFlowAndGetId(mcp, 'Running Run')
+        const flowVersion = await db.findOneByOrFail<{ id: string }>('flow_version', { flowId })
+
+        const runningRunId = apId()
+        await db.save('flow_run', {
+            id: runningRunId,
+            projectId: ctx.project.id,
+            flowId,
+            flowVersionId: flowVersion.id,
+            environment: RunEnvironment.PRODUCTION,
+            status: FlowRunStatus.RUNNING,
+            stepsCount: 0,
+            failParentOnFailure: true,
+        })
+
+        const result = await apGetRunTool(mcp, mockLog).execute({ flowRunId: runningRunId })
+
+        expect(text(result)).toContain('still in progress')
     })
 })
