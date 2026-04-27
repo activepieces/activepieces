@@ -5,8 +5,6 @@ import { toast } from 'sonner';
 import { API_BASE_URL } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { registerGlobalSocketHandlers } from './global-socket-handlers';
-
 const socket = io(API_BASE_URL, {
   transports: ['websocket'],
   path: '/api/socket.io',
@@ -52,12 +50,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       socket.disconnect();
     }
-    const unregisterGlobalHandlers = registerGlobalSocketHandlers(socket);
 
     return () => {
       socket.off('connect');
       socket.off('disconnect');
-      unregisterGlobalHandlers();
       socket.disconnect();
     };
   }, [token, projectId]);
