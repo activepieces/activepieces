@@ -14,31 +14,27 @@ export const pipelineRecordUpdated = createTrigger({
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    try {
-      const channel_id = Date.now().toString();
-      const { api_domain } = context.auth.data;
+    const channel_id = Date.now().toString();
+    const { api_domain } = context.auth.data;
 
-      const webhookData = {
-        watch: [
-          {
-            channel_id,
-            events: ['Pipelines.edit'],
-            notify_url: context.webhookUrl,
-            token: ZOHO_WEBHOOK_TOKEN,
-          },
-        ],
-      };
+    const webhookData = {
+      watch: [
+        {
+          channel_id,
+          events: ['Pipelines.edit'],
+          notify_url: context.webhookUrl,
+          token: ZOHO_WEBHOOK_TOKEN,
+        },
+      ],
+    };
 
-      await biginApiService.createWebhook(
-        context.auth.access_token,
-        webhookData,
-        api_domain
-      );
+    await biginApiService.createWebhook(
+      context.auth.access_token,
+      webhookData,
+      api_domain
+    );
 
-      await context.store.put(CACHE_KEY, channel_id);
-    } catch (error) {
-      console.error('Failed to enable Zoho webhook');
-    }
+    await context.store.put(CACHE_KEY, channel_id);
   },
   async onDisable(context) {
     const channel_id = (await context.store.get(CACHE_KEY)) as string;
