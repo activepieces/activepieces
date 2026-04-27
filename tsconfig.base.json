@@ -50,6 +50,9 @@
       "@activepieces/piece-aidbase": [
         "packages/pieces/community/aidbase/src/index.ts"
       ],
+      "@activepieces/piece-aiprise": [
+        "packages/pieces/community/aiprise/src/index.ts"
+      ],
       "@activepieces/piece-aircall": [
         "packages/pieces/community/aircall/src/index.ts"
       ],
@@ -118,6 +121,9 @@
       ],
       "@activepieces/piece-avoma": [
         "packages/pieces/community/avoma/src/index.ts"
+      ],
+      "@activepieces/piece-azure-ad": [
+        "packages/pieces/community/azure-ad/src/index.ts"
       ],
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
@@ -1267,6 +1273,9 @@
       ],
       "@activepieces/piece-vtiger": [
         "packages/pieces/community/vtiger/src/index.ts"
+      ],
+      "@activepieces/piece-wafeq": [
+        "packages/pieces/community/wafeq/src/index.ts"
       ],
       "@activepieces/piece-wealthbox": [
         "packages/pieces/community/wealthbox/src/index.ts"

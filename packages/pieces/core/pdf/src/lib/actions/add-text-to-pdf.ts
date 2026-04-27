@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { PDFDocument, rgb, StandardFonts, PDFFont, degrees } from 'pdf-lib';
+import { getTargetPages, mapVisualToIntrinsic } from '../common';
 
 const fontOptions = Object.entries(StandardFonts).map(([key, value]) => {
   const formattedLabel = key.replace(/([A-Z])/g, ' $1').trim();
@@ -34,16 +35,16 @@ export const addTextToPdf = createAction({
           displayName: 'Page Number',
           description: 'Which page to stamp? (Leave blank or ignore if applying to all pages)',
           required: false,
-					defaultValue: 1,
+          defaultValue: 1,
         }),
         distanceFromLeft: Property.Number({
           displayName: 'Distance from Left Edge (in pixels)',
-					description: '0 is the far left edge of the page. Standard A4 width is about 595 pts.',
+          description: '0 is the far left edge of the page. Standard A4 width is about 595 pts.',
           required: true,
         }),
         distanceFromTop: Property.Number({
           displayName: 'Distance from Top Edge (in pixels)',
-					description: '0 is the very top edge of the page. Standard A4 height is about 842 pts.',
+          description: '0 is the very top edge of the page. Standard A4 height is about 842 pts.',
           required: true,
         }),
         font: Property.StaticDropdown({
@@ -93,8 +94,6 @@ export const addTextToPdf = createAction({
 
       const pdfDoc = await PDFDocument.load(file.data as any); 
       const pages = pdfDoc.getPages();
-      const totalPages = pages.length;
-
       const embeddedFonts: Record<string, PDFFont> = {};
 
       for (const item of textItems) {
@@ -104,48 +103,24 @@ export const addTextToPdf = createAction({
         const lineSpacing = item.lineSpacing ?? 1.15;
 
         if (lineSpacing <= 0) {
-          throw new Error(
-            `Line Spacing must be a positive number greater than 0. You provided ${lineSpacing} for text "${cleanTextSample}..."`
-          );
+          throw new Error(`Line Spacing must be a positive number greater than 0. You provided ${lineSpacing} for text "${cleanTextSample}..."`);
+        }
+        if (item.fontSize <= 0) {
+          throw new Error(`Font Size must be a positive number greater than 0. You provided ${item.fontSize} for text "${cleanTextSample}..."`);
         }
 
-				if (item.fontSize <= 0) {
-					throw new Error(
-						`Font Size must be a positive number greater than 0. You provided ${item.fontSize} for text "${cleanTextSample}..."`
-					);
-				}
-
         const actualLineHeight = item.fontSize * lineSpacing;
-
         const fontEnum = item.font;
+        
         if (!embeddedFonts[fontEnum]) {
           embeddedFonts[fontEnum] = await pdfDoc.embedFont(fontEnum);
         }
         const font = embeddedFonts[fontEnum];
 
-        const maxTextWidth = Math.max(
-          ...lines.map(line => font.widthOfTextAtSize(line, item.fontSize))
-        );
-
-        const targetPages = [];
+        const maxTextWidth = Math.max(...lines.map(line => font.widthOfTextAtSize(line, item.fontSize)));
         
-        if (item.applyToAllPages) {
-          targetPages.push(...pages);
-        } else {
-					if (item.pageNumber === undefined) {
-						throw new Error(
-							`Page Number is required when "Apply to all pages?" is not checked for text "${cleanTextSample}...".`
-						);
-					}
-          const pageIndex = Number(item.pageNumber) - 1;
-          
-          if (pageIndex < 0 || pageIndex >= totalPages) {
-            throw new Error(
-              `You requested Page ${item.pageNumber} for text "${cleanTextSample}...", but this document only has ${totalPages} page(s).`
-            );
-          }
-          targetPages.push(pages[pageIndex]);
-        }
+        // Use helper to resolve target pages
+        const targetPages = getTargetPages(pages, item.applyToAllPages, item.pageNumber, `text "${cleanTextSample}..."`);
 
         for (const targetPage of targetPages) {
           const { width, height } = targetPage.getSize();
@@ -158,78 +133,20 @@ export const addTextToPdf = createAction({
           const vX = item.distanceFromLeft;
           const vY = vHeight - item.distanceFromTop;
           
-          // Check Left Edge
-          if (vX < 0 || vX > vWidth) {
-            throw new Error(
-              `The Left distance (${item.distanceFromLeft}pts) for "${cleanTextSample}..." is outside the page width. Current PDF's max width is ${Math.round(vWidth)}pts.`
-            );
-          }
+          // Boundary Checks
+          if (vX < 0 || vX > vWidth) throw new Error(`The Left distance (${item.distanceFromLeft}pts) for "${cleanTextSample}..." is outside the page width.`);
+          if (vX + maxTextWidth > vWidth) throw new Error(`The text "${cleanTextSample}..." is too long and runs off the right edge.`);
+          if (vY < 0 || vY > vHeight) throw new Error(`The Top distance (${item.distanceFromTop}pts) for "${cleanTextSample}..." is outside the page height.`);
 
-          // Check Right Edge (Long text running off the right edge)
-          if (vX + maxTextWidth > vWidth) {
-              throw new Error(
-                `The text "${cleanTextSample}..." is too long and runs off the right edge. Reduce the Left distance or font size.`
-              );
-          }
-
-          // Check Top Edge
-          if (vY < 0 || vY > vHeight) {
-            throw new Error(
-              `The Top distance (${item.distanceFromTop}pts) for "${cleanTextSample}..." is outside the page height. Current PDF's max height is ${Math.round(vHeight)}pts.`
-            );
-          }
-
-          // Check multi-line overflow along the axis that lines stack on after page rotation:
-          // 0°   → lines stack downward  → check vY - (n-1)*lineHeight >= 0
-          // 90°  → lines stack leftward  → check vX - (n-1)*lineHeight >= 0
-          // 180° → lines stack upward    → check vY + (n-1)*lineHeight <= vHeight
-          // 270° → lines stack rightward → check vX + (n-1)*lineHeight <= vWidth
           const lineOverflow = (lines.length - 1) * actualLineHeight;
-          if (rotationAngle === 90) {
-            if (vX - lineOverflow < 0) {
-              throw new Error(
-                `The text "${cleanTextSample}..." contains too many lines and runs off the left edge of the page. Reduce the Left distance, Font Size, or Line Spacing.`
-              );
-            }
-          } else if (rotationAngle === 180) {
-            if (vY + lineOverflow > vHeight) {
-              throw new Error(
-                `The text "${cleanTextSample}..." contains too many lines and runs off the top of the page. Reduce the Top distance, Font Size, or Line Spacing.`
-              );
-            }
-          } else if (rotationAngle === 270) {
-            if (vX + lineOverflow > vWidth) {
-              throw new Error(
-                `The text "${cleanTextSample}..." contains too many lines and runs off the right edge of the page. Reduce the Left distance, Font Size, or Line Spacing.`
-              );
-            }
-          } else {
-            // 0° — lines stack downward
-            if (vY - lineOverflow < 0) {
-              throw new Error(
-                `The text "${cleanTextSample}..." contains too many lines and runs off the bottom of the page. Reduce the Top distance, Font Size, or Line Spacing.`
-              );
-            }
-          }
+          if (rotationAngle === 90 && vX - lineOverflow < 0) throw new Error(`The text "${cleanTextSample}..." runs off the left edge.`);
+          else if (rotationAngle === 180 && vY + lineOverflow > vHeight) throw new Error(`The text "${cleanTextSample}..." runs off the top.`);
+          else if (rotationAngle === 270 && vX + lineOverflow > vWidth) throw new Error(`The text "${cleanTextSample}..." runs off the right edge.`);
+          else if (rotationAngle === 0 && vY - lineOverflow < 0) throw new Error(`The text "${cleanTextSample}..." runs off the bottom.`);
 
-          // Map Visual coordinates back to Intrinsic coordinates for pdf-lib
-          let iX = vX;
-          let iY = vY;
-          let textRotation = 0;
-
-          if (rotationAngle === 90) {
-            iX = vHeight - vY; 
-            iY = vX;
-            textRotation = 90;
-          } else if (rotationAngle === 180) {
-            iX = vWidth - vX;
-            iY = vHeight - vY;
-            textRotation = 180;
-          } else if (rotationAngle === 270) {
-            iX = vY;
-            iY = vWidth - vX;
-            textRotation = -90;
-          }
+          // Use helper to calculate rotated mapping 
+          // (pdf-lib draws text from the baseline, so vY is our anchor)
+          const { iX, iY, mappedRotation } = mapVisualToIntrinsic(vX, vY, vWidth, vHeight, rotationAngle);
 
           targetPage.drawText(cleanText, {
             x: iX,
@@ -238,18 +155,18 @@ export const addTextToPdf = createAction({
             font: font,
             color: rgb(0, 0, 0),
             lineHeight: actualLineHeight,
-            rotate: degrees(textRotation),
+            rotate: degrees(mappedRotation),
           });
         }
       }
 
       const pdfBytes = await pdfDoc.save();
-      const base64Pdf = Buffer.from(pdfBytes).toString('base64');
 
       return context.files.write({
-        data: Buffer.from(base64Pdf, 'base64'),
-        fileName: `stamped_${file.filename}`,
+        data: Buffer.from(pdfBytes),
+        fileName: `text_stamped_${file.filename}`,
       });
+
     } catch (error) {
       throw new Error(`Failed to add text to PDF: ${(error as Error).message}`);
     }

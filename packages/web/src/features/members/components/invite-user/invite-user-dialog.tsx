@@ -11,13 +11,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon, DownloadIcon } from 'lucide-react';
-import React, { useState, useRef } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { TagInput } from '@/components/custom/tag-input';
+import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,17 +30,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
 import { PlatformRoleSelect } from '@/features/members/components/platform-role-select';
 import { ProjectRoleSelect } from '@/features/members/components/project-role-select';
+import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
+import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -52,10 +48,38 @@ import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
 
 import { UserSuggestionsPopover } from './user-suggestions-popover';
 
+const buildInvalidEmailsMessage = (emails: string[]): string => {
+  const maxShown = 3;
+  const shown = emails.slice(0, maxShown);
+  const remaining = emails.length - maxShown;
+  if (remaining > 0) {
+    return t('Fix invalid emails {list} and {count} more', {
+      list: shown.join(', '),
+      count: remaining,
+    });
+  }
+  if (shown.length === 1) {
+    return t('Fix invalid email {email}', { email: shown[0] });
+  }
+  const last = shown.pop();
+  return t('Fix invalid emails {list} and {last}', {
+    list: shown.join(', '),
+    last,
+  });
+};
+
 const FormSchema = z.object({
-  emails: z
-    .array(z.string())
-    .min(1, t('Please enter at least one email address')),
+  emails: z.array(z.string()).superRefine((emails, ctx) => {
+    if (emails.length === 0) return;
+    const invalidEmails = emails.filter(
+      (email) => !formatUtils.emailRegex.test(email.trim()),
+    );
+    if (invalidEmails.length === 0) return;
+    ctx.addIssue({
+      code: 'custom',
+      message: buildInvalidEmailsMessage(invalidEmails),
+    });
+  }),
   type: z.enum(InvitationType, {
     message: t('Please select invitation type'),
   }),
@@ -80,10 +104,7 @@ export const InviteUserDialog = ({
   const [invitationResults, setInvitationResults] = useState<
     UserInvitationWithLink[]
   >([]);
-  const [inputValue, setInputValue] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [tagInputKey, setTagInputKey] = useState(0);
-  const inputRef = useRef<HTMLDivElement>(null);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: isSmtpConfigured } = flagsHooks.useFlag<boolean>(
     ApFlagId.SMTP_CONFIGURED,
@@ -95,6 +116,14 @@ export const InviteUserDialog = ({
   const isPlatformPage = location.pathname.includes('/platform/');
   const userHasPermissionToInviteUser = checkAccess(
     Permission.WRITE_INVITATION,
+  );
+  const { data: platformUsersData } = platformUserHooks.useUsers();
+  const platformUserEmails = new Set(
+    platformUsersData?.data.map((u) => u.email.toLowerCase()) ?? [],
+  );
+  const { projectMembers } = projectMembersHooks.useProjectMembers();
+  const projectMemberEmails = new Set(
+    projectMembers?.map((m) => m.user.email.toLowerCase()) ?? [],
   );
 
   const resultsWithLinks = invitationResults.filter((r) => r.link);
@@ -167,31 +196,32 @@ export const InviteUserDialog = ({
         : platform.plan.projectRolesEnabled && project.type === ProjectType.TEAM
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
-      platformRole: PlatformRole.MEMBER,
+      platformRole: PlatformRole.OPERATOR,
       projectRole: undefined,
     },
   });
 
-  // Watch emails to update suggestions
-  const currentEmails = form.watch('emails');
+  const invitationType = form.getValues().type;
+  const isPlatformInvite = invitationType === InvitationType.PLATFORM;
+
+  const handleEmailsChange = useCallback(
+    (emails: ReadonlyArray<string>) => {
+      const filtered = emails.filter((e) => {
+        const lower = e.toLowerCase();
+        if (isPlatformInvite) return !platformUserEmails.has(lower);
+        return !projectMemberEmails.has(lower);
+      });
+      form.setValue('emails', [...filtered]);
+      form.trigger('emails');
+    },
+    [form, isPlatformInvite, platformUserEmails, projectMemberEmails],
+  );
 
   const onSubmit = (data: FormSchema) => {
     if (data.emails.length === 0) {
       form.setError('emails', {
         type: 'required',
         message: t('Please enter at least one email address'),
-      });
-      return;
-    }
-
-    const invalidEmails = data.emails.filter(
-      (email) => !formatUtils.emailRegex.test(email.trim()),
-    );
-
-    if (invalidEmails.length > 0) {
-      form.setError('emails', {
-        type: 'validation',
-        message: t('Please fix invalid email addresses'),
       });
       return;
     }
@@ -205,13 +235,6 @@ export const InviteUserDialog = ({
     }
 
     mutate(data);
-  };
-
-  const copyInvitationLink = (link: string) => {
-    navigator.clipboard.writeText(link);
-    toast.success(t('Invitation link copied successfully'), {
-      duration: 3000,
-    });
   };
 
   const copyAllLinks = () => {
@@ -240,35 +263,21 @@ export const InviteUserDialog = ({
     URL.revokeObjectURL(url);
   };
 
-  const handleSelectUser = (email: string) => {
-    const currentEmails = form.getValues('emails');
-    form.setValue('emails', [...currentEmails, email]);
-    setInputValue('');
-    setShowSuggestions(false);
-    // Force TagInput to remount and clear its internal input state
-    setTagInputKey((prev) => prev + 1);
-  };
-
-  const handleInputChange = (value: string) => {
-    setInputValue(value);
-    setShowSuggestions(value.trim().length > 0 && !isPlatformPage);
-  };
-
   if (embedState.isEmbedded || !userHasPermissionToInviteUser) {
     return null;
   }
 
   const dialogTitle = hasLinks
     ? t('Invitation Links')
-    : isPlatformPage
-    ? t('Invite to Your Platform')
+    : isPlatformInvite
+    ? t('Invite to platform')
     : t('Add Members');
 
   const dialogDescription = getDialogDescription({
     hasLinks,
     addedMembersCount,
     resultsWithLinksCount: resultsWithLinks.length,
-    isPlatformPage,
+    invitationType,
     isSmtpConfigured: isSmtpConfigured ?? false,
     projectName: project.displayName,
   });
@@ -283,12 +292,15 @@ export const InviteUserDialog = ({
             setOpen(open);
             form.reset();
             setInvitationResults([]);
-            setInputValue('');
-            setShowSuggestions(false);
-            setTagInputKey(0);
+            setSuggestionsOpen(false);
           }}
         >
-          <DialogContent className="sm:max-w-[475px]">
+          <DialogContent
+            className="sm:max-w-[475px]"
+            onEscapeKeyDown={(e) => {
+              if (suggestionsOpen) e.preventDefault();
+            }}
+          >
             <DialogHeader>
               <DialogTitle>{dialogTitle}</DialogTitle>
               <DialogDescription>{dialogDescription}</DialogDescription>
@@ -307,23 +319,12 @@ export const InviteUserDialog = ({
                       <FormItem className="grid gap-2">
                         <Label htmlFor="emails">{t('Emails')}</Label>
                         <UserSuggestionsPopover
-                          open={showSuggestions}
-                          onOpenChange={setShowSuggestions}
-                          inputValue={inputValue}
-                          currentEmails={currentEmails}
-                          onSelectUser={handleSelectUser}
-                          isPlatformPage={isPlatformPage}
-                        >
-                          <div ref={inputRef}>
-                            <TagInput
-                              key={tagInputKey}
-                              {...field}
-                              type="email"
-                              placeholder={t('Invite users by email')}
-                              onInputChange={handleInputChange}
-                            />
-                          </div>
-                        </UserSuggestionsPopover>
+                          value={field.value}
+                          onChange={handleEmailsChange}
+                          placeholder={t('Invite users by email')}
+                          invitationType={invitationType}
+                          onOpenChange={setSuggestionsOpen}
+                        />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -348,7 +349,7 @@ export const InviteUserDialog = ({
                       </Button>
                     </DialogClose>
                     <Button type="submit" loading={isPending}>
-                      {isPlatformPage ? t('Invite') : t('Add')}
+                      {isPlatformInvite ? t('Invite') : t('Add')}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -360,29 +361,10 @@ export const InviteUserDialog = ({
                     {resultsWithLinks.map((result) => (
                       <div key={result.id} className="flex flex-col gap-1">
                         <Label className="text-sm">{result.email}</Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="text"
-                            readOnly={true}
-                            value={result.link!}
-                            className="flex-1 rounded-l-md rounded-r-none focus-visible:ring-0! focus-visible:ring-offset-0!"
-                          />
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                className="rounded-l-none rounded-r-md"
-                                onClick={() => copyInvitationLink(result.link!)}
-                              >
-                                <CopyIcon height={15} width={15} />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                              {t('Copy')}
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
+                        <CopyToClipboardInput
+                          useInput={true}
+                          textToCopy={result.link!}
+                        />
                       </div>
                     ))}
                   </div>
@@ -422,14 +404,14 @@ function getDialogDescription({
   hasLinks,
   addedMembersCount,
   resultsWithLinksCount,
-  isPlatformPage,
+  invitationType,
   isSmtpConfigured,
   projectName,
 }: {
   hasLinks: boolean;
   addedMembersCount: number;
   resultsWithLinksCount: number;
-  isPlatformPage: boolean;
+  invitationType: InvitationType;
   isSmtpConfigured: boolean;
   projectName: string;
 }): string {
@@ -452,7 +434,7 @@ function getDialogDescription({
     return addedPrefix + linkText;
   }
 
-  if (isPlatformPage) {
+  if (invitationType === InvitationType.PLATFORM) {
     const base = t(
       'Invite team members to collaborate and build amazing flows together.',
     );
@@ -467,10 +449,10 @@ function getDialogDescription({
 
   return isSmtpConfigured
     ? t(
-        'Existing platform members will be added immediately. New users will receive an invitation email.',
+        'Platform members get instant access. New users will receive an invitation email.',
       )
     : t(
-        'Existing platform members will be added immediately. New users must use the invitation link.',
+        'Platform members get instant access. New users will need to visit the invitation link.',
       );
 }
 

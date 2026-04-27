@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ApEnvironment, ExecutionMode } from '@activepieces/shared'
+import { ApEnvironment, ExecutionMode, NetworkMode } from '@activepieces/shared'
 
 const { getSettingsMock, createSandboxMock, isolateProcessMock, simpleProcessMock, getGlobalCacheCommonPathMock, getGlobalCodeCachePathMock, getEnginePathMock } = vi.hoisted(() => ({
     getSettingsMock: vi.fn(),
@@ -58,7 +58,7 @@ type Settings = {
     S3_USE_SIGNED_URLS: string
     EVENT_DESTINATION_TIMEOUT_SECONDS: number
     EDITION: string
-    SSRF_PROTECTION_ENABLED: boolean
+    NETWORK_MODE: NetworkMode
     SSRF_ALLOW_LIST: string[]
 }
 
@@ -84,7 +84,7 @@ function buildSettings(overrides: Partial<Settings> = {}): Settings {
         S3_USE_SIGNED_URLS: 'false',
         EVENT_DESTINATION_TIMEOUT_SECONDS: 30,
         EDITION: 'community',
-        SSRF_PROTECTION_ENABLED: false,
+        NETWORK_MODE: NetworkMode.UNRESTRICTED,
         SSRF_ALLOW_LIST: [],
     }
     return { ...base, ...overrides }
@@ -155,7 +155,7 @@ describe('createSandboxForJob', () => {
                 EXECUTION_MODE: ExecutionMode.SANDBOX_PROCESS,
                 MAX_FLOW_RUN_LOG_SIZE_MB: 25,
                 MAX_FILE_SIZE_MB: 50,
-                SSRF_PROTECTION_ENABLED: true,
+                NETWORK_MODE: NetworkMode.STRICT,
             }))
             createSandboxForJob({ log, apiClient, boxId: 1, reusable: false })
 
@@ -166,7 +166,7 @@ describe('createSandboxForJob', () => {
                 AP_MAX_FLOW_RUN_LOG_SIZE_MB: '25',
                 AP_MAX_FILE_SIZE_MB: '50',
                 NODE_PATH: '/usr/src/node_modules',
-                AP_SSRF_PROTECTION_ENABLED: 'true',
+                AP_NETWORK_MODE: NetworkMode.STRICT,
             })
         })
 

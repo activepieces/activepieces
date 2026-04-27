@@ -10,6 +10,7 @@ export enum AIProviderName {
     ACTIVEPIECES = 'activepieces',
     CLOUDFLARE_GATEWAY = 'cloudflare-gateway',
     CUSTOM = 'custom',
+    BEDROCK = 'bedrock',
 }
 
 
@@ -48,6 +49,12 @@ export type OpenAIProviderAuthConfig = z.infer<typeof OpenAIProviderAuthConfig>
 
 export const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
 export type OpenRouterProviderAuthConfig = z.infer<typeof OpenRouterProviderAuthConfig>
+
+export const BedrockProviderAuthConfig = z.object({
+    accessKeyId: z.string().min(1),
+    secretAccessKey: z.string().min(1),
+})
+export type BedrockProviderAuthConfig = z.infer<typeof BedrockProviderAuthConfig>
 
 export const AnthropicProviderConfig = z.object({})
 export type AnthropicProviderConfig = z.infer<typeof AnthropicProviderConfig>
@@ -94,6 +101,11 @@ export type OpenAIProviderConfig = z.infer<typeof OpenAIProviderConfig>
 export const OpenRouterProviderConfig = z.object({})
 export type OpenRouterProviderConfig = z.infer<typeof OpenRouterProviderConfig>
 
+export const BedrockProviderConfig = z.object({
+    region: z.string().min(1),
+})
+export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
+
 export const AIProviderAuthConfig = z.union([
     AnthropicProviderAuthConfig,
     AzureProviderAuthConfig,
@@ -103,6 +115,7 @@ export const AIProviderAuthConfig = z.union([
     CloudflareGatewayProviderAuthConfig,
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
+    BedrockProviderAuthConfig,
 ])
 export type AIProviderAuthConfig = z.infer<typeof AIProviderAuthConfig>
 // Order matters, put schemas with required fields first, empty ones last. This is to avoid empty objects matching any object.
@@ -110,6 +123,7 @@ export const AIProviderConfig = z.union([
     OpenAICompatibleProviderConfig,
     CloudflareGatewayProviderConfig,
     AzureProviderConfig,
+    BedrockProviderConfig,
     AnthropicProviderConfig,
     GoogleProviderConfig,
     OpenAIProviderConfig,
@@ -167,6 +181,12 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         config: ActivePiecesProviderConfig,
         auth: ActivePiecesProviderAuthConfig,
     }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.BEDROCK),
+        config: BedrockProviderConfig,
+        auth: BedrockProviderAuthConfig,
+    }),
 ])
 
 export const AIProvider = z.object({
@@ -223,6 +243,44 @@ export const AIErrorResponse = z.object({
 
 export type AIErrorResponse = z.infer<typeof AIErrorResponse>
 /**
+ * Resolves the effective provider and model for capability decisions. For direct providers
+ * this is the same pair that came in. For Cloudflare Gateway (which tunnels to a submodel
+ * like "openai/gpt-4"), it returns the underlying provider inferred from the prefix and the
+ * submodel portion of the id.
+ *
+ * Callers can use this to decide which provider-specific capabilities apply (e.g. which
+ * web-search tool builder to use, which advancedOptions schema to render). Unrecognized
+ * prefixes or missing input fall back to the raw inputs so callers never end up with a
+ * wrong-but-confident answer.
+ */
+export function getEffectiveProviderAndModel({
+    provider,
+    model,
+}: {
+    provider: string | undefined
+    model: string | undefined
+}): { provider: string | undefined, model: string | undefined } {
+    if (provider !== AIProviderName.CLOUDFLARE_GATEWAY || !model) {
+        return { provider, model }
+    }
+    const split = splitCloudflareGatewayModelId(model)
+    // Prefix must match map keys (lowercase); some gateways/UI send "OpenAI/...".
+    const gatewaySubmodelPrefix = (split.provider ?? '').trim().toLowerCase()
+    const mapped = CF_GATEWAY_SUBMODEL_TO_PROVIDER[gatewaySubmodelPrefix]
+    if (!mapped) {
+        return { provider, model }
+    }
+    return { provider: mapped, model: split.model }
+}
+
+const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
+    openai: AIProviderName.OPENAI,
+    anthropic: AIProviderName.ANTHROPIC,
+    'google-ai-studio': AIProviderName.GOOGLE,
+    'google-vertex-ai': AIProviderName.GOOGLE,
+}
+
+/**
  * Splits a Cloudflare Gateway model ID into provider and model, i.e. "google-vertex-ai/google/gemini-2.5-pro" -> { provider: "google-vertex-ai", model: "google/gemini-2.5-pro" }.
  * @param modelId - The model ID to split.
  * @returns An object containing the provider and model.
@@ -249,7 +307,8 @@ export function splitCloudflareGatewayModelId(modelId: string): {
             publisher: undefined,
         }
     }
-    const provider = modelId.substring(0, slashIndex)
+    // Normalize first path segment: AI Gateway and docs use lowercase (e.g. "openai/gpt-4o").
+    const provider = modelId.substring(0, slashIndex).trim().toLowerCase()
     const rest = modelId.substring(slashIndex + 1)
 
     if (provider === 'google-vertex-ai') {

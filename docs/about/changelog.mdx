@@ -4,6 +4,20 @@ description: "A log of all notable changes to Activepieces"
 icon: "code-commit"
 ---
 
+<Update label="April 2026" description="Network Security">
+
+### Network Security
+
+Activepieces now ships with a built-in **network proxy that protects your automations from network attacks**.
+
+- **One switch to turn it on** — set `AP_NETWORK_MODE=STRICT` and the protection is active. It's **opt-in today**, but in an upcoming release it will become **opt-out** (on by default).
+- **Allow list for trusted internal services** — if a flow legitimately needs to reach an internal API or database, add its address (or a whole subnet like `10.10.0.0/24`) to `AP_SSRF_ALLOW_LIST`.
+- **Works with your corporate proxy** — if you already use `HTTP_PROXY` / `HTTPS_PROXY`, Activepieces respects them automatically.
+
+See the [Network Security](/install/architecture/network-security) architecture page for the full breakdown.
+
+</Update>
+
 <Update label="April 2026" description="Shared Concurrency Pools">
 
 ### Shared concurrency pools

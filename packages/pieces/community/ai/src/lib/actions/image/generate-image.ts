@@ -16,7 +16,7 @@ import {
 } from 'ai';
 import { generateImage } from 'ai';
 import mime from 'mime-types';
-import { isNil } from '@activepieces/shared';
+import { isNil, getEffectiveProviderAndModel } from '@activepieces/shared';
 import { createAIModel } from '../../common/ai-sdk';
 import { AIProviderName } from '@activepieces/shared';
 import { aiProps } from '../../common/props';
@@ -38,8 +38,14 @@ export const generateImageAction = createAction({
       auth: PieceAuth.None(),
       refreshers: ['provider', 'model'],
       props: async (propsValue): Promise<InputPropertyMap> => {
-        const providerId = propsValue['provider'] as unknown as string;
-        const modelId = propsValue['model'] as unknown as string;
+        const rawProvider = propsValue['provider'] as unknown as string;
+        const rawModel = propsValue['model'] as unknown as string;
+        const { provider: effectiveProvider, model: effectiveModel } = getEffectiveProviderAndModel({
+          provider: rawProvider,
+          model: rawModel,
+        });
+        const providerId = effectiveProvider ?? rawProvider;
+        const modelId = effectiveModel ?? rawModel;
 
         let options: InputPropertyMap = {};
 
@@ -197,7 +203,10 @@ const getGeneratedImage = async ({
     isImage: true,
   });
 
-  switch (provider) {
+  const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model: modelId });
+  const resolvedProvider = (effectiveProvider ?? provider) as AIProviderName;
+
+  switch (resolvedProvider) {
     case AIProviderName.GOOGLE:
     case AIProviderName.ACTIVEPIECES:
     case AIProviderName.OPENROUTER:
@@ -212,7 +221,7 @@ const getGeneratedImage = async ({
         model,
         prompt,
         providerOptions: {
-          [provider]: { ...advancedOptions },
+          [resolvedProvider]: { ...advancedOptions },
         },
       });
       return image
