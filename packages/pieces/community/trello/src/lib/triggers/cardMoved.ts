@@ -87,8 +87,7 @@ export const cardMovedTrigger = createTrigger({
 
 			return cards.slice(0, 5);
 		} catch (error) {
-			console.error('An error occurred:', error);
-			return [];
+			throw error;
 		}
 	},
 	sampleData: {
