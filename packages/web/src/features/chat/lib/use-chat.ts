@@ -23,7 +23,7 @@ function isAllowedMimeType(value: string): value is ChatAllowedMimeType {
 }
 
 function fileToBase64(
-  file: File
+  file: File,
 ): Promise<{ name: string; mimeType: ChatAllowedMimeType; data: string }> {
   return new Promise((resolve, reject) => {
     const mimeType = file.type || 'application/octet-stream';
@@ -126,7 +126,7 @@ function hasAssistantContent(msg: ChatUIMessage): boolean {
     (p) =>
       (p.type === 'text' && p.text.length > 0) ||
       p.type === 'reasoning' ||
-      p.type === 'dynamic-tool'
+      p.type === 'dynamic-tool',
   );
 }
 
@@ -138,7 +138,7 @@ export function useAgentChat({
   onConversationCreated?: () => void;
 } = {}) {
   const [conversationId, setConversationIdState] = useState<string | null>(
-    null
+    null,
   );
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -163,7 +163,7 @@ export function useAgentChat({
         const lastUserText =
           lastUser?.parts
             .filter(
-              (p): p is { type: 'text'; text: string } => p.type === 'text'
+              (p): p is { type: 'text'; text: string } => p.type === 'text',
             )
             .map((p) => p.text)
             .join('') ?? '';
@@ -204,7 +204,7 @@ export function useAgentChat({
       ) {
         onTitleUpdateRef.current?.(
           (dataPart.data as Record<string, unknown>)['title'] as string,
-          conversationIdRef.current ?? undefined
+          conversationIdRef.current ?? undefined,
         );
       }
     },
@@ -223,7 +223,7 @@ export function useAgentChat({
     if (!hasPending) return liveMessages;
     if (liveMessages.length === 0) return pendingMessages;
     const withoutEmptyAssistant = liveMessages.filter(
-      (m) => !(m.role === 'assistant' && !hasAssistantContent(m))
+      (m) => !(m.role === 'assistant' && !hasAssistantContent(m)),
     );
     return [...withoutEmptyAssistant, createPendingAssistantMessage()];
   }, [hasPending, uiMessages, pendingMessages]);
@@ -265,7 +265,7 @@ export function useAgentChat({
       setConversationIdState(conv.id);
       return conv;
     },
-    []
+    [],
   );
 
   const sendMessage = useCallback(
@@ -290,7 +290,7 @@ export function useAgentChat({
           return;
         }
         const { data: encodedFiles, error: fileError } = await tryCatch(
-          async () => Promise.all(files.map(fileToBase64))
+          async () => Promise.all(files.map(fileToBase64)),
         );
         if (fileError) {
           setLocalError(fileError.message ?? 'Failed to read attached files');
@@ -320,7 +320,7 @@ export function useAgentChat({
 
       await chatSendMessage({ text: content });
     },
-    [createConversation, chatSendMessage]
+    [createConversation, chatSendMessage],
   );
 
   const setConversationId = useCallback(
@@ -335,7 +335,7 @@ export function useAgentChat({
 
       setIsLoadingHistory(true);
       const { data: history, error: historyError } = await tryCatch(async () =>
-        chatApi.getMessages(id)
+        chatApi.getMessages(id),
       );
       if (historyError) {
         setLocalError('Failed to load conversation history');
@@ -344,7 +344,7 @@ export function useAgentChat({
       }
       setIsLoadingHistory(false);
     },
-    [stop, setUiMessages]
+    [stop, setUiMessages],
   );
 
   return {

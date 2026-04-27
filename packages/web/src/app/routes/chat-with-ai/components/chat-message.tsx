@@ -67,14 +67,14 @@ export function UserMessage({ message }: { message: ChatUIMessage }) {
   const fileNames = message.parts
     .filter(
       (
-        p
+        p,
       ): p is {
         type: 'file';
         filename: string;
         mediaType: string;
         url: string;
       } =>
-        p.type === 'file' && 'filename' in p && typeof p.filename === 'string'
+        p.type === 'file' && 'filename' in p && typeof p.filename === 'string',
     )
     .map((p) => p.filename);
 
@@ -120,14 +120,14 @@ export function UserMessage({ message }: { message: ChatUIMessage }) {
 }
 
 function extractPlanEntries(
-  parts: ChatUIMessage['parts']
+  parts: ChatUIMessage['parts'],
 ): Array<{ content: string; status: string }> {
-  return parts.flatMap((p) => {
-    if (isDataUIPart<ChatDataParts>(p) && p.type === 'data-plan') {
-      return p.data.entries;
-    }
-    return [];
-  });
+  const planParts = parts.filter(
+    (p): p is Extract<typeof p, { type: 'data-plan' }> =>
+      isDataUIPart<ChatDataParts>(p) && p.type === 'data-plan',
+  );
+  const last = planParts[planParts.length - 1];
+  return last ? last.data.entries : [];
 }
 
 export function AssistantMessage({
@@ -148,17 +148,17 @@ export function AssistantMessage({
   onPieceConnected: (piece: string) => void;
 }) {
   const reasoningParts = message.parts.filter(
-    (p): p is { type: 'reasoning'; text: string } => p.type === 'reasoning'
+    (p): p is { type: 'reasoning'; text: string } => p.type === 'reasoning',
   );
   const thoughts = reasoningParts.map((p) => p.text).join('');
   const hasThoughts = thoughts.length > 0;
 
   const dynamicToolParts = message.parts.filter(
-    (p) => p.type === 'dynamic-tool'
+    (p) => p.type === 'dynamic-tool',
   );
   const textParts = message.parts.filter(
     (p): p is { type: 'text'; text: string } =>
-      p.type === 'text' && p.text.length > 0
+      p.type === 'text' && p.text.length > 0,
   );
   const hasContent = textParts.length > 0;
   const hasAnyParts = hasThoughts || dynamicToolParts.length > 0 || hasContent;
@@ -175,7 +175,7 @@ export function AssistantMessage({
   const renderableParts = message.parts.filter(
     (p) =>
       (p.type === 'text' && 'text' in p && p.text.length > 0) ||
-      p.type === 'dynamic-tool'
+      p.type === 'dynamic-tool',
   );
 
   return (
@@ -274,7 +274,11 @@ function renderParts({
     const snapshot = [...toolBuffer];
     toolBuffer.length = 0;
     nodes.push(
-      <ToolCallGroup key={key} toolParts={snapshot} isStreaming={isStreaming} />
+      <ToolCallGroup
+        key={key}
+        toolParts={snapshot}
+        isStreaming={isStreaming}
+      />,
     );
   }
 
@@ -292,7 +296,7 @@ function renderParts({
           isStreaming={isStreaming && isLast}
           connectedPieces={connectedPieces}
           onPieceConnected={onPieceConnected}
-        />
+        />,
       );
     }
   });

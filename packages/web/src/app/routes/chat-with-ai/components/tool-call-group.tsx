@@ -42,7 +42,7 @@ export function ToolCallGroup({
   isStreaming?: boolean;
 }) {
   const dynamicParts = toolParts.filter(
-    (p): p is DynamicToolPart => p.type === 'dynamic-tool'
+    (p): p is DynamicToolPart => p.type === 'dynamic-tool',
   );
 
   const groups = groupToolPartsByPhase(dynamicParts);
@@ -86,7 +86,7 @@ export function ToolCallGroup({
 }
 
 function groupToolPartsByPhase(
-  parts: DynamicToolPart[]
+  parts: DynamicToolPart[],
 ): Array<{ label: string; tools: DynamicToolPart[] }> {
   const visible = parts.filter((p) => !isUtilityTool(p.title ?? p.toolName));
   if (visible.length === 0) return [];
@@ -113,7 +113,7 @@ function groupToolPartsByPhase(
 }
 
 function mergeConsecutiveGroups(
-  groups: Array<{ label: string; tools: DynamicToolPart[] }>
+  groups: Array<{ label: string; tools: DynamicToolPart[] }>,
 ): Array<{ label: string; tools: DynamicToolPart[] }> {
   if (groups.length <= 1) return groups;
   const merged: Array<{ label: string; tools: DynamicToolPart[] }> = [
