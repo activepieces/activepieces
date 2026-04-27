@@ -67,9 +67,6 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 
 		let response: PageCollection = await client.api(`/chats?${filter}`).get();
 
-		console.log('RESPONE');
-		console.log(JSON.stringify(response))
-
 		while (response.value && response.value.length > 0) {
 			for (const channel of response.value as Chat[]) {
 				if (isNil(channel.createdDateTime)) {
