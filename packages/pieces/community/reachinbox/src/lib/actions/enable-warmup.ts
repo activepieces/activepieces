@@ -57,7 +57,6 @@ export const enableWarmup = createAction({
             disabled: options.length === 0,
           };
         } catch (error) {
-          console.error('Error fetching email accounts:', error);
           return { options: [], disabled: true };
         }
       },
@@ -87,7 +86,6 @@ export const enableWarmup = createAction({
         message: `Warmup enabled for account ID: ${accountId}`,
       };
     } catch (error) {
-      console.error('Error enabling warmup:', error);
       throw new Error(`Failed to enable warmup for account ID: ${accountId}`);
     }
   },

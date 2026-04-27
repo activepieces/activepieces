@@ -52,7 +52,6 @@ export const pauseWarmup = createAction({
             disabled: options.length === 0,
           };
         } catch (error) {
-          console.error('Error fetching email accounts:', error);
           return { options: [], disabled: true };
         }
       },
@@ -82,7 +81,6 @@ export const pauseWarmup = createAction({
         message: `Warmup paused for account ID: ${accountId}`,
       };
     } catch (error) {
-      console.error('Error pausing warmup:', error);
       throw new Error(`Failed to pause warmup for account ID: ${accountId}`);
     }
   },

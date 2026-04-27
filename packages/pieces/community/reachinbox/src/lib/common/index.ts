@@ -47,7 +47,6 @@ export const fetchCampaigns = async (auth: string): Promise<Campaign[]> => {
 
     return response.body?.data?.rows || [];
   } catch (error) {
-    console.error('Error fetching campaigns:', error);
     throw new Error('Failed to fetch campaigns.');
   }
 };
@@ -89,7 +88,6 @@ export const addLeadsToCampaign = async (
 
     return response.body;
   } catch (error) {
-    console.error('Error adding leads:', error);
     throw new Error('Failed to add leads to campaign.');
   }
 };

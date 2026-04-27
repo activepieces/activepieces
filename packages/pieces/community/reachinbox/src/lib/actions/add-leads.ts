@@ -125,7 +125,6 @@ export const addLeads = createAction({
         throw new Error(`Failed to add leads: ${response.body.message}`);
       }
     } catch (error) {
-      console.error('Error adding leads:', error);
       throw new Error('Failed to add leads to the campaign.');
     }
   },

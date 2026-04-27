@@ -46,7 +46,6 @@ export const removeEmail = createAction({
             disabled: options.length === 0,
           };
         } catch (error) {
-          console.error('Error fetching email accounts:', error);
           return { options: [], disabled: true };
         }
       },
@@ -73,7 +72,6 @@ export const removeEmail = createAction({
         throw new Error(`Failed to remove email account with ID: ${accountId}`);
       }
     } catch (error) {
-      console.error('Error removing email account:', error);
       throw new Error(`Error removing email account with ID: ${accountId}`);
     }
   },
