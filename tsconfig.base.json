@@ -303,6 +303,9 @@
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
       ],
+      "@activepieces/piece-courier": [
+        "packages/pieces/community/courier/src/index.ts"
+      ],
       "@activepieces/piece-connections": [
         "packages/pieces/core/connections/src/index.ts"
       ],
