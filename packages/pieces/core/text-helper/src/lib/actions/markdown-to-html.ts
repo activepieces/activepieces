@@ -79,7 +79,6 @@ export const markdownToHTML = createAction({
       simpleLineBreaks: context.propsValue.simpleLineBreaks,
       openLinksInNewWindow: context.propsValue.openLinksInNewWindow,
     });
-    console.log('noHeaderId', context.propsValue.noHeaderId);
     converter.setFlavor(context.propsValue.flavor as Flavor);
     return converter.makeHtml(context.propsValue.markdown);
   },
