@@ -24,7 +24,6 @@ const polling: Polling<
       HttpMethod.GET,
       `/projects/${propsValue.projectId}/keys`
     )) as any;
-    console.log(keys)
     return keys.keys
       .filter(
         (key: { created_at_timestamp: number }) =>
