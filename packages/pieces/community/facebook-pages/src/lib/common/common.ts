@@ -42,8 +42,7 @@ export const facebookPagesCommon = {
           options: pages,
           placeholder: 'Choose a page',
         };
-      } catch (e) {
-        console.debug(e);
+      } catch {
         return {
           disabled: true,
           options: [],
