@@ -92,13 +92,11 @@ export const taskFinishedSuccessfullyTrigger = createTrigger({
           resourceUri: `/robots/${robotId}/webhooks/${webhookId}`,
         });
       } catch (error: any) {
-        console.warn(
-          `Warning: Failed to clean up webhook ${webhookId}:`,
-          error.message
-        );
-
         // Clean up the stored webhook ID even if deletion failed
         await context.store.delete(TRIGGER_KEY);
+        throw new Error(
+          `Failed to clean up webhook ${webhookId}: ${error.message}`
+        );
       }
     }
   },
