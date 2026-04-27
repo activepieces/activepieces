@@ -651,7 +651,7 @@
     },
     "packages/pieces/community/amazon-s3": {
       "name": "@activepieces/piece-amazon-s3",
-      "version": "0.5.7",
+      "version": "0.5.8",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
