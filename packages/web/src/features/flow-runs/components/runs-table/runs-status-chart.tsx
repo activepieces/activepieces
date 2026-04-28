@@ -21,9 +21,9 @@ import {
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
-const DONUT_SIZE = 18;
+const DONUT_SIZE = 20;
 const DONUT_RADIUS = 6;
-const DONUT_STROKE = 3;
+const DONUT_STROKE = 2.5;
 const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
 const DONUT_CENTER = DONUT_SIZE / 2;
 
@@ -93,12 +93,12 @@ function RunsStatusChart() {
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <button className="flex items-center gap-2 px-3 h-8 rounded-md hover:bg-accent transition-colors text-sm text-accent-foreground">
+        <button className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md hover:bg-accent transition-colors text-sm text-muted-foreground">
           <MiniDonut categories={categories} total={total} />
           {t('Queue Status')}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-72 p-4">
+      <PopoverContent align="end" className="w-80 p-4">
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
@@ -113,12 +113,13 @@ function RunsStatusChart() {
               </Tooltip>
             </div>
             <p className="text-xs text-muted-foreground">
-              {t('Total Runs')}: {total}
+              {t('Total Runs')}:{' '}
+              {formatUtils.formatNumberCompact(total + 200000)}
             </p>
           </div>
 
           {total > 0 && (
-            <div className="flex h-3 w-full overflow-hidden rounded-full">
+            <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
               {categories.map((cat) => (
                 <div
                   key={cat.label}
@@ -147,7 +148,9 @@ function RunsStatusChart() {
                     {formatUtils.convertEnumToHumanReadable(cat.label)}
                   </span>
                 </div>
-                <span className="font-medium tabular-nums">{cat.count}</span>
+                <span className="font-medium tabular-nums">
+                  {formatUtils.formatNumberCompact(cat.count)}
+                </span>
               </div>
             ))}
           </div>
