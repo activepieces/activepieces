@@ -67,7 +67,7 @@ export const stripeNewCustomer = createTrigger({
       headers: {
         Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Stripe-Version': "2026-02-25.clover",
+        'Stripe-Version': "2023-10-16",
       },
       queryParams: {
         limit: '5',
