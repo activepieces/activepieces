@@ -113,8 +113,7 @@ function RunsStatusChart() {
               </Tooltip>
             </div>
             <p className="text-xs text-muted-foreground">
-              {t('Total Runs')}:{' '}
-              {formatUtils.formatNumberCompact(total)}
+              {t('Total Runs')}: {formatUtils.formatNumberCompact(total)}
             </p>
           </div>
 
