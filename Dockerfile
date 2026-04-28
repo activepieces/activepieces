@@ -85,8 +85,16 @@ ENV VITE_DEPLOY_ENV=$VITE_DEPLOY_ENV
 ENV VITE_OTOM8_SITE_URL=$VITE_OTOM8_SITE_URL
 ENV VITE_PIECE_CDN_BASE_URL=$VITE_PIECE_CDN_BASE_URL
 
-# Build frontend, engine, server API, and worker
-RUN npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
+# Fail fast if the Clerk publishable key wasn't passed — prevents silently baking the dev fallback key.
+RUN test -n "$VITE_CLERK_PUBLISHABLE_KEY" || (echo "ERROR: VITE_CLERK_PUBLISHABLE_KEY build-arg is empty" && exit 1)
+
+# Build frontend, engine, server API, and worker.
+# Prefix env vars explicitly on the RUN line — some Node.js build tools (turbo, vite)
+# don't always inherit ENV instructions from the Dockerfile layer.
+RUN VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY \
+    VITE_DEPLOY_ENV=$VITE_DEPLOY_ENV \
+    VITE_OTOM8_SITE_URL=$VITE_OTOM8_SITE_URL \
+    npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
 
 # Generate migration manifest (ordered list of migration names) for image-tag-based rollback
 RUN node -e "\
