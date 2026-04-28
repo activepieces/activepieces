@@ -422,7 +422,12 @@ export function useAgentChat({
         tryCatch(async () => chatApi.getConversation(id)),
         tryCatch(async () => chatApi.getMessages(id)),
       ]);
-      if (conversationResult.data?.modelName) {
+      if (conversationResult.error) {
+        console.warn(
+          'Failed to load conversation details',
+          conversationResult.error,
+        );
+      } else if (conversationResult.data?.modelName) {
         setLoadedModelName(conversationResult.data.modelName);
       }
       if (historyResult.error) {

@@ -13,7 +13,7 @@ async function getOrCreate({ userId, platformId, aiConfig }: {
     const existing = await userSandboxRepo().findOneBy({ userId })
 
     if (!isNil(existing)) {
-        if (existing.envsHash !== null && existing.envsHash === aiConfig.envsHash) {
+        if (!isNil(existing.envsHash) && existing.envsHash === aiConfig.envsHash) {
             return existing.sandboxId
         }
         void chatSandboxAgent.destroySandbox({ sandboxId: existing.sandboxId, aiConfig }).catch(() => undefined)
