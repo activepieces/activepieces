@@ -2389,8 +2389,6 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        // Single quotes in externalId would break the {{connections['...']}}
-        // template wrapping — validateAuth must reject before any DB writes.
         const result = await apRunActionTool(mcp, mockLog).execute({
             pieceName: '@activepieces/piece-test-email',
             actionName: 'send_email',
@@ -2406,9 +2404,6 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        // No actual connection exists, so this will fail downstream — but it
-        // must get past the auth-shape validator first. We assert the error
-        // we see is NOT about "special characters".
         const result = await apRunActionTool(mcp, mockLog).execute({
             pieceName: '@activepieces/piece-test-email',
             actionName: 'send_email',
