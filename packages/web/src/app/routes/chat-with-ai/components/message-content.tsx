@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -174,6 +175,7 @@ export function ConnectionRequiredCard({
   connectedPieces?: Set<string>;
   onPieceConnected?: (piece: string) => void;
 }) {
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const connected = connectedPieces?.has(connection.piece) ?? false;
   const shortName = connection.piece.replace(/[^a-z0-9-]/gi, '');
@@ -246,6 +248,9 @@ export function ConnectionRequiredCard({
             setDialogOpen(open);
             if (createdConnection) {
               onPieceConnected?.(connection.piece);
+              void queryClient.invalidateQueries({
+                queryKey: ['app-connections'],
+              });
               onSend?.(
                 `Done — ${connection.displayName} is connected. [auth externalId: ${createdConnection.externalId}]`,
               );
