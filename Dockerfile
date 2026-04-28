@@ -71,10 +71,10 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 # Copy remaining source code (turbo config, etc.)
 COPY . .
 
-# Pass Clerk publishable key into Vite build so the AP frontend bundles the
-# correct Clerk instance. CI passes pk_live_* for prod; local builds default
-# to pk_test_* (otom8 Development instance) so `docker build` just works.
-ARG VITE_CLERK_PUBLISHABLE_KEY=pk_test_c3dlZXBpbmctcGFuZ29saW4tNjQuY2xlcmsuYWNjb3VudHMuZGV2JA
+# Clerk publishable key baked into the Vite bundle at build time.
+# Default is the prod key so `docker build` without --build-arg always produces a valid image.
+# Override with --build-arg VITE_CLERK_PUBLISHABLE_KEY=pk_test_* for local dev builds.
+ARG VITE_CLERK_PUBLISHABLE_KEY=pk_live_Y2xlcmsub3RvbTgudXMk
 ENV VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY
 
 # Baked into the Vite bundle: prod/stg vs inferred local when running same image on localhost
