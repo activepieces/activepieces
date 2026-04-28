@@ -57,7 +57,7 @@ function CreatePlatformForm() {
             },
           }}
           render={({ field }) => (
-            <FormItem className="grid space-y-1">
+            <FormItem className="grid space-y-2">
               <Label htmlFor="platformName">{t('Platform Name')}</Label>
               <Input
                 {...field}

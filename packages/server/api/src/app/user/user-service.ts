@@ -173,16 +173,18 @@ export const userService = (log: FastifyBaseLogger) => ({
         }
     },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
-        const platform = await platformService(log).getOneOrThrow(platformId)
-        if (platform.ownerId === id) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Platform owner cannot be deleted',
-                },
-            })
-        }
-
+        await assertNotPlatformOwner({ id, platformId, log })
+        await platformProjectService(log).deletePersonalProjectForUser({
+            userId: id,
+            platformId,
+        })
+        await userRepo().delete({
+            id,
+            platformId,
+        })
+    },
+    async removeFromPlatform({ id, platformId }: DeleteParams): Promise<void> {
+        await assertNotPlatformOwner({ id, platformId, log })
         await platformProjectService(log).deletePersonalProjectForUser({
             userId: id,
             platformId,
@@ -247,6 +249,18 @@ export const userService = (log: FastifyBaseLogger) => ({
     },
 })
 
+
+async function assertNotPlatformOwner({ id, platformId, log }: DeleteParams & { log: FastifyBaseLogger }): Promise<void> {
+    const platform = await platformService(log).getOneOrThrow(platformId)
+    if (platform.ownerId === id) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'Platform owner cannot be deleted',
+            },
+        })
+    }
+}
 
 async function getUsersForProject(platformId: PlatformId, projectId: string): Promise<UserId[]> {
     const platformAdmins = await userRepo().find({ where: { platformId, platformRole: PlatformRole.ADMIN } }).then((users) => users.map((user) => user.id))

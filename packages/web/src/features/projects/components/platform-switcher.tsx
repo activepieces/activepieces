@@ -1,3 +1,4 @@
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Plus } from 'lucide-react';
 import * as React from 'react';
@@ -11,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { projectHooks } from '@/features/projects/stores/project-collection';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
@@ -22,7 +24,9 @@ import { CreatePlatformDialog } from './create-platform-dialog';
 export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
   const { data: allProjects } = projectHooks.useProjectsForPlatforms();
   const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const isCloud = edition === ApEdition.CLOUD;
 
   const platforms = React.useMemo(() => {
     if (!allProjects) return [];
@@ -65,14 +69,18 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
           </DropdownMenuItem>
         ))}
       </ScrollArea>
-      <DropdownMenuSeparator />
-      <DropdownMenuItem
-        onClick={() => setCreateDialogOpen(true)}
-        className="text-sm p-2 cursor-pointer"
-      >
-        <Plus className="mr-2 h-4 w-4" />
-        {t('Create Platform')}
-      </DropdownMenuItem>
+      {isCloud && (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => setCreateDialogOpen(true)}
+            className="text-sm p-2 cursor-pointer"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            {t('Create Platform')}
+          </DropdownMenuItem>
+        </>
+      )}
     </DropdownMenuContent>
   );
 
@@ -84,10 +92,12 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
         </DropdownMenuTrigger>
         {dropdownContent}
       </DropdownMenu>
-      <CreatePlatformDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-      />
+      {isCloud && (
+        <CreatePlatformDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+        />
+      )}
     </>
   );
 }

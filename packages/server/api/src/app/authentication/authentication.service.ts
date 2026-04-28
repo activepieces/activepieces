@@ -77,7 +77,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         const identity = await userIdentityService(log).verifyIdentityPassword(params)
         const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformId(identity.id, log) : params.predefinedPlatformId
         if (isNil(platformId)) {
-            const user = await userService(log).getOneByIdentityAndPlatform({ identityId: identity.id, platformId: null })
+            const user = await userService(log).getOneByIdentityIdOnly({ identityId: identity.id })
             assertNotNullOrUndefined(user, 'User not found')
             log.info({ email: params.email }, 'User signed in without platform, returning onboarding token')
             return authenticationUtils(log).getOnboardingResponse({
@@ -110,7 +110,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
 
         if (isNil(platformId)) {
             if (!isNil(userIdentity)) {
-                const user = await userService(log).getOneByIdentityAndPlatform({ identityId: userIdentity.id, platformId: null })
+                const user = await userService(log).getOneByIdentityIdOnly({ identityId: userIdentity.id })
                 assertNotNullOrUndefined(user, 'User not found')
                 return authenticationUtils(log).getOnboardingResponse({
                     userId: user.id,

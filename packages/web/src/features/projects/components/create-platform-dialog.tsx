@@ -61,7 +61,7 @@ function CreatePlatformDialogForm({
             },
           }}
           render={({ field }) => (
-            <FormItem className="grid space-y-1">
+            <FormItem className="grid space-y-2">
               <Label htmlFor="createPlatformName">{t('Platform Name')}</Label>
               <Input
                 {...field}
