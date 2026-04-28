@@ -65,10 +65,13 @@ export const newDocumentTrigger = createTrigger({
 	auth: googleDocsAuth,
 	name: 'new-document',
 	displayName: 'New Document',
-	description: 'Triggers when a new document is added to a specific folder(optional).',
+	description: 'Triggers when a new Google Doc is created (optionally restricted to a specific folder).',
 	type: TriggerStrategy.POLLING,
 	props: {
-		folderId: folderIdProp,
+		folderId: folderIdProp(
+			'Folder',
+			'Watch only documents created inside this folder. Leave empty to watch across Drive.',
+		),
 	},
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, {
