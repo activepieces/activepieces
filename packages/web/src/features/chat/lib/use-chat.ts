@@ -236,6 +236,15 @@ export function useAgentChat({
     },
     onError: () => {
       setPendingMessages([]);
+      const convId = conversationIdRef.current;
+      if (convId) {
+        void chatApi
+          .getMessages(convId)
+          .then((result) => {
+            setUiMessages(mapHistoryToUIMessages(result.data));
+          })
+          .catch(() => undefined);
+      }
     },
   });
 
