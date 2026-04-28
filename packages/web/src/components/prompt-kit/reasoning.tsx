@@ -86,17 +86,20 @@ export type ReasoningTriggerProps = {
   className?: string;
 } & React.HTMLAttributes<HTMLButtonElement>;
 
-function ReasoningTrigger({
-  children,
-  className,
-  ...props
-}: ReasoningTriggerProps) {
+const ReasoningTrigger = React.forwardRef<
+  HTMLButtonElement,
+  ReasoningTriggerProps
+>(function ReasoningTrigger({ children, className, onClick, ...props }, ref) {
   const { isOpen, onOpenChange } = useReasoningContext();
 
   return (
     <button
+      ref={ref}
       className={cn('flex cursor-pointer items-center gap-2', className)}
-      onClick={() => onOpenChange(!isOpen)}
+      onClick={(event) => {
+        onClick?.(event);
+        if (!event.defaultPrevented) onOpenChange(!isOpen);
+      }}
       {...props}
     >
       <span className="text-primary">{children}</span>
@@ -110,7 +113,7 @@ function ReasoningTrigger({
       </div>
     </button>
   );
-}
+});
 
 export type ReasoningContentProps = {
   children: React.ReactNode;
