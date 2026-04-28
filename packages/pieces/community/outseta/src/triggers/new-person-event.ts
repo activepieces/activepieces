@@ -45,6 +45,22 @@ export const newPersonEventTrigger = createTrigger({
           { label: 'Person Support Ticket Updated', value: 'person_support_ticket_updated' },
           { label: 'Person Support Ticket Closed', value: 'person_support_ticket_closed' },
           { label: 'Person Lead Form Submitted', value: 'person_lead_form_submitted' },
+          // Discord events. Per Outseta support, Discord activities are logged
+          // with Person as the entity, so the webhook body is a Person.
+          { label: 'Discord User Linked', value: 'discord_user_linked' },
+          { label: 'Discord User Added To Server', value: 'discord_user_added_to_server' },
+          { label: 'Discord User Removed From Server', value: 'discord_user_removed_from_server' },
+          { label: 'Discord User Roles Updated', value: 'discord_user_roles_updated' },
+          // Manual activity events. Per Outseta support, these fire with the
+          // entity they are attached to as the webhook payload — when logged
+          // against a Person (the default for Email and Chat), the body is the
+          // Person.
+          { label: 'Custom', value: 'custom' },
+          { label: 'Note', value: 'note' },
+          { label: 'Email', value: 'email' },
+          { label: 'Phone Call', value: 'phone_call' },
+          { label: 'Meeting', value: 'meeting' },
+          { label: 'Chat', value: 'chat' },
         ],
       },
     }),

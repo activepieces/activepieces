@@ -46,6 +46,15 @@ export const newAccountEventTrigger = createTrigger({
           { label: 'Account Subscription Payment Declined', value: 'account_subscription_payment_declined' },
           { label: 'Account Subscription Renewal Extended', value: 'account_subscription_renewal_extended' },
           { label: 'Account Subscription Started', value: 'account_subscription_started' },
+          // Manual activity events. Per Outseta support, these fire with the
+          // entity they are attached to as the webhook payload — when logged
+          // against an Account, the body is the Account.
+          { label: 'Custom', value: 'custom' },
+          { label: 'Note', value: 'note' },
+          { label: 'Email', value: 'email' },
+          { label: 'Phone Call', value: 'phone_call' },
+          { label: 'Meeting', value: 'meeting' },
+          { label: 'Chat', value: 'chat' },
         ],
       },
     }),

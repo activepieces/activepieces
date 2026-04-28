@@ -31,6 +31,15 @@ export const newDealEventTrigger = createTrigger({
           { label: 'Deal Add Account', value: 'deal_add_account' },
           { label: 'Deal Deleted', value: 'deal_deleted' },
           { label: 'Deal Due Date', value: 'deal_due_date' },
+          // Manual activity events. Per Outseta support, these fire with the
+          // entity they are attached to as the webhook payload — when logged
+          // against a Deal, the body is the Deal.
+          { label: 'Custom', value: 'custom' },
+          { label: 'Note', value: 'note' },
+          { label: 'Email', value: 'email' },
+          { label: 'Phone Call', value: 'phone_call' },
+          { label: 'Meeting', value: 'meeting' },
+          { label: 'Chat', value: 'chat' },
         ],
       },
     }),
