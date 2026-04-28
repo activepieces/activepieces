@@ -193,11 +193,9 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     (folderId: string, kind: CreateInFolderKind) => {
       switch (kind) {
         case 'flow':
-          expandFolderIfCollapsed(folderId);
           mutations.createFlow(folderId);
           break;
         case 'table':
-          expandFolderIfCollapsed(folderId);
           mutations.createTable(t('New Table'), folderId);
           break;
         case 'import-flow':

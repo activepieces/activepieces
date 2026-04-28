@@ -7,6 +7,7 @@ import {
   Upload,
   Workflow,
 } from 'lucide-react';
+import { useState } from 'react';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -20,7 +21,6 @@ import {
 
 export const CreateNewMenu = ({
   children,
-  open,
   scope = 'root',
   align = 'end',
   userHasPermissionToWriteFlow,
@@ -36,13 +36,20 @@ export const CreateNewMenu = ({
   onSelectTemplate,
 }: CreateNewMenuProps) => {
   const { embedState } = useEmbedding();
+  const [isOpen, setIsOpen] = useState(false);
 
   const showFolder = scope === 'root' && !embedState.hideFolders;
   const showTemplate = scope === 'root';
   const busy = isCreatingFlow || isCreatingTable;
 
   return (
-    <DropdownMenu open={busy || open}>
+    <DropdownMenu
+      open={isOpen}
+      onOpenChange={(next) => {
+        if (busy && !next) return;
+        setIsOpen(next);
+      }}
+    >
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       <DropdownMenuContent align={align} className="w-48">
         <PermissionNeededTooltip hasPermission={userHasPermissionToWriteFlow}>
@@ -156,7 +163,6 @@ export const CreateNewMenu = ({
 
 type CreateNewMenuProps = {
   children: React.ReactNode;
-  open?: boolean;
   scope?: 'root' | 'folder';
   align?: 'start' | 'end' | 'center';
   userHasPermissionToWriteFlow: boolean;
