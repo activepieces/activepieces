@@ -239,25 +239,31 @@ export function useAgentChat({
     },
     onError: () => {
       setPendingMessages([]);
+      if (cancelledRef.current) return;
       const convId = conversationIdRef.current;
       if (!convId) return;
       const recoverMessages = async (): Promise<void> => {
         const previousCount = messageCountRef.current;
         for (let attempt = 0; attempt < RECOVERY_MAX_ATTEMPTS; attempt++) {
           await new Promise((r) => setTimeout(r, RECOVERY_DELAY_MS));
+          if (cancelledRef.current || conversationIdRef.current !== convId)
+            return;
           const { data: result, error } = await tryCatch(() =>
             chatApi.getMessages(convId),
           );
           if (error) continue;
           if (result.data.length > previousCount) {
+            if (conversationIdRef.current !== convId) return;
             setUiMessages(mapHistoryToUIMessages(result.data));
             return;
           }
         }
+        if (conversationIdRef.current !== convId) return;
         const { data: finalResult } = await tryCatch(() =>
           chatApi.getMessages(convId),
         );
         if (finalResult) {
+          if (conversationIdRef.current !== convId) return;
           setUiMessages(mapHistoryToUIMessages(finalResult.data));
         }
       };
