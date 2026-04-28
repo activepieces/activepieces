@@ -21,8 +21,9 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { nanoid } from 'nanoid'
 import { In, IsNull } from 'typeorm'
-import { userIdentityService } from '../authentication/user-identity/user-identity-service'
+import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformProjectService } from '../ee/projects/platform-project-service'
 import { projectMemberRepo } from '../ee/projects/project-role/project-role.service'
@@ -185,6 +186,7 @@ export const userService = (log: FastifyBaseLogger) => ({
     },
     async removeFromPlatform({ id, platformId }: DeleteParams): Promise<void> {
         await assertNotPlatformOwner({ id, platformId, log })
+        const user = await this.getOneOrFail({ id })
         await platformProjectService(log).deletePersonalProjectForUser({
             userId: id,
             platformId,
@@ -194,6 +196,9 @@ export const userService = (log: FastifyBaseLogger) => ({
             platformId,
         }, {
             platformId: null,
+        })
+        await userIdentityRepository().update(user.identityId, {
+            tokenVersion: nanoid(),
         })
     },
 
