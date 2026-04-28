@@ -7,6 +7,9 @@ import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
+import { ChatConversationEntity } from '../chat/chat-conversation-entity'
+import { SandboxSessionEntity, SandboxSessionEventEntity } from '../chat/sandbox/sandbox-session-entity'
+import { UserSandboxEntity } from '../chat/user-sandbox-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
@@ -100,6 +103,10 @@ function getEntities(): EntitySchema<unknown>[] {
         McpOAuthTokenEntity,
         KnowledgeBaseFileEntity,
         KnowledgeBaseChunkEntity,
+        ChatConversationEntity,
+        UserSandboxEntity,
+        SandboxSessionEntity,
+        SandboxSessionEventEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
         WaitpointEntity,

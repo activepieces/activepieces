@@ -642,7 +642,7 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
     }
 }
 
-function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
+export function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
     if (!createdTime) return false
     return apDayjs(createdTime).add(retentionDays, 'day').isBefore(apDayjs())
 }
