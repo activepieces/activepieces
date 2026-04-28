@@ -114,7 +114,7 @@ function RunsStatusChart() {
             </div>
             <p className="text-xs text-muted-foreground">
               {t('Total Runs')}:{' '}
-              {formatUtils.formatNumberCompact(total + 200000)}
+              {formatUtils.formatNumberCompact(total)}
             </p>
           </div>
 
