@@ -130,6 +130,10 @@ export const chatService = (log: FastifyBaseLogger) => ({
         return { ...conversation, ...updates }
     },
 
+    async resetSession({ id, projectId }: { id: string, projectId: string }): Promise<void> {
+        await conversationRepo().update({ id, projectId }, { sandboxSessionId: null })
+    },
+
     async cancelSession({ id, projectId, userId }: DeleteConversationParams): Promise<void> {
         const conversation = await this.getConversationOrThrow({ id, projectId, userId })
         const sandboxSessionId = conversation.sandboxSessionId

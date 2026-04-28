@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { API_URL } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -160,7 +160,7 @@ export function useAgentChat({
   onConversationCreated,
 }: {
   onTitleUpdate?: (title: string, conversationId?: string) => void;
-  onConversationCreated?: () => void;
+  onConversationCreated?: (conversationId: string) => void;
 } = {}) {
   const [conversationId, setConversationIdState] = useState<string | null>(
     null,
@@ -238,6 +238,33 @@ export function useAgentChat({
       setPendingMessages([]);
     },
   });
+
+  const statusRef = useRef(status);
+  statusRef.current = status;
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      const convId = conversationIdRef.current;
+      if (!convId) return;
+      if (
+        statusRef.current !== 'streaming' &&
+        statusRef.current !== 'submitted'
+      )
+        return;
+      void stop();
+      setPendingMessages([]);
+      void chatApi
+        .getMessages(convId)
+        .then((result) => {
+          setUiMessages(mapHistoryToUIMessages(result.data));
+        })
+        .catch(() => undefined);
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () =>
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [stop, setUiMessages]);
 
   const sdkIsStreaming = status === 'streaming' || status === 'submitted';
   const lastLiveMessage = uiMessages[uiMessages.length - 1];
@@ -345,8 +372,10 @@ export function useAgentChat({
 
       if (!conversationIdRef.current) {
         const { error: convError } = await tryCatch(async () => {
-          await createConversation({ title: content.slice(0, 100) });
-          onConversationCreatedRef.current?.();
+          const conv = await createConversation({
+            title: content.slice(0, 100),
+          });
+          onConversationCreatedRef.current?.(conv.id);
         });
         if (convError) {
           setLocalError(convError.message ?? 'Failed to start conversation');
