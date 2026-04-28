@@ -87,12 +87,12 @@ export const flowRunQueries = {
     useQuery({
       queryKey: flowRunKeys.detail(runId),
       queryFn: () => flowRunsApi.getPopulated(runId),
-      refetchInterval: 15000,
+      refetchInterval: 7000,
     }),
   useRunStats: () => {
     const projectId = authenticationSession.getProjectId()!;
 
-    const { data, isLoading } = useQuery({
+    const { data, isLoading, dataUpdatedAt, refetch } = useQuery({
       queryKey: ['flow-run-count-by-status', projectId],
       queryFn: () => {
         const range = getDefaultRange(DEFAULT_DATE_PRESET);
@@ -111,7 +111,7 @@ export const flowRunQueries = {
       [categories],
     );
 
-    return { categories, total, isLoading };
+    return { categories, total, isLoading, dataUpdatedAt, refetch };
   },
 };
 

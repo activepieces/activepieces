@@ -1,11 +1,14 @@
+import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { CircleHelp } from 'lucide-react';
+import { CircleHelp, RefreshCcw } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
 
+import { Button } from '@/components/ui/button';
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Tooltip,
   TooltipContent,
@@ -16,6 +19,7 @@ import {
   RunStatusCategory,
 } from '@/features/flow-runs/hooks/flow-run-hooks';
 import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 const DONUT_SIZE = 18;
 const DONUT_RADIUS = 6;
@@ -64,21 +68,41 @@ function MiniDonut({
 
 function RunsStatusChart() {
   const { categories, total, isLoading } = flowRunQueries.useRunStats();
+  const [open, setOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setOpen(true), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleOpenChange = useCallback((v: boolean) => {
+    setOpen(v);
+    if (!v) {
+      setIsVisible(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      requestAnimationFrame(() => setIsVisible(true));
+    }
+  }, [open]);
 
   if (isLoading || categories.length === 0) return;
   return (
-    <HoverCard openDelay={200}>
-      <HoverCardTrigger asChild>
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
         <button className="flex items-center gap-2 px-3 h-8 rounded-md hover:bg-accent transition-colors text-sm text-accent-foreground">
           <MiniDonut categories={categories} total={total} />
-          {t('Statistics')}
+          {t('Queue Status')}
         </button>
-      </HoverCardTrigger>
-      <HoverCardContent align="end" className="w-72 p-4">
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-72 p-4">
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <p className="text-sm font-medium">{t('Runs by Status')}</p>
+              <p className="text-sm font-medium">{t('Current Queue Status')}</p>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <CircleHelp className="size-3.5 text-muted-foreground" />
@@ -99,8 +123,9 @@ function RunsStatusChart() {
                 <div
                   key={cat.label}
                   style={{
-                    width: `${(cat.count / total) * 100}%`,
+                    width: isVisible ? `${(cat.count / total) * 100}%` : '0%',
                     backgroundColor: cat.color,
+                    transition: 'width 600ms ease-out',
                   }}
                 />
               ))}
@@ -127,9 +152,52 @@ function RunsStatusChart() {
             ))}
           </div>
         </div>
-      </HoverCardContent>
-    </HoverCard>
+      </PopoverContent>
+    </Popover>
   );
 }
 
-export { RunsStatusChart };
+function RunsRefreshButton({
+  statsRefetch,
+  tableRefetch,
+  dataUpdatedAt,
+}: {
+  statsRefetch: () => void;
+  tableRefetch: () => void;
+  dataUpdatedAt: number;
+}) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    statsRefetch();
+    tableRefetch();
+    setTimeout(() => setIsRefreshing(false), 1000);
+  }, [statsRefetch, tableRefetch]);
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-muted-foreground">
+      <span>
+        {t('Updated')} {dayjs(dataUpdatedAt).format('MMM DD, hh:mm A')}
+      </span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCcw
+              className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin')}
+            />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{t('Refresh data')}</TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
+
+export { RunsStatusChart, RunsRefreshButton };
