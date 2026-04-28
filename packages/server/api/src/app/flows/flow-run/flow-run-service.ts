@@ -408,6 +408,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             .where({
                 projectId: params.projectId,
                 environment: RunEnvironment.PRODUCTION,
+                archivedAt: IsNull(),
             })
             .groupBy('flow_run.status')
 

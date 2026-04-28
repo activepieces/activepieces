@@ -15,24 +15,24 @@ export class AddRunStatusCoverIndex1777370308000 implements Migration {
     public async up(queryRunner: QueryRunner): Promise<void> {
         if (isPGlite) {
             await queryRunner.query(`
-                CREATE INDEX IF NOT EXISTS "idx_run_project_id_environment_created_status"
-                ON "flow_run" ("projectId", "environment", "created" DESC, "status")
+                CREATE INDEX IF NOT EXISTS "idx_run_project_id_environment_created_status_archived_at"
+                ON "flow_run" ("projectId", "environment", "created" DESC, "archivedAt", "status")
             `)
         }
         else {
             await queryRunner.query(`
-                CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_environment_created_status"
-                ON "flow_run" ("projectId", "environment", "created" DESC, "status")
+                CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_environment_created_status_archived_at"
+                ON "flow_run" ("projectId", "environment", "created" DESC, "archivedAt", "status")
             `)
         }
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (isPGlite) {
-            await queryRunner.query('DROP INDEX IF EXISTS "idx_run_project_id_environment_created_status"')
+            await queryRunner.query('DROP INDEX IF EXISTS "idx_run_project_id_environment_created_status_archived_at"')
         }
         else {
-            await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "idx_run_project_id_environment_created_status"')
+            await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "idx_run_project_id_environment_created_status_archived_at"')
         }
     }
 }
