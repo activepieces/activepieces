@@ -147,7 +147,7 @@ function ChatBoxContent({
               onStop={cancelStream}
               selectedModel={selectedModel}
               onModelChange={setSelectedModel}
-              modelDisabled={false}
+              modelDisabled={hasConversation}
             />
           </div>
         </div>
