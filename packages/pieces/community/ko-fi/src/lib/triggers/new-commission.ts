@@ -1,4 +1,8 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 
 import { koFiAuth } from '../auth';
 
@@ -41,7 +45,12 @@ export const newCommission = createTrigger({
   name: 'new_commission',
   displayName: 'New Commission',
   description: 'Triggers when a new commission is received on Ko-fi.',
-  props: {},
+  props: {
+    instructions: Property.MarkDown({
+      value:
+        'To receive commission events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the "Commission" event type.',
+    }),
+  },
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
     message_id: '3a1fac0c-f960-4506-a60e-2e3f3d09e6e0',
@@ -72,9 +81,6 @@ export const newCommission = createTrigger({
 
   async run(context): Promise<KoFiCommissionEvent[]> {
     const body = context.payload.body as KoFiWebhookBody;
-    if (typeof body?.data !== 'string') {
-      return [];
-    }
 
     let event: KoFiCommissionEvent;
     try {
