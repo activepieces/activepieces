@@ -237,6 +237,9 @@
       "@activepieces/piece-chatwoot": [
         "packages/pieces/community/chatwoot/src/index.ts"
       ],
+      "@activepieces/piece-chess-com": [
+        "packages/pieces/community/chess-com/src/index.ts"
+      ],
       "@activepieces/piece-checkout": [
         "packages/pieces/community/checkout/src/index.ts"
       ],
