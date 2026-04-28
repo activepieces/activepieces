@@ -41,13 +41,10 @@ export function SidebarUser() {
 
   const handleLogout = () => {
     reset();
-    // Let ClerkProvider.afterSignOutUrl="/login" handle the redirect.
-    // Do NOT clear the AP session here — clearing it synchronously causes in-flight
-    // React Query requests to get INVALID_BEARER_TOKEN, which triggers the global
-    // error handler to fire window.location.href='/sign-in' while Clerk is still
-    // processing its async signout, creating a redirect race / refresh loop.
-    // The AP session is cleared cleanly on /login mount instead.
-    signOut();
+    // Pass redirectUrl explicitly — without it, Clerk v5 may complete signOut
+    // but skip the navigation if the internal instance state is inconsistent.
+    // The AP session is cleared cleanly on /login mount (LoginPage useEffect).
+    signOut({ redirectUrl: '/login' });
   };
 
   return (
