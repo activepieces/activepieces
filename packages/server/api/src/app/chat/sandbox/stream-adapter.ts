@@ -8,7 +8,7 @@ export function createStreamWriter({ writer, textPartId, reasoningPartId, onSess
     textPartId: string
     reasoningPartId: string
     onSessionTitle?: (title: string) => void
-}): { write: (update: Record<string, unknown>) => void } {
+}): { write: (update: Record<string, unknown>) => void, appendText: (delta: string) => void, endAll: () => void } {
     const text = chunkedPart({ writer, id: textPartId, kind: 'text' })
     const reasoning = chunkedPart({ writer, id: reasoningPartId, kind: 'reasoning' })
 
@@ -76,14 +76,30 @@ export function createStreamWriter({ writer, textPartId, reasoningPartId, onSess
                     break
             }
         },
+        appendText(delta: string): void {
+            text.append(delta)
+        },
+        endAll(): void {
+            text.end()
+            reasoning.end()
+        },
     }
 }
 
-export function createHistoryReplayFilter(): { shouldSuppress: (update: Record<string, unknown>) => boolean } {
+export function createHistoryReplayFilter(): {
+    shouldSuppress: (update: Record<string, unknown>) => boolean
+    drainMissedText: () => string
+} {
     let state: 'detecting' | 'suppressing' | 'passthrough' = 'detecting'
     let buffer = ''
+    let missedText = ''
 
     return {
+        drainMissedText(): string {
+            const text = missedText
+            missedText = ''
+            return text
+        },
         shouldSuppress(update: Record<string, unknown>): boolean {
             if (state === 'passthrough') return false
             const isTextChunk = getString(update, 'sessionUpdate') === SandboxSessionUpdateType.AGENT_MESSAGE_CHUNK
@@ -95,6 +111,7 @@ export function createHistoryReplayFilter(): { shouldSuppress: (update: Record<s
             buffer += text
             if (chatEventUtils.isHistoryReplayContent(buffer)) {
                 buffer = ''
+                missedText = ''
                 state = 'suppressing'
                 return true
             }
@@ -103,6 +120,9 @@ export function createHistoryReplayFilter(): { shouldSuppress: (update: Record<s
                 buffer = ''
                 state = 'passthrough'
                 return false
+            }
+            if (state === 'suppressing') {
+                missedText += text
             }
             return state === 'suppressing'
         },

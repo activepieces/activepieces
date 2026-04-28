@@ -222,6 +222,11 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
                                     if (historyReplayFilter.shouldSuppress(update)) return
 
+                                    const missedText = historyReplayFilter.drainMissedText()
+                                    if (missedText) {
+                                        streamWriter.appendText(missedText)
+                                    }
+
                                     streamWriter.write(update)
                                 })
 
@@ -251,6 +256,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                             }
                         }
 
+                        streamWriter.endAll()
                         writer.write({ type: 'finish', finishReason: 'stop' })
                     }
                     finally {
