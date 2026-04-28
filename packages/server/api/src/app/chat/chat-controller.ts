@@ -245,6 +245,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                         finally {
                             clearInterval(keepalive)
                             unsubscribe?.()
+                            streamWriter.endAll()
                             void userSandboxService.updateLastUsed({ userId }).catch(() => undefined)
                             if (pendingTitle && promptCompleted) {
                                 void service.updateConversation({
@@ -256,7 +257,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                             }
                         }
 
-                        streamWriter.endAll()
                         writer.write({ type: 'finish', finishReason: 'stop' })
                     }
                     finally {

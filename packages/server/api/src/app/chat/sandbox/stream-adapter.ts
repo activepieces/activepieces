@@ -119,6 +119,8 @@ export function createHistoryReplayFilter(): {
             if (buffer.length > limit) {
                 buffer = ''
                 state = 'passthrough'
+                // missedText holds previously suppressed chunks; the current chunk
+                // returns false and is written directly by the caller via streamWriter.write()
                 return false
             }
             if (state === 'suppressing') {
