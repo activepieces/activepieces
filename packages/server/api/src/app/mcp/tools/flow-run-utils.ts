@@ -1,8 +1,10 @@
 import { FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, isFlowRunStateTerminal, isNil, RunEnvironment, SampleDataFileType, StepOutputStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
-import { flowRunService } from '../../flows/flow-run/flow-run-service'
+import { flowRunService, isOutsideRetentionWindow } from '../../flows/flow-run/flow-run-service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
 
@@ -115,12 +117,19 @@ export function formatRunResult(run: FlowRun): string {
     }
 
     const steps = run.steps
-    if (!isNil(steps) && typeof steps === 'object') {
-        lines.push('')
+    const stepEntries = !isNil(steps) && typeof steps === 'object'
+        ? Object.entries(steps as Record<string, unknown>)
+        : []
+
+    lines.push('')
+    if (stepEntries.length > 0) {
         lines.push('Steps:')
-        for (const [name, step] of Object.entries(steps)) {
+        for (const [name, step] of stepEntries) {
             lines.push(formatStepOutput(name, step))
         }
+    }
+    else {
+        lines.push(`Steps: ${stepDataUnavailableReason(run)}`)
     }
 
     return lines.join('\n')
@@ -131,7 +140,8 @@ export function formatRunSummary(run: FlowRun): string {
     const failed = run.failedStep ? ` | Failed: ${run.failedStep.displayName ?? run.failedStep.name}` : ''
     const dur = formatDuration(run.startTime, run.finishTime)
     const durStr = dur !== 'N/A' ? ` | ${dur}` : ''
-    return `${statusIcon(run.status)} ${run.id} — ${run.status}${env}${durStr}${failed} | ${run.created}`
+    const expired = isStepDataExpired(run) ? ' | step data expired' : ''
+    return `${statusIcon(run.status)} ${run.id} — ${run.status}${env}${durStr}${failed}${expired} | ${run.created}`
 }
 
 function statusIcon(status: FlowRunStatus): string {
@@ -169,5 +179,24 @@ function formatStepOutput(name: string, step: unknown): string {
     }
 
     return parts.join('\n')
+}
+
+function stepDataUnavailableReason(run: FlowRun): string {
+    if (!isFlowRunStateTerminal({ status: run.status, ignoreInternalError: false })) {
+        return 'not yet available — run is still in progress.'
+    }
+    const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+    if (isOutsideRetentionWindow(run.created, retentionDays)) {
+        return `not available — execution data is purged after ${retentionDays} days. Re-run the flow with ap_test_flow or ap_retry_run to capture fresh step data.`
+    }
+    return 'not available for this run.'
+}
+
+function isStepDataExpired(run: FlowRun): boolean {
+    if (!isFlowRunStateTerminal({ status: run.status, ignoreInternalError: false })) {
+        return false
+    }
+    const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+    return isOutsideRetentionWindow(run.created, retentionDays)
 }
 
