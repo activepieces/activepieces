@@ -33,7 +33,7 @@ export type CodeBlockCodeProps = {
 function CodeBlockCode({
   code,
   language = 'tsx',
-  theme = 'github-light',
+  theme,
   className,
   ...props
 }: CodeBlockCodeProps) {
@@ -46,11 +46,24 @@ function CodeBlockCode({
         return;
       }
 
+      const themeOptions = theme
+        ? { theme }
+        : {
+            themes: { light: 'vitesse-light', dark: 'vitesse-dark' },
+            defaultColor: false as const,
+          };
+
       try {
-        const html = await codeToHtml(code, { lang: language, theme });
+        const html = await codeToHtml(code, {
+          lang: language,
+          ...themeOptions,
+        });
         setHighlightedHtml(html);
       } catch {
-        const html = await codeToHtml(code, { lang: 'plaintext', theme });
+        const html = await codeToHtml(code, {
+          lang: 'plaintext',
+          ...themeOptions,
+        });
         setHighlightedHtml(html);
       }
     }

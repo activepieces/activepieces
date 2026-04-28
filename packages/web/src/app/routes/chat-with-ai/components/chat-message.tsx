@@ -1,15 +1,19 @@
 import { isDataUIPart } from 'ai';
 import { t } from 'i18next';
-import { Paperclip, RefreshCw } from 'lucide-react';
+import { Check, Copy, Paperclip, RefreshCw } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { memo, useEffect, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useRef,
+  useState,
+  type ButtonHTMLAttributes,
+} from 'react';
 
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import {
   Message,
   MessageAction,
   MessageActions,
-  MessageAvatar,
   MessageContent,
 } from '@/components/prompt-kit/message';
 import {
@@ -19,8 +23,8 @@ import {
 } from '@/components/prompt-kit/reasoning';
 import { PlanCard } from '@/features/chat/components/plan-card';
 import { ChatDataParts, ChatUIMessage } from '@/features/chat/lib/chat-types';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 import { getTextFromParts } from '../lib/message-parsers';
 
@@ -48,7 +52,7 @@ export function ChatMessage({
   onPieceConnected: (piece: string) => void;
 }) {
   if (message.role === 'user') {
-    return <UserMessage message={message} />;
+    return <UserMessage message={message} isLastMessage={isLastMessage} />;
   }
 
   return (
@@ -65,7 +69,13 @@ export function ChatMessage({
   );
 }
 
-export function UserMessage({ message }: { message: ChatUIMessage }) {
+export function UserMessage({
+  message,
+  isLastMessage = false,
+}: {
+  message: ChatUIMessage;
+  isLastMessage?: boolean;
+}) {
   const content = getTextFromParts(message.parts);
   const fileNames = message.parts
     .filter(
@@ -90,7 +100,7 @@ export function UserMessage({ message }: { message: ChatUIMessage }) {
     >
       <div className="max-w-[80%]">
         <Message className="flex-row-reverse">
-          <div className="bg-muted rounded-2xl rounded-br-md px-4 py-2.5">
+          <div className="bg-muted rounded-2xl rounded-br-md px-2.5 py-1 text-sm">
             {fileNames.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-1.5">
                 {fileNames.map((name, i) => (
@@ -109,14 +119,16 @@ export function UserMessage({ message }: { message: ChatUIMessage }) {
             </MessageContent>
           </div>
         </Message>
-        <MessageActions className="justify-end mt-1">
+        <MessageActions
+          className={cn(
+            'justify-end mt-1 transition-opacity',
+            isLastMessage
+              ? 'opacity-100'
+              : 'opacity-0 group-hover/msg:opacity-100',
+          )}
+        >
           <MessageAction tooltip={t('Copy')}>
-            <CopyButton
-              textToCopy={content}
-              withoutTooltip
-              variant="ghost"
-              className="h-6 w-6 p-0"
-            />
+            <CopyIconButton textToCopy={content} className="h-6 w-6" />
           </MessageAction>
         </MessageActions>
       </div>
@@ -174,6 +186,7 @@ export function AssistantMessage({
     isStreaming && hasThoughts && !hasContent && dynamicToolParts.length === 0;
   const isThinking = isWaiting || isThinkingOnly;
   const thinkingSeconds = useThinkingTimer(isThinking);
+  const [isReasoningOpen, setIsReasoningOpen] = useState(false);
   const fullText = getTextFromParts(message.parts);
 
   const planEntries = extractPlanEntries(message.parts);
@@ -192,7 +205,6 @@ export function AssistantMessage({
       transition={{ duration: 0.3 }}
     >
       <Message>
-        <AssistantAvatar />
         <div className="min-w-0 space-y-2 flex-1">
           <AnimatePresence mode="wait">
             {isWaiting && (
@@ -203,24 +215,10 @@ export function AssistantMessage({
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.2 }}
               >
-                <ChatThinkingLoader onStop={onCancel} />
+                <ChatThinkingLoader />
               </motion.div>
             )}
           </AnimatePresence>
-
-          {hasThoughts && (
-            <Reasoning isStreaming={isThinkingOnly} className="">
-              <ReasoningTrigger className="text-sm text-muted-foreground">
-                {formatThinkingTime({
-                  seconds: thinkingSeconds,
-                  isActive: isThinking,
-                })}
-              </ReasoningTrigger>
-              <ReasoningContent markdown contentClassName="text-xs">
-                {thoughts}
-              </ReasoningContent>
-            </Reasoning>
-          )}
 
           {renderParts({
             parts: renderableParts,
@@ -233,26 +231,58 @@ export function AssistantMessage({
 
           {planEntries.length > 0 && <PlanCard entries={planEntries} />}
 
+          {isStreaming && !isWaiting && (
+            <ChatThinkingLoader showText={false} />
+          )}
+
           {hasContent && !isStreaming && (
-            <MessageActions className="mt-2">
-              <MessageAction tooltip={t('Copy')}>
-                <CopyButton
-                  textToCopy={fullText}
-                  withoutTooltip
-                  variant="ghost"
-                  className="h-7 w-7 p-0"
-                />
-              </MessageAction>
-              <MessageAction tooltip={t('Regenerate')}>
-                <button
-                  type="button"
-                  onClick={onRetry}
-                  className="p-1.5 rounded-md hover:bg-muted transition-colors"
+            <Reasoning
+              isStreaming={isThinkingOnly}
+              open={isReasoningOpen}
+              onOpenChange={setIsReasoningOpen}
+            >
+              {hasThoughts && (
+                <ReasoningContent
+                  markdown
+                  className="pl-2"
+                  contentClassName="text-xs italic text-muted-foreground relative pl-3 py-3 before:absolute before:left-0 before:top-3 before:bottom-3 before:w-0.5 before:bg-muted-foreground/30"
                 >
-                  <RefreshCw className="h-4 w-4" />
-                </button>
-              </MessageAction>
-            </MessageActions>
+                  {thoughts}
+                </ReasoningContent>
+              )}
+              <MessageActions
+                className={cn(
+                  'gap-1 transition-opacity',
+                  isLastMessage
+                    ? 'opacity-100'
+                    : 'opacity-0 group-hover/msg:opacity-100',
+                )}
+              >
+                <MessageAction tooltip={t('Copy')}>
+                  <CopyIconButton textToCopy={fullText} className="h-6 w-6" />
+                </MessageAction>
+                <MessageAction tooltip={t('Regenerate')}>
+                  <button
+                    type="button"
+                    onClick={onRetry}
+                    className="p-1 rounded-md hover:bg-muted transition-colors"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  </button>
+                </MessageAction>
+                {hasThoughts && thinkingSeconds >= 0.1 && (
+                  <MessageAction
+                    tooltip={
+                      isReasoningOpen ? t('Hide thinking') : t('Show thinking')
+                    }
+                  >
+                    <ReasoningTrigger className="text-xs text-muted-foreground rounded-md px-1.5 py-1 gap-1 transition-colors hover:bg-muted hover:text-foreground [&>span]:!text-muted-foreground hover:[&>span]:!text-foreground [&>div>svg]:!h-3 [&>div>svg]:!w-3">
+                      {formatThinkingTime({ seconds: thinkingSeconds })}
+                    </ReasoningTrigger>
+                  </MessageAction>
+                )}
+              </MessageActions>
+            </Reasoning>
           )}
         </div>
       </Message>
@@ -328,40 +358,59 @@ function useThinkingTimer(isActive: boolean): number {
     setSeconds(0);
     const interval = setInterval(() => {
       if (startRef.current) {
-        setSeconds(Math.floor((Date.now() - startRef.current) / 1000));
+        setSeconds((Date.now() - startRef.current) / 1000);
       }
-    }, 1000);
+    }, 100);
     return () => clearInterval(interval);
   }, [isActive]);
 
   return seconds;
 }
 
-function formatThinkingTime({
-  seconds,
-  isActive,
-}: {
-  seconds: number;
-  isActive: boolean;
-}): string {
-  if (seconds < 1) {
-    return isActive ? t('Thinking...') : t('Thought for a few seconds');
-  }
-  const duration = formatUtils.formatToHoursAndMinutes(seconds);
-  return isActive
-    ? t('Thinking for {duration}...', { duration })
-    : t('Thought for {duration}', { duration });
+function formatThinkingTime({ seconds }: { seconds: number }): string {
+  const rounded = Math.round(seconds * 10) / 10;
+  return Number.isInteger(rounded) ? `${rounded}s` : `${rounded.toFixed(1)}s`;
 }
 
-const AssistantAvatar = memo(function AssistantAvatar() {
-  const branding = flagsHooks.useWebsiteBranding();
+const CopyIconButton = forwardRef<
+  HTMLButtonElement,
+  {
+    textToCopy: string;
+    className?: string;
+  } & ButtonHTMLAttributes<HTMLButtonElement>
+>(function CopyIconButton({ textToCopy, className, ...rest }, ref) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // ignore — clipboard not available
+    }
+  };
 
   return (
-    <MessageAvatar
-      src={branding.logos.logoIconUrl}
-      alt=""
-      fallback="AI"
-      className="h-6 w-6 rounded-none overflow-visible"
-    />
+    <button
+      ref={ref}
+      type="button"
+      {...rest}
+      onClick={(event) => {
+        rest.onClick?.(event);
+        if (!event.defaultPrevented) handleCopy();
+      }}
+      className={cn(
+        'flex items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+        className,
+      )}
+    >
+      {copied ? (
+        <Check className="h-3.5 w-3.5" />
+      ) : (
+        <Copy className="h-3.5 w-3.5" />
+      )}
+    </button>
   );
 });
+

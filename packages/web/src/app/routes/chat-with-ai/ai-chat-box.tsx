@@ -126,21 +126,32 @@ function ChatBoxContent({
       <div className="flex flex-col h-full flex-1 min-w-0 items-center justify-center px-6 pb-8">
         <div className="flex-1" />
         <EmptyState incognito={incognito} />
-        <div className="w-full max-w-4xl mt-6">
-          <ChatInput isStreaming={isStreaming} onSend={handleSend} />
+        <div className="w-full max-w-3xl mt-6">
           <SuggestionCards onSend={handleSend} />
+          <div className="mt-3">
+            <ChatInput
+              isStreaming={isStreaming}
+              onSend={handleSend}
+              onStop={cancelStream}
+            />
+          </div>
         </div>
         <div className="flex-1" />
-        <p className="text-[11px] text-muted-foreground text-center mt-4">
-          {t('Activepieces AI can help you automate anything.')}
-        </p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col h-full flex-1 min-w-0">
-      <ChatContainerRoot className="flex-1 relative">
+      <ChatContainerRoot
+        className="flex-1 relative"
+        style={{
+          maskImage:
+            'linear-gradient(to bottom, black 0%, black calc(100% - 40px), transparent 100%)',
+          WebkitMaskImage:
+            'linear-gradient(to bottom, black 0%, black calc(100% - 40px), transparent 100%)',
+        }}
+      >
         <ChatContainerContent className="max-w-4xl mx-auto px-6 py-8 gap-0">
           {isLoadingHistory && <MessageSkeletons />}
 
@@ -212,22 +223,13 @@ function ChatBoxContent({
       </ChatContainerRoot>
 
       <div className="pb-4 px-6">
-        <div className="max-w-4xl mx-auto">
-          <ChatInput isStreaming={isStreaming} onSend={handleSend} />
-          <div className="flex items-center justify-center gap-3 mt-2">
-            <span className="text-[11px] text-muted-foreground">
-              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">
-                Enter
-              </kbd>{' '}
-              {t('to send')}
-            </span>
-            <span className="text-[11px] text-muted-foreground">
-              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">
-                Shift+Enter
-              </kbd>{' '}
-              {t('new line')}
-            </span>
-          </div>
+        <div className="max-w-3xl mx-auto">
+          <ChatInput
+            isStreaming={isStreaming}
+            onSend={handleSend}
+            onStop={cancelStream}
+            placeholder={t('Reply...')}
+          />
         </div>
       </div>
     </div>
