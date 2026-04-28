@@ -214,9 +214,15 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
                         try {
                             await new Promise<void>((resolve, reject) => {
+                                let quiescenceTimer: ReturnType<typeof setTimeout> | undefined
+
                                 const safeResolve = (): void => {
                                     if (resolved) return
                                     resolved = true
+                                    if (quiescenceTimer !== undefined) {
+                                        clearTimeout(quiescenceTimer)
+                                        quiescenceTimer = undefined
+                                    }
                                     resolve()
                                 }
 
@@ -258,9 +264,9 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                                                 safeResolve()
                                                 return
                                             }
-                                            setTimeout(checkQuiescence, Math.min(EVENT_QUIESCENCE_MS - sinceLastEvent, 200))
+                                            quiescenceTimer = setTimeout(checkQuiescence, Math.min(EVENT_QUIESCENCE_MS - sinceLastEvent, 200))
                                         }
-                                        setTimeout(checkQuiescence, 200)
+                                        quiescenceTimer = setTimeout(checkQuiescence, 200)
                                     })
                                     .catch(reject)
                             })
