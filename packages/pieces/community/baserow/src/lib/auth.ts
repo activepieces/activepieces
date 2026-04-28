@@ -5,18 +5,44 @@ import {
 } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-const databaseTokenAuth = PieceAuth.CustomAuth({
-  displayName: 'Database Token',
-  description: `
-  1. Log in to your Baserow Account.
-  2. Click on your profile-pic(top-left) and navigate to **Settings->Database tokens**.
-  3. Create new token with any name and appropriate workspace.
-  4. After token creation,click on **:** right beside token name and copy database token.
-  5. Enter your Baserow API URL.If you are using baserow.io, you can leave the default one.
+const description = `Choose how you want to authenticate with Baserow:
 
-**Note:** Database tokens cannot register webhooks via API. Triggers will require manual webhook setup. To enable automatic webhook registration, use the **Email & Password (JWT)** authentication method.`,
+**Database Token** — recommended. Per-table CRUD scoping, compatible with 2FA accounts. Triggers require manual webhook setup.
+  1. Log in to your Baserow account.
+  2. Click on your profile picture (top-left) and go to **Settings → Database tokens**.
+  3. Create a new token, then click **:** beside the token name to copy it.
+  4. Paste it into **Database Token** below. Leave **Email** and **Password** empty.
+
+**Email & Password (JWT)** — workspace-wide access, enables automatic webhook registration for triggers. Not compatible with accounts that have 2FA enabled.
+  1. Fill in **Email** and **Password** with your Baserow login credentials. Leave **Database Token** empty.
+
+In both modes, set **API URL** to your Baserow instance (default: \`https://api.baserow.io\`).`;
+
+function isJwtMode(authType: string | undefined, props: { token?: string; email?: string; password?: string }): boolean {
+  if (authType === 'jwt') return true;
+  if (authType === 'database_token') return false;
+  return Boolean(props.email && props.password && !props.token);
+}
+
+export const baserowAuth = PieceAuth.CustomAuth({
+  displayName: 'Authentication',
+  description,
   required: true,
   props: {
+    authType: Property.StaticDropdown({
+      displayName: 'Authentication Method',
+      description:
+        'Database Token is recommended. Use Email & Password (JWT) only if you need automatic webhook registration on triggers.',
+      required: true,
+      defaultValue: 'database_token',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Database Token', value: 'database_token' },
+          { label: 'Email & Password (JWT)', value: 'jwt' },
+        ],
+      },
+    }),
     apiUrl: Property.ShortText({
       displayName: 'API URL',
       required: true,
@@ -24,10 +50,49 @@ const databaseTokenAuth = PieceAuth.CustomAuth({
     }),
     token: PieceAuth.SecretText({
       displayName: 'Database Token',
-      required: true,
+      description: 'Required if Authentication Method is **Database Token**. Leave empty for JWT.',
+      required: false,
+    }),
+    email: Property.ShortText({
+      displayName: 'Email',
+      description: 'Required if Authentication Method is **Email & Password (JWT)**. Leave empty for Database Token.',
+      required: false,
+    }),
+    password: PieceAuth.SecretText({
+      displayName: 'Password',
+      description: 'Required if Authentication Method is **Email & Password (JWT)**. Leave empty for Database Token.',
+      required: false,
     }),
   },
   validate: async ({ auth }) => {
+    if (isJwtMode(auth.authType, auth)) {
+      if (!auth.email || !auth.password) {
+        return {
+          valid: false,
+          error: 'Email and Password are required for JWT authentication.',
+        };
+      }
+      try {
+        await httpClient.sendRequest({
+          method: HttpMethod.POST,
+          url: `${auth.apiUrl}/api/user/token-auth/`,
+          body: { email: auth.email, password: auth.password },
+        });
+        return { valid: true };
+      } catch {
+        return {
+          valid: false,
+          error:
+            'Invalid email, password, or API URL. Note: 2FA is not supported — use Database Token if 2FA is enabled.',
+        };
+      }
+    }
+    if (!auth.token) {
+      return {
+        valid: false,
+        error: 'Database Token is required when using Database Token authentication.',
+      };
+    }
     try {
       await httpClient.sendRequest({
         method: HttpMethod.GET,
@@ -41,66 +106,9 @@ const databaseTokenAuth = PieceAuth.CustomAuth({
   },
 });
 
-const jwtAuth = PieceAuth.CustomAuth({
-  displayName: 'Email & Password (JWT)',
-  description: `Authenticate with your Baserow email and password. This mode enables automatic webhook registration for triggers — no manual setup needed.
-
-**Note:** Two-factor authentication (2FA) is not supported. If your Baserow account has 2FA enabled, use the Database Token authentication instead.`,
-  required: true,
-  props: {
-    apiUrl: Property.ShortText({
-      displayName: 'API URL',
-      required: true,
-      defaultValue: 'https://api.baserow.io',
-    }),
-    email: Property.ShortText({
-      displayName: 'Email',
-      required: true,
-    }),
-    password: PieceAuth.SecretText({
-      displayName: 'Password',
-      required: true,
-    }),
-  },
-  validate: async ({ auth }) => {
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: `${auth.apiUrl}/api/user/token-auth/`,
-        body: { email: auth.email, password: auth.password },
-      });
-      return { valid: true };
-    } catch {
-      return {
-        valid: false,
-        error:
-          'Invalid email, password, or API URL. Note: 2FA is not supported — use Database Token if 2FA is enabled.',
-      };
-    }
-  },
-});
-
-function hasJwtCredentials(
-  auth: BaserowAuthValue,
-): auth is BaserowAuthValue & { props: BaserowJwtAuthProps } {
-  return 'email' in auth.props && 'password' in auth.props;
-}
-
-export const baserowAuth = [databaseTokenAuth, jwtAuth];
-
 export const baserowAuthHelpers = {
-  isJwtAuth: hasJwtCredentials,
+  isJwtAuth: (auth: BaserowAuthValue): boolean =>
+    isJwtMode(auth.props.authType, auth.props),
 };
 
 export type BaserowAuthValue = AppConnectionValueForAuthProperty<typeof baserowAuth>;
-
-export type BaserowJwtAuthProps = {
-  apiUrl: string;
-  email: string;
-  password: string;
-};
-
-export type BaserowDatabaseTokenAuthProps = {
-  apiUrl: string;
-  token: string;
-};

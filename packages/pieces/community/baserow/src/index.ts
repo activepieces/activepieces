@@ -25,15 +25,18 @@ import { baserowAuth, baserowAuthHelpers, BaserowAuthValue } from './lib/auth';
 import { BaserowClient } from './lib/common/client';
 
 async function buildCustomApiAuthHeader(auth: BaserowAuthValue): Promise<{ Authorization: string }> {
+  const { apiUrl, token, email, password } = auth.props;
   if (baserowAuthHelpers.isJwtAuth(auth)) {
-    const jwt = await BaserowClient.getJwtToken({
-      apiUrl: auth.props.apiUrl,
-      email: auth.props.email,
-      password: auth.props.password,
-    });
+    if (!email || !password) {
+      throw new Error('Email and Password are required for JWT authentication.');
+    }
+    const jwt = await BaserowClient.getJwtToken({ apiUrl, email, password });
     return { Authorization: `JWT ${jwt}` };
   }
-  return { Authorization: `Token ${auth.props.token}` };
+  if (!token) {
+    throw new Error('Database Token is required for Database Token authentication.');
+  }
+  return { Authorization: `Token ${token}` };
 }
 
 export const baserow = createPiece({

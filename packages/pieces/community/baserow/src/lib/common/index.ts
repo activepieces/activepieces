@@ -16,15 +16,22 @@ import { BaserowField } from './types';
 export async function makeClient(
   auth: BaserowAuthValue
 ): Promise<BaserowClient> {
+  const { apiUrl, token, email, password } = auth.props;
   if (baserowAuthHelpers.isJwtAuth(auth)) {
-    const jwt = await BaserowClient.getJwtToken({
-      apiUrl: auth.props.apiUrl,
-      email: auth.props.email,
-      password: auth.props.password,
-    });
-    return new BaserowClient(auth.props.apiUrl, `JWT ${jwt}`);
+    if (!email || !password) {
+      throw new Error(
+        'Email and Password are required for JWT authentication. Update your Baserow connection.'
+      );
+    }
+    const jwt = await BaserowClient.getJwtToken({ apiUrl, email, password });
+    return new BaserowClient(apiUrl, `JWT ${jwt}`);
   }
-  return new BaserowClient(auth.props.apiUrl, `Token ${auth.props.token}`);
+  if (!token) {
+    throw new Error(
+      'Database Token is required for Database Token authentication. Update your Baserow connection.'
+    );
+  }
+  return new BaserowClient(apiUrl, `Token ${token}`);
 }
 
 export function formatFieldValues(
