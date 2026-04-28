@@ -15,6 +15,9 @@ import { createBusinessProfileAction } from './lib/actions/create-business-profi
 import { createUserProfileAction } from './lib/actions/create-user-profile';
 import { getAdditionalUserInfoAction } from './lib/actions/get-additional-user-info';
 import { getBusinessDocumentsAction } from './lib/actions/get-business-documents';
+import { getUserProfileAction } from './lib/actions/get-user-profile';
+import { getBusinessProfileAction } from './lib/actions/get-business-profile';
+import { searchBusinessesAction } from './lib/actions/search-businesses';
 
 export const aipriseAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -47,6 +50,9 @@ export const aiprise = createPiece({
     runDocumentCheckAction,
     createBusinessProfileAction,
     createUserProfileAction,
+    getUserProfileAction,
+    getBusinessProfileAction,
+    searchBusinessesAction,
     getAdditionalUserInfoAction,
     getBusinessDocumentsAction,
     createCustomApiCallAction({

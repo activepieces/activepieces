@@ -66,6 +66,27 @@ export const buildGraphErrorMessage = (error: any): string => {
 	return `Graph error (${status}${code ? ` ${code}` : ''})${requestId ? ` [request-id: ${requestId}]` : ''}: ${message}`;
 };
 
+export const resolveMeetingId = async ({
+	client,
+	identifierType,
+	identifierValue,
+}: {
+	client: Client;
+	identifierType: string;
+	identifierValue: string;
+}): Promise<string> => {
+	if (identifierType === 'meetingId') return identifierValue;
+	const filter =
+		identifierType === 'joinWebUrl'
+			? `JoinWebUrl eq '${identifierValue}'`
+			: `joinMeetingIdSettings/joinMeetingId eq '${identifierValue}'`;
+	const response = await client.api('/me/onlineMeetings').filter(filter).get();
+	if (!response.value?.length) {
+		throw new Error('No meeting found with the provided identifier.');
+	}
+	return response.value[0].id as string;
+};
+
 export const withGraphRetry = async <T>(
 	requestFn: () => Promise<T>,
 	options: GraphRetryOptions = {}
