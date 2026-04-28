@@ -44,7 +44,6 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 const pieces = await pieceMetadataService(log).list({
                     projectId: mcp.projectId,
                     platformId: project.platformId,
-                    includeHidden: true,
                     categories: params.categories as PieceCategory[] | undefined,
                     tags: params.tags,
                     searchQuery: params.searchQuery,
