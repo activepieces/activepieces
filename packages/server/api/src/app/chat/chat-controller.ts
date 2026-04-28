@@ -222,6 +222,11 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
                                     if (historyReplayFilter.shouldSuppress(update)) return
 
+                                    const missedText = historyReplayFilter.drainMissedText()
+                                    if (missedText) {
+                                        streamWriter.appendText(missedText)
+                                    }
+
                                     streamWriter.write(update)
                                 })
 
@@ -240,6 +245,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                         finally {
                             clearInterval(keepalive)
                             unsubscribe?.()
+                            streamWriter.endAll()
                             void userSandboxService.updateLastUsed({ userId }).catch(() => undefined)
                             if (pendingTitle && promptCompleted) {
                                 void service.updateConversation({
