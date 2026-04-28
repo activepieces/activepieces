@@ -135,7 +135,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
         })
         log.info({ runId: flowRunId, flowId: oldFlowRun.flowId, strategy }, 'Flow run retry initiated')
-        
+
         const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
         if (
             isFlowRunStateTerminal({ status: oldFlowRun.status, ignoreInternalError: false }) &&
@@ -408,7 +408,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             .where({
                 projectId: params.projectId,
                 environment: RunEnvironment.PRODUCTION,
-                archivedAt: IsNull(),
             })
             .groupBy('flow_run.status')
 

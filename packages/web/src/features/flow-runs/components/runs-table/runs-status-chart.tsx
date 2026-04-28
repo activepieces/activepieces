@@ -1,10 +1,16 @@
 import { t } from 'i18next';
+import { CircleHelp } from 'lucide-react';
 
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   flowRunQueries,
   RunStatusCategory,
@@ -71,7 +77,17 @@ function RunsStatusChart() {
       <HoverCardContent align="end" className="w-72 p-4">
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">{t('Runs by Status')}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-medium">{t('Runs by Status')}</p>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <CircleHelp className="size-3.5 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {t('Showing results from the last 7 days')}
+                </TooltipContent>
+              </Tooltip>
+            </div>
             <p className="text-xs text-muted-foreground">
               {t('Total Runs')}: {total}
             </p>

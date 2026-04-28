@@ -102,7 +102,7 @@ export const flowRunQueries = {
           createdBefore: range.to.toISOString(),
         });
       },
-      refetchInterval: 5000,
+      refetchInterval: 15000,
     });
 
     const categories = useMemo(() => groupByCategory(data?.data ?? []), [data]);
