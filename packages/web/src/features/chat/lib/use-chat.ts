@@ -160,9 +160,11 @@ function injectFilePartsIntoLastUserMessage({
 export function useAgentChat({
   onTitleUpdate,
   onConversationCreated,
+  modelName,
 }: {
   onTitleUpdate?: (title: string, conversationId?: string) => void;
   onConversationCreated?: (conversationId: string) => void;
+  modelName?: string | null;
 } = {}) {
   const [conversationId, setConversationIdState] = useState<string | null>(
     null,
@@ -171,6 +173,7 @@ export function useAgentChat({
   const [localError, setLocalError] = useState<string | null>(null);
   const [wasCancelled, setWasCancelled] = useState(false);
   const [pendingMessages, setPendingMessages] = useState<ChatUIMessage[]>([]);
+  const [loadedModelName, setLoadedModelName] = useState<string | null>(null);
 
   const pendingFilesRef = useRef<
     { name: string; mimeType: ChatAllowedMimeType; data: string }[] | undefined
@@ -183,6 +186,8 @@ export function useAgentChat({
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
   onConversationCreatedRef.current = onConversationCreated;
+  const modelNameRef = useRef(modelName);
+  modelNameRef.current = modelName;
 
   const transport = useMemo(() => {
     return new DefaultChatTransport({
@@ -381,6 +386,7 @@ export function useAgentChat({
         const { error: convError } = await tryCatch(async () => {
           const conv = await createConversation({
             title: content.slice(0, 100),
+            modelName: modelNameRef.current,
           });
           onConversationCreatedRef.current?.(conv.id);
         });
@@ -412,13 +418,17 @@ export function useAgentChat({
       lastSentFileNamesRef.current = [];
 
       setIsLoadingHistory(true);
-      const { data: history, error: historyError } = await tryCatch(async () =>
-        chatApi.getMessages(id),
-      );
-      if (historyError) {
+      const [conversationResult, historyResult] = await Promise.all([
+        tryCatch(async () => chatApi.getConversation(id)),
+        tryCatch(async () => chatApi.getMessages(id)),
+      ]);
+      if (conversationResult.data?.modelName) {
+        setLoadedModelName(conversationResult.data.modelName);
+      }
+      if (historyResult.error) {
         setLocalError('Failed to load conversation history');
       } else {
-        setUiMessages(mapHistoryToUIMessages(history.data));
+        setUiMessages(mapHistoryToUIMessages(historyResult.data.data));
       }
       setIsLoadingHistory(false);
     },
@@ -432,6 +442,7 @@ export function useAgentChat({
     wasCancelled,
     isLoadingHistory,
     error,
+    loadedModelName,
     sendMessage,
     cancelStream,
     resetChat,

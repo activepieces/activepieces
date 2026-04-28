@@ -26,6 +26,10 @@ export const UserSandboxEntity = new EntitySchema<UserSandboxWithRelations>({
             type: 'timestamp with time zone',
             nullable: false,
         },
+        envsHash: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {

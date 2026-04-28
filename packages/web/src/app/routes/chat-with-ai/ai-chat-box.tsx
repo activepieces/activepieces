@@ -39,9 +39,7 @@ export function AIChatBox({
     aiProviderQueries.useAiProviders();
 
   const hasChatProvider = providers?.some(
-    (p) =>
-      p.provider === AIProviderName.ACTIVEPIECES ||
-      p.provider === AIProviderName.ANTHROPIC,
+    (p) => p.provider === AIProviderName.ACTIVEPIECES,
   );
 
   const { data: warmResult, isLoading: isLoadingWarm } = useQuery({
@@ -83,16 +81,24 @@ function ChatBoxContent({
   onTitleUpdate,
   onConversationCreated,
 }: AIChatBoxProps) {
+  const [selectedModel, setSelectedModel] = useState<string | null>(null);
+  const hasConversation = Boolean(initialConversationId);
+
   const {
     messages,
     isStreaming,
     wasCancelled,
     isLoadingHistory,
     error,
+    loadedModelName,
     sendMessage,
     cancelStream,
     setConversationId,
-  } = useAgentChat({ onTitleUpdate, onConversationCreated });
+  } = useAgentChat({
+    onTitleUpdate,
+    onConversationCreated,
+    modelName: selectedModel,
+  });
   const [connectedPieces, setConnectedPieces] = useState<Set<string>>(
     new Set(),
   );
@@ -105,6 +111,12 @@ function ChatBoxContent({
       void setConversationId(initialConversationId);
     }
   }, [initialConversationId, setConversationId]);
+
+  useEffect(() => {
+    if (loadedModelName) {
+      setSelectedModel(loadedModelName);
+    }
+  }, [loadedModelName]);
 
   const handleSend = useCallback(
     async (text: string, files?: File[]) => {
@@ -133,6 +145,9 @@ function ChatBoxContent({
               isStreaming={isStreaming}
               onSend={handleSend}
               onStop={cancelStream}
+              selectedModel={selectedModel}
+              onModelChange={setSelectedModel}
+              modelDisabled={false}
             />
           </div>
         </div>
@@ -228,6 +243,9 @@ function ChatBoxContent({
             onSend={handleSend}
             onStop={cancelStream}
             placeholder={t('Reply...')}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+            modelDisabled={hasConversation || messages.length > 0}
           />
         </div>
       </div>

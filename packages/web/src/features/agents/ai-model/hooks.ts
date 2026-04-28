@@ -17,30 +17,34 @@ type Provider =
 
 type AIModelType = 'text' | 'image';
 
-const OPENAI_MODELS = ['gpt-5.2', 'gpt-5.1', 'gpt-5-mini'] as const;
+const OPENAI_MODELS = [
+  'gpt-5.5-pro',
+  'gpt-5.5',
+  'gpt-5.4',
+  'gpt-5.4-mini',
+  'gpt-5.4-nano',
+] as const;
 
 const ANTHROPIC_MODELS = [
-  'claude-haiku-4-5-20251001',
-  'claude-haiku-4-5',
-  'claude-sonnet-4-6',
+  'claude-opus-4-7',
   'claude-opus-4-6',
+  'claude-sonnet-4-6',
 ] as const;
 
 const ANTHROPIC_OPENROUTER_MODELS = [
-  'claude-haiku-4-5-20251001',
-  'claude-haiku-4.5',
-  'claude-sonnet-4.6',
+  'claude-opus-4.7',
   'claude-opus-4.6',
+  'claude-sonnet-4.6',
 ] as const;
 
 const GOOGLE_MODELS = [
-  'gemini-2.5-flash-lite-preview-09-2025',
-  'gemini-2.5-flash-preview-09-2025',
-  'gemini-3-flash-preview',
   'gemini-3.1-pro-preview',
+  'gemini-3.1-flash-lite-preview',
+  'gemini-3-flash-preview',
+  'gemini-3-pro-preview',
 ] as const;
 
-const X_AI_OPENROUTER_MODELS = ['grok-4.1-fast'] as const;
+const X_AI_OPENROUTER_MODELS = ['grok-4.20'] as const;
 
 const ALLOWED_MODELS_BY_PROVIDER: Partial<Record<Provider, readonly string[]>> =
   {
@@ -70,7 +74,6 @@ function getAllowedModelsForProvider(
       if (isNil(allowedIds)) {
         return true;
       }
-
       return allowedIds.includes(model.id);
     })
     .sort((a, b) => a.name.localeCompare(b.name));

@@ -81,6 +81,7 @@ export const UserSandbox = z.object({
     platformId: z.string(),
     sandboxId: z.string(),
     lastUsedAt: z.string().datetime(),
+    envsHash: Nullable(z.string()),
 })
 export type UserSandbox = z.infer<typeof UserSandbox>
 

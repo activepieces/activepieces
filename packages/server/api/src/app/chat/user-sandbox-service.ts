@@ -11,8 +11,19 @@ async function getOrCreate({ userId, platformId, aiConfig }: {
     aiConfig: ChatAiConfig
 }): Promise<string> {
     const existing = await userSandboxRepo().findOneBy({ userId })
+
     if (!isNil(existing)) {
-        return existing.sandboxId
+        if (existing.envsHash !== null && existing.envsHash === aiConfig.envsHash) {
+            return existing.sandboxId
+        }
+        void chatSandboxAgent.destroySandbox({ sandboxId: existing.sandboxId, aiConfig }).catch(() => undefined)
+        const newSandboxId = await chatSandboxAgent.createSandbox({ aiConfig })
+        await userSandboxRepo().update(existing.id, {
+            sandboxId: newSandboxId,
+            envsHash: aiConfig.envsHash,
+            lastUsedAt: new Date().toISOString(),
+        })
+        return newSandboxId
     }
 
     const sandboxId = await chatSandboxAgent.createSandbox({ aiConfig })
@@ -25,6 +36,7 @@ async function getOrCreate({ userId, platformId, aiConfig }: {
             userId,
             platformId,
             sandboxId,
+            envsHash: aiConfig.envsHash,
             lastUsedAt: new Date().toISOString(),
         })
         .orIgnore()

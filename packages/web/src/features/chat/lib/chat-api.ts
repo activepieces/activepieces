@@ -35,6 +35,14 @@ async function listConversations({
   });
 }
 
+async function getConversation(
+  conversationId: string,
+): Promise<ChatConversation> {
+  return api.get<ChatConversation>(`/v1/chat/conversations/${conversationId}`, {
+    projectId: projectId(),
+  });
+}
+
 async function getMessages(
   conversationId: string,
 ): Promise<{ data: ChatHistoryMessage[] }> {
@@ -75,6 +83,7 @@ async function warm(): Promise<{ configured: boolean }> {
 
 export const chatApi = {
   createConversation,
+  getConversation,
   listConversations,
   getMessages,
   updateConversation,

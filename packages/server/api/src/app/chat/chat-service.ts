@@ -26,13 +26,13 @@ import { mcpServerService } from '../mcp/mcp-service'
 import { projectService } from '../project/project-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
 import { chatSessionCleanup } from './sandbox/postgres-persist-driver'
-import { ChatAiConfig, chatSandboxAgent, ChatSandboxConfig } from './sandbox/sandbox-agent'
+import { ChatAiConfig, chatSandboxAgent, ChatSandboxConfig, computeEnvsHash, isAnthropicModel } from './sandbox/sandbox-agent'
 import { userSandboxService } from './user-sandbox-service'
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 
 const AI_CONFIG_TTL_MS = 5 * 60 * 1000
-const aiConfigCache = new Map<string, { config: ChatAiConfig, expiresAt: number }>()
+const apiKeyCache = new Map<string, { apiKey: string, expiresAt: number }>()
 
 export const chatService = (log: FastifyBaseLogger) => ({
     async createConversation({ projectId, userId, request }: CreateConversationParams): Promise<ChatConversation> {
@@ -172,13 +172,8 @@ export const chatService = (log: FastifyBaseLogger) => ({
     },
 
     async getChatAiConfig({ platformId, modelName }: { platformId: string, modelName?: string | null }): Promise<ChatAiConfig> {
-        const cached = aiConfigCache.get(platformId)
-        if (cached && cached.expiresAt > Date.now()) {
-            return { ...cached.config, model: modelName ?? ChatSandboxConfig.model.DEFAULT }
-        }
-        const config = await resolveChatAiConfig({ platformId, modelName, log })
-        aiConfigCache.set(platformId, { config, expiresAt: Date.now() + AI_CONFIG_TTL_MS })
-        return config
+        const apiKey = await resolveOpenRouterApiKey({ platformId, log })
+        return buildChatAiConfig({ apiKey, modelName })
     },
 
     isSandboxConfigured(): boolean {
@@ -193,35 +188,56 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api'
 
-async function resolveChatAiConfig({ platformId, modelName, log }: { platformId: string, modelName?: string | null, log: FastifyBaseLogger }): Promise<ChatAiConfig> {
+async function resolveOpenRouterApiKey({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<string> {
+    const cached = apiKeyCache.get(platformId)
+    if (cached && cached.expiresAt > Date.now()) {
+        return cached.apiKey
+    }
+
+    const apiKey = await resolveProviderApiKey({ platformId, provider: AIProviderName.ACTIVEPIECES, log })
+    if (!apiKey) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: platformId, entityType: 'ChatAiProvider' },
+        })
+    }
+
+    apiKeyCache.set(platformId, { apiKey, expiresAt: Date.now() + AI_CONFIG_TTL_MS })
+    return apiKey
+}
+
+function makeConfig({ model, envs }: { model: string, envs: Record<string, string> }): ChatAiConfig {
+    return { agent: ChatSandboxConfig.agent.CLAUDE, model, envs, envsHash: computeEnvsHash(envs) }
+}
+
+function buildChatAiConfig({ apiKey, modelName }: { apiKey: string, modelName?: string | null }): ChatAiConfig {
+    const ev = ChatSandboxConfig.envVar
     const model = modelName ?? ChatSandboxConfig.model.DEFAULT
 
-    const openRouterConfig = await resolveProviderApiKey({ platformId, provider: AIProviderName.ACTIVEPIECES, log })
-    if (openRouterConfig) {
-        return {
-            agent: ChatSandboxConfig.agent.CLAUDE,
+    if (isAnthropicModel(modelName)) {
+        return makeConfig({
             model,
             envs: {
-                [ChatSandboxConfig.envVar.ANTHROPIC_API_KEY]: openRouterConfig,
-                [ChatSandboxConfig.envVar.ANTHROPIC_BASE_URL]: OPENROUTER_BASE_URL,
+                [ev.ANTHROPIC_API_KEY]: apiKey,
+                [ev.ANTHROPIC_BASE_URL]: OPENROUTER_BASE_URL,
             },
-        }
+        })
     }
 
-    const anthropicApiKey = await resolveProviderApiKey({ platformId, provider: AIProviderName.ANTHROPIC, log })
-    if (anthropicApiKey) {
-        return {
-            agent: ChatSandboxConfig.agent.CLAUDE,
-            model,
-            envs: {
-                [ChatSandboxConfig.envVar.ANTHROPIC_API_KEY]: anthropicApiKey,
-            },
-        }
-    }
-
-    throw new ActivepiecesError({
-        code: ErrorCode.ENTITY_NOT_FOUND,
-        params: { entityId: platformId, entityType: 'ChatAiProvider' },
+    return makeConfig({
+        model: ChatSandboxConfig.model.DEFAULT,
+        envs: {
+            [ev.ANTHROPIC_BASE_URL]: OPENROUTER_BASE_URL,
+            [ev.ANTHROPIC_AUTH_TOKEN]: apiKey,
+            [ev.ANTHROPIC_API_KEY]: '',
+            [ev.ANTHROPIC_DEFAULT_OPUS_MODEL]: model,
+            [ev.ANTHROPIC_DEFAULT_SONNET_MODEL]: model,
+            [ev.ANTHROPIC_DEFAULT_HAIKU_MODEL]: model,
+            [ev.CLAUDE_CODE_SUBAGENT_MODEL]: model,
+            [ev.CLAUDE_CODE_ATTRIBUTION_HEADER]: '0',
+            [ev.CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT]: '1',
+            [ev.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS]: '1',
+        },
     })
 }
 
@@ -333,3 +349,4 @@ type GetMessagesParams = {
     projectId: string
     userId: string
 }
+

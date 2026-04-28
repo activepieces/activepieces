@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import {
     ActivepiecesError,
     apId,
@@ -476,11 +477,38 @@ export const ChatSandboxConfig = {
         OPUS_1M: 'opus[1m]',
         HAIKU: 'haiku',
     },
-    envVar: { ANTHROPIC_API_KEY: 'ANTHROPIC_API_KEY', ANTHROPIC_BASE_URL: 'ANTHROPIC_BASE_URL' },
+    envVar: {
+        ANTHROPIC_API_KEY: 'ANTHROPIC_API_KEY',
+        ANTHROPIC_BASE_URL: 'ANTHROPIC_BASE_URL',
+        ANTHROPIC_AUTH_TOKEN: 'ANTHROPIC_AUTH_TOKEN',
+        ANTHROPIC_DEFAULT_OPUS_MODEL: 'ANTHROPIC_DEFAULT_OPUS_MODEL',
+        ANTHROPIC_DEFAULT_SONNET_MODEL: 'ANTHROPIC_DEFAULT_SONNET_MODEL',
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: 'ANTHROPIC_DEFAULT_HAIKU_MODEL',
+        CLAUDE_CODE_SUBAGENT_MODEL: 'CLAUDE_CODE_SUBAGENT_MODEL',
+        CLAUDE_CODE_ATTRIBUTION_HEADER: 'CLAUDE_CODE_ATTRIBUTION_HEADER',
+        CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT: 'CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT',
+        CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS: 'CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS',
+    },
 } as const
+
+function computeEnvsHash(envs: Record<string, string>): string {
+    const sorted = Object.keys(envs).sort().map((k) => `${k}=${envs[k]}`).join('\n')
+    return createHash('sha256').update(sorted).digest('hex').slice(0, 16)
+}
+
+const ANTHROPIC_MODEL_ALIASES = new Set<string>(Object.values(ChatSandboxConfig.model))
+
+function isAnthropicModel(modelId: string | null | undefined): boolean {
+    if (!modelId || modelId === ChatSandboxConfig.model.DEFAULT) return true
+    if (ANTHROPIC_MODEL_ALIASES.has(modelId)) return true
+    return modelId.startsWith('anthropic/')
+}
+
+export { computeEnvsHash, isAnthropicModel }
 
 export type ChatAiConfig = {
     agent: string
     model: string
     envs: Record<string, string>
+    envsHash: string
 }
