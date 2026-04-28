@@ -37,6 +37,7 @@ import { apDuplicateFlowTool } from '../../../../src/app/mcp/tools/ap-duplicate-
 import { apUpdateBranchTool } from '../../../../src/app/mcp/tools/ap-update-branch'
 import { apListRunsTool } from '../../../../src/app/mcp/tools/ap-list-runs'
 import { apGetRunTool } from '../../../../src/app/mcp/tools/ap-get-run'
+import { apRunActionTool } from '../../../../src/app/mcp/tools/ap-run-action'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
 
 let app: FastifyInstance
@@ -2320,5 +2321,96 @@ describe('MCP Tools integration', () => {
         const result = await apGetRunTool(mcp, mockLog).execute({ flowRunId: runningRunId })
 
         expect(text(result)).toContain('still in progress')
+    })
+
+    // ── ap_run_action ────────────────────────────────────────────────
+
+    it('84. ap_run_action — returns error for non-existent piece', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apRunActionTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-nonexistent',
+            actionName: 'any_action',
+            input: {},
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('not found')
+        expect(text(result)).toContain('ap_list_pieces')
+    })
+
+    it('85. ap_run_action — returns error for non-existent action on a valid piece', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apRunActionTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-test-array',
+            actionName: 'action_that_does_not_exist',
+            input: {},
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('not found')
+        expect(text(result)).toContain('action_with_array')
+    })
+
+    it('86. ap_run_action — returns error when required input is missing', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apRunActionTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-test-array',
+            actionName: 'action_with_array',
+            input: {},
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('Missing required inputs')
+        expect(text(result)).toContain('items')
+    })
+
+    it('87. ap_run_action — returns error when auth-required action has no connection', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apRunActionTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-test-email',
+            actionName: 'send_email',
+            input: { to: 'x@y.z', subject: 'hi' },
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('auth')
+        expect(text(result)).toContain('ap_list_connections')
+    })
+
+    it('88. ap_run_action — rejects connectionExternalId containing special characters', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apRunActionTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-test-email',
+            actionName: 'send_email',
+            input: { to: 'x@y.z', subject: 'hi' },
+            connectionExternalId: "bad'; evil",
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('special characters')
+    })
+
+    it('89. ap_run_action — accepts a plain connectionExternalId without validation error', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apRunActionTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-test-email',
+            actionName: 'send_email',
+            input: { to: 'x@y.z', subject: 'hi' },
+            connectionExternalId: 'valid_external_id_123',
+        })
+
+        expect(text(result)).not.toContain('special characters')
     })
 })
