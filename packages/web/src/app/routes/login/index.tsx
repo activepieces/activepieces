@@ -1,10 +1,19 @@
 import { SignIn } from '@clerk/clerk-react';
 import { motion } from 'motion/react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+import { authenticationSession } from '@/lib/authentication-session';
 import { otom8ClerkAppearance } from '@/lib/otom8-clerk-appearance';
 
 export function LoginPage() {
+  // Clear any stale AP session on mount. This is the canonical teardown point —
+  // it fires on every load of /login (signout landing, expired session, fresh visit)
+  // with no race conditions because it runs in a clean page load context.
+  useEffect(() => {
+    authenticationSession.clearSession();
+  }, []);
+
   return (
     <main
       className="relative min-h-[100dvh] flex flex-col items-center justify-center px-6 py-12 overflow-hidden"
@@ -57,7 +66,7 @@ export function LoginPage() {
           }}
         >
           <SignIn
-            routing="hash"
+            routing="virtual"
             forceRedirectUrl="/api/ap-sso"
             signUpForceRedirectUrl="/api/ap-sso"
             appearance={{

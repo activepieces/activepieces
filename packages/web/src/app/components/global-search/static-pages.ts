@@ -1,7 +1,6 @@
 import { type ComponentType } from 'react';
 
 import { BotIcon } from '@/components/icons/bot';
-import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
 import { FileHeartIcon } from '@/components/icons/file-heart';
 import { FileJson2Icon } from '@/components/icons/file-json2';
@@ -17,7 +16,6 @@ import { ServerIcon } from '@/components/icons/server';
 import { Settings2Icon } from '@/components/icons/settings2';
 import { ShieldIcon } from '@/components/icons/shield';
 import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
-import { TrophyIcon } from '@/components/icons/trophy';
 import { UnplugIcon } from '@/components/icons/unplug';
 import { UsersIcon } from '@/components/icons/users';
 import { WebhookIcon } from '@/components/icons/webhook';
@@ -43,18 +41,6 @@ export const STATIC_PAGES: StaticPage[] = [
     label: 'Explore Templates',
     href: '/templates',
     icon: CompassIcon,
-  },
-  {
-    id: 'page-impact',
-    label: 'Impact',
-    href: '/impact',
-    icon: ChartLineIcon,
-  },
-  {
-    id: 'page-leaderboard',
-    label: 'Leaderboard',
-    href: '/leaderboard',
-    icon: TrophyIcon,
   },
   // Platform Admin pages
   {

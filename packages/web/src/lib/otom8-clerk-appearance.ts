@@ -118,5 +118,20 @@ export const otom8ClerkAppearance: Appearance = {
     userButtonPopoverActionButton: {
       color: '#F5F5F5',
     },
+    // Reverification / step-up modal overlay
+    modalContent: {
+      backgroundColor: '#111111',
+      border: '1px solid rgba(255,255,255,0.08)',
+    },
+    modalBackdrop: {
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      backdropFilter: 'blur(4px)',
+    },
+    // OTP / verification code input
+    otpCodeFieldInput: {
+      backgroundColor: '#0A0A0A',
+      borderColor: 'rgba(255,255,255,0.12)',
+      color: '#F5F5F5',
+    },
   },
 };

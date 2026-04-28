@@ -86,6 +86,13 @@ export function ProjectDashboardLayout({
       icon: CompassIcon,
       hasPermission: true,
     },
+    {
+      to: '/user-settings',
+      label: t('Settings'),
+      show: !isEmbedded,
+      icon: CompassIcon,
+      hasPermission: true,
+    },
   ];
 
   const hideHeader =
