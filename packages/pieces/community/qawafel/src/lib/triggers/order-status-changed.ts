@@ -67,13 +67,13 @@ export const orderStatusChanged = createTrigger({
       },
     });
     await context.store.put(
-      'qawafel_order_status_webhook_id',
+      `qawafel_order_status_webhook_id_${context.propsValue.status}`,
       response.body.id
     );
   },
   async onDisable(context) {
     const webhookId = await context.store.get<string>(
-      'qawafel_order_status_webhook_id'
+      `qawafel_order_status_webhook_id_${context.propsValue.status}`
     );
     if (!webhookId) return;
     try {
