@@ -15,6 +15,8 @@ import { chatApi } from './chat-api';
 import { ChatUIMessage } from './chat-types';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const RECOVERY_DELAY_MS = 3_000;
+const RECOVERY_MAX_ATTEMPTS = 5;
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
 
@@ -176,6 +178,7 @@ export function useAgentChat({
   const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
   const cancelledRef = useRef(false);
+  const messageCountRef = useRef(0);
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
@@ -237,16 +240,32 @@ export function useAgentChat({
     onError: () => {
       setPendingMessages([]);
       const convId = conversationIdRef.current;
-      if (convId) {
-        void chatApi
-          .getMessages(convId)
-          .then((result) => {
+      if (!convId) return;
+      const recoverMessages = async (): Promise<void> => {
+        const previousCount = messageCountRef.current;
+        for (let attempt = 0; attempt < RECOVERY_MAX_ATTEMPTS; attempt++) {
+          await new Promise((r) => setTimeout(r, RECOVERY_DELAY_MS));
+          const { data: result, error } = await tryCatch(() =>
+            chatApi.getMessages(convId),
+          );
+          if (error) continue;
+          if (result.data.length > previousCount) {
             setUiMessages(mapHistoryToUIMessages(result.data));
-          })
-          .catch(() => undefined);
-      }
+            return;
+          }
+        }
+        const { data: finalResult } = await tryCatch(() =>
+          chatApi.getMessages(convId),
+        );
+        if (finalResult) {
+          setUiMessages(mapHistoryToUIMessages(finalResult.data));
+        }
+      };
+      void recoverMessages();
     },
   });
+
+  messageCountRef.current = uiMessages.length;
 
   const sdkIsStreaming = status === 'streaming' || status === 'submitted';
   const lastLiveMessage = uiMessages[uiMessages.length - 1];
