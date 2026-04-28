@@ -31,6 +31,7 @@ import { ToolCallGroup } from './tool-call-group';
 export function ChatMessage({
   message,
   isStreaming,
+  isLastMessage = false,
   onCancel,
   onRetry,
   onSend,
@@ -39,6 +40,7 @@ export function ChatMessage({
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
+  isLastMessage?: boolean;
   onCancel: () => void;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
@@ -53,6 +55,7 @@ export function ChatMessage({
     <AssistantMessage
       message={message}
       isStreaming={isStreaming}
+      isLastMessage={isLastMessage}
       onCancel={onCancel}
       onRetry={onRetry}
       onSend={onSend}
@@ -101,7 +104,9 @@ export function UserMessage({ message }: { message: ChatUIMessage }) {
                 ))}
               </div>
             )}
-            <MessageContent className="prose-sm">{content}</MessageContent>
+            <MessageContent markdown className="prose-sm">
+              {content}
+            </MessageContent>
           </div>
         </Message>
         <MessageActions className="justify-end mt-1">
@@ -132,6 +137,7 @@ function extractPlanEntries(
 export function AssistantMessage({
   message,
   isStreaming,
+  isLastMessage = false,
   onCancel,
   onRetry,
   onSend,
@@ -140,6 +146,7 @@ export function AssistantMessage({
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
+  isLastMessage?: boolean;
   onCancel: () => void;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
@@ -218,6 +225,7 @@ export function AssistantMessage({
           {renderParts({
             parts: renderableParts,
             isStreaming,
+            isLastMessage,
             onSend,
             connectedPieces,
             onPieceConnected,
@@ -255,12 +263,14 @@ export function AssistantMessage({
 function renderParts({
   parts,
   isStreaming,
+  isLastMessage = false,
   onSend,
   connectedPieces,
   onPieceConnected,
 }: {
   parts: ChatUIMessage['parts'];
   isStreaming: boolean;
+  isLastMessage?: boolean;
   onSend: (text: string, files?: File[]) => void;
   connectedPieces: Set<string>;
   onPieceConnected: (piece: string) => void;
@@ -293,6 +303,7 @@ function renderParts({
           content={part.text}
           onSend={onSend}
           isStreaming={isStreaming && isLast}
+          isLastMessage={isLastMessage}
           connectedPieces={connectedPieces}
           onPieceConnected={onPieceConnected}
         />,

@@ -15,16 +15,21 @@ export function ChatWithAIPage() {
   const projectId =
     routeProjectId ?? authenticationSession.getProjectId() ?? '';
   const [resetKey, setResetKey] = useState(0);
+  const [pendingConversationId, setPendingConversationId] = useState<
+    string | null
+  >(null);
 
   const selectedConversationId = urlConversationId ?? null;
 
   const handleNewChat = useCallback(() => {
     setResetKey((k) => k + 1);
+    setPendingConversationId(null);
     navigate(`/projects/${projectId}/chat`, { replace: true });
   }, [navigate, projectId]);
 
   const handleSelectConversation = useCallback(
     (conversationId: string) => {
+      setPendingConversationId(null);
       navigate(`/projects/${projectId}/chat/${conversationId}`, {
         replace: true,
       });
@@ -32,18 +37,28 @@ export function ChatWithAIPage() {
     [navigate, projectId],
   );
 
-  const handleConversationCreated = useCallback(() => {
-    void queryClient.invalidateQueries({
-      queryKey: ['chat-conversations', projectId],
-    });
-  }, [queryClient, projectId]);
+  const handleConversationCreated = useCallback(
+    (conversationId: string) => {
+      setPendingConversationId(conversationId);
+      window.history.replaceState(
+        null,
+        '',
+        `/projects/${projectId}/chat/${conversationId}`,
+      );
+      void queryClient.invalidateQueries({
+        queryKey: ['chat-conversations', projectId],
+      });
+    },
+    [queryClient, projectId],
+  );
 
   const handleTitleUpdate = useCallback(
-    (title: string, conversationId?: string) => {
+    (_title: string, conversationId?: string) => {
       void queryClient.invalidateQueries({
         queryKey: ['chat-conversations', projectId],
       });
       if (conversationId && !selectedConversationId) {
+        setPendingConversationId(null);
         navigate(`/projects/${projectId}/chat/${conversationId}`, {
           replace: true,
         });
@@ -73,7 +88,7 @@ export function ChatWithAIPage() {
         <ConversationList
           onNewChat={handleNewChat}
           onSelect={handleSelectConversation}
-          selectedId={selectedConversationId}
+          selectedId={pendingConversationId ?? selectedConversationId}
         />
       </div>
       <AIChatBox

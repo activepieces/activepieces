@@ -14,8 +14,11 @@ import {
   ConnectionRequired,
   parseAllConnectionsRequired,
   parseAutomationProposal,
+  parseMultiQuestion,
   parseQuickReplies,
 } from '../lib/message-parsers';
+
+import { MultiQuestionForm } from './multi-question-form';
 
 const PROSE_CLASSES =
   'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4';
@@ -39,12 +42,14 @@ export function MessageContentWithAuth({
   content,
   onSend,
   isStreaming = false,
+  isLastMessage = false,
   connectedPieces,
   onPieceConnected,
 }: {
   content: string;
   onSend?: (text: string) => void;
   isStreaming?: boolean;
+  isLastMessage?: boolean;
   connectedPieces?: Set<string>;
   onPieceConnected?: (piece: string) => void;
 }) {
@@ -76,7 +81,9 @@ export function MessageContentWithAuth({
     parseAutomationProposal(content);
   const { connections, cleanContent: afterConnection } =
     parseAllConnectionsRequired(afterProposal);
-  const { cleanContent: finalContent } = parseQuickReplies(afterConnection);
+  const { questions, cleanContent: afterQuestions } =
+    parseMultiQuestion(afterConnection);
+  const { cleanContent: finalContent } = parseQuickReplies(afterQuestions);
 
   return (
     <div className="space-y-2">
@@ -97,6 +104,12 @@ export function MessageContentWithAuth({
           onPieceConnected={onPieceConnected}
         />
       ))}
+      {questions.length > 0 && isLastMessage && (
+        <MultiQuestionForm
+          questions={questions}
+          onSubmit={(text) => onSend?.(text)}
+        />
+      )}
       {proposal && (
         <AutomationProposalCard
           proposal={proposal}
