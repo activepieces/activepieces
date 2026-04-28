@@ -22,6 +22,9 @@ import { ChatUIMessage, createHistoryReplayFilter, createStreamWriter } from './
 import { userSandboxService } from './user-sandbox-service'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
+const EVENT_QUIESCENCE_MS = 1_500
+const MAX_QUIESCENCE_WAIT_MS = 10_000
+const KEEPALIVE_INTERVAL_MS = 15_000
 
 function isExpectedStreamError(error: unknown): boolean {
     if (!(error instanceof Error)) return false
@@ -190,7 +193,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                         })
                         const session = resumed.session
 
-                        const KEEPALIVE_INTERVAL_MS = 25_000
                         const keepalive = setInterval(() => {
                             writer.write({ type: 'data-usage', data: { inputTokens: 0, outputTokens: 0 }, transient: true })
                         }, KEEPALIVE_INTERVAL_MS)
@@ -207,9 +209,23 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                         })
                         let unsubscribe: (() => void) | undefined
                         let promptCompleted = false
+                        let lastEventAt = Date.now()
+                        let resolved = false
 
                         try {
                             await new Promise<void>((resolve, reject) => {
+                                let quiescenceTimer: ReturnType<typeof setTimeout> | undefined
+
+                                const safeResolve = (): void => {
+                                    if (resolved) return
+                                    resolved = true
+                                    if (quiescenceTimer !== undefined) {
+                                        clearTimeout(quiescenceTimer)
+                                        quiescenceTimer = undefined
+                                    }
+                                    resolve()
+                                }
+
                                 unsubscribe = session.onEvent((event) => {
                                     if (event.sender !== 'agent') return
 
@@ -228,16 +244,29 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                                     }
 
                                     streamWriter.write(update)
+                                    lastEventAt = Date.now()
                                 })
 
                                 reply.raw.on('close', () => {
-                                    resolve()
+                                    safeResolve()
                                 })
 
                                 chatSandboxAgent.sendPrompt({ session, text: content, systemPrompt, files })
                                     .then(() => {
                                         promptCompleted = true
-                                        resolve()
+                                        lastEventAt = Date.now()
+                                        const waitStart = Date.now()
+                                        const checkQuiescence = (): void => {
+                                            if (resolved) return
+                                            const now = Date.now()
+                                            const sinceLastEvent = now - lastEventAt
+                                            if (sinceLastEvent >= EVENT_QUIESCENCE_MS || now - waitStart >= MAX_QUIESCENCE_WAIT_MS) {
+                                                safeResolve()
+                                                return
+                                            }
+                                            quiescenceTimer = setTimeout(checkQuiescence, Math.min(EVENT_QUIESCENCE_MS - sinceLastEvent, 200))
+                                        }
+                                        quiescenceTimer = setTimeout(checkQuiescence, 200)
                                     })
                                     .catch(reject)
                             })
