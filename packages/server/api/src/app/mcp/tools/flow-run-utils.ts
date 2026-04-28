@@ -1,4 +1,4 @@
-import { apId, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, isNil, RunEnvironment, SampleDataFileType, StepLocationRelativeToParent, StepOutputStatus, UpdateActionRequest } from '@activepieces/shared'
+import { apId, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, isNil, RunEnvironment, SampleDataFileType, StepLocationRelativeToParent, StepOutputStatus, tryCatch, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService, isOutsideRetentionWindow } from '../../flows/flow-run/flow-run-service'
@@ -95,8 +95,6 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
     return { content: [{ type: 'text', text: warning + formatRunResult(completedRun) }] }
 }
 
-type McpToolTextResult = { content: [{ type: 'text', text: string }] }
-
 export async function executeAdhocAction({
     projectId,
     pieceName,
@@ -113,7 +111,7 @@ export async function executeAdhocAction({
     input?: Record<string, unknown>
     connectionExternalId?: string
     log: FastifyBaseLogger
-}): Promise<McpToolTextResult> {
+}): Promise<{ content: [{ type: 'text', text: string }] }> {
     const authError = mcpUtils.validateAuth(connectionExternalId)
     if (authError) {
         return authError
@@ -152,25 +150,23 @@ export async function executeAdhocAction({
         return { content: [{ type: 'text', text: `❌ Cannot run action: ${diagnosis.parts.join(' ')}` }] }
     }
 
-    let project
-    try {
-        project = await projectService(log).getOneOrThrow(projectId)
-    }
-    catch (err) {
-        return mcpUtils.mcpToolError('Failed to load project', err)
+    const { data: project, error: projectError } = await tryCatch(
+        () => projectService(log).getOneOrThrow(projectId),
+    )
+    if (projectError) {
+        return mcpUtils.mcpToolError('Failed to load project', projectError)
     }
 
     const resolvedPieceVersion = pieceVersion ?? piece.version
 
-    let flow
-    try {
-        flow = await flowService(log).create({
+    const { data: flow, error: flowError } = await tryCatch(
+        () => flowService(log).create({
             projectId,
             request: { displayName: `__adhoc_${apId()}__`, projectId },
-        })
-    }
-    catch (err) {
-        return mcpUtils.mcpToolError('Failed to create adhoc flow', err)
+        }),
+    )
+    if (flowError) {
+        return mcpUtils.mcpToolError('Failed to create adhoc flow', flowError)
     }
 
     try {
@@ -272,16 +268,22 @@ export async function executeAdhocAction({
 }
 
 function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: string): string {
-    const steps = run.steps as Record<string, unknown> | undefined | null
-    const step = !isNil(steps) && typeof steps === 'object' ? steps[stepName] : undefined
+    const steps = run.steps
+    if (isNil(steps) || typeof steps !== 'object') {
+        return `❌ ${displayName} — run ${run.id} completed with no step output (status: ${run.status}).`
+    }
+    const step = (steps as Record<string, unknown>)[stepName]
     if (isNil(step) || typeof step !== 'object') {
         return `❌ ${displayName} — run ${run.id} completed with no step output (status: ${run.status}).`
     }
-    const { status, output, errorMessage } = step as { status?: unknown, output?: unknown, errorMessage?: unknown }
+    const stepRecord = step as Record<string, unknown>
+    const status = stepRecord.status
+    const output = stepRecord.output
+    const errorMessage = stepRecord.errorMessage
     if (status === StepOutputStatus.SUCCEEDED) {
         const outStr = output === undefined
             ? '(no output)'
-            : typeof output === 'string' ? output : JSON.stringify(output, null, 2)
+            : typeof output === 'string' ? output : JSON.stringify(output)
         return `✅ ${displayName} completed (run ${run.id}).\n\n${mcpUtils.truncate(outStr, 4000)}`
     }
     const errStr = errorMessage === undefined

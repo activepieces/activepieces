@@ -2321,6 +2321,7 @@ describe('MCP Tools integration', () => {
         const result = await apGetRunTool(mcp, mockLog).execute({ flowRunId: runningRunId })
 
         expect(text(result)).toContain('still in progress')
+    })
 
     // ── ap_run_action ────────────────────────────────────────────────
 
