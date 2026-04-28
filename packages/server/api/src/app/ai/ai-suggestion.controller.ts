@@ -9,8 +9,11 @@ import { pieceMetadataService } from '../pieces/metadata/piece-metadata-service'
 
 export const aiSuggestionController: FastifyPluginAsyncZod = async (app) => {
     app.post('/suggest', SuggestAction, async (request) => {
-        const { query, workloadContext } = request.body
+        const { workloadContext } = request.body
         const log = app.log
+
+        // Sanitize query to prevent prompt injection and control character issues
+        const query = request.body.query.replace(/[\n\r`"]/g, ' ').trim()
 
         // Fallback to environment variable for surgical fix
         const openAIApiKey = process.env.AP_AI_SUGGESTION_OPENAI_API_KEY
@@ -28,8 +31,11 @@ export const aiSuggestionController: FastifyPluginAsyncZod = async (app) => {
             platformId: request.principal.platform.id,
         })
 
-        const contextPrefix = workloadContext?.existingPieces?.length
-            ? `Current workflow already uses: ${workloadContext.existingPieces.join(', ')}. `
+        const existingPieceNames = pieces.map(p => p.name)
+        const validatedExistingPieces = workloadContext?.existingPieces?.filter(p => existingPieceNames.includes(p)) || []
+
+        const contextPrefix = validatedExistingPieces.length
+            ? `Current workflow already uses: ${validatedExistingPieces.join(', ')}. `
             : ''
 
         const basePrompt = `You are an AI assistant for Activepieces, a workflow automation tool. Given a user's natural language description, suggest relevant actions from the available pieces.
@@ -113,9 +119,9 @@ const SuggestAction = {
     },
     schema: {
         body: z.object({
-            query: z.string(),
+            query: z.string().max(500),
             workloadContext: z.object({
-                existingPieces: z.array(z.string()).optional(),
+                existingPieces: z.array(z.string().max(100)).max(50).optional(),
                 stepIndex: z.number().optional(),
             }).optional(),
         }),

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { authenticationSession } from '@/lib/authentication-session';
 import './ai-suggestion-widget.css';
 
 interface APActionMeta {
@@ -56,7 +57,7 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
         method: 'POST',
         headers: { 
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}` // Activepieces stores token in localStorage
+            'Authorization': `Bearer ${authenticationSession.getToken()}`
         },
         body: JSON.stringify({
           query: searchQuery,
@@ -195,6 +196,7 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
           onKeyDown={handleKeyDown}
           onFocus={() => query.length >= 2 && setShowSuggestions(true)}
           autoComplete="off"
+          maxLength={500}
           aria-autocomplete="list"
           aria-controls="ai-suggestions-list"
           aria-expanded={showSuggestions && (suggestions.length > 0 || !!error)}
