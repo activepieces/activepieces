@@ -421,6 +421,9 @@
       "@activepieces/piece-figma": [
         "packages/pieces/community/figma/src/index.ts"
       ],
+      "@activepieces/piece-flat": [
+        "packages/pieces/community/flat/src/index.ts"
+      ],
       "@activepieces/piece-file-helper": [
         "packages/pieces/core/file-helper/src/index.ts"
       ],
@@ -490,6 +493,9 @@
       ],
       "@activepieces/piece-ghostcms": [
         "packages/pieces/community/ghostcms/src/index.ts"
+      ],
+      "@activepieces/piece-giphy": [
+        "packages/pieces/community/giphy/src/index.ts"
       ],
       "@activepieces/piece-github": [
         "packages/pieces/community/github/src/index.ts"

@@ -7,6 +7,7 @@ import { publishPieceCommand } from './lib/commands/publish-piece';
 import { buildPieceCommand } from './lib/commands/build-piece';
 import { generateWorkerTokenCommand } from './lib/commands/generate-worker-token';
 import { generateTranslationFileForAllPiecesCommand, generateTranslationFileForPieceCommand } from './lib/commands/generate-translation-file-for-piece';
+import { generateFromOpenApiCommand } from './lib/commands/generate-piece-from-openapi';
 
 const pieceCommand = new Command('pieces')
   .description('Manage pieces');
@@ -17,6 +18,7 @@ pieceCommand.addCommand(publishPieceCommand);
 pieceCommand.addCommand(buildPieceCommand);
 pieceCommand.addCommand(generateTranslationFileForPieceCommand);
 pieceCommand.addCommand(generateTranslationFileForAllPiecesCommand);
+pieceCommand.addCommand(generateFromOpenApiCommand);
 const actionCommand = new Command('actions')
   .description('Manage actions');
 
