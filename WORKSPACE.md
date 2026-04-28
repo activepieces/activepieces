@@ -29,10 +29,17 @@ Otom8/                          ← you open this in Cursor (often not a git roo
 From **`otom8-site/`** (not from `ap/`):
 
 ```bash
-pnpm dev
+pnpm dev:native   # recommended — hot reload for AP + site
 ```
 
-That starts the AP Docker stack on **http://localhost:8080** and the site on **http://localhost:3000**. First-time SSO: `pnpm dev:bootstrap`. See **`README.md`** in this repo (section *otom8 — run the full product locally*) and **`otom8-site/site/.env.local.example`**.
+Starts Postgres + Redis in Docker, everything else natively:
+- AP Vite frontend → **http://localhost:4200**
+- AP Fastify API → **http://localhost:3000**
+- Next.js site → **http://localhost:3001**
+
+First-time SSO: `pnpm dev:bootstrap`. Env: `otom8-site/site/.env.local` (copy from `.env.local.example`, use `pk_test_*` / `sk_test_*` Clerk keys for local dev).
+
+**Alternative (Docker AP):** `pnpm dev` — runs full AP in Docker on `:8080`, site on `:3000`. Slower iteration but no native Node.js deps needed.
 
 ## Request flow (high level)
 
