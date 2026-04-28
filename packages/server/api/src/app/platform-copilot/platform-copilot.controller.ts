@@ -1,4 +1,4 @@
-import { ApEdition, isNil, PlatformCopilotChatRequest, PlatformCopilotErrorCode, PrincipalType } from '@activepieces/shared'
+import { ApEdition, isNil, PLATFORM_COPILOT_LIMITS, PlatformCopilotChatRequest, PlatformCopilotErrorCode, PrincipalType } from '@activepieces/shared'
 import { RateLimitOptions } from '@fastify/rate-limit'
 import { createUIMessageStream, pipeUIMessageStreamToResponse, stepCountIs, streamText, UI_MESSAGE_STREAM_HEADERS } from 'ai'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
@@ -7,25 +7,21 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { system } from '../helper/system/system'
-import { copilotCloudProxyService, isSelfHostedEdition } from './copilot-cloud-proxy.service'
-import { copilotPlatformRegistryService } from './copilot-platform-registry.service'
-import { copilotRateLimiter, estimateUsageCents } from './copilot-rate-limiter.service'
-import { runModeration } from './openai-moderation'
+import { copilotCloudProxyService, isSelfHostedEdition } from './platform-copilot-cloud-proxy.service'
+import { runModeration } from './platform-copilot-moderation'
+import { copilotRateLimiter, estimateUsageCents } from './platform-copilot-rate-limiter.service'
+import { platformCopilotRegistryService } from './platform-copilot-registry.service'
 import { createCopilotTools } from './platform-copilot-tools'
 import { platformCopilotService } from './platform-copilot.service'
 
-const MAX_MESSAGE_CHARS = 4000
-const MAX_HISTORY_CONTENT_CHARS = 8000
-const MAX_HISTORY_MESSAGES = 50
-
 const ChatBodySchema = z.object({
-    message: z.string().min(1).max(MAX_MESSAGE_CHARS),
+    message: z.string().min(1).max(PLATFORM_COPILOT_LIMITS.maxMessageChars),
     conversationHistory: z.array(
         z.object({
             role: z.enum(['user', 'assistant']),
-            content: z.string().max(MAX_HISTORY_CONTENT_CHARS),
+            content: z.string().max(PLATFORM_COPILOT_LIMITS.maxHistoryContentChars),
         }),
-    ).max(MAX_HISTORY_MESSAGES).default([]),
+    ).max(PLATFORM_COPILOT_LIMITS.maxHistoryMessages).default([]),
 } satisfies Record<keyof PlatformCopilotChatRequest, unknown>)
 
 const RegisterBodySchema = z.object({
@@ -80,7 +76,7 @@ export const platformCopilotController: FastifyPluginAsyncZod = async (app) => {
 
         app.post('/register', RegisterRequestOptions, async (request, reply) => {
             const { platformId, edition, version } = request.body
-            const result = await copilotPlatformRegistryService.register({ platformId, edition, version })
+            const result = await platformCopilotRegistryService.register({ platformId, edition, version })
             return reply.status(StatusCodes.OK).send(result)
         })
     }
@@ -92,22 +88,23 @@ const runChatStream = async ({ body, log, reply, platformId }: {
     reply: FastifyReply
     platformId: string
 }): Promise<void> => {
-    const platformAllowance = await copilotRateLimiter.checkPlatformAllowance(platformId)
+    const [platformAllowance, globalAllowance, moderation] = await Promise.all([
+        copilotRateLimiter.checkPlatformAllowance(platformId),
+        copilotRateLimiter.checkGlobalAllowance(),
+        runModeration({ input: body.message, log }),
+    ])
     if (!platformAllowance.allowed) {
         return reply
             .header('Retry-After', platformAllowance.retryAfterSeconds.toString())
             .status(StatusCodes.TOO_MANY_REQUESTS)
             .send({ error: PlatformCopilotErrorCode.PLATFORM_DAILY_LIMIT_REACHED })
     }
-    const globalAllowance = await copilotRateLimiter.checkGlobalAllowance()
     if (!globalAllowance.allowed) {
         return reply
             .header('Retry-After', globalAllowance.retryAfterSeconds.toString())
             .status(StatusCodes.SERVICE_UNAVAILABLE)
             .send({ error: PlatformCopilotErrorCode.SERVICE_PAUSED })
     }
-
-    const moderation = await runModeration({ input: body.message, log })
     if (moderation.flagged) {
         return reply.status(StatusCodes.BAD_REQUEST).send({
             error: PlatformCopilotErrorCode.CONTENT_POLICY,
@@ -156,24 +153,24 @@ const runChatStream = async ({ body, log, reply, platformId }: {
 }
 
 type ProxyChatAuthSuccess = { ok: true, platformId: string }
-type ProxyChatAuthFailure = { ok: false, status: number, errorCode: string }
+type ProxyChatAuthFailure = { ok: false, status: number, errorCode: PlatformCopilotErrorCode }
 
 const authenticateProxyChat = async (request: FastifyRequest): Promise<ProxyChatAuthSuccess | ProxyChatAuthFailure> => {
     const authHeader = request.headers.authorization
     const platformId = request.headers['x-ap-platform-id']
 
     if (typeof platformId !== 'string' || isNil(authHeader) || !authHeader.startsWith('Bearer ')) {
-        return { ok: false, status: StatusCodes.UNAUTHORIZED, errorCode: 'unauthorized' }
+        return { ok: false, status: StatusCodes.UNAUTHORIZED, errorCode: PlatformCopilotErrorCode.UNAUTHORIZED }
     }
 
     const copilotApiKey = authHeader.slice('Bearer '.length).trim()
     if (copilotApiKey.length === 0) {
-        return { ok: false, status: StatusCodes.UNAUTHORIZED, errorCode: 'unauthorized' }
+        return { ok: false, status: StatusCodes.UNAUTHORIZED, errorCode: PlatformCopilotErrorCode.UNAUTHORIZED }
     }
 
-    const result = await copilotPlatformRegistryService.validateAndTouch({ copilotApiKey, platformId })
+    const result = await platformCopilotRegistryService.validateAndTouch({ copilotApiKey, platformId })
     if (result.status === 'unknown') {
-        return { ok: false, status: StatusCodes.UNAUTHORIZED, errorCode: 'unauthorized' }
+        return { ok: false, status: StatusCodes.UNAUTHORIZED, errorCode: PlatformCopilotErrorCode.UNAUTHORIZED }
     }
     if (result.status === 'blocked') {
         return { ok: false, status: StatusCodes.FORBIDDEN, errorCode: PlatformCopilotErrorCode.PLATFORM_UNAVAILABLE }

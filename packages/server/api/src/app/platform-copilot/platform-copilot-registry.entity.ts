@@ -2,7 +2,7 @@ import { ApEdition } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart } from '../database/database-common'
 
-export type CopilotPlatformRegistrySchema = {
+export type PlatformCopilotRegistrySchema = {
     id: string
     created: string
     updated: string
@@ -14,8 +14,8 @@ export type CopilotPlatformRegistrySchema = {
     lastSeenAt: string
 }
 
-export const CopilotPlatformRegistryEntity = new EntitySchema<CopilotPlatformRegistrySchema>({
-    name: 'copilot_platform_registry',
+export const PlatformCopilotRegistryEntity = new EntitySchema<PlatformCopilotRegistrySchema>({
+    name: 'platform_copilot_registry',
     columns: {
         ...BaseColumnSchemaPart,
         platformId: {
@@ -45,12 +45,12 @@ export const CopilotPlatformRegistryEntity = new EntitySchema<CopilotPlatformReg
     },
     indices: [
         {
-            name: 'idx_copilot_platform_registry_platform_id',
+            name: 'idx_platform_copilot_registry_platform_id',
             columns: ['platformId'],
             unique: true,
         },
         {
-            name: 'idx_copilot_platform_registry_api_key_hash',
+            name: 'idx_platform_copilot_registry_api_key_hash',
             columns: ['copilotApiKeyHash'],
             unique: true,
         },

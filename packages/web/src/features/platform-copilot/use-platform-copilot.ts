@@ -1,4 +1,7 @@
-import { PlatformCopilotErrorCode } from '@activepieces/shared';
+import {
+  PLATFORM_COPILOT_LIMITS,
+  PlatformCopilotErrorCode,
+} from '@activepieces/shared';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, isTextUIPart, UIMessage } from 'ai';
 import { useEffect, useMemo } from 'react';
@@ -28,14 +31,20 @@ export function usePlatformCopilot() {
         const lastMessage = messages[messages.length - 1];
         const conversationHistory = messages
           .slice(0, -1)
-          .slice(-MAX_HISTORY_MESSAGES)
+          .slice(-PLATFORM_COPILOT_LIMITS.maxHistoryMessages)
           .map((m) => ({
             role: m.role as 'user' | 'assistant',
-            content: getMessageText(m).slice(0, MAX_HISTORY_CONTENT_CHARS),
+            content: getMessageText(m).slice(
+              0,
+              PLATFORM_COPILOT_LIMITS.maxHistoryContentChars,
+            ),
           }));
         return {
           body: {
-            message: getMessageText(lastMessage).slice(0, MAX_MESSAGE_CHARS),
+            message: getMessageText(lastMessage).slice(
+              0,
+              PLATFORM_COPILOT_LIMITS.maxMessageChars,
+            ),
             conversationHistory,
           },
         };
@@ -127,7 +136,3 @@ function parseCopilotErrorCode(message: string): string | null {
     return null;
   }
 }
-
-const MAX_MESSAGE_CHARS = 4000;
-const MAX_HISTORY_CONTENT_CHARS = 8000;
-const MAX_HISTORY_MESSAGES = 50;

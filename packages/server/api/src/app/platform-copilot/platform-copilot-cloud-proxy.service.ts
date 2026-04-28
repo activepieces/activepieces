@@ -102,9 +102,6 @@ export const copilotCloudProxyService = {
         }
     },
 
-    async invalidateApiKey(platformId: string): Promise<void> {
-        await platformCopilotCredentialsService.clear(platformId)
-    },
 }
 
 export const isSelfHostedEdition = (): boolean => {
