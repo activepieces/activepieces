@@ -167,7 +167,6 @@ function ChatBoxContent({
                 message={msg}
                 isStreaming={isLastStreamingAssistant}
                 isLastMessage={idx === messages.length - 1}
-                onCancel={cancelStream}
                 onSend={handleSend}
                 connectedPieces={connectedPieces}
                 onPieceConnected={markPieceConnected}

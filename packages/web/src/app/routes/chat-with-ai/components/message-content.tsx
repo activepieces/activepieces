@@ -41,14 +41,12 @@ function stripAuthContent(content: string): string {
 export function MessageContentWithAuth({
   content,
   onSend,
-  isStreaming = false,
   isLastMessage = false,
   connectedPieces,
   onPieceConnected,
 }: {
   content: string;
   onSend?: (text: string) => void;
-  isStreaming?: boolean;
   isLastMessage?: boolean;
   connectedPieces?: Set<string>;
   onPieceConnected?: (piece: string) => void;

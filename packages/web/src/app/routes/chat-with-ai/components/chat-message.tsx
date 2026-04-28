@@ -23,7 +23,6 @@ import {
 } from '@/components/prompt-kit/reasoning';
 import { PlanCard } from '@/features/chat/components/plan-card';
 import { ChatDataParts, ChatUIMessage } from '@/features/chat/lib/chat-types';
-import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
 import { getTextFromParts } from '../lib/message-parsers';
@@ -36,7 +35,6 @@ export function ChatMessage({
   message,
   isStreaming,
   isLastMessage = false,
-  onCancel,
   onRetry,
   onSend,
   connectedPieces,
@@ -45,7 +43,6 @@ export function ChatMessage({
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
-  onCancel: () => void;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
   connectedPieces: Set<string>;
@@ -60,7 +57,6 @@ export function ChatMessage({
       message={message}
       isStreaming={isStreaming}
       isLastMessage={isLastMessage}
-      onCancel={onCancel}
       onRetry={onRetry}
       onSend={onSend}
       connectedPieces={connectedPieces}
@@ -150,7 +146,6 @@ export function AssistantMessage({
   message,
   isStreaming,
   isLastMessage = false,
-  onCancel,
   onRetry,
   onSend,
   connectedPieces,
@@ -159,7 +154,6 @@ export function AssistantMessage({
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
-  onCancel: () => void;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
   connectedPieces: Set<string>;
@@ -231,9 +225,7 @@ export function AssistantMessage({
 
           {planEntries.length > 0 && <PlanCard entries={planEntries} />}
 
-          {isStreaming && !isWaiting && (
-            <ChatThinkingLoader showText={false} />
-          )}
+          {isStreaming && !isWaiting && <ChatThinkingLoader showText={false} />}
 
           {hasContent && !isStreaming && (
             <Reasoning
@@ -326,13 +318,11 @@ function renderParts({
       toolBuffer.push(part);
     } else if (part.type === 'text') {
       flushTools(`tools-before-${idx}`);
-      const isLast = idx === parts.length - 1;
       nodes.push(
         <MessageContentWithAuth
           key={idx}
           content={part.text}
           onSend={onSend}
-          isStreaming={isStreaming && isLast}
           isLastMessage={isLastMessage}
           connectedPieces={connectedPieces}
           onPieceConnected={onPieceConnected}
@@ -413,4 +403,3 @@ const CopyIconButton = forwardRef<
     </button>
   );
 });
-

@@ -13,29 +13,6 @@ import { appConnectionsQueries } from '@/features/connections';
 import { piecesHooks } from '@/features/pieces';
 import { authenticationSession } from '@/lib/authentication-session';
 
-function dedupePieceNames({
-  pieceNames,
-  pieceMeta,
-}: {
-  pieceNames: string[];
-  pieceMeta: Map<string, { displayName: string; logoUrl: string }>;
-}): string[] {
-  const seenDisplayNames = new Set<string>();
-  const seenLogoUrls = new Set<string>();
-  const result: string[] = [];
-  for (const pieceName of pieceNames) {
-    const meta = pieceMeta.get(pieceName);
-    const displayName = meta?.displayName ?? pieceName;
-    const logoUrl = meta?.logoUrl ?? '';
-    if (seenDisplayNames.has(displayName)) continue;
-    if (logoUrl && seenLogoUrls.has(logoUrl)) continue;
-    seenDisplayNames.add(displayName);
-    if (logoUrl) seenLogoUrls.add(logoUrl);
-    result.push(pieceName);
-  }
-  return result;
-}
-
 export function ConnectedAppsList() {
   const navigate = useNavigate();
   const projectId = authenticationSession.getProjectId() ?? '';
@@ -51,10 +28,7 @@ export function ConnectedAppsList() {
   });
 
   const { pieces } = piecesHooks.usePieces({});
-  const pieceMeta = new Map<
-    string,
-    { displayName: string; logoUrl: string }
-  >(
+  const pieceMeta = new Map<string, { displayName: string; logoUrl: string }>(
     (pieces ?? []).map((p) => [
       p.name,
       { displayName: p.displayName, logoUrl: p.logoUrl },
@@ -127,6 +101,29 @@ export function ConnectedAppsList() {
       </div>
     </button>
   );
+}
+
+function dedupePieceNames({
+  pieceNames,
+  pieceMeta,
+}: {
+  pieceNames: string[];
+  pieceMeta: Map<string, { displayName: string; logoUrl: string }>;
+}): string[] {
+  const seenDisplayNames = new Set<string>();
+  const seenLogoUrls = new Set<string>();
+  const result: string[] = [];
+  for (const pieceName of pieceNames) {
+    const meta = pieceMeta.get(pieceName);
+    const displayName = meta?.displayName ?? pieceName;
+    const logoUrl = meta?.logoUrl ?? '';
+    if (seenDisplayNames.has(displayName)) continue;
+    if (logoUrl && seenLogoUrls.has(logoUrl)) continue;
+    seenDisplayNames.add(displayName);
+    if (logoUrl) seenLogoUrls.add(logoUrl);
+    result.push(pieceName);
+  }
+  return result;
 }
 
 function PieceLogo({ pieceName }: { pieceName: string }) {
