@@ -92,6 +92,10 @@ const resolveIdpMetadata = async (idpMetadata: string): Promise<string> => {
             timeout: 10_000,
             transformResponse: (data) => data,
         })
+        const contentType = String(response.headers['content-type'] ?? '').toLowerCase()
+        if (contentType !== '' && !contentType.includes('xml') && !contentType.includes('text/plain')) {
+            throw new Error(`Unexpected content-type "${contentType}" — expected XML.`)
+        }
         return typeof response.data === 'string' ? response.data : String(response.data)
     }
     catch (error) {
