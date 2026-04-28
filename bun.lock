@@ -4566,7 +4566,7 @@
     },
     "packages/pieces/community/microsoft-teams": {
       "name": "@activepieces/piece-microsoft-teams",
-      "version": "0.4.2",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8287,6 +8287,7 @@
         "i18next-icu": "2.3.0",
         "jszip": "3.10.1",
         "jwt-decode": "4.0.0",
+        "lottie-web": "5.12.2",
         "lucide-react": "0.576.0",
         "marked": "18.0.2",
         "motion": "12.35.0",

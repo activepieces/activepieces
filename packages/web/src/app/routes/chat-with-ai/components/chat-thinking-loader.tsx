@@ -1,9 +1,12 @@
 import { t } from 'i18next';
+import lottie from 'lottie-web';
 import { Square } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 import { cn } from '@/lib/utils';
+
+import chatLoadingAnimation from './chat-loading.lottie.json';
 
 function pickRandomIndex(current: number, length: number): number {
   let next = Math.floor(Math.random() * (length - 1));
@@ -52,9 +55,11 @@ const MESSAGES = [
 function ChatThinkingLoader({
   onStop,
   className,
+  showText = true,
 }: {
   onStop?: () => void;
   className?: string;
+  showText?: boolean;
 }) {
   const [messageIndex, setMessageIndex] = useState(() =>
     Math.floor(Math.random() * MESSAGES.length),
@@ -70,39 +75,28 @@ function ChatThinkingLoader({
   }, [rotateMessage]);
 
   return (
-    <div className={cn('flex items-center gap-3', className)}>
-      <div className="flex items-center gap-1.5">
-        <motion.span
-          className="h-2 w-2 rounded-full bg-primary"
-          animate={{ opacity: [0.3, 1, 0.3] }}
-          transition={{ duration: 1.2, repeat: Infinity, delay: 0 }}
-        />
-        <motion.span
-          className="h-2 w-2 rounded-full bg-primary"
-          animate={{ opacity: [0.3, 1, 0.3] }}
-          transition={{ duration: 1.2, repeat: Infinity, delay: 0.2 }}
-        />
-        <motion.span
-          className="h-2 w-2 rounded-full bg-primary"
-          animate={{ opacity: [0.3, 1, 0.3] }}
-          transition={{ duration: 1.2, repeat: Infinity, delay: 0.4 }}
-        />
-      </div>
+    <div
+      dir="ltr"
+      className={cn('flex items-center justify-start gap-1', className)}
+    >
+      <LottieLoader />
 
-      <div className="h-5 overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.span
-            key={messageIndex}
-            className="text-sm text-muted-foreground"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2 }}
-          >
-            {t(MESSAGES[messageIndex])}
-          </motion.span>
-        </AnimatePresence>
-      </div>
+      {showText && (
+        <div className="h-5 overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={messageIndex}
+              className="text-sm text-muted-foreground"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+            >
+              {t(MESSAGES[messageIndex])}
+            </motion.span>
+          </AnimatePresence>
+        </div>
+      )}
 
       {onStop && (
         <button
@@ -114,6 +108,31 @@ function ChatThinkingLoader({
           {t('Stop')}
         </button>
       )}
+    </div>
+  );
+}
+
+function LottieLoader() {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return undefined;
+    const animation = lottie.loadAnimation({
+      container,
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      animationData: chatLoadingAnimation,
+    });
+    return () => {
+      animation.destroy();
+    };
+  }, []);
+
+  return (
+    <div className="h-7 w-7 shrink-0 overflow-hidden">
+      <div ref={containerRef} className="h-7 w-12 -translate-x-2.5" />
     </div>
   );
 }

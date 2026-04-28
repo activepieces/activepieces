@@ -517,6 +517,13 @@ describe('worker integration', () => {
             expect(await res.json()).toEqual({ status: 'ok' })
         }, 5_000)
 
+        it('responds 200 with status ok on /api/v1/health', async () => {
+            await startWithHealthServer()
+            const res = await fetch(`http://127.0.0.1:${healthPort}/api/v1/health`)
+            expect(res.status).toBe(200)
+            expect(await res.json()).toEqual({ status: 'ok' })
+        }, 5_000)
+
         it('responds 404 on unknown paths', async () => {
             await startWithHealthServer()
             const res = await fetch(`http://127.0.0.1:${healthPort}/unknown`)
