@@ -248,6 +248,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                                 chatSandboxAgent.sendPrompt({ session, text: content, systemPrompt, files })
                                     .then(() => {
                                         promptCompleted = true
+                                        lastEventAt = Date.now()
                                         const waitStart = Date.now()
                                         const checkQuiescence = (): void => {
                                             if (resolved) return
