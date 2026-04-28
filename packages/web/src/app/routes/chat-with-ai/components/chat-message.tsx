@@ -336,16 +336,24 @@ function renderParts({
 }
 
 function useThinkingTimer(isActive: boolean): number {
-  const [seconds, setSeconds] = useState(0);
   const startRef = useRef<number | null>(null);
+  const finalRef = useRef<number>(0);
+  const [seconds, setSeconds] = useState(0);
 
   useEffect(() => {
-    if (!isActive) {
+    if (isActive) {
+      startRef.current = Date.now();
+    } else {
+      if (startRef.current) {
+        finalRef.current = (Date.now() - startRef.current) / 1000;
+      }
       startRef.current = null;
-      return;
+      setSeconds(finalRef.current);
     }
-    startRef.current = Date.now();
-    setSeconds(0);
+  }, [isActive]);
+
+  useEffect(() => {
+    if (!isActive) return;
     const interval = setInterval(() => {
       if (startRef.current) {
         setSeconds((Date.now() - startRef.current) / 1000);

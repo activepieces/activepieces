@@ -22,7 +22,7 @@ export function ConnectedAppsList() {
   };
 
   const { data, isLoading } = appConnectionsQueries.useAppConnections({
-    request: { projectId, limit: 1000, cursor: undefined },
+    request: { projectId, limit: 100, cursor: undefined },
     extraKeys: [projectId],
     enabled: Boolean(projectId),
   });
@@ -78,16 +78,22 @@ export function ConnectedAppsList() {
         {t('Connected apps')}
       </span>
       <div className="flex items-center gap-0.5 flex-wrap justify-end">
-        {visiblePieceNames.map((pieceName, i) => (
-          <motion.div
-            key={pieceName}
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.2, delay: 0.15 + i * 0.04 }}
-          >
-            <PieceLogo pieceName={pieceName} />
-          </motion.div>
-        ))}
+        {visiblePieceNames.map((pieceName, i) => {
+          const meta = pieceMeta.get(pieceName);
+          return (
+            <motion.div
+              key={pieceName}
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2, delay: 0.15 + i * 0.04 }}
+            >
+              <PieceLogo
+                displayName={meta?.displayName ?? pieceName}
+                logoUrl={meta?.logoUrl}
+              />
+            </motion.div>
+          );
+        })}
         {overflowCount > 0 && (
           <motion.div
             className="flex h-[18px] min-w-[18px] items-center justify-center rounded-md bg-background px-1 text-[10px] font-medium text-muted-foreground tabular-nums"
@@ -126,9 +132,14 @@ function dedupePieceNames({
   return result;
 }
 
-function PieceLogo({ pieceName }: { pieceName: string }) {
-  const { pieceModel } = piecesHooks.usePiece({ name: pieceName });
-  if (!pieceModel?.logoUrl) {
+function PieceLogo({
+  displayName,
+  logoUrl,
+}: {
+  displayName: string;
+  logoUrl?: string;
+}) {
+  if (!logoUrl) {
     return <Skeleton className="h-[18px] w-[18px] rounded-md" />;
   }
   return (
@@ -136,13 +147,13 @@ function PieceLogo({ pieceName }: { pieceName: string }) {
       <TooltipTrigger asChild>
         <div className="flex h-[18px] w-[18px] items-center justify-center rounded-md bg-background p-0.5">
           <img
-            src={pieceModel.logoUrl}
-            alt={pieceModel.displayName}
+            src={logoUrl}
+            alt={displayName}
             className="max-h-full max-w-full object-contain"
           />
         </div>
       </TooltipTrigger>
-      <TooltipContent side="bottom">{pieceModel.displayName}</TooltipContent>
+      <TooltipContent side="bottom">{displayName}</TooltipContent>
     </Tooltip>
   );
 }
