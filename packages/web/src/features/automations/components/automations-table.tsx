@@ -17,6 +17,7 @@ import { SelectedItemsMap, TreeItem } from '../lib/types';
 import { groupTreeItemsByFolder } from '../lib/utils';
 
 import { AutomationsTableRow } from './automations-table-row';
+import { CreateInFolderKind } from './create-new-menu';
 
 type AutomationsTableProps = {
   items: TreeItem[];
@@ -38,6 +39,11 @@ type AutomationsTableProps = {
   onMoveItem: (item: TreeItem, folderId: string) => void;
   onExportFlow: (flow: PopulatedFlow) => void;
   onExportTable: (table: Table) => void;
+  onCreateInFolder?: (folderId: string, kind: CreateInFolderKind) => void;
+  userHasPermissionToWriteFlow?: boolean;
+  userHasPermissionToWriteTable?: boolean;
+  isCreatingFlow?: boolean;
+  isCreatingTable?: boolean;
   isMoving: boolean;
   isDuplicating: boolean;
   onLoadMoreInFolder: (folderId: string) => void;
@@ -45,7 +51,7 @@ type AutomationsTableProps = {
 };
 
 const rowClassName =
-  'flex items-center min-h-[48px] py-2 text-sm cursor-pointer hover:bg-muted/50';
+  'group flex items-center min-h-[48px] py-2 text-sm cursor-pointer hover:bg-muted/50';
 
 export const AutomationsTable = ({
   items,
@@ -67,6 +73,11 @@ export const AutomationsTable = ({
   onMoveItem,
   onExportFlow,
   onExportTable,
+  onCreateInFolder,
+  userHasPermissionToWriteFlow,
+  userHasPermissionToWriteTable,
+  isCreatingFlow,
+  isCreatingTable,
   isMoving,
   isDuplicating,
   onLoadMoreInFolder,
@@ -112,7 +123,7 @@ export const AutomationsTable = ({
             <Activity className="h-3.5 w-3.5" />
             {t('Status')}
           </div>
-          <div className="w-[50px] shrink-0 px-2"></div>
+          <div className="w-[80px] shrink-0 px-2"></div>
         </div>
 
         {isLoading ? (
@@ -163,6 +174,15 @@ export const AutomationsTable = ({
                         onMoveTo={onMoveItem}
                         onExportFlow={onExportFlow}
                         onExportTable={onExportTable}
+                        onCreateInFolder={onCreateInFolder}
+                        userHasPermissionToWriteFlow={
+                          userHasPermissionToWriteFlow
+                        }
+                        userHasPermissionToWriteTable={
+                          userHasPermissionToWriteTable
+                        }
+                        isCreatingFlow={isCreatingFlow}
+                        isCreatingTable={isCreatingTable}
                         isMoving={isMoving}
                         isDuplicating={isDuplicating}
                         onLoadMore={undefined}
