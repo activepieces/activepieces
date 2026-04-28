@@ -24,7 +24,7 @@ import { userSandboxService } from './user-sandbox-service'
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
 const EVENT_QUIESCENCE_MS = 1_500
 const MAX_QUIESCENCE_WAIT_MS = 10_000
-const KEEPALIVE_INTERVAL_MS = 15_000
+const KEEPALIVE_INTERVAL_MS = 10_000
 
 function isExpectedStreamError(error: unknown): boolean {
     if (!(error instanceof Error)) return false
@@ -248,6 +248,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                                 })
 
                                 reply.raw.on('close', () => {
+                                    log.info({ conversationId, promptCompleted, resolved, timeSinceLastEvent: Date.now() - lastEventAt }, 'Chat stream connection closed by client')
                                     safeResolve()
                                 })
 
