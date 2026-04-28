@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { API_URL } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -15,6 +15,8 @@ import { chatApi } from './chat-api';
 import { ChatUIMessage } from './chat-types';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const RECOVERY_DELAY_MS = 3_000;
+const RECOVERY_MAX_ATTEMPTS = 5;
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
 
@@ -176,6 +178,7 @@ export function useAgentChat({
   const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
   const cancelledRef = useRef(false);
+  const messageCountRef = useRef(0);
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
@@ -236,44 +239,39 @@ export function useAgentChat({
     },
     onError: () => {
       setPendingMessages([]);
+      if (cancelledRef.current) return;
       const convId = conversationIdRef.current;
-      if (convId) {
-        void chatApi
-          .getMessages(convId)
-          .then((result) => {
+      if (!convId) return;
+      const recoverMessages = async (): Promise<void> => {
+        const previousCount = messageCountRef.current;
+        for (let attempt = 0; attempt < RECOVERY_MAX_ATTEMPTS; attempt++) {
+          await new Promise((r) => setTimeout(r, RECOVERY_DELAY_MS));
+          if (cancelledRef.current || conversationIdRef.current !== convId)
+            return;
+          const { data: result, error } = await tryCatch(() =>
+            chatApi.getMessages(convId),
+          );
+          if (error) continue;
+          if (result.data.length > previousCount) {
+            if (conversationIdRef.current !== convId) return;
             setUiMessages(mapHistoryToUIMessages(result.data));
-          })
-          .catch(() => undefined);
-      }
+            return;
+          }
+        }
+        if (conversationIdRef.current !== convId) return;
+        const { data: finalResult } = await tryCatch(() =>
+          chatApi.getMessages(convId),
+        );
+        if (finalResult) {
+          if (conversationIdRef.current !== convId) return;
+          setUiMessages(mapHistoryToUIMessages(finalResult.data));
+        }
+      };
+      void recoverMessages();
     },
   });
 
-  const statusRef = useRef(status);
-  statusRef.current = status;
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') return;
-      const convId = conversationIdRef.current;
-      if (!convId) return;
-      if (
-        statusRef.current !== 'streaming' &&
-        statusRef.current !== 'submitted'
-      )
-        return;
-      void stop();
-      setPendingMessages([]);
-      void chatApi
-        .getMessages(convId)
-        .then((result) => {
-          setUiMessages(mapHistoryToUIMessages(result.data));
-        })
-        .catch(() => undefined);
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () =>
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [stop, setUiMessages]);
+  messageCountRef.current = uiMessages.length;
 
   const sdkIsStreaming = status === 'streaming' || status === 'submitted';
   const lastLiveMessage = uiMessages[uiMessages.length - 1];
