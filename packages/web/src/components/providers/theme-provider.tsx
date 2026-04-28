@@ -46,6 +46,9 @@ export function ThemeProvider({
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
   const [forceLightMode, setForceLightMode] = useState(false);
+  const [systemIsDark, setSystemIsDark] = useState(
+    () => window.matchMedia('(prefers-color-scheme: dark)').matches,
+  );
   const branding = flagsHooks.useWebsiteBranding();
   useEffect(() => {
     if (!branding) {
@@ -57,7 +60,9 @@ export function ThemeProvider({
     const resolvedTheme = forceLightMode
       ? 'light'
       : theme === 'system'
-      ? 'light'
+      ? systemIsDark
+        ? 'dark'
+        : 'light'
       : theme;
     root.classList.remove('light', 'dark');
     document.title = branding.websiteName;
@@ -95,7 +100,15 @@ export function ThemeProvider({
     }
 
     root.classList.add(resolvedTheme);
-  }, [theme, branding, forceLightMode]);
+  }, [theme, branding, forceLightMode, systemIsDark]);
+
+  useEffect(() => {
+    if (theme !== 'system') return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (e: MediaQueryListEvent) => setSystemIsDark(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [theme]);
 
   const value = {
     theme,

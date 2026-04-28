@@ -94,10 +94,16 @@ function ConnectedAccountRow({ account }: { account: ExternalAccount }) {
 }
 
 export default function ConnectionsSettingsPage() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [connecting, setConnecting] = useState<string | null>(null);
 
-  if (!user) return null;
+  if (!isLoaded || !user) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   const connectedProviders = new Set(
     user.externalAccounts.map((a) => `oauth_${a.provider}`),

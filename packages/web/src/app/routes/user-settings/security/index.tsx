@@ -58,7 +58,7 @@ function PasswordInput({
 }
 
 export default function SecuritySettingsPage() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -81,7 +81,13 @@ export default function SecuritySettingsPage() {
     });
   });
 
-  if (!user) return null;
+  if (!isLoaded || !user) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   const hasPassword = user.passwordEnabled;
 

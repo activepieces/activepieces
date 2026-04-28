@@ -32,7 +32,7 @@ function clerkError(err: unknown): string {
 }
 
 export default function ContactSettingsPage() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [adding, setAdding] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -47,7 +47,13 @@ export default function ContactSettingsPage() {
     return result;
   });
 
-  if (!user) return null;
+  if (!isLoaded || !user) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   const handleAdd = async () => {
     if (!newEmail.trim()) return;
