@@ -90,6 +90,8 @@ const resolveIdpMetadata = async (idpMetadata: string): Promise<string> => {
         const response = await safeHttp.axios.get<string>(trimmed, {
             responseType: 'text',
             timeout: 10_000,
+            maxContentLength: 5 * 1024 * 1024,
+            maxBodyLength: 5 * 1024 * 1024,
             transformResponse: (data) => data,
         })
         const contentType = String(response.headers['content-type'] ?? '').toLowerCase()
