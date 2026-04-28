@@ -2254,17 +2254,12 @@
     },
     "packages/pieces/community/drupal": {
       "name": "@activepieces/piece-drupal",
-      "version": "1.1.5",
+      "version": "1.1.6",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "tslib": "2.6.2",
-      },
-      "peerDependencies": {
-        "@activepieces/pieces-common": "*",
-        "@activepieces/pieces-framework": "*",
-        "@activepieces/shared": "*",
       },
     },
     "packages/pieces/community/dub": {
