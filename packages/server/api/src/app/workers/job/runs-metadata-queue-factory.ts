@@ -108,8 +108,8 @@ export type RunsMetadataUpsertData = {
     flowVersionId?: string
     environment?: RunEnvironment
     triggeredBy?: string
-    startTime?: string
-    finishTime?: string
+    startTime?: string | null
+    finishTime?: string | null
     status?: FlowRunStatus
     tags?: string[]
     failedStep?: { name: string, displayName: string }

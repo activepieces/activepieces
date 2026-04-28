@@ -3,16 +3,20 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import {
     apId,
     FlowActionType,
+    FlowRunStatus,
     McpServer,
     McpServerStatus,
     PackageType,
     PieceType,
+    RunEnvironment,
     StepLocationRelativeToParent,
 } from '@activepieces/shared'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { createTestContext } from '../../../helpers/test-context'
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
+import { system } from '../../../../src/app/helper/system/system'
+import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
@@ -31,6 +35,8 @@ import { apValidateFlowTool } from '../../../../src/app/mcp/tools/ap-validate-fl
 import { apUpdateTriggerTool } from '../../../../src/app/mcp/tools/ap-update-trigger'
 import { apDuplicateFlowTool } from '../../../../src/app/mcp/tools/ap-duplicate-flow'
 import { apUpdateBranchTool } from '../../../../src/app/mcp/tools/ap-update-branch'
+import { apListRunsTool } from '../../../../src/app/mcp/tools/ap-list-runs'
+import { apGetRunTool } from '../../../../src/app/mcp/tools/ap-get-run'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
 
 let app: FastifyInstance
@@ -2039,5 +2045,280 @@ describe('MCP Tools integration', () => {
         expect(output).not.toContain('.bun/')
         expect(output).toContain('<sandbox>')
         expect(output).toContain('<internal>')
+    })
+
+    // ── Router branch condition validation ───────────────────────────
+
+    it('74. ap_update_branch — rejects empty firstValue', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Empty firstValue')
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'Router',
+        })
+
+        const result = await apUpdateBranchTool(mcp, mockLog).execute({
+            flowId,
+            routerStepName: 'step_1',
+            branchIndex: 0,
+            conditions: [[{ firstValue: '', secondValue: 'urgent', operator: 'TEXT_CONTAINS' }]],
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('firstValue')
+    })
+
+    it('75. ap_update_branch — rejects empty secondValue with non-single-value operator', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Empty secondValue')
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'Router',
+        })
+
+        const result = await apUpdateBranchTool(mcp, mockLog).execute({
+            flowId,
+            routerStepName: 'step_1',
+            branchIndex: 0,
+            conditions: [[{ firstValue: '{{trigger.subject}}', secondValue: '', operator: 'TEXT_CONTAINS' }]],
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('secondValue')
+    })
+
+    it('76. ap_update_branch — rejects missing secondValue with non-single-value operator', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Missing secondValue')
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'Router',
+        })
+
+        const result = await apUpdateBranchTool(mcp, mockLog).execute({
+            flowId,
+            routerStepName: 'step_1',
+            branchIndex: 0,
+            conditions: [[{ firstValue: '{{trigger.subject}}', operator: 'TEXT_CONTAINS' }]],
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('secondValue')
+        expect(text(result)).toContain('TEXT_CONTAINS')
+    })
+
+    it('77. ap_update_branch — accepts single-value operator without secondValue', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'EXISTS works')
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'Router',
+        })
+
+        const result = await apUpdateBranchTool(mcp, mockLog).execute({
+            flowId,
+            routerStepName: 'step_1',
+            branchIndex: 0,
+            conditions: [[{ firstValue: '{{trigger.subject}}', operator: 'EXISTS' }]],
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).not.toContain('Incomplete')
+        expect(text(result)).not.toContain('invalid')
+    })
+
+    it('78. ap_add_branch — rejects empty firstValue at input layer', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'AddBranch firstValue')
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'Router',
+        })
+
+        const result = await apAddBranchTool(mcp, mockLog).execute({
+            flowId,
+            routerStepName: 'step_1',
+            branchName: 'New',
+            conditions: [[{ firstValue: '', operator: 'EXISTS' }]],
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('firstValue')
+    })
+
+    it('79. ap_update_branch — rejects secondValue provided without operator', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'secondValue without operator')
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.ROUTER,
+            displayName: 'Router',
+        })
+
+        const result = await apUpdateBranchTool(mcp, mockLog).execute({
+            flowId,
+            routerStepName: 'step_1',
+            branchIndex: 0,
+            conditions: [[{ firstValue: '{{trigger.subject}}', secondValue: 'urgent' }]],
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('operator')
+    })
+
+    it('80. ap_list_runs — defaults environment to PRODUCTION when no flowId is given', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const flowId = await createFlowAndGetId(mcp, 'Run Listing Defaults')
+        const flowVersion = await db.findOneByOrFail<{ id: string }>('flow_version', { flowId })
+
+        const prodRunId = apId()
+        const testRunId = apId()
+        await db.save('flow_run', [
+            {
+                id: prodRunId,
+                projectId: ctx.project.id,
+                flowId,
+                flowVersionId: flowVersion.id,
+                environment: RunEnvironment.PRODUCTION,
+                status: FlowRunStatus.SUCCEEDED,
+                stepsCount: 0,
+                failParentOnFailure: true,
+            },
+            {
+                id: testRunId,
+                projectId: ctx.project.id,
+                flowId,
+                flowVersionId: flowVersion.id,
+                environment: RunEnvironment.TESTING,
+                status: FlowRunStatus.SUCCEEDED,
+                stepsCount: 0,
+                failParentOnFailure: true,
+            },
+        ])
+
+        const result = await apListRunsTool(mcp, mockLog).execute({})
+
+        expect(text(result)).toContain(prodRunId)
+        expect(text(result)).not.toContain(testRunId)
+    })
+
+    it('81. ap_list_runs — caller-supplied environment overrides the PRODUCTION default', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const flowId = await createFlowAndGetId(mcp, 'Run Listing Override')
+        const flowVersion = await db.findOneByOrFail<{ id: string }>('flow_version', { flowId })
+
+        const prodRunId = apId()
+        const testRunId = apId()
+        await db.save('flow_run', [
+            {
+                id: prodRunId,
+                projectId: ctx.project.id,
+                flowId,
+                flowVersionId: flowVersion.id,
+                environment: RunEnvironment.PRODUCTION,
+                status: FlowRunStatus.SUCCEEDED,
+                stepsCount: 0,
+                failParentOnFailure: true,
+            },
+            {
+                id: testRunId,
+                projectId: ctx.project.id,
+                flowId,
+                flowVersionId: flowVersion.id,
+                environment: RunEnvironment.TESTING,
+                status: FlowRunStatus.SUCCEEDED,
+                stepsCount: 0,
+                failParentOnFailure: true,
+            },
+        ])
+
+        const result = await apListRunsTool(mcp, mockLog).execute({ environment: RunEnvironment.TESTING })
+
+        expect(text(result)).toContain(testRunId)
+        expect(text(result)).not.toContain(prodRunId)
+    })
+
+    it('82. ap_get_run — surfaces a clear "purged" message when run is past retention', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const flowId = await createFlowAndGetId(mcp, 'Expired Run')
+        const flowVersion = await db.findOneByOrFail<{ id: string }>('flow_version', { flowId })
+
+        const expiredRunId = apId()
+        await db.save('flow_run', {
+            id: expiredRunId,
+            projectId: ctx.project.id,
+            flowId,
+            flowVersionId: flowVersion.id,
+            environment: RunEnvironment.PRODUCTION,
+            status: FlowRunStatus.SUCCEEDED,
+            stepsCount: 0,
+            failParentOnFailure: true,
+        })
+        await db.update('flow_run', expiredRunId, { created: '2024-01-01T00:00:00.000Z' })
+
+        const result = await apGetRunTool(mcp, mockLog).execute({ flowRunId: expiredRunId })
+        const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+
+        expect(text(result)).toContain('purged')
+        expect(text(result)).toContain(`${retentionDays} days`)
+    })
+
+    it('83. ap_get_run — reports "still in progress" when a non-terminal run has no step data', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const flowId = await createFlowAndGetId(mcp, 'Running Run')
+        const flowVersion = await db.findOneByOrFail<{ id: string }>('flow_version', { flowId })
+
+        const runningRunId = apId()
+        await db.save('flow_run', {
+            id: runningRunId,
+            projectId: ctx.project.id,
+            flowId,
+            flowVersionId: flowVersion.id,
+            environment: RunEnvironment.PRODUCTION,
+            status: FlowRunStatus.RUNNING,
+            stepsCount: 0,
+            failParentOnFailure: true,
+        })
+
+        const result = await apGetRunTool(mcp, mockLog).execute({ flowRunId: runningRunId })
+
+        expect(text(result)).toContain('still in progress')
     })
 })

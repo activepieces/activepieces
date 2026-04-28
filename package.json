@@ -1,7 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.81.3",
-  "rcVersion": "0.82.0-rc.0",
+  "version": "0.82.1",
   "packageManager": "bun@1.3.3",
   "scripts": {
     "prebuild": "node tools/scripts/install-bun.js",
@@ -264,7 +263,7 @@
     "p-limit": "2.3.0",
     "pako": "2.1.0",
     "papaparse": "5.5.3",
-    "pg": "8.11.3",
+    "pg": "8.20.0",
     "pickleparser": "0.1.0",
     "pino": "10.1.0",
     "pino-loki": "2.1.3",
@@ -299,6 +298,7 @@
     "rollup": "4.59.0",
     "rss-parser": "3.13.0",
     "samlify": "2.10.0",
+    "sandbox-agent": "0.4.2",
     "semver": "7.6.0",
     "simple-git": "3.33.0",
     "slackify-markdown": "4.4.0",

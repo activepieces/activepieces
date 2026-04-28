@@ -1,3 +1,4 @@
+import net from 'node:net'
 import { tryCatch } from '@activepieces/shared'
 import { Logger } from 'pino'
 import { spawnWithKill } from '../utils/exec'
@@ -16,7 +17,7 @@ export const iptablesLockdown = {
         await preflightCleanup({ log, params })
 
         for (const family of FAMILIES) {
-            for (const args of buildApplyCommandsForFamily({ params, rejectWith: family.rejectWith })) {
+            for (const args of buildApplyCommandsForFamily({ params, rejectWith: family.rejectWith, family: family.ipFamily })) {
                 const { error } = await tryCatch(() => runRule({ binary: family.binary, args }))
                 if (error) {
                     log.error({ err: error, binary: family.binary, args }, 'iptables rule failed; rolling back')
@@ -33,7 +34,7 @@ export const iptablesLockdown = {
     },
 
     buildApplyCommands(params: ApplyParams): string[][] {
-        return buildApplyCommandsForFamily({ params, rejectWith: IPV4.rejectWith })
+        return buildApplyCommandsForFamily({ params, rejectWith: IPV4.rejectWith, family: 4 })
     },
 
     buildRemoveCommands({ firstBoxUid, numBoxes }: ApplyParams): string[][] {
@@ -50,6 +51,8 @@ const rule = {
     createChain: (name: string): string[] => ['-N', name],
     allowLoopbackTcp: ({ chain, dport }: { chain: string, dport: string }): string[] =>
         ['-A', chain, '-o', 'lo', '-p', 'tcp', '--dport', dport, '-j', 'ACCEPT'],
+    allowDns: ({ chain, protocol, nameserver }: { chain: string, protocol: 'tcp' | 'udp', nameserver: string }): string[] =>
+        ['-A', chain, '-d', nameserver, '-p', protocol, '--dport', '53', '-j', 'ACCEPT'],
     rejectAll: ({ chain, rejectWith }: { chain: string, rejectWith: string }): string[] =>
         ['-A', chain, '-j', 'REJECT', '--reject-with', rejectWith],
     jumpFromOutputForUid: ({ uidRange, target }: { uidRange: string, target: string }): string[] =>
@@ -60,13 +63,18 @@ const rule = {
     deleteChain: (name: string): string[] => ['-X', name],
 }
 
-function buildApplyCommandsForFamily({ params, rejectWith }: { params: ApplyParams, rejectWith: string }): string[][] {
-    const { proxyPort, wsRpcPortRange, firstBoxUid, numBoxes } = params
+function buildApplyCommandsForFamily({ params, rejectWith, family }: { params: ApplyParams, rejectWith: string, family: 4 | 6 }): string[][] {
+    const { proxyPort, wsRpcPortRange, firstBoxUid, numBoxes, nameservers } = params
     const uidRange = `${firstBoxUid}-${firstBoxUid + numBoxes - 1}`
+    const familyNameservers = nameservers.filter((ns) => net.isIP(ns) === family)
     return [
         rule.createChain(CHAIN),
         rule.allowLoopbackTcp({ chain: CHAIN, dport: String(proxyPort) }),
         ...(wsRpcPortRange ? [rule.allowLoopbackTcp({ chain: CHAIN, dport: `${wsRpcPortRange.first}:${wsRpcPortRange.last}` })] : []),
+        ...familyNameservers.flatMap((ns) => [
+            rule.allowDns({ chain: CHAIN, protocol: 'udp', nameserver: ns }),
+            rule.allowDns({ chain: CHAIN, protocol: 'tcp', nameserver: ns }),
+        ]),
         rule.rejectAll({ chain: CHAIN, rejectWith }),
         rule.jumpFromOutputForUid({ uidRange, target: CHAIN }),
     ]
@@ -110,8 +118,8 @@ export class IptablesLockdownError extends Error {
     }
 }
 
-const IPV4 = { binary: 'iptables', rejectWith: 'icmp-host-prohibited' } as const
-const IPV6 = { binary: 'ip6tables', rejectWith: 'icmp6-adm-prohibited' } as const
+const IPV4 = { binary: 'iptables', rejectWith: 'icmp-host-prohibited', ipFamily: 4 } as const
+const IPV6 = { binary: 'ip6tables', rejectWith: 'icmp6-adm-prohibited', ipFamily: 6 } as const
 const FAMILIES = [IPV4, IPV6] as const
 
 const IPTABLES_TIMEOUT_MS = 5_000
@@ -121,6 +129,7 @@ type ApplyParams = {
     wsRpcPortRange?: { first: number, last: number }
     firstBoxUid: number
     numBoxes: number
+    nameservers: string[]
     log: Logger
 }
 

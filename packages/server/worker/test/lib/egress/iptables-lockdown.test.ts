@@ -9,6 +9,7 @@ describe('iptables-lockdown command builder', () => {
         wsRpcPortRange: { first: 52000, last: 52999 },
         firstBoxUid: 60000,
         numBoxes: 10,
+        nameservers: [] as string[],
         log,
     }
 
@@ -55,5 +56,49 @@ describe('iptables-lockdown command builder', () => {
         const cmds = iptablesLockdown.buildApplyCommands({ ...baseParams, firstBoxUid: 60000, numBoxes: 1 })
         const jump = cmds[cmds.length - 1]
         expect(jump).toEqual(['-A', 'OUTPUT', '-m', 'owner', '--uid-owner', '60000-60000', '-j', 'AP_EGRESS_LOCKDOWN'])
+    })
+
+    describe('DNS nameserver allow rules', () => {
+        it('emits a UDP and a TCP /53 ACCEPT for a single IPv4 nameserver', () => {
+            const cmds = iptablesLockdown.buildApplyCommands({ ...baseParams, nameservers: ['10.0.0.2'] })
+            const udp = cmds.find((c) => c.includes('10.0.0.2') && c.includes('udp'))
+            const tcp = cmds.find((c) => c.includes('10.0.0.2') && c.includes('tcp') && c.includes('--dport') && c[c.indexOf('--dport') + 1] === '53')
+            expect(udp).toEqual(['-A', 'AP_EGRESS_LOCKDOWN', '-d', '10.0.0.2', '-p', 'udp', '--dport', '53', '-j', 'ACCEPT'])
+            expect(tcp).toEqual(['-A', 'AP_EGRESS_LOCKDOWN', '-d', '10.0.0.2', '-p', 'tcp', '--dport', '53', '-j', 'ACCEPT'])
+        })
+
+        it('emits UDP+TCP /53 rules for each nameserver in input order', () => {
+            const cmds = iptablesLockdown.buildApplyCommands({ ...baseParams, nameservers: ['10.0.0.2', '169.254.169.253'] })
+            const dnsRules = cmds.filter((c) => c[0] === '-A' && c[1] === 'AP_EGRESS_LOCKDOWN' && c.includes('--dport') && c[c.indexOf('--dport') + 1] === '53')
+            expect(dnsRules).toEqual([
+                ['-A', 'AP_EGRESS_LOCKDOWN', '-d', '10.0.0.2', '-p', 'udp', '--dport', '53', '-j', 'ACCEPT'],
+                ['-A', 'AP_EGRESS_LOCKDOWN', '-d', '10.0.0.2', '-p', 'tcp', '--dport', '53', '-j', 'ACCEPT'],
+                ['-A', 'AP_EGRESS_LOCKDOWN', '-d', '169.254.169.253', '-p', 'udp', '--dport', '53', '-j', 'ACCEPT'],
+                ['-A', 'AP_EGRESS_LOCKDOWN', '-d', '169.254.169.253', '-p', 'tcp', '--dport', '53', '-j', 'ACCEPT'],
+            ])
+        })
+
+        it('omits all DNS rules when nameservers is empty', () => {
+            const cmds = iptablesLockdown.buildApplyCommands({ ...baseParams, nameservers: [] })
+            const dnsRules = cmds.filter((c) => c.includes('--dport') && c[c.indexOf('--dport') + 1] === '53')
+            expect(dnsRules).toHaveLength(0)
+        })
+
+        it('places DNS rules after loopback ACCEPTs and strictly before the REJECT', () => {
+            const cmds = iptablesLockdown.buildApplyCommands({ ...baseParams, nameservers: ['10.0.0.2'] })
+            const lastLoopbackIdx = cmds.findLastIndex((c) => c.includes('-o') && c.includes('lo'))
+            const firstDnsIdx = cmds.findIndex((c) => c.includes('--dport') && c[c.indexOf('--dport') + 1] === '53')
+            const rejectIdx = cmds.findIndex((c) => c.includes('REJECT'))
+            expect(firstDnsIdx).toBeGreaterThan(lastLoopbackIdx)
+            expect(firstDnsIdx).toBeLessThan(rejectIdx)
+        })
+
+        it('IPv4 builder skips IPv6 nameservers', () => {
+            const cmds = iptablesLockdown.buildApplyCommands({ ...baseParams, nameservers: ['10.0.0.2', 'fd00::1'] })
+            const ipv6Rules = cmds.filter((c) => c.includes('fd00::1'))
+            expect(ipv6Rules).toHaveLength(0)
+            const ipv4Rules = cmds.filter((c) => c.includes('10.0.0.2'))
+            expect(ipv4Rules).toHaveLength(2)
+        })
     })
 })

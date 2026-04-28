@@ -156,6 +156,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     projectId: oldFlowRun.projectId,
                 }, {
                     status: FlowRunStatus.QUEUED,
+                    startTime: apDayjs().toISOString(),
+                    finishTime: null,
                 })
                 const updatedFlowRun = await findFlowRunOrThrow(oldFlowRun.id)
                 const platformId = await projectService(log).getPlatformId(updatedFlowRun.projectId)
@@ -619,7 +621,7 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
     }
 }
 
-function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
+export function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
     if (!createdTime) return false
     return apDayjs(createdTime).add(retentionDays, 'day').isBefore(apDayjs())
 }
