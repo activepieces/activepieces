@@ -65,7 +65,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
             root: frontendPath,
             setHeaders: (res, filepath) => {
                 if (filepath.endsWith('.html')) {
-                    void res.setHeader('Cache-Control', 'public, max-age=120')
+                    void res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate')
                 }
                 else {
                     void res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
