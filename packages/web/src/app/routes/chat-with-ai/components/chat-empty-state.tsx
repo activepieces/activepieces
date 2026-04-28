@@ -84,11 +84,11 @@ export function SetupRequiredState() {
       </div>
       <div className="space-y-2">
         <h2 className="text-xl font-semibold">
-          {t('Set up Anthropic to get started')}
+          {t('Set up OpenRouter to get started')}
         </h2>
         <p className="text-muted-foreground text-sm max-w-md">
           {t(
-            'AI Chat requires an Anthropic API key. Add your Anthropic provider in the AI settings to start chatting.',
+            'AI Chat is powered by OpenRouter. Configure your OpenRouter API key in the AI settings to start chatting.',
           )}
         </p>
       </div>
