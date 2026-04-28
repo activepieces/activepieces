@@ -9,7 +9,7 @@ export function buildPolling(
 ): Polling<AppConnectionValue, Record<string, never>> {
   return {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ auth, lastFetchEpochMS }) => {
+    items: async ({ auth }) => {
       const a = getAuth({ auth });
       const response = await ninjapipeApiCall<{ data?: unknown[] }>({
         auth: a,
@@ -19,7 +19,9 @@ export function buildPolling(
       });
       const items = extractItems(response.body);
       return items.map((item: any) => ({
-        epochMilliSeconds: new Date(item[timestampField] ?? item.created_at ?? item.updated_at).getTime(),
+        epochMilliSeconds: new Date(
+          item[timestampField] ?? item.created_at ?? item.updated_at ?? Date.now()
+        ).getTime(),
         data: flattenCustomFields(item as Record<string, unknown>),
       }));
     },
