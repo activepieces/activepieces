@@ -190,7 +190,10 @@ export function useGlobalSearchResults(query: string, open: boolean) {
 
       type PoolItem = { item: SearchResultItem; timestamp: number };
 
-      const historyPool: PoolItem[] = accessHistory.map((h) => ({
+      const validPageIds = new Set(STATIC_PAGES.map((p) => p.id));
+      const historyPool: PoolItem[] = accessHistory
+        .filter((h) => h.type !== 'page' || validPageIds.has(h.id))
+        .map((h) => ({
         timestamp: h.accessedAt,
         item: {
           id: h.id,

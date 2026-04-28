@@ -78,7 +78,7 @@ export const apSsoController: FastifyPluginAsyncZod = async (app) => {
             const lastName = clerkUser.lastName ?? ''
 
             let projectDisplayName: string
-            let memberRole: string | undefined
+            let memberRole: string
 
             if (orgId) {
                 try {
@@ -88,16 +88,17 @@ export const apSsoController: FastifyPluginAsyncZod = async (app) => {
                     ])
                     projectDisplayName = org.name
                     const membership = memberships.data.find(m => m.organization.id === orgId)
-                    if (membership) {
-                        memberRole = membership.role === 'org:admin' ? 'Admin' : 'Editor'
-                    }
+                    memberRole = membership?.role === 'org:admin' ? 'ADMIN' : 'EDITOR'
                 }
                 catch {
                     projectDisplayName = `${firstName}'s Workspace`
+                    memberRole = 'ADMIN'
                 }
             }
             else {
+                // No org — this is the user's personal workspace; they are always the admin.
                 projectDisplayName = `${firstName}'s Workspace`
+                memberRole = 'ADMIN'
             }
 
             // Sign the AP external token (RS256, verified by external-token-extractor)
@@ -108,12 +109,13 @@ export const apSsoController: FastifyPluginAsyncZod = async (app) => {
                     firstName,
                     lastName,
                     projectDisplayName,
-                    ...(memberRole ? { role: memberRole } : {}),
+                    role: memberRole,
                 },
                 key: privateKeyPem,
                 expiresInSeconds: 300,
                 keyId: signingKeyId,
                 algorithm: JwtSignAlgorithm.RS256,
+                issuer: 'otom8',
             })
 
             // Exchange with managed-authn service (same layer as /api/v1/managed-authn/external-token)

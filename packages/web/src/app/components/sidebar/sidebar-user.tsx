@@ -1,8 +1,8 @@
 import { isNil } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
+import { useClerk } from '@clerk/clerk-react';
 import { t } from 'i18next';
 import { ChevronsUpDown, LogOut, UserCogIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -23,28 +23,31 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import { userHooks } from '@/hooks/user-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
-import AccountSettingsDialog from '../account-settings';
 import { HelpAndFeedback } from '../help-and-feedback';
 
 export function SidebarUser() {
-  const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const { embedState } = useEmbedding();
   const { data: user } = userHooks.useCurrentUser();
-  const queryClient = useQueryClient();
   const { reset } = useTelemetry();
   const { state } = useSidebar();
+  const { signOut } = useClerk();
+  const navigate = useNavigate();
   const isCollapsed = state === 'collapsed';
   if (!user || embedState.isEmbedded) {
     return null;
   }
 
   const handleLogout = () => {
-    userHooks.invalidateCurrentUser(queryClient);
-    authenticationSession.logOut();
     reset();
+    // Let ClerkProvider.afterSignOutUrl="/login" handle the redirect.
+    // Do NOT clear the AP session here — clearing it synchronously causes in-flight
+    // React Query requests to get INVALID_BEARER_TOKEN, which triggers the global
+    // error handler to fire window.location.href='/sign-in' while Clerk is still
+    // processing its async signout, creating a redirect race / refresh loop.
+    // The AP session is cleared cleanly on /login mount instead.
+    signOut();
   };
 
   return (
@@ -105,7 +108,9 @@ export function SidebarUser() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => setAccountSettingsOpen(true)}>
+              <DropdownMenuItem
+                onClick={() => navigate('/user-settings/profile')}
+              >
                 <UserCogIcon className="w-4 h-4 mr-2" />
                 {t('Account Settings')}
               </DropdownMenuItem>
@@ -120,11 +125,6 @@ export function SidebarUser() {
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
-
-      <AccountSettingsDialog
-        open={accountSettingsOpen}
-        onClose={() => setAccountSettingsOpen(false)}
-      />
     </SidebarMenu>
   );
 }

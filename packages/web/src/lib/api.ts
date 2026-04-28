@@ -44,6 +44,12 @@ function globalErrorHandler(error: AxiosError) {
       errorCode === ErrorCode.SESSION_EXPIRED ||
       errorCode === ErrorCode.INVALID_BEARER_TOKEN
     ) {
+      // Guard: if already on /login or /sign-in, do not redirect again.
+      // Without this, stale in-flight requests that fail during signout would
+      // each try to navigate to /sign-in, racing with Clerk's own signout redirect
+      // and causing a rapid refresh loop.
+      const { pathname } = window.location;
+      if (pathname === '/login' || pathname === '/sign-in') return;
       authenticationSession.logOut();
       console.log(errorCode);
       window.location.href = '/sign-in';

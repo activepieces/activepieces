@@ -9,11 +9,10 @@ import {
 import { t } from 'i18next';
 import { UsersRound, Lock } from 'lucide-react';
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PageHeader } from '@/components/custom/page-header';
-import { SettingsIcon } from '@/components/icons/settings';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,8 +29,6 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
-import { ProjectSettingsDialog } from '../project-settings';
-
 export const ProjectDashboardPageHeader = ({
   children,
   description,
@@ -42,11 +39,8 @@ export const ProjectDashboardPageHeader = ({
   const { project } = projectCollectionUtils.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsInitialTab, setSettingsInitialTab] = useState<
-    'general' | 'members' | 'alerts' | 'pieces' | 'environment'
-  >('general');
   const location = useLocation();
+  const navigate = useNavigate();
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const activeProjectMembers = projectMembers?.filter(
     (member) => member.user.status === UserStatus.ACTIVE,
@@ -79,27 +73,6 @@ export const ProjectDashboardPageHeader = ({
   const showInviteUserButton =
     userCanInviteToProject || userCanInviteToPlatform;
   const isProjectPage = location.pathname.includes('/projects/');
-
-  const hasGeneralSettings =
-    project.type === ProjectType.TEAM ||
-    (platform.plan.embeddingEnabled &&
-      user?.platformRole === PlatformRole.ADMIN);
-
-  const getFirstAvailableTab = ():
-    | 'general'
-    | 'members'
-    | 'alerts'
-    | 'pieces'
-    | 'environment' => {
-    if (hasGeneralSettings) return 'general';
-    if (
-      project.type === ProjectType.TEAM &&
-      showProjectMembersFlag &&
-      userHasPermissionToReadProjectMembers
-    )
-      return 'members';
-    return 'pieces';
-  };
 
   const titleContent = (
     <div className="flex items-center gap-1">
@@ -137,10 +110,7 @@ export const ProjectDashboardPageHeader = ({
           aria-label={`View ${activeProjectMembers?.length} team member${
             activeProjectMembers?.length !== 1 ? 's' : ''
           }`}
-          onClick={() => {
-            setSettingsInitialTab('members');
-            setSettingsOpen(true);
-          }}
+          onClick={() => navigate('/user-settings/workspace/members')}
         >
           <UsersRound className="w-4 h-4" />
           <span className="text-sm font-medium">
@@ -159,17 +129,6 @@ export const ProjectDashboardPageHeader = ({
           <span className="text-sm font-medium">{t('Add Members')}</span>
         </AnimatedIconButton>
       )}
-      <AnimatedIconButton
-        icon={SettingsIcon}
-        iconSize={16}
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={() => {
-          setSettingsInitialTab(getFirstAvailableTab());
-          setSettingsOpen(true);
-        }}
-      />
     </div>
   ) : (
     children
@@ -185,14 +144,6 @@ export const ProjectDashboardPageHeader = ({
         className="min-w-full"
       />
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
-      <ProjectSettingsDialog
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        initialTab={settingsInitialTab}
-        initialValues={{
-          projectName: project?.displayName,
-        }}
-      />
     </>
   );
 };
