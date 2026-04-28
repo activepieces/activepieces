@@ -21,7 +21,7 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
+import { In, IsNull } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformProjectService } from '../ee/projects/platform-project-service'
@@ -137,7 +137,7 @@ export const userService = (log: FastifyBaseLogger) => ({
         return userRepo().find({ where: { identityId } })
     },
     async getOneByIdentityAndPlatform({ identityId, platformId }: GetOneByIdentityIdParams): Promise<User | null> {
-        return userRepo().findOneBy({ identityId, platformId })
+        return userRepo().findOneBy({ identityId, platformId: isNil(platformId) ? IsNull() : platformId })
     },
     async get({ id }: IdParams): Promise<User | null> {
         return userRepo().findOneBy({ id })
@@ -295,7 +295,7 @@ type GetByIdentityId = {
 
 type GetOneByIdentityIdParams = {
     identityId: string
-    platformId: PlatformId
+    platformId: PlatformId | null
 }
 
 type UpdateParams = {

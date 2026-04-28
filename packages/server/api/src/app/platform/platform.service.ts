@@ -20,7 +20,9 @@ import { ActivepiecesError,
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { nanoid } from 'nanoid'
 import { authenticationUtils } from '../authentication/authentication-utils'
+import { userIdentityRepository } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-client'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -89,12 +91,16 @@ export const platformService = (log: FastifyBaseLogger) => ({
         return savedPlatform
     },
     async createPlatformWithProject({ userId, name }: CreatePlatformWithProjectParams): Promise<AuthenticationResponse> {
+        const user = await userService(log).getOneOrFail({ id: userId })
         const platform = await this.create({ ownerId: userId, name })
         const defaultProject = await projectService(log).create({
             displayName: `${name}'s Project`,
             ownerId: userId,
             platformId: platform.id,
             type: ProjectType.PERSONAL,
+        })
+        await userIdentityRepository().update(user.identityId, {
+            tokenVersion: nanoid(),
         })
         return authenticationUtils(log).getProjectAndToken({
             userId,
