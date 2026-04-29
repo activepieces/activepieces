@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, AuthenticationResponse, EndpointScope, ErrorCode, isNil, PrincipalType, Project, ProjectType, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, AuthenticationResponse, EndpointScope, ErrorCode, isNil, PlatformRole, PrincipalType, Project, ProjectType, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -86,9 +86,8 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async getOnboardingResponse({ userId }: GetOnboardingResponseParams): Promise<AuthenticationResponse> {
-        const user = await userService(log).getOneOrFail({ id: userId })
-        const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
+    async getOnboardingResponse({ identityId }: GetOnboardingResponseParams): Promise<AuthenticationResponse> {
+        const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
         if (!identity.verified) {
             throw new ActivepiecesError({
                 code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
@@ -97,21 +96,17 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        if (user.status === UserStatus.INACTIVE) {
-            throw new ActivepiecesError({
-                code: ErrorCode.USER_IS_INACTIVE,
-                params: {
-                    email: identity.email,
-                },
-            })
-        }
         const token = await accessTokenManager(log).generateToken({
-            id: user.id,
+            id: identity.id,
             type: PrincipalType.ONBOARDING,
             tokenVersion: identity.tokenVersion,
         })
         return {
-            ...user,
+            id: identity.id,
+            platformId: null,
+            platformRole: PlatformRole.ADMIN,
+            status: UserStatus.ACTIVE,
+            externalId: null,
             firstName: identity.firstName,
             lastName: identity.lastName,
             email: identity.email,
@@ -244,7 +239,7 @@ type AssertUserIsInvitedToPlatformOrProjectParams = {
 }
 
 type GetOnboardingResponseParams = {
-    userId: string
+    identityId: string
 }
 
 type GetProjectAndTokenParams = {

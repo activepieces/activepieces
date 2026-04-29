@@ -86,6 +86,20 @@ export const accessTokenManager = (log: FastifyBaseLogger) => ({
 async function assertUserSession(log: FastifyBaseLogger, decoded: Principal | Principal): Promise<void> {
     if (decoded.type !== PrincipalType.USER && decoded.type !== PrincipalType.ONBOARDING) return
 
+    if (decoded.type === PrincipalType.ONBOARDING) {
+        const identity = await userIdentityService(log).getOneOrFail({ id: decoded.id })
+        const isExpired = (identity.tokenVersion ?? null) !== (decoded.tokenVersion ?? null)
+        if (isExpired || !identity.verified) {
+            throw new ActivepiecesError({
+                code: ErrorCode.SESSION_EXPIRED,
+                params: {
+                    message: 'The session has expired or the user is not verified.',
+                },
+            })
+        }
+        return
+    }
+
     const user = await userService(log).getOneOrFail({ id: decoded.id })
     const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
     const isExpired = (identity.tokenVersion ?? null) !== (decoded.tokenVersion ?? null)
@@ -96,6 +110,9 @@ async function assertUserSession(log: FastifyBaseLogger, decoded: Principal | Pr
                 message: 'The session has expired or the user is not verified.',
             },
         })
+    }
+    if (identity.lastLoggedInPlatformId !== decoded.platform.id) {
+        await userIdentityService(log).updateLastLoggedInPlatformId({ id: identity.id, lastLoggedInPlatformId: decoded.platform.id })
     }
 }
 

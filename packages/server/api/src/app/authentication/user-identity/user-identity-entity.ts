@@ -47,6 +47,10 @@ export const UserIdentityEntity = new EntitySchema<UserIdentity>({
             type: String,
             nullable: true,
         },
+        lastLoggedInPlatformId: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {

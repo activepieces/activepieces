@@ -1,5 +1,5 @@
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, OtpType, PlatformRole, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, OtpType, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
@@ -31,25 +31,26 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 ...params,
                 verified: hasInvitations || isFederatedProvider,
             })
-            const response = await createUserWithoutPlatform(userIdentity, log)
+            await sendVerificationOrAutoVerify(userIdentity, log)
+            await flagService(log).save({ id: ApFlagId.USER_CREATED, value: true })
+            await authenticationUtils(log).saveNewsLetterSubscriber(userIdentity)
             await userInvitationsService(log).provisionUserInvitation({ email: params.email })
+
             const preferredPlatformId = await getPreferredPlatformId(userIdentity.id, log)
             if (!isNil(preferredPlatformId)) {
-                const user = await userService(log).getOneByIdentityAndPlatform({
-                    identityId: userIdentity.id,
+                const user = await userService(log).getOrCreateWithProject({
+                    identity: userIdentity,
                     platformId: preferredPlatformId,
                 })
-                if (!isNil(user)) {
-                    log.info({ email: params.email, provider: params.provider, preferredPlatformId }, 'User signed up with invitation, returning preferred platform token')
-                    return authenticationUtils(log).getProjectAndToken({
-                        userId: user.id,
-                        platformId: preferredPlatformId,
-                        projectId: null,
-                    })
-                }
+                log.info({ email: params.email, provider: params.provider, preferredPlatformId }, 'User signed up with invitation, returning preferred platform token')
+                return authenticationUtils(log).getProjectAndToken({
+                    userId: user.id,
+                    platformId: preferredPlatformId,
+                    projectId: null,
+                })
             }
             log.info({ email: params.email, provider: params.provider }, 'User signed up without platform')
-            return response
+            return authenticationUtils(log).getOnboardingResponse({ identityId: userIdentity.id })
         }
 
         await authenticationUtils(log).assertUserIsInvitedToPlatformOrProject({
@@ -77,12 +78,15 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         const identity = await userIdentityService(log).verifyIdentityPassword(params)
         const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformId(identity.id, log) : params.predefinedPlatformId
         if (isNil(platformId)) {
-            const user = await userService(log).getOneByIdentityIdOnly({ identityId: identity.id })
-            assertNotNullOrUndefined(user, 'User not found')
+            const anyUser = await userService(log).getOneByIdentityIdOnly({ identityId: identity.id })
+            if (!isNil(anyUser) && anyUser.status === UserStatus.INACTIVE) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.USER_IS_INACTIVE,
+                    params: { email: params.email },
+                })
+            }
             log.info({ email: params.email }, 'User signed in without platform, returning onboarding token')
-            return authenticationUtils(log).getOnboardingResponse({
-                userId: user.id,
-            })
+            return authenticationUtils(log).getOnboardingResponse({ identityId: identity.id })
         }
         await authenticationUtils(log).assertEmailAuthIsEnabled({
             platformId,
@@ -110,11 +114,14 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
 
         if (isNil(platformId)) {
             if (!isNil(userIdentity)) {
-                const user = await userService(log).getOneByIdentityIdOnly({ identityId: userIdentity.id })
-                assertNotNullOrUndefined(user, 'User not found')
-                return authenticationUtils(log).getOnboardingResponse({
-                    userId: user.id,
-                })
+                const anyUser = await userService(log).getOneByIdentityIdOnly({ identityId: userIdentity.id })
+                if (!isNil(anyUser) && anyUser.status === UserStatus.INACTIVE) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.USER_IS_INACTIVE,
+                        params: { email: params.email },
+                    })
+                }
+                return authenticationUtils(log).getOnboardingResponse({ identityId: userIdentity.id })
             }
             // Create new identity and user without platform
             return authenticationService(log).signUp({
@@ -206,15 +213,8 @@ async function getUserForPlatform(identityId: string, platform: PlatformWithoutS
     return user
 }
 
-async function createUserWithoutPlatform(userIdentity: UserIdentity, log: FastifyBaseLogger): Promise<AuthenticationResponse> {
-    const user = await userService(log).create({
-        identityId: userIdentity.id,
-        platformRole: PlatformRole.ADMIN,
-        platformId: null,
-    })
-
+async function sendVerificationOrAutoVerify(userIdentity: UserIdentity, log: FastifyBaseLogger): Promise<void> {
     const edition = system.getEdition()
-
     switch (edition) {
         case ApEdition.CLOUD:
             if (!userIdentity.verified) {
@@ -230,20 +230,6 @@ async function createUserWithoutPlatform(userIdentity: UserIdentity, log: Fastif
             await userIdentityService(log).verify(userIdentity.id)
             break
     }
-
-    await flagService(log).save({
-        id: ApFlagId.USER_CREATED,
-        value: true,
-    })
-    await authenticationUtils(log).sendTelemetry({
-        identity: userIdentity,
-        user,
-    })
-    await authenticationUtils(log).saveNewsLetterSubscriber(userIdentity)
-
-    return authenticationUtils(log).getOnboardingResponse({
-        userId: user.id,
-    })
 }
 
 async function getPreferredPlatformIdForFederatedAuthn(email: string, log: FastifyBaseLogger): Promise<string | null> {
@@ -259,8 +245,10 @@ async function getPreferredPlatformId(identityId: string, log: FastifyBaseLogger
     if (edition === ApEdition.CLOUD) {
         const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId })
         const nonDedicated = platforms.filter((p) => !platformUtils.isCustomerOnDedicatedDomain(p))
+        const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
+        const lastUsed = !isNil(identity.lastLoggedInPlatformId) ? nonDedicated.find((p) => p.id === identity.lastLoggedInPlatformId) : undefined
         const licensed = nonDedicated.find((p) => !isNil(p.plan.licenseKey))
-        return licensed?.id ?? nonDedicated[0]?.id ?? null
+        return lastUsed?.id ?? licensed?.id ?? nonDedicated[0]?.id ?? null
     }
     return null
 }
