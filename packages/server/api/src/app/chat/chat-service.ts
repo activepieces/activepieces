@@ -143,7 +143,9 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
         let pendingTitle = ''
         const localTools = createChatTools({
-            onSessionTitle: (title) => { pendingTitle = title },
+            onSessionTitle: (title) => {
+                pendingTitle = title 
+            },
         })
         const tools = { ...localTools, ...mcpToolSet }
 

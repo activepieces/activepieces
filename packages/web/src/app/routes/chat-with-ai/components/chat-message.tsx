@@ -155,9 +155,7 @@ export function AssistantMessage({
 
   const HIDDEN_TOOLS = new Set(['ap_set_session_title']);
   const dynamicToolParts = message.parts.filter(
-    (p) =>
-      p.type === 'dynamic-tool' &&
-      !HIDDEN_TOOLS.has(p.toolName),
+    (p) => p.type === 'dynamic-tool' && !HIDDEN_TOOLS.has(p.toolName),
   );
   const textParts = message.parts.filter(
     (p): p is { type: 'text'; text: string } =>
