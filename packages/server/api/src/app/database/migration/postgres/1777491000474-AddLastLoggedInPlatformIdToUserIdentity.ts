@@ -1,7 +1,11 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { QueryRunner } from 'typeorm'
+import { Migration } from '../../migration'
 
-export class AddLastLoggedInPlatformIdToUserIdentity1777491000474 implements MigrationInterface {
+export class AddLastLoggedInPlatformIdToUserIdentity1777491000474 implements Migration {
     name = 'AddLastLoggedInPlatformIdToUserIdentity1777491000474'
+    breaking = false
+    release = '0.83.0'
+    transaction = true
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -15,5 +19,4 @@ export class AddLastLoggedInPlatformIdToUserIdentity1777491000474 implements Mig
             ALTER TABLE "user_identity" DROP COLUMN "lastLoggedInPlatformId"
         `)
     }
-
 }
