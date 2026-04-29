@@ -34,7 +34,11 @@ async function buildUserContentWithFiles({ text, files }: {
     for (const file of files) {
         const safeName = sanitizeFileName(file.name)
         if (TEXT_MIME_TYPES.has(file.mimeType)) {
-            userText += `\n--- File: ${safeName} ---\n${Buffer.from(file.data, 'base64').toString('utf-8')}`
+            const decoded = Buffer.from(file.data, 'base64').toString('utf-8')
+            const content = decoded.length > MAX_EXTRACTED_TEXT_LENGTH
+                ? decoded.slice(0, MAX_EXTRACTED_TEXT_LENGTH) + '\n[Content truncated due to length]'
+                : decoded
+            userText += `\n--- File: ${safeName} ---\n${content}`
         }
         else if (file.mimeType === 'application/pdf') {
             const pdfText = await extractPdfText(file.data)
