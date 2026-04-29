@@ -23,14 +23,12 @@ export function ChatInput({
   onStop,
   placeholder,
   leftActions,
-  disabled = false,
 }: {
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
   onStop?: () => void;
   placeholder?: string;
   leftActions?: React.ReactNode;
-  disabled?: boolean;
 }) {
   const [value, setValue] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
@@ -59,7 +57,6 @@ export function ChatInput({
         value={value}
         onValueChange={setValue}
         onSubmit={handleSubmit}
-        disabled={disabled}
         className="relative z-10 rounded-2xl border border-foreground/20 shadow-none transition-colors hover:border-foreground/40 focus-within:border-foreground/40"
       >
         {attachedFiles.length > 0 && (
