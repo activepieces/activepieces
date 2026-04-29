@@ -61,7 +61,7 @@ export const aggregateFieldAction = createAction({
     aggregation_type: Property.StaticDropdown({
       displayName: 'Aggregation Type',
       description:
-        'Sum, average, min, max, std_dev and variance only work on number fields.',
+        'The calculation to run over the field. **Sum, Average, Min, Max, Median, Std Dev, and Variance** only work with number fields.',
       required: true,
       options: {
         disabled: false,

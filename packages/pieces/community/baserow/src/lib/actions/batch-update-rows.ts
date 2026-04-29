@@ -25,9 +25,10 @@ export const batchUpdateRowsAction = createAction({
       throw new Error('Rows must be a JSON array.');
     }
     const client = await makeClient(context.auth);
-    return await client.batchUpdateRows(
+    const response = (await client.batchUpdateRows(
       table_id,
       rows as Record<string, unknown>[]
-    );
+    )) as { items: Record<string, unknown>[] };
+    return { count: response.items.length, rows: response.items };
   },
 });
