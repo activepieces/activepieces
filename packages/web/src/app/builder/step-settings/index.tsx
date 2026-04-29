@@ -20,24 +20,29 @@ import {
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { stepsHooks, pieceSelectorUtils, formUtils } from '@/features/pieces';
+import {
+  stepsHooks,
+  pieceSelectorUtils,
+  formUtils,
+  PieceIcon,
+} from '@/features/pieces';
 import { projectCollectionUtils } from '@/features/projects';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { DynamicPropertiesProvider } from '../piece-properties/dynamic-properties-context';
-import { FlowStepInputOutput } from '../run-details/flow-step-input-output';
 import { SidebarHeader } from '../sidebar-header';
-import { TestStepContainer } from '../test-step';
+import { TestPanelHost } from '../test-step/test-panel-host';
+import { TestStepCTAButton } from '../test-step/test-step-cta-button';
 
 import { AgentSettings } from './agent-settings';
 import { CodeSettings } from './code-settings';
 import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
-import { useResizableVerticalPanelsContext } from './resizable-vertical-panels-context';
 import { RouterSettings } from './router-settings';
-import { StepInfo } from './step-info';
+import { SettingsSubHeader } from './settings-sub-header';
+import { StepNavigationButtons } from './step-navigation-buttons';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
@@ -52,6 +57,7 @@ const StepSettingsContainer = () => {
     selectedBranchIndex,
     setSelectedBranchIndex,
     run,
+    testPanelView,
   ] = useBuilderStateContext((state) => [
     state.readonly,
     state.exitStepSettings,
@@ -61,6 +67,7 @@ const StepSettingsContainer = () => {
     state.selectedBranchIndex,
     state.setSelectedBranchIndex,
     state.run,
+    state.testPanelView,
   ]);
 
   const { stepMetadata } = stepsHooks.useStepMetadata({
@@ -157,18 +164,93 @@ const StepSettingsContainer = () => {
     form.trigger();
   }, []);
 
-  const { height, setHeight } = useResizableVerticalPanelsContext();
-  const initialHeightRef = useRef(height);
+  const showTestPanel = showGenerateSampleData || showStepInputOutFromRun;
+
+  const settingsForm = (
+    <ScrollArea className="h-full">
+      <SettingsSubHeader step={selectedStep} />
+      <div
+        className={cn(
+          'flex flex-col px-4 pb-6 pt-3',
+          GAP_SIZE_FOR_STEP_SETTINGS,
+        )}
+      >
+        {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
+          <LoopsSettings readonly={readonly}></LoopsSettings>
+        )}
+        {modifiedStep.type === FlowActionType.CODE && (
+          <CodeSettings readonly={readonly}></CodeSettings>
+        )}
+        {modifiedStep.type === FlowActionType.PIECE &&
+          runAgentStep &&
+          modifiedStep && (
+            <AgentSettings
+              step={modifiedStep}
+              flowId={flowVersion.flowId}
+              readonly={readonly}
+            />
+          )}
+        {modifiedStep.type === FlowActionType.PIECE &&
+          !runAgentStep &&
+          modifiedStep && (
+            <PieceSettings
+              step={modifiedStep}
+              flowId={flowVersion.flowId}
+              readonly={readonly}
+            ></PieceSettings>
+          )}
+        {modifiedStep.type === FlowActionType.ROUTER && modifiedStep && (
+          <RouterSettings readonly={readonly}></RouterSettings>
+        )}
+        {modifiedStep.type === FlowTriggerType.PIECE && modifiedStep && (
+          <PieceSettings
+            step={modifiedStep}
+            flowId={flowVersion.flowId}
+            readonly={readonly}
+          ></PieceSettings>
+        )}
+        {showActionErrorHandlingForm && (
+          <ActionErrorHandlingForm
+            hideContinueOnFailure={
+              stepMetadata.type === FlowActionType.PIECE
+                ? stepMetadata.errorHandlingOptions?.continueOnFailure?.hide
+                : false
+            }
+            disabled={readonly}
+            hideRetryOnFailure={
+              stepMetadata.type === FlowActionType.PIECE
+                ? stepMetadata.errorHandlingOptions?.retryOnFailure?.hide
+                : false
+            }
+          ></ActionErrorHandlingForm>
+        )}
+      </div>
+    </ScrollArea>
+  );
 
   return (
     <Form {...form}>
       <form
         onSubmit={(e) => e.preventDefault()}
         onChange={(e) => e.preventDefault()}
-        className="w-full h-full"
+        className="w-full h-full flex flex-col"
       >
         <div ref={sidebarHeaderContainerRef}>
-          <SidebarHeader onClose={() => exitStepSettings()}>
+          <SidebarHeader
+            onClose={() => exitStepSettings()}
+            leadingIcon={
+              stepMetadata ? (
+                <PieceIcon
+                  logoUrl={stepMetadata.logoUrl}
+                  displayName={stepMetadata.displayName}
+                  showTooltip={false}
+                  border={false}
+                  size="md"
+                />
+              ) : null
+            }
+            actions={<StepNavigationButtons />}
+          >
             <EditableStepName
               selectedBranchIndex={selectedBranchIndex}
               setDisplayName={(value) => {
@@ -206,104 +288,46 @@ const StepSettingsContainer = () => {
         <DynamicPropertiesProvider
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
-          <ResizablePanelGroup orientation="vertical">
-            <ResizablePanel className="min-h-[80px]">
-              <ScrollArea className="h-full">
-                <div className="w-full my-3 px-3">
-                  {stepMetadata && <StepInfo step={selectedStep} />}
-                </div>
-                <div
-                  className={cn(
-                    'flex flex-col px-4 pb-6',
-                    GAP_SIZE_FOR_STEP_SETTINGS,
-                  )}
-                >
-                  {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
-                    <LoopsSettings readonly={readonly}></LoopsSettings>
-                  )}
-                  {modifiedStep.type === FlowActionType.CODE && (
-                    <CodeSettings readonly={readonly}></CodeSettings>
-                  )}
-                  {modifiedStep.type === FlowActionType.PIECE &&
-                    runAgentStep &&
-                    modifiedStep && (
-                      <AgentSettings
-                        step={modifiedStep}
-                        flowId={flowVersion.flowId}
-                        readonly={readonly}
-                      />
-                    )}
-                  {modifiedStep.type === FlowActionType.PIECE &&
-                    !runAgentStep &&
-                    modifiedStep && (
-                      <PieceSettings
-                        step={modifiedStep}
-                        flowId={flowVersion.flowId}
-                        readonly={readonly}
-                      ></PieceSettings>
-                    )}
-                  {modifiedStep.type === FlowActionType.ROUTER &&
-                    modifiedStep && (
-                      <RouterSettings readonly={readonly}></RouterSettings>
-                    )}
-                  {modifiedStep.type === FlowTriggerType.PIECE &&
-                    modifiedStep && (
-                      <PieceSettings
-                        step={modifiedStep}
-                        flowId={flowVersion.flowId}
-                        readonly={readonly}
-                      ></PieceSettings>
-                    )}
-                  {showActionErrorHandlingForm && (
-                    <ActionErrorHandlingForm
-                      hideContinueOnFailure={
-                        stepMetadata.type === FlowActionType.PIECE
-                          ? stepMetadata.errorHandlingOptions?.continueOnFailure
-                              ?.hide
-                          : false
-                      }
-                      disabled={readonly}
-                      hideRetryOnFailure={
-                        stepMetadata.type === FlowActionType.PIECE
-                          ? stepMetadata.errorHandlingOptions?.retryOnFailure
-                              ?.hide
-                          : false
-                      }
-                    ></ActionErrorHandlingForm>
-                  )}
-                </div>
-              </ScrollArea>
-            </ResizablePanel>
-
-            {(showGenerateSampleData || showStepInputOutFromRun) && (
-              <>
-                <ResizableHandle withHandle={true} />
-                <ResizablePanel
-                  defaultSize={`${initialHeightRef.current}%`}
-                  onResize={(panelSize) => setHeight(panelSize.asPercentage)}
-                  className="min-h-[130px]"
-                >
-                  <ScrollArea
-                    className="h-[calc(100%-35px)]"
-                    viewPortClassName="h-full"
-                  >
-                    {showGenerateSampleData && (
-                      <TestStepContainer
-                        type={modifiedStep.type}
-                        flowId={flowVersion.flowId}
-                        flowVersionId={flowVersion.id}
-                        projectId={project?.id}
-                        isSaving={saving}
-                      ></TestStepContainer>
-                    )}
-                    {showStepInputOutFromRun && (
-                      <FlowStepInputOutput></FlowStepInputOutput>
-                    )}
-                  </ScrollArea>
-                </ResizablePanel>
-              </>
-            )}
-          </ResizablePanelGroup>
+          {showTestPanel && testPanelView === 'split' ? (
+            <ResizablePanelGroup
+              orientation="horizontal"
+              className="flex-1 min-h-0"
+            >
+              <ResizablePanel defaultSize={50} minSize={30} className="min-w-0">
+                {settingsForm}
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={50} minSize={30} className="min-w-0">
+                <TestPanelHost
+                  mode="split"
+                  flowId={flowVersion.flowId}
+                  flowVersionId={flowVersion.id}
+                  projectId={project?.id}
+                  stepType={modifiedStep.type}
+                  showGenerateSampleData={showGenerateSampleData}
+                  showStepInputOutFromRun={showStepInputOutFromRun}
+                  saving={saving}
+                />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          ) : (
+            <div className="relative flex-1 min-h-0 flex flex-col">
+              <div className="flex-1 min-h-0">{settingsForm}</div>
+              {showTestPanel && <TestStepCTAButton />}
+              {showTestPanel && (
+                <TestPanelHost
+                  mode="drawer"
+                  flowId={flowVersion.flowId}
+                  flowVersionId={flowVersion.id}
+                  projectId={project?.id}
+                  stepType={modifiedStep.type}
+                  showGenerateSampleData={showGenerateSampleData}
+                  showStepInputOutFromRun={showStepInputOutFromRun}
+                  saving={saving}
+                />
+              )}
+            </div>
+          )}
         </DynamicPropertiesProvider>
       </form>
     </Form>
