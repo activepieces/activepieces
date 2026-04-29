@@ -26,7 +26,7 @@ async function descriptApiCall<T extends HttpMessageBody>({
         method,
         url: `${BASE_URL}${path}`,
         headers: {
-            Authorization: `Bearer ${normalizeToken(apiKey)}`,
+            Authorization: `Bearer ${apiKey}`,
         },
         body,
         queryParams,
@@ -80,11 +80,15 @@ const projectIdProp = Property.Dropdown({
         if (!auth) {
             return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         }
-        const projects = await fetchAllProjects(getAuthToken(auth));
-        return {
-            disabled: false,
-            options: projects.map((p) => ({ label: p.name, value: p.id })),
-        };
+        try {
+            const projects = await fetchAllProjects(getAuthToken(auth));
+            return {
+                disabled: false,
+                options: projects.map((p) => ({ label: p.name, value: p.id })),
+            };
+        } catch {
+            return { disabled: true, options: [], placeholder: 'Failed to load projects. Check your connection.' };
+        }
     },
 });
 
@@ -100,19 +104,23 @@ const compositionIdProp = (required: boolean) =>
             if (!auth || !project_id) {
                 return { disabled: true, options: [], placeholder: 'Please select a project first' };
             }
-            const response = await descriptApiCall<{
-                id: string;
-                name: string;
-                compositions: { id: string; name: string }[];
-            }>({
-                apiKey: getAuthToken(auth),
-                method: HttpMethod.GET,
-                path: `/projects/${project_id as string}`,
-            });
-            return {
-                disabled: false,
-                options: response.body.compositions.map((c) => ({ label: c.name, value: c.id })),
-            };
+            try {
+                const response = await descriptApiCall<{
+                    id: string;
+                    name: string;
+                    compositions: { id: string; name: string }[];
+                }>({
+                    apiKey: getAuthToken(auth),
+                    method: HttpMethod.GET,
+                    path: `/projects/${project_id as string}`,
+                });
+                return {
+                    disabled: false,
+                    options: response.body.compositions.map((c) => ({ label: c.name, value: c.id })),
+                };
+            } catch {
+                return { disabled: true, options: [], placeholder: 'Failed to load compositions. Check your connection.' };
+            }
         },
     });
 

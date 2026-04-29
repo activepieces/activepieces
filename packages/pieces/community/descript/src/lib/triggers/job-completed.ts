@@ -114,17 +114,27 @@ const polling: Polling<
     TriggerProps
 > = {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ auth, propsValue }) => {
+    items: async ({ auth, propsValue, lastFetchEpochMS }) => {
         const { job_type_filter } = propsValue;
         const apiKey = descriptCommon.getAuthToken(auth);
         const params: Record<string, string> = { limit: '100' };
         if (job_type_filter && job_type_filter !== 'all') {
             params['type'] = job_type_filter;
         }
+
+        // Use created_after to avoid re-fetching full history on every poll.
+        if (lastFetchEpochMS > 0) {
+            const createdAfter = new Date(lastFetchEpochMS).toISOString();
+            params['created_after'] = createdAfter;
+        }
+
         const allJobs: JobItem[] = [];
         let cursor: string | undefined = undefined;
+        let pageCount = 0;
+        const maxPages = 10; // Defensive safety cap to prevent runaway pagination.
 
         do {
+            pageCount++;
             const queryParams: Record<string, string> = {
                 ...params,
                 ...(cursor ? { cursor } : {}),
@@ -142,7 +152,7 @@ const polling: Polling<
 
             allJobs.push(...response.body.data);
             cursor = response.body.pagination.next_cursor;
-        } while (cursor);
+        } while (cursor && pageCount < maxPages);
 
         // Descript may use different terminal state labels across job types.
         const stoppedJobs = allJobs.filter(isCompletedJob);
