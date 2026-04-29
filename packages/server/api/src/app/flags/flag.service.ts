@@ -5,6 +5,7 @@ import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
+import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { system } from '../helper/system/system'
 import { AppSystemProp, apVersionUtil } from '../helper/system/system-props'
 import { FlagEntity } from './flag.entity'
@@ -297,6 +298,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.DEFAULT_CONCURRENT_JOBS_LIMIT,
                 value: system.getNumber(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SMTP_CONFIGURED,
+                value: smtpEmailSender(log).isSmtpConfigured(),
                 created,
                 updated,
             },

@@ -1,12 +1,15 @@
 import { apDayjs } from '@activepieces/server-utils'
 import {
+    ActivepiecesError,
     apId,
     AppConnectionScope,
     Cursor,
+    ErrorCode,
     isNil,
     Metadata,
     PiecesFilterType,
     PlatformId,
+    PrincipalType,
     Project,
     ProjectId,
     ProjectType,
@@ -30,6 +33,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { applyProjectsAccessFilters, projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
 import { concurrencyPoolService } from '../platform/concurrency-pool/concurrency-pool.service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { projectMemberService } from './project-members/project-member.service'
@@ -40,7 +44,12 @@ const projectPlanRepo = repoFactory(ProjectPlanEntity)
 
 export const platformProjectService = (log: FastifyBaseLogger) => ({
     async getForPlatform(params: GetAllForParamsAndUser): Promise<SeekPage<ProjectWithLimits>> {
-        const { cursorRequest, limit, platformId, displayName, externalId, userId, types, isPrivileged } = params
+        const { cursorRequest, limit, platformId, displayName, externalId, externalUserId, userId, types, isPrivileged, principalType } = params
+        const accessFilterUser = await resolveAccessFilterUser({ platformId, externalUserId, callerUserId: userId, callerIsPrivileged: isPrivileged, principalType, log })
+        if (isNil(accessFilterUser)) {
+            return paginationHelper.createPage<ProjectWithLimits>([], null)
+        }
+
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: ProjectEntity,
@@ -68,7 +77,10 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             .createQueryBuilder('project')
             .where(filters)
 
-        await applyProjectsAccessFilters(queryBuilder, { platformId, userId, isPrivileged })
+        await applyProjectsAccessFilters(queryBuilder, {
+            platformId,
+            ...accessFilterUser,
+        })
 
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const projects: ProjectWithLimits[] = await enrichProjects(data, log)
@@ -277,6 +289,23 @@ async function enrichProjects(
     })
 }
 
+async function resolveAccessFilterUser({ platformId, externalUserId, callerUserId, callerIsPrivileged, principalType, log }: ResolveAccessFilterUserParams): Promise<AccessFilterUser | null> {
+    if (isNil(externalUserId)) {
+        return { userId: callerUserId, isPrivileged: callerIsPrivileged }
+    }
+    if (principalType !== PrincipalType.SERVICE) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {},
+        })
+    }
+    const user = await userService(log).getByPlatformAndExternalId({ platformId, externalId: externalUserId })
+    if (isNil(user)) {
+        return null
+    }
+    return { userId: user.id, isPrivileged: false }
+}
+
 async function resolvePoolId({ platformId, projectId, maxConcurrentJobs, log }: ResolvePoolIdParams): Promise<string | null | undefined> {
     if (typeof maxConcurrentJobs === 'number') {
         const { poolId } = await concurrencyPoolService(log).upsertPool({
@@ -299,15 +328,31 @@ type ResolvePoolIdParams = {
     log: FastifyBaseLogger
 }
 
+type AccessFilterUser = {
+    userId: string
+    isPrivileged: boolean
+}
+
+type ResolveAccessFilterUserParams = {
+    platformId: string
+    externalUserId: string | undefined
+    callerUserId: string
+    callerIsPrivileged: boolean
+    principalType?: PrincipalType
+    log: FastifyBaseLogger
+}
+
 type GetAllForParamsAndUser = {
     userId: string
     platformId: string
     displayName?: string
     externalId?: string
+    externalUserId?: string
     cursorRequest: Cursor | null
     limit: number
     types?: ProjectType[]
     isPrivileged: boolean
+    principalType?: PrincipalType
 }
 
 type DeletePersonalProjectForUserParams = {

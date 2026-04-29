@@ -4,6 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { ApTableStateProvider } from '@/features/tables';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 
@@ -14,6 +15,7 @@ import { RoutePermissionGuard } from '../guards/permission-guard';
 import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
 import { AutomationsPage } from './automations';
+import { ChatWithAIPage } from './chat-with-ai';
 
 const FlowBuilderPage = React.lazy(() =>
   import('./flows/id').then((m) => ({ default: m.FlowBuilderPage })),
@@ -53,6 +55,14 @@ function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
 }
 
+function HideTablesGuard({ children }: { children: React.ReactNode }) {
+  const { embedState } = useEmbedding();
+  if (embedState.hideTables) {
+    return <Navigate to={routesThatRequireProjectId.automations} replace />;
+  }
+  return <>{children}</>;
+}
+
 const automationsPagePermissions = [
   Permission.READ_FLOW,
   Permission.READ_TABLE,
@@ -71,6 +81,30 @@ export const projectRoutes = [
             </SuspenseWrapper>
           </PageTitle>
         </RoutePermissionGuard>
+      </ProjectDashboardLayout>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/chat',
+    element: (
+      <ProjectDashboardLayout>
+        <PageTitle title="Chat">
+          <SuspenseWrapper>
+            <ChatWithAIPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </ProjectDashboardLayout>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/chat/:conversationId',
+    element: (
+      <ProjectDashboardLayout>
+        <PageTitle title="Chat">
+          <SuspenseWrapper>
+            <ChatWithAIPage />
+          </SuspenseWrapper>
+        </PageTitle>
       </ProjectDashboardLayout>
     ),
   }),
@@ -143,17 +177,19 @@ export const projectRoutes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleTable,
     element: (
-      <RoutePermissionGuard requiredPermissions={Permission.READ_TABLE}>
-        <PageTitle title="Table">
-          <BuilderLayout>
-            <ApTableStateProvider>
-              <SuspenseWrapper>
-                <ApTableEditorPage />
-              </SuspenseWrapper>
-            </ApTableStateProvider>
-          </BuilderLayout>
-        </PageTitle>
-      </RoutePermissionGuard>
+      <HideTablesGuard>
+        <RoutePermissionGuard requiredPermissions={Permission.READ_TABLE}>
+          <PageTitle title="Table">
+            <BuilderLayout>
+              <ApTableStateProvider>
+                <SuspenseWrapper>
+                  <ApTableEditorPage />
+                </SuspenseWrapper>
+              </ApTableStateProvider>
+            </BuilderLayout>
+          </PageTitle>
+        </RoutePermissionGuard>
+      </HideTablesGuard>
     ),
   }),
   ...ProjectRouterWrapper({

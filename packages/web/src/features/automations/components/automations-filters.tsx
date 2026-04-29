@@ -111,7 +111,7 @@ export const AutomationsFilters = ({
     useState(false);
   const typeOptions = [
     { value: 'flow', label: t('Flows') },
-    { value: 'table', label: t('Tables') },
+    ...(embedState.hideTables ? [] : [{ value: 'table', label: t('Tables') }]),
   ];
 
   const statusOptions = Object.values(FlowStatus).map((status) => ({
@@ -147,7 +147,11 @@ export const AutomationsFilters = ({
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder={t('Search flows and tables...')}
+                placeholder={
+                  embedState.hideTables
+                    ? t('Search flows...')
+                    : t('Search flows and tables...')
+                }
                 value={searchTerm}
                 onChange={(e) => {
                   onSearchChange(e.target.value);
@@ -273,18 +277,20 @@ export const AutomationsFilters = ({
                       {t('Import Flow')}
                     </DropdownMenuItem>
                   </PermissionNeededTooltip>
-                  <PermissionNeededTooltip
-                    hasPermission={userHasPermissionToWriteTable}
-                  >
-                    <DropdownMenuItem
-                      disabled={!userHasPermissionToWriteTable}
-                      onClick={onImportTable}
-                      className="cursor-pointer"
+                  {!embedState.hideTables && (
+                    <PermissionNeededTooltip
+                      hasPermission={userHasPermissionToWriteTable}
                     >
-                      <Table2 className="h-4 w-4 mr-2" />
-                      {t('Import Table')}
-                    </DropdownMenuItem>
-                  </PermissionNeededTooltip>
+                      <DropdownMenuItem
+                        disabled={!userHasPermissionToWriteTable}
+                        onClick={onImportTable}
+                        className="cursor-pointer"
+                      >
+                        <Table2 className="h-4 w-4 mr-2" />
+                        {t('Import Table')}
+                      </DropdownMenuItem>
+                    </PermissionNeededTooltip>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -346,29 +352,31 @@ export const AutomationsFilters = ({
                     {t('Start from Template')}
                   </DropdownMenuItem>
                 </PermissionNeededTooltip>
-                <PermissionNeededTooltip
-                  hasPermission={userHasPermissionToWriteTable}
-                >
-                  <DropdownMenuItem
-                    disabled={
-                      !userHasPermissionToWriteTable ||
-                      isCreatingFlow ||
-                      isCreatingTable
-                    }
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      onCreateTable();
-                    }}
-                    className="cursor-pointer"
+                {!embedState.hideTables && (
+                  <PermissionNeededTooltip
+                    hasPermission={userHasPermissionToWriteTable}
                   >
-                    {isCreatingTable ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Table2 className="h-4 w-4 mr-2" />
-                    )}
-                    {isCreatingTable ? t('Creating...') : t('New Table')}
-                  </DropdownMenuItem>
-                </PermissionNeededTooltip>
+                    <DropdownMenuItem
+                      disabled={
+                        !userHasPermissionToWriteTable ||
+                        isCreatingFlow ||
+                        isCreatingTable
+                      }
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        onCreateTable();
+                      }}
+                      className="cursor-pointer"
+                    >
+                      {isCreatingTable ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Table2 className="h-4 w-4 mr-2" />
+                      )}
+                      {isCreatingTable ? t('Creating...') : t('New Table')}
+                    </DropdownMenuItem>
+                  </PermissionNeededTooltip>
+                )}
                 {!embedState.hideFolders && (
                   <>
                     <DropdownMenuSeparator />

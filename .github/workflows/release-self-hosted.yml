@@ -53,7 +53,7 @@ jobs:
           git push origin ${{ inputs.tag }} --force
 
       - name: Create or update changelog via release-drafter
-        uses: release-drafter/release-drafter@v5
+        uses: release-drafter/release-drafter@v7
         with:
           commitish: ${{ github.ref_name }}
           prerelease: false

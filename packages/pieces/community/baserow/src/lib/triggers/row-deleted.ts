@@ -1,27 +1,39 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { baserowJwtAuth } from '../auth';
-import { baserowCommon } from '../common';
-import { createWebhookTriggerHooks } from '../common/webhook-trigger';
-
-const webhookHooks = createWebhookTriggerHooks('rows.deleted', 'baserow_row_deleted');
+import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/shared';
+import { baserowAuth } from '../auth';
 
 export const rowDeletedTrigger = createTrigger({
   name: 'baserow_row_deleted',
-  auth: baserowJwtAuth,
+  auth: baserowAuth,
   displayName: 'Row Deleted',
   description: 'Triggers when a row is deleted from a Baserow table.',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    table_id: baserowCommon.tableId(),
+    instructions: Property.MarkDown({
+      value: `
+## Setup Instructions
+
+1. In Baserow, click the **···** menu beside your table and select **Webhooks**.
+2. Click **Create webhook +**.
+3. Set the HTTP method to **POST**.
+4. Paste the following URL into the endpoint field:
+\`\`\`text
+{{webhookUrl}}
+\`\`\`
+5. Under events, select **Rows deleted**.
+6. Click **Save**.
+`,
+      variant: MarkdownVariant.INFO,
+    }),
   },
   sampleData: {
     id: 1,
   },
-  async onEnable(context) {
-    await webhookHooks.onEnable(context);
+  async onEnable() {
+    // Manual setup required — user registers the webhook URL in Baserow UI.
   },
-  async onDisable(context) {
-    await webhookHooks.onDisable(context);
+  async onDisable() {
+    // Manual cleanup — user deletes the webhook in Baserow UI.
   },
   async run(context) {
     const body = context.payload.body as { row_ids?: number[] };

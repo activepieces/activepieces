@@ -22,6 +22,8 @@ beforeEach(async () => {
 
 async function createFailedFlowRun(params: {
     projectId: string
+    startTime?: string
+    finishTime?: string
 }) {
     const flow = createMockFlow({ projectId: params.projectId })
     await db.save('flow', flow)
@@ -38,6 +40,8 @@ async function createFailedFlowRun(params: {
         flowVersionId: flowVersion.id,
         status: FlowRunStatus.FAILED,
         environment: RunEnvironment.PRODUCTION,
+        startTime: params.startTime,
+        finishTime: params.finishTime,
     })
     await db.save('flow_run', flowRun)
 
@@ -59,6 +63,28 @@ describe('Retry flow run', () => {
 
         const updatedRun = await db.findOneByOrFail<{ id: string, status: string }>('flow_run', { id: flowRun.id })
         expect(updatedRun.status).toBe(FlowRunStatus.QUEUED)
+    })
+
+    it('should reset startTime and clear finishTime when retrying from failed step', async () => {
+        const originalStartTime = new Date('2020-01-01T00:00:00.000Z').toISOString()
+        const originalFinishTime = new Date('2020-01-01T00:05:00.000Z').toISOString()
+        const { flowRun } = await createFailedFlowRun({
+            projectId: ctx.project.id,
+            startTime: originalStartTime,
+            finishTime: originalFinishTime,
+        })
+
+        const response = await ctx.post(`/v1/flow-runs/${flowRun.id}/retry`, {
+            strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+            projectId: ctx.project.id,
+        })
+
+        expect(response.statusCode).toBe(200)
+
+        const updatedRun = await db.findOneByOrFail<{ id: string, startTime: Date | null, finishTime: Date | null }>('flow_run', { id: flowRun.id })
+        expect(updatedRun.startTime).not.toBeNull()
+        expect(new Date(updatedRun.startTime!).getTime()).toBeGreaterThan(new Date(originalStartTime).getTime())
+        expect(updatedRun.finishTime).toBeNull()
     })
 
     it('should retry on latest version and create a new run', async () => {

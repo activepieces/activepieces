@@ -6,12 +6,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { BoxIcon } from '@/components/icons/box';
 import { ConnectIcon } from '@/components/icons/connect';
 import { HistoryIcon } from '@/components/icons/history';
+import { SendIcon } from '@/components/icons/send';
 import { WorkflowIcon } from '@/components/icons/workflow';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
@@ -52,6 +54,11 @@ const AnimatedTab = ({
     >
       <IconComponent ref={iconRef} size={16} className="mr-2" />
       {tab.label}
+      {tab.beta && (
+        <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium leading-none text-primary">
+          Beta
+        </span>
+      )}
     </TabsTrigger>
   );
 };
@@ -59,12 +66,21 @@ const AnimatedTab = ({
 export const ProjectDashboardLayoutHeader = () => {
   const { project } = projectCollectionUtils.useCurrentProject();
   const { checkAccess } = useAuthorization();
+  const { platform } = platformHooks.useCurrentPlatform();
   const { embedState } = useEmbedding();
   const location = useLocation();
   const navigate = useNavigate();
   const isEmbedded = embedState.isEmbedded;
 
   const primaryTabs: ProjectDashboardLayoutHeaderTab[] = [
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/chat'),
+      label: t('Chat'),
+      icon: SendIcon,
+      hasPermission: checkAccess(Permission.READ_CHAT),
+      show: platform.plan.chatEnabled,
+      beta: true,
+    },
     {
       to: authenticationSession.appendProjectRoutePrefix('/automations'),
       label: t('Automations'),
@@ -111,8 +127,8 @@ export const ProjectDashboardLayoutHeader = () => {
   return (
     <div className="flex flex-col">
       {!isEmbedded && <ProjectDashboardPageHeader />}
-      <Tabs className="px-3 pt-2 border-b">
-        {!embedState.hideSideNav && (
+      {!embedState.hideSideNav && (
+        <Tabs className="px-3 pt-2 border-b">
           <TabsList variant="outline">
             {visiblePrimaryTabs.map((tab) => (
               <AnimatedTab
@@ -138,8 +154,8 @@ export const ProjectDashboardLayoutHeader = () => {
               />
             ))}
           </TabsList>
-        )}
-      </Tabs>
+        </Tabs>
+      )}
     </div>
   );
 };

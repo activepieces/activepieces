@@ -4,14 +4,14 @@ import {
     ExecutionType,
     FlowTriggerType,
     FlowVersionState,
-    ProgressUpdateType,
+    StreamStepProgress,
     RunEnvironment,
     StepOutputStatus,
 } from '@activepieces/shared'
 import type { BeginExecuteFlowOperation, FlowVersion } from '@activepieces/shared'
 
-vi.mock('../../src/lib/services/progress.service', () => ({
-    progressService: {
+vi.mock('../../src/lib/handler/run-progress', () => ({
+    runProgressService: {
         backup: vi.fn(),
     },
 }))
@@ -56,9 +56,9 @@ function makeBeginOperation(overrides?: Partial<BeginExecuteFlowOperation>): Beg
         executionType: ExecutionType.BEGIN,
         runEnvironment: RunEnvironment.TESTING,
         executionState: { steps: {}, tags: [] },
-        serverHandlerId: null,
+        workerHandlerId: null,
         httpRequestId: null,
-        progressUpdateType: ProgressUpdateType.NONE,
+        streamStepProgress: StreamStepProgress.NONE,
         stepNameToTest: null,
         triggerPayload: {},
         executeTrigger: false,

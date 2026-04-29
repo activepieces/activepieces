@@ -1,6 +1,4 @@
-import { AgentMcpTool, ApId, buildAuthHeaders, isNil, McpAuthConfig, McpProtocol, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
-import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp'
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
+import { ApId, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
@@ -27,66 +25,6 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
             projectId: req.projectId,
         })
     })
-
-    app.post('/validate-agent-mcp-tool', AddMcpServerToolRequest, async (req) => {
-        const tool = req.body as McpToolValidationBody
-        let mcpClient: MCPClient | null = null
-
-        try {
-            mcpClient = await createMCPClient({
-                transport: createTransportConfig(
-                    tool.protocol,
-                    tool.serverUrl,
-                    buildAuthHeaders(tool.auth as McpAuthConfig),
-                ) as MCPTransport,
-            })
-            const mcpTools = await mcpClient.tools()
-
-            return { toolNames: Object.keys(mcpTools).map(toolName => toolName), error: null }
-        }
-        catch (error) {
-            return { toolNames: null, error: `Error connecting to mcp server ${tool.toolName}, Error: ${error}` }
-        }
-        finally {
-            if (!isNil(mcpClient)) {
-                await mcpClient.close()
-            }
-        }
-    })
-}
-
-function createTransportConfig(
-    protocol: McpProtocol,
-    serverUrl: string,
-    headers: Record<string, string> = {},
-) {
-    const url = new URL(serverUrl)
-
-    switch (protocol) {
-        case McpProtocol.SIMPLE_HTTP: {
-            return {
-                type: 'http',
-                url: serverUrl,
-                headers,
-            }
-        }
-        case McpProtocol.STREAMABLE_HTTP: {
-            return new StreamableHTTPClientTransport(url, {
-                requestInit: {
-                    headers,
-                },
-            })
-        }
-        case McpProtocol.SSE: {
-            return {
-                type: 'sse',
-                url: serverUrl,
-                headers,
-            }
-        }
-        default:
-            throw new Error(`Unsupported MCP protocol type: ${protocol}`)
-    }
 }
 
 export const UpdateMcpRequest = {
@@ -107,30 +45,6 @@ export const UpdateMcpRequest = {
             projectId: ApId,
         }),
         body: UpdateMcpServerRequest,
-    },
-}
-
-export const AddMcpServerToolRequest = {
-    config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            Permission.WRITE_FLOW,
-            {
-                type: ProjectResourceType.PARAM,
-            },
-        ),
-    },
-    schema: {
-        tags: ['agent'],
-        description: 'Validate agent MCP tool',
-        params: z.object({
-            projectId: ApId,
-        }),
-        body: AgentMcpTool.omit({ auth: true }).merge(
-            z.object({
-                auth: z.unknown(),
-            }),
-        ),
     },
 }
 
@@ -172,5 +86,3 @@ const RotateTokenRequest = {
         projectId: ApId,
     }),
 }
-
-type McpToolValidationBody = Omit<AgentMcpTool, 'auth'> & { auth: unknown }

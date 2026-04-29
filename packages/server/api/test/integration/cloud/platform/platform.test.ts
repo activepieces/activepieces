@@ -6,6 +6,7 @@ import { apId, ApEdition, FilteredPieceBehavior,
     PlatformRole,
     PrincipalType,
     UpdatePlatformRequestBody,
+    UserIdentityProvider,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
@@ -255,6 +256,45 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
+        it('rejects cross-tenant platform update (IDOR)', async () => {
+            // arrange — two independent platforms with their own admin owners
+            const { mockOwner: ownerOfPlatformA, mockPlatform: platformA } = await mockAndSaveBasicSetup()
+            const { mockOwner: ownerOfPlatformB, mockPlatform: platformB } = await mockAndSaveBasicSetup({
+                platform: { name: 'platform-b-original-name' },
+            })
+
+            const attackerToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: ownerOfPlatformA.id,
+                platform: { id: platformA.id },
+            })
+
+            // act — attacker (admin of platform A) points the write at platform B
+            const attackResponse = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${platformB.id}`,
+                headers: { authorization: `Bearer ${attackerToken}` },
+                body: { name: 'pwned' },
+            })
+
+            // assert — request is rejected
+            expect(attackResponse?.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            // assert — platform B was NOT mutated (defense-in-depth check)
+            const victimToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: ownerOfPlatformB.id,
+                platform: { id: platformB.id },
+            })
+            const victimReadResponse = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/${platformB.id}`,
+                headers: { authorization: `Bearer ${victimToken}` },
+            })
+            expect(victimReadResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(victimReadResponse?.json().name).toBe('platform-b-original-name')
+        })
+
     })
 
     describe('get platform endpoint', () => {
@@ -312,6 +352,80 @@ describe('Platform API', () => {
             expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)
         })
 
+
+        it('Hides license key from JWT provider (embedded) users', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    licenseKey: 'test-license-key',
+                },
+            })
+
+            const { mockUser: embeddedUser } = await mockBasicUser({
+                userIdentity: {
+                    provider: UserIdentityProvider.JWT,
+                },
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+
+            const mockToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: embeddedUser.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            const responseBody = response?.json()
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.plan.licenseKey).toBeNull()
+        })
+
+        it('Returns license key for non-embedded users', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    licenseKey: 'test-license-key',
+                },
+            })
+
+            const mockToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            const responseBody = response?.json()
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.plan.licenseKey).toBe('test-license-key')
+        })
 
         it('Fails if user is not a platform member', async () => {
             const { mockOwner: mockOwner1, mockPlatform: mockPlatform1 } = await mockAndSaveBasicSetup()

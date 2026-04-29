@@ -3,9 +3,9 @@ import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { CodeAction, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
-import { progressService } from '../services/progress.service'
 import { utils } from '../utils'
 import { ActionHandler, BaseExecutor } from './base-executor'
+import { runProgressService } from './run-progress'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
     async handle({
@@ -35,7 +35,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
     })
 
     const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-        await progressService.sendUpdate({
+        await runProgressService.sendUpdate({
             engineConstants: constants,
             flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
             stepNameToUpdate: action.name,

@@ -7,6 +7,9 @@ import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
+import { ChatConversationEntity } from '../chat/chat-conversation-entity'
+import { SandboxSessionEntity, SandboxSessionEventEntity } from '../chat/sandbox/sandbox-session-entity'
+import { UserSandboxEntity } from '../chat/user-sandbox-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
@@ -30,6 +33,7 @@ import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
+import { WaitpointEntity } from '../flows/flow-run/waitpoint/waitpoint-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { system } from '../helper/system/system'
@@ -99,8 +103,13 @@ function getEntities(): EntitySchema<unknown>[] {
         McpOAuthTokenEntity,
         KnowledgeBaseFileEntity,
         KnowledgeBaseChunkEntity,
+        ChatConversationEntity,
+        UserSandboxEntity,
+        SandboxSessionEntity,
+        SandboxSessionEventEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
+        WaitpointEntity,
         // Enterprise
         ConcurrencyPoolEntity,
         ProjectMemberEntity,
