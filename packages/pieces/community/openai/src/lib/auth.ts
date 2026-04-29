@@ -51,3 +51,22 @@ export type OpenAIAuth = {
   apiKey: string;
   baseUrl?: string;
 };
+
+export const getOpenAIAuth = (auth: OpenAIAuth | string | undefined): OpenAIAuth => {
+  if (!auth) {
+    return {
+      apiKey: '',
+      baseUrl: DEFAULT_BASE_URL,
+    };
+  }
+  if (typeof auth === 'string') {
+    return {
+      apiKey: auth,
+      baseUrl: DEFAULT_BASE_URL,
+    };
+  }
+  return {
+    apiKey: auth.apiKey,
+    baseUrl: auth.baseUrl?.trim() || DEFAULT_BASE_URL,
+  };
+};

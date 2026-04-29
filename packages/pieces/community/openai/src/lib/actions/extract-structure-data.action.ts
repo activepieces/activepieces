@@ -1,4 +1,4 @@
-import { openaiAuth } from '../auth';
+import { getOpenAIAuth, openaiAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { notLLMs } from '../common/common';
@@ -24,9 +24,10 @@ export const extractStructuredDataAction = createAction({
 					};
 				}
 				try {
+					const resolvedAuth = getOpenAIAuth(auth);
 					const openai = new OpenAI({
-						apiKey: auth.apiKey,
-						baseURL: auth.baseUrl,
+						apiKey: resolvedAuth.apiKey,
+						baseURL: resolvedAuth.baseUrl,
 					});
 					const response = await openai.models.list();
 					// We need to get only LLM models
@@ -106,9 +107,10 @@ export const extractStructuredDataAction = createAction({
 			}
 		}
 		const prompt = 'Extract the following data from the provided text'
+		const resolvedAuth = getOpenAIAuth(context.auth);
 		const openai = new OpenAI({
-			apiKey: context.auth.apiKey,
-			baseURL: context.auth.baseUrl,
+			apiKey: resolvedAuth.apiKey,
+			baseURL: resolvedAuth.baseUrl,
 		});
 
 		const response = await openai.chat.completions.create({

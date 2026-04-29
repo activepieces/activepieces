@@ -3,7 +3,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import { openaiAuth } from '../auth';
+import { getOpenAIAuth, openaiAuth } from '../auth';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
@@ -99,9 +99,10 @@ export const visionPrompt = createAction({
       temperature: z.number().min(0).max(1),
     });
 
+    const resolvedAuth = getOpenAIAuth(auth);
     const openai = new OpenAI({
-      apiKey: auth.apiKey,
-      baseURL: auth.baseUrl,
+      apiKey: resolvedAuth.apiKey,
+      baseURL: resolvedAuth.baseUrl,
     });
     const { temperature, maxTokens, topP, frequencyPenalty, presencePenalty } =
       propsValue;

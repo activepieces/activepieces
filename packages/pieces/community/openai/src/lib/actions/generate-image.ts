@@ -3,7 +3,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { kebabCase } from '@activepieces/shared';
 import { randomBytes } from 'node:crypto';
 import OpenAI from 'openai';
-import { openaiAuth } from '../auth';
+import { getOpenAIAuth, openaiAuth } from '../auth';
 
 export const generateImage = createAction({
   auth: openaiAuth,
@@ -96,9 +96,10 @@ export const generateImage = createAction({
     }),
   },
   async run(context) {
+    const resolvedAuth = getOpenAIAuth(context.auth);
     const openai = new OpenAI({ 
-      apiKey: context.auth.apiKey,
-      baseURL: context.auth.baseUrl,
+      apiKey: resolvedAuth.apiKey,
+      baseURL: resolvedAuth.baseUrl,
     });
     const { quality, resolution, model, prompt } = context.propsValue;
 
@@ -133,7 +134,7 @@ export const generateImage = createAction({
           imageBuffer = Buffer.from(img.b64_json, 'base64');
         } else if (img.url) {
           const headers = {
-            Authorization: `Bearer ${context.auth.apiKey}`,
+            Authorization: `Bearer ${resolvedAuth.apiKey}`,
           };
           const downloaded = await httpClient.sendRequest({
             method: HttpMethod.GET,

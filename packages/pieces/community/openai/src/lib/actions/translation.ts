@@ -4,10 +4,10 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { openaiAuth } from '../auth';
+import { getOpenAIAuth, openaiAuth } from '../auth';
 import FormData from 'form-data';
 import mime from 'mime-types';
-import { baseUrl } from '../common/common';
+import { DEFAULT_BASE_URL } from '../common/common';
 
 export const translateAction = createAction({
   name: 'translate',
@@ -31,13 +31,16 @@ export const translateAction = createAction({
     });
     form.append('model', 'whisper-1');
 
+    const resolvedAuth = getOpenAIAuth(context.auth);
     const headers = {
-      Authorization: `Bearer ${context.auth.apiKey}`,
+      Authorization: `Bearer ${resolvedAuth.apiKey}`,
     };
+
+    const resolvedBaseUrl = resolvedAuth.baseUrl.replace(/\/+$/, '');
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${context.auth.baseUrl.replace(/\/+$/, '')}/audio/translations`,
+      url: `${resolvedBaseUrl}/audio/translations`,
       body: form,
       headers: {
         ...form.getHeaders(),

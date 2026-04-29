@@ -3,7 +3,7 @@ import OpenAI, { toFile } from 'openai';
 import { randomBytes } from 'node:crypto';
 import { kebabCase } from '@activepieces/shared';
 import mime from 'mime-types';
-import { openaiAuth } from '../auth';
+import { getOpenAIAuth, openaiAuth } from '../auth';
 
 export const editImage = createAction({
   auth: openaiAuth,
@@ -57,9 +57,10 @@ export const editImage = createAction({
     }),
   },
   async run(context) {
+    const resolvedAuth = getOpenAIAuth(context.auth);
     const openai = new OpenAI({ 
-      apiKey: context.auth.apiKey,
-      baseURL: context.auth.baseUrl,
+      apiKey: resolvedAuth.apiKey,
+      baseURL: resolvedAuth.baseUrl,
     });
     const { image, prompt, mask, size, quality } = context.propsValue;
 

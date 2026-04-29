@@ -4,7 +4,7 @@ import {
   StoreScope,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import { openaiAuth } from '../auth';
+import { getOpenAIAuth, openaiAuth } from '../auth';
 import { sleep } from '../common/common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
@@ -30,9 +30,10 @@ export const askAssistant = createAction({
           };
         }
         try {
+          const resolvedAuth = getOpenAIAuth(auth);
           const openai = new OpenAI({
-            apiKey: auth.apiKey,
-            baseURL: auth.baseUrl,
+            apiKey: resolvedAuth.apiKey,
+            baseURL: resolvedAuth.baseUrl,
           });
           const assistants = await openai.beta.assistants.list();
 
@@ -70,9 +71,10 @@ export const askAssistant = createAction({
       memoryKey: z.string().max(128).optional(),
     });
 
+    const resolvedAuth = getOpenAIAuth(auth);
     const openai = new OpenAI({
-      apiKey: auth.apiKey,
-      baseURL: auth.baseUrl,
+      apiKey: resolvedAuth.apiKey,
+      baseURL: resolvedAuth.baseUrl,
     });
     const { assistant, prompt, memoryKey } = propsValue;
     const runCheckDelay = 1000;

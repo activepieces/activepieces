@@ -4,7 +4,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { openaiAuth } from '../auth';
+import { getOpenAIAuth, openaiAuth } from '../auth';
 import FormData from 'form-data';
 import mime from 'mime-types';
 import { Languages, DEFAULT_BASE_URL } from '../common/common';
@@ -47,10 +47,11 @@ export const transcribeAction = createAction({
     form.append('model', 'whisper-1');
     form.append('language', language);
 
+    const resolvedAuth = getOpenAIAuth(context.auth);
     const headers = {
-      Authorization: `Bearer ${context.auth.apiKey}`,
+      Authorization: `Bearer ${resolvedAuth.apiKey}`,
     };
-    const resolvedBaseUrl = (context.auth.baseUrl?.trim() || DEFAULT_BASE_URL).replace(/\/$/, '');
+    const resolvedBaseUrl = resolvedAuth.baseUrl.replace(/\/$/, '');
 
 
     const request: HttpRequest = {

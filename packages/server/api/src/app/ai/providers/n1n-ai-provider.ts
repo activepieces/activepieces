@@ -1,14 +1,14 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderModel, AIProviderModelType, BaseAIProviderAuthConfig } from '@activepieces/shared'
+import { AIProviderModel, AIProviderModelType, BaseAIProviderAuthConfig, N1nAIProviderConfig } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
 
-export const n1nAIProvider: AIProviderStrategy<BaseAIProviderAuthConfig, Record<string, never>> = {
+export const n1nAIProvider: AIProviderStrategy<BaseAIProviderAuthConfig, N1nAIProviderConfig> = {
     name: 'n1n.ai',
-    async validateConnection(authConfig: BaseAIProviderAuthConfig, config: Record<string, never>, _log: FastifyBaseLogger): Promise<void> {
+    async validateConnection(authConfig: BaseAIProviderAuthConfig, config: N1nAIProviderConfig, _log: FastifyBaseLogger): Promise<void> {
         await n1nAIProvider.listModels(authConfig, config)
     },
-    async listModels(authConfig: BaseAIProviderAuthConfig, _config: Record<string, never>): Promise<AIProviderModel[]> {
+    async listModels(authConfig: BaseAIProviderAuthConfig, _config: N1nAIProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ data: N1NModel[] }>({
             url: 'https://api.n1n.ai/v1/models',
             method: HttpMethod.GET,

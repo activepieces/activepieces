@@ -4,7 +4,7 @@ import {
   StoreScope,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import { openaiAuth } from '../auth';
+import { getOpenAIAuth, openaiAuth } from '../auth';
 import {
   calculateMessagesTokenSize,
   DEFAULT_BASE_URL,
@@ -38,9 +38,10 @@ export const askOpenAI = createAction({
           };
         }
         try {
+          const resolvedAuth = getOpenAIAuth(auth);
           const openai = new OpenAI({
-            apiKey: auth.apiKey,
-            baseURL: auth.baseUrl?.trim() || DEFAULT_BASE_URL,
+            apiKey: resolvedAuth.apiKey,
+            baseURL: resolvedAuth.baseUrl,
           });
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -123,9 +124,10 @@ export const askOpenAI = createAction({
       temperature: z.number().min(0).max(1).optional(),
       memoryKey: z.string().max(128).optional(),
     });
+    const resolvedAuth = getOpenAIAuth(auth);
     const openai = new OpenAI({
-      apiKey: auth.apiKey,
-      baseURL: auth.baseUrl?.trim() || DEFAULT_BASE_URL,
+      apiKey: resolvedAuth.apiKey,
+      baseURL: resolvedAuth.baseUrl,
     });
     const {
       model,
