@@ -50,6 +50,7 @@ const seedDevUser = async (): Promise<void> => {
     await platformService(log).createPlatformWithProject({
         identityId: response.id,
         name: 'dev\'s Platform',
+        invalidatePreviousTokens: true,
     })
 
     log.info({ email: DEV_EMAIL, password: DEV_PASSWORD }, '[devSeeds#seedDevUser] Dev user and platform created')

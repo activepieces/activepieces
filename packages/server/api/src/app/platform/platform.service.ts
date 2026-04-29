@@ -91,7 +91,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         log.info({ platformId: savedPlatform.id, ownerId }, 'Platform created')
         return savedPlatform
     },
-    async createPlatformWithProject({ identityId, name }: CreatePlatformWithProjectParams): Promise<AuthenticationResponse> {
+    async createPlatformWithProject({ identityId, name, invalidatePreviousTokens }: CreatePlatformWithProjectParams): Promise<AuthenticationResponse> {
         const newUser = await userService(log).create({
             identityId,
             platformRole: PlatformRole.ADMIN,
@@ -104,9 +104,11 @@ export const platformService = (log: FastifyBaseLogger) => ({
             platformId: platform.id,
             type: ProjectType.PERSONAL,
         })
-        await userIdentityRepository().update(identityId, {
-            tokenVersion: nanoid(),
-        })
+        if (invalidatePreviousTokens) {
+            await userIdentityRepository().update(identityId, {
+                tokenVersion: nanoid(),
+            })
+        }
         return authenticationUtils(log).getProjectAndToken({
             userId: newUser.id,
             platformId: platform.id,
@@ -269,6 +271,7 @@ type UpdateParams = UpdatePlatformRequestBody & {
 type CreatePlatformWithProjectParams = {
     identityId: string
     name: string
+    invalidatePreviousTokens: boolean
 }
 
 type ListPlatformsForIdentityParams = {

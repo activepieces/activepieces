@@ -34,12 +34,14 @@ import { platformService } from './platform.service'
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreatePlatformEndpoint, async (req) => {
-        const identityId = req.principal.type === PrincipalType.ONBOARDING
+        const isOnboarding = req.principal.type === PrincipalType.ONBOARDING
+        const identityId = isOnboarding
             ? req.principal.id
             : (await userService(req.log).getOneOrFail({ id: req.principal.id })).identityId
         return platformService(req.log).createPlatformWithProject({
             identityId,
             name: req.body.name,
+            invalidatePreviousTokens: isOnboarding,
         })
     })
 
