@@ -25,7 +25,11 @@ import { ChatInput } from './components/chat-input';
 import { ChatMessage } from './components/chat-message';
 import { ChatModelSelector } from './components/chat-model-selector';
 import { QuickReplies } from './components/message-content';
-import { getTextFromParts, parseMultiQuestion, parseQuickReplies } from './lib/message-parsers';
+import {
+  getTextFromParts,
+  parseMultiQuestion,
+  parseQuickReplies,
+} from './lib/message-parsers';
 
 export function AIChatBox({
   incognito,
@@ -108,8 +112,12 @@ function ChatBoxContent({
   }, [messages, sendMessage]);
 
   const lastMessage = messages[messages.length - 1];
-  const lastMessageText = lastMessage?.role === 'assistant' ? getTextFromParts(lastMessage.parts) : '';
-  const hasActiveForm = parseMultiQuestion(lastMessageText).questions.length > 0;
+  const lastMessageText =
+    lastMessage?.role === 'assistant'
+      ? getTextFromParts(lastMessage.parts)
+      : '';
+  const hasActiveForm =
+    parseMultiQuestion(lastMessageText).questions.length > 0;
   const isEmpty = messages.length === 0 && !isLoadingHistory && !isStreaming;
 
   if (isEmpty) {

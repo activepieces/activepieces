@@ -77,23 +77,26 @@ export function MultiQuestionForm({
               i === currentStep
                 ? 'bg-primary/10 text-primary font-medium'
                 : answers[i]?.trim()
-                  ? 'text-muted-foreground cursor-pointer hover:bg-muted'
-                  : 'text-muted-foreground/50',
+                ? 'text-muted-foreground cursor-pointer hover:bg-muted'
+                : 'text-muted-foreground/50',
             )}
           >
-            <span className={cn(
-              'flex items-center justify-center size-4 rounded-full text-[10px] font-medium shrink-0',
-              i === currentStep
-                ? 'bg-primary text-primary-foreground'
-                : answers[i]?.trim()
+            <span
+              className={cn(
+                'flex items-center justify-center size-4 rounded-full text-[10px] font-medium shrink-0',
+                i === currentStep
+                  ? 'bg-primary text-primary-foreground'
+                  : answers[i]?.trim()
                   ? 'bg-primary/20 text-primary'
                   : 'bg-muted-foreground/20 text-muted-foreground',
-            )}>
+              )}
+            >
               {answers[i]?.trim() ? <Check className="size-2.5" /> : i + 1}
             </span>
-            {question.title ?? (question.question.length > 25
-              ? question.question.slice(0, 25) + '...'
-              : question.question)}
+            {question.title ??
+              (question.question.length > 25
+                ? question.question.slice(0, 25) + '...'
+                : question.question)}
           </button>
         ))}
       </div>
@@ -116,10 +119,13 @@ export function MultiQuestionForm({
                   <button
                     key={option}
                     type="button"
-                    onClick={() => setAnswers((prev) => ({
-                      ...prev,
-                      [currentStep]: prev[currentStep] === option ? '' : option,
-                    }))}
+                    onClick={() =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        [currentStep]:
+                          prev[currentStep] === option ? '' : option,
+                      }))
+                    }
                     className={cn(
                       'px-4 py-2 text-sm rounded-full border transition-colors cursor-pointer',
                       answers[currentStep] === option
@@ -134,8 +140,18 @@ export function MultiQuestionForm({
               <Input
                 className="h-9 text-sm"
                 placeholder={t('Or type your own answer...')}
-                value={answers[currentStep] && !q.options.includes(answers[currentStep]) ? answers[currentStep] : ''}
-                onChange={(e) => setAnswers((prev) => ({ ...prev, [currentStep]: e.target.value }))}
+                value={
+                  answers[currentStep] &&
+                  !q.options.includes(answers[currentStep])
+                    ? answers[currentStep]
+                    : ''
+                }
+                onChange={(e) =>
+                  setAnswers((prev) => ({
+                    ...prev,
+                    [currentStep]: e.target.value,
+                  }))
+                }
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && currentAnswer) handleNext();
                 }}
