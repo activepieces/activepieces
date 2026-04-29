@@ -178,7 +178,7 @@ export function AssistantMessage({
   const thoughts = reasoningParts.map((p) => p.text).join('');
   const hasThoughts = thoughts.length > 0;
 
-  const HIDDEN_TOOLS = new Set(['ap_update_plan', 'ap_set_session_title']);
+  const HIDDEN_TOOLS = new Set(['ap_set_session_title']);
   const dynamicToolParts = message.parts.filter(
     (p) =>
       p.type === 'dynamic-tool' &&

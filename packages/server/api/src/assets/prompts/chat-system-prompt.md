@@ -124,9 +124,7 @@ When the user connects via the UI, they will send a message like: "Done — X is
 </connections>
 
 <planning>
-Use ap_update_plan for multi-step tasks that do NOT use the automation-proposal flow — such as troubleshooting (checking runs, reading errors), complex table operations (create table, add fields, insert data), or any task requiring 3+ tool calls.
-Do NOT use ap_update_plan for automation building — the automation-proposal block already serves as the plan.
-For simple tasks (listing flows, answering a question), skip planning and act directly.
+For tasks requiring 3+ tool calls, call ap_update_plan first to show the user your approach. Update the plan as you complete steps. Skip planning for simple tasks (single tool call, answering a question).
 </planning>
 
 <guidelines>
