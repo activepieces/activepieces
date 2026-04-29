@@ -50,11 +50,13 @@ export const upsertRowAction = createAction({
           BaserowFieldType.LAST_MODIFIED,
           BaserowFieldType.CREATED_ON,
           BaserowFieldType.DURATION,
+          BaserowFieldType.UUID,
+          BaserowFieldType.AUTO_NUMBER,
         ];
         return {
           disabled: false,
           options: fields
-            .filter((f) => !unsupportedTypes.includes(f.type))
+            .filter((f) => !f.read_only && !unsupportedTypes.includes(f.type))
             .map((f) => ({ label: f.name, value: `field_${f.id}` })),
         };
       },
@@ -90,14 +92,6 @@ export const upsertRowAction = createAction({
       skipEmpty: true,
     });
 
-    if (create_missing_select_options) {
-      await ensureSelectOptionsExist({
-        fields: tableSchema,
-        payload: formattedFields,
-        client,
-      });
-    }
-
     const existing = (await client.listRows(
       table_id!,
       undefined,
@@ -108,19 +102,35 @@ export const upsertRowAction = createAction({
     )) as { results: Record<string, unknown>[]; count: number };
 
     if (existing.results.length > 0) {
+      if (create_missing_select_options) {
+        await ensureSelectOptionsExist({
+          fields: tableSchema,
+          payload: formattedFields,
+          client,
+        });
+      }
       const rowId = existing.results[0]['id'] as number;
       const updated = await client.updateRow(table_id!, rowId, formattedFields);
       return { action: 'updated', row: updated };
     }
 
-    // Ensure the match field is present in the new row so the upsert is idempotent.
-    // The user may not have included it in table_fields.
+    // Inject the match field into the new row so the upsert is idempotent.
+    // Done before ensureSelectOptionsExist so a SINGLE_SELECT match value
+    // gets auto-created when the toggle is enabled.
     const matchFieldId = parseInt(match_field!.replace('field_', ''), 10);
     const matchFieldDef = tableSchema.find((f) => f.id === matchFieldId);
     if (matchFieldDef) {
       formattedFields[matchFieldDef.name] = coerceMatchValue({
         value: match_value!,
         fieldType: matchFieldDef.type,
+      });
+    }
+
+    if (create_missing_select_options) {
+      await ensureSelectOptionsExist({
+        fields: tableSchema,
+        payload: formattedFields,
+        client,
       });
     }
 
