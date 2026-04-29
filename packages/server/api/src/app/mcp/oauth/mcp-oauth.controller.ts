@@ -5,7 +5,8 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { telemetry } from '../../helper/telemetry.utils'
-import { mcpServerService } from '../mcp-service'
+import { projectService } from '../../project/project-service'
+import { mcpServerRepository, mcpServerService } from '../mcp-service'
 import { mcpOAuthTokenService } from './token/mcp-oauth-token.service'
 
 export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
@@ -98,8 +99,13 @@ async function resolveIdentity(token: string, log: FastifyBaseLogger): Promise<R
         }
         catch (e) {
             log.debug({ err: e }, 'JWT verification failed')
-            return null
         }
+    }
+
+    const mcpServer = await mcpServerRepository().findOneBy({ token })
+    if (!isNil(mcpServer)) {
+        const project = await projectService(log).getOneOrThrow(mcpServer.projectId)
+        return { projectId: mcpServer.projectId, userId: project.ownerId }
     }
 
     return null
