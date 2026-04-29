@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { featuresVoteAuth } from '../../';
 import { featuresVoteApiCall } from '../common';
+import { featuresVoteAuth } from '../auth';
 
 export const createReleaseAction = createAction({
   auth: featuresVoteAuth,
@@ -57,7 +57,7 @@ export const createReleaseAction = createAction({
       body['feature_ids'] = context.propsValue.feature_ids;
     }
     const response = await featuresVoteApiCall({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       method: HttpMethod.POST,
       path: '/releases',
       body,

@@ -18,7 +18,7 @@ export const featuresVoteAuth = PieceAuth.SecretText({
     try {
       await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: 'https://features.vote/api/projects',
+        url: 'https://features.vote/api/releases',
         headers: {
           Authorization: `Bearer ${auth}`,
         },

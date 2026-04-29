@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { featuresVoteAuth } from '../../';
+import { featuresVoteAuth } from '../auth';
 import { featuresVoteApiCall } from '../common';
 
 export const listFeaturesAction = createAction({
@@ -55,7 +55,7 @@ export const listFeaturesAction = createAction({
       queryParams['limit'] = String(context.propsValue.limit);
     }
     const response = await featuresVoteApiCall({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       method: HttpMethod.GET,
       path: '/features',
       queryParams,

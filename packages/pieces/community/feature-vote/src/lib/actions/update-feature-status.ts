@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { featuresVoteAuth } from '../../';
+import { featuresVoteAuth } from '../auth';
 import { featuresVoteApiCall } from '../common';
 
 export const updateFeatureStatusAction = createAction({
@@ -11,7 +11,8 @@ export const updateFeatureStatusAction = createAction({
   props: {
     id: Property.ShortText({
       displayName: 'Feature ID',
-      description: 'The ID of the feature to update. You can get this from the List Features action.',
+      description:
+        'The ID of the feature to update. You can get this from the List Features action.',
       required: true,
     }),
     status: Property.StaticDropdown({
@@ -31,12 +32,15 @@ export const updateFeatureStatusAction = createAction({
   },
   async run(context) {
     const response = await featuresVoteApiCall({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       method: HttpMethod.PUT,
-      path: '/features?is_status_update=true',
+      path: '/features',
       body: {
         id: context.propsValue.id,
         status: context.propsValue.status,
+      },
+      queryParams: {
+        is_status_update: 'true',
       },
     });
     return response.body;

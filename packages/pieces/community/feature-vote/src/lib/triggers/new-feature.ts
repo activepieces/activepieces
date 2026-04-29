@@ -1,4 +1,3 @@
-import { featuresVoteAuth } from '../../';
 import {
   DedupeStrategy,
   HttpMethod,
@@ -10,13 +9,14 @@ import {
   createTrigger,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
+import { featuresVoteAuth } from '../auth';
 import { featuresVoteApiCall } from '../common';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof featuresVoteAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth }) => {
+  items: async ({ auth, lastFetchEpochMS }) => {
     const response = await featuresVoteApiCall<{ data: Array<{ id: string; created_at: string; [key: string]: unknown }> }>({
-      apiKey: auth,
+      apiKey: auth.secret_text,
       method: HttpMethod.GET,
       path: '/features',
       queryParams: {
@@ -24,10 +24,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof featuresVoteAuth
       },
     });
     const features = response.body.data ?? [];
-    return features.map((feature) => ({
-      epochMilliSeconds: new Date(feature.created_at).getTime(),
-      data: feature,
-    }));
+    return features
+      .filter((feature) => new Date(feature.created_at).getTime() > lastFetchEpochMS)
+      .map((feature) => ({
+        epochMilliSeconds: new Date(feature.created_at).getTime(),
+        data: feature,
+      }));
   },
 };
 

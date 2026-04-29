@@ -4,7 +4,6 @@ import {
   HttpMessageBody,
   HttpResponse,
 } from '@activepieces/pieces-common';
-import { SecretTextConnectionValue } from '@activepieces/shared';
 
 const BASE_URL = 'https://features.vote/api';
 
@@ -15,7 +14,7 @@ export async function featuresVoteApiCall<T extends HttpMessageBody>({
   body,
   queryParams,
 }: {
-  apiKey: SecretTextConnectionValue;
+  apiKey: string;
   method: HttpMethod;
   path: string;
   body?: unknown;
@@ -25,7 +24,7 @@ export async function featuresVoteApiCall<T extends HttpMessageBody>({
     method,
     url: `${BASE_URL}${path}`,
     headers: {
-      Authorization: `Bearer ${apiKey.secret_text}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     queryParams,
     body,

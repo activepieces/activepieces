@@ -8,15 +8,14 @@ import { updateFeatureStatusAction } from './lib/actions/update-feature-status';
 import { createReleaseAction } from './lib/actions/create-release';
 import { newFeatureTrigger } from './lib/triggers/new-feature';
 
-export { featuresVoteAuth };
 
 export const featureVote = createPiece({
   displayName: 'FeaturesVote',
   description: 'Product feedback and feature voting board.',
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://features.vote/favicon.ico',
+  logoUrl: 'https://cdn.activepieces.com/pieces/feature-vote.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: [],
+  authors: ['Eamateli', 'sanket-a11y'],
   auth: featuresVoteAuth,
   actions: [
     createFeatureAction,
@@ -27,7 +26,7 @@ export const featureVote = createPiece({
       baseUrl: () => 'https://features.vote/api',
       auth: featuresVoteAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as unknown as { secret_text: string }).secret_text}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],
