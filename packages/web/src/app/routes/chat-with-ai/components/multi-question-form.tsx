@@ -24,15 +24,6 @@ export function MultiQuestionForm({
   const currentAnswer = answers[currentStep]?.trim() ?? '';
   const allAnswered = questions.every((_q, i) => answers[i]?.trim());
 
-  function handleChoiceSelect(option: string) {
-    if (submitted) return;
-    setAnswers((prev) =>
-      prev[currentStep] === option
-        ? { ...prev, [currentStep]: '' }
-        : { ...prev, [currentStep]: option },
-    );
-  }
-
   function handleTextChange(value: string) {
     setAnswers((prev) => ({ ...prev, [currentStep]: value }));
   }
@@ -108,23 +99,12 @@ export function MultiQuestionForm({
           <p className="text-sm font-medium">{q.question}</p>
 
           {q.type === 'choice' && q.options && (
-            <div className="flex flex-wrap gap-1.5">
-              {q.options.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => handleChoiceSelect(option)}
-                  className={cn(
-                    'px-3 py-1.5 text-sm rounded-full border transition-colors cursor-pointer',
-                    answers[currentStep] === option
-                      ? 'border-primary text-primary bg-primary/5'
-                      : 'bg-background hover:bg-muted',
-                  )}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
+            <ChoiceWithCustomInput
+              options={q.options}
+              value={answers[currentStep] ?? ''}
+              onChange={(val) => setAnswers((prev) => ({ ...prev, [currentStep]: val }))}
+              onSubmit={handleNext}
+            />
           )}
 
           {q.type === 'text' && (
@@ -173,5 +153,50 @@ export function MultiQuestionForm({
         </Button>
       </div>
     </motion.div>
+  );
+}
+
+function ChoiceWithCustomInput({
+  options,
+  value,
+  onChange,
+  onSubmit,
+}: {
+  options: string[];
+  value: string;
+  onChange: (val: string) => void;
+  onSubmit: () => void;
+}) {
+  const isCustom = value !== '' && !options.includes(value);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onChange(value === option ? '' : option)}
+            className={cn(
+              'px-3 py-1.5 text-sm rounded-full border transition-colors cursor-pointer',
+              value === option
+                ? 'border-primary text-primary bg-primary/5'
+                : 'bg-background hover:bg-muted',
+            )}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+      <Input
+        className="h-9 text-sm"
+        placeholder={t('Or type your own answer...')}
+        value={isCustom ? value : ''}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && value) onSubmit();
+        }}
+      />
+    </div>
   );
 }
