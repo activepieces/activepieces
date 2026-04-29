@@ -223,6 +223,13 @@ function ChatBoxContent({
             onSend={handleSend}
             onStop={cancelStream}
             placeholder={t('Reply...')}
+            leftActions={
+              <ChatModelSelector
+                chatProviderName={chatProviderName}
+                selectedModel={modelName}
+                onModelChange={setModelName}
+              />
+            }
           />
         </div>
       </div>
