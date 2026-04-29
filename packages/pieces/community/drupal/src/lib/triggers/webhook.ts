@@ -8,7 +8,8 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { drupalAuth } from '../auth';
-import { DrupalAuthType } from '../common/jsonapi';
+
+const webhookStoreKey = (id: string) => `_drupal_webhook_trigger_${id}`;
 
 export const drupalWebhook = createTrigger({
   auth: drupalAuth,
@@ -40,11 +41,11 @@ export const drupalWebhook = createTrigger({
       },
     });
     console.debug('Webhook register response', response);
-    await context.store.put(`_drupal_webhook_trigger_` + context.propsValue.id, response.body);
+    await context.store.put(webhookStoreKey(context.propsValue.id), response.body);
   },
   async onDisable(context) {
     const { website_url, username, password } = context.auth.props;
-    const webhook = await context.store.get(`_drupal_webhook_trigger` + context.propsValue.id);
+    const webhook = await context.store.get(webhookStoreKey(context.propsValue.id));
     if (webhook) {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
