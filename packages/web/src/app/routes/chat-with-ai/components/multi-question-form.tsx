@@ -47,7 +47,7 @@ export function MultiQuestionForm({
   if (submitted) {
     return (
       <motion.div
-        className="my-2 flex items-center gap-2 text-sm text-muted-foreground"
+        className="my-3 flex items-center gap-2 text-sm text-muted-foreground"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
@@ -61,7 +61,7 @@ export function MultiQuestionForm({
 
   return (
     <motion.div
-      className="my-2 space-y-3"
+      className="my-4 space-y-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -90,7 +90,7 @@ export function MultiQuestionForm({
       <AnimatePresence mode="wait">
         <motion.div
           key={currentStep}
-          className="space-y-2"
+          className="space-y-3"
           initial={{ opacity: 0, x: 12 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -12 }}
@@ -99,12 +99,37 @@ export function MultiQuestionForm({
           <p className="text-sm font-medium">{q.question}</p>
 
           {q.type === 'choice' && q.options && (
-            <ChoiceWithCustomInput
-              options={q.options}
-              value={answers[currentStep] ?? ''}
-              onChange={(val) => setAnswers((prev) => ({ ...prev, [currentStep]: val }))}
-              onSubmit={handleNext}
-            />
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {q.options.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setAnswers((prev) => ({
+                      ...prev,
+                      [currentStep]: prev[currentStep] === option ? '' : option,
+                    }))}
+                    className={cn(
+                      'px-4 py-2 text-sm rounded-full border transition-colors cursor-pointer',
+                      answers[currentStep] === option
+                        ? 'border-primary text-primary bg-primary/5'
+                        : 'bg-background hover:bg-muted',
+                    )}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+              <Input
+                className="h-9 text-sm"
+                placeholder={t('Or type your own answer...')}
+                value={answers[currentStep] && !q.options.includes(answers[currentStep]) ? answers[currentStep] : ''}
+                onChange={(e) => setAnswers((prev) => ({ ...prev, [currentStep]: e.target.value }))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && currentAnswer) handleNext();
+                }}
+              />
+            </div>
           )}
 
           {q.type === 'text' && (
@@ -121,7 +146,7 @@ export function MultiQuestionForm({
         </motion.div>
       </AnimatePresence>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-end gap-2">
         {currentStep > 0 && (
           <Button
             variant="ghost"
@@ -153,50 +178,5 @@ export function MultiQuestionForm({
         </Button>
       </div>
     </motion.div>
-  );
-}
-
-function ChoiceWithCustomInput({
-  options,
-  value,
-  onChange,
-  onSubmit,
-}: {
-  options: string[];
-  value: string;
-  onChange: (val: string) => void;
-  onSubmit: () => void;
-}) {
-  const isCustom = value !== '' && !options.includes(value);
-
-  return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-1.5">
-        {options.map((option) => (
-          <button
-            key={option}
-            type="button"
-            onClick={() => onChange(value === option ? '' : option)}
-            className={cn(
-              'px-3 py-1.5 text-sm rounded-full border transition-colors cursor-pointer',
-              value === option
-                ? 'border-primary text-primary bg-primary/5'
-                : 'bg-background hover:bg-muted',
-            )}
-          >
-            {option}
-          </button>
-        ))}
-      </div>
-      <Input
-        className="h-9 text-sm"
-        placeholder={t('Or type your own answer...')}
-        value={isCustom ? value : ''}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && value) onSubmit();
-        }}
-      />
-    </div>
   );
 }
