@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/shared';
-import { useClerk } from '@clerk/clerk-react';
+import { useClerk, useUser } from '@clerk/clerk-react';
 import { t } from 'i18next';
 import { ChevronsUpDown, LogOut, UserCogIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -33,7 +33,9 @@ export function SidebarUser() {
   const { reset } = useTelemetry();
   const { state } = useSidebar();
   const { signOut } = useClerk();
+  const { user: clerkUser } = useUser();
   const navigate = useNavigate();
+  const email = clerkUser?.primaryEmailAddress?.emailAddress ?? '';
   const isCollapsed = state === 'collapsed';
   if (!user || embedState.isEmbedded) {
     return null;
@@ -59,7 +61,7 @@ export function SidebarUser() {
                     'scale-150': isNil(user.imageUrl),
                   })}
                   name={user.firstName + ' ' + user.lastName}
-                  email={user.email}
+                  email={email}
                   imageUrl={user.imageUrl}
                   size={18}
                   disableTooltip={true}
@@ -88,7 +90,7 @@ export function SidebarUser() {
                   <UserAvatar
                     className="size-full object-cover"
                     name={user.firstName + ' ' + user.lastName}
-                    email={user.email}
+                    email={email}
                     imageUrl={user.imageUrl}
                     size={32}
                     disableTooltip={true}
@@ -99,7 +101,7 @@ export function SidebarUser() {
                   <span className="truncate font-medium">
                     {user.firstName + ' ' + user.lastName}
                   </span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate text-xs">{email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
