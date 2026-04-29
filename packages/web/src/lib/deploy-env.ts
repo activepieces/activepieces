@@ -40,7 +40,7 @@ function resolveOtom8SiteUrl(): string {
     return buildSiteUrlOverride.replace(/\/$/, "");
   }
   if (DEPLOY_ENV === "local") {
-    return "http://localhost:3000";
+    return "http://localhost:3001";
   }
   return "https://otom8.us";
 }
