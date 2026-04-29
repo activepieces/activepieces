@@ -19,7 +19,7 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   const { reset } = useTelemetry();
   const location = useLocation();
   if (!authenticationSession.isLoggedIn()) {
-    authenticationSession.logOut();
+    authenticationSession.clearSession();
     reset();
     const searchParams = new URLSearchParams();
     searchParams.set('from', location.pathname + location.search);
