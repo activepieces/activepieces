@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
-import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { getBotToken, requireUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const updateGroupUsersAction = createAction({
   auth: slackAuth,
@@ -27,14 +27,15 @@ export const updateGroupUsersAction = createAction({
     }),
   },
   async run(context) {
-    const token = getBotToken(context.auth as SlackAuthValue);
-    const client = new WebClient(token);
+    const auth = context.auth as SlackAuthValue;
+    const botClient = new WebClient(getBotToken(auth));
+    const userClient = new WebClient(requireUserToken(auth));
     const searchHandle = context.propsValue.handle.replace('@', '').toLowerCase();
     const rawUserIds = (context.propsValue.userIds || []) as string[];
     const userIds = rawUserIds.filter((id) => id && id.trim() !== '');
     const appendUsers = context.propsValue.appendUsers;
 
-    const listResponse = await client.usergroups.list({ include_users: true });
+    const listResponse = await botClient.usergroups.list({ include_users: true });
 
     const group = listResponse.usergroups?.find(
       (g) => g.handle && g.handle.toLowerCase() === searchHandle
@@ -53,7 +54,7 @@ export const updateGroupUsersAction = createAction({
 
     const usersString = finalUserIds.join(', ');
 
-    const updateResponse = await client.usergroups.users.update({
+    const updateResponse = await userClient.usergroups.users.update({
       usergroup: group.id,
       users: usersString,
     });

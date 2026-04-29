@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { aiprise } from '../common';
-import { aipriseAuth } from '../../';
+import { aipriseAuth } from '../common/auth';
 
 export const runDocumentCheckAction = createAction({
   auth: aipriseAuth,
@@ -67,7 +67,7 @@ export const runDocumentCheckAction = createAction({
     if (client_reference_data) body['client_reference_data'] = client_reference_data;
 
     return aiprise.makeRequest<Record<string, unknown>>({
-      apiKey: context.auth.secret_text,
+      auth: context.auth.props,
       method: HttpMethod.POST,
       path: '/verify/run_check_on_business_document',
       body,
