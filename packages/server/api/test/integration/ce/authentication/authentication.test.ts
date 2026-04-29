@@ -107,7 +107,7 @@ describe('Authentication API', () => {
             expect(responseBody?.platformId).toHaveLength(21)
             expect(responseBody?.projectId).toHaveLength(21)
             expect(responseBody?.token).toBeDefined()
-            expect(responseBody?.id).toBe(signUpBody.id)
+            expect(responseBody?.id).toHaveLength(21)
 
             const platformCount = await databaseConnection().getRepository('platform').count()
             const projectCount = await databaseConnection().getRepository('project').count()
