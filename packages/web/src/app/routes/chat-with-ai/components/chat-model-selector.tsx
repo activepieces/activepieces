@@ -1,7 +1,7 @@
 import { AIProviderName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, ChevronDown, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +27,14 @@ export function ChatModelSelector({
   const [open, setOpen] = useState(false);
   const { data: models = [], isLoading } =
     aiModelHooks.useGetModelsForProvider(chatProviderName);
+
+  const autoSelectedRef = useRef(false);
+  useEffect(() => {
+    if (!selectedModel && models.length > 0 && !autoSelectedRef.current) {
+      autoSelectedRef.current = true;
+      onModelChange(models[0].id);
+    }
+  }, [selectedModel, models, onModelChange]);
 
   const selectedModelName =
     models.find((m) => m.id === selectedModel)?.name ?? selectedModel;
