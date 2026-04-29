@@ -16,7 +16,7 @@ export const newSubmissionTrigger = createTrigger({
   name: 'new-submission',
   auth: youformAuth,
   displayName: 'New Submission',
-  description: 'Triggers When a new submission is recieved.',
+  description: 'Triggers when a new submission is received.',
   type: TriggerStrategy.WEBHOOK,
   props: {
     formId: formIdDropdown,

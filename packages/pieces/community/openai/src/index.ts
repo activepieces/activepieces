@@ -34,10 +34,12 @@ export const openai = createPiece({
     extractStructuredDataAction,
     createCustomApiCallAction({
       auth: openaiAuth,
-      baseUrl: () => baseUrl,
+      baseUrl: (auth) => {
+        return (auth as any)?.baseUrl?.replace(/\/+$/, '') ?? baseUrl;
+      },
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth.secret_text}`,
+          Authorization: `Bearer ${(auth as any).apiKey}`,
         };
       },
     }),

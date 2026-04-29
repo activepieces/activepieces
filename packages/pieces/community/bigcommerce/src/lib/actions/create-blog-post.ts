@@ -42,7 +42,7 @@ export const createBlogPost = createAction({
     }),
     meta_keywords: Property.LongText({
       displayName: 'Meta Keywords',
-      description: 'Comma seperated (,) Keywords for this blog post’s <meta/> element. Eg welcome, bigcommerce',
+      description: 'Comma separated (,) Keywords for this blog post’s <meta/> element. Eg welcome, bigcommerce',
       required: false,
     }),
     tags: Property.Array({

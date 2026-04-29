@@ -95,7 +95,7 @@ export async function getUpdatedOrNewEvents(
 
   const deletedObjects: string[] = weblingChanges.deleted ?? [];
 
-  // filter out already deleted objects to treat seperately
+  // filter out already deleted objects to treat separately
   // including a deleted event in a query list will result in a 404 response for the whole query
   const updatedOrNewEvents: string[] = changedEvents.filter(
     (event) => !deletedObjects.includes(event)
