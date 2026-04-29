@@ -1,0 +1,73 @@
+name: Gitleaks
+
+on:
+  pull_request:
+  # schedule:
+  #   - cron: '17 3 * * 1'   # weekly Monday 03:17 UTC, for full-history job
+  # workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+env:
+  GITLEAKS_VERSION: 8.30.1
+
+jobs:
+  pr-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          curl -sSL -o gl.tgz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar xzf gl.tgz gitleaks
+          sudo mv gitleaks /usr/local/bin/
+
+      - name: Scan PR diff
+        continue-on-error: true
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          gitleaks detect \
+            --config=.gitleaks.toml \
+            --log-opts="--no-merges $BASE_SHA..HEAD" \
+            --report-format sarif --report-path gitleaks.sarif \
+            --redact --no-banner
+
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: gitleaks.sarif
+          category: gitleaks
+
+  # full-history:
+  #   if: github.event_name != 'pull_request'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #
+  #     - name: Install gitleaks
+  #       run: |
+  #         curl -sSL -o gl.tgz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+  #         tar xzf gl.tgz gitleaks
+  #         sudo mv gitleaks /usr/local/bin/
+  #
+  #     - name: Scan full history
+  #       continue-on-error: true
+  #       run: |
+  #         gitleaks detect \
+  #           --config=.gitleaks.toml \
+  #           --report-format sarif --report-path gitleaks.sarif \
+  #           --redact --no-banner
+  #
+  #     - uses: github/codeql-action/upload-sarif@v3
+  #       if: always()
+  #       with:
+  #         sarif_file: gitleaks.sarif
+  #         category: gitleaks

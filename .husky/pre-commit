@@ -9,3 +9,16 @@ if [ -n "$ENV_FILES" ]; then
   echo "Please unstage them with: git reset HEAD <file>"
   exit 1
 fi
+
+# Scan staged diff for secrets (this hook is happy-path defense in depth).
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --config=.gitleaks.toml --redact --no-banner || {
+    echo
+    echo "gitleaks blocked the commit — a potential secret was detected above."
+    echo "If this is a false positive, run: git commit --no-verify"
+    exit 1
+  }
+else
+  echo "warning: gitleaks not installed — skipping local secret scan."
+  echo "  install: https://github.com/gitleaks/gitleaks#installing"
+fi

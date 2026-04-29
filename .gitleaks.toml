@@ -1,0 +1,67 @@
+[extend]
+useDefault = true
+
+# Suppress findings inside sampleData blocks in piece triggers.
+[[allowlists]]
+description = "piece-sample-data"
+condition   = "AND"
+regexTarget = "match"
+regexes     = ['''sampleData\s*:\s*\{[\s\S]*?\}''']
+paths       = ['''packages/pieces/community/.*/src/lib/triggers?/.*\.ts''']
+
+# Env placeholders + test fixtures.
+[[allowlists]]
+description = "env-placeholders-and-fixtures"
+paths = [
+  '''\.env\.example$''',
+  '''\.env\.e2e$''',
+  '''\.env\.dev$''',
+  '''packages/server/worker/test/fixtures/.*''',
+  '''packages/server/worker/test/e2e/fixtures/.*''',
+  '''packages/tests-e2e/fixtures/.*''',
+]
+
+# Snowflake — private-key placeholder strings.
+[[allowlists]]
+description = "snowflake-private-key-placeholders"
+targetRules = ["private-key"]
+paths       = ['''packages/pieces/community/snowflake/src/lib/.*\.ts''']
+
+# Piece trigger sample data + i18n locale strings.
+[[allowlists]]
+description = "piece-trigger-sample-data-and-i18n"
+targetRules = [
+  "generic-api-key",
+  "jwt",
+  "aws-access-token",
+  "stripe-access-token",
+  "openai-api-key",
+  "sendgrid-api-token",
+  "rapidapi-access-token",
+  "linkedin-client-id",
+  "curl-auth-header",
+  "private-key",
+  "gcp-api-key",
+]
+paths = [
+  '''packages/pieces/community/.+/src/lib/triggers?/.*\.ts''',
+  '''packages/pieces/.+/src/i18n/.+\.json''',
+]
+
+# Paths gone from HEAD.
+[[allowlists]]
+description = "gone-from-head-historical-paths"
+paths = [
+  '''^packages/backend/.*''',
+  '''^packages/frontend/.*''',
+  '''^packages/ui/.*''',
+  '''^packages/chatbots/.*''',
+  '''^packages/engine/.*''',
+  '''^packages/ee/product-embed/.*''',
+  '''^packages/pieces/linkedin/.*''',
+  '''^packages/pieces/custom/.+/.*''',
+  '''^packages/server/api/src/app/request-writer/.*''',
+  '''^src/backend/.*''',
+  '''^src/frontend/.*''',
+  '''^src/worker/.*''',
+]
