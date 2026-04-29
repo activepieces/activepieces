@@ -170,11 +170,16 @@ export const chatService = (log: FastifyBaseLogger) => ({
                 },
                 onFinish: async ({ response, usage }) => {
                     const updatedMessages = [...allMessages, ...response.messages]
-                    await conversationRepo().update(conversationId, {
-                        messages: updatedMessages,
-                        ...(pendingTitle ? { title: pendingTitle } : {}),
-                        ...(isNil(conversation.modelName) ? { modelName } : {}),
-                    })
+                    try {
+                        await conversationRepo().update(conversationId, {
+                            messages: updatedMessages,
+                            ...(pendingTitle ? { title: pendingTitle } : {}),
+                            ...(isNil(conversation.modelName) ? { modelName } : {}),
+                        })
+                    }
+                    catch (saveErr) {
+                        log.error({ err: saveErr, conversationId }, 'Failed to persist conversation messages')
+                    }
 
                     log.info({
                         conversationId,
