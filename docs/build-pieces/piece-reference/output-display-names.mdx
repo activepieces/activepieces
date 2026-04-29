@@ -1,0 +1,74 @@
+---
+title: 'Output Display Names'
+icon: 'tag'
+description: 'Show human-readable labels for opaque keys in the data selector'
+---
+
+When your action returns an object keyed by UUIDs or internal codes, you can add `__displayName` to each child object so the data selector shows a readable label instead of the raw key. The underlying key path used in expressions is never affected.
+
+<Tip>
+This is especially useful when keying output by UUID — the key stays stable even if the name is renamed in the external system, so existing automations never break.
+</Tip>
+
+## Add a Display Name
+
+Set `__displayName` on any child object to control its label in the data selector.
+
+**Example:**
+
+```typescript
+async run(context) {
+  const response = await httpClient.sendRequest<{
+    items: { id: string; name: string; [key: string]: unknown }[];
+  }>({
+    method: HttpMethod.GET,
+    url: 'https://api.example.com/items',
+    headers: { Authorization: `Bearer ${context.auth}` }, // auth shape depends on your piece authentication
+  });
+
+  return Object.fromEntries(
+    response.body.items.map((item) => [
+      item.id,
+      {
+        ...item,
+        __displayName: item.name,
+      },
+    ])
+  );
+}
+```
+
+The data selector will show `item.name` as the node label instead of `item.id`. The inserted expression still references the correct key (`step_1['3f2504e0-4f89-11d3-9a0c-0305e82c3301']`).
+
+<Note>
+`__displayName` is hidden from the data selector tree — users will not see it as a selectable value. Nested objects each need their own `__displayName`; it does not propagate to children automatically.
+</Note>
+
+## Arrays of Objects
+
+When your action returns an array where each element represents a named entity, set `__displayName` on each element so the data selector shows a meaningful label instead of `[1]`, `[2]`, etc.
+
+**Example:**
+
+```typescript
+async run(context) {
+  const response = await httpClient.sendRequest<{
+    items: { id: string; name: string; [key: string]: unknown }[];
+  }>({
+    method: HttpMethod.GET,
+    url: 'https://api.example.com/items',
+    headers: { Authorization: `Bearer ${context.auth}` },
+  });
+
+  return response.body.items.map((item) => ({
+    ...item,
+    __displayName: item.name,
+  }));
+}
+```
+
+The data selector shows each `item.name` as the element label. The inserted expression still references the element by its numeric index (`step_1[0]`, `step_1[1]`) — the display name only affects what the user sees in the picker.
+
+<Note>
+`__displayName` on array elements applies only in the default (expanded) view. In the column/zipped view, column headers are derived from property keys.
+</Note>
