@@ -33,12 +33,6 @@ export class ReplacesSandboxWithVercelAiSdk1785000000000 implements Migration {
             WHERE "provider" = 'activepieces'
         `)
 
-        await queryRunner.query(`
-            CREATE INDEX IF NOT EXISTS "idx_ai_provider_platform_enabled_chat"
-            ON "ai_provider" ("platformId")
-            WHERE "enabledForChat" = true
-        `)
-
         await queryRunner.query('DROP TABLE IF EXISTS "sandbox_events"')
         await queryRunner.query('DROP TABLE IF EXISTS "sandbox_sessions"')
         await queryRunner.query('DROP TABLE IF EXISTS "user_sandbox"')
@@ -59,8 +53,6 @@ export class ReplacesSandboxWithVercelAiSdk1785000000000 implements Migration {
             ALTER TABLE "chat_conversation"
             ADD COLUMN IF NOT EXISTS "summary" text
         `)
-
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_ai_provider_platform_enabled_chat"')
 
         await queryRunner.query(`
             ALTER TABLE "ai_provider"
