@@ -1,6 +1,8 @@
 import { isNil } from '@activepieces/shared';
 import { useClerk, useUser } from '@clerk/clerk-react';
 import { t } from 'i18next';
+
+import { OTOM8_SITE_URL } from '@/lib/otom8-site-url';
 import { ChevronsUpDown, LogOut, UserCogIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -46,7 +48,7 @@ export function SidebarUser() {
     // Pass redirectUrl explicitly — without it, Clerk v5 may complete signOut
     // but skip the navigation if the internal instance state is inconsistent.
     // The AP session is cleared cleanly on /login mount (LoginPage useEffect).
-    signOut({ redirectUrl: '/login' });
+    signOut({ redirectUrl: `${OTOM8_SITE_URL}/login` });
   };
 
   return (
