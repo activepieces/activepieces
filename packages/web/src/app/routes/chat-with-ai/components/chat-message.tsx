@@ -141,19 +141,15 @@ function extractPlanEntries(
   );
   if (fromDataPart) return fromDataPart.data.entries;
 
-  const fromToolCall = parts.findLast(
+  const planToolCalls = parts.filter(
     (p) => p.type === 'dynamic-tool' && p.toolName === 'ap_update_plan',
   );
-  if (
-    fromToolCall &&
-    fromToolCall.type === 'dynamic-tool' &&
-    'input' in fromToolCall &&
-    fromToolCall.input &&
-    typeof fromToolCall.input === 'object' &&
-    'entries' in fromToolCall.input &&
-    Array.isArray(fromToolCall.input.entries)
-  ) {
-    return fromToolCall.input.entries;
+  const lastPlanCall = planToolCalls[planToolCalls.length - 1];
+  if (!lastPlanCall || lastPlanCall.type !== 'dynamic-tool') return [];
+
+  const input = lastPlanCall.input;
+  if (input && typeof input === 'object' && 'entries' in input && Array.isArray((input as Record<string, unknown>).entries)) {
+    return (input as Record<string, unknown>).entries as Array<{ content: string; status: string }>;
   }
 
   return [];
