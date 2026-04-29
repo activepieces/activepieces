@@ -90,6 +90,7 @@ Clickable choices (use to let the user pick between a SINGLE question's options)
 
 Multi-question form (use ONLY when you must ask 2-3 questions at once — renders as an inline form the user fills out and submits):
 ```multi-question
+title: CV Source
 question: Where do CVs come in?
 type: choice
 options:
@@ -97,6 +98,7 @@ options:
 - Form submission
 - Google Drive / Dropbox
 ---
+title: After Screening
 question: What should happen after screening?
 type: choice
 options:
@@ -104,13 +106,15 @@ options:
 - Add to spreadsheet
 - Auto-reply to candidates
 ---
+title: Role
 question: What role are you hiring for?
 type: text
 placeholder: e.g. Senior Backend Engineer, 5+ years Python
 ```
 
 Supported question types: `choice` (renders buttons), `text` (renders input field).
-Separate each question with `---`. Keep question text short (under 8 words) — it appears as a step title. Prefer asking one question at a time — only use multi-question when the questions are tightly related and asking them separately would feel tedious.
+Each question must have a `title` (2-4 words, shown as a step label) and a `question` (the full question text, can be longer and descriptive).
+Separate each question with `---`. Prefer asking one question at a time — only use multi-question when the questions are tightly related and asking them separately would feel tedious.
 
 Missing connection (one block per piece, only when that piece is not yet connected):
 ```connection-required

@@ -107,6 +107,7 @@ export type ConnectionRequired = {
 };
 
 export type MultiQuestion = {
+  title?: string;
   question: string;
   type: 'choice' | 'text';
   options?: string[];
@@ -128,7 +129,9 @@ export function parseMultiQuestion(content: string): {
     const typeMatch = /^type:\s*(choice|text)$/m.exec(section);
     if (!questionMatch || !typeMatch) continue;
 
+    const titleMatch = /^title:\s*(.+)$/m.exec(section);
     const q: MultiQuestion = {
+      title: titleMatch ? titleMatch[1].trim() : undefined,
       question: questionMatch[1].trim(),
       type: typeMatch[1] as 'choice' | 'text',
     };

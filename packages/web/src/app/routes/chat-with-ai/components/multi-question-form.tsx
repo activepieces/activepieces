@@ -91,9 +91,9 @@ export function MultiQuestionForm({
             )}>
               {answers[i]?.trim() ? <Check className="size-2.5" /> : i + 1}
             </span>
-            {question.question.length > 25
+            {question.title ?? (question.question.length > 25
               ? question.question.slice(0, 25) + '...'
-              : question.question}
+              : question.question)}
           </button>
         ))}
       </div>
