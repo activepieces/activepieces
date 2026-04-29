@@ -19,6 +19,8 @@ const MAX_CACHED_ENTRIES = 50
 const SLOT_WAIT_TIMEOUT_MS = 60_000
 const SDK_TIMEOUT_MS = 30_000
 const SDK_CACHE_TTL_MS = 10 * 60 * 1000
+const SANDBOX_IDLE_TIMEOUT_MS = 5 * 60 * 1000
+const E2B_TEMPLATE = 'wunszvjeuyrdgrt0z6o9'
 let activeSandboxCount = 0
 const slotQueue: Array<{ resolve: () => void, reject: (err: Error) => void }> = []
 const sdkCache = new Map<string, { sdk: SandboxAgent, expiresAt: number }>()
@@ -87,6 +89,8 @@ async function createSdk({ aiConfig, sandboxId }: { aiConfig: ChatAiConfig, sand
     const sandbox = e2b({
         create: { apiKey: e2bApiKey, envs: aiConfig.envs },
         connect: { apiKey: e2bApiKey },
+        timeoutMs: SANDBOX_IDLE_TIMEOUT_MS,
+        template: E2B_TEMPLATE,
     })
     const { PostgresSessionPersistDriver } = await import('./postgres-persist-driver')
     const persist = new PostgresSessionPersistDriver() as unknown as SessionPersistDriver

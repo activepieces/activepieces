@@ -105,3 +105,46 @@ export type ConnectionRequired = {
   piece: string;
   displayName: string;
 };
+
+export type MultiQuestion = {
+  question: string;
+  type: 'choice' | 'text';
+  options?: string[];
+  placeholder?: string;
+};
+
+export function parseMultiQuestion(content: string): {
+  questions: MultiQuestion[];
+  cleanContent: string;
+} {
+  const { block, cleanContent } = parseCodeBlock(content, 'multi-question');
+  if (!block) return { questions: [], cleanContent: content };
+
+  const questions: MultiQuestion[] = [];
+  const sections = block.split(/^---$/m);
+
+  for (const section of sections) {
+    const questionMatch = /^question:\s*(.+)$/m.exec(section);
+    const typeMatch = /^type:\s*(choice|text)$/m.exec(section);
+    if (!questionMatch || !typeMatch) continue;
+
+    const q: MultiQuestion = {
+      question: questionMatch[1].trim(),
+      type: typeMatch[1] as 'choice' | 'text',
+    };
+
+    if (q.type === 'choice') {
+      const optionLines = section.match(/^-\s+.+$/gm);
+      q.options = optionLines?.map((l) => l.replace(/^-\s+/, '').trim()) ?? [];
+    }
+
+    const placeholderMatch = /^placeholder:\s*(.+)$/m.exec(section);
+    if (placeholderMatch) {
+      q.placeholder = placeholderMatch[1].trim();
+    }
+
+    questions.push(q);
+  }
+
+  return { questions, cleanContent };
+}

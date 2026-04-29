@@ -1,11 +1,11 @@
 import { t } from 'i18next';
 import {
   AlertTriangle,
-  Cable,
+  Database,
+  Lightbulb,
   Settings,
+  ShieldCheck,
   Sparkles,
-  Table2,
-  Workflow,
   Zap,
 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -49,10 +49,10 @@ export function SuggestionCards({
   onSend: (text: string, files?: File[]) => void;
 }) {
   const suggestions = [
-    { icon: Zap, text: t('What can I automate today?') },
-    { icon: Workflow, text: t('Show me what I have running') },
-    { icon: Table2, text: t('I keep doing something manually...') },
-    { icon: Cable, text: t('Help me connect two apps') },
+    { icon: Zap, text: t('Automate a task') },
+    { icon: ShieldCheck, text: t('Handle approvals') },
+    { icon: Database, text: t('Check my data') },
+    { icon: Lightbulb, text: t('Brainstorm ideas') },
   ];
 
   return (

@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -14,11 +15,14 @@ import {
   ConnectionRequired,
   parseAllConnectionsRequired,
   parseAutomationProposal,
+  parseMultiQuestion,
   parseQuickReplies,
 } from '../lib/message-parsers';
 
+import { MultiQuestionForm } from './multi-question-form';
+
 const PROSE_CLASSES =
-  'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4';
+  'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4 [&_h1]:text-[18px] [&_h2]:text-[18px] [&_h3]:text-[18px]';
 
 const AUTH_URL_PATTERN = /https?:\/\/[^\s]*\/authorize\?[^\s]*/;
 
@@ -38,13 +42,13 @@ function stripAuthContent(content: string): string {
 export function MessageContentWithAuth({
   content,
   onSend,
-  isStreaming = false,
+  isLastMessage = false,
   connectedPieces,
   onPieceConnected,
 }: {
   content: string;
   onSend?: (text: string) => void;
-  isStreaming?: boolean;
+  isLastMessage?: boolean;
   connectedPieces?: Set<string>;
   onPieceConnected?: (piece: string) => void;
 }) {
@@ -76,16 +80,15 @@ export function MessageContentWithAuth({
     parseAutomationProposal(content);
   const { connections, cleanContent: afterConnection } =
     parseAllConnectionsRequired(afterProposal);
-  const { cleanContent: finalContent } = parseQuickReplies(afterConnection);
+  const { questions, cleanContent: afterQuestions } =
+    parseMultiQuestion(afterConnection);
+  const { cleanContent: finalContent } = parseQuickReplies(afterQuestions);
 
   return (
     <div className="space-y-2">
       {finalContent && (
         <div className={PROSE_CLASSES}>
           <Markdown>{finalContent}</Markdown>
-          {isStreaming && (
-            <span className="inline-block w-[2px] h-[1em] bg-foreground align-text-bottom ml-0.5 animate-[blink-cursor_1s_step-end_infinite]" />
-          )}
         </div>
       )}
       {connections.map((conn) => (
@@ -97,6 +100,12 @@ export function MessageContentWithAuth({
           onPieceConnected={onPieceConnected}
         />
       ))}
+      {questions.length > 0 && isLastMessage && (
+        <MultiQuestionForm
+          questions={questions}
+          onSubmit={(text) => onSend?.(text)}
+        />
+      )}
       {proposal && (
         <AutomationProposalCard
           proposal={proposal}
@@ -117,7 +126,7 @@ export function AutomationProposalCard({
   onBuild: () => void;
 }) {
   return (
-    <div className="rounded-xl border bg-background shadow-sm overflow-hidden my-2">
+    <div className="rounded-xl border bg-background overflow-hidden my-2">
       <div className="p-4 space-y-3">
         <div className="flex items-start gap-3">
           <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-primary/10 shrink-0">
@@ -166,6 +175,7 @@ export function ConnectionRequiredCard({
   connectedPieces?: Set<string>;
   onPieceConnected?: (piece: string) => void;
 }) {
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const connected = connectedPieces?.has(connection.piece) ?? false;
   const shortName = connection.piece.replace(/[^a-z0-9-]/gi, '');
@@ -177,7 +187,7 @@ export function ConnectionRequiredCard({
   return (
     <>
       <motion.div
-        className="rounded-xl border bg-background shadow-sm overflow-hidden my-2"
+        className="rounded-xl border bg-background overflow-hidden my-2"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{
@@ -238,6 +248,9 @@ export function ConnectionRequiredCard({
             setDialogOpen(open);
             if (createdConnection) {
               onPieceConnected?.(connection.piece);
+              void queryClient.invalidateQueries({
+                queryKey: ['app-connections'],
+              });
               onSend?.(
                 `Done — ${connection.displayName} is connected. [auth externalId: ${createdConnection.externalId}]`,
               );

@@ -1,15 +1,18 @@
 import {
+    ChatConversation,
     CreateChatConversationRequest,
     isObject,
     Permission,
     PrincipalType,
     SendChatMessageRequest,
     SERVICE_KEY_SECURITY_OPENAPI,
+    tryCatch,
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
 import { createUIMessageStream, pipeUIMessageStreamToResponse } from 'ai'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import type { Session } from 'sandbox-agent'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
@@ -19,10 +22,54 @@ import { ChatUIMessage, createHistoryReplayFilter, createStreamWriter } from './
 import { userSandboxService } from './user-sandbox-service'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
+const EVENT_QUIESCENCE_MS = 1_500
+const MAX_QUIESCENCE_WAIT_MS = 10_000
+const KEEPALIVE_INTERVAL_MS = 10_000
 
 function isExpectedStreamError(error: unknown): boolean {
     if (!(error instanceof Error)) return false
     return (error as NodeJS.ErrnoException).code === 'ECONNRESET' || error.name === 'SandboxDestroyedError'
+}
+
+async function resumeOrRecreateSession({ conversation, liveSession, sandboxId, aiConfig, userId, platformId, conversationId, projectId, service }: {
+    conversation: ChatConversation
+    liveSession: { session: Session, sandboxId: string } | undefined
+    sandboxId: string
+    aiConfig: Parameters<typeof chatSandboxAgent.resumeSession>[0]['aiConfig']
+    userId: string
+    platformId: string
+    conversationId: string
+    projectId: string
+    service: ReturnType<typeof chatService>
+}): Promise<{ session: Session }> {
+    if (liveSession) {
+        return { session: liveSession.session }
+    }
+
+    const { data: result } = await tryCatch(async () => chatSandboxAgent.resumeSession({
+        sessionId: conversation.sandboxSessionId!,
+        sandboxId,
+        aiConfig,
+    }))
+
+    if (result) {
+        if (result.newSandboxId && result.newSandboxId !== sandboxId) {
+            void userSandboxService.updateSandboxId({ userId, sandboxId: result.newSandboxId }).catch(() => undefined)
+        }
+        return { session: result.session }
+    }
+
+    await service.resetSession({ id: conversationId, projectId })
+    const fresh = await service.ensureSession({ id: conversationId, projectId, userId, platformId })
+    if (fresh.liveSession) {
+        return { session: fresh.liveSession.session }
+    }
+    const retried = await chatSandboxAgent.resumeSession({
+        sessionId: fresh.conversation.sandboxSessionId!,
+        sandboxId: await userSandboxService.getSandboxId({ userId }) ?? sandboxId,
+        aiConfig,
+    })
+    return { session: retried.session }
 }
 
 export const chatController: FastifyPluginAsyncZod = async (app) => {
@@ -133,18 +180,19 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                     try {
                         writer.write({ type: 'start' })
 
-                        const { session, newSandboxId } = liveSession
-                            ? { ...liveSession, newSandboxId: null }
-                            : await chatSandboxAgent.resumeSession({
-                                sessionId: conversation.sandboxSessionId!,
-                                sandboxId,
-                                aiConfig,
-                            })
-                        if (newSandboxId && newSandboxId !== sandboxId) {
-                            void userSandboxService.updateSandboxId({ userId, sandboxId: newSandboxId }).catch(() => undefined)
-                        }
+                        const resumed = await resumeOrRecreateSession({
+                            conversation,
+                            liveSession,
+                            sandboxId,
+                            aiConfig,
+                            userId,
+                            platformId,
+                            conversationId,
+                            projectId,
+                            service,
+                        })
+                        const session = resumed.session
 
-                        const KEEPALIVE_INTERVAL_MS = 25_000
                         const keepalive = setInterval(() => {
                             writer.write({ type: 'data-usage', data: { inputTokens: 0, outputTokens: 0 }, transient: true })
                         }, KEEPALIVE_INTERVAL_MS)
@@ -161,9 +209,23 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                         })
                         let unsubscribe: (() => void) | undefined
                         let promptCompleted = false
+                        let lastEventAt = Date.now()
+                        let resolved = false
 
                         try {
                             await new Promise<void>((resolve, reject) => {
+                                let quiescenceTimer: ReturnType<typeof setTimeout> | undefined
+
+                                const safeResolve = (): void => {
+                                    if (resolved) return
+                                    resolved = true
+                                    if (quiescenceTimer !== undefined) {
+                                        clearTimeout(quiescenceTimer)
+                                        quiescenceTimer = undefined
+                                    }
+                                    resolve()
+                                }
+
                                 unsubscribe = session.onEvent((event) => {
                                     if (event.sender !== 'agent') return
 
@@ -176,17 +238,36 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
                                     if (historyReplayFilter.shouldSuppress(update)) return
 
+                                    const missedText = historyReplayFilter.drainMissedText()
+                                    if (missedText) {
+                                        streamWriter.appendText(missedText)
+                                    }
+
                                     streamWriter.write(update)
+                                    lastEventAt = Date.now()
                                 })
 
                                 reply.raw.on('close', () => {
-                                    resolve()
+                                    log.info({ conversationId, promptCompleted, resolved, timeSinceLastEvent: Date.now() - lastEventAt }, 'Chat stream connection closed by client')
+                                    safeResolve()
                                 })
 
                                 chatSandboxAgent.sendPrompt({ session, text: content, systemPrompt, files })
                                     .then(() => {
                                         promptCompleted = true
-                                        resolve()
+                                        lastEventAt = Date.now()
+                                        const waitStart = Date.now()
+                                        const checkQuiescence = (): void => {
+                                            if (resolved) return
+                                            const now = Date.now()
+                                            const sinceLastEvent = now - lastEventAt
+                                            if (sinceLastEvent >= EVENT_QUIESCENCE_MS || now - waitStart >= MAX_QUIESCENCE_WAIT_MS) {
+                                                safeResolve()
+                                                return
+                                            }
+                                            quiescenceTimer = setTimeout(checkQuiescence, Math.min(EVENT_QUIESCENCE_MS - sinceLastEvent, 200))
+                                        }
+                                        quiescenceTimer = setTimeout(checkQuiescence, 200)
                                     })
                                     .catch(reject)
                             })
@@ -194,6 +275,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                         finally {
                             clearInterval(keepalive)
                             unsubscribe?.()
+                            streamWriter.endAll()
                             void userSandboxService.updateLastUsed({ userId }).catch(() => undefined)
                             if (pendingTitle && promptCompleted) {
                                 void service.updateConversation({

@@ -15,6 +15,8 @@ import { chatApi } from './chat-api';
 import { ChatUIMessage } from './chat-types';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const RECOVERY_DELAY_MS = 3_000;
+const RECOVERY_MAX_ATTEMPTS = 5;
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
 
@@ -160,7 +162,7 @@ export function useAgentChat({
   onConversationCreated,
 }: {
   onTitleUpdate?: (title: string, conversationId?: string) => void;
-  onConversationCreated?: () => void;
+  onConversationCreated?: (conversationId: string) => void;
 } = {}) {
   const [conversationId, setConversationIdState] = useState<string | null>(
     null,
@@ -176,6 +178,7 @@ export function useAgentChat({
   const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
   const cancelledRef = useRef(false);
+  const messageCountRef = useRef(0);
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
@@ -236,8 +239,39 @@ export function useAgentChat({
     },
     onError: () => {
       setPendingMessages([]);
+      if (cancelledRef.current) return;
+      const convId = conversationIdRef.current;
+      if (!convId) return;
+      const recoverMessages = async (): Promise<void> => {
+        const previousCount = messageCountRef.current;
+        for (let attempt = 0; attempt < RECOVERY_MAX_ATTEMPTS; attempt++) {
+          await new Promise((r) => setTimeout(r, RECOVERY_DELAY_MS));
+          if (cancelledRef.current || conversationIdRef.current !== convId)
+            return;
+          const { data: result, error } = await tryCatch(() =>
+            chatApi.getMessages(convId),
+          );
+          if (error) continue;
+          if (result.data.length > previousCount) {
+            if (conversationIdRef.current !== convId) return;
+            setUiMessages(mapHistoryToUIMessages(result.data));
+            return;
+          }
+        }
+        if (conversationIdRef.current !== convId) return;
+        const { data: finalResult } = await tryCatch(() =>
+          chatApi.getMessages(convId),
+        );
+        if (finalResult) {
+          if (conversationIdRef.current !== convId) return;
+          setUiMessages(mapHistoryToUIMessages(finalResult.data));
+        }
+      };
+      void recoverMessages();
     },
   });
+
+  messageCountRef.current = uiMessages.length;
 
   const sdkIsStreaming = status === 'streaming' || status === 'submitted';
   const lastLiveMessage = uiMessages[uiMessages.length - 1];
@@ -345,8 +379,10 @@ export function useAgentChat({
 
       if (!conversationIdRef.current) {
         const { error: convError } = await tryCatch(async () => {
-          await createConversation({ title: content.slice(0, 100) });
-          onConversationCreatedRef.current?.();
+          const conv = await createConversation({
+            title: content.slice(0, 100),
+          });
+          onConversationCreatedRef.current?.(conv.id);
         });
         if (convError) {
           setLocalError(convError.message ?? 'Failed to start conversation');

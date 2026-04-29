@@ -1,4 +1,5 @@
 
+import { safeHttp } from '@activepieces/server-utils'
 import { ActivepiecesError, ErrorCode, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import * as validator from '@authenio/samlify-node-xmllint'
 import * as saml from 'samlify'
@@ -44,7 +45,7 @@ class SamlClient {
                 params: {
                     message: 'Invalid SAML response, It should contain these firstName, lastName, email fields.',
                 },
-            
+
             })
         }
         return atts
@@ -59,7 +60,8 @@ export const createSamlClient = async (platformId: string, samlProvider: SAMLAut
         return cached
     }
     saml.setSchemaValidator(validator)
-    const idp = createIdp(samlProvider.idpMetadata)
+    const metadataXml = await resolveIdpMetadata(samlProvider.idpMetadata)
+    const idp = createIdp(metadataXml)
     const sp = await createSp(samlProvider.idpCertificate)
     const client = new SamlClient(idp, sp)
     instanceCache.set(platformId, client)
@@ -77,6 +79,36 @@ const createIdp = (metadata: string): saml.IdentityProviderInstance => {
         messageSigningOrder: 'encrypt-then-sign',
         wantLogoutRequestSigned: true,
     })
+}
+
+const resolveIdpMetadata = async (idpMetadata: string): Promise<string> => {
+    const trimmed = idpMetadata.trim()
+    if (!/^https?:\/\//i.test(trimmed)) {
+        return idpMetadata
+    }
+    try {
+        const response = await safeHttp.axios.get<string>(trimmed, {
+            responseType: 'text',
+            timeout: 10_000,
+            maxContentLength: 5 * 1024 * 1024,
+            maxBodyLength: 5 * 1024 * 1024,
+            transformResponse: (data) => data,
+        })
+        const contentType = String(response.headers['content-type'] ?? '').toLowerCase()
+        if (contentType !== '' && !contentType.includes('xml') && !contentType.includes('text/plain')) {
+            throw new Error(`Unexpected content-type "${contentType}" — expected XML.`)
+        }
+        return typeof response.data === 'string' ? response.data : String(response.data)
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        throw new ActivepiecesError({
+            code: ErrorCode.INVALID_SAML_RESPONSE,
+            params: {
+                message: `Failed to fetch IdP metadata from URL: ${message}`,
+            },
+        })
+    }
 }
 
 const createSp = async (privateKey: string): Promise<saml.ServiceProviderInstance> => {
