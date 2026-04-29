@@ -25,7 +25,7 @@ import { ChatInput } from './components/chat-input';
 import { ChatMessage } from './components/chat-message';
 import { ChatModelSelector } from './components/chat-model-selector';
 import { QuickReplies } from './components/message-content';
-import { getTextFromParts, parseQuickReplies } from './lib/message-parsers';
+import { getTextFromParts, parseMultiQuestion, parseQuickReplies } from './lib/message-parsers';
 
 export function AIChatBox({
   incognito,
@@ -107,6 +107,9 @@ function ChatBoxContent({
     if (lastUser) void sendMessage(getTextFromParts(lastUser.parts));
   }, [messages, sendMessage]);
 
+  const lastMessage = messages[messages.length - 1];
+  const lastMessageText = lastMessage?.role === 'assistant' ? getTextFromParts(lastMessage.parts) : '';
+  const hasActiveForm = parseMultiQuestion(lastMessageText).questions.length > 0;
   const isEmpty = messages.length === 0 && !isLoadingHistory && !isStreaming;
 
   if (isEmpty) {
@@ -216,23 +219,25 @@ function ChatBoxContent({
         <ScrollButton className="absolute bottom-4 right-1/2 translate-x-1/2" />
       </ChatContainerRoot>
 
-      <div className="pb-4 px-6">
-        <div className="max-w-3xl mx-auto">
-          <ChatInput
-            isStreaming={isStreaming}
-            onSend={handleSend}
-            onStop={cancelStream}
-            placeholder={t('Reply...')}
-            leftActions={
-              <ChatModelSelector
-                chatProviderName={chatProviderName}
-                selectedModel={modelName}
-                onModelChange={setModelName}
-              />
-            }
-          />
+      {!hasActiveForm && (
+        <div className="pb-4 px-6">
+          <div className="max-w-3xl mx-auto">
+            <ChatInput
+              isStreaming={isStreaming}
+              onSend={handleSend}
+              onStop={cancelStream}
+              placeholder={t('Reply...')}
+              leftActions={
+                <ChatModelSelector
+                  chatProviderName={chatProviderName}
+                  selectedModel={modelName}
+                  onModelChange={setModelName}
+                />
+              }
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
