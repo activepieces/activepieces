@@ -7,7 +7,7 @@ export const toggleClientPortal = createAction({
   auth: ninjapipeAuth,
   name: 'toggle_client_portal',
   displayName: 'Toggle Client Portal',
-  description: 'Enable or disable client portal access for a contact.',
+  description: 'Enable or disable client portal access for a contact. When enabling, NinjaPipe auto-generates a secure password and returns it in the response.',
   props: {
     contactId: ninjapipeCommon.contactDropdownRequired,
     enable: Property.Checkbox({
@@ -21,28 +21,15 @@ export const toggleClientPortal = createAction({
       description: 'Optional. Used only when enabling. Defaults to the contact\'s email.',
       required: false,
     }),
-    password: Property.ShortText({
-      displayName: 'Portal Password',
-      description: 'Optional. Min 8 characters. Used only when enabling. If left blank, a secure password is generated and returned.',
-      required: false,
-    }),
   },
   async run(context) {
     const auth = getAuth(context);
-    const { contactId, enable, email, password } = context.propsValue;
-    if (!contactId) {
-      throw new Error('Contact is required.');
-    }
+    const { contactId, enable, email } = context.propsValue;
     const action = enable ? 'enable' : 'disable';
     const body: Record<string, unknown> = {};
     if (enable) {
       if (email) body['email'] = email;
-      if (password) {
-        body['password'] = password;
-        body['auto_generate_password'] = false;
-      } else {
-        body['auto_generate_password'] = true;
-      }
+      body['auto_generate_password'] = true;
     }
     const response = await ninjapipeApiCall<Record<string, unknown>>({
       auth,
