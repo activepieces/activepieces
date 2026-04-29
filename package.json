@@ -38,7 +38,8 @@
     "push-i18n": "crowdin upload sources",
     "i18n:extract": "i18next --config packages/web/i18next-parser.config.js",
     "bump-translated-pieces": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/pieces/bump-translated-pieces.ts",
-    "bump-all-pieces-patch-version": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/pieces/bump-all-pieces-patch-version.ts"
+    "bump-all-pieces-patch-version": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/pieces/bump-all-pieces-patch-version.ts",
+    "create-piece-from-openapi": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json packages/cli/src/index.ts pieces from-openapi"
   },
   "private": true,
   "dependencies": {

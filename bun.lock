@@ -359,6 +359,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "*",
         "@activepieces/shared": "*",
+        "@apidevtools/swagger-parser": "^10.1.0",
         "axios": "1.15.0",
         "chalk": "4.1.2",
         "commander": "11.1.0",
@@ -366,11 +367,13 @@
         "dotenv": "17.2.3",
         "form-data": "4.0.4",
         "inquirer": "8.2.7",
+        "js-yaml": "^4.1.0",
         "jsonwebtoken": "9.0.1",
         "nanoid": "3.3.8",
         "tslib": "2.6.2",
       },
       "devDependencies": {
+        "@types/js-yaml": "^4.0.9",
         "@types/node": "24.11.0",
       },
     },
@@ -2569,6 +2572,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/flat": {
+      "name": "@activepieces/piece-flat",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/flipando": {
       "name": "@activepieces/piece-flipando",
       "version": "0.0.5",
@@ -2870,6 +2883,16 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/giphy": {
+      "name": "@activepieces/piece-giphy",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/gistly": {
@@ -8771,6 +8794,8 @@
 
     "@activepieces/piece-fireflies-ai": ["@activepieces/piece-fireflies-ai@workspace:packages/pieces/community/fireflies-ai"],
 
+    "@activepieces/piece-flat": ["@activepieces/piece-flat@workspace:packages/pieces/community/flat"],
+
     "@activepieces/piece-flipando": ["@activepieces/piece-flipando@workspace:packages/pieces/community/flipando"],
 
     "@activepieces/piece-fliqr-ai": ["@activepieces/piece-fliqr-ai@workspace:packages/pieces/community/fliqr-ai"],
@@ -8830,6 +8855,8 @@
     "@activepieces/piece-ghostcms": ["@activepieces/piece-ghostcms@workspace:packages/pieces/community/ghostcms"],
 
     "@activepieces/piece-giftbit": ["@activepieces/piece-giftbit@workspace:packages/pieces/community/giftbit"],
+
+    "@activepieces/piece-giphy": ["@activepieces/piece-giphy@workspace:packages/pieces/community/giphy"],
 
     "@activepieces/piece-gistly": ["@activepieces/piece-gistly@workspace:packages/pieces/community/gistly"],
 
@@ -9795,7 +9822,13 @@
 
     "@anthropic-ai/sdk": ["@anthropic-ai/sdk@0.39.0", "", { "dependencies": { "@types/node": "^18.11.18", "@types/node-fetch": "^2.6.4", "abort-controller": "^3.0.0", "agentkeepalive": "^4.2.1", "form-data-encoder": "1.7.2", "formdata-node": "^4.3.2", "node-fetch": "^2.6.7" } }, "sha512-eMyDIPRZbt1CCLErRCi3exlAvNkBtRe+kW5vvJyef93PmNr/clstYgHhtvmkxN82nlKgzyGPCyGxrm0JQ1ZIdg=="],
 
+    "@apidevtools/json-schema-ref-parser": ["@apidevtools/json-schema-ref-parser@11.7.2", "", { "dependencies": { "@jsdevtools/ono": "^7.1.3", "@types/json-schema": "^7.0.15", "js-yaml": "^4.1.0" } }, "sha512-4gY54eEGEstClvEkGnwVkTkrx0sqwemEFG5OSRRn3tD91XH0+Q8XIkYIfo7IwEWPpJZwILb9GUXeShtplRc/eA=="],
+
+    "@apidevtools/openapi-schemas": ["@apidevtools/openapi-schemas@2.1.0", "", {}, "sha512-Zc1AlqrJlX3SlpupFGpiLi2EbteyP7fXmUOGup6/DnkRgjP9bgMM/ag+n91rsv0U1Gpz0H3VILA/o3bW7Ua6BQ=="],
+
     "@apidevtools/swagger-methods": ["@apidevtools/swagger-methods@3.0.2", "", {}, "sha512-QAkD5kK2b1WfjDS/UQn/qQkbwF31uqRjPTrsCs5ZG9BQGAkjwvqGFjjPqAuzac/IYzpPtRzjCP1WrTuAIjMrXg=="],
+
+    "@apidevtools/swagger-parser": ["@apidevtools/swagger-parser@10.1.1", "", { "dependencies": { "@apidevtools/json-schema-ref-parser": "11.7.2", "@apidevtools/openapi-schemas": "^2.1.0", "@apidevtools/swagger-methods": "^3.0.2", "@jsdevtools/ono": "^7.1.3", "ajv": "^8.17.1", "ajv-draft-04": "^1.0.0", "call-me-maybe": "^1.0.2" }, "peerDependencies": { "openapi-types": ">=7" } }, "sha512-u/kozRnsPO/x8QtKYJOqoGtC4kH6yg1lfYkB9Au0WhYB0FNLpyFusttQtvhlwjtG3rOwiRz4D8DnnXa8iEpIKA=="],
 
     "@apify/consts": ["@apify/consts@2.52.1", "", {}, "sha512-Nhal8FiIgAw5ylVL4U2DAeJJyKow0bFObAX/og5BJjB9xJ2csQcyVAx4ChnO7XOaeRU8HbRn9u0QUGzPt5NNqA=="],
 
