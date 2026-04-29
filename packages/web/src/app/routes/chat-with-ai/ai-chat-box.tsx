@@ -123,6 +123,7 @@ function ChatBoxContent({
               onStop={cancelStream}
               leftActions={
                 <ChatModelSelector
+                  chatProviderName={chatProviderName}
                   selectedModel={modelName}
                   onModelChange={setModelName}
                 />
