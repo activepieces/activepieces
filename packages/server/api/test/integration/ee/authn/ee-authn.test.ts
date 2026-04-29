@@ -15,7 +15,7 @@ let app: FastifyInstance | null = null
 beforeAll(async () => {
     app = await setupTestEnvironment()
 })
-packages/server/api/test/integration/ee/authn/ee-authn.test.ts
+
 afterAll(async () => {
     await teardownTestEnvironment()
 })
