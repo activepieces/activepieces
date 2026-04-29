@@ -88,6 +88,14 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
 
     async getOnboardingResponse({ identityId }: GetOnboardingResponseParams): Promise<AuthenticationResponse> {
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
+        if (!identity.verified) {
+            throw new ActivepiecesError({
+                code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
+                params: {
+                    email: identity.email,
+                },
+            })
+        }
 
         const token = await accessTokenManager(log).generateToken({
             id: identity.id,
