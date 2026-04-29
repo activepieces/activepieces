@@ -51,8 +51,6 @@ function globalErrorHandler(error: AxiosError) {
       const { pathname } = window.location;
       if (pathname === '/login' || pathname === '/sign-in') return;
       authenticationSession.logOut();
-      console.log(errorCode);
-      window.location.href = '/sign-in';
     }
   }
 }

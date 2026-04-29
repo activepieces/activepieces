@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 
-// Stub for AP's legacy native auth routes. Clerk owns account lifecycle — bounce to /login.
+import { OTOM8_SITE_URL } from '@/lib/otom8-site-url';
+
+// Stub for AP's legacy native auth routes. Clerk owns account lifecycle — bounce to the site login.
 export const RedirectToLogin: React.FC = () => {
   useEffect(() => {
-    window.location.replace('/login');
+    window.location.replace(`${OTOM8_SITE_URL}/login`);
   }, []);
   return null;
 };

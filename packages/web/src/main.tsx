@@ -24,9 +24,9 @@ root.render(
     <ClerkProvider
       publishableKey={CLERK_PUBLISHABLE_KEY}
       appearance={otom8ClerkAppearance}
-      signInUrl="/login"
-      signUpUrl="/login"
-      afterSignOutUrl="/login"
+      signInUrl={`${OTOM8_SITE_URL}/login`}
+      signUpUrl={`${OTOM8_SITE_URL}/login`}
+      afterSignOutUrl={`${OTOM8_SITE_URL}/login`}
     >
       <App />
     </ClerkProvider>

@@ -1,4 +1,4 @@
-import { Permission, ProjectType } from '@activepieces/shared';
+import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -19,7 +19,6 @@ export default function WorkspaceGeneralPage() {
   const { project } = projectCollectionUtils.useCurrentProject();
   const { checkAccess } = useAuthorization();
   const canWrite = checkAccess(Permission.WRITE_PROJECT);
-  const isPersonal = project.type === ProjectType.PERSONAL;
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -63,19 +62,17 @@ export default function WorkspaceGeneralPage() {
 
         <Separator />
 
-        {isPersonal && (
-          <div>
-            <Label htmlFor="workspaceName" className="text-sm font-medium">
-              {t('Workspace Name')}
-            </Label>
-            <Input
-              id="workspaceName"
-              className="mt-2 h-10"
-              disabled={!canWrite}
-              {...form.register('projectName')}
-            />
-          </div>
-        )}
+        <div>
+          <Label htmlFor="workspaceName" className="text-sm font-medium">
+            {t('Workspace Name')}
+          </Label>
+          <Input
+            id="workspaceName"
+            className="mt-2 h-10"
+            disabled={!canWrite}
+            {...form.register('projectName')}
+          />
+        </div>
 
         <GeneralSettings form={form} />
 

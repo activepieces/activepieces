@@ -32,12 +32,12 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             externalAccessToken,
         )
 
-        const { project } = await getOrCreateProject({
+        const { project, isNewProject } = await getOrCreateProject({
             platformId: externalPrincipal.platformId,
             externalProjectId: externalPrincipal.externalProjectId,
         }, log)
 
-        if (!isNil(externalPrincipal.projectDisplayName)) {
+        if (isNewProject && !isNil(externalPrincipal.projectDisplayName)) {
             await projectService(log).update(project.id, {
                 type: project.type,
                 displayName: externalPrincipal.projectDisplayName,
