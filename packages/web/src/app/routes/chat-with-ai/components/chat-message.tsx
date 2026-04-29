@@ -135,11 +135,28 @@ export function UserMessage({
 function extractPlanEntries(
   parts: ChatUIMessage['parts'],
 ): Array<{ content: string; status: string }> {
-  const last = parts.findLast(
+  const fromDataPart = parts.findLast(
     (p): p is Extract<typeof p, { type: 'data-plan' }> =>
       isDataUIPart<ChatDataParts>(p) && p.type === 'data-plan',
   );
-  return last ? last.data.entries : [];
+  if (fromDataPart) return fromDataPart.data.entries;
+
+  const fromToolCall = parts.findLast(
+    (p) => p.type === 'dynamic-tool' && p.toolName === 'ap_update_plan',
+  );
+  if (
+    fromToolCall &&
+    fromToolCall.type === 'dynamic-tool' &&
+    'input' in fromToolCall &&
+    fromToolCall.input &&
+    typeof fromToolCall.input === 'object' &&
+    'entries' in fromToolCall.input &&
+    Array.isArray(fromToolCall.input.entries)
+  ) {
+    return fromToolCall.input.entries;
+  }
+
+  return [];
 }
 
 export function AssistantMessage({
@@ -165,8 +182,11 @@ export function AssistantMessage({
   const thoughts = reasoningParts.map((p) => p.text).join('');
   const hasThoughts = thoughts.length > 0;
 
+  const HIDDEN_TOOLS = new Set(['ap_update_plan', 'ap_set_session_title']);
   const dynamicToolParts = message.parts.filter(
-    (p) => p.type === 'dynamic-tool',
+    (p) =>
+      p.type === 'dynamic-tool' &&
+      !HIDDEN_TOOLS.has(p.toolName),
   );
   const textParts = message.parts.filter(
     (p): p is { type: 'text'; text: string } =>
@@ -188,7 +208,7 @@ export function AssistantMessage({
   const renderableParts = message.parts.filter(
     (p) =>
       (p.type === 'text' && 'text' in p && p.text.length > 0) ||
-      p.type === 'dynamic-tool',
+      (p.type === 'dynamic-tool' && !HIDDEN_TOOLS.has(p.toolName)),
   );
 
   return (
