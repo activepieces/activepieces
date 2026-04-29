@@ -1,4 +1,3 @@
-import { isDataUIPart } from 'ai';
 import { t } from 'i18next';
 import { Check, Copy, Paperclip, RefreshCw } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -21,8 +20,7 @@ import {
   ReasoningContent,
   ReasoningTrigger,
 } from '@/components/prompt-kit/reasoning';
-import { PlanCard } from '@/features/chat/components/plan-card';
-import { ChatDataParts, ChatUIMessage } from '@/features/chat/lib/chat-types';
+import { ChatUIMessage } from '@/features/chat/lib/chat-types';
 import { cn } from '@/lib/utils';
 
 import { getTextFromParts } from '../lib/message-parsers';
@@ -132,29 +130,6 @@ export function UserMessage({
   );
 }
 
-function extractPlanEntries(
-  parts: ChatUIMessage['parts'],
-): Array<{ content: string; status: string }> {
-  const fromDataPart = parts.findLast(
-    (p): p is Extract<typeof p, { type: 'data-plan' }> =>
-      isDataUIPart<ChatDataParts>(p) && p.type === 'data-plan',
-  );
-  if (fromDataPart) return fromDataPart.data.entries;
-
-  const planToolCalls = parts.filter(
-    (p) => p.type === 'dynamic-tool' && p.toolName === 'ap_update_plan',
-  );
-  const lastPlanCall = planToolCalls[planToolCalls.length - 1];
-  if (!lastPlanCall || lastPlanCall.type !== 'dynamic-tool') return [];
-
-  const input = lastPlanCall.input;
-  if (input && typeof input === 'object' && 'entries' in input && Array.isArray((input as Record<string, unknown>).entries)) {
-    return (input as Record<string, unknown>).entries as Array<{ content: string; status: string }>;
-  }
-
-  return [];
-}
-
 export function AssistantMessage({
   message,
   isStreaming,
@@ -199,8 +174,6 @@ export function AssistantMessage({
   const [isReasoningOpen, setIsReasoningOpen] = useState(false);
   const fullText = getTextFromParts(message.parts);
 
-  const planEntries = extractPlanEntries(message.parts);
-
   const renderableParts = message.parts.filter(
     (p) =>
       (p.type === 'text' && 'text' in p && p.text.length > 0) ||
@@ -238,8 +211,6 @@ export function AssistantMessage({
             connectedPieces,
             onPieceConnected,
           })}
-
-          {planEntries.length > 0 && <PlanCard entries={planEntries} />}
 
           {isStreaming && !isWaiting && <ChatThinkingLoader showText={false} />}
 
