@@ -124,7 +124,8 @@ export const apSsoController: FastifyPluginAsyncZod = async (app) => {
             })
 
             const responseParam = encodeURIComponent(JSON.stringify(apAuth))
-            return reply.redirect(`/authenticate?response=${responseParam}`)
+            const frontendBase = (process.env.AP_FRONTEND_URL ?? '').replace(/\/$/, '')
+            return reply.redirect(`${frontendBase}/authenticate?response=${responseParam}`)
         },
     )
 }

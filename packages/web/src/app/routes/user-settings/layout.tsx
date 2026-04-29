@@ -12,6 +12,7 @@ import {
   Mail,
   Puzzle,
   Settings,
+  SlidersHorizontal,
   User,
   Users,
 } from 'lucide-react';
@@ -28,6 +29,7 @@ const ACCOUNT_NAV = [
   { to: '/user-settings/contact', label: 'Email', icon: Mail },
   { to: '/user-settings/connections', label: 'Connected Accounts', icon: Link2 },
   { to: '/user-settings/security', label: 'Password', icon: KeyRound },
+  { to: '/user-settings/preferences', label: 'Preferences', icon: SlidersHorizontal },
 ];
 
 function NavItem({ to, label, icon: Icon }: { to: string; label: string; icon: React.ComponentType<{ className?: string }> }) {

@@ -545,36 +545,6 @@
   --add-button-shadow: 0px 0px 0px 6px hsl(var(--primary-100));
 }
 
-.dark {
-  --background: 0 0% 4%;
-  --foreground: 0 0% 96%;
-  --popover: 0 0% 7%;
-  --card: 0 0% 7%;
-  --muted: 0 0% 10%;
-  --muted-foreground: 240 5% 65%;
-  --secondary: 0 0% 8%;
-  --secondary-foreground: 0 0% 96%;
-  --accent: 0 0% 10%;
-  --accent-foreground: 0 0% 96%;
-  --primary: 160 84% 39%;
-  --primary-100: 164 86% 17%;
-  --primary-300: 156 84% 80%;
-  --primary-foreground: 0 0% 100%;
-  --border: hsla(0, 0%, 100%, 0.08);
-  --input: hsla(0, 0%, 100%, 0.08);
-  --ring: 160 84% 39%;
-  --sidebar-background: 0 0% 7%;
-  --sidebar-foreground: 0 0% 96%;
-  --sidebar-primary: 160 84% 39%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 0 0% 10%;
-  --sidebar-accent-foreground: 0 0% 96%;
-  --sidebar-border: hsla(0, 0%, 100%, 0.08);
-  --builder-background: 0 0% 4%;
-  --builder-background-pattern: 0 0% 18%;
-  --add-button-shadow: 0 0 0 6px hsl(var(--primary) / 0.25);
-}
-
 @layer base {
   * {
     @apply border-border;
