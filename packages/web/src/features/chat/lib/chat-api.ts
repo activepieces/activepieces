@@ -35,6 +35,12 @@ async function listConversations({
   });
 }
 
+async function getConversation(id: string): Promise<ChatConversation> {
+  return api.get<ChatConversation>(`/v1/chat/conversations/${id}`, {
+    projectId: projectId(),
+  });
+}
+
 async function getMessages(
   conversationId: string,
 ): Promise<{ data: ChatHistoryMessage[] }> {
@@ -59,26 +65,11 @@ async function deleteConversation(id: string): Promise<void> {
   });
 }
 
-async function cancelSession(conversationId: string): Promise<void> {
-  return api.post<void>(
-    `/v1/chat/conversations/${conversationId}/cancel`,
-    undefined,
-    { projectId: projectId() },
-  );
-}
-
-async function warm(): Promise<{ configured: boolean }> {
-  return api.post<{ configured: boolean }>('/v1/chat/warm', undefined, {
-    projectId: projectId(),
-  });
-}
-
 export const chatApi = {
   createConversation,
   listConversations,
+  getConversation,
   getMessages,
   updateConversation,
   deleteConversation,
-  cancelSession,
-  warm,
 };

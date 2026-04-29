@@ -529,7 +529,7 @@
     },
     "packages/pieces/community/aiprise": {
       "name": "@activepieces/piece-aiprise",
-      "version": "0.0.4",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-common": "0.12.1",
         "@activepieces/pieces-framework": "0.26.2",
@@ -890,7 +890,7 @@
     },
     "packages/pieces/community/attio": {
       "name": "@activepieces/piece-attio",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -1030,7 +1030,7 @@
     },
     "packages/pieces/community/baserow": {
       "name": "@activepieces/piece-baserow",
-      "version": "0.7.0",
+      "version": "0.8.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3817,6 +3817,16 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/ko-fi": {
+      "name": "@activepieces/piece-ko-fi",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/kommo": {
@@ -7991,6 +8001,7 @@
         "@ai-sdk/azure": "^3.0.0",
         "@ai-sdk/google": "^3.0.0",
         "@ai-sdk/google-vertex": "^3.0.0",
+        "@ai-sdk/mcp": "1.0.11",
         "@ai-sdk/openai": "^3.0.0",
         "@ai-sdk/openai-compatible": "2.0.16",
         "@ai-sdk/provider": "^3.0.0",
@@ -8079,7 +8090,6 @@
         "redlock": "5.0.0-beta.2",
         "request-filtering-agent": "3.2.0",
         "samlify": "2.10.0",
-        "sandbox-agent": "0.4.2",
         "semver": "7.6.0",
         "simple-git": "3.33.0",
         "socket.io": "4.8.1",
@@ -8199,7 +8209,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.68.3",
+      "version": "0.68.4",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -9012,6 +9022,8 @@
     "@activepieces/piece-knack": ["@activepieces/piece-knack@workspace:packages/pieces/community/knack"],
 
     "@activepieces/piece-knock": ["@activepieces/piece-knock@workspace:packages/pieces/community/knock"],
+
+    "@activepieces/piece-ko-fi": ["@activepieces/piece-ko-fi@workspace:packages/pieces/community/ko-fi"],
 
     "@activepieces/piece-kommo": ["@activepieces/piece-kommo@workspace:packages/pieces/community/kommo"],
 
