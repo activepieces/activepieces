@@ -38,7 +38,7 @@ import { createChatTools } from './chat-tools'
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 
-const MAX_STEPS = 20
+const MAX_STEPS = 30
 
 export const chatService = (log: FastifyBaseLogger) => ({
     async createConversation({ projectId, userId, request }: CreateConversationParams): Promise<ChatConversation> {
