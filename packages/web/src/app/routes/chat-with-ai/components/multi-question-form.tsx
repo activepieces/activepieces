@@ -1,6 +1,6 @@
 import { t } from 'i18next';
-import { Check, Send } from 'lucide-react';
-import { motion } from 'motion/react';
+import { ArrowLeft, Check, ChevronRight, Send } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -16,23 +16,34 @@ export function MultiQuestionForm({
   questions: MultiQuestion[];
   onSubmit: (text: string) => void;
 }) {
+  const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [submitted, setSubmitted] = useState(false);
 
-  const answeredCount = questions.filter((_q, i) => answers[i]?.trim()).length;
-  const allAnswered = answeredCount === questions.length;
+  const isLastStep = currentStep === questions.length - 1;
+  const currentAnswer = answers[currentStep]?.trim() ?? '';
+  const allAnswered = questions.every((_q, i) => answers[i]?.trim());
 
-  function handleChoiceSelect(index: number, option: string) {
+  function handleChoiceSelect(option: string) {
     if (submitted) return;
     setAnswers((prev) =>
-      prev[index] === option
-        ? { ...prev, [index]: '' }
-        : { ...prev, [index]: option },
+      prev[currentStep] === option
+        ? { ...prev, [currentStep]: '' }
+        : { ...prev, [currentStep]: option },
     );
   }
 
-  function handleTextChange(index: number, value: string) {
-    setAnswers((prev) => ({ ...prev, [index]: value }));
+  function handleTextChange(value: string) {
+    setAnswers((prev) => ({ ...prev, [currentStep]: value }));
+  }
+
+  function handleNext() {
+    if (!currentAnswer) return;
+    if (isLastStep) {
+      handleSubmit();
+    } else {
+      setCurrentStep((s) => s + 1);
+    }
   }
 
   function handleSubmit() {
@@ -42,20 +53,57 @@ export function MultiQuestionForm({
     onSubmit(lines.join('\n'));
   }
 
+  if (submitted) {
+    return (
+      <motion.div
+        className="my-2 flex items-center gap-2 text-sm text-muted-foreground"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <Check className="size-4 text-green-600 dark:text-green-400" />
+        <span>{t('Answers submitted')}</span>
+      </motion.div>
+    );
+  }
+
+  const q = questions[currentStep];
+
   return (
     <motion.div
-      className="my-2 space-y-4"
+      className="my-2 space-y-3"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      {questions.map((q, i) => (
+      <div className="flex items-center gap-2">
+        {questions.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => i < currentStep && setCurrentStep(i)}
+            className={cn(
+              'h-1.5 rounded-full transition-all',
+              i === currentStep
+                ? 'w-6 bg-primary'
+                : answers[i]?.trim()
+                  ? 'w-1.5 bg-primary/40 cursor-pointer'
+                  : 'w-1.5 bg-muted-foreground/20',
+            )}
+          />
+        ))}
+        <span className="text-xs text-muted-foreground ml-1">
+          {currentStep + 1}/{questions.length}
+        </span>
+      </div>
+
+      <AnimatePresence mode="wait">
         <motion.div
-          key={i}
+          key={currentStep}
           className="space-y-2"
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: i * 0.08 }}
+          initial={{ opacity: 0, x: 12 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -12 }}
+          transition={{ duration: 0.2 }}
         >
           <p className="text-sm font-medium">{q.question}</p>
 
@@ -65,12 +113,10 @@ export function MultiQuestionForm({
                 <button
                   key={option}
                   type="button"
-                  disabled={submitted}
-                  onClick={() => handleChoiceSelect(i, option)}
+                  onClick={() => handleChoiceSelect(option)}
                   className={cn(
                     'px-3 py-1.5 text-sm rounded-full border transition-colors cursor-pointer',
-                    'disabled:opacity-50 disabled:cursor-not-allowed',
-                    answers[i] === option
+                    answers[currentStep] === option
                       ? 'border-primary text-primary bg-primary/5'
                       : 'bg-background hover:bg-muted',
                   )}
@@ -85,41 +131,47 @@ export function MultiQuestionForm({
             <Input
               className="h-9 text-sm"
               placeholder={q.placeholder}
-              value={answers[i] ?? ''}
-              disabled={submitted}
-              onChange={(e) => handleTextChange(i, e.target.value)}
+              value={answers[currentStep] ?? ''}
+              onChange={(e) => handleTextChange(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && allAnswered) handleSubmit();
+                if (e.key === 'Enter') handleNext();
               }}
             />
           )}
         </motion.div>
-      ))}
+      </AnimatePresence>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.2, delay: questions.length * 0.08 }}
-      >
+      <div className="flex items-center gap-2">
+        {currentStep > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1 rounded-full text-xs"
+            onClick={() => setCurrentStep((s) => s - 1)}
+          >
+            <ArrowLeft className="size-3" />
+            {t('Back')}
+          </Button>
+        )}
         <Button
           size="sm"
-          className="gap-1.5 rounded-full mt-1"
-          disabled={!allAnswered || submitted}
-          onClick={handleSubmit}
+          className="gap-1 rounded-full text-xs"
+          disabled={!currentAnswer}
+          onClick={handleNext}
         >
-          {submitted ? (
+          {isLastStep ? (
             <>
-              <Check className="h-3.5 w-3.5" />
-              {t('Submitted')}
+              <Send className="size-3" />
+              {t('Submit')}
             </>
           ) : (
             <>
-              <Send className="h-3.5 w-3.5" />
-              {t('Submit answers')}
+              {t('Next')}
+              <ChevronRight className="size-3" />
             </>
           )}
         </Button>
-      </motion.div>
+      </div>
     </motion.div>
   );
 }
