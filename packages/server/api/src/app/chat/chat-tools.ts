@@ -23,7 +23,7 @@ function createChatTools({ onSessionTitle, onPlanUpdate }: ChatToolCallbacks) {
             },
         }),
         ap_update_plan: tool({
-            description: 'Create or update a step-by-step plan for the current task. Use this when working on complex tasks that require multiple steps (e.g., building automations, managing tables). Each entry has a status: pending, in_progress, or completed. Update the plan as you progress through steps.',
+            description: 'REQUIRED before executing any multi-step task. Create a step-by-step plan that shows the user what you will do. Call this BEFORE calling other tools when the task involves building automations, creating tables with data, or troubleshooting. Each entry has a status: pending, in_progress, or completed. Update the plan as you complete steps.',
             inputSchema: planSchema,
             execute: async (input) => {
                 onPlanUpdate(input.entries)
