@@ -26,7 +26,6 @@ import { cn } from '@/lib/utils';
 import { getTextFromParts } from '../lib/message-parsers';
 
 import { ChatThinkingLoader } from './chat-thinking-loader';
-import { ConfirmationCard, isConfirmationTool } from './confirmation-card';
 import { MessageContentWithAuth } from './message-content';
 import { ToolCallGroup } from './tool-call-group';
 
@@ -302,16 +301,7 @@ function renderParts({
   }
 
   parts.forEach((part, idx) => {
-    if (part.type === 'dynamic-tool' && isConfirmationTool(part)) {
-      flushTools(`tools-before-confirm-${idx}`);
-      nodes.push(
-        <ConfirmationCard
-          key={`confirm-${idx}`}
-          toolPart={part}
-          onConfirm={onSend}
-        />,
-      );
-    } else if (part.type === 'dynamic-tool') {
+    if (part.type === 'dynamic-tool') {
       toolBuffer.push(part);
     } else if (part.type === 'text') {
       flushTools(`tools-before-${idx}`);
