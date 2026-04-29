@@ -9,7 +9,7 @@ const planSchema = z.object({
     entries: z.array(z.object({
         content: z.string().describe('Description of the step'),
         status: z.enum(['pending', 'in_progress', 'completed']).describe('Current status of the step'),
-    })).min(1).max(20),
+    })).min(1).max(5),
 })
 
 function createChatTools({ onSessionTitle }: { onSessionTitle: (title: string) => void }) {
@@ -23,7 +23,7 @@ function createChatTools({ onSessionTitle }: { onSessionTitle: (title: string) =
             },
         }),
         ap_update_plan: tool({
-            description: 'Show a brief execution plan to the user. Each entry should be a short action (3-8 words max, e.g. "Check connections", "Create flow", "Add trigger"). Call this at the start of multi-step tasks. Update statuses as you progress.',
+            description: 'Show a brief execution plan. Keep entries short (3-8 words, e.g. "Check connections", "Build flow", "Configure trigger"). Max 5 entries. Call once at start, update statuses as you progress. Do NOT add new entries on retries.',
             inputSchema: planSchema,
             execute: async () => {
                 return { success: true }
