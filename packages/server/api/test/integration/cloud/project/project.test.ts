@@ -1047,12 +1047,8 @@ describe('Project API', () => {
             const sharedIdentity = createMockUserIdentity({ verified: true })
             await db.save('user_identity', sharedIdentity)
 
-            const { mockPlatform: platformOne } = await mockAndSaveBasicSetup({
-                plan: { customDomainsEnabled: false },
-            })
-            const { mockPlatform: platformTwo } = await mockAndSaveBasicSetup({
-                plan: { customDomainsEnabled: false },
-            })
+            const { mockPlatform: platformOne } = await mockAndSaveBasicSetup()
+            const { mockPlatform: platformTwo } = await mockAndSaveBasicSetup()
 
             const userOnOne = createMockUser({
                 identityId: sharedIdentity.id,

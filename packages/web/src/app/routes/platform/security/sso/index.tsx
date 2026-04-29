@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
-import { LockIcon, MailIcon, Earth } from 'lucide-react';
+import { Globe, LockIcon, MailIcon, Earth } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CenteredPage } from '@/app/components/centered-page';
@@ -8,6 +8,7 @@ import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
 import { NewOAuth2Dialog } from '@/app/routes/platform/security/sso/oauth2-dialog';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
+import { SsoDomainDialog } from '@/app/routes/platform/security/sso/sso-domain-dialog';
 import {
   Item,
   ItemMedia,
@@ -117,6 +118,31 @@ const SSOPage = () => {
                 platform={platform}
                 refetch={refetch}
                 connected={samlConnected}
+              />
+            </ItemActions>
+          </Item>
+
+          <Item variant="outline">
+            <ItemMedia variant="icon">
+              <Globe />
+            </ItemMedia>
+            <ItemContent>
+              <ItemTitle>{t('SSO Domain')}</ItemTitle>
+              <ItemDescription>
+                {t(
+                  'Domain users enter on the sign-in page to be routed to your SAML provider.',
+                )}
+              </ItemDescription>
+              {!isNil(platform.plan.ssoDomain) && (
+                <div className="mt-1 text-sm font-mono">
+                  {platform.plan.ssoDomain}
+                </div>
+              )}
+            </ItemContent>
+            <ItemActions>
+              <SsoDomainDialog
+                ssoDomain={platform.plan.ssoDomain ?? null}
+                refetch={refetch}
               />
             </ItemActions>
           </Item>

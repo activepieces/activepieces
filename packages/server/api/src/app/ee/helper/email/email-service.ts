@@ -1,12 +1,12 @@
 import { AlertChannel, ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { alertsService } from '../../alerts/alerts-service'
-import { domainHelper } from '../../custom-domains/domain-helper'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 
@@ -54,7 +54,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const { name: projectName, role } = await getEntityNameForInvitation(userInvitation, log)
         const redirectPath = projectId ? `/projects/${projectId}/flows` : '/flows'
         const loginLink = await domainHelper.getPublicUrl({
-            platformId,
             path: `sign-in?from=${encodeURIComponent(redirectPath)}`,
         })
         await emailSender(log).send({
@@ -83,7 +82,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
 
         const loginLink = await domainHelper.getPublicUrl({
-            platformId,
             path: 'sign-in',
         })
 
@@ -162,7 +160,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
         }
 
         const setupLink = await domainHelper.getInternalUrl({
-            platformId,
             path: frontendPath[type] + `?otpcode=${otp}&identityId=${userIdentity.id}`,
         })
 

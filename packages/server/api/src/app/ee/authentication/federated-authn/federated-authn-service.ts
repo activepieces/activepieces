@@ -5,10 +5,10 @@ import { assertNotNullOrUndefined, AuthenticationResponse,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { authenticationService } from '../../../authentication/authentication.service'
+import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformService } from '../../../platform/platform.service'
-import { domainHelper } from '../../custom-domains/domain-helper'
 import { googleAuthnProvider } from './google-authn-provider'
 
 export const federatedAuthnService = (log: FastifyBaseLogger) => ({
@@ -54,7 +54,7 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
     ): Promise<string> {
         return domainHelper.getInternalUrl({
             path: '/redirect',
-            platformId,
+
         })
     },
 })

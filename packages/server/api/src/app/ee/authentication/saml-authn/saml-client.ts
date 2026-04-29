@@ -3,7 +3,7 @@ import { ActivepiecesError, ErrorCode, SAMLAuthnProviderConfig } from '@activepi
 import * as validator from '@authenio/samlify-node-xmllint'
 import * as saml from 'samlify'
 import { z } from 'zod'
-import { domainHelper } from '../../custom-domains/domain-helper'
+import { domainHelper } from '../../../helper/domain-helper'
 
 
 const samlResponseValidator = z.object({
@@ -60,7 +60,7 @@ export const createSamlClient = async (platformId: string, samlProvider: SAMLAut
     }
     saml.setSchemaValidator(validator)
     const idp = createIdp(samlProvider.idpMetadata)
-    const sp = await createSp(platformId, samlProvider.idpCertificate)
+    const sp = await createSp(samlProvider.idpCertificate)
     const client = new SamlClient(idp, sp)
     instanceCache.set(platformId, client)
     return client
@@ -79,8 +79,8 @@ const createIdp = (metadata: string): saml.IdentityProviderInstance => {
     })
 }
 
-const createSp = async (platformId: string, privateKey: string): Promise<saml.ServiceProviderInstance> => {
-    const acsUrl = await domainHelper.getPublicUrl({ path: '/api/v1/authn/saml/acs', platformId })
+const createSp = async (privateKey: string): Promise<saml.ServiceProviderInstance> => {
+    const acsUrl = await domainHelper.getPublicUrl({ path: '/api/v1/authn/saml/acs' })
     return saml.ServiceProvider({
         entityID: 'Activepieces',
         authnRequestsSigned: false,

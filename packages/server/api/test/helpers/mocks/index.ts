@@ -15,8 +15,6 @@ import {
     assertNotNullOrUndefined,
     Cell,
     ColorName,
-    CustomDomain,
-    CustomDomainStatus,
     EventDestinationScope,
     Field,
     FieldType,
@@ -251,7 +249,6 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         chatEnabled: platformPlan?.chatEnabled ?? false,
         teamProjectsLimit: platformPlan?.teamProjectsLimit ?? TeamProjectsLimit.NONE,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
-        customDomainsEnabled: platformPlan?.customDomainsEnabled ?? false,
         stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
         stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
         plan: platformPlan?.plan,
@@ -439,19 +436,6 @@ export const createAuditEvent = (auditEvent: Partial<ApplicationEvent>) => {
         userEmail: auditEvent.userEmail ?? faker.internet.email(),
         action: auditEvent.action ?? faker.helpers.enumValue(ApplicationEventName),
         data: auditEvent.data ?? {},
-    }
-}
-
-export const createMockCustomDomain = (
-    customDomain?: Partial<CustomDomain>,
-): CustomDomain => {
-    return {
-        id: customDomain?.id ?? apId(),
-        created: customDomain?.created ?? faker.date.recent().toISOString(),
-        updated: customDomain?.updated ?? faker.date.recent().toISOString(),
-        domain: customDomain?.domain ?? faker.internet.domainName(),
-        platformId: customDomain?.platformId ?? apId(),
-        status: customDomain?.status ?? CustomDomainStatus.ACTIVE,
     }
 }
 
@@ -696,7 +680,6 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
             apiKeysEnabled: true,
             customRolesEnabled: true,
             teamProjectsLimit: TeamProjectsLimit.UNLIMITED,
-            customDomainsEnabled: true,
             includedAiCredits: 1000,
             ...params?.plan,
         })

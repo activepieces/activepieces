@@ -67,6 +67,7 @@
     "bullmq-otel": "1.0.1",
     "chokidar": "4.0.3",
     "clear-module": "4.1.2",
+    "cloudflare": "5.2.0",
     "content-disposition": "0.5.4",
     "csv-parse": "5.6.0",
     "dayjs": "1.11.9",

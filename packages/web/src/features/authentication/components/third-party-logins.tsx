@@ -11,6 +11,7 @@ import GoogleIcon from '@/assets/img/custom/auth/google-icon.svg';
 import SamlIcon from '@/assets/img/custom/auth/saml.svg';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { SamlDomainDialog } from '@/features/authentication/components/saml-domain-dialog';
 import { oauth2Utils } from '@/features/connections/utils/oauth2-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
@@ -45,9 +46,6 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
     thirdPartyLogin(loginUrl, providerName);
   };
 
-  const signInWithSaml = () =>
-    (window.location.href = '/api/v1/authn/saml/login');
-
   return (
     <div className="flex flex-col gap-4">
       {thirdPartyAuthProviders?.google && (
@@ -65,16 +63,14 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
         </Button>
       )}
       {thirdPartyAuthProviders?.saml && (
-        <Button
-          variant="outline"
-          className="w-full rounded-sm"
-          onClick={signInWithSaml}
-        >
-          <ThirdPartyIcon icon={SamlIcon} />
-          {isSignUp
-            ? `${t(`Sign up With`)} ${t('SAML')}`
-            : `${t(`Sign in With`)} ${t('SAML')}`}
-        </Button>
+        <SamlDomainDialog>
+          <Button variant="outline" className="w-full rounded-sm">
+            <ThirdPartyIcon icon={SamlIcon} />
+            {isSignUp
+              ? `${t(`Sign up With`)} ${t('SAML')}`
+              : `${t(`Sign in With`)} ${t('SAML')}`}
+          </Button>
+        </SamlDomainDialog>
       )}
     </div>
   );

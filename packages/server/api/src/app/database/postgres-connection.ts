@@ -363,6 +363,8 @@ import { DropWaitpointTimeoutSeconds1776342514732 } from './migration/postgres/1
 import { AddMcpServerTokenIndex1776400000000 } from './migration/postgres/1776400000000-AddMcpServerTokenIndex'
 import { DropChatTokenColumns1782000000000 } from './migration/postgres/1782000000000-DropChatTokenColumns'
 import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
+import { AddEmbedSubdomainTable1786000000000 } from './migration/postgres/1786000000000-AddEmbedSubdomainTable'
+import { AddSsoDomainToPlatformPlan1786500000000 } from './migration/postgres/1786500000000-AddSsoDomainToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -741,6 +743,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddMcpServerTokenIndex1776400000000,
         DropChatTokenColumns1782000000000,
         AddUserSandboxTable1784000000000,
+        AddEmbedSubdomainTable1786000000000,
+        AddSsoDomainToPlatformPlan1786500000000,
     ]
     return migrations
 }

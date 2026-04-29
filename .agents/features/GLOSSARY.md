@@ -53,7 +53,6 @@
 | Term | Definition (one sentence) | Aliases to avoid | Related terms |
 |---|---|---|---|
 | API Key | A platform-scoped authentication token (hashed, `sk-` prefixed) for programmatic API access. | service key, token | Platform |
-| Custom Domain | A white-label domain mapped to a platform, verified via DNS (CNAME/TXT) with PENDING/ACTIVE lifecycle. | — | Platform, Appearance |
 | Edition | The product variant: Community (CE, open-source), Enterprise (EE, self-hosted licensed), or Cloud (hosted SaaS). | plan type, tier | Platform, PlatformPlan |
 | License Key | An activation key for self-hosted Enterprise that maps features to PlatformPlan flags with expiration tracking. | — | PlatformPlan, Edition |
 | Platform | The top-level tenant entity that owns projects, users, billing, branding, and feature configuration. | tenant, organization, workspace | Project, PlatformPlan, User |

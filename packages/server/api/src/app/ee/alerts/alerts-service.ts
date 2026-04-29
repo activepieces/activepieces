@@ -7,11 +7,11 @@ import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { domainHelper } from '../../helper/domain-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
-import { domainHelper } from '../custom-domains/domain-helper'
 import { emailService } from '../helper/email/email-service'
 import { AlertEntity } from './alerts-entity'
 
@@ -119,7 +119,6 @@ async function sendAlertOnFlowFailure(log: FastifyBaseLogger, params: IssueParam
     const { platformId, flowRunId, projectId } = params
 
     const issueUrl = await domainHelper.getInternalUrl({
-        platformId,
         path: `projects/${projectId}/runs/${flowRunId}`,
     })
 

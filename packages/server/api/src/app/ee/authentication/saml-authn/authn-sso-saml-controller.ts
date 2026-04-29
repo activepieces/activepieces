@@ -1,4 +1,4 @@
-import { ApplicationEventName, assertNotNullOrUndefined, SAMLAuthnProviderConfig } from '@activepieces/shared'
+import { ActivepiecesError, ApplicationEventName, assertNotNullOrUndefined, ErrorCode, isNil, PrincipalType, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
@@ -9,6 +9,7 @@ import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformService } from '../../../platform/platform.service'
 import { platformUtils } from '../../../platform/platform.utils'
+import { platformPlanRepo, platformPlanService } from '../../platform/platform-plan/platform-plan.service'
 import { authnSsoSamlService } from './authn-sso-saml-service'
 
 export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
@@ -39,10 +40,55 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
         })
         return res.redirect(url.toString())
     })
+
+    app.post('/discover', DiscoverRequest, async (req) => {
+        const ssoDomain = req.body.domain.trim().toLowerCase()
+        if (ssoDomain.length === 0) {
+            return { platformId: null }
+        }
+        const plan = await platformPlanRepo().findOneBy({ ssoDomain })
+        if (isNil(plan)) {
+            return { platformId: null }
+        }
+        const platform = await platformService(req.log).getOneOrThrow(plan.platformId)
+        const saml = platform.federatedAuthProviders?.saml
+        if (isNil(saml)) {
+            return { platformId: null }
+        }
+        return { platformId: plan.platformId }
+    })
+
+    app.post('/sso-domain', UpdateSsoDomainRequest, async (req) => {
+        const platformId = req.principal.platform.id
+        const normalized = req.body.ssoDomain?.trim().toLowerCase() ?? null
+        const ssoDomain = normalized && normalized.length > 0 ? normalized : null
+        if (!isNil(ssoDomain)) {
+            if (!z.hostname().safeParse(ssoDomain).success || !ssoDomain.includes('.')) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'SSO domain must be a valid lowercase domain (e.g. acme.com)',
+                    },
+                })
+            }
+            const existing = await platformPlanRepo().findOneBy({ ssoDomain })
+            if (!isNil(existing) && existing.platformId !== platformId) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'This SSO domain is already in use',
+                    },
+                })
+            }
+        }
+        return platformPlanService(req.log).update({ platformId, ssoDomain })
+    })
 }
 
 async function getSamlConfigOrThrow(req: FastifyRequest, log: FastifyBaseLogger): Promise<{ saml: SAMLAuthnProviderConfig, platformId: string }> {
-    const platformId = await platformUtils.getPlatformIdForRequest(req)
+    const query = req.query as Record<string, unknown>
+    const platformIdFromQuery = typeof query?.platformId === 'string' ? query.platformId : null
+    const platformId = platformIdFromQuery ?? await platformUtils.getPlatformIdForRequest(req)
     assertNotNullOrUndefined(platformId, 'Platform ID is required for SAML authentication')
     const platform = await platformService(log).getOneOrThrow(platformId)
     const saml = platform.federatedAuthProviders.saml
@@ -59,12 +105,46 @@ const AcsRequest = {
     },
     schema: {
         body: z.record(z.string(), z.unknown()),
-        querystring: z.record(z.string(), z.unknown()),
+        querystring: z.object({
+            platformId: z.string().optional(),
+        }).catchall(z.unknown()),
     },
 }
 
 const LoginRequest = {
     config: {
         security: securityAccess.public(),
+    },
+    schema: {
+        querystring: z.object({
+            platformId: z.string().optional(),
+        }),
+    },
+}
+
+const DiscoverRequest = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        body: z.object({
+            domain: z.string().min(1).max(253),
+        }),
+        response: {
+            200: z.object({
+                platformId: z.string().nullable(),
+            }),
+        },
+    },
+}
+
+const UpdateSsoDomainRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        body: z.object({
+            ssoDomain: z.string().max(253).nullable(),
+        }),
     },
 }

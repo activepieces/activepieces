@@ -3,7 +3,7 @@ import { Queue, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedLock, distributedStore, redisConnections } from '../../database/redis-connections'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { domainHelper } from '../../helper/domain-helper'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
@@ -105,7 +105,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     parentRunId,
                                     childRunId: savedFlowRun.id,
                                     projectId: savedFlowRun.projectId,
-                                    platformId,
                                     log,
                                 })
                             }
@@ -180,7 +179,6 @@ async function markParentRunAsFailed({
     parentRunId,
     childRunId,
     projectId,
-    platformId,
     log,
 }: MarkParentRunAsFailedParams): Promise<void> {
     const flowRun = await flowRunRepo().findOneBy({
@@ -191,7 +189,7 @@ async function markParentRunAsFailed({
         return
     }
 
-    const childRunUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/runs/${childRunId}`, platformId })
+    const childRunUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/runs/${childRunId}` })
     const errorPayload = {
         body: {
             status: 'error',
@@ -225,6 +223,5 @@ type MarkParentRunAsFailedParams = {
     parentRunId: string
     childRunId: string
     projectId: string
-    platformId: string
     log: FastifyBaseLogger
 }

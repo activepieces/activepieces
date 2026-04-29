@@ -13,6 +13,7 @@ import { Socket } from 'socket.io'
 import { getAdapter, setupApp } from './app'
 import { websocketService } from './core/websockets.service'
 import { healthModule } from './health/health.module'
+import { embedSecurity } from './helper/embed-security'
 import { errorHandler } from './helper/error-handler'
 import { exceptionHandler } from './helper/exception-handler'
 import { rejectedPromiseHandler } from './helper/promise-handler'
@@ -87,9 +88,15 @@ export const setupServer = async (): Promise<FastifyInstance> => {
         return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Route not found' })
     })
 
-    app.addHook('onSend', async (_request, reply) => {
+    app.addHook('onSend', async (request, reply) => {
         void reply.header('X-Content-Type-Options', 'nosniff')
         void reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+        if (!reply.hasHeader('Content-Security-Policy')) {
+            const frameAncestors = await embedSecurity(request.log).getFrameAncestorsHeader({
+                hostname: request.hostname,
+            })
+            void reply.header('Content-Security-Policy', frameAncestors)
+        }
     })
 
     return app

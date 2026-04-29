@@ -40,7 +40,6 @@ The Enterprise Edition extends the Community Edition with commercial features gr
 | **projects/project-release/** | Git sync, diff/apply releases, rollback, manual snapshots | `environmentsEnabled` |
 | **projects/project-plan/** | Per-project piece filtering (NONE/ALLOWED) | — |
 | **global-connections/** | Platform-wide shared connections across all projects | `globalConnectionsEnabled` |
-| **custom-domains/** | White-label domains (PENDING → ACTIVE after DNS verification) | `customDomainsEnabled` |
 | **signing-key/** | RSA-4096 keys for embedding JWT exchange | `embeddingEnabled` |
 | **managed-authn/** | JWT exchange: external token → AP token + auto user/project creation | `embeddingEnabled` |
 | **secret-managers/** | AWS Secrets Manager, HashiCorp Vault, CyberArk Conjur, 1Password. Redis cache 1hr. | `secretManagersEnabled` |
