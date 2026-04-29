@@ -1,0 +1,29 @@
+{
+    "name": "pieces-community-deftform",
+    "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/pieces/community/deftform/src",
+    "projectType": "library",
+    "release": {
+        "version": {
+            "generatorOptions": {
+                "packageRoot": "dist/{projectRoot}"
+            }
+        }
+    },
+    "tags": [],
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/packages/pieces/community/deftform",
+                "tsConfig": "packages/pieces/community/deftform/tsconfig.lib.json",
+                "packageJson": "packages/pieces/community/deftform/package.json",
+                "main": "packages/pieces/community/deftform/src/index.ts",
+                "assets": ["packages/pieces/community/deftform/*.md"],
+                "buildableProjectDepsInPackageJsonType": "dependencies",
+                "updateBuildableProjectDepsInPackageJson": true
+            }
+        }
+    }
+}
