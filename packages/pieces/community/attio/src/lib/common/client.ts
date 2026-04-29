@@ -101,7 +101,7 @@ export async function buildMembersMap(
 	for (const record of records) {
 		for (const valueArray of Object.values(record.values)) {
 			for (const item of valueArray) {
-				if (item.attribute_type === 'actor-reference' && item.referenced_actor_id) {
+				if (item.attribute_type === 'actor-reference' && item.referenced_actor_type === 'workspace-member' && item.referenced_actor_id) {
 					actorIds.add(item.referenced_actor_id);
 				}
 			}
@@ -159,9 +159,9 @@ function extractAttributeValue(
 			return Object.keys(loc).length > 0 ? loc : null;
 		}
 		case 'select':
-			return item.option.title;
+			return item.option?.title ?? null;
 		case 'status':
-			return item.status.title;
+			return item.status?.title ?? null;
 		case 'record-reference':
 			return item.target_record_id;
 		case 'actor-reference':
