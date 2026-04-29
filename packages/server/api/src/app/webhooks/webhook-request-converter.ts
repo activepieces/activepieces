@@ -1,4 +1,5 @@
 import {
+    ApMultipartFile,
     EventPayload,
     FAIL_PARENT_ON_FAILURE_HEADER,
     FlowRun,
@@ -64,16 +65,22 @@ async function convertBody(
 
         for (const [key, value] of requestBodyEntries) {
             if (isMultipartFile(value)) {
-                const file = await stepFileService(request.log).saveAndEnrich({
-                    data: value.data as Buffer,
-                    fileName: value.filename,
-                    stepName: 'trigger',
+                jsonResult[key] = await saveMultipartFileAsUrl({
+                    file: value,
+                    request,
                     flowId,
-                    contentLength: value.data.length,
-                    platformId,
                     projectId,
+                    platformId,
                 })
-                jsonResult[key] = file.url
+            }
+            else if (Array.isArray(value) && value.every(isMultipartFile)) {
+                jsonResult[key] = await Promise.all(value.map((file) => saveMultipartFileAsUrl({
+                    file,
+                    request,
+                    flowId,
+                    projectId,
+                    platformId,
+                })))
             }
             else {
                 jsonResult[key] = value
@@ -102,4 +109,26 @@ async function convertBody(
     }
 
     return request.body
+}
+
+async function saveMultipartFileAsUrl(params: SaveMultipartFileAsUrlParams): Promise<string> {
+    const { file, request, flowId, projectId, platformId } = params
+    const saved = await stepFileService(request.log).saveAndEnrich({
+        data: file.data,
+        fileName: file.filename,
+        stepName: 'trigger',
+        flowId,
+        contentLength: file.data.length,
+        platformId,
+        projectId,
+    })
+    return saved.url
+}
+
+type SaveMultipartFileAsUrlParams = {
+    file: ApMultipartFile
+    request: FastifyRequest
+    flowId: string
+    projectId: string
+    platformId: string
 }

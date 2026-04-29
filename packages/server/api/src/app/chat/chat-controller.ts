@@ -1,0 +1,458 @@
+import {
+    ChatConversation,
+    CreateChatConversationRequest,
+    isObject,
+    Permission,
+    PrincipalType,
+    SendChatMessageRequest,
+    SERVICE_KEY_SECURITY_OPENAPI,
+    tryCatch,
+    UpdateChatConversationRequest,
+} from '@activepieces/shared'
+import { createUIMessageStream, pipeUIMessageStreamToResponse } from 'ai'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
+import type { Session } from 'sandbox-agent'
+import { z } from 'zod'
+import { ProjectResourceType } from '../core/security/authorization/common'
+import { securityAccess } from '../core/security/authorization/fastify-security'
+import { chatService } from './chat-service'
+import { chatSandboxAgent } from './sandbox/sandbox-agent'
+import { ChatUIMessage, createHistoryReplayFilter, createStreamWriter } from './sandbox/stream-adapter'
+import { userSandboxService } from './user-sandbox-service'
+
+const CHAT_PRINCIPALS = [PrincipalType.USER] as const
+const EVENT_QUIESCENCE_MS = 1_500
+const MAX_QUIESCENCE_WAIT_MS = 10_000
+const KEEPALIVE_INTERVAL_MS = 10_000
+
+function isExpectedStreamError(error: unknown): boolean {
+    if (!(error instanceof Error)) return false
+    return (error as NodeJS.ErrnoException).code === 'ECONNRESET' || error.name === 'SandboxDestroyedError'
+}
+
+async function resumeOrRecreateSession({ conversation, liveSession, sandboxId, aiConfig, userId, platformId, conversationId, projectId, service }: {
+    conversation: ChatConversation
+    liveSession: { session: Session, sandboxId: string } | undefined
+    sandboxId: string
+    aiConfig: Parameters<typeof chatSandboxAgent.resumeSession>[0]['aiConfig']
+    userId: string
+    platformId: string
+    conversationId: string
+    projectId: string
+    service: ReturnType<typeof chatService>
+}): Promise<{ session: Session }> {
+    if (liveSession) {
+        return { session: liveSession.session }
+    }
+
+    const { data: result } = await tryCatch(async () => chatSandboxAgent.resumeSession({
+        sessionId: conversation.sandboxSessionId!,
+        sandboxId,
+        aiConfig,
+    }))
+
+    if (result) {
+        if (result.newSandboxId && result.newSandboxId !== sandboxId) {
+            void userSandboxService.updateSandboxId({ userId, sandboxId: result.newSandboxId }).catch(() => undefined)
+        }
+        return { session: result.session }
+    }
+
+    await service.resetSession({ id: conversationId, projectId })
+    const fresh = await service.ensureSession({ id: conversationId, projectId, userId, platformId })
+    if (fresh.liveSession) {
+        return { session: fresh.liveSession.session }
+    }
+    const retried = await chatSandboxAgent.resumeSession({
+        sessionId: fresh.conversation.sandboxSessionId!,
+        sandboxId: await userSandboxService.getSandboxId({ userId }) ?? sandboxId,
+        aiConfig,
+    })
+    return { session: retried.session }
+}
+
+export const chatController: FastifyPluginAsyncZod = async (app) => {
+
+    app.post('/warm', WarmRoute, async (request) => {
+        const configured = chatService(request.log).isSandboxConfigured()
+        if (configured) {
+            void chatService(request.log).getChatAiConfig({ platformId: request.principal.platform.id }).then((aiConfig) =>
+                userSandboxService.getOrCreate({ userId: request.principal.id, platformId: request.principal.platform.id, aiConfig }),
+            ).catch(() => undefined)
+        }
+        return { configured }
+    })
+
+    app.post('/conversations', CreateConversationRoute, async (request, reply) => {
+        const conversation = await chatService(request.log).createConversation({
+            projectId: request.projectId,
+            userId: request.principal.id,
+            request: request.body,
+        })
+        return reply.status(StatusCodes.CREATED).send(conversation)
+    })
+
+    app.get('/conversations', ListConversationsRoute, async (request) => {
+        return chatService(request.log).listConversations({
+            projectId: request.projectId,
+            userId: request.principal.id,
+            cursor: request.query.cursor,
+            limit: request.query.limit ?? 20,
+        })
+    })
+
+    app.get('/conversations/:id', GetConversationRoute, async (request) => {
+        return chatService(request.log).getConversationOrThrow({
+            id: request.params.id,
+            projectId: request.projectId,
+            userId: request.principal.id,
+        })
+    })
+
+    app.post('/conversations/:id', UpdateConversationRoute, async (request) => {
+        return chatService(request.log).updateConversation({
+            id: request.params.id,
+            projectId: request.projectId,
+            userId: request.principal.id,
+            request: request.body,
+        })
+    })
+
+    app.delete('/conversations/:id', DeleteConversationRoute, async (request, reply) => {
+        await chatService(request.log).deleteConversation({
+            id: request.params.id,
+            projectId: request.projectId,
+            userId: request.principal.id,
+            platformId: request.principal.platform.id,
+        })
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
+    app.get('/conversations/:id/messages', GetMessagesRoute, async (request) => {
+        return chatService(request.log).getMessages({
+            id: request.params.id,
+            projectId: request.projectId,
+            userId: request.principal.id,
+        })
+    })
+
+    app.post('/conversations/:id/cancel', CancelRoute, async (request, reply) => {
+        await chatService(request.log).cancelSession({
+            id: request.params.id,
+            projectId: request.projectId,
+            userId: request.principal.id,
+            platformId: request.principal.platform.id,
+        })
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
+    app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
+        const { content, files } = request.body
+        const log = request.log
+        const platformId = request.principal.platform.id
+        const conversationId = request.params.id
+        const projectId = request.projectId
+        const userId = request.principal.id
+
+        const { conversation, liveSession } = await chatService(log).ensureSession({
+            id: conversationId,
+            projectId,
+            userId,
+            platformId,
+        })
+
+        const service = chatService(log)
+        const [aiConfig, systemPrompt] = await Promise.all([
+            service.getChatAiConfig({ platformId, modelName: conversation.modelName }),
+            service.buildSystemPrompt({ projectId }),
+        ])
+        const sandboxId = await userSandboxService.getSandboxId({ userId })
+            ?? await userSandboxService.getOrCreate({ userId, platformId, aiConfig })
+
+        await chatSandboxAgent.acquireSandboxSlot()
+
+        try {
+            await reply.hijack()
+
+            const stream = createUIMessageStream<ChatUIMessage>({
+                execute: async ({ writer }) => {
+                    try {
+                        writer.write({ type: 'start' })
+
+                        const resumed = await resumeOrRecreateSession({
+                            conversation,
+                            liveSession,
+                            sandboxId,
+                            aiConfig,
+                            userId,
+                            platformId,
+                            conversationId,
+                            projectId,
+                            service,
+                        })
+                        const session = resumed.session
+
+                        const keepalive = setInterval(() => {
+                            writer.write({ type: 'data-usage', data: { inputTokens: 0, outputTokens: 0 }, transient: true })
+                        }, KEEPALIVE_INTERVAL_MS)
+
+                        const historyReplayFilter = createHistoryReplayFilter()
+                        let pendingTitle = ''
+                        const streamWriter = createStreamWriter({
+                            writer,
+                            textPartId: 'text',
+                            reasoningPartId: 'reasoning',
+                            onSessionTitle: (title) => {
+                                pendingTitle = title
+                            },
+                        })
+                        let unsubscribe: (() => void) | undefined
+                        let promptCompleted = false
+                        let lastEventAt = Date.now()
+                        let resolved = false
+
+                        try {
+                            await new Promise<void>((resolve, reject) => {
+                                let quiescenceTimer: ReturnType<typeof setTimeout> | undefined
+
+                                const safeResolve = (): void => {
+                                    if (resolved) return
+                                    resolved = true
+                                    if (quiescenceTimer !== undefined) {
+                                        clearTimeout(quiescenceTimer)
+                                        quiescenceTimer = undefined
+                                    }
+                                    resolve()
+                                }
+
+                                unsubscribe = session.onEvent((event) => {
+                                    if (event.sender !== 'agent') return
+
+                                    const payload: unknown = event.payload
+                                    if (!isObject(payload) || payload.method !== 'session/update') return
+                                    if (!isObject(payload.params)) return
+
+                                    const update = payload.params.update
+                                    if (!isObject(update)) return
+
+                                    if (historyReplayFilter.shouldSuppress(update)) return
+
+                                    const missedText = historyReplayFilter.drainMissedText()
+                                    if (missedText) {
+                                        streamWriter.appendText(missedText)
+                                    }
+
+                                    streamWriter.write(update)
+                                    lastEventAt = Date.now()
+                                })
+
+                                reply.raw.on('close', () => {
+                                    log.info({ conversationId, promptCompleted, resolved, timeSinceLastEvent: Date.now() - lastEventAt }, 'Chat stream connection closed by client')
+                                    safeResolve()
+                                })
+
+                                chatSandboxAgent.sendPrompt({ session, text: content, systemPrompt, files })
+                                    .then(() => {
+                                        promptCompleted = true
+                                        lastEventAt = Date.now()
+                                        const waitStart = Date.now()
+                                        const checkQuiescence = (): void => {
+                                            if (resolved) return
+                                            const now = Date.now()
+                                            const sinceLastEvent = now - lastEventAt
+                                            if (sinceLastEvent >= EVENT_QUIESCENCE_MS || now - waitStart >= MAX_QUIESCENCE_WAIT_MS) {
+                                                safeResolve()
+                                                return
+                                            }
+                                            quiescenceTimer = setTimeout(checkQuiescence, Math.min(EVENT_QUIESCENCE_MS - sinceLastEvent, 200))
+                                        }
+                                        quiescenceTimer = setTimeout(checkQuiescence, 200)
+                                    })
+                                    .catch(reject)
+                            })
+                        }
+                        finally {
+                            clearInterval(keepalive)
+                            unsubscribe?.()
+                            streamWriter.endAll()
+                            void userSandboxService.updateLastUsed({ userId }).catch(() => undefined)
+                            if (pendingTitle && promptCompleted) {
+                                void service.updateConversation({
+                                    id: conversationId,
+                                    projectId,
+                                    userId,
+                                    request: { title: pendingTitle },
+                                }).catch(() => undefined)
+                            }
+                        }
+
+                        writer.write({ type: 'finish', finishReason: 'stop' })
+                    }
+                    finally {
+                        chatSandboxAgent.releaseSandboxSlot()
+                    }
+                },
+                onError: (error) => {
+                    if (isExpectedStreamError(error)) {
+                        log.debug({ err: error }, 'Chat stream ended (client disconnect or session cancelled)')
+                    }
+                    else {
+                        log.error({ err: error }, 'Chat agent prompt failed')
+                    }
+                    return 'An error occurred while processing your request'
+                },
+            })
+
+            try {
+                pipeUIMessageStreamToResponse({
+                    response: reply.raw,
+                    stream,
+                    headers: {
+                        'X-Accel-Buffering': 'no',
+                    },
+                })
+            }
+            catch (err) {
+                if (!isExpectedStreamError(err)) {
+                    log.error({ err }, 'Failed to pipe chat stream')
+                }
+            }
+        }
+        catch (setupErr) {
+            chatSandboxAgent.releaseSandboxSlot()
+            throw setupErr
+        }
+    })
+}
+
+const WarmRoute = {
+    config: {
+        security: securityAccess.project(CHAT_PRINCIPALS, Permission.READ_CHAT, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        querystring: z.object({ projectId: z.string() }),
+    },
+}
+
+const CreateConversationRoute = {
+    config: {
+        security: securityAccess.project(CHAT_PRINCIPALS, Permission.WRITE_CHAT, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        querystring: z.object({ projectId: z.string() }),
+        body: CreateChatConversationRequest,
+    },
+}
+
+const ListConversationsRoute = {
+    config: {
+        security: securityAccess.project(CHAT_PRINCIPALS, Permission.READ_CHAT, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        querystring: z.object({
+            projectId: z.string(),
+            cursor: z.string().optional(),
+            limit: z.coerce.number().int().min(1).max(100).default(20).optional(),
+        }),
+    },
+}
+
+const CONVERSATION_QUERY = z.object({ projectId: z.string() })
+const CONVERSATION_PARAMS = z.object({ id: z.string() })
+
+const GetConversationRoute = {
+    config: {
+        security: securityAccess.project(CHAT_PRINCIPALS, Permission.READ_CHAT, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
+        querystring: CONVERSATION_QUERY,
+    },
+}
+
+const UpdateConversationRoute = {
+    config: {
+        security: securityAccess.project(CHAT_PRINCIPALS, Permission.WRITE_CHAT, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
+        querystring: CONVERSATION_QUERY,
+        body: UpdateChatConversationRequest,
+    },
+}
+
+const DeleteConversationRoute = {
+    config: {
+        security: securityAccess.project(CHAT_PRINCIPALS, Permission.WRITE_CHAT, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
+        querystring: CONVERSATION_QUERY,
+    },
+}
+
+const GetMessagesRoute = {
+    config: {
+        security: securityAccess.project(CHAT_PRINCIPALS, Permission.READ_CHAT, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
+        querystring: CONVERSATION_QUERY,
+    },
+}
+
+const CancelRoute = {
+    config: {
+        security: securityAccess.project(CHAT_PRINCIPALS, Permission.WRITE_CHAT, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
+        querystring: CONVERSATION_QUERY,
+    },
+}
+
+const SendMessageRoute = {
+    config: {
+        security: securityAccess.project(CHAT_PRINCIPALS, Permission.WRITE_CHAT, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: CONVERSATION_PARAMS,
+        querystring: CONVERSATION_QUERY,
+        body: SendChatMessageRequest,
+    },
+}

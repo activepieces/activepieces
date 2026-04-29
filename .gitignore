@@ -1,5 +1,8 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
+# Claude Code worktrees
+.claude/worktrees/
+
 pieces-cache-db-*.sqlite
 
 # compiled output

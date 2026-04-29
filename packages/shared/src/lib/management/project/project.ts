@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { SAFE_STRING_PATTERN } from '../../core/common'
 import { BaseModelSchema, DateOrString, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { Metadata } from '../../core/common/metadata'
@@ -78,13 +77,6 @@ export const ProjectWithLimits = Project.omit({ deleted: true }).extend({
     plan: ProjectPlan,
     analytics: projectAnalytics,
 })
-
-export const UpdateProjectRequestInCommunity = z.object({
-    displayName: z.string().regex(new RegExp(SAFE_STRING_PATTERN)).optional(),
-    metadata: Metadata.optional(),
-})
-
-export type UpdateProjectRequestInCommunity = z.infer<typeof UpdateProjectRequestInCommunity>
 
 export type ProjectWithLimits = z.infer<typeof ProjectWithLimits>
 

@@ -2,7 +2,7 @@ import { promisify } from 'node:util'
 import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { CONTENT_ENCODING_ZSTD, DEFAULT_MCP_DATA, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { CONTENT_ENCODING_ZSTD, DEFAULT_MCP_DATA, EngineGenericError, FlowActionType, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import fetchRetry from 'fetch-retry'
@@ -128,7 +128,7 @@ export const runProgressService = {
             if (isNil(logsUploadUrl)) {
                 throw new EngineGenericError('LogsUploadUrlNotSetError', 'Logs upload URL is not set')
             }
-            const uploadLogResponse = await uploadExecutionState(logsUploadUrl!, executionState)
+            const uploadLogResponse = await uploadExecutionState(logsUploadUrl, executionState)
             if (!uploadLogResponse.ok) {
                 throw new EngineGenericError('ProgressUpdateError', 'Failed to upload execution state', uploadLogResponse)
             }
@@ -142,15 +142,12 @@ export const runProgressService = {
             const request: UploadRunLogsRequest = {
                 runId: engineConstants.flowRunId,
                 projectId: engineConstants.projectId,
-                workerHandlerId: engineConstants.serverHandlerId ?? null,
-                httpRequestId: engineConstants.httpRequestId ?? null,
                 status: flowExecutorContext.verdict.status,
-                progressUpdateType: engineConstants.progressUpdateType,
+                streamStepProgress: engineConstants.streamStepProgress,
                 logsFileId: engineConstants.logsFileId,
                 failedStep: 'failedStep' in flowExecutorContext.verdict ? flowExecutorContext.verdict.failedStep : undefined,
                 stepNameToTest: engineConstants.stepNameToTest,
                 stepResponse,
-                pauseMetadata: flowExecutorContext.verdict.status === FlowRunStatus.PAUSED ? flowExecutorContext.verdict.pauseMetadata : undefined,
                 startTime: savedStartTime ?? undefined,
                 finishTime: isFlowRunStateTerminal({
                     status: flowExecutorContext.verdict.status,

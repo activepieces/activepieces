@@ -94,6 +94,7 @@ export type ApErrorParams =
     | ResumeLogsFileMissingParams
     | ExecutionStateMissingParams
     | GenericErrorParams
+    | SandboxCapacityExceededParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -487,6 +488,8 @@ export type GenericErrorParams = BaseErrorParams<ErrorCode.GENERIC_ERROR, {
     message: string
 }>
 
+export type SandboxCapacityExceededParams = BaseErrorParams<ErrorCode.SANDBOX_CAPACITY_EXCEEDED, Record<string, never>>
+
 export enum ErrorCode {
     INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
@@ -506,6 +509,7 @@ export enum ErrorCode {
     SANDBOX_EXECUTION_TIMEOUT = 'SANDBOX_EXECUTION_TIMEOUT',
     SANDBOX_MEMORY_ISSUE = 'SANDBOX_MEMORY_ISSUE',
     SANDBOX_INTERNAL_ERROR = 'SANDBOX_INTERNAL_ERROR',
+    SANDBOX_CAPACITY_EXCEEDED = 'SANDBOX_CAPACITY_EXCEEDED',
     TRIGGER_EXECUTION_FAILED = 'TRIGGER_EXECUTION_FAILED',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',

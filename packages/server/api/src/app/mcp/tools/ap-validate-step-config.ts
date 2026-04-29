@@ -1,7 +1,9 @@
 import {
+    BranchExecutionType,
     McpServer,
     McpToolDefinition,
     RouterActionSettingsWithValidation,
+    RouterExecutionType,
     SourceCode,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -34,7 +36,7 @@ export const apValidateStepConfigTool = (mcp: McpServer, log: FastifyBaseLogger)
                     case 'LOOP_ON_ITEMS':
                         return validateWithSchema({ schema: loopValidator, data: { items: params.loopItems ?? '' }, label: 'LOOP_ON_ITEMS' })
                     case 'ROUTER':
-                        return validateWithSchema({ schema: RouterActionSettingsWithValidation, data: params.settings ?? {}, label: 'ROUTER' })
+                        return validateRouter(params.settings)
                 }
             }
             catch (err) {
@@ -113,6 +115,47 @@ const codeValidator = z.object({
 const loopValidator = z.object({
     items: z.string().min(1),
 })
+
+function routerEnumHint(): string {
+    return `Valid executionType values: ${Object.values(RouterExecutionType).join(', ')}\nBranch types: ${Object.values(BranchExecutionType).join(', ')}`
+}
+
+function validateRouter(settings: Record<string, unknown> | undefined): McpResult {
+    if (!settings || !settings.branches || !settings.executionType) {
+        const example = JSON.stringify({
+            branches: [
+                {
+                    branchName: 'Branch 1',
+                    branchType: BranchExecutionType.CONDITION,
+                    conditions: [[{
+                        firstValue: '{{trigger.status}}',
+                        operator: 'TEXT_EXACTLY_MATCHES',
+                        secondValue: 'active',
+                    }]],
+                },
+                { branchName: 'Otherwise', branchType: BranchExecutionType.FALLBACK },
+            ],
+            executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+        }, null, 2)
+        return {
+            content: [{
+                type: 'text',
+                text: `⚠️ Invalid ROUTER configuration: settings must include branches and executionType.\n\n${routerEnumHint()}\n\nExample:\n${example}`,
+            }],
+        }
+    }
+    const result = RouterActionSettingsWithValidation.safeParse(settings)
+    if (result.success) {
+        return { content: [{ type: 'text', text: '✅ Valid ROUTER configuration.' }] }
+    }
+    const errors = result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`)
+    return {
+        content: [{
+            type: 'text',
+            text: `⚠️ Invalid ROUTER configuration:\n${errors.join('\n')}\n\n${routerEnumHint()}`,
+        }],
+    }
+}
 
 type McpResult = { content: [{ type: 'text', text: string }] }
 

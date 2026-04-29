@@ -1,13 +1,14 @@
 import {
     ActivepiecesError,
     ApEdition,
-    apId,
-
     ApId,
+
+    apId,
     Cursor,
     DefaultProjectRole,
     ErrorCode,
     isNil,
+    Permission,
     PlatformId,
     PlatformRole,
     ProjectId,
@@ -225,6 +226,18 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         
         return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
     },
+    async hasPermissionOnAnyProject({ userId, platformId, permission }: HasPermissionOnAnyProjectParams): Promise<boolean> {
+        const count = await repo()
+            .createQueryBuilder('project_member')
+            .innerJoin('project_member.projectRole', 'project_role')
+            .innerJoin('project_member.project', 'project')
+            .where('project_member.userId = :userId', { userId })
+            .andWhere('project_member.platformId = :platformId', { platformId })
+            .andWhere(':permission = ANY(project_role.permissions)', { permission })
+            .andWhere('project.deleted IS NULL')
+            .getCount()
+        return count > 0
+    },
     async countActiveUsersByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
         if (projectIds.length === 0) return new Map()
         
@@ -269,6 +282,12 @@ type UpdateMemberRole = {
     projectId: ProjectId
     platformId: PlatformId
     role: string
+}
+
+type HasPermissionOnAnyProjectParams = {
+    userId: UserId
+    platformId: PlatformId
+    permission: Permission
 }
 
 async function enrichProjectMemberWithUser(

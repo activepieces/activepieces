@@ -14,22 +14,23 @@ import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES } fro
 
 const EDITION_REQUIRES_RBAC = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 
-const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server — Agent Workflow Guide
+const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 
-### Recommended workflow
-1. **Discover**: ap_list_pieces (find pieces), ap_list_connections (find auth), ap_list_ai_models (find AI providers)
-2. **Schema**: ap_get_piece_props (get exact field names/types before configuring)
-3. **Build**: ap_create_flow → ap_update_trigger → ap_add_step → ap_update_step
-4. **Validate**: ap_validate_step_config (check a step config) or ap_validate_flow (check the whole flow)
-5. **Publish**: ap_lock_and_publish → ap_change_flow_status
+### Workflow
+1. Discover: ap_list_pieces, ap_list_connections, ap_list_ai_models
+2. Schema: ap_get_piece_props (get field names/types before configuring)
+3. Build: ap_build_flow (one call for new flows) OR ap_create_flow → ap_update_trigger → ap_add_step (granular)
+4. Validate: ap_validate_flow
+5. Publish: ap_lock_and_publish → ap_change_flow_status
 
 ### Key patterns
-- **Auth**: Use ap_list_connections to get the \`externalId\`, then pass it as the \`auth\` parameter on ap_update_step or ap_update_trigger.
-- **Step references**: Use \`{{stepName.output.field}}\` in input values to reference data from previous steps (e.g. \`{{trigger.output.body.email}}\`, \`{{step_1.output.id}}\`).
-- **Step names**: Steps are named \`trigger\`, \`step_1\`, \`step_2\`, etc. Use ap_flow_structure to see all step names and valid insertion points.
-- **Piece names**: Use the full format (e.g. "@activepieces/piece-slack") for ap_add_step and ap_update_trigger. Short names like "slack" are accepted by lookup tools (ap_list_connections, ap_get_piece_props, ap_validate_step_config).
-- **CODE steps**: Set sourceCode (must export a \`code\` function) and input (key-value pairs accessible via \`inputs.key\`).
-- **Tables**: Use field names (not IDs) when inserting or querying records.`
+- **Auth**: ap_list_connections → get \`externalId\` → pass as \`auth\` param on ap_update_step/ap_update_trigger.
+- **Step refs**: \`{{stepName.field}}\` — no \`.output.\` in the path (e.g. \`{{trigger.body.email}}\`, \`{{step_1.id}}\`).
+- **Step names**: \`trigger\`, \`step_1\`, \`step_2\`, etc. Use ap_flow_structure to see all names.
+- **Piece names**: full format (e.g. "@activepieces/piece-slack") for ap_add_step/ap_update_trigger. Short names work for lookup tools.
+- **Modifying steps**: use ap_update_step/ap_update_trigger. Never delete+recreate — loses sample data.
+- **CODE steps**: export a \`code\` fn; access inputs via \`inputs.key\`.
+- **Tables**: use field names, not IDs.`
 
 export const mcpServerRepository = repoFactory(McpServerEntity)
 

@@ -26,7 +26,8 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
 
     async upsertFlowToGit({ fileName, flow, flowFolderPath }: UpsertFlowIntoProjectParams): Promise<void> {
         try {
-            const flowJsonPath = path.join(flowFolderPath, `${fileName}.json`)
+            const flowJsonPath = resolveSafeJsonPath({ fileName, baseDir: flowFolderPath })
+            await fileSystemUtils.assertPathInside({ baseDir: flowFolderPath, targetPath: flowJsonPath })
             await fs.mkdir(path.dirname(flowJsonPath), { recursive: true })
             const flowState = await projectStateService(log).getFlowState(flow)
             await fs.writeFile(flowJsonPath, JSON.stringify(flowState, null, 2))
@@ -38,20 +39,23 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
     },
 
     async upsertTableToGit({ fileName, table, tablesFolderPath }: UpsertTableIntoProjectParams): Promise<void> {
-        const tableJsonPath = path.join(tablesFolderPath, `${fileName}.json`)
+        const tableJsonPath = resolveSafeJsonPath({ fileName, baseDir: tablesFolderPath })
+        await fileSystemUtils.assertPathInside({ baseDir: tablesFolderPath, targetPath: tableJsonPath })
         await fs.mkdir(path.dirname(tableJsonPath), { recursive: true })
         const tableState = projectStateService(log).getTableState(table)
         await fs.writeFile(tableJsonPath, JSON.stringify(tableState, null, 2))
     },
 
     async upsertConnectionToGit({ fileName, connection, folderPath }: UpsertConnectionIntoProjectParams): Promise<void> {
-        const connectionJsonPath = path.join(folderPath, `${fileName}.json`)
+        const connectionJsonPath = resolveSafeJsonPath({ fileName, baseDir: folderPath })
+        await fileSystemUtils.assertPathInside({ baseDir: folderPath, targetPath: connectionJsonPath })
         await fs.mkdir(path.dirname(connectionJsonPath), { recursive: true })
         await fs.writeFile(connectionJsonPath, JSON.stringify(connection, null, 2))
     },
 
     async deleteFromGit({ fileName, folderPath }: DeleteFromProjectParams): Promise<boolean> {
-        const jsonPath = path.join(folderPath, `${fileName}.json`)
+        const jsonPath = resolveSafeJsonPath({ fileName, baseDir: folderPath })
+        await fileSystemUtils.assertPathInside({ baseDir: folderPath, targetPath: jsonPath })
         const exists = await fileSystemUtils.fileExists(jsonPath)
         if (exists) {
             await fs.unlink(jsonPath)
@@ -92,6 +96,15 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+const SAFE_FILENAME_PATTERN = /^[A-Za-z0-9._-]{1,128}$/
+
+function resolveSafeJsonPath({ fileName, baseDir }: { fileName: string, baseDir: string }): string {
+    if (!SAFE_FILENAME_PATTERN.test(fileName) || fileName === '.' || fileName === '..') {
+        throw new Error(`invalid fileName "${fileName}": only alphanumeric, dot, dash and underscore are allowed`)
+    }
+    return path.join(baseDir, `${fileName}.json`)
+}
 
 async function readFlowsFromGit(flowFolderPath: string, log: FastifyBaseLogger): Promise<FlowState[]> {
     const flowFiles = await fs.readdir(flowFolderPath)
