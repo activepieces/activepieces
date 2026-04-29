@@ -551,6 +551,9 @@
       "@activepieces/piece-gravityforms": [
         "packages/pieces/community/gravityforms/src/index.ts"
       ],
+      "@activepieces/piece-greenhouse": [
+        "packages/pieces/community/greenhouse/src/index.ts"
+      ],
       "@activepieces/piece-grist": [
         "packages/pieces/community/grist/src/index.ts"
       ],
@@ -779,6 +782,9 @@
       "@activepieces/piece-mistral-ai": [
         "packages/pieces/community/mistral-ai/src/index.ts"
       ],
+      "@activepieces/piece-mixmax": [
+        "packages/pieces/community/mixmax/src/index.ts"
+      ],
       "@activepieces/piece-mixpanel": [
         "packages/pieces/community/mixpanel/src/index.ts"
       ],
@@ -814,6 +820,9 @@
       ],
       "@activepieces/piece-nifty": [
         "packages/pieces/community/nifty/src/index.ts"
+      ],
+      "@activepieces/piece-ninjapipe": [
+        "packages/pieces/community/ninjapipe/src/index.ts"
       ],
       "@activepieces/piece-ninox": [
         "packages/pieces/community/ninox/src/index.ts"
@@ -1276,6 +1285,9 @@
       ],
       "@activepieces/piece-vtiger": [
         "packages/pieces/community/vtiger/src/index.ts"
+      ],
+      "@activepieces/piece-wafeq": [
+        "packages/pieces/community/wafeq/src/index.ts"
       ],
       "@activepieces/piece-wealthbox": [
         "packages/pieces/community/wealthbox/src/index.ts"
