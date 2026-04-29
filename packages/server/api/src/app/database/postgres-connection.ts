@@ -358,7 +358,12 @@ import { AddAiProvidersEnabledToPlatformPlan1775728983000 } from './migration/po
 import { AddWaitpointTable1775747638323 } from './migration/postgres/1775747638323-AddWaitpointTable'
 import { AddConcurrencyPoolTable1775800000000 } from './migration/postgres/1775800000000-AddConcurrencyPoolTable'
 import { AddDefaultToAiProvidersEnabled1776000000000 } from './migration/postgres/1776000000000-AddDefaultToAiProvidersEnabled'
+import { AddChatTables1776200000000 } from './migration/postgres/1776200000000-AddChatTables'
 import { DropWaitpointTimeoutSeconds1776342514732 } from './migration/postgres/1776342514732-DropWaitpointTimeoutSeconds'
+import { AddMcpServerTokenIndex1776400000000 } from './migration/postgres/1776400000000-AddMcpServerTokenIndex'
+import { AddRunStatusCoverIndex1777370308000 } from './migration/postgres/1777370308000-AddRunStatusCoverIndex'
+import { DropChatTokenColumns1782000000000 } from './migration/postgres/1782000000000-DropChatTokenColumns'
+import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -733,6 +738,11 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddConcurrencyPoolTable1775800000000,
         AddDefaultToAiProvidersEnabled1776000000000,
         DropWaitpointTimeoutSeconds1776342514732,
+        AddChatTables1776200000000,
+        AddMcpServerTokenIndex1776400000000,
+        AddRunStatusCoverIndex1777370308000,
+        DropChatTokenColumns1782000000000,
+        AddUserSandboxTable1784000000000,
     ]
     return migrations
 }

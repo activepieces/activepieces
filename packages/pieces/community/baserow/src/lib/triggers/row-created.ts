@@ -1,44 +1,41 @@
-import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
+import { baserowCommon, makeClient } from '../common';
+import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
+
+const triggerHooks = createWebhookTriggerHooks({
+  events: ['rows.created'],
+  storeKey: 'baserow_row_created_trigger',
+});
 
 export const rowCreatedTrigger = createTrigger({
   name: 'baserow_row_created',
   auth: baserowAuth,
-  displayName: 'Row Created',
+  displayName: 'New Row',
   description: 'Triggers when a new row is created in a Baserow table.',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    instructions: Property.MarkDown({
-      value: `
-## Setup Instructions
-
-1. In Baserow, click the **···** menu beside your table and select **Webhooks**.
-2. Click **Create webhook +**.
-3. Set the HTTP method to **POST**.
-4. Paste the following URL into the endpoint field:
-\`\`\`text
-{{webhookUrl}}
-\`\`\`
-5. Under events, select **Rows created**.
-6. Click **Save**.
-`,
-      variant: MarkdownVariant.INFO,
-    }),
+    table_id: baserowCommon.tableId(),
+    instructions: dynamicWebhookInstructions('Rows created'),
   },
   sampleData: {
     id: 1,
     order: '1.00000000000000000000',
     Name: 'Example row',
   },
-  async onEnable() {
-    // Manual setup required — user registers the webhook URL in Baserow UI.
-  },
-  async onDisable() {
-    // Manual cleanup — user deletes the webhook in Baserow UI.
-  },
+  onEnable: triggerHooks.onEnable,
+  onDisable: triggerHooks.onDisable,
   async run(context) {
     const body = context.payload.body as { items?: unknown[] };
     return body.items ?? [];
+  },
+  async test(context) {
+    const tableId = context.propsValue.table_id;
+    if (!tableId) return [];
+    const client = await makeClient(context.auth);
+    const response = (await client.listRows(tableId, 1, 5)) as {
+      results: Record<string, unknown>[];
+    };
+    return response.results;
   },
 });
