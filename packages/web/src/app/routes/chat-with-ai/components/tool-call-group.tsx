@@ -151,11 +151,12 @@ function describeToolParts(parts: DynamicToolPart[]): string {
         primaryAction = 'flows';
       else if (name.includes('list_tables') || name.includes('find_records'))
         primaryAction = 'data';
-      else if (
-        name.includes('lock_and_publish') ||
-        name.includes('change_flow_status')
-      )
+      else if (name.includes('lock_and_publish'))
         primaryAction = 'publish';
+      else if (name.includes('change_flow_status')) {
+        const status = isObject(part.input) && typeof part.input.status === 'string' ? part.input.status : '';
+        primaryAction = status === 'DISABLED' ? 'disable' : 'publish';
+      }
     }
   }
 
@@ -192,6 +193,8 @@ function describeToolParts(parts: DynamicToolPart[]): string {
       return t('Querying your data');
     case 'publish':
       return t('Publishing the flow');
+    case 'disable':
+      return t('Disabling the flow');
     default:
       return t('Working on it');
   }
