@@ -14,7 +14,7 @@ export const koFi = createPiece({
   auth: koFiAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/ko-fi.png',
-  authors: ['zeiyre'],
+  authors: ['zeiyre', 'sanket-a11y'],
   categories: [PieceCategory.PAYMENT_PROCESSING],
   actions: [],
   triggers: [newDonation, newSubscription, newCommission, newShopOrder],

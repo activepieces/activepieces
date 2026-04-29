@@ -4,6 +4,6 @@ import { PieceAuth } from '@activepieces/pieces-framework';
 export const koFiAuth = PieceAuth.SecretText({
   displayName: 'Verification Token',
   description:
-    'Your Ko-fi webhook verification token. Find it in Ko-fi Dashboard > Settings > API/Webhooks.',
+    'Your Ko-fi webhook verification token. Find it in Ko-fi Dashboard > Settings > API/Webhooks > Advanced Settings > Webhook verification token.',
   required: true,
 });
