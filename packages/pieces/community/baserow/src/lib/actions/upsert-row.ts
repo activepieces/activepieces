@@ -92,6 +92,9 @@ export const upsertRowAction = createAction({
       skipEmpty: true,
     });
 
+    const matchFieldId = parseInt(match_field!.replace('field_', ''), 10);
+    const matchFieldDef = tableSchema.find((f) => f.id === matchFieldId);
+
     const existing = (await client.listRows(
       table_id!,
       undefined,
@@ -102,6 +105,12 @@ export const upsertRowAction = createAction({
     )) as { results: Record<string, unknown>[]; count: number };
 
     if (existing.results.length > 0) {
+      // Strip the match field from the update payload so the upsert stays
+      // idempotent. Use the dedicated Update Row action to rename a row's
+      // match value.
+      if (matchFieldDef) {
+        delete formattedFields[matchFieldDef.name];
+      }
       if (create_missing_select_options) {
         await ensureSelectOptionsExist({
           fields: tableSchema,
@@ -117,8 +126,6 @@ export const upsertRowAction = createAction({
     // Inject the match field into the new row so the upsert is idempotent.
     // Done before ensureSelectOptionsExist so a SINGLE_SELECT match value
     // gets auto-created when the toggle is enabled.
-    const matchFieldId = parseInt(match_field!.replace('field_', ''), 10);
-    const matchFieldDef = tableSchema.find((f) => f.id === matchFieldId);
     if (matchFieldDef) {
       formattedFields[matchFieldDef.name] = coerceMatchValue({
         value: match_value!,
