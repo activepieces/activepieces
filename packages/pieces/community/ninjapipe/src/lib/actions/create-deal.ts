@@ -25,17 +25,17 @@ export const createDeal = createAction({
     const auth = getAuth(context);
     const p = context.propsValue;
     const body: Record<string, unknown> = {};
-    if (p.name) body.name = p.name;
-    if (p.title) body.title = p.title;
-    if (p.status) body.status = p.status;
-    if (p.value !== undefined) body.value = p.value;
-    if (p.currency) body.currency = p.currency;
-    if (p.owner) body.owner = p.owner;
-    if (p.pipelineId) body.pipeline_id = p.pipelineId;
-    if (p.companyId) body.company_id = p.companyId;
-    if (p.contactId) body.contact_id = p.contactId;
-    if (p.notes) body.notes = p.notes;
-    if (p.customFields && typeof p.customFields === 'object') body.custom_fields = p.customFields;
+    if (p.name) body['name'] = p.name;
+    if (p.title) body['title'] = p.title;
+    if (p.status) body['status'] = p.status;
+    if (p.value !== undefined) body['value'] = p.value;
+    if (p.currency) body['currency'] = p.currency;
+    if (p.owner) body['owner'] = p.owner;
+    if (p.pipelineId) body['pipeline_id'] = p.pipelineId;
+    if (p.companyId) body['company_id'] = p.companyId;
+    if (p.contactId) body['contact_id'] = p.contactId;
+    if (p.notes) body['notes'] = p.notes;
+    if (p.customFields && typeof p.customFields === 'object') body['custom_fields'] = p.customFields;
     const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.POST, path: '/deals', body });
     return flattenCustomFields(response.body);
   },

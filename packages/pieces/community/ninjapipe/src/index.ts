@@ -47,29 +47,19 @@ import { updatePipeline } from './lib/actions/update-pipeline';
 import { getPipeline } from './lib/actions/get-pipeline';
 import { listPipelines } from './lib/actions/list-pipelines';
 import { deletePipeline } from './lib/actions/delete-pipeline';
-import { createPipelineItem } from './lib/actions/create-pipeline-item';
-import { updatePipelineItem } from './lib/actions/update-pipeline-item';
-import { getPipelineItem } from './lib/actions/get-pipeline-item';
-import { listPipelineItems } from './lib/actions/list-pipeline-items';
-import { deletePipelineItem } from './lib/actions/delete-pipeline-item';
-import { createInvoice } from './lib/actions/create-invoice';
-import { updateInvoice } from './lib/actions/update-invoice';
-import { getInvoice } from './lib/actions/get-invoice';
-import { listInvoices } from './lib/actions/list-invoices';
-import { deleteInvoice } from './lib/actions/delete-invoice';
 import { createOrder } from './lib/actions/create-order';
 import { updateOrder } from './lib/actions/update-order';
 import { getOrder } from './lib/actions/get-order';
 import { listOrders } from './lib/actions/list-orders';
 import { deleteOrder } from './lib/actions/delete-order';
 import { sendToDatabin } from './lib/actions/send-to-databin';
+import { addToList } from './lib/actions/add-to-list';
 
 // Triggers
 import { newContact } from './lib/triggers/new-contact';
 import { newCompany } from './lib/triggers/new-company';
 import { newDeal } from './lib/triggers/new-deal';
 import { newTask } from './lib/triggers/new-task';
-import { newDatabinReceived } from './lib/triggers/new-databin-received';
 import { newOrUpdatedContact } from './lib/triggers/new-or-updated-contact';
 import { newOrUpdatedCompany } from './lib/triggers/new-or-updated-company';
 import { newOrUpdatedDeal } from './lib/triggers/new-or-updated-deal';
@@ -97,10 +87,36 @@ export const ninjapipeAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
+    let parsed: URL;
+    try {
+      parsed = new URL(auth.base_url);
+    } catch {
+      return { valid: false, error: 'Base URL is not a valid URL.' };
+    }
+    if (parsed.protocol !== 'https:') {
+      return { valid: false, error: 'Base URL must use https://.' };
+    }
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === 'localhost' ||
+      host === '0.0.0.0' ||
+      host.endsWith('.localhost') ||
+      /^127\./.test(host) ||
+      /^10\./.test(host) ||
+      /^192\.168\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+      host === '169.254.169.254' ||
+      /^169\.254\./.test(host) ||
+      /^fc00:/i.test(host) ||
+      /^fe80:/i.test(host) ||
+      host === '::1'
+    ) {
+      return { valid: false, error: `Base URL host "${host}" is not allowed (loopback, private, or metadata IP).` };
+    }
     try {
       await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${auth.base_url}/contacts`,
+        url: `${auth.base_url.replace(/\/+$/, '')}/contacts`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: auth.api_key,
@@ -109,14 +125,22 @@ export const ninjapipeAuth = PieceAuth.CustomAuth({
       });
       return { valid: true };
     } catch (e) {
-      return { valid: false, error: 'Could not connect to NinjaPipe. Check the Base URL and API Key.' };
+      const err = e as { response?: { status?: number }; status?: number; message?: string };
+      const status = err.response?.status ?? err.status;
+      if (status === 401 || status === 403) {
+        return { valid: false, error: 'API key was rejected. Check the key in NinjaPipe Settings > API.' };
+      }
+      if (status === 404) {
+        return { valid: false, error: 'Base URL is reachable but /contacts returned 404. Check the Base URL path.' };
+      }
+      return { valid: false, error: `Could not connect to NinjaPipe (${status ?? err.message ?? 'unknown error'}). Check the Base URL and API Key.` };
     }
   },
 });
 
 export const ninjapipe = createPiece({
   displayName: 'NinjaPipe',
-  description: 'NinjaPipe CRM integration with contacts, companies, deals, tasks, pipelines, invoices, and databins.',
+  description: 'NinjaPipe CRM integration with contacts, companies, deals, tasks (under projects), pipelines, products, budgets, projects, orders, lists, and Databin webhook delivery.',
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/ninjapipe.png',
   categories: [PieceCategory.SALES_AND_CRM],
@@ -166,27 +190,18 @@ export const ninjapipe = createPiece({
     getPipeline,
     listPipelines,
     deletePipeline,
-    createPipelineItem,
-    updatePipelineItem,
-    getPipelineItem,
-    listPipelineItems,
-    deletePipelineItem,
-    createInvoice,
-    updateInvoice,
-    getInvoice,
-    listInvoices,
-    deleteInvoice,
     createOrder,
     updateOrder,
     getOrder,
     listOrders,
     deleteOrder,
     sendToDatabin,
+    addToList,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as unknown as { base_url: string }).base_url,
+      baseUrl: (auth) => (auth?.props?.base_url as string) ?? '',
       auth: ninjapipeAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as unknown as { api_key: string }).api_key}`,
+        Authorization: `Bearer ${auth?.props?.api_key as string}`,
       }),
     }),
   ],
@@ -195,7 +210,6 @@ export const ninjapipe = createPiece({
     newCompany,
     newDeal,
     newTask,
-    newDatabinReceived,
     newOrUpdatedContact,
     newOrUpdatedCompany,
     newOrUpdatedDeal,

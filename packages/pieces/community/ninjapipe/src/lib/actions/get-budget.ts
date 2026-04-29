@@ -1,7 +1,7 @@
-﻿import { createAction, Property } from '@activepieces/pieces-framework';
+﻿import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth } from '../common';
+import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
 
 export const getBudget = createAction({
   auth: ninjapipeAuth,
@@ -9,11 +9,11 @@ export const getBudget = createAction({
   displayName: 'Get Budget',
   description: 'Retrieves a budget by ID.',
   props: {
-    budgetId: Property.ShortText({ displayName: 'Budget ID', required: true }),
+    budgetId: ninjapipeCommon.budgetDropdownRequired,
   },
   async run(context) {
     const auth = getAuth(context);
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.GET, path: `/budgets/${context.propsValue.budgetId}` });
+    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.GET, path: `/budgets/${encodeURIComponent(String(context.propsValue.budgetId))}` });
     return flattenCustomFields(response.body);
   },
 });

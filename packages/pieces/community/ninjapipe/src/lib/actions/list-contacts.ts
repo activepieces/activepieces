@@ -32,9 +32,9 @@ export const listContacts = createAction({
       limit: String(context.propsValue.limit ?? 20),
       page: String(context.propsValue.page ?? 1),
     };
-    if (context.propsValue.search) qs.search = context.propsValue.search;
-    if (context.propsValue.statusFilter) qs.status = context.propsValue.statusFilter;
-    if (context.propsValue.ownerFilter) qs.owner = context.propsValue.ownerFilter;
+    if (context.propsValue.search) qs['search'] = context.propsValue.search;
+    if (context.propsValue.statusFilter) qs['status'] = context.propsValue.statusFilter;
+    if (context.propsValue.ownerFilter) qs['owner'] = context.propsValue.ownerFilter;
 
     if (context.propsValue.returnAll) {
       const results: unknown[] = [];

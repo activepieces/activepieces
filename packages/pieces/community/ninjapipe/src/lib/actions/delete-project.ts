@@ -1,7 +1,7 @@
-﻿import { createAction, Property } from '@activepieces/pieces-framework';
+﻿import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, getAuth } from '../common';
+import { ninjapipeApiCall, getAuth, ninjapipeCommon } from '../common';
 
 export const deleteProject = createAction({
   auth: ninjapipeAuth,
@@ -9,11 +9,11 @@ export const deleteProject = createAction({
   displayName: 'Delete Project',
   description: 'Deletes a project by ID.',
   props: {
-    projectId: Property.ShortText({ displayName: 'Project ID', required: true }),
+    projectId: ninjapipeCommon.projectDropdownRequired,
   },
   async run(context) {
     const auth = getAuth(context);
-    await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.DELETE, path: `/projects/${context.propsValue.projectId}` });
+    await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.DELETE, path: `/projects/${encodeURIComponent(String(context.propsValue.projectId))}` });
     return { success: true, deleted_id: context.propsValue.projectId };
   },
 });

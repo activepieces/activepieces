@@ -1,7 +1,7 @@
-﻿import { createAction, Property } from '@activepieces/pieces-framework';
+﻿import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth } from '../common';
+import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
 
 export const getProject = createAction({
   auth: ninjapipeAuth,
@@ -9,11 +9,11 @@ export const getProject = createAction({
   displayName: 'Get Project',
   description: 'Retrieves a project by ID.',
   props: {
-    projectId: Property.ShortText({ displayName: 'Project ID', required: true }),
+    projectId: ninjapipeCommon.projectDropdownRequired,
   },
   async run(context) {
     const auth = getAuth(context);
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.GET, path: `/projects/${context.propsValue.projectId}` });
+    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.GET, path: `/projects/${encodeURIComponent(String(context.propsValue.projectId))}` });
     return flattenCustomFields(response.body);
   },
 });

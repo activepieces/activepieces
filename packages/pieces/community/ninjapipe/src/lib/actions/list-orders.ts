@@ -18,8 +18,8 @@ export const listOrders = createAction({
   async run(context) {
     const auth = getAuth(context);
     const qs: Record<string, string> = { limit: String(context.propsValue.limit ?? 20), page: String(context.propsValue.page ?? 1) };
-    if (context.propsValue.search) qs.search = context.propsValue.search;
-    if (context.propsValue.statusFilter) qs.status = context.propsValue.statusFilter;
+    if (context.propsValue.search) qs['search'] = context.propsValue.search;
+    if (context.propsValue.statusFilter) qs['status'] = context.propsValue.statusFilter;
     if (context.propsValue.returnAll) {
       const results: unknown[] = [];
       let page = 1;

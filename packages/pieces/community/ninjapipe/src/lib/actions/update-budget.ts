@@ -1,7 +1,7 @@
-﻿import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth } from '../common';
+import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon, toDateOnly } from '../common';
 
 export const updateBudget = createAction({
   auth: ninjapipeAuth,
@@ -9,29 +9,46 @@ export const updateBudget = createAction({
   displayName: 'Update Budget',
   description: 'Updates a budget by ID.',
   props: {
-    budgetId: Property.ShortText({ displayName: 'Budget ID', required: true }),
+    budgetId: ninjapipeCommon.budgetDropdownRequired,
     name: Property.ShortText({ displayName: 'Name', required: false }),
+    allocated: Property.Number({
+      displayName: 'Allocated Amount',
+      description: 'Total allocated budget amount. Must be greater than 0 if set.',
+      required: false,
+    }),
     description: Property.LongText({ displayName: 'Description', required: false }),
-    amount: Property.Number({ displayName: 'Amount', required: false }),
+    category: ninjapipeCommon.budgetCategoryDropdown,
+    period: ninjapipeCommon.budgetPeriodDropdown,
     currency: Property.ShortText({ displayName: 'Currency', required: false }),
-    startDate: Property.ShortText({ displayName: 'Start Date', description: 'ISO date string or YYYY-MM-DD.', required: false }),
-    endDate: Property.ShortText({ displayName: 'End Date', description: 'ISO date string or YYYY-MM-DD.', required: false }),
-    status: Property.ShortText({ displayName: 'Status', required: false }),
-    customFields: Property.Object({ displayName: 'Custom Fields', required: false }),
+    status: ninjapipeCommon.budgetStatusDropdown,
+    startDate: Property.DateTime({ displayName: 'Start Date', required: false }),
+    endDate: Property.DateTime({ displayName: 'End Date', required: false }),
   },
   async run(context) {
     const auth = getAuth(context);
     const p = context.propsValue;
     const body: Record<string, unknown> = {};
-    if (p.name) body.name = p.name;
-    if (p.description) body.description = p.description;
-    if (p.amount !== undefined) body.amount = p.amount;
-    if (p.currency) body.currency = p.currency;
-    if (p.startDate) body.start_date = p.startDate;
-    if (p.endDate) body.end_date = p.endDate;
-    if (p.status) body.status = p.status;
-    if (p.customFields && typeof p.customFields === 'object') body.custom_fields = p.customFields;
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.PUT, path: `/budgets/${p.budgetId}`, body });
+    if (p.name) body['name'] = p.name;
+    if (p.allocated !== undefined && p.allocated !== null) body['allocated'] = p.allocated;
+    if (p.description !== undefined) body['description'] = p.description;
+    if (p.category) body['category'] = p.category;
+    if (p.period) body['period'] = p.period;
+    if (p.currency) body['currency'] = p.currency;
+    if (p.status) body['status'] = p.status;
+    {
+      const v = toDateOnly(p.startDate);
+      if (v) body['start_date'] = v;
+    }
+    {
+      const v = toDateOnly(p.endDate);
+      if (v) body['end_date'] = v;
+    }
+    const response = await ninjapipeApiCall<Record<string, unknown>>({
+      auth,
+      method: HttpMethod.PUT,
+      path: `/budgets/${encodeURIComponent(String(p.budgetId))}`,
+      body,
+    });
     return flattenCustomFields(response.body);
   },
 });

@@ -28,39 +28,39 @@ export const upsertContact = createAction({
     const auth = getAuth(context);
     const p = context.propsValue;
     const body: Record<string, unknown> = {};
-    if (p.firstName) body.first_name = p.firstName;
-    if (p.lastName) body.last_name = p.lastName;
-    if (p.email) body.email = p.email;
-    if (p.phone) body.phone = p.phone;
-    if (p.company) body.company = p.company;
-    if (p.status) body.status = p.status;
-    if (p.owner) body.owner = p.owner;
-    if (p.address) body.address = p.address;
-    if (p.city) body.city = p.city;
-    if (p.zip) body.zip = p.zip;
-    if (p.country) body.country = p.country;
-    if (p.state) body.state = p.state;
-    if (p.notes) body.notes = p.notes;
+    if (p.firstName) body['first_name'] = p.firstName;
+    if (p.lastName) body['last_name'] = p.lastName;
+    if (p.email) body['email'] = p.email;
+    if (p.phone) body['phone'] = p.phone;
+    if (p.company) body['company'] = p.company;
+    if (p.status) body['status'] = p.status;
+    if (p.owner) body['owner'] = p.owner;
+    if (p.address) body['address'] = p.address;
+    if (p.city) body['city'] = p.city;
+    if (p.zip) body['zip'] = p.zip;
+    if (p.country) body['country'] = p.country;
+    if (p.state) body['state'] = p.state;
+    if (p.notes) body['notes'] = p.notes;
     if (p.customFields && typeof p.customFields === 'object') {
-      body.custom_fields = p.customFields;
+      body['custom_fields'] = p.customFields;
     }
 
-    const search = await ninjapipeApiCall<{ data?: any[]; contacts?: any[] }>({
+    const search = await ninjapipeApiCall<Record<string, unknown>>({
       auth,
       method: HttpMethod.GET,
       path: '/contacts',
-      queryParams: { search: p.email as string, limit: '5' },
+      queryParams: { search: p.email, limit: '5' },
     });
-    const items = extractItems(search.body);
-    const existing = items.find((c: any) =>
-      c.email?.toLowerCase?.() === p.email?.toLowerCase?.()
+    const items = extractItems(search.body) as ContactRecord[];
+    const existing = items.find(
+      (c) => c.email?.toLowerCase() === p.email.toLowerCase(),
     );
 
     if (existing) {
       const response = await ninjapipeApiCall<Record<string, unknown>>({
         auth,
         method: HttpMethod.PUT,
-        path: `/contacts/${existing.id}`,
+        path: `/contacts/${encodeURIComponent(String(existing.id))}`,
         body,
       });
       return { ...flattenCustomFields(response.body), _upsert_action: 'updated' };
@@ -75,3 +75,5 @@ export const upsertContact = createAction({
     return { ...flattenCustomFields(response.body), _upsert_action: 'created' };
   },
 });
+
+type ContactRecord = { id?: string | number; email?: string };

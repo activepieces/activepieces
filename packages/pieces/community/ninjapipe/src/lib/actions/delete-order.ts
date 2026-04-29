@@ -1,7 +1,7 @@
-﻿import { createAction, Property } from '@activepieces/pieces-framework';
+﻿import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, getAuth } from '../common';
+import { ninjapipeApiCall, getAuth, ninjapipeCommon } from '../common';
 
 export const deleteOrder = createAction({
   auth: ninjapipeAuth,
@@ -9,11 +9,11 @@ export const deleteOrder = createAction({
   displayName: 'Delete Order',
   description: 'Deletes an order by ID.',
   props: {
-    orderId: Property.ShortText({ displayName: 'Order ID', required: true }),
+    orderId: ninjapipeCommon.orderDropdownRequired,
   },
   async run(context) {
     const auth = getAuth(context);
-    await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.DELETE, path: `/orders/${context.propsValue.orderId}` });
+    await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.DELETE, path: `/orders/${encodeURIComponent(String(context.propsValue.orderId))}` });
     return { success: true, deleted_id: context.propsValue.orderId };
   },
 });

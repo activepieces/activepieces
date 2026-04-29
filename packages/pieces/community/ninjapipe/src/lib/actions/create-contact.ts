@@ -42,21 +42,21 @@ export const createContact = createAction({
     const auth = getAuth(context);
     const p = context.propsValue;
     const body: Record<string, unknown> = {};
-    if (p.firstName) body.first_name = p.firstName;
-    if (p.lastName) body.last_name = p.lastName;
-    if (p.email) body.email = p.email;
-    if (p.phone) body.phone = p.phone;
-    if (p.company) body.company = p.company;
-    if (p.status) body.status = p.status;
-    if (p.owner) body.owner = p.owner;
-    if (p.address) body.address = p.address;
-    if (p.city) body.city = p.city;
-    if (p.zip) body.zip = p.zip;
-    if (p.country) body.country = p.country;
-    if (p.state) body.state = p.state;
-    if (p.notes) body.notes = p.notes;
+    if (p.firstName) body['first_name'] = p.firstName;
+    if (p.lastName) body['last_name'] = p.lastName;
+    if (p.email) body['email'] = p.email;
+    if (p.phone) body['phone'] = p.phone;
+    if (p.company) body['company'] = p.company;
+    if (p.status) body['status'] = p.status;
+    if (p.owner) body['owner'] = p.owner;
+    if (p.address) body['address'] = p.address;
+    if (p.city) body['city'] = p.city;
+    if (p.zip) body['zip'] = p.zip;
+    if (p.country) body['country'] = p.country;
+    if (p.state) body['state'] = p.state;
+    if (p.notes) body['notes'] = p.notes;
     if (p.customFields && typeof p.customFields === 'object') {
-      body.custom_fields = p.customFields;
+      body['custom_fields'] = p.customFields;
     }
 
     try {
@@ -67,18 +67,19 @@ export const createContact = createAction({
         body,
       });
       return flattenCustomFields(response.body);
-    } catch (error: any) {
-      const status = error?.response?.status ?? error?.status ?? 0;
+    } catch (error) {
+      const err = error as { response?: { status?: number }; status?: number; message?: string };
+      const status = err.response?.status ?? err.status ?? 0;
       if (status === 409 && p.ifContactExists && p.ifContactExists !== 'error') {
-        const search = await ninjapipeApiCall<{ data?: any[]; contacts?: any[] }>({
+        const search = await ninjapipeApiCall<Record<string, unknown>>({
           auth,
           method: HttpMethod.GET,
           path: '/contacts',
-          queryParams: { search: p.email as string, limit: '5' },
+          queryParams: { search: p.email, limit: '5' },
         });
-        const items = extractItems(search.body);
-        const existing = items.find((c: any) =>
-          c.email?.toLowerCase?.() === p.email?.toLowerCase?.()
+        const items = extractItems(search.body) as ContactRecord[];
+        const existing = items.find(
+          (c) => c.email?.toLowerCase() === p.email.toLowerCase(),
         );
         if (!existing) {
           throw new Error('Duplicate detected but could not locate existing contact by email.');
@@ -88,19 +89,21 @@ export const createContact = createAction({
           return { skipped: true, reason: 'contact_exists', email: p.email, existing_id: existing.id };
         }
         if (p.ifContactExists === 'getExisting') {
-          return flattenCustomFields(existing as Record<string, unknown>);
+          return flattenCustomFields(existing as unknown as Record<string, unknown>);
         }
         if (p.ifContactExists === 'updateExisting') {
           const update = await ninjapipeApiCall<Record<string, unknown>>({
             auth,
             method: HttpMethod.PUT,
-            path: `/contacts/${existing.id}`,
+            path: `/contacts/${encodeURIComponent(String(existing.id))}`,
             body,
           });
           return flattenCustomFields(update.body);
         }
       }
-      throw new Error(`Failed to create contact: ${error?.message ?? String(error)}`);
+      throw new Error(`Failed to create contact: ${err.message ?? String(error)}`);
     }
   },
 });
+
+type ContactRecord = { id?: string | number; email?: string };

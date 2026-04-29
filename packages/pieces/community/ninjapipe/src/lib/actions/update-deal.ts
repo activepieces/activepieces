@@ -9,7 +9,7 @@ export const updateDeal = createAction({
   displayName: 'Update Deal',
   description: 'Updates a deal by ID.',
   props: {
-    dealId: Property.ShortText({ displayName: 'Deal ID', required: true }),
+    dealId: ninjapipeCommon.dealDropdownRequired,
     name: Property.ShortText({ displayName: 'Name', required: false }),
     title: Property.ShortText({ displayName: 'Title', required: false }),
     status: Property.ShortText({ displayName: 'Status', required: false }),
@@ -26,18 +26,18 @@ export const updateDeal = createAction({
     const auth = getAuth(context);
     const p = context.propsValue;
     const body: Record<string, unknown> = {};
-    if (p.name) body.name = p.name;
-    if (p.title) body.title = p.title;
-    if (p.status) body.status = p.status;
-    if (p.value !== undefined) body.value = p.value;
-    if (p.currency) body.currency = p.currency;
-    if (p.owner) body.owner = p.owner;
-    if (p.pipelineId) body.pipeline_id = p.pipelineId;
-    if (p.companyId) body.company_id = p.companyId;
-    if (p.contactId) body.contact_id = p.contactId;
-    if (p.notes) body.notes = p.notes;
-    if (p.customFields && typeof p.customFields === 'object') body.custom_fields = p.customFields;
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.PUT, path: `/deals/${p.dealId}`, body });
+    if (p.name) body['name'] = p.name;
+    if (p.title) body['title'] = p.title;
+    if (p.status) body['status'] = p.status;
+    if (p.value !== undefined) body['value'] = p.value;
+    if (p.currency) body['currency'] = p.currency;
+    if (p.owner) body['owner'] = p.owner;
+    if (p.pipelineId) body['pipeline_id'] = p.pipelineId;
+    if (p.companyId) body['company_id'] = p.companyId;
+    if (p.contactId) body['contact_id'] = p.contactId;
+    if (p.notes) body['notes'] = p.notes;
+    if (p.customFields && typeof p.customFields === 'object') body['custom_fields'] = p.customFields;
+    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.PUT, path: `/deals/${encodeURIComponent(String(p.dealId))}`, body });
     return flattenCustomFields(response.body);
   },
 });

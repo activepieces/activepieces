@@ -1,7 +1,7 @@
-﻿import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
+import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon, toDateOnly } from '../common';
 
 export const createProject = createAction({
   auth: ninjapipeAuth,
@@ -11,30 +11,50 @@ export const createProject = createAction({
   props: {
     name: Property.ShortText({ displayName: 'Name', required: true }),
     description: Property.LongText({ displayName: 'Description', required: false }),
-    status: Property.ShortText({ displayName: 'Status', required: false }),
-    owner: Property.ShortText({ displayName: 'Owner', required: false }),
-    startDate: Property.ShortText({ displayName: 'Start Date', description: 'ISO date string or YYYY-MM-DD.', required: false }),
-    endDate: Property.ShortText({ displayName: 'End Date', description: 'ISO date string or YYYY-MM-DD.', required: false }),
-    companyId: ninjapipeCommon.companyDropdown,
+    status: ninjapipeCommon.projectStatusDropdown,
+    priority: ninjapipeCommon.priorityDropdown,
+    dueDate: Property.DateTime({
+      displayName: 'Due Date',
+      required: false,
+    }),
     contactId: ninjapipeCommon.contactDropdown,
-    notes: Property.LongText({ displayName: 'Notes', required: false }),
-    customFields: Property.Object({ displayName: 'Custom Fields', required: false }),
+    team: Property.Array({
+      displayName: 'Team',
+      description: 'Optional list of team members (account IDs).',
+      required: false,
+    }),
+    tags: Property.Array({ displayName: 'Tags', required: false }),
+    settingsJson: Property.Object({
+      displayName: 'Extra Settings',
+      description: 'Optional metadata (e.g. linked contact, custom fields).',
+      required: false,
+    }),
   },
   async run(context) {
     const auth = getAuth(context);
     const p = context.propsValue;
-    const body: Record<string, unknown> = {};
-    if (p.name) body.name = p.name;
-    if (p.description) body.description = p.description;
-    if (p.status) body.status = p.status;
-    if (p.owner) body.owner = p.owner;
-    if (p.startDate) body.start_date = p.startDate;
-    if (p.endDate) body.end_date = p.endDate;
-    if (p.companyId) body.company_id = p.companyId;
-    if (p.contactId) body.contact_id = p.contactId;
-    if (p.notes) body.notes = p.notes;
-    if (p.customFields && typeof p.customFields === 'object') body.custom_fields = p.customFields;
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.POST, path: '/projects', body });
+    const body: Record<string, unknown> = { name: p.name };
+    if (p.description) body['description'] = p.description;
+    if (p.status) body['status'] = p.status;
+    if (p.priority) body['priority'] = p.priority;
+    {
+      const v = toDateOnly(p.dueDate);
+      if (v) body['due_date'] = v;
+    }
+    if (p.team && Array.isArray(p.team) && p.team.length > 0) body['team'] = p.team;
+    if (p.tags && Array.isArray(p.tags) && p.tags.length > 0) body['tags'] = p.tags;
+    const settings: Record<string, unknown> =
+      p.settingsJson && typeof p.settingsJson === 'object'
+        ? { ...(p.settingsJson as Record<string, unknown>) }
+        : {};
+    if (p.contactId) settings['contact_id'] = p.contactId;
+    if (Object.keys(settings).length > 0) body['settings_json'] = settings;
+    const response = await ninjapipeApiCall<Record<string, unknown>>({
+      auth,
+      method: HttpMethod.POST,
+      path: '/projects',
+      body,
+    });
     return flattenCustomFields(response.body);
   },
 });

@@ -9,7 +9,7 @@ export const updateCompany = createAction({
   displayName: 'Update Company',
   description: 'Updates a company by ID.',
   props: {
-    companyId: Property.ShortText({ displayName: 'Company ID', required: true }),
+    companyId: ninjapipeCommon.companyDropdownRequired,
     name: Property.ShortText({ displayName: 'Name', required: false }),
     industry: Property.ShortText({ displayName: 'Industry', required: false }),
     website: Property.ShortText({ displayName: 'Website', required: false }),
@@ -29,21 +29,21 @@ export const updateCompany = createAction({
     const auth = getAuth(context);
     const p = context.propsValue;
     const body: Record<string, unknown> = {};
-    if (p.name) body.name = p.name;
-    if (p.industry) body.industry = p.industry;
-    if (p.website) body.website = p.website;
-    if (p.email) body.email = p.email;
-    if (p.phone) body.phone = p.phone;
-    if (p.address) body.address = p.address;
-    if (p.city) body.city = p.city;
-    if (p.zip) body.zip = p.zip;
-    if (p.country) body.country = p.country;
-    if (p.state) body.state = p.state;
-    if (p.status) body.status = p.status;
-    if (p.owner) body.owner = p.owner;
-    if (p.notes) body.notes = p.notes;
-    if (p.customFields && typeof p.customFields === 'object') body.custom_fields = p.customFields;
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.PUT, path: `/companies/${p.companyId}`, body });
+    if (p.name) body['name'] = p.name;
+    if (p.industry) body['industry'] = p.industry;
+    if (p.website) body['website'] = p.website;
+    if (p.email) body['email'] = p.email;
+    if (p.phone) body['phone'] = p.phone;
+    if (p.address) body['address'] = p.address;
+    if (p.city) body['city'] = p.city;
+    if (p.zip) body['zip'] = p.zip;
+    if (p.country) body['country'] = p.country;
+    if (p.state) body['state'] = p.state;
+    if (p.status) body['status'] = p.status;
+    if (p.owner) body['owner'] = p.owner;
+    if (p.notes) body['notes'] = p.notes;
+    if (p.customFields && typeof p.customFields === 'object') body['custom_fields'] = p.customFields;
+    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.PUT, path: `/companies/${encodeURIComponent(String(p.companyId))}`, body });
     return flattenCustomFields(response.body);
   },
 });

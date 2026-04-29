@@ -1,7 +1,7 @@
-﻿import { createAction, Property } from '@activepieces/pieces-framework';
+﻿import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth } from '../common';
+import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
 
 export const getCompany = createAction({
   auth: ninjapipeAuth,
@@ -9,11 +9,11 @@ export const getCompany = createAction({
   displayName: 'Get Company',
   description: 'Retrieves a company by ID.',
   props: {
-    companyId: Property.ShortText({ displayName: 'Company ID', required: true }),
+    companyId: ninjapipeCommon.companyDropdownRequired,
   },
   async run(context) {
     const auth = getAuth(context);
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.GET, path: `/companies/${context.propsValue.companyId}` });
+    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.GET, path: `/companies/${encodeURIComponent(String(context.propsValue.companyId))}` });
     return flattenCustomFields(response.body);
   },
 });

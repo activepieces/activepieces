@@ -1,31 +1,53 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth } from '../common';
+import { ninjapipeApiCall, flattenCustomFields, getAuth, toDateOnly, ninjapipeCommon } from '../common';
 
 export const createBudgetExpense = createAction({
   auth: ninjapipeAuth,
   name: 'create_budget_expense',
   displayName: 'Create Budget Expense',
-  description: 'Adds an expense to a budget.',
+  description: 'Adds an expense to a budget. The expense amount is added to the budget\'s spent amount.',
   props: {
-    budgetId: Property.ShortText({ displayName: 'Budget ID', required: true }),
-    name: Property.ShortText({ displayName: 'Name', required: true }),
-    amount: Property.Number({ displayName: 'Amount', required: true }),
-    currency: Property.ShortText({ displayName: 'Currency', required: false }),
-    date: Property.ShortText({ displayName: 'Date', description: 'ISO date string or YYYY-MM-DD.', required: false }),
-    notes: Property.LongText({ displayName: 'Notes', required: false }),
+    budgetId: ninjapipeCommon.budgetDropdownRequired,
+    description: Property.ShortText({
+      displayName: 'Description',
+      description: 'Description of the expense.',
+      required: true,
+    }),
+    amount: Property.Number({
+      displayName: 'Amount',
+      description: 'Expense amount (positive number).',
+      required: true,
+    }),
+    category: Property.ShortText({
+      displayName: 'Category',
+      description: 'Expense category (e.g. Marketing, Travel).',
+      required: true,
+    }),
+    date: Property.DateTime({
+      displayName: 'Date',
+      description: 'Expense date.',
+      required: true,
+    }),
   },
   async run(context) {
     const auth = getAuth(context);
     const p = context.propsValue;
-    const body: Record<string, unknown> = {};
-    if (p.name) body.name = p.name;
-    if (p.amount !== undefined) body.amount = p.amount;
-    if (p.currency) body.currency = p.currency;
-    if (p.date) body.date = p.date;
-    if (p.notes) body.notes = p.notes;
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.POST, path: `/budgets/${p.budgetId}/expenses`, body });
+    const date = toDateOnly(p.date);
+    if (!date) throw new Error('Date is required.');
+    const body: Record<string, unknown> = {
+      description: p.description,
+      amount: p.amount,
+      category: p.category,
+      date,
+    };
+    const response = await ninjapipeApiCall<Record<string, unknown>>({
+      auth,
+      method: HttpMethod.POST,
+      path: `/budgets/${encodeURIComponent(String(p.budgetId))}/expenses`,
+      body,
+    });
     return flattenCustomFields(response.body);
   },
 });

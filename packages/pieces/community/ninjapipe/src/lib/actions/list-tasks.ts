@@ -1,4 +1,4 @@
-﻿import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ninjapipeAuth } from '../../';
 import { ninjapipeApiCall, extractItems, flattenArray, getAuth, ninjapipeCommon } from '../common';
@@ -7,36 +7,78 @@ export const listTasks = createAction({
   auth: ninjapipeAuth,
   name: 'list_tasks',
   displayName: 'List Tasks',
-  description: 'Retrieves a list of tasks.',
+  description: 'Retrieves the tasks of a project as a flat list. Use parent_id on each item to build a tree.',
   props: {
-    limit: ninjapipeCommon.limitProperty,
-    search: ninjapipeCommon.searchProperty,
-    statusFilter: ninjapipeCommon.statusFilterProperty,
-    ownerFilter: ninjapipeCommon.ownerFilterProperty,
-    returnAll: Property.Checkbox({ displayName: 'Return All', description: 'Retrieve all tasks using pagination.', required: false, defaultValue: false }),
-    page: Property.Number({ displayName: 'Page', description: 'Page number when not using Return All.', required: false, defaultValue: 1 }),
+    projectId: ninjapipeCommon.projectDropdownRequired,
+    statusFilter: Property.StaticDropdown({
+      displayName: 'Status Filter',
+      required: false,
+      options: {
+        options: [
+          { label: 'To Do', value: 'To Do' },
+          { label: 'In Progress', value: 'In Progress' },
+          { label: 'Done', value: 'Done' },
+          { label: 'Cancelled', value: 'Cancelled' },
+        ],
+      },
+    }),
+    priorityFilter: Property.StaticDropdown({
+      displayName: 'Priority Filter',
+      required: false,
+      options: {
+        options: [
+          { label: 'High', value: 'High' },
+          { label: 'Medium', value: 'Medium' },
+          { label: 'Low', value: 'Low' },
+        ],
+      },
+    }),
+    parentId: Property.ShortText({
+      displayName: 'Parent Task Filter',
+      description: 'Pass a parent task ID to fetch its subtasks. Empty string to fetch only root tasks.',
+      required: false,
+    }),
+    sortBy: Property.StaticDropdown({
+      displayName: 'Sort By',
+      required: false,
+      defaultValue: 'order_index',
+      options: {
+        options: [
+          { label: 'Order Index', value: 'order_index' },
+          { label: 'Created At', value: 'created_at' },
+          { label: 'Updated At', value: 'updated_at' },
+          { label: 'Title', value: 'title' },
+          { label: 'Due Date', value: 'due_date' },
+        ],
+      },
+    }),
+    sortOrder: Property.StaticDropdown({
+      displayName: 'Sort Order',
+      required: false,
+      defaultValue: 'asc',
+      options: {
+        options: [
+          { label: 'Ascending', value: 'asc' },
+          { label: 'Descending', value: 'desc' },
+        ],
+      },
+    }),
   },
   async run(context) {
     const auth = getAuth(context);
-    const qs: Record<string, string> = { limit: String(context.propsValue.limit ?? 20), page: String(context.propsValue.page ?? 1) };
-    if (context.propsValue.search) qs.search = context.propsValue.search;
-    if (context.propsValue.statusFilter) qs.status = context.propsValue.statusFilter;
-    if (context.propsValue.ownerFilter) qs.owner = context.propsValue.ownerFilter;
-    if (context.propsValue.returnAll) {
-      const results: unknown[] = [];
-      let page = 1;
-      const limit = 100;
-      let hasMore = true;
-      while (hasMore) {
-        const response = await ninjapipeApiCall<{ data?: unknown[] }>({ auth, method: HttpMethod.GET, path: '/tasks', queryParams: { ...qs, limit: String(limit), page: String(page) } });
-        const items = extractItems(response.body);
-        results.push(...items);
-        hasMore = items.length === limit && page < 1000;
-        page++;
-      }
-      return flattenArray(results);
-    }
-    const response = await ninjapipeApiCall<{ data?: unknown[] }>({ auth, method: HttpMethod.GET, path: '/tasks', queryParams: qs });
+    const p = context.propsValue;
+    const qs: Record<string, string> = {};
+    if (p.statusFilter) qs['status'] = p.statusFilter;
+    if (p.priorityFilter) qs['priority'] = p.priorityFilter;
+    if (p.parentId !== undefined && p.parentId !== null) qs['parent_id'] = p.parentId;
+    if (p.sortBy) qs['sort_by'] = p.sortBy;
+    if (p.sortOrder) qs['sort_order'] = p.sortOrder;
+    const response = await ninjapipeApiCall<{ data?: unknown[] }>({
+      auth,
+      method: HttpMethod.GET,
+      path: `/projects/${encodeURIComponent(String(p.projectId))}/tasks`,
+      queryParams: qs,
+    });
     const items = extractItems(response.body);
     return flattenArray(items);
   },
