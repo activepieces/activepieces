@@ -32,6 +32,18 @@ export const generateImageAction = createAction({
       displayName: 'Prompt',
       required: true,
     }),
+    inputImages: Property.Array({
+      displayName: 'Input Images',
+      description:
+        'Provide images for editing, variation, or merging. Support depends on the selected model.',
+      required: false,
+      properties: {
+        file: Property.File({
+          displayName: 'Image File',
+          required: true,
+        }),
+      },
+    }),
     advancedOptions: Property.DynamicProperties({
       displayName: 'Advanced Options',
       required: false,
@@ -120,25 +132,6 @@ export const generateImageAction = createAction({
           return options;
         }
 
-        if (
-          providerId === AIProviderName.GOOGLE &&
-          modelId === 'gemini-2.5-flash-image-preview'
-        ) {
-          options = {
-            image: Property.Array({
-              displayName: 'Images',
-              required: false,
-              properties: {
-                file: Property.File({
-                  displayName: 'Image File',
-                  required: true,
-                }),
-              },
-              description: 'The image(s) you want to edit/merge',
-            }),
-          };
-        }
-
         return options;
       },
     }),
@@ -147,12 +140,18 @@ export const generateImageAction = createAction({
     const provider = context.propsValue.provider;
     const modelId = context.propsValue.model;
 
+    const inputImages = collectInputImages({
+      inputImages: context.propsValue.inputImages,
+      advancedOptions: context.propsValue.advancedOptions,
+    });
+
     const image = await getGeneratedImage({
       provider: provider as AIProviderName,
       modelId,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
       prompt: context.propsValue.prompt,
+      inputImages,
       projectId: context.project.id,
       flowId: context.flows.current.id,
       runId: context.run.id,
@@ -171,12 +170,44 @@ export const generateImageAction = createAction({
   },
 });
 
+const collectInputImages = ({
+  inputImages,
+  advancedOptions,
+}: {
+  inputImages?: unknown;
+  advancedOptions?: DynamicPropsValue;
+}): ApFile[] => {
+  const fromTopLevel = extractImageFiles(inputImages);
+  if (fromTopLevel.length > 0) {
+    return fromTopLevel;
+  }
+  return extractImageFiles(advancedOptions?.['image']);
+};
+
+const extractImageFiles = (value: unknown): ApFile[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.flatMap((entry) => {
+    if (
+      entry &&
+      typeof entry === 'object' &&
+      'file' in entry &&
+      entry.file
+    ) {
+      return [entry.file as ApFile];
+    }
+    return [];
+  });
+};
+
 const getGeneratedImage = async ({
   provider,
   modelId,
   engineToken,
   apiUrl,
   prompt,
+  inputImages,
   projectId,
   flowId,
   runId,
@@ -187,6 +218,7 @@ const getGeneratedImage = async ({
   engineToken: string;
   apiUrl: string;
   prompt: string;
+  inputImages: ApFile[];
   projectId: string;
   flowId: string;
   runId: string;
@@ -214,41 +246,47 @@ const getGeneratedImage = async ({
       return generateImageUsingGenerateText({
         model: model as unknown as LanguageModel,
         prompt,
-        advancedOptions,
+        inputImages,
       });
     default: {
+      const sanitizedAdvancedOptions = stripLegacyImageField(advancedOptions);
+      const sdkImages = inputImages.map((file) =>
+        Buffer.from(file.base64, 'base64'),
+      );
       const { image } = await generateImage({
         model,
-        prompt,
+        prompt:
+          sdkImages.length > 0
+            ? { text: prompt, images: sdkImages }
+            : prompt,
         providerOptions: {
-          [resolvedProvider]: { ...advancedOptions },
+          [resolvedProvider]: { ...sanitizedAdvancedOptions },
         },
       });
-      return image
-    };
+      return image;
+    }
   }
 };
 
 const generateImageUsingGenerateText = async ({
   model,
   prompt,
-  advancedOptions,
+  inputImages,
 }: {
   model: LanguageModel;
   prompt: string;
-  advancedOptions?: DynamicPropsValue;
+  inputImages: ApFile[];
 }): Promise<GeneratedFile> => {
-  const images =
-    (advancedOptions?.['image'] as Array<{ file: ApFile }> | undefined) ?? [];
-
-  const imageFiles = images.map<ImagePart>((image) => {
-    const fileType = image.file.extension
-      ? mime.lookup(image.file.extension)
-      : 'image/jpeg';
+  const imageFiles = inputImages.map<ImagePart>((file) => {
+    const detected = file.extension ? mime.lookup(file.extension) : false;
+    const fileType =
+      detected && ALLOWED_IMAGE_MIME_TYPES.has(detected)
+        ? detected
+        : 'image/jpeg';
 
     return {
       type: 'image',
-      image: `data:${fileType || 'image/jpeg'};base64,${image.file.base64}`,
+      image: `data:${fileType};base64,${file.base64}`,
     };
   });
 
@@ -270,6 +308,24 @@ const generateImageUsingGenerateText = async ({
 
   return result.files[0];
 };
+
+const stripLegacyImageField = (
+  advancedOptions: DynamicPropsValue | undefined,
+): DynamicPropsValue | undefined => {
+  if (isNil(advancedOptions)) {
+    return advancedOptions;
+  }
+  const { image: _legacy, ...rest } = advancedOptions as Record<string, unknown>;
+  return rest as DynamicPropsValue;
+};
+
+const ALLOWED_IMAGE_MIME_TYPES: ReadonlySet<string> = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+]);
 
 const assertImageGenerationSuccess = (
   result: GenerateTextResult<ToolSet, never>
