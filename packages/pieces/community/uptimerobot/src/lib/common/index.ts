@@ -7,6 +7,7 @@ import {
 import { Property } from '@activepieces/pieces-framework';
 
 const BASE_URL = 'https://api.uptimerobot.com/v2';
+const PAGE_LIMIT = 50;
 
 export async function uptimeRobotApiCall<T extends HttpMessageBody>({
   apiKey,
@@ -31,6 +32,57 @@ export async function uptimeRobotApiCall<T extends HttpMessageBody>({
   });
 }
 
+interface PaginatedResponse<T> {
+  stat: string;
+  pagination: { offset: number; limit: number; total: number };
+  monitors?: T[];
+  alert_contacts?: T[];
+}
+
+export async function uptimeRobotPaginatedCall<T>({
+  apiKey,
+  endpoint,
+  listKey,
+  body,
+}: {
+  apiKey: string;
+  endpoint: string;
+  listKey: 'monitors' | 'alert_contacts';
+  body?: Record<string, unknown>;
+}): Promise<T[]> {
+  const results: T[] = [];
+  let offset = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const response = await uptimeRobotApiCall<PaginatedResponse<T>>({
+      apiKey,
+      endpoint,
+      body: {
+        ...body,
+        offset,
+        limit: PAGE_LIMIT,
+      },
+    });
+
+    if (response.body.stat !== 'ok') {
+      throw new Error(`UptimeRobot API error: ${JSON.stringify(response.body)}`);
+    }
+
+    const items = response.body[listKey] ?? [];
+    results.push(...items);
+
+    const pagination = response.body.pagination;
+    if (pagination && offset + PAGE_LIMIT < pagination.total) {
+      offset += PAGE_LIMIT;
+    } else {
+      hasMore = false;
+    }
+  }
+
+  return results;
+}
+
 export const MONITOR_TYPES: Record<number, string> = {
   1: 'HTTP(s)',
   2: 'Keyword',
@@ -47,11 +99,6 @@ export const MONITOR_STATUSES: Record<number, string> = {
   9: 'Down',
 };
 
-export const KEYWORD_TYPES: Record<number, string> = {
-  1: 'Exists',
-  2: 'Not exists',
-};
-
 export const monitorDropdown = Property.Dropdown({
   displayName: 'Monitor',
   description: 'Select the monitor to use',
@@ -62,19 +109,18 @@ export const monitorDropdown = Property.Dropdown({
       return { disabled: true, options: [], placeholder: 'Please connect your account first' };
     }
     try {
-      const response = await uptimeRobotApiCall<{
-        stat: string;
-        monitors: Array<{ id: number; friendly_name: string; url: string }>;
+      const monitors = await uptimeRobotPaginatedCall<{
+        id: number;
+        friendly_name: string;
+        url: string;
       }>({
         apiKey: auth as string,
         endpoint: 'getMonitors',
+        listKey: 'monitors',
       });
-      if (response.body.stat !== 'ok' || !response.body.monitors) {
-        return { disabled: true, options: [], placeholder: 'Failed to load monitors. Check your API key.' };
-      }
       return {
         disabled: false,
-        options: response.body.monitors.map((m) => ({
+        options: monitors.map((m) => ({
           label: `${m.friendly_name} (${m.url})`,
           value: String(m.id),
         })),

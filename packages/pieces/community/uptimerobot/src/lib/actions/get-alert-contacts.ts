@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { uptimeRobotAuth } from '../../';
-import { uptimeRobotApiCall } from '../common';
+import { uptimeRobotPaginatedCall } from '../common';
 
 const ALERT_CONTACT_TYPES: Record<number, string> = {
   1: 'SMS',
@@ -29,28 +29,22 @@ export const getAlertContactsAction = createAction({
   auth: uptimeRobotAuth,
   name: 'get_alert_contacts',
   displayName: 'Get Alert Contacts',
-  description: 'Retrieves all alert contacts configured in your UptimeRobot account. Use the IDs when creating monitors.',
+  description: 'Retrieves all alert contacts configured in your UptimeRobot account. Automatically fetches all pages. Use the IDs when creating monitors.',
   props: {},
   async run(context) {
-    const response = await uptimeRobotApiCall<{
-      stat: string;
-      alert_contacts: Array<{
-        id: string;
-        friendly_name: string;
-        type: number;
-        status: number;
-        value: string;
-      }>;
+    const contacts = await uptimeRobotPaginatedCall<{
+      id: string;
+      friendly_name: string;
+      type: number;
+      status: number;
+      value: string;
     }>({
       apiKey: context.auth as unknown as string,
       endpoint: 'getAlertContacts',
+      listKey: 'alert_contacts',
     });
 
-    if (response.body.stat !== 'ok') {
-      throw new Error(`UptimeRobot API error: ${JSON.stringify(response.body)}`);
-    }
-
-    return (response.body.alert_contacts ?? []).map((c) => ({
+    return contacts.map((c) => ({
       id: c.id,
       friendly_name: c.friendly_name,
       type: c.type,
