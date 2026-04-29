@@ -238,33 +238,56 @@ const getGeneratedImage = async ({
   const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model: modelId });
   const resolvedProvider = (effectiveProvider ?? provider) as AIProviderName;
 
-  switch (resolvedProvider) {
-    case AIProviderName.GOOGLE:
-    case AIProviderName.ACTIVEPIECES:
-    case AIProviderName.OPENROUTER:
-    case AIProviderName.CLOUDFLARE_GATEWAY:
-      return generateImageUsingGenerateText({
-        model: model as unknown as LanguageModel,
-        prompt,
-        inputImages,
-      });
-    default: {
-      const sanitizedAdvancedOptions = stripLegacyImageField(advancedOptions);
-      const sdkImages = inputImages.map((file) =>
-        Buffer.from(file.base64, 'base64'),
-      );
-      const { image } = await generateImage({
-        model,
-        prompt:
-          sdkImages.length > 0
+  const hasInputImages = inputImages.length > 0;
+
+  return withImageInputErrorContext({ modelId, hasInputImages }, async () => {
+    switch (resolvedProvider) {
+      case AIProviderName.GOOGLE:
+      case AIProviderName.ACTIVEPIECES:
+      case AIProviderName.OPENROUTER:
+      case AIProviderName.CLOUDFLARE_GATEWAY:
+        return generateImageUsingGenerateText({
+          model: model as unknown as LanguageModel,
+          prompt,
+          inputImages,
+        });
+      default: {
+        const sanitizedAdvancedOptions = stripLegacyImageField(advancedOptions);
+        const sdkImages = inputImages.map((file) =>
+          Buffer.from(file.base64, 'base64'),
+        );
+        const { image } = await generateImage({
+          model,
+          prompt: hasInputImages
             ? { text: prompt, images: sdkImages }
             : prompt,
-        providerOptions: {
-          [resolvedProvider]: { ...sanitizedAdvancedOptions },
-        },
-      });
-      return image;
+          providerOptions: {
+            [resolvedProvider]: { ...sanitizedAdvancedOptions },
+          },
+        });
+        return image;
+      }
     }
+  });
+};
+
+const withImageInputErrorContext = async <T>(
+  { modelId, hasInputImages }: { modelId: string; hasInputImages: boolean },
+  run: () => Promise<T>,
+): Promise<T> => {
+  try {
+    return await run();
+  } catch (error) {
+    if (!hasInputImages) {
+      throw error;
+    }
+    const original = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Image generation failed for model "${modelId}". ` +
+      `This model may not support input images. Try a model that supports image editing — ` +
+      `for example gpt-image-1, dall-e-2, or a Gemini Nano Banana model — or remove the input images. ` +
+      `Original error: ${original}`,
+    );
   }
 };
 
