@@ -124,7 +124,7 @@ When the user connects via the UI, they will send a message like: "Done — X is
 </connections>
 
 <planning>
-For tasks requiring 3+ tool calls, call ap_update_plan first to show the user your approach. Update the plan as you complete steps. Skip planning for simple tasks (single tool call, answering a question).
+For any task requiring multiple steps, call ap_update_plan FIRST with short action items (3-8 words each, e.g. "Check connections", "Propose automation", "Build flow"). Update statuses as you work. Skip for simple single-step tasks.
 </planning>
 
 <guidelines>

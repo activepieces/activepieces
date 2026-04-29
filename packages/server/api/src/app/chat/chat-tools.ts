@@ -23,7 +23,7 @@ function createChatTools({ onSessionTitle }: { onSessionTitle: (title: string) =
             },
         }),
         ap_update_plan: tool({
-            description: 'Show a step-by-step plan to the user for multi-step tasks. Call this before executing when the task requires 3+ tool calls (building automations, managing tables, troubleshooting). Update the plan as you complete steps.',
+            description: 'Show a brief execution plan to the user. Each entry should be a short action (3-8 words max, e.g. "Check connections", "Create flow", "Add trigger"). Call this at the start of multi-step tasks. Update statuses as you progress.',
             inputSchema: planSchema,
             execute: async () => {
                 return { success: true }
