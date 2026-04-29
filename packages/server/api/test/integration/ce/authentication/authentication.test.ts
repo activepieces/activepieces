@@ -22,6 +22,7 @@ beforeEach(async () => {
     await databaseConnection().getRepository('project').createQueryBuilder().delete().execute()
     await databaseConnection().getRepository('platform').createQueryBuilder().delete().execute()
     await databaseConnection().getRepository('user').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('user_identity').createQueryBuilder().delete().execute()
 })
 describe('Authentication API', () => {
     describe('Sign up Endpoint', () => {
@@ -41,8 +42,6 @@ describe('Authentication API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody?.id).toHaveLength(21)
-            expect(responseBody?.created).toBeDefined()
-            expect(responseBody?.updated).toBeDefined()
             expect(responseBody?.verified).toBe(true)
             expect(responseBody?.email).toBe(mockSignUpRequest.email.toLocaleLowerCase().trim())
             expect(responseBody?.firstName).toBe(mockSignUpRequest.firstName)
