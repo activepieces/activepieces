@@ -707,6 +707,7 @@
   "Configure SAML 2.0 SSO": "Configure SAML 2.0 SSO",
   "\n**Setup Instructions**:\nPlease check the following documentation: [SAML SSO](https://activepieces.com/docs/security/sso)\n\n**Single sign-on URL**:\n```text\n{samlAcs}\n```\n**Audience URI (SP Entity ID)**:\n```text\nActivepieces\n```\n": "\n**Setup Instructions**:\nPlease check the following documentation: [SAML SSO](https://activepieces.com/docs/security/sso)\n\n**Single sign-on URL**:\n```text\n{samlAcs}\n```\n**Audience URI (SP Entity ID)**:\n```text\nActivepieces\n```\n",
   "IDP Metadata": "IDP Metadata",
+  "Paste the metadata XML contents or the metadata URL provided by your identity provider.": "Paste the metadata XML contents or the metadata URL provided by your identity provider.",
   "IDP Certificate": "IDP Certificate",
   "Unlock AI": "Unlock AI",
   "Set your AI providers so your users enjoy a seamless building experience with our universal AI pieces": "",
