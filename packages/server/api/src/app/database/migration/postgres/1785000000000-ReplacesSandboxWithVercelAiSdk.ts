@@ -3,7 +3,7 @@ import { Migration } from '../../migration'
 
 export class ReplacesSandboxWithVercelAiSdk1785000000000 implements Migration {
     name = 'ReplacesSandboxWithVercelAiSdk1785000000000'
-    breaking = false
+    breaking = true
     release = '0.84.0'
     transaction = true
 

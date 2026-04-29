@@ -108,14 +108,13 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        if (request.enabledForChat === true) {
-            await aiProviderRepo().update({ platformId }, { enabledForChat: false })
-        }
-
         if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
-            await aiProviderRepo().update(providerId, {
-                ...spreadIfDefined('enabledForChat', request.enabledForChat),
-            })
+            if (request.enabledForChat === true) {
+                await aiProviderRepo().manager.transaction(async (manager) => {
+                    await manager.update(AIProviderEntity, { platformId }, { enabledForChat: false })
+                    await manager.update(AIProviderEntity, providerId, { enabledForChat: true })
+                })
+            }
             return
         }
 
@@ -129,13 +128,22 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
 
         const encryptedAuth = !isNil(request.auth) ? await encryptUtils.encryptObject(request.auth) : undefined
-
-        await aiProviderRepo().update(providerId, {
+        const updates = {
             ...spreadIfDefined('auth', encryptedAuth),
             ...spreadIfDefined('config', request.config),
             ...spreadIfDefined('enabledForChat', request.enabledForChat),
             displayName: request.displayName,
-        })
+        }
+
+        if (request.enabledForChat === true) {
+            await aiProviderRepo().manager.transaction(async (manager) => {
+                await manager.update(AIProviderEntity, { platformId }, { enabledForChat: false })
+                await manager.update(AIProviderEntity, providerId, updates)
+            })
+        }
+        else {
+            await aiProviderRepo().update(providerId, updates)
+        }
     },
 
     async getChatProvider({ platformId }: { platformId: PlatformId }): Promise<GetProviderConfigResponse | null> {
