@@ -33,7 +33,8 @@ export function prepareQuery(request?: Record<string, unknown>): QueryParams {
 export class BaserowClient {
   constructor(
     private baseUrl: string,
-    private authHeader: string
+    private authHeader: string,
+    private isJwt: boolean = false
   ) { }
 
   static async getJwtToken({
@@ -69,6 +70,13 @@ export class BaserowClient {
     return res.body;
   }
   async listTables(): Promise<BaserowTable[]> {
+    if (this.isJwt) {
+      const apps = await this.makeRequest<Array<{ id: number; type: string; tables: BaserowTable[] }>>(
+        HttpMethod.GET,
+        `/applications/`
+      );
+      return apps.filter((a) => a.type === 'database').flatMap((a) => a.tables);
+    }
     return await this.makeRequest<BaserowTable[]>(
       HttpMethod.GET,
       `/database/tables/all-tables/`

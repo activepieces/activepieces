@@ -24,7 +24,7 @@ export async function makeClient(
       );
     }
     const jwt = await BaserowClient.getJwtToken({ apiUrl, email, password });
-    return new BaserowClient(apiUrl, `JWT ${jwt}`);
+    return new BaserowClient(apiUrl, `JWT ${jwt}`, true);
   }
   if (!token) {
     throw new Error(

@@ -1,5 +1,42 @@
-import { BaserowAuthValue, baserowAuthHelpers } from '../auth';
+import { MarkdownVariant } from '@activepieces/shared';
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { BaserowAuthValue, baserowAuth, baserowAuthHelpers } from '../auth';
 import { makeClient } from './index';
+
+export function dynamicWebhookInstructions(eventLabel: string) {
+  return Property.DynamicProperties({
+    auth: baserowAuth,
+    displayName: 'Webhook Setup',
+    required: false,
+    refreshers: ['auth'],
+    props: async ({ auth }): Promise<DynamicPropsValue> => {
+      if (auth && baserowAuthHelpers.isJwtAuth(auth as BaserowAuthValue)) {
+        return {
+          info: Property.MarkDown({
+            value: '✅ **Webhook auto-registered** — no manual setup needed. The webhook is created and removed automatically when you enable or disable this trigger.',
+            variant: MarkdownVariant.INFO,
+          }),
+        };
+      }
+      return {
+        info: Property.MarkDown({
+          value: `**Manual webhook setup required** (Database Token auth):
+
+1. In Baserow, click the **···** menu beside your table and select **Webhooks**.
+2. Click **Create webhook +**.
+3. Set the HTTP method to **POST**.
+4. Paste this URL into the endpoint field:
+\`\`\`
+{{webhookUrl}}
+\`\`\`
+5. Under **Events**, select **${eventLabel}**.
+6. Click **Save**.`,
+          variant: MarkdownVariant.INFO,
+        }),
+      };
+    },
+  });
+}
 
 export function createWebhookTriggerHooks({
   events,

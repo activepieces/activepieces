@@ -10,7 +10,7 @@ import {
 export const createRowAction = createAction({
   name: 'baserow_create_row',
   displayName: 'Create Row',
-  description: 'Creates a new row.',
+  description: 'Creates a new row in a table.',
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),

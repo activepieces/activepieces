@@ -1,8 +1,7 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
-import { createWebhookTriggerHooks } from '../common/webhook-trigger';
+import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
 
 const triggerHooks = createWebhookTriggerHooks({
   events: ['rows.created', 'rows.updated', 'rows.deleted'],
@@ -12,28 +11,13 @@ const triggerHooks = createWebhookTriggerHooks({
 export const rowEventTrigger = createTrigger({
   name: 'baserow_row_event',
   auth: baserowAuth,
-  displayName: 'Row Event',
+  displayName: 'Any Row Change',
   description:
     'Triggers when a row is created, updated, or deleted in a Baserow table. To react to only one event type, use the dedicated Row Created, Row Updated, or Row Deleted triggers.',
   type: TriggerStrategy.WEBHOOK,
   props: {
     table_id: baserowCommon.tableId(),
-    instructions: Property.MarkDown({
-      value: `If you authenticated with **Database Token**, the webhook must be created manually:
-
-1. In Baserow, click the **···** menu beside your table and select **Webhooks**.
-2. Click **Create webhook +**.
-3. Set the HTTP method to **POST**.
-4. Paste the following URL into the endpoint field:
-\`\`\`text
-{{webhookUrl}}
-\`\`\`
-5. Under events, **enable all three of them**: **Rows created**, **Rows updated**, and **Rows deleted**.
-6. Click **Save**.
-
-If you authenticated with **Email & Password (JWT)**, a single webhook covering the three events is registered automatically — you can ignore the steps above.`,
-      variant: MarkdownVariant.INFO,
-    }),
+    instructions: dynamicWebhookInstructions('Rows created, Rows updated, and Rows deleted'),
   },
   sampleData: {
     event_type: 'rows.created',

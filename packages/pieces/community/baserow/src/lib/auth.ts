@@ -5,18 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-const description = `Choose how you want to authenticate with Baserow:
-
-**Database Token** — recommended. Per-table CRUD scoping, compatible with 2FA accounts. Triggers require manual webhook setup.
-  1. Log in to your Baserow account.
-  2. Click on your profile picture (top-left) and go to **Settings → Database tokens**.
-  3. Create a new token, then click **:** beside the token name to copy it.
-  4. Paste it into **Database Token** below. Leave **Email** and **Password** empty.
-
-**Email & Password (JWT)** — workspace-wide access, enables automatic webhook registration for triggers. Not compatible with accounts that have 2FA enabled.
-  1. Fill in **Email** and **Password** with your Baserow login credentials. Leave **Database Token** empty.
-
-In both modes, set **API URL** to your Baserow instance (default: \`https://api.baserow.io\`).`;
+const description = `Connect to Baserow using either a Database Token (recommended) or your Email & Password. Fill in only the fields for your chosen method — leave the other section blank.`;
 
 function isJwtMode(authType: string | undefined, props: { token?: string; email?: string; password?: string }): boolean {
   if (authType === 'jwt') return true;
@@ -32,35 +21,46 @@ export const baserowAuth = PieceAuth.CustomAuth({
     authType: Property.StaticDropdown({
       displayName: 'Authentication Method',
       description:
-        'Database Token is recommended. Use Email & Password (JWT) only if you need automatic webhook registration on triggers.',
+        'Choose **Database Token** (recommended) for scoped, per-table access compatible with 2FA. Choose **Email & Password** only if you need automatic webhook registration on triggers — 2FA accounts are not supported.',
       required: true,
       defaultValue: 'database_token',
       options: {
         disabled: false,
         options: [
-          { label: 'Database Token', value: 'database_token' },
+          { label: 'Database Token (recommended)', value: 'database_token' },
           { label: 'Email & Password (JWT)', value: 'jwt' },
         ],
       },
     }),
     apiUrl: Property.ShortText({
       displayName: 'API URL',
+      description: 'Your Baserow instance URL. Leave the default for Baserow Cloud.',
       required: true,
       defaultValue: 'https://api.baserow.io',
     }),
+    md_token: Property.MarkDown({
+      value: `---
+#### 🔑 Database Token
+Go to **Settings → Database tokens** in Baserow, create a token, copy it, and paste it below. Leave Email and Password blank.`,
+    }),
     token: PieceAuth.SecretText({
       displayName: 'Database Token',
-      description: 'Required if Authentication Method is **Database Token**. Leave empty for JWT.',
+      description: 'Your Baserow database token. Leave blank when using Email & Password.',
       required: false,
+    }),
+    md_jwt: Property.MarkDown({
+      value: `---
+#### 👤 Email & Password (JWT)
+Enter your Baserow login credentials below. Leave Database Token blank. Accounts with 2FA enabled are not supported.`,
     }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'Required if Authentication Method is **Email & Password (JWT)**. Leave empty for Database Token.',
+      description: 'Your Baserow account email. Leave blank when using Database Token.',
       required: false,
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
-      description: 'Required if Authentication Method is **Email & Password (JWT)**. Leave empty for Database Token.',
+      description: 'Your Baserow account password. Leave blank when using Database Token.',
       required: false,
     }),
   },
