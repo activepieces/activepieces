@@ -54,6 +54,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         })
         await sendVerificationOrAutoVerify(userIdentity, log)
         await flagService(log).save({ id: ApFlagId.USER_CREATED, value: true })
+        await authenticationUtils(log).sendTelemetry({ identity: userIdentity })
         await authenticationUtils(log).saveNewsLetterSubscriber(userIdentity)
         await userInvitationsService(log).provisionUserInvitation({ email: params.email })
 

@@ -174,7 +174,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         identity,
     }: SendTelemetryParams): Promise<void> {
         try {
-            await telemetry(log).identify(user, identity)
+            await telemetry(log).identify(identity, user)
         }
         catch (e) {
             log.warn({ err: e }, '[authenticationUtils#sendTelemetry] Failed to send telemetry')
@@ -221,7 +221,7 @@ function findPersonalProject(projects: Project[], userId: string): Project | und
 
 type SendTelemetryParams = {
     identity: UserIdentity
-    user: User
+    user?: User
 }
 
 type AssertDomainIsAllowedParams = {
