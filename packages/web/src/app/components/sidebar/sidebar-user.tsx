@@ -111,7 +111,7 @@ export function SidebarUser() {
                 onClick={() => navigate('/user-settings/profile')}
               >
                 <UserCogIcon className="w-4 h-4 mr-2" />
-                {t('Account Settings')}
+                {t('Settings')}
               </DropdownMenuItem>
 
               <HelpAndFeedback />
