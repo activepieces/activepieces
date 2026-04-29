@@ -365,6 +365,7 @@ import { AddRunStatusCoverIndex1777370308000 } from './migration/postgres/177737
 import { AddLastLoggedInPlatformIdToUserIdentity1777491000474 } from './migration/postgres/1777491000474-AddLastLoggedInPlatformIdToUserIdentity'
 import { DropChatTokenColumns1782000000000 } from './migration/postgres/1782000000000-DropChatTokenColumns'
 import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
+import { ReplacesSandboxWithVercelAiSdk1785000000000 } from './migration/postgres/1785000000000-ReplacesSandboxWithVercelAiSdk'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -745,6 +746,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         DropChatTokenColumns1782000000000,
         AddUserSandboxTable1784000000000,
         AddLastLoggedInPlatformIdToUserIdentity1777491000474,
+        ReplacesSandboxWithVercelAiSdk1785000000000,
     ]
     return migrations
 }

@@ -202,6 +202,7 @@ export const AIProviderWithoutSensitiveData = z.object({
     name: z.string(),
     provider: z.nativeEnum(AIProviderName),
     config: AIProviderConfig,
+    enabledForChat: z.boolean(),
 })
 export type AIProviderWithoutSensitiveData = z.infer<typeof AIProviderWithoutSensitiveData>
 
@@ -220,6 +221,7 @@ export const UpdateAIProviderRequest = z.object({
     displayName: z.string().min(1),
     config: AIProviderConfig.optional(),
     auth: AIProviderAuthConfig.optional(),
+    enabledForChat: z.boolean().optional(),
 })
 export type UpdateAIProviderRequest = z.infer<typeof UpdateAIProviderRequest>
 
@@ -253,6 +255,24 @@ export type AIErrorResponse = z.infer<typeof AIErrorResponse>
  * prefixes or missing input fall back to the raw inputs so callers never end up with a
  * wrong-but-confident answer.
  */
+const OPENAI_CHAT_MODELS = ['gpt-5.2', 'gpt-5.1', 'gpt-5-mini'] as const
+const ANTHROPIC_CHAT_MODELS = ['claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5', 'claude-haiku-4-5-20251001'] as const
+const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-opus-4.6', 'claude-sonnet-4.6', 'claude-haiku-4.5', 'claude-haiku-4-5-20251001'] as const
+const GOOGLE_CHAT_MODELS = ['gemini-2.5-flash-lite-preview-09-2025', 'gemini-2.5-flash-preview-09-2025', 'gemini-3-flash-preview', 'gemini-3.1-pro-preview'] as const
+const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.1-fast'] as const
+
+export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
+    [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
+    [AIProviderName.ANTHROPIC]: ANTHROPIC_CHAT_MODELS,
+    [AIProviderName.GOOGLE]: GOOGLE_CHAT_MODELS,
+    [AIProviderName.ACTIVEPIECES]: [
+        ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
+        ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((m) => `${AIProviderName.ANTHROPIC}/${m}`),
+        ...GOOGLE_CHAT_MODELS.map((m) => `${AIProviderName.GOOGLE}/${m}`),
+        ...X_AI_OPENROUTER_CHAT_MODELS.map((m) => `x-ai/${m}`),
+    ],
+}
+
 export function getEffectiveProviderAndModel({
     provider,
     model,
