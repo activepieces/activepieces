@@ -136,7 +136,8 @@ export const chatService = (log: FastifyBaseLogger) => ({
             modelId: modelName,
         })
 
-        const systemPrompt = buildAgentSystemPrompt(projectName)
+        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+        const systemPrompt = buildAgentSystemPrompt({ projectName, projectId, frontendUrl })
         const previousMessages = conversation.messages as ModelMessage[]
         const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
         const allMessages = [...previousMessages, newUserMessage]
@@ -350,8 +351,15 @@ const SYSTEM_PROMPT_TEMPLATE = readFileSync(
     'utf8',
 )
 
-function buildAgentSystemPrompt(projectName: string): string {
-    return SYSTEM_PROMPT_TEMPLATE.replace('{{PROJECT_NAME}}', sanitizeProjectName(projectName))
+function buildAgentSystemPrompt({ projectName, projectId, frontendUrl }: {
+    projectName: string
+    projectId: string
+    frontendUrl: string
+}): string {
+    const projectUrl = `${frontendUrl}/projects/${projectId}`
+    return SYSTEM_PROMPT_TEMPLATE
+        .replace('{{PROJECT_NAME}}', sanitizeProjectName(projectName))
+        .replace('{{PROJECT_URL}}', projectUrl)
 }
 
 type CreateConversationParams = {
