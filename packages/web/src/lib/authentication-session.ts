@@ -111,7 +111,7 @@ export const authenticationSession = {
   },
   logOut() {
     this.clearSession();
-    window.location.href = '/sign-in';
+    window.location.href = '/login';
   },
 };
 

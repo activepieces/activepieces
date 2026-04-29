@@ -1,14 +1,6 @@
-import { useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 
-import { OTOM8_SITE_URL } from '@/lib/otom8-site-url';
-
-const SignInPage: React.FC = () => {
-  useEffect(() => {
-    window.location.replace(`${OTOM8_SITE_URL}/login`);
-  }, []);
-
-  return null;
-};
+const SignInPage: React.FC = () => <Navigate to="/login" replace />;
 
 SignInPage.displayName = 'SignInPage';
 
