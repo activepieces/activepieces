@@ -18,7 +18,7 @@ export const azureProvider: AIProviderStrategy<AzureProviderAuthConfig, AzurePro
         }
 
         const res = await httpClient.sendRequest<{ data: AzureModel[] }>({
-            url: `${endpoint}/openai/deployments?api-version=${apiVersion}`,
+            url: `${endpoint}/openai/deployments?api-version=${encodeURIComponent(apiVersion)}`,
             method: HttpMethod.GET,
             headers: {
                 'api-key': apiKey,
