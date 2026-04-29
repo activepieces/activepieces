@@ -219,25 +219,24 @@ function ChatBoxContent({
         <ScrollButton className="absolute bottom-4 right-1/2 translate-x-1/2" />
       </ChatContainerRoot>
 
-      {!hasActiveForm && (
-        <div className="pb-4 px-6">
-          <div className="max-w-3xl mx-auto">
-            <ChatInput
-              isStreaming={isStreaming}
-              onSend={handleSend}
-              onStop={cancelStream}
-              placeholder={t('Reply...')}
-              leftActions={
-                <ChatModelSelector
-                  chatProviderName={chatProviderName}
-                  selectedModel={modelName}
-                  onModelChange={setModelName}
-                />
-              }
-            />
-          </div>
+      <div className="pb-4 px-6">
+        <div className="max-w-3xl mx-auto">
+          <ChatInput
+            isStreaming={isStreaming}
+            onSend={handleSend}
+            onStop={cancelStream}
+            placeholder={hasActiveForm ? t('Answer the questions above...') : t('Reply...')}
+            disabled={hasActiveForm}
+            leftActions={
+              <ChatModelSelector
+                chatProviderName={chatProviderName}
+                selectedModel={modelName}
+                onModelChange={setModelName}
+              />
+            }
+          />
         </div>
-      )}
+      </div>
     </div>
   );
 }
