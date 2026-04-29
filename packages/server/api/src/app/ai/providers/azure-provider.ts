@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderModel, AIProviderModelType, AzureProviderAuthConfig, AzureProviderConfig } from '@activepieces/shared'
+import { AIProviderModel, AIProviderModelType, AzureProviderAuthConfig, AzureProviderConfig, DEFAULT_AZURE_API_VERSION } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
 
@@ -11,7 +11,7 @@ export const azureProvider: AIProviderStrategy<AzureProviderAuthConfig, AzurePro
     async listModels(authConfig: AzureProviderAuthConfig, config: AzureProviderConfig): Promise<AIProviderModel[]> {
         const endpoint = `https://${config.resourceName}.openai.azure.com`
         const apiKey = authConfig.apiKey
-        const apiVersion = '2024-10-21'
+        const apiVersion = config.apiVersion ?? DEFAULT_AZURE_API_VERSION
 
         if (!endpoint || !apiKey) {
             return []
