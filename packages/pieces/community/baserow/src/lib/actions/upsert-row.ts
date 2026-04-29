@@ -118,10 +118,40 @@ export const upsertRowAction = createAction({
     const matchFieldId = parseInt(match_field!.replace('field_', ''), 10);
     const matchFieldDef = tableSchema.find((f) => f.id === matchFieldId);
     if (matchFieldDef) {
-      formattedFields[matchFieldDef.name] = match_value;
+      formattedFields[matchFieldDef.name] = coerceMatchValue({
+        value: match_value!,
+        fieldType: matchFieldDef.type,
+      });
     }
 
     const created = await client.createRow(table_id!, formattedFields);
     return { action: 'created', row: created };
   },
 });
+
+function coerceMatchValue({
+  value,
+  fieldType,
+}: {
+  value: string;
+  fieldType: string;
+}): unknown {
+  switch (fieldType) {
+    case BaserowFieldType.BOOLEAN: {
+      const normalized = value.trim().toLowerCase();
+      return ['true', '1', 'yes'].includes(normalized);
+    }
+    case BaserowFieldType.NUMBER:
+    case BaserowFieldType.RATING: {
+      const parsed = Number(value);
+      if (Number.isNaN(parsed)) {
+        throw new Error(
+          `Match Value "${value}" is not a valid number for the selected ${fieldType} field.`
+        );
+      }
+      return parsed;
+    }
+    default:
+      return value;
+  }
+}
