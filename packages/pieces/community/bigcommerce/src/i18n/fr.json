@@ -87,7 +87,7 @@
   "URL for the public blog post. Example - /blog/welcome-bigcommerce/": "URL pour le billet public. Exemple - /blog/welcome-bigcommerce/",
   "Published Date for the blog post. Example - Wed, 10 Aug 2022 15:39:15 -0500": "Publié date pour le blog. Exemple - Mercredi, 10 Août 2022 15:39:15 -0500",
   "Description text for this blog post’s <meta/> element.": "Description text for this blog post’s <meta/> element.",
-  "Comma seperated (,) Keywords for this blog post’s <meta/> element. Eg welcome, bigcommerce": "Comma seperated (,) Keywords for this blog post’s <meta/> element. Eg welcome, bigcommerce",
+  "Comma separated (,) Keywords for this blog post’s <meta/> element. Eg welcome, bigcommerce": "Comma separated (,) Keywords for this blog post’s <meta/> element. Eg welcome, bigcommerce",
   "Array of tags": "Tableau de balises",
   "Whether the post is published": "Si le message est publié",
   "Select the customer": "Sélectionnez le client",

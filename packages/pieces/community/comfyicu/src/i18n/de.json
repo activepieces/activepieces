@@ -13,7 +13,7 @@
   "Prompt": "Prompt",
   "Webhook": "Webhook",
   "You can get workflow prompt by navigating to History->Select Run -> Copy API Workflow.": "Sie können einen Workflow-Prompt erhalten, indem Sie unter History->Auswahl Ausführen -> API Workflow kopieren.",
-  "Webhook URL to recieve run status.": "Webhook URL um den Ausführungsstatus zu erhalten.",
+  "Webhook URL to receive run status.": "Webhook URL um den Ausführungsstatus zu erhalten.",
   "New Workflow Created": "Neuer Workflow erstellt",
   "Run Completed": "Ausführung abgeschlossen",
   "Run Failed": "Ausführung fehlgeschlagen",

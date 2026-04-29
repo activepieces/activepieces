@@ -87,7 +87,7 @@
   "URL for the public blog post. Example - /blog/welcome-bigcommerce/": "公開ブログのURL。例 - /blog/welcommerce/",
   "Published Date for the blog post. Example - Wed, 10 Aug 2022 15:39:15 -0500": "ブログ投稿の公開日時 例 - Wed, 10 Aug 2022 15:39:15 -0500",
   "Description text for this blog post’s <meta/> element.": "このブログ記事の説明テキスト <meta/> 要素。",
-  "Comma seperated (,) Keywords for this blog post’s <meta/> element. Eg welcome, bigcommerce": "このブログ記事の <meta/> 要素のキーワードをカンマ区切りにしました。例えば、bigcommerce",
+  "Comma separated (,) Keywords for this blog post’s <meta/> element. Eg welcome, bigcommerce": "このブログ記事の <meta/> 要素のキーワードをカンマ区切りにしました。例えば、bigcommerce",
   "Array of tags": "タグの配列",
   "Whether the post is published": "投稿が公開されるかどうか",
   "Select the customer": "顧客を選択",

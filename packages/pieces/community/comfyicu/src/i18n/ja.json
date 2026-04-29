@@ -13,7 +13,7 @@
   "Prompt": "Prompt",
   "Webhook": "Webhook",
   "You can get workflow prompt by navigating to History->Select Run -> Copy API Workflow.": "History->format@@0->format@@1->format@@2ワークフローをコピーすることで、ワークフロープロンプトを取得できます。",
-  "Webhook URL to recieve run status.": "実行ステータスを受け取るWebhookのURL。",
+  "Webhook URL to receive run status.": "実行ステータスを受け取るWebhookのURL。",
   "New Workflow Created": "新しいワークフローを作成しました",
   "Run Completed": "実行完了",
   "Run Failed": "実行に失敗しました",

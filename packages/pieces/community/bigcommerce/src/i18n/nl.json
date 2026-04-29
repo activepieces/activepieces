@@ -87,7 +87,7 @@
   "URL for the public blog post. Example - /blog/welcome-bigcommerce/": "URL voor de publieke blogpost. Voorbeeld - /blog/welcome-bigcommerce/",
   "Published Date for the blog post. Example - Wed, 10 Aug 2022 15:39:15 -0500": "Gepubliceerde datum voor de blogpost. Voorbeeld - Wed, 10 Aug 2022 15:39:15 -0500",
   "Description text for this blog post’s <meta/> element.": "Beschrijvingstekst van deze blogpost <meta/> -element.",
-  "Comma seperated (,) Keywords for this blog post’s <meta/> element. Eg welcome, bigcommerce": "Komma gescheiden (,) trefwoorden voor het <meta/> -element van deze blog. Hartelijk welkom, bigcommerce",
+  "Comma separated (,) Keywords for this blog post’s <meta/> element. Eg welcome, bigcommerce": "Komma gescheiden (,) trefwoorden voor het <meta/> -element van deze blog. Hartelijk welkom, bigcommerce",
   "Array of tags": "Array van tags",
   "Whether the post is published": "Of de post gepubliceerd is",
   "Select the customer": "Klant selecteren",

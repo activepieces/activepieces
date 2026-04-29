@@ -14,7 +14,7 @@
   "Prompt": "Prompt",
   "Webhook": "Вебхук",
   "You can get workflow prompt by navigating to History->Select Run -> Copy API Workflow.": "Вы можете получить запрос рабочего процесса, перейдя по ссылке History->Select Run -> Copy API Workflow.",
-  "Webhook URL to recieve run status.": "Webhook URL для получения статуса запуска.",
+  "Webhook URL to receive run status.": "Webhook URL для получения статуса запуска.",
   "New Workflow Created": "Новый рабочий процесс создан",
   "Run Completed": "Запуск завершен",
   "Run Failed": "Неудачный запуск",
