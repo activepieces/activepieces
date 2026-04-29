@@ -7,6 +7,8 @@ import { flowRunUtils } from '@/features/flow-runs';
 import { BuilderState } from '../builder-hooks';
 import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
 
+export type TestPanelView = 'drawer' | 'split';
+
 export type CanvasState = {
   readonly: boolean;
   hideTestWidget: boolean;
@@ -33,6 +35,10 @@ export type CanvasState = {
     isFocusInsideListMapperModeInput: boolean,
   ) => void;
   deselectStep: () => void;
+  testPanelView: TestPanelView;
+  setTestPanelView: (view: TestPanelView) => void;
+  isTestDrawerOpen: boolean;
+  setTestDrawerOpen: (open: boolean) => void;
 };
 
 type CanvasStateInitialState = Pick<
@@ -155,6 +161,18 @@ export const createCanvasState = (
         isFocusInsideListMapperModeInput,
       }));
     },
+    testPanelView: getTestPanelViewFromLocalStorage(),
+    setTestPanelView: (view: TestPanelView) => {
+      localStorage.setItem(TEST_PANEL_VIEW_KEY_IN_LOCAL_STORAGE, view);
+      return set(() => ({
+        testPanelView: view,
+      }));
+    },
+    isTestDrawerOpen: !isNil(initialState.run),
+    setTestDrawerOpen: (open: boolean) =>
+      set(() => ({
+        isTestDrawerOpen: open,
+      })),
   };
 };
 
@@ -164,4 +182,11 @@ function getPanningModeFromLocalStorage(): 'grab' | 'pan' {
     'grab'
     ? 'grab'
     : 'pan';
+}
+
+const TEST_PANEL_VIEW_KEY_IN_LOCAL_STORAGE = 'ap.builder.testPanelView';
+function getTestPanelViewFromLocalStorage(): TestPanelView {
+  return localStorage.getItem(TEST_PANEL_VIEW_KEY_IN_LOCAL_STORAGE) === 'split'
+    ? 'split'
+    : 'drawer';
 }
