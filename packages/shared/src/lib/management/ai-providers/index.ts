@@ -255,11 +255,11 @@ export type AIErrorResponse = z.infer<typeof AIErrorResponse>
  * prefixes or missing input fall back to the raw inputs so callers never end up with a
  * wrong-but-confident answer.
  */
-const OPENAI_CHAT_MODELS = ['gpt-5.2', 'gpt-5.1', 'gpt-5-mini'] as const
-const ANTHROPIC_CHAT_MODELS = ['claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5', 'claude-haiku-4-5-20251001'] as const
-const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-opus-4.6', 'claude-sonnet-4.6', 'claude-haiku-4.5', 'claude-haiku-4-5-20251001'] as const
-const GOOGLE_CHAT_MODELS = ['gemini-2.5-flash-lite-preview-09-2025', 'gemini-2.5-flash-preview-09-2025', 'gemini-3-flash-preview', 'gemini-3.1-pro-preview'] as const
-const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.1-fast'] as const
+const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
+const ANTHROPIC_CHAT_MODELS = ['claude-opus-4-7', 'claude-sonnet-4-6', 'claude-haiku-4-5'] as const
+const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-opus-4.7', 'claude-sonnet-4.6', 'claude-haiku-4.5'] as const
+const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
+const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20', 'grok-4-1-fast-reasoning'] as const
 
 export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
     [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
