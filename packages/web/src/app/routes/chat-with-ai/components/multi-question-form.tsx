@@ -66,25 +66,36 @@ export function MultiQuestionForm({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="flex items-center gap-2">
-        {questions.map((_, i) => (
+      <div className="flex items-center gap-1 overflow-x-auto">
+        {questions.map((question, i) => (
           <button
             key={i}
             type="button"
             onClick={() => i < currentStep && setCurrentStep(i)}
             className={cn(
-              'h-1.5 rounded-full transition-all',
+              'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs whitespace-nowrap transition-colors',
               i === currentStep
-                ? 'w-6 bg-primary'
+                ? 'bg-primary/10 text-primary font-medium'
                 : answers[i]?.trim()
-                  ? 'w-1.5 bg-primary/40 cursor-pointer'
-                  : 'w-1.5 bg-muted-foreground/20',
+                  ? 'text-muted-foreground cursor-pointer hover:bg-muted'
+                  : 'text-muted-foreground/50',
             )}
-          />
+          >
+            <span className={cn(
+              'flex items-center justify-center size-4 rounded-full text-[10px] font-medium shrink-0',
+              i === currentStep
+                ? 'bg-primary text-primary-foreground'
+                : answers[i]?.trim()
+                  ? 'bg-primary/20 text-primary'
+                  : 'bg-muted-foreground/20 text-muted-foreground',
+            )}>
+              {answers[i]?.trim() ? <Check className="size-2.5" /> : i + 1}
+            </span>
+            {question.question.length > 25
+              ? question.question.slice(0, 25) + '...'
+              : question.question}
+          </button>
         ))}
-        <span className="text-xs text-muted-foreground ml-1">
-          {currentStep + 1}/{questions.length}
-        </span>
       </div>
 
       <AnimatePresence mode="wait">
