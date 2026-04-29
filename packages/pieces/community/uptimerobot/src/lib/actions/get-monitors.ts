@@ -6,7 +6,7 @@ export const getMonitorsAction = createAction({
   auth: uptimeRobotAuth,
   name: 'get_monitors',
   displayName: 'Get Monitors',
-  description: 'Retrieves all monitors or a specific set of monitors from your UptimeRobot account',
+  description: 'Retrieves all monitors from your UptimeRobot account with automatic pagination',
   props: {
     statuses: Property.StaticMultiSelectDropdown({
       displayName: 'Filter by Status',
@@ -29,31 +29,46 @@ export const getMonitorsAction = createAction({
     }),
   },
   async run(context) {
-    const body: Record<string, unknown> = {};
+    const baseBody: Record<string, unknown> = {};
 
     const statuses = context.propsValue.statuses;
     if (statuses && statuses.length > 0) {
-      body['statuses'] = (statuses as string[]).join('-');
+      baseBody['statuses'] = (statuses as string[]).join('-');
     }
 
     if (context.propsValue.search) {
-      body['search'] = context.propsValue.search;
+      baseBody['search'] = context.propsValue.search;
     }
 
-    const response = await uptimeRobotApiCall<{
-      stat: string;
-      monitors: Array<Record<string, unknown>>;
-      pagination: { offset: number; limit: number; total: number };
-    }>({
-      apiKey: context.auth as unknown as string,
-      endpoint: 'getMonitors',
-      body,
-    });
+    const allMonitors: Array<Record<string, unknown>> = [];
+    let offset = 0;
+    const limit = 50;
 
-    if (response.body.stat !== 'ok') {
-      throw new Error(`UptimeRobot API error: ${JSON.stringify(response.body)}`);
+    while (true) {
+      const response = await uptimeRobotApiCall<{
+        stat: string;
+        monitors: Array<Record<string, unknown>>;
+        pagination: { offset: number; limit: number; total: number };
+      }>({
+        apiKey: context.auth as unknown as string,
+        endpoint: 'getMonitors',
+        body: { ...baseBody, offset, limit },
+      });
+
+      if (response.body.stat !== 'ok') {
+        throw new Error(`UptimeRobot API error: ${JSON.stringify(response.body)}`);
+      }
+
+      const monitors = response.body.monitors ?? [];
+      allMonitors.push(...monitors);
+
+      const pagination = response.body.pagination;
+      if (!pagination || offset + limit >= pagination.total) {
+        break;
+      }
+      offset += limit;
     }
 
-    return (response.body.monitors ?? []).map((m) => flattenMonitor(m as never));
+    return allMonitors.map((m) => flattenMonitor(m as never));
   },
 });

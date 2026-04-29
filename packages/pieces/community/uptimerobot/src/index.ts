@@ -1,5 +1,4 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
 import { getMonitorsAction } from './lib/actions/get-monitors';
 import { createMonitorAction } from './lib/actions/create-monitor';
@@ -50,14 +49,6 @@ export const uptimerobot = createPiece({
     editMonitorAction,
     deleteMonitorAction,
     getAlertContactsAction,
-    createCustomApiCallAction({
-      baseUrl: () => 'https://api.uptimerobot.com/v2',
-      auth: uptimeRobotAuth,
-      authMapping: async (auth) => ({
-        'Content-Type': 'application/json',
-      }),
-      description: 'Send a custom request to the UptimeRobot API. Important: UptimeRobot uses POST with api_key in the request body (not headers). Include `"api_key": "YOUR_KEY"` in the request body for every call.',
-    }),
   ],
   triggers: [monitorStatusChangeTrigger],
 });
