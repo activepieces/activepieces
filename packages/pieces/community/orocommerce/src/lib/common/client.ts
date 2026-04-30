@@ -3,6 +3,7 @@ import {
   HttpMethod,
   HttpMessageBody,
   HttpResponse,
+  HttpError,
   AuthenticationType,
 } from '@activepieces/pieces-common';
 
@@ -10,16 +11,38 @@ import {
   type OroAuth,
   type OroAuthResponseType,
   type OroApiCallParams,
-  OroJsonApiItem,
-  OroJsonApiCollection,
+  type OroJsonApiItem,
+  type OroJsonApiCollection,
+  type FetchCollectionParams,
 } from './types';
 
-let cachedToken: string | null = null;
-let tokenExpiresAt = 0;
+const tokenCache = new Map<string, { token: string; expiresAt: number }>();
 
-async function getAccessToken(auth: OroAuth): Promise<string> {
-  if (cachedToken && Date.now() < tokenExpiresAt) {
-    return cachedToken;
+function buildCacheKey({ auth }: { auth: OroAuth }): string {
+  return `${auth.props.serverUrl}::${auth.props.clientId}`;
+}
+
+function formatError({ error }: { error: unknown }): string {
+  if (error instanceof HttpError) {
+    const status = error.response.status;
+    const body = error.response.body;
+    const detail = typeof body === 'object' && body !== null
+      ? JSON.stringify(body)
+      : String(body ?? '');
+    return `OroCommerce API Error (${status}): ${detail}`;
+  }
+  if (error instanceof Error) {
+    return `OroCommerce API Error: ${error.message}`;
+  }
+  return `OroCommerce API Error: ${String(error)}`;
+}
+
+async function getAccessToken({ auth }: { auth: OroAuth }): Promise<string> {
+  const cacheKey = buildCacheKey({ auth });
+  const cached = tokenCache.get(cacheKey);
+
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.token;
   }
 
   const baseUrl = auth.props.serverUrl.replace(/\/*$/, '');
@@ -29,17 +52,20 @@ async function getAccessToken(auth: OroAuth): Promise<string> {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: {
+    body: new URLSearchParams({
       grant_type: 'client_credentials',
       client_id: auth.props.clientId,
       client_secret: auth.props.clientSecret,
-    },
+    }).toString(),
   });
 
-  cachedToken = response.body.access_token;
-  tokenExpiresAt = Date.now() + response.body.expires_in * 1000 - 30 * 1000;
+  const token = response.body.access_token;
+  tokenCache.set(cacheKey, {
+    token,
+    expiresAt: Date.now() + response.body.expires_in * 1000 - 30_000,
+  });
 
-  return cachedToken;
+  return token;
 }
 
 export async function oroApiCall({
@@ -64,27 +90,21 @@ export async function oroApiCall({
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: await getAccessToken(auth),
+        token: await getAccessToken({ auth }),
       },
       queryParams,
       body,
     });
-  } catch (error: any) {
-    const statusCode = error.response?.status;
-    const errorMessage =
-      error.response?.data?.message || error.message || 'Unknown error';
-
-    throw new Error(
-      `OroCommerce API Error (${statusCode || 'Unknown'}): ${errorMessage}`
-    );
+  } catch (error: unknown) {
+    throw new Error(formatError({ error }));
   }
 }
 
-export async function fetchCollection(
-  auth: OroAuth,
-  resourceUri: string,
-  queryParams?: Record<string, string>
-): Promise<OroJsonApiItem[]> {
+export async function fetchCollection({
+  auth,
+  resourceUri,
+  queryParams,
+}: FetchCollectionParams): Promise<OroJsonApiItem[]> {
   const response = await oroApiCall({
     method: HttpMethod.GET,
     resourceUri,
@@ -92,5 +112,6 @@ export async function fetchCollection(
     queryParams: { 'page[size]': '50', ...queryParams },
   });
 
-  return (response.body as OroJsonApiCollection).data ?? [];
+  const body = response.body as OroJsonApiCollection | undefined;
+  return body?.data ?? [];
 }

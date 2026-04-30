@@ -1,7 +1,7 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, HttpResponse, HttpMessageBody } from '@activepieces/pieces-common';
 import { oroApiCall } from './client';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType, tryCatch } from '@activepieces/shared';
 
 export const oroAuth = PieceAuth.CustomAuth({
   description: `
@@ -44,25 +44,25 @@ Authenticate to OroCommerce APIs using OAuth 2.0 Client Credentials.
     }),
   },
 
-  validate: async ({ auth }) => {
-    try {
-      await oroApiCall({
+  validate: async ({ auth }): Promise<{ valid: true } | { valid: false; error: string }> => {
+    const { error } = await tryCatch<HttpResponse<HttpMessageBody>>(() =>
+      oroApiCall({
         method: HttpMethod.GET,
         resourceUri: 'regions/US-CA',
         auth: {
           type: AppConnectionType.CUSTOM_AUTH,
           props: auth,
         },
-      });
-      return { valid: true };
-    } catch (e: any) {
+      }),
+    );
+    if (error) {
       return {
         valid: false,
-        error:
-          e?.message ||
+        error: error.message ||
           'Invalid credentials. Please verify your Server URL, Admin Prefix, Client ID, and Client Secret.',
       };
     }
+    return { valid: true };
   },
 
   required: true,

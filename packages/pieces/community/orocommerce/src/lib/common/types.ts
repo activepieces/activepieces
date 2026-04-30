@@ -25,6 +25,12 @@ export type OroApiCallParams = {
   headers?: Record<string, string>;
 };
 
+export type FetchCollectionParams = {
+  auth: OroAuth;
+  resourceUri: string;
+  queryParams?: Record<string, string>;
+};
+
 export interface OroJsonApiItem {
   id: string;
   type: string;

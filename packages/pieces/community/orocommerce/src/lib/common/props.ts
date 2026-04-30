@@ -43,11 +43,11 @@ function buildCustomerOptions(
           params['filter[searchQuery]'] = `name ~ "${searchValue.trim().replace('"', '')}"`;
         }
 
-        const items = await fetchCollection(
-          auth as OroAuth,
-          '/customers',
-          params
-        );
+        const items = await fetchCollection({
+          auth: auth as OroAuth,
+          resourceUri: '/customers',
+          queryParams: params,
+        });
         return {
           options: items.map((item) => ({
             label: String(item.attributes['name'] ?? item.id),
@@ -101,11 +101,11 @@ export const customerUserDropdown = (required = false) =>
         }
 
         params['filter[searchQuery]'] = searchFilters.join(' and ');
-        const items = await fetchCollection(
-          auth as OroAuth,
-          '/customerusers',
-          params
-        );
+        const items = await fetchCollection({
+          auth: auth as OroAuth,
+          resourceUri: '/customerusers',
+          queryParams: params,
+        });
         return {
           options: items.map((item) => {
             const firstName = String(item.attributes['firstName'] ?? '');
@@ -142,11 +142,11 @@ export const organizationDropdown = Property.Dropdown({
         params['filter[searchQuery]'] = `name ~ "${searchValue.trim().replace('"', '')}"`;
       }
 
-      const items = await fetchCollection(
-        auth as OroAuth,
-        '/organizations',
-        params
-      );
+      const items = await fetchCollection({
+        auth: auth as OroAuth,
+        resourceUri: '/organizations',
+        queryParams: params,
+      });
       return {
         options: items.map((item) => ({
           label: String(item.attributes['name'] ?? item.id),
@@ -177,7 +177,7 @@ export const userDropdown = Property.Dropdown({
       if (searchValue && searchValue.trim().length > 0) {
         params['filter[searchQuery]'] = `allText ~ "${searchValue.trim().replace('"', '')}"`;
       }
-      const items = await fetchCollection(auth as OroAuth, '/users', params);
+      const items = await fetchCollection({ auth: auth as OroAuth, resourceUri: '/users', queryParams: params });
       return {
         options: items.map((item) => {
           const firstName = String(item.attributes['firstName'] ?? '');
@@ -214,7 +214,7 @@ export const websiteDropdown = Property.Dropdown({
       if (searchValue && searchValue.trim().length > 0) {
         params['filter[searchQuery]'] = `name ~ "${searchValue.trim().replace('"', '')}"`;
       }
-      const items = await fetchCollection(auth as OroAuth, '/websites', params);
+      const items = await fetchCollection({ auth: auth as OroAuth, resourceUri: '/websites', queryParams: params });
       return {
         options: items.map((item) => ({
           label: String(item.attributes['name'] ?? item.id),
@@ -239,10 +239,10 @@ export const invoiceInternalStatusDropdown = Property.Dropdown({
   options: async ({ auth }) => {
     if (!auth) return NOT_CONNECTED;
     try {
-      const items = await fetchCollection(
-        auth as OroAuth,
-        '/invoiceinternalstatuses'
-      );
+      const items = await fetchCollection({
+        auth: auth as OroAuth,
+        resourceUri: '/invoiceinternalstatuses',
+      });
       return {
         options: items.map((item) => ({
           label: String(item.attributes['name'] ?? item.id),
@@ -267,10 +267,10 @@ export const orderInternalStatusDropdown = Property.Dropdown({
   options: async ({ auth }) => {
     if (!auth) return NOT_CONNECTED;
     try {
-      const items = await fetchCollection(
-        auth as OroAuth,
-        '/orderinternalstatuses'
-      );
+      const items = await fetchCollection({
+        auth: auth as OroAuth,
+        resourceUri: '/orderinternalstatuses',
+      });
       return {
         options: items.map((item) => ({
           label: String(item.attributes['name'] ?? item.id),
@@ -368,11 +368,11 @@ export const paymentTermDropdown = Property.Dropdown({
         params['filter[searchQuery]'] = `label ~ "${searchValue.trim().replace('"', '')}"`;
       }
 
-      const items = await fetchCollection(
-        auth as OroAuth,
-        '/paymentterms',
-        params
-      );
+      const items = await fetchCollection({
+        auth: auth as OroAuth,
+        resourceUri: '/paymentterms',
+        queryParams: params,
+      });
       return {
         options: items.map((item) => ({
           label: String(item.attributes['label'] ?? item.id),
@@ -404,11 +404,11 @@ export const warehouseDropdown = Property.Dropdown({
       if (searchValue && searchValue.trim().length > 0) {
         params['filter[searchQuery]'] = `name ~ "${searchValue.trim().replace('"', '')}"`;
       }
-      const items = await fetchCollection(
-        auth as OroAuth,
-        '/warehouses',
-        params
-      );
+      const items = await fetchCollection({
+        auth: auth as OroAuth,
+        resourceUri: '/warehouses',
+        queryParams: params,
+      });
       return {
         options: items.map((item) => ({
           label: String(item.attributes['name'] ?? item.id),
@@ -441,11 +441,11 @@ export const buildCountryDropdown = (required = false, displayName = 'Country') 
           'page[size]': '300',
         };
 
-        const items = await fetchCollection(
-          auth as OroAuth,
-          '/countries',
-          params
-        );
+        const items = await fetchCollection({
+          auth: auth as OroAuth,
+          resourceUri: '/countries',
+          queryParams: params,
+        });
         return {
           options: items
             .filter(function (item) {
@@ -501,7 +501,7 @@ export const buildRegionDropdown = (
       try {
         const params: Record<string, string> = {'filter[country]': countryId};
 
-        const items = await fetchCollection(auth, '/regions', params);
+        const items = await fetchCollection({ auth, resourceUri: '/regions', queryParams: params });
         return {
           options: items
             .filter(function (item) {
@@ -537,7 +537,7 @@ export const orderStatusDropdown = Property.Dropdown({
   options: async ({ auth }) => {
     if (!auth) return NOT_CONNECTED;
     try {
-      const items = await fetchCollection(auth as OroAuth, '/orderstatuses');
+      const items = await fetchCollection({ auth: auth as OroAuth, resourceUri: '/orderstatuses' });
       return {
         options: items.map((item) => ({
           label: String(item.attributes['name'] ?? item.id),
@@ -568,7 +568,7 @@ export const orderDropdown = Property.Dropdown({
       if (searchValue && searchValue.trim().length > 0) {
         params['filter[searchQuery]'] = `allText ~ "${searchValue.trim().replace('"', '')}"`;
       }
-      const items = await fetchCollection(auth as OroAuth, '/orders', params);
+      const items = await fetchCollection({ auth: auth as OroAuth, resourceUri: '/orders', queryParams: params });
       return {
         options: items.map((item) => ({
           label: String(
@@ -597,9 +597,9 @@ export const productUnitDropdown = Property.Dropdown({
   options: async ({ auth }) => {
     if (!auth) return NOT_CONNECTED;
     try {
-      const items = await fetchCollection(auth as OroAuth, '/productunits', {
+      const items = await fetchCollection({ auth: auth as OroAuth, resourceUri: '/productunits', queryParams: {
         'page[size]': '100',
-      });
+      } });
       return {
         options: items.map((item) => ({
           // productunits use the string code as id (e.g. "each"), attributes may have label
