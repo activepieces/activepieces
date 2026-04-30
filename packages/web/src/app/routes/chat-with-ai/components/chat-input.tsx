@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { ArrowUp, Paperclip, X } from 'lucide-react';
+import { ArrowUp, Paperclip, Square, X } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
 import {
@@ -15,12 +15,20 @@ import {
 } from '@/components/prompt-kit/prompt-input';
 import { Button } from '@/components/ui/button';
 
+import { ConnectedAppsList } from './connected-apps-list';
+
 export function ChatInput({
   isStreaming,
   onSend,
+  onStop,
+  placeholder,
+  leftActions,
 }: {
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
+  onStop?: () => void;
+  placeholder?: string;
+  leftActions?: React.ReactNode;
 }) {
   const [value, setValue] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
@@ -49,7 +57,7 @@ export function ChatInput({
         value={value}
         onValueChange={setValue}
         onSubmit={handleSubmit}
-        className="rounded-2xl border shadow-sm"
+        className="relative z-10 rounded-2xl border border-foreground/20 shadow-none transition-colors hover:border-foreground/40 focus-within:border-foreground/40"
       >
         {attachedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 px-3 pt-2">
@@ -79,30 +87,47 @@ export function ChatInput({
           </div>
         )}
         <PromptInputTextarea
-          placeholder={t('Message...')}
+          placeholder={placeholder ?? t('Tell me what you need...')}
           className="min-h-[44px] text-sm"
         />
         <PromptInputActions className="flex items-center justify-between px-1">
-          <PromptInputAction tooltip={t('Attach files')}>
-            <FileUploadTrigger asChild>
-              <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-                <Paperclip className="size-4" />
-              </div>
-            </FileUploadTrigger>
-          </PromptInputAction>
-          <PromptInputAction tooltip={t('Send message')}>
-            <Button
-              variant="default"
-              size="icon"
-              className="h-8 w-8 rounded-full"
-              onClick={handleSubmit}
-              disabled={!canSend || isStreaming}
-            >
-              <ArrowUp className="size-5" />
-            </Button>
-          </PromptInputAction>
+          <div className="flex items-center gap-1">
+            <PromptInputAction tooltip={t('Attach files')}>
+              <FileUploadTrigger asChild>
+                <div className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                  <Paperclip className="size-4" />
+                </div>
+              </FileUploadTrigger>
+            </PromptInputAction>
+            {leftActions}
+          </div>
+          {isStreaming && onStop ? (
+            <PromptInputAction tooltip={t('Stop')}>
+              <Button
+                variant="default"
+                size="icon"
+                className="h-7 w-7 rounded-full"
+                onClick={onStop}
+              >
+                <Square className="size-3 fill-current" />
+              </Button>
+            </PromptInputAction>
+          ) : (
+            <PromptInputAction tooltip={t('Send message')}>
+              <Button
+                variant="default"
+                size="icon"
+                className="h-7 w-7 rounded-full"
+                onClick={handleSubmit}
+                disabled={!canSend || isStreaming}
+              >
+                <ArrowUp className="size-4" />
+              </Button>
+            </PromptInputAction>
+          )}
         </PromptInputActions>
       </PromptInput>
+      <ConnectedAppsList />
 
       <FileUploadContent>
         <div className="flex min-h-[200px] w-full items-center justify-center backdrop-blur-sm">
