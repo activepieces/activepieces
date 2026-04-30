@@ -29,6 +29,7 @@ describe('SAML Discover API', () => {
 
             const mockPlatform = createMockPlatform({
                 ownerId: mockOwner.id,
+                ssoDomain: 'discover-test.example.com',
                 federatedAuthProviders: {
                     saml: {
                         idpMetadata: '<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"></md:EntityDescriptor>',
@@ -46,7 +47,6 @@ describe('SAML Discover API', () => {
                 created: new Date().toISOString(),
                 updated: new Date().toISOString(),
                 platformId: mockPlatform.id,
-                ssoDomain: 'discover-test.example.com',
                 ssoEnabled: true,
                 tablesEnabled: false,
                 eventStreamingEnabled: false,
@@ -106,6 +106,7 @@ describe('SAML Discover API', () => {
 
             const mockPlatform = createMockPlatform({
                 ownerId: mockOwner.id,
+                ssoDomain: 'no-saml.example.com',
                 federatedAuthProviders: {},
             })
             await databaseConnection().getRepository('platform').save(mockPlatform)
@@ -118,7 +119,6 @@ describe('SAML Discover API', () => {
                 created: new Date().toISOString(),
                 updated: new Date().toISOString(),
                 platformId: mockPlatform.id,
-                ssoDomain: 'no-saml.example.com',
                 ssoEnabled: true,
                 tablesEnabled: false,
                 eventStreamingEnabled: false,

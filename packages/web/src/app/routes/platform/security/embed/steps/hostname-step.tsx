@@ -12,7 +12,6 @@ import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { api } from '@/lib/api';
 import {
   Form,
   FormField,
@@ -23,6 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { embedSubdomainMutations } from '@/features/platform-admin';
+import { api } from '@/lib/api';
 
 import { StepShell } from '../stepper';
 
@@ -119,7 +119,9 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
       await mutateAsync({ hostname: hostname.trim() });
       toast.success(t('Domain updated'));
     } catch (error) {
-      setErrorMessage(extractServerErrorMessage(error, t("Couldn't update domain")));
+      setErrorMessage(
+        extractServerErrorMessage(error, t("Couldn't update domain")),
+      );
       throw error;
     }
   };
@@ -170,7 +172,10 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
 function extractServerErrorMessage(error: unknown, fallback: string): string {
   if (api.isError(error)) {
     const data = error.response?.data as ApErrorParams | undefined;
-    const message = data?.params && 'message' in data.params ? data.params.message : undefined;
+    const message =
+      data?.params && 'message' in data.params
+        ? data.params.message
+        : undefined;
     if (typeof message === 'string' && message.length > 0) {
       return message;
     }

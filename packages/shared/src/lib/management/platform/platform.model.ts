@@ -79,7 +79,6 @@ export const PlatformPlan = z.object({
     customRolesEnabled: z.boolean(),
     apiKeysEnabled: z.boolean(),
     ssoEnabled: z.boolean(),
-    ssoDomain: Nullable(z.string()),
     secretManagersEnabled: z.boolean(),
     scimEnabled: z.boolean(),
     licenseKey: Nullable(z.string()),
@@ -129,6 +128,7 @@ export const Platform = z.object({
     enforceAllowedAuthDomains: z.boolean(),
     allowedAuthDomains: z.array(z.string()),
     allowedEmbedDomains: z.array(z.string()),
+    ssoDomain: Nullable(z.string()),
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
@@ -155,6 +155,7 @@ export const PlatformWithoutSensitiveData = z.object({
     enforceAllowedAuthDomains: z.boolean(),
     allowedAuthDomains: z.array(z.string()),
     allowedEmbedDomains: z.array(z.string()),
+    ssoDomain: Nullable(z.string()),
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
 })

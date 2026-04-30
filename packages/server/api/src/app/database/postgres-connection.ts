@@ -366,9 +366,8 @@ import { AddLastLoggedInPlatformIdToUserIdentity1777491000474 } from './migratio
 import { DropChatTokenColumns1782000000000 } from './migration/postgres/1782000000000-DropChatTokenColumns'
 import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
 import { ReplacesSandboxWithVercelAiSdk1785000000000 } from './migration/postgres/1785000000000-ReplacesSandboxWithVercelAiSdk'
-import { AddEmbedSubdomainTable1786000000000 } from './migration/postgres/1786000000000-AddEmbedSubdomainTable'
-import { AddSsoDomainToPlatformPlan1786500000000 } from './migration/postgres/1786500000000-AddSsoDomainToPlatformPlan'
 import { AddChatCompactionColumns1786000000000 } from './migration/postgres/1786000000000-AddChatCompactionColumns'
+import { AddEmbedSubdomainTable1786000000000 } from './migration/postgres/1786000000000-AddEmbedSubdomainTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -751,7 +750,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddUserSandboxTable1784000000000,
         ReplacesSandboxWithVercelAiSdk1785000000000,
         AddEmbedSubdomainTable1786000000000,
-        AddSsoDomainToPlatformPlan1786500000000,
         AddChatCompactionColumns1786000000000,
     ]
     return migrations

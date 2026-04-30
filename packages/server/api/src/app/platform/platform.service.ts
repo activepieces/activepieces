@@ -151,6 +151,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
             ...spreadIfDefined('allowedEmbedDomains', params.allowedEmbedDomains),
+            ...spreadIfDefined('ssoDomain', params.ssoDomain),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
         }
         if (!isNil(params.plan)) {
@@ -268,6 +269,7 @@ type UpdateParams = UpdatePlatformRequestBody & {
     logoIconUrl?: string
     fullLogoUrl?: string
     favIconUrl?: string
+    ssoDomain?: string | null
 }
 
 type CreatePlatformWithProjectParams = {

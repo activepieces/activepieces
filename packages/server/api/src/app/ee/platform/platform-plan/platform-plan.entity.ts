@@ -104,10 +104,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         ssoEnabled: {
             type: Boolean,
         },
-        ssoDomain: {
-            type: String,
-            nullable: true,
-        },
         scimEnabled: {
             type: Boolean,
         },

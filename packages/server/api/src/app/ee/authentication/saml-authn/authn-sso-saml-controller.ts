@@ -7,9 +7,9 @@ import { applicationEvents } from '../../../helper/application-events'
 import { networkUtils } from '../../../helper/network-utils'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
-import { platformService } from '../../../platform/platform.service'
+import { platformRepo, platformService } from '../../../platform/platform.service'
 import { platformUtils } from '../../../platform/platform.utils'
-import { platformPlanRepo, platformPlanService } from '../../platform/platform-plan/platform-plan.service'
+import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
 import { authnSsoSamlService } from './authn-sso-saml-service'
 
 export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
@@ -46,16 +46,18 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
         if (ssoDomain.length === 0) {
             return { platformId: null }
         }
-        const plan = await platformPlanRepo().findOneBy({ ssoDomain })
-        if (isNil(plan) || !plan.ssoEnabled) {
+        const platform = await platformRepo().findOneBy({ ssoDomain })
+        if (isNil(platform)) {
             return { platformId: null }
         }
-        const platform = await platformService(req.log).getOneOrThrow(plan.platformId)
-        const saml = platform.federatedAuthProviders?.saml
-        if (isNil(saml)) {
+        const plan = await platformPlanService(req.log).getOrCreateForPlatform(platform.id)
+        if (!plan.ssoEnabled) {
             return { platformId: null }
         }
-        return { platformId: plan.platformId }
+        if (isNil(platform.federatedAuthProviders?.saml)) {
+            return { platformId: null }
+        }
+        return { platformId: platform.id }
     })
 
     app.post('/sso-domain', UpdateSsoDomainRequest, async (req) => {
@@ -71,8 +73,8 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
                     },
                 })
             }
-            const existing = await platformPlanRepo().findOneBy({ ssoDomain })
-            if (!isNil(existing) && existing.platformId !== platformId) {
+            const existing = await platformRepo().findOneBy({ ssoDomain })
+            if (!isNil(existing) && existing.id !== platformId) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
                     params: {
@@ -81,7 +83,7 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
                 })
             }
         }
-        return platformPlanService(req.log).update({ platformId, ssoDomain })
+        return platformService(req.log).update({ id: platformId, ssoDomain })
     })
 }
 

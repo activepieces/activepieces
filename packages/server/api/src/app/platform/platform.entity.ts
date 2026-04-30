@@ -66,6 +66,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             array: true,
             nullable: false,
         },
+        ssoDomain: {
+            type: String,
+            nullable: true,
+        },
         enforceAllowedAuthDomains: {
             type: Boolean,
             nullable: false,

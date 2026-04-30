@@ -65,7 +65,7 @@ export const ConfigureSamlDialog = ({
     defaultValues: {
       idpMetadata: '',
       idpCertificate: '',
-      ssoDomain: platform.plan.ssoDomain ?? '',
+      ssoDomain: platform.ssoDomain ?? '',
     },
     mode: 'onChange',
   });
@@ -122,7 +122,7 @@ export const ConfigureSamlDialog = ({
           form.reset({
             idpMetadata: '',
             idpCertificate: '',
-            ssoDomain: platform.plan.ssoDomain ?? '',
+            ssoDomain: platform.ssoDomain ?? '',
           });
         }
         setOpen(next);
