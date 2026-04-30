@@ -12,7 +12,7 @@ export const batchDeleteRowsAction = createAction({
     table_id: baserowCommon.tableId(),
     row_ids: Property.Array({
       displayName: 'Row IDs',
-      description: 'List of row IDs to delete.',
+      description: 'Numeric IDs of the rows to delete. You can get row IDs from the List Rows or Find Row actions.',
       required: true,
     }),
   },
@@ -26,6 +26,7 @@ export const batchDeleteRowsAction = createAction({
       .map((id) => parseInt(String(id), 10))
       .filter((id) => !isNaN(id));
     const client = await makeClient(context.auth);
-    return await client.batchDeleteRows(table_id, ids);
+    await client.batchDeleteRows(table_id, ids);
+    return { deleted_count: ids.length };
   },
 });

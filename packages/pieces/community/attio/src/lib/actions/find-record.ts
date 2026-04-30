@@ -2,7 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { attioAuth } from '../auth';
 import { formatInputFields, objectFields, objectTypeIdDropdown } from '../common/props';
-import { attioApiCall, attioPaginatedApiCall } from '../common/client';
+import { attioApiCall, attioPaginatedApiCall, buildMembersMap, normalizeRecord } from '../common/client';
+import { AttioRecordResponse } from '../common/types';
 
 export const findRecordAction = createAction({
 	name: 'find_record',
@@ -31,14 +32,16 @@ export const findRecordAction = createAction({
 		}
 
 		if (recordId) {
-			const response = await attioApiCall<{ data: Record<string, unknown> }>({
+			const response = await attioApiCall<{ data: AttioRecordResponse }>({
 				method: HttpMethod.GET,
 				accessToken,
 				resourceUri: `/objects/${objectTypeId}/records/${recordId}`,
 			});
+			const records = [response.data];
+			const membersMap = await buildMembersMap(accessToken, records);
 			return {
 				found: true,
-				result: [response.data],
+				result: records.map((r) => normalizeRecord(r, membersMap)),
 			};
 		}
 
@@ -52,7 +55,7 @@ export const findRecordAction = createAction({
 		);
 
 		// https://docs.attio.com/rest-api/endpoint-reference/records/list-records
-		const response = await attioPaginatedApiCall({
+		const records = await attioPaginatedApiCall<AttioRecordResponse>({
 			method: HttpMethod.POST,
 			accessToken,
 			resourceUri: `/objects/${objectTypeId}/records/query`,
@@ -61,9 +64,10 @@ export const findRecordAction = createAction({
 			},
 		});
 
+		const membersMap = await buildMembersMap(accessToken, records);
 		return {
-			found: response.length > 0,
-			result: response,
+			found: records.length > 0,
+			result: records.map((r) => normalizeRecord(r, membersMap)),
 		};
 	},
 });

@@ -651,6 +651,9 @@
       "@activepieces/piece-knack": [
         "packages/pieces/community/knack/src/index.ts"
       ],
+      "@activepieces/piece-ko-fi": [
+        "packages/pieces/community/ko-fi/src/index.ts"
+      ],
       "@activepieces/piece-kustomer": [
         "packages/pieces/community/kustomer/src/index.ts"
       ],
@@ -817,6 +820,9 @@
       ],
       "@activepieces/piece-nifty": [
         "packages/pieces/community/nifty/src/index.ts"
+      ],
+      "@activepieces/piece-ninjapipe": [
+        "packages/pieces/community/ninjapipe/src/index.ts"
       ],
       "@activepieces/piece-ninox": [
         "packages/pieces/community/ninox/src/index.ts"
