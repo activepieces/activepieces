@@ -20,7 +20,7 @@ import {
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
-import { ModelMessage, stepCountIs, streamText } from 'ai'
+import { LanguageModel, ModelMessage, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
@@ -31,6 +31,7 @@ import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { mcpServerService } from '../mcp/mcp-service'
 import { projectService } from '../project/project-service'
+import { chatCompaction } from './chat-compaction'
 import { ChatConversationEntity } from './chat-conversation-entity'
 import { buildUserContentWithFiles } from './chat-file-utils'
 import { createChatModel } from './chat-model-factory'
@@ -142,6 +143,23 @@ export const chatService = (log: FastifyBaseLogger) => ({
         const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
         const allMessages = [...previousMessages, newUserMessage]
 
+        const compactionState = await resolveCompactionState({
+            conversation,
+            allMessages,
+            systemPromptLength: systemPrompt.length,
+            provider: providerConfig.provider,
+            model,
+            conversationId,
+            log,
+        })
+
+        const messagesForLlm = chatCompaction.buildCompactedPayload({
+            messages: allMessages,
+            summary: compactionState.summary,
+            summarizedUpToIndex: compactionState.summarizedUpToIndex,
+            provider: providerConfig.provider,
+        })
+
         let pendingTitle = ''
         const localTools = createChatTools({
             onSessionTitle: (title) => {
@@ -162,7 +180,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
             const result = streamText({
                 model,
                 system: systemPrompt,
-                messages: allMessages,
+                messages: messagesForLlm,
                 tools,
                 stopWhen: stepCountIs(MAX_STEPS),
                 onStepFinish: ({ finishReason, usage }) => {
@@ -232,6 +250,45 @@ async function resolveDefaultChatModel({ platformId, provider, log }: {
         code: ErrorCode.ENTITY_NOT_FOUND,
         params: { entityId: provider, entityType: 'AIProviderTextModel' },
     })
+}
+
+async function resolveCompactionState({ conversation, allMessages, systemPromptLength, provider, model, conversationId, log }: {
+    conversation: ChatConversation
+    allMessages: ModelMessage[]
+    systemPromptLength: number
+    provider: AIProviderName
+    model: LanguageModel
+    conversationId: string
+    log: FastifyBaseLogger
+}): Promise<{ summary: string | null, summarizedUpToIndex: number | null }> {
+    const summary = conversation.summary ?? null
+    const summarizedUpToIndex = conversation.summarizedUpToIndex ?? null
+
+    const estimatedTokens = chatCompaction.estimateTokenCount({
+        messages: allMessages,
+        systemPromptLength,
+    })
+
+    if (!chatCompaction.shouldCompact({ estimatedTokens, provider, messageCount: allMessages.length })) {
+        return { summary, summarizedUpToIndex }
+    }
+
+    const result = await chatCompaction.compactMessages({
+        messages: allMessages,
+        existingSummary: summary,
+        summarizedUpToIndex,
+        provider,
+        model,
+        log,
+    })
+
+    await conversationRepo().update(conversationId, {
+        summary: result.summary,
+        summarizedUpToIndex: result.summarizedUpToIndex,
+    })
+    log.info({ conversationId, summarizedUpToIndex: result.summarizedUpToIndex }, 'Chat compaction completed')
+
+    return result
 }
 
 async function connectMcpClient({ mcpCredentials, log }: {
