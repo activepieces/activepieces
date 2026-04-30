@@ -139,7 +139,7 @@ const SuggestAction = {
                 suggestions: z.array(z.object({
                     pieceName: z.string(),
                     actionName: z.string(),
-                    confidence: z.number(),
+                    confidence: z.number().min(0).max(1),
                     suggestedParameters: z.record(z.unknown()),
                     reasoning: z.string(),
                 })),

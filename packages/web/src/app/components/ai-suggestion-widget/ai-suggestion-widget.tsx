@@ -43,7 +43,7 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
 
   const pieceNames = React.useMemo(() => pieces.map(p => p.name), [pieces]);
 
-  const fetchSuggestions = useCallback(async (searchQuery: string) => {
+  const fetchSuggestions = useCallback(async (searchQuery: string, signal?: AbortSignal) => {
     if (!searchQuery.trim()) {
       setSuggestions([]);
       return;
@@ -65,6 +65,7 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers,
+        signal,
         body: JSON.stringify({
           query: searchQuery,
           workloadContext: { existingPieces: pieceNames }
@@ -77,9 +78,20 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
       }
 
       const data = await response.json();
-      setSuggestions(data.suggestions || []);
-      setActiveIndex(data.suggestions && data.suggestions.length > 0 ? 0 : -1);
+      const rawSuggestions: ActionSuggestion[] = data.suggestions || [];
+      
+      // Resolve P1 (Frontend): Validate that suggested actionName actually exists in the pieces meta
+      const validatedSuggestions = rawSuggestions.filter(suggestion => {
+        const piece = pieces.find(p => p.name === suggestion.pieceName);
+        return piece?.actions.some(a => a.name === suggestion.actionName);
+      });
+
+      setSuggestions(validatedSuggestions);
+      setActiveIndex(validatedSuggestions.length > 0 ? 0 : -1);
     } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return; // Ignore aborted requests
+      }
       console.error('Failed to fetch suggestions:', err);
       if (err instanceof Error) {
         setError(err.message);
@@ -89,21 +101,27 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
       setSuggestions([]);
       setActiveIndex(-1);
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) {
+        setIsLoading(false);
+      }
     }
-  }, [apiEndpoint, pieceNames]);
+  }, [apiEndpoint, pieceNames, pieces]);
 
   useEffect(() => {
+    const abortController = new AbortController();
     const debounceTimer = setTimeout(() => {
       if (query.length >= 2) {
-        fetchSuggestions(query);
+        fetchSuggestions(query, abortController.signal);
       } else {
         setSuggestions([]);
         setActiveIndex(-1);
       }
     }, 300);
 
-    return () => clearTimeout(debounceTimer);
+    return () => {
+      clearTimeout(debounceTimer);
+      abortController.abort();
+    };
   }, [query, fetchSuggestions]);
 
   // Close suggestions when clicking outside
