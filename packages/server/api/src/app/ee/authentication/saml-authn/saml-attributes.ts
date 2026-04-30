@@ -24,13 +24,13 @@ export const resolveSamlAttributes = ({ rawAttributes, mapping }: ResolveArgs): 
 
 function buildCandidates(mapping: SAMLAttributeMapping | undefined): FieldCandidates {
     return {
-        email: prepend(mapping?.email, DEFAULT_EMAIL_KEYS),
-        firstName: prepend(mapping?.firstName, DEFAULT_FIRST_NAME_KEYS),
-        lastName: prepend(mapping?.lastName, DEFAULT_LAST_NAME_KEYS),
+        email: prepend({ override: mapping?.email, defaults: DEFAULT_EMAIL_KEYS }),
+        firstName: prepend({ override: mapping?.firstName, defaults: DEFAULT_FIRST_NAME_KEYS }),
+        lastName: prepend({ override: mapping?.lastName, defaults: DEFAULT_LAST_NAME_KEYS }),
     }
 }
 
-function prepend(override: string | undefined, defaults: string[]): string[] {
+function prepend({ override, defaults }: PrependArgs): string[] {
     if (isNil(override) || override.trim().length === 0) {
         return defaults
     }
@@ -107,6 +107,11 @@ type PickArgs = {
 type ReadArgs = {
     rawAttributes: RawAttributes
     key: string
+}
+
+type PrependArgs = {
+    override: string | undefined
+    defaults: string[]
 }
 
 type FieldCandidates = {

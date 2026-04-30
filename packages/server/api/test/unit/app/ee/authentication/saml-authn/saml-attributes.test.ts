@@ -144,28 +144,21 @@ describe('resolveSamlAttributes', () => {
 
     describe('error reporting', () => {
         it('throws INVALID_SAML_RESPONSE listing missing fields and received keys', () => {
-            expect(() => resolveSamlAttributes({
+            const run = () => resolveSamlAttributes({
                 rawAttributes: {
                     'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress': 'mario@flix.com',
                 },
-            })).toThrow(ActivepiecesError)
+            })
 
-            try {
-                resolveSamlAttributes({
-                    rawAttributes: {
-                        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress': 'mario@flix.com',
-                    },
-                })
-            }
-            catch (error) {
-                const e = error as ActivepiecesError
-                expect(e.error.code).toBe(ErrorCode.INVALID_SAML_RESPONSE)
-                const message = String((e.error.params as { message: string }).message)
-                expect(message).toContain('firstName')
-                expect(message).toContain('lastName')
-                expect(message).toContain('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress')
-                expect(message).toContain('attributeMapping')
-            }
+            expect(run).toThrow(ActivepiecesError)
+
+            const error = captureActivepiecesError(run)
+            expect(error.error.code).toBe(ErrorCode.INVALID_SAML_RESPONSE)
+            const message = readMessage(error)
+            expect(message).toContain('firstName')
+            expect(message).toContain('lastName')
+            expect(message).toContain('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress')
+            expect(message).toContain('attributeMapping')
         })
 
         it('throws when rawAttributes is null or undefined', () => {
@@ -184,3 +177,24 @@ describe('resolveSamlAttributes', () => {
         })
     })
 })
+
+function captureActivepiecesError(run: () => unknown): ActivepiecesError {
+    try {
+        run()
+    }
+    catch (error) {
+        if (error instanceof ActivepiecesError) {
+            return error
+        }
+        throw error
+    }
+    throw new Error('Expected ActivepiecesError to be thrown')
+}
+
+function readMessage(error: ActivepiecesError): string {
+    const params = error.error.params
+    if (params && typeof params === 'object' && 'message' in params && typeof params.message === 'string') {
+        return params.message
+    }
+    return ''
+}
