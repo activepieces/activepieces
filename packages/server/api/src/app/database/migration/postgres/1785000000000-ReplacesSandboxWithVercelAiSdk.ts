@@ -4,7 +4,7 @@ import { Migration } from '../../migration'
 export class ReplacesSandboxWithVercelAiSdk1785000000000 implements Migration {
     name = 'ReplacesSandboxWithVercelAiSdk1785000000000'
     breaking = false
-    release = '0.85.0'
+    release = '0.82.1'
     transaction = true
 
     public async up(queryRunner: QueryRunner): Promise<void> {
