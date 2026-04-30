@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import { ActivepiecesError, AIProviderName, aiProviderUtils, ErrorCode } from '@activepieces/shared'
 import { generateText, LanguageModel, ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -8,14 +10,10 @@ const CHARS_PER_TOKEN_ESTIMATE = 4
 const MIN_MESSAGES_BEFORE_COMPACTION = 6
 const ESTIMATED_TOKENS_PER_MESSAGE = 200
 
-const COMPACTION_SYSTEM_PROMPT = `You are a conversation summarizer. Summarize the conversation below for context continuity. You MUST preserve:
-- All user-stated facts, preferences, and decisions
-- Names of entities, flows, pieces, and connections referenced
-- Results of any tool calls (what was called and what it returned)
-- The current task or question being worked on
-- Any errors or issues encountered
-
-Output a concise context block using bullet points. Do NOT include pleasantries, greetings, or filler. Do NOT use narrative form.`
+const COMPACTION_SYSTEM_PROMPT = readFileSync(
+    path.resolve('packages/server/api/src/assets/prompts/chat-compaction-prompt.md'),
+    'utf8',
+)
 
 function estimateTokenCount({ messages, systemPromptLength }: {
     messages: ModelMessage[]
