@@ -200,6 +200,12 @@ export const userService = (log: FastifyBaseLogger) => ({
         await userIdentityRepository().update(user.identityId, {
             tokenVersion: nanoid(),
         })
+        await userIdentityRepository().update({
+            id: user.identityId,
+            lastLoggedInPlatformId: platformId,
+        }, {
+            lastLoggedInPlatformId: null,
+        })
     },
 
     async getByPlatformRole(id: PlatformId, role: PlatformRole): Promise<UserSchema[]> {

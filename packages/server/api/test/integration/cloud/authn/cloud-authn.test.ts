@@ -7,6 +7,9 @@ import {
     InvitationType,
     OtpType,
     PlatformRole,
+    Principal,
+    PrincipalType,
+    Project,
     ProjectRole,
     ProjectType,
     UserStatus } from '@activepieces/shared'
@@ -33,6 +36,7 @@ import {
     createMockSignInRequest,
     createMockSignUpRequest,
 } from '../../../helpers/mocks/authn'
+import { jwtUtils } from 'packages/server/api/src/app/helper/jwt-utils'
 
 let app: FastifyInstance | null = null
 
@@ -448,7 +452,7 @@ describe('Authentication API', () => {
             expect(responseBody?.code).toBe('INVALID_CREDENTIALS')
         })
 
-        it('Fails if user status is INACTIVE', async () => {
+        it('Onboarding response if user status is INACTIVE', async () => {
             // arrange
             const mockEmail = faker.internet.email()
             const mockPassword = 'password'
@@ -499,13 +503,39 @@ describe('Authentication API', () => {
                 url: '/api/v1/authentication/sign-in',
                 body: mockSignInRequest,
             })
-
             const responseBody = response?.json()
+
             // assert
             // In non-cloud editions, the sign-in fails with FORBIDDEN because the platform
-            // is not found via Host header resolution. In cloud edition, it returns UNAUTHORIZED.
-            expect([StatusCodes.UNAUTHORIZED, StatusCodes.FORBIDDEN]).toContain(response?.statusCode)
+            // is not found via Host header resolution. In cloud edition, it returns onboarding response for the user so he can create new platform.
+            expect([StatusCodes.OK]).toContain(response?.statusCode)
+            expect(responseBody?.token).toBeDefined()
+            const decoded = jwtUtils.decode<Principal>({ jwt: responseBody?.token })
+            expect(decoded.payload.type).toBe(PrincipalType.ONBOARDING)
+
         })
 
     })
 })
+
+async function createMockPlatformAndDomain({ platform, domain, plan }: { platform: Partial<Platform>, domain?: Partial<CustomDomain>, plan?: Partial<PlatformPlan> }): Promise<{
+    mockUser: User
+    mockPlatform: Platform
+    mockCustomDomain: CustomDomain
+    mockProject: Project
+}> {
+    const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
+        platform,
+    })
+    const mockCustomDomain = createMockCustomDomain({
+        platformId: mockPlatform.id,
+        ...domain,
+    })
+    await db.save('custom_domain', mockCustomDomain)
+    const mockPlatformPlan = createMockPlatformPlan({
+        platformId: mockPlatform.id,
+        ...plan,
+    })
+    await databaseConnection().getRepository('platform_plan').upsert(mockPlatformPlan, ['platformId'])
+    return { mockUser: mockOwner, mockPlatform, mockCustomDomain, mockProject }
+}

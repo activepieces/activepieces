@@ -1,5 +1,5 @@
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, OtpType, PlatformRole, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, OtpType, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
@@ -13,6 +13,7 @@ import { userIdentityService } from './user-identity/user-identity-service'
 export const authenticationService = (log: FastifyBaseLogger) => ({
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
         const platformId = params.platformId
+
         if (!isNil(platformId)) {
             await authenticationUtils(log).assertEmailAuthIsEnabled({
                 platformId,
@@ -22,67 +23,66 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 email: params.email,
                 platformId,
             })
-        }
-        if (isNil(platformId)) {
-            const hasInvitations = await userInvitationsService(log).hasAnyAcceptedInvitationsForEmail({ email: params.email })
-            const isFederatedProvider = params.provider === UserIdentityProvider.GOOGLE || params.provider === UserIdentityProvider.JWT || params.provider === UserIdentityProvider.SAML
+            await authenticationUtils(log).assertUserIsInvitedToPlatformOrProject({
+                email: params.email,
+                platformId,
+            })
             const userIdentity = await userIdentityService(log).create({
                 ...params,
-                verified: hasInvitations || isFederatedProvider,
+                verified: true,
             })
-            const response = await createUserWithoutPlatform(userIdentity, log)
+            const user = await userService(log).getOrCreateWithProject({
+                identity: userIdentity,
+                platformId,
+            })
             await userInvitationsService(log).provisionUserInvitation({ email: params.email })
-            const preferredPlatformId = await getPreferredPlatformId(userIdentity.id, log)
-            if (!isNil(preferredPlatformId)) {
-                const user = await userService(log).getOneByIdentityAndPlatform({
-                    identityId: userIdentity.id,
-                    platformId: preferredPlatformId,
-                })
-                if (!isNil(user)) {
-                    log.info({ email: params.email, provider: params.provider, preferredPlatformId }, 'User signed up with invitation, returning preferred platform token')
-                    return authenticationUtils(log).getProjectAndToken({
-                        userId: user.id,
-                        platformId: preferredPlatformId,
-                        projectId: null,
-                    })
-                }
-            }
-            log.info({ email: params.email, provider: params.provider }, 'User signed up without platform')
-            return response
+
+            log.info({ email: params.email, platformId }, 'User signed up to existing platform')
+            return authenticationUtils(log).getProjectAndToken({
+                userId: user.id,
+                platformId,
+                projectId: null,
+            })
         }
 
-        await authenticationUtils(log).assertUserIsInvitedToPlatformOrProject({
-            email: params.email,
-            platformId,
-        })
+        const hasInvitations = await userInvitationsService(log).hasAnyAcceptedInvitationsForEmail({ email: params.email })
+        const isFederatedProvider = params.provider === UserIdentityProvider.GOOGLE || params.provider === UserIdentityProvider.JWT || params.provider === UserIdentityProvider.SAML
         const userIdentity = await userIdentityService(log).create({
             ...params,
-            verified: true,
+            verified: hasInvitations || isFederatedProvider,
         })
-        const user = await userService(log).getOrCreateWithProject({
-            identity: userIdentity,
-            platformId,
-        })
+        await sendVerificationOrAutoVerify(userIdentity, log)
+        await flagService(log).save({ id: ApFlagId.USER_CREATED, value: true })
+        await authenticationUtils(log).sendTelemetry({ identity: userIdentity })
+        await authenticationUtils(log).saveNewsLetterSubscriber(userIdentity)
         await userInvitationsService(log).provisionUserInvitation({ email: params.email })
 
-        log.info({ email: params.email, platformId }, 'User signed up to existing platform')
-        return authenticationUtils(log).getProjectAndToken({
-            userId: user.id,
-            platformId,
-            projectId: null,
-        })
+        const preferredPlatformId = await getPreferredPlatformId(userIdentity.id, log)
+        if (!isNil(preferredPlatformId)) {
+            const user = await userService(log).getOrCreateWithProject({
+                identity: userIdentity,
+                platformId: preferredPlatformId,
+            })
+            log.info({ email: params.email, provider: params.provider, preferredPlatformId }, 'User signed up with invitation, returning preferred platform token')
+            return authenticationUtils(log).getProjectAndToken({
+                userId: user.id,
+                platformId: preferredPlatformId,
+                projectId: null,
+            })
+        }
+        log.info({ email: params.email, provider: params.provider }, 'User signed up without platform')
+        return authenticationUtils(log).getOnboardingResponse({ identityId: userIdentity.id })
+
     },
     async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResponse> {
         const identity = await userIdentityService(log).verifyIdentityPassword(params)
         const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformId(identity.id, log) : params.predefinedPlatformId
-        if (isNil(platformId)) {
-            const user = await userService(log).getOneByIdentityIdOnly({ identityId: identity.id })
-            assertNotNullOrUndefined(user, 'User not found')
-            log.info({ email: params.email }, 'User signed in without platform, returning onboarding token')
-            return authenticationUtils(log).getOnboardingResponse({
-                userId: user.id,
-            })
+
+        if (isNil(platformId)) { // always cloud
+            log.info({ email: params.email }, 'User signed in without an active platform on cloud, returning onboarding token')
+            return authenticationUtils(log).getOnboardingResponse({ identityId: identity.id })
         }
+
         await authenticationUtils(log).assertEmailAuthIsEnabled({
             platformId,
             provider: UserIdentityProvider.EMAIL,
@@ -107,15 +107,10 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformIdForFederatedAuthn(params.email, log) : params.predefinedPlatformId
         const userIdentity = await userIdentityService(log).getIdentityByEmail(params.email)
 
-        if (isNil(platformId)) {
+        if (isNil(platformId)) { // always cloud
             if (!isNil(userIdentity)) {
-                const user = await userService(log).getOneByIdentityIdOnly({ identityId: userIdentity.id })
-                assertNotNullOrUndefined(user, 'User not found')
-                return authenticationUtils(log).getOnboardingResponse({
-                    userId: user.id,
-                })
+                return authenticationUtils(log).getOnboardingResponse({ identityId: userIdentity.id })
             }
-            // Create new identity and user without platform
             return authenticationService(log).signUp({
                 email: params.email,
                 firstName: params.firstName,
@@ -195,15 +190,8 @@ async function getUserForPlatform(identityId: string, platform: PlatformWithoutS
     return user
 }
 
-async function createUserWithoutPlatform(userIdentity: UserIdentity, log: FastifyBaseLogger): Promise<AuthenticationResponse> {
-    const user = await userService(log).create({
-        identityId: userIdentity.id,
-        platformRole: PlatformRole.ADMIN,
-        platformId: null,
-    })
-
+async function sendVerificationOrAutoVerify(userIdentity: UserIdentity, log: FastifyBaseLogger): Promise<void> {
     const edition = system.getEdition()
-
     switch (edition) {
         case ApEdition.CLOUD:
             if (!userIdentity.verified) {
@@ -219,20 +207,6 @@ async function createUserWithoutPlatform(userIdentity: UserIdentity, log: Fastif
             await userIdentityService(log).verify(userIdentity.id)
             break
     }
-
-    await flagService(log).save({
-        id: ApFlagId.USER_CREATED,
-        value: true,
-    })
-    await authenticationUtils(log).sendTelemetry({
-        identity: userIdentity,
-        user,
-    })
-    await authenticationUtils(log).saveNewsLetterSubscriber(userIdentity)
-
-    return authenticationUtils(log).getOnboardingResponse({
-        userId: user.id,
-    })
 }
 
 async function getPreferredPlatformIdForFederatedAuthn(email: string, log: FastifyBaseLogger): Promise<string | null> {
@@ -247,8 +221,10 @@ async function getPreferredPlatformId(identityId: string, log: FastifyBaseLogger
     const edition = system.getEdition()
     if (edition === ApEdition.CLOUD) {
         const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId })
+        const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
+        const lastUsed = !isNil(identity.lastLoggedInPlatformId) ? nonDedicated.find((p) => p.id === identity.lastLoggedInPlatformId) : undefined
         const licensed = platforms.find((p) => !isNil(p.plan.licenseKey))
-        return licensed?.id ?? platforms[0]?.id ?? null
+        return lastUsed?.id ?? licensed?.id ?? platforms[0]?.id ?? null
     }
     return null
 }

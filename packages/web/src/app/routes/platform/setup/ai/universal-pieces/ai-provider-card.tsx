@@ -16,14 +16,6 @@ import { AiProviderInfo } from '@/features/agents';
 
 import { UpsertAIProviderDialog } from './upsert-provider-dialog';
 
-type AIProviderCardProps = {
-  providerInfo: AiProviderInfo;
-  providerConfig?: AIProviderWithoutSensitiveData;
-  onDelete: (id: string) => Promise<void>;
-  onSave: () => void;
-  allowWrite?: boolean;
-};
-
 const AIProviderCard = ({
   providerInfo,
   providerConfig,
@@ -88,6 +80,14 @@ const AIProviderCard = ({
       )}
     </Item>
   );
+};
+
+type AIProviderCardProps = {
+  providerInfo: AiProviderInfo;
+  providerConfig?: AIProviderWithoutSensitiveData;
+  onDelete: (id: string) => Promise<void>;
+  onSave: () => void;
+  allowWrite?: boolean;
 };
 
 AIProviderCard.displayName = 'AIProviderCard';

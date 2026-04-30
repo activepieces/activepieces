@@ -11,6 +11,7 @@ import { ActivepiecesError,
     Platform,
     PlatformId,
     PlatformPlanLimits,
+    PlatformRole,
     PlatformUsage,
     PlatformWithoutSensitiveData,
     ProjectType,
@@ -90,20 +91,26 @@ export const platformService = (log: FastifyBaseLogger) => ({
         log.info({ platformId: savedPlatform.id, ownerId }, 'Platform created')
         return savedPlatform
     },
-    async createPlatformWithProject({ userId, name }: CreatePlatformWithProjectParams): Promise<AuthenticationResponse> {
-        const user = await userService(log).getOneOrFail({ id: userId })
-        const platform = await this.create({ ownerId: userId, name })
+    async createPlatformWithProject({ identityId, name, invalidatePreviousTokens }: CreatePlatformWithProjectParams): Promise<AuthenticationResponse> {
+        const newUser = await userService(log).create({
+            identityId,
+            platformRole: PlatformRole.ADMIN,
+            platformId: null,
+        })
+        const platform = await this.create({ ownerId: newUser.id, name })
         const defaultProject = await projectService(log).create({
             displayName: `${name}'s Project`,
-            ownerId: userId,
+            ownerId: newUser.id,
             platformId: platform.id,
             type: ProjectType.PERSONAL,
         })
-        await userIdentityRepository().update(user.identityId, {
-            tokenVersion: nanoid(),
-        })
+        if (invalidatePreviousTokens) {
+            await userIdentityRepository().update(identityId, {
+                tokenVersion: nanoid(),
+            })
+        }
         return authenticationUtils(log).getProjectAndToken({
-            userId,
+            userId: newUser.id,
             platformId: platform.id,
             projectId: defaultProject.id,
         })
@@ -262,8 +269,9 @@ type UpdateParams = UpdatePlatformRequestBody & {
 }
 
 type CreatePlatformWithProjectParams = {
-    userId: string
+    identityId: string
     name: string
+    invalidatePreviousTokens: boolean
 }
 
 type ListPlatformsForIdentityParams = {

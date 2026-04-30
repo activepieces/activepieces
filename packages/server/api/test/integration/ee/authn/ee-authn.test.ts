@@ -15,7 +15,7 @@ afterAll(async () => {
 })
 describe('Authentication API', () => {
     describe('Sign up Endpoint', () => {
-        it('Adds new user', async () => {
+        it('Adds new user with onboarding token', async () => {
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()
 
@@ -31,8 +31,6 @@ describe('Authentication API', () => {
             const responseBody = response?.json()
 
             expect(responseBody?.id).toHaveLength(21)
-            expect(responseBody?.created).toBeDefined()
-            expect(responseBody?.updated).toBeDefined()
             expect(responseBody?.email).toBe(mockSignUpRequest.email.toLocaleLowerCase().trim())
             expect(responseBody?.firstName).toBe(mockSignUpRequest.firstName)
             expect(responseBody?.lastName).toBe(mockSignUpRequest.lastName)
@@ -41,9 +39,9 @@ describe('Authentication API', () => {
             expect(responseBody?.password).toBeUndefined()
             expect(responseBody?.status).toBe('ACTIVE')
             expect(responseBody?.verified).toBe(true)
-            expect(responseBody?.platformId).toBeDefined()
-            expect(responseBody?.externalId).toBe(null)
-            expect(responseBody?.projectId).toHaveLength(21)
+            expect(responseBody?.platformId).toBeNull()
+            expect(responseBody?.externalId).toBeNull()
+            expect(responseBody?.projectId).toBeNull()
             expect(responseBody?.token).toBeDefined()
         })
     })
