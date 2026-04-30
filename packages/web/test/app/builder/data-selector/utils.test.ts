@@ -26,17 +26,17 @@ function makeCodeStep(): CodeStepFixture {
   };
 }
 
-describe('dataSelectorUtils.traverseStep', () => {
-  function childDisplayNames(
-    node: ReturnType<typeof dataSelectorUtils.traverseStep>,
-  ): string[] {
-    return (node.children ?? []).map((child) => {
-      if (child.data.type === 'value') return child.data.displayName;
-      if (child.data.type === 'chunk') return child.data.displayName;
-      return child.data.stepName;
-    });
-  }
+function childDisplayNames(
+  node: ReturnType<typeof dataSelectorUtils.traverseStep>,
+): string[] {
+  return (node.children ?? []).map((child) => {
+    if (child.data.type === 'value') return child.data.displayName;
+    if (child.data.type === 'chunk') return child.data.displayName;
+    return child.data.stepName;
+  });
+}
 
+describe('dataSelectorUtils.traverseStep', () => {
   it('labels array items with index when __displayName is absent', () => {
     const step = makeCodeStep();
     const node = dataSelectorUtils.traverseStep(
@@ -44,7 +44,6 @@ describe('dataSelectorUtils.traverseStep', () => {
       { step_1: [{ value: 1 }, { value: 2 }] },
       false,
     );
-    // root displayName is "1. My Step" (dfsIndex 0 → prefix "1.")
     expect(childDisplayNames(node)).toEqual([
       '1. My Step [1]',
       '1. My Step [2]',
@@ -134,11 +133,53 @@ describe('dataSelectorUtils.traverseStep', () => {
 
     const parentNode = node.children?.[0];
     expect(parentNode).toBeDefined();
-    // "items" has no __displayName on the array itself → key name used
     expect(childDisplayNames(parentNode!)).toEqual(['items']);
 
     const itemsNode = parentNode!.children?.[0];
     expect(itemsNode).toBeDefined();
     expect(childDisplayNames(itemsNode!)).toEqual(['Row One', 'Row Two']);
+  });
+});
+
+describe('dataSelectorUtils.traverseStep > zipped view', () => {
+  it('excludes __displayName column from zipped array view', () => {
+    const step = makeCodeStep();
+    const node = dataSelectorUtils.traverseStep(
+      step,
+      {
+        step_1: [
+          { __displayName: 'First', value: 1 },
+          { __displayName: 'Second', value: 2 },
+        ],
+      },
+      true,
+    );
+    const keys = childDisplayNames(node);
+    expect(keys).not.toContain('__displayName');
+    expect(keys).toContain('value');
+  });
+
+  it('excludes __displayName from nested zipped array view', () => {
+    const step = makeCodeStep();
+    const node = dataSelectorUtils.traverseStep(
+      step,
+      {
+        step_1: {
+          items: [
+            { __displayName: 'Alpha', id: 'a' },
+            { __displayName: 'Beta', id: 'b' },
+          ],
+        },
+      },
+      true,
+    );
+    const topKeys = childDisplayNames(node);
+    expect(topKeys).toContain('items');
+
+    const itemsNode = node.children?.[0];
+    expect(itemsNode).toBeDefined();
+    const itemKeys = childDisplayNames(itemsNode!);
+    expect(itemKeys).not.toContain('__displayName');
+    expect(itemKeys).toContain('id');
   });
 });

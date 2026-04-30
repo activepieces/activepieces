@@ -200,6 +200,11 @@ function breakArrayIntoChunks<T>(
   );
 }
 
+function stripDisplayNameKey(keys: Record<string, Node>): Record<string, Node> {
+  const { [OUTPUT_DISPLAY_NAME_KEY]: _, ...rest } = keys;
+  return rest;
+}
+
 function getOutputDisplayName(value: unknown, fallback: string): string {
   return isObject(value) &&
     typeof value[OUTPUT_DISPLAY_NAME_KEY] === 'string' &&
@@ -259,7 +264,10 @@ function traverseOutput(
         displayName,
         propertyPath,
         node,
-        convertArrayToZippedView(extractUniqueKeys(node), propertyPath),
+        convertArrayToZippedView(
+          stripDisplayNameKey(extractUniqueKeys(node)),
+          propertyPath,
+        ),
         insertable,
       );
     }
@@ -273,10 +281,10 @@ function traverseOutput(
             childDisplayName,
             [...propertyPath, key],
             value,
-            convertArrayToZippedView(extractUniqueKeys(value), [
-              ...propertyPath,
-              key,
-            ]),
+            convertArrayToZippedView(
+              stripDisplayNameKey(extractUniqueKeys(value)),
+              [...propertyPath, key],
+            ),
             insertable,
           );
         }
