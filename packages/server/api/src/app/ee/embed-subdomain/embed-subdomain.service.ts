@@ -74,7 +74,12 @@ export const embedSubdomainService = (log: FastifyBaseLogger) => ({
             return record
         }
 
-        const cloudflareStatus = await cloudflareService(log).getCustomHostname({ cloudflareId: record.cloudflareId })
+        const statusResult = await tryCatch(() => cloudflareService(log).getCustomHostname({ cloudflareId: record.cloudflareId }))
+        if (statusResult.error) {
+            log.warn({ platformId, cloudflareId: record.cloudflareId, error: statusResult.error }, 'Failed to refresh hostname status from Cloudflare; returning cached record')
+            return record
+        }
+        const cloudflareStatus = statusResult.data
         const newStatus = mapCloudflareStatus({ status: cloudflareStatus.status, sslStatus: cloudflareStatus.sslStatus })
 
         const recordsChanged = JSON.stringify(record.verificationRecords) !== JSON.stringify(cloudflareStatus.verificationRecords)

@@ -11,11 +11,12 @@ import { appearanceHelper } from '../helper/appearance-helper'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
-        const modifiedFlags: Record<string, string | boolean | number | Record<string, unknown>> = { ...flags }
+        const modifiedFlags: Record<string, string | boolean | number | string[] | Record<string, unknown>> = { ...flags }
         const platformIdFromPrincipal = !request.principal || request.principal.type === PrincipalType.UNKNOWN || request.principal.type === PrincipalType.WORKER ? null : request.principal.platform.id
         const platformId = platformIdFromPrincipal ?? await platformUtils.getPlatformIdForRequest(request)
         const edition = system.getEdition()
         const googleAuthEnabled = !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_ID)) && !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_SECRET))
+        modifiedFlags[ApFlagId.ALLOWED_EMBED_DOMAINS] = system.getList(AppSystemProp.ALLOWED_EMBED_DOMAINS)
         if (isNil(platformId)) {
             if (edition === ApEdition.CLOUD) {
                 modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {

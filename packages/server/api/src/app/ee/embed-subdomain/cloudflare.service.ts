@@ -1,4 +1,4 @@
-import { EmbedVerificationRecord, EmbedVerificationRecordPurpose, EmbedVerificationRecordType, isNil, tryCatch } from '@activepieces/shared'
+import { ActivepiecesError, EmbedVerificationRecord, EmbedVerificationRecordPurpose, EmbedVerificationRecordType, ErrorCode, isNil, tryCatch } from '@activepieces/shared'
 import Cloudflare from 'cloudflare'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../helper/system/system'
@@ -10,7 +10,7 @@ export const cloudflareService = (log: FastifyBaseLogger) => ({
     async createCustomHostname({ hostname }: { hostname: string }): Promise<CloudflareHostnameResult> {
         const { zoneId, fallbackOrigin } = getConfig()
 
-        const result = await getClient().customHostnames.create({
+        const created = await tryCatch(() => getClient().customHostnames.create({
             zone_id: zoneId,
             hostname,
             ssl: {
@@ -18,7 +18,12 @@ export const cloudflareService = (log: FastifyBaseLogger) => ({
                 type: 'dv',
                 bundle_method: 'ubiquitous',
             },
-        })
+        }))
+        if (created.error) {
+            log.warn({ hostname, error: created.error }, 'Cloudflare createCustomHostname failed')
+            throw toActivepiecesError(created.error, 'register hostname with Cloudflare')
+        }
+        const result = created.data
 
         log.info({ hostname, cloudflareId: result.id }, 'Cloudflare custom hostname created')
 
@@ -34,7 +39,12 @@ export const cloudflareService = (log: FastifyBaseLogger) => ({
     async getCustomHostname({ cloudflareId }: { cloudflareId: string }): Promise<CloudflareHostnameStatus> {
         const { zoneId, fallbackOrigin } = getConfig()
 
-        const result = await getClient().customHostnames.get(cloudflareId, { zone_id: zoneId })
+        const fetched = await tryCatch(() => getClient().customHostnames.get(cloudflareId, { zone_id: zoneId }))
+        if (fetched.error) {
+            log.warn({ cloudflareId, error: fetched.error }, 'Cloudflare getCustomHostname failed')
+            throw toActivepiecesError(fetched.error, 'fetch hostname status from Cloudflare')
+        }
+        const result = fetched.data
 
         return {
             status: result.status,
@@ -47,23 +57,51 @@ export const cloudflareService = (log: FastifyBaseLogger) => ({
     async hostnameExists({ hostname }: { hostname: string }): Promise<boolean> {
         const { zoneId } = getConfig()
 
-        const result = await tryCatch(async () => {
-            const list = await getClient().customHostnames.list({ zone_id: zoneId, hostname })
-            return list.result
-        })
+        const result = await tryCatch(() => getClient().customHostnames.list({ zone_id: zoneId, hostname }))
         if (result.error) {
             log.warn({ hostname, error: result.error }, 'Failed to check hostname existence in Cloudflare')
             return false
         }
-        return result.data.length > 0
+        return result.data.result.length > 0
     },
 
     async deleteCustomHostname({ cloudflareId }: { cloudflareId: string }): Promise<void> {
         const { zoneId } = getConfig()
-        await getClient().customHostnames.delete(cloudflareId, { zone_id: zoneId })
+        const deleted = await tryCatch(() => getClient().customHostnames.delete(cloudflareId, { zone_id: zoneId }))
+        if (deleted.error) {
+            log.warn({ cloudflareId, error: deleted.error }, 'Cloudflare deleteCustomHostname failed')
+            throw toActivepiecesError(deleted.error, 'delete hostname from Cloudflare')
+        }
         log.info({ cloudflareId }, 'Cloudflare custom hostname deleted')
     },
 })
+
+function toActivepiecesError(error: unknown, op: string): ActivepiecesError {
+    return new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: {
+            message: extractCloudflareMessage(error, op),
+        },
+    })
+}
+
+function extractCloudflareMessage(error: unknown, op: string): string {
+    const fallback = `Couldn't ${op}. Please try again or contact support if the issue persists.`
+    if (!(error instanceof Error)) {
+        return fallback
+    }
+    const apiErrors = (error as { errors?: Array<{ message?: string }> }).errors
+    if (Array.isArray(apiErrors) && apiErrors.length > 0) {
+        const first = apiErrors[0]?.message
+        if (typeof first === 'string' && first.length > 0) {
+            return `Cloudflare: ${first}`
+        }
+    }
+    if (typeof error.message === 'string' && error.message.length > 0) {
+        return `Cloudflare: ${error.message}`
+    }
+    return fallback
+}
 
 function getClient(): Cloudflare {
     if (!isNil(client)) return client

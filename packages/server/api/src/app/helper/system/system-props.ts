@@ -7,6 +7,7 @@ export type SystemProp = AppSystemProp
 let cachedVersion: string | undefined
 
 export enum AppSystemProp {
+    ALLOWED_EMBED_DOMAINS = 'ALLOWED_EMBED_DOMAINS',
     API_KEY = 'API_KEY',
     TEMPLATES_API_KEY = 'TEMPLATES_API_KEY',
     TEMPLATE_MANAGER_API_KEY = 'TEMPLATE_MANAGER_API_KEY',

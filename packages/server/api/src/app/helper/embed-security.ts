@@ -4,6 +4,7 @@ import { lru, LRU } from 'tiny-lru'
 import { embedSubdomainService } from '../ee/embed-subdomain/embed-subdomain.service'
 import { platformService } from '../platform/platform.service'
 import { system } from './system/system'
+import { AppSystemProp } from './system/system-props'
 
 const CACHE_MAX_ENTRIES = 1000
 const CACHE_TTL_MS = 3 * 60 * 1000
@@ -26,32 +27,38 @@ async function resolveAllowedDomains({ hostname, log }: { hostname: string, log:
     if (!isNil(hit)) {
         return hit
     }
+    const envDomains = system.getList(AppSystemProp.ALLOWED_EMBED_DOMAINS).filter(isValidOrigin)
+
     try {
         if (edition === ApEdition.CLOUD) {
             const record = await embedSubdomainService(log).getByHostname({ hostname })
             if (isNil(record)) {
-                cache.set(cacheKey, [])
-                return []
+                cache.set(cacheKey, envDomains)
+                return envDomains
             }
             const platform = await platformService(log).getOneOrThrow(record.platformId)
-            const domains = platform.allowedEmbedDomains ?? []
+            const domains = mergeUnique(platform.allowedEmbedDomains ?? [], envDomains)
             cache.set(cacheKey, domains)
             return domains
         }
 
         const platform = await platformService(log).getOldestPlatform()
         if (isNil(platform)) {
-            cache.set(cacheKey, [])
-            return []
+            cache.set(cacheKey, envDomains)
+            return envDomains
         }
-        const domains = platform.allowedEmbedDomains ?? []
+        const domains = mergeUnique(platform.allowedEmbedDomains ?? [], envDomains)
         cache.set(cacheKey, domains)
         return domains
     }
     catch (e) {
         log.warn({ error: e, hostname }, 'Failed to resolve embed allowed domains')
-        return []
+        return envDomains
     }
+}
+
+function mergeUnique(a: string[], b: string[]): string[] {
+    return Array.from(new Set([...a, ...b]))
 }
 
 export const embedSecurity = (log: FastifyBaseLogger) => ({
@@ -60,3 +67,12 @@ export const embedSecurity = (log: FastifyBaseLogger) => ({
         return buildFrameAncestorsHeader({ domains })
     },
 })
+
+function isValidOrigin(value: string): boolean {
+    try {
+        return new URL(value).origin === value
+    }
+    catch {
+        return false
+    }
+}

@@ -1,4 +1,5 @@
 import {
+  ApErrorParams,
   EmbedSubdomain,
   GenerateEmbedSubdomainRequest,
 } from '@activepieces/shared';
@@ -11,6 +12,7 @@ import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api';
 import {
   Form,
   FormField,
@@ -61,11 +63,9 @@ const EmbedHostnameForm = () => {
         toast.success(t('Domain saved'));
       },
       onError: (error) => {
-        const message =
-          error instanceof Error ? error.message : t("Couldn't save domain");
         form.setError('root.serverError', {
           type: 'manual',
-          message,
+          message: extractServerErrorMessage(error, t("Couldn't save domain")),
         });
       },
     });
@@ -119,9 +119,7 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
       await mutateAsync({ hostname: hostname.trim() });
       toast.success(t('Domain updated'));
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : t("Couldn't update domain");
-      setErrorMessage(message);
+      setErrorMessage(extractServerErrorMessage(error, t("Couldn't update domain")));
       throw error;
     }
   };
@@ -168,3 +166,17 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
     </div>
   );
 };
+
+function extractServerErrorMessage(error: unknown, fallback: string): string {
+  if (api.isError(error)) {
+    const data = error.response?.data as ApErrorParams | undefined;
+    const message = data?.params && 'message' in data.params ? data.params.message : undefined;
+    if (typeof message === 'string' && message.length > 0) {
+      return message;
+    }
+  }
+  if (error instanceof Error && error.message.length > 0) {
+    return error.message;
+  }
+  return fallback;
+}

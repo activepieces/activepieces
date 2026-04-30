@@ -187,6 +187,9 @@ const systemPropValidators: {
     [AppSystemProp.CANARY_APP_URL]: urlValidator,
     // SSRF protection
     [AppSystemProp.SSRF_ALLOW_LIST]: stringValidator,
+
+    // Embed
+    [AppSystemProp.ALLOWED_EMBED_DOMAINS]: stringValidator,
     [AppSystemProp.NETWORK_MODE]: enumValidator(Object.values(NetworkMode)),
 
     // On-call

@@ -713,6 +713,7 @@
   "Issues an SSL certificate": "Issues an SSL certificate",
   "Allowed websites": "Allowed websites",
   "Press Enter or use a comma to add another, e.g. https://app.acme.com": "Press Enter or use a comma to add another, e.g. https://app.acme.com",
+  "These domains are also allowed automatically (configured via AP_ALLOWED_EMBED_DOMAINS):": "These domains are also allowed automatically (configured via AP_ALLOWED_EMBED_DOMAINS):",
   "No signing keys yet": "No signing keys yet",
   "Hostname": "Hostname",
   "Lowercase letters, numbers, hyphens, and dots. You must own this domain.": "Lowercase letters, numbers, hyphens, and dots. You must own this domain.",
