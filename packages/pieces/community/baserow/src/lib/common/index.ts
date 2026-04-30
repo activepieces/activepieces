@@ -190,11 +190,7 @@ export const baserowCommon = {
           };
         }
         const client = await makeClient(auth);
-        const response = (await client.listRows(
-          table_id,
-          undefined,
-          200
-        )) as { results: Record<string, unknown>[] };
+        const response = await client.listRows(table_id, undefined, 200);
         return {
           disabled: false,
           options: response.results.map((row) => {
@@ -202,10 +198,8 @@ export const baserowCommon = {
               .filter(([k]) => k !== 'id' && k !== 'order')
               .map(([, v]) => (typeof v === 'string' && v ? v : null))
               .find(Boolean);
-            const label = primaryValue
-              ? `#${row['id']} ${primaryValue}`
-              : `Row #${row['id']}`;
-            return { label, value: row['id'] as number };
+            const label = primaryValue ? `#${row.id} ${primaryValue}` : `Row #${row.id}`;
+            return { label, value: row.id };
           }),
         };
       },
