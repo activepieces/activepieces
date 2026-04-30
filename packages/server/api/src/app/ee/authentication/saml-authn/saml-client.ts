@@ -35,7 +35,7 @@ const samlClient = ({ idp, sp, attributeMapping }: SamlClientArgs) => ({
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_SAML_RESPONSE,
                 params: {
-                    message: `Failed to parse SAML response: ${parseError.message}`,
+                    message: `Failed to parse SAML response: ${toErrorMessage(parseError)}`,
                 },
             })
         }
@@ -71,7 +71,7 @@ const resolveIdpMetadata = async (idpMetadata: string): Promise<string> => {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_SAML_RESPONSE,
             params: {
-                message: `Failed to fetch IdP metadata from URL: ${error.message}`,
+                message: `Failed to fetch IdP metadata from URL: ${toErrorMessage(error)}`,
             },
         })
     }
@@ -103,6 +103,10 @@ const createSp = async ({ platformId, privateKey }: CreateSpArgs): Promise<saml.
         }],
         signatureConfig: {},
     })
+}
+
+const toErrorMessage = (error: unknown): string => {
+    return error instanceof Error ? error.message : String(error)
 }
 
 const LOGIN_REQUEST_BINDING = 'redirect'
