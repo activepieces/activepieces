@@ -36,11 +36,8 @@ function shouldCompact({ estimatedTokens, provider, messageCount }: {
 }
 
 /**
- * Snaps a cutoff index forward to a safe message boundary.
  * Anthropic requires that every tool_result has a preceding tool_use in the
- * same context. If the cutoff lands on a 'tool' message (or inside an
- * assistant→tool pair), we back up so the recent window starts at the
- * assistant message that initiated the tool call.
+ * same context, so the cutoff must not split an assistant→tool pair.
  */
 function snapToSafeMessageBoundary({ messages, rawCutoff }: {
     messages: ModelMessage[]
@@ -118,14 +115,11 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
     }
 
     const recentMessages = messages.slice(summarizedUpToIndex)
-    const summaryMessage: ModelMessage = {
-        role: 'user',
-        content: `[Previous conversation summary]\n${summary}\n[End of summary — conversation continues below]`,
-    }
+    const summaryText = `[Previous conversation summary]\n${summary}\n[End of summary — conversation continues below]`
 
     const maxContext = aiProviderUtils.getMaxContextTokens({ provider })
     const threshold = maxContext * COMPACTION_THRESHOLD
-    const summaryCharLen = JSON.stringify(summaryMessage).length
+    const summaryCharLen = JSON.stringify(summaryText).length
     const recentLengths = recentMessages.map((m) => JSON.stringify(m).length)
 
     let runningCharLen = summaryCharLen + recentLengths.reduce((a, b) => a + b, 0)
@@ -140,24 +134,20 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
     }
 
     const trimmedRecent = recentMessages.slice(startIdx)
-    const summaryText = `[Previous conversation summary]\n${summary}\n[End of summary — conversation continues below]`
 
-    // Anthropic rejects consecutive same-role messages. If the first recent
-    // message is also 'user', merge the summary into it instead of prepending
-    // a separate user message.
-    let finalPayload: ModelMessage[]
-    if (trimmedRecent[0]?.role === 'user') {
-        const mergedFirst: ModelMessage = {
-            ...trimmedRecent[0],
-            content: typeof trimmedRecent[0].content === 'string'
-                ? `${summaryText}\n\n${trimmedRecent[0].content}`
-                : summaryText,
-        }
-        finalPayload = [mergedFirst, ...trimmedRecent.slice(1)]
-    }
-    else {
-        finalPayload = [summaryMessage, ...trimmedRecent]
-    }
+    // Anthropic rejects consecutive same-role messages, so merge the summary
+    // into the first message when it is already a 'user' turn.
+    const finalPayload: ModelMessage[] = trimmedRecent[0]?.role === 'user'
+        ? [
+            {
+                ...trimmedRecent[0],
+                content: typeof trimmedRecent[0].content === 'string'
+                    ? `${summaryText}\n\n${trimmedRecent[0].content}`
+                    : summaryText,
+            },
+            ...trimmedRecent.slice(1),
+        ]
+        : [{ role: 'user', content: summaryText }, ...trimmedRecent]
     const finalEstimate = Math.ceil(runningCharLen / CHARS_PER_TOKEN_ESTIMATE)
 
     if (finalEstimate > maxContext) {
