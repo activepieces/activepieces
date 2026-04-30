@@ -6,6 +6,7 @@ import {
   isNil,
   Note,
   Step,
+  StepLocationRelativeToParent,
 } from '@activepieces/shared';
 import {
   ReactFlow,
@@ -34,6 +35,7 @@ import { FlowDragLayer } from './flow-drag-layer';
 import { flowCanvasHooks } from './hooks';
 import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
+import { ApButtonData } from './utils/types';
 import { AboveFlowWidgets } from './widgets';
 import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
@@ -90,6 +92,8 @@ export const FlowCanvas = React.memo(
     const [contextMenuType, setContextMenuType] = useState<ContextMenuType>(
       ContextMenuType.CANVAS,
     );
+    const [bigAddButtonData, setBigAddButtonData] =
+      useState<ApButtonData | null>(null);
 
     const onContextMenu = useCallback(
       (ev: React.MouseEvent<HTMLDivElement>) => {
@@ -108,6 +112,36 @@ export const FlowCanvas = React.memo(
             selectStepByName(stepName);
             reactFlowStore.getState().addSelectedNodes([stepName]);
           }
+
+          const bigAddButtonElement = ev.target.closest(
+            `[data-${flowCanvasConsts.BIG_ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}]`,
+          );
+          const bigAddButtonDataAttr = bigAddButtonElement?.getAttribute(
+            `data-${flowCanvasConsts.BIG_ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}`,
+          );
+          let parsedBigAddButtonData: ApButtonData | null = null;
+          if (bigAddButtonElement && bigAddButtonDataAttr) {
+            try {
+              const parsed = JSON.parse(bigAddButtonDataAttr);
+              if (
+                parsed &&
+                typeof parsed === 'object' &&
+                typeof parsed.parentStepName === 'string' &&
+                typeof parsed.edgeId === 'string' &&
+                (parsed.stepLocationRelativeToParent ===
+                  StepLocationRelativeToParent.INSIDE_LOOP ||
+                  (parsed.stepLocationRelativeToParent ===
+                    StepLocationRelativeToParent.INSIDE_BRANCH &&
+                    typeof parsed.branchIndex === 'number'))
+              ) {
+                parsedBigAddButtonData = parsed as ApButtonData;
+              }
+            } catch {
+              parsedBigAddButtonData = null;
+            }
+          }
+          setBigAddButtonData(parsedBigAddButtonData);
+
           const targetIsSelectionChevron = ev.target.closest(
             `[data-${flowCanvasConsts.SELECTION_RECT_CHEVRON_ATTRIBUTE}]`,
           );
@@ -200,7 +234,10 @@ export const FlowCanvas = React.memo(
         }}
       >
         <FlowDragLayer>
-          <CanvasContextMenu contextMenuType={contextMenuType}>
+          <CanvasContextMenu
+            contextMenuType={contextMenuType}
+            bigAddButtonData={bigAddButtonData}
+          >
             <ReactFlow
               className="bg-builder-background"
               onContextMenu={onContextMenu}

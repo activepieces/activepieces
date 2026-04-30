@@ -65,6 +65,10 @@ const ApBigAddButtonCanvasNode = React.memo(
                       width: `${flowCanvasConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                     }}
                     id={id}
+                    {...{
+                      [`data-${flowCanvasConsts.BIG_ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}`]:
+                        JSON.stringify(data),
+                    }}
                     className={cn('rounded-lg bg-background relative', {
                       'bg-primary/80':
                         isShowingDropIndicator || isPieceSelectorOpened,
