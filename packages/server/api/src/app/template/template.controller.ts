@@ -270,7 +270,7 @@ async function loadCustomTemplatesOrReturnEmpty(
     if ((!isNil(query.type) && query.type !== TemplateType.CUSTOM)) {
         return []
     }
-    const platformId = principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER ? null : principal.platform.id
+    const platformId = principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER || principal.type === PrincipalType.ONBOARDING ? null : principal.platform.id
     if (isNil(platformId)) {
         return []
     }

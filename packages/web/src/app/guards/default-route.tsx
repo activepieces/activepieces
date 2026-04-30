@@ -18,5 +18,8 @@ export const DefaultRoute = () => {
       ></Navigate>
     );
   }
+  if (authenticationSession.isOnboarding()) {
+    return <Navigate to="/create-platform" replace />;
+  }
   return <Navigate to={determineDefaultRoute(checkAccess)} replace></Navigate>;
 };
