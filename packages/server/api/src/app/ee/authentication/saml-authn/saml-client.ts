@@ -13,7 +13,7 @@ export const createSamlClient = async (platformId: string, samlProvider: SAMLAut
     saml.setSchemaValidator(validator)
     const metadataXml = await resolveIdpMetadata(samlProvider.idpMetadata)
     const idp = createIdp(metadataXml)
-    const sp = await createSp({ privateKey: samlProvider.idpCertificate })
+    const sp = await createSp({ privateKey: samlProvider.idpCertificate, platformId })
     const client = samlClient({ idp, sp, attributeMapping: samlProvider.attributeMapping })
     instanceCache.set(platformId, client)
     return client
@@ -87,8 +87,9 @@ const resolveIdpMetadata = async (idpMetadata: string): Promise<string> => {
     return typeof response.data === 'string' ? response.data : String(response.data)
 }
 
-const createSp = async ({ privateKey }: CreateSpArgs): Promise<saml.ServiceProviderInstance> => {
-    const acsUrl = await domainHelper.getPublicUrl({ path: '/api/v1/authn/saml/acs' })
+const createSp = async ({ privateKey, platformId }: CreateSpArgs): Promise<saml.ServiceProviderInstance> => {
+    const baseAcsUrl = await domainHelper.getPublicUrl({ path: '/api/v1/authn/saml/acs' })
+    const acsUrl = `${baseAcsUrl}?platformId=${encodeURIComponent(platformId)}`
     return saml.ServiceProvider({
         entityID: 'Activepieces',
         authnRequestsSigned: false,
@@ -124,6 +125,7 @@ type SamlClientArgs = {
 
 type CreateSpArgs = {
     privateKey: string
+    platformId: string
 }
 
 export type IdpLoginResponse = {
