@@ -140,7 +140,24 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
     }
 
     const trimmedRecent = recentMessages.slice(startIdx)
-    const finalPayload = [summaryMessage, ...trimmedRecent]
+    const summaryText = `[Previous conversation summary]\n${summary}\n[End of summary — conversation continues below]`
+
+    // Anthropic rejects consecutive same-role messages. If the first recent
+    // message is also 'user', merge the summary into it instead of prepending
+    // a separate user message.
+    let finalPayload: ModelMessage[]
+    if (trimmedRecent[0]?.role === 'user') {
+        const mergedFirst: ModelMessage = {
+            ...trimmedRecent[0],
+            content: typeof trimmedRecent[0].content === 'string'
+                ? `${summaryText}\n\n${trimmedRecent[0].content}`
+                : summaryText,
+        }
+        finalPayload = [mergedFirst, ...trimmedRecent.slice(1)]
+    }
+    else {
+        finalPayload = [summaryMessage, ...trimmedRecent]
+    }
     const finalEstimate = Math.ceil(runningCharLen / CHARS_PER_TOKEN_ESTIMATE)
 
     if (finalEstimate > maxContext) {
