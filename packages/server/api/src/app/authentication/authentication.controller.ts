@@ -1,6 +1,5 @@
-import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-common'
 import { ApplicationEventName,
-    assertNotNullOrUndefined,
+    isNil,
     PrincipalType,
     SignInRequest,
     SignUpRequest,
@@ -9,8 +8,11 @@ import { ApplicationEventName,
 } from '@activepieces/shared'
 import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { applicationEvents } from '../helper/application-events'
+import { networkUtils } from '../helper/network-utils'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'
@@ -27,17 +29,19 @@ export const authenticationController: FastifyPluginAsyncZod = async (
             platformId: platformId ?? null,
         })
 
-        applicationEvents(request.log).sendUserEvent({
-            platformId: signUpResponse.platformId!,
-            userId: signUpResponse.id,
-            projectId: signUpResponse.projectId,
-            ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, {
-            action: ApplicationEventName.USER_SIGNED_UP,
-            data: {
-                source: 'credentials',
-            },
-        })
+        if (!isNil(signUpResponse.platformId)) {
+            applicationEvents(request.log).sendUserEvent({
+                platformId: signUpResponse.platformId,
+                userId: signUpResponse.id,
+                projectId: signUpResponse.projectId ?? undefined,
+                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            }, {
+                action: ApplicationEventName.USER_SIGNED_UP,
+                data: {
+                    source: 'credentials',
+                },
+            })
+        }
 
         return signUpResponse
     })
@@ -51,17 +55,17 @@ export const authenticationController: FastifyPluginAsyncZod = async (
             predefinedPlatformId,
         })
 
-        const responsePlatformId = response.platformId
-        assertNotNullOrUndefined(responsePlatformId, 'Platform ID is required')
-        applicationEvents(request.log).sendUserEvent({
-            platformId: responsePlatformId,
-            userId: response.id,
-            projectId: response.projectId,
-            ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, {
-            action: ApplicationEventName.USER_SIGNED_IN,
-            data: {},
-        })
+        if (!isNil(response.platformId)) {
+            applicationEvents(request.log).sendUserEvent({
+                platformId: response.platformId,
+                userId: response.id,
+                projectId: response.projectId ?? undefined,
+                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            }, {
+                action: ApplicationEventName.USER_SIGNED_IN,
+                data: {},
+            })
+        }
 
         return response
     })

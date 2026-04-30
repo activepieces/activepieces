@@ -2,10 +2,15 @@ import { z } from 'zod'
 import { OptionalArrayFromQuery } from '../../../core/common/base-model'
 import { Cursor } from '../../../core/common/seek-page'
 
+const coerceToString = z.preprocess(
+    (v) => (v === null || v === undefined ? v : String(v)),
+    z.string().nullable(),
+)
+
 export const CreateRecordsRequest = z.object({
     records: z.array(z.array(z.object({
         fieldId: z.string(),
-        value: z.string(),
+        value: coerceToString,
     }))),
     tableId: z.string(),
 })
@@ -15,7 +20,7 @@ export type CreateRecordsRequest = z.infer<typeof CreateRecordsRequest>
 export const UpdateRecordRequest = z.object({
     cells: z.array(z.object({
         fieldId: z.string(),
-        value: z.string(),
+        value: coerceToString,
     })).optional(),
     tableId: z.string(),
     agentUpdate: z.boolean().optional(),
@@ -32,13 +37,32 @@ export enum FilterOperator {
     LT = 'lt',
     LTE = 'lte',
     CO = 'co',
+    EXISTS = 'exists',
+    NOT_EXISTS = 'not_exists',
 }
 
-export const Filter = z.object({
+const valueFilter = <T extends FilterOperator>(op: T) => z.object({
     fieldId: z.string(),
+    operator: z.literal(op),
     value: z.string(),
-    operator: z.nativeEnum(FilterOperator).optional(),
 })
+
+const existenceFilter = <T extends FilterOperator>(op: T) => z.object({
+    fieldId: z.string(),
+    operator: z.literal(op),
+})
+
+export const Filter = z.discriminatedUnion('operator', [
+    valueFilter(FilterOperator.EQ),
+    valueFilter(FilterOperator.NEQ),
+    valueFilter(FilterOperator.GT),
+    valueFilter(FilterOperator.GTE),
+    valueFilter(FilterOperator.LT),
+    valueFilter(FilterOperator.LTE),
+    valueFilter(FilterOperator.CO),
+    existenceFilter(FilterOperator.EXISTS),
+    existenceFilter(FilterOperator.NOT_EXISTS),
+])
 
 export type Filter = z.infer<typeof Filter>
 

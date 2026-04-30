@@ -14,7 +14,7 @@ export const DashboardPageHeader = ({
       title={title}
       description={description}
       rightContent={children}
-      className="min-w-full z-30 "
+      className="min-w-full"
     />
   );
 };

@@ -1,4 +1,5 @@
 import { Client } from '@microsoft/microsoft-graph-client';
+import { getGraphBaseUrl } from './microsoft-cloud';
 
 type GraphRetryOptions = {
 	maxRetries?: number;
@@ -6,11 +7,12 @@ type GraphRetryOptions = {
 	maxDelayMs?: number;
 };
 
-export const createGraphClient = (accessToken: string): Client => {
+export const createGraphClient = (accessToken: string, cloud?: string | null): Client => {
 	return Client.initWithMiddleware({
 		authProvider: {
 			getAccessToken: () => Promise.resolve(accessToken),
 		},
+		baseUrl: getGraphBaseUrl(cloud),
 	});
 };
 
@@ -62,6 +64,27 @@ export const buildGraphErrorMessage = (error: any): string => {
 	const inner = err?.innerError ?? err?.innererror ?? {};
 	const requestId = inner?.['request-id'] ?? inner?.requestId ?? error?.requestId;
 	return `Graph error (${status}${code ? ` ${code}` : ''})${requestId ? ` [request-id: ${requestId}]` : ''}: ${message}`;
+};
+
+export const resolveMeetingId = async ({
+	client,
+	identifierType,
+	identifierValue,
+}: {
+	client: Client;
+	identifierType: string;
+	identifierValue: string;
+}): Promise<string> => {
+	if (identifierType === 'meetingId') return identifierValue;
+	const filter =
+		identifierType === 'joinWebUrl'
+			? `JoinWebUrl eq '${identifierValue}'`
+			: `joinMeetingIdSettings/joinMeetingId eq '${identifierValue}'`;
+	const response = await client.api('/me/onlineMeetings').filter(filter).get();
+	if (!response.value?.length) {
+		throw new Error('No meeting found with the provided identifier.');
+	}
+	return response.value[0].id as string;
 };
 
 export const withGraphRetry = async <T>(

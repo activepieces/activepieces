@@ -1,10 +1,12 @@
-import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-common'
 import { ApplicationEventName, assertNotNullOrUndefined, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../../helper/application-events'
+import { networkUtils } from '../../../helper/network-utils'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformService } from '../../../platform/platform.service'
 import { platformUtils } from '../../../platform/platform.utils'
 import { authnSsoSamlService } from './authn-sso-saml-service'
@@ -27,7 +29,7 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
         applicationEvents(req.log).sendUserEvent({
             platformId,
             userId: response.id,
-            projectId: response.projectId,
+            projectId: response.projectId ?? undefined,
             ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
         }, {
             action: ApplicationEventName.USER_SIGNED_UP,

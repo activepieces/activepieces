@@ -1,11 +1,12 @@
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { AppSystemProp } from '@activepieces/server-common'
 import { ApEdition, ApEnvironment, spreadIfDefined } from '@activepieces/shared'
 import { types } from '@electric-sql/pglite'
+import { vector } from '@electric-sql/pglite/vector'
 import { DataSource } from 'typeorm'
 import { PGliteDriver } from 'typeorm-pglite'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { commonProperties } from './database-connection'
 import { getMigrations } from './postgres-connection'
 
@@ -38,6 +39,7 @@ export const createPGliteDataSource = (): DataSource => {
         type: 'postgres',
         driver: new PGliteDriver({
             ...spreadIfDefined('dataDir', dataPath),
+            extensions: { vector },
             serializers: {
                 [types.BOOL]: (val: unknown): string => {
                     if (val === true || val === 'true' || val === 1) return 'TRUE'

@@ -15,24 +15,25 @@ type ThemeProviderProps = {
 type ThemeProviderState = {
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  forceLightMode: boolean;
+  setForceLightMode: (value: boolean) => void;
 };
 
 const initialState: ThemeProviderState = {
   theme: 'system',
   setTheme: () => null,
+  forceLightMode: false,
+  setForceLightMode: () => null,
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 const setFavicon = (url: string) => {
-  let link: HTMLLinkElement | null =
-    document.querySelector("link[rel*='icon']");
-  if (!link) {
-    link = document.createElement('link');
-    link.rel = 'shortcut icon';
-    document.head.appendChild(link);
-  }
+  document.querySelectorAll("link[rel*='icon']").forEach((el) => el.remove());
+  const link = document.createElement('link');
+  link.rel = 'icon';
   link.href = url;
+  document.head.appendChild(link);
 };
 
 export function ThemeProvider({
@@ -44,6 +45,7 @@ export function ThemeProvider({
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
+  const [forceLightMode, setForceLightMode] = useState(false);
   const branding = flagsHooks.useWebsiteBranding();
   useEffect(() => {
     if (!branding) {
@@ -52,7 +54,11 @@ export function ThemeProvider({
     }
     const root = window.document.documentElement;
 
-    const resolvedTheme = theme === 'system' ? 'light' : theme;
+    const resolvedTheme = forceLightMode
+      ? 'light'
+      : theme === 'system'
+      ? 'light'
+      : theme;
     root.classList.remove('light', 'dark');
     document.title = branding.websiteName;
     document.documentElement.style.setProperty(
@@ -89,7 +95,7 @@ export function ThemeProvider({
     }
 
     root.classList.add(resolvedTheme);
-  }, [theme, branding]);
+  }, [theme, branding, forceLightMode]);
 
   const value = {
     theme,
@@ -97,6 +103,8 @@ export function ThemeProvider({
       localStorage.setItem(storageKey, theme);
       setTheme(theme);
     },
+    forceLightMode,
+    setForceLightMode,
   };
 
   return (

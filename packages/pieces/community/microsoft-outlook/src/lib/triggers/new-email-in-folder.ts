@@ -1,4 +1,5 @@
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import {
 	AppConnectionValueForAuthProperty,
 	PiecePropValueSchema,
@@ -14,10 +15,12 @@ import { mailFolderIdDropdown } from '../common/props';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftOutlookAuth>, { folderId?: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, lastFetchEpochMS, propsValue }) => {
+		const cloud = auth.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(auth.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		const messages = [];

@@ -1,13 +1,13 @@
-import { apDayjs, AppSystemProp, getPlatformPlanNameKey } from '@activepieces/server-common'
+import { apDayjs } from '@activepieces/server-utils'
 import { ActivepiecesError, AiCreditsAutoTopUpState, ApEdition, ApEnvironment, apId, ErrorCode, FlowStatus, isCloudPlanButNotEnterprise, isNil, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PlatformUsageMetric, PRICE_ID_MAP, PRICE_NAMES, STANDARD_CLOUD_PLAN, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
+import { getPlatformPlanNameKey } from '../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformService } from '../../../platform/platform.service'
-import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { platformAiCreditsService } from './platform-ai-credits.service'
 import { PlatformPlanEntity } from './platform-plan.entity'
@@ -92,13 +92,12 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         return isCloudPlanButNotEnterprise(platformPlan.plan)
     },
     async getUsage(platformId: string): Promise<PlatformUsage> {
-        const projectIds = await projectService(log).getProjectIdsByPlatform(platformId)
-        const activeFlowsCount = await flowRepo().count({
-            where: {
-                projectId: In(projectIds),
-                status: FlowStatus.ENABLED,
-            },
-        })
+        const activeFlowsCount = await flowRepo()
+            .createQueryBuilder('flow')
+            .innerJoin('project', 'project', 'project.id = flow."projectId"')
+            .where('project."platformId" = :platformId', { platformId })
+            .andWhere('flow.status = :status', { status: FlowStatus.ENABLED })
+            .getCount()
         const aiCreditsUsage = await platformAiCreditsService(log).getUsage(platformId)
         return {
             activeFlows: activeFlowsCount,

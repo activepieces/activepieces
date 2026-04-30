@@ -1,23 +1,24 @@
 import { isNil } from '@activepieces/shared'
-import { progressService } from './lib/services/progress.service'
+import { runProgressService } from './lib/handler/run-progress'
+import { ssrfGuard } from './lib/network/ssrf-guard'
 import { workerSocket } from './lib/worker-socket'
+
+ssrfGuard.install()
 
 const SANDBOX_ID = process.env.SANDBOX_ID
 process.title = `sandbox-${SANDBOX_ID}`
 
 if (!isNil(SANDBOX_ID)) {
     workerSocket.init(SANDBOX_ID)
-    progressService.init()
+    runProgressService.init()
 }
 
 process.on('uncaughtException', (error) => {
-    void workerSocket.sendError(error).catch().finally(() => {
-        process.exit(3)
-    })
+    workerSocket.sendError(error)
+    process.exit(3)
 })
 
 process.on('unhandledRejection', (reason) => {
-    void workerSocket.sendError(reason).catch().finally(() => {
-        process.exit(4)
-    })
+    workerSocket.sendError(reason)
+    process.exit(4)
 })

@@ -1,4 +1,4 @@
-import type { Label as LabelPrimitive } from 'radix-ui';
+import { t } from 'i18next';
 import { Slot } from 'radix-ui';
 import * as React from 'react';
 import {
@@ -11,7 +11,7 @@ import {
   type FieldValues,
 } from 'react-hook-form';
 
-import { Label } from '@/components/ui/label';
+import { Label, type LabelProps } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 const Form = FormProvider;
@@ -74,10 +74,7 @@ function FormItem({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-function FormLabel({
-  className,
-  ...props
-}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+function FormLabel({ className, ...props }: LabelProps) {
   const { error, formItemId } = useFormField();
 
   return (
@@ -146,7 +143,7 @@ function FormError({
 
 function FormMessage({ className, ...props }: React.ComponentProps<'p'>) {
   const { error, formMessageId } = useFormField();
-  const body = error ? String(error?.message ?? '') : props.children;
+  const body = error ? t(String(error?.message ?? '')) : props.children;
 
   if (!body) {
     return null;

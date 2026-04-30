@@ -1,5 +1,9 @@
 {
   "Microsoft 365 Planner is part of the Microsoft 365 suite, offering lightweight task and bucket-based planning for teams. This integration supports creating plans, buckets, tasks, fetching them, deleting them, and custom API calls.": "O Planejador do Microsoft 365 faz parte do pacote Microsoft 365, oferecendo uma tarefa leve e um planejamento baseado em baldes para equipes. Esta integração suporta a criação de planos, buckets, tarefas, buscando-os, excluindo-as e chamadas de API personalizadas.",
+  "Cloud Environment": "Ambiente de Nuvem",
+  "Select your Microsoft cloud environment.": "Selecione seu ambiente de nuvem da Microsoft.",
+  "Commercial (Global)": "Comercial (Global)",
+  "US Government (GCC High)": "Governo dos EUA (GCC High)",
   "\nIf you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n - Group.Read.All\n - Tasks.ReadWrite\n - User.Read": "\nIf you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n - Group.Read.All\n - Tasks.ReadWrite\n - User.Read",
   "Create Plan": "Criar plano",
   "Create Bucket": "Criar Balde",

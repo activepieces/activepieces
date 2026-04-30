@@ -44,7 +44,7 @@ const ApErrorDialog = () => {
             </div>
           </div>
         </DialogHeader>
-        <div className="w-full flex flex-col items-stretch mt-2">
+        <div className="w-full flex flex-col items-stretch mt-2 max-h-[60vh] overflow-y-auto">
           <CollapsibleJson
             json={params?.error}
             label={t('Technical Details')}

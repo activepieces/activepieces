@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { BodyType } from '@microsoft/microsoft-graph-types';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
-  PauseType,
 } from '@activepieces/shared';
 import { microsoftOutlookAuth } from '../common/auth';
 
@@ -46,10 +46,13 @@ export const requestApprovalInMail = createAction({
         assertNotNullOrUndefined(subject, 'subject');
         assertNotNullOrUndefined(body, 'body');
 
-        const approvalLink = context.generateResumeUrl({
+        const waitpoint = await context.run.createWaitpoint({
+          type: 'WEBHOOK',
+        });
+        const approvalLink = waitpoint.buildResumeUrl({
           queryParams: { action: 'approve' },
         });
-        const disapprovalLink = context.generateResumeUrl({
+        const disapprovalLink = waitpoint.buildResumeUrl({
           queryParams: { action: 'disapprove' },
         });
 
@@ -64,10 +67,12 @@ export const requestApprovalInMail = createAction({
         </div>
       `;
 
+        const cloud = context.auth.props?.['cloud'] as string | undefined;
         const client = Client.initWithMiddleware({
           authProvider: {
             getAccessToken: () => Promise.resolve(context.auth.access_token),
           },
+          baseUrl: getGraphBaseUrl(cloud),
         });
 
         const mailPayload = {
@@ -89,12 +94,7 @@ export const requestApprovalInMail = createAction({
           message: mailPayload,
           saveToSentItems: true,
         });
-        context.run.pause({
-          pauseMetadata: {
-            type: PauseType.WEBHOOK,
-            response: {},
-          },
-        });
+        context.run.waitForWaitpoint(waitpoint.id);
 
         return {
           approved: false, // default approval is false

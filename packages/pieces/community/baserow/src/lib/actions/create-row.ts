@@ -1,57 +1,53 @@
-import {
-  DynamicPropsValue,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
-import { baserowCommon, makeClient } from '../common';
-import { BaserowFieldType } from '../common/constants';
+import {
+  baserowCommon,
+  ensureSelectOptionsExist,
+  formatFieldValues,
+  makeClient,
+} from '../common';
 
 export const createRowAction = createAction({
   name: 'baserow_create_row',
   displayName: 'Create Row',
-  description: 'Creates a new row.',
+  description: 'Creates a new row in a table.',
   auth: baserowAuth,
   props: {
-    table_id: Property.Number({
-      displayName: 'Table ID',
-      required: true,
-      description:
-        "Please enter the table ID where the row must be created in. You can find the ID by clicking on the three dots next to the table. It's the number between brackets.",
-    }),
+    table_id: baserowCommon.tableId(),
     table_fields: baserowCommon.tableFields(true),
+    create_missing_select_options: Property.Checkbox({
+      displayName: 'Create missing select options',
+      description:
+        'When enabled, single/multi-select values that do not yet exist in the field will be added before creating the row. Existing options are preserved.',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run(context) {
     const table_id = context.propsValue.table_id!;
     const tableFieldsInput = context.propsValue.table_fields!;
-    const formattedTableFields: DynamicPropsValue = {};
+    const createMissingSelectOptions = context.propsValue.create_missing_select_options ?? false;
 
-    const client = makeClient(
-      context.auth.props
-    );
+    const client = await makeClient(context.auth);
     const tableSchema = await client.listTableFields(table_id);
 
-    // transform props value to related baserow value
-    const fieldIDTypeMap: { [key: string]: string } = {};
+    const fieldTypeMap: Record<string, string> = {};
     for (const column of tableSchema) {
-      fieldIDTypeMap[column.name] = column.type;
+      fieldTypeMap[column.name] = column.type;
     }
 
-    Object.keys(tableFieldsInput).forEach((key) => {
-      const fieldType: string = fieldIDTypeMap[key];
-      if (fieldType === BaserowFieldType.LINK_TO_TABLE) {
-        formattedTableFields[key] = tableFieldsInput[key].map((id: string) =>
-          parseInt(id, 10)
-        );
-      } else if (fieldType === BaserowFieldType.MULTIPLE_COLLABORATORS) {
-        formattedTableFields[key] = tableFieldsInput[key].map((id: string) => ({
-          id: parseInt(id, 10),
-        }));
-      } else {
-        formattedTableFields[key] = tableFieldsInput[key];
-      }
+    const formattedFields = formatFieldValues(tableFieldsInput, fieldTypeMap, {
+      skipEmpty: true,
     });
 
-    return await client.createRow(table_id, formattedTableFields);
+    if (createMissingSelectOptions) {
+      await ensureSelectOptionsExist({
+        fields: tableSchema,
+        payload: formattedFields,
+        client,
+      });
+    }
+
+    return await client.createRow(table_id, formattedFields);
   },
 });

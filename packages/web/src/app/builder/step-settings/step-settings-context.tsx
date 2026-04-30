@@ -21,8 +21,8 @@ import { UseFormReturn } from 'react-hook-form';
 import { z, ZodObject } from 'zod';
 
 import { formUtils } from '@/features/pieces';
-const numberReplacement = 'anyOf[0]items';
-const stringReplacement = 'properties.';
+const numberReplacement = 'def.options.0.element';
+const stringReplacement = 'shape.';
 const createUpdatedSchemaKey = (propertyKey: string) => {
   return propertyKey
     .split('.')
@@ -87,7 +87,10 @@ export const StepSettingsProvider = ({
           newFieldPropertyMap,
           undefined,
         );
-        const currentSchema = { ...prevSchema };
+        const currentSchema = Object.create(
+          Object.getPrototypeOf(prevSchema),
+          Object.getOwnPropertyDescriptors(prevSchema),
+        );
         const keyUpdated = createUpdatedSchemaKey(key);
         setAtPath(currentSchema, keyUpdated, newFieldSchema);
         return currentSchema;

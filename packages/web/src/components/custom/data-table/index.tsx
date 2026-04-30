@@ -262,11 +262,14 @@ export function DataTable<
     });
   }, []);
 
-  useDeepCompareEffect(() => {
-    onSelectedRowsChange?.(
-      table.getSelectedRowModel().rows.map((row) => row.original),
-    );
-  }, [table.getSelectedRowModel().rows]);
+  const rowSelection = table.getState().rowSelection;
+  const selectedRowOriginals = React.useMemo(
+    () => table.getSelectedRowModel().rows.map((row) => row.original),
+    [rowSelection],
+  );
+  useEffect(() => {
+    onSelectedRowsChange?.(selectedRowOriginals);
+  }, [selectedRowOriginals]);
 
   useEffect(() => {
     if (hidePagination) {
@@ -316,7 +319,6 @@ export function DataTable<
   return (
     <div
       className={cn(
-        '-mx-4',
         virtualizeRows ? 'flex flex-col flex-1 min-h-0' : undefined,
       )}
     >
@@ -359,12 +361,7 @@ export function DataTable<
       >
         <Table className="table-fixed">
           <TableHeader
-            className={cn(
-              'border-t',
-              virtualizeRows
-                ? 'sticky top-0 z-10 bg-background'
-                : 'bg-background',
-            )}
+            className={cn(virtualizeRows ? 'sticky top-0 z-10' : undefined)}
           >
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
@@ -683,9 +680,7 @@ export function DataTable<
       )}
       {bulkActions.length > 0 && (
         <DataTableBulkActions
-          selectedRows={table
-            .getSelectedRowModel()
-            .rows.map((row) => row.original)}
+          selectedRows={selectedRowOriginals}
           actions={bulkActions}
           resetSelection={resetSelection}
         />

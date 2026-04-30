@@ -1,5 +1,7 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import axiosRetry from 'axios-retry';
+import { HttpProxyAgent } from 'http-proxy-agent';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import { DelegatingAuthenticationConverter } from '../core/delegating-authentication-converter';
 import { BaseHttpClient } from '../core/base-http-client';
 import { HttpError } from '../core/http-error';
@@ -9,6 +11,8 @@ import { HttpMethod } from '../core/http-method';
 import { HttpRequest } from '../core/http-request';
 import { HttpResponse } from '../core/http-response';
 import { HttpRequestBody } from '../core/http-request-body';
+
+
 
 export class AxiosHttpClient extends BaseHttpClient {
   constructor(
@@ -46,6 +50,18 @@ export class AxiosHttpClient extends BaseHttpClient {
         timeout,
         responseType,
       };
+
+      const httpProxy = process.env['HTTP_PROXY'] ?? process.env['http_proxy'];
+      const httpsProxy = process.env['HTTPS_PROXY'] ?? process.env['https_proxy'];
+      if (httpProxy) {
+        config.httpAgent = new HttpProxyAgent(httpProxy);
+      }
+      if (httpsProxy) {
+        config.httpsAgent = new HttpsProxyAgent(httpsProxy);
+      }
+      if (httpProxy || httpsProxy) {
+        config.proxy = false;
+      }
 
       if (request.followRedirects === false) {
         config.maxRedirects = 0;

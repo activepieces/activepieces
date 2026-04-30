@@ -1,6 +1,7 @@
 import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { getNotebooksDropdown, getSectionsByNotebookDropdown } from '../common';
 import { oneNoteAuth } from '../auth';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
@@ -10,10 +11,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof oneNoteAuth>, { 
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue, store, lastFetchEpochMS }) => {
 		const sectionId = propsValue.section_id;
+		const cloud = auth.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(auth.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		try {

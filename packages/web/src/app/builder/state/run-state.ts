@@ -3,7 +3,6 @@ import {
   FlowActionType,
   FlowOperationType,
   FlowRun,
-  FlowTrigger,
   flowOperations,
   flowStructureUtil,
   FlowVersion,
@@ -14,7 +13,6 @@ import {
   stringifyNullOrUndefined,
   WebsocketClientEvent,
 } from '@activepieces/shared';
-import dayjs from 'dayjs';
 import { Socket } from 'socket.io-client';
 import { StoreApi } from 'zustand';
 
@@ -178,6 +176,21 @@ export const createRunState = (
               stepName,
               response.standardError === '' ? null : response.standardError,
             );
+            set((state) => {
+              const failedStep = flowStructureUtil.getStep(
+                stepName,
+                state.flowVersion.trigger,
+              );
+              return {
+                flowVersion: flowOperations.apply(state.flowVersion, {
+                  type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+                  request: {
+                    stepName,
+                    sampleDataSettings: failedStep?.settings.sampleData ?? {},
+                  },
+                }),
+              };
+            });
           }
           if (step.type === FlowActionType.CODE) {
             get().setConsoleLogs(
@@ -247,29 +260,20 @@ export const createRunState = (
         internalErrorToast();
         return;
       }
-      const clonedStep: FlowAction | FlowTrigger = JSON.parse(
-        JSON.stringify(step),
-      );
-      clonedStep.settings.sampleData = {
-        ...clonedStep.settings.sampleData,
-        lastTestDate: dayjs().toISOString(),
-      };
-      // set the latest test date in the flow version locally
-      if (flowStructureUtil.isAction(step.type)) {
-        set((state) => ({
+
+      set((state) => {
+        // only update the last test date
+        return {
           flowVersion: flowOperations.apply(state.flowVersion, {
-            type: FlowOperationType.UPDATE_ACTION,
-            request: clonedStep as FlowAction,
+            type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+            request: {
+              stepName: step.name,
+              sampleDataSettings: step.settings.sampleData ?? {},
+            },
           }),
-        }));
-      } else {
-        set((state) => ({
-          flowVersion: flowOperations.apply(state.flowVersion, {
-            type: FlowOperationType.UPDATE_TRIGGER,
-            request: clonedStep as FlowTrigger,
-          }),
-        }));
-      }
+        };
+      });
+
       setSampleDataLocally({
         stepName: step.name,
         type: 'output',

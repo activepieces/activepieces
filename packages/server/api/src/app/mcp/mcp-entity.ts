@@ -19,11 +19,20 @@ export const McpServerEntity = new EntitySchema<McpServerWithSchema>({
             type: String,
             nullable: false,
         },
+        enabledTools: {
+            type: 'jsonb',
+            nullable: true,
+        },
     },
     indices: [
         {
             name: 'mcp_server_project_id',
             columns: ['projectId'],
+            unique: true,
+        },
+        {
+            name: 'idx_mcp_server_token',
+            columns: ['token'],
             unique: true,
         },
     ],

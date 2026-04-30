@@ -1,0 +1,49 @@
+---
+title: "Redis QueueEvents Overload — Mar 20, 2026"
+---
+
+## Summary
+
+On Friday, March 20, 2026, BullMQ's `QueueEvents` caused every worker to broadcast job lifecycle events to all connected app instances. As traffic grew, Redis output buffers grew faster than clients could consume them, eventually filling Redis memory. Once memory was exhausted, the `runsMetadata` queue stopped consuming, workers crashed, and flow execution logs were delayed up to **8 hours** before appearing in the UI.
+
+The incident lasted the entire day. Mitigation involved repeated server restarts and manual cleanup to minimize customer impact while the root cause was identified. The fix was to revert the `QueueEvents` change.
+
+## Impact
+
+- Redis memory filled up, causing all queue processing to stall.
+- Workers crashed and could not recover automatically.
+- Flow execution logs were delayed up to **8 hours** before appearing in the UI.
+- No executions were lost — all `runsMetadata` jobs were eventually resumed and indexed.
+
+## Timeline
+
+All times are in UTC.
+
+1. **Mar 20, morning** — Incident begins. Redis memory usage spikes as `QueueEvents` broadcast volume overwhelms output buffers. The `runsMetadata` queue stops consuming and workers start crashing.
+2. **Mar 20, during the day** — Customers report missing/delayed execution logs on the community. Team begins investigating.
+3. **Mar 20, during the day** — Mitigation: repeated server restarts and manual cleanup of stalled jobs to keep customer impact minimal while root cause is identified.
+4. **Mar 20, end of day** — Root cause identified as `QueueEvents` broadcasting. Change reverted. Redis memory recovers, workers resume, and all backed-up `runsMetadata` jobs are processed and indexed.
+
+## Root Cause
+
+BullMQ's `QueueEvents` feature subscribes each worker instance to a Redis pub/sub stream of all job lifecycle events (started, completed, failed, etc.) for the queues it listens to. In a multi-instance deployment, this means **every** app server receives **every** event from **every** other server.
+
+As traffic grew, the volume of events exceeded the rate at which clients could read them. Redis buffers these unread events in per-client output buffers. When the cumulative buffer size exceeded available Redis memory, Redis could no longer accept writes. The `runsMetadata` queue — which records execution logs for the UI — was the first visible casualty, but all queue operations were degraded.
+
+## Detection & Monitoring Gaps
+
+- **Detected by customers on the community**, not by automated alerting.
+- No alerting specifically on Redis output buffer growth or pub/sub subscriber lag.
+- No automated detection of `runsMetadata` queue stalling or worker crash loops.
+
+## Action Items
+
+| Action Item | Status |
+|---|---|
+| Revert `QueueEvents` adoption to stop the event broadcast storm | Done |
+| Add alerting on Redis memory usage and output buffer growth | To do |
+| Add monitoring for `runsMetadata` queue consumption lag | To do |
+
+## Improvements Done
+
+- **QueueEvents reverted** — Removed the `QueueEvents` listener so workers no longer broadcast lifecycle events to all instances, eliminating the Redis output buffer growth.

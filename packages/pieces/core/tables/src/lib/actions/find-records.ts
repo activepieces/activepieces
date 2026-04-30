@@ -1,4 +1,4 @@
-import { createAction, DynamicPropsValue, PieceAuth, Property, PropertyContext } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@activepieces/shared';
@@ -57,7 +57,7 @@ export const findRecords = createAction({
                 options: {
                   options: fields.map((field) => ({
                     label: field.name,
-                    value: { id: field.id, type: field.type, name: field.name } as FieldInfo,
+                    value: { id: field.externalId, type: field.type, name: field.name } as FieldInfo,
                   })),
                 },
               }),
@@ -73,12 +73,14 @@ export const findRecords = createAction({
                     { label: 'Less Than', value: FilterOperator.LT },
                     { label: 'Less Than or Equal', value: FilterOperator.LTE },
                     { label: 'Contains', value: FilterOperator.CO },
+                    { label: 'Exists', value: FilterOperator.EXISTS },
+                    { label: 'Does not exist', value: FilterOperator.NOT_EXISTS },
                   ],
                 },
               }),
               value: Property.ShortText({
                 displayName: 'Value',
-                required: true,
+                required: false,
               }),
             },
           }),
@@ -92,6 +94,10 @@ export const findRecords = createAction({
     const filtersArray: { field: FieldInfo; operator: FilterOperator; value: unknown }[] = filters?.['filters'] ?? [];
 
     for (const filter of filtersArray) {
+      if (filter.operator === FilterOperator.EXISTS || filter.operator === FilterOperator.NOT_EXISTS) {
+        continue;
+      }
+
       const value = filter.value;
       const fieldType = filter.field.type;
 
@@ -124,11 +130,22 @@ export const findRecords = createAction({
       await propsValidation.validateZod({ value }, schema);
     }
 
-    const parsedFilters: Filter[] = filtersArray.map((filter) => ({
-      fieldId: filter.field.id,
-      operator: filter.operator,
-      value: filter.value as string,
-    }));
+    const tableFields = await tablesCommon.getTableFields({ tableId, context });
+
+    const parsedFilters: Filter[] = filtersArray.map((filter) => {
+      const fieldId = tableFields.find((f) => f.externalId === filter.field.id)?.id ?? filter.field.id;
+      if (filter.operator === FilterOperator.EXISTS || filter.operator === FilterOperator.NOT_EXISTS) {
+        return {
+          fieldId,
+          operator: filter.operator,
+        };
+      }
+      return {
+        fieldId,
+        operator: filter.operator,
+        value: filter.value as string,
+      };
+    });
 
     const request: ListRecordsRequest = {
       tableId,

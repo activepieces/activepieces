@@ -1,6 +1,5 @@
-import { McpServerStatus, FlowStatus } from '@activepieces/shared';
+import { McpServerStatus } from '@activepieces/shared';
 import { t } from 'i18next';
-import { CheckCircle, CircleDot } from 'lucide-react';
 
 import {
   Field,
@@ -9,12 +8,13 @@ import {
   FieldLabel,
 } from '@/components/custom/field';
 import { LoadingSpinner } from '@/components/custom/spinner';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { McpCredentials } from './mcp-credentials';
+import { McpFlows } from './mcp-flows';
+import { McpTools } from './mcp-tools';
 import { mcpHooks } from './utils/mcp-hooks';
 
 export const McpServerSettings = () => {
@@ -59,68 +59,49 @@ export const McpServerSettings = () => {
           disabled={isUpdating}
         />
       </Field>
-      {mcpServer?.status === McpServerStatus.ENABLED && (
-        <div className="mt-8 space-y-8">
-          <div>
-            <h3 className="font-semibold text-base mb-2">
-              {t('Connection Details')}
-            </h3>
-            {mcpServer && <McpCredentials mcpServer={mcpServer} />}
-          </div>
-          <div>
-            <h3 className="font-semibold text-base mb-2">
-              {t('Available Flows')}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {t(
-                'Any flow that has the "MCP Trigger" turned on will show up here and can be accessed from your MCP server.',
-              )}
-            </p>
-            <div className="space-y-2">
-              {(mcpServer?.flows?.length ?? 0) === 0 ? (
-                <div className="text-sm text-muted-foreground">
-                  {t('No MCP flows available')}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2 max-w-xs">
-                  {mcpServer.flows.map((flow) => {
-                    const isEnabled = flow.status === FlowStatus.ENABLED;
-                    const flowUrl = `/project/${flow.projectId}/flow/${flow.id}`;
-                    return (
-                      <div
-                        key={flow.id}
-                        className="flex items-center gap-2 w-full max-w-xs"
-                        style={{ minHeight: 32 }}
-                      >
-                        <div className="flex-1 min-w-0 overflow-hidden">
-                          <Button
-                            variant="link"
-                            className="text-sm font-medium p-0 h-auto min-w-0 text-secondary break-all"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              window.open(
-                                flowUrl,
-                                '_blank',
-                                'noopener,noreferrer',
-                              );
-                            }}
-                            tabIndex={-1}
-                          >
-                            {flow.version.displayName}
-                          </Button>
-                        </div>
-                        <StatusIconWithText
-                          icon={isEnabled ? CheckCircle : CircleDot}
-                          text={isEnabled ? t('On') : t('Off')}
-                          variant={isEnabled ? 'success' : 'default'}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
+
+      {isEnabled && mcpServer && (
+        <div className="mt-6">
+          <Tabs defaultValue="connection">
+            <TabsList>
+              <TabsTrigger value="connection">{t('Connection')}</TabsTrigger>
+              <TabsTrigger value="tools">{t('Tools')}</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="connection" className="mt-4 pb-6" tabIndex={-1}>
+              <McpCredentials />
+            </TabsContent>
+
+            <TabsContent
+              value="tools"
+              className="mt-4 space-y-6 pb-6"
+              tabIndex={-1}
+            >
+              <div>
+                <h3 className="font-semibold text-base mb-1">
+                  {t('Internal Tools')}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {t(
+                    'Control which built-in Activepieces tools are available to agents via this MCP server.',
+                  )}
+                </p>
+                <McpTools mcpServer={mcpServer} />
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-base mb-1">
+                  {t('Your Flows')}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {t(
+                    'Flows with the MCP Trigger are exposed as tools on this server.',
+                  )}
+                </p>
+                <McpFlows mcpServer={mcpServer} />
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       )}
     </div>

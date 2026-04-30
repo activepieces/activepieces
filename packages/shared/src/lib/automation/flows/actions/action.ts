@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { STEP_NAME_REGEX } from '../../../core/common'
 import { VersionType } from '../../pieces'
 import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
@@ -21,10 +22,11 @@ export enum BranchExecutionType {
 }
 
 const commonActionProps = {
-    name: z.string(),
+    name: z.string().regex(STEP_NAME_REGEX),
     valid: z.boolean(),
     displayName: z.string(),
     skip: z.boolean().optional(),
+    lastUpdatedDate: z.string(),
 }
 const commonActionSettings = {
     sampleData: SampleDataSetting.optional(),
@@ -65,7 +67,7 @@ export const CodeActionSchema = z.object({
     type: z.literal(FlowActionType.CODE),
     settings: CodeActionSettings,
 })
-export const PieceActionSettings = z.object({
+const pieceActionSettingsFields = {
     ...commonActionSettings,
     propertySettings: z.record(z.string(), PropertySettings),
     pieceName: z.string(),
@@ -73,7 +75,12 @@ export const PieceActionSettings = z.object({
     actionName: z.string().optional(),
     input: z.record(z.string(), z.unknown()),
     errorHandlingOptions: ActionErrorHandlingOptions,
+}
+
+export const PieceActionSettings = z.object({
+    ...pieceActionSettingsFields,
 })
+
 export type PieceActionSettings = z.infer<typeof PieceActionSettings>
 
 export const PieceActionSchema = z.object({
@@ -314,6 +321,7 @@ type BaseActionProps = {
     valid: boolean
     displayName: string
     skip?: boolean
+    lastUpdatedDate: string
 }
 
 export type FlowAction =

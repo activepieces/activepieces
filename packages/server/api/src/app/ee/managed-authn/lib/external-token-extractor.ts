@@ -49,6 +49,8 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
                         filterType: piecesFilterType ?? PiecesFilterType.NONE,
                         tags: piecesTags ?? [],
                     },
+                    concurrencyPoolKey: payload.concurrencyPoolKey,
+                    concurrencyPoolLimit: payload.concurrencyPoolLimit,
                 }
             }
             catch (error) {
@@ -130,6 +132,8 @@ function externalTokenPayload() {
             filterType: z.nativeEnum(PiecesFilterType),
             tags: z.array(z.string()).optional(),
         }).optional(),
+        concurrencyPoolKey: z.string().optional(),
+        concurrencyPoolLimit: z.number().int().positive().optional(),
     })
 
     const v3 = v2.omit({ pieces: true }).extend({
@@ -157,6 +161,8 @@ export type ExternalPrincipal = {
         tags: string[]
     }
     projectDisplayName?: string
+    concurrencyPoolKey?: string
+    concurrencyPoolLimit?: number
 }
 
 type GetSigningKeyParams = {

@@ -1,7 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { gmailAuth } from '../auth';
+import { gmailAuth, createGoogleClient } from '../auth';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { getFirstFiveOrAll } from '../common/data';
 import { isNil } from '@activepieces/shared';
 
@@ -16,8 +15,7 @@ export const gmailNewLabelTrigger = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 
     const response = await gmail.users.labels.list({
@@ -33,8 +31,7 @@ export const gmailNewLabelTrigger = createTrigger({
     await context.store.delete(TRIGGER_KEY);
   },
   async test(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 
     const response = await gmail.users.labels.list({
@@ -49,8 +46,7 @@ export const gmailNewLabelTrigger = createTrigger({
     const existingIds = (await context.store.get<string>(TRIGGER_KEY)) ?? '[]';
     const parsedExistingIds = JSON.parse(existingIds) as string[];
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 

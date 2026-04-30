@@ -1,7 +1,7 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getTaskListsDropdown } from '../common';
+import { getTaskListsDropdown, createTodoClient } from '../common';
 import { microsoftToDoAuth } from '../auth';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 
 import { TodoTask } from '@microsoft/microsoft-graph-types';
 
@@ -48,11 +48,7 @@ export const findTaskByTitleAction = createAction({
 		const { auth, propsValue } = context;
 		const { title, task_list_id, match_type } = propsValue;
 
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-		});
+		const client = createTodoClient(auth);
 
 		let titleFilterString = '';
 		switch (match_type) {

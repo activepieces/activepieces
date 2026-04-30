@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { hedyAuth } from '../../auth';
-import { HedyApiClient } from '../../common/client';
+import { createClient } from '../../common/client';
 import { commonProps } from '../../common/props';
 import { PaginatedResponse, Topic } from '../../common/types';
 import { assertLimit } from '../../common/validation';
@@ -31,7 +31,7 @@ export const listTopics = createAction({
     limit: commonProps.limit,
   },
   async run(context) {
-    const client = new HedyApiClient(context.auth.secret_text);
+    const client = createClient(context.auth);
     const { returnAll, limit } = context.propsValue as {
       returnAll?: boolean;
       limit?: number;

@@ -6,7 +6,7 @@ import { isNil, OAuth2GrantType, PieceScope } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Package, Hash, GitBranch, Puzzle } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
@@ -36,6 +36,7 @@ const PlatformPiecesPage = () => {
     searchQuery,
     includeTags: true,
     includeHidden: true,
+    isTableQuery: true,
   });
 
   const { refetch: refetchPiecesOAuth2AppsMap } =
@@ -140,10 +141,6 @@ const PlatformPiecesPage = () => {
       [],
     );
 
-  const [selectedPieces, setSelectedPieces] = useState<
-    PieceMetadataModelSummary[]
-  >([]);
-
   return (
     <>
       <DashboardPageHeader
@@ -188,9 +185,9 @@ const PlatformPiecesPage = () => {
           isLoading={isLoading}
           bulkActions={[
             {
-              render: () => (
+              render: (selectedRows) => (
                 <ApplyTags
-                  selectedPieces={selectedPieces}
+                  selectedPieces={selectedRows}
                   onApplyTags={() => refetchPieces()}
                 />
               ),
@@ -205,7 +202,6 @@ const PlatformPiecesPage = () => {
             />,
           ]}
           selectColumn={true}
-          onSelectedRowsChange={setSelectedPieces}
           virtualizeRows={true}
           hidePagination={true}
         />

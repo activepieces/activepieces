@@ -89,6 +89,8 @@ const StepSettingsContainer = () => {
       const cleanedCurrentValues = formUtils.removeUndefinedFromInput(
         currentValuesRef.current,
       );
+      const valid = Object.keys(result.errors).length === 0;
+      cleanedNewValues.valid = valid;
       if (
         cleanedNewValues.type === FlowTriggerType.EMPTY ||
         (isNil(pieceModel) &&
@@ -105,9 +107,6 @@ const StepSettingsContainer = () => {
       ) {
         return result;
       }
-      const valid = Object.keys(result.errors).length === 0;
-      const latestSampleData = selectedStepRef.current.settings.sampleData;
-      cleanedNewValues.settings.sampleData = latestSampleData;
       //We need to copy the object because the form is using the same object reference
       currentValuesRef.current = JSON.parse(JSON.stringify(cleanedNewValues));
       if (cleanedNewValues.type === FlowTriggerType.PIECE) {
@@ -159,6 +158,7 @@ const StepSettingsContainer = () => {
   }, []);
 
   const { height, setHeight } = useResizableVerticalPanelsContext();
+  const initialHeightRef = useRef(height);
 
   return (
     <Form {...form}>
@@ -209,7 +209,7 @@ const StepSettingsContainer = () => {
           <ResizablePanelGroup orientation="vertical">
             <ResizablePanel className="min-h-[80px]">
               <ScrollArea className="h-full">
-                <div className="w-full my-2 px-3">
+                <div className="w-full my-3 px-3">
                   {stepMetadata && <StepInfo step={selectedStep} />}
                 </div>
                 <div
@@ -279,7 +279,7 @@ const StepSettingsContainer = () => {
               <>
                 <ResizableHandle withHandle={true} />
                 <ResizablePanel
-                  defaultSize={`${height}%`}
+                  defaultSize={`${initialHeightRef.current}%`}
                   onResize={(panelSize) => setHeight(panelSize.asPercentage)}
                   className="min-h-[130px]"
                 >
@@ -313,5 +313,7 @@ StepSettingsContainer.displayName = 'StepSettingsContainer';
 export { StepSettingsContainer };
 const stripSampleData = (step: FlowAction | FlowTrigger) => {
   const { sampleData: _, ...settingsWithoutSampleData } = step.settings;
-  return { ...step, settings: settingsWithoutSampleData };
+  const { lastUpdatedDate: __, ...stepWithoutMetadata } = step;
+
+  return { ...stepWithoutMetadata, settings: settingsWithoutSampleData };
 };

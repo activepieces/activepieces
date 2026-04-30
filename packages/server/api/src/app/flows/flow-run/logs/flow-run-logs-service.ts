@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../../ee/custom-domains/domain-helper'
 import { fileService } from '../../../file/file.service'
-import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
+import { JwtAudience, JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 
 export const flowRunLogsService = (log: FastifyBaseLogger) => {
     return {
@@ -13,6 +13,7 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
                 key: await jwtUtils.getJwtSecret(),
                 algorithm: JwtSignAlgorithm.HS256,
                 issuer: null,
+                audience: JwtAudience.FLOW_RUN_LOG,
             })
             return payload
         },
@@ -27,6 +28,7 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
                 key: await jwtUtils.getJwtSecret(),
                 algorithm: JwtSignAlgorithm.HS256,
                 expiresInSeconds: dayjs.duration(100, 'year').asSeconds(),
+                audience: JwtAudience.FLOW_RUN_LOG,
             })
             return domainHelper.getApiUrlForWorker({ path: `/v1/flow-runs/logs?token=${token}`, platformId: null })
         },
@@ -45,14 +47,15 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
             await upsertFile(request, log, content)
         },
         async getLogs(request: GetLogsParams): Promise<ExecutioOutputFile | null> {
-            const file = await fileService(log).getDataOrUndefined({
-                fileId: request.logsFileId,
+            const result = await fileService(log).getDataOrUndefined({
                 projectId: request.projectId,
+                fileId: request.logsFileId,
+                type: FileType.FLOW_RUN_LOG,
             })
-            if (isNil(file)) {
+            if (isNil(result)) {
                 return null
             }
-            return JSON.parse(file.data.toString('utf-8'))
+            return JSON.parse(result.data.toString('utf-8'))
         },
     }
 }
@@ -64,7 +67,7 @@ function upsertFile(request: UploadLogsToken, log: FastifyBaseLogger, content: B
         data: content,
         size: content?.length ?? 0,
         type: FileType.FLOW_RUN_LOG,
-        compression: FileCompression.NONE,
+        compression: FileCompression.ZSTD,
         metadata: {
             flowRunId: request.flowRunId,
             projectId: request.projectId,

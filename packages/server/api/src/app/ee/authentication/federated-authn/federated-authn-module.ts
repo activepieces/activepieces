@@ -1,13 +1,15 @@
-import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-common'
 import {
     ApplicationEventName,
-
     ClaimTokenRequest,
+    isNil,
     ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../../helper/application-events'
+import { networkUtils } from '../../../helper/network-utils'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformUtils } from '../../../platform/platform.utils'
 import { federatedAuthnService } from './federated-authn-service'
 
@@ -31,17 +33,19 @@ const federatedAuthnController: FastifyPluginAsyncZod = async (app) => {
             platformId: platformId ?? undefined,
             code: req.body.code,
         })
-        applicationEvents(req.log).sendUserEvent({
-            platformId: response.platformId!,
-            userId: response.id,
-            projectId: response.projectId,
-            ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, {
-            action: ApplicationEventName.USER_SIGNED_UP,
-            data: {
-                source: 'sso',
-            },
-        })
+        if (!isNil(response.platformId)) {
+            applicationEvents(req.log).sendUserEvent({
+                platformId: response.platformId,
+                userId: response.id,
+                projectId: response.projectId ?? undefined,
+                ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            }, {
+                action: ApplicationEventName.USER_SIGNED_UP,
+                data: {
+                    source: 'sso',
+                },
+            })
+        }
         return response
     })
 }

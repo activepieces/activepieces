@@ -1,12 +1,12 @@
 import { z } from 'zod'
 import { Nullable } from '../../../core/common'
 import { Metadata } from '../../../core/common/metadata'
-import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
+import { BranchCondition, CodeActionSchema, CodeActionSettings, FlowActionType, LoopOnItemsActionSchema, LoopOnItemsActionSettings, PieceActionSchema, PieceActionSettings, RouterActionSchema, RouterActionSettings } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { Note } from '../note'
-import { SaveSampleDataRequest } from '../sample-data'
-import { EmptyTrigger, FlowTrigger, FlowTriggerType, PieceTrigger } from '../triggers/trigger'
+import { SampleDataSetting, SaveSampleDataRequest } from '../sample-data'
+import { EmptyTrigger, FlowTrigger, FlowTriggerType, PieceTrigger, PieceTriggerSettings } from '../triggers/trigger'
 import { flowPieceUtil } from '../util/flow-piece-util'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { _addAction } from './add-action'
@@ -22,6 +22,7 @@ import { notesOperations } from './notes-operations'
 import { _getOperationsForPaste } from './paste-operations'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
+import { _updateSampleDataInfo } from './update-sample-data-info'
 import { _updateTrigger } from './update-trigger'
 
 export enum FlowOperationType {
@@ -50,6 +51,7 @@ export enum FlowOperationType {
     UPDATE_NOTE = 'UPDATE_NOTE',
     DELETE_NOTE = 'DELETE_NOTE',
     ADD_NOTE = 'ADD_NOTE',
+    UPDATE_SAMPLE_DATA_INFO = 'UPDATE_SAMPLE_DATA_INFO',
 }
 
 export const DeleteBranchRequest = z.object({
@@ -82,6 +84,13 @@ export const SkipActionRequest = z.object({
 })
 
 export type SkipActionRequest = z.infer<typeof SkipActionRequest>
+
+export const UpdateSampleDataInfoRequest = z.object({
+    stepName: z.string(),
+    sampleDataSettings: Nullable(SampleDataSetting.omit({ lastTestDate: true })),
+})
+export type UpdateSampleDataInfoRequest = z.infer<typeof UpdateSampleDataInfoRequest>
+
 
 export const DuplicateBranchRequest = z.object({
     branchIndex: z.number(),
@@ -138,11 +147,13 @@ export const DeleteActionRequest = z.object({
 export type DeleteActionRequest = z.infer<typeof DeleteActionRequest>
 
 export const UpdateActionRequest = z.union([
-    CodeActionSchema,
-    LoopOnItemsActionSchema,
-    PieceActionSchema,
-    RouterActionSchema,
+    CodeActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: CodeActionSettings.omit({ sampleData: true }) })),
+    LoopOnItemsActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: LoopOnItemsActionSettings.omit({ sampleData: true }) })),
+    PieceActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: PieceActionSettings.omit({ sampleData: true }) })),
+    RouterActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: RouterActionSettings.omit({ sampleData: true }) })),
 ])
+
+
 
 export type UpdateActionRequest = z.infer<typeof UpdateActionRequest>
 
@@ -168,7 +179,10 @@ export const AddActionRequest = z.object({
 })
 export type AddActionRequest = z.infer<typeof AddActionRequest>
 
-export const UpdateTriggerRequest = z.union([EmptyTrigger, PieceTrigger])
+export const UpdateTriggerRequest = z.union([
+    EmptyTrigger.omit({ lastUpdatedDate: true }),
+    PieceTrigger.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: PieceTriggerSettings.omit({ sampleData: true }) })),
+])
 export type UpdateTriggerRequest = z.infer<typeof UpdateTriggerRequest>
 
 export const UpdateFlowStatusRequest = z.object({
@@ -197,6 +211,7 @@ export const UpdateOwnerRequest = z.object({
     ownerId: z.string(),
 })
 export type UpdateOwnerRequest = z.infer<typeof UpdateOwnerRequest>
+
 export const FlowOperationRequest = z.union([
     z.object({
         type: z.literal(FlowOperationType.MOVE_ACTION),
@@ -298,7 +313,10 @@ export const FlowOperationRequest = z.union([
         type: z.literal(FlowOperationType.ADD_NOTE),
         request: AddNoteRequest,
     }).describe('Add Note'),
-
+    z.object({
+        type: z.literal(FlowOperationType.UPDATE_SAMPLE_DATA_INFO),
+        request: UpdateSampleDataInfoRequest,
+    }).describe('Update Sample Data Info'),
 ])
 
 
@@ -316,7 +334,6 @@ export const flowOperations = {
                 operations.forEach((operation) => {
                     clonedVersion = flowOperations.apply(clonedVersion, operation)
                 })
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.CHANGE_NAME:
@@ -340,33 +357,36 @@ export const flowOperations = {
                 clonedVersion.state = FlowVersionState.LOCKED
                 break
             case FlowOperationType.ADD_ACTION: {
+                if (operation.request.action.type === FlowActionType.PIECE) {
+                    operation.request.action.settings.pieceVersion = flowPieceUtil.getExactVersion(operation.request.action.settings.pieceVersion)
+                }
                 clonedVersion = _addAction(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.DELETE_ACTION: {
                 clonedVersion = _deleteAction(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.UPDATE_TRIGGER: {
+                if (operation.request.type === FlowTriggerType.PIECE) {
+                    operation.request.settings.pieceVersion = flowPieceUtil.getExactVersion(operation.request.settings.pieceVersion)
+                }
                 clonedVersion = _updateTrigger(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.ADD_BRANCH: {
                 clonedVersion = _addBranch(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.DELETE_BRANCH: {
                 clonedVersion = _deleteBranch(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.UPDATE_ACTION: {
+                if (operation.request.type === FlowActionType.PIECE) {
+                    operation.request.settings.pieceVersion = flowPieceUtil.getExactVersion(operation.request.settings.pieceVersion)
+                }
                 clonedVersion = _updateAction(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.IMPORT_FLOW: {
@@ -382,7 +402,6 @@ export const flowOperations = {
             }
             case FlowOperationType.MOVE_BRANCH: {
                 clonedVersion = _moveBranch(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.UPDATE_NOTE: {
@@ -397,7 +416,10 @@ export const flowOperations = {
                 clonedVersion = notesOperations.addNote(clonedVersion, operation.request)
                 break
             }
-
+            case FlowOperationType.UPDATE_SAMPLE_DATA_INFO: {
+                clonedVersion = _updateSampleDataInfo(clonedVersion, operation.request)
+                break
+            }
             default:
                 break
         }

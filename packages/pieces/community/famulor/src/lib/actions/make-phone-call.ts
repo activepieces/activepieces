@@ -7,7 +7,7 @@ export const makePhoneCall = createAction({
   auth: famulorAuth,
   name: 'makePhoneCall',
   displayName: 'Make Phone Call',
-  description: 'Initiate an AI-powered phone call to a customer using a selected assistant.',
+  description: 'Initiate an AI-powered phone call to a customer.',
   props: famulorCommon.makePhoneCallProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.makePhoneCallSchema);

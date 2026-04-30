@@ -9,22 +9,24 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
+  AppConnectionScope,
+  AppConnectionType,
   CodeActionSchema,
   LoopOnItemsActionSchema,
+  Metadata,
   PieceActionSchema,
   PieceActionSettings,
   PieceTrigger,
   isNil,
   RouterActionSchema,
   RouterBranchesSchema,
-  SampleDataSetting,
   RouterExecutionType,
-  UpsertOAuth2Request,
   UpsertCloudOAuth2Request,
-  UpsertPlatformOAuth2Request,
-  UpsertAppConnectionRequestBody,
   UpsertCustomAuthRequest,
   UpsertBasicAuthRequest,
+  UpsertNoAuthRequest,
+  UpsertOAuth2Request,
+  UpsertPlatformOAuth2Request,
   UpsertSecretTextRequest,
   FlowTriggerType,
   FlowActionType,
@@ -33,9 +35,11 @@ import {
   PropertyExecutionType,
   PropertySettings,
   PieceTriggerSettings,
+  AUTHENTICATION_PROPERTY_NAME,
+  OAuth2GrantType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { z, ZodType } from 'zod';
+import { z, ZodObject, ZodType } from 'zod';
 
 function buildInputSchemaForStep(
   type: FlowActionType | FlowTriggerType,
@@ -157,7 +161,7 @@ function getDefaultValueForProperties({
   existingInput: Record<string, unknown>;
   propertySettings?: Record<string, PropertySettings>;
 }): Record<string, unknown> {
-  return Object.entries(props).reduce<Record<string, unknown>>(
+  const defaultValues = Object.entries(props).reduce<Record<string, unknown>>(
     (defaultValues, [propertyName, property]) => {
       defaultValues[propertyName] =
         //we specifically check for undefined because null is a valid value
@@ -173,63 +177,268 @@ function getDefaultValueForProperties({
     },
     {},
   );
+  if (existingInput[AUTHENTICATION_PROPERTY_NAME]) {
+    defaultValues[AUTHENTICATION_PROPERTY_NAME] =
+      existingInput[AUTHENTICATION_PROPERTY_NAME];
+  }
+  return defaultValues;
 }
 
-function buildConnectionSchema(auth: PieceAuthProperty) {
+const EXTERNAL_ID_SCHEMA = z
+  .string()
+  .min(1, {
+    error: t('External ID can only contain letters, numbers and underscores'),
+  })
+  .regex(/^[A-Za-z0-9_\-@+.]*$/, {
+    error: t('External ID can only contain letters, numbers and underscores'),
+  });
+
+function displayNameSchema(required: boolean) {
+  if (required) {
+    return z.string().min(1, { error: t('required') });
+  }
+  return z.string();
+}
+
+const PROJECT_FORM_EXTRAS_SCHEMA = z.object({
+  pieceVersion: z.string().optional(),
+  projectIds: z.array(z.string()),
+  preSelectForNewProjects: z.boolean(),
+});
+
+const GLOBAL_CONNECTION_EXTRAS_SCHEMA = z.object({
+  scope: z.literal(AppConnectionScope.PLATFORM),
+  projectIds: z
+    .array(z.string())
+    .min(1, { error: t('Please select at least one project') }),
+  metadata: Metadata.optional(),
+  preSelectForNewProjects: z.boolean().optional(),
+});
+
+function connectionNameSchema(required: boolean) {
+  return z.object({
+    externalId: EXTERNAL_ID_SCHEMA,
+    displayName: displayNameSchema(required),
+  });
+}
+
+function buildOAuth2ValueSchema(
+  auth: PieceAuthProperty,
+  connectionType:
+    | AppConnectionType.OAUTH2
+    | AppConnectionType.CLOUD_OAUTH2
+    | AppConnectionType.PLATFORM_OAUTH2,
+) {
+  if (auth.type !== PropertyType.OAUTH2) {
+    throw new Error('buildOAuth2ValueSchema expects OAuth2 auth');
+  }
+  const propsSchema = piecePropertiesUtils.buildSchema(
+    auth.props ?? {},
+    undefined,
+  );
+  const isClientCredsGrantType =
+    auth.grantType === OAuth2GrantType.CLIENT_CREDENTIALS;
+
+  const withPropsAndCode = {
+    props: propsSchema.optional(),
+    code: isClientCredsGrantType
+      ? z.string().optional()
+      : z.string().min(1, {
+          error: t('Please connect your account first'),
+        }),
+  } as const;
+
+  switch (connectionType) {
+    case AppConnectionType.OAUTH2:
+      return UpsertOAuth2Request.shape.value
+        .omit({ props: true })
+        .extend(withPropsAndCode);
+    case AppConnectionType.CLOUD_OAUTH2:
+      return UpsertCloudOAuth2Request.shape.value
+        .omit({ props: true })
+        .extend(withPropsAndCode);
+    case AppConnectionType.PLATFORM_OAUTH2:
+      return UpsertPlatformOAuth2Request.shape.value
+        .omit({ props: true })
+        .extend(withPropsAndCode);
+  }
+}
+
+const PROJECT_NAME_OMIT = { externalId: true, displayName: true } as const;
+const GLOBAL_NAME_OMIT = {
+  projectId: true,
+  externalId: true,
+  displayName: true,
+} as const;
+const PROJECT_NAME_AND_VALUE_OMIT = {
+  ...PROJECT_NAME_OMIT,
+  value: true,
+} as const;
+const GLOBAL_NAME_AND_VALUE_OMIT = {
+  ...GLOBAL_NAME_OMIT,
+  value: true,
+} as const;
+
+const CUSTOM_AUTH_VALUE_PROPS = z.object({
+  value: z.object({
+    props: z.record(z.string(), z.unknown()),
+  }),
+});
+
+function extendUpsertSchema(
+  upsertSchema: ZodObject<z.ZodRawShape>,
+  names: ReturnType<typeof connectionNameSchema>,
+  isGlobalConnection: boolean,
+) {
+  const base = upsertSchema
+    .omit(isGlobalConnection ? GLOBAL_NAME_OMIT : PROJECT_NAME_OMIT)
+    .extend(names.shape);
+  return isGlobalConnection
+    ? base
+        .extend(GLOBAL_CONNECTION_EXTRAS_SCHEMA.shape)
+        .extend(PROJECT_FORM_EXTRAS_SCHEMA.shape)
+    : base.extend(PROJECT_FORM_EXTRAS_SCHEMA.shape);
+}
+
+function extendCustomAuthUpsertSchema(
+  names: ReturnType<typeof connectionNameSchema>,
+  isGlobalConnection: boolean,
+) {
+  const omit = isGlobalConnection
+    ? GLOBAL_NAME_AND_VALUE_OMIT
+    : PROJECT_NAME_AND_VALUE_OMIT;
+  const base = UpsertCustomAuthRequest.omit(omit).extend(names.shape);
+  const withExtras = isGlobalConnection
+    ? base
+        .extend(GLOBAL_CONNECTION_EXTRAS_SCHEMA.shape)
+        .extend(PROJECT_FORM_EXTRAS_SCHEMA.shape)
+    : base.extend(PROJECT_FORM_EXTRAS_SCHEMA.shape);
+  return withExtras.extend(CUSTOM_AUTH_VALUE_PROPS.shape);
+}
+
+function buildOAuth2RequestSchema(
+  auth: PieceAuthProperty,
+  showConnectionNameField: boolean,
+  isGlobalConnection: boolean,
+) {
+  const names = connectionNameSchema(showConnectionNameField);
+  const omit = isGlobalConnection
+    ? GLOBAL_NAME_AND_VALUE_OMIT
+    : PROJECT_NAME_AND_VALUE_OMIT;
+  const buildBranch = (
+    schema: ZodObject<z.ZodRawShape>,
+    connectionType:
+      | AppConnectionType.OAUTH2
+      | AppConnectionType.CLOUD_OAUTH2
+      | AppConnectionType.PLATFORM_OAUTH2,
+  ) => {
+    const valueShape = z.object({
+      value: buildOAuth2ValueSchema(auth, connectionType),
+    });
+    const base = schema.omit(omit).extend(names.shape);
+    return isGlobalConnection
+      ? base
+          .extend(GLOBAL_CONNECTION_EXTRAS_SCHEMA.shape)
+          .extend(valueShape.shape)
+          .extend(PROJECT_FORM_EXTRAS_SCHEMA.shape)
+      : base.extend(valueShape.shape).extend(PROJECT_FORM_EXTRAS_SCHEMA.shape);
+  };
+
+  return z.object({
+    request: z.discriminatedUnion('type', [
+      buildBranch(UpsertOAuth2Request, AppConnectionType.OAUTH2),
+      buildBranch(UpsertCloudOAuth2Request, AppConnectionType.CLOUD_OAUTH2),
+      buildBranch(
+        UpsertPlatformOAuth2Request,
+        AppConnectionType.PLATFORM_OAUTH2,
+      ),
+    ]),
+  });
+}
+
+function buildFallbackConnectionSchema(options: {
+  isGlobalConnection: boolean;
+  showConnectionNameField: boolean;
+}) {
+  const names = connectionNameSchema(options.showConnectionNameField);
+  const isGlobal = options.isGlobalConnection;
+
+  return z.object({
+    request: z.union([
+      extendUpsertSchema(UpsertSecretTextRequest, names, isGlobal),
+      extendUpsertSchema(UpsertOAuth2Request, names, isGlobal),
+      extendUpsertSchema(UpsertCloudOAuth2Request, names, isGlobal),
+      extendUpsertSchema(UpsertPlatformOAuth2Request, names, isGlobal),
+      extendUpsertSchema(UpsertBasicAuthRequest, names, isGlobal),
+      extendCustomAuthUpsertSchema(names, isGlobal),
+      extendUpsertSchema(UpsertNoAuthRequest, names, isGlobal),
+    ]),
+  });
+}
+
+function buildCustomAuthValueSchema(auth: PieceAuthProperty) {
+  if (auth.type !== PropertyType.CUSTOM_AUTH) {
+    throw new Error('buildCustomAuthValueSchema expects CUSTOM_AUTH');
+  }
+  return z.object({
+    value: z.object({
+      type: z.literal(AppConnectionType.CUSTOM_AUTH),
+      props: piecePropertiesUtils.buildSchema(auth.props, undefined),
+    }),
+  });
+}
+
+function buildConnectionSchema(
+  auth: PieceAuthProperty | null,
+  options: {
+    isGlobalConnection: boolean;
+    showConnectionNameField: boolean;
+  },
+) {
+  const { isGlobalConnection, showConnectionNameField } = options;
   if (isNil(auth)) {
-    return z.object({
-      request: z.object({}).passthrough(),
+    return buildFallbackConnectionSchema({
+      isGlobalConnection,
+      showConnectionNameField,
     });
   }
-  const connectionSchema = z.object({
-    externalId: z
-      .string()
-      .min(1, t('Name can only contain letters, numbers and underscores'))
-      .regex(
-        /^[A-Za-z0-9_\-@+.]*$/,
-        t('Name can only contain letters, numbers and underscores'),
-      ),
-  });
+
+  const names = connectionNameSchema(showConnectionNameField);
 
   switch (auth.type) {
     case PropertyType.SECRET_TEXT:
+    case PropertyType.BASIC_AUTH: {
+      const base =
+        auth.type === PropertyType.SECRET_TEXT
+          ? UpsertSecretTextRequest
+          : UpsertBasicAuthRequest;
       return z.object({
-        request: UpsertSecretTextRequest.omit({
-          externalId: true,
-          displayName: true,
-        }).merge(connectionSchema),
+        request: extendUpsertSchema(base, names, isGlobalConnection),
       });
-    case PropertyType.BASIC_AUTH:
+    }
+    case PropertyType.CUSTOM_AUTH: {
+      const valueShape = buildCustomAuthValueSchema(auth);
       return z.object({
-        request: UpsertBasicAuthRequest.omit({
-          externalId: true,
-          displayName: true,
-        }).merge(connectionSchema),
+        request: extendUpsertSchema(
+          UpsertCustomAuthRequest.omit({ value: true }),
+          names,
+          isGlobalConnection,
+        ).extend(valueShape.shape),
       });
-    case PropertyType.CUSTOM_AUTH:
-      return z.object({
-        request: UpsertCustomAuthRequest.omit({
-          externalId: true,
-          value: true,
-          displayName: true,
-        })
-          .merge(connectionSchema)
-          .merge(
-            z.object({
-              value: z.object({
-                props: piecePropertiesUtils.buildSchema(auth.props, undefined),
-              }),
-            }),
-          ),
+    }
+    case PropertyType.OAUTH2: {
+      return buildOAuth2RequestSchema(
+        auth,
+        showConnectionNameField,
+        isGlobalConnection,
+      );
+    }
+    default: {
+      return buildFallbackConnectionSchema({
+        isGlobalConnection,
+        showConnectionNameField,
       });
-    case PropertyType.OAUTH2:
-      return z.object({
-        request: z.object({}).passthrough(),
-      });
-    default:
-      return z.object({
-        request: z.object({}).passthrough().merge(connectionSchema),
-      });
+    }
   }
 }
 
@@ -262,32 +471,31 @@ export const formUtils = {
   ) => {
     switch (type) {
       case FlowActionType.LOOP_ON_ITEMS:
-        return LoopOnItemsActionSchema.omit({ settings: true }).merge(
+        return LoopOnItemsActionSchema.omit({ settings: true }).extend(
           z.object({
             settings: z.object({
               items: z.string().min(1),
             }),
-          }),
+          }).shape,
         );
       case FlowActionType.ROUTER:
-        return RouterActionSchema.omit({ settings: true }).merge(
+        return RouterActionSchema.omit({ settings: true }).extend(
           z.object({
             settings: z.object({
               branches: RouterBranchesSchema(true),
-              executionType: z.nativeEnum(RouterExecutionType),
-              sampleData: SampleDataSetting,
+              executionType: z.enum(RouterExecutionType),
             }),
-          }),
+          }).shape,
         );
       case FlowActionType.CODE:
         return CodeActionSchema;
       case FlowActionType.PIECE: {
-        return PieceActionSchema.omit({ settings: true }).merge(
+        return PieceActionSchema.omit({ settings: true }).extend(
           z.object({
             settings: PieceActionSettings.omit({
               input: true,
               actionName: true,
-            }).merge(
+            }).extend(
               z.object({
                 actionName: z.string().min(1),
                 input: buildInputSchemaForStep(
@@ -295,18 +503,18 @@ export const formUtils = {
                   piece,
                   actionNameOrTriggerName,
                 ),
-              }),
+              }).shape,
             ),
-          }),
+          }).shape,
         );
       }
       case FlowTriggerType.PIECE: {
-        return PieceTrigger.omit({ settings: true }).merge(
+        return PieceTrigger.omit({ settings: true }).extend(
           z.object({
             settings: PieceTriggerSettings.omit({
               input: true,
               triggerName: true,
-            }).merge(
+            }).extend(
               z.object({
                 triggerName: z.string().min(1),
                 input: buildInputSchemaForStep(
@@ -314,9 +522,9 @@ export const formUtils = {
                   piece,
                   actionNameOrTriggerName,
                 ),
-              }),
+              }).shape,
             ),
-          }),
+          }).shape,
         );
       }
       default: {
@@ -327,4 +535,9 @@ export const formUtils = {
   getDefaultValueForProperties,
   buildConnectionSchema,
   getDefaultPropertyValue,
+};
+
+export type BuildConnectionSchemaOptions = {
+  isGlobalConnection: boolean;
+  showConnectionNameField: boolean;
 };

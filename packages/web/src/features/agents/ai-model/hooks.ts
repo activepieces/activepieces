@@ -1,70 +1,21 @@
-import { AIProviderModel, AIProviderName, isNil } from '@activepieces/shared';
+import {
+  AIProviderModel,
+  AIProviderName,
+  ALLOWED_CHAT_MODELS_BY_PROVIDER,
+  isNil,
+} from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 
 import { aiProviderApi } from '@/features/platform-admin/api/ai-provider-api';
 
-type Provider =
-  | 'activepieces'
-  | 'openai'
-  | 'anthropic'
-  | 'google'
-  | 'openrouter'
-  | 'cloudflare-gateway'
-  | 'custom'
-  | 'azure'
-  | 'x-ai';
-
 type AIModelType = 'text' | 'image';
 
-const OPENAI_MODELS = ['gpt-5.2', 'gpt-5.1', 'gpt-5-mini'] as const;
-
-const ANTHROPIC_MODELS = [
-  'claude-haiku-4-5-20251001',
-  'claude-haiku-4.5',
-  'claude-sonnet-4-5-20250929',
-  'claude-opus-4.5',
-  'claude-opus-4-5-20251101',
-  'claude-sonnet-4.5',
-] as const;
-
-const GOOGLE_MODELS = [
-  'gemini-2.5-flash-lite-preview-09-2025',
-  'gemini-2.5-flash-preview-09-2025',
-  'gemini-3-flash-preview',
-  'gemini-3-pro-preview',
-] as const;
-
-const X_AI_MODELS = [
-  'grok-3-mini',
-  'grok-3',
-  'grok-code-fast-1',
-  'grok-4',
-  'grok-4-fast',
-  'grok-4.1-fast',
-] as const;
-
-const ALLOWED_MODELS_BY_PROVIDER: Partial<Record<Provider, readonly string[]>> =
-  {
-    openai: OPENAI_MODELS,
-    anthropic: ANTHROPIC_MODELS,
-    google: GOOGLE_MODELS,
-    'x-ai': X_AI_MODELS,
-    activepieces: [
-      ...OPENAI_MODELS.map((model) => `${AIProviderName.OPENAI}/${model}`),
-      ...ANTHROPIC_MODELS.map(
-        (model) => `${AIProviderName.ANTHROPIC}/${model}`,
-      ),
-      ...GOOGLE_MODELS.map((model) => `${AIProviderName.GOOGLE}/${model}`),
-      ...X_AI_MODELS.map((model) => `${'x-ai'}/${model}`),
-    ],
-  };
-
 function getAllowedModelsForProvider(
-  provider: Provider,
+  provider: AIProviderName,
   allModels: AIProviderModel[],
   modelType: AIModelType,
 ): AIProviderModel[] {
-  const allowedIds = ALLOWED_MODELS_BY_PROVIDER[provider];
+  const allowedIds = ALLOWED_CHAT_MODELS_BY_PROVIDER[provider];
 
   return allModels
     .filter((model) => model.type === modelType)
@@ -86,7 +37,7 @@ export const aiModelHooks = {
     });
   },
 
-  useGetModelsForProvider: (provider?: Provider) => {
+  useGetModelsForProvider: (provider?: AIProviderName) => {
     return useQuery({
       queryKey: ['ai-models', provider],
       enabled: !!provider,

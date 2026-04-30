@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsoft-cloud';
 import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '../common';
 import { groupDropdown } from '../common/properties';
 
@@ -16,9 +17,11 @@ export const createPlan = createAction({
     }),
   },
   async run({ auth, propsValue }) {
+    const cloud = getMicrosoftCloudFromAuth(auth);
+    const graphBaseUrl = getGraphBaseUrl(cloud);
     const planParams = {
       container: {
-        url : `https://graph.microsoft.com/v1.0/groups/${propsValue.groupId}`,
+        url: `${graphBaseUrl}/v1.0/groups/${propsValue.groupId}`,
       },
       title: propsValue.title,
     };

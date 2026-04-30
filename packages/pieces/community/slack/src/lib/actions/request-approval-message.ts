@@ -4,7 +4,6 @@ import { slackAuth } from '../auth';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
-  PauseType,
 } from '@activepieces/shared';
 import {
   profilePicture,
@@ -15,6 +14,7 @@ import {
   mentionOriginFlow,
 } from '../common/props';
 import { ChatPostMessageResponse, WebClient } from '@slack/web-api';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const requestSendApprovalMessageAction = createAction({
   auth: slackAuth,
@@ -32,12 +32,16 @@ export const requestSendApprovalMessageAction = createAction({
   },
   async run(context) {
     if (context.executionType === ExecutionType.BEGIN) {
-      const token = context.auth.access_token;
+      const token = getBotToken(context.auth as SlackAuthValue);
       const { channel, username, profilePicture, mentionOriginFlow } = context.propsValue;
 
       assertNotNullOrUndefined(token, 'token');
       assertNotNullOrUndefined(text, 'text');
       assertNotNullOrUndefined(channel, 'channel');
+
+      const waitpoint = await context.run.createWaitpoint({
+        type: 'WEBHOOK',
+      });
 
       const postMessage = await slackSendMessage({
         token,
@@ -48,10 +52,10 @@ export const requestSendApprovalMessageAction = createAction({
       });
       const messageTs = (postMessage as ChatPostMessageResponse).ts as string
 
-      const approvalLink = context.generateResumeUrl({
+      const approvalLink = waitpoint.buildResumeUrl({
         queryParams: { action: 'approve', channel, messageTs },
       });
-      const disapprovalLink = context.generateResumeUrl({
+      const disapprovalLink = waitpoint.buildResumeUrl({
         queryParams: { action: 'disapprove', channel, messageTs },
       });
 
@@ -73,7 +77,8 @@ export const requestSendApprovalMessageAction = createAction({
                   text: 'Approve',
                 },
                 style: 'primary',
-                url: approvalLink,
+                value: approvalLink,
+                action_id: 'approve',
               },
               {
                 type: 'button',
@@ -82,7 +87,8 @@ export const requestSendApprovalMessageAction = createAction({
                   text: 'Disapprove',
                 },
                 style: 'danger',
-                url: disapprovalLink,
+                value: disapprovalLink,
+                action_id: 'disapprove',
               },
             ],
           },
@@ -90,22 +96,45 @@ export const requestSendApprovalMessageAction = createAction({
         ],
       });
 
-      context.run.pause({
-        pauseMetadata: {
-          type: PauseType.WEBHOOK,
-          response: {},
-        },
-      });
+      context.run.waitForWaitpoint(waitpoint.id);
 
       return {
         approved: false, // default approval is false
         messageTs
       };
     } else {
-      return {
-        approved: context.resumePayload.queryParams['action'] === 'approve',
-        messageTs: context.resumePayload.queryParams['messageTs']
-      };
+      const approved = context.resumePayload.queryParams['action'] === 'approve';
+      const channel = context.resumePayload.queryParams['channel'];
+      const messageTs = context.resumePayload.queryParams['messageTs'];
+
+      const token = getBotToken(context.auth as SlackAuthValue);
+      try {
+        if (token && channel && messageTs) {
+          const client = new WebClient(token);
+          const statusText = approved ? 'Approved' : 'Disapproved';
+          await client.chat.update({
+            channel,
+            ts: messageTs,
+            text: `${context.propsValue.text}\n\n${statusText}`,
+            blocks: [
+              ...textToSectionBlocks(`${context.propsValue.text}`),
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: approved
+                    ? ':white_check_mark: *Approved*'
+                    : ':x: *Disapproved*',
+                },
+              },
+            ],
+          });
+        }
+      } catch (e) {
+        // Ignore errors from updating the message, as it's cosmetic
+      }
+
+      return { approved, messageTs };
     }
   },
 });

@@ -1,4 +1,3 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
@@ -20,6 +19,8 @@ import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -55,12 +56,14 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
         return platformProjectService(request.log).getForPlatform({
             platformId: request.principal.platform.id,
             externalId: request.query.externalId,
+            externalUserId: request.query.externalUserId,
             cursorRequest: request.query.cursor ?? null,
             displayName: request.query.displayName,
             types: request.query.types,
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
             userId,
             isPrivileged: userService(request.log).isUserPrivileged(user),
+            principalType: request.principal.type,
         })
     })
 

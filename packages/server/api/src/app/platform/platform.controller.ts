@@ -1,34 +1,59 @@
-import { securityAccess } from '@activepieces/server-common'
+import { apDayjs } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     ApEdition,
     ApId,
     assertNotNullOrUndefined,
+    AuthenticationResponse,
+    CreatePlatformRequest,
     ErrorCode,
     FileType,
     PlatformWithoutSensitiveData,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdatePlatformRequestBody,
+    UserStatus,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
-import { userIdentityRepository } from '../authentication/user-identity/user-identity-service'
-import { transaction } from '../core/db/transaction'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { stripeHelper } from '../ee/platform/platform-plan/stripe-helper'
+import { platformProjectService } from '../ee/projects/platform-project-service'
 import { fileService } from '../file/file.service'
-import { flowService } from '../flows/flow/flow.service'
 import { system } from '../helper/system/system'
-import { projectRepo } from '../project/project-service'
+import { SystemJobName } from '../helper/system-jobs/common'
+import { systemJobsSchedule } from '../helper/system-jobs/system-job'
+import { userIdentityHelper } from '../helper/user-identity-helper'
+import { projectService } from '../project/project-service'
 import { userRepo, userService } from '../user/user-service'
-import { platformRepo, platformService } from './platform.service'
+import { platformService } from './platform.service'
 
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncZod = async (app) => {
+    app.post('/', CreatePlatformEndpoint, async (req) => {
+        const isOnboarding = req.principal.type === PrincipalType.ONBOARDING
+        const identityId = isOnboarding
+            ? req.principal.id
+            : (await userService(req.log).getOneOrFail({ id: req.principal.id })).identityId
+        return platformService(req.log).createPlatformWithProject({
+            identityId,
+            name: req.body.name,
+            invalidatePreviousTokens: isOnboarding,
+        })
+    })
+
     app.post('/:id', UpdatePlatformRequest, async (req, _res) => {
+        if (req.principal.platform.id !== req.params.id) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'You are not authorized to access this platform',
+                },
+            })
+        }
         const platformId = req.principal.platform.id
 
         const [logoIconUrl, fullLogoUrl, favIconUrl] = await Promise.all([
@@ -53,13 +78,13 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
         ])
 
         await platformService(req.log).update({
-            id: req.params.id,
+            id: platformId,
             ...req.body,
             logoIconUrl,
             fullLogoUrl,
             favIconUrl,
         })
-        return platformService(req.log).getOneWithPlanAndUsageOrThrow(req.params.id)
+        return platformService(req.log).getOneWithPlanAndUsageOrThrow(platformId)
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
@@ -71,7 +96,20 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
         }
-        return platformService(req.log).getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
+        const platform = await platformService(req.log).getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
+        if (req.principal.type === PrincipalType.USER) {
+            const isEmbedded = await userIdentityHelper(req.log).isUserEmbedded(req.principal.id)
+            if (isEmbedded) {
+                return {
+                    ...platform,
+                    plan: {
+                        ...platform.plan,
+                        licenseKey: null,
+                    },
+                }
+            }
+        }
+        return platform
     })
 
     app.get('/assets/:id', GetAssetRequest, async (req, reply) => {
@@ -88,6 +126,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             .status(StatusCodes.OK)
             .send(data.data)
     })
+
 
     if (edition === ApEdition.CLOUD) {
         app.delete('/:id', DeletePlatformRequest, async (req, res) => {
@@ -106,36 +145,66 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             if (platformPlan.stripeSubscriptionId) {
                 await stripeHelper(req.log).deleteCustomer(platformPlan.stripeSubscriptionId)
             }
-            await flowService(req.log).deleteAllByPlatformId(req.params.id)
-            await transaction(async (entityManager) => {
-                await projectRepo(entityManager).delete({
-                    platformId: req.params.id,
-                })
-                await platformRepo(entityManager).delete({
-                    id: req.params.id,
-                })
-                const user = await userService(req.log).getOneOrFail({
-                    id: req.principal.id,
-                })
-                await userRepo(entityManager).delete({
-                    id: user.id,
-                    platformId: req.params.id,
-                })
-                const usersUsingIdentity = await userRepo(entityManager).find({
-                    where: {
+
+            const platformId = req.params.id
+
+            const user = await userService(req.log).getOneOrFail({
+                id: req.principal.id,
+            })
+
+            await userRepo().update(
+                { id: user.id, platformId },
+                { status: UserStatus.INACTIVE },
+            )
+
+            const projectIds = await projectService(req.log).getProjectIdsByPlatform(platformId)
+            await Promise.all(
+                projectIds.map((projectId) =>
+                    platformProjectService(req.log).markForDeletion({
+                        id: projectId,
+                        platformId,
+                    }),
+                ),
+            )
+
+            await systemJobsSchedule(req.log).upsertJob({
+                job: {
+                    name: SystemJobName.HARD_DELETE_PLATFORM,
+                    data: {
+                        platformId,
+                        userId: user.id,
                         identityId: user.identityId,
                     },
-                })
-                if (usersUsingIdentity.length === 0) {
-                    await userIdentityRepository(entityManager).delete({
-                        id: user.identityId,
-                    })
-                }
+                    jobId: `hard-delete-platform-${platformId}`,
+                },
+                schedule: {
+                    type: 'one-time',
+                    date: apDayjs(),
+                },
+                customConfig: {
+                    attempts: 25,
+                    backoff: {
+                        type: 'fixed',
+                        delay: 60000,
+                    },
+                },
             })
 
             return res.status(StatusCodes.NO_CONTENT).send()
         })
     }
+}
+
+const CreatePlatformEndpoint = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.ONBOARDING, PrincipalType.USER]),
+    },
+    schema: {
+        body: CreatePlatformRequest,
+        response: {
+            [StatusCodes.OK]: AuthenticationResponse,
+        },
+    },
 }
 
 const UpdatePlatformRequest = {
@@ -192,3 +261,4 @@ const GetAssetRequest = {
         }),
     },
 }
+

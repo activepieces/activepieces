@@ -67,6 +67,9 @@ export const PlatformPlan = z.object({
     showPoweredBy: z.boolean(),
     auditLogEnabled: z.boolean(),
     embeddingEnabled: z.boolean(),
+    agentsEnabled: z.boolean(),
+    aiProvidersEnabled: z.boolean(),
+    chatEnabled: z.boolean(),
     managePiecesEnabled: z.boolean(),
     manageTemplatesEnabled: z.boolean(),
     customAppearanceEnabled: z.boolean(),
@@ -91,9 +94,13 @@ export const PlatformPlan = z.object({
     projectsLimit: Nullable(z.number()),
     activeFlowsLimit: Nullable(z.number()),
 
+    /** @deprecated use workerGroupId instead — will be removed in 0.83.0 */
     dedicatedWorkers: Nullable(z.object({
         trustedEnvironment: z.boolean(),
     })),
+    /** @deprecated use workerGroupId instead — will be removed in 0.83.0 */
+    canary: z.boolean(),
+    workerGroupId: Nullable(z.string()),
 })
 export type PlatformPlan = z.infer<typeof PlatformPlan>
 

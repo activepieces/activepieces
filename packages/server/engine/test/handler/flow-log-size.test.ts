@@ -1,11 +1,11 @@
-import { FlowRunStatus, StepOutputStatus } from '@activepieces/shared'
+import { ExecutionType, FlowRunStatus, FlowTriggerType, FlowVersionState, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
-import { buildCodeAction, generateMockEngineConstants } from './test-helper'
-import { vi } from 'vitest'
+import { buildCodeAction, buildMockBeginExecuteFlowOperation, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
 
-vi.mock('../../src/lib/services/progress.service', () => ({
-    progressService: {
+vi.mock('../../src/lib/handler/run-progress', () => ({
+    runProgressService: {
         sendUpdate: vi.fn().mockResolvedValue(undefined),
         backup: vi.fn().mockResolvedValue(undefined),
         init: vi.fn(),
@@ -13,72 +13,133 @@ vi.mock('../../src/lib/services/progress.service', () => ({
     },
 }))
 
+vi.mock('../../src/lib/helper/trigger-helper', () => ({
+    triggerHelper: {
+        executeOnStart: vi.fn().mockResolvedValue(undefined),
+    },
+}))
+
 describe('flow executor log size exceeded', () => {
 
-    it('should throw LogSizeExceededError when log size exceeds limit', async () => {
-        const originalEnv = process.env.AP_MAX_FLOW_RUN_LOG_SIZE_MB
-        process.env.AP_MAX_FLOW_RUN_LOG_SIZE_MB = '0.0001'
+    describe('with small log size limit', () => {
+        let freshExecutor: typeof flowExecutor
+        let FreshContext: typeof FlowExecutorContext
 
-        vi.resetModules()
-        const { flowExecutor: freshExecutor } = await import('../../src/lib/handler/flow-executor')
-        const { FlowExecutorContext: FreshContext } = await import('../../src/lib/handler/context/flow-execution-context')
-
-        const action = buildCodeAction({
-            name: 'echo_step',
-            input: {
-                'key': 'x'.repeat(10000),
-            },
+        beforeAll(async () => {
+            process.env.AP_MAX_FLOW_RUN_LOG_SIZE_MB = '0.0001'
+            vi.resetModules()
+            const executorModule = await import('../../src/lib/handler/flow-executor')
+            const contextModule = await import('../../src/lib/handler/context/flow-execution-context')
+            freshExecutor = executorModule.flowExecutor
+            FreshContext = contextModule.FlowExecutorContext
         })
 
-        await expect(freshExecutor.execute({
-            action,
-            executionState: FreshContext.empty(),
-            constants: generateMockEngineConstants(),
-        })).rejects.toThrow('Flow run data size exceeded the maximum allowed size')
-
-        process.env.AP_MAX_FLOW_RUN_LOG_SIZE_MB = originalEnv
-    })
-
-    it('should set verdict to LOG_SIZE_EXCEEDED before throwing', async () => {
-        const originalEnv = process.env.AP_MAX_FLOW_RUN_LOG_SIZE_MB
-        process.env.AP_MAX_FLOW_RUN_LOG_SIZE_MB = '0.0001'
-
-        vi.resetModules()
-        const { flowExecutor: freshExecutor } = await import('../../src/lib/handler/flow-executor')
-        const { FlowExecutorContext: FreshContext } = await import('../../src/lib/handler/context/flow-execution-context')
-        const { progressService } = await import('../../src/lib/services/progress.service')
-
-        const action = buildCodeAction({
-            name: 'echo_step',
-            input: {
-                'key': 'x'.repeat(10000),
-            },
+        beforeEach(() => {
+            vi.clearAllMocks()
         })
 
-        try {
-            await freshExecutor.execute({
+        it('should return LOG_SIZE_EXCEEDED verdict when log size exceeds limit', async () => {
+            const action = buildCodeAction({
+                name: 'echo_step',
+                input: {
+                    'key': 'x'.repeat(10000),
+                },
+            })
+
+            const result = await freshExecutor.execute({
                 action,
                 executionState: FreshContext.empty(),
                 constants: generateMockEngineConstants(),
             })
-            expect.unreachable('should have thrown')
-        }
-        catch (e) {
-            expect((e as Error).name).toBe('LogSizeExceededError')
-        }
 
-        // Verify backup was called with LOG_SIZE_EXCEEDED status
-        expect(progressService.backup).toHaveBeenCalledWith(
-            expect.objectContaining({
-                flowExecutorContext: expect.objectContaining({
-                    verdict: expect.objectContaining({
-                        status: FlowRunStatus.LOG_SIZE_EXCEEDED,
-                    }),
+            expect(result.verdict.status).toBe(FlowRunStatus.LOG_SIZE_EXCEEDED)
+        })
+
+        it('should set failedStep to the step that caused log size to exceed', async () => {
+            const action = buildCodeAction({
+                name: 'echo_step',
+                input: {
+                    'key': 'x'.repeat(10000),
+                },
+            })
+
+            const result = await freshExecutor.execute({
+                action,
+                executionState: FreshContext.empty(),
+                constants: generateMockEngineConstants(),
+            })
+
+            expect(result.verdict.status).toBe(FlowRunStatus.LOG_SIZE_EXCEEDED)
+            expect(result.verdict.failedStep).toEqual(expect.objectContaining({
+                name: 'echo_step',
+            }))
+        })
+
+        it('should return LOG_SIZE_EXCEEDED verdict when terminal loop action exceeds log size limit', async () => {
+            const loopAction = buildSimpleLoopAction({
+                name: 'loop',
+                loopItems: '{{ [1, 2, 3] }}',
+                firstLoopAction: buildCodeAction({
+                    name: 'echo_step',
+                    input: { key: 'x'.repeat(10000) },
                 }),
-            }),
-        )
+            })
 
-        process.env.AP_MAX_FLOW_RUN_LOG_SIZE_MB = originalEnv
+            const result = await freshExecutor.execute({
+                action: loopAction,
+                executionState: FreshContext.empty(),
+                constants: generateMockEngineConstants(),
+            })
+
+            expect(result.verdict.status).toBe(FlowRunStatus.LOG_SIZE_EXCEEDED)
+        })
+
+        it('should return LOG_SIZE_EXCEEDED verdict when trigger output exceeds log size limit', async () => {
+            const triggerName = 'trigger'
+            const trigger = {
+                name: triggerName,
+                displayName: 'Test Trigger',
+                type: FlowTriggerType.EMPTY as const,
+                valid: true,
+                settings: {},
+                lastUpdatedDate: '2024-01-01T00:00:00Z',
+                nextAction: buildCodeAction({
+                    name: 'echo_step',
+                    input: { key: 'value' },
+                }),
+            }
+
+            const executionState = FreshContext.empty().upsertStep(triggerName, GenericStepOutput.create({
+                type: FlowTriggerType.EMPTY,
+                status: StepOutputStatus.SUCCEEDED,
+                input: {},
+            }).setOutput({ data: 'x'.repeat(10000) }))
+
+            const result = await freshExecutor.executeFromTrigger({
+                executionState,
+                constants: generateMockEngineConstants(),
+                input: buildMockBeginExecuteFlowOperation({
+                    flowVersion: {
+                        id: 'flowVersionId',
+                        created: '2024-01-01T00:00:00Z',
+                        updated: '2024-01-01T00:00:00Z',
+                        flowId: 'flowId',
+                        displayName: 'Test Flow',
+                        trigger,
+                        updatedBy: null,
+                        valid: true,
+                        schemaVersion: null,
+                        agentIds: [],
+                        state: FlowVersionState.DRAFT,
+                        connectionIds: [],
+                        backupFiles: null,
+                        notes: [],
+                    },
+                }),
+            })
+
+            expect(result.verdict.status).toBe(FlowRunStatus.LOG_SIZE_EXCEEDED)
+        })
     })
 
     it('should not throw when log size is within limit', async () => {
@@ -99,11 +160,7 @@ describe('flow executor log size exceeded', () => {
         expect(result.steps.echo_step.status).toBe(StepOutputStatus.SUCCEEDED)
     })
 
-    it('should skip log size check for loop actions', async () => {
-        // Even with large data, loops should not trigger the check
-        // because their children are checked individually
-        const { buildSimpleLoopAction } = await import('./test-helper')
-
+    it('should not throw for loop actions when log size is within limit', async () => {
         const loopAction = buildSimpleLoopAction({
             name: 'loop',
             loopItems: '{{ [1, 2, 3] }}',
@@ -119,7 +176,6 @@ describe('flow executor log size exceeded', () => {
             constants: generateMockEngineConstants(),
         })
 
-        // Should complete without throwing
         expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
     })
 })

@@ -2,7 +2,6 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { db } from '../../../helpers/db'
 import {
     createMockSignInRequest,
     createMockSignUpRequest,
@@ -23,17 +22,18 @@ beforeEach(async () => {
     await databaseConnection().getRepository('project').createQueryBuilder().delete().execute()
     await databaseConnection().getRepository('platform').createQueryBuilder().delete().execute()
     await databaseConnection().getRepository('user').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('user_identity').createQueryBuilder().delete().execute()
 })
 describe('Authentication API', () => {
     describe('Sign up Endpoint', () => {
-        it('Adds new user', async () => {
+        it('Adds new user with onboarding token', async () => {
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()
 
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
             })
 
@@ -42,8 +42,6 @@ describe('Authentication API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody?.id).toHaveLength(21)
-            expect(responseBody?.created).toBeDefined()
-            expect(responseBody?.updated).toBeDefined()
             expect(responseBody?.verified).toBe(true)
             expect(responseBody?.email).toBe(mockSignUpRequest.email.toLocaleLowerCase().trim())
             expect(responseBody?.firstName).toBe(mockSignUpRequest.firstName)
@@ -51,52 +49,108 @@ describe('Authentication API', () => {
             expect(responseBody?.trackEvents).toBe(mockSignUpRequest.trackEvents)
             expect(responseBody?.newsLetter).toBe(mockSignUpRequest.newsLetter)
             expect(responseBody?.status).toBe('ACTIVE')
-            expect(responseBody?.platformId).toBeDefined()
+            expect(responseBody?.platformId).toBeNull()
             expect(responseBody?.externalId).toBe(null)
-            expect(responseBody?.projectId).toHaveLength(21)
+            expect(responseBody?.projectId).toBeNull()
             expect(responseBody?.token).toBeDefined()
         })
 
-        it('Creates new project for user', async () => {
+        it('Does not create project or platform on signup', async () => {
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()
 
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
             })
 
-            const responseBody = response?.json()
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const project = await db.findOneBy('project', {
-                id: responseBody.projectId,
+            const platformCount = await databaseConnection().getRepository('platform').count()
+            const projectCount = await databaseConnection().getRepository('project').count()
+
+            expect(platformCount).toBe(0)
+            expect(projectCount).toBe(0)
+        })
+    })
+
+    describe('Create Platform Endpoint', () => {
+        it('Creates platform and project with onboarding token', async () => {
+            // arrange
+            const mockSignUpRequest = createMockSignUpRequest()
+            const signUpResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/sign-up',
+                body: mockSignUpRequest,
+            })
+            const signUpBody = signUpResponse?.json()
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/platforms',
+                headers: {
+                    authorization: `Bearer ${signUpBody.token}`,
+                },
+                body: {
+                    name: 'My Platform',
+                },
             })
 
-            expect(project?.ownerId).toBe(responseBody.id)
-            expect(project?.displayName).toBeDefined()
-            expect(project?.platformId).toBeDefined()
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody?.platformId).toHaveLength(21)
+            expect(responseBody?.projectId).toHaveLength(21)
+            expect(responseBody?.token).toBeDefined()
+            expect(responseBody?.id).toHaveLength(21)
+
+            const platformCount = await databaseConnection().getRepository('platform').count()
+            const projectCount = await databaseConnection().getRepository('project').count()
+
+            expect(platformCount).toBe(1)
+            expect(projectCount).toBe(1)
+        })
+
+        it('Fails with missing name', async () => {
+            // arrange
+            const mockSignUpRequest = createMockSignUpRequest()
+            const signUpResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/sign-up',
+                body: mockSignUpRequest,
+            })
+            const signUpBody = signUpResponse?.json()
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/platforms',
+                headers: {
+                    authorization: `Bearer ${signUpBody.token}`,
+                },
+                body: {},
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
         })
     })
 
     describe('Sign in Endpoint', () => {
-        it('Logs in existing users', async () => {
+        it('Logs in with onboarding token when no platform exists', async () => {
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()
-
-            // First sign up the user
-            const signUpResponse = await app?.inject({
+            await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
             })
 
-            const signUpBody = signUpResponse?.json()
-
-            // Then try to sign in
             const mockSignInRequest = createMockSignInRequest({
                 email: mockSignUpRequest.email,
                 password: mockSignUpRequest.password,
@@ -105,7 +159,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-in',
+                url: '/api/v1/authentication/sign-in',
                 body: mockSignInRequest,
             })
 
@@ -113,18 +167,57 @@ describe('Authentication API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody?.id).toBe(signUpBody.id)
+            expect(responseBody?.platformId).toBeNull()
+            expect(responseBody?.projectId).toBeNull()
+            expect(responseBody?.token).toBeDefined()
+        })
+
+        it('Logs in with user token after platform creation', async () => {
+            // arrange
+            const mockSignUpRequest = createMockSignUpRequest()
+            const signUpResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/sign-up',
+                body: mockSignUpRequest,
+            })
+            const signUpBody = signUpResponse?.json()
+
+            const createPlatformResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/platforms',
+                headers: {
+                    authorization: `Bearer ${signUpBody.token}`,
+                },
+                body: {
+                    name: 'My Platform',
+                },
+            })
+            const createPlatformBody = createPlatformResponse?.json()
+
+            const mockSignInRequest = createMockSignInRequest({
+                email: mockSignUpRequest.email,
+                password: mockSignUpRequest.password,
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/sign-in',
+                body: mockSignInRequest,
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody?.email).toBe(mockSignUpRequest.email.toLowerCase().trim())
             expect(responseBody?.firstName).toBe(mockSignUpRequest.firstName)
             expect(responseBody?.lastName).toBe(mockSignUpRequest.lastName)
-            expect(responseBody?.trackEvents).toBe(mockSignUpRequest.trackEvents)
-            expect(responseBody?.newsLetter).toBe(mockSignUpRequest.newsLetter)
             expect(responseBody?.password).toBeUndefined()
             expect(responseBody?.status).toBe('ACTIVE')
             expect(responseBody?.verified).toBe(true)
-            expect(responseBody?.platformId).toBe(signUpBody.platformId)
-            expect(responseBody?.externalId).toBe(null)
-            expect(responseBody?.projectId).toBe(signUpBody.projectId)
+            expect(responseBody?.platformId).toBe(createPlatformBody.platformId)
+            expect(responseBody?.projectId).toBe(createPlatformBody.projectId)
             expect(responseBody?.token).toBeDefined()
         })
 
@@ -135,7 +228,7 @@ describe('Authentication API', () => {
             // First sign up the user
             await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-up',
+                url: '/api/v1/authentication/sign-up',
                 body: mockSignUpRequest,
             })
 
@@ -147,7 +240,7 @@ describe('Authentication API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/authentication/sign-in',
+                url: '/api/v1/authentication/sign-in',
                 body: mockSignInRequest,
             })
 

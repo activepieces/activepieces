@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { flowsApi } from '@/features/flows/api/flows-api';
 import { foldersApi } from '@/features/folders/api/folders-api';
 import { tablesApi } from '@/features/tables/api/tables-api';
@@ -31,6 +32,8 @@ export function useAutomationsData(
   const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
   const projectId = projectIdFromUrl ?? authenticationSession.getProjectId()!;
   const queryClient = useQueryClient();
+  const { embedState } = useEmbedding();
+  const hideTables = embedState.hideTables;
   const isFiltered = hasNonFolderFilters(filters);
 
   const [rootPage, setRootPage] = useState(0);
@@ -48,21 +51,26 @@ export function useAutomationsData(
     queryFn: () => foldersApi.list(),
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
+    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const folderIds = foldersQuery.data?.map((f) => f.id).join(',') ?? '';
 
   const folderCountsQuery = useQuery<Map<string, number>>({
-    queryKey: ['folder-counts', projectId, folderIds],
+    queryKey: ['folder-counts', projectId, folderIds, hideTables],
     queryFn: async () => {
       const folders = foldersQuery.data!;
       const [folderFlowCounts, folderTableCounts] = await Promise.all([
         Promise.all(
           folders.map(({ id }) => flowsApi.count({ projectId, folderId: id })),
         ),
-        Promise.all(
-          folders.map(({ id }) => tablesApi.count({ projectId, folderId: id })),
-        ),
+        hideTables
+          ? Promise.resolve(folders.map(() => 0))
+          : Promise.all(
+              folders.map(({ id }) =>
+                tablesApi.count({ projectId, folderId: id }),
+              ),
+            ),
       ]);
       const folderTotalCounts = folderFlowCounts.map(
         (count, index) => count + folderTableCounts[index],
@@ -77,7 +85,7 @@ export function useAutomationsData(
   });
 
   const folderContentsQuery = useQuery<FolderContentsMap>({
-    queryKey: ['all-folder-contents', projectId, folderIds],
+    queryKey: ['all-folder-contents', projectId, folderIds, hideTables],
     queryFn: async () => {
       const folders = foldersQuery.data!;
       const [folderFlowPages, folderTablePages] = await Promise.all([
@@ -91,22 +99,27 @@ export function useAutomationsData(
             }),
           ),
         ),
-        Promise.all(
-          folders.map(({ id }) =>
-            tablesApi.list({
-              projectId,
-              folderId: id,
-              limit: FOLDER_PAGE_SIZE,
-              cursor: undefined,
-            }),
-          ),
-        ),
+        hideTables
+          ? Promise.resolve<SeekPage<Table>[]>(
+              folders.map(() => emptyTablePage()),
+            )
+          : Promise.all(
+              folders.map(({ id }) =>
+                tablesApi.list({
+                  projectId,
+                  folderId: id,
+                  limit: FOLDER_PAGE_SIZE,
+                  cursor: undefined,
+                }),
+              ),
+            ),
       ]);
       return buildFolderContentsMap(folders, folderFlowPages, folderTablePages);
     },
     enabled: !!foldersQuery.data && foldersQuery.data.length > 0,
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
+    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const skipFlows =
@@ -135,6 +148,7 @@ export function useAutomationsData(
     enabled: !skipFlows,
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
+    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const rootTablesQuery = useQuery({
@@ -147,9 +161,10 @@ export function useAutomationsData(
         cursor: undefined,
         name: filters.searchTerm || undefined,
       }),
-    enabled: !skipTables,
+    enabled: !skipTables && !hideTables,
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
+    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const toggleFolder = useCallback((folderId: string) => {
@@ -179,7 +194,7 @@ export function useAutomationsData(
       }
 
       const hasMoreFlows = !!contents.flowsNextCursor;
-      const hasMoreTables = !!contents.tablesNextCursor;
+      const hasMoreTables = !hideTables && !!contents.tablesNextCursor;
       if (!hasMoreFlows && !hasMoreTables) {
         setFolderVisibleCounts((prev) => {
           const next = new Map(prev);
@@ -220,7 +235,7 @@ export function useAutomationsData(
       ]);
 
       queryClient.setQueryData<FolderContentsMap>(
-        ['all-folder-contents', projectId, folderIds],
+        ['all-folder-contents', projectId, folderIds, hideTables],
         (old) => {
           if (!old) return old;
           const next = new Map(old);
@@ -248,7 +263,7 @@ export function useAutomationsData(
         return next;
       });
     },
-    [folderContentsQuery.data, projectId, folderIds, queryClient],
+    [folderContentsQuery.data, projectId, folderIds, queryClient, hideTables],
   );
 
   const nextRootPage = useCallback(() => {
@@ -297,6 +312,9 @@ export function useAutomationsData(
         rootPage,
         pageSize,
         pinnedList,
+        filters.searchTerm,
+        folderContents,
+        folderCounts,
       );
       return { treeItems: items, totalPageItems: totalItems };
     }
@@ -331,6 +349,7 @@ export function useAutomationsData(
     rootPage,
     pageSize,
     isFiltered,
+    filters.searchTerm,
     filters.folderFilter,
     pinnedList,
   ]);
@@ -351,7 +370,7 @@ export function useAutomationsData(
   const isLoading =
     foldersQuery.isLoading ||
     (rootFlowsQuery.isLoading && !skipFlows) ||
-    (rootTablesQuery.isLoading && !skipTables) ||
+    (rootTablesQuery.isLoading && !skipTables && !hideTables) ||
     folderContentsQuery.isLoading;
 
   const invalidateAll = useCallback(() => {
@@ -391,7 +410,6 @@ export function useAutomationsData(
     pageSize,
     changePageSize,
     totalPages,
-    totalPageItems,
     nextRootPage,
     prevRootPage,
     resetPagination,
@@ -419,6 +437,10 @@ function buildFolderContentsMap(
       },
     ]),
   );
+}
+
+function emptyTablePage(): SeekPage<Table> {
+  return { data: [], next: null, previous: null };
 }
 
 const STALE_TIME = 30_000;
