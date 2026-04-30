@@ -83,11 +83,7 @@ export const aggregateFieldAction = createAction({
   async run(context) {
     const { view_id, field_id, aggregation_type } = context.propsValue;
     const client = await makeClient(context.auth);
-    const raw = (await client.aggregateField(
-      view_id!,
-      field_id!,
-      aggregation_type!
-    )) as { value: unknown };
+    const raw = await client.aggregateField(view_id!, field_id!, aggregation_type!);
     return { result: raw['value'] };
   },
 });
