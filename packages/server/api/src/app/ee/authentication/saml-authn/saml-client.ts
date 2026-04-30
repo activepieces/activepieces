@@ -1,17 +1,10 @@
 
 import { safeHttp } from '@activepieces/server-utils'
-import { ActivepiecesError, ErrorCode, SAMLAuthnProviderConfig } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, SAMLAttributeMapping, SAMLAuthnProviderConfig, tryCatch } from '@activepieces/shared'
 import * as validator from '@authenio/samlify-node-xmllint'
 import * as saml from 'samlify'
-import { z } from 'zod'
 import { domainHelper } from '../../custom-domains/domain-helper'
-
-
-const samlResponseValidator = z.object({
-    email: z.string(),
-    firstName: z.string(),
-    lastName: z.string(),
-})
+import { resolveSamlAttributes, SamlAttributes } from './saml-attributes'
 
 class SamlClient {
     private static readonly LOGIN_REQUEST_BINDING = 'redirect'
@@ -20,6 +13,7 @@ class SamlClient {
     constructor(
         private readonly idp: saml.IdentityProviderInstance,
         private readonly sp: saml.ServiceProviderInstance,
+        private readonly attributeMapping: SAMLAttributeMapping | undefined,
     ) {}
 
     getLoginUrl(): string {
@@ -32,23 +26,21 @@ class SamlClient {
     }
 
     async parseAndValidateLoginResponse(idpLoginResponse: IdpLoginResponse): Promise<SamlAttributes> {
-        const loginResult = await this.sp.parseLoginResponse(
+        const { data: loginResult, error: parseError } = await tryCatch(() => this.sp.parseLoginResponse(
             this.idp,
             SamlClient.LOGIN_RESPONSE_BINDING,
             idpLoginResponse,
-        )
-
-        const atts = loginResult.extract.attributes
-        if (!samlResponseValidator.safeParse(atts).success) {
+        ))
+        if (parseError !== null) {
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_SAML_RESPONSE,
                 params: {
-                    message: 'Invalid SAML response, It should contain these firstName, lastName, email fields.',
+                    message: `Failed to parse SAML response: ${parseError.message}`,
                 },
-            
             })
         }
-        return atts
+        const rawAttributes = loginResult.extract?.attributes
+        return resolveSamlAttributes({ rawAttributes, mapping: this.attributeMapping })
     }
 }
 
@@ -63,7 +55,7 @@ export const createSamlClient = async (platformId: string, samlProvider: SAMLAut
     const metadataXml = await resolveIdpMetadata(samlProvider.idpMetadata)
     const idp = createIdp(metadataXml)
     const sp = await createSp(platformId, samlProvider.idpCertificate)
-    const client = new SamlClient(idp, sp)
+    const client = new SamlClient(idp, sp, samlProvider.attributeMapping)
     instanceCache.set(platformId, client)
     return client
 }
@@ -134,8 +126,4 @@ export type IdpLoginResponse = {
     query: Record<string, unknown>
 }
 
-export type SamlAttributes = {
-    email: string
-    firstName: string
-    lastName: string
-}
+export type { SamlAttributes } from './saml-attributes'
