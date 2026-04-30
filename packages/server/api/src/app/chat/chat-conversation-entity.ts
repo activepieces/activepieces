@@ -32,6 +32,14 @@ export const ChatConversationEntity = new EntitySchema<ChatConversationWithRelat
             nullable: false,
             default: '[]',
         },
+        summary: {
+            type: String,
+            nullable: true,
+        },
+        summarizedUpToIndex: {
+            type: Number,
+            nullable: true,
+        },
     },
     indices: [
         {

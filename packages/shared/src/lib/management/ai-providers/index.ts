@@ -354,3 +354,24 @@ export function splitCloudflareGatewayModelId(modelId: string): {
         publisher: undefined,
     }
 }
+
+const DEFAULT_MAX_CONTEXT_TOKENS = 128_000
+
+const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
+    [AIProviderName.OPENAI]: 1_048_576,
+    [AIProviderName.ANTHROPIC]: 200_000,
+    [AIProviderName.GOOGLE]: 1_048_576,
+    [AIProviderName.BEDROCK]: 200_000,
+    [AIProviderName.AZURE]: 1_048_576,
+    [AIProviderName.OPENROUTER]: 200_000,
+    [AIProviderName.ACTIVEPIECES]: 200_000,
+}
+
+function getMaxContextTokens({ provider }: { provider: AIProviderName | undefined }): number {
+    if (!provider) return DEFAULT_MAX_CONTEXT_TOKENS
+    return PROVIDER_MAX_CONTEXT_TOKENS[provider] ?? DEFAULT_MAX_CONTEXT_TOKENS
+}
+
+export const aiProviderUtils = {
+    getMaxContextTokens,
+}
