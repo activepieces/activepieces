@@ -61,7 +61,7 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             array: true,
         },
-        allowedEmbedDomains: {
+        allowedEmbedOrigins: {
             type: String,
             array: true,
             nullable: false,

@@ -216,6 +216,7 @@
                   "group": "Essentials",
                   "pages": [
                      "embedding/overview",
+                     "embedding/configure-embedding",
                      "embedding/provision-users",
                      "embedding/embed-builder"
                   ]

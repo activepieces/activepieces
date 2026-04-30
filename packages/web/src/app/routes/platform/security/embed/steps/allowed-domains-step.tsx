@@ -17,20 +17,20 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { StepShell } from '../stepper';
 
 export const AllowedDomainsStep = ({
-  allowedEmbedDomains,
+  allowedEmbedOrigins,
 }: {
-  allowedEmbedDomains: string[];
+  allowedEmbedOrigins: string[];
 }) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
-  const { data: envAllowedDomains } = flagsHooks.useFlag<string[]>(
-    ApFlagId.ALLOWED_EMBED_DOMAINS,
+  const { data: envAllowedOrigins } = flagsHooks.useFlag<string[]>(
+    ApFlagId.ALLOWED_EMBED_ORIGINS,
   );
-  const [domains, setDomains] =
-    useState<readonly string[]>(allowedEmbedDomains);
+  const [origins, setOrigins] =
+    useState<readonly string[]>(allowedEmbedOrigins);
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       await platformApi.update(
-        { allowedEmbedDomains: [...domains] },
+        { allowedEmbedOrigins: [...origins] },
         platform.id,
       );
       await refetch();
@@ -60,19 +60,19 @@ export const AllowedDomainsStep = ({
           )}
         </p>
         <TagInput
-          value={domains}
-          onChange={setDomains}
+          value={origins}
+          onChange={setOrigins}
           placeholder="https://app.acme.com"
         />
-        {envAllowedDomains && envAllowedDomains.length > 0 && (
+        {envAllowedOrigins && envAllowedOrigins.length > 0 && (
           <div className="mt-2 flex flex-col gap-1.5">
             <p className="text-xs text-muted-foreground">
               {t(
-                'These domains are also allowed automatically (configured via AP_ALLOWED_EMBED_DOMAINS):',
+                'These origins are also allowed automatically (configured via AP_ALLOWED_EMBED_ORIGINS):',
               )}
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {envAllowedDomains.map((d) => (
+              {envAllowedOrigins.map((d) => (
                 <Badge key={d} variant="outline" className="font-mono text-xs">
                   {d}
                 </Badge>

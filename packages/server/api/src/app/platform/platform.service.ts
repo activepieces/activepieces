@@ -150,7 +150,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 params.enforceAllowedAuthDomains,
             ),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
-            ...spreadIfDefined('allowedEmbedDomains', params.allowedEmbedDomains),
+            ...spreadIfDefined('allowedEmbedOrigins', params.allowedEmbedOrigins),
             ...spreadIfDefined('ssoDomain', params.ssoDomain),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
         }

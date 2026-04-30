@@ -1,13 +1,20 @@
 import { QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
+import { DatabaseType } from '../../database-type'
 import { Migration } from '../../migration'
+
+const isPGlite = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
 
 export class AddEmbedSubdomainTable1786000000000 implements Migration {
     name = 'AddEmbedSubdomainTable1786000000000'
     breaking = false
     release = '0.83.0'
-    transaction = true
+    transaction = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        const concurrently = isPGlite ? '' : 'CONCURRENTLY'
+
         await queryRunner.query(`
             CREATE TABLE IF NOT EXISTS "embed_subdomain" (
                 "id" character varying(21) NOT NULL,
@@ -25,18 +32,18 @@ export class AddEmbedSubdomainTable1786000000000 implements Migration {
         `)
 
         await queryRunner.query(`
-            CREATE UNIQUE INDEX IF NOT EXISTS "idx_embed_subdomain_platform_id"
+            CREATE UNIQUE INDEX ${concurrently} IF NOT EXISTS "idx_embed_subdomain_platform_id"
             ON "embed_subdomain" ("platformId")
         `)
 
         await queryRunner.query(`
-            CREATE UNIQUE INDEX IF NOT EXISTS "idx_embed_subdomain_hostname"
+            CREATE UNIQUE INDEX ${concurrently} IF NOT EXISTS "idx_embed_subdomain_hostname"
             ON "embed_subdomain" ("hostname")
         `)
 
         await queryRunner.query(`
             ALTER TABLE "platform"
-            ADD COLUMN IF NOT EXISTS "allowedEmbedDomains" character varying[] NOT NULL DEFAULT '{}'
+            ADD COLUMN IF NOT EXISTS "allowedEmbedOrigins" character varying[] NOT NULL DEFAULT '{}'
         `)
 
         await queryRunner.query(`
@@ -50,19 +57,21 @@ export class AddEmbedSubdomainTable1786000000000 implements Migration {
         `)
 
         await queryRunner.query(`
-            CREATE UNIQUE INDEX IF NOT EXISTS "idx_platform_sso_domain"
+            CREATE UNIQUE INDEX ${concurrently} IF NOT EXISTS "idx_platform_sso_domain"
             ON "platform" ("ssoDomain")
             WHERE "ssoDomain" IS NOT NULL
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_platform_sso_domain"')
+        const concurrently = isPGlite ? '' : 'CONCURRENTLY'
+
+        await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_platform_sso_domain"`)
         await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "ssoDomain"')
         await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "googleAuthEnabled"')
-        await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "allowedEmbedDomains"')
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_embed_subdomain_hostname"')
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_embed_subdomain_platform_id"')
+        await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "allowedEmbedOrigins"')
+        await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_embed_subdomain_hostname"`)
+        await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_embed_subdomain_platform_id"`)
         await queryRunner.query('DROP TABLE IF EXISTS "embed_subdomain"')
     }
 }

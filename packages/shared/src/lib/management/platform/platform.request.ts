@@ -6,10 +6,10 @@ import { ApMultipartFile } from '../../core/common/multipart-file'
 import { FederatedAuthnProviderConfig } from '../../core/federated-authn'
 import { FilteredPieceBehavior } from './platform.model'
 
-const MAX_ALLOWED_EMBED_DOMAINS = 50
+const MAX_ALLOWED_EMBED_ORIGINS = 50
 const MAX_EMBED_ORIGIN_LENGTH = 300
 
-const allowedEmbedDomainSchema = z.httpUrl()
+const allowedEmbedOriginSchema = z.httpUrl()
     .max(MAX_EMBED_ORIGIN_LENGTH, 'invalidEmbedOrigin')
     .refine((value) => {
         try {
@@ -48,8 +48,8 @@ export const UpdatePlatformRequestBody = z.object({
     allowedAuthDomains: OptionalArrayFromQuery(z.string()),
     enforceAllowedAuthDomains: OptionalBooleanFromQuery,
     pinnedPieces: OptionalArrayFromQuery(z.string()),
-    allowedEmbedDomains: z.array(allowedEmbedDomainSchema)
-        .max(MAX_ALLOWED_EMBED_DOMAINS, 'tooManyEmbedDomains')
+    allowedEmbedOrigins: z.array(allowedEmbedOriginSchema)
+        .max(MAX_ALLOWED_EMBED_ORIGINS, 'tooManyEmbedOrigins')
         .optional(),
 })
 

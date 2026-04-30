@@ -47,7 +47,7 @@ const EmbedPage = () => {
 
   const isLoading = (isCloud && isSubdomainLoading) || isKeysLoading;
 
-  const allowedEmbedDomains = platform.allowedEmbedDomains ?? [];
+  const allowedEmbedOrigins = platform.allowedEmbedOrigins ?? [];
 
   const allSteps: Record<StepKind, StepDef> = {
     hostname: {
@@ -84,7 +84,7 @@ const EmbedPage = () => {
   const completionByKind: Record<StepKind, boolean> = {
     hostname: !!subdomain,
     dns: subdomain?.status === EmbedSubdomainStatus.ACTIVE,
-    'allowed-domains': allowedEmbedDomains.length > 0,
+    'allowed-domains': allowedEmbedOrigins.length > 0,
     'signing-keys': signingKeys.length > 0,
   };
 
@@ -167,7 +167,7 @@ const EmbedPage = () => {
             ) : displayedStep?.kind === 'dns' ? (
               <DnsStep subdomain={subdomain} />
             ) : displayedStep?.kind === 'allowed-domains' ? (
-              <AllowedDomainsStep allowedEmbedDomains={allowedEmbedDomains} />
+              <AllowedDomainsStep allowedEmbedOrigins={allowedEmbedOrigins} />
             ) : displayedStep?.kind === 'signing-keys' ? (
               <SigningKeysStep
                 signingKeys={signingKeys}

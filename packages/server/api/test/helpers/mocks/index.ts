@@ -266,7 +266,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         enforceAllowedAuthDomains: platform?.enforceAllowedAuthDomains ?? false,
         federatedAuthProviders: platform?.federatedAuthProviders ?? {},
         allowedAuthDomains: platform?.allowedAuthDomains ?? [],
-        allowedEmbedDomains: platform?.allowedEmbedDomains ?? [],
+        allowedEmbedOrigins: platform?.allowedEmbedOrigins ?? [],
         name: platform?.name ?? faker.lorem.word(),
         primaryColor: platform?.primaryColor ?? faker.color.rgb(),
         logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),

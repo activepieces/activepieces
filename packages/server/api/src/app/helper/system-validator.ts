@@ -189,7 +189,7 @@ const systemPropValidators: {
     [AppSystemProp.SSRF_ALLOW_LIST]: stringValidator,
 
     // Embed
-    [AppSystemProp.ALLOWED_EMBED_DOMAINS]: stringValidator,
+    [AppSystemProp.ALLOWED_EMBED_ORIGINS]: stringValidator,
     [AppSystemProp.NETWORK_MODE]: enumValidator(Object.values(NetworkMode)),
 
     // On-call

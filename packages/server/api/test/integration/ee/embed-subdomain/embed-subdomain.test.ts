@@ -65,19 +65,19 @@ describe('Embed Subdomain API', () => {
         })
     })
 
-    describe('POST /v1/platforms/:id (allowedEmbedDomains)', () => {
-        it('should update allowed embed domains on platform plan', async () => {
+    describe('POST /v1/platforms/:id (allowedEmbedOrigins)', () => {
+        it('should update allowed embed origins on platform plan', async () => {
             const ctx = await createTestContext(app!, {
                 plan: { embeddingEnabled: true },
             })
 
             const response = await ctx.post(`/v1/platforms/${ctx.platform.id}`, {
-                allowedEmbedDomains: ['https://myapp.com', 'https://dashboard.myapp.com'],
+                allowedEmbedOrigins: ['https://myapp.com', 'https://dashboard.myapp.com'],
             })
 
             expect(response.statusCode).toBe(StatusCodes.OK)
             const body = response.json()
-            expect(body.allowedEmbedDomains).toEqual(['https://myapp.com', 'https://dashboard.myapp.com'])
+            expect(body.allowedEmbedOrigins).toEqual(['https://myapp.com', 'https://dashboard.myapp.com'])
         })
     })
 
