@@ -10,6 +10,8 @@ import {
     Platform,
     PlatformPlan,
     PlatformRole,
+    Principal,
+    PrincipalType,
     Project,
     ProjectRole,
     ProjectType,
@@ -39,6 +41,7 @@ import {
     createMockSignInRequest,
     createMockSignUpRequest,
 } from '../../../helpers/mocks/authn'
+import { jwtUtils } from 'packages/server/api/src/app/helper/jwt-utils'
 
 let app: FastifyInstance | null = null
 
@@ -305,7 +308,7 @@ describe('Authentication API', () => {
             expect(teamProject).toBeDefined()
 
             const projectMember = await databaseConnection().getRepository('project_member').findOne({ where: { projectId: teamProject?.id, userId: responseBody?.id } })
-            
+
             expect(projectMember).toBeDefined()
             expect(projectMember?.userId).toBe(responseBody?.id)
             expect(projectMember?.projectId).toBe(teamProject?.id)
@@ -732,7 +735,7 @@ describe('Authentication API', () => {
             expect(responseBody?.code).toBe('INVALID_CREDENTIALS')
         })
 
-        it('Fails if user status is INACTIVE', async () => {
+        it('Onboarding response if user status is INACTIVE', async () => {
             // arrange
             const mockEmail = faker.internet.email()
             const mockPassword = 'password'
@@ -783,12 +786,16 @@ describe('Authentication API', () => {
                 url: '/api/v1/authentication/sign-in',
                 body: mockSignInRequest,
             })
-
             const responseBody = response?.json()
+
             // assert
             // In non-cloud editions, the sign-in fails with FORBIDDEN because the platform
-            // is not found via Host header resolution. In cloud edition, it returns UNAUTHORIZED.
-            expect([StatusCodes.UNAUTHORIZED, StatusCodes.FORBIDDEN]).toContain(response?.statusCode)
+            // is not found via Host header resolution. In cloud edition, it returns onboarding response for the user so he can create new platform.
+            expect([StatusCodes.OK]).toContain(response?.statusCode)
+            expect(responseBody?.token).toBeDefined()
+            const decoded = jwtUtils.decode<Principal>({ jwt: responseBody?.token })
+            expect(decoded.payload.type).toBe(PrincipalType.ONBOARDING)
+
         })
 
     })
