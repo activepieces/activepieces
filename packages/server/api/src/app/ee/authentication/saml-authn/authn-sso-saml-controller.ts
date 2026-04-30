@@ -47,7 +47,7 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
             return { platformId: null }
         }
         const plan = await platformPlanRepo().findOneBy({ ssoDomain })
-        if (isNil(plan)) {
+        if (isNil(plan) || !plan.ssoEnabled) {
             return { platformId: null }
         }
         const platform = await platformService(req.log).getOneOrThrow(plan.platformId)

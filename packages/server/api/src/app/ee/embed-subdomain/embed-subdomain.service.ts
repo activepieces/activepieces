@@ -70,8 +70,6 @@ export const embedSubdomainService = (log: FastifyBaseLogger) => ({
 
     async checkAndUpdateStatus({ platformId }: { platformId: string }): Promise<EmbedSubdomain | null> {
         const record = await repo().findOneBy({ platformId })
-        log.info({ platformId, record }, 'Embed hostname status refreshed')
-
         if (isNil(record) || record.status === EmbedSubdomainStatus.ACTIVE) {
             return record
         }
