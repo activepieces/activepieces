@@ -80,6 +80,8 @@ export const platformService = (log: FastifyBaseLogger) => ({
             federatedAuthProviders: {},
             cloudAuthEnabled: true,
             pinnedPieces: [],
+            allowedEmbedOrigins: [],
+            googleAuthEnabled: true,
         }
 
         const savedPlatform = await platformRepo().save(newPlatform)

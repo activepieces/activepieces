@@ -32,7 +32,7 @@ export const stepFileService = (log: FastifyBaseLogger) => ({
         })
         return {
             uploadUrl: await constructUploadUrl(log, file.s3Key ?? undefined, params.data, params.contentLength),
-            url: await constructDownloadUrl(params.platformId, file),
+            url: await constructDownloadUrl(file),
         }
     },
 })
@@ -46,7 +46,7 @@ async function constructUploadUrl(log: FastifyBaseLogger, s3Key: string | undefi
     return s3Helper(log).putS3SignedUrl({ s3Key, contentLength })
 }
 
-async function constructDownloadUrl(platformId: string, file: File): Promise<string> {
+async function constructDownloadUrl(file: File): Promise<string> {
     const accessToken = await jwtUtils.sign({
         payload: {
             fileId: file.id,
@@ -56,7 +56,6 @@ async function constructDownloadUrl(platformId: string, file: File): Promise<str
     })
     return domainHelper.getPublicApiUrl({
         path: `v1/step-files/signed?token=${accessToken}`,
-        platformId,
     })
 }
 
