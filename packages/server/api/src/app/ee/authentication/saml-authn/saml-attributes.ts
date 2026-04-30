@@ -2,128 +2,94 @@ import { ActivepiecesError, ErrorCode, isNil, SAMLAttributeMapping } from '@acti
 
 export const resolveSamlAttributes = ({ rawAttributes, mapping }: ResolveArgs): SamlAttributes => {
     const safeAttributes = rawAttributes ?? {}
-    const candidates = buildCandidates(mapping)
-
-    const email = pickAttribute({ rawAttributes: safeAttributes, candidates: candidates.email })
-    const firstName = pickAttribute({ rawAttributes: safeAttributes, candidates: candidates.firstName })
-    const lastName = pickAttribute({ rawAttributes: safeAttributes, candidates: candidates.lastName })
-
+    const email = pickFirstValue({ source: safeAttributes, keys: candidatesFor({ field: 'email', mapping }) })
+    const firstName = pickFirstValue({ source: safeAttributes, keys: candidatesFor({ field: 'firstName', mapping }) })
+    const lastName = pickFirstValue({ source: safeAttributes, keys: candidatesFor({ field: 'lastName', mapping }) })
     if (isNil(email) || isNil(firstName) || isNil(lastName)) {
-        const missing = collectMissing({ email, firstName, lastName })
-        const receivedKeys = Object.keys(safeAttributes).join(', ')
-        throw new ActivepiecesError({
-            code: ErrorCode.INVALID_SAML_RESPONSE,
-            params: {
-                message: `Invalid SAML response. Missing required field(s): ${missing.join(', ')}. Received attribute keys: [${receivedKeys}]. Configure attributeMapping in SSO settings if your IdP uses non-standard claim names.`,
-            },
+        throw missingFieldsError({
+            resolved: { email, firstName, lastName },
+            receivedKeys: Object.keys(safeAttributes),
         })
     }
-
     return { email, firstName, lastName }
 }
 
-function buildCandidates(mapping: SAMLAttributeMapping | undefined): FieldCandidates {
-    return {
-        email: prepend({ override: mapping?.email, defaults: DEFAULT_EMAIL_KEYS }),
-        firstName: prepend({ override: mapping?.firstName, defaults: DEFAULT_FIRST_NAME_KEYS }),
-        lastName: prepend({ override: mapping?.lastName, defaults: DEFAULT_LAST_NAME_KEYS }),
-    }
+function candidatesFor({ field, mapping }: CandidatesArgs): string[] {
+    const override = mapping?.[field]?.trim()
+    return isNil(override) || override.length === 0
+        ? DEFAULT_KEYS[field]
+        : [override, ...DEFAULT_KEYS[field]]
 }
 
-function prepend({ override, defaults }: PrependArgs): string[] {
-    if (isNil(override) || override.trim().length === 0) {
-        return defaults
-    }
-    return [override, ...defaults]
+function pickFirstValue({ source, keys }: PickArgs): string | undefined {
+    return keys.map((key) => unwrap(source[key])).find(isNonEmptyString)
 }
 
-function pickAttribute({ rawAttributes, candidates }: PickArgs): string | undefined {
-    for (const key of candidates) {
-        const value = readNonEmpty({ rawAttributes, key })
-        if (!isNil(value)) {
-            return value
-        }
-    }
-    return undefined
+function unwrap(value: unknown): unknown {
+    return Array.isArray(value) ? value.find(isNonEmptyString) : value
 }
 
-function readNonEmpty({ rawAttributes, key }: ReadArgs): string | undefined {
-    const value = rawAttributes[key]
-    const flat = Array.isArray(value)
-        ? value.find((entry) => typeof entry === 'string' && entry.length > 0)
-        : value
-    if (typeof flat === 'string' && flat.length > 0) {
-        return flat
-    }
-    return undefined
+function isNonEmptyString(value: unknown): value is string {
+    return typeof value === 'string' && value.length > 0
 }
 
-function collectMissing({ email, firstName, lastName }: ResolvedTriple): string[] {
+function missingFieldsError({ resolved, receivedKeys }: MissingFieldsErrorArgs): ActivepiecesError {
     const missing: string[] = []
-    if (isNil(email)) {
+    if (isNil(resolved.email)) {
         missing.push('email')
     }
-    if (isNil(firstName)) {
+    if (isNil(resolved.firstName)) {
         missing.push('firstName')
     }
-    if (isNil(lastName)) {
+    if (isNil(resolved.lastName)) {
         missing.push('lastName')
     }
-    return missing
+    return new ActivepiecesError({
+        code: ErrorCode.INVALID_SAML_RESPONSE,
+        params: {
+            message: `Invalid SAML response. Missing required field(s): ${missing.join(', ')}. Received attribute keys: [${receivedKeys.join(', ')}]. Configure attributeMapping in SSO settings if your IdP uses non-standard claim names.`,
+        },
+    })
 }
 
-const DEFAULT_EMAIL_KEYS = [
-    'email',
-    'emailaddress',
-    'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
-]
-
-const DEFAULT_FIRST_NAME_KEYS = [
-    'firstName',
-    'firstname',
-    'givenname',
-    'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
-]
-
-const DEFAULT_LAST_NAME_KEYS = [
-    'lastName',
-    'lastname',
-    'surname',
-    'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname',
-]
-
-type RawAttributes = Record<string, unknown>
+const DEFAULT_KEYS: Record<keyof SamlAttributes, string[]> = {
+    email: [
+        'email',
+        'emailaddress',
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+    ],
+    firstName: [
+        'firstName',
+        'firstname',
+        'givenname',
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
+    ],
+    lastName: [
+        'lastName',
+        'lastname',
+        'surname',
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname',
+    ],
+}
 
 type ResolveArgs = {
-    rawAttributes: RawAttributes | null | undefined
+    rawAttributes: Record<string, unknown> | null | undefined
     mapping?: SAMLAttributeMapping
 }
 
+type CandidatesArgs = {
+    field: keyof SamlAttributes
+    mapping: SAMLAttributeMapping | undefined
+}
+
 type PickArgs = {
-    rawAttributes: RawAttributes
-    candidates: string[]
+    source: Record<string, unknown>
+    keys: string[]
 }
 
-type ReadArgs = {
-    rawAttributes: RawAttributes
-    key: string
-}
-
-type PrependArgs = {
-    override: string | undefined
-    defaults: string[]
-}
-
-type FieldCandidates = {
-    email: string[]
-    firstName: string[]
-    lastName: string[]
-}
-
-type ResolvedTriple = {
-    email: string | undefined
-    firstName: string | undefined
-    lastName: string | undefined
+type MissingFieldsErrorArgs = {
+    resolved: Partial<SamlAttributes>
+    receivedKeys: string[]
 }
 
 export type SamlAttributes = {
