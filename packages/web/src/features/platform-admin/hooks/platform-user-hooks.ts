@@ -96,7 +96,7 @@ export const platformUserMutations = {
           data.status === UserStatus.ACTIVE
             ? t('User activated successfully')
             : t('User deactivated successfully'),
-          { duration: 3000 },
+          { duration: 3000 }
         );
       },
     });
