@@ -92,12 +92,13 @@ export const stripeInvoicePaymentFailed = createTrigger({
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/invoices',
+      url: 'https://api.stripe.com/v1/checkout/invoices',
       headers: {
         Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {
+        status: 'failed',
         limit: '5',
       },
     });

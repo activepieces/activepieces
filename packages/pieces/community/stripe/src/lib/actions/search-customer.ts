@@ -25,7 +25,7 @@ export const stripeSearchCustomer = createAction({
       headers: {
         Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Stripe-Version': '2023-10-16',
+        'Stripe-Version': '2026-02-25.clover',
       },
       body: {
         query: `email:'${customer.email}'`,
