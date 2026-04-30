@@ -6,7 +6,7 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { microsoftTeamsCommon } from '../common';
-import { createGraphClient } from '../common/graph';
+import { createGraphClient, withGraphRetry } from '../common/graph';
 import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { ChatMessage } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
@@ -94,10 +94,9 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 		const messages: ChatMessage[] = [];
 
 		if (lastFetchEpochMS === 0) {
-			const response: PageCollection = await client
-				.api(`/chats/${chatId}/messages`)
-				.top(5)
-				.get();
+			const response: PageCollection = await withGraphRetry(() =>
+				client.api(`/chats/${chatId}/messages`).top(5).get(),
+			);
 
 			if (!isNil(response.value)) {
 				messages.push(...(response.value as ChatMessage[]));
@@ -109,7 +108,8 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 
 			// https://learn.microsoft.com/graph/api/chatmessage-delta?view=graph-rest-1.0&tabs=http
 			while (nextLink) {
-				const response: PageCollection = await client.api(nextLink).get();
+				const url = nextLink;
+				const response: PageCollection = await withGraphRetry(() => client.api(url).get());
 				const chatMessages = response.value as ChatMessage[];
 
 				if (Array.isArray(chatMessages)) {
