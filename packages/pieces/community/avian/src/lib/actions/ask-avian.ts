@@ -3,7 +3,7 @@ import { createAction, Property, StoreScope } from '@activepieces/pieces-framewo
 import OpenAI from 'openai';
 import { baseUrl } from '../common/common';
 import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation, httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 
 export const askAvian = createAction({
   auth: avianAuth,
@@ -17,7 +17,6 @@ export const askAvian = createAction({
       required: true,
       description: 'The model which will generate the completion.',
       refreshers: [],
-      defaultValue: 'MiniMax-M2.5',
       options: async ({ auth }) => {
         if (!auth) {
           return {
@@ -27,15 +26,19 @@ export const askAvian = createAction({
           };
         }
         try {
-          const openai = new OpenAI({
-            baseURL: baseUrl,
-            apiKey: auth.secret_text,
+          const response = await httpClient.sendRequest<{
+            data: Array<{ id: string }>;
+          }>({
+            method: HttpMethod.GET,
+            url: `${baseUrl}/models`,
+            authentication: {
+              type: AuthenticationType.BEARER_TOKEN,
+              token: auth.secret_text,
+            },
           });
-          const response = await openai.models.list();
-          const models = response.data;
           return {
             disabled: false,
-            options: models.map((model) => {
+            options: response.body.data.map((model) => {
               return {
                 label: model.id,
                 value: model.id,

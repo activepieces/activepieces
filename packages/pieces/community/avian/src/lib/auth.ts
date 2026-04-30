@@ -1,6 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import OpenAI from 'openai';
-import { baseUrl, unauthorizedMessage } from './common/common';
+import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { baseUrl } from './common/common';
 
 export const avianAuth = PieceAuth.SecretText({
   description: `
@@ -11,27 +11,23 @@ export const avianAuth = PieceAuth.SecretText({
 3. Create a new API key and copy it.`,
   displayName: 'API Key',
   required: true,
-  validate: async (auth) => {
+  validate: async ({ auth }) => {
     try {
-      const openai = new OpenAI({
-        baseURL: baseUrl,
-        apiKey: auth.auth,
+      await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `${baseUrl}/balance`,
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: auth,
+        },
       });
-
-      const models = await openai.models.list();
-      if (models.data.length > 0) {
-        return {
-          valid: true,
-        };
-      }
       return {
-        valid: false,
-        error: unauthorizedMessage,
+        valid: true,
       };
     } catch (e) {
       return {
         valid: false,
-        error: unauthorizedMessage,
+        error: `${e}`,
       };
     }
   },
