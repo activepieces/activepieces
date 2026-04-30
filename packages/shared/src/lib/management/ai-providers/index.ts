@@ -363,7 +363,7 @@ const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
     [AIProviderName.GOOGLE]: 1_048_576,
     [AIProviderName.BEDROCK]: 200_000,
     [AIProviderName.AZURE]: 128_000,
-    [AIProviderName.OPENROUTER]: 200_000,
+    [AIProviderName.OPENROUTER]: 128_000,
     [AIProviderName.ACTIVEPIECES]: 200_000,
 }
 
