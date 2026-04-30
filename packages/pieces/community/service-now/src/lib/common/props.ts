@@ -102,6 +102,52 @@ export const recordDropdown = Property.Dropdown({
   },
 });
 
+export const catalogItemDropdown = Property.Dropdown({
+  auth: servicenowAuth,
+  displayName: 'Catalog Item',
+  description: 'Select a catalog item to order',
+  required: true,
+  refreshers: [],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        placeholder: 'Please connect your ServiceNow account first',
+        options: [],
+      };
+    }
+
+    try {
+      const client = new ServiceNowClient({
+        instanceUrl: (auth as any).instanceUrl,
+        auth: {
+          type: 'basic',
+          username: (auth as any).username,
+          password: (auth as any).password,
+        },
+      });
+
+      const items = await client.listCatalogItems({ limit: 100 });
+      return {
+        disabled: false,
+        options: items.map((item) => ({
+          label: item.name
+            ? `${item.name} (${item.sys_id})`
+            : item.sys_id,
+          value: item.sys_id,
+        })),
+      };
+    } catch {
+      return {
+        disabled: true,
+        placeholder:
+          'Failed to load catalog items. Check your credentials and ensure the Service Catalog API is enabled.',
+        options: [],
+      };
+    }
+  },
+});
+
 export function createServiceNowClient(auth: AppConnectionValueForAuthProperty<typeof servicenowAuth>): ServiceNowClient {
   return new ServiceNowClient({
     instanceUrl: auth.props.instanceUrl,
@@ -111,4 +157,22 @@ export function createServiceNowClient(auth: AppConnectionValueForAuthProperty<t
       password: auth.props.password,
     },
   });
+}
+
+export function resolveSysId({
+  selected,
+  manual,
+  label = 'record',
+}: {
+  selected: string | undefined;
+  manual: string | undefined;
+  label?: string;
+}): string {
+  const value = selected || manual;
+  if (!value) {
+    throw new Error(
+      `Either ${label} selection or manual sys_id must be provided`
+    );
+  }
+  return value;
 }
