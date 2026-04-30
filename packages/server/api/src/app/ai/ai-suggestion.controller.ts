@@ -66,7 +66,7 @@ AVAILABLE PIECES:
         let piecesString = ''
         const MAX_TOKENS = 3000
         for (const p of pieces) {
-            const pieceStr = `PIECE: "${p.displayName}" (id: "${p.name}")\nDESCRIPTION: ${p.description.substring(0, 100)}\n\n`
+            const pieceStr = `PIECE: "${p.displayName}" (id: "${p.name}")\nDESCRIPTION: ${(p.description || '').substring(0, 100)}\n\n`
             if ((piecesString + pieceStr).length / 4 > MAX_TOKENS) break
             piecesString += pieceStr
         }

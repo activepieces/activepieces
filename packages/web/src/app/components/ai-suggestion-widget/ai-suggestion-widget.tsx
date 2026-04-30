@@ -54,12 +54,17 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
     setActiveIndex(-1);
 
     try {
+      const token = authenticationSession.getToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(apiEndpoint, {
         method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authenticationSession.getToken()}`
-        },
+        headers,
         body: JSON.stringify({
           query: searchQuery,
           workloadContext: { existingPieces: pieceNames }
