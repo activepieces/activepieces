@@ -89,7 +89,7 @@ export function PlatformSidebar() {
       locked: edition === ApEdition.COMMUNITY,
     },
     {
-      to: '/platform/security/signing-keys',
+      to: '/platform/security/embed',
       label: t('Embedding'),
       icon: FrameIcon,
       locked: !platform.plan.embeddingEnabled,

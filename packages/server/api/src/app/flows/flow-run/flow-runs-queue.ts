@@ -7,7 +7,6 @@ import { domainHelper } from '../../helper/domain-helper'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { projectService } from '../../project/project-service'
 import { QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '../../workers/job'
 import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
@@ -100,7 +99,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             const parentRunId = savedFlowRun.parentRunId
                             const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
                             if (shouldMarkParentAsFailed) {
-                                const platformId = await projectService(log).getPlatformId(savedFlowRun.projectId)
                                 await markParentRunAsFailed({
                                     parentRunId,
                                     childRunId: savedFlowRun.id,

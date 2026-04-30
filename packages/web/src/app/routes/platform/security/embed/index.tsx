@@ -1,4 +1,6 @@
 import {
+  ApEdition,
+  ApFlagId,
   EmbedSubdomain,
   EmbedSubdomainStatus,
   SigningKey,
@@ -47,12 +49,24 @@ import {
   signingKeyQueries,
   NewSigningKeyDialog,
 } from '@/features/platform-admin';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
-const SigningKeysPage = () => {
+type StepKind = 'hostname' | 'dns' | 'allowed-domains' | 'signing-keys';
+
+type StepDef = {
+  kind: StepKind;
+  title: string;
+  icon: LucideIcon;
+};
+
+const EmbedPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCloud = edition === ApEdition.CLOUD;
+
   const { subdomain, isLoading: isSubdomainLoading } =
     embedSubdomainQueries.useCurrentEmbedSubdomain();
   const {
@@ -62,14 +76,50 @@ const SigningKeysPage = () => {
   } = signingKeyQueries.useSigningKeys();
   const signingKeys: SigningKey[] = data?.data ?? [];
 
-  const isLoading = isSubdomainLoading || isKeysLoading;
+  const isLoading = (isCloud && isSubdomainLoading) || isKeysLoading;
 
-  const stepCompletion: boolean[] = [
-    !!subdomain,
-    subdomain?.status === EmbedSubdomainStatus.ACTIVE,
-    (subdomain?.allowedEmbedDomains.length ?? 0) > 0,
-    signingKeys.length > 0,
-  ];
+  const allowedEmbedDomains = platform.allowedEmbedDomains ?? [];
+
+  const allSteps: Record<StepKind, StepDef> = {
+    hostname: {
+      kind: 'hostname',
+      title: t('Enter the embed URL'),
+      icon: Globe,
+    },
+    dns: {
+      kind: 'dns',
+      title: t('Verify the DNS records'),
+      icon: ShieldCheck,
+    },
+    'allowed-domains': {
+      kind: 'allowed-domains',
+      title: t('Add allowed domains'),
+      icon: ListChecks,
+    },
+    'signing-keys': {
+      kind: 'signing-keys',
+      title: t('Add signing keys'),
+      icon: Key,
+    },
+  };
+
+  const steps: StepDef[] = isCloud
+    ? [
+        allSteps.hostname,
+        allSteps.dns,
+        allSteps['allowed-domains'],
+        allSteps['signing-keys'],
+      ]
+    : [allSteps['allowed-domains'], allSteps['signing-keys']];
+
+  const completionByKind: Record<StepKind, boolean> = {
+    hostname: !!subdomain,
+    dns: subdomain?.status === EmbedSubdomainStatus.ACTIVE,
+    'allowed-domains': allowedEmbedDomains.length > 0,
+    'signing-keys': signingKeys.length > 0,
+  };
+
+  const stepCompletion = steps.map((step) => completionByKind[step.kind]);
 
   const firstIncompleteIndex = stepCompletion.findIndex((done) => !done);
   const activeStepIndex =
@@ -88,12 +138,13 @@ const SigningKeysPage = () => {
     setViewingIndex(index === activeStepIndex ? null : index);
   };
 
-  const steps: Array<{ title: string; icon: LucideIcon }> = [
-    { title: t('Enter the embed URL'), icon: Globe },
-    { title: t('Verify the DNS records'), icon: ShieldCheck },
-    { title: t('Add allowed domains'), icon: ListChecks },
-    { title: t('Add signing keys'), icon: Key },
-  ];
+  const description = isCloud
+    ? t(
+        'Run embedded workflows under your own domain — four quick steps to get set up.',
+      )
+    : t(
+        'Configure who can embed your workflows and create the signing keys to authenticate sessions.',
+      );
 
   return (
     <LockedFeatureGuard
@@ -108,9 +159,7 @@ const SigningKeysPage = () => {
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-medium">{t('Embed Onboarding')}</h1>
           <div className="text-sm text-muted-foreground">
-            {t(
-              'Run embedded workflows under your own domain — four quick steps to get set up.',
-            )}
+            {description}
             <Button
               variant="link"
               size="sm"
@@ -144,8 +193,9 @@ const SigningKeysPage = () => {
               <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
             ) : (
               <StepContent
-                index={displayedIndex}
+                step={steps[displayedIndex]}
                 subdomain={subdomain}
+                allowedEmbedDomains={allowedEmbedDomains}
                 signingKeys={signingKeys}
                 refetchSigningKeys={refetch}
                 isSigningKeysLoading={isKeysLoading}
@@ -165,7 +215,7 @@ const Stepper = ({
   displayedIndex,
   onStepClick,
 }: {
-  steps: Array<{ title: string; icon: LucideIcon }>;
+  steps: StepDef[];
   completion: boolean[];
   activeStepIndex: number;
   displayedIndex: number;
@@ -180,7 +230,7 @@ const Stepper = ({
         const isLast = index === steps.length - 1;
         const Icon = step.icon;
         return (
-          <li key={index} className="flex gap-3">
+          <li key={step.kind} className="flex gap-3">
             <div className="flex flex-col items-center">
               <button
                 type="button"
@@ -235,20 +285,24 @@ const Stepper = ({
 };
 
 const StepContent = ({
-  index,
+  step,
   subdomain,
+  allowedEmbedDomains,
   signingKeys,
   refetchSigningKeys,
   isSigningKeysLoading,
 }: {
-  index: number;
+  step: StepDef | undefined;
   subdomain: EmbedSubdomain | undefined;
+  allowedEmbedDomains: string[];
   signingKeys: SigningKey[];
   refetchSigningKeys: () => void;
   isSigningKeysLoading: boolean;
 }) => {
-  switch (index) {
-    case 0:
+  if (!step) return null;
+
+  switch (step.kind) {
+    case 'hostname':
       return (
         <StepShell
           title={t('Enter the embed URL')}
@@ -263,7 +317,7 @@ const StepContent = ({
           )}
         </StepShell>
       );
-    case 1:
+    case 'dns':
       return (
         <StepShell
           title={t('Verify the DNS records')}
@@ -274,7 +328,7 @@ const StepContent = ({
           {subdomain && <EmbedVerificationStep subdomain={subdomain} />}
         </StepShell>
       );
-    case 2:
+    case 'allowed-domains':
       return (
         <StepShell
           title={t('Add allowed domains')}
@@ -282,10 +336,12 @@ const StepContent = ({
             'List the websites that can load your embed in an iframe. All other origins are blocked.',
           )}
         >
-          {subdomain && <EmbedAllowedDomainsEditor subdomain={subdomain} />}
+          <EmbedAllowedDomainsEditor
+            initialAllowedEmbedDomains={allowedEmbedDomains}
+          />
         </StepShell>
       );
-    case 3:
+    case 'signing-keys':
       return (
         <StepShell
           title={t('Add signing keys')}
@@ -420,5 +476,5 @@ const SigningKeysList = ({
   );
 };
 
-SigningKeysPage.displayName = 'SigningKeysPage';
-export { SigningKeysPage };
+EmbedPage.displayName = 'EmbedPage';
+export { EmbedPage };

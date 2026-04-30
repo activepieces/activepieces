@@ -18,7 +18,6 @@ export class AddEmbedSubdomainTable1786000000000 implements Migration {
                 "status" character varying NOT NULL,
                 "cloudflareId" character varying NOT NULL,
                 "verificationRecords" jsonb NOT NULL DEFAULT '[]'::jsonb,
-                "allowedEmbedDomains" character varying[] NOT NULL DEFAULT '{}',
                 CONSTRAINT "pk_embed_subdomain" PRIMARY KEY ("id"),
                 CONSTRAINT "fk_embed_subdomain_platform_id" FOREIGN KEY ("platformId")
                     REFERENCES "platform" ("id") ON DELETE CASCADE
@@ -34,9 +33,15 @@ export class AddEmbedSubdomainTable1786000000000 implements Migration {
             CREATE UNIQUE INDEX IF NOT EXISTS "idx_embed_subdomain_hostname"
             ON "embed_subdomain" ("hostname")
         `)
+
+        await queryRunner.query(`
+            ALTER TABLE "platform"
+            ADD COLUMN IF NOT EXISTS "allowedEmbedDomains" character varying[] NOT NULL DEFAULT '{}'
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "allowedEmbedDomains"')
         await queryRunner.query('DROP INDEX IF EXISTS "idx_embed_subdomain_hostname"')
         await queryRunner.query('DROP INDEX IF EXISTS "idx_embed_subdomain_platform_id"')
         await queryRunner.query('DROP TABLE IF EXISTS "embed_subdomain"')

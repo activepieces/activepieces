@@ -163,7 +163,7 @@ export const flagService = (log: FastifyBaseLogger) => ({
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value: await federatedAuthnService(log).getThirdPartyRedirectUrl(undefined),
+                value: await federatedAuthnService(log).getThirdPartyRedirectUrl(),
                 created,
                 updated,
             },

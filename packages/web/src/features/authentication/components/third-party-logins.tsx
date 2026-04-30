@@ -1,4 +1,5 @@
 import {
+  ApEdition,
   ApFlagId,
   ThirdPartyAuthnProviderEnum,
   ThirdPartyAuthnProvidersToShowMap,
@@ -27,6 +28,8 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
   const { data: thirdPartyRedirectUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCloud = edition === ApEdition.CLOUD;
   const thirdPartyLogin = oauth2Utils.useThirdPartyLogin();
 
   const handleProviderClick = async (
@@ -62,16 +65,30 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
             : `${t(`Sign in With`)} ${t('Google')}`}
         </Button>
       )}
-      {thirdPartyAuthProviders?.saml && (
-        <SamlDomainDialog>
-          <Button variant="outline" className="w-full rounded-sm">
+      {thirdPartyAuthProviders?.saml &&
+        (isCloud ? (
+          <SamlDomainDialog>
+            <Button variant="outline" className="w-full rounded-sm">
+              <ThirdPartyIcon icon={SamlIcon} />
+              {isSignUp
+                ? `${t(`Sign up With`)} ${t('SAML')}`
+                : `${t(`Sign in With`)} ${t('SAML')}`}
+            </Button>
+          </SamlDomainDialog>
+        ) : (
+          <Button
+            variant="outline"
+            className="w-full rounded-sm"
+            onClick={() => {
+              window.location.href = '/api/v1/authn/saml/login';
+            }}
+          >
             <ThirdPartyIcon icon={SamlIcon} />
             {isSignUp
               ? `${t(`Sign up With`)} ${t('SAML')}`
               : `${t(`Sign in With`)} ${t('SAML')}`}
           </Button>
-        </SamlDomainDialog>
-      )}
+        ))}
     </div>
   );
 });

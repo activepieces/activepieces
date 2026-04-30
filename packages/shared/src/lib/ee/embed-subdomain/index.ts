@@ -1,20 +1,7 @@
 import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common/base-model'
 
-const MAX_ALLOWED_EMBED_DOMAINS = 50
 const MAX_EMBED_HOSTNAME_LENGTH = 253
-const MAX_EMBED_ORIGIN_LENGTH = 300
-
-const ALLOWED_EMBED_DOMAIN = z.httpUrl()
-    .max(MAX_EMBED_ORIGIN_LENGTH, 'invalidEmbedOrigin')
-    .refine((value) => {
-        try {
-            return new URL(value).origin === value
-        }
-        catch {
-            return false
-        }
-    }, 'invalidEmbedOrigin')
 
 export enum EmbedSubdomainStatus {
     PENDING_VERIFICATION = 'PENDING_VERIFICATION',
@@ -57,7 +44,6 @@ export const EmbedSubdomain = z.object({
     ]),
     cloudflareId: z.string(),
     verificationRecords: z.array(EmbedVerificationRecord),
-    allowedEmbedDomains: z.array(ALLOWED_EMBED_DOMAIN).max(MAX_ALLOWED_EMBED_DOMAINS, 'tooManyEmbedDomains'),
 })
 
 export type EmbedSubdomain = z.infer<typeof EmbedSubdomain>
@@ -70,9 +56,3 @@ export const GenerateEmbedSubdomainRequest = z.object({
 })
 
 export type GenerateEmbedSubdomainRequest = z.infer<typeof GenerateEmbedSubdomainRequest>
-
-export const UpdateEmbedSubdomainAllowedDomainsRequest = z.object({
-    allowedEmbedDomains: z.array(ALLOWED_EMBED_DOMAIN).max(MAX_ALLOWED_EMBED_DOMAINS, 'tooManyEmbedDomains'),
-})
-
-export type UpdateEmbedSubdomainAllowedDomainsRequest = z.infer<typeof UpdateEmbedSubdomainAllowedDomainsRequest>

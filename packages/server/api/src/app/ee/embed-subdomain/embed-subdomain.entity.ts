@@ -31,11 +31,6 @@ export const EmbedSubdomainEntity = new EntitySchema<EmbedSubdomainSchema>({
             nullable: false,
             default: () => '\'[]\'::jsonb',
         },
-        allowedEmbedDomains: {
-            type: String,
-            array: true,
-            nullable: false,
-        },
     },
     indices: [
         {

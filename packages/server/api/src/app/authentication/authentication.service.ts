@@ -222,7 +222,7 @@ async function getPreferredPlatformId(identityId: string, log: FastifyBaseLogger
     if (edition === ApEdition.CLOUD) {
         const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId })
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
-        const lastUsed = !isNil(identity.lastLoggedInPlatformId) ? nonDedicated.find((p) => p.id === identity.lastLoggedInPlatformId) : undefined
+        const lastUsed = !isNil(identity.lastLoggedInPlatformId) ? platforms.find((p) => p.id === identity.lastLoggedInPlatformId) : undefined
         const licensed = platforms.find((p) => !isNil(p.plan.licenseKey))
         return lastUsed?.id ?? licensed?.id ?? platforms[0]?.id ?? null
     }

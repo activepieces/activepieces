@@ -127,6 +127,7 @@ export const Platform = z.object({
     cloudAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),
     allowedAuthDomains: z.array(z.string()),
+    allowedEmbedDomains: z.array(z.string()),
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
@@ -151,6 +152,7 @@ export const PlatformWithoutSensitiveData = z.object({
     cloudAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),
     allowedAuthDomains: z.array(z.string()),
+    allowedEmbedDomains: z.array(z.string()),
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
 })

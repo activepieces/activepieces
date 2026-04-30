@@ -49,12 +49,9 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
             imageUrl: idToken.imageUrl,
         })
     },
-    async getThirdPartyRedirectUrl(
-        platformId: string | undefined,
-    ): Promise<string> {
+    async getThirdPartyRedirectUrl(): Promise<string> {
         return domainHelper.getInternalUrl({
             path: '/redirect',
-
         })
     },
 })

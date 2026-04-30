@@ -43,7 +43,6 @@ export const embedSubdomainService = (log: FastifyBaseLogger) => ({
                 status: mapCloudflareStatus({ status: newCloudflare.status, sslStatus: newCloudflare.sslStatus }),
                 cloudflareId: newCloudflare.cloudflareId,
                 verificationRecords: newCloudflare.verificationRecords,
-                allowedEmbedDomains: [],
             }
             return repo().save(subdomain)
         }
@@ -99,21 +98,6 @@ export const embedSubdomainService = (log: FastifyBaseLogger) => ({
             return null
         }
         return `https://${record.hostname}`
-    },
-
-    async updateAllowedDomains({ platformId, allowedEmbedDomains }: { platformId: string, allowedEmbedDomains: string[] }): Promise<EmbedSubdomain> {
-        const record = await repo().findOneBy({ platformId })
-        if (isNil(record)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'EmbedSubdomain',
-                    entityId: platformId,
-                    message: 'No embed hostname found for this platform',
-                },
-            })
-        }
-        return repo().save({ ...record, allowedEmbedDomains })
     },
 
     async getByHostname({ hostname }: { hostname: string }): Promise<EmbedSubdomain | null> {

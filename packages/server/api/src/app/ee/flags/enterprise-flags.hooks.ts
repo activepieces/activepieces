@@ -62,7 +62,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
                 path: '/v1/webhooks',
             })
         }
-        modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = await federatedAuthnService(request.log).getThirdPartyRedirectUrl(platformId)
+        modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = await federatedAuthnService(request.log).getThirdPartyRedirectUrl()
         return modifiedFlags
     },
 }

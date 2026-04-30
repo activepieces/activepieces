@@ -6,12 +6,14 @@ import {
   GenerateEmbedSubdomainRequest,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CheckCircle, Loader2, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { platformApi } from '@/api/platforms-api';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { TagInput } from '@/components/custom/tag-input';
@@ -26,6 +28,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import { embedSubdomainMutations } from '../hooks/embed-subdomain-hooks';
 
@@ -173,26 +176,30 @@ export function EmbedVerificationStep({
 }
 
 export function EmbedAllowedDomainsEditor({
-  subdomain,
+  initialAllowedEmbedDomains,
 }: {
-  subdomain: EmbedSubdomain;
+  initialAllowedEmbedDomains: string[];
 }) {
+  const { platform, refetch } = platformHooks.useCurrentPlatform();
   const [domains, setDomains] = useState<readonly string[]>(
-    subdomain.allowedEmbedDomains,
+    initialAllowedEmbedDomains,
   );
-  const { mutate, isPending } =
-    embedSubdomainMutations.useUpdateAllowedDomains();
+  const { mutate, isPending } = useMutation({
+    mutationFn: async () => {
+      await platformApi.update(
+        { allowedEmbedDomains: [...domains] },
+        platform.id,
+      );
+      await refetch();
+    },
+    onSuccess: () => {
+      toast.success(t('Allowed domains updated'));
+    },
+    onError: () => internalErrorToast(),
+  });
 
   const handleSave = () => {
-    mutate(
-      { allowedEmbedDomains: [...domains] },
-      {
-        onSuccess: () => {
-          toast.success(t('Allowed domains updated'));
-        },
-        onError: () => internalErrorToast(),
-      },
-    );
+    mutate();
   };
 
   return (

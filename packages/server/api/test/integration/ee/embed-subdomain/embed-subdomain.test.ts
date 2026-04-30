@@ -17,7 +17,7 @@ afterAll(async () => {
 
 describe('Embed Subdomain API', () => {
     describe('GET /v1/embed-subdomain', () => {
-        it('should return empty object when no subdomain exists', async () => {
+        it('should return null when no subdomain exists', async () => {
             const ctx = await createTestContext(app!, {
                 plan: { embeddingEnabled: true },
             })
@@ -25,7 +25,7 @@ describe('Embed Subdomain API', () => {
             const response = await ctx.get('/v1/embed-subdomain')
 
             expect(response.statusCode).toBe(StatusCodes.OK)
-            expect(response.json()).toEqual({})
+            expect(response.json()).toBeNull()
         })
 
         it('should return subdomain record when one exists', async () => {
@@ -43,7 +43,6 @@ describe('Embed Subdomain API', () => {
                 status: EmbedSubdomainStatus.ACTIVE,
                 cloudflareId: `cf-${apId()}`,
                 verificationRecords: [],
-                allowedEmbedDomains: [],
             })
 
             const response = await ctx.get('/v1/embed-subdomain')
@@ -66,44 +65,19 @@ describe('Embed Subdomain API', () => {
         })
     })
 
-    describe('POST /v1/embed-subdomain/allowed-domains', () => {
-        it('should update allowed embed domains', async () => {
+    describe('POST /v1/platforms/:id (allowedEmbedDomains)', () => {
+        it('should update allowed embed domains on platform plan', async () => {
             const ctx = await createTestContext(app!, {
                 plan: { embeddingEnabled: true },
             })
 
-            const hostname = `test-${apId().slice(0, 8).toLowerCase()}.example.com`
-            await databaseConnection().getRepository('embed_subdomain').save({
-                id: apId(),
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                platformId: ctx.platform.id,
-                hostname,
-                status: EmbedSubdomainStatus.ACTIVE,
-                cloudflareId: `cf-${apId()}`,
-                verificationRecords: [],
-                allowedEmbedDomains: [],
-            })
-
-            const response = await ctx.post('/v1/embed-subdomain/allowed-domains', {
+            const response = await ctx.post(`/v1/platforms/${ctx.platform.id}`, {
                 allowedEmbedDomains: ['https://myapp.com', 'https://dashboard.myapp.com'],
             })
 
             expect(response.statusCode).toBe(StatusCodes.OK)
             const body = response.json()
             expect(body.allowedEmbedDomains).toEqual(['https://myapp.com', 'https://dashboard.myapp.com'])
-        })
-
-        it('should return 404 when no subdomain exists for platform', async () => {
-            const ctx = await createTestContext(app!, {
-                plan: { embeddingEnabled: true },
-            })
-
-            const response = await ctx.post('/v1/embed-subdomain/allowed-domains', {
-                allowedEmbedDomains: ['https://myapp.com'],
-            })
-
-            expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
     })
 
