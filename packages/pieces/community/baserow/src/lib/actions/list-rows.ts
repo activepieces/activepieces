@@ -77,7 +77,7 @@ Example: \`{"field": 123, "type": "equal", "value": "Active"}\``,
 
     if (filters && filters.length > 0) {
       const parsedFilters = filters.map((f) => {
-        const filter =
+        const filter: Record<string, unknown> =
           typeof f === 'string' ? JSON.parse(f) : (f as Record<string, unknown>);
         return {
           field: Number(filter['field']),
@@ -99,7 +99,7 @@ Example: \`{"field": 123, "type": "equal", "value": "Active"}\``,
       order_by,
       undefined,
       advancedFilters
-    )) as { count: number; results: Record<string, unknown>[] };
+    ))
 
     return { count: response.count, rows: response.results };
   },

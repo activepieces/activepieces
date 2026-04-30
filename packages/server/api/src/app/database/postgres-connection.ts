@@ -748,6 +748,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddLastLoggedInPlatformIdToUserIdentity1777491000474,
         DropChatTokenColumns1782000000000,
         AddUserSandboxTable1784000000000,
+        AddLastLoggedInPlatformIdToUserIdentity1777491000474,
         ReplacesSandboxWithVercelAiSdk1785000000000,
         AddEmbedSubdomainTable1786000000000,
         AddSsoDomainToPlatformPlan1786500000000,

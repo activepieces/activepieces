@@ -285,6 +285,39 @@ describe('Authentication API', () => {
             expect(allPlatforms.length).toBe(1)
         })
 
+        it('fails to sign up invited user platform if no project exist', async () => {
+            // arrange
+            const { mockCustomDomain } = await createMockPlatformAndDomain({
+                platform: {
+                    emailAuthEnabled: true,
+                    enforceAllowedAuthDomains: false,
+                },
+                plan: {
+                    ssoEnabled: false,
+                },
+            })
+            const mockedUpEmail = faker.internet.email()
+            const mockSignUpRequest = createMockSignUpRequest({
+                email: mockedUpEmail,
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/sign-up',
+                headers: {
+                    Host: mockCustomDomain.domain,
+                },
+                body: mockSignUpRequest,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            const responseBody = response?.json()
+
+            expect(responseBody?.code).toBe('INVITATION_ONLY_SIGN_UP')
+        })
+
     })
 
     describe('Sign in Endpoint', () => {

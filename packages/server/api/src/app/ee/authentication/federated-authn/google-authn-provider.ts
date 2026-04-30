@@ -19,7 +19,7 @@ const keyLoader = jwksClient({
 
 export const googleAuthnProvider = (log: FastifyBaseLogger) => ({
     async getLoginUrl(params: GetLoginUrlParams): Promise<string> {
-        const { clientId, platformId } = params
+        const { clientId } = params
         const loginUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
         loginUrl.searchParams.set('client_id', clientId)
         loginUrl.searchParams.set(
