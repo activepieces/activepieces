@@ -73,6 +73,9 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
     const newCutoffIndex = snapToSafeMessageBoundary({ messages, rawCutoff })
 
     const startIndex = summarizedUpToIndex ?? 0
+    if (newCutoffIndex <= startIndex) {
+        return { summary: existingSummary ?? '', summarizedUpToIndex: startIndex }
+    }
     const messagesToSummarize = messages.slice(startIndex, newCutoffIndex)
 
     let contentToSummarize = ''

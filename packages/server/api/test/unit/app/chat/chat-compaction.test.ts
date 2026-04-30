@@ -62,10 +62,10 @@ describe('chatCompaction.shouldCompact', () => {
     })
 
     it('uses correct limits per provider', () => {
-        // OpenAI has 1M context. 70% = 700K
+        // Google has 1M context. 70% = ~700K. 150K is well below threshold.
         const result = chatCompaction.shouldCompact({
             estimatedTokens: 150_000,
-            provider: AIProviderName.OPENAI,
+            provider: AIProviderName.GOOGLE,
             messageCount: 20,
         })
         expect(result).toBe(false)

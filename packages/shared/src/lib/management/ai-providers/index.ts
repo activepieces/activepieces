@@ -358,11 +358,11 @@ export function splitCloudflareGatewayModelId(modelId: string): {
 const DEFAULT_MAX_CONTEXT_TOKENS = 128_000
 
 const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
-    [AIProviderName.OPENAI]: 1_048_576,
+    [AIProviderName.OPENAI]: 128_000,
     [AIProviderName.ANTHROPIC]: 200_000,
     [AIProviderName.GOOGLE]: 1_048_576,
     [AIProviderName.BEDROCK]: 200_000,
-    [AIProviderName.AZURE]: 1_048_576,
+    [AIProviderName.AZURE]: 128_000,
     [AIProviderName.OPENROUTER]: 200_000,
     [AIProviderName.ACTIVEPIECES]: 200_000,
 }
