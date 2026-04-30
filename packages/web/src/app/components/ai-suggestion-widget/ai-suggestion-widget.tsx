@@ -41,6 +41,8 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
   const widgetRef = useRef<HTMLDivElement>(null);
   const suggestionRefs = useRef<Array<HTMLDivElement | null>>([]);
 
+  const pieceNames = React.useMemo(() => pieces.map(p => p.name), [pieces]);
+
   const fetchSuggestions = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) {
       setSuggestions([]);
@@ -52,7 +54,6 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
     setActiveIndex(-1);
 
     try {
-      const existingPieceNames = pieces.map(p => p.name);
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 
@@ -61,7 +62,7 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
         },
         body: JSON.stringify({
           query: searchQuery,
-          workloadContext: { existingPieces: existingPieceNames }
+          workloadContext: { existingPieces: pieceNames }
         })
       });
 
@@ -85,7 +86,7 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [apiEndpoint, pieces]);
+  }, [apiEndpoint, pieceNames]);
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -218,7 +219,7 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
                 <div
                   key={`${suggestion.pieceName}-${suggestion.actionName}-${idx}`}
                   id={`suggestion-${idx}`}
-                  ref={el => suggestionRefs.current[idx] = el}
+                  ref={el => { suggestionRefs.current[idx] = el; }}
                   className={`ai-suggestion-item ${idx === activeIndex ? 'active' : ''}`}
                   onClick={() => handleSuggestionClick(suggestion)}
                   role="option"

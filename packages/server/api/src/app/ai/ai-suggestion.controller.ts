@@ -8,7 +8,16 @@ import { securityAccess } from '../core/security/authorization/fastify-security'
 import { pieceMetadataService } from '../pieces/metadata/piece-metadata-service'
 
 export const aiSuggestionController: FastifyPluginAsyncZod = async (app) => {
-    app.post('/suggest', SuggestAction, async (request) => {
+    app.post('/suggest', {
+        ...SuggestAction,
+        config: {
+            ...SuggestAction.config,
+            rateLimit: {
+                max: 10,
+                timeWindow: '1 minute',
+            },
+        },
+    }, async (request) => {
         const { workloadContext } = request.body
         const log = app.log
 
@@ -72,9 +81,6 @@ AVAILABLE PIECES:
                 model: openai('gpt-3.5-turbo-1106'),
                 prompt: systemPrompt,
                 temperature: 0.2,
-                headers: {
-                    'OpenAI-Beta': 'assistants=v1',
-                },
             })
             text = result.text
             totalTokens = result.usage.totalTokens
@@ -99,8 +105,11 @@ AVAILABLE PIECES:
             log.error(e, '[ai-suggestion.controller] Failed to parse AI response')
         }
 
+        // Resolve P1: Validate AI-suggested piece names against the actual DB piece list
+        const validatedSuggestions = suggestions.filter(s => existingPieceNames.includes(s.pieceName))
+
         return {
-            suggestions: suggestions.map(s => ({
+            suggestions: validatedSuggestions.map(s => ({
                 pieceName: s.pieceName,
                 actionName: s.actionName,
                 confidence: s.confidence,
