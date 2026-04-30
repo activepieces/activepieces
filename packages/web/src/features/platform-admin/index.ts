@@ -9,12 +9,6 @@ export { samlSsoApi } from './api/saml-sso-api';
 export { signingKeyApi } from './api/signing-key-api';
 export { workersApi } from './api/workers-api';
 export {
-  EmbedHostnameForm,
-  EmbedHostnameSummary,
-  EmbedVerificationStep,
-  EmbedAllowedDomainsEditor,
-} from './components/embed-subdomain-section';
-export {
   embedSubdomainQueries,
   embedSubdomainMutations,
   embedSubdomainKeys,
