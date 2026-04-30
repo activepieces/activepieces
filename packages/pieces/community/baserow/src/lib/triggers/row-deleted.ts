@@ -31,9 +31,7 @@ export const rowDeletedTrigger = createTrigger({
     const tableId = context.propsValue.table_id;
     if (!tableId) return [];
     const client = await makeClient(context.auth);
-    const response = (await client.listRows(tableId, 1, 5)) as {
-      results: { id: number }[];
-    };
+    const response = await client.listRows(tableId, 1, 5);
     return response.results.map((row) => ({ id: row.id }));
   },
 });

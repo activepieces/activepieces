@@ -95,14 +95,14 @@ export const upsertRowAction = createAction({
     const matchFieldId = parseInt(match_field!.replace('field_', ''), 10);
     const matchFieldDef = tableSchema.find((f) => f.id === matchFieldId);
 
-    const existing = (await client.listRows(
+    const existing = await client.listRows(
       table_id!,
       undefined,
       1,
       undefined,
       undefined,
       { [`filter__${match_field}__equal`]: match_value! }
-    )) as { results: Record<string, unknown>[]; count: number };
+    );
 
     if (existing.results.length > 0) {
       // Strip the match field from the update payload so the upsert stays
@@ -118,7 +118,7 @@ export const upsertRowAction = createAction({
           client,
         });
       }
-      const rowId = existing.results[0]['id'] as number;
+      const rowId = existing.results[0].id;
       const updated = await client.updateRow(table_id!, rowId, formattedFields);
       return { action: 'updated', row: updated };
     }
