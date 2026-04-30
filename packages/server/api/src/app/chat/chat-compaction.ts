@@ -143,7 +143,7 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
                 ...trimmedRecent[0],
                 content: typeof trimmedRecent[0].content === 'string'
                     ? `${summaryText}\n\n${trimmedRecent[0].content}`
-                    : summaryText,
+                    : [{ type: 'text' as const, text: summaryText }, ...trimmedRecent[0].content],
             },
             ...trimmedRecent.slice(1),
         ]
