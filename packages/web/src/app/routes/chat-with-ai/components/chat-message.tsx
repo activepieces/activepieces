@@ -1,4 +1,3 @@
-import { isDataUIPart } from 'ai';
 import { t } from 'i18next';
 import { Check, Copy, Paperclip, RefreshCw } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -21,8 +20,7 @@ import {
   ReasoningContent,
   ReasoningTrigger,
 } from '@/components/prompt-kit/reasoning';
-import { PlanCard } from '@/features/chat/components/plan-card';
-import { ChatDataParts, ChatUIMessage } from '@/features/chat/lib/chat-types';
+import { ChatUIMessage } from '@/features/chat/lib/chat-types';
 import { cn } from '@/lib/utils';
 
 import { getTextFromParts } from '../lib/message-parsers';
@@ -132,16 +130,6 @@ export function UserMessage({
   );
 }
 
-function extractPlanEntries(
-  parts: ChatUIMessage['parts'],
-): Array<{ content: string; status: string }> {
-  const last = parts.findLast(
-    (p): p is Extract<typeof p, { type: 'data-plan' }> =>
-      isDataUIPart<ChatDataParts>(p) && p.type === 'data-plan',
-  );
-  return last ? last.data.entries : [];
-}
-
 export function AssistantMessage({
   message,
   isStreaming,
@@ -165,8 +153,9 @@ export function AssistantMessage({
   const thoughts = reasoningParts.map((p) => p.text).join('');
   const hasThoughts = thoughts.length > 0;
 
+  const HIDDEN_TOOLS = new Set(['ap_set_session_title']);
   const dynamicToolParts = message.parts.filter(
-    (p) => p.type === 'dynamic-tool',
+    (p) => p.type === 'dynamic-tool' && !HIDDEN_TOOLS.has(p.toolName),
   );
   const textParts = message.parts.filter(
     (p): p is { type: 'text'; text: string } =>
@@ -183,12 +172,10 @@ export function AssistantMessage({
   const [isReasoningOpen, setIsReasoningOpen] = useState(false);
   const fullText = getTextFromParts(message.parts);
 
-  const planEntries = extractPlanEntries(message.parts);
-
   const renderableParts = message.parts.filter(
     (p) =>
       (p.type === 'text' && 'text' in p && p.text.length > 0) ||
-      p.type === 'dynamic-tool',
+      (p.type === 'dynamic-tool' && !HIDDEN_TOOLS.has(p.toolName)),
   );
 
   return (
@@ -222,8 +209,6 @@ export function AssistantMessage({
             connectedPieces,
             onPieceConnected,
           })}
-
-          {planEntries.length > 0 && <PlanCard entries={planEntries} />}
 
           {isStreaming && !isWaiting && <ChatThinkingLoader showText={false} />}
 

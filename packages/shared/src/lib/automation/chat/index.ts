@@ -28,9 +28,8 @@ export const ChatConversation = z.object({
     projectId: z.string(),
     userId: z.string(),
     title: Nullable(z.string()),
-    sandboxSessionId: Nullable(z.string()),
     modelName: Nullable(z.string()),
-    summary: Nullable(z.string()),
+    messages: z.array(z.record(z.string(), z.unknown())).default([]),
 })
 export type ChatConversation = z.infer<typeof ChatConversation>
 
@@ -69,20 +68,6 @@ export type ChatHistoryMessage = {
     toolCalls?: ChatHistoryToolCall[]
     thoughts?: string
 }
-
-export type PlanItem = {
-    content: string
-    status: 'pending' | 'in_progress' | 'completed'
-}
-
-export const UserSandbox = z.object({
-    ...BaseModelSchema,
-    userId: z.string(),
-    platformId: z.string(),
-    sandboxId: z.string(),
-    lastUsedAt: z.string().datetime(),
-})
-export type UserSandbox = z.infer<typeof UserSandbox>
 
 export type ChatAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
 export { CHAT_ALLOWED_MIME_TYPES }

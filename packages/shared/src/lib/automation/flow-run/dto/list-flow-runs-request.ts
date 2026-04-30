@@ -18,3 +18,22 @@ export const ListFlowRunsRequestQuery = z.object({
 })
 
 export type ListFlowRunsRequestQuery = z.infer<typeof ListFlowRunsRequestQuery>
+
+export const CountFlowRunsByStatusRequest = z.object({
+    projectId: ApId,
+    createdAfter: z.string().optional(),
+    createdBefore: z.string().optional(),
+})
+
+export const FlowRunCountByStatus = z.object({
+    status: z.nativeEnum(FlowRunStatus),
+    count: z.number(),
+})
+
+export const CountFlowRunsByStatusResponse = z.object({
+    data: z.array(FlowRunCountByStatus),
+})
+
+export type CountFlowRunsByStatusRequest = z.infer<typeof CountFlowRunsByStatusRequest>
+export type FlowRunCountByStatus = z.infer<typeof FlowRunCountByStatus>
+export type CountFlowRunsByStatusResponse = z.infer<typeof CountFlowRunsByStatusResponse>

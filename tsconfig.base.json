@@ -651,6 +651,9 @@
       "@activepieces/piece-knack": [
         "packages/pieces/community/knack/src/index.ts"
       ],
+      "@activepieces/piece-ko-fi": [
+        "packages/pieces/community/ko-fi/src/index.ts"
+      ],
       "@activepieces/piece-kustomer": [
         "packages/pieces/community/kustomer/src/index.ts"
       ],
@@ -818,6 +821,9 @@
       "@activepieces/piece-nifty": [
         "packages/pieces/community/nifty/src/index.ts"
       ],
+      "@activepieces/piece-ninjapipe": [
+        "packages/pieces/community/ninjapipe/src/index.ts"
+      ],
       "@activepieces/piece-ninox": [
         "packages/pieces/community/ninox/src/index.ts"
       ],
@@ -938,6 +944,9 @@
       ],
       "@activepieces/piece-pylon": [
         "packages/pieces/community/pylon/src/index.ts"
+      ],
+      "@activepieces/piece-qawafel": [
+        "packages/pieces/community/qawafel/src/index.ts"
       ],
       "@activepieces/piece-qdrant": [
         "packages/pieces/community/qdrant/src/index.ts"
@@ -1065,6 +1074,9 @@
       ],
       "@activepieces/piece-seven": [
         "packages/pieces/community/seven/src/index.ts"
+      ],
+      "@activepieces/piece-service-now": [
+        "packages/pieces/community/service-now/src/index.ts"
       ],
       "@activepieces/piece-sftp": ["packages/pieces/core/sftp/src/index.ts"],
       "@activepieces/piece-shopify": [

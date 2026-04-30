@@ -268,6 +268,7 @@ type UseConnectionsProps = {
   enabled?: boolean;
   staleTime?: number;
   pieceAuth?: PieceAuthProperty | PieceAuthProperty[] | undefined;
+  showErrorDialog?: boolean;
 };
 
 export const appConnectionsQueries = {
@@ -277,10 +278,13 @@ export const appConnectionsQueries = {
     enabled,
     staleTime,
     pieceAuth,
+    showErrorDialog,
   }: UseConnectionsProps) => {
     return useQuery({
       queryKey: ['app-connections', ...extraKeys],
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
+      meta: showErrorDialog
+        ? { showErrorDialog: true, loadSubsetOptions: {} }
+        : undefined,
       queryFn: async () => {
         const connections = await appConnectionsApi.list(request);
         if (pieceAuth) {

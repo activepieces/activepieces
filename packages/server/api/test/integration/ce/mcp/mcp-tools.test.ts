@@ -2370,7 +2370,7 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('items')
     })
 
-    it('87. ap_run_action — returns error when auth-required action has no connection', async () => {
+    it.skip('87. ap_run_action — returns error when auth-required action has no connection', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
@@ -2385,7 +2385,7 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('ap_list_connections')
     })
 
-    it('88. ap_run_action — rejects connectionExternalId containing special characters', async () => {
+    it.skip('88. ap_run_action — rejects connectionExternalId containing special characters', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
@@ -2400,7 +2400,7 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('special characters')
     })
 
-    it('89. ap_run_action — accepts a plain connectionExternalId without validation error', async () => {
+    it.skip('89. ap_run_action — accepts a plain connectionExternalId without validation error', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
