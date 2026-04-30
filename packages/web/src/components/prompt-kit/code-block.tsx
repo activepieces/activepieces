@@ -140,17 +140,30 @@ function CodeBlockGroup({
 }
 
 const EMPTY_STYLE: React.CSSProperties = {};
+const FONT_STYLE_ITALIC = 1;
+const FONT_STYLE_BOLD = 2;
+const FONT_STYLE_UNDERLINE = 4;
 
 function getTokenStyle(token: ThemedToken): React.CSSProperties {
   if (token.htmlStyle) {
     const style: React.CSSProperties = {};
-    Object.assign(style, token.htmlStyle);
+    for (const [key, value] of Object.entries(token.htmlStyle)) {
+      Object.assign(style, { [toCssPropertyKey(key)]: value });
+    }
     return style;
   }
+  const style: React.CSSProperties = {};
   if (token.color) {
-    return { color: token.color };
+    style.color = token.color;
   }
-  return EMPTY_STYLE;
+  if (token.fontStyle) {
+    if (token.fontStyle & FONT_STYLE_ITALIC) style.fontStyle = 'italic';
+    if (token.fontStyle & FONT_STYLE_BOLD) style.fontWeight = 'bold';
+    if (token.fontStyle & FONT_STYLE_UNDERLINE)
+      style.textDecoration = 'underline';
+  }
+  if (!token.color && !token.fontStyle) return EMPTY_STYLE;
+  return style;
 }
 
 function parseCssProperties(cssString: string): React.CSSProperties {
@@ -161,10 +174,15 @@ function parseCssProperties(cssString: string): React.CSSProperties {
     const key = part.slice(0, colonIndex).trim();
     const value = part.slice(colonIndex + 1).trim();
     if (key && value) {
-      Object.assign(style, { [key]: value });
+      Object.assign(style, { [toCssPropertyKey(key)]: value });
     }
   }
   return style;
+}
+
+function toCssPropertyKey(key: string): string {
+  if (key.startsWith('--')) return key;
+  return key.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
 }
 
 function isBundledLanguage(lang: string): lang is BundledLanguage {
