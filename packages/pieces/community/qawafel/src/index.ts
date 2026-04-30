@@ -1,7 +1,11 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
-import { PRODUCTION_API_BASE_URL, qawafelAuth } from './lib/common/auth';
+import {
+  getQawafelBaseUrl,
+  PRODUCTION_API_BASE_URL,
+  qawafelAuth,
+} from './lib/common/auth';
 
 import { createProduct } from './lib/actions/create-product';
 import { updateProduct } from './lib/actions/update-product';
@@ -55,9 +59,10 @@ export const qawafel = createPiece({
     listInvoices,
     createCustomApiCallAction({
       auth: qawafelAuth,
-      baseUrl: () => PRODUCTION_API_BASE_URL,
+      baseUrl: (auth) =>
+        auth ? getQawafelBaseUrl(auth) : PRODUCTION_API_BASE_URL,
       authMapping: async (auth) => ({
-        'x-qawafel-api-key': auth.secret_text,
+        'x-qawafel-api-key': auth.props.apiKey,
       }),
     }),
   ],

@@ -7,9 +7,9 @@ import { OrderLineItemInput, qawafelProps } from '../common/props';
 export const createOrder = createAction({
   auth: qawafelAuth,
   name: 'create_order',
-  displayName: 'Create Order',
+  displayName: 'Create Completed Order',
   description:
-    'Place a sales order in Qawafel for one of your customers. Use this to programmatically create orders from another storefront, ERP, or B2B portal.',
+    'Sync a completed (fulfilled) order into Qawafel. Use this to import historical or externally-completed orders from another storefront, ERP, or B2B portal — the order is created directly in **Fulfilled** state and skips the normal fulfilment workflow. Do **not** use this for new orders that still need to be confirmed, picked, and delivered.',
   props: {
     merchant_id: qawafelProps.merchantDropdown({
       displayName: 'Customer',

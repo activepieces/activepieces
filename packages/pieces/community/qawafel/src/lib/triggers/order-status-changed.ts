@@ -89,9 +89,7 @@ export const orderStatusChanged = createTrigger({
   async run(context) {
     const payloadEvent = context.payload.body as { id: string; event: string };
     if (payloadEvent.event !== context.propsValue.status) {
-      throw new Error(
-        `Received event ${payloadEvent.event} does not match trigger configuration ${context.propsValue.status}`
-      );
+      return [];
     }
     return [payloadEvent];
   },

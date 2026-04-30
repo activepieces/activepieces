@@ -64,7 +64,11 @@ export function createQawafelEventTrigger({
       }
     },
     async run(context) {
-      return [context.payload.body];
+      const payload = context.payload.body as any;
+      if (payload.event !== event) {
+        return [];
+      }
+      return [payload.data];
     },
   });
 }

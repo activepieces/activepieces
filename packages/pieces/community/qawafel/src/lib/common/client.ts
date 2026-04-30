@@ -5,7 +5,7 @@ import {
   HttpResponse,
   QueryParams,
 } from '@activepieces/pieces-common';
-import { PRODUCTION_API_BASE_URL, QawafelAuth } from './auth';
+import { getQawafelBaseUrl, QawafelAuth } from './auth';
 
 export async function qawafelApiCall<T extends HttpMessageBody>({
   auth,
@@ -23,14 +23,14 @@ export async function qawafelApiCall<T extends HttpMessageBody>({
   idempotencyKey?: string;
 }): Promise<HttpResponse<T>> {
   const headers: Record<string, string> = {
-    'x-qawafel-api-key': auth.secret_text,
+    'x-qawafel-api-key': auth.props.apiKey,
   };
   if (idempotencyKey) {
     headers['Idempotency-Key'] = idempotencyKey;
   }
   return await httpClient.sendRequest<T>({
     method,
-    url: `${PRODUCTION_API_BASE_URL}${path}`,
+    url: `${getQawafelBaseUrl(auth)}${path}`,
     headers,
     queryParams,
     body,

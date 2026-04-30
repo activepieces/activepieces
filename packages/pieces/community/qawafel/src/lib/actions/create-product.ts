@@ -102,8 +102,11 @@ export const createProduct = createAction({
       name_en: propsValue.name_en,
       name_ar: propsValue.name_ar,
       unit_price: propsValue.unit_price,
-      supplier_id: propsValue.supplier_id,
     };
+
+    if (propsValue.supplier_id && propsValue.type === 'purchase') {
+      body['supplier_id'] = propsValue.supplier_id;
+    }
 
     if (propsValue.is_taxable === false) {
       body['is_taxable'] = false;
