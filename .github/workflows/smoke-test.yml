@@ -29,6 +29,12 @@ jobs:
       - name: Build Docker image
         run: docker build -t activepieces-benchmark:local .
 
+      - name: Verify image runs as non-root user (uid=1001)
+        run: |
+          actual=$(docker run --rm --entrypoint id activepieces-benchmark:local)
+          echo "$actual"
+          echo "$actual" | grep -q 'uid=1001(app)'
+
       - name: Start stack
         run: |
           APP_REPLICAS=1 \

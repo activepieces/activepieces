@@ -44,6 +44,10 @@ The engine runs as a plain `child_process.fork` with a memory cap. In `SANDBOX_C
 
 The engine runs inside [ioi/isolate](https://github.com/ioi/isolate), which creates fresh PID, mount, user, and UTS namespaces per run and mounts the engine and code artifacts read-only. Arbitrary `npm` packages are safe inside Code steps because filesystem and process state are scoped to the box. The cost: cold boot per run (not reusable), and the worker container must hold `CAP_SYS_ADMIN` — `--privileged` in Docker, `securityContext.privileged: true` in Kubernetes.
 
+<Warning>
+The default Activepieces image runs as the unprivileged `app` user. The `isolate` binary refuses non-root callers, so for `SANDBOX_PROCESS` and `SANDBOX_CODE_AND_PROCESS` the worker container must additionally be run as root. In Docker Compose, set `user: "root"` on the worker service alongside `privileged: true`. In Kubernetes, set `securityContext.runAsUser: 0` alongside `securityContext.privileged: true`. The `app` and other services should keep the default unprivileged user.
+</Warning>
+
 ## Network Isolation
 
 Execution mode decides *how* user code runs; `AP_NETWORK_MODE` decides *what it can reach*. See [Network Security](./network-security) for the SSRF guard, egress proxy, and iptables lockdown that layer on top of every sandbox mode.

@@ -95,36 +95,46 @@ RUN rm -rf packages/pieces/core packages/pieces/custom && \
 ### STAGE 2: Run ###
 FROM base AS run
 
+# Create the unprivileged runtime user early so --chown can resolve "app:app"
+RUN groupadd --system --gid 1001 app && \
+    useradd --system --uid 1001 --gid app \
+            --home-dir /home/app --create-home app
+
 WORKDIR /usr/src/app
 
 # Copy static configuration files first (better layer caching)
 COPY --from=build /usr/src/app/packages/server/api/src/assets/default.cf /usr/local/etc/isolate
-COPY docker-entrypoint.sh .
+COPY --chown=app:app docker-entrypoint.sh .
 
-# Create all necessary directories in one layer
+# WORKDIR creates /usr/src/app as root; retag so bun install can write here as app
 RUN mkdir -p \
     /usr/src/app/dist/packages/engine && \
-    chmod +x docker-entrypoint.sh
+    chmod +x docker-entrypoint.sh && \
+    chown app:app /usr/src/app
 
 # Copy root config files needed for dependency resolution
-COPY --from=build /usr/src/app/package.json ./
-COPY --from=build /usr/src/app/.npmrc ./
-COPY --from=build /usr/src/app/bun.lock ./
-COPY --from=build /usr/src/app/bunfig.toml ./
-COPY --from=build /usr/src/app/LICENSE .
+COPY --chown=app:app --from=build /usr/src/app/package.json ./
+COPY --chown=app:app --from=build /usr/src/app/.npmrc ./
+COPY --chown=app:app --from=build /usr/src/app/bun.lock ./
+COPY --chown=app:app --from=build /usr/src/app/bunfig.toml ./
+COPY --chown=app:app --from=build /usr/src/app/LICENSE .
 
 # Copy workspace package.json files (needed for bun workspace resolution)
-COPY --from=build /usr/src/app/packages ./packages
+COPY --chown=app:app --from=build /usr/src/app/packages ./packages
 
 # Copy built engine
-COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
+COPY --chown=app:app --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
 
-# Regenerate lockfile and install production dependencies (pieces were trimmed from workspace)
-RUN --mount=type=cache,target=/root/.bun/install/cache \
+USER app
+
+# Regenerate lockfile and install production dependencies as the app user
+RUN --mount=type=cache,target=/home/app/.bun/install/cache,uid=1001,gid=1001 \
     bun install --production
 
 # Copy frontend files
-COPY --from=build /usr/src/app/dist/packages/web ./dist/packages/web/
+COPY --chown=app:app --from=build /usr/src/app/dist/packages/web ./dist/packages/web/
+
+ENV PM2_HOME=/home/app/.pm2
 
 LABEL service=activepieces
 
