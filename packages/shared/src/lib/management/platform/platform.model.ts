@@ -125,6 +125,7 @@ export const Platform = z.object({
     */
     filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior),
     cloudAuthEnabled: z.boolean(),
+    googleAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),
     allowedAuthDomains: z.array(z.string()),
     allowedEmbedDomains: z.array(z.string()),
@@ -150,6 +151,7 @@ export const PlatformWithoutSensitiveData = z.object({
     filteredPieceNames: z.array(z.string()),
     filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior),
     cloudAuthEnabled: z.boolean(),
+    googleAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),
     allowedAuthDomains: z.array(z.string()),
     allowedEmbedDomains: z.array(z.string()),

@@ -1,14 +1,11 @@
-import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Globe, LockIcon, MailIcon, Earth } from 'lucide-react';
+import { LockIcon, MailIcon, Earth } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CenteredPage } from '@/app/components/centered-page';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
-import { NewOAuth2Dialog } from '@/app/routes/platform/security/sso/oauth2-dialog';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
-import { SsoDomainDialog } from '@/app/routes/platform/security/sso/sso-domain-dialog';
 import {
   Item,
   ItemMedia,
@@ -27,16 +24,24 @@ import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
 const SSOPage = () => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
 
-  const googleConnected = !isNil(platform.federatedAuthProviders?.google);
-  const samlConnected = !isNil(platform.federatedAuthProviders?.saml);
+  const samlConnected = !!platform.federatedAuthProviders?.saml;
   const emailAuthEnabled = platform.emailAuthEnabled;
 
-  const { mutate: toggleEmailAuthentication, isPending } =
+  const { mutate: toggleEmailAuthentication, isPending: isEmailAuthPending } =
     ssoMutations.useUpdatePlatformSso({
       platformId: platform.id,
       refetch,
       onSuccess: () => {
         toast.success(t('Email authentication updated'), { duration: 3000 });
+      },
+    });
+
+  const { mutate: toggleGoogleAuth, isPending: isGoogleAuthPending } =
+    ssoMutations.useUpdatePlatformSso({
+      platformId: platform.id,
+      refetch,
+      onSuccess: () => {
+        toast.success(t('Google authentication updated'), { duration: 3000 });
       },
     });
 
@@ -91,12 +96,14 @@ const SSOPage = () => {
               </ItemDescription>
             </ItemContent>
             <ItemActions>
-              <NewOAuth2Dialog
-                providerDisplayName="Google"
-                providerName="google"
-                platform={platform}
-                refetch={refetch}
-                connected={googleConnected}
+              <Switch
+                checked={platform.googleAuthEnabled}
+                onCheckedChange={() =>
+                  toggleGoogleAuth({
+                    googleAuthEnabled: !platform.googleAuthEnabled,
+                  })
+                }
+                disabled={isGoogleAuthPending}
               />
             </ItemActions>
           </Item>
@@ -124,31 +131,6 @@ const SSOPage = () => {
 
           <Item variant="outline">
             <ItemMedia variant="icon">
-              <Globe />
-            </ItemMedia>
-            <ItemContent>
-              <ItemTitle>{t('SSO Domain')}</ItemTitle>
-              <ItemDescription>
-                {t(
-                  'Domain users enter on the sign-in page to be routed to your SAML provider.',
-                )}
-              </ItemDescription>
-              {!isNil(platform.plan.ssoDomain) && (
-                <div className="mt-1 text-sm font-mono">
-                  {platform.plan.ssoDomain}
-                </div>
-              )}
-            </ItemContent>
-            <ItemActions>
-              <SsoDomainDialog
-                ssoDomain={platform.plan.ssoDomain ?? null}
-                refetch={refetch}
-              />
-            </ItemActions>
-          </Item>
-
-          <Item variant="outline">
-            <ItemMedia variant="icon">
               <MailIcon />
             </ItemMedia>
             <ItemContent>
@@ -165,7 +147,7 @@ const SSOPage = () => {
                     emailAuthEnabled: !platform.emailAuthEnabled,
                   })
                 }
-                disabled={isPending}
+                disabled={isEmailAuthPending}
               />
             </ItemActions>
           </Item>

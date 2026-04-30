@@ -29,8 +29,10 @@ import {
   FormItem,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { samlSsoApi } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 type ConfigureSamlDialogProps = {
@@ -42,6 +44,13 @@ type ConfigureSamlDialogProps = {
 const Saml2FormValues = z.object({
   idpMetadata: z.string().min(1),
   idpCertificate: z.string().min(1),
+  ssoDomain: z.union([
+    z
+      .hostname('invalidSsoDomain')
+      .max(253, 'invalidSsoDomain')
+      .refine((v) => v.includes('.'), 'invalidSsoDomain'),
+    z.literal(''),
+  ]),
 });
 type Saml2FormValues = z.infer<typeof Saml2FormValues>;
 
@@ -53,14 +62,28 @@ export const ConfigureSamlDialog = ({
   const [open, setOpen] = useState(false);
   const form = useForm<Saml2FormValues>({
     resolver: zodResolver(Saml2FormValues),
+    defaultValues: {
+      idpMetadata: '',
+      idpCertificate: '',
+      ssoDomain: platform.plan.ssoDomain ?? '',
+    },
+    mode: 'onChange',
   });
 
   const { data: samlAcs } = flagsHooks.useFlag<string>(
     ApFlagId.SAML_AUTH_ACS_URL,
   );
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (request: UpdatePlatformRequestBody) => {
+
+  const { mutate: saveSaml, isPending: isSavingSaml } = useMutation({
+    mutationFn: async ({
+      request,
+      ssoDomain,
+    }: {
+      request: UpdatePlatformRequestBody;
+      ssoDomain: string | null;
+    }) => {
       await platformApi.update(request, platform.id);
+      await samlSsoApi.updateSsoDomain(ssoDomain);
       await refetch();
     },
     onSuccess: () => {
@@ -69,16 +92,40 @@ export const ConfigureSamlDialog = ({
       });
       setOpen(false);
     },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : t('Save failed');
+      form.setError('root.serverError', { type: 'manual', message });
+    },
+  });
+
+  const { mutate: disableSaml, isPending: isDisabling } = useMutation({
+    mutationFn: async () => {
+      await platformApi.update(
+        { federatedAuthProviders: { saml: null } },
+        platform.id,
+      );
+      await samlSsoApi.updateSsoDomain(null);
+      await refetch();
+    },
+    onSuccess: () => {
+      toast.success(t('Single sign-on settings updated'), {
+        duration: 3000,
+      });
+    },
   });
 
   return (
     <Dialog
       open={open}
-      onOpenChange={(open) => {
-        if (!open) {
-          form.reset();
+      onOpenChange={(next) => {
+        if (!next) {
+          form.reset({
+            idpMetadata: '',
+            idpCertificate: '',
+            ssoDomain: platform.plan.ssoDomain ?? '',
+          });
         }
-        setOpen(open);
+        setOpen(next);
       }}
     >
       <DialogTrigger asChild>
@@ -87,13 +134,9 @@ export const ConfigureSamlDialog = ({
             size={'sm'}
             className="text-destructive"
             variant={'basic'}
-            loading={isPending}
+            loading={isDisabling}
             onClick={(e) => {
-              mutate({
-                federatedAuthProviders: {
-                  saml: null,
-                },
-              });
+              disableSaml();
               e.preventDefault();
             }}
           >
@@ -136,10 +179,17 @@ Activepieces
           <form
             className="grid space-y-4"
             onSubmit={form.handleSubmit((data) => {
-              mutate({
-                federatedAuthProviders: {
-                  saml: data,
+              const trimmed = data.ssoDomain.trim().toLowerCase();
+              saveSaml({
+                request: {
+                  federatedAuthProviders: {
+                    saml: {
+                      idpMetadata: data.idpMetadata,
+                      idpCertificate: data.idpCertificate,
+                    },
+                  },
                 },
+                ssoDomain: trimmed.length === 0 ? null : trimmed,
               });
             })}
           >
@@ -167,7 +217,7 @@ Activepieces
             <FormField
               name="idpCertificate"
               render={({ field }) => (
-                <FormItem className="grid space-y-4">
+                <FormItem className="grid space-y-2">
                   <Label htmlFor="idpCertificate">{t('IDP Certificate')}</Label>
                   <Textarea
                     {...field}
@@ -175,6 +225,26 @@ Activepieces
                     id="idpCertificate"
                     className="rounded-sm"
                   />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="ssoDomain"
+              render={({ field }) => (
+                <FormItem className="grid space-y-2">
+                  <Label htmlFor="ssoDomain">{t('SSO Domain')}</Label>
+                  <Input
+                    {...field}
+                    id="ssoDomain"
+                    placeholder="acme.com"
+                    className="rounded-sm"
+                  />
+                  <FormDescription>
+                    {t(
+                      'When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.',
+                    )}
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -190,7 +260,7 @@ Activepieces
                 {t('Cancel')}
               </Button>
               <Button
-                loading={isPending}
+                loading={isSavingSaml}
                 disabled={!form.formState.isValid}
                 type="submit"
               >

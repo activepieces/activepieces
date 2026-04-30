@@ -42,6 +42,11 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             nullable: false,
             default: true,
         },
+        googleAuthEnabled: {
+            type: Boolean,
+            nullable: false,
+            default: true,
+        },
         filteredPieceNames: {
             type: String,
             array: true,

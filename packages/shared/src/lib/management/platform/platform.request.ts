@@ -43,6 +43,7 @@ export const UpdatePlatformRequestBody = z.object({
     filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior).optional(),
     federatedAuthProviders: FederatedAuthnProviderConfig.optional(),
     cloudAuthEnabled: OptionalBooleanFromQuery,
+    googleAuthEnabled: OptionalBooleanFromQuery,
     emailAuthEnabled: OptionalBooleanFromQuery,
     allowedAuthDomains: OptionalArrayFromQuery(z.string()),
     enforceAllowedAuthDomains: OptionalBooleanFromQuery,

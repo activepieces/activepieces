@@ -38,9 +38,15 @@ export class AddEmbedSubdomainTable1786000000000 implements Migration {
             ALTER TABLE "platform"
             ADD COLUMN IF NOT EXISTS "allowedEmbedDomains" character varying[] NOT NULL DEFAULT '{}'
         `)
+
+        await queryRunner.query(`
+            ALTER TABLE "platform"
+            ADD COLUMN IF NOT EXISTS "googleAuthEnabled" boolean NOT NULL DEFAULT true
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "googleAuthEnabled"')
         await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "allowedEmbedDomains"')
         await queryRunner.query('DROP INDEX IF EXISTS "idx_embed_subdomain_hostname"')
         await queryRunner.query('DROP INDEX IF EXISTS "idx_embed_subdomain_platform_id"')

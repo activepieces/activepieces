@@ -1,6 +1,6 @@
-import { assertNotNullOrUndefined, AuthenticationResponse,
+import {
+    AuthenticationResponse,
     FederatedAuthnLoginResponse,
-    isNil,
     UserIdentityProvider,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -8,14 +8,13 @@ import { authenticationService } from '../../../authentication/authentication.se
 import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
-import { platformService } from '../../../platform/platform.service'
 import { googleAuthnProvider } from './google-authn-provider'
 
 export const federatedAuthnService = (log: FastifyBaseLogger) => ({
     async login({
         platformId,
     }: LoginParams): Promise<FederatedAuthnLoginResponse> {
-        const { clientId } = await getClientIdAndSecret(platformId, log)
+        const { clientId } = getClientIdAndSecret()
         const loginUrl = await googleAuthnProvider(log).getLoginUrl({
             clientId,
             platformId,
@@ -30,7 +29,7 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
         platformId,
         code,
     }: ClaimParams): Promise<AuthenticationResponse> {
-        const { clientId, clientSecret } = await getClientIdAndSecret(platformId, log)
+        const { clientId, clientSecret } = getClientIdAndSecret()
         const idToken = await googleAuthnProvider(log).authenticate({
             clientId,
             clientSecret,
@@ -56,19 +55,10 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function getClientIdAndSecret(platformId: string | undefined, log: FastifyBaseLogger) {
-    if (isNil(platformId)) {
-        return {
-            clientId: system.getOrThrow(AppSystemProp.GOOGLE_CLIENT_ID),
-            clientSecret: system.getOrThrow(AppSystemProp.GOOGLE_CLIENT_SECRET),
-        }
-    }
-    const platform = await platformService(log).getOneOrThrow(platformId)
-    const clientInformation = platform.federatedAuthProviders.google
-    assertNotNullOrUndefined(clientInformation, 'Google client information is not defined')
+function getClientIdAndSecret() {
     return {
-        clientId: clientInformation.clientId,
-        clientSecret: clientInformation.clientSecret,
+        clientId: system.getOrThrow(AppSystemProp.GOOGLE_CLIENT_ID),
+        clientSecret: system.getOrThrow(AppSystemProp.GOOGLE_CLIENT_SECRET),
     }
 }
 
