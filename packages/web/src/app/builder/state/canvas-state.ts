@@ -37,8 +37,8 @@ export type CanvasState = {
   deselectStep: () => void;
   testPanelView: TestPanelView;
   setTestPanelView: (view: TestPanelView) => void;
-  isTestDrawerOpen: boolean;
-  setTestDrawerOpen: (open: boolean) => void;
+  isTestPanelOpen: boolean;
+  setTestPanelOpen: (open: boolean) => void;
 };
 
 type CanvasStateInitialState = Pick<
@@ -168,11 +168,16 @@ export const createCanvasState = (
         testPanelView: view,
       }));
     },
-    isTestDrawerOpen: !isNil(initialState.run),
-    setTestDrawerOpen: (open: boolean) =>
-      set(() => ({
-        isTestDrawerOpen: open,
-      })),
+    isTestPanelOpen: getTestPanelOpenFromLocalStorage(),
+    setTestPanelOpen: (open: boolean) => {
+      localStorage.setItem(
+        TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE,
+        open ? 'open' : 'closed',
+      );
+      return set(() => ({
+        isTestPanelOpen: open,
+      }));
+    },
   };
 };
 
@@ -189,4 +194,11 @@ function getTestPanelViewFromLocalStorage(): TestPanelView {
   return localStorage.getItem(TEST_PANEL_VIEW_KEY_IN_LOCAL_STORAGE) === 'split'
     ? 'split'
     : 'drawer';
+}
+
+const TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE = 'ap.builder.testPanelOpen';
+function getTestPanelOpenFromLocalStorage(): boolean {
+  return (
+    localStorage.getItem(TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE) !== 'closed'
+  );
 }

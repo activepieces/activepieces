@@ -1,6 +1,13 @@
 import { StepOutputStatus } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Columns2, Copy, Download, Play, Rows2 } from 'lucide-react';
+import {
+  ChevronDown,
+  Columns2,
+  Copy,
+  Download,
+  Play,
+  Rows2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -25,6 +32,7 @@ type TestPanelHeaderProps = {
   dataLabel?: string;
   downloadFileName?: string;
   hideRetest?: boolean;
+  hideClose?: boolean;
 };
 
 const TestPanelHeader = ({
@@ -37,11 +45,14 @@ const TestPanelHeader = ({
   dataLabel,
   downloadFileName = 'data',
   hideRetest = false,
+  hideClose = false,
 }: TestPanelHeaderProps) => {
-  const [testPanelView, setTestPanelView] = useBuilderStateContext((state) => [
-    state.testPanelView,
-    state.setTestPanelView,
-  ]);
+  const [testPanelView, setTestPanelView, setTestPanelOpen] =
+    useBuilderStateContext((state) => [
+      state.testPanelView,
+      state.setTestPanelView,
+      state.setTestPanelOpen,
+    ]);
 
   const handleCopy = () => {
     if (copyableData === undefined) return;
@@ -158,6 +169,23 @@ const TestPanelHeader = ({
             </TooltipTrigger>
             <TooltipContent side="bottom">{toggleLabel}</TooltipContent>
           </Tooltip>
+          {!hideClose && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setTestPanelOpen(false)}
+                  aria-label={t('Hide test panel')}
+                >
+                  <ChevronDown className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {t('Hide test panel')}
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </div>
     </TooltipProvider>

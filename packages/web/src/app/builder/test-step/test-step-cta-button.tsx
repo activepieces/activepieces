@@ -5,7 +5,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Play } from 'lucide-react';
+import { Eye, Play } from 'lucide-react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
@@ -13,39 +13,19 @@ import { Button } from '@/components/ui/button';
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepHooks } from './utils/test-step-hooks';
 
-type TestStepCTAVariant = 'sticky' | 'header';
-
-type TestStepCTABaseProps = {
-  variant?: TestStepCTAVariant;
-};
-
-const TestStepCTAButton = (props: TestStepCTABaseProps) => {
-  return <TestStepCTAButtonInternal variant={props.variant ?? 'sticky'} />;
-};
-
-const TestStepHeaderCTAButton = () => {
-  return <TestStepCTAButtonInternal variant="header" />;
-};
-
-const TestStepCTAButtonInternal = ({
-  variant,
-}: {
-  variant: TestStepCTAVariant;
-}) => {
+const TestStepCTAButton = () => {
   const [
     selectedStep,
     flowVersion,
     isStepBeingTested,
-    setTestDrawerOpen,
-    isTestDrawerOpen,
+    setTestPanelOpen,
     run,
     saving,
   ] = useBuilderStateContext((state) => [
     state.selectedStep,
     state.flowVersion,
     state.isStepBeingTested,
-    state.setTestDrawerOpen,
-    state.isTestDrawerOpen,
+    state.setTestPanelOpen,
     state.run,
     state.saving,
   ]);
@@ -62,6 +42,7 @@ const TestStepCTAButtonInternal = ({
   const lastTestDate = currentStep.settings?.sampleData?.lastTestDate;
   const sampleDataExists = !isNil(lastTestDate);
   const stepIsRunning = isStepBeingTested(currentStep.name);
+  const openPanel = () => setTestPanelOpen(true);
 
   if (currentStep.type === FlowActionType.PIECE) {
     return (
@@ -69,33 +50,29 @@ const TestStepCTAButtonInternal = ({
         currentStep={currentStep}
         sampleDataExists={sampleDataExists}
         stepIsRunning={stepIsRunning}
-        onOpenDrawer={() => setTestDrawerOpen(true)}
-        drawerOpen={isTestDrawerOpen}
+        onOpenPanel={openPanel}
         saving={saving}
         hasRun={hasRun}
-        variant={variant}
       />
     );
   }
 
-  const openDrawer = () => setTestDrawerOpen(true);
+  const showsViewState = sampleDataExists || hasRun;
+  const label = showsViewState ? t('View sample data') : t('Test Step');
+  const Icon = showsViewState ? Eye : Play;
   return (
-    <CTAShell variant={variant}>
+    <CTAShell>
       <Button
-        onClick={openDrawer}
+        onClick={openPanel}
         disabled={saving}
         keyboardShortcut="G"
-        onKeyboardShortcut={openDrawer}
-        variant={variant === 'sticky' ? 'outline' : 'ghost'}
-        className={
-          variant === 'sticky'
-            ? 'w-full justify-center text-primary hover:text-primary'
-            : 'bg-transparent text-primary hover:bg-primary/10 px-2'
-        }
-        size={variant === 'sticky' ? 'sm' : 'sm'}
+        onKeyboardShortcut={openPanel}
+        variant="outline"
+        className="w-full justify-center text-primary hover:text-primary"
+        size="sm"
       >
-        <Play className="size-4 fill-current" />
-        {hasRun ? t('View output') : t('Test Step')}
+        <Icon className={showsViewState ? 'size-4' : 'size-4 fill-current'} />
+        {label}
       </Button>
     </CTAShell>
   );
@@ -107,22 +84,18 @@ type PieceActionCTAButtonProps = {
   currentStep: PieceFlowAction;
   sampleDataExists: boolean;
   stepIsRunning: boolean;
-  onOpenDrawer: () => void;
-  drawerOpen: boolean;
+  onOpenPanel: () => void;
   saving: boolean;
   hasRun: boolean;
-  variant: TestStepCTAVariant;
 };
 
 const PieceActionCTAButton = ({
   currentStep,
   sampleDataExists,
   stepIsRunning,
-  onOpenDrawer,
-  drawerOpen,
+  onOpenPanel,
   saving,
   hasRun,
-  variant,
 }: PieceActionCTAButtonProps) => {
   const isReturnResponseAndWaitWebhook =
     currentStep.settings.pieceName === '@activepieces/piece-webhook' &&
@@ -134,12 +107,11 @@ const PieceActionCTAButton = ({
 
   const isTesting = stepIsRunning || isWaitingTestResult;
   const disabled = !stepIsValid || saving;
-  const canAutoFireTest = !isReturnResponseAndWaitWebhook && !hasRun;
+  const showsViewState = sampleDataExists || hasRun;
+  const canAutoFireTest = !isReturnResponseAndWaitWebhook && !showsViewState;
 
   const handleClick = () => {
-    if (!drawerOpen) {
-      onOpenDrawer();
-    }
+    onOpenPanel();
     if (canAutoFireTest && !isTesting && stepIsValid) {
       testAction(undefined);
     }
@@ -147,14 +119,13 @@ const PieceActionCTAButton = ({
 
   const label = isTesting
     ? t('Testing...')
-    : hasRun
-    ? t('View output')
-    : sampleDataExists
-    ? t('Re-test step')
+    : showsViewState
+    ? t('View sample data')
     : t('Test Step');
+  const Icon = showsViewState ? Eye : Play;
 
   return (
-    <CTAShell variant={variant}>
+    <CTAShell>
       <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
         <Button
           onClick={handleClick}
@@ -162,15 +133,15 @@ const PieceActionCTAButton = ({
           loading={isTesting}
           keyboardShortcut="G"
           onKeyboardShortcut={handleClick}
-          variant={variant === 'sticky' ? 'outline' : 'ghost'}
-          className={
-            variant === 'sticky'
-              ? 'w-full justify-center text-primary hover:text-primary disabled:opacity-60'
-              : 'bg-transparent text-primary hover:bg-primary/10 px-2 disabled:opacity-60'
-          }
+          variant="outline"
+          className="w-full justify-center text-primary hover:text-primary disabled:opacity-60"
           size="sm"
         >
-          {!isTesting && <Play className="size-4 fill-current" />}
+          {!isTesting && (
+            <Icon
+              className={showsViewState ? 'size-4' : 'size-4 fill-current'}
+            />
+          )}
           {label}
         </Button>
       </TestButtonTooltip>
@@ -178,22 +149,11 @@ const PieceActionCTAButton = ({
   );
 };
 
-type CTAShellProps = {
-  variant: TestStepCTAVariant;
-  children: React.ReactNode;
-};
-
-const CTAShell = ({ variant, children }: CTAShellProps) => {
-  if (variant === 'sticky') {
-    return (
-      <div className="sticky bottom-0 left-0 right-0 px-3 py-3 bg-background border-t border-border z-10">
-        {children}
-      </div>
-    );
-  }
-  return <>{children}</>;
-};
+const CTAShell = ({ children }: { children: React.ReactNode }) => (
+  <div className="sticky bottom-0 left-0 right-0 px-3 py-3 bg-background border-t border-border z-10">
+    {children}
+  </div>
+);
 
 TestStepCTAButton.displayName = 'TestStepCTAButton';
-TestStepHeaderCTAButton.displayName = 'TestStepHeaderCTAButton';
-export { TestStepCTAButton, TestStepHeaderCTAButton };
+export { TestStepCTAButton };

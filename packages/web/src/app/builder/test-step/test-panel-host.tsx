@@ -1,5 +1,5 @@
-import { FlowActionType, FlowTriggerType, isNil } from '@activepieces/shared';
-import { useEffect, useRef, useState } from 'react';
+import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
+import { useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -35,16 +35,9 @@ const TestPanelHost = ({
   showStepInputOutFromRun,
   saving,
 }: TestPanelHostProps) => {
-  const [isTestDrawerOpen, setTestDrawerOpen, run] = useBuilderStateContext(
-    (state) => [state.isTestDrawerOpen, state.setTestDrawerOpen, state.run],
+  const setTestPanelOpen = useBuilderStateContext(
+    (state) => state.setTestPanelOpen,
   );
-
-  useEffect(() => {
-    if (!isNil(run) && mode === 'drawer') {
-      setTestDrawerOpen(true);
-    }
-  }, [run, mode, setTestDrawerOpen]);
-
   const drawerRef = useRef<HTMLDivElement>(null);
   const dragStateRef = useRef<{
     startY: number;
@@ -112,7 +105,7 @@ const TestPanelHost = ({
     const moved = dragStateRef.current?.moved ?? false;
     dragStateRef.current = null;
     if (!moved) {
-      setTestDrawerOpen(false);
+      setTestPanelOpen(false);
     }
   };
 
@@ -121,12 +114,10 @@ const TestPanelHost = ({
       ref={drawerRef}
       className={cn(
         'absolute inset-x-0 bottom-0 z-20 bg-background border-t border-border shadow-2xl rounded-t-lg flex flex-col',
-        'transition-[transform] duration-300 ease-out',
-        isTestDrawerOpen ? 'translate-y-0' : 'translate-y-full',
+        'animate-in slide-in-from-bottom-4 duration-200',
       )}
       style={{ height: `${drawerHeightPct}%` }}
       role="dialog"
-      aria-hidden={!isTestDrawerOpen}
     >
       <div
         role="separator"

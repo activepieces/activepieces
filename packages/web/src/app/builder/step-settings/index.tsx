@@ -58,6 +58,7 @@ const StepSettingsContainer = () => {
     setSelectedBranchIndex,
     run,
     testPanelView,
+    isTestPanelOpen,
   ] = useBuilderStateContext((state) => [
     state.readonly,
     state.exitStepSettings,
@@ -68,6 +69,7 @@ const StepSettingsContainer = () => {
     state.setSelectedBranchIndex,
     state.run,
     state.testPanelView,
+    state.isTestPanelOpen,
   ]);
 
   const { stepMetadata } = stepsHooks.useStepMetadata({
@@ -288,7 +290,7 @@ const StepSettingsContainer = () => {
         <DynamicPropertiesProvider
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
-          {showTestPanel && testPanelView === 'split' ? (
+          {showTestPanel && isTestPanelOpen && testPanelView === 'split' ? (
             <ResizablePanelGroup
               orientation="horizontal"
               className="flex-1 min-h-0"
@@ -313,8 +315,8 @@ const StepSettingsContainer = () => {
           ) : (
             <div className="relative flex-1 min-h-0 flex flex-col">
               <div className="flex-1 min-h-0">{settingsForm}</div>
-              {showTestPanel && <TestStepCTAButton />}
-              {showTestPanel && (
+              {showTestPanel && !isTestPanelOpen && <TestStepCTAButton />}
+              {showTestPanel && isTestPanelOpen && (
                 <TestPanelHost
                   mode="drawer"
                   flowId={flowVersion.flowId}
