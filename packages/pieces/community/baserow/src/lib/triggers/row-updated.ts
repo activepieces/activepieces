@@ -1,30 +1,22 @@
-import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
+import { baserowCommon, makeClient } from '../common';
+import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
+
+const triggerHooks = createWebhookTriggerHooks({
+  events: ['rows.updated'],
+  storeKey: 'baserow_row_updated_trigger',
+});
 
 export const rowUpdatedTrigger = createTrigger({
   name: 'baserow_row_updated',
   auth: baserowAuth,
-  displayName: 'Row Updated',
+  displayName: 'Updated Row',
   description: 'Triggers when an existing row is updated in a Baserow table.',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    instructions: Property.MarkDown({
-      value: `
-## Setup Instructions
-
-1. In Baserow, click the **···** menu beside your table and select **Webhooks**.
-2. Click **Create webhook +**.
-3. Set the HTTP method to **POST**.
-4. Paste the following URL into the endpoint field:
-\`\`\`text
-{{webhookUrl}}
-\`\`\`
-5. Under events, select **Rows updated**.
-6. Click **Save**.
-`,
-      variant: MarkdownVariant.INFO,
-    }),
+    table_id: baserowCommon.tableId(),
+    instructions: dynamicWebhookInstructions('Rows updated'),
   },
   sampleData: {
     row: {
@@ -38,12 +30,8 @@ export const rowUpdatedTrigger = createTrigger({
       Name: 'Original row',
     },
   },
-  async onEnable() {
-    // Manual setup required — user registers the webhook URL in Baserow UI.
-  },
-  async onDisable() {
-    // Manual cleanup — user deletes the webhook in Baserow UI.
-  },
+  onEnable: triggerHooks.onEnable,
+  onDisable: triggerHooks.onDisable,
   async run(context) {
     const body = context.payload.body as {
       items?: Record<string, unknown>[];
@@ -59,5 +47,14 @@ export const rowUpdatedTrigger = createTrigger({
         if (!previous) return true;
         return JSON.stringify(row) !== JSON.stringify(previous);
       });
+  },
+  async test(context) {
+    const tableId = context.propsValue.table_id;
+    if (!tableId) return [];
+    const client = await makeClient(context.auth);
+    const response = (await client.listRows(tableId, 1, 5)) as {
+      results: Record<string, unknown>[];
+    };
+    return response.results.map((row) => ({ row, previous: null }));
   },
 });

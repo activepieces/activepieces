@@ -33,8 +33,26 @@ export function prepareQuery(request?: Record<string, unknown>): QueryParams {
 export class BaserowClient {
   constructor(
     private baseUrl: string,
-    private authHeader: string
+    private authHeader: string,
+    private isJwt: boolean = false
   ) { }
+
+  static async getJwtToken({
+    apiUrl,
+    email,
+    password,
+  }: {
+    apiUrl: string;
+    email: string;
+    password: string;
+  }): Promise<string> {
+    const res = await httpClient.sendRequest<{ token: string }>({
+      method: HttpMethod.POST,
+      url: `${apiUrl}/api/user/token-auth/`,
+      body: { email, password },
+    });
+    return res.body.token;
+  }
 
   async makeRequest<T extends HttpMessageBody>(
     method: HttpMethod,
@@ -52,6 +70,13 @@ export class BaserowClient {
     return res.body;
   }
   async listTables(): Promise<BaserowTable[]> {
+    if (this.isJwt) {
+      const apps = await this.makeRequest<Array<{ id: number; type: string; tables: BaserowTable[] }>>(
+        HttpMethod.GET,
+        `/applications/`
+      );
+      return apps.filter((a) => a.type === 'database').flatMap((a) => a.tables);
+    }
     return await this.makeRequest<BaserowTable[]>(
       HttpMethod.GET,
       `/database/tables/all-tables/`
@@ -170,12 +195,38 @@ export class BaserowClient {
       { type: aggregation_type }
     );
   }
-  async createWebhook(
-    tableId: number,
-    url: string,
-    events: string[],
-    name: string
-  ): Promise<{ id: number }> {
+  async updateFieldSelectOptions({
+    fieldId,
+    existingOptions,
+    newOptions,
+  }: {
+    fieldId: number;
+    existingOptions: { id: number; value: string; color: string }[];
+    newOptions: string[];
+  }): Promise<{ select_options: { id: number; value: string; color: string }[] }> {
+    const palette = ['blue', 'green', 'orange', 'red', 'purple', 'pink', 'cyan', 'yellow', 'gray'];
+    const additions = newOptions.map((value, i) => ({
+      value,
+      color: palette[i % palette.length],
+    }));
+    return await this.makeRequest(
+      HttpMethod.PATCH,
+      `/database/fields/${fieldId}/`,
+      undefined,
+      { select_options: [...existingOptions, ...additions] }
+    );
+  }
+  async createWebhook({
+    tableId,
+    url,
+    events,
+    name,
+  }: {
+    tableId: number;
+    url: string;
+    events: string[];
+    name: string;
+  }): Promise<{ id: number }> {
     return await this.makeRequest<{ id: number }>(
       HttpMethod.POST,
       `/database/webhooks/table/${tableId}/`,

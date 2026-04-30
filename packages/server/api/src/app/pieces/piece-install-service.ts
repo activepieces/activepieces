@@ -55,7 +55,7 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
         catch (error) {
             log.error({ err: error }, '[pieceInstallService#add] Failed to add piece')
 
-            if ((error as ActivepiecesError).error.code === ErrorCode.VALIDATION) {
+            if (error instanceof ActivepiecesError && error.error.code === ErrorCode.VALIDATION) {
                 throw error
             }
             throw new ActivepiecesError({
