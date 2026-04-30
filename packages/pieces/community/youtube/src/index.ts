@@ -2,6 +2,7 @@ import {
   createPiece,
   OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
+import { getAccessToken } from './lib/common/auth';
 import { PieceCategory } from '@activepieces/shared';
 import { youtubeNewVideoTrigger } from './lib/triggers/new-video.trigger';
 import { youtubeAuth } from './lib/common/auth';
@@ -32,7 +33,7 @@ export const youtube = createPiece({
       baseUrl: () => 'https://www.googleapis.com/youtube/v3',
       auth: youtubeAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${await getAccessToken(auth as OAuth2PropertyValue)}`,
       }),
     }),
   ],

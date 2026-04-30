@@ -1,4 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const youtubeAuth = PieceAuth.OAuth2({
   description: `
@@ -30,3 +32,43 @@ export const youtubeAuth = PieceAuth.OAuth2({
     'https://www.googleapis.com/auth/youtube.force-ssl'
   ],
 });
+
+// Helper to get a valid access token, refreshing if needed
+export async function getAccessToken(auth: OAuth2PropertyValue): Promise<string> {
+  if (!auth.refresh_token || !auth.expires_in || !auth.expires_at) {
+    return auth.access_token;
+  }
+  const expiresAt = typeof auth.expires_at === 'string' ? Date.parse(auth.expires_at) : auth.expires_at;
+  if (Date.now() < expiresAt - 60000) {
+    return auth.access_token;
+  }
+  // Refresh the token
+  const params = new URLSearchParams({
+    client_id: auth.client_id,
+    client_secret: auth.client_secret,
+    refresh_token: auth.refresh_token,
+    grant_type: 'refresh_token',
+  });
+  const response = await httpClient.sendRequest<any>({
+    method: HttpMethod.POST,
+    url: 'https://oauth2.googleapis.com/token',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
+  });
+  if (!response.body.access_token) {
+    throw new Error('Failed to refresh YouTube access token');
+  }
+  return response.body.access_token;
+}
+
+// Helper to revoke access and refresh tokens via Google's endpoint
+export async function revokeTokens(auth: OAuth2PropertyValue): Promise<void> {
+  const tokens = [auth.access_token, auth.refresh_token].filter(Boolean);
+  for (const token of tokens) {
+    await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(token)}`,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+  }
+}
