@@ -12,7 +12,7 @@ export const exceptionHandler = {
         Sentry.init({
             dsn: sentryDsn,
             beforeSend: (event) => {
-                if (event?.exception?.values?.[0]?.type === 'AxiosError') {
+                if (event?.exception?.values?.[0].type === 'AxiosError') {
                     return null
                 }
                 const value = event?.exception?.values?.[0]?.value

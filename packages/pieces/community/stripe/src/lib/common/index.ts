@@ -22,7 +22,7 @@ const baseUrl = 'https://api.stripe.com/v1';
 
 export const getClient = (apiKey: string): Stripe => {
   return new Stripe(apiKey, {
-    apiVersion: '2023-10-16',
+    apiVersion: '2025-03-31.basil' as any,
   });
 };
 
