@@ -41,7 +41,6 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
   const widgetRef = useRef<HTMLDivElement>(null);
   const suggestionRefs = useRef<Array<HTMLDivElement | null>>([]);
 
-  const pieceNames = React.useMemo(() => pieces.map(p => p.name), [pieces]);
 
   const fetchSuggestions = useCallback(async (searchQuery: string, signal?: AbortSignal) => {
     if (!searchQuery.trim()) {
@@ -68,7 +67,7 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
         signal,
         body: JSON.stringify({
           query: searchQuery,
-          workloadContext: { existingPieces: pieceNames }
+          workloadContext: { existingPieces: [] }
         })
       });
 
@@ -105,7 +104,7 @@ export const AISuggestionWidget: React.FC<AISuggestionWidgetProps> = ({
         setIsLoading(false);
       }
     }
-  }, [apiEndpoint, pieceNames, pieces]);
+  }, [apiEndpoint, pieces]);
 
   useEffect(() => {
     const abortController = new AbortController();

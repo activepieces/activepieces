@@ -130,7 +130,7 @@ const SuggestAction = {
         body: z.object({
             query: z.string().max(500),
             workloadContext: z.object({
-                existingPieces: z.array(z.string().max(100)).max(50).optional(),
+                existingPieces: z.array(z.string().max(100)).max(1000).optional(),
                 stepIndex: z.number().optional(),
             }).optional(),
         }),
