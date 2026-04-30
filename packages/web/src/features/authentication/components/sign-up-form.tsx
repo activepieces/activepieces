@@ -9,7 +9,7 @@ import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -88,11 +88,16 @@ const SignUpForm = ({
   }, [edition, websiteName]);
 
   const redirectAfterLogin = useRedirectAfterLogin();
+  const navigate = useNavigate();
 
   const { mutate, isPending } = authMutations.useSignUp({
     onSuccess: (data) => {
       if (data.verified) {
         authenticationSession.saveResponse(data, false);
+        if (isNil(data.projectId)) {
+          navigate('/create-platform');
+          return;
+        }
         redirectAfterLogin();
       } else {
         setShowCheckYourEmailNote(true);

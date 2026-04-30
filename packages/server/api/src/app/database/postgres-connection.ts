@@ -362,6 +362,7 @@ import { AddChatTables1776200000000 } from './migration/postgres/1776200000000-A
 import { DropWaitpointTimeoutSeconds1776342514732 } from './migration/postgres/1776342514732-DropWaitpointTimeoutSeconds'
 import { AddMcpServerTokenIndex1776400000000 } from './migration/postgres/1776400000000-AddMcpServerTokenIndex'
 import { AddRunStatusCoverIndex1777370308000 } from './migration/postgres/1777370308000-AddRunStatusCoverIndex'
+import { AddLastLoggedInPlatformIdToUserIdentity1777491000474 } from './migration/postgres/1777491000474-AddLastLoggedInPlatformIdToUserIdentity'
 import { DropChatTokenColumns1782000000000 } from './migration/postgres/1782000000000-DropChatTokenColumns'
 import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
 import { ReplacesSandboxWithVercelAiSdk1785000000000 } from './migration/postgres/1785000000000-ReplacesSandboxWithVercelAiSdk'
@@ -744,6 +745,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddRunStatusCoverIndex1777370308000,
         DropChatTokenColumns1782000000000,
         AddUserSandboxTable1784000000000,
+        AddLastLoggedInPlatformIdToUserIdentity1777491000474,
         ReplacesSandboxWithVercelAiSdk1785000000000,
     ]
     return migrations
