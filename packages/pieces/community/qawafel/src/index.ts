@@ -39,7 +39,7 @@ export const qawafel = createPiece({
     "B2B marketplace and ZATCA-compliant document platform — sync products, orders, merchants and invoices with Saudi Arabia's leading wholesale network.",
   auth: qawafelAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: '"https://cdn.activepieces.com/pieces/qawafel.jpg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/qawafel.jpg',
   categories: [PieceCategory.COMMERCE],
   authors: ['sanket-a11y'],
   actions: [
