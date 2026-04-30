@@ -119,6 +119,9 @@
       "@activepieces/piece-autocalls": [
         "packages/pieces/community/autocalls/src/index.ts"
       ],
+      "@activepieces/piece-avian": [
+        "packages/pieces/community/avian/src/index.ts"
+      ],
       "@activepieces/piece-avoma": [
         "packages/pieces/community/avoma/src/index.ts"
       ],
