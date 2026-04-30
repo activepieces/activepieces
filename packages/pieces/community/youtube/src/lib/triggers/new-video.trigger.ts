@@ -16,7 +16,7 @@ import {
 import { channelIdentifier } from '../common/props';
 import { isNil } from '@activepieces/shared';
 import dayjs from 'dayjs';
-import cheerio from 'cheerio';
+import { load as cheerioLoad } from 'cheerio';
 import FeedParser from 'feedparser';
 import axios from 'axios';
 
@@ -340,7 +340,7 @@ async function getChannelId(urlOrId: string) {
     method: HttpMethod.GET,
     url: urlOrId,
   });
-  const $ = cheerio.load(response.body);
+  const $ = cheerioLoad(response.body);
 
   // Check if the URL is a channel ID itself
   const channelUrl = $('link[rel="canonical"]').attr('href');
