@@ -25,7 +25,7 @@ export function prepareQuery(request?: Record<string, unknown>): QueryParams {
   Object.keys(request)
     .filter(emptyValueFilter((k) => request[k]))
     .forEach((k: string) => {
-      params[k] = (request as Record<string, unknown>)[k]!.toString();
+      params[k] = request[k]!.toString();
     });
   return params;
 }
@@ -135,7 +135,7 @@ export class BaserowClient {
     order_by?: string,
     filters?: Record<string, string>,
     advancedFilters?: { filter_type: string; filters: { field: number; type: string; value: string }[] }
-  ) {
+  ): Promise<{ results: Array<{ id: number } & Record<string, unknown>>; count: number }> {
     const query = prepareQuery({
       user_field_names: 'true',
       page: page,
@@ -147,22 +147,22 @@ export class BaserowClient {
     if (advancedFilters && advancedFilters.filters.length > 0) {
       query['filters'] = JSON.stringify(advancedFilters);
     }
-    return await this.makeRequest(
+    return await this.makeRequest<{ results: Array<{ id: number } & Record<string, unknown>>; count: number }>(
       HttpMethod.GET,
       `/database/rows/table/${table_id}/`,
       query
     );
   }
-  async batchCreateRows(table_id: number, items: Record<string, unknown>[]) {
-    return await this.makeRequest(
+  async batchCreateRows(table_id: number, items: unknown[]): Promise<{ items: Record<string, unknown>[] }> {
+    return await this.makeRequest<{ items: Record<string, unknown>[] }>(
       HttpMethod.POST,
       `/database/rows/table/${table_id}/batch/`,
       { user_field_names: 'true' },
       { items }
     );
   }
-  async batchUpdateRows(table_id: number, items: Record<string, unknown>[]) {
-    return await this.makeRequest(
+  async batchUpdateRows(table_id: number, items: unknown[]): Promise<{ items: Record<string, unknown>[] }> {
+    return await this.makeRequest<{ items: Record<string, unknown>[] }>(
       HttpMethod.PATCH,
       `/database/rows/table/${table_id}/batch/`,
       { user_field_names: 'true' },
@@ -188,8 +188,8 @@ export class BaserowClient {
     view_id: number,
     field_id: number,
     aggregation_type: string
-  ) {
-    return await this.makeRequest(
+  ): Promise<{ value: unknown }> {
+    return await this.makeRequest<{ value: unknown }>(
       HttpMethod.GET,
       `/database/views/grid/${view_id}/aggregation/${field_id}/`,
       { type: aggregation_type }
@@ -246,5 +246,13 @@ export class BaserowClient {
       url: `${this.baseUrl}/api/database/webhooks/${webhookId}/`,
       headers: { Authorization: this.authHeader },
     });
+  }
+  async uploadFileFromUrl({ url }: { url: string }): Promise<Record<string, unknown>> {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      `/user-files/upload-via-url/`,
+      undefined,
+      { url }
+    );
   }
 }
