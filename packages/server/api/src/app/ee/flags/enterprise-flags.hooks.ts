@@ -28,11 +28,10 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         }
         const platformWithPlan = await platformService(request.log).getOneWithPlanOrThrow(platformId)
         const platform = await platformService(request.log).getOneOrThrow(platformId)
+        const samlConfigured = await platformService(request.log).hasSamlConfigured(platformId)
         modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
             [ThirdPartyAuthnProviderEnum.GOOGLE]: googleAuthEnabled && platform.googleAuthEnabled,
-            [ThirdPartyAuthnProviderEnum.SAML]: !isNil(
-                platform.federatedAuthProviders.saml,
-            ),
+            [ThirdPartyAuthnProviderEnum.SAML]: samlConfigured,
         }
         modifiedFlags[ApFlagId.EMAIL_AUTH_ENABLED] = platform.emailAuthEnabled
         modifiedFlags[ApFlagId.SHOW_POWERED_BY_IN_FORM] = platformWithPlan.plan.showPoweredBy

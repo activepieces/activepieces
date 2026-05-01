@@ -265,7 +265,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         updated: platform?.updated ?? faker.date.recent().toISOString(),
         ownerId: platform?.ownerId ?? apId(),
         enforceAllowedAuthDomains: platform?.enforceAllowedAuthDomains ?? false,
-        federatedAuthProviders: platform?.federatedAuthProviders ?? {},
+        federatedAuthProviders: platform?.federatedAuthProviders ?? { saml: null },
         allowedAuthDomains: platform?.allowedAuthDomains ?? [],
         allowedEmbedOrigins: platform?.allowedEmbedOrigins ?? [],
         name: platform?.name ?? faker.lorem.word(),

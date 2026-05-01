@@ -80,6 +80,7 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
         },
         federatedAuthProviders: {
             type: 'jsonb',
+            select: false,
         },
         pinnedPieces: {
             type: String,

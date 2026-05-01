@@ -54,7 +54,8 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
         if (!plan.ssoEnabled) {
             return { platformId: null }
         }
-        if (isNil(platform.federatedAuthProviders?.saml)) {
+        const samlConfigured = await platformService(req.log).hasSamlConfigured(platform.id)
+        if (!samlConfigured) {
             return { platformId: null }
         }
         return { platformId: platform.id }
@@ -92,7 +93,7 @@ async function getSamlConfigOrThrow(req: FastifyRequest, log: FastifyBaseLogger)
     const platformIdFromQuery = typeof query?.platformId === 'string' ? query.platformId : null
     const platformId = platformIdFromQuery ?? await platformUtils.getPlatformIdForRequest(req)
     assertNotNullOrUndefined(platformId, 'Platform ID is required for SAML authentication')
-    const platform = await platformService(log).getOneOrThrow(platformId)
+    const platform = await platformService(log).getOneWithFederatedAuthOrThrow(platformId)
     const saml = platform.federatedAuthProviders.saml
     assertNotNullOrUndefined(saml, 'SAML IDP metadata is not configured for this platform')
     return {

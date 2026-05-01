@@ -107,7 +107,7 @@ describe('SAML Discover API', () => {
             const mockPlatform = createMockPlatform({
                 ownerId: mockOwner.id,
                 ssoDomain: 'no-saml.example.com',
-                federatedAuthProviders: {},
+                federatedAuthProviders: { saml: null },
             })
             await databaseConnection().getRepository('platform').save(mockPlatform)
 
