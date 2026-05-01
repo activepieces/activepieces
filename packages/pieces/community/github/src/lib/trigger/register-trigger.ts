@@ -62,8 +62,6 @@ export const githubRegisterTrigger = ({
       }
     },
     async run(context) {
-      console.debug('payload received', context.payload.body);
-
       if (isVerificationCall(context.payload.body as Record<string, unknown>)) {
         return [];
       }
