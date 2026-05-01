@@ -18,6 +18,8 @@ const FLOW_HEADERS_SKIP_GLOBAL_CORS = new Set([
     'access-control-allow-origin',
     'access-control-allow-methods',
     'access-control-allow-headers',
+    'access-control-allow-credentials',
+    'access-control-max-age',
 ])
 
 function webhookReplyHeaders(flowHeaders: Record<string, string>): Record<string, string> {
