@@ -48,7 +48,6 @@ export const createShopifyWebhookTrigger = ({
         },
       });
       await context.store?.put(`shopify_webhook_id`, response.body.webhook.id);
-      console.log('webhook created', response.body.webhook.id);
     },
     async onDisable(context) {
       const webhookId = await context.store.get<string>(`shopify_webhook_id`);
@@ -67,7 +66,6 @@ export const createShopifyWebhookTrigger = ({
       await context.store?.put(`shopify_webhook_id`, null);
     },
     async run(context) {
-      console.debug('trigger running', context);
       return [context.payload.body];
     },
   });
