@@ -68,7 +68,7 @@ const TestStepCTAButton = () => {
           disabled={saving}
           keyboardShortcut="G"
           onKeyboardShortcut={openPanel}
-          className="w-full justify-center bg-primary/60 text-primary-foreground hover:bg-primary/70 disabled:opacity-60"
+          className="w-full justify-center bg-primary/70 text-primary-foreground enabled:hover:bg-primary disabled:opacity-50 [&_span]:text-primary-foreground/70"
           size="sm"
         >
           <Icon className={showsViewState ? 'size-4' : 'size-4 fill-current'} />
@@ -134,7 +134,7 @@ const PieceActionCTAButton = ({
           loading={isTesting}
           keyboardShortcut="G"
           onKeyboardShortcut={handleClick}
-          className="w-full justify-center bg-primary/60 text-primary-foreground hover:bg-primary/70 disabled:opacity-60"
+          className="w-full justify-center bg-primary/70 text-primary-foreground enabled:hover:bg-primary disabled:opacity-50 [&_span]:text-primary-foreground/70"
           size="sm"
         >
           {!isTesting && (
