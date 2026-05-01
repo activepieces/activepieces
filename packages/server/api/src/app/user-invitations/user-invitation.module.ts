@@ -148,17 +148,20 @@ async function shouldAutoAcceptInvitation(principal: Principal, request: SendUse
     if (principal.type === PrincipalType.SERVICE) {
         return true
     }
-    
+
     if (request.type === InvitationType.PLATFORM) {
         return false
     }
-    
+
     const identity = await userIdentityService(log).getIdentityByEmail(request.email)
     if (isNil(identity)) {
         return false
     }
-    
-    const user = await userService(log).getOneByIdentityIdOnly({ identityId: identity.id })
+
+    const user = await userService(log).getOneByIdentityAndPlatform({
+        identityId: identity.id,
+        platformId: principal.platform.id,
+    })
     return !isNil(user)
 }
 

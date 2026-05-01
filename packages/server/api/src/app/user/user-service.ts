@@ -130,9 +130,6 @@ export const userService = (log: FastifyBaseLogger) => ({
         const usersWithMetaInformation = await Promise.all(data.map(this.getMetaInformation))
         return paginationHelper.createPage<UserWithMetaInformation>(usersWithMetaInformation, cursor)
     },
-    async getOneByIdentityIdOnly({ identityId }: GetOneByIdentityIdOnlyParams): Promise<User | null> {
-        return userRepo().findOneBy({ identityId })
-    },
     async getByIdentityId({ identityId }: GetByIdentityId): Promise<UserSchema[]> {
         return userRepo().find({ where: { identityId } })
     },
@@ -280,10 +277,6 @@ type ListParams = {
     externalId?: string
     cursorRequest: Cursor
     limit?: number
-}
-
-type GetOneByIdentityIdOnlyParams = {
-    identityId: string
 }
 
 type GetByIdentityId = {
