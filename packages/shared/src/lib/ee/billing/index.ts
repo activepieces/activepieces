@@ -99,6 +99,7 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     scimEnabled: false,
     dedicatedWorkers: null,
     canary: false,
+    customDomainsEnabled: false,
 }
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
@@ -130,6 +131,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
     dedicatedWorkers: null,
     canary: false,
+    customDomainsEnabled: false,
 }
 
 export const APPSUMO_PLAN = (planName: PlanName): PlatformPlanWithOnlyLimits => ({
