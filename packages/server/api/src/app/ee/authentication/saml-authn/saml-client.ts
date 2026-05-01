@@ -2,10 +2,9 @@ import { safeHttp } from '@activepieces/server-utils'
 import { ActivepiecesError, ErrorCode, SAMLAttributeMapping, SAMLAuthnProviderConfig, tryCatch } from '@activepieces/shared'
 import * as validator from '@authenio/samlify-node-xmllint'
 import * as saml from 'samlify'
-import { domainHelper } from '../../../helper/domain-helper'
 import { resolveSamlAttributes, SamlAttributes } from './saml-attributes'
 
-export const createSamlClient = async (platformId: string, samlProvider: SAMLAuthnProviderConfig): Promise<SamlClient> => {
+export const createSamlClient = async ({ platformId, samlProvider, acsUrl }: CreateSamlClientArgs): Promise<SamlClient> => {
     const cached = instanceCache.get(platformId)
     if (cached) {
         return cached
@@ -13,7 +12,7 @@ export const createSamlClient = async (platformId: string, samlProvider: SAMLAut
     saml.setSchemaValidator(validator)
     const metadataXml = await resolveIdpMetadata(samlProvider.idpMetadata)
     const idp = createIdp(metadataXml)
-    const sp = await createSp({ privateKey: samlProvider.idpCertificate, platformId })
+    const sp = createSp({ privateKey: samlProvider.idpCertificate, acsUrl })
     const client = samlClient({ idp, sp, attributeMapping: samlProvider.attributeMapping })
     instanceCache.set(platformId, client)
     return client
@@ -87,9 +86,7 @@ const resolveIdpMetadata = async (idpMetadata: string): Promise<string> => {
     return typeof response.data === 'string' ? response.data : String(response.data)
 }
 
-const createSp = async ({ privateKey, platformId }: CreateSpArgs): Promise<saml.ServiceProviderInstance> => {
-    const baseAcsUrl = await domainHelper.getPublicUrl({ path: '/api/v1/authn/saml/acs' })
-    const acsUrl = `${baseAcsUrl}?platformId=${encodeURIComponent(platformId)}`
+const createSp = ({ privateKey, acsUrl }: CreateSpArgs): saml.ServiceProviderInstance => {
     return saml.ServiceProvider({
         entityID: 'Activepieces',
         authnRequestsSigned: false,
@@ -125,7 +122,13 @@ type SamlClientArgs = {
 
 type CreateSpArgs = {
     privateKey: string
+    acsUrl: string
+}
+
+type CreateSamlClientArgs = {
     platformId: string
+    samlProvider: SAMLAuthnProviderConfig
+    acsUrl: string
 }
 
 export type IdpLoginResponse = {

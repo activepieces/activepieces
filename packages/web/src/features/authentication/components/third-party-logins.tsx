@@ -65,30 +65,30 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
             : `${t(`Sign in With`)} ${t('Google')}`}
         </Button>
       )}
-      {thirdPartyAuthProviders?.saml &&
-        (isCloud ? (
-          <SamlDomainDialog>
-            <Button variant="outline" className="w-full rounded-sm">
-              <ThirdPartyIcon icon={SamlIcon} />
-              {isSignUp
-                ? `${t(`Sign up With`)} ${t('SAML')}`
-                : `${t(`Sign in With`)} ${t('SAML')}`}
-            </Button>
-          </SamlDomainDialog>
-        ) : (
-          <Button
-            variant="outline"
-            className="w-full rounded-sm"
-            onClick={() => {
-              window.location.href = '/api/v1/authn/saml/login';
-            }}
-          >
+      {isCloud && (
+        <SamlDomainDialog>
+          <Button variant="outline" className="w-full rounded-sm">
             <ThirdPartyIcon icon={SamlIcon} />
             {isSignUp
               ? `${t(`Sign up With`)} ${t('SAML')}`
               : `${t(`Sign in With`)} ${t('SAML')}`}
           </Button>
-        ))}
+        </SamlDomainDialog>
+      )}
+      {!isCloud && thirdPartyAuthProviders?.saml && (
+        <Button
+          variant="outline"
+          className="w-full rounded-sm"
+          onClick={() => {
+            window.location.href = '/api/v1/authn/saml/login';
+          }}
+        >
+          <ThirdPartyIcon icon={SamlIcon} />
+          {isSignUp
+            ? `${t(`Sign up With`)} ${t('SAML')}`
+            : `${t(`Sign in With`)} ${t('SAML')}`}
+        </Button>
+      )}
     </div>
   );
 });

@@ -6,6 +6,7 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
 import { platformUtils } from '../../platform/platform.utils'
 import { federatedAuthnService } from '../authentication/federated-authn/federated-authn-service'
+import { authnSsoSamlService } from '../authentication/saml-authn/authn-sso-saml-service'
 import { embedSubdomainService } from '../embed-subdomain/embed-subdomain.service'
 import { appearanceHelper } from '../helper/appearance-helper'
 
@@ -47,10 +48,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         modifiedFlags[ApFlagId.PUBLIC_URL] = await domainHelper.getPublicUrl({
             path: '',
         })
-        const acsBaseUrl = await domainHelper.getInternalApiUrl({
-            path: '/v1/authn/saml/acs',
-        })
-        modifiedFlags[ApFlagId.SAML_AUTH_ACS_URL] = `${acsBaseUrl}?platformId=${platformId}`
+        modifiedFlags[ApFlagId.SAML_AUTH_ACS_URL] = await authnSsoSamlService(request.log).getAcsUrl(platformId)
 
         const embedSubdomainUrl = await embedSubdomainService(request.log).getActiveSubdomainUrl({ platformId })
         if (embedSubdomainUrl) {

@@ -20,7 +20,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { embedSubdomainMutations } from '@/features/platform-admin';
 import { api } from '@/lib/api';
 
@@ -107,16 +106,23 @@ const EmbedHostnameForm = () => {
 };
 
 const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
-  const [hostname, setHostname] = useState(subdomain.hostname);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { mutateAsync, isPending } = embedSubdomainMutations.useUpsert();
-  const isDirty = hostname.trim() !== subdomain.hostname;
+
+  const form = useForm<GenerateEmbedSubdomainRequest>({
+    resolver: zodResolver(GenerateEmbedSubdomainRequest),
+    defaultValues: { hostname: subdomain.hostname },
+    mode: 'onChange',
+  });
+
+  const hostnameValue = form.watch('hostname');
+  const isDirty = hostnameValue.trim() !== subdomain.hostname;
 
   const handleConfirm = async () => {
     setErrorMessage(null);
     try {
-      await mutateAsync({ hostname: hostname.trim() });
+      await mutateAsync({ hostname: hostnameValue.trim() });
       toast.success(t('Domain updated'));
     } catch (error) {
       setErrorMessage(
@@ -127,45 +133,47 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-1.5">
-        <Label>{t('Domain')}</Label>
-        <Input
-          value={hostname}
-          onChange={(e) => setHostname(e.target.value)}
-          placeholder="flows.acme.com"
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(() => setConfirmOpen(true))}
+        className="flex flex-col gap-3"
+      >
+        <FormField
+          name="hostname"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('Domain')}</FormLabel>
+              <Input {...field} placeholder="flows.acme.com" />
+              <p className="text-xs text-muted-foreground">
+                {t('Use a subdomain you control, like flows.acme.com')}
+              </p>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        <p className="text-xs text-muted-foreground">
-          {t('Use a subdomain you control, like flows.acme.com')}
-        </p>
-      </div>
-      {errorMessage && (
-        <p className="text-sm text-destructive">{errorMessage}</p>
-      )}
-      <div className="flex justify-end mt-6">
-        <Button
-          type="button"
-          size="sm"
-          disabled={!isDirty || isPending}
-          onClick={() => setConfirmOpen(true)}
-        >
-          {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
-          {t('Update')}
-        </Button>
-      </div>
-      <ConfirmationDeleteDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        title={t('Change embed domain?')}
-        message={t(
-          "Your current domain will stop working and you'll need to add new DNS records to verify the new one. Allowed websites and signing keys will be kept.",
+        {errorMessage && (
+          <p className="text-sm text-destructive">{errorMessage}</p>
         )}
-        warning={t('This action cannot be undone.')}
-        buttonText={t('Update domain')}
-        entityName={t('domain')}
-        mutationFn={handleConfirm}
-      />
-    </div>
+        <div className="flex justify-end mt-6">
+          <Button type="submit" size="sm" disabled={!isDirty || isPending}>
+            {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
+            {t('Update')}
+          </Button>
+        </div>
+        <ConfirmationDeleteDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title={t('Change embed domain?')}
+          message={t(
+            "Your current domain will stop working and you'll need to add new DNS records to verify the new one. Allowed websites and signing keys will be kept.",
+          )}
+          warning={t('This action cannot be undone.')}
+          buttonText={t('Update domain')}
+          entityName={t('domain')}
+          mutationFn={handleConfirm}
+        />
+      </form>
+    </Form>
   );
 };
 

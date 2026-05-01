@@ -6,10 +6,10 @@ import { ApMultipartFile } from '../../core/common/multipart-file'
 import { FederatedAuthnProviderConfig } from '../../core/federated-authn'
 import { FilteredPieceBehavior } from './platform.model'
 
-const MAX_ALLOWED_EMBED_ORIGINS = 50
-const MAX_EMBED_ORIGIN_LENGTH = 300
+export const MAX_ALLOWED_EMBED_ORIGINS = 50
+export const MAX_EMBED_ORIGIN_LENGTH = 300
 
-const allowedEmbedOriginSchema = z.httpUrl()
+export const allowedEmbedOriginSchema = z.httpUrl()
     .max(MAX_EMBED_ORIGIN_LENGTH, 'invalidEmbedOrigin')
     .refine((value) => {
         try {

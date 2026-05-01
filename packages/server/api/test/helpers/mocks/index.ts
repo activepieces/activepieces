@@ -254,7 +254,8 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         plan: platformPlan?.plan,
         secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
         scimEnabled: platformPlan?.scimEnabled ?? false,
-        canary: platformPlan?.canary ?? false
+        canary: platformPlan?.canary ?? false,
+        customDomainsEnabled: false,
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
@@ -774,7 +775,7 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         }),
         config: aiProvider?.config ?? {},
     }
-    
+
 }
 
 export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
