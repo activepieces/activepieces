@@ -6,8 +6,8 @@ import { Migration } from '../../migration'
 
 const isPGlite = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
 
-export class AddEmbedSubdomainTable1786000000000 implements Migration {
-    name = 'AddEmbedSubdomainTable1786000000000'
+export class AddEmbedSubdomainTable1787000000000 implements Migration {
+    name = 'AddEmbedSubdomainTable1787000000000'
     breaking = false
     release = '0.83.0'
     transaction = false

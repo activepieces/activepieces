@@ -367,7 +367,7 @@ import { DropChatTokenColumns1782000000000 } from './migration/postgres/17820000
 import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
 import { ReplacesSandboxWithVercelAiSdk1785000000000 } from './migration/postgres/1785000000000-ReplacesSandboxWithVercelAiSdk'
 import { AddChatCompactionColumns1786000000000 } from './migration/postgres/1786000000000-AddChatCompactionColumns'
-import { AddEmbedSubdomainTable1786000000000 } from './migration/postgres/1786000000000-AddEmbedSubdomainTable'
+import { AddEmbedSubdomainTable1787000000000 } from './migration/postgres/1787000000000-AddEmbedSubdomainTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -749,8 +749,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         DropChatTokenColumns1782000000000,
         AddUserSandboxTable1784000000000,
         ReplacesSandboxWithVercelAiSdk1785000000000,
-        AddEmbedSubdomainTable1786000000000,
         AddChatCompactionColumns1786000000000,
+        AddEmbedSubdomainTable1787000000000,
     ]
     return migrations
 }
