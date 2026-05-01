@@ -10,6 +10,7 @@ import {
     PlatformPlanLimits,
     PlatformRole,
     PlatformUsage,
+    PlatformWithoutFederatedAuth,
     PlatformWithoutSensitiveData,
     ProjectType,
     spreadIfDefined,
@@ -129,7 +130,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         const platform = params.federatedAuthProviders !== undefined
             ? await this.getOneWithFederatedAuthOrThrow(params.id)
             : await this.getOneOrThrow(params.id)
-        const federatedAuthProviders = 'federatedAuthProviders' in platform
+        const federatedAuthProviders = hasFederatedAuth(platform)
             ? {
                 ...platform.federatedAuthProviders,
                 ...(params.federatedAuthProviders ?? {}),
@@ -261,6 +262,10 @@ function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
     return rest
 }
 
+function hasFederatedAuth(platform: Platform | PlatformWithoutFederatedAuth): platform is Platform {
+    return 'federatedAuthProviders' in platform
+}
+
 type AddParams = {
     ownerId: UserId
     name: string
@@ -290,5 +295,3 @@ type CreatePlatformWithProjectParams = {
 type ListPlatformsForIdentityParams = {
     identityId: string
 }
-
-export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>

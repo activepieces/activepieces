@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { ActivepiecesError, ApEdition, ApEnvironment, ErrorCode, isNil, Platform } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, ErrorCode, isNil, PlatformWithoutFederatedAuth } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
@@ -80,7 +80,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
     }
 }
 
-const getPlatform = async (platformId: string | undefined, log: FastifyBaseLogger): Promise<Platform | null> => {
+const getPlatform = async (platformId: string | undefined, log: FastifyBaseLogger): Promise<PlatformWithoutFederatedAuth | null> => {
     return platformId ? platformService(log).getOne(platformId) : null
 }
 
@@ -154,6 +154,6 @@ const hexToLightTint = ({ hex, opacity }: { hex: string, opacity: number }): str
 }
 
 type RenderEmailBodyArgs = {
-    platform: Platform | null
+    platform: PlatformWithoutFederatedAuth | null
     templateData: EmailTemplateData
 }

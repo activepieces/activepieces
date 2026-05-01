@@ -136,6 +136,7 @@ export const Platform = z.object({
     pinnedPieces: z.array(z.string()),
 })
 export type Platform = z.infer<typeof Platform>
+export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
 
 export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
