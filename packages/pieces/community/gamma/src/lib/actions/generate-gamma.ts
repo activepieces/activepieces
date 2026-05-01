@@ -16,14 +16,18 @@ export const generateGamma = createAction({
       auth: gammaAuth,
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect your account first' };
-        const response = await httpClient.sendRequest<{ data: { id: string; name: string }[] }>({
-          method: HttpMethod.GET,
-          url: 'https://public-api.gamma.app/v1.0/folders',
-          headers: { 'X-API-KEY': auth.props.apiKey },
-        });
-        return {
-          options: response.body.data.map((f) => ({ label: f.name, value: f.id })),
-        };
+        try {
+          const response = await httpClient.sendRequest<{ data: { id: string; name: string }[] }>({
+            method: HttpMethod.GET,
+            url: 'https://public-api.gamma.app/v1.0/folders',
+            headers: { 'X-API-KEY': auth.props.apiKey },
+          });
+          return {
+            options: (response.body.data ?? []).map((f) => ({ label: f.name, value: f.id })),
+          };
+        } catch {
+          return { disabled: true, options: [], placeholder: 'Failed to load folders' };
+        }
       },
     }),
     inputText: Property.LongText({
