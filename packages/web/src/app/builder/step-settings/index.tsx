@@ -282,6 +282,12 @@ const StepSettingsContainer = () => {
               setSelectedBranchIndex={setSelectedBranchIndex}
               isEditingStepOrBranchName={isEditingStepOrBranchName}
               setIsEditingStepOrBranchName={setIsEditingStepOrBranchName}
+              actionDisplayName={
+                stepMetadata?.actionOrTriggerOrAgentDisplayName
+              }
+              actionDescription={
+                stepMetadata?.actionOrTriggerOrAgentDescription
+              }
             ></EditableStepName>
           </SidebarHeader>
           <Separator className="w-full h-px" />
