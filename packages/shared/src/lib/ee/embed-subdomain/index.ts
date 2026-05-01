@@ -52,7 +52,7 @@ export const GenerateEmbedSubdomainRequest = z.object({
     hostname: z.hostname('invalidEmbedHostname')
         .min(4, 'invalidEmbedHostname')
         .max(MAX_EMBED_HOSTNAME_LENGTH, 'invalidEmbedHostname')
-        .refine((value) => value.includes('.'), 'invalidEmbedHostname'),
+        .refine((value) => value.includes('.'), 'invalidEmbedHostname')
         .refine((value) => value === value.toLowerCase(), 'invalidEmbedHostname'),
 })
 
