@@ -22,8 +22,9 @@ interface EditableStepNameProps {
   isEditingStepOrBranchName: boolean;
   setIsEditingStepOrBranchName: (isEditing: boolean) => void;
   setSelectedBranchIndex: (index: number | null) => void;
-  actionDisplayName?: string;
-  actionDescription?: string;
+  tooltipTitle?: string;
+  tooltipDescription?: string;
+  pieceVersion?: string;
 }
 
 const EditableStepName: React.FC<EditableStepNameProps> = ({
@@ -36,14 +37,15 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
   isEditingStepOrBranchName,
   setIsEditingStepOrBranchName,
   setSelectedBranchIndex,
-  actionDisplayName,
-  actionDescription,
+  tooltipTitle,
+  tooltipDescription,
+  pieceVersion,
 }) => {
   const inBranchView = !isNil(selectedBranchIndex);
   const showActionTooltip =
     !inBranchView &&
     !isEditingStepOrBranchName &&
-    (!!actionDisplayName || !!actionDescription);
+    (!!tooltipTitle || !!tooltipDescription || !!pieceVersion);
   const handleStartEditing = useCallback(() => {
     if (!readonly) {
       setIsEditingStepOrBranchName(true);
@@ -93,14 +95,26 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
             {showActionTooltip && (
               <TooltipContent side="bottom" className="max-w-xs">
                 <div className="flex flex-col gap-1">
-                  {actionDisplayName && (
-                    <div className="font-medium text-sm">
-                      {actionDisplayName}
+                  {tooltipTitle && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">
+                        {tooltipTitle}
+                      </span>
+                      {pieceVersion && (
+                        <span className="text-[10px] font-mono text-muted-foreground">
+                          v{pieceVersion}
+                        </span>
+                      )}
                     </div>
                   )}
-                  {actionDescription && (
+                  {!tooltipTitle && pieceVersion && (
+                    <span className="text-[10px] font-mono text-muted-foreground">
+                      v{pieceVersion}
+                    </span>
+                  )}
+                  {tooltipDescription && (
                     <div className="text-xs text-muted-foreground">
-                      {actionDescription}
+                      {tooltipDescription}
                     </div>
                   )}
                 </div>

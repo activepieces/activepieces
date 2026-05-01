@@ -25,6 +25,7 @@ import {
   pieceSelectorUtils,
   formUtils,
   PieceIcon,
+  PieceStepMetadata,
 } from '@/features/pieces';
 import { projectCollectionUtils } from '@/features/projects';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
@@ -282,11 +283,18 @@ const StepSettingsContainer = () => {
               setSelectedBranchIndex={setSelectedBranchIndex}
               isEditingStepOrBranchName={isEditingStepOrBranchName}
               setIsEditingStepOrBranchName={setIsEditingStepOrBranchName}
-              actionDisplayName={
-                stepMetadata?.actionOrTriggerOrAgentDisplayName
+              tooltipTitle={
+                stepMetadata?.actionOrTriggerOrAgentDisplayName ||
+                stepMetadata?.displayName
               }
-              actionDescription={
-                stepMetadata?.actionOrTriggerOrAgentDescription
+              tooltipDescription={
+                stepMetadata?.actionOrTriggerOrAgentDescription ||
+                stepMetadata?.description
+              }
+              pieceVersion={
+                isPieceMetadata(stepMetadata)
+                  ? stepMetadata.pieceVersion
+                  : undefined
               }
             ></EditableStepName>
           </SidebarHeader>
@@ -349,3 +357,9 @@ const stripSampleData = (step: FlowAction | FlowTrigger) => {
 
   return { ...stepWithoutMetadata, settings: settingsWithoutSampleData };
 };
+
+const isPieceMetadata = (
+  metadata: { type: FlowActionType | FlowTriggerType } | undefined,
+): metadata is PieceStepMetadata =>
+  metadata?.type === FlowActionType.PIECE ||
+  metadata?.type === FlowTriggerType.PIECE;
