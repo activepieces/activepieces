@@ -62,18 +62,19 @@ const TestStepCTAButton = () => {
   const Icon = showsViewState ? Eye : Play;
   return (
     <CTAShell>
-      <Button
-        onClick={openPanel}
-        disabled={saving}
-        keyboardShortcut="G"
-        onKeyboardShortcut={openPanel}
-        variant="outline"
-        className="w-full justify-center text-primary hover:text-primary"
-        size="sm"
-      >
-        <Icon className={showsViewState ? 'size-4' : 'size-4 fill-current'} />
-        {label}
-      </Button>
+      <TestButtonTooltip saving={saving} invalid={false}>
+        <Button
+          onClick={openPanel}
+          disabled={saving}
+          keyboardShortcut="G"
+          onKeyboardShortcut={openPanel}
+          className="w-full justify-center bg-primary/60 text-primary-foreground hover:bg-primary/70 disabled:opacity-60"
+          size="sm"
+        >
+          <Icon className={showsViewState ? 'size-4' : 'size-4 fill-current'} />
+          {label}
+        </Button>
+      </TestButtonTooltip>
     </CTAShell>
   );
 };
@@ -133,8 +134,7 @@ const PieceActionCTAButton = ({
           loading={isTesting}
           keyboardShortcut="G"
           onKeyboardShortcut={handleClick}
-          variant="outline"
-          className="w-full justify-center text-primary hover:text-primary disabled:opacity-60"
+          className="w-full justify-center bg-primary/60 text-primary-foreground hover:bg-primary/70 disabled:opacity-60"
           size="sm"
         >
           {!isTesting && (
