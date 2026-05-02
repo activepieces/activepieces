@@ -118,3 +118,22 @@ const VerifySsoDomainRequest = {
     },
     preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
 }
+
+const UpdateSsoDomainRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
+    schema: {
+        body: z.object({
+            ssoDomain: z.string().max(253).nullable(),
+        }),
+    },
+}
+
+const VerifySsoDomainRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
+}
