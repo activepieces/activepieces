@@ -40,7 +40,7 @@ export const FailedStep = z.object({
 })
 ```
 
-A small named helper truncates long error strings before they hit the database (cap is 500 chars + ellipsis):
+A small named helper truncates long error strings before they hit the database (cap is 700 chars + ellipsis):
 
 ```ts
 export function truncateFailedStepMessage(
@@ -94,7 +94,7 @@ The two fields are threaded through the existing alert path:
 
 **New file:** `packages/web/src/features/flow-runs/components/runs-table/failed-step-dialog.tsx`
 
-A focused component wrapping a Dialog with a project `Button` trigger (variant `link`), an `Info` icon to signal "click for details", the error message display, and a "View run" CTA:
+A focused component wrapping a Dialog with a project `Button` trigger (variant `link`), an `Info` icon to signal "click for details", the error message display, and a "View run" CTA. The error itself is rendered with the existing `JsonViewer` from `@/components/custom/json-viewer.tsx` — the same component used in the run-details panel for step output. It already handles strings (renders as `<pre>` with copy + download), gracefully degrades for objects (we may want to enrich `failedStep` with structured error fields later), and gives the user a one-click copy out of the box. No bespoke `<pre>` block, no hand-rolled copy button.
 
 ```tsx
 export const FailedStepDialog = ({ failedStep, runId }) => {
@@ -114,25 +114,31 @@ export const FailedStepDialog = ({ failedStep, runId }) => {
       </DialogTrigger>
       <DialogContent className="max-w-lg" onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
-          <DialogTitle>Failed Step</DialogTitle>
+          <DialogTitle>{t('Failed Step')}</DialogTitle>
         </DialogHeader>
         {failedStep.message ? (
-          <ScrollArea className="max-h-64">
-            <pre className="bg-muted rounded-md p-3 text-xs whitespace-pre-wrap break-words font-mono">
-              {failedStep.message}
-            </pre>
-          </ScrollArea>
+          <JsonViewer
+            json={failedStep.message}
+            title={failedStep.displayName}
+            hideDownload
+          />
         ) : (
-          <div className="italic text-muted-foreground">No error message available</div>
+          <div className="italic text-muted-foreground">
+            {t('No error message available')}
+          </div>
         )}
         <DialogFooter>
-          <Button onClick={() => navigate(/* run details path */)}>View run</Button>
+          <Button onClick={() => navigate(/* run details path */)}>
+            {t('View run')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
 ```
+
+Why `JsonViewer` and not `SimpleJsonViewer`: `JsonViewer` carries the title bar with copy + (optional) download, which is the contract we want. `hideDownload` is true here because the run row already deep-links to the full run; downloading a 700-char truncation would be misleading.
 
 The trigger uses the project's `Button` component for consistent styling, with an `Info` icon that telegraphs "more info available." `stopPropagation` is critical — the row is already clickable for navigation, so without it, opening the dialog would also navigate the user away.
 
