@@ -7,7 +7,7 @@ import { authnSsoSamlService } from './authn-sso-saml-service'
 
 export const authnSsoSamlModule: FastifyPluginAsyncZod = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.EXPIRE_PENDING_SSO_DOMAINS, async () => authnSsoSamlService(app.log).expirePendingSsoDomains())
-    systemJobsSchedule(app.log).upsertJob({
+    void systemJobsSchedule(app.log).upsertJob({
         job: {
             name: SystemJobName.EXPIRE_PENDING_SSO_DOMAINS,
             data: {},
