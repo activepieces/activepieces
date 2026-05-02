@@ -1,9 +1,11 @@
-import {
-  PlatformWithoutFederatedAuth,
-  SsoDomainVerification,
-} from '@activepieces/shared';
+import { SsoDomainVerification } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
+
+type SsoDomainState = {
+  ssoDomain: string | null;
+  ssoDomainVerification: SsoDomainVerification | null;
+};
 
 export const samlSsoApi = {
   discover(domain: string) {
@@ -12,15 +14,11 @@ export const samlSsoApi = {
     });
   },
   updateSsoDomain(ssoDomain: string | null) {
-    return api.post<PlatformWithoutFederatedAuth>(
-      '/v1/authn/saml/sso-domain',
-      { ssoDomain },
-    );
+    return api.post<SsoDomainState>('/v1/authn/saml/sso-domain', {
+      ssoDomain,
+    });
   },
   verifySsoDomain() {
-    return api.post<{
-      ssoDomain: string | null;
-      ssoDomainVerification: SsoDomainVerification | null;
-    }>('/v1/authn/saml/sso-domain/verify', {});
+    return api.post<SsoDomainState>('/v1/authn/saml/sso-domain/verify', {});
   },
 };

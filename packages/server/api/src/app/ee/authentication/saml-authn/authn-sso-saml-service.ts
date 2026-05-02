@@ -1,5 +1,5 @@
 import { resolveTxt } from 'dns/promises'
-import { ActivepiecesError, ApEdition, apId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformId, PlatformWithoutFederatedAuth, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, tryCatch, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, apId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformId, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, tryCatch, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { authenticationService } from '../../../authentication/authentication.service'
@@ -68,7 +68,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             }
             return { platformId: platform.id }
         },
-        async updateSsoDomain({ platformId, ssoDomain }: UpdateSsoDomainParams): Promise<PlatformWithoutFederatedAuth> {
+        async updateSsoDomain({ platformId, ssoDomain }: UpdateSsoDomainParams): Promise<SsoDomainState> {
             const normalized = ssoDomain?.trim().toLowerCase() ?? null
             const value = normalized && normalized.length > 0 ? normalized : null
             if (!isNil(value)) {
@@ -94,9 +94,10 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             const current = await platformService(log).getOneOrThrow(platformId)
             const verification = computeNextVerification({ nextDomain: value, currentDomain: current.ssoDomain ?? null, currentVerification: current.ssoDomainVerification ?? null })
 
-            return platformService(log).update({ id: platformId, ssoDomain: value, ssoDomainVerification: verification })
+            await platformService(log).update({ id: platformId, ssoDomain: value, ssoDomainVerification: verification })
+            return { ssoDomain: value, ssoDomainVerification: verification }
         },
-        async verifySsoDomain({ platformId }: VerifySsoDomainParams): Promise<VerifySsoDomainResult> {
+        async verifySsoDomain({ platformId }: VerifySsoDomainParams): Promise<SsoDomainState> {
             const platform = await platformService(log).getOneOrThrow(platformId)
             if (isNil(platform.ssoDomain) || isNil(platform.ssoDomainVerification)) {
                 throw new ActivepiecesError({
@@ -122,8 +123,24 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             const updated = await platformService(log).update({ id: platformId, ssoDomainVerification: verified })
             return { ssoDomain: updated.ssoDomain ?? null, ssoDomainVerification: updated.ssoDomainVerification ?? null }
         },
+        async expirePendingSsoDomains(): Promise<void> {
+            const result = await platformRepo()
+                .createQueryBuilder()
+                .update()
+                .set({ ssoDomain: null, ssoDomainVerification: null })
+                .where('"ssoDomain" IS NOT NULL')
+                .andWhere('"ssoDomainVerification"->>\'status\' = :status', { status: SsoDomainVerificationStatus.PENDING_VERIFICATION })
+                .andWhere(`("ssoDomainVerification"->>'createdAt')::timestamptz < NOW() - INTERVAL '${PENDING_DOMAIN_TTL_HOURS} hour'`)
+                .execute()
+            const affected = result.affected ?? 0
+            if (affected > 0) {
+                log.info({ affected }, 'Expired pending SSO domain verifications')
+            }
+        },
     }
 }
+
+const PENDING_DOMAIN_TTL_HOURS = 1
 
 function computeNextVerification({ nextDomain, currentDomain, currentVerification }: { nextDomain: string | null, currentDomain: string | null, currentVerification: SsoDomainVerification | null }): SsoDomainVerification | null {
     if (isNil(nextDomain)) {
@@ -139,6 +156,7 @@ function computeNextVerification({ nextDomain, currentDomain, currentVerificatio
             name: `${VERIFICATION_NAME_PREFIX}.${nextDomain}`,
             value: `${VERIFICATION_VALUE_PREFIX}=${apId()}`,
         },
+        createdAt: new Date().toISOString(),
     }
 }
 
@@ -176,7 +194,7 @@ type VerifySsoDomainParams = {
     platformId: PlatformId
 }
 
-type VerifySsoDomainResult = {
+type SsoDomainState = {
     ssoDomain: string | null
     ssoDomainVerification: SsoDomainVerification | null
 }

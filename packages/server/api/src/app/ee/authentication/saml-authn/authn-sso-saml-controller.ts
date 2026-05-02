@@ -13,7 +13,7 @@ import { authnSsoSamlService } from './authn-sso-saml-service'
 export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
     app.get('/login', LoginRequest, async (req, res) => {
         const platformId = req.query.platformId ?? await platformUtils.getPlatformIdForRequest(req)
-        assertNotNullOrUndefined(platformId, "Platform Id should not be null")
+        assertNotNullOrUndefined(platformId, 'Platform Id should not be null')
         const { saml } = await authnSsoSamlService(req.log).getSamlConfigOrThrow(platformId)
         const { redirectUrl } = await authnSsoSamlService(req.log).login(platformId, saml)
         return res.redirect(redirectUrl)
@@ -21,7 +21,7 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/acs', AcsRequest, async (req, res) => {
         const platformId = req.query.platformId ?? await platformUtils.getPlatformIdForRequest(req)
-        assertNotNullOrUndefined(platformId, "Platform Id should not be null")
+        assertNotNullOrUndefined(platformId, 'Platform Id should not be null')
         const { saml } = await authnSsoSamlService(req.log).getSamlConfigOrThrow(platformId)
         const response = await authnSsoSamlService(req.log).acs(platformId, saml, {
             body: req.body,
@@ -98,25 +98,6 @@ const DiscoverRequest = {
             }),
         },
     },
-}
-
-const UpdateSsoDomainRequest = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
-    schema: {
-        body: z.object({
-            ssoDomain: z.string().max(253).nullable(),
-        }),
-    },
-}
-
-const VerifySsoDomainRequest = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
 }
 
 const UpdateSsoDomainRequest = {
