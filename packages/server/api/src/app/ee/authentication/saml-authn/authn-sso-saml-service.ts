@@ -83,19 +83,19 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             const updated = await platformService(log).update({ id: platformId, ssoDomainVerification: verified })
             return { ssoDomain: updated.ssoDomain ?? null, ssoDomainVerification: updated.ssoDomainVerification ?? null }
         },
-        async expirePendingSsoDomains(): Promise<number> {
+        async expirePendingSsoDomains(): Promise<void> {
             const result = await platformRepo()
                 .createQueryBuilder()
                 .update()
                 .set({ ssoDomain: null, ssoDomainVerification: null })
-                .where(`"ssoDomainVerification"->>'status' = :status`, { status: SsoDomainVerificationStatus.PENDING_VERIFICATION })
+                .where('"ssoDomain" IS NOT NULL')
+                .andWhere('"ssoDomainVerification"->>\'status\' = :status', { status: SsoDomainVerificationStatus.PENDING_VERIFICATION })
                 .andWhere(`("ssoDomainVerification"->>'createdAt')::timestamptz < NOW() - INTERVAL '${PENDING_DOMAIN_TTL_HOURS} hour'`)
                 .execute()
             const affected = result.affected ?? 0
             if (affected > 0) {
                 log.info({ affected }, 'Expired pending SSO domain verifications')
             }
-            return affected
         },
     }
 }
