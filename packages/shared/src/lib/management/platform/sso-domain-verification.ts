@@ -23,6 +23,7 @@ export const SsoDomainVerification = z.object({
         SsoDomainVerificationStatus.VERIFIED,
     ]),
     record: SsoDomainVerificationRecord,
+    createdAt: z.string(),
 })
 
 export type SsoDomainVerification = z.infer<typeof SsoDomainVerification>
