@@ -160,7 +160,8 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
 
 function parsePathAfterConnectionName(variableName: string, connectionName: string): string | null {
     if (variableName.includes('[')) {
-        return variableName.substring(`connections.['${connectionName}']`.length)
+        const cp = variableName.substring(`connections['${connectionName}']`.length)
+        return cp.length === 0 ? cp : `connection${cp}`
     }
     const cp = variableName.substring(`connections.${connectionName}`.length)
     if (cp.length === 0) {
