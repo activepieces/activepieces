@@ -55,7 +55,7 @@ const isMentionNodeText = (item: string) => {
     if (itemIsFlattenedArray) {
       return true;
     }
-    return /^(step_\d+|trigger)/.test(content);
+    return /^(step_\d+|trigger|connections)/.test(content);
   }
   return false;
 };
@@ -167,6 +167,14 @@ function parseLabelFromMention(
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ) {
   const { stepName, path } = parseStepAndNameFromMention(mention);
+  if (stepName === 'connections') {
+    const externalId = path[0] ?? '';
+    return {
+      displayText: `Credential · ${externalId}`,
+      serverValue: mention,
+      logoUrl: undefined,
+    };
+  }
   const stepIdx = steps.findIndex((step) => step.name === stepName);
   if (stepIdx < 0) {
     return {
