@@ -8,13 +8,14 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { CheckCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, Loader2, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -98,6 +99,8 @@ const SsoDomainForm = ({
   const isDirty =
     ssoDomainValue.trim().toLowerCase() !== (platform.ssoDomain ?? '');
 
+  const [showUpdateWarning, setShowUpdateWarning] = useState(false);
+
   const { mutate: saveDomain, isPending: isSaving } = useMutation({
     mutationFn: async (values: SsoDomainFormValues) => {
       await samlSsoApi.updateSsoDomain(values.ssoDomain.trim().toLowerCase());
@@ -105,12 +108,14 @@ const SsoDomainForm = ({
     },
     onSuccess: () => {
       toast.success(t('SSO domain saved'));
+      setShowUpdateWarning(false);
     },
     onError: (error) => {
       form.setError('root.serverError', {
         type: 'manual',
         message: extractServerErrorMessage(error, t("Couldn't save domain")),
       });
+      setShowUpdateWarning(false);
     },
   });
 
@@ -140,21 +145,13 @@ const SsoDomainForm = ({
     },
   });
 
-  const { mutate: removeDomain, isPending: isRemoving } = useMutation({
-    mutationFn: async () => {
-      await samlSsoApi.updateSsoDomain(null);
-      await refetch();
-    },
-    onSuccess: () => {
-      toast.success(t('SSO domain removed'));
-      onClose();
-    },
-    onError: (error) => {
-      toast.error(
-        extractServerErrorMessage(error, t("Couldn't remove domain")),
-      );
-    },
-  });
+  const handleSubmit = (values: SsoDomainFormValues) => {
+    if (platform.ssoDomain) {
+      setShowUpdateWarning(true);
+      return;
+    }
+    saveDomain(values);
+  };
 
   return (
     <>
@@ -164,7 +161,7 @@ const SsoDomainForm = ({
       <Form {...form}>
         <form
           className="grid space-y-4"
-          onSubmit={form.handleSubmit((v) => saveDomain(v))}
+          onSubmit={form.handleSubmit(handleSubmit)}
         >
           <FormField
             name="ssoDomain"
@@ -202,17 +199,6 @@ const SsoDomainForm = ({
           )}
 
           <DialogFooter>
-            {platform.ssoDomain && (
-              <Button
-                type="button"
-                variant="basic"
-                className="text-destructive mr-auto"
-                loading={isRemoving}
-                onClick={() => removeDomain()}
-              >
-                {t('Remove domain')}
-              </Button>
-            )}
             <Button variant="outline" type="button" onClick={onClose}>
               {t('Close')}
             </Button>
@@ -221,11 +207,43 @@ const SsoDomainForm = ({
               loading={isSaving}
               disabled={!form.formState.isValid || !isDirty}
             >
-              {t('Save domain')}
+              {platform.ssoDomain ? t('Update domain') : t('Save domain')}
             </Button>
           </DialogFooter>
         </form>
       </Form>
+      <Dialog open={showUpdateWarning} onOpenChange={setShowUpdateWarning}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('Update SSO domain?')}</DialogTitle>
+          </DialogHeader>
+          <Alert variant="warning">
+            <TriangleAlert className="size-4" />
+            <AlertDescription>
+              {t(
+                "Users won't be able to sign in via SSO until you verify the new domain.",
+              )}
+            </AlertDescription>
+          </Alert>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              type="button"
+              disabled={isSaving}
+              onClick={() => setShowUpdateWarning(false)}
+            >
+              {t('Cancel')}
+            </Button>
+            <Button
+              type="button"
+              loading={isSaving}
+              onClick={() => saveDomain(form.getValues())}
+            >
+              {t('Update domain')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
