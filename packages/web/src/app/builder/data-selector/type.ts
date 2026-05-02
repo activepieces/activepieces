@@ -9,6 +9,7 @@ export type DataSelectorTreeNodeData = {
   displayName: string;
   propertyPath: string;
   insertable: boolean;
+  hideStepIcon?: boolean;
 };
 
 export type DataSelectorTestNodeData = {

@@ -354,6 +354,22 @@ function traverseStep(
     (step.type === FlowActionType.CODE || step.type === FlowActionType.PIECE) &&
     step.settings.errorHandlingOptions?.continueOnFailure?.value === true;
   if (cofEnabled) {
+    if (isNil(stepNode.children) && stepNode.data.type === 'value') {
+      const outputLeaf: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> = {
+        key: `${step.name}_output`,
+        data: {
+          type: 'value',
+          displayName: t('Output'),
+          propertyPath: step.name,
+          value: stepNode.data.value,
+          insertable: true,
+          hideStepIcon: true,
+        },
+      };
+      stepNode.data = { ...stepNode.data, insertable: false };
+      stepNode.children = [outputLeaf];
+    }
+
     const onFailureNode: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> = {
       key: `${step.name}_on_failure`,
       data: {
@@ -367,7 +383,7 @@ function traverseStep(
             type: 'value',
             displayName: t('Error message'),
             propertyPath: `${step.name}['error']['message']`,
-            value: '',
+            value: '---runtime error message---',
             insertable: true,
           },
         },

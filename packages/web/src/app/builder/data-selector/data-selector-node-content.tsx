@@ -45,7 +45,7 @@ const DataSelectorNodeContent = ({
 
   const [ripple, rippleEvent] = useApRipple();
   const step =
-    node.data.type === 'value'
+    node.data.type === 'value' && !node.data.hideStepIcon
       ? flowStructureUtil.getStep(node.data.propertyPath, flowVersion.trigger)
       : node.data.type === 'test'
       ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
