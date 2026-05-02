@@ -22,11 +22,13 @@ export function ChatInput({
   onSend,
   onStop,
   placeholder,
+  leftActions,
 }: {
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
   onStop?: () => void;
   placeholder?: string;
+  leftActions?: React.ReactNode;
 }) {
   const [value, setValue] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
@@ -89,13 +91,16 @@ export function ChatInput({
           className="min-h-[44px] text-sm"
         />
         <PromptInputActions className="flex items-center justify-between px-1">
-          <PromptInputAction tooltip={t('Attach files')}>
-            <FileUploadTrigger asChild>
-              <div className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-                <Paperclip className="size-4" />
-              </div>
-            </FileUploadTrigger>
-          </PromptInputAction>
+          <div className="flex items-center gap-1">
+            <PromptInputAction tooltip={t('Attach files')}>
+              <FileUploadTrigger asChild>
+                <div className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                  <Paperclip className="size-4" />
+                </div>
+              </FileUploadTrigger>
+            </PromptInputAction>
+            {leftActions}
+          </div>
           {isStreaming && onStop ? (
             <PromptInputAction tooltip={t('Stop')}>
               <Button

@@ -4,6 +4,8 @@ import {
     ApEdition,
     ApId,
     assertNotNullOrUndefined,
+    AuthenticationResponse,
+    CreatePlatformRequest,
     ErrorCode,
     FileType,
     PlatformWithoutSensitiveData,
@@ -31,6 +33,18 @@ import { platformService } from './platform.service'
 
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncZod = async (app) => {
+    app.post('/', CreatePlatformEndpoint, async (req) => {
+        const isOnboarding = req.principal.type === PrincipalType.ONBOARDING
+        const identityId = isOnboarding
+            ? req.principal.id
+            : (await userService(req.log).getOneOrFail({ id: req.principal.id })).identityId
+        return platformService(req.log).createPlatformWithProject({
+            identityId,
+            name: req.body.name,
+            invalidatePreviousTokens: isOnboarding,
+        })
+    })
+
     app.post('/:id', UpdatePlatformRequest, async (req, _res) => {
         if (req.principal.platform.id !== req.params.id) {
             throw new ActivepiecesError({
@@ -179,6 +193,18 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             return res.status(StatusCodes.NO_CONTENT).send()
         })
     }
+}
+
+const CreatePlatformEndpoint = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.ONBOARDING, PrincipalType.USER]),
+    },
+    schema: {
+        body: CreatePlatformRequest,
+        response: {
+            [StatusCodes.OK]: AuthenticationResponse,
+        },
+    },
 }
 
 const UpdatePlatformRequest = {
