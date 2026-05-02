@@ -3,8 +3,10 @@ import {
     ApEdition,
     ApEnvironment,
     apId,
+    assertNotNullOrUndefined,
     AppConnection,
     AppConnectionId,
+    AppConnectionKind,
     AppConnectionOwners,
     AppConnectionScope,
     AppConnectionStatus,
@@ -63,11 +65,15 @@ export const appConnectionsRepo = repoFactory(AppConnectionEntity)
 export const appConnectionService = (log: FastifyBaseLogger) => ({
     async upsert(params: UpsertParams): Promise<AppConnectionWithoutSensitiveData> {
         const { projectIds, externalId, value, displayName, pieceName, ownerId, platformId, scope, type, status, metadata, preSelectForNewProjects } = params
-        const pieceVersion = params.pieceVersion ?? ( await pieceMetadataService(log).getOrThrow({
-            name: pieceName,
-            platformId,
-        })).version
-        validatePieceVersion(pieceVersion)
+        const pieceVersion = isNil(pieceName)
+            ? null
+            : params.pieceVersion ?? (await pieceMetadataService(log).getOrThrow({
+                name: pieceName,
+                platformId,
+            })).version
+        if (!isNil(pieceVersion)) {
+            validatePieceVersion(pieceVersion)
+        }
         await assertProjectIds(projectIds, platformId)
         const validatedConnectionValue = await validateConnectionValue({
             value: await secretManagersService(log).resolveObject({ value, platformId, projectIds }),
@@ -172,6 +178,28 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         }
     },
 
+    async revealCredentialValue(params: GetOneParams): Promise<string> {
+        const connection = await appConnectionsRepo().findOneBy({
+            id: params.id,
+            platformId: params.platformId,
+            ...(params.projectId ? { projectIds: ArrayContains([params.projectId]) } : {}),
+        })
+        if (isNil(connection)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'AppConnection', entityId: params.id },
+            })
+        }
+        if (!isNil(connection.pieceName) || connection.type !== AppConnectionType.SECRET_TEXT) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'Only credentials can be revealed' },
+            })
+        }
+        const decrypted = await encryptUtils.decryptObject<{ secret_text: string }>(connection.value)
+        return decrypted.secret_text
+    },
+
     async getOneOrThrowWithoutValue(params: GetOneParams): Promise<AppConnectionWithoutSensitiveData> {
         const connectionById = await appConnectionsRepo().findOneBy({
             id: params.id,
@@ -271,6 +299,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         scope,
         platformId,
         externalIds,
+        kind,
     }: ListParams): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
@@ -305,6 +334,12 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             .leftJoinAndSelect('app_connection.owner', 'owner')
             .leftJoinAndSelect('owner.identity', 'owner_identity')
             .where(querySelector)
+        if (kind === AppConnectionKind.SECRET) {
+            queryBuilder.andWhere('app_connection.pieceName IS NULL')
+        }
+        else if (kind === AppConnectionKind.CONNECTION) {
+            queryBuilder.andWhere('app_connection.pieceName IS NOT NULL')
+        }
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
         const flowIdsByExternalId = await fetchFlowIdsForConnections(log, data)
@@ -409,6 +444,7 @@ const validateConnectionValue = async (
 
     switch (value.type) {
         case AppConnectionType.PLATFORM_OAUTH2: {
+            assertNotNullOrUndefined(pieceName, 'pieceName')
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 pieceName,
                 platformId,
@@ -431,6 +467,7 @@ const validateConnectionValue = async (
             })
         }
         case AppConnectionType.CLOUD_OAUTH2: {
+            assertNotNullOrUndefined(pieceName, 'pieceName')
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 pieceName,
                 platformId,
@@ -452,12 +489,13 @@ const validateConnectionValue = async (
             })
         }
         case AppConnectionType.OAUTH2: {
+            assertNotNullOrUndefined(pieceName, 'pieceName')
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 pieceName,
                 platformId,
                 props: value.props,
             })
-            
+
             const auth = await oauth2Handler[value.type](log).claim({
                 projectId,
                 platformId,
@@ -488,12 +526,14 @@ const validateConnectionValue = async (
         case AppConnectionType.CUSTOM_AUTH:
         case AppConnectionType.BASIC_AUTH:
         case AppConnectionType.SECRET_TEXT:
-            await engineValidateAuth({
-                platformId,
-                pieceName,
-                projectId,
-                auth: value,
-            }, log)
+            if (!isNil(pieceName)) {
+                await engineValidateAuth({
+                    platformId,
+                    pieceName,
+                    projectId,
+                    auth: value,
+                }, log)
+            }
     }
 
     return value
@@ -634,7 +674,7 @@ type UpsertParams = {
     displayName: string
     type: AppConnectionType
     status?: AppConnectionStatus
-    pieceName: string
+    pieceName: string | null
     metadata?: Metadata
     pieceVersion?: string
     preSelectForNewProjects?: boolean
@@ -666,7 +706,7 @@ type DeleteParams = {
 
 type ValidateConnectionValueParams = {
     value: UpsertAppConnectionRequestBody['value']
-    pieceName: string
+    pieceName: string | null
     projectId: ProjectId | undefined
     platformId: string
 }
@@ -679,6 +719,7 @@ type ListParams = {
     scope: AppConnectionScope | undefined
     displayName: string | undefined
     status: AppConnectionStatus[] | undefined
+    kind: AppConnectionKind | undefined
     limit: number
     externalIds: string[] | undefined
 }

@@ -38,6 +38,7 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         },
         pieceName: {
             type: String,
+            nullable: true,
         },
         ownerId: {
             type: String,
@@ -60,6 +61,7 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         },
         pieceVersion: {
             type: String,
+            nullable: true,
         },
         preSelectForNewProjects: {
             type: Boolean,

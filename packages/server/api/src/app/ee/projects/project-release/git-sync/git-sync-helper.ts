@@ -79,6 +79,7 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
             pieceName: undefined,
             displayName: undefined,
             status: undefined,
+            kind: undefined,
         })
         await Promise.all(currentConnections.data.map(async (connection) => {
             await this.upsertConnectionToGit({
