@@ -168,7 +168,12 @@ export class FlowExecutorContext {
 
 function extractOutput(steps: Record<string, StepOutput>): Record<string, unknown> {
     return Object.entries(steps).reduce((acc: Record<string, unknown>, [stepName, step]) => {
-        acc[stepName] = step.output
+        if (step.status === StepOutputStatus.FAILED) {
+            acc[stepName] = { error: { message: step.errorMessage } }
+        }
+        else {
+            acc[stepName] = step.output
+        }
         return acc
     }, {} as Record<string, unknown>)
 }

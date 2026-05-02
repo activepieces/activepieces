@@ -37,14 +37,22 @@ export const ActionErrorHandlingOptions = z.object({
     continueOnFailure: z.object({
         value: z.boolean().optional(),
     }).optional(),
+    continueOnFailureBranches: z.lazy(() => ContinueOnFailureBranches).optional(),
     retryOnFailure: z.object({
         value: z.boolean().optional(),
     }).optional(),
 }).optional()
 
-export type ActionErrorHandlingOptions = z.infer<
-  typeof ActionErrorHandlingOptions
->
+export type ActionErrorHandlingOptions = {
+    continueOnFailure?: { value?: boolean }
+    continueOnFailureBranches?: ContinueOnFailureBranches
+    retryOnFailure?: { value?: boolean }
+} | undefined
+
+export type ContinueOnFailureBranches = {
+    onSuccess?: FlowAction
+    onFailure?: FlowAction
+}
 
 export const SourceCode = z.object({
     packageJson: z.string(),
@@ -302,6 +310,12 @@ export const FlowAction: z.ZodType<FlowAction> = z.lazy(() =>
         }),
     ]),
 )
+
+export const ContinueOnFailureBranches: z.ZodType<ContinueOnFailureBranches> = z.object({
+    onSuccess: FlowAction.optional(),
+    onFailure: FlowAction.optional(),
+})
+
 export const RouterActionSchema = z.object({
     ...commonActionProps,
     type: z.literal(FlowActionType.ROUTER),

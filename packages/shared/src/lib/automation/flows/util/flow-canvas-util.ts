@@ -1,4 +1,4 @@
-import { FlowAction, FlowActionType, LoopOnItemsAction, RouterAction } from '../actions/action'
+import { CodeAction, FlowAction, FlowActionType, LoopOnItemsAction, PieceAction, RouterAction } from '../actions/action'
 import { FlowTrigger } from '../triggers/trigger'
 
 export const FLOW_CANVAS_STEP_HEIGHT = 60
@@ -63,6 +63,29 @@ function getFlowBBox(step: Step | FlowAction | null | undefined, forBranch = fal
             withChildHeight = Math.max(FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE, subgraphEndY)
         }
     }
+    else if (hasContinueOnFailureBranches(step)) {
+        const branches = getContinueOnFailureBranchPair(step)
+        const childBBoxes = branches.map(b => getFlowBBox(b, true))
+        const totalWidth = childBBoxes.reduce((sum, b) => sum + (b.maxX - b.minX), 0) + FLOW_CANVAS_HSPACE * (branches.length - 1)
+        const firstLeft = -childBBoxes[0].minX + FLOW_CANVAS_STEP_WIDTH / 2
+        const lastRight = childBBoxes[branches.length - 1].maxX - FLOW_CANVAS_STEP_WIDTH / 2
+        let deltaLeftX = -(totalWidth - firstLeft - lastRight) / 2 - firstLeft
+        let cofMinX = 0
+        let cofMaxX = FLOW_CANVAS_STEP_WIDTH
+        let maxChildHeight = 0
+        for (let i = 0; i < branches.length; i++) {
+            const bbox = childBBoxes[i]
+            const x = deltaLeftX + (-bbox.minX + FLOW_CANVAS_STEP_WIDTH / 2)
+            cofMinX = Math.min(cofMinX, x + bbox.minX)
+            cofMaxX = Math.max(cofMaxX, x + bbox.maxX)
+            maxChildHeight = Math.max(maxChildHeight, bbox.height)
+            deltaLeftX += (bbox.maxX - bbox.minX) + FLOW_CANVAS_HSPACE
+        }
+        const subgraphEndY = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET + maxChildHeight + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
+        withChildMinX = cofMinX
+        withChildMaxX = cofMaxX
+        withChildHeight = Math.max(FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE, subgraphEndY)
+    }
 
     const nextBBox = getFlowBBox(step.nextAction, false)
     return {
@@ -122,9 +145,43 @@ function buildPositions(
         const subgraphEndY = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET + maxChildHeight + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
         buildPositions(step.nextAction, offsetX, offsetY + subgraphEndY, positions)
     }
+    else if (hasContinueOnFailureBranches(step)) {
+        const branches = getContinueOnFailureBranchPair(step)
+        const childBBoxes = branches.map(b => getFlowBBox(b, true))
+        const totalWidth = childBBoxes.reduce((sum, b) => sum + (b.maxX - b.minX), 0) + FLOW_CANVAS_HSPACE * (branches.length - 1)
+        const firstLeft = -childBBoxes[0].minX + FLOW_CANVAS_STEP_WIDTH / 2
+        const lastRight = childBBoxes[branches.length - 1].maxX - FLOW_CANVAS_STEP_WIDTH / 2
+        let deltaLeftX = -(totalWidth - firstLeft - lastRight) / 2 - firstLeft
+        const childOffsetY = offsetY + FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET
+        let maxChildHeight = 0
+        for (let i = 0; i < branches.length; i++) {
+            const child = branches[i]
+            const bbox = childBBoxes[i]
+            const branchOffsetX = offsetX + deltaLeftX + (-bbox.minX + FLOW_CANVAS_STEP_WIDTH / 2)
+            if (child) {
+                buildPositions(child, branchOffsetX, childOffsetY, positions)
+            }
+            maxChildHeight = Math.max(maxChildHeight, bbox.height)
+            deltaLeftX += (bbox.maxX - bbox.minX) + FLOW_CANVAS_HSPACE
+        }
+        const subgraphEndY = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET + maxChildHeight + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
+        buildPositions(step.nextAction, offsetX, offsetY + subgraphEndY, positions)
+    }
     else {
         buildPositions(step.nextAction, offsetX, offsetY + FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE, positions)
     }
+}
+
+function hasContinueOnFailureBranches(step: Step | FlowAction): step is CodeAction | PieceAction {
+    if (step.type !== FlowActionType.CODE && step.type !== FlowActionType.PIECE) {
+        return false
+    }
+    return step.settings.errorHandlingOptions?.continueOnFailure?.value === true
+}
+
+function getContinueOnFailureBranchPair(step: CodeAction | PieceAction): (FlowAction | undefined)[] {
+    const branches = step.settings.errorHandlingOptions?.continueOnFailureBranches
+    return [branches?.onSuccess, branches?.onFailure]
 }
 
 export const flowCanvasUtils = {

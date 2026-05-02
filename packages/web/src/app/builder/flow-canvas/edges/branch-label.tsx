@@ -27,9 +27,17 @@ type BaseBranchLabel = {
   label: string;
   targetNodeName: string;
   sourceNodeName: string;
-  stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
-  branchIndex: number;
-};
+} & (
+  | {
+      stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
+      branchIndex: number;
+    }
+  | {
+      stepLocationRelativeToParent:
+        | StepLocationRelativeToParent.INSIDE_ON_SUCCESS_BRANCH
+        | StepLocationRelativeToParent.INSIDE_ON_FAILURE_BRANCH;
+    }
+);
 
 const BranchLabel = (props: BaseBranchLabel) => {
   const [
@@ -50,25 +58,37 @@ const BranchLabel = (props: BaseBranchLabel) => {
     state.readonly,
   ]);
 
-  const isFallbackBranch =
+  const isOnSuccessBranch =
     props.stepLocationRelativeToParent ===
-      StepLocationRelativeToParent.INSIDE_BRANCH &&
+    StepLocationRelativeToParent.INSIDE_ON_SUCCESS_BRANCH;
+  const isOnFailureBranch =
+    props.stepLocationRelativeToParent ===
+    StepLocationRelativeToParent.INSIDE_ON_FAILURE_BRANCH;
+  const isCofBranch = isOnSuccessBranch || isOnFailureBranch;
+  const branchIndex =
+    props.stepLocationRelativeToParent ===
+    StepLocationRelativeToParent.INSIDE_BRANCH
+      ? props.branchIndex
+      : null;
+  const isInsideRouterBranch = branchIndex !== null;
+  const isFallbackBranch =
+    isInsideRouterBranch &&
     step?.type === FlowActionType.ROUTER &&
-    step?.settings.branches[props.branchIndex]?.branchType ===
+    step?.settings.branches[branchIndex]?.branchType ===
       BranchExecutionType.FALLBACK;
-  const isNotInsideRoute =
-    props.stepLocationRelativeToParent !==
-    StepLocationRelativeToParent.INSIDE_BRANCH;
-  const isOtherwiseBranch = isNotInsideRoute || isFallbackBranch;
+  const isOtherwiseBranch =
+    (!isInsideRouterBranch && !isCofBranch) || isFallbackBranch;
   const isBranchSelected =
     selectedStep === props.sourceNodeName &&
-    props.stepLocationRelativeToParent ===
-      StepLocationRelativeToParent.INSIDE_BRANCH &&
-    props.branchIndex === selectedBranchIndex;
+    isInsideRouterBranch &&
+    branchIndex === selectedBranchIndex;
   const { fitView } = useReactFlow();
   const [isDropdownMenuOpen, setIsDropdownMenuOpen] = useState(false);
 
-  if (isNil(step) || step.type !== FlowActionType.ROUTER) {
+  if (isNil(step)) {
+    return <></>;
+  }
+  if (isInsideRouterBranch && step.type !== FlowActionType.ROUTER) {
     return <></>;
   }
 
@@ -95,6 +115,10 @@ const BranchLabel = (props: BaseBranchLabel) => {
               'border-primary text-primary': isBranchSelected,
               'bg-border/60 text-foreground/70 dark:text-foreground/70  border-border hover:text-foreground/70 hover:bg-border/60 hover:border-border cursor-default':
                 isOtherwiseBranch,
+              'text-success-800 bg-success-50 border-success-200 dark:text-success-200 dark:bg-success-900 dark:border-success-800 hover:text-success-800 hover:bg-success-50 hover:border-success-200 cursor-default':
+                isOnSuccessBranch,
+              'text-destructive-800 bg-destructive-50 border-destructive-200 dark:text-destructive-200 dark:bg-destructive-900 dark:border-destructive-800 hover:text-destructive-800 hover:bg-destructive-50 hover:border-destructive-200 cursor-default':
+                isOnFailureBranch,
             },
           )}
           style={{
@@ -102,13 +126,9 @@ const BranchLabel = (props: BaseBranchLabel) => {
             maxWidth: flowCanvasConsts.AP_NODE_SIZE.STEP.width - 10 + 'px',
           }}
           onClick={() => {
-            if (
-              props.stepLocationRelativeToParent ===
-                StepLocationRelativeToParent.INSIDE_BRANCH &&
-              !isOtherwiseBranch
-            ) {
+            if (branchIndex !== null && !isOtherwiseBranch) {
               selectStepByName(props.sourceNodeName);
-              setSelectedBranchIndex(props.branchIndex);
+              setSelectedBranchIndex(branchIndex);
               fitView(
                 flowCanvasUtils.createFocusStepInGraphParams(
                   props.targetNodeName,
@@ -147,14 +167,15 @@ const BranchLabel = (props: BaseBranchLabel) => {
                     onSelect={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      if (branchIndex === null) return;
                       applyOperation({
                         type: FlowOperationType.DUPLICATE_BRANCH,
                         request: {
                           stepName: props.sourceNodeName,
-                          branchIndex: props.branchIndex,
+                          branchIndex,
                         },
                       });
-                      setSelectedBranchIndex(props.branchIndex + 1);
+                      setSelectedBranchIndex(branchIndex + 1);
                     }}
                   >
                     <div className="flex cursor-pointer  flex-row gap-2 items-center">
@@ -168,12 +189,13 @@ const BranchLabel = (props: BaseBranchLabel) => {
                     onSelect={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      if (branchIndex === null) return;
                       setSelectedBranchIndex(null);
                       applyOperation({
                         type: FlowOperationType.DELETE_BRANCH,
                         request: {
                           stepName: props.sourceNodeName,
-                          branchIndex: props.branchIndex,
+                          branchIndex,
                         },
                       });
                       selectStepByName(props.sourceNodeName);

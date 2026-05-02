@@ -1568,5 +1568,8 @@
   "What would you like to do in {projectName}?": "What would you like to do in {projectName}?",
   "steps": "steps",
   "{name} connected": "{name} connected",
-  "AI Chat requires an E2B sandbox to run. Ask your admin to set the AP_E2B_API_KEY environment variable.": "AI Chat requires an E2B sandbox to run. Ask your admin to set the AP_E2B_API_KEY environment variable."
+  "AI Chat requires an E2B sandbox to run. Ask your admin to set the AP_E2B_API_KEY environment variable.": "AI Chat requires an E2B sandbox to run. Ask your admin to set the AP_E2B_API_KEY environment variable.",
+  "Failure": "Failure",
+  "On failure": "On failure",
+  "Error message": "Error message"
 }

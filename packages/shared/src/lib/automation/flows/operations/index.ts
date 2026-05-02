@@ -107,6 +107,8 @@ export enum StepLocationRelativeToParent {
     AFTER = 'AFTER',
     INSIDE_LOOP = 'INSIDE_LOOP',
     INSIDE_BRANCH = 'INSIDE_BRANCH',
+    INSIDE_ON_SUCCESS_BRANCH = 'INSIDE_ON_SUCCESS_BRANCH',
+    INSIDE_ON_FAILURE_BRANCH = 'INSIDE_ON_FAILURE_BRANCH',
 }
 
 export const UseAsDraftRequest = z.object({

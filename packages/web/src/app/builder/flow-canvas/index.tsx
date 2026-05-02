@@ -269,8 +269,23 @@ const getChildrenKey = (step: Step) => {
         return `${routerKey}-${childrenKey}`;
       }, '');
     case FlowActionType.CODE:
-    case FlowActionType.PIECE:
-      return '';
+    case FlowActionType.PIECE: {
+      const cofEnabled =
+        step.settings.errorHandlingOptions?.continueOnFailure?.value === true;
+      const branches =
+        step.settings.errorHandlingOptions?.continueOnFailureBranches;
+      const onSuccessKey = branches?.onSuccess
+        ? flowStructureUtil
+            .getAllSteps(branches.onSuccess)
+            .reduce((acc, s) => `${acc}-${s.name}`, '')
+        : 'null';
+      const onFailureKey = branches?.onFailure
+        ? flowStructureUtil
+            .getAllSteps(branches.onFailure)
+            .reduce((acc, s) => `${acc}-${s.name}`, '')
+        : 'null';
+      return `cof:${cofEnabled}-success:${onSuccessKey}-failure:${onFailureKey}`;
+    }
   }
 };
 const createGraphKey = (

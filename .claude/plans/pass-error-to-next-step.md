@@ -162,7 +162,44 @@ Operations like `ADD_ACTION`, `DELETE_ACTION`, `MOVE_ACTION`, importer, exporter
   }
 ```
 
-`ADD_ACTION` gains a small dispatch arm in `add-action.ts` to insert at the head of the corresponding branch (or chain into the branch's existing `nextAction`). `DELETE_ACTION` and `MOVE_ACTION` need **no diff** — they delegate to the tree-walker, which already covers the new slots.
+`ADD_ACTION` gains a small dispatch arm in `add-action.ts` to insert at the head of the corresponding branch (or chain into the branch's existing `nextAction`).
+
+`MOVE_ACTION` decomposes into DELETE + ADD via `_getImportOperations`, so it inherits the fixes in 5c and 5d below — no direct diff.
+
+### 5c. `DELETE_ACTION` — re-stitch when a branch head is deleted
+
+**File:** `packages/shared/src/lib/automation/flows/operations/delete-action.ts` &nbsp;·&nbsp; ~10 lines added
+
+The `DELETE_ACTION` callback is **not** a pure `transferStep` delegate — it tests `parentStep.nextAction.name === name`, `parentStep.firstLoopAction.name === name`, and `parentStep.children[i].name === name`, then re-stitches the chain. Mirror this for the new branch slots: when a step is the head of `branches.onSuccess` / `branches.onFailure`, replace the slot with that step's `nextAction` (or undefined).
+
+```diff
+  switch (parentStep.type) {
+      case FlowActionType.LOOP_ON_ITEMS: { /* ... */ break }
+      case FlowActionType.ROUTER:        { /* ... */ break }
+      default: break
+  }
++ const branches = parentStep.settings?.errorHandlingOptions?.continueOnFailureBranches
++ if (branches?.onSuccess?.name === name) {
++     branches.onSuccess = branches.onSuccess.nextAction
++ }
++ if (branches?.onFailure?.name === name) {
++     branches.onFailure = branches.onFailure.nextAction
++ }
+```
+
+Without this, deleting the head of either new branch leaves a dangling reference inside `errorHandlingOptions`.
+
+### 5d. Import / round-trip — emit ADD ops + strip on clone
+
+**File:** `packages/shared/src/lib/automation/flows/operations/import-flow.ts` &nbsp;·&nbsp; ~25 lines added
+
+Two functions in this file walk the tree directly and need explicit branch handling:
+
+1. **`_getImportOperationsForSteps`** — emits `ADD_ACTION` ops for every step in an imported flow. It explicitly switches on `LOOP_ON_ITEMS` (emits `INSIDE_LOOP`) and `ROUTER` (emits `INSIDE_BRANCH` per child). Add an unconditional pass over `errorHandlingOptions.continueOnFailureBranches`: if `onSuccess` / `onFailure` is present, emit `ADD_ACTION` with the corresponding new `INSIDE_ON_*_BRANCH` location, then recurse into that branch's chain.
+
+2. **`removeAnySubsequentAction`** — clones an action and strips any sub-tree that the recursive importer will re-emit as separate ADD ops. Currently strips `firstLoopAction`, recurses into `children`, and deletes `nextAction`. Add: delete `errorHandlingOptions.continueOnFailureBranches.onSuccess` / `.onFailure` from the cloned action before returning, so they get re-emitted via the new `INSIDE_ON_*_BRANCH` ADD ops rather than carried inline.
+
+Without these, an imported flow silently loses everything inside the new branches — and `MOVE_ACTION` (which calls `_getImportOperations` on the source step) inherits the same data loss.
 
 ### 6. Canvas — render the fork when CoF is on
 
@@ -269,6 +306,14 @@ VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD
 
 `hasCofBranches` is false → no child subgraph → straight-line edge to `nextAction` is restored. Branch data inside `continueOnFailureBranches` is still attached to the action object (and still walked by `transferStep` for ops like serialise/import) but is invisible to layout. Toggle back on → the dispatch arm fires, the fork reappears with content intact.
 
+### 6e. Server-side canvas position math — shared `flow-canvas-util.ts`
+
+**File:** `packages/shared/src/lib/automation/flows/util/flow-canvas-util.ts` &nbsp;·&nbsp; ~20 lines added
+
+Distinct from the web canvas in §6: this is the **shared** layout module that the **MCP `ap_flow_structure` tool** calls via `flowCanvasUtils.computeStepPositions(trigger)` to give agents `(x, y)` coordinates for every step. `getFlowBBox` and `buildPositions` both walk `firstLoopAction`, `children`, and `nextAction` directly — no `transferStep` delegation. Without an `onSuccess` / `onFailure` arm, MCP-reported positions for steps inside the new branches will be missing or wrong.
+
+Mirror the existing `ROUTER` arm: when a step has CoF on, treat the two branches as a 2-child router for layout purposes. Vertical offset = `FLOW_CANVAS_ROUTER_VOFFSET`; branch widths sum with `FLOW_CANVAS_HSPACE` between them; subgraph height = `FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET + max(branchHeights) + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE`. Add the same arm in both `getFlowBBox` and `buildPositions` so width math and `(x, y)` placement stay consistent with the web canvas (§6).
+
 ### 7. Toggle — pure boolean flip, no destructive ops
 
 **File:** `packages/web/src/app/builder/piece-properties/action-error-handling.tsx` &nbsp;·&nbsp; **0 lines**
@@ -318,6 +363,24 @@ The engine and the picker agree on the same shape (`step.error.message`) — wha
      └── Error message
 ```
 
+### 9. EE project-state sync — re-clean the branches
+
+**File:** `packages/server/api/src/app/ee/projects/project-release/project-state/clean-flow-state.ts` &nbsp;·&nbsp; ~6 lines added
+
+`cleanAction` hand-rebuilds each action by listing the props it wants to keep and recursing on `nextAction`, `firstLoopAction`, and `children`. The new branches live under `settings.errorHandlingOptions.continueOnFailureBranches`, which gets carried along inside the spread `settings` object — so the data round-trips. **But** the cloned branches still point at their **original** sub-trees, never re-cleaned, so steps inside them keep fields the cleaner is supposed to drop (e.g. `valid`, `lastUpdatedDate` on inner actions).
+
+Add a second pass that re-cleans the branches in-place: clone `settings`, then `branches.onSuccess = isNil(branches.onSuccess) ? undefined : cleanAction(branches.onSuccess)` (same for `onFailure`). EE-only — failing to update this causes silent data drift on Project Release sync (Cloud + EE), not on CE.
+
+### 10. MCP `ap_flow_structure` — parent detection + insert locations
+
+**File:** `packages/server/api/src/app/mcp/tools/ap-flow-structure.ts` &nbsp;·&nbsp; ~10 lines added
+
+Two issues in this MCP tool:
+
+1. **`buildFlowStructure`** does its own parent-relationship detection (looping over `allSteps` and testing `parent.nextAction?.name`, `parent.firstLoopAction?.name`, `parent.children[]?.name`). Won't detect a step whose parent is its `branches.onSuccess` / `branches.onFailure` slot, so its `parentName` and `relationship` come back wrong. Extend `StepInfo['relationship']` with `'on_success_branch'` / `'on_failure_branch'` and add an arm that tests `parent.settings?.errorHandlingOptions?.continueOnFailureBranches?.onSuccess?.name === step.name` (and `onFailure`).
+
+2. **`formatFlowStructure`** lists valid insert locations for `ap_add_step` (it already lists `INSIDE_LOOP` and `INSIDE_BRANCH` per step type). For any action with CoF on, also list `INSIDE_ON_SUCCESS_BRANCH` and `INSIDE_ON_FAILURE_BRANCH`. Without this, agents won't know they can target the new branches.
+
 ### Total LoC across the feature
 
 | # | Touchpoint | Added | Removed |
@@ -328,15 +391,20 @@ The engine and the picker agree on the same shape (`step.error.message`) — wha
 | 4 | Tree-walker (`flow-structure-util.ts`) | +9 | 0 |
 | 5a | Step-location enum | +2 | 0 |
 | 5b | `ADD_ACTION` handler | ~10 | 0 |
+| 5c | `DELETE_ACTION` handler | ~10 | 0 |
+| 5d | Import / round-trip (`import-flow.ts`) | ~25 | 0 |
 | 6a | Canvas — `buildFlowGraph` dispatch | +3 | 0 |
 | 6b | Canvas — `createStepGraph` skip-list | +3 | 0 |
 | 6c | Canvas — `buildContinueOnFailureBranchesGraph` | ~60 | 0 |
 | 6d | Canvas — `createAddOperationFromAddButtonData` | ~5 | 0 |
+| 6e | Shared canvas math (`flow-canvas-util.ts`) | ~20 | 0 |
 | 7 | Toggle (`action-error-handling.tsx`) | 0 | 0 |
 | 8 | Data picker (`data-selector/utils.ts`) | ~17 | 0 |
-| | **Total** | **~147** | **-1** |
+| 9 | EE project-state (`clean-flow-state.ts`) | ~6 | 0 |
+| 10 | MCP (`ap-flow-structure.ts`) | ~10 | 0 |
+| | **Total** | **~218** | **-1** |
 
-**~150 LoC net** across **~9 files** — almost all of it additive, mostly mechanical, no special-casing of existing code paths. The `transferStep` change is the multiplier: 9 lines there means 9+ tree-walking helpers and every operation built on top of them inherit the new slots without their own diff.
+**~220 LoC net** across **~14 files** — almost all of it additive, mostly mechanical. The `transferStep` change is the multiplier inside `flow-structure-util.ts`, but five parallel tree-walkers live outside that file (delete-action, import-flow, shared canvas math, EE clean-flow-state, MCP flow-structure) and need their own arms. Total file count is still bounded by the codebase's parallel walkers, not the conceptual surface of the feature.
 
 ## Note: how retry-on-failure works today
 
@@ -371,10 +439,17 @@ When a user clicks **Test step** on a downstream step that references `{{step.er
 - **Engine — error reference**
   - A downstream step referencing `{{step.error.message}}` resolves to the failed step's error string.
 - **Tree-walker / operations**
-  - Move a step into a branch and back out. Works without bespoke logic.
-  - Delete a step inside a branch.
+  - Move a step into a branch and back out (DELETE + ADD path via import-flow).
+  - Delete the **head** of an `onSuccess` / `onFailure` branch — slot must rebind to the deleted step's `nextAction` (or undefined).
+  - Delete a step further down the branch chain (covered by `transferStep`).
   - Duplicate a step that has CoF + branch contents — duplicate carries the branches with fresh apIds.
-  - Round-trip a flow through import/export.
+  - Round-trip a flow through import/export — branch contents identical before and after.
+- **EE Project Release sync (Cloud + EE only)**
+  - Sync a project containing CoF branches with inner steps. Verify the cleaned state preserves both the branches and their inner steps' cleaned shape.
+- **MCP `ap_flow_structure`**
+  - Run on a flow with CoF branches. Verify each step inside a branch reports the correct `parentName` and `relationship` (`on_success_branch` / `on_failure_branch`).
+  - Verify valid insert locations include `INSIDE_ON_SUCCESS_BRANCH` and `INSIDE_ON_FAILURE_BRANCH` for any CoF-enabled action.
+  - Verify `(x, y)` coordinates for branch-internal steps match the frontend canvas.
 - **Canvas**
   - Toggle CoF on → two labelled paths appear, both converging into the existing `nextAction`.
   - Toggle off → paths hide, data preserved on the action.

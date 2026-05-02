@@ -33,7 +33,7 @@ import {
 } from './types';
 
 const createBigAddButtonGraph: (
-  parentStep: LoopOnItemsAction | RouterAction,
+  parentStep: FlowAction,
   nodeData: ApBigAddButtonNode['data'],
 ) => ApGraph = (parentStep, nodeData) => {
   const bigAddButtonNode: ApBigAddButtonNode = {
@@ -75,6 +75,12 @@ const createBigAddButtonGraph: (
     edges: [straightLineEdge],
   };
 };
+
+const hasContinueOnFailureBranches = (
+  step: FlowAction | FlowTrigger,
+): step is FlowAction =>
+  (step.type === FlowActionType.CODE || step.type === FlowActionType.PIECE) &&
+  step.settings.errorHandlingOptions?.continueOnFailure?.value === true;
 
 const createStepGraph: (
   step: FlowAction | FlowTrigger,
@@ -119,7 +125,8 @@ const createStepGraph: (
     nodes: [stepNode, graphEndNode],
     edges:
       step.type !== FlowActionType.LOOP_ON_ITEMS &&
-      step.type !== FlowActionType.ROUTER
+      step.type !== FlowActionType.ROUTER &&
+      !hasContinueOnFailureBranches(step)
         ? [straightLineEdge]
         : [],
   };
@@ -145,6 +152,8 @@ const buildFlowGraph: (
       ? buildLoopChildGraph(step)
       : step.type === FlowActionType.ROUTER
       ? buildRouterChildGraph(step)
+      : hasContinueOnFailureBranches(step)
+      ? buildContinueOnFailureBranchesGraph(step)
       : null;
 
   const graphWithChild = childGraph ? mergeGraph(graph, childGraph) : graph;
@@ -385,6 +394,103 @@ const buildRouterChildGraph = (step: RouterAction) => {
             drawHorizontalLine:
               branchIndex === 0 ||
               branchIndex === childGraphsAfterOffset.length - 1,
+            routerOrBranchStepName: step.name,
+            isNextStepEmpty: isNil(step.nextAction),
+          },
+        },
+      ];
+    })
+    .flat();
+
+  return {
+    nodes: [
+      ...childGraphsAfterOffset.map((cg) => cg.nodes).flat(),
+      subgraphEndSubNode,
+    ],
+    edges: [...childGraphsAfterOffset.map((cg) => cg.edges).flat(), ...edges],
+  };
+};
+
+const buildContinueOnFailureBranchesGraph = (step: FlowAction): ApGraph => {
+  const branches =
+    step.type === FlowActionType.CODE || step.type === FlowActionType.PIECE
+      ? step.settings.errorHandlingOptions?.continueOnFailureBranches
+      : undefined;
+  const branchOrder = [
+    {
+      branch: branches?.onSuccess,
+      label: t('Success'),
+      location: StepLocationRelativeToParent.INSIDE_ON_SUCCESS_BRANCH as const,
+    },
+    {
+      branch: branches?.onFailure,
+      label: t('Failure'),
+      location: StepLocationRelativeToParent.INSIDE_ON_FAILURE_BRANCH as const,
+    },
+  ];
+
+  const childGraphs = branchOrder.map(({ branch, location }, index) =>
+    branch
+      ? buildFlowGraph(branch)
+      : createBigAddButtonGraph(step, {
+          parentStepName: step.name,
+          stepLocationRelativeToParent: location,
+          edgeId: `${step.name}-cof-branch-${index}-start-edge`,
+        }),
+  );
+
+  const childGraphsAfterOffset = offsetRouterChildSteps(childGraphs);
+
+  const maxHeight = Math.max(
+    ...childGraphsAfterOffset.map((cg) => calculateGraphBoundingBox(cg).height),
+  );
+
+  const subgraphEndSubNode: ApGraphEndNode = {
+    id: `${step.name}-cof-subgraph-end`,
+    type: ApNodeType.GRAPH_END_WIDGET,
+    position: {
+      x: flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
+      y:
+        flowCanvasConsts.AP_NODE_SIZE.STEP.height +
+        flowCanvasConsts.VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD +
+        maxHeight +
+        flowCanvasConsts.ARC_LENGTH +
+        flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS,
+    },
+    data: {},
+    selectable: false,
+  };
+
+  const edges: ApEdge[] = childGraphsAfterOffset
+    .map((childGraph, branchIndex) => {
+      const { label, location, branch } = branchOrder[branchIndex];
+      return [
+        {
+          id: `${step.name}-cof-branch-${branchIndex}-start-edge`,
+          source: step.name,
+          target: `${childGraph.nodes[0].id}`,
+          type: ApEdgeType.ROUTER_START_EDGE as const,
+          data: {
+            isBranchEmpty: isNil(branch),
+            label,
+            stepLocationRelativeToParent: location,
+            drawHorizontalLine: true,
+            drawStartingVerticalLine: branchIndex === 0,
+          },
+        },
+        {
+          id: `${step.name}-cof-branch-${branchIndex}-end-edge`,
+          source: `${childGraph.nodes.at(-1)!.id}`,
+          target: subgraphEndSubNode.id,
+          type: ApEdgeType.ROUTER_END_EDGE as const,
+          data: {
+            drawEndingVerticalLine: branchIndex === 0,
+            verticalSpaceBetweenLastNodeInBranchAndEndLine:
+              subgraphEndSubNode.position.y -
+              childGraph.nodes.at(-1)!.position.y -
+              flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS -
+              flowCanvasConsts.ARC_LENGTH,
+            drawHorizontalLine: true,
             routerOrBranchStepName: step.name,
             isNextStepEmpty: isNil(step.nextAction),
           },

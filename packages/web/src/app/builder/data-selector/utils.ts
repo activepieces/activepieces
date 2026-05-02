@@ -6,6 +6,7 @@ import {
   FlowTrigger,
   FlowTriggerType,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 
 import { pieceSelectorUtils } from '@/features/pieces';
 
@@ -341,13 +342,41 @@ function traverseStep(
     return headNode;
   }
 
-  return traverseOutput(
+  const stepNode = traverseOutput(
     displayName,
     [step.name],
     sampleData[step.name],
     zipArraysOfProperties,
     true,
   );
+
+  const cofEnabled =
+    (step.type === FlowActionType.CODE || step.type === FlowActionType.PIECE) &&
+    step.settings.errorHandlingOptions?.continueOnFailure?.value === true;
+  if (cofEnabled) {
+    const onFailureNode: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> = {
+      key: `${step.name}_on_failure`,
+      data: {
+        type: 'chunk',
+        displayName: t('On failure'),
+      },
+      children: [
+        {
+          key: `${step.name}_error_message`,
+          data: {
+            type: 'value',
+            displayName: t('Error message'),
+            propertyPath: `${step.name}['error']['message']`,
+            value: '',
+            insertable: true,
+          },
+        },
+      ],
+    };
+    stepNode.children = [...(stepNode.children ?? []), onFailureNode];
+  }
+
+  return stepNode;
 }
 
 function filterBy(

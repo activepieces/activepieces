@@ -144,14 +144,25 @@ export const ApRouterStartCanvasEdge = ({
         }
         className="flex items-center "
       >
-        <BranchLabel
-          key={branchLabelProps.label + branchLabelProps.targetNodeName}
-          sourceNodeName={source}
-          targetNodeName={target}
-          stepLocationRelativeToParent={data.stepLocationRelativeToParent}
-          branchIndex={data.branchIndex}
-          label={data.label}
-        />
+        {data.stepLocationRelativeToParent ===
+        StepLocationRelativeToParent.INSIDE_BRANCH ? (
+          <BranchLabel
+            key={branchLabelProps.label + branchLabelProps.targetNodeName}
+            sourceNodeName={source}
+            targetNodeName={target}
+            stepLocationRelativeToParent={data.stepLocationRelativeToParent}
+            branchIndex={data.branchIndex}
+            label={data.label}
+          />
+        ) : (
+          <BranchLabel
+            key={branchLabelProps.label + branchLabelProps.targetNodeName}
+            sourceNodeName={source}
+            targetNodeName={target}
+            stepLocationRelativeToParent={data.stepLocationRelativeToParent}
+            label={data.label}
+          />
+        )}
       </foreignObject>
     </>
   );

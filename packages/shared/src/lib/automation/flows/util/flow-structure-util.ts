@@ -16,6 +16,13 @@ function isAction(type: FlowActionType | FlowTriggerType | undefined): type is F
     return Object.entries(FlowActionType).some(([, value]) => value === type)
 }
 
+function isStepAction(step: Step): step is FlowAction {
+    return step.type === FlowActionType.CODE
+        || step.type === FlowActionType.PIECE
+        || step.type === FlowActionType.LOOP_ON_ITEMS
+        || step.type === FlowActionType.ROUTER
+}
+
 function isTrigger(type: FlowActionType | FlowTriggerType | undefined): type is FlowTriggerType {
     return Object.entries(FlowTriggerType).some(([, value]) => value === type)
 }
@@ -96,6 +103,22 @@ function transferStep<T extends Step>(
         }
         default:
             break
+    }
+
+    if (updatedStep.type === FlowActionType.CODE || updatedStep.type === FlowActionType.PIECE) {
+        const branches = updatedStep.settings.errorHandlingOptions?.continueOnFailureBranches
+        if (branches?.onSuccess) {
+            const transferred = transferStep(branches.onSuccess, transferFunction)
+            if (isStepAction(transferred)) {
+                branches.onSuccess = transferred
+            }
+        }
+        if (branches?.onFailure) {
+            const transferred = transferStep(branches.onFailure, transferFunction)
+            if (isStepAction(transferred)) {
+                branches.onFailure = transferred
+            }
+        }
     }
 
     if (updatedStep.nextAction) {

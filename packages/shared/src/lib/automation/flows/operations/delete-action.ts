@@ -34,6 +34,17 @@ function _deleteAction(
                     })
                     break
                 }
+                case FlowActionType.CODE:
+                case FlowActionType.PIECE: {
+                    const branches = parentStep.settings.errorHandlingOptions?.continueOnFailureBranches
+                    if (branches?.onSuccess?.name === name) {
+                        branches.onSuccess = branches.onSuccess.nextAction
+                    }
+                    if (branches?.onFailure?.name === name) {
+                        branches.onFailure = branches.onFailure.nextAction
+                    }
+                    break
+                }
                 default:
                     break
             }
