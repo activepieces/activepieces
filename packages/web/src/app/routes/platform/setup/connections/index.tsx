@@ -106,7 +106,7 @@ const GlobalConnectionsTable = () => {
           >
             <div className="flex items-center gap-2 w-fit">
               <PieceIconWithPieceName
-                pieceName={row.original.pieceName}
+                pieceName={row.original.pieceName ?? ''}
                 showTooltip={false}
                 size="sm"
               />

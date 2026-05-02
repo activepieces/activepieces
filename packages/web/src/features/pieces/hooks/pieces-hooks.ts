@@ -367,8 +367,8 @@ export const piecesHooks = {
           return piecesApi.get({ name: pieceName });
         }
         return piecesApi.get({
-          name: appConnection.pieceName,
-          version: appConnection.pieceVersion,
+          name: appConnection.pieceName ?? '',
+          version: appConnection.pieceVersion ?? undefined,
         });
       },
       staleTime: Infinity,

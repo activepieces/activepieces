@@ -460,7 +460,7 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       const { connection } = event.data;
       return [
         { label: t('Connection'), value: connection.displayName },
-        { label: t('Piece'), value: connection.pieceName },
+        { label: t('Piece'), value: connection.pieceName ?? t('N/A') },
         {
           label: t('Type'),
           value: formatUtils.convertEnumToHumanReadable(connection.type),
