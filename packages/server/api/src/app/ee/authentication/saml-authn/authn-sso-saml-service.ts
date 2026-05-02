@@ -1,5 +1,5 @@
 import { resolveTxt } from 'dns/promises'
-import { ActivepiecesError, apId, AuthenticationResponse, ErrorCode, isNil, Platform, PlatformId, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, tryCatch, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, apId, AuthenticationResponse, ErrorCode, isNil, PlatformId, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, tryCatch, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { authenticationService } from '../../../authentication/authentication.service'
@@ -28,7 +28,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 predefinedPlatformId: platformId,
             })
         },
-        async updateSsoDomain({ platformId, ssoDomain }: UpdateSsoDomainParams): Promise<Platform> {
+        async updateSsoDomain({ platformId, ssoDomain }: UpdateSsoDomainParams): Promise<SsoDomainState> {
             const normalized = ssoDomain?.trim().toLowerCase() ?? null
             const value = normalized && normalized.length > 0 ? normalized : null
             if (!isNil(value)) {
@@ -54,9 +54,21 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             const current = await platformService(log).getOneOrThrow(platformId)
             const verification = computeNextVerification({ nextDomain: value, currentDomain: current.ssoDomain ?? null, currentVerification: current.ssoDomainVerification ?? null })
 
-            return platformService(log).update({ id: platformId, ssoDomain: value, ssoDomainVerification: verification })
+            const result = await tryCatch(() => platformService(log).update({ id: platformId, ssoDomain: value, ssoDomainVerification: verification }))
+            if (result.error) {
+                if (isPostgresUniqueViolation(result.error)) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: {
+                            message: 'This SSO domain is already in use',
+                        },
+                    })
+                }
+                throw result.error
+            }
+            return { ssoDomain: result.data.ssoDomain ?? null, ssoDomainVerification: result.data.ssoDomainVerification ?? null }
         },
-        async verifySsoDomain({ platformId }: VerifySsoDomainParams): Promise<VerifySsoDomainResult> {
+        async verifySsoDomain({ platformId }: VerifySsoDomainParams): Promise<SsoDomainState> {
             const platform = await platformService(log).getOneOrThrow(platformId)
             if (isNil(platform.ssoDomain) || isNil(platform.ssoDomainVerification)) {
                 throw new ActivepiecesError({
@@ -111,6 +123,14 @@ async function txtRecordMatches({ name, expected, log }: { name: string, expecte
     return lookup.data.some((chunks) => chunks.join('').trim() === expected)
 }
 
+function isPostgresUniqueViolation(error: unknown): boolean {
+    if (typeof error !== 'object' || error === null || !('code' in error)) {
+        return false
+    }
+    const code = error.code
+    return code === '23505'
+}
+
 const VERIFICATION_NAME_PREFIX = '_activepieces-verify'
 const VERIFICATION_VALUE_PREFIX = 'activepieces-verify'
 
@@ -127,7 +147,7 @@ type VerifySsoDomainParams = {
     platformId: PlatformId
 }
 
-type VerifySsoDomainResult = {
+type SsoDomainState = {
     ssoDomain: string | null
     ssoDomainVerification: SsoDomainVerification | null
 }

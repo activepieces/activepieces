@@ -140,6 +140,22 @@ const SsoDomainForm = ({
     },
   });
 
+  const { mutate: removeDomain, isPending: isRemoving } = useMutation({
+    mutationFn: async () => {
+      await samlSsoApi.updateSsoDomain(null);
+      await refetch();
+    },
+    onSuccess: () => {
+      toast.success(t('SSO domain removed'));
+      onClose();
+    },
+    onError: (error) => {
+      toast.error(
+        extractServerErrorMessage(error, t("Couldn't remove domain")),
+      );
+    },
+  });
+
   return (
     <>
       <DialogHeader>
@@ -186,6 +202,17 @@ const SsoDomainForm = ({
           )}
 
           <DialogFooter>
+            {platform.ssoDomain && (
+              <Button
+                type="button"
+                variant="basic"
+                className="text-destructive mr-auto"
+                loading={isRemoving}
+                onClick={() => removeDomain()}
+              >
+                {t('Remove domain')}
+              </Button>
+            )}
             <Button variant="outline" type="button" onClick={onClose}>
               {t('Close')}
             </Button>
