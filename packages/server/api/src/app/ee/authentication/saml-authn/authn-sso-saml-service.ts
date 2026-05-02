@@ -54,19 +54,8 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             const current = await platformService(log).getOneOrThrow(platformId)
             const verification = computeNextVerification({ nextDomain: value, currentDomain: current.ssoDomain ?? null, currentVerification: current.ssoDomainVerification ?? null })
 
-            const result = await tryCatch(() => platformService(log).update({ id: platformId, ssoDomain: value, ssoDomainVerification: verification }))
-            if (result.error) {
-                if (isPostgresUniqueViolation(result.error)) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.VALIDATION,
-                        params: {
-                            message: 'This SSO domain is already in use',
-                        },
-                    })
-                }
-                throw result.error
-            }
-            return { ssoDomain: result.data.ssoDomain ?? null, ssoDomainVerification: result.data.ssoDomainVerification ?? null }
+            await platformService(log).update({ id: platformId, ssoDomain: value, ssoDomainVerification: verification })
+            return { ssoDomain, ssoDomainVerification: verification }
         },
         async verifySsoDomain({ platformId }: VerifySsoDomainParams): Promise<SsoDomainState> {
             const platform = await platformService(log).getOneOrThrow(platformId)
@@ -121,14 +110,6 @@ async function txtRecordMatches({ name, expected, log }: { name: string, expecte
         return false
     }
     return lookup.data.some((chunks) => chunks.join('').trim() === expected)
-}
-
-function isPostgresUniqueViolation(error: unknown): boolean {
-    if (typeof error !== 'object' || error === null || !('code' in error)) {
-        return false
-    }
-    const code = error.code
-    return code === '23505'
 }
 
 const VERIFICATION_NAME_PREFIX = '_activepieces-verify'
