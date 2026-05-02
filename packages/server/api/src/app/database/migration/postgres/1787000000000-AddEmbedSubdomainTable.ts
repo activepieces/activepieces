@@ -57,6 +57,11 @@ export class AddEmbedSubdomainTable1787000000000 implements Migration {
         `)
 
         await queryRunner.query(`
+            ALTER TABLE "platform"
+            ADD COLUMN IF NOT EXISTS "ssoDomainVerification" jsonb
+        `)
+
+        await queryRunner.query(`
             CREATE UNIQUE INDEX ${concurrently} IF NOT EXISTS "idx_platform_sso_domain"
             ON "platform" ("ssoDomain")
             WHERE "ssoDomain" IS NOT NULL
@@ -67,6 +72,7 @@ export class AddEmbedSubdomainTable1787000000000 implements Migration {
         const concurrently = isPGlite ? '' : 'CONCURRENTLY'
 
         await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_platform_sso_domain"`)
+        await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "ssoDomainVerification"')
         await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "ssoDomain"')
         await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "googleAuthEnabled"')
         await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "allowedEmbedOrigins"')

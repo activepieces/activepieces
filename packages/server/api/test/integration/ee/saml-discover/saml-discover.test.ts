@@ -30,6 +30,14 @@ describe('SAML Discover API', () => {
             const mockPlatform = createMockPlatform({
                 ownerId: mockOwner.id,
                 ssoDomain: 'discover-test.example.com',
+                ssoDomainVerification: {
+                    status: 'VERIFIED',
+                    record: {
+                        type: 'TXT',
+                        name: '_activepieces-verify.discover-test.example.com',
+                        value: 'activepieces-verify=test-token',
+                    },
+                },
                 federatedAuthProviders: {
                     saml: {
                         idpMetadata: '<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"></md:EntityDescriptor>',
@@ -107,6 +115,14 @@ describe('SAML Discover API', () => {
             const mockPlatform = createMockPlatform({
                 ownerId: mockOwner.id,
                 ssoDomain: 'no-saml.example.com',
+                ssoDomainVerification: {
+                    status: 'VERIFIED',
+                    record: {
+                        type: 'TXT',
+                        name: '_activepieces-verify.no-saml.example.com',
+                        value: 'activepieces-verify=test-token',
+                    },
+                },
                 federatedAuthProviders: { saml: null },
             })
             await databaseConnection().getRepository('platform').save(mockPlatform)

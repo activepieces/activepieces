@@ -1,7 +1,8 @@
 import {
+  ApErrorParams,
   ApFlagId,
+  formErrors,
   PlatformWithoutSensitiveData,
-  UpdatePlatformRequestBody,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -29,74 +30,25 @@ import {
   FormItem,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { samlSsoApi } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { api } from '@/lib/api';
 
 type ConfigureSamlDialogProps = {
   platform: PlatformWithoutSensitiveData;
   connected: boolean;
+  domainVerified: boolean;
   refetch: () => Promise<void>;
 };
-
-const Saml2FormValues = z.object({
-  idpMetadata: z.string().min(1),
-  idpCertificate: z.string().min(1),
-  ssoDomain: z.union([
-    z
-      .hostname('invalidSsoDomain')
-      .max(253, 'invalidSsoDomain')
-      .refine((v) => v.includes('.'), 'invalidSsoDomain'),
-    z.literal(''),
-  ]),
-});
-type Saml2FormValues = z.infer<typeof Saml2FormValues>;
 
 export const ConfigureSamlDialog = ({
   platform,
   connected,
+  domainVerified,
   refetch,
 }: ConfigureSamlDialogProps) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<Saml2FormValues>({
-    resolver: zodResolver(Saml2FormValues),
-    defaultValues: {
-      idpMetadata: '',
-      idpCertificate: '',
-      ssoDomain: platform.ssoDomain ?? '',
-    },
-    mode: 'onChange',
-  });
-
-  const { data: samlAcs } = flagsHooks.useFlag<string>(
-    ApFlagId.SAML_AUTH_ACS_URL,
-  );
-
-  const { mutate: saveSaml, isPending: isSavingSaml } = useMutation({
-    mutationFn: async ({
-      request,
-      ssoDomain,
-    }: {
-      request: UpdatePlatformRequestBody;
-      ssoDomain: string | null;
-    }) => {
-      await platformApi.update(request, platform.id);
-      await samlSsoApi.updateSsoDomain(ssoDomain);
-      await refetch();
-    },
-    onSuccess: () => {
-      toast.success(t('Single sign-on settings updated'), {
-        duration: 3000,
-      });
-      setOpen(false);
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : t('Save failed');
-      form.setError('root.serverError', { type: 'manual', message });
-    },
-  });
 
   const { mutate: disableSaml, isPending: isDisabling } = useMutation({
     mutationFn: async () => {
@@ -104,36 +56,21 @@ export const ConfigureSamlDialog = ({
         { federatedAuthProviders: { saml: null } },
         platform.id,
       );
-      await samlSsoApi.updateSsoDomain(null);
       await refetch();
     },
     onSuccess: () => {
-      toast.success(t('Single sign-on settings updated'), {
-        duration: 3000,
-      });
+      toast.success(t('Single sign-on settings updated'), { duration: 3000 });
     },
   });
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (!next) {
-          form.reset({
-            idpMetadata: '',
-            idpCertificate: '',
-            ssoDomain: platform.ssoDomain ?? '',
-          });
-        }
-        setOpen(next);
-      }}
-    >
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {connected ? (
           <Button
-            size={'sm'}
+            size="sm"
             className="text-destructive"
-            variant={'basic'}
+            variant="basic"
             loading={isDisabling}
             onClick={(e) => {
               disableSaml();
@@ -143,17 +80,92 @@ export const ConfigureSamlDialog = ({
             {t('Disable')}
           </Button>
         ) : (
-          <Button size={'sm'} variant={'basic'} onClick={() => setOpen(true)}>
+          <Button
+            size="sm"
+            variant="basic"
+            disabled={!domainVerified}
+            onClick={() => setOpen(true)}
+          >
             {t('Enable')}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('Configure SAML 2.0 SSO')}</DialogTitle>
-        </DialogHeader>
-        {samlAcs && (
-          <div className="mb-4">
+        {open && (
+          <SamlCredentialsForm
+            platform={platform}
+            refetch={refetch}
+            onClose={() => setOpen(false)}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const SamlCredentialsFormValues = z.object({
+  idpMetadata: z.string().min(1, formErrors.required),
+  idpCertificate: z.string().min(1, formErrors.required),
+});
+type SamlCredentialsFormValues = z.infer<typeof SamlCredentialsFormValues>;
+
+const SamlCredentialsForm = ({
+  platform,
+  refetch,
+  onClose,
+}: {
+  platform: PlatformWithoutSensitiveData;
+  refetch: () => Promise<void>;
+  onClose: () => void;
+}) => {
+  const form = useForm<SamlCredentialsFormValues>({
+    resolver: zodResolver(SamlCredentialsFormValues),
+    defaultValues: { idpMetadata: '', idpCertificate: '' },
+    mode: 'onChange',
+  });
+
+  const { data: samlAcs } = flagsHooks.useFlag<string>(
+    ApFlagId.SAML_AUTH_ACS_URL,
+  );
+
+  const { mutate: saveSaml, isPending } = useMutation({
+    mutationFn: async (values: SamlCredentialsFormValues) => {
+      await platformApi.update(
+        {
+          federatedAuthProviders: {
+            saml: {
+              idpMetadata: values.idpMetadata,
+              idpCertificate: values.idpCertificate,
+            },
+          },
+        },
+        platform.id,
+      );
+      await refetch();
+    },
+    onSuccess: () => {
+      toast.success(t('Single sign-on settings updated'), { duration: 3000 });
+      onClose();
+    },
+    onError: (error) => {
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: extractServerErrorMessage(error, t('Save failed')),
+      });
+    },
+  });
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>{t('Configure SAML 2.0 SSO')}</DialogTitle>
+      </DialogHeader>
+      <Form {...form}>
+        <form
+          className="grid space-y-4"
+          onSubmit={form.handleSubmit((v) => saveSaml(v))}
+        >
+          {samlAcs && (
             <ApMarkdown
               markdown={t(
                 `
@@ -169,107 +181,84 @@ Please check the following documentation: [SAML SSO](https://activepieces.com/do
 Activepieces
 \`\`\`
 `,
-                { samlAcs: samlAcs ?? '' },
+                { samlAcs },
               )}
             />
-          </div>
-        )}
+          )}
 
-        <Form {...form}>
-          <form
-            className="grid space-y-4"
-            onSubmit={form.handleSubmit((data) => {
-              const trimmed = data.ssoDomain.trim().toLowerCase();
-              saveSaml({
-                request: {
-                  federatedAuthProviders: {
-                    saml: {
-                      idpMetadata: data.idpMetadata,
-                      idpCertificate: data.idpCertificate,
-                    },
-                  },
-                },
-                ssoDomain: trimmed.length === 0 ? null : trimmed,
-              });
-            })}
-          >
-            <FormField
-              name="idpMetadata"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="idpMetadata">{t('IDP Metadata')}</Label>
-                  <Textarea
-                    {...field}
-                    required
-                    id="idpMetadata"
-                    rows={6}
-                    className="rounded-sm font-mono text-xs"
-                  />
-                  <FormDescription>
-                    {t(
-                      'Paste the metadata XML contents or the metadata URL provided by your identity provider.',
-                    )}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="idpCertificate"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="idpCertificate">{t('IDP Certificate')}</Label>
-                  <Textarea
-                    {...field}
-                    required
-                    id="idpCertificate"
-                    className="rounded-sm"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="ssoDomain"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="ssoDomain">{t('SSO Domain')}</Label>
-                  <Input
-                    {...field}
-                    id="ssoDomain"
-                    placeholder="acme.com"
-                    className="rounded-sm"
-                  />
-                  <FormDescription>
-                    {t(
-                      'When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.',
-                    )}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {form?.formState?.errors?.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
+          <FormField
+            name="idpMetadata"
+            render={({ field }) => (
+              <FormItem className="grid space-y-2">
+                <Label htmlFor="idpMetadata">{t('IDP Metadata')}</Label>
+                <Textarea
+                  {...field}
+                  required
+                  id="idpMetadata"
+                  rows={6}
+                  className="rounded-sm font-mono text-xs"
+                />
+                <FormDescription>
+                  {t(
+                    'Paste the metadata XML contents or the metadata URL provided by your identity provider.',
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
             )}
+          />
+          <FormField
+            name="idpCertificate"
+            render={({ field }) => (
+              <FormItem className="grid space-y-2">
+                <Label htmlFor="idpCertificate">{t('IDP Certificate')}</Label>
+                <Textarea
+                  {...field}
+                  required
+                  id="idpCertificate"
+                  className="rounded-sm"
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {form.formState.errors.root?.serverError && (
+            <FormMessage>
+              {form.formState.errors.root.serverError.message}
+            </FormMessage>
+          )}
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>
-                {t('Cancel')}
-              </Button>
-              <Button
-                loading={isSavingSaml}
-                disabled={!form.formState.isValid}
-                type="submit"
-              >
-                {t('Save')}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              {t('Cancel')}
+            </Button>
+            <Button
+              type="submit"
+              loading={isPending}
+              disabled={!form.formState.isValid}
+            >
+              {t('Save')}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    </>
   );
 };
+
+function extractServerErrorMessage(error: unknown, fallback: string): string {
+  if (api.isError(error)) {
+    const data = error.response?.data as ApErrorParams | undefined;
+    const message =
+      data?.params && 'message' in data.params
+        ? data.params.message
+        : undefined;
+    if (typeof message === 'string' && message.length > 0) {
+      return message;
+    }
+  }
+  if (error instanceof Error && error.message.length > 0) {
+    return error.message;
+  }
+  return fallback;
+}

@@ -1,5 +1,4 @@
-import { ActivepiecesError, ApplicationEventName, assertNotNullOrUndefined, ErrorCode, isNil, PrincipalType, SAMLAuthnProviderConfig } from '@activepieces/shared'
-import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { ApplicationEventName, assertNotNullOrUndefined, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
@@ -7,20 +6,23 @@ import { applicationEvents } from '../../../helper/application-events'
 import { networkUtils } from '../../../helper/network-utils'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
-import { platformRepo, platformService } from '../../../platform/platform.service'
 import { platformUtils } from '../../../platform/platform.utils'
-import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
+import { platformMustHaveFeatureEnabled } from '../ee-authorization'
 import { authnSsoSamlService } from './authn-sso-saml-service'
 
 export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
     app.get('/login', LoginRequest, async (req, res) => {
-        const { saml, platformId } = await getSamlConfigOrThrow(req, req.log)
-        const loginResponse = await authnSsoSamlService(req.log).login(platformId, saml)
-        return res.redirect(loginResponse.redirectUrl)
+        const platformId = req.query.platformId ?? await platformUtils.getPlatformIdForRequest(req)
+        assertNotNullOrUndefined(platformId, "Platform Id should not be null")
+        const { saml } = await authnSsoSamlService(req.log).getSamlConfigOrThrow(platformId)
+        const { redirectUrl } = await authnSsoSamlService(req.log).login(platformId, saml)
+        return res.redirect(redirectUrl)
     })
 
     app.post('/acs', AcsRequest, async (req, res) => {
-        const { saml, platformId } = await getSamlConfigOrThrow(req, req.log)
+        const platformId = req.query.platformId ?? await platformUtils.getPlatformIdForRequest(req)
+        assertNotNullOrUndefined(platformId, "Platform Id should not be null")
+        const { saml } = await authnSsoSamlService(req.log).getSamlConfigOrThrow(platformId)
         const response = await authnSsoSamlService(req.log).acs(platformId, saml, {
             body: req.body,
             query: req.query,
@@ -42,64 +44,21 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/discover', DiscoverRequest, async (req) => {
-        const ssoDomain = req.body.domain.trim().toLowerCase()
-        if (ssoDomain.length === 0) {
-            return { platformId: null }
-        }
-        const platform = await platformRepo().findOneBy({ ssoDomain })
-        if (isNil(platform)) {
-            return { platformId: null }
-        }
-        const plan = await platformPlanService(req.log).getOrCreateForPlatform(platform.id)
-        if (!plan.ssoEnabled) {
-            return { platformId: null }
-        }
-        const samlConfigured = await platformService(req.log).hasSamlConfigured(platform.id)
-        if (!samlConfigured) {
-            return { platformId: null }
-        }
-        return { platformId: platform.id }
+        return authnSsoSamlService(req.log).discoverByDomain(req.body.domain)
     })
 
     app.post('/sso-domain', UpdateSsoDomainRequest, async (req) => {
-        const platformId = req.principal.platform.id
-        const normalized = req.body.ssoDomain?.trim().toLowerCase() ?? null
-        const ssoDomain = normalized && normalized.length > 0 ? normalized : null
-        if (!isNil(ssoDomain)) {
-            if (!z.hostname().safeParse(ssoDomain).success || !ssoDomain.includes('.')) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
-                    params: {
-                        message: 'SSO domain must be a valid lowercase domain (e.g. acme.com)',
-                    },
-                })
-            }
-            const existing = await platformRepo().findOneBy({ ssoDomain })
-            if (!isNil(existing) && existing.id !== platformId) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
-                    params: {
-                        message: 'This SSO domain is already in use',
-                    },
-                })
-            }
-        }
-        return platformService(req.log).update({ id: platformId, ssoDomain })
+        return authnSsoSamlService(req.log).updateSsoDomain({
+            platformId: req.principal.platform.id,
+            ssoDomain: req.body.ssoDomain,
+        })
     })
-}
 
-async function getSamlConfigOrThrow(req: FastifyRequest, log: FastifyBaseLogger): Promise<{ saml: SAMLAuthnProviderConfig, platformId: string }> {
-    const query = req.query as Record<string, unknown>
-    const platformIdFromQuery = typeof query?.platformId === 'string' ? query.platformId : null
-    const platformId = platformIdFromQuery ?? await platformUtils.getPlatformIdForRequest(req)
-    assertNotNullOrUndefined(platformId, 'Platform ID is required for SAML authentication')
-    const platform = await platformService(log).getOneWithFederatedAuthOrThrow(platformId)
-    const saml = platform.federatedAuthProviders.saml
-    assertNotNullOrUndefined(saml, 'SAML IDP metadata is not configured for this platform')
-    return {
-        saml,
-        platformId,
-    }
+    app.post('/sso-domain/verify', VerifySsoDomainRequest, async (req) => {
+        return authnSsoSamlService(req.log).verifySsoDomain({
+            platformId: req.principal.platform.id,
+        })
+    })
 }
 
 const AcsRequest = {
@@ -145,9 +104,17 @@ const UpdateSsoDomainRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
+    preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
     schema: {
         body: z.object({
             ssoDomain: z.string().max(253).nullable(),
         }),
     },
+}
+
+const VerifySsoDomainRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
 }

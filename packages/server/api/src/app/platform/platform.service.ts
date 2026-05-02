@@ -1,7 +1,9 @@
 import {
+    ActivepiecesError,
     ApEdition,
     apId,
     AuthenticationResponse,
+    ErrorCode,
     FilteredPieceBehavior,
     isNil,
     OPEN_SOURCE_PLAN,
@@ -14,6 +16,8 @@ import {
     PlatformWithoutSensitiveData,
     ProjectType,
     spreadIfDefined,
+    SsoDomainVerification,
+    SsoDomainVerificationStatus,
     UpdatePlatformRequestBody,
     UserId,
     UserStatus,
@@ -127,6 +131,28 @@ export const platformService = (log: FastifyBaseLogger) => ({
         })
     },
     async update(params: UpdateParams): Promise<PlatformWithoutFederatedAuth> {
+        if (params.federatedAuthProviders?.saml !== undefined) {
+            const plan = await platformPlanService(log).getOrCreateForPlatform(params.id)
+            if (!plan.ssoEnabled) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.FEATURE_DISABLED,
+                    params: {
+                        message: 'SSO is not enabled for this platform',
+                    },
+                })
+            }
+            if (!isNil(params.federatedAuthProviders.saml)) {
+                const platform = await this.getOneOrThrow(params.id)
+                if (platform.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: {
+                            message: 'SSO domain must be verified before configuring SAML',
+                        },
+                    })
+                }
+            }
+        }
         const platform = params.federatedAuthProviders !== undefined
             ? await this.getOneWithFederatedAuthOrThrow(params.id)
             : await this.getOneOrThrow(params.id)
@@ -156,6 +182,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
             ...spreadIfDefined('allowedEmbedOrigins', params.allowedEmbedOrigins),
             ...spreadIfDefined('ssoDomain', params.ssoDomain),
+            ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
         }
         if (!isNil(params.plan)) {
@@ -284,6 +311,7 @@ type UpdateParams = UpdatePlatformRequestBody & {
     fullLogoUrl?: string
     favIconUrl?: string
     ssoDomain?: string | null
+    ssoDomainVerification?: SsoDomainVerification | null
 }
 
 type CreatePlatformWithProjectParams = {

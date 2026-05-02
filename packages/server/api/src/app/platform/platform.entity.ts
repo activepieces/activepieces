@@ -70,6 +70,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             nullable: true,
         },
+        ssoDomainVerification: {
+            type: 'jsonb',
+            nullable: true,
+        },
         enforceAllowedAuthDomains: {
             type: Boolean,
             nullable: false,

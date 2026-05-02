@@ -1,11 +1,13 @@
+import { SsoDomainVerificationStatus } from '@activepieces/shared';
 import { t } from 'i18next';
-import { LockIcon, MailIcon, Earth } from 'lucide-react';
+import { CheckCircle, Globe, LockIcon, MailIcon, Earth } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CenteredPage } from '@/app/components/centered-page';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
+import { SsoDomainDialog } from '@/app/routes/platform/security/sso/sso-domain-dialog';
 import {
   Item,
   ItemMedia,
@@ -25,6 +27,9 @@ const SSOPage = () => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
 
   const samlConnected = !!platform.federatedAuthProviders?.saml;
+  const ssoDomainVerified =
+    platform.ssoDomainVerification?.status ===
+    SsoDomainVerificationStatus.VERIFIED;
   const emailAuthEnabled = platform.emailAuthEnabled;
 
   const { mutate: toggleEmailAuthentication, isPending: isEmailAuthPending } =
@@ -115,9 +120,11 @@ const SSOPage = () => {
             <ItemContent>
               <ItemTitle>{t('SAML 2.0')}</ItemTitle>
               <ItemDescription>
-                {t(
-                  "Allow logins through saml 2.0's single sign-on functionality.",
-                )}
+                {ssoDomainVerified
+                  ? t(
+                      "Allow logins through saml 2.0's single sign-on functionality.",
+                    )
+                  : t('Verify your SSO domain below before enabling SAML.')}
               </ItemDescription>
             </ItemContent>
             <ItemActions>
@@ -125,7 +132,38 @@ const SSOPage = () => {
                 platform={platform}
                 refetch={refetch}
                 connected={samlConnected}
+                domainVerified={ssoDomainVerified}
               />
+            </ItemActions>
+          </Item>
+
+          <Item variant="outline">
+            <ItemMedia variant="icon">
+              <Globe />
+            </ItemMedia>
+            <ItemContent>
+              <ItemTitle>{t('SSO Domain')}</ItemTitle>
+              <ItemDescription>
+                {t('Maps an email domain to your SAML provider.')}
+              </ItemDescription>
+              {platform.ssoDomain && (
+                <div className="mt-1 gap-2 flex items-center">
+                  <Badge variant="outline">{platform.ssoDomain}</Badge>
+                  {ssoDomainVerified ? (
+                    <span className="flex items-center gap-1 text-xs text-success-600">
+                      <CheckCircle className="size-3" />
+                      {t('Verified')}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-warning">
+                      {t('Pending verification')}
+                    </span>
+                  )}
+                </div>
+              )}
+            </ItemContent>
+            <ItemActions>
+              <SsoDomainDialog platform={platform} refetch={refetch} />
             </ItemActions>
           </Item>
 
