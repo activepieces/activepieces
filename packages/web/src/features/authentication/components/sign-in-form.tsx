@@ -13,7 +13,7 @@ import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
@@ -52,6 +52,7 @@ const SignInForm: React.FC = () => {
 
   const { data: userCreated } = flagsHooks.useFlag(ApFlagId.USER_CREATED);
   const redirectAfterLogin = useRedirectAfterLogin();
+  const navigate = useNavigate();
 
   const { mutate, isPending } = useMutation<
     AuthenticationResponse,
@@ -61,6 +62,10 @@ const SignInForm: React.FC = () => {
     mutationFn: authenticationApi.signIn,
     onSuccess: (data) => {
       authenticationSession.saveResponse(data, false);
+      if (isNil(data.projectId)) {
+        navigate('/create-platform');
+        return;
+      }
       redirectAfterLogin();
     },
     onError: (error) => {

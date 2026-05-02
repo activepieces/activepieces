@@ -154,7 +154,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
 }
 
 function getPlatformId(principal: Principal): string | undefined {
-    return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN ? undefined : principal.platform?.id
+    return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.ONBOARDING ? undefined : principal.platform?.id
 }
 
 const RegistryPiecesRequest = {
