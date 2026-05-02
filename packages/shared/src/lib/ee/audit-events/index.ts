@@ -65,7 +65,7 @@ export const ConnectionEvent = z.object({
         connection: z.object({
             displayName: z.string(),
             externalId: z.string(),
-            pieceName: z.string(),
+            pieceName: Nullable(z.string()),
             status: z.string(),
             type: z.string(),
             id: z.string(),

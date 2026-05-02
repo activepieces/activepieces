@@ -70,6 +70,7 @@ export const UpsertCloudOAuth2Request = z.object({
 
 export const UpsertSecretTextRequest = z.object({
     ...commonAuthProps,
+    pieceName: z.string().optional(),
     type: z.literal(AppConnectionType.SECRET_TEXT),
     value: z.object({
         type: z.literal(AppConnectionType.SECRET_TEXT),
