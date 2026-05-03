@@ -21,7 +21,7 @@ const updateBranchInput = z.object({
     routerStepName: z.string(),
     branchIndex: z.number().int().min(0),
     branchName: z.string().optional(),
-    conditions: z.array(z.array(BranchCondition)).optional(),
+    conditions: mcpUtils.BRANCH_CONDITIONS_INPUT_SCHEMA.optional(),
 })
 
 export const apUpdateBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -88,7 +88,8 @@ export const apUpdateBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                     branches[branchIndex] = {
                         ...targetBranch,
                         ...(branchName !== undefined && { branchName }),
-                        ...(conditions !== undefined && { conditions }),
+                        // .min(1) and .superRefine on the input schema align the runtime shape with BranchCondition's discriminated union.
+                        ...(conditions !== undefined && { conditions: conditions as BranchCondition[][] }),
                     }
                 }
 
@@ -108,7 +109,7 @@ export const apUpdateBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                     },
                 }
 
-                await flowService(log).update({
+                const updatedFlow = await flowService(log).update({
                     id: flow.id,
                     projectId: mcp.projectId,
                     userId: null,
@@ -120,10 +121,11 @@ export const apUpdateBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                 if (branchName !== undefined) updatedParts.push(`name → "${branchName}"`)
                 if (conditions !== undefined) updatedParts.push(`conditions (${conditions.length} OR group(s))`)
 
+                const invalidWarning = mcpUtils.routerInvalidWarning({ stepName: routerStepName, trigger: updatedFlow.version.trigger })
                 return {
                     content: [{
                         type: 'text',
-                        text: `✅ Branch ${branchIndex} of router "${routerStepName}" updated: ${updatedParts.join(', ')}. Steps inside the branch are unchanged.`,
+                        text: `✅ Branch ${branchIndex} of router "${routerStepName}" updated: ${updatedParts.join(', ')}. Steps inside the branch are unchanged.${invalidWarning}`,
                     }],
                 }
             }

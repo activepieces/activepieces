@@ -158,6 +158,7 @@ const StepSettingsContainer = () => {
   }, []);
 
   const { height, setHeight } = useResizableVerticalPanelsContext();
+  const initialHeightRef = useRef(height);
 
   return (
     <Form {...form}>
@@ -278,7 +279,7 @@ const StepSettingsContainer = () => {
               <>
                 <ResizableHandle withHandle={true} />
                 <ResizablePanel
-                  defaultSize={`${height}%`}
+                  defaultSize={`${initialHeightRef.current}%`}
                   onResize={(panelSize) => setHeight(panelSize.asPercentage)}
                   className="min-h-[130px]"
                 >

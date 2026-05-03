@@ -1,43 +1,40 @@
 ---
-title: 'Piece Versioning'
-icon: 'code-compare'
-description: 'Learn how to version your pieces'
+title: "Piece versioning"
+icon: "code-compare"
+description: "How to choose a version number when publishing a piece"
 ---
 
-Pieces are npm packages and follows **semantic versioning**.
+Pieces are npm packages and follow **semantic versioning**.
 
-## Semantic Versioning
+<Note>
+This page is for *piece authors* deciding what version number to publish. For how flows adopt new piece versions, see [Piece syncing & versioning](/install/architecture/piece-syncing).
+</Note>
 
-The version number consists of three numbers: `MAJOR.MINOR.PATCH`, where:
+## Semantic versioning
 
-- **MAJOR** It should be incremented when there are breaking changes to the piece.
-- **MINOR** It should be incremented for new features or functionality that is compatible with the previous version, unless the major version is less than 1.0, in which case it can be a breaking change.
-- **PATCH** It should be incremented for bug fixes and small changes that do not introduce new features or break backward compatibility.
+The version number is `MAJOR.MINOR.PATCH`:
 
-## Engine
-The engine will use the most up-to-date compatible version for a given piece version during the **DRAFT** flow versions. Once the flow is published, all pieces will be locked to a specific version.
+- **MAJOR** — bump when you make a breaking change.
+- **MINOR** — bump when you add functionality without breaking existing flows.
+- **PATCH** — bump for bug fixes that don't change behavior.
 
-**Case 1: Piece Version is Less Than 1.0**:
-The engine will select the latest **patch** version that shares the same **minor** version number.
+## Classifying changes
 
-**Case 2: Piece Version Reaches Version 1.0**:
-The engine will select the latest **minor** version that shares the same **major** version number.
+Use this checklist when deciding which segment to bump.
 
-## Examples
-<Tip>
-when you make a change, remember to increment the version accordingly.
-</Tip>
+### Breaking changes (MAJOR)
 
-### Breaking changes
-- Remove an existing action.
-- Add a required `action` prop.
-- Remove an existing action prop, whether required or optional.
+- Remove an existing action or trigger.
+- Add a required prop to an existing action or trigger.
+- Remove an existing prop, whether required or optional.
 - Remove an attribute from an action output.
-- Change the existing behavior of an action/trigger.
+- Change the existing behavior of an action or trigger.
 
-### Non-breaking changes
-- Add a new action.
-- Add an optional `action` prop.
+### Non-breaking changes (MINOR or PATCH)
+
+- Add a new action or trigger.
+- Add an optional prop.
 - Add an attribute to an action output.
+- Fix a bug without changing the public surface (PATCH).
 
-i.e., any removal is breaking, any required addition is breaking, everything else is not breaking.
+The rule of thumb: **any removal is breaking, any required addition is breaking, everything else is not.**

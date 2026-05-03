@@ -3,8 +3,10 @@ import { PieceCategory } from "@activepieces/shared";
 import { createChatCompletion } from "./lib/actions/create-chat-completion";
 import { createEmbeddings } from "./lib/actions/create-embeddings";
 import { uploadFile } from "./lib/actions/upload-file";
+import { runOcr } from "./lib/actions/run-ocr";
 import { listModels } from "./lib/actions/list-models";
 import { mistralAuth } from "./lib/common/auth";
+import { mistralRequest } from "./lib/common/request";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 
 export const mistralAi = createPiece({
@@ -19,17 +21,13 @@ export const mistralAi = createPiece({
     createChatCompletion,
     createEmbeddings,
     uploadFile,
+    runOcr,
     listModels,
     createCustomApiCallAction({
-      auth:mistralAuth,
-      baseUrl:()=>'https://api.mistral.ai/v1',
-      authMapping:async (auth)=>{
-        return{
-          Authorization:`Bearer ${auth.secret_text}`
-        }
-      }
-    })
+      auth: mistralAuth,
+      baseUrl: (auth) => (auth ? mistralRequest.getConfig(auth).baseUrl : 'https://api.mistral.ai/v1'),
+      authMapping: async (auth) => mistralRequest.getConfig(auth).headers,
+    }),
   ],
   triggers: [],
 });
-    

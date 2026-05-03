@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { mistralAuth } from '../common/auth';
 import { modelDropdown, parseMistralError } from '../common/props';
+import { mistralRequest } from '../common/request';
 
 export const createChatCompletion = createAction({
 	auth: mistralAuth,
@@ -34,6 +35,7 @@ export const createChatCompletion = createAction({
 	},
 	async run(context) {
 		const { model, temperature, top_p, max_tokens, random_seed, timeout, prompt } = context.propsValue;
+		const { baseUrl, headers } = mistralRequest.getConfig(context.auth);
 
 		const body: Record<string, any> = {
 			model,
@@ -46,18 +48,15 @@ export const createChatCompletion = createAction({
 			temperature,
 			top_p,
 			max_tokens,
-			random_seed
+			random_seed,
 		};
 		let lastErr;
 		for (let attempt = 0; attempt <= 3; ++attempt) {
 			try {
-				const response = await httpClient.sendRequest<{choices:{message:{content:string}}[]}>({
+				const response = await httpClient.sendRequest<{ choices: { message: { content: string } }[] }>({
 					method: HttpMethod.POST,
-					url: 'https://api.mistral.ai/v1/chat/completions',
-					authentication: {
-						type: AuthenticationType.BEARER_TOKEN,
-						token: context.auth.secret_text,
-					},
+					url: `${baseUrl}/chat/completions`,
+					headers,
 					body,
 					timeout: timeout ?? 30000,
 				});
