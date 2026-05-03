@@ -108,7 +108,7 @@ const CredentialsSettings = () => {
   >[] = [
     {
       accessorKey: 'displayName',
-      size: 320,
+      size: 240,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -117,7 +117,7 @@ const CredentialsSettings = () => {
         />
       ),
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 text-primary">
             <KeyRound className="w-4 h-4" />
           </div>
@@ -125,7 +125,7 @@ const CredentialsSettings = () => {
             title={t('Copy reference')}
             text={`{{connections['${row.original.externalId}'].secret_text}}`}
           >
-            <span className="font-mono text-sm truncate max-w-[260px]">
+            <span className="font-mono text-sm truncate">
               {row.original.displayName}
             </span>
           </CopyTextTooltip>
@@ -134,13 +134,13 @@ const CredentialsSettings = () => {
     },
     {
       accessorKey: 'owner',
-      size: 220,
+      size: 160,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
       ),
       cell: ({ row }) =>
         row.original.owner ? (
-          <span className="text-sm">
+          <span className="text-sm truncate block">
             {row.original.owner.firstName} {row.original.owner.lastName}
           </span>
         ) : (
@@ -149,7 +149,7 @@ const CredentialsSettings = () => {
     },
     {
       accessorKey: 'updated',
-      size: 200,
+      size: 140,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Last updated')} />
       ),
@@ -159,7 +159,7 @@ const CredentialsSettings = () => {
     },
     {
       id: 'actions',
-      size: 60,
+      size: 50,
       cell: ({ row }) => (
         <div className="flex justify-end">
           <DropdownMenu modal={false}>
