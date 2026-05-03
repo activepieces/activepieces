@@ -19,6 +19,21 @@ export const ErrorHandlingOptionsParam = z.object({
 })
 export type ErrorHandlingOptionsParam = z.infer<typeof ErrorHandlingOptionsParam>
 
+/**
+ * Metadata an LLM/MCP agent reads to choose this action or trigger.
+ * Optional today; intended to become the gating field for exposing actions
+ * as direct MCP tools (`piece.{name}.{action}`).
+ *
+ * Kept as a single bundle so the "AI-ready" contract lives in one well-named
+ * place, and so future fields can land here without bloating the top-level
+ * action/trigger type.
+ */
+export const InfoForLLM = z.object({
+  /** Imperative-mood description optimised for tool selection by an LLM. */
+  description: z.string().optional(),
+})
+export type InfoForLLM = z.infer<typeof InfoForLLM>
+
 type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined, ActionProps extends InputPropertyMap> = {
   /**
    * A dummy parameter used to infer {@code PieceAuth} type
@@ -30,6 +45,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
   auth?: PieceAuth
   displayName: string
   description: string
+  infoForLLM?: InfoForLLM
   props: ActionProps
   run: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>
   test?: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>
@@ -43,6 +59,7 @@ export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |
     public readonly name: string,
     public readonly displayName: string,
     public readonly description: string,
+    public readonly infoForLLM: InfoForLLM | undefined,
     public readonly props: ActionProps,
     public readonly run: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>,
     public readonly test: ActionRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, ActionProps>,
@@ -57,6 +74,10 @@ export type Action<
   ActionProps extends InputPropertyMap = any,
 > = IAction<PieceAuth, ActionProps>
 
+export type ActionResult<T = unknown> =
+  | { success: true; data: T }
+  | { success: false; error: string }
+
 export const createAction = <
   PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = PieceAuthProperty,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,6 +89,7 @@ export const createAction = <
     params.name,
     params.displayName,
     params.description,
+    params.infoForLLM,
     params.props,
     params.run,
     params.test ?? params.run,
