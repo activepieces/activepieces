@@ -24,7 +24,7 @@ export class AddEmbedSubdomainTable1787000000000 implements Migration {
                 "hostname" character varying NOT NULL,
                 "status" character varying NOT NULL,
                 "cloudflareId" character varying NOT NULL,
-                "verificationRecords" jsonb NOT NULL DEFAULT '[]'::jsonb,
+                "verificationRecords" jsonb NOT NULL DEFAULT '[]',
                 CONSTRAINT "pk_embed_subdomain" PRIMARY KEY ("id"),
                 CONSTRAINT "fk_embed_subdomain_platform_id" FOREIGN KEY ("platformId")
                     REFERENCES "platform" ("id") ON DELETE CASCADE
