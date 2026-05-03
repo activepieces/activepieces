@@ -18,10 +18,17 @@ export class RelaxAppConnectionPieceFields1787000000000 implements Migration {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            DELETE FROM "app_connection"
+        const [{ count }] = await queryRunner.query(`
+            SELECT COUNT(*)::int AS count
+            FROM "app_connection"
             WHERE "pieceName" IS NULL OR "pieceVersion" IS NULL
         `)
+        if (count > 0) {
+            throw new Error(
+                `Cannot rollback RelaxAppConnectionPieceFields: ${count} credential row(s) have a NULL pieceName/pieceVersion. ` +
+                'Delete or migrate them manually before re-running the rollback so credential data is not silently lost.',
+            )
+        }
         await queryRunner.query(`
             ALTER TABLE "app_connection"
             ALTER COLUMN "pieceVersion" SET NOT NULL
