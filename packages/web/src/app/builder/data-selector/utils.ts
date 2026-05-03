@@ -1,4 +1,5 @@
 import {
+  flowCanvasUtils,
   isNil,
   isObject,
   FlowAction,
@@ -350,9 +351,7 @@ function traverseStep(
     true,
   );
 
-  const cofEnabled =
-    (step.type === FlowActionType.CODE || step.type === FlowActionType.PIECE) &&
-    step.settings.errorHandlingOptions?.continueOnFailure?.value === true;
+  const cofEnabled = flowCanvasUtils.hasContinueOnFailureBranches(step);
   if (cofEnabled) {
     if (isNil(stepNode.children) && stepNode.data.type === 'value') {
       const outputLeaf: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> = {

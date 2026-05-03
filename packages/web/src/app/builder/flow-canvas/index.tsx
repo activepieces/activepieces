@@ -1,4 +1,5 @@
 import {
+  flowCanvasUtils as sharedFlowCanvasUtils,
   FlowActionType,
   flowStructureUtil,
   FlowTriggerType,
@@ -271,7 +272,7 @@ const getChildrenKey = (step: Step) => {
     case FlowActionType.CODE:
     case FlowActionType.PIECE: {
       const cofEnabled =
-        step.settings.errorHandlingOptions?.continueOnFailure?.value === true;
+        sharedFlowCanvasUtils.hasContinueOnFailureBranches(step);
       const branches =
         step.settings.errorHandlingOptions?.continueOnFailureBranches;
       const onSuccessKey = branches?.onSuccess
