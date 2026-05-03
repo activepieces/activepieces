@@ -1863,6 +1863,9 @@
       ],
       "@activepieces/piece-emailit": [
         "packages/pieces/community/emailit/src/index.ts"
+      ],
+      "@activepieces/piece-proxycurl": [
+        "packages/pieces/community/proxycurl/src/index.ts"
       ]
     },
     "resolveJsonModule": true
