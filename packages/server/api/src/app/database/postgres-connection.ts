@@ -368,6 +368,7 @@ import { AddUserSandboxTable1784000000000 } from './migration/postgres/178400000
 import { ReplacesSandboxWithVercelAiSdk1785000000000 } from './migration/postgres/1785000000000-ReplacesSandboxWithVercelAiSdk'
 import { AddChatCompactionColumns1786000000000 } from './migration/postgres/1786000000000-AddChatCompactionColumns'
 import { RelaxAppConnectionPieceFields1787000000000 } from './migration/postgres/1787000000000-RelaxAppConnectionPieceFields'
+import { AddSsoDomainVerification1787100000000 } from './migration/postgres/1787100000000-AddSsoDomainVerification'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -751,6 +752,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         ReplacesSandboxWithVercelAiSdk1785000000000,
         AddChatCompactionColumns1786000000000,
         RelaxAppConnectionPieceFields1787000000000,
+        AddSsoDomainVerification1787100000000,
     ]
     return migrations
 }
