@@ -61,6 +61,7 @@ export const platformAppConnectionController: FastifyPluginAsyncZod = async (app
             .addSelect('identity.email', 'email')
             .distinct(true)
             .orderBy('identity.email', 'ASC')
+            .limit(MAX_OWNERS)
             .getRawMany<PlatformAppConnectionOwner>()
 
         return { data: owners, next: null, previous: null }
@@ -68,6 +69,7 @@ export const platformAppConnectionController: FastifyPluginAsyncZod = async (app
 }
 
 const DEFAULT_PAGE_SIZE = 10
+const MAX_OWNERS = 1000
 
 const fetchProjectsForPlatform = async (projectIds: string[], platformId: string): Promise<Map<string, PlatformAppConnectionProjectInfo>> => {
     if (projectIds.length === 0) {
