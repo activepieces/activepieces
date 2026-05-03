@@ -8,7 +8,9 @@ const coerceToString = z.preprocess(
 )
 
 export const CreateRecordsRequest = z.object({
-    records: z.array(z.array(z.object({
+  records: z.array(
+    z.array(
+      z.object({
         fieldId: z.string(),
         value: coerceToString,
     }))),
@@ -18,7 +20,9 @@ export const CreateRecordsRequest = z.object({
 export type CreateRecordsRequest = z.infer<typeof CreateRecordsRequest>
 
 export const UpdateRecordRequest = z.object({
-    cells: z.array(z.object({
+  cells: z
+    .array(
+      z.object({
         fieldId: z.string(),
         value: coerceToString,
     })).optional(),

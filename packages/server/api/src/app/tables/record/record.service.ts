@@ -203,12 +203,14 @@ export const recordService = {
                 // Prepare cells for upsert
                 const cellsToUpsert = validCells.map((cellData) => {
                     return {
-                        recordId: id,
-                        fieldId: cellData.fieldId,
-                        projectId,
-                        value: cellData.value ?? '',
-                        id: apId(),
-                    }
+                      recordId: id,
+                      fieldId: cellData.fieldId,
+                      projectId,
+                      value: isNil(cellData.value)
+                        ? null
+                        : String(cellData.value),
+                      id: apId(),
+                    };
                 })
 
                 // Perform bulk upsert only for valid cells
@@ -419,44 +421,46 @@ type RecordInsertion = {
 }
 
 type CellInsertion = {
-    id: string
-    recordId: string
-    fieldId: string
-    projectId: string
-    value: string
-}
+  id: string;
+  recordId: string;
+  fieldId: string;
+  projectId: string;
+  value: string | number | boolean | null;
+};
 
 function prepareRecordInsertions(
-    records: Array<Array<{ fieldId: string, value: string | null }>>,
-    tableId: string,
-    projectId: string,
-    baseDate: Date,
+  records: Array<
+    Array<{ fieldId: string; value: string | number | boolean | null }>
+  >,
+  tableId: string,
+  projectId: string,
+  baseDate: Date
 ): RecordInsertion[] {
-    return records.map((_, index) => {
-        const created = new Date(baseDate.getTime() + index).toISOString()
-        return {
-            tableId,
-            projectId,
-            created,
-            id: apId(),
-        }
-    })
+  return records.map((_, index) => {
+    const created = new Date(baseDate.getTime() + index).toISOString();
+    return {
+      tableId,
+      projectId,
+      created,
+      id: apId(),
+    };
+  });
 }
 
 function prepareCellInsertions(
-    records: Array<Array<{ fieldId: string, value: string | null }>>,
+    records: Array<Array<{ fieldId: string, value: string | number | boolean | null }>>,
     recordInsertions: RecordInsertion[],
     projectId: string,
 ): CellInsertion[] {
     return records.flatMap((recordData, index) =>
         recordData.map((cellData) => {
             return {
-                recordId: recordInsertions[index].id,
-                fieldId: cellData.fieldId,
-                projectId,
-                value: cellData.value ?? '',
-                id: apId(),
-            }
+              recordId: recordInsertions[index].id,
+              fieldId: cellData.fieldId,
+              projectId,
+              value: isNil(cellData.value) ? null : String(cellData.value),
+              id: apId(),
+            };
         }),
     )
 }
