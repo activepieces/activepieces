@@ -56,7 +56,7 @@ export const ConfigureSamlDialog = ({
   });
 
   const { data: samlAcs } = flagsHooks.useFlag<string>(
-    ApFlagId.SAML_AUTH_ACS_URL
+    ApFlagId.SAML_AUTH_ACS_URL,
   );
   const { mutate, isPending } = useMutation({
     mutationFn: async (request: UpdatePlatformRequestBody) => {
@@ -126,7 +126,7 @@ Please check the following documentation: [SAML SSO](https://activepieces.com/do
 Activepieces
 \`\`\`
 `,
-                { samlAcs: samlAcs ?? '' }
+                { samlAcs: samlAcs ?? '' },
               )}
             />
           </div>
@@ -157,7 +157,7 @@ Activepieces
                   />
                   <FormDescription>
                     {t(
-                      'Paste the metadata XML contents or the metadata URL provided by your identity provider.'
+                      'Paste the metadata XML contents or the metadata URL provided by your identity provider.',
                     )}
                   </FormDescription>
                   <FormMessage />

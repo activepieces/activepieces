@@ -56,7 +56,7 @@ const SSOPage = () => {
       locked={!platform.plan.ssoEnabled}
       lockTitle={t('Enable Single Sign On')}
       lockDescription={t(
-        'Let your users sign in with your current SSO provider or give them self serve sign up access'
+        'Let your users sign in with your current SSO provider or give them self serve sign up access',
       )}
     >
       <CenteredPage
@@ -96,7 +96,7 @@ const SSOPage = () => {
               <ItemTitle>Google</ItemTitle>
               <ItemDescription>
                 {t(
-                  "Allow logins through google's single sign-on functionality."
+                  "Allow logins through google's single sign-on functionality.",
                 )}
               </ItemDescription>
             </ItemContent>
@@ -122,7 +122,7 @@ const SSOPage = () => {
               <ItemDescription>
                 {ssoDomainVerified
                   ? t(
-                      "Allow logins through saml 2.0's single sign-on functionality."
+                      "Allow logins through saml 2.0's single sign-on functionality.",
                     )
                   : t('Verify your SSO domain below before enabling SAML.')}
               </ItemDescription>
