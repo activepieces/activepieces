@@ -367,7 +367,7 @@ export const piecesHooks = {
           return piecesApi.get({ name: pieceName });
         }
         return piecesApi.get({
-          name: appConnection.pieceName ?? '',
+          name: pieceName,
           version: appConnection.pieceVersion ?? undefined,
         });
       },

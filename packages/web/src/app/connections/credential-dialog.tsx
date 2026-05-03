@@ -97,9 +97,6 @@ function CredentialForm(props: CredentialFormProps) {
       if (!projectId) {
         throw new Error('No project');
       }
-      if (isEdit && !showValueField) {
-        return existing!;
-      }
       return appConnectionsApi.upsert({
         projectId,
         externalId: existing?.externalId ?? values.displayName,
@@ -120,8 +117,7 @@ function CredentialForm(props: CredentialFormProps) {
   });
 
   const handleSubmit = (values: FormValues) => {
-    const valueRequired = !isEdit || showValueField;
-    if (valueRequired && !values.value) {
+    if (!values.value) {
       form.setError('value', { type: 'manual', message: formErrors.required });
       return;
     }
@@ -211,12 +207,14 @@ function CredentialForm(props: CredentialFormProps) {
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline">
-              {t('Cancel')}
+              {isEdit && !showValueField ? t('Close') : t('Cancel')}
             </Button>
           </DialogClose>
-          <Button type="submit" loading={isPending}>
-            {isEdit ? t('Save') : t('Create')}
-          </Button>
+          {(!isEdit || showValueField) && (
+            <Button type="submit" loading={isPending}>
+              {isEdit ? t('Save new value') : t('Create')}
+            </Button>
+          )}
         </DialogFooter>
       </form>
     </Form>

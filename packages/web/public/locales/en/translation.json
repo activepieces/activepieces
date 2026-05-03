@@ -216,6 +216,7 @@
   "Fill in the following fields to use them as sample data for the trigger.": "Fill in the following fields to use them as sample data for the trigger.",
   "No input fields defined in the schema": "No input fields defined in the schema",
   "Save": "Save",
+  "Save new value": "Save new value",
   "Send Sample Data to Webhook": "Send Sample Data to Webhook",
   "Method": "Method",
   "Query Params": "Query Params",
