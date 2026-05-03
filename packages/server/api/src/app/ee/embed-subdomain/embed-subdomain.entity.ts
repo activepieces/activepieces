@@ -29,7 +29,7 @@ export const EmbedSubdomainEntity = new EntitySchema<EmbedSubdomainSchema>({
         verificationRecords: {
             type: 'jsonb',
             nullable: false,
-            default: () => '\'[]\'::jsonb',
+            default: '[]',
         },
     },
     indices: [
