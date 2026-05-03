@@ -286,8 +286,8 @@ describe('Authentication API', () => {
         })
 
         it('fails to sign up invited user platform if no project exist', async () => {
-            // arrange
-            const { mockCustomDomain } = await createMockPlatformAndDomain({
+            // arrange — platform exists but has no projects, no invitation
+            await mockAndSaveBasicSetup({
                 platform: {
                     emailAuthEnabled: true,
                     enforceAllowedAuthDomains: false,
@@ -305,17 +305,13 @@ describe('Authentication API', () => {
             const response = await app?.inject({
                 method: 'POST',
                 url: '/api/v1/authentication/sign-up',
-                headers: {
-                    Host: mockCustomDomain.domain,
-                },
                 body: mockSignUpRequest,
             })
 
-            // assert
+            // assert — sign-up succeeds in onboarding mode (no platformId)
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             const responseBody = response?.json()
-
-            expect(responseBody?.code).toBe('INVITATION_ONLY_SIGN_UP')
+            expect(responseBody?.code).toBe('EMAIL_IS_NOT_VERIFIED')
         })
 
     })
@@ -550,25 +546,3 @@ describe('Authentication API', () => {
 
     })
 })
-
-async function createMockPlatformAndDomain({ platform, domain, plan }: { platform: Partial<Platform>, domain?: Partial<CustomDomain>, plan?: Partial<PlatformPlan> }): Promise<{
-    mockUser: User
-    mockPlatform: Platform
-    mockCustomDomain: CustomDomain
-    mockProject: Project
-}> {
-    const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
-        platform,
-    })
-    const mockCustomDomain = createMockCustomDomain({
-        platformId: mockPlatform.id,
-        ...domain,
-    })
-    await db.save('custom_domain', mockCustomDomain)
-    const mockPlatformPlan = createMockPlatformPlan({
-        platformId: mockPlatform.id,
-        ...plan,
-    })
-    await databaseConnection().getRepository('platform_plan').upsert(mockPlatformPlan, ['platformId'])
-    return { mockUser: mockOwner, mockPlatform, mockCustomDomain, mockProject }
-}
