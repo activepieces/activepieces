@@ -8,6 +8,6 @@ export type EmailStatusType =
     }
   | {
       email: string;
-      type: 'external';
+      type: 'new-user';
       user: undefined;
     };

@@ -1,10 +1,10 @@
 import {
   FlowRun,
-  FlowStatusUpdatedResponse,
   FlowVersion,
   FlowVersionState,
   isNil,
   Permission,
+  PopulatedFlow,
 } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -72,9 +72,9 @@ const PublishFlowReminderWidget = () => {
   const { mutateAsync: publish } = flowHooks.useChangeFlowStatus({
     flowId: flow.id,
     change: 'publish',
-    onSuccess: (response: FlowStatusUpdatedResponse) => {
-      setFlow(response.flow);
-      setVersion(response.flow.version);
+    onSuccess: (updatedFlow: PopulatedFlow) => {
+      setFlow(updatedFlow);
+      setVersion(updatedFlow.version);
     },
     setIsPublishing: setIsPublishing,
   });
@@ -145,7 +145,7 @@ const PublishFlowReminderWidget = () => {
 };
 
 PublishFlowReminderWidget.displayName = 'PublishFlowReminderWidget';
-export default PublishFlowReminderWidget;
+export { PublishFlowReminderWidget };
 
 const useShouldShowPublishButton = ({
   flowVersion,

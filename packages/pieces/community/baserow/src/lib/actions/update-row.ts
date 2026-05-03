@@ -1,51 +1,56 @@
-import {
-  DynamicPropsValue,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
-import { baserowCommon, makeClient } from '../common';
-import { BaserowFieldType } from '../common/constants';
+import {
+  baserowCommon,
+  ensureSelectOptionsExist,
+  formatFieldValues,
+  makeClient,
+} from '../common';
 
 export const updateRowAction = createAction({
   name: 'baserow_update_row',
   displayName: 'Update Row',
-  description: 'Updates an existing row.',
+  description:
+    'Updates fields in an existing row. Empty values are skipped. To clear a field, use Clean Row.',
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),
     row_id: baserowCommon.rowId(),
     table_fields: baserowCommon.tableFields(true),
+    create_missing_select_options: Property.Checkbox({
+      displayName: 'Create missing select options',
+      description:
+        'When enabled, single/multi-select values that do not yet exist in the field will be added before updating the row. Existing options are preserved.',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run(context) {
-    const { table_id, row_id } = context.propsValue as {table_id: number, row_id: number};
+    const table_id = context.propsValue.table_id!;
+    const row_id = context.propsValue.row_id!;
     const tableFieldsInput = context.propsValue.table_fields!;
-    const formattedTableFields: DynamicPropsValue = {};
+    const createMissingSelectOptions = context.propsValue.create_missing_select_options ?? false;
 
-    const client = makeClient(
-      context.auth.props
-    );
+    const client = await makeClient(context.auth);
     const tableSchema = await client.listTableFields(table_id);
 
-    // transform props value to related baserow value
-    const fieldIDTypeMap: { [key: string]: string } = {};
+    const fieldTypeMap: Record<string, string> = {};
     for (const column of tableSchema) {
-      fieldIDTypeMap[column.name] = column.type;
+      fieldTypeMap[column.name] = column.type;
     }
 
-    Object.keys(tableFieldsInput).forEach((key) => {
-      const fieldType: string = fieldIDTypeMap[key];
-      if (fieldType === BaserowFieldType.LINK_TO_TABLE) {
-        formattedTableFields[key] = tableFieldsInput[key].map((id: string) =>
-          parseInt(id, 10)
-        );
-      } else if (fieldType === BaserowFieldType.MULTIPLE_COLLABORATORS) {
-        formattedTableFields[key] = tableFieldsInput[key].map((id: string) => ({
-          id: parseInt(id, 10),
-        }));
-      } else {
-        formattedTableFields[key] = tableFieldsInput[key];
-      }
+    const formattedFields = formatFieldValues(tableFieldsInput, fieldTypeMap, {
+      skipEmpty: true,
     });
-    return await client.updateRow(table_id, row_id, formattedTableFields);
+
+    if (createMissingSelectOptions) {
+      await ensureSelectOptionsExist({
+        fields: tableSchema,
+        payload: formattedFields,
+        client,
+      });
+    }
+
+    return await client.updateRow(table_id, row_id, formattedFields);
   },
 });

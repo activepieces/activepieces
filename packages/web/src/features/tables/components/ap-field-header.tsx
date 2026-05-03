@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { ClientField } from '../stores/store/ap-tables-client-state';
 import { FieldHeaderContext, tablesUtils } from '../utils/utils';
 
+import { useTableState } from './ap-table-state-provider';
 import ApFieldActionMenuItemRenderer, {
   FieldActionType,
 } from './field-action-menu-item-renderer';
@@ -29,10 +30,12 @@ type ApFieldHeaderProps = {
 export function ApFieldHeader({ field }: ApFieldHeaderProps) {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [popoverContent, setPopoverContent] = useState<React.ReactNode>(null);
+  const lockedByOtherUser = useTableState((state) => state.lockedByOtherUser);
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
-  const actions = userHasTableWritePermission
+  const canEdit = userHasTableWritePermission && !lockedByOtherUser;
+  const actions = canEdit
     ? [FieldActionType.RENAME, FieldActionType.DELETE]
     : [];
 
@@ -42,7 +45,7 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
         setIsPopoverOpen,
         setPopoverContent,
         field,
-        userHasTableWritePermission,
+        userHasTableWritePermission: canEdit,
       }}
     >
       <DropdownMenu>

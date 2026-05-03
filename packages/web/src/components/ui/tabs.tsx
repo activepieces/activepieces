@@ -17,7 +17,7 @@ const tabsListVariants = cva('inline-flex', {
   variants: {
     variant: {
       default:
-        'items-center justify-center h-10 rounded-md bg-muted p-1 text-muted-foreground',
+        'items-center justify-center h-9 rounded-md bg-muted p-1 text-muted-foreground',
       outline: '',
     },
   },
@@ -30,9 +30,9 @@ const tabsTriggerVariants = cva('inline-flex items-center justify-center', {
   variants: {
     variant: {
       default:
-        'whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs',
+        'whitespace-nowrap rounded-sm px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs',
       outline:
-        'px-3 py-1.5 text-sm font-medium ring-offset-background transition-all border-b-2 border-transparent data-[state=active]:border-secondary data-[state=active]:text-foreground text-accent-foreground',
+        'px-3 py-1 text-sm font-medium ring-offset-background transition-all border-b-2 border-transparent data-[state=active]:border-secondary data-[state=active]:text-foreground text-accent-foreground',
     },
   },
   defaultVariants: {

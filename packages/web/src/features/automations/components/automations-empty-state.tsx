@@ -31,6 +31,7 @@ import { UseTemplateDialog } from '@/features/templates/components/use-template-
 import { templatesHooks } from '@/features/templates/hooks/templates-hook';
 import { useGradientFromPieces } from '@/features/templates/hooks/use-gradient-from-pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 type ActionRowProps = {
@@ -247,12 +248,15 @@ export const AutomationsEmptyState = ({
 
   const topTemplates = templates?.slice(0, 3) || [];
   const hasTemplates = topTemplates.length > 0;
+  const branding = flagsHooks.useWebsiteBranding();
 
   return (
     <div className="flex flex-col gap-8 py-8 px-4 max-w-5xl mx-auto">
       <div>
         <h2 className="text-sm font-medium text-muted-foreground mb-4">
-          {t('Get started with Activepieces')}
+          {t('Get started with {brandName}', {
+            brandName: branding.websiteName ?? platform.name,
+          })}
         </h2>
         <div className="flex gap-4">
           <GetStartedCard
@@ -304,26 +308,28 @@ export const AutomationsEmptyState = ({
             />
           </GetStartedCard>
 
-          <GetStartedCard
-            icon={<Table2 className="h-5 w-5 text-emerald-600" />}
-            iconBgClass="bg-emerald-100"
-            title={t('Create a Table')}
-            description={t('Organize and manage data')}
-          >
-            <ActionRow
-              icon={<Plus className="h-4 w-4" />}
-              label={t('Start from scratch')}
-              onClick={() => createTable({ name: t('New Table') })}
-              disabled={isCreateTablePending}
-              hasPermission={userHasPermissionToWriteTable}
-            />
-            <ActionRow
-              icon={<Upload className="h-4 w-4" />}
-              label={t('Import')}
-              onClick={() => setIsImportTableDialogOpen(true)}
-              hasPermission={userHasPermissionToWriteTable}
-            />
-          </GetStartedCard>
+          {!embedState.hideTables && (
+            <GetStartedCard
+              icon={<Table2 className="h-5 w-5 text-emerald-600" />}
+              iconBgClass="bg-emerald-100"
+              title={t('Create a Table')}
+              description={t('Organize and manage data')}
+            >
+              <ActionRow
+                icon={<Plus className="h-4 w-4" />}
+                label={t('Start from scratch')}
+                onClick={() => createTable({ name: t('New Table') })}
+                disabled={isCreateTablePending}
+                hasPermission={userHasPermissionToWriteTable}
+              />
+              <ActionRow
+                icon={<Upload className="h-4 w-4" />}
+                label={t('Import')}
+                onClick={() => setIsImportTableDialogOpen(true)}
+                hasPermission={userHasPermissionToWriteTable}
+              />
+            </GetStartedCard>
+          )}
         </div>
       </div>
 
@@ -362,11 +368,13 @@ export const AutomationsEmptyState = ({
         </div>
       )}
 
-      <ImportTableDialog
-        open={isImportTableDialogOpen}
-        setIsOpen={setIsImportTableDialogOpen}
-        showTrigger={false}
-      />
+      {!embedState.hideTables && (
+        <ImportTableDialog
+          open={isImportTableDialogOpen}
+          setIsOpen={setIsImportTableDialogOpen}
+          showTrigger={false}
+        />
+      )}
       <TemplatesBrowseDialog
         open={isTemplatesBrowseDialogOpen}
         onOpenChange={setIsTemplatesBrowseDialogOpen}

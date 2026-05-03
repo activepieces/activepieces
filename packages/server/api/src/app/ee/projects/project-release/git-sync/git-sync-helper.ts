@@ -11,14 +11,12 @@ import { gitHelper } from './git-helper'
 export const gitSyncHelper = (log: FastifyBaseLogger) => ({
     async getStateFromGit({ flowPath, connectionsFolderPath, tablesFolderPath }: GetStateFromGitParams): Promise<ProjectState> {
         try {
-            const flows = await readFlowsFromGit(flowPath, log)
-            const connections = await readConnectionsFromGit(connectionsFolderPath)
-            const tables = await readTablesFromGit(tablesFolderPath, log)
-            return {
-                flows,
-                connections,
-                tables,
-            }
+            const [flows, connections, tables] = await Promise.all([
+                readFlowsFromGit(flowPath, log),
+                readConnectionsFromGit(connectionsFolderPath),
+                readTablesFromGit(tablesFolderPath, log),
+            ])
+            return { flows, connections, tables }
         }
         catch (error) {
             log.error({ err: error }, '[gitSyncHelper#getStateFromGit] Failed to read flow files')
@@ -28,7 +26,8 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
 
     async upsertFlowToGit({ fileName, flow, flowFolderPath }: UpsertFlowIntoProjectParams): Promise<void> {
         try {
-            const flowJsonPath = path.join(flowFolderPath, `${fileName}.json`)
+            const flowJsonPath = resolveSafeJsonPath({ fileName, baseDir: flowFolderPath })
+            await fileSystemUtils.assertPathInside({ baseDir: flowFolderPath, targetPath: flowJsonPath })
             await fs.mkdir(path.dirname(flowJsonPath), { recursive: true })
             const flowState = await projectStateService(log).getFlowState(flow)
             await fs.writeFile(flowJsonPath, JSON.stringify(flowState, null, 2))
@@ -40,20 +39,23 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
     },
 
     async upsertTableToGit({ fileName, table, tablesFolderPath }: UpsertTableIntoProjectParams): Promise<void> {
-        const tableJsonPath = path.join(tablesFolderPath, `${fileName}.json`)
+        const tableJsonPath = resolveSafeJsonPath({ fileName, baseDir: tablesFolderPath })
+        await fileSystemUtils.assertPathInside({ baseDir: tablesFolderPath, targetPath: tableJsonPath })
         await fs.mkdir(path.dirname(tableJsonPath), { recursive: true })
         const tableState = projectStateService(log).getTableState(table)
         await fs.writeFile(tableJsonPath, JSON.stringify(tableState, null, 2))
     },
 
     async upsertConnectionToGit({ fileName, connection, folderPath }: UpsertConnectionIntoProjectParams): Promise<void> {
-        const connectionJsonPath = path.join(folderPath, `${fileName}.json`)
+        const connectionJsonPath = resolveSafeJsonPath({ fileName, baseDir: folderPath })
+        await fileSystemUtils.assertPathInside({ baseDir: folderPath, targetPath: connectionJsonPath })
         await fs.mkdir(path.dirname(connectionJsonPath), { recursive: true })
         await fs.writeFile(connectionJsonPath, JSON.stringify(connection, null, 2))
     },
 
     async deleteFromGit({ fileName, folderPath }: DeleteFromProjectParams): Promise<boolean> {
-        const jsonPath = path.join(folderPath, `${fileName}.json`)
+        const jsonPath = resolveSafeJsonPath({ fileName, baseDir: folderPath })
+        await fileSystemUtils.assertPathInside({ baseDir: folderPath, targetPath: jsonPath })
         const exists = await fileSystemUtils.fileExists(jsonPath)
         if (exists) {
             await fs.unlink(jsonPath)
@@ -95,40 +97,38 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
 
 })
 
+const SAFE_FILENAME_PATTERN = /^[A-Za-z0-9._-]{1,128}$/
+
+function resolveSafeJsonPath({ fileName, baseDir }: { fileName: string, baseDir: string }): string {
+    if (!SAFE_FILENAME_PATTERN.test(fileName) || fileName === '.' || fileName === '..') {
+        throw new Error(`invalid fileName "${fileName}": only alphanumeric, dot, dash and underscore are allowed`)
+    }
+    return path.join(baseDir, `${fileName}.json`)
+}
+
 async function readFlowsFromGit(flowFolderPath: string, log: FastifyBaseLogger): Promise<FlowState[]> {
     const flowFiles = await fs.readdir(flowFolderPath)
-    const flows: FlowState[] = []
-    for (const file of flowFiles) {
+    const stateService = projectStateService(log)
+    return Promise.all(flowFiles.map(async (file) => {
         const flow: PopulatedFlow = JSON.parse(await fs.readFile(path.join(flowFolderPath, file), 'utf-8'))
-        const flowState = await projectStateService(log).getFlowState(flow)
-        flows.push(flowState)
-    }
-    return flows
+        return stateService.getFlowState(flow)
+    }))
 }
 
 async function readConnectionsFromGit(connectionsFolderPath: string): Promise<ConnectionState[]> {
     const connectionFiles = await fs.readdir(connectionsFolderPath)
-    const connections: ConnectionState[] = []
-    for (const file of connectionFiles) {
-        const connection: ConnectionState = JSON.parse(
-            await fs.readFile(path.join(connectionsFolderPath, file), 'utf-8'),
-        )
-        connections.push(connection)
-    }
-    return connections
+    return Promise.all(connectionFiles.map(async (file) => {
+        return JSON.parse(await fs.readFile(path.join(connectionsFolderPath, file), 'utf-8')) as ConnectionState
+    }))
 }
 
 async function readTablesFromGit(tablesFolderPath: string, log: FastifyBaseLogger): Promise<TableState[]> {
     const tableFiles = await fs.readdir(tablesFolderPath)
-    const tables: TableState[] = []
-    for (const file of tableFiles) {
-        const table = JSON.parse(
-            await fs.readFile(path.join(tablesFolderPath, file), 'utf-8'),
-        )
-        const tableState = projectStateService(log).getTableState(table)
-        tables.push(tableState)
-    }
-    return tables
+    const stateService = projectStateService(log)
+    return Promise.all(tableFiles.map(async (file) => {
+        const table = JSON.parse(await fs.readFile(path.join(tablesFolderPath, file), 'utf-8'))
+        return stateService.getTableState(table)
+    }))
 }
 
 type GetStateFromGitParams = {

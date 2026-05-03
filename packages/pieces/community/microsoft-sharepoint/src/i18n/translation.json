@@ -1,4 +1,8 @@
 {
+  "Cloud Environment": "Cloud Environment",
+  "Select your Microsoft cloud environment.": "Select your Microsoft cloud environment.",
+  "Commercial (Global)": "Commercial (Global)",
+  "US Government (GCC High)": "US Government (GCC High)",
   "\nIf you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n - Sites.Read.All\n - Sites.ReadWrite.All\n - Sites.Manage.All\n - Files.ReadWrite.All\n - openid\n - email\n - profile\n - offline_access": "\nIf you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n - Sites.Read.All\n - Sites.ReadWrite.All\n - Sites.Manage.All\n - Files.ReadWrite.All\n - openid\n - email\n - profile\n - offline_access",
   "Create Folder": "Create Folder",
   "Create List": "Create List",

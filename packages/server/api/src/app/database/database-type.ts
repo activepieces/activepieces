@@ -1,5 +1,1 @@
-export enum DatabaseType {
-    POSTGRES = 'POSTGRES',
-    PGLITE = 'PGLITE',
-}
-
+export { DatabaseType } from '@activepieces/server-utils'

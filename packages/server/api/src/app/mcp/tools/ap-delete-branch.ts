@@ -1,16 +1,16 @@
 import {
-    FlowActionType,
     FlowOperationRequest,
     FlowOperationType,
-    flowStructureUtil,
     isNil,
     McpServer,
     McpToolDefinition,
+    Permission,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
+import { mcpUtils } from './mcp-utils'
 
 const deleteBranchInput = z.object({
     flowId: z.string(),
@@ -21,7 +21,8 @@ const deleteBranchInput = z.object({
 export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_delete_branch',
-        description: 'Delete a branch from a router (ROUTER) step. Cannot delete the last (fallback) branch. Use ap_flow_structure to get branch indices.',
+        permission: Permission.WRITE_FLOW,
+        description: 'Delete a branch from a router step. Cannot delete the fallback branch.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             routerStepName: z.string().describe('The name of the ROUTER step. Use ap_flow_structure to get valid values.'),
@@ -39,15 +40,11 @@ export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
             }
 
-            const routerStep = flowStructureUtil.getStep(routerStepName, flow.version.trigger)
-            if (isNil(routerStep) || routerStep.type !== FlowActionType.ROUTER) {
-                return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Step "${routerStepName}" is not a ROUTER step. Use ap_flow_structure to find router steps.`,
-                    }],
-                }
+            const resolved = mcpUtils.resolveRouterStep({ stepName: routerStepName, trigger: flow.version.trigger })
+            if (resolved.error) {
+                return resolved.error
             }
+            const routerStep = resolved.routerStep
 
             const branches = (routerStep as { settings: { branches: unknown[] } }).settings.branches
             if (branchIndex < 0 || branchIndex >= branches.length) {
@@ -88,10 +85,7 @@ export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                 }
             }
             catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                return {
-                    content: [{ type: 'text', text: `❌ Delete branch failed: ${message}` }],
-                }
+                return mcpUtils.mcpToolError('Delete branch failed', err)
             }
         },
     }

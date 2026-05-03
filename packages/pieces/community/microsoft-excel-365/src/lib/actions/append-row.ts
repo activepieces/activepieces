@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 import { objectToArray } from '../common/common';
 import { commonProps } from '../common/props';
@@ -24,6 +24,7 @@ export const appendRowAction = createAction({
 		const values = propsValue.isFirstRowHeaders
 			? objectToArray(propsValue['values'])
 			: Object.values(propsValue['values'])[0];
+		const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 
 		if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
 			throw new Error('please select SharePoint site and document library.');
@@ -36,7 +37,8 @@ export const appendRowAction = createAction({
 			auth.access_token,
 			drivePath,
 			workbookId,
-			worksheetId
+			worksheetId,
+			cloud
 		);
 
 		const lastUsedColumn = numberToColumnName(Object.values(values).length);
@@ -45,7 +47,7 @@ export const appendRowAction = createAction({
 		const rangeTo = `${lastUsedColumn}${lastUsedRow + 1}`;
 		const insertedRowNumber = lastUsedRow + 1;
 
-		const client = createMSGraphClient(auth.access_token);
+		const client = createMSGraphClient(auth.access_token, cloud);
 
 		const response: WorkbookRange = await client
 			.api(

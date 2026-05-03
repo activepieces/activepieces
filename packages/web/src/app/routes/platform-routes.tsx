@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
-import { LoadingScreen } from '@/components/custom/loading-screen';
+import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { Error, Success } from '@/features/billing';
 
 import { PlatformLayout } from '../components/platform-layout';
@@ -65,7 +65,7 @@ const PlatformTemplatesPage = React.lazy(() =>
 const UsersPage = React.lazy(() => import('./platform/users'));
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<LoadingScreen />}>{children}</Suspense>;
+  return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
 }
 
 export const platformRoutes = [

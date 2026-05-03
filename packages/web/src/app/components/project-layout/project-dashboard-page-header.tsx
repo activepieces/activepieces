@@ -71,9 +71,13 @@ export const ProjectDashboardPageHeader = ({
     !isNil(activeProjectMembers) &&
     project.type === ProjectType.TEAM;
 
+  const userCanInviteToProject =
+    userHasPermissionToInviteUser &&
+    project.type === ProjectType.TEAM &&
+    platform.plan.projectRolesEnabled;
+  const userCanInviteToPlatform = user?.platformRole === PlatformRole.ADMIN;
   const showInviteUserButton =
-    userHasPermissionToInviteUser && project.type === ProjectType.TEAM;
-
+    userCanInviteToProject || userCanInviteToPlatform;
   const isProjectPage = location.pathname.includes('/projects/');
 
   const hasGeneralSettings =
@@ -178,7 +182,7 @@ export const ProjectDashboardPageHeader = ({
         description={description}
         rightContent={rightContent}
         showSidebarToggle={true}
-        className="min-w-full px-3"
+        className="min-w-full"
       />
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
       <ProjectSettingsDialog

@@ -10,6 +10,8 @@ import {
     Platform,
     PlatformPlan,
     PlatformRole,
+    Principal,
+    PrincipalType,
     Project,
     ProjectRole,
     ProjectType,
@@ -39,6 +41,7 @@ import {
     createMockSignInRequest,
     createMockSignUpRequest,
 } from '../../../helpers/mocks/authn'
+import { jwtUtils } from 'packages/server/api/src/app/helper/jwt-utils'
 
 let app: FastifyInstance | null = null
 
@@ -234,7 +237,7 @@ describe('Authentication API', () => {
                 expect(sendOtpSpy).toHaveBeenCalledTimes(1)
                 expect(sendOtpSpy).toHaveBeenCalledWith({
                     otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
-                    platformId: expect.any(String),
+                    platformId: null,
                     type: OtpType.EMAIL_VERIFICATION,
                     userIdentity: expect.objectContaining({
                         email: mockSignUpRequest.email.trim().toLocaleLowerCase(),
@@ -305,7 +308,7 @@ describe('Authentication API', () => {
             expect(teamProject).toBeDefined()
 
             const projectMember = await databaseConnection().getRepository('project_member').findOne({ where: { projectId: teamProject?.id, userId: responseBody?.id } })
-            
+
             expect(projectMember).toBeDefined()
             expect(projectMember?.userId).toBe(responseBody?.id)
             expect(projectMember?.projectId).toBe(teamProject?.id)
@@ -317,6 +320,58 @@ describe('Authentication API', () => {
             expect(responseBody?.platformId).toBeDefined()
             expect(responseBody?.status).toBe('ACTIVE')
             expect(responseBody?.verified).toBe(true)
+        })
+
+        it('should join enterprise platform when signing up with accepted invitation on cloud (no custom domain)', async () => {
+            // arrange - enterprise platform exists
+            const { mockPlatform, mockUser } = await createMockPlatformAndDomain({
+                platform: { emailAuthEnabled: true },
+                plan: { projectRolesEnabled: true, licenseKey: 'test-key' },
+            })
+
+            const mockProject = createMockProject({
+                ownerId: mockUser.id,
+                platformId: mockPlatform.id,
+            })
+            await db.save('project', mockProject)
+
+            const invitedEmail = faker.internet.email()
+
+            // ACCEPTED invitation (user clicked invite link)
+            const mockUserInvitation = createMockUserInvitation({
+                platformId: mockPlatform.id,
+                email: invitedEmail,
+                platformRole: PlatformRole.MEMBER,
+                type: InvitationType.PLATFORM,
+                status: InvitationStatus.ACCEPTED,
+                created: dayjs().toISOString(),
+            })
+            await db.save('user_invitation', mockUserInvitation)
+
+            const mockSignUpRequest = createMockSignUpRequest({ email: invitedEmail })
+
+            // act - sign up WITHOUT Host header (cloud.activepieces.com, no custom domain)
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/sign-up',
+                body: mockSignUpRequest,
+            })
+
+            const responseBody = response?.json()
+
+            // assert - user should be on enterprise platform
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody?.platformId).toBe(mockPlatform.id)
+
+            // Invitation should be provisioned (deleted after processing)
+            const remainingInvitation = await databaseConnection()
+                .getRepository('user_invitation')
+                .findOneBy({ id: mockUserInvitation.id })
+            expect(remainingInvitation).toBeNull()
+
+            // No personal platform is auto-created; only the enterprise platform exists
+            const allPlatforms = await databaseConnection().getRepository('platform').find()
+            expect(allPlatforms.length).toBe(1)
         })
 
         it('fails to sign up invited user platform if no project exist', async () => {
@@ -680,7 +735,7 @@ describe('Authentication API', () => {
             expect(responseBody?.code).toBe('INVALID_CREDENTIALS')
         })
 
-        it('Fails if user status is INACTIVE', async () => {
+        it('Onboarding response if user status is INACTIVE', async () => {
             // arrange
             const mockEmail = faker.internet.email()
             const mockPassword = 'password'
@@ -731,12 +786,16 @@ describe('Authentication API', () => {
                 url: '/api/v1/authentication/sign-in',
                 body: mockSignInRequest,
             })
-
             const responseBody = response?.json()
+
             // assert
             // In non-cloud editions, the sign-in fails with FORBIDDEN because the platform
-            // is not found via Host header resolution. In cloud edition, it returns UNAUTHORIZED.
-            expect([StatusCodes.UNAUTHORIZED, StatusCodes.FORBIDDEN]).toContain(response?.statusCode)
+            // is not found via Host header resolution. In cloud edition, it returns onboarding response for the user so he can create new platform.
+            expect([StatusCodes.OK]).toContain(response?.statusCode)
+            expect(responseBody?.token).toBeDefined()
+            const decoded = jwtUtils.decode<Principal>({ jwt: responseBody?.token })
+            expect(decoded.payload.type).toBe(PrincipalType.ONBOARDING)
+
         })
 
     })

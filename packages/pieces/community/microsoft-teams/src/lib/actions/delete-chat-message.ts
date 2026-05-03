@@ -1,7 +1,7 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsCommon } from '../common';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { createGraphClient } from '../common/graph';
 
 export const deleteChatMessageAction = createAction({
     auth: microsoftTeamsAuth,
@@ -19,11 +19,8 @@ export const deleteChatMessageAction = createAction({
     async run(context) {
         const { chatId, messageId } = context.propsValue;
 
-        const client = Client.initWithMiddleware({
-                    authProvider: {
-                        getAccessToken: () => Promise.resolve(context.auth.access_token),
-                    },
-                });
+        const cloud = context.auth.props?.['cloud'] as string | undefined;
+        const client = createGraphClient(context.auth.access_token, cloud);
         
 
         const me = await client.api('/me').select('id,userPrincipalName').get();

@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, assertNotNullOrUndefined, EnginePrincipal, ErrorCode, PlatformId, Principal, PrincipalType, ProjectId, UserStatus, WorkerPrincipal } from '@activepieces/shared'
+import { ActivepiecesError, ALL_PRINCIPAL_TYPES, apId, EnginePrincipal, ErrorCode, PlatformId, Principal, PrincipalType, ProjectId, UserStatus, WorkerPrincipal } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { jwtUtils } from '../../helper/jwt-utils'
@@ -58,7 +58,14 @@ export const accessTokenManager = (log: FastifyBaseLogger) => ({
                 jwt: token,
                 key: secret,
             })
-            assertNotNullOrUndefined(decoded.type, 'decoded.type')
+            if (!ALL_PRINCIPAL_TYPES.includes(decoded.type)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.INVALID_BEARER_TOKEN,
+                    params: {
+                        message: 'invalid principal type',
+                    },
+                })
+            }
             await assertUserSession(log, decoded)
             return decoded
         }
@@ -77,7 +84,21 @@ export const accessTokenManager = (log: FastifyBaseLogger) => ({
 })
 
 async function assertUserSession(log: FastifyBaseLogger, decoded: Principal | Principal): Promise<void> {
-    if (decoded.type !== PrincipalType.USER) return
+    if (decoded.type !== PrincipalType.USER && decoded.type !== PrincipalType.ONBOARDING) return
+
+    if (decoded.type === PrincipalType.ONBOARDING) {
+        const identity = await userIdentityService(log).getOneOrFail({ id: decoded.id })
+        const isExpired = (identity.tokenVersion ?? null) !== (decoded.tokenVersion ?? null)
+        if (isExpired || !identity.verified) {
+            throw new ActivepiecesError({
+                code: ErrorCode.SESSION_EXPIRED,
+                params: {
+                    message: 'The session has expired or the user is not verified.',
+                },
+            })
+        }
+        return
+    }
 
     const user = await userService(log).getOneOrFail({ id: decoded.id })
     const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
@@ -89,6 +110,9 @@ async function assertUserSession(log: FastifyBaseLogger, decoded: Principal | Pr
                 message: 'The session has expired or the user is not verified.',
             },
         })
+    }
+    if (identity.lastLoggedInPlatformId !== decoded.platform.id) {
+        await userIdentityService(log).updateLastLoggedInPlatformId({ id: identity.id, lastLoggedInPlatformId: decoded.platform.id })
     }
 }
 

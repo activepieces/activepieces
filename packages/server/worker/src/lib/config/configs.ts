@@ -1,11 +1,14 @@
+import { environmentMigrations } from '@activepieces/server-utils'
 import { from } from 'env-var'
 
-const env = from(process.env)
+function env() {
+    return from(environmentMigrations.migrate())
+}
 
 function getApiUrl(): string {
     const containerType = system.get(WorkerSystemProp.CONTAINER_TYPE) ?? 'WORKER_AND_APP'
     if (containerType === 'WORKER_AND_APP') {
-        const port = system.get(WorkerSystemProp.PORT)
+        const port = process.env[WorkerSystemProp.PORT] ?? system.get(WorkerSystemProp.PORT)
         return `http://127.0.0.1:${port}/api/`
     }
     const frontendUrl = system.getOrThrow(WorkerSystemProp.FRONTEND_URL).replace(/\/+$/, '')
@@ -15,7 +18,7 @@ function getApiUrl(): string {
 function getSocketUrl(): { url: string, path: string } {
     const containerType = system.get(WorkerSystemProp.CONTAINER_TYPE) ?? 'WORKER_AND_APP'
     if (containerType === 'WORKER_AND_APP') {
-        const port = system.get(WorkerSystemProp.PORT)
+        const port = process.env[WorkerSystemProp.PORT] ?? system.get(WorkerSystemProp.PORT)
         return { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' }
     }
     const frontendUrl = system.getOrThrow(WorkerSystemProp.FRONTEND_URL).replace(/\/+$/, '')
@@ -31,8 +34,10 @@ export enum WorkerSystemProp {
     LOG_PRETTY = 'AP_LOG_PRETTY',
     OTEL_ENABLED = 'AP_OTEL_ENABLED',
     LOAD_TRANSLATIONS_FOR_DEV_PIECES = 'AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES',
-    PLATFORM_ID_FOR_DEDICATED_WORKER = 'AP_PLATFORM_ID_FOR_DEDICATED_WORKER',
+    WORKER_GROUP_ID = 'AP_WORKER_GROUP_ID',
     WORKER_CONCURRENCY = 'AP_WORKER_CONCURRENCY',
+    EXECUTION_MODE = 'AP_EXECUTION_MODE',
+    REUSE_SANDBOX = 'AP_REUSE_SANDBOX',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
@@ -40,18 +45,22 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
     [WorkerSystemProp.LOG_LEVEL]: 'info',
     [WorkerSystemProp.LOG_PRETTY]: 'false',
     [WorkerSystemProp.OTEL_ENABLED]: 'false',
-    [WorkerSystemProp.WORKER_CONCURRENCY]: '1',
+    [WorkerSystemProp.WORKER_CONCURRENCY]: '5',
 }
 
 export const system = {
     get(prop: WorkerSystemProp): string | undefined {
-        return env.get(prop).asString() ?? defaultValues[prop]
+        return env().get(prop).asString() ?? defaultValues[prop]
     },
     getOrThrow(prop: WorkerSystemProp): string {
-        return env.get(prop).required().asString()
+        return env().get(prop).required().asString()
     },
     getBoolean(prop: WorkerSystemProp): boolean | undefined {
-        return env.get(prop).asBoolStrict()
+        return env().get(prop).asBoolStrict()
+    },
+    getList(prop: WorkerSystemProp): string[] {
+        const value = env().get(prop).asString() ?? defaultValues[prop]
+        return value ? value.split(',').map(s => s.trim()).filter(Boolean) : []
     },
 }
 
