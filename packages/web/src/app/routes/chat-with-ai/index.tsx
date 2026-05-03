@@ -84,7 +84,7 @@ export function ChatWithAIPage() {
 
   return (
     <div className="flex h-full overflow-hidden">
-      <div className="shrink-0 border-r overflow-hidden">
+      <div className="shrink-0 overflow-hidden opacity-40 hover:opacity-100 transition-opacity duration-200">
         <ConversationList
           onNewChat={handleNewChat}
           onSelect={handleSelectConversation}

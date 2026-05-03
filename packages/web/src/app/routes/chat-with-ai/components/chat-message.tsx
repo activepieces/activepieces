@@ -247,14 +247,16 @@ export function AssistantMessage({
                     <RefreshCw className="h-3.5 w-3.5" />
                   </button>
                 </MessageAction>
-                {hasThoughts && thinkingSeconds >= 0.1 && (
+                {hasThoughts && (
                   <MessageAction
                     tooltip={
                       isReasoningOpen ? t('Hide thinking') : t('Show thinking')
                     }
                   >
                     <ReasoningTrigger className="text-xs text-muted-foreground rounded-md px-1.5 py-1 gap-1 transition-colors hover:bg-muted hover:text-foreground [&>span]:!text-muted-foreground hover:[&>span]:!text-foreground [&>div>svg]:!h-3 [&>div>svg]:!w-3">
-                      {formatThinkingTime({ seconds: thinkingSeconds })}
+                      {thinkingSeconds >= 0.1
+                        ? formatThinkingTime({ seconds: thinkingSeconds })
+                        : t('Thoughts')}
                     </ReasoningTrigger>
                   </MessageAction>
                 )}
@@ -308,7 +310,6 @@ function renderParts({
           key={idx}
           content={part.text}
           onSend={onSend}
-          isLastMessage={isLastMessage}
           connectedPieces={connectedPieces}
           onPieceConnected={onPieceConnected}
         />,

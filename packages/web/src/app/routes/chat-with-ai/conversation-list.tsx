@@ -113,7 +113,7 @@ export function ConversationList({
     if (items.length === 0) return null;
     const isCollapsed = collapsed[label];
     return (
-      <div className="mb-2 flex flex-col gap-0.5">
+      <div className="mb-2 flex flex-col gap-px">
         <button
           type="button"
           className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-[11px] font-semibold px-2 py-1 uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
@@ -140,9 +140,6 @@ export function ConversationList({
               style={{ animationDelay: `${index * 30}ms` }}
               onClick={() => handleClick(conv)}
             >
-              {selectedId === conv.id && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-3.5 rounded-full bg-primary animate-in fade-in zoom-in-50 duration-200" />
-              )}
               <span className="overflow-hidden text-ellipsis whitespace-nowrap pr-5 flex-1">
                 {conv.title ?? t('New conversation')}
               </span>

@@ -1,14 +1,17 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, Zap } from 'lucide-react';
+import { Check, Plus, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { Markdown } from '@/components/prompt-kit/markdown';
 import { Button } from '@/components/ui/button';
+import { appConnectionsQueries } from '@/features/connections';
 import { piecesHooks } from '@/features/pieces';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
+import { authenticationSession } from '@/lib/authentication-session';
+import { cn } from '@/lib/utils';
 
 import {
   AutomationProposal,
@@ -17,9 +20,10 @@ import {
   parseAutomationProposal,
   parseMultiQuestion,
   parseQuickReplies,
+  stripIncompleteSpecialBlock,
 } from '../lib/message-parsers';
 
-import { MultiQuestionForm } from './multi-question-form';
+import { ProposalFlowDiagram } from './proposal-flow-diagram';
 
 const PROSE_CLASSES =
   'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4 [&_h1]:text-[18px] [&_h2]:text-[18px] [&_h3]:text-[18px]';
@@ -42,13 +46,11 @@ function stripAuthContent(content: string): string {
 export function MessageContentWithAuth({
   content,
   onSend,
-  isLastMessage = false,
   connectedPieces,
   onPieceConnected,
 }: {
   content: string;
   onSend?: (text: string) => void;
-  isLastMessage?: boolean;
   connectedPieces?: Set<string>;
   onPieceConnected?: (piece: string) => void;
 }) {
@@ -80,9 +82,9 @@ export function MessageContentWithAuth({
     parseAutomationProposal(content);
   const { connections, cleanContent: afterConnection } =
     parseAllConnectionsRequired(afterProposal);
-  const { questions, cleanContent: afterQuestions } =
-    parseMultiQuestion(afterConnection);
-  const { cleanContent: finalContent } = parseQuickReplies(afterQuestions);
+  const { cleanContent: afterQuestions } = parseMultiQuestion(afterConnection);
+  const { cleanContent: afterReplies } = parseQuickReplies(afterQuestions);
+  const finalContent = stripIncompleteSpecialBlock(afterReplies);
 
   return (
     <div className="space-y-2">
@@ -100,12 +102,6 @@ export function MessageContentWithAuth({
           onPieceConnected={onPieceConnected}
         />
       ))}
-      {questions.length > 0 && isLastMessage && (
-        <MultiQuestionForm
-          questions={questions}
-          onSubmit={(text) => onSend?.(text)}
-        />
-      )}
       {proposal && (
         <AutomationProposalCard
           proposal={proposal}
@@ -142,24 +138,24 @@ export function AutomationProposalCard({
           </div>
         </div>
 
-        <div className="space-y-1.5 ml-12">
-          {proposal.steps.map((step, i) => (
-            <div key={i} className="flex items-start gap-2 text-sm">
-              <span className="text-xs font-medium text-muted-foreground bg-muted rounded-full h-5 w-5 flex items-center justify-center shrink-0 mt-0.5">
-                {i + 1}
-              </span>
-              <span className="text-foreground/80">{step}</span>
-            </div>
-          ))}
+        <div className="ml-12">
+          <ProposalFlowDiagram steps={proposal.steps} />
         </div>
       </div>
 
-      <div className="border-t px-4 py-3 bg-muted/30">
-        <Button size="sm" className="gap-1.5" onClick={onBuild}>
-          <Zap className="h-3.5 w-3.5" />
-          {t('Build this automation')}
-        </Button>
-      </div>
+      {proposal.isComplete && (
+        <motion.div
+          className="border-t px-4 py-3 bg-muted/30"
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+        >
+          <Button size="sm" className="gap-1.5" onClick={onBuild}>
+            <Zap className="h-3.5 w-3.5" />
+            {t('Build this automation')}
+          </Button>
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -177,12 +173,40 @@ export function ConnectionRequiredCard({
 }) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const connected = connectedPieces?.has(connection.piece) ?? false;
+  const [selectedExternalId, setSelectedExternalId] = useState<string | null>(
+    null,
+  );
+  const justConnectedInChat = connectedPieces?.has(connection.piece) ?? false;
   const shortName = connection.piece.replace(/[^a-z0-9-]/gi, '');
   const pieceName = connection.piece.startsWith('@activepieces/')
     ? connection.piece
     : `@activepieces/piece-${shortName}`;
-  const { pieceModel, isLoading } = piecesHooks.usePiece({ name: pieceName });
+  const { pieceModel, isLoading: isLoadingPiece } = piecesHooks.usePiece({
+    name: pieceName,
+  });
+  const projectId = authenticationSession.getProjectId();
+  const { data: connections, isLoading: isLoadingConnections } =
+    appConnectionsQueries.useAppConnections({
+      request: {
+        pieceName,
+        projectId: projectId!,
+        limit: 1000,
+      },
+      pieceAuth: pieceModel?.auth,
+      extraKeys: [pieceName, projectId ?? ''],
+      enabled: Boolean(projectId) && Boolean(pieceModel),
+      staleTime: 0,
+    });
+  const existing = connections?.data ?? [];
+  const hasExisting = existing.length > 0;
+
+  const handleSelectExisting = (externalId: string, displayName: string) => {
+    setSelectedExternalId(externalId);
+    onPieceConnected?.(connection.piece);
+    onSend?.(
+      `Using existing ${connection.displayName} account "${displayName}". [auth externalId: ${externalId}]`,
+    );
+  };
 
   return (
     <>
@@ -205,40 +229,94 @@ export function ConnectionRequiredCard({
             showTooltip={false}
           />
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm">
-              {connected
-                ? t('{name} connected', { name: connection.displayName })
-                : t('Connect {name}', { name: connection.displayName })}
-            </h3>
+            <h3 className="font-semibold text-sm">{connection.displayName}</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {connected
-                ? t('Ready to use')
+              {hasExisting
+                ? t(
+                    '{count, plural, =1 {1 account already connected} other {# accounts already connected}}',
+                    { count: existing.length },
+                  )
                 : t('This automation needs a {name} connection to work', {
                     name: connection.displayName,
                   })}
             </p>
           </div>
-          {connected ? (
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-              className="shrink-0 flex items-center justify-center"
-            >
-              <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
-            </motion.span>
-          ) : (
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 shrink-0"
-              disabled={isLoading}
-              onClick={() => setDialogOpen(true)}
-            >
-              {t('Connect')}
-            </Button>
-          )}
+          <Button
+            size="sm"
+            variant={hasExisting ? 'outline' : 'default'}
+            className="gap-1.5 shrink-0"
+            disabled={isLoadingPiece || isLoadingConnections}
+            onClick={() => setDialogOpen(true)}
+          >
+            {hasExisting ? (
+              <>
+                <Plus className="h-3.5 w-3.5" />
+                {t('Connect another')}
+              </>
+            ) : (
+              t('Connect')
+            )}
+          </Button>
         </div>
+        {hasExisting && (
+          <div className="border-t bg-muted/30">
+            {existing.map((conn, index) => {
+              const isSelected = selectedExternalId === conn.externalId;
+              const isJustConnected =
+                justConnectedInChat && index === existing.length - 1;
+              return (
+                <motion.button
+                  key={conn.externalId}
+                  type="button"
+                  onClick={() =>
+                    handleSelectExisting(conn.externalId, conn.displayName)
+                  }
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.18,
+                    delay: index * 0.04,
+                    ease: 'easeOut',
+                  }}
+                  className={cn(
+                    'group flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/60 cursor-pointer',
+                    index > 0 && 'border-t border-border/40',
+                  )}
+                >
+                  <PieceIconWithPieceName
+                    pieceName={pieceName}
+                    size="xs"
+                    border={false}
+                    showTooltip={false}
+                  />
+                  <span className="flex-1 min-w-0 truncate text-sm">
+                    {conn.displayName}
+                  </span>
+                  {(isSelected || isJustConnected) && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 400,
+                        damping: 15,
+                      }}
+                      className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      {t('Using {name}', { name: conn.displayName })}
+                    </motion.span>
+                  )}
+                  {!isSelected && !isJustConnected && (
+                    <span className="text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                      {t('Use this account')}
+                    </span>
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
+        )}
       </motion.div>
       {pieceModel && (
         <CreateOrEditConnectionDialog
@@ -247,6 +325,7 @@ export function ConnectionRequiredCard({
           setOpen={(open, createdConnection) => {
             setDialogOpen(open);
             if (createdConnection) {
+              setSelectedExternalId(createdConnection.externalId);
               onPieceConnected?.(connection.piece);
               void queryClient.invalidateQueries({
                 queryKey: ['app-connections'],
