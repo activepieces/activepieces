@@ -146,7 +146,7 @@
   "Deleted Row": "Ligne supprimée",
   "Triggers when a row is deleted from a Baserow table.": "Se déclenche lorsqu'une ligne est supprimée d'une table Baserow.",
   "Any Row Change": "Tout changement de ligne",
-  "Triggers when a row is created, updated, or deleted in a Baserow table. To react to only one event type, use the dedicated Row Created, Row Updated, or Row Deleted triggers.": "Se déclenche lorsqu'une ligne est créée, mise à jour ou supprimée dans une table Baserow. Pour ne réagir qu'à un seul type d'événement, utilisez les déclencheurs dédiés Nouvelle ligne, Ligne mise à jour ou Ligne supprimée.",
+  "Triggers when a row is created, updated, or deleted in a Baserow table. To react to only one event type, use the dedicated New Row, Updated Row, or Deleted Row triggers.": "Se déclenche lorsqu'une ligne est créée, mise à jour ou supprimée dans une table Baserow. Pour ne réagir qu'à un seul type d'événement, utilisez les déclencheurs dédiés Nouvelle ligne, Ligne mise à jour ou Ligne supprimée.",
   "New Rows (Batch)": "Nouvelles lignes (lot)",
   "Triggers when new rows are created in a Baserow table. Returns all rows from the event as a single batch.": "Se déclenche lorsque de nouvelles lignes sont créées dans une table Baserow. Renvoie toutes les lignes de l'événement en un seul lot.",
   "Updated Rows (Batch)": "Lignes mises à jour (lot)",

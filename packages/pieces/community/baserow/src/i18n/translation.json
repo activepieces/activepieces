@@ -146,7 +146,7 @@
   "Deleted Row": "Deleted Row",
   "Triggers when a row is deleted from a Baserow table.": "Triggers when a row is deleted from a Baserow table.",
   "Any Row Change": "Any Row Change",
-  "Triggers when a row is created, updated, or deleted in a Baserow table. To react to only one event type, use the dedicated Row Created, Row Updated, or Row Deleted triggers.": "Triggers when a row is created, updated, or deleted in a Baserow table. To react to only one event type, use the dedicated Row Created, Row Updated, or Row Deleted triggers.",
+  "Triggers when a row is created, updated, or deleted in a Baserow table. To react to only one event type, use the dedicated New Row, Updated Row, or Deleted Row triggers.": "Triggers when a row is created, updated, or deleted in a Baserow table. To react to only one event type, use the dedicated New Row, Updated Row, or Deleted Row triggers.",
   "New Rows (Batch)": "New Rows (Batch)",
   "Triggers when new rows are created in a Baserow table. Returns all rows from the event as a single batch.": "Triggers when new rows are created in a Baserow table. Returns all rows from the event as a single batch.",
   "Updated Rows (Batch)": "Updated Rows (Batch)",
