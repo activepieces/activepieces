@@ -15,15 +15,13 @@ import {
   User,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { CredentialDialog } from '@/app/connections/credential-dialog';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
-  CURSOR_QUERY_PARAM,
   DataTable,
   DataTableFilters,
-  LIMIT_QUERY_PARAM,
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -47,8 +45,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { CredentialDialog } from '../../connections/credential-dialog';
-
 const revealCredential = async (id: string): Promise<string> => {
   const { value } = await api.post<{ value: string }>(
     `/v1/app-connections/${id}/reveal`,
@@ -67,8 +63,7 @@ const copyValueToClipboard = async (id: string) => {
   }
 };
 
-export function CredentialsTab() {
-  const location = useLocation();
+const CredentialsSettings = () => {
   const projectId = authenticationSession.getProjectId()!;
   const { checkAccess } = useAuthorization();
   const canWrite = checkAccess(Permission.WRITE_APP_CONNECTION);
@@ -81,13 +76,6 @@ export function CredentialsTab() {
     AppConnectionWithoutSensitiveData | undefined
   >(undefined);
 
-  const searchParams = new URLSearchParams(location.search);
-  const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
-  const limit = searchParams.get(LIMIT_QUERY_PARAM)
-    ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
-    : 10;
-  const displayName = searchParams.get('displayName') ?? undefined;
-
   const {
     data: credentials,
     isLoading,
@@ -95,12 +83,10 @@ export function CredentialsTab() {
   } = appConnectionsQueries.useAppConnections({
     request: {
       projectId,
-      cursor,
-      limit,
-      displayName,
+      limit: 100,
       kind: AppConnectionKind.SECRET,
     },
-    extraKeys: ['credentials', location.search, projectId],
+    extraKeys: ['credentials-settings', projectId],
     showErrorDialog: true,
   });
 
@@ -241,7 +227,7 @@ export function CredentialsTab() {
   ];
 
   return (
-    <>
+    <div className="space-y-6">
       <DataTable
         emptyStateTextTitle={t('No credentials yet')}
         emptyStateTextDescription={t(
@@ -253,6 +239,7 @@ export function CredentialsTab() {
         isLoading={isLoading}
         filters={filters}
         toolbarButtons={toolbarButtons}
+        hidePagination={true}
       />
       <CredentialDialog
         open={createOpen}
@@ -292,6 +279,9 @@ export function CredentialsTab() {
           setDeleting(undefined);
         }}
       />
-    </>
+    </div>
   );
-}
+};
+
+CredentialsSettings.displayName = 'CredentialsSettings';
+export { CredentialsSettings };

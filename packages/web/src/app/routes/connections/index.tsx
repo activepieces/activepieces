@@ -42,7 +42,6 @@ import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { PlusIcon } from '@/components/icons/plus';
 import { ReplaceIcon } from '@/components/icons/replace';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -61,8 +60,6 @@ import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
-
-import { CredentialsTab } from './credentials-tab';
 
 function AppConnectionsPage() {
   const navigate = useNavigate();
@@ -426,36 +423,21 @@ function AppConnectionsPage() {
   );
   return (
     <div className="flex-col w-full">
-      <Tabs defaultValue="connections">
-        <TabsList variant="outline" className="px-3 mt-2">
-          <TabsTrigger value="connections" variant="outline">
-            {t('Connections')}
-          </TabsTrigger>
-          <TabsTrigger value="credentials" variant="outline">
-            {t('Credentials')}
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="connections">
-          <DataTable
-            emptyStateTextTitle={t('No connections found')}
-            emptyStateTextDescription={t(
-              'Come back later when you create a automation to manage your connections',
-            )}
-            emptyStateIcon={<Globe className="size-14" />}
-            columns={columns}
-            page={filteredData}
-            isLoading={connectionsLoading}
-            filters={filters}
-            selectColumn={true}
-            onSelectedRowsChange={setSelectedRows}
-            bulkActions={bulkActions}
-            toolbarButtons={toolbarButtons}
-          />
-        </TabsContent>
-        <TabsContent value="credentials">
-          <CredentialsTab />
-        </TabsContent>
-      </Tabs>
+      <DataTable
+        emptyStateTextTitle={t('No connections found')}
+        emptyStateTextDescription={t(
+          'Come back later when you create a automation to manage your connections',
+        )}
+        emptyStateIcon={<Globe className="size-14" />}
+        columns={columns}
+        page={filteredData}
+        isLoading={connectionsLoading}
+        filters={filters}
+        selectColumn={true}
+        onSelectedRowsChange={setSelectedRows}
+        bulkActions={bulkActions}
+        toolbarButtons={toolbarButtons}
+      />
     </div>
   );
 }

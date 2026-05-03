@@ -6,7 +6,14 @@ import {
   ProjectType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
+import {
+  Bell,
+  GitBranch,
+  KeyRound,
+  Puzzle,
+  Settings,
+  Users,
+} from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -27,6 +34,7 @@ import { cn } from '@/lib/utils';
 import { ProjectAvatar } from '../project-avatar';
 
 import { AlertsSettings } from './alerts';
+import { CredentialsSettings } from './credentials';
 import { EnvironmentSettings } from './environment';
 import { GeneralSettings, FormValues } from './general';
 import { McpServerSettings } from './mcp-server';
@@ -38,6 +46,7 @@ type TabId =
   | 'members'
   | 'alerts'
   | 'pieces'
+  | 'credentials'
   | 'environment'
   | 'mcp';
 
@@ -147,6 +156,12 @@ export function ProjectSettingsDialog({
       disabled: false,
     },
     {
+      id: 'credentials' as TabId,
+      label: t('Credentials'),
+      icon: <KeyRound className="w-4 h-4" />,
+      disabled: !checkAccess(Permission.READ_APP_CONNECTION),
+    },
+    {
       id: 'environment' as TabId,
       label: t('Environment'),
       icon: <GitBranch className="w-4 h-4" />,
@@ -164,6 +179,8 @@ export function ProjectSettingsDialog({
         return <AlertsSettings />;
       case 'pieces':
         return <PiecesSettings />;
+      case 'credentials':
+        return <CredentialsSettings />;
       case 'environment':
         return <EnvironmentSettings />;
       case 'mcp':
