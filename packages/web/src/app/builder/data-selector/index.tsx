@@ -139,15 +139,22 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         className="transition-all overflow-hidden"
       >
         <Tabs defaultValue="data" className="h-full flex flex-col gap-0">
-          <TabsList variant="outline" className="px-3 mt-1 shrink-0">
-            <TabsTrigger value="data" variant="outline" className="gap-1.5">
+          <TabsList
+            variant="outline"
+            className="px-3 shrink-0 gap-1 border-b border-border w-full justify-start"
+          >
+            <TabsTrigger
+              value="data"
+              variant="outline"
+              className="gap-2 px-3 py-2 hover:text-foreground rounded-none"
+            >
               <Database className="w-4 h-4" />
               {t('Data')}
             </TabsTrigger>
             <TabsTrigger
               value="credentials"
               variant="outline"
-              className="gap-1.5"
+              className="gap-2 px-3 py-2 hover:text-foreground rounded-none"
             >
               <KeyRound className="w-4 h-4" />
               {t('Credentials')}
