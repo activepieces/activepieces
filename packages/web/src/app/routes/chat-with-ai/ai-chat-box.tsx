@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { aiProviderQueries } from '@/features/platform-admin';
+import { projectCollectionUtils } from '@/features/projects';
 
 import {
   EmptyState,
@@ -24,6 +25,7 @@ import {
 import { ChatInput } from './components/chat-input';
 import { ChatMessage } from './components/chat-message';
 import { ChatModelSelector } from './components/chat-model-selector';
+import { ChatProjectSelector } from './components/chat-project-selector';
 import { QuickReplies } from './components/message-content';
 import {
   getTextFromParts,
@@ -76,6 +78,7 @@ function ChatBoxContent({
   const {
     messages,
     modelName,
+    selectedProjectId,
     isStreaming,
     wasCancelled,
     isLoadingHistory,
@@ -84,7 +87,18 @@ function ChatBoxContent({
     cancelStream,
     setConversationId,
     setModelName,
+    setProjectContext,
   } = useAgentChat({ onTitleUpdate, onConversationCreated });
+  const { data: allProjects } = projectCollectionUtils.useAll();
+  const projects = allProjects ?? [];
+
+  const handleProjectChange = useCallback(
+    (projectId: string | null) => {
+      void setProjectContext(projectId);
+    },
+    [setProjectContext],
+  );
+
   const [connectedPieces, setConnectedPieces] = useState<Set<string>>(
     new Set(),
   );
@@ -126,18 +140,29 @@ function ChatBoxContent({
         <div className="flex-1" />
         <EmptyState incognito={incognito} />
         <div className="w-full max-w-3xl mt-6">
-          <SuggestionCards onSend={handleSend} />
+          <SuggestionCards
+            onSend={handleSend}
+            onSelectProject={handleProjectChange}
+            projects={projects}
+          />
           <div className="mt-3">
             <ChatInput
               isStreaming={isStreaming}
               onSend={handleSend}
               onStop={cancelStream}
               leftActions={
-                <ChatModelSelector
-                  chatProviderName={chatProviderName}
-                  selectedModel={modelName}
-                  onModelChange={setModelName}
-                />
+                <>
+                  <ChatProjectSelector
+                    projects={projects}
+                    selectedProjectId={selectedProjectId}
+                    onProjectChange={handleProjectChange}
+                  />
+                  <ChatModelSelector
+                    chatProviderName={chatProviderName}
+                    selectedModel={modelName}
+                    onModelChange={setModelName}
+                  />
+                </>
               }
             />
           </div>
@@ -177,6 +202,9 @@ function ChatBoxContent({
                 connectedPieces={connectedPieces}
                 onPieceConnected={markPieceConnected}
                 onRetry={handleRetry}
+                selectedProjectId={selectedProjectId}
+                projects={projects}
+                onSelectProject={handleProjectChange}
               />
             );
           })}
@@ -236,11 +264,18 @@ function ChatBoxContent({
               onStop={cancelStream}
               placeholder={t('Reply...')}
               leftActions={
-                <ChatModelSelector
-                  chatProviderName={chatProviderName}
-                  selectedModel={modelName}
-                  onModelChange={setModelName}
-                />
+                <>
+                  <ChatProjectSelector
+                    projects={projects}
+                    selectedProjectId={selectedProjectId}
+                    onProjectChange={handleProjectChange}
+                  />
+                  <ChatModelSelector
+                    chatProviderName={chatProviderName}
+                    selectedModel={modelName}
+                    onModelChange={setModelName}
+                  />
+                </>
               }
             />
           </div>

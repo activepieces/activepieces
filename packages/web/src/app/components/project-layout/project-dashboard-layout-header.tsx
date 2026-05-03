@@ -6,7 +6,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { BoxIcon } from '@/components/icons/box';
 import { ConnectIcon } from '@/components/icons/connect';
 import { HistoryIcon } from '@/components/icons/history';
-import { SendIcon } from '@/components/icons/send';
 import { WorkflowIcon } from '@/components/icons/workflow';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Separator } from '@/components/ui/separator';
@@ -73,14 +72,6 @@ export const ProjectDashboardLayoutHeader = () => {
   const isEmbedded = embedState.isEmbedded;
 
   const primaryTabs: ProjectDashboardLayoutHeaderTab[] = [
-    {
-      to: authenticationSession.appendProjectRoutePrefix('/chat'),
-      label: t('Chat'),
-      icon: SendIcon,
-      hasPermission: checkAccess(Permission.READ_CHAT),
-      show: platform.plan.chatEnabled,
-      beta: true,
-    },
     {
       to: authenticationSession.appendProjectRoutePrefix('/automations'),
       label: t('Automations'),

@@ -1,28 +1,16 @@
+import { PROJECT_COLOR_PALETTE, Project } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  Database,
-  Lightbulb,
-  Settings,
-  ShieldCheck,
-  Sparkles,
-  Zap,
-} from 'lucide-react';
+import { Database, Hammer, Lightbulb, Settings, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 
 import { PromptSuggestion } from '@/components/prompt-kit/prompt-suggestion';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { projectCollectionUtils } from '@/features/projects';
-
 export function EmptyState({ incognito }: { incognito: boolean }) {
-  const { project } = projectCollectionUtils.useCurrentProject();
-
   const greeting = incognito
     ? t('Private Chat')
-    : t('What would you like to do in {projectName}?', {
-        projectName: project.displayName,
-      });
+    : t('What would you like to work on?');
 
   return (
     <motion.div
@@ -44,24 +32,69 @@ export function EmptyState({ incognito }: { incognito: boolean }) {
 
 export function SuggestionCards({
   onSend,
+  onSelectProject,
+  projects,
 }: {
   onSend: (text: string, files?: File[]) => void;
+  onSelectProject?: (projectId: string) => void;
+  projects: Project[];
 }) {
-  const suggestions = [
-    { icon: Zap, text: t('Automate a task') },
-    { icon: ShieldCheck, text: t('Handle approvals') },
+  const genericSuggestions = [
     { icon: Database, text: t('Check my data') },
     { icon: Lightbulb, text: t('Brainstorm ideas') },
   ];
 
+  const projectSuggestions = projects.slice(0, 2);
+
   return (
     <div className="flex flex-wrap justify-center gap-2 mt-3">
-      {suggestions.map((s, i) => (
+      {projectSuggestions.map((project, i) => {
+        const color = PROJECT_COLOR_PALETTE[project.icon.color];
+        return (
+          <motion.div
+            key={project.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.3 + i * 0.08 }}
+          >
+            <PromptSuggestion
+              onClick={() => {
+                onSelectProject?.(project.id);
+                onSend(
+                  t('I want to build an automation in {projectName}', {
+                    projectName: project.displayName,
+                  }),
+                );
+              }}
+            >
+              <span
+                className="inline-flex items-center justify-center h-4 w-4 rounded-sm shrink-0 text-[10px] font-bold"
+                style={{
+                  backgroundColor: color.color,
+                  color: color.textColor,
+                }}
+              >
+                {project.displayName.charAt(0).toUpperCase()}
+              </span>
+              <span className="flex items-center gap-1">
+                <Hammer className="h-3 w-3" />
+                {t('Build in {projectName}', {
+                  projectName: project.displayName,
+                })}
+              </span>
+            </PromptSuggestion>
+          </motion.div>
+        );
+      })}
+      {genericSuggestions.map((s, i) => (
         <motion.div
           key={s.text}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.3 + i * 0.08 }}
+          transition={{
+            duration: 0.3,
+            delay: 0.3 + (projectSuggestions.length + i) * 0.08,
+          }}
         >
           <PromptSuggestion onClick={() => onSend(s.text)}>
             <s.icon className="h-3.5 w-3.5" />
