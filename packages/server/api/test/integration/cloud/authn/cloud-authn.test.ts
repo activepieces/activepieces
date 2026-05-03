@@ -166,7 +166,7 @@ describe('Authentication API', () => {
 
         it('auto verify invited users to continue platform sign up', async () => {
             const {
-                mockUser: mockPlatformOwner,
+                mockOwner: mockPlatformOwner,
                 mockPlatform,
             } = await mockAndSaveBasicSetup({
                 platform: {
@@ -235,13 +235,13 @@ describe('Authentication API', () => {
 
         it('should join enterprise platform when signing up with accepted invitation on cloud (no custom domain)', async () => {
             // arrange - enterprise platform exists
-            const { mockPlatform, mockUser } = await mockAndSaveBasicSetup({
+            const { mockPlatform, mockOwner } = await mockAndSaveBasicSetup({
                 platform: { emailAuthEnabled: true },
                 plan: { projectRolesEnabled: true, licenseKey: 'test-key' },
             })
 
             const mockProject = createMockProject({
-                ownerId: mockUser.id,
+                ownerId: mockOwner.id,
                 platformId: mockPlatform.id,
             })
             await db.save('project', mockProject)
