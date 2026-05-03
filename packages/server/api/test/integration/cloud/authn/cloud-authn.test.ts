@@ -28,6 +28,7 @@ import {
     createMockPlatform,
     createMockPlatformPlan,
     createMockProject,
+    createMockUserIdentity,
     createMockUserInvitation,
     mockAndSaveBasicSetup,
     mockBasicUser,
@@ -642,23 +643,36 @@ describe('Authentication API', () => {
     })
 
 
+    async function getOnboardingToken(): Promise<string> {
+        const password = faker.internet.password()
+        const mockUserIdentity = createMockUserIdentity({
+            password,
+            verified: true,
+        })
+        await db.save('user_identity', mockUserIdentity)
+
+        const signInResponse = await app?.inject({
+            method: 'POST',
+            url: '/api/v1/authentication/sign-in',
+            body: createMockSignInRequest({
+                email: mockUserIdentity.email,
+                password,
+            }),
+        })
+        return signInResponse?.json().token
+    }
+
     describe('Create Platform Endpoint', () => {
         it('Creates platform and project with onboarding token', async () => {
             // arrange
-            const mockSignUpRequest = createMockSignUpRequest()
-            const signUpResponse = await app?.inject({
-                method: 'POST',
-                url: '/api/v1/authentication/sign-up',
-                body: mockSignUpRequest,
-            })
-            const signUpBody = signUpResponse?.json()
+            const onboardingToken = await getOnboardingToken()
 
             // act
             const response = await app?.inject({
                 method: 'POST',
                 url: '/api/v1/platforms',
                 headers: {
-                    authorization: `Bearer ${signUpBody.token}`,
+                    authorization: `Bearer ${onboardingToken}`,
                 },
                 body: {
                     name: 'My Platform',
@@ -683,20 +697,14 @@ describe('Authentication API', () => {
 
         it('Fails with missing name', async () => {
             // arrange
-            const mockSignUpRequest = createMockSignUpRequest()
-            const signUpResponse = await app?.inject({
-                method: 'POST',
-                url: '/api/v1/authentication/sign-up',
-                body: mockSignUpRequest,
-            })
-            const signUpBody = signUpResponse?.json()
+            const onboardingToken = await getOnboardingToken()
 
             // act
             const response = await app?.inject({
                 method: 'POST',
                 url: '/api/v1/platforms',
                 headers: {
-                    authorization: `Bearer ${signUpBody.token}`,
+                    authorization: `Bearer ${onboardingToken}`,
                 },
                 body: {},
             })
