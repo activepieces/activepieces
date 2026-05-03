@@ -1,8 +1,7 @@
-import { apId } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { createMockPlatform, createMockUser, createMockUserIdentity } from '../../../helpers/mocks'
+import { createMockPlatform, createMockPlatformPlan, createMockUser, createMockUserIdentity } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -50,36 +49,12 @@ describe('SAML Discover API', () => {
             mockOwner.platformId = mockPlatform.id
             await databaseConnection().getRepository('user').save(mockOwner)
 
-            await databaseConnection().getRepository('platform_plan').save({
-                id: apId(),
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                platformId: mockPlatform.id,
-                ssoEnabled: true,
-                tablesEnabled: false,
-                eventStreamingEnabled: false,
-                includedAiCredits: 0,
-                aiCreditsAutoTopUpState: 'DISABLED',
-                environmentsEnabled: false,
-                analyticsEnabled: false,
-                showPoweredBy: false,
-                auditLogEnabled: false,
-                embeddingEnabled: false,
-                agentsEnabled: false,
-                aiProvidersEnabled: false,
-                chatEnabled: false,
-                managePiecesEnabled: false,
-                manageTemplatesEnabled: false,
-                customAppearanceEnabled: false,
-                teamProjectsLimit: 'ONE',
-                projectRolesEnabled: false,
-                globalConnectionsEnabled: false,
-                customRolesEnabled: false,
-                apiKeysEnabled: false,
-                secretManagersEnabled: false,
-                scimEnabled: false,
-                canary: false,
-            })
+            await databaseConnection().getRepository('platform_plan').save(
+                createMockPlatformPlan({
+                    platformId: mockPlatform.id,
+                    ssoEnabled: true,
+                }),
+            )
 
             const response = await app?.inject({
                 method: 'POST',
@@ -130,36 +105,12 @@ describe('SAML Discover API', () => {
             mockOwner.platformId = mockPlatform.id
             await databaseConnection().getRepository('user').save(mockOwner)
 
-            await databaseConnection().getRepository('platform_plan').save({
-                id: apId(),
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                platformId: mockPlatform.id,
-                ssoEnabled: true,
-                tablesEnabled: false,
-                eventStreamingEnabled: false,
-                includedAiCredits: 0,
-                aiCreditsAutoTopUpState: 'DISABLED',
-                environmentsEnabled: false,
-                analyticsEnabled: false,
-                showPoweredBy: false,
-                auditLogEnabled: false,
-                embeddingEnabled: false,
-                agentsEnabled: false,
-                aiProvidersEnabled: false,
-                chatEnabled: false,
-                managePiecesEnabled: false,
-                manageTemplatesEnabled: false,
-                customAppearanceEnabled: false,
-                teamProjectsLimit: 'ONE',
-                projectRolesEnabled: false,
-                globalConnectionsEnabled: false,
-                customRolesEnabled: false,
-                apiKeysEnabled: false,
-                secretManagersEnabled: false,
-                scimEnabled: false,
-                canary: false,
-            })
+            await databaseConnection().getRepository('platform_plan').save(
+                createMockPlatformPlan({
+                    platformId: mockPlatform.id,
+                    ssoEnabled: true,
+                }),
+            )
 
             const response = await app?.inject({
                 method: 'POST',

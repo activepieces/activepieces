@@ -544,5 +544,100 @@ describe('Authentication API', () => {
 
         })
 
+        it('Fails If the email auth is not enabled', async () => {
+            // arrange
+
+            const rawPassword = faker.internet.password()
+
+            const { mockPlatform } = await mockAndSaveBasicSetup({
+                platform: {
+                    emailAuthEnabled: false,
+                },
+                plan: {
+                    ssoEnabled: true,
+                },
+            })
+
+            const { mockUserIdentity } = await mockBasicUser({
+                user: {
+                    status: UserStatus.ACTIVE,
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                },
+                userIdentity: {
+                    email: faker.internet.email(),
+                    password: rawPassword,
+                    verified: true,
+                },
+            })
+
+            const mockSignInRequest = createMockSignInRequest({
+                email: mockUserIdentity.email,
+                password: rawPassword,
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/sign-in',
+                body: mockSignInRequest,
+            })
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            const responseBody = response?.json()
+
+            expect(responseBody?.code).toBe('EMAIL_AUTH_DISABLED')
+        })
+
+        it('Fails If the domain is not allowed', async () => {
+            // arrange
+            const mockPlatformId = faker.string.nanoid()
+            const mockPlatformDomain = faker.internet.domainName()
+
+            await mockAndSaveBasicSetup({
+                platform: {
+                    id: mockPlatformId,
+                    allowedAuthDomains: [mockPlatformDomain],
+                    enforceAllowedAuthDomains: true,
+                    emailAuthEnabled: true,
+                },
+                plan: {
+                    ssoEnabled: true,
+                },
+
+            })
+            const rawPassword = faker.internet.password()
+            const { mockUserIdentity } = await mockBasicUser({
+                user: {
+                    status: UserStatus.ACTIVE,
+                    platformId: mockPlatformId,
+                    platformRole: PlatformRole.ADMIN,
+                },
+                userIdentity: {
+                    email: faker.internet.email(),
+                    password: rawPassword,
+                    verified: true,
+                },
+            })
+
+
+            const mockSignInRequest = createMockSignInRequest({
+                email: mockUserIdentity.email,
+                password: rawPassword,
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/sign-in',
+                headers: {
+                    Host: mockPlatformDomain,
+                },
+                body: mockSignInRequest,
+            })
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            const responseBody = response?.json()
+
+            expect(responseBody?.code).toBe('DOMAIN_NOT_ALLOWED')
+        })
     })
 })
