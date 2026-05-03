@@ -281,6 +281,8 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
             faker.helpers.enumValue(FilteredPieceBehavior),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         googleAuthEnabled: platform?.googleAuthEnabled ?? true,
+        ssoDomain: platform?.ssoDomain ?? null,
+        ssoDomainVerification: platform?.ssoDomainVerification ?? null,
     }
 }
 
