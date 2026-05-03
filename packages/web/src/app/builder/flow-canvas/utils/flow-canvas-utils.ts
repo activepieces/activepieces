@@ -505,9 +505,8 @@ const buildContinueOnFailureBranchesGraph = (step: FlowAction): ApGraph => {
 
 const offsetRouterChildSteps = (childGraphs: ApGraph[]) => {
   const boundingBoxes = childGraphs.map((g) => calculateGraphBoundingBox(g));
-  const offsets = sharedFlowCanvasUtils.computeRouterChildOffsets(
-    boundingBoxes
-  );
+  const offsets =
+    sharedFlowCanvasUtils.computeRouterChildOffsets(boundingBoxes);
   return childGraphs.map((g, i) =>
     offsetGraph(g, {
       x: offsets[i],
