@@ -63,12 +63,12 @@ function getFlowBoundingBox(step: Step | FlowAction | null | undefined, forBranc
     }
 }
 
-function buildPositions(
-    step: Step | FlowAction | null | undefined,
-    offsetX: number,
-    offsetY: number,
-    positions: Map<string, { x: number, y: number }>,
-): void {
+function buildPositions({ step, offsetX, offsetY, positions }: {
+    step: Step | FlowAction | null | undefined
+    offsetX: number
+    offsetY: number
+    positions: Map<string, { x: number, y: number }>
+}): void {
     if (!step) return
 
     positions.set(step.name, { x: offsetX + FLOW_CANVAS_STEP_WIDTH / 2, y: offsetY })
@@ -82,21 +82,21 @@ function buildPositions(
         const childOffsetX = offsetX + deltaLeftX + FLOW_CANVAS_STEP_WIDTH + FLOW_CANVAS_HSPACE + childLeft
         const childOffsetY = offsetY + FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_LOOP_VOFFSET
         if (step.firstLoopAction) {
-            buildPositions(step.firstLoopAction, childOffsetX, childOffsetY, positions)
+            buildPositions({ step: step.firstLoopAction, offsetX: childOffsetX, offsetY: childOffsetY, positions })
         }
         const subgraphEndY = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_LOOP_VOFFSET + childBoundingBox.height + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
-        buildPositions(step.nextAction, offsetX, offsetY + subgraphEndY, positions)
+        buildPositions({ step: step.nextAction, offsetX, offsetY: offsetY + subgraphEndY, positions })
     }
     else if (step.type === FlowActionType.ROUTER) {
-        const subgraphEndY = positionBranchedChildren(step.children, offsetX, offsetY, positions)
-        buildPositions(step.nextAction, offsetX, offsetY + subgraphEndY, positions)
+        const subgraphEndY = positionBranchedChildren({ children: step.children, offsetX, offsetY, positions })
+        buildPositions({ step: step.nextAction, offsetX, offsetY: offsetY + subgraphEndY, positions })
     }
     else if (hasContinueOnFailureBranches(step)) {
-        const subgraphEndY = positionBranchedChildren(getContinueOnFailureBranchPair(step), offsetX, offsetY, positions)
-        buildPositions(step.nextAction, offsetX, offsetY + subgraphEndY, positions)
+        const subgraphEndY = positionBranchedChildren({ children: getContinueOnFailureBranchPair(step), offsetX, offsetY, positions })
+        buildPositions({ step: step.nextAction, offsetX, offsetY: offsetY + subgraphEndY, positions })
     }
     else {
-        buildPositions(step.nextAction, offsetX, offsetY + FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE, positions)
+        buildPositions({ step: step.nextAction, offsetX, offsetY: offsetY + FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE, positions })
     }
 }
 
@@ -145,12 +145,12 @@ function boundingBoxToLayoutDimensions(b: CanvasBoundingBox): { width: number, l
     }
 }
 
-function positionBranchedChildren(
-    children: ReadonlyArray<FlowAction | null | undefined>,
-    offsetX: number,
-    offsetY: number,
-    positions: Map<string, { x: number, y: number }>,
-): number {
+function positionBranchedChildren({ children, offsetX, offsetY, positions }: {
+    children: ReadonlyArray<FlowAction | null | undefined>
+    offsetX: number
+    offsetY: number
+    positions: Map<string, { x: number, y: number }>
+}): number {
     let maxChildHeight = 0
     if (children.length > 0) {
         const childBoundingBoxes = children.map(c => getFlowBoundingBox(c, true))
@@ -159,7 +159,7 @@ function positionBranchedChildren(
         for (let i = 0; i < children.length; i++) {
             const child = children[i]
             if (child) {
-                buildPositions(child, offsetX + offsets[i], childOffsetY, positions)
+                buildPositions({ step: child, offsetX: offsetX + offsets[i], offsetY: childOffsetY, positions })
             }
             maxChildHeight = Math.max(maxChildHeight, childBoundingBoxes[i].height)
         }
@@ -171,7 +171,7 @@ function hasContinueOnFailureBranches(step: Step | FlowAction): step is CodeActi
     if (step.type !== FlowActionType.CODE && step.type !== FlowActionType.PIECE) {
         return false
     }
-    return step.settings.errorHandlingOptions?.continueOnFailure?.value === true
+    return step.settings.errorHandlingOptions?.continueOnFailure?.value ?? false
 }
 
 function getContinueOnFailureBranchPair(step: CodeAction | PieceAction): (FlowAction | undefined)[] {
@@ -186,7 +186,7 @@ export const flowCanvasUtils = {
      */
     computeStepPositions(trigger: FlowTrigger): Map<string, { x: number, y: number }> {
         const positions = new Map<string, { x: number, y: number }>()
-        buildPositions(trigger, 0, 0, positions)
+        buildPositions({ step: trigger, offsetX: 0, offsetY: 0, positions })
         return positions
     },
     hasContinueOnFailureBranches,
