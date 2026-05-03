@@ -270,7 +270,7 @@ const RevealCredentialRequest = {
     config: {
         security: securityAccess.project(
             [PrincipalType.USER],
-            Permission.READ_APP_CONNECTION,
+            Permission.WRITE_APP_CONNECTION,
             { type: ProjectResourceType.TABLE, tableName: AppConnectionEntity },
         ),
     },

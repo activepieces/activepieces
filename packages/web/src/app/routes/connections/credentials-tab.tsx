@@ -199,6 +199,7 @@ export function CredentialsTab() {
                 {t('Edit')}
               </DropdownMenuItem>
               <DropdownMenuItem
+                disabled={!canWrite}
                 onSelect={(e) => {
                   e.preventDefault();
                   void copyValueToClipboard(row.original.id);
