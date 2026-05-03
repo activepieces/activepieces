@@ -68,6 +68,7 @@ export type ApErrorParams =
     | SessionExpiredParams
     | InvalidLicenseKeyParams
     | NoChatResponseParams
+    | ChatContextLimitExceededParams
     | InvalidSmtpCredentialsErrorParams
     | InvalidGitCredentialsParams
     | InvalidReleaseTypeParams
@@ -143,6 +144,8 @@ export type SessionExpiredParams = BaseErrorParams<ErrorCode.SESSION_EXPIRED, {
 }>
 
 export type NoChatResponseParams = BaseErrorParams<ErrorCode.NO_CHAT_RESPONSE, Record<string, never>>
+
+export type ChatContextLimitExceededParams = BaseErrorParams<ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED, Record<string, never>>
 
 export type EmailAuthIsDisabledParams = BaseErrorParams<ErrorCode.EMAIL_AUTH_DISABLED, Record<string, never>>
 
@@ -496,6 +499,7 @@ export enum ErrorCode {
     MACHINE_NOT_AVAILABLE = 'MACHINE_NOT_AVAILABLE',
     INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
+    CHAT_CONTEXT_LIMIT_EXCEEDED = 'CHAT_CONTEXT_LIMIT_EXCEEDED',
     ERROR_UPDATING_SUBSCRIPTION = 'ERROR_UPDATING_SUBSCRIPTION',
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',

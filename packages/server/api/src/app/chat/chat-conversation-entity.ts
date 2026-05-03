@@ -23,16 +23,21 @@ export const ChatConversationEntity = new EntitySchema<ChatConversationWithRelat
             type: String,
             nullable: true,
         },
-        sandboxSessionId: {
-            type: String,
-            nullable: true,
-        },
         modelName: {
             type: String,
             nullable: true,
         },
+        messages: {
+            type: 'jsonb',
+            nullable: false,
+            default: '[]',
+        },
         summary: {
             type: 'text',
+            nullable: true,
+        },
+        summarizedUpToIndex: {
+            type: Number,
             nullable: true,
         },
     },
