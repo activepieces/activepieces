@@ -1,7 +1,7 @@
 # License Keys (License Activation)
 
 ## Summary
-License Keys are the mechanism by which self-hosted Enterprise customers activate and maintain their subscription. A license key is a string that encodes which EE features are enabled (SSO, SCIM, audit logs, etc.) and an expiry date. The key is validated against Activepieces' remote secrets service (`https://secrets.activepieces.com/license-keys`). When valid, the key's feature flags are written to the platform's `plan` object, enabling gated features. A background job runs daily to re-validate every platform's license key and downgrade to a free plan if the key has expired. The endpoints are public (no auth required) since they are used during self-hosted setup before authentication is configured.
+License Keys are the mechanism by which self-hosted Enterprise customers activate and maintain their subscription. A license key is a string that encodes which EE features are enabled (SSO, SCIM, audit logs, custom domains, etc.) and an expiry date. The key is validated against Activepieces' remote secrets service (`https://secrets.activepieces.com/license-keys`). When valid, the key's feature flags are written to the platform's `plan` object, enabling gated features. A background job runs daily to re-validate every platform's license key and downgrade to a free plan if the key has expired. The endpoints are public (no auth required) since they are used during self-hosted setup before authentication is configured.
 
 ## Key Files
 - `packages/server/api/src/app/ee/license-keys/license-keys-module.ts` — module registration, schedules daily `TRIAL_TRACKER` job
@@ -64,6 +64,7 @@ The remote secrets service returns an object with these feature flags:
 | `managePiecesEnabled` | boolean | Piece management |
 | `manageTemplatesEnabled` | boolean | Template management |
 | `apiKeysEnabled` | boolean | Platform API keys |
+| `customDomainsEnabled` | boolean | Custom domains |
 | `projectRolesEnabled` | boolean | Custom project roles |
 | `analyticsEnabled` | boolean | Analytics dashboard |
 | `globalConnectionsEnabled` | boolean | Global connections |
