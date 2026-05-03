@@ -1,4 +1,4 @@
-import { CodeAction, FlowAction, FlowActionType, LoopOnItemsAction, PieceAction, RouterAction } from '../actions/action'
+import { CodeAction, FlowAction, FlowActionType, PieceAction } from '../actions/action'
 import { FlowTrigger } from '../triggers/trigger'
 
 export const FLOW_CANVAS_STEP_HEIGHT = 60
@@ -11,9 +11,9 @@ export const FLOW_CANVAS_HSPACE = 80
 
 type Step = FlowAction | FlowTrigger
 
-type CanvasBBox = { minX: number, maxX: number, height: number }
+type CanvasBoundingBox = { minX: number, maxX: number, height: number }
 
-function getFlowBBox(step: Step | FlowAction | null | undefined, forBranch = false): CanvasBBox {
+function getFlowBoundingBox(step: Step | FlowAction | null | undefined, forBranch = false): CanvasBoundingBox {
     if (!step) {
         return forBranch
             ? { minX: 0, maxX: FLOW_CANVAS_STEP_WIDTH, height: FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE }
@@ -25,73 +25,41 @@ function getFlowBBox(step: Step | FlowAction | null | undefined, forBranch = fal
     let withChildHeight = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE
 
     if (step.type === FlowActionType.LOOP_ON_ITEMS) {
-        const loopStep = step as LoopOnItemsAction
-        const childBBox = getFlowBBox(loopStep.firstLoopAction, true)
-        const childWidth = childBBox.maxX - childBBox.minX
-        const childLeft = -childBBox.minX + FLOW_CANVAS_STEP_WIDTH / 2
-        const childRight = childBBox.maxX - FLOW_CANVAS_STEP_WIDTH / 2
+        const childBoundingBox = getFlowBoundingBox(step.firstLoopAction, true)
+        const childWidth = childBoundingBox.maxX - childBoundingBox.minX
+        const childLeft = -childBoundingBox.minX + FLOW_CANVAS_STEP_WIDTH / 2
+        const childRight = childBoundingBox.maxX - FLOW_CANVAS_STEP_WIDTH / 2
         const deltaLeftX = -(childWidth + FLOW_CANVAS_STEP_WIDTH + FLOW_CANVAS_HSPACE - FLOW_CANVAS_STEP_WIDTH / 2 - childRight) / 2 - FLOW_CANVAS_STEP_WIDTH / 2
         const childOffsetX = deltaLeftX + FLOW_CANVAS_STEP_WIDTH + FLOW_CANVAS_HSPACE + childLeft
-        const subgraphEndY = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_LOOP_VOFFSET + childBBox.height + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
-        withChildMinX = Math.min(0, deltaLeftX, childOffsetX + childBBox.minX)
-        withChildMaxX = Math.max(FLOW_CANVAS_STEP_WIDTH, deltaLeftX + FLOW_CANVAS_STEP_WIDTH, childOffsetX + childBBox.maxX)
+        const subgraphEndY = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_LOOP_VOFFSET + childBoundingBox.height + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
+        withChildMinX = Math.min(0, deltaLeftX, childOffsetX + childBoundingBox.minX)
+        withChildMaxX = Math.max(FLOW_CANVAS_STEP_WIDTH, deltaLeftX + FLOW_CANVAS_STEP_WIDTH, childOffsetX + childBoundingBox.maxX)
         withChildHeight = Math.max(FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE, subgraphEndY)
     }
     else if (step.type === FlowActionType.ROUTER) {
-        const routerStep = step as RouterAction
-        const children = routerStep.children
+        const children = step.children
         if (children.length > 0) {
-            const childBBoxes = children.map(c => getFlowBBox(c, true))
-            const totalWidth = childBBoxes.reduce((sum, b) => sum + (b.maxX - b.minX), 0) + FLOW_CANVAS_HSPACE * (children.length - 1)
-            const firstLeft = -childBBoxes[0].minX + FLOW_CANVAS_STEP_WIDTH / 2
-            const lastRight = childBBoxes[children.length - 1].maxX - FLOW_CANVAS_STEP_WIDTH / 2
-            let deltaLeftX = -(totalWidth - firstLeft - lastRight) / 2 - firstLeft
-            let routerMinX = 0
-            let routerMaxX = FLOW_CANVAS_STEP_WIDTH
-            let maxChildHeight = 0
-            for (let i = 0; i < children.length; i++) {
-                const bbox = childBBoxes[i]
-                const x = deltaLeftX + (-bbox.minX + FLOW_CANVAS_STEP_WIDTH / 2)
-                routerMinX = Math.min(routerMinX, x + bbox.minX)
-                routerMaxX = Math.max(routerMaxX, x + bbox.maxX)
-                maxChildHeight = Math.max(maxChildHeight, bbox.height)
-                deltaLeftX += (bbox.maxX - bbox.minX) + FLOW_CANVAS_HSPACE
-            }
-            const subgraphEndY = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET + maxChildHeight + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
-            withChildMinX = routerMinX
-            withChildMaxX = routerMaxX
-            withChildHeight = Math.max(FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE, subgraphEndY)
+            const childBoundingBoxes = children.map(c => getFlowBoundingBox(c, true))
+            const merged = mergeBranchedChildBoundingBoxes(childBoundingBoxes)
+            withChildMinX = merged.minX
+            withChildMaxX = merged.maxX
+            withChildHeight = merged.height
         }
     }
     else if (hasContinueOnFailureBranches(step)) {
         const branches = getContinueOnFailureBranchPair(step)
-        const childBBoxes = branches.map(b => getFlowBBox(b, true))
-        const totalWidth = childBBoxes.reduce((sum, b) => sum + (b.maxX - b.minX), 0) + FLOW_CANVAS_HSPACE * (branches.length - 1)
-        const firstLeft = -childBBoxes[0].minX + FLOW_CANVAS_STEP_WIDTH / 2
-        const lastRight = childBBoxes[branches.length - 1].maxX - FLOW_CANVAS_STEP_WIDTH / 2
-        let deltaLeftX = -(totalWidth - firstLeft - lastRight) / 2 - firstLeft
-        let cofMinX = 0
-        let cofMaxX = FLOW_CANVAS_STEP_WIDTH
-        let maxChildHeight = 0
-        for (let i = 0; i < branches.length; i++) {
-            const bbox = childBBoxes[i]
-            const x = deltaLeftX + (-bbox.minX + FLOW_CANVAS_STEP_WIDTH / 2)
-            cofMinX = Math.min(cofMinX, x + bbox.minX)
-            cofMaxX = Math.max(cofMaxX, x + bbox.maxX)
-            maxChildHeight = Math.max(maxChildHeight, bbox.height)
-            deltaLeftX += (bbox.maxX - bbox.minX) + FLOW_CANVAS_HSPACE
-        }
-        const subgraphEndY = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET + maxChildHeight + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
-        withChildMinX = cofMinX
-        withChildMaxX = cofMaxX
-        withChildHeight = Math.max(FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE, subgraphEndY)
+        const childBoundingBoxes = branches.map(b => getFlowBoundingBox(b, true))
+        const merged = mergeBranchedChildBoundingBoxes(childBoundingBoxes)
+        withChildMinX = merged.minX
+        withChildMaxX = merged.maxX
+        withChildHeight = merged.height
     }
 
-    const nextBBox = getFlowBBox(step.nextAction, false)
+    const nextBoundingBox = getFlowBoundingBox(step.nextAction, false)
     return {
-        minX: Math.min(withChildMinX, nextBBox.minX),
-        maxX: Math.max(withChildMaxX, nextBBox.maxX),
-        height: withChildHeight + nextBBox.height,
+        minX: Math.min(withChildMinX, nextBoundingBox.minX),
+        maxX: Math.max(withChildMaxX, nextBoundingBox.maxX),
+        height: withChildHeight + nextBoundingBox.height,
     }
 }
 
@@ -106,70 +74,97 @@ function buildPositions(
     positions.set(step.name, { x: offsetX + FLOW_CANVAS_STEP_WIDTH / 2, y: offsetY })
 
     if (step.type === FlowActionType.LOOP_ON_ITEMS) {
-        const loopStep = step as LoopOnItemsAction
-        const childBBox = getFlowBBox(loopStep.firstLoopAction, true)
-        const childLeft = -childBBox.minX + FLOW_CANVAS_STEP_WIDTH / 2
-        const childRight = childBBox.maxX - FLOW_CANVAS_STEP_WIDTH / 2
-        const childWidth = childBBox.maxX - childBBox.minX
+        const childBoundingBox = getFlowBoundingBox(step.firstLoopAction, true)
+        const childLeft = -childBoundingBox.minX + FLOW_CANVAS_STEP_WIDTH / 2
+        const childRight = childBoundingBox.maxX - FLOW_CANVAS_STEP_WIDTH / 2
+        const childWidth = childBoundingBox.maxX - childBoundingBox.minX
         const deltaLeftX = -(childWidth + FLOW_CANVAS_STEP_WIDTH + FLOW_CANVAS_HSPACE - FLOW_CANVAS_STEP_WIDTH / 2 - childRight) / 2 - FLOW_CANVAS_STEP_WIDTH / 2
         const childOffsetX = offsetX + deltaLeftX + FLOW_CANVAS_STEP_WIDTH + FLOW_CANVAS_HSPACE + childLeft
         const childOffsetY = offsetY + FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_LOOP_VOFFSET
-        if (loopStep.firstLoopAction) {
-            buildPositions(loopStep.firstLoopAction, childOffsetX, childOffsetY, positions)
+        if (step.firstLoopAction) {
+            buildPositions(step.firstLoopAction, childOffsetX, childOffsetY, positions)
         }
-        const subgraphEndY = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_LOOP_VOFFSET + childBBox.height + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
+        const subgraphEndY = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_LOOP_VOFFSET + childBoundingBox.height + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
         buildPositions(step.nextAction, offsetX, offsetY + subgraphEndY, positions)
     }
     else if (step.type === FlowActionType.ROUTER) {
-        const routerStep = step as RouterAction
-        const children = routerStep.children
-        const childBBoxes = children.map(c => getFlowBBox(c, true))
-        let maxChildHeight = 0
-        if (children.length > 0) {
-            const totalWidth = childBBoxes.reduce((sum, b) => sum + (b.maxX - b.minX), 0) + FLOW_CANVAS_HSPACE * (children.length - 1)
-            const firstLeft = -childBBoxes[0].minX + FLOW_CANVAS_STEP_WIDTH / 2
-            const lastRight = childBBoxes[children.length - 1].maxX - FLOW_CANVAS_STEP_WIDTH / 2
-            let deltaLeftX = -(totalWidth - firstLeft - lastRight) / 2 - firstLeft
-            const childOffsetY = offsetY + FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET
-            for (let i = 0; i < children.length; i++) {
-                const child = children[i]
-                const bbox = childBBoxes[i]
-                const branchOffsetX = offsetX + deltaLeftX + (-bbox.minX + FLOW_CANVAS_STEP_WIDTH / 2)
-                if (child) {
-                    buildPositions(child, branchOffsetX, childOffsetY, positions)
-                }
-                maxChildHeight = Math.max(maxChildHeight, bbox.height)
-                deltaLeftX += (bbox.maxX - bbox.minX) + FLOW_CANVAS_HSPACE
-            }
-        }
-        const subgraphEndY = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET + maxChildHeight + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
+        const subgraphEndY = positionBranchedChildren(step.children, offsetX, offsetY, positions)
         buildPositions(step.nextAction, offsetX, offsetY + subgraphEndY, positions)
     }
     else if (hasContinueOnFailureBranches(step)) {
-        const branches = getContinueOnFailureBranchPair(step)
-        const childBBoxes = branches.map(b => getFlowBBox(b, true))
-        const totalWidth = childBBoxes.reduce((sum, b) => sum + (b.maxX - b.minX), 0) + FLOW_CANVAS_HSPACE * (branches.length - 1)
-        const firstLeft = -childBBoxes[0].minX + FLOW_CANVAS_STEP_WIDTH / 2
-        const lastRight = childBBoxes[branches.length - 1].maxX - FLOW_CANVAS_STEP_WIDTH / 2
-        let deltaLeftX = -(totalWidth - firstLeft - lastRight) / 2 - firstLeft
-        const childOffsetY = offsetY + FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET
-        let maxChildHeight = 0
-        for (let i = 0; i < branches.length; i++) {
-            const child = branches[i]
-            const bbox = childBBoxes[i]
-            const branchOffsetX = offsetX + deltaLeftX + (-bbox.minX + FLOW_CANVAS_STEP_WIDTH / 2)
-            if (child) {
-                buildPositions(child, branchOffsetX, childOffsetY, positions)
-            }
-            maxChildHeight = Math.max(maxChildHeight, bbox.height)
-            deltaLeftX += (bbox.maxX - bbox.minX) + FLOW_CANVAS_HSPACE
-        }
-        const subgraphEndY = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET + maxChildHeight + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
+        const subgraphEndY = positionBranchedChildren(getContinueOnFailureBranchPair(step), offsetX, offsetY, positions)
         buildPositions(step.nextAction, offsetX, offsetY + subgraphEndY, positions)
     }
     else {
         buildPositions(step.nextAction, offsetX, offsetY + FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE, positions)
     }
+}
+
+function computeRouterChildOffsets(
+    boundingBoxes: ReadonlyArray<{ width: number, left: number, right: number }>,
+): number[] {
+    if (boundingBoxes.length === 0) return []
+    const totalWidth = boundingBoxes.reduce((sum, b) => sum + b.width, 0)
+        + FLOW_CANVAS_HSPACE * (boundingBoxes.length - 1)
+    let deltaLeftX = -(totalWidth - boundingBoxes[0].left - boundingBoxes[boundingBoxes.length - 1].right) / 2
+        - boundingBoxes[0].left
+    return boundingBoxes.map(b => {
+        const x = deltaLeftX + b.left
+        deltaLeftX += b.width + FLOW_CANVAS_HSPACE
+        return x
+    })
+}
+
+function mergeBranchedChildBoundingBoxes(
+    childBoundingBoxes: CanvasBoundingBox[],
+): { minX: number, maxX: number, height: number } {
+    const offsets = computeRouterChildOffsets(childBoundingBoxes.map(boundingBoxToLayoutDimensions))
+    let mergedMinX = 0
+    let mergedMaxX = FLOW_CANVAS_STEP_WIDTH
+    let maxChildHeight = 0
+    for (let i = 0; i < childBoundingBoxes.length; i++) {
+        const bbox = childBoundingBoxes[i]
+        const x = offsets[i]
+        mergedMinX = Math.min(mergedMinX, x + bbox.minX)
+        mergedMaxX = Math.max(mergedMaxX, x + bbox.maxX)
+        maxChildHeight = Math.max(maxChildHeight, bbox.height)
+    }
+    const subgraphEndY = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET + maxChildHeight + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
+    return {
+        minX: mergedMinX,
+        maxX: mergedMaxX,
+        height: Math.max(FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE, subgraphEndY),
+    }
+}
+
+function boundingBoxToLayoutDimensions(b: CanvasBoundingBox): { width: number, left: number, right: number } {
+    return {
+        width: b.maxX - b.minX,
+        left: -b.minX + FLOW_CANVAS_STEP_WIDTH / 2,
+        right: b.maxX - FLOW_CANVAS_STEP_WIDTH / 2,
+    }
+}
+
+function positionBranchedChildren(
+    children: ReadonlyArray<FlowAction | null | undefined>,
+    offsetX: number,
+    offsetY: number,
+    positions: Map<string, { x: number, y: number }>,
+): number {
+    let maxChildHeight = 0
+    if (children.length > 0) {
+        const childBoundingBoxes = children.map(c => getFlowBoundingBox(c, true))
+        const offsets = computeRouterChildOffsets(childBoundingBoxes.map(boundingBoxToLayoutDimensions))
+        const childOffsetY = offsetY + FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET
+        for (let i = 0; i < children.length; i++) {
+            const child = children[i]
+            if (child) {
+                buildPositions(child, offsetX + offsets[i], childOffsetY, positions)
+            }
+            maxChildHeight = Math.max(maxChildHeight, childBoundingBoxes[i].height)
+        }
+    }
+    return FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET + maxChildHeight + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
 }
 
 function hasContinueOnFailureBranches(step: Step | FlowAction): step is CodeAction | PieceAction {
@@ -194,4 +189,7 @@ export const flowCanvasUtils = {
         buildPositions(trigger, 0, 0, positions)
         return positions
     },
+    hasContinueOnFailureBranches,
+    getContinueOnFailureBranchPair,
+    computeRouterChildOffsets,
 }

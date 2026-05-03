@@ -1,4 +1,4 @@
-import { FlowAction, FlowActionType, FlowState, FlowTrigger, FlowTriggerType, FlowVersion, isNil } from '@activepieces/shared'
+import { CodeActionSettings, FlowAction, FlowActionType, FlowState, FlowTrigger, FlowTriggerType, FlowVersion, isNil, PieceActionSettings } from '@activepieces/shared'
 
 function cleanFlowState(flowState: FlowState): FlowState {
     return {
@@ -84,7 +84,7 @@ function cleanAction(action: FlowAction): FlowAction {
     }
 }
 
-function cleanSettingsWithBranches<S extends { errorHandlingOptions?: { continueOnFailureBranches?: { onSuccess?: FlowAction, onFailure?: FlowAction } } }>(settings: S): S {
+function cleanSettingsWithBranches<S extends CodeActionSettings | PieceActionSettings>(settings: S): S {
     const branches = settings.errorHandlingOptions?.continueOnFailureBranches
     if (isNil(branches) || (isNil(branches.onSuccess) && isNil(branches.onFailure))) {
         return settings

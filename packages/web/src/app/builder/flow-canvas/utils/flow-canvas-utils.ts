@@ -3,6 +3,7 @@ import {
   FlowActionType,
   FlowOperationType,
   FlowRun,
+  flowCanvasUtils as sharedFlowCanvasUtils,
   flowStructureUtil,
   FlowVersion,
   isNil,
@@ -76,12 +77,6 @@ const createBigAddButtonGraph: (
   };
 };
 
-const hasContinueOnFailureBranches = (
-  step: FlowAction | FlowTrigger,
-): step is FlowAction =>
-  (step.type === FlowActionType.CODE || step.type === FlowActionType.PIECE) &&
-  step.settings.errorHandlingOptions?.continueOnFailure?.value === true;
-
 const createStepGraph: (
   step: FlowAction | FlowTrigger,
   graphHeight: number,
@@ -126,7 +121,7 @@ const createStepGraph: (
     edges:
       step.type !== FlowActionType.LOOP_ON_ITEMS &&
       step.type !== FlowActionType.ROUTER &&
-      !hasContinueOnFailureBranches(step)
+      !sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
         ? [straightLineEdge]
         : [],
   };
@@ -152,7 +147,7 @@ const buildFlowGraph: (
       ? buildLoopChildGraph(step)
       : step.type === FlowActionType.ROUTER
       ? buildRouterChildGraph(step)
-      : hasContinueOnFailureBranches(step)
+      : sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
       ? buildContinueOnFailureBranchesGraph(step)
       : null;
 
@@ -509,33 +504,22 @@ const buildContinueOnFailureBranchesGraph = (step: FlowAction): ApGraph => {
 };
 
 const offsetRouterChildSteps = (childGraphs: ApGraph[]) => {
-  const childGraphsBoundingBoxes = childGraphs.map((childGraph) =>
-    calculateGraphBoundingBox(childGraph),
+  const boundingBoxes = childGraphs.map((g) => calculateGraphBoundingBox(g));
+  const offsets = sharedFlowCanvasUtils.computeRouterChildOffsets(
+    boundingBoxes.map((b) => ({
+      width: b.width,
+      left: b.left,
+      right: b.right,
+    })),
   );
-  const totalWidth =
-    childGraphsBoundingBoxes.reduce((acc, current) => acc + current.width, 0) +
-    flowCanvasConsts.HORIZONTAL_SPACE_BETWEEN_NODES * (childGraphs.length - 1);
-  let deltaLeftX =
-    -(
-      totalWidth -
-      childGraphsBoundingBoxes[0].left -
-      childGraphsBoundingBoxes[childGraphs.length - 1].right
-    ) /
-      2 -
-    childGraphsBoundingBoxes[0].left;
-
-  return childGraphsBoundingBoxes.map((childGraphBoundingBox, index) => {
-    const x = deltaLeftX + childGraphBoundingBox.left;
-    deltaLeftX +=
-      childGraphBoundingBox.width +
-      flowCanvasConsts.HORIZONTAL_SPACE_BETWEEN_NODES;
-    return offsetGraph(childGraphs[index], {
-      x,
+  return childGraphs.map((g, i) =>
+    offsetGraph(g, {
+      x: offsets[i],
       y:
         flowCanvasConsts.AP_NODE_SIZE.STEP.height +
         flowCanvasConsts.VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD,
-    });
-  });
+    }),
+  );
 };
 
 const createAddOperationFromAddButtonData = (data: ApButtonData) => {

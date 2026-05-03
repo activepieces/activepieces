@@ -93,6 +93,23 @@ function formatStepSettings(step: Step): string[] {
     return lines
 }
 
+function formatRelationshipLabel(step: StepInfo): string {
+    switch (step.relationship) {
+        case 'trigger':
+            return 'trigger'
+        case 'next':
+            return 'after parent'
+        case 'first_loop_action':
+            return 'inside_loop'
+        case 'on_success_branch':
+            return 'on_success_branch'
+        case 'on_failure_branch':
+            return 'on_failure_branch'
+        case 'branch':
+            return `branch ${step.branchIndex}${step.branchName ? ` "${step.branchName}"` : ''}`
+    }
+}
+
 function formatBranchConditions(conditions: BranchCondition[][]): string {
     const groups = conditions.map((andGroup) => {
         const parts = andGroup.map((c) => {
@@ -212,16 +229,7 @@ function formatFlowStructure(
             continue
         }
 
-        const rel =
-            step.relationship === 'next'
-                ? 'after parent'
-                : step.relationship === 'first_loop_action'
-                    ? 'inside_loop'
-                    : step.relationship === 'on_success_branch'
-                        ? 'on_success_branch'
-                        : step.relationship === 'on_failure_branch'
-                            ? 'on_failure_branch'
-                            : `branch ${step.branchIndex}${step.branchName ? ` "${step.branchName}"` : ''}`
+        const rel = formatRelationshipLabel(step)
 
         let stepDetail = ''
         if (step.type === FlowActionType.PIECE) {

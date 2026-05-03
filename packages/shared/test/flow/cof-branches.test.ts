@@ -75,7 +75,7 @@ function buildFlow(headAction: FlowAction): FlowVersion {
 
 describe('Continue-on-Failure branches', () => {
     describe('schema', () => {
-        it('parses an action with onSuccess and onFailure branches without overflow', () => {
+        it('parses an action with onSuccess and onFailure branches without infinite loop', () => {
             const action = buildCodeAction({
                 name: 'step_1',
                 cof: true,
