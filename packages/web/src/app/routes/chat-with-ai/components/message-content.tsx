@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, Plus, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { Markdown } from '@/components/prompt-kit/markdown';
@@ -46,15 +46,26 @@ function stripAuthContent(content: string): string {
 export function MessageContentWithAuth({
   content,
   onSend,
-  connectedPieces,
-  onPieceConnected,
 }: {
   content: string;
   onSend?: (text: string) => void;
-  connectedPieces?: Set<string>;
-  onPieceConnected?: (piece: string) => void;
 }) {
   const hasAuthUrl = AUTH_URL_PATTERN.test(content);
+
+  const { proposal, connections, finalContent } = useMemo(() => {
+    if (hasAuthUrl) {
+      return { proposal: null, connections: [], finalContent: '' };
+    }
+    const { proposal, cleanContent: afterProposal } =
+      parseAutomationProposal(content);
+    const { connections, cleanContent: afterConnection } =
+      parseAllConnectionsRequired(afterProposal);
+    const { cleanContent: afterQuestions } =
+      parseMultiQuestion(afterConnection);
+    const { cleanContent: afterReplies } = parseQuickReplies(afterQuestions);
+    const finalContent = stripIncompleteSpecialBlock(afterReplies);
+    return { proposal, connections, finalContent };
+  }, [content, hasAuthUrl]);
 
   if (hasAuthUrl) {
     const cleanContent = stripAuthContent(content);
@@ -78,14 +89,6 @@ export function MessageContentWithAuth({
     );
   }
 
-  const { proposal, cleanContent: afterProposal } =
-    parseAutomationProposal(content);
-  const { connections, cleanContent: afterConnection } =
-    parseAllConnectionsRequired(afterProposal);
-  const { cleanContent: afterQuestions } = parseMultiQuestion(afterConnection);
-  const { cleanContent: afterReplies } = parseQuickReplies(afterQuestions);
-  const finalContent = stripIncompleteSpecialBlock(afterReplies);
-
   return (
     <div className="space-y-2">
       {finalContent && (
@@ -98,8 +101,6 @@ export function MessageContentWithAuth({
           key={conn.piece}
           connection={conn}
           onSend={onSend}
-          connectedPieces={connectedPieces}
-          onPieceConnected={onPieceConnected}
         />
       ))}
       {proposal && (
@@ -163,20 +164,15 @@ export function AutomationProposalCard({
 export function ConnectionRequiredCard({
   connection,
   onSend,
-  connectedPieces,
-  onPieceConnected,
 }: {
   connection: ConnectionRequired;
   onSend?: (text: string) => void;
-  connectedPieces?: Set<string>;
-  onPieceConnected?: (piece: string) => void;
 }) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedExternalId, setSelectedExternalId] = useState<string | null>(
     null,
   );
-  const justConnectedInChat = connectedPieces?.has(connection.piece) ?? false;
   const shortName = connection.piece.replace(/[^a-z0-9-]/gi, '');
   const pieceName = connection.piece.startsWith('@activepieces/')
     ? connection.piece
@@ -202,7 +198,6 @@ export function ConnectionRequiredCard({
 
   const handleSelectExisting = (externalId: string, displayName: string) => {
     setSelectedExternalId(externalId);
-    onPieceConnected?.(connection.piece);
     onSend?.(
       `Using existing ${connection.displayName} account "${displayName}". [auth externalId: ${externalId}]`,
     );
@@ -262,8 +257,6 @@ export function ConnectionRequiredCard({
           <div className="border-t bg-muted/30">
             {existing.map((conn, index) => {
               const isSelected = selectedExternalId === conn.externalId;
-              const isJustConnected =
-                justConnectedInChat && index === existing.length - 1;
               return (
                 <motion.button
                   key={conn.externalId}
@@ -292,7 +285,7 @@ export function ConnectionRequiredCard({
                   <span className="flex-1 min-w-0 truncate text-sm">
                     {conn.displayName}
                   </span>
-                  {(isSelected || isJustConnected) && (
+                  {isSelected && (
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
@@ -307,7 +300,7 @@ export function ConnectionRequiredCard({
                       {t('Using {name}', { name: conn.displayName })}
                     </motion.span>
                   )}
-                  {!isSelected && !isJustConnected && (
+                  {!isSelected && (
                     <span className="text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
                       {t('Use this account')}
                     </span>
@@ -326,7 +319,6 @@ export function ConnectionRequiredCard({
             setDialogOpen(open);
             if (createdConnection) {
               setSelectedExternalId(createdConnection.externalId);
-              onPieceConnected?.(connection.piece);
               void queryClient.invalidateQueries({
                 queryKey: ['app-connections'],
               });

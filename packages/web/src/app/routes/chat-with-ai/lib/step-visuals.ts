@@ -60,6 +60,13 @@ const PIECE_KEYWORD_MAP: Record<string, string> = {
   email: 'gmail',
 };
 
+const PIECE_SLUG_PATTERNS = KNOWN_PIECE_SLUGS.map((slug) => ({
+  slug,
+  pattern: new RegExp(
+    `\\b${slug.replace(/-/g, ' ').replace(/\s+/g, '\\s+')}\\b`,
+  ),
+}));
+
 function inferKind({
   label,
   index,
@@ -108,9 +115,7 @@ function inferPieceName({ label }: { label: string }): string | undefined {
     if (text.includes(keyword)) return `@activepieces/piece-${slug}`;
   }
 
-  for (const slug of KNOWN_PIECE_SLUGS) {
-    const word = slug.replace(/-/g, ' ');
-    const pattern = new RegExp(`\\b${word.replace(/\s+/g, '\\s+')}\\b`);
+  for (const { slug, pattern } of PIECE_SLUG_PATTERNS) {
     if (pattern.test(text)) return `@activepieces/piece-${slug}`;
   }
 

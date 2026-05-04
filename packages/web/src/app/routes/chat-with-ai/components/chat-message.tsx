@@ -35,16 +35,12 @@ export function ChatMessage({
   isLastMessage = false,
   onRetry,
   onSend,
-  connectedPieces,
-  onPieceConnected,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
-  connectedPieces: Set<string>;
-  onPieceConnected: (piece: string) => void;
 }) {
   if (message.role === 'user') {
     return <UserMessage message={message} isLastMessage={isLastMessage} />;
@@ -57,13 +53,11 @@ export function ChatMessage({
       isLastMessage={isLastMessage}
       onRetry={onRetry}
       onSend={onSend}
-      connectedPieces={connectedPieces}
-      onPieceConnected={onPieceConnected}
     />
   );
 }
 
-export function UserMessage({
+function UserMessage({
   message,
   isLastMessage = false,
 }: {
@@ -130,22 +124,18 @@ export function UserMessage({
   );
 }
 
-export function AssistantMessage({
+function AssistantMessage({
   message,
   isStreaming,
   isLastMessage = false,
   onRetry,
   onSend,
-  connectedPieces,
-  onPieceConnected,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
-  connectedPieces: Set<string>;
-  onPieceConnected: (piece: string) => void;
 }) {
   const reasoningParts = message.parts.filter(
     (p): p is { type: 'reasoning'; text: string } => p.type === 'reasoning',
@@ -204,10 +194,7 @@ export function AssistantMessage({
           {renderParts({
             parts: renderableParts,
             isStreaming,
-            isLastMessage,
             onSend,
-            connectedPieces,
-            onPieceConnected,
           })}
 
           {isStreaming && !isWaiting && <ChatThinkingLoader showText={false} />}
@@ -272,17 +259,11 @@ export function AssistantMessage({
 function renderParts({
   parts,
   isStreaming,
-  isLastMessage = false,
   onSend,
-  connectedPieces,
-  onPieceConnected,
 }: {
   parts: ChatUIMessage['parts'];
   isStreaming: boolean;
-  isLastMessage?: boolean;
   onSend: (text: string, files?: File[]) => void;
-  connectedPieces: Set<string>;
-  onPieceConnected: (piece: string) => void;
 }): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   const toolBuffer: ChatUIMessage['parts'] = [];
@@ -310,8 +291,6 @@ function renderParts({
           key={idx}
           content={part.text}
           onSend={onSend}
-          connectedPieces={connectedPieces}
-          onPieceConnected={onPieceConnected}
         />,
       );
     }

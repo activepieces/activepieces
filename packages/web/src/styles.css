@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import url('https://api.fontshare.com/v2/css?f[]=sentient@400,500,600,700&display=swap');
 @custom-variant dark (&:is(.dark *));
 
 /* Sentient Variable Font */

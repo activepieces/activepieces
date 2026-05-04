@@ -2,7 +2,7 @@ import { AIProviderName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   ChatContainerContent,
@@ -77,15 +77,9 @@ function ChatBoxContent({
     setConversationId,
     setModelName,
   } = useAgentChat({ onTitleUpdate, onConversationCreated });
-  const [connectedPieces, setConnectedPieces] = useState<Set<string>>(
-    new Set(),
-  );
   const [dismissedFormIds, setDismissedFormIds] = useState<Set<string>>(
     new Set(),
   );
-  const markPieceConnected = useCallback((piece: string) => {
-    setConnectedPieces((prev) => new Set(prev).add(piece));
-  }, []);
 
   useEffect(() => {
     if (initialConversationId) {
@@ -107,11 +101,17 @@ function ChatBoxContent({
   }, [messages, sendMessage]);
 
   const lastMessage = messages[messages.length - 1];
-  const lastMessageText =
-    lastMessage?.role === 'assistant'
-      ? getTextFromParts(lastMessage.parts)
-      : '';
-  const activeQuestions = parseMultiQuestion(lastMessageText).questions;
+  const lastMessageText = useMemo(
+    () =>
+      lastMessage?.role === 'assistant'
+        ? getTextFromParts(lastMessage.parts)
+        : '',
+    [lastMessage],
+  );
+  const activeQuestions = useMemo(
+    () => parseMultiQuestion(lastMessageText).questions,
+    [lastMessageText],
+  );
   const hasActiveForm =
     activeQuestions.length > 0 &&
     !!lastMessage &&
@@ -172,8 +172,6 @@ function ChatBoxContent({
                 isStreaming={isLastStreamingAssistant}
                 isLastMessage={idx === messages.length - 1}
                 onSend={handleSend}
-                connectedPieces={connectedPieces}
-                onPieceConnected={markPieceConnected}
                 onRetry={handleRetry}
               />
             );
@@ -186,18 +184,12 @@ function ChatBoxContent({
             </div>
           )}
 
-          {!wasCancelled &&
-            messages.length > 0 &&
-            messages[messages.length - 1]?.role === 'assistant' && (
-              <QuickReplies
-                replies={
-                  parseQuickReplies(
-                    getTextFromParts(messages[messages.length - 1].parts),
-                  ).replies
-                }
-                onSend={handleSend}
-              />
-            )}
+          {!wasCancelled && lastMessageText && (
+            <QuickReplies
+              replies={parseQuickReplies(lastMessageText).replies}
+              onSend={handleSend}
+            />
+          )}
 
           {error && (
             <motion.div
