@@ -3,7 +3,6 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import {
     apId,
     DefaultProjectRole,
-    McpServerStatus,
     McpServerType,
     Permission,
     ProjectScopedMcpServer,
@@ -35,7 +34,6 @@ function makeMcp(projectId: string): ProjectScopedMcpServer {
         projectId,
         platformId: null,
         type: McpServerType.PROJECT,
-        status: McpServerStatus.ENABLED,
         token: apId(),
         enabledTools: null,
     }

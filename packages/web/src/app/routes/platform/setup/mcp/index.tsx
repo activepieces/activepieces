@@ -1,18 +1,11 @@
-import { ApFlagId, McpServerStatus } from '@activepieces/shared';
+import { ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { CenteredPage } from '@/app/components/centered-page';
 import { McpTools } from '@/app/components/project-settings/mcp-server/mcp-tools';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldLabel,
-} from '@/components/custom/field';
 import { LoadingSpinner } from '@/components/custom/spinner';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
@@ -21,8 +14,6 @@ import { platformMcpHooks } from './platform-mcp-hooks';
 export default function PlatformMcpPage() {
   const { data: mcpServer, isLoading } =
     platformMcpHooks.usePlatformMcpServer();
-  const { mutate: updateStatus, isPending: isStatusUpdating } =
-    platformMcpHooks.useUpdatePlatformMcpStatus();
   const { mutate: updateTools, isPending: isToolsUpdating } =
     platformMcpHooks.useUpdatePlatformMcpTools();
   const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
@@ -42,7 +33,6 @@ export default function PlatformMcpPage() {
     );
   }
 
-  const isEnabled = mcpServer?.status === McpServerStatus.ENABLED;
   const serverUrl = `${(publicUrl ?? '').replace(/\/$/, '')}/mcp/platform`;
 
   const jsonConfiguration = {
@@ -61,32 +51,7 @@ export default function PlatformMcpPage() {
       )}
     >
       <div className="space-y-6">
-        <Field orientation="horizontal">
-          <FieldContent>
-            <FieldLabel htmlFor="platform-mcp-access">
-              {t('Enable Platform MCP')}
-            </FieldLabel>
-            <FieldDescription>
-              {t(
-                'Allow the AI Chat and external agents to access tools across all projects on this platform.',
-              )}
-            </FieldDescription>
-          </FieldContent>
-          <Switch
-            id="platform-mcp-access"
-            checked={isEnabled}
-            onCheckedChange={(checked) =>
-              updateStatus({
-                status: checked
-                  ? McpServerStatus.ENABLED
-                  : McpServerStatus.DISABLED,
-              })
-            }
-            disabled={isStatusUpdating}
-          />
-        </Field>
-
-        {isEnabled && mcpServer && (
+        {mcpServer && (
           <Tabs defaultValue="connection">
             <TabsList>
               <TabsTrigger value="connection">{t('Connection')}</TabsTrigger>
