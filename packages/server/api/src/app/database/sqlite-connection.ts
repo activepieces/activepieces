@@ -169,7 +169,6 @@ import { AddMcpServerSqlite1764524983756 } from './migration/sqlite/176452498375
 import { AddPieceVersionToAppConnection1764856239445 } from './migration/sqlite/1764856239445-addPieceVersionToAppConnection'
 import { FixFlowRunIndexes1764871079154 } from './migration/sqlite/1764871079154-FixFlowRunIndexesSqlite'
 import { RemovePlatformSMTP1765264096034 } from './migration/sqlite/1765264096034-RemovePlatformSMTP'
-import { RemoveMcpServerStatusSqlite1790000000000 } from './migration/sqlite/1790000000000-RemoveMcpServerStatusSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -356,7 +355,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPieceVersionToAppConnection1764856239445,
         FixFlowRunIndexes1764871079154,
         RemovePlatformSMTP1765264096034,
-        RemoveMcpServerStatusSqlite1790000000000,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
