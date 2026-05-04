@@ -17,12 +17,10 @@ vi.mock('../../src/lib/helper/flow-run-progress-reporter', () => ({
     },
 }))
 
-const mockGetPayloadFile = vi.fn()
-vi.mock('../../src/lib/worker-socket', () => ({
-    workerSocket: {
-        getWorkerClient: () => ({
-            getPayloadFile: mockGetPayloadFile,
-        }),
+const { mockGetPayloadFile } = vi.hoisted(() => ({ mockGetPayloadFile: vi.fn() }))
+vi.mock('../../src/lib/helper/payload-file-client', () => ({
+    payloadFileClient: {
+        get: mockGetPayloadFile,
     },
 }))
 
@@ -177,7 +175,7 @@ describe('flow operation invariants', () => {
             expect(mockGetPayloadFile).not.toHaveBeenCalled()
         })
 
-        it('ref payload is fetched via worker socket', async () => {
+        it('ref payload is fetched via the engine HTTP client', async () => {
             mockGetPayloadFile.mockReset()
             mockGetPayloadFile.mockResolvedValue(Buffer.from(JSON.stringify({ hello: 'ref' })))
             const operation = makeBeginOperation({
@@ -192,8 +190,9 @@ describe('flow operation invariants', () => {
             }
 
             expect(mockGetPayloadFile).toHaveBeenCalledWith({
+                apiUrl: 'http://localhost:3000/',
+                engineToken: 'test-token',
                 fileId: 'payload-file-1',
-                projectId: 'proj-1',
             })
         })
     })

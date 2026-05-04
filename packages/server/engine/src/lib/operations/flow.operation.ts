@@ -25,8 +25,8 @@ import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
+import { payloadFileClient } from '../helper/payload-file-client'
 import { triggerHelper } from '../helper/trigger-helper'
-import { workerSocket } from '../worker-socket'
 
 export const flowOperation = {
     execute: async (operation: ExecuteFlowOperation): Promise<EngineResponse<undefined>> => {
@@ -146,34 +146,34 @@ async function hydrateFlowOperation(input: ExecuteFlowOperation): Promise<Hydrat
     if (input.executionType === ExecutionType.BEGIN) {
         return {
             kind: 'begin',
-            payload: await resolveJobPayload(input.triggerPayload, input.projectId),
+            payload: await resolveJobPayload(input.triggerPayload, input),
             executionState: { steps: {}, tags: [] },
         }
     }
-    const executionState = await fetchExecutionStateFromLogs(input.logsFileId, input.projectId)
+    const executionState = await fetchExecutionStateFromLogs(input.logsFileId, input)
     if (Object.keys(executionState.steps).length === 0) {
         throw new EngineGenericError('EmptyResumeStateError', 'RESUME operation received with empty execution state')
     }
     return {
         kind: 'resume',
-        payload: await resolveJobPayload(input.resumePayload, input.projectId) as ResumePayload,
+        payload: await resolveJobPayload(input.resumePayload, input) as ResumePayload,
         executionState,
     }
 }
 
-async function resolveJobPayload(payload: JobPayload, projectId: string): Promise<unknown> {
+async function resolveJobPayload(payload: JobPayload, input: ExecuteFlowOperation): Promise<unknown> {
     if (payload.type === 'inline') {
         return payload.value
     }
-    const buffer = await workerSocket.getWorkerClient().getPayloadFile({ fileId: payload.fileId, projectId })
+    const buffer = await payloadFileClient.get({ apiUrl: input.internalApiUrl, engineToken: input.engineToken, fileId: payload.fileId })
     return JSON.parse(buffer.toString('utf-8'))
 }
 
-async function fetchExecutionStateFromLogs(logsFileId: string | undefined, projectId: string): Promise<ExecutionState> {
+async function fetchExecutionStateFromLogs(logsFileId: string | undefined, input: ExecuteFlowOperation): Promise<ExecutionState> {
     if (isNil(logsFileId)) {
         throw new EngineGenericError('ResumeLogsFileMissing', 'logsFileId is missing for RESUME operation')
     }
-    const buffer = await workerSocket.getWorkerClient().getPayloadFile({ fileId: logsFileId, projectId })
+    const buffer = await payloadFileClient.get({ apiUrl: input.internalApiUrl, engineToken: input.engineToken, fileId: logsFileId })
     const parsed = JSON.parse(buffer.toString('utf-8'))
     if (isNil(parsed?.executionState)) {
         throw new EngineGenericError('ExecutionStateMissing', 'executionState is missing in logs file')
