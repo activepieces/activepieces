@@ -47,6 +47,8 @@ type RunsTableColumnsProps = {
   setSelectedAll: Dispatch<SetStateAction<boolean>>;
   excludedRows: Set<string>;
   setExcludedRows: Dispatch<SetStateAction<Set<string>>>;
+  onViewError: (run: FlowRun) => void;
+  onViewRun: (run: FlowRun) => void;
 };
 export const runsTableColumns = ({
   setSelectedRows,
@@ -56,6 +58,8 @@ export const runsTableColumns = ({
   excludedRows,
   setExcludedRows,
   data,
+  onViewError,
+  onViewRun,
 }: RunsTableColumnsProps): ColumnDef<RowDataWithActions<FlowRun>>[] => [
   {
     id: 'select',
@@ -305,32 +309,38 @@ export const runsTableColumns = ({
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={t('Failed Step')}
+        title={t('Failure')}
         icon={AlertTriangle}
       />
     ),
     cell: ({ row }) => {
       const { failedStep } = row.original;
-      const parsedErrorMessage = tryParsingErrorMessage(
-        failedStep?.message ?? '',
-      );
       if (isNil(failedStep)) {
         return <div className="text-left">-</div>;
       }
-      if (!failedStep.message) {
-        return <div className="text-left">{failedStep.displayName}</div>;
-      }
       return (
-        <div className="flex items-center gap-2">
+        <div className="text-left">
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="text-left">{failedStep.displayName}</div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (failedStep.message) {
+                    onViewError(row.original);
+                  } else {
+                    onViewRun(row.original);
+                  }
+                }}
+              >
+                {t('View error')}
+              </Button>
             </TooltipTrigger>
-            <TooltipContent
-              side="bottom"
-              className="max-w-md whitespace-pre-wrap"
-            >
-              {parsedErrorMessage}
+            <TooltipContent side="bottom">
+              {t('Failed on ({stepName})', {
+                stepName: failedStep.displayName,
+              })}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -338,11 +348,3 @@ export const runsTableColumns = ({
     },
   },
 ];
-
-const tryParsingErrorMessage = (message: string) => {
-  try {
-    return JSON.stringify(JSON.parse(message), null, 2);
-  } catch (error) {
-    return message;
-  }
-};

@@ -55,6 +55,7 @@ import { useNewWindow } from '@/lib/navigation-utils';
 
 import { runsTableColumns } from './columns';
 import { FailedRetryRunsDialog } from './failed-retry-runs-dialog';
+import { FailedStepDialog } from './failed-step-dialog';
 import {
   RetriedRunsSnackbar,
   RUN_IDS_QUERY_PARAM,
@@ -77,6 +78,7 @@ export const RunsTable = () => {
     Required<FlowRunWithRetryError>[]
   >([]);
   const [failedRetryDialogOpen, setFailedRetryDialogOpen] = useState(false);
+  const [errorDialogRun, setErrorDialogRun] = useState<FlowRun | null>(null);
 
   const [hasSeededDefaultRange, setHasSeededDefaultRange] = useState(() =>
     searchParams.has('createdAfter'),
@@ -148,6 +150,7 @@ export const RunsTable = () => {
       return runningRuns?.length ? 15 * 1000 : false;
     },
   });
+  const navigate = useNavigate();
   const columns = runsTableColumns({
     data,
     selectedRows,
@@ -156,9 +159,13 @@ export const RunsTable = () => {
     setSelectedAll,
     excludedRows,
     setExcludedRows,
+    onViewError: setErrorDialogRun,
+    onViewRun: (run) =>
+      navigate(
+        authenticationSession.appendProjectRoutePrefix(`/runs/${run.id}`),
+      ),
   });
 
-  const navigate = useNavigate();
   const { data: flowsData, isFetching: isFetchingFlows } = flowHooks.useFlows({
     limit: 1000,
     cursor: undefined,
@@ -633,6 +640,13 @@ export const RunsTable = () => {
         open={failedRetryDialogOpen}
         onOpenChange={setFailedRetryDialogOpen}
         failedRuns={failedRetryRuns}
+      />
+      <FailedStepDialog
+        run={errorDialogRun}
+        open={errorDialogRun !== null}
+        onOpenChange={(open) => {
+          if (!open) setErrorDialogRun(null);
+        }}
       />
     </div>
   );
