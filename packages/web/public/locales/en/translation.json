@@ -1598,5 +1598,10 @@
   "TXT record not found yet — DNS can take a few minutes.": "TXT record not found yet — DNS can take a few minutes.",
   "Add this TXT record at your DNS provider. We'll detect it once it propagates — this usually takes a few minutes.": "Add this TXT record at your DNS provider. We'll detect it once it propagates — this usually takes a few minutes.",
   "When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.": "When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.",
-  "invalidSsoDomain": "Must be a valid lowercase domain (e.g. acme.com)"
+  "invalidSsoDomain": "Must be a valid lowercase domain (e.g. acme.com)",
+  "All app connections across every project on this platform": "All app connections across every project on this platform",
+  "Connections created in any project on this platform will appear here.": "Connections created in any project on this platform will appear here.",
+  "Scope": "Scope",
+  "Global": "Global",
+  "{count, plural, =1 {1 project} other {# projects}}": "{count, plural, =1 {1 project} other {# projects}}"
 }

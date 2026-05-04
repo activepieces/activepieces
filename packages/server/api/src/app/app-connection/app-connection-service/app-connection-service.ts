@@ -263,6 +263,8 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
 
     async list({
         projectId,
+        projectIds,
+        ownerIds,
         pieceName,
         cursorRequest,
         displayName,
@@ -300,11 +302,17 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         if (!isNil(externalIds)) {
             querySelector.externalId = In(externalIds)
         }
+        if (!isNil(ownerIds) && ownerIds.length > 0) {
+            querySelector.ownerId = In(ownerIds)
+        }
         const queryBuilder = appConnectionsRepo()
             .createQueryBuilder('app_connection')
             .leftJoinAndSelect('app_connection.owner', 'owner')
             .leftJoinAndSelect('owner.identity', 'owner_identity')
             .where(querySelector)
+        if (!isNil(projectIds) && projectIds.length > 0) {
+            queryBuilder.andWhere('app_connection."projectIds" && :projectIds::varchar[]', { projectIds })
+        }
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
         const flowIdsByExternalId = await fetchFlowIdsForConnections(log, data)
@@ -673,6 +681,8 @@ type ValidateConnectionValueParams = {
 
 type ListParams = {
     projectId: ProjectId | null
+    projectIds?: ProjectId[]
+    ownerIds?: string[]
     platformId: string
     pieceName: string | undefined
     cursorRequest: Cursor | null
