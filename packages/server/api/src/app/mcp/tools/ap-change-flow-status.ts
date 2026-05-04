@@ -3,9 +3,9 @@ import {
     FlowOperationType,
     FlowStatus,
     isNil,
-    McpServer,
     McpToolDefinition,
     Permission,
+    ProjectScopedMcpServer,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -18,7 +18,7 @@ const changeFlowStatusInput = z.object({
     status: z.enum(Object.values(FlowStatus) as [FlowStatus, ...FlowStatus[]]),
 })
 
-export const apChangeFlowStatusTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apChangeFlowStatusTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_change_flow_status',
         permission: Permission.UPDATE_FLOW_STATUS,

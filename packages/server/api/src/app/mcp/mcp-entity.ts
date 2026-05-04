@@ -1,8 +1,9 @@
-import { McpServer, Project } from '@activepieces/shared'
+import { McpServer, Platform, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
-type McpServerWithSchema = McpServer & {  
+type McpServerWithSchema = McpServer & {
+    platform: Platform
     project: Project
 }
 
@@ -10,8 +11,15 @@ export const McpServerEntity = new EntitySchema<McpServerWithSchema>({
     name: 'mcp_server',
     columns: {
         ...BaseColumnSchemaPart,
-        projectId: ApIdSchema,
-        status: {
+        platformId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        projectId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        type: {
             type: String,
             nullable: false,
         },
@@ -35,8 +43,23 @@ export const McpServerEntity = new EntitySchema<McpServerWithSchema>({
             columns: ['token'],
             unique: true,
         },
+        {
+            name: 'idx_mcp_server_platform_id',
+            columns: ['platformId'],
+            unique: true,
+        },
     ],
     relations: {
+        platform: {
+            type: 'many-to-one',
+            target: 'platform',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'platformId',
+                foreignKeyConstraintName: 'fk_mcp_server_platform_id',
+            },
+        },
         project: {
             type: 'many-to-one',
             target: 'project',
@@ -48,6 +71,4 @@ export const McpServerEntity = new EntitySchema<McpServerWithSchema>({
             },
         },
     },
-    
 })
-

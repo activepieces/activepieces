@@ -1,8 +1,8 @@
 import {
     LocalesEnum,
-    McpServer,
     McpToolDefinition,
     PieceCategory,
+    ProjectScopedMcpServer,
     SuggestionType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -21,7 +21,7 @@ const listPiecesSchema = z.object({
     includeTriggers: z.boolean().optional(),
 })
 
-export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apListPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_pieces',
         description: 'List available pieces with their actions and triggers. Use includeActions/includeTriggers for details.',

@@ -3,16 +3,16 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import {
     apId,
     DefaultProjectRole,
-    McpServer,
-    McpServerStatus,
+    McpServerType,
     Permission,
+    ProjectScopedMcpServer,
 } from '@activepieces/shared'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apSetupGuideTool } from '../../../../src/app/mcp/tools/ap-setup-guide'
-import { resolvePermissionChecker } from '../../../../src/app/mcp/mcp-service'
+import { resolvePermissionChecker } from '../../../../src/app/mcp/mcp-permissions'
 
 let app: FastifyInstance
 let mockLog: FastifyBaseLogger
@@ -26,13 +26,14 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-function makeMcp(projectId: string): McpServer {
+function makeMcp(projectId: string): ProjectScopedMcpServer {
     return {
         id: apId(),
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
         projectId,
-        status: McpServerStatus.ENABLED,
+        platformId: null,
+        type: McpServerType.PROJECT,
         token: apId(),
         enabledTools: null,
     }

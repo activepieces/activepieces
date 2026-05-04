@@ -1,5 +1,12 @@
 import { t } from 'i18next';
-import { Database, Lightbulb, Settings, ShieldCheck, Zap } from 'lucide-react';
+import {
+  Database,
+  Lightbulb,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Zap,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,7 +15,9 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function EmptyState({ incognito }: { incognito: boolean }) {
-  const greeting = incognito ? t('Private Chat') : t('What can I do for you?');
+  const greeting = incognito
+    ? t('Private Chat')
+    : t('What would you like to work on?');
 
   return (
     <motion.div
@@ -17,12 +26,10 @@ export function EmptyState({ incognito }: { incognito: boolean }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
+      <Sparkles className="h-7 w-7 text-primary shrink-0" />
       <h2
         className="text-[28px] font-bold leading-tight bg-[length:200%_100%] animate-[shimmer_3s_ease-in-out_infinite] bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent"
-        style={{
-          textWrap: 'balance',
-          fontFamily: '"Sentient", ui-serif, Georgia, serif',
-        }}
+        style={{ textWrap: 'balance' }}
       >
         {greeting}
       </h2>

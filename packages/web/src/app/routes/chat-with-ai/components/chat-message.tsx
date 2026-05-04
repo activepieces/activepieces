@@ -1,3 +1,4 @@
+import { Project } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Copy, Paperclip, RefreshCw } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -29,18 +30,26 @@ import { ChatThinkingLoader } from './chat-thinking-loader';
 import { MessageContentWithAuth } from './message-content';
 import { ToolCallGroup } from './tool-call-group';
 
+const HIDDEN_TOOLS = new Set(['ap_set_session_title', 'ap_select_project']);
+
 export function ChatMessage({
   message,
   isStreaming,
   isLastMessage = false,
   onRetry,
   onSend,
+  selectedProjectId,
+  projects,
+  onSelectProject,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
+  selectedProjectId?: string | null;
+  projects?: Project[];
+  onSelectProject?: (projectId: string) => void;
 }) {
   if (message.role === 'user') {
     return <UserMessage message={message} isLastMessage={isLastMessage} />;
@@ -53,6 +62,9 @@ export function ChatMessage({
       isLastMessage={isLastMessage}
       onRetry={onRetry}
       onSend={onSend}
+      selectedProjectId={selectedProjectId}
+      projects={projects}
+      onSelectProject={onSelectProject}
     />
   );
 }
@@ -130,12 +142,18 @@ function AssistantMessage({
   isLastMessage = false,
   onRetry,
   onSend,
+  selectedProjectId,
+  projects,
+  onSelectProject,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
+  selectedProjectId?: string | null;
+  projects?: Project[];
+  onSelectProject?: (projectId: string) => void;
 }) {
   const reasoningParts = message.parts.filter(
     (p): p is { type: 'reasoning'; text: string } => p.type === 'reasoning',
@@ -143,7 +161,6 @@ function AssistantMessage({
   const thoughts = reasoningParts.map((p) => p.text).join('');
   const hasThoughts = thoughts.length > 0;
 
-  const HIDDEN_TOOLS = new Set(['ap_set_session_title']);
   const dynamicToolParts = message.parts.filter(
     (p) => p.type === 'dynamic-tool' && !HIDDEN_TOOLS.has(p.toolName),
   );
@@ -194,7 +211,11 @@ function AssistantMessage({
           {renderParts({
             parts: renderableParts,
             isStreaming,
+            isLastMessage,
             onSend,
+            selectedProjectId,
+            projects,
+            onSelectProject,
           })}
 
           {isStreaming && !isWaiting && <ChatThinkingLoader showText={false} />}
@@ -234,16 +255,14 @@ function AssistantMessage({
                     <RefreshCw className="h-3.5 w-3.5" />
                   </button>
                 </MessageAction>
-                {hasThoughts && (
+                {hasThoughts && thinkingSeconds >= 0.1 && (
                   <MessageAction
                     tooltip={
                       isReasoningOpen ? t('Hide thinking') : t('Show thinking')
                     }
                   >
                     <ReasoningTrigger className="text-xs text-muted-foreground rounded-md px-1.5 py-1 gap-1 transition-colors hover:bg-muted hover:text-foreground [&>span]:!text-muted-foreground hover:[&>span]:!text-foreground [&>div>svg]:!h-3 [&>div>svg]:!w-3">
-                      {thinkingSeconds >= 0.1
-                        ? formatThinkingTime({ seconds: thinkingSeconds })
-                        : t('Thoughts')}
+                      {formatThinkingTime({ seconds: thinkingSeconds })}
                     </ReasoningTrigger>
                   </MessageAction>
                 )}
@@ -259,11 +278,19 @@ function AssistantMessage({
 function renderParts({
   parts,
   isStreaming,
+  isLastMessage = false,
   onSend,
+  selectedProjectId,
+  projects,
+  onSelectProject,
 }: {
   parts: ChatUIMessage['parts'];
   isStreaming: boolean;
+  isLastMessage?: boolean;
   onSend: (text: string, files?: File[]) => void;
+  selectedProjectId?: string | null;
+  projects?: Project[];
+  onSelectProject?: (projectId: string) => void;
 }): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   const toolBuffer: ChatUIMessage['parts'] = [];
@@ -291,6 +318,10 @@ function renderParts({
           key={idx}
           content={part.text}
           onSend={onSend}
+          isLastMessage={isLastMessage}
+          selectedProjectId={selectedProjectId}
+          projects={projects}
+          onSelectProject={onSelectProject}
         />,
       );
     }
