@@ -106,6 +106,8 @@ export const emailService = (log: FastifyBaseLogger) => ({
         issueOrRunsPath,
         isIssue,
         createdAt,
+        failedStepDisplayName,
+        failedStepMessage,
     }: IssueCreatedArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
@@ -135,6 +137,8 @@ export const emailService = (log: FastifyBaseLogger) => ({
                     createdAt,
                     isIssue: isIssue.toString(),
                     issueUrl: issueOrRunsPath,
+                    failedStepDisplayName: failedStepDisplayName ?? '',
+                    failedStepMessage: failedStepMessage ?? '',
                 },
             },
         })
@@ -273,4 +277,6 @@ type IssueCreatedArgs = {
     isIssue: boolean
     issueOrRunsPath: string
     createdAt: string
+    failedStepDisplayName?: string
+    failedStepMessage?: string
 }

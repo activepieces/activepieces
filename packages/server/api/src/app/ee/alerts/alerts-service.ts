@@ -1,5 +1,5 @@
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { ActivepiecesError, Alert, AlertChannel, ApEdition, ApId, apId, ErrorCode, ListAlertsParams, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, Alert, AlertChannel, ApEdition, ApId, apId, ErrorCode, FailedStep, ListAlertsParams, SeekPage } from '@activepieces/shared'
 
 import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
@@ -26,9 +26,11 @@ export const alertsService = (log: FastifyBaseLogger) => ({
     async sendAlertOnRunFinish({
         issueToAlert,
         flowRunId,
+        failedStep,
     }: {
         issueToAlert: IssueToAlert
         flowRunId: string
+        failedStep?: FailedStep
     }): Promise<void> {
         if (!paidEditions) {
             return
@@ -57,6 +59,8 @@ export const alertsService = (log: FastifyBaseLogger) => ({
             createdAt: dayjs(issueToAlert.created)
                 .tz('America/Los_Angeles')
                 .format('DD MMM YYYY, HH:mm [PT]'),
+            failedStepDisplayName: failedStep?.displayName,
+            failedStepMessage: failedStep?.message,
         }
 
         await sendAlertOnFlowFailure(log, alertsInfo)
@@ -145,6 +149,8 @@ type IssueParams = {
     flowRunId: string
     flowName: string
     createdAt: string
+    failedStepDisplayName?: string
+    failedStepMessage?: string
 }
 
 type IssueToAlert = {

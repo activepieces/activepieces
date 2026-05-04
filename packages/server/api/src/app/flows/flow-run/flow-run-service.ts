@@ -96,9 +96,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 flowId: In(params.flowId),
             })
         }
-        if (params.status) {
+        const narrowedStatus = isNil(params.failedStepMessage)
+            ? params.status
+            : [FlowRunStatus.FAILED]
+        if (narrowedStatus) {
             query = query.andWhere({
-                status: In(params.status),
+                status: In(narrowedStatus),
             })
         }
         if (params.createdAfter) {
@@ -118,6 +121,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         if (!isNil(params.failedStepName)) {
             query = query.andWhere('flow_run."failedStep"->>\'name\' = :failedStepName', {
                 failedStepName: params.failedStepName,
+            })
+        }
+        if (!isNil(params.failedStepMessage)) {
+            query = query.andWhere('flow_run."failedStep"->>\'message\' ILIKE :failedStepMessage', {
+                failedStepMessage: `%${params.failedStepMessage}%`,
             })
         }
         if (params.flowRunIds) {
@@ -541,6 +549,11 @@ async function filterFlowRunsAndApplyFilters(
             failedStepName: params.failedStepName,
         })
     }
+    if (params.failedStepMessage) {
+        query = query.andWhere('flow_run."failedStep"->>\'message\' ILIKE :failedStepMessage', {
+            failedStepMessage: `%${params.failedStepMessage}%`,
+        })
+    }
 
     const flowRuns = await query.getMany()
     return flowRuns
@@ -669,6 +682,7 @@ type ListParams = {
     createdAfter?: string
     createdBefore?: string
     failedStepName?: string
+    failedStepMessage?: string
     flowRunIds?: FlowRunId[]
     includeArchived?: boolean
     environment?: RunEnvironment
@@ -753,6 +767,7 @@ type BulkRetryParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+    failedStepMessage?: string
 }
 
 type BulkArchiveActionParams = {
@@ -765,6 +780,7 @@ type BulkArchiveActionParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+    failedStepMessage?: string
 }
 
 type CountByStatusParams = {
@@ -783,4 +799,5 @@ type FilterFlowRunsAndApplyFiltersParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+    failedStepMessage?: string
 }

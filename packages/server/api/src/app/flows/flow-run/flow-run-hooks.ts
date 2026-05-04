@@ -33,7 +33,11 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
             }
 
             if (paidEditions) {
-                await alertsService(log).sendAlertOnRunFinish({ issueToAlert, flowRunId: flowRun.id })
+                await alertsService(log).sendAlertOnRunFinish({
+                    issueToAlert,
+                    flowRunId: flowRun.id,
+                    failedStep: flowRun.failedStep,
+                })
             }
         }
         if (!paidEditions) {

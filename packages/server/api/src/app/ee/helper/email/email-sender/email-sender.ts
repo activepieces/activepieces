@@ -49,6 +49,8 @@ type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     flowName: string
     isIssue: string
     createdAt: string
+    failedStepDisplayName: string
+    failedStepMessage: string
 }>
 
 type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
