@@ -20,7 +20,7 @@ import {
     TriggerHookType,
     TriggerPayload,
 } from '@activepieces/shared'
-import { EngineConstants } from '../handler/context/engine-constants'
+import { EngineConstants, HydratedFlowInput } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
@@ -30,10 +30,12 @@ import { workerSocket } from '../worker-socket'
 
 export const flowOperation = {
     execute: async (operation: ExecuteFlowOperation): Promise<EngineResponse<undefined>> => {
-        const input = operation as ExecuteFlowOperation
-        const hydrated = await hydrateFlowOperation(input)
-        const constants = EngineConstants.fromExecuteFlowInput(input, hydrated.resumePayload)
-        const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input, hydrated, constants)).finishExecution()
+        const input: HydratedExecuteFlowOperation = {
+            ...operation,
+            hydrated: await hydrateFlowOperation(operation),
+        }
+        const constants = EngineConstants.fromExecuteFlowInput(input)
+        const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input, constants)).finishExecution()
         await flowRunProgressReporter.sendUpdate({
             engineConstants: constants,
             flowExecutorContext: output,
@@ -49,7 +51,7 @@ export const flowOperation = {
     },
 }
 
-const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation, hydrated: HydratedFlowInput, constants: EngineConstants): Promise<FlowExecutorContext> => {
+const executieSingleStepOrFlowOperation = async (input: HydratedExecuteFlowOperation, constants: EngineConstants): Promise<FlowExecutorContext> => {
     const testSingleStepMode = !isNil(constants.stepNameToTest)
     if (testSingleStepMode) {
         const testContext = await testExecutionContext.stateFromFlowVersion({
@@ -64,36 +66,31 @@ const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation, hy
         const step = flowStructureUtil.getActionOrThrow(input.stepNameToTest!, input.flowVersion.trigger)
         return flowExecutor.execute({
             action: step,
-            executionState: await getFlowExecutionState(input, hydrated, testContext),
+            executionState: await getFlowExecutionState(input, testContext),
             constants,
         })
     }
     return flowExecutor.executeFromTrigger({
-        executionState: await getFlowExecutionState(input, hydrated, FlowExecutorContext.empty()),
+        executionState: await getFlowExecutionState(input, FlowExecutorContext.empty()),
         constants,
         input,
-        triggerPayload: hydrated.triggerPayload,
     })
 }
 
-async function getFlowExecutionState(input: ExecuteFlowOperation, hydrated: HydratedFlowInput, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
-    switch (input.executionType) {
-        case ExecutionType.BEGIN: {
-            const newPayload = await runOrReturnPayload(input, hydrated.triggerPayload)
-            flowContext = flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
-                type: input.flowVersion.trigger.type,
-                status: StepOutputStatus.SUCCEEDED,
-                input: {},
-            }).setOutput(newPayload))
-            break
-        }
-        case ExecutionType.RESUME: {
-            flowContext = flowContext.addTags(hydrated.executionState.tags)
-            break
-        }
+async function getFlowExecutionState(input: HydratedExecuteFlowOperation, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
+    if (input.hydrated.kind === 'begin') {
+        const newPayload = await runOrReturnPayload(input as BeginExecuteFlowOperation, input.hydrated.payload)
+        flowContext = flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
+            type: input.flowVersion.trigger.type,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+        }).setOutput(newPayload))
+    }
+    else {
+        flowContext = flowContext.addTags(input.hydrated.executionState.tags)
     }
 
-    for (const [step, output] of Object.entries(hydrated.executionState.steps)) {
+    for (const [step, output] of Object.entries(input.hydrated.executionState.steps)) {
         if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
             const newOutput = await insertSuccessStepsOrPausedRecursively(output)
             if (!isNil(newOutput)) {
@@ -148,7 +145,8 @@ async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Pr
 async function hydrateFlowOperation(input: ExecuteFlowOperation): Promise<HydratedFlowInput> {
     if (input.executionType === ExecutionType.BEGIN) {
         return {
-            triggerPayload: await resolveJobPayload(input.triggerPayload, input.projectId),
+            kind: 'begin',
+            payload: await resolveJobPayload(input.triggerPayload, input.projectId),
             executionState: { steps: {}, tags: [] },
         }
     }
@@ -157,7 +155,8 @@ async function hydrateFlowOperation(input: ExecuteFlowOperation): Promise<Hydrat
         throw new EngineGenericError('EmptyResumeStateError', 'RESUME operation received with empty execution state')
     }
     return {
-        resumePayload: await resolveJobPayload(input.resumePayload, input.projectId) as ResumePayload,
+        kind: 'resume',
+        payload: await resolveJobPayload(input.resumePayload, input.projectId) as ResumePayload,
         executionState,
     }
 }
@@ -182,8 +181,4 @@ async function fetchExecutionStateFromLogs(logsFileId: string | undefined, proje
     return parsed.executionState as ExecutionState
 }
 
-type HydratedFlowInput = {
-    triggerPayload?: unknown
-    resumePayload?: ResumePayload
-    executionState: ExecutionState
-}
+export type HydratedExecuteFlowOperation = ExecuteFlowOperation & { hydrated: HydratedFlowInput }

@@ -1,5 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, flowStructureUtil, FlowVersionState, PlatformId, Project, ProjectId, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionState, flowStructureUtil, FlowVersionState, PlatformId, Project, ProjectId, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -118,7 +118,7 @@ export class EngineConstants {
         this.stepNames = params.stepNames
     }
   
-    public static fromExecuteFlowInput(input: ExecuteFlowOperation, resumePayload?: ResumePayload): EngineConstants {
+    public static fromExecuteFlowInput(input: ExecuteFlowOperation & { hydrated?: HydratedFlowInput }): EngineConstants {
         return new EngineConstants({
             flowId: input.flowVersion.flowId,
             flowVersionId: input.flowVersion.id,
@@ -133,7 +133,7 @@ export class EngineConstants {
             streamStepProgress: input.streamStepProgress,
             workerHandlerId: input.workerHandlerId ?? null,
             httpRequestId: input.httpRequestId ?? null,
-            resumePayload: input.executionType === ExecutionType.RESUME ? resumePayload : undefined,
+            resumePayload: input.hydrated?.kind === 'resume' ? input.hydrated.payload : undefined,
             runEnvironment: input.runEnvironment,
             stepNameToTest: input.stepNameToTest ?? undefined,
             logsUploadUrl: input.logsUploadUrl,
@@ -251,3 +251,7 @@ export class EngineConstants {
 const addTrailingSlashIfMissing = (url: string): string => {
     return url.endsWith('/') ? url : url + '/'
 }
+
+export type HydratedFlowInput =
+    | { kind: 'begin', payload: unknown, executionState: ExecutionState }
+    | { kind: 'resume', payload: ResumePayload, executionState: ExecutionState }
