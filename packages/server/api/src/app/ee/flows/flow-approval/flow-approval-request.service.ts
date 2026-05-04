@@ -73,18 +73,20 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             versionId: approval.flowVersionId,
         })
 
-        await flowService(log).setPublishedVersion({ flow, lockedVersion })
+        const updated = await transaction(async (entityManager) => {
+            await flowService(log).setPublishedVersion({ flow, lockedVersion, entityManager })
+            return flowApprovalRequestRepo(entityManager).save({
+                ...approval,
+                state: FlowApprovalRequestState.APPROVED,
+                approverId: approverPrincipal.id,
+                decidedAt: new Date().toISOString(),
+            })
+        })
+
         await flowService(log).applyStatusChangeForPublishedFlow({
             id: flow.id,
             projectId: approval.projectId,
             newStatus: approval.requestedStatus,
-        })
-
-        const updated = await flowApprovalRequestRepo().save({
-            ...approval,
-            state: FlowApprovalRequestState.APPROVED,
-            approverId: approverPrincipal.id,
-            decidedAt: new Date().toISOString(),
         })
         applicationEvents(log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_APPROVAL_GRANTED,
