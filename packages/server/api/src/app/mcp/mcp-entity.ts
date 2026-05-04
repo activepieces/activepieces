@@ -23,10 +23,6 @@ export const McpServerEntity = new EntitySchema<McpServerWithSchema>({
             type: String,
             nullable: false,
         },
-        status: {
-            type: String,
-            nullable: false,
-        },
         token: {
             type: String,
             nullable: false,
