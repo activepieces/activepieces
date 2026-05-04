@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useApRipple } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { PieceIcon, stepsHooks } from '@/features/pieces';
+import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
@@ -97,7 +98,9 @@ const DataSelectorNodeContent = ({
           </div>
         )}
         {node.data.type !== 'test' && (
-          <div className=" truncate">{node.data.displayName}</div>
+          <div className={cn('truncate', node.data.displayNameClassName)}>
+            {node.data.displayName}
+          </div>
         )}
 
         {showNodeValue && (
