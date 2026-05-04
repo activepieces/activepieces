@@ -12,10 +12,9 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/', UpdateMcpRequest, async (req) => {
-        const { status, enabledTools } = req.body
+        const { enabledTools } = req.body
         return mcpServerService(req.log).update({
             projectId: req.projectId,
-            status,
             enabledTools,
         })
     })
