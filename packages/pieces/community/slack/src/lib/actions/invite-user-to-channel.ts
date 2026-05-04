@@ -1,8 +1,9 @@
 import { slackAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
-import { singleSelectChannelInfo, slackChannel, userId } from '../common/props';
+import { autoAddBot, singleSelectChannelInfo, slackChannel, userId } from '../common/props';
+import { tryAddBotToChannel } from '../common/utils';
 import { WebClient } from '@slack/web-api';
-import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { getBotToken, getUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const inviteUserToChannelAction = createAction({
 	auth: slackAuth,
@@ -12,13 +13,24 @@ export const inviteUserToChannelAction = createAction({
 	props: {
 		info: singleSelectChannelInfo,
 		channel: slackChannel(true),
+		autoAddBot,
 		userId: userId(true),
 	},
 	async run(context) {
-		const client = new WebClient(getBotToken(context.auth as SlackAuthValue));
+		const { channel, autoAddBot: shouldAddBot } = context.propsValue;
+		const botToken = getBotToken(context.auth as SlackAuthValue);
 
+		if (shouldAddBot) {
+			await tryAddBotToChannel({
+				botToken,
+				userToken: getUserToken(context.auth as SlackAuthValue),
+				channel,
+			});
+		}
+
+		const client = new WebClient(botToken);
 		return await client.conversations.invite({
-			channel: context.propsValue.channel,
+			channel,
 			users: `${context.propsValue.userId}`,
 		});
 	},

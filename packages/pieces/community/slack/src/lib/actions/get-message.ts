@@ -1,9 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { singleSelectChannelInfo, slackChannel } from '../common/props';
-import { processMessageTimestamp } from '../common/utils';
+import { autoAddBot, singleSelectChannelInfo, slackChannel } from '../common/props';
+import { processMessageTimestamp, tryAddBotToChannel } from '../common/utils';
 import { WebClient } from '@slack/web-api';
-import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { getBotToken, getUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const getMessageAction = createAction({
 	name: 'get-message',
@@ -13,6 +13,7 @@ export const getMessageAction = createAction({
 	props: {
 		info: singleSelectChannelInfo,
 		channel: slackChannel(true),
+		autoAddBot,
 		ts: Property.ShortText({
 			displayName: 'Message Timestamp',
 			description:
@@ -25,8 +26,18 @@ export const getMessageAction = createAction({
 		if (!messageTimestamp) {
 			throw new Error('Invalid Timestamp Value.');
 		}
-		const client = new WebClient(getBotToken(auth as SlackAuthValue));
 
+		const botToken = getBotToken(auth as SlackAuthValue);
+
+		if (propsValue.autoAddBot) {
+			await tryAddBotToChannel({
+				botToken,
+				userToken: getUserToken(auth as SlackAuthValue),
+				channel: propsValue.channel,
+			});
+		}
+
+		const client = new WebClient(botToken);
 		return await client.conversations.history({
 			channel: propsValue.channel,
 			oldest: messageTimestamp,

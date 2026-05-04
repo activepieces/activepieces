@@ -1,12 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { blocks, singleSelectChannelInfo, slackChannel, mentionOriginFlow } from '../common/props';
-import { buildFlowOriginContextBlock, processMessageTimestamp, textToSectionBlocks } from '../common/utils';
-import { Block,KnownBlock, WebClient } from '@slack/web-api';
-import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { autoAddBot, blocks, singleSelectChannelInfo, slackChannel, mentionOriginFlow } from '../common/props';
+import { buildFlowOriginContextBlock, processMessageTimestamp, textToSectionBlocks, tryAddBotToChannel } from '../common/utils';
+import { Block, KnownBlock, WebClient } from '@slack/web-api';
+import { getBotToken, getUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const updateMessage = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'updateMessage',
   displayName: 'Update message',
   description: 'Update an existing message',
@@ -14,6 +13,7 @@ export const updateMessage = createAction({
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),
+    autoAddBot,
     ts: Property.ShortText({
       displayName: 'Message Timestamp',
       description:
@@ -34,7 +34,18 @@ export const updateMessage = createAction({
     if (!messageTimestamp) {
       throw new Error('Invalid Timestamp Value.');
     }
-    const client = new WebClient(getBotToken(auth as SlackAuthValue));
+
+    const botToken = getBotToken(auth as SlackAuthValue);
+
+    if (propsValue.autoAddBot) {
+      await tryAddBotToChannel({
+        botToken,
+        userToken: getUserToken(auth as SlackAuthValue),
+        channel: propsValue.channel,
+      });
+    }
+
+    const client = new WebClient(botToken);
 
     const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(propsValue.text)];
 
