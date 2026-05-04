@@ -30,10 +30,7 @@ import { ChatThinkingLoader } from './chat-thinking-loader';
 import { MessageContentWithAuth } from './message-content';
 import { ToolCallGroup } from './tool-call-group';
 
-const HIDDEN_TOOLS = new Set([
-  'ap_set_session_title',
-  'ap_select_project',
-]);
+const HIDDEN_TOOLS = new Set(['ap_set_session_title', 'ap_select_project']);
 
 export function ChatMessage({
   message,
