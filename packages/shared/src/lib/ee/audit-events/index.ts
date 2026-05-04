@@ -34,6 +34,7 @@ export enum ApplicationEventName {
     FOLDER_DELETED = 'folder.deleted',
     CONNECTION_UPSERTED = 'connection.upserted',
     CONNECTION_DELETED = 'connection.deleted',
+    CONNECTION_VALUE_REVEALED = 'connection.value.revealed',
     USER_SIGNED_UP = 'user.signed.up',
     USER_SIGNED_IN = 'user.signed.in',
     USER_PASSWORD_RESET = 'user.password.reset',
@@ -60,6 +61,7 @@ export const ConnectionEvent = z.object({
     action: z.union([
         z.literal(ApplicationEventName.CONNECTION_DELETED),
         z.literal(ApplicationEventName.CONNECTION_UPSERTED),
+        z.literal(ApplicationEventName.CONNECTION_VALUE_REVEALED),
     ]),
     data: z.object({
         connection: z.object({
@@ -317,6 +319,8 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `${event.data.connection.displayName} (${event.data.connection.externalId}) is updated`
         case ApplicationEventName.CONNECTION_DELETED:
             return `${event.data.connection.displayName} (${event.data.connection.externalId}) is deleted`
+        case ApplicationEventName.CONNECTION_VALUE_REVEALED:
+            return `${event.data.connection.displayName} (${event.data.connection.externalId}) value was revealed`
         case ApplicationEventName.USER_SIGNED_IN:
             return `User ${event.userEmail} signed in`
         case ApplicationEventName.USER_PASSWORD_RESET:

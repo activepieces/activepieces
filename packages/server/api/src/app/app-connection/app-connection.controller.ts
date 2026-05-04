@@ -116,10 +116,21 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
     })
 
     app.post('/:id/reveal', RevealCredentialRequest, async (request) => {
+        const connection = await appConnectionService(request.log).getOneOrThrowWithoutValue({
+            id: request.params.id,
+            platformId: request.principal.platform.id,
+            projectId: request.projectId,
+        })
         const value = await appConnectionService(request.log).revealCredentialValue({
             id: request.params.id,
             platformId: request.principal.platform.id,
             projectId: request.projectId,
+        })
+        applicationEvents(request.log).sendUserEvent(request, {
+            action: ApplicationEventName.CONNECTION_VALUE_REVEALED,
+            data: {
+                connection,
+            },
         })
         return { value }
     })
