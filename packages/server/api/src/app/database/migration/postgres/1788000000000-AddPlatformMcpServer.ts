@@ -36,13 +36,12 @@ export class AddPlatformMcpServer1788000000000 implements Migration {
             ALTER TABLE "mcp_server"
             ADD CONSTRAINT "fk_mcp_server_platform_id"
             FOREIGN KEY ("platformId") REFERENCES "platform"("id")
-            ON DELETE CASCADE
+            ON DELETE CASCADE ON UPDATE NO ACTION
         `)
 
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_mcp_server_platform_id"
             ON "mcp_server" ("platformId")
-            WHERE "platformId" IS NOT NULL
         `)
     }
 

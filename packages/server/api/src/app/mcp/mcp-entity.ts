@@ -47,8 +47,11 @@ export const McpServerEntity = new EntitySchema<McpServerWithSchema>({
             columns: ['token'],
             unique: true,
         },
-        // idx_mcp_server_platform_id is a partial unique index (WHERE platformId IS NOT NULL)
-        // managed by migration only — TypeORM doesn't support partial indices in entity schema
+        {
+            name: 'idx_mcp_server_platform_id',
+            columns: ['platformId'],
+            unique: true,
+        },
     ],
     relations: {
         platform: {
@@ -58,7 +61,7 @@ export const McpServerEntity = new EntitySchema<McpServerWithSchema>({
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'platformId',
-                referencedColumnName: 'id',
+                foreignKeyConstraintName: 'fk_mcp_server_platform_id',
             },
         },
         project: {
