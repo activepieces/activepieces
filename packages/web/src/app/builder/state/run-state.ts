@@ -34,6 +34,7 @@ export type RunState = {
   clearRun: (userHasPermissionToEditFlow: boolean) => void;
   loopsIndexes: Record<string, number>;
   setLoopIndex: (stepName: string, index: number) => void;
+  goToFailedStep: () => void;
   addActionTestListener: ({
     runId,
     stepName,
@@ -76,12 +77,12 @@ export const createRunState = (
     run: initialState.run,
     loopsIndexes:
       initialState.run && initialState.run.steps
-        ? flowRunUtils.findLoopsState(initialState.run, {})
+        ? flowRunUtils.pinLoopsToIterationsWithFailedStep(initialState.run, {})
         : {},
     setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
       set((state) => {
         get().removeAllStepTestsListeners();
-        const loopsIndexes = flowRunUtils.findLoopsState(
+        const loopsIndexes = flowRunUtils.pinLoopsToIterationsWithFailedStep(
           run,
           state.loopsIndexes,
         );
@@ -92,6 +93,19 @@ export const createRunState = (
           readonly: true,
         };
       }),
+    goToFailedStep: () => {
+      const { run, selectStepByName } = get();
+      if (isNil(run) || isNil(run.failedStep)) {
+        return;
+      }
+      set((state) => ({
+        loopsIndexes: flowRunUtils.pinLoopsToIterationsWithFailedStep(
+          run,
+          state.loopsIndexes,
+        ),
+      }));
+      selectStepByName(run.failedStep.name);
+    },
     clearRun: (userHasPermissionToEditFlow: boolean) =>
       set({
         run: null,
