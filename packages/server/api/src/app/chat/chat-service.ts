@@ -30,6 +30,7 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { Order } from '../helper/pagination/paginator'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { mcpProjectSelection } from '../mcp/mcp-project-selection'
 import { mcpOAuthTokenService } from '../mcp/oauth/token/mcp-oauth-token.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
@@ -142,6 +143,13 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
         const { mcpClient, mcpToolSet } = await connectMcpClient({ mcpCredentials, log })
 
+        if (selectedProjectId) {
+            mcpProjectSelection.set({ platformId, userId, projectId: selectedProjectId })
+        }
+        else {
+            mcpProjectSelection.clear({ platformId, userId })
+        }
+
         const model = createChatModel({
             provider: providerConfig.provider,
             auth: providerConfig.auth,
@@ -183,9 +191,11 @@ export const chatService = (log: FastifyBaseLogger) => ({
             },
             onSelectProject: async (projectId) => {
                 await conversationRepo().update(conversationId, { projectId })
+                mcpProjectSelection.set({ platformId, userId, projectId })
             },
             onDeselectProject: async () => {
                 await conversationRepo().update(conversationId, { projectId: null })
+                mcpProjectSelection.clear({ platformId, userId })
             },
             currentProjectId: selectedProjectId,
             availableProjectIds: userProjects.map((p) => p.id),
