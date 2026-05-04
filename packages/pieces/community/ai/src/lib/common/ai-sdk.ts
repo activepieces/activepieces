@@ -192,6 +192,9 @@ export async function createAIModel({
         }
         case AIProviderName.MISTRAL: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
+            if (isImage) {
+                throw new Error(`Provider ${AIProviderName.MISTRAL} does not support image models`)
+            }
             const provider = createOpenAICompatible({
                 name: 'mistral',
                 baseURL: 'https://api.mistral.ai/v1',

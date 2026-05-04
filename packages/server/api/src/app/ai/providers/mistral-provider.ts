@@ -20,14 +20,19 @@ export const mistralProvider: AIProviderStrategy<MistralProviderAuthConfig, Mist
 
         const { data } = res.body
 
-        return data.map((model: MistralModel) => ({
-            id: model.id,
-            name: model.id,
-            type: AIProviderModelType.TEXT,
-        }))
+        return data
+            .filter((model) => model.capabilities.completion_chat)
+            .map((model) => ({
+                id: model.id,
+                name: model.id,
+                type: AIProviderModelType.TEXT,
+            }))
     },
 }
 
 type MistralModel = {
     id: string
+    capabilities: {
+        completion_chat: boolean
+    }
 }
