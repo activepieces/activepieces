@@ -8,11 +8,6 @@ export type McpId = ApId
 
 export const MCP_TRIGGER_PIECE_NAME = '@activepieces/piece-mcp'
 
-export enum McpServerStatus {
-    ENABLED = 'ENABLED',
-    DISABLED = 'DISABLED',
-}
-
 export enum McpServerType {
     PLATFORM = 'PLATFORM',
     PROJECT = 'PROJECT',
@@ -23,7 +18,6 @@ export const McpServer = z.object({
     platformId: ApId.nullable(),
     projectId: ApId.nullable(),
     type: z.enum([McpServerType.PLATFORM, McpServerType.PROJECT]),
-    status: z.nativeEnum(McpServerStatus),
     token: ApId,
     enabledTools: z.array(z.string()).nullable(),
 })
@@ -38,7 +32,6 @@ export type McpServer = z.infer<typeof McpServer>
 export type ProjectScopedMcpServer = McpServer & { projectId: string }
 
 export const UpdateMcpServerRequest = z.object({
-    status: z.nativeEnum(McpServerStatus).optional(),
     enabledTools: z.array(z.string()).optional(),
 })
 

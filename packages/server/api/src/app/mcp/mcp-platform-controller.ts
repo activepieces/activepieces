@@ -10,10 +10,9 @@ export const mcpPlatformController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/', UpdatePlatformMcpRoute, async (req) => {
-        const { status, enabledTools } = req.body
+        const { enabledTools } = req.body
         return mcpServerService(req.log).updatePlatform({
             platformId: req.principal.platform.id,
-            status,
             enabledTools,
         })
     })
