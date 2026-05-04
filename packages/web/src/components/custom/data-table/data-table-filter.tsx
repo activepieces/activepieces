@@ -21,10 +21,12 @@ type DropdownFilterProps = {
     value: string;
     icon?: React.ComponentType<{ className?: string }> | string;
   }[];
+  onChange?: (values: string[], params: URLSearchParams) => void;
 };
 
 type InputFilterProps = {
   type: 'input';
+  onChange?: (value: string | undefined, params: URLSearchParams) => void;
 };
 type DateFilterProps = {
   type: 'date';
@@ -66,29 +68,41 @@ export function DataTableFilter<TData, TValue>({
           newParams.delete(`${paramKey}After`);
           newParams.delete(`${paramKey}Before`);
           newParams.delete(CURSOR_QUERY_PARAM);
-          if (!filterValue) {
-            return newParams;
+          if (filterValue) {
+            if (Array.isArray(filterValue)) {
+              filterValue.forEach((value) =>
+                newParams.append(paramKey as string, value),
+              );
+            } else if (
+              typeof filterValue === 'object' &&
+              filterValue !== null
+            ) {
+              if (filterValue.from) {
+                newParams.append(
+                  `${paramKey}After`,
+                  filterValue.from.toISOString(),
+                );
+              }
+              if (filterValue.to) {
+                newParams.append(
+                  `${paramKey}Before`,
+                  filterValue.to.toISOString(),
+                );
+              }
+            } else {
+              newParams.append(paramKey as string, filterValue);
+            }
           }
 
-          if (Array.isArray(filterValue)) {
-            filterValue.forEach((value) =>
-              newParams.append(paramKey as string, value),
+          if (props.type === 'input') {
+            const stringValue =
+              typeof filterValue === 'string' ? filterValue : '';
+            props.onChange?.(
+              stringValue.length > 0 ? stringValue : undefined,
+              newParams,
             );
-          } else if (typeof filterValue === 'object' && filterValue !== null) {
-            if (filterValue.from) {
-              newParams.append(
-                `${paramKey}After`,
-                filterValue.from.toISOString(),
-              );
-            }
-            if (filterValue.to) {
-              newParams.append(
-                `${paramKey}Before`,
-                filterValue.to.toISOString(),
-              );
-            }
-          } else {
-            newParams.append(paramKey as string, filterValue);
+          } else if (props.type === 'select' && Array.isArray(filterValue)) {
+            props.onChange?.(filterValue, newParams);
           }
 
           return newParams;
@@ -106,7 +120,7 @@ export function DataTableFilter<TData, TValue>({
         column?.setFilterValue(filterValue ? filterValue : undefined);
       }
     },
-    [paramKey, column, setSearchParams],
+    [paramKey, column, setSearchParams, props],
   );
 
   switch (props.type) {

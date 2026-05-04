@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { SearchIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useDebounce } from 'use-debounce';
+import { useState } from 'react';
+import { useDebouncedCallback } from 'use-debounce';
 
 import { SearchInput } from '@/components/custom/search-input';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+
+const DEBOUNCE_MS = 500;
 
 type DataTableInputPopoverProps = {
   title?: string;
@@ -25,11 +27,15 @@ const DataTableInputPopover = ({
   handleFilterChange,
 }: DataTableInputPopoverProps) => {
   const [searchQuery, setSearchQuery] = useState(filterValue);
-  const [debouncedQuery] = useDebounce(searchQuery, 300);
+  const debouncedFilterChange = useDebouncedCallback(
+    handleFilterChange,
+    DEBOUNCE_MS,
+  );
 
-  useEffect(() => {
-    handleFilterChange(debouncedQuery);
-  }, [debouncedQuery]);
+  const onSearchChange = (value: string) => {
+    setSearchQuery(value);
+    debouncedFilterChange(value);
+  };
 
   return (
     <Popover>
@@ -54,7 +60,7 @@ const DataTableInputPopover = ({
         <SearchInput
           placeholder={t('Search')}
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e)}
+          onChange={onSearchChange}
         />
       </PopoverContent>
     </Popover>

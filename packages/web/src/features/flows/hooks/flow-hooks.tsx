@@ -251,17 +251,29 @@ export const flowHooks = {
       },
     });
   },
-  useGetFlow: (flowId: string) => {
+  useGetFlow: ({
+    flowId,
+    versionId,
+    enabled = true,
+  }: {
+    flowId: string;
+    versionId?: string;
+    enabled?: boolean;
+  }) => {
     return useQuery({
-      queryKey: ['flow', flowId],
+      queryKey: ['flow', flowId, versionId],
       queryFn: async () => {
         try {
-          return await flowsApi.get(flowId);
+          return await flowsApi.get(
+            flowId,
+            versionId ? { versionId } : undefined,
+          );
         } catch (err) {
           console.error(err);
           return null;
         }
       },
+      enabled: enabled && !!flowId,
       staleTime: 0,
     });
   },

@@ -310,11 +310,39 @@ export const runsTableColumns = ({
       />
     ),
     cell: ({ row }) => {
+      const { failedStep } = row.original;
+      const parsedErrorMessage = tryParsingErrorMessage(
+        failedStep?.message ?? '',
+      );
+      if (isNil(failedStep)) {
+        return <div className="text-left">-</div>;
+      }
+      if (!failedStep.message) {
+        return <div className="text-left">{failedStep.displayName}</div>;
+      }
       return (
-        <div className="text-left">
-          {row.original.failedStep?.displayName ?? '-'}
+        <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="text-left">{failedStep.displayName}</div>
+            </TooltipTrigger>
+            <TooltipContent
+              side="bottom"
+              className="max-w-md whitespace-pre-wrap"
+            >
+              {parsedErrorMessage}
+            </TooltipContent>
+          </Tooltip>
         </div>
       );
     },
   },
 ];
+
+const tryParsingErrorMessage = (message: string) => {
+  try {
+    return JSON.stringify(JSON.parse(message), null, 2);
+  } catch (error) {
+    return message;
+  }
+};
