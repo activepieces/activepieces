@@ -1,4 +1,3 @@
-
 import {
     RAW_PAYLOAD_HEADER,
     WebhookUrlParams,
@@ -13,6 +12,21 @@ import { convertRequest, extractHeaderFromRequest } from './webhook-request-conv
 import { WebhookFlowVersionToRun, webhookService } from './webhook.service'
 
 const tracer = trace.getTracer('webhook-controller')
+
+const CORS_HEADERS = new Set([
+    'access-control-allow-origin',
+    'access-control-allow-headers',
+    'access-control-allow-methods',
+    'access-control-allow-credentials',
+    'access-control-expose-headers',
+    'access-control-max-age',
+])
+
+function filterCorsHeaders(headers: Record<string, string>): Record<string, string> {
+    return Object.fromEntries(
+        Object.entries(headers ?? {}).filter(([key]) => !CORS_HEADERS.has(key.toLowerCase())),
+    )
+}
 
 export const webhookController: FastifyPluginAsyncZod = async (app) => {
 
@@ -37,7 +51,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                         saveSampleData: await triggerSourceService(request.log).existsByFlowId({
                             flowId: request.params.flowId,
                             simulate: true,
-                        },
+                            },
                         ),
                         execute: true,
                         ...extractRawPayload(request),
@@ -46,7 +60,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                     span.setAttribute('webhook.response.status', response.status)
                     await reply
                         .status(response.status)
-                        .headers(response.headers)
+                        .headers(filterCorsHeaders(response.headers))
                         .send(response.body)
                 }
                 finally {
@@ -76,7 +90,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                         saveSampleData: await triggerSourceService(request.log).existsByFlowId({
                             flowId: request.params.flowId,
                             simulate: true,
-                        },
+                            },
                         ),
                         flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                         execute: true,
@@ -86,7 +100,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                     span.setAttribute('webhook.response.status', response.status)
                     await reply
                         .status(response.status)
-                        .headers(response.headers)
+                        .headers(filterCorsHeaders(response.headers))
                         .send(response.body)
                 }
                 finally {
@@ -112,7 +126,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
         })
         await reply
             .status(response.status)
-            .headers(response.headers)
+            .headers(filterCorsHeaders(response.headers))
             .send(response.body)
     })
 
@@ -129,7 +143,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
         })
         await reply
             .status(response.status)
-            .headers(response.headers)
+            .headers(filterCorsHeaders(response.headers))
             .send(response.body)
     })
 
@@ -146,7 +160,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
         })
         await reply
             .status(response.status)
-            .headers(response.headers)
+            .headers(filterCorsHeaders(response.headers))
             .send(response.body)
     })
 
