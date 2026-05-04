@@ -10,9 +10,10 @@ import {
 } from '@activepieces/shared'
 import type { BeginExecuteFlowOperation, FlowVersion } from '@activepieces/shared'
 
-vi.mock('../../src/lib/handler/run-progress', () => ({
-    runProgressService: {
-        backup: vi.fn(),
+vi.mock('../../src/lib/helper/flow-run-progress-reporter', () => ({
+    flowRunProgressReporter: {
+        sendUpdate: vi.fn().mockResolvedValue(undefined),
+        backup: vi.fn().mockResolvedValue(undefined),
     },
 }))
 
