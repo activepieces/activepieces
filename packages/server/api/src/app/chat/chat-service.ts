@@ -29,7 +29,7 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { Order } from '../helper/pagination/paginator'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
-import { mcpServerService } from '../mcp/mcp-service'
+import { mcpOAuthTokenService } from '../mcp/oauth/token/mcp-oauth-token.service'
 import { projectService } from '../project/project-service'
 import { chatCompaction } from './chat-compaction'
 import { ChatConversationEntity } from './chat-conversation-entity'
@@ -120,7 +120,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
         const [conversation, providerConfig, mcpCredentials, projectName, userContent] = await Promise.all([
             this.getConversationOrThrow({ id: conversationId, projectId, userId }),
             resolveChatProvider({ platformId, log }),
-            getMcpCredentials({ projectId, log }),
+            getMcpCredentials({ platformId, userId, log }),
             projectService(log).getOneOrThrow(projectId).then((p) => p.displayName),
             buildUserContentWithFiles({ text: content, files }),
         ])
@@ -315,17 +315,18 @@ async function connectMcpClient({ mcpCredentials, log }: {
     return { mcpClient: client, mcpToolSet }
 }
 
-async function getMcpCredentials({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<{ mcpServerUrl: string | null, mcpToken: string | null }> {
-    const { data: mcpServer, error } = await tryCatch(async () => mcpServerService(log).getByProjectId(projectId))
+async function getMcpCredentials({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<{ mcpServerUrl: string | null, mcpToken: string | null }> {
+    const { data: accessToken, error } = await tryCatch(() =>
+        mcpOAuthTokenService.issueInternalAccessToken({ userId, platformId, projectId: null }),
+    )
     if (error) {
-        log.warn({ err: error, projectId }, 'Failed to get MCP credentials — chat will work without MCP tools')
+        log.warn({ err: error, platformId }, 'Failed to get MCP credentials — chat will work without MCP tools')
         return { mcpServerUrl: null, mcpToken: null }
     }
     const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-    const mcpServerUrl = `${frontendUrl}/mcp`
     return {
-        mcpServerUrl,
-        mcpToken: mcpServer.token,
+        mcpServerUrl: `${frontendUrl}/mcp/platform`,
+        mcpToken: accessToken,
     }
 }
 
