@@ -104,6 +104,8 @@ end
 redis.call('SREM', waitlistMembersKey, nextMember)
 redis.call('ZADD', activeKey, currentTime, nextMember)
 redis.call('EXPIRE', activeKey, ttlSeconds)
+redis.call('EXPIRE', waitlistKey, ttlSeconds)
+redis.call('EXPIRE', waitlistMembersKey, ttlSeconds)
 return nextMember
 `
 

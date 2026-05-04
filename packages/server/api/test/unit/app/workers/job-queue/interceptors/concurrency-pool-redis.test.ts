@@ -554,5 +554,28 @@ describe('concurrencyPoolRedis Lua primitives', () => {
             expect(await redis.llen(getConcurrencyPoolWaitlistKey(poolId))).toBe(0)
             expect(await redis.scard(getConcurrencyPoolWaitlistMembersKey(poolId))).toBe(0)
         })
+
+        it('release refreshes waitlist + members TTL so a sustained-saturation pool does not lose its keys', async () => {
+            const poolId = `smoke-ttl-${crypto.randomUUID()}`
+            const redis = await redisConnections.useExisting()
+            const active = member('p', 'active')
+            const waiter1 = member('p', 'waiter-1')
+            const waiter2 = member('p', 'waiter-2')
+
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: active, maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: waiter1, maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: waiter2, maxJobs: 1, timeoutMs: TIMEOUT_MS })
+
+            await redis.expire(getConcurrencyPoolWaitlistKey(poolId), 5)
+            await redis.expire(getConcurrencyPoolWaitlistMembersKey(poolId), 5)
+
+            await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: active, timeoutMs: TIMEOUT_MS })
+
+            const waitlistTtl = await redis.ttl(getConcurrencyPoolWaitlistKey(poolId))
+            const membersTtl = await redis.ttl(getConcurrencyPoolWaitlistMembersKey(poolId))
+            expect(waitlistTtl).toBeGreaterThan(60)
+            expect(membersTtl).toBeGreaterThan(60)
+        })
+
     })
 })
