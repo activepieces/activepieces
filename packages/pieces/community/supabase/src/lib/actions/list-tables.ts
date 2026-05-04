@@ -1,0 +1,45 @@
+import { createAction } from "@activepieces/pieces-framework";
+import { supabaseAuth } from '../auth';
+import { createClient } from "@supabase/supabase-js";
+
+export const listTables = createAction({
+    name: 'list_tables',
+    displayName: 'List Tables',
+    description: 'Returns a list of all public tables in the database',
+    auth: supabaseAuth,
+    props: {},
+    async run(context) {
+        const { url, apiKey } = context.auth.props;
+        const supabase = createClient(url, apiKey);
+
+        try {
+            const { data: tables, error } = await supabase.rpc('get_public_tables');
+            if (!error && tables) {
+                return tables.map((table: any) => ({
+                    name: table.table_name || table.name || table
+                }));
+            }
+        } catch (rpcError) {
+            // Fallback to OpenAPI
+        }
+
+        const response = await fetch(`${url}/rest/v1/`, {
+            method: 'GET',
+            headers: {
+                'apikey': apiKey,
+                'Authorization': `Bearer ${apiKey}`,
+                'Accept': 'application/openapi+json'
+            }
+        });
+
+        if (response.ok) {
+            const openApiSpec = await response.json();
+            const definitions = openApiSpec.definitions || openApiSpec.components?.schemas || {};
+            return Object.keys(definitions).map(tableName => ({
+                name: tableName
+            }));
+        }
+
+        return [];
+    },
+});
