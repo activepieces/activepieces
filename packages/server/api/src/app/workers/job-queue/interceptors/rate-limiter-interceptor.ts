@@ -30,6 +30,8 @@ export const rateLimiterInterceptor: JobInterceptor = {
             return { verdict: InterceptorVerdict.ALLOW }
         }
 
+        await selfHealWedgedPool({ poolId: effectivePoolId, platformId: jobData.platformId, timeoutMs: getStaleEntryThresholdMs(), log })
+
         const delayInMs = getFlowTimeoutMs() + SAFETY_NET_DELAY_BUFFER_MS
         log.info({ jobId, projectId: jobData.projectId, delayInMs }, '[rateLimiterInterceptor] Job enqueued to waitlist')
         return {
@@ -113,6 +115,26 @@ async function getMaxConcurrentJobs({ poolId, platformId, log }: { poolId: strin
         if (!isNil(limit)) return limit
     }
     return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
+}
+
+async function selfHealWedgedPool({ poolId, platformId, timeoutMs, log }: { poolId: string, platformId: PlatformId, timeoutMs: number, log: FastifyBaseLogger }): Promise<void> {
+    const healed = await concurrencyPoolRedis.selfHealEmptyPool({ poolId, timeoutMs })
+    if (isNil(healed)) {
+        return
+    }
+    const parsed = concurrencyPoolRedis.parseMember(healed)
+    if (isNil(parsed)) {
+        log.warn({ healed, poolId }, '[rateLimiterInterceptor] self-heal popped invalid member, dropping')
+        await concurrencyPoolRedis.dropPromotedMember({ poolId, member: healed })
+        return
+    }
+    const promoted = await jobQueue(log).promoteJob({ jobId: parsed.jobId, platformId })
+    if (promoted) {
+        log.debug({ healedJobId: parsed.jobId, poolId }, '[rateLimiterInterceptor] self-heal promoted wedged head waiter')
+        return
+    }
+    log.warn({ healed, poolId }, '[rateLimiterInterceptor] self-heal promotion failed; dropping member (safety-net delay re-enqueues if alive)')
+    await concurrencyPoolRedis.dropPromotedMember({ poolId, member: healed })
 }
 
 function getFlowTimeoutMs(): number {

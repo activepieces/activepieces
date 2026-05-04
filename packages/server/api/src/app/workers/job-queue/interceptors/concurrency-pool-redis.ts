@@ -38,6 +38,20 @@ export const concurrencyPoolRedis = {
         await redis.zrem(getConcurrencyPoolSetKey(poolId), member)
     },
 
+    async selfHealEmptyPool({ poolId, timeoutMs }: { poolId: string, timeoutMs: number }): Promise<string | null> {
+        const redis = await redisConnections.useExisting()
+        const result = await redis.eval(
+            SELF_HEAL_LUA,
+            3,
+            getConcurrencyPoolSetKey(poolId),
+            getConcurrencyPoolWaitlistKey(poolId),
+            getConcurrencyPoolWaitlistMembersKey(poolId),
+            Date.now().toString(),
+            timeoutMs.toString(),
+        ) as string
+        return result === '' ? null : result
+    },
+
     buildMember({ projectId, jobId }: { projectId: string, jobId: string }): string {
         return `${projectId}:${jobId}`
     },
@@ -107,6 +121,31 @@ redis.call('EXPIRE', activeKey, ttlSeconds)
 redis.call('EXPIRE', waitlistKey, ttlSeconds)
 redis.call('EXPIRE', waitlistMembersKey, ttlSeconds)
 return nextMember
+`
+
+const SELF_HEAL_LUA = `
+local activeKey = KEYS[1]
+local waitlistKey = KEYS[2]
+local waitlistMembersKey = KEYS[3]
+local currentTime = tonumber(ARGV[1])
+local timeoutMs = tonumber(ARGV[2])
+local ttlSeconds = math.ceil(timeoutMs / 1000)
+
+redis.call('ZREMRANGEBYSCORE', activeKey, '-inf', currentTime - timeoutMs)
+
+if redis.call('ZCARD', activeKey) > 0 then
+    return ''
+end
+
+local head = redis.call('LPOP', waitlistKey)
+if not head then
+    return ''
+end
+
+redis.call('SREM', waitlistMembersKey, head)
+redis.call('ZADD', activeKey, currentTime, head)
+redis.call('EXPIRE', activeKey, ttlSeconds)
+return head
 `
 
 export type AcquireOutcome = 'acquired' | 'queued'

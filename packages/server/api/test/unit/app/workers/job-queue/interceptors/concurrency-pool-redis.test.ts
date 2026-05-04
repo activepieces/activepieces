@@ -577,5 +577,61 @@ describe('concurrencyPoolRedis Lua primitives', () => {
             expect(membersTtl).toBeGreaterThan(60)
         })
 
+        it('selfHealEmptyPool returns null when pool has running jobs', async () => {
+            const poolId = `smoke-heal-active-${crypto.randomUUID()}`
+            const redis = await redisConnections.useExisting()
+            const active = member('p', 'active')
+            const waiter = member('p', 'waiter')
+
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: active, maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: waiter, maxJobs: 1, timeoutMs: TIMEOUT_MS })
+
+            const healed = await concurrencyPoolRedis.selfHealEmptyPool({ poolId, timeoutMs: TIMEOUT_MS })
+
+            expect(healed).toBeNull()
+            expect(await redis.zrange(getConcurrencyPoolSetKey(poolId), 0, -1)).toEqual([active])
+            expect(await redis.lrange(getConcurrencyPoolWaitlistKey(poolId), 0, -1)).toEqual([waiter])
+        })
+
+        it('selfHealEmptyPool returns null when waitlist is empty', async () => {
+            const poolId = `smoke-heal-empty-${crypto.randomUUID()}`
+            const healed = await concurrencyPoolRedis.selfHealEmptyPool({ poolId, timeoutMs: TIMEOUT_MS })
+            expect(healed).toBeNull()
+        })
+
+        it('selfHealEmptyPool promotes head waiter when active set is empty (closes wedged-pool gap)', async () => {
+            const poolId = `smoke-heal-wedged-${crypto.randomUUID()}`
+            const redis = await redisConnections.useExisting()
+            const head = member('p', 'head')
+            const tail = member('p', 'tail')
+
+            await redis.rpush(getConcurrencyPoolWaitlistKey(poolId), head, tail)
+            await redis.sadd(getConcurrencyPoolWaitlistMembersKey(poolId), head, tail)
+
+            const healed = await concurrencyPoolRedis.selfHealEmptyPool({ poolId, timeoutMs: TIMEOUT_MS })
+
+            expect(healed).toBe(head)
+            expect(await redis.zrange(getConcurrencyPoolSetKey(poolId), 0, -1)).toEqual([head])
+            expect(await redis.lrange(getConcurrencyPoolWaitlistKey(poolId), 0, -1)).toEqual([tail])
+            expect(await redis.sismember(getConcurrencyPoolWaitlistMembersKey(poolId), head)).toBe(0)
+            expect(await redis.sismember(getConcurrencyPoolWaitlistMembersKey(poolId), tail)).toBe(1)
+        })
+
+        it('selfHealEmptyPool sweeps stale active entries before deciding the pool is non-empty', async () => {
+            const poolId = `smoke-heal-stale-${crypto.randomUUID()}`
+            const redis = await redisConnections.useExisting()
+            const stale = member('p', 'stale')
+            const head = member('p', 'head')
+
+            await redis.zadd(getConcurrencyPoolSetKey(poolId), Date.now() - TIMEOUT_MS - 1000, stale)
+            await redis.rpush(getConcurrencyPoolWaitlistKey(poolId), head)
+            await redis.sadd(getConcurrencyPoolWaitlistMembersKey(poolId), head)
+
+            const healed = await concurrencyPoolRedis.selfHealEmptyPool({ poolId, timeoutMs: TIMEOUT_MS })
+
+            expect(healed).toBe(head)
+            expect(await redis.zrange(getConcurrencyPoolSetKey(poolId), 0, -1)).toEqual([head])
+        })
+
     })
 })
