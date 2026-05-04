@@ -1,5 +1,4 @@
 import {
-  AP_ERROR_KEY,
   FlowAction,
   FlowTrigger,
   assertNotNullOrUndefined,
@@ -56,7 +55,7 @@ const isMentionNodeText = (item: string) => {
     if (itemIsFlattenedArray) {
       return true;
     }
-    return /^(step_\d+|trigger)/.test(content);
+    return /^(step_\d+|trigger|errors)/.test(content);
   }
   return false;
 };
@@ -156,6 +155,12 @@ function parseStepAndNameFromMention(mention: string) {
       path: [],
     };
   }
+  if (keys[0] === 'errors' && keys.length >= 2) {
+    return {
+      stepName: keys[1],
+      path: ['errors', ...keys.slice(2)],
+    };
+  }
   return {
     stepName: keys[0],
     path: keys.slice(1),
@@ -188,7 +193,7 @@ function parseLabelFromMention(
 }
 
 function collapseEngineReservedPath(path: string[]): string[] {
-  if (path.length === 2 && path[0] === AP_ERROR_KEY && path[1] === 'message') {
+  if (path.length === 2 && path[0] === 'errors' && path[1] === 'message') {
     return ['Error message'];
   }
   return path;

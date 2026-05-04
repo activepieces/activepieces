@@ -7,6 +7,7 @@ import { utils } from '../utils'
 
 const VARIABLE_PATTERN = /\{\{(.*?)\}\}/g
 const CONNECTIONS = 'connections'
+const ERRORS = 'errors'
 const FLATTEN_NESTED_KEYS_PATTERN = /\{\{\s*flattenNestedKeys(.*?)\}\}/g
 
 
@@ -21,12 +22,15 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 }
             }
             const referencedStepNames = extractReferencedStepNames(unresolvedInput, stepNames)
-            const currentState = executionState.currentState(Array.from(referencedStepNames))
+            const referencedStepNamesArray = Array.from(referencedStepNames)
+            const currentState = executionState.currentState(referencedStepNamesArray)
+            const errors = executionState.currentErrors(referencedStepNamesArray)
             const resolveOptions = {
                 engineToken,
                 projectId,
                 apiUrl,
                 currentState,
+                errors,
             }
             const resolvedInput = await applyFunctionToValues<T>(
                 unresolvedInput,
@@ -53,7 +57,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
 }
 
 const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeedResolving: string[],
-    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput'>,
+    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'errors' | 'censoredInput'>,
     contextVersion: ContextVersion | undefined,
 ) => {
     const resolvedValues: Record<string, unknown> = {}
@@ -97,7 +101,7 @@ function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<st
  * tokenThatNeedResolving: [`{{firstName}}`, `{{lastName}}`]
  */
 async function resolveInputAsync(params: ResolveInputInternalParams): Promise<unknown> {
-    const { input, currentState, engineToken, projectId, apiUrl, censoredInput } = params
+    const { input, currentState, errors, engineToken, projectId, apiUrl, censoredInput } = params
     const tokensThatNeedResolving = input.match(VARIABLE_PATTERN)
     const inputContainsOnlyOneTokenToResolve = tokensThatNeedResolving !== null && tokensThatNeedResolving.length === 1 && tokensThatNeedResolving[0] === input
     const resolveOptions = {
@@ -105,6 +109,7 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         projectId,
         apiUrl,
         currentState,
+        errors,
         censoredInput,
     }
 
@@ -133,12 +138,24 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
 }
 
 async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unknown> {
-    const { variableName, currentState } = params
+    const { variableName, currentState, errors } = params
     const isConnection = variableName.startsWith(CONNECTIONS)
     if (isConnection) {
         return handleConnection(params)
     }
+    const isError = variableName.startsWith(ERRORS)
+    if (isError) {
+        return handleError({ variableName, errors })
+    }
     return evalInScope(variableName, { ...currentState }, { flattenNestedKeys })
+}
+
+async function handleError({ variableName, errors }: { variableName: string, errors: Readonly<Record<string, { message: string }>> }): Promise<unknown> {
+    const pathAfterErrors = variableName.substring(ERRORS.length)
+    if (pathAfterErrors.length === 0) {
+        return errors
+    }
+    return evalInScope(`${ERRORS}${pathAfterErrors}`, { [ERRORS]: errors }, { flattenNestedKeys })
 }
 
 async function handleConnection(params: ResolveSingleTokenParams): Promise<unknown> {
@@ -231,6 +248,7 @@ function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
 type ResolveSingleTokenParams = {
     variableName: string
     currentState: Record<string, unknown>
+    errors: Readonly<Record<string, { message: string }>>
     engineToken: string
     projectId: string
     apiUrl: string
@@ -245,6 +263,7 @@ type ResolveInputInternalParams = {
     apiUrl: string
     censoredInput: boolean
     currentState: Record<string, unknown>
+    errors: Readonly<Record<string, { message: string }>>
     contextVersion: ContextVersion | undefined
 }
 
