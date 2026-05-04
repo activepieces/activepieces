@@ -18,11 +18,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flowHooks } from '@/features/flows';
+import { flowHooks, flowsApi } from '@/features/flows';
+import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
+import { runDiscard } from './discard-draft';
 import LargeWidgetWrapper from './large-widget-wrapper';
 
 const PublishFlowReminderWidget = () => {
@@ -55,18 +58,28 @@ const PublishFlowReminderWidget = () => {
     run,
     isSaving,
   });
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { project } = projectCollectionUtils.useCurrentProject();
+  const { checkAccess } = useAuthorization();
+  const canBypassApproval = checkAccess(
+    Permission.PUBLISH_SENSITIVE_FLOW_ACCESS,
+  );
+  const requiresApproval =
+    platform.plan.flowApprovalEnabled &&
+    project.sensitive &&
+    !canBypassApproval;
   const { mutate: discardChange, isPending: isDiscardingChanges } = useMutation(
     {
-      mutationFn: async () => {
-        if (!flow.publishedVersionId) {
-          return;
-        }
-        await overWriteDraftWithVersion({
-          flowId: flow.id,
-          versionId: flow.publishedVersionId,
-        });
-        await publish();
-      },
+      mutationFn: () =>
+        runDiscard({
+          flow,
+          requiresApproval,
+          overWriteDraftWithVersion,
+          publish,
+          fetchFlow: flowsApi.get,
+          setFlow,
+          setVersion,
+        }),
     },
   );
   const { mutateAsync: publish } = flowHooks.useChangeFlowStatus({
@@ -129,7 +142,7 @@ const PublishFlowReminderWidget = () => {
                   onClick={() => publish()}
                   disabled={!isValid}
                 >
-                  {t('Publish')}
+                  {requiresApproval ? t('Request approval') : t('Publish')}
                 </Button>
               </div>
             </TooltipTrigger>

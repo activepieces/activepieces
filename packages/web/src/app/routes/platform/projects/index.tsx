@@ -312,6 +312,7 @@ export default function ProjectsPage() {
                   e.preventDefault();
                   setEditDialogInitialValues({
                     projectName: row.displayName,
+                    sensitive: row.sensitive,
                   });
                   setEditDialogProjectId(row.id);
                   setEditDialogOpen(true);

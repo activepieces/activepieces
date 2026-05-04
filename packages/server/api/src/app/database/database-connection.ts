@@ -16,6 +16,7 @@ import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
 import { OtpEntity } from '../ee/authentication/otp/otp-entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
+import { FlowApprovalRequestEntity } from '../ee/flows/flow-approval/flow-approval-request.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { ConcurrencyPoolEntity } from '../ee/platform/concurrency-pool/concurrency-pool.entity'
 import { PlatformPlanEntity } from '../ee/platform/platform-plan/platform-plan.entity'
@@ -119,6 +120,7 @@ function getEntities(): EntitySchema<unknown>[] {
         AuditEventEntity,
         ProjectReleaseEntity,
         PlatformAnalyticsReportEntity,
+        FlowApprovalRequestEntity,
         // CLOUD
         AppSumoEntity,
         ConnectionKeyEntity,

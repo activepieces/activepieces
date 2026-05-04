@@ -17,7 +17,12 @@ import {
   UncategorizedFolderId,
   UpdateRunProgressRequest,
 } from '@activepieces/shared';
-import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -72,6 +77,7 @@ export const flowHooks = {
       ApFlagId.TRIGGER_TIMEOUT_SECONDS,
     );
     const { openDialog } = useApErrorDialogStore();
+    const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async () => {
         if (change === 'publish') {
@@ -92,8 +98,11 @@ export const flowHooks = {
           },
         });
       },
-      onSuccess: (flow: PopulatedFlow) => {
+      onSuccess: async (flow: PopulatedFlow) => {
         if (change === 'publish') {
+          await queryClient.refetchQueries({
+            queryKey: ['flow-approval-requests'],
+          });
           setIsPublishing?.(false);
         }
         onSuccess?.(flow);

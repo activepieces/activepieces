@@ -1,8 +1,13 @@
-import { isNil, Permission } from '@activepieces/shared';
+import {
+  FlowApprovalRequestState,
+  isNil,
+  Permission,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Info } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { flowHooks } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
@@ -13,12 +18,13 @@ import { OverwriteDraftDialog } from '../../flow-versions/overwrite-draft-dialog
 import LargeWidgetWrapper from './large-widget-wrapper';
 
 const ViewingOldVersionWidget = () => {
-  const [run, readonly, version, isPublishing] = useBuilderStateContext(
+  const [run, readonly, version, isPublishing, flow] = useBuilderStateContext(
     (state) => [
       state.run,
       state.readonly,
       state.flowVersion,
       state.isPublishing,
+      state.flow,
     ],
   );
   const versionNumber = flowHooks
@@ -26,7 +32,20 @@ const ViewingOldVersionWidget = () => {
     .toString();
   const { checkAccess } = useAuthorization();
   const hasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
-  if (!isNil(run) || !readonly || isPublishing) {
+  const { data: approvals } = flowApprovalsHooks.useListApprovalsForFlow(
+    flow.id,
+  );
+  const hasPendingApprovalForThisVersion = (approvals ?? []).some(
+    (request) =>
+      request.flowVersionId === version.id &&
+      request.state === FlowApprovalRequestState.PENDING,
+  );
+  if (
+    !isNil(run) ||
+    !readonly ||
+    isPublishing ||
+    hasPendingApprovalForThisVersion
+  ) {
     return null;
   }
   return (

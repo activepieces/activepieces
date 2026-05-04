@@ -174,9 +174,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 }, log)
             }
             case FlowRetryStrategy.ON_LATEST_VERSION: {
-                const latestFlowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(
-                    oldFlowRun.flowId,
-                )
+                const latestFlowVersion = await flowService(log).getPublishedVersionOrThrow({
+                    id: oldFlowRun.flowId,
+                    projectId: oldFlowRun.projectId,
+                })
                 const payload = oldFlowRun.steps ? oldFlowRun.steps[latestFlowVersion.trigger.name]?.output : undefined
                 return this.start({
                     flowId: oldFlowRun.flowId,

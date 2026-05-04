@@ -30,6 +30,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections/hooks/global-connections-hooks';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -43,6 +44,7 @@ interface EditProjectDialogProps {
   initialValues?: {
     projectName?: string;
     externalId?: string;
+    sensitive?: boolean;
   };
 }
 
@@ -131,6 +133,7 @@ const EditProjectForm = ({
     defaultValues: {
       displayName: initialValues?.projectName,
       externalId: initialValues?.externalId,
+      sensitive: initialValues?.sensitive ?? false,
       globalConnectionExternalIds: currentConnectionExternalIds,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
@@ -146,6 +149,7 @@ const EditProjectForm = ({
             request: {
               displayName: values.displayName,
               externalId: values.externalId,
+              sensitive: values.sensitive,
               globalConnectionExternalIds: values.globalConnectionExternalIds,
             },
           });
@@ -183,6 +187,31 @@ const EditProjectForm = ({
                     id="externalId"
                     placeholder={t('org-3412321')}
                     className="rounded-sm"
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+        {platform.plan.flowApprovalEnabled &&
+          platformRole === PlatformRole.ADMIN && (
+            <FormField
+              name="sensitive"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between gap-3 rounded-md border p-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="sensitive">{t('Sensitive Project')}</Label>
+                    <FormDescription>
+                      {t(
+                        'When enabled, publishing flows in this project requires approval.',
+                      )}
+                    </FormDescription>
+                  </div>
+                  <Switch
+                    id="sensitive"
+                    checked={!!field.value}
+                    onCheckedChange={field.onChange}
                   />
                   <FormMessage />
                 </FormItem>

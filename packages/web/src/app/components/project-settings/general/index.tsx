@@ -27,6 +27,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -38,6 +39,7 @@ export type FormValues = {
   icon: ProjectIcon;
   externalId?: string;
   maxConcurrentJobs?: number | null;
+  sensitive?: boolean;
 };
 
 type GeneralSettingsProps = {
@@ -170,6 +172,33 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
             )}
           />
         )}
+        {platform.plan.flowApprovalEnabled &&
+          platformRole === PlatformRole.ADMIN && (
+            <FormField
+              name="sensitive"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between gap-3 rounded-md border p-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="sensitive" className="text-sm font-medium">
+                      {t('Sensitive Project')}
+                    </Label>
+                    <FormDescription className="text-xs text-muted-foreground">
+                      {t(
+                        'When enabled, publishing flows in this project requires approval.',
+                      )}
+                    </FormDescription>
+                  </div>
+                  <Switch
+                    id="sensitive"
+                    checked={!!field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={form.formState.disabled}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         {platformRole === PlatformRole.ADMIN && (
           <FormField
             name="maxConcurrentJobs"

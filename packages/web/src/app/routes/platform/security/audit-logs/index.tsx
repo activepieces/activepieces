@@ -518,6 +518,29 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       }
       return rows;
     }
+    case ApplicationEventName.FLOW_APPROVAL_REQUESTED:
+    case ApplicationEventName.FLOW_APPROVAL_GRANTED:
+    case ApplicationEventName.FLOW_APPROVAL_WITHDRAWN: {
+      const rows: EventDetailRow[] = [
+        {
+          label: t('Flow'),
+          value: event.data.flowDisplayName ?? event.data.flowId,
+        },
+      ];
+      return rows;
+    }
+    case ApplicationEventName.FLOW_APPROVAL_REJECTED: {
+      const rows: EventDetailRow[] = [
+        {
+          label: t('Flow'),
+          value: event.data.flowDisplayName ?? event.data.flowId,
+        },
+      ];
+      if (event.data.rejectionReason) {
+        rows.push({ label: t('Reason'), value: event.data.rejectionReason });
+      }
+      return rows;
+    }
   }
 }
 

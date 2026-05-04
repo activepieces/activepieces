@@ -98,6 +98,7 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     ssoEnabled: false,
     secretManagersEnabled: false,
     scimEnabled: false,
+    flowApprovalEnabled: false,
     dedicatedWorkers: null,
     canary: false,
 }
@@ -126,6 +127,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     ssoEnabled: false,
     secretManagersEnabled: false,
     scimEnabled: false,
+    flowApprovalEnabled: false,
     stripeCustomerId: undefined,
     stripeSubscriptionId: undefined,
     stripeSubscriptionStatus: undefined,

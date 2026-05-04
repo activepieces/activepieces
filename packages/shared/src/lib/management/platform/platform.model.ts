@@ -83,6 +83,7 @@ export const PlatformPlan = z.object({
     ssoEnabled: z.boolean(),
     secretManagersEnabled: z.boolean(),
     scimEnabled: z.boolean(),
+    flowApprovalEnabled: z.boolean(),
     licenseKey: Nullable(z.string()),
     licenseExpiresAt: Nullable(DateOrString),
     stripeCustomerId: Nullable(z.string()),

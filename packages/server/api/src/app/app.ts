@@ -34,6 +34,8 @@ import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { domainHelper } from './ee/custom-domains/domain-helper'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
+import { flowApprovalModule } from './ee/flows/flow-approval/flow-approval.module'
+import { eeFlowPublishHook } from './ee/flows/flow-approval/flow-publish-hook'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
@@ -58,6 +60,7 @@ import { userModule } from './ee/users/user.module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
+import { publishHooksFactory } from './flows/flow/flow-publish-hooks'
 import { flowBackgroundJobs } from './flows/flow/flow.jobs'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
@@ -289,9 +292,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)
+            await app.register(flowApprovalModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
+            publishHooksFactory.set(eeFlowPublishHook)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformBackgroundJobs(app.log).hardDeletePlatformHandler(data))
             break
@@ -318,9 +323,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)
+            await app.register(flowApprovalModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
+            publishHooksFactory.set(eeFlowPublishHook)
             break
         case ApEdition.COMMUNITY:
             await app.register(platformProjectModule)

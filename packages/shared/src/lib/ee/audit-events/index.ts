@@ -43,6 +43,10 @@ export enum ApplicationEventName {
     PROJECT_ROLE_DELETED = 'project.role.deleted',
     PROJECT_ROLE_UPDATED = 'project.role.updated',
     PROJECT_RELEASE_CREATED = 'project.release.created',
+    FLOW_APPROVAL_REQUESTED = 'flow.approval.requested',
+    FLOW_APPROVAL_GRANTED = 'flow.approval.granted',
+    FLOW_APPROVAL_REJECTED = 'flow.approval.rejected',
+    FLOW_APPROVAL_WITHDRAWN = 'flow.approval.withdrawn',
 }
 
 const BaseAuditEventProps = {
@@ -271,6 +275,24 @@ export const ProjectReleaseEvent = z.object({
 
 export type ProjectReleaseEvent = z.infer<typeof ProjectReleaseEvent>
 
+export const FlowApprovalEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.FLOW_APPROVAL_REQUESTED),
+        z.literal(ApplicationEventName.FLOW_APPROVAL_GRANTED),
+        z.literal(ApplicationEventName.FLOW_APPROVAL_REJECTED),
+        z.literal(ApplicationEventName.FLOW_APPROVAL_WITHDRAWN),
+    ]),
+    data: z.object({
+        approvalRequestId: z.string(),
+        flowId: z.string(),
+        flowVersionId: z.string(),
+        flowDisplayName: z.string().optional(),
+        rejectionReason: Nullable(z.string()).optional(),
+    }),
+})
+export type FlowApprovalEvent = z.infer<typeof FlowApprovalEvent>
+
 export const ApplicationEvent = z.union([
     ConnectionEvent,
     FlowCreatedEvent,
@@ -283,6 +305,7 @@ export const ApplicationEvent = z.union([
     SigningKeyEvent,
     ProjectRoleEvent,
     ProjectReleaseEvent,
+    FlowApprovalEvent,
 ])
 
 export type ApplicationEvent = z.infer<typeof ApplicationEvent>
@@ -335,6 +358,14 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `${event.data.projectRole.name} is deleted`
         case ApplicationEventName.PROJECT_RELEASE_CREATED:
             return `${event.data.release.name} is created`
+        case ApplicationEventName.FLOW_APPROVAL_REQUESTED:
+            return `Approval requested for flow ${event.data.flowDisplayName ?? event.data.flowId}`
+        case ApplicationEventName.FLOW_APPROVAL_GRANTED:
+            return `Approval granted for flow ${event.data.flowDisplayName ?? event.data.flowId}`
+        case ApplicationEventName.FLOW_APPROVAL_REJECTED:
+            return `Approval rejected for flow ${event.data.flowDisplayName ?? event.data.flowId}${event.data.rejectionReason ? ` (${event.data.rejectionReason})` : ''}`
+        case ApplicationEventName.FLOW_APPROVAL_WITHDRAWN:
+            return `Approval request withdrawn for flow ${event.data.flowDisplayName ?? event.data.flowId}`
     }
 }
 

@@ -31,6 +31,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
             ...rest,
             icon,
             releasesEnabled: false,
+            sensitive: false,
         }
         const savedProject = await projectRepo(entityManager).save(newProject)
         if (callPostCreateHooks) {
@@ -83,6 +84,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('externalId', externalId),
             ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
             ...spreadIfDefined('metadata', request.metadata),
+            ...spreadIfDefined('sensitive', request.sensitive),
             ...(request.poolId !== undefined ? { poolId: request.poolId } : {}),
             ...(request.maxConcurrentJobs !== undefined ? { maxConcurrentJobs: request.maxConcurrentJobs } : {}),
         }
@@ -278,6 +280,7 @@ type UpdateTeamProjectParams = {
     poolId?: string | null
     maxConcurrentJobs?: number | null
     icon?: ProjectIcon
+    sensitive?: boolean
 }
 
 type UpdatePersonalProjectParams = {
@@ -287,6 +290,7 @@ type UpdatePersonalProjectParams = {
     metadata?: Metadata
     poolId?: string | null
     maxConcurrentJobs?: number | null
+    sensitive?: boolean
 }
 
 type UpdateParams = UpdateTeamProjectParams | UpdatePersonalProjectParams
