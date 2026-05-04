@@ -140,11 +140,7 @@ function ChatBoxContent({
         <div className="flex-1" />
         <EmptyState incognito={incognito} />
         <div className="w-full max-w-3xl mt-6">
-          <SuggestionCards
-            onSend={handleSend}
-            onSelectProject={handleProjectChange}
-            projects={projects}
-          />
+          <SuggestionCards onSend={handleSend} />
           <div className="mt-3">
             <ChatInput
               isStreaming={isStreaming}
