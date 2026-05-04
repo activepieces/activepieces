@@ -1,4 +1,5 @@
 import {
+  AP_ERROR_KEY,
   FlowAction,
   FlowTrigger,
   assertNotNullOrUndefined,
@@ -176,13 +177,21 @@ function parseLabelFromMention(
     };
   }
   const stepMetadata = stepsMetadata[stepIdx];
+  const friendlyPath = collapseEngineReservedPath(path);
   return {
     displayText: `${stepIdx + 1}. ${
       stepMetadata?.stepDisplayName ?? ''
-    } ${path.join(' ')}`,
+    } ${friendlyPath.join(' ')}`,
     serverValue: mention,
     logoUrl: stepMetadata?.logoUrl,
   };
+}
+
+function collapseEngineReservedPath(path: string[]): string[] {
+  if (path.length === 2 && path[0] === AP_ERROR_KEY && path[1] === 'message') {
+    return ['Error message'];
+  }
+  return path;
 }
 
 function createMentionNodeFromText(
