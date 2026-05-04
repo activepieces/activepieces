@@ -1,13 +1,12 @@
 import { performance } from 'node:perf_hooks'
-import { EngineGenericError, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
+import { EngineGenericError, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { loggingUtils } from '../helper/logging-utils'
 import { triggerHelper } from '../helper/trigger-helper'
-import { HydratedExecuteFlowOperation } from '../operations/flow.operation'
 import { BaseExecutor } from './base-executor'
 import { codeExecutor } from './code-executor'
-import { EngineConstants } from './context/engine-constants'
+import { EngineConstants, ResolvedExecuteFlowOperation } from './context/engine-constants'
 import { FlowExecutorContext } from './context/flow-execution-context'
 import { loopExecutor } from './loop-executor'
 import { pieceExecutor } from './piece-executor'
@@ -36,10 +35,10 @@ export const flowExecutor = {
     async executeFromTrigger({ executionState, constants, input }: {
         executionState: FlowExecutorContext
         constants: EngineConstants
-        input: HydratedExecuteFlowOperation
+        input: ResolvedExecuteFlowOperation
     }): Promise<FlowExecutorContext> {
         const trigger = input.flowVersion.trigger
-        if (input.hydrated.kind === 'begin') {
+        if (input.executionType === ExecutionType.BEGIN) {
             await flowRunProgressReporter.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState,
@@ -47,7 +46,7 @@ export const flowExecutor = {
             void flowRunProgressReporter.backup().catch((err) => {
                 console.error('[Progress] Initial payload upload failed', err)
             })
-            await triggerHelper.executeOnStart(trigger, constants, input.hydrated.payload)
+            await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
             await flowRunProgressReporter.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState,

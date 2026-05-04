@@ -1,6 +1,5 @@
 import { ActionErrorHandlingOptions, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, StreamStepProgress, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
-import { EngineConstants, HydratedFlowInput } from '../../src/lib/handler/context/engine-constants'
-import { HydratedExecuteFlowOperation } from '../../src/lib/operations/flow.operation'
+import { EngineConstants, ResolvedBeginExecuteFlowOperation } from '../../src/lib/handler/context/engine-constants'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
     return new EngineConstants(
@@ -126,9 +125,8 @@ export function buildPieceAction({ name, input, skip, pieceName, actionName, nex
 }
 
 export function buildMockBeginExecuteFlowOperation(
-    params: Partial<BeginExecuteFlowOperation> & Pick<BeginExecuteFlowOperation, 'flowVersion'> & { hydrated?: HydratedFlowInput },
-): HydratedExecuteFlowOperation {
-    const { hydrated, ...overrides } = params
+    params: Partial<ResolvedBeginExecuteFlowOperation> & Pick<BeginExecuteFlowOperation, 'flowVersion'>,
+): ResolvedBeginExecuteFlowOperation {
     return {
         projectId: 'projectId',
         engineToken: 'engineToken',
@@ -143,9 +141,8 @@ export function buildMockBeginExecuteFlowOperation(
         httpRequestId: null,
         streamStepProgress: StreamStepProgress.NONE,
         stepNameToTest: null,
-        triggerPayload: { type: 'inline', value: {} },
+        triggerPayload: {},
         executeTrigger: false,
-        ...overrides,
-        hydrated: hydrated ?? { kind: 'begin', payload: {}, executionState: { steps: {}, tags: [] } },
+        ...params,
     }
 }
