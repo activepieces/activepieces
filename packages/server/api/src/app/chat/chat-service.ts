@@ -1,6 +1,4 @@
 import { ServerResponse } from 'http'
-import { readFileSync } from 'node:fs'
-import path from 'node:path'
 import {
     ActivepiecesError,
     AIProviderModelType,
@@ -9,7 +7,6 @@ import {
     apId,
     ChatConversation,
     ChatHistoryMessage,
-    ChatHistoryToolCall,
     CreateChatConversationRequest,
     ErrorCode,
     GetProviderConfigResponse,
@@ -17,10 +14,8 @@ import {
     Project,
     SeekPage,
     spreadIfDefined,
-    tryCatch,
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
-import { createMCPClient } from '@ai-sdk/mcp'
 import { LanguageModel, ModelMessage, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../ai/ai-provider-service'
@@ -31,14 +26,16 @@ import { Order } from '../helper/pagination/paginator'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { mcpProjectSelection } from '../mcp/mcp-project-selection'
-import { mcpOAuthTokenService } from '../mcp/oauth/token/mcp-oauth-token.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { chatCompaction } from './chat-compaction'
 import { ChatConversationEntity } from './chat-conversation-entity'
 import { buildUserContentWithFiles } from './chat-file-utils'
+import { chatHistory } from './history/chat-history'
+import { chatMcp } from './mcp/chat-mcp'
 import { createChatModel } from './chat-model-factory'
-import { createChatTools } from './chat-tools'
+import { chatPrompt } from './prompt/chat-prompt'
+import { createChatTools } from './tools/chat-tools'
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 
@@ -111,7 +108,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
     async getMessages({ id, platformId, userId }: ConversationIdentifier): Promise<{ data: ChatHistoryMessage[] }> {
         const conversation = await this.getConversationOrThrow({ id, platformId, userId })
-        const messages = reconstructChatHistory(conversation.messages as ModelMessage[])
+        const messages = chatHistory.reconstruct(conversation.messages as ModelMessage[])
         return { data: messages }
     },
 
@@ -129,7 +126,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
             this.getConversationOrThrow({ id: conversationId, platformId, userId }),
             resolveChatProvider({ platformId, log }),
             getUserProjects({ platformId, userId, log }),
-            getMcpCredentials({ platformId, userId, log }),
+            chatMcp.getCredentials({ platformId, userId, log }),
             buildUserContentWithFiles({ text: content, files }),
         ])
 
@@ -141,7 +138,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
         const modelName = conversation.modelName
             ?? await resolveDefaultChatModel({ platformId, provider: providerConfig.provider, log })
 
-        const { mcpClient, mcpToolSet } = await connectMcpClient({ mcpCredentials, log })
+        const { mcpClient, mcpToolSet } = await chatMcp.connectClient({ mcpCredentials, log })
 
         if (selectedProjectId) {
             mcpProjectSelection.set({ platformId, userId, projectId: selectedProjectId })
@@ -158,7 +155,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
         })
 
         const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-        const systemPrompt = buildAgentSystemPrompt({
+        const systemPrompt = chatPrompt.buildSystemPrompt({
             projects: userProjects,
             currentProjectId: selectedProjectId,
             frontendUrl,
@@ -351,173 +348,6 @@ async function resolveCompactionState({ conversation, allMessages, systemPromptL
     log.info({ conversationId, summarizedUpToIndex: result.summarizedUpToIndex }, 'Chat compaction completed')
 
     return result
-}
-
-async function connectMcpClient({ mcpCredentials, log }: {
-    mcpCredentials: { mcpServerUrl: string | null, mcpToken: string | null }
-    log: FastifyBaseLogger
-}): Promise<{ mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null, mcpToolSet: Record<string, unknown> }> {
-    if (isNil(mcpCredentials.mcpServerUrl) || isNil(mcpCredentials.mcpToken)) {
-        return { mcpClient: null, mcpToolSet: {} }
-    }
-    const mcpUrl = mcpCredentials.mcpServerUrl
-    const mcpToken = mcpCredentials.mcpToken
-    const { data: client, error } = await tryCatch(async () => createMCPClient({
-        transport: {
-            type: 'http',
-            url: mcpUrl,
-            headers: { 'Authorization': `Bearer ${mcpToken}` },
-        },
-    }))
-    if (isNil(client)) {
-        log.warn({ err: error }, 'Failed to create MCP client — chat will work without MCP tools')
-        return { mcpClient: null, mcpToolSet: {} }
-    }
-    const mcpToolSet = await client.tools()
-    return { mcpClient: client, mcpToolSet }
-}
-
-async function getMcpCredentials({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<{ mcpServerUrl: string | null, mcpToken: string | null }> {
-    const { data: accessToken, error } = await tryCatch(() =>
-        mcpOAuthTokenService.issueInternalAccessToken({ userId, platformId, projectId: null }),
-    )
-    if (error) {
-        log.warn({ err: error, platformId }, 'Failed to get MCP credentials — chat will work without MCP tools')
-        return { mcpServerUrl: null, mcpToken: null }
-    }
-    const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-    return {
-        mcpServerUrl: `${frontendUrl}/mcp/platform`,
-        mcpToken: accessToken,
-    }
-}
-
-function reconstructChatHistory(messages: ModelMessage[]): ChatHistoryMessage[] {
-    const result: ChatHistoryMessage[] = []
-
-    for (const msg of messages) {
-        if (msg.role === 'user') {
-            const textContent = extractTextFromContent(msg.content)
-            if (textContent) {
-                result.push({ role: 'user', content: textContent })
-            }
-        }
-        else if (msg.role === 'assistant') {
-            const parts = Array.isArray(msg.content) ? msg.content : [{ type: 'text' as const, text: String(msg.content) }]
-            let text = ''
-            const toolCalls: ChatHistoryToolCall[] = []
-
-            for (const part of parts) {
-                if (typeof part === 'string') {
-                    text += part
-                }
-                else if (part.type === 'text') {
-                    text += part.text
-                }
-                else if (part.type === 'tool-call') {
-                    toolCalls.push({
-                        toolCallId: part.toolCallId,
-                        title: part.toolName,
-                        status: 'completed',
-                        input: typeof part.input === 'object' && part.input !== null ? part.input as Record<string, unknown> : undefined,
-                    })
-                }
-            }
-
-            if (text || toolCalls.length > 0) {
-                result.push({
-                    role: 'assistant',
-                    content: text,
-                    ...(toolCalls.length > 0 ? { toolCalls } : {}),
-                })
-            }
-        }
-        else if (msg.role === 'tool') {
-            const lastAssistant = result[result.length - 1]
-            if (lastAssistant?.role === 'assistant' && lastAssistant.toolCalls) {
-                const toolResults = Array.isArray(msg.content) ? msg.content : []
-                for (const toolResult of toolResults) {
-                    if (typeof toolResult === 'object' && toolResult !== null && 'type' in toolResult && toolResult.type === 'tool-result') {
-                        const tr = toolResult as { toolCallId: string, output: unknown }
-                        const existing = lastAssistant.toolCalls.find((tc) => tc.toolCallId === tr.toolCallId)
-                        if (existing) {
-                            existing.output = typeof tr.output === 'string'
-                                ? tr.output
-                                : JSON.stringify(tr.output)
-                            existing.status = 'completed'
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return result
-}
-
-function extractTextFromContent(content: unknown): string {
-    if (typeof content === 'string') return content
-    if (!Array.isArray(content)) return ''
-    let text = ''
-    for (const part of content) {
-        if (typeof part === 'object' && part !== null && 'type' in part && part.type === 'text' && 'text' in part) {
-            text += part.text
-        }
-    }
-    return text
-}
-
-function loadPromptTemplate(filename: string): string {
-    return readFileSync(path.resolve(`packages/server/api/src/assets/prompts/${filename}`), 'utf8')
-}
-
-const PROMPT_TEMPLATES = {
-    system: loadPromptTemplate('chat-system-prompt.md'),
-    projectSelected: loadPromptTemplate('chat-project-context-selected.md'),
-    noProject: loadPromptTemplate('chat-project-context-none.md'),
-}
-
-function sanitizeProjectName(name: string): string {
-    return name.replace(/[^a-zA-Z0-9 \-_.]/g, '').slice(0, 64)
-}
-
-function buildProjectListBlock({ projects, frontendUrl }: {
-    projects: Project[]
-    frontendUrl: string
-}): string {
-    if (projects.length === 0) return 'No projects available.'
-    return projects.map((p) => {
-        const url = `${frontendUrl}/projects/${p.id}`
-        return `- **${sanitizeProjectName(p.displayName)}** (ID: ${p.id}) — [Open](${url})`
-    }).join('\n')
-}
-
-function buildProjectContextBlock({ project, frontendUrl }: {
-    project: Project | null
-    frontendUrl: string
-}): string {
-    if (!project) {
-        return PROMPT_TEMPLATES.noProject
-    }
-    return PROMPT_TEMPLATES.projectSelected
-        .replaceAll('{{PROJECT_NAME}}', sanitizeProjectName(project.displayName))
-        .replaceAll('{{PROJECT_ID}}', project.id)
-        .replaceAll('{{FRONTEND_URL}}', frontendUrl)
-}
-
-function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl }: {
-    projects: Project[]
-    currentProjectId: string | null
-    frontendUrl: string
-}): string {
-    const currentProject = currentProjectId
-        ? projects.find((p) => p.id === currentProjectId) ?? null
-        : null
-
-    return PROMPT_TEMPLATES.system
-        .replace('{{PROJECT_LIST}}', buildProjectListBlock({ projects, frontendUrl }))
-        .replace('{{PROJECT_CONTEXT}}', buildProjectContextBlock({ project: currentProject, frontendUrl }))
-        .replaceAll('{{FRONTEND_URL}}', frontendUrl)
 }
 
 type CreateConversationParams = {
