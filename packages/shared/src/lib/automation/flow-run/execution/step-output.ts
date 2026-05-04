@@ -2,6 +2,8 @@ import { isNil } from '../../../core/common'
 import { FlowActionType } from '../../flows/actions/action'
 import { FlowTriggerType } from '../../flows/triggers/trigger'
 
+export const AP_ERROR_KEY = '__ap_error'
+
 export enum StepOutputStatus {
     FAILED = 'FAILED',
     PAUSED = 'PAUSED',

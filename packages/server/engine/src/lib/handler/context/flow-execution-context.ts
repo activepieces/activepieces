@@ -1,4 +1,4 @@
-import { assertEqual, BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { AP_ERROR_KEY, assertEqual, BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
 
@@ -169,7 +169,7 @@ export class FlowExecutorContext {
 function extractOutput(steps: Record<string, StepOutput>): Record<string, unknown> {
     return Object.entries(steps).reduce((acc: Record<string, unknown>, [stepName, step]) => {
         if (step.status === StepOutputStatus.FAILED) {
-            acc[stepName] = { error: { message: step.errorMessage } }
+            acc[stepName] = { [AP_ERROR_KEY]: { message: step.errorMessage } }
         }
         else {
             acc[stepName] = step.output

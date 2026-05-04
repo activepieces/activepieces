@@ -1,4 +1,5 @@
 import {
+  AP_ERROR_KEY,
   flowCanvasUtils,
   isNil,
   isObject,
@@ -381,7 +382,7 @@ function traverseStep(
           data: {
             type: 'value',
             displayName: t('Error message'),
-            propertyPath: `${step.name}['error']['message']`,
+            propertyPath: `${step.name}['${AP_ERROR_KEY}']['message']`,
             value: '---runtime error message---',
             insertable: true,
           },
