@@ -103,6 +103,10 @@ export function MultiQuestionForm({
           return a ? `- **${qq.question}** ${a}` : null;
         })
         .filter((l): l is string => l !== null);
+      if (lines.length === 0) {
+        onDismiss?.();
+        return;
+      }
       setSubmitted(true);
       onSubmit(lines.join('\n'));
     } else {

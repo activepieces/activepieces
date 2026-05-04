@@ -44,9 +44,6 @@ const KNOWN_PIECE_SLUGS = [
   'sendgrid',
   'openai',
   'anthropic',
-  'webhook',
-  'schedule',
-  'http',
 ];
 
 const PIECE_KEYWORD_MAP: Record<string, string> = {
