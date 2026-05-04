@@ -12,7 +12,6 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
@@ -65,7 +64,6 @@ const AnimatedTab = ({
 export const ProjectDashboardLayoutHeader = () => {
   const { project } = projectCollectionUtils.useCurrentProject();
   const { checkAccess } = useAuthorization();
-  const { platform } = platformHooks.useCurrentPlatform();
   const { embedState } = useEmbedding();
   const location = useLocation();
   const navigate = useNavigate();
