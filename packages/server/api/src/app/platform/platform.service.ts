@@ -1,10 +1,9 @@
-import { ActivepiecesError,
+import {
+    ActivepiecesError,
     ApEdition,
     apId,
     AuthenticationResponse,
     ErrorCode,
-    FederatedAuthnProviderConfig,
-    FederatedAuthnProviderConfigWithoutSensitiveData,
     FilteredPieceBehavior,
     isNil,
     OPEN_SOURCE_PLAN,
@@ -13,10 +12,12 @@ import { ActivepiecesError,
     PlatformPlanLimits,
     PlatformRole,
     PlatformUsage,
+    PlatformWithoutFederatedAuth,
     PlatformWithoutSensitiveData,
     ProjectType,
     spreadIfDefined,
     SsoDomainVerification,
+    SsoDomainVerificationStatus,
     UpdatePlatformRequestBody,
     UserId,
     UserStatus,
@@ -55,7 +56,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         const platforms = await Promise.all(platformsWithProjects.filter((platformId) => !isNil(platformId)).map((platformId) => this.getOneWithPlanOrThrow(platformId)))
         return platforms
     },
-    async create(params: AddParams): Promise<Platform> {
+    async create(params: AddParams): Promise<PlatformWithoutFederatedAuth> {
         const {
             ownerId,
             name,
@@ -78,9 +79,11 @@ export const platformService = (log: FastifyBaseLogger) => ({
             enforceAllowedAuthDomains: false,
             allowedAuthDomains: [],
             filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
-            federatedAuthProviders: {},
+            federatedAuthProviders: { saml: null },
             cloudAuthEnabled: true,
             pinnedPieces: [],
+            allowedEmbedOrigins: [],
+            googleAuthEnabled: true,
         }
 
         const savedPlatform = await platformRepo().save(newPlatform)
@@ -90,7 +93,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         })
 
         log.info({ platformId: savedPlatform.id, ownerId }, 'Platform created')
-        return savedPlatform
+        return stripFederatedAuth(savedPlatform)
     },
     async createPlatformWithProject({ identityId, name, invalidatePreviousTokens }: CreatePlatformWithProjectParams): Promise<AuthenticationResponse> {
         const newUser = await userService(log).create({
@@ -116,10 +119,10 @@ export const platformService = (log: FastifyBaseLogger) => ({
             projectId: defaultProject.id,
         })
     },
-    async getAll(): Promise<Platform[]> {
+    async getAll(): Promise<PlatformWithoutFederatedAuth[]> {
         return platformRepo().find()
     },
-    async getOldestPlatform(): Promise<Platform | null> {
+    async getOldestPlatform(): Promise<PlatformWithoutFederatedAuth | null> {
         return platformRepo().findOne({
             where: {},
             order: {
@@ -127,15 +130,41 @@ export const platformService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async update(params: UpdateParams): Promise<Platform> {
-        const platform = await this.getOneOrThrow(params.id)
-        const federatedAuthProviders = {
-            ...platform.federatedAuthProviders,
-            ...(params.federatedAuthProviders ?? {}),
+    async update(params: UpdateParams): Promise<PlatformWithoutFederatedAuth> {
+        if (params.federatedAuthProviders?.saml !== undefined) {
+            const plan = await platformPlanService(log).getOrCreateForPlatform(params.id)
+            if (!plan.ssoEnabled) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.FEATURE_DISABLED,
+                    params: {
+                        message: 'SSO is not enabled for this platform',
+                    },
+                })
+            }
+            if (!isNil(params.federatedAuthProviders.saml)) {
+                const platform = await this.getOneOrThrow(params.id)
+                if (platform.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: {
+                            message: 'SSO domain must be verified before configuring SAML',
+                        },
+                    })
+                }
+            }
         }
-        const updatedPlatform: Platform = {
+        const platform = params.federatedAuthProviders !== undefined
+            ? await this.getOneWithFederatedAuthOrThrow(params.id)
+            : await this.getOneOrThrow(params.id)
+        const federatedAuthProviders = hasFederatedAuth(platform)
+            ? {
+                ...platform.federatedAuthProviders,
+                ...(params.federatedAuthProviders ?? {}),
+            }
+            : undefined
+        const updatedPlatform = {
             ...platform,
-            federatedAuthProviders,
+            ...spreadIfDefined('federatedAuthProviders', federatedAuthProviders),
             ...spreadIfDefined('name', params.name),
             ...spreadIfDefined('primaryColor', params.primaryColor),
             ...spreadIfDefined('logoIconUrl', params.logoIconUrl),
@@ -144,12 +173,14 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('filteredPieceNames', params.filteredPieceNames),
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
+            ...spreadIfDefined('googleAuthEnabled', params.googleAuthEnabled),
             ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
             ...spreadIfDefined(
                 'enforceAllowedAuthDomains',
                 params.enforceAllowedAuthDomains,
             ),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
+            ...spreadIfDefined('allowedEmbedOrigins', params.allowedEmbedOrigins),
             ...spreadIfDefined('ssoDomain', params.ssoDomain),
             ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
@@ -164,67 +195,76 @@ export const platformService = (log: FastifyBaseLogger) => ({
             invalidateSamlClientCache(params.id)
         }
         log.info({ platformId: params.id }, 'Platform updated')
-        return platformRepo().save(updatedPlatform)
+        const saved = await platformRepo().save(updatedPlatform)
+        return stripFederatedAuth(saved)
     },
-    async getOneOrThrow(id: PlatformId): Promise<Platform> {
-        const platform = await platformRepo().findOneBy({
-            id,
-        })
-
-        if (isNil(platform)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityId: id,
-                    entityType: 'Platform',
-                    message: 'Platform not found',
-                },
-            })
-        }
-
-        return platform
+    async getOneOrThrow(id: PlatformId): Promise<PlatformWithoutFederatedAuth> {
+        return platformRepo().findOneByOrFail({ id })
+    },
+    async getOne(id: PlatformId): Promise<PlatformWithoutFederatedAuth | null> {
+        return platformRepo().findOneBy({ id })
+    },
+    async getOneWithFederatedAuthOrThrow(id: PlatformId): Promise<Platform> {
+        return platformRepo()
+            .createQueryBuilder('platform')
+            .addSelect('platform.federatedAuthProviders')
+            .where({ id })
+            .getOneOrFail()
+    },
+    async hasSamlConfigured(id: PlatformId): Promise<boolean> {
+        const result = await platformRepo()
+            .createQueryBuilder('platform')
+            .select('platform."federatedAuthProviders"', 'federatedAuthProviders')
+            .where({ id })
+            .getRawOne<{ federatedAuthProviders: { saml?: unknown } | null }>()
+        return !isNil(result?.federatedAuthProviders?.saml)
     },
     async getOneWithPlan(id: PlatformId): Promise<PlatformWithoutSensitiveData | null> {
         const platform = await this.getOne(id)
         if (isNil(platform)) {
             return null
         }
+        const [samlConfigured, plan, usage] = await Promise.all([
+            this.hasSamlConfigured(id),
+            getPlan(log, platform),
+            getUsage(log, platform),
+        ])
         return {
             ...platform,
-            federatedAuthProviders: stripSensitiveData(platform.federatedAuthProviders),
-            usage: await getUsage(log, platform),
-            plan: await getPlan(log, platform),
+            federatedAuthProviders: { saml: samlConfigured ? {} : null },
+            usage,
+            plan,
         }
     },
     async getOneWithPlanOrThrow(id: PlatformId): Promise<Omit<PlatformWithoutSensitiveData, 'usage'>> {
         const platform = await this.getOneOrThrow(id)
+        const [samlConfigured, plan] = await Promise.all([
+            this.hasSamlConfigured(id),
+            getPlan(log, platform),
+        ])
         return {
             ...platform,
-            federatedAuthProviders: stripSensitiveData(platform.federatedAuthProviders),
-            plan: await getPlan(log, platform),
+            federatedAuthProviders: { saml: samlConfigured ? {} : null },
+            plan,
         }
     },
     async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
         const platform = await this.getOneOrThrow(id)
-        const [usage, plan] = await Promise.all([
+        const [samlConfigured, usage, plan] = await Promise.all([
+            this.hasSamlConfigured(id),
             getUsage(log, platform),
             getPlan(log, platform),
         ])
         return {
             ...platform,
-            federatedAuthProviders: stripSensitiveData(platform.federatedAuthProviders),
+            federatedAuthProviders: { saml: samlConfigured ? {} : null },
             usage,
             plan,
         }
     },
-    async getOne(id: PlatformId): Promise<Platform | null> {
-        return platformRepo().findOneBy({
-            id,
-        })
-    },
 })
 
-async function getUsage(log: FastifyBaseLogger, platform: Platform): Promise<PlatformUsage | undefined> {
+async function getUsage(log: FastifyBaseLogger, platform: PlatformWithoutFederatedAuth): Promise<PlatformUsage | undefined> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
         return undefined
@@ -232,7 +272,7 @@ async function getUsage(log: FastifyBaseLogger, platform: Platform): Promise<Pla
     return platformPlanService(log).getUsage(platform.id)
 }
 
-async function getPlan(log: FastifyBaseLogger, platform: Platform): Promise<PlatformPlanLimits> {
+async function getPlan(log: FastifyBaseLogger, platform: PlatformWithoutFederatedAuth): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
         return {
@@ -244,12 +284,13 @@ async function getPlan(log: FastifyBaseLogger, platform: Platform): Promise<Plat
     return platformPlanService(log).getOrCreateForPlatform(platform.id)
 }
 
-function stripSensitiveData(providers: FederatedAuthnProviderConfig): FederatedAuthnProviderConfigWithoutSensitiveData {
-    return {
-        google: providers.google ? { clientId: providers.google.clientId } : null,
-        github: providers.github ? { clientId: providers.github.clientId } : null,
-        saml: providers.saml ? {} : null,
-    }
+function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
+    const { federatedAuthProviders: _omitted, ...rest } = platform
+    return rest
+}
+
+function hasFederatedAuth(platform: Platform | PlatformWithoutFederatedAuth): platform is Platform {
+    return 'federatedAuthProviders' in platform
 }
 
 type AddParams = {

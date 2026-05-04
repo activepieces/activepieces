@@ -1,8 +1,8 @@
 import { ExecutioOutputFile, File, FileCompression, FileType, isNil, UploadLogsBehavior, UploadLogsToken } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { domainHelper } from '../../../ee/custom-domains/domain-helper'
 import { fileService } from '../../../file/file.service'
+import { domainHelper } from '../../../helper/domain-helper'
 import { JwtAudience, JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 
 export const flowRunLogsService = (log: FastifyBaseLogger) => {
@@ -30,7 +30,7 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
                 expiresInSeconds: dayjs.duration(100, 'year').asSeconds(),
                 audience: JwtAudience.FLOW_RUN_LOG,
             })
-            return domainHelper.getApiUrlForWorker({ path: `/v1/flow-runs/logs?token=${token}`, platformId: null })
+            return domainHelper.getApiUrlForWorker({ path: `/v1/flow-runs/logs?token=${token}` })
         },
         async upsertMetadata(request: UploadLogsToken): Promise<File> {
             const file = await fileService(log).getFile({

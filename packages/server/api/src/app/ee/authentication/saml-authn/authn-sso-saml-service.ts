@@ -1,22 +1,40 @@
 import { resolveTxt } from 'dns/promises'
-import { ActivepiecesError, apId, AuthenticationResponse, ErrorCode, isNil, PlatformId, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, tryCatch, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, apId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformId, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, tryCatch, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { authenticationService } from '../../../authentication/authentication.service'
+import { domainHelper } from '../../../helper/domain-helper'
+import { system } from '../../../helper/system/system'
 import { platformRepo, platformService } from '../../../platform/platform.service'
+import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
 import { createSamlClient, IdpLoginResponse } from './saml-client'
 
 export const authnSsoSamlService = (log: FastifyBaseLogger) => {
     return {
+        async getAcsUrl(platformId: string): Promise<string> {
+            const baseUrl = await domainHelper.getPublicApiUrl({ path: '/v1/authn/saml/acs' })
+            return system.getEdition() === ApEdition.CLOUD
+                ? `${baseUrl}?platformId=${encodeURIComponent(platformId)}`
+                : baseUrl
+        },
+        async getSamlConfigOrThrow(platformId: string | null): Promise<SamlConfigResult> {
+            assertNotNullOrUndefined(platformId, 'Platform ID is required for SAML authentication')
+            const platform = await platformService(log).getOneWithFederatedAuthOrThrow(platformId)
+            const saml = platform.federatedAuthProviders.saml
+            assertNotNullOrUndefined(saml, 'SAML IDP metadata is not configured for this platform')
+            return { saml, platformId }
+        },
         async login(platformId: string, samlProvider: SAMLAuthnProviderConfig): Promise<LoginResponse> {
-            const client = await createSamlClient(platformId, samlProvider)
+            const acsUrl = await this.getAcsUrl(platformId)
+            const client = await createSamlClient({ platformId, samlProvider, acsUrl })
             const redirectUrl = client.getLoginUrl()
             return {
                 redirectUrl,
             }
         },
         async acs(platformId: string, samlProvider: SAMLAuthnProviderConfig, idpLoginResponse: IdpLoginResponse): Promise<AuthenticationResponse> {
-            const client = await createSamlClient(platformId, samlProvider)
+            const acsUrl = await this.getAcsUrl(platformId)
+            const client = await createSamlClient({ platformId, samlProvider, acsUrl })
             const attributes = await client.parseAndValidateLoginResponse(idpLoginResponse)
             return authenticationService(log).federatedAuthn({
                 email: attributes.email,
@@ -27,6 +45,28 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 provider: UserIdentityProvider.SAML,
                 predefinedPlatformId: platformId,
             })
+        },
+        async discoverByDomain(domain: string): Promise<DiscoverResult> {
+            const ssoDomain = domain.trim().toLowerCase()
+            if (ssoDomain.length === 0) {
+                return { platformId: null }
+            }
+            const platform = await platformRepo().findOneBy({ ssoDomain })
+            if (isNil(platform)) {
+                return { platformId: null }
+            }
+            if (platform.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
+                return { platformId: null }
+            }
+            const plan = await platformPlanService(log).getOrCreateForPlatform(platform.id)
+            if (!plan.ssoEnabled) {
+                return { platformId: null }
+            }
+            const samlConfigured = await platformService(log).hasSamlConfigured(platform.id)
+            if (!samlConfigured) {
+                return { platformId: null }
+            }
+            return { platformId: platform.id }
         },
         async updateSsoDomain({ platformId, ssoDomain }: UpdateSsoDomainParams): Promise<SsoDomainState> {
             const normalized = ssoDomain?.trim().toLowerCase() ?? null
@@ -55,7 +95,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             const verification = computeNextVerification({ nextDomain: value, currentDomain: current.ssoDomain ?? null, currentVerification: current.ssoDomainVerification ?? null })
 
             await platformService(log).update({ id: platformId, ssoDomain: value, ssoDomainVerification: verification })
-            return { ssoDomain, ssoDomainVerification: verification }
+            return { ssoDomain: value, ssoDomainVerification: verification }
         },
         async verifySsoDomain({ platformId }: VerifySsoDomainParams): Promise<SsoDomainState> {
             const platform = await platformService(log).getOneOrThrow(platformId)
@@ -100,7 +140,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
     }
 }
 
-const PENDING_DOMAIN_TTL_HOURS = 3
+const PENDING_DOMAIN_TTL_HOURS = 3 // if sso domain was not verified in this number of hours it will be set to null
 
 function computeNextVerification({ nextDomain, currentDomain, currentVerification }: { nextDomain: string | null, currentDomain: string | null, currentVerification: SsoDomainVerification | null }): SsoDomainVerification | null {
     if (isNil(nextDomain)) {
@@ -134,6 +174,15 @@ const VERIFICATION_VALUE_PREFIX = 'activepieces-verify'
 
 type LoginResponse = {
     redirectUrl: string
+}
+
+type SamlConfigResult = {
+    saml: SAMLAuthnProviderConfig
+    platformId: string
+}
+
+type DiscoverResult = {
+    platformId: string | null
 }
 
 type UpdateSsoDomainParams = {

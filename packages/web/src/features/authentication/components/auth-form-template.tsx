@@ -100,9 +100,12 @@ const AuthSeparator = ({
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
       ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
     );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCloud = edition === ApEdition.CLOUD;
+  const hasThirdPartyLogin =
+    thirdPartyAuthProviders?.google || thirdPartyAuthProviders?.saml || isCloud;
 
-  return (thirdPartyAuthProviders?.google || thirdPartyAuthProviders?.saml) &&
-    isEmailAuthEnabled ? (
+  return hasThirdPartyLogin && isEmailAuthEnabled ? (
     <HorizontalSeparatorWithText className="my-5 text-muted-foreground">
       {t('or')}
     </HorizontalSeparatorWithText>

@@ -1,4 +1,4 @@
-import { ApEdition, FilteredPieceBehavior, isNil, PiecesFilterType, Platform } from '@activepieces/shared'
+import { ApEdition, FilteredPieceBehavior, isNil, PiecesFilterType, PlatformWithoutFederatedAuth } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { PieceMetadataSchema } from '../../../pieces/metadata/piece-metadata-entity'
@@ -73,7 +73,7 @@ async function filterBasedOnProject(
     @deprecated This function is deprecated and will be removed in the future. replaced with project filtering
 */
 async function filterPiecesBasedPlatform(
-    platformWithPlan: Platform,
+    platformWithPlan: PlatformWithoutFederatedAuth,
     pieces: PieceMetadataSchema[],
 ): Promise<PieceMetadataSchema[]> {
 

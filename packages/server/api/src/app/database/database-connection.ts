@@ -15,7 +15,7 @@ import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
 import { OtpEntity } from '../ee/authentication/otp/otp-entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
-import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
+import { EmbedSubdomainEntity } from '../ee/embed-subdomain/embed-subdomain.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { ConcurrencyPoolEntity } from '../ee/platform/concurrency-pool/concurrency-pool.entity'
 import { PlatformPlanEntity } from '../ee/platform/platform-plan/platform-plan.entity'
@@ -109,7 +109,6 @@ function getEntities(): EntitySchema<unknown>[] {
         ConcurrencyPoolEntity,
         ProjectMemberEntity,
         ProjectPlanEntity,
-        CustomDomainEntity,
         SigningKeyEntity,
         OAuthAppEntity,
         OtpEntity,
@@ -119,6 +118,7 @@ function getEntities(): EntitySchema<unknown>[] {
         AuditEventEntity,
         ProjectReleaseEntity,
         PlatformAnalyticsReportEntity,
+        EmbedSubdomainEntity,
         // CLOUD
         AppSumoEntity,
         ConnectionKeyEntity,

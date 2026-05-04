@@ -68,7 +68,7 @@ The Enterprise Authentication module extends the Community Edition auth layer wi
 
 **Config**: `platform.federatedAuthProviders.google { clientId, clientSecret }` or system-wide defaults
 
-**Custom domain support**: Redirect URLs use custom domain if configured
+**Redirect URLs**: Always use `FRONTEND_URL` (no custom domain support)
 
 ## OTP — One-Time Passwords (`otp/`)
 

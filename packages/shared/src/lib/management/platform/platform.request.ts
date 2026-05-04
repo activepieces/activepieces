@@ -6,6 +6,20 @@ import { ApMultipartFile } from '../../core/common/multipart-file'
 import { FederatedAuthnProviderConfig } from '../../core/federated-authn'
 import { FilteredPieceBehavior } from './platform.model'
 
+export const MAX_ALLOWED_EMBED_ORIGINS = 50
+export const MAX_EMBED_ORIGIN_LENGTH = 300
+
+export const allowedEmbedOriginSchema = z.httpUrl()
+    .max(MAX_EMBED_ORIGIN_LENGTH, 'invalidEmbedOrigin')
+    .refine((value) => {
+        try {
+            return new URL(value).origin === value
+        }
+        catch {
+            return false
+        }
+    }, 'invalidEmbedOrigin')
+
 export const Base64EncodedFile = z.object({
     base64: z.string(),
     mimetype: z.string(),
@@ -29,10 +43,14 @@ export const UpdatePlatformRequestBody = z.object({
     filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior).optional(),
     federatedAuthProviders: FederatedAuthnProviderConfig.optional(),
     cloudAuthEnabled: OptionalBooleanFromQuery,
+    googleAuthEnabled: OptionalBooleanFromQuery,
     emailAuthEnabled: OptionalBooleanFromQuery,
     allowedAuthDomains: OptionalArrayFromQuery(z.string()),
     enforceAllowedAuthDomains: OptionalBooleanFromQuery,
     pinnedPieces: OptionalArrayFromQuery(z.string()),
+    allowedEmbedOrigins: z.array(allowedEmbedOriginSchema)
+        .max(MAX_ALLOWED_EMBED_ORIGINS, 'tooManyEmbedOrigins')
+        .optional(),
 })
 
 export type UpdatePlatformRequestBody = z.infer<typeof UpdatePlatformRequestBody>
@@ -58,4 +76,3 @@ export const IncreaseAICreditsForPlatformRequestBody = z.object({
 })
 
 export type IncreaseAICreditsForPlatformRequestBody = z.infer<typeof IncreaseAICreditsForPlatformRequestBody>
-

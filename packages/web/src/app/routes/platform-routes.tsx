@@ -33,9 +33,9 @@ const ProjectRolePage = React.lazy(() =>
 const SecretManagersPage = React.lazy(
   () => import('./platform/security/secret-managers'),
 );
-const SigningKeysPage = React.lazy(() =>
-  import('./platform/security/signing-keys').then((m) => ({
-    default: m.SigningKeysPage,
+const EmbedPage = React.lazy(() =>
+  import('./platform/security/embed').then((m) => ({
+    default: m.EmbedPage,
   })),
 );
 const SSOPage = React.lazy(() =>
@@ -252,12 +252,12 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/security/signing-keys',
+    path: '/platform/security/embed',
     element: (
       <PlatformLayout>
         <PageTitle title="Embedding">
           <SuspenseWrapper>
-            <SigningKeysPage />
+            <EmbedPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>

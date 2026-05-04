@@ -116,7 +116,7 @@ export const STATIC_PAGES: StaticPage[] = [
   {
     id: 'page-platform-embedding',
     label: 'Platform Admin — Embedding',
-    href: '/platform/security/signing-keys',
+    href: '/platform/security/embed',
     icon: FrameIcon,
     requiresPlatformAdmin: true,
   },

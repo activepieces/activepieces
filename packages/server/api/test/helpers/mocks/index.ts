@@ -15,8 +15,6 @@ import {
     assertNotNullOrUndefined,
     Cell,
     ColorName,
-    CustomDomain,
-    CustomDomainStatus,
     EventDestinationScope,
     Field,
     FieldType,
@@ -251,13 +249,13 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         chatEnabled: platformPlan?.chatEnabled ?? false,
         teamProjectsLimit: platformPlan?.teamProjectsLimit ?? TeamProjectsLimit.NONE,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
-        customDomainsEnabled: platformPlan?.customDomainsEnabled ?? false,
         stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
         stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
         plan: platformPlan?.plan,
         secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
         scimEnabled: platformPlan?.scimEnabled ?? false,
-        canary: platformPlan?.canary ?? false
+        canary: platformPlan?.canary ?? false,
+        customDomainsEnabled: false,
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
@@ -267,8 +265,9 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         updated: platform?.updated ?? faker.date.recent().toISOString(),
         ownerId: platform?.ownerId ?? apId(),
         enforceAllowedAuthDomains: platform?.enforceAllowedAuthDomains ?? false,
-        federatedAuthProviders: platform?.federatedAuthProviders ?? {},
+        federatedAuthProviders: platform?.federatedAuthProviders ?? { saml: null },
         allowedAuthDomains: platform?.allowedAuthDomains ?? [],
+        allowedEmbedOrigins: platform?.allowedEmbedOrigins ?? [],
         name: platform?.name ?? faker.lorem.word(),
         primaryColor: platform?.primaryColor ?? faker.color.rgb(),
         logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
@@ -281,6 +280,9 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
             platform?.filteredPieceBehavior ??
             faker.helpers.enumValue(FilteredPieceBehavior),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
+        googleAuthEnabled: platform?.googleAuthEnabled ?? true,
+        ssoDomain: platform?.ssoDomain ?? null,
+        ssoDomainVerification: platform?.ssoDomainVerification ?? null,
     }
 }
 
@@ -439,19 +441,6 @@ export const createAuditEvent = (auditEvent: Partial<ApplicationEvent>) => {
         userEmail: auditEvent.userEmail ?? faker.internet.email(),
         action: auditEvent.action ?? faker.helpers.enumValue(ApplicationEventName),
         data: auditEvent.data ?? {},
-    }
-}
-
-export const createMockCustomDomain = (
-    customDomain?: Partial<CustomDomain>,
-): CustomDomain => {
-    return {
-        id: customDomain?.id ?? apId(),
-        created: customDomain?.created ?? faker.date.recent().toISOString(),
-        updated: customDomain?.updated ?? faker.date.recent().toISOString(),
-        domain: customDomain?.domain ?? faker.internet.domainName(),
-        platformId: customDomain?.platformId ?? apId(),
-        status: customDomain?.status ?? CustomDomainStatus.ACTIVE,
     }
 }
 
@@ -696,7 +685,6 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
             apiKeysEnabled: true,
             customRolesEnabled: true,
             teamProjectsLimit: TeamProjectsLimit.UNLIMITED,
-            customDomainsEnabled: true,
             includedAiCredits: 1000,
             ...params?.plan,
         })
@@ -789,7 +777,7 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         }),
         config: aiProvider?.config ?? {},
     }
-    
+
 }
 
 export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
