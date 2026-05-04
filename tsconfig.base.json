@@ -408,6 +408,9 @@
       "@activepieces/piece-emailoctopus": [
         "packages/pieces/community/emailoctopus/src/index.ts"
       ],
+      "@activepieces/piece-engagebay": [
+        "packages/pieces/community/engagebay/src/index.ts"
+      ],
       "@activepieces/piece-eth-name-service": [
         "packages/pieces/community/eth-name-service/src/index.ts"
       ],
