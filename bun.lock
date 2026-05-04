@@ -481,7 +481,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "dependencies": {
         "@activepieces/pieces-common": "0.12.3",
         "@activepieces/pieces-framework": "0.26.2",
@@ -8230,7 +8230,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.68.6",
+      "version": "0.70.0",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",

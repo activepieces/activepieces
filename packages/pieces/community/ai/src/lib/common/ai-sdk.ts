@@ -190,6 +190,15 @@ export async function createAIModel({
             }
             return provider.chatModel(modelId)
         }
+        case AIProviderName.MISTRAL: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            const provider = createOpenAICompatible({
+                name: 'mistral',
+                baseURL: 'https://api.mistral.ai/v1',
+                apiKey,
+            })
+            return provider.chatModel(modelId)
+        }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig

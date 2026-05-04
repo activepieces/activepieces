@@ -3,18 +3,6 @@ import { t } from 'i18next';
 
 export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
   {
-    provider: AIProviderName.OPENAI,
-    name: 'OpenAI',
-    markdown: t(`Follow these instructions to get your OpenAI API Key:
-
-1. Go to https://platform.openai.com/account/api-keys.
-2. Once on the website, locate and click on the option to obtain your OpenAI API Key.
-
-It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
-`),
-    logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
-  },
-  {
     provider: AIProviderName.ANTHROPIC,
     name: 'Anthropic',
     markdown: t(`Follow these instructions to get your Claude API Key:
@@ -25,13 +13,16 @@ It is strongly recommended that you add your credit card information to your Ope
     logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
   },
   {
-    provider: AIProviderName.GOOGLE,
-    name: 'Google Gemini',
-    markdown: t(`Follow these instructions to get your Google API Key:
-1. Go to https://console.cloud.google.com/apis/credentials.
-2. Once on the website, locate and click on the option to obtain your Google API Key.
-`),
-    logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
+    provider: AIProviderName.BEDROCK,
+    name: 'AWS Bedrock',
+    logoUrl: 'https://cdn.activepieces.com/pieces/amazon-bedrock.png',
+    markdown: t(`Connect your AWS account to use Amazon Bedrock AI models.
+
+1. Open the [AWS IAM Console](https://console.aws.amazon.com/iam/) and go to **Users**.
+2. Select your user (or create a new one), then go to **Security credentials**.
+3. Click **Create access key** — copy both the Access Key ID and Secret Access Key.
+4. Attach a policy granting only the Bedrock actions this integration uses: \`bedrock:ListFoundationModels\`, \`bedrock:ListInferenceProfiles\`, \`bedrock:InvokeModel\`, and \`bedrock:InvokeModelWithResponseStream\`. Avoid broad policies like **AmazonBedrockFullAccess** — follow least-privilege so a leaked key has limited blast radius.
+5. In the [AWS Bedrock Console](https://console.aws.amazon.com/bedrock/), go to **Model access** and request access to the models you want to use.`),
   },
   {
     provider: AIProviderName.AZURE,
@@ -40,14 +31,6 @@ It is strongly recommended that you add your credit card information to your Ope
     markdown: t(
       'Use the Azure Portal to browse to your OpenAI resource and retrieve an API key and resource name.',
     ),
-  },
-  {
-    provider: AIProviderName.OPENROUTER,
-    name: 'OpenRouter',
-    logoUrl: 'https://cdn.activepieces.com/pieces/openrouter.jpg',
-    markdown: t(`Follow these instructions to get your OpenRouter API Key:
-1. Go to https://openrouter.ai/settings/keys.
-2. Once on the website, locate and click on the option to obtain your OpenRouter API Key.`),
   },
   {
     provider: AIProviderName.CLOUDFLARE_GATEWAY,
@@ -62,26 +45,54 @@ It is strongly recommended that you add your credit card information to your Ope
 5. After you finish all the previous steps and filled the required inputs, add models but make sure you prefix the model id with the provider name i.e (openai/gpt-4o) or (anthropic/claude-3-5-sonnet), check https://developers.cloudflare.com/ai-gateway/usage/chat-completion/ for more information.`),
   },
   {
+    provider: AIProviderName.GOOGLE,
+    name: 'Google Gemini',
+    markdown: t(`Follow these instructions to get your Google API Key:
+1. Go to https://console.cloud.google.com/apis/credentials.
+2. Once on the website, locate and click on the option to obtain your Google API Key.
+`),
+    logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
+  },
+  {
+    provider: AIProviderName.MISTRAL,
+    name: 'Mistral AI',
+    logoUrl: 'https://cdn.activepieces.com/pieces/mistral-ai.png',
+    markdown: t(`Follow these instructions to get your Mistral AI API Key:
+
+1. Go to https://console.mistral.ai.
+2. Navigate to **API Keys** in your account settings.
+3. Click **Create new key**, copy the key, and paste it below.
+`),
+  },
+  {
+    provider: AIProviderName.OPENAI,
+    name: 'OpenAI',
+    markdown: t(`Follow these instructions to get your OpenAI API Key:
+
+1. Go to https://platform.openai.com/account/api-keys.
+2. Once on the website, locate and click on the option to obtain your OpenAI API Key.
+
+It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
+`),
+    logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
+  },
+  {
+    provider: AIProviderName.OPENROUTER,
+    name: 'OpenRouter',
+    logoUrl: 'https://cdn.activepieces.com/pieces/openrouter.jpg',
+    markdown: t(`Follow these instructions to get your OpenRouter API Key:
+1. Go to https://openrouter.ai/settings/keys.
+2. Once on the website, locate and click on the option to obtain your OpenRouter API Key.`),
+  },
+  {
     provider: AIProviderName.CUSTOM,
-    name: 'OpenAI Compatible',
-    logoUrl: 'https://cdn.activepieces.com/pieces/openai-compatible.png',
+    name: 'Other (OpenAI Compatible)',
+    logoUrl: 'https://cdn.activepieces.com/pieces/new-core/text-ai.svg',
     markdown:
       t(`Follow these instructions to get your OpenAI Compatible API Key:
 1. Set the base url to your proxy url.
 2. In the api key input, make sure to include any required prefix, i.e 'Bearer sk-****************'.
 3. In the api key header, set the value of your auth header name (e.g. 'Authorization').`),
-  },
-  {
-    provider: AIProviderName.BEDROCK,
-    name: 'AWS Bedrock',
-    logoUrl: 'https://cdn.activepieces.com/pieces/amazon-bedrock.png',
-    markdown: t(`Connect your AWS account to use Amazon Bedrock AI models.
-
-1. Open the [AWS IAM Console](https://console.aws.amazon.com/iam/) and go to **Users**.
-2. Select your user (or create a new one), then go to **Security credentials**.
-3. Click **Create access key** — copy both the Access Key ID and Secret Access Key.
-4. Attach a policy granting only the Bedrock actions this integration uses: \`bedrock:ListFoundationModels\`, \`bedrock:ListInferenceProfiles\`, \`bedrock:InvokeModel\`, and \`bedrock:InvokeModelWithResponseStream\`. Avoid broad policies like **AmazonBedrockFullAccess** — follow least-privilege so a leaked key has limited blast radius.
-5. In the [AWS Bedrock Console](https://console.aws.amazon.com/bedrock/), go to **Model access** and request access to the models you want to use.`),
   },
 ];
 
