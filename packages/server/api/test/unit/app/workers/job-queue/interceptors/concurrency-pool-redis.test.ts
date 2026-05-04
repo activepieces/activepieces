@@ -525,4 +525,34 @@ describe('concurrencyPoolRedis Lua primitives', () => {
             expect(await redis.llen(getConcurrencyPoolWaitlistKey(poolId))).toBe(0)
         })
     })
+
+    describe('Smoke — promote-on-release happy path', () => {
+        beforeEach(async () => {
+            await clearPoolKeys()
+        })
+
+        it('fills capacity, queues overflow, and promotes the queued waiter on release', async () => {
+            const poolId = `smoke-${crypto.randomUUID()}`
+            const redis = await redisConnections.useExisting()
+            const active = member('p', 'active')
+            const waiter = member('p', 'waiter')
+
+            const acquire = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: active, maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            expect(acquire).toBe('acquired')
+
+            const queued = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: waiter, maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            expect(queued).toBe('queued')
+
+            const reQueued = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: waiter, maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            expect(reQueued).toBe('queued')
+            expect(await redis.llen(getConcurrencyPoolWaitlistKey(poolId))).toBe(1)
+
+            const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: active, timeoutMs: TIMEOUT_MS })
+            expect(popped).toBe(waiter)
+
+            expect(await redis.zrange(getConcurrencyPoolSetKey(poolId), 0, -1)).toEqual([waiter])
+            expect(await redis.llen(getConcurrencyPoolWaitlistKey(poolId))).toBe(0)
+            expect(await redis.scard(getConcurrencyPoolWaitlistMembersKey(poolId))).toBe(0)
+        })
+    })
 })
