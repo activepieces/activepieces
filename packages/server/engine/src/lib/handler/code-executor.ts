@@ -3,7 +3,7 @@ import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { CodeAction, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
-import { progressService } from '../services/progress.service'
+import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { utils } from '../utils'
 import { ActionHandler, BaseExecutor } from './base-executor'
 
@@ -22,7 +22,7 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
 }
 
 const executeAction: ActionHandler<CodeAction> = async ({ action, executionState, constants }) => {
-    const stepStartTime = performance.now() 
+    const stepStartTime = performance.now()
     const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<Record<string, unknown>>({
         unresolvedInput: action.settings.input,
         executionState,
@@ -33,14 +33,14 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
         type: FlowActionType.CODE,
         status: StepOutputStatus.RUNNING,
     })
-    
+
     const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-        await progressService.sendUpdate({
+        await flowRunProgressReporter.sendUpdate({
             engineConstants: constants,
             flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
             stepNameToUpdate: action.name,
         })
-    
+
         if (isNil(constants.runEnvironment)) {
             throw new EngineGenericError('RunEnvironmentNotSetError', 'Run environment is not set')
         }
@@ -52,7 +52,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             codeFilePath: artifactPath,
             inputs: resolvedInput,
         })
-    
+
         return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime)).incrementStepsExecuted()
     }))
 

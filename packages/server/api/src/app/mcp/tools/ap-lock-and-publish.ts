@@ -6,12 +6,13 @@ import {
     isNil,
     McpServer,
     McpToolDefinition,
+    Permission,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const lockAndPublishInput = z.object({
     flowId: z.string(),
@@ -20,6 +21,7 @@ const lockAndPublishInput = z.object({
 export const apLockAndPublishTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_lock_and_publish',
+        permission: Permission.UPDATE_FLOW_STATUS,
         description: 'Publish and enable the current draft version of a flow. This locks the draft, sets it as the published version, and enables the flow. Returns validation errors if the flow is not ready.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow to publish'),
@@ -66,7 +68,7 @@ export const apLockAndPublishTool = (mcp: McpServer, log: FastifyBaseLogger): Mc
                 }
             }
             catch (err) {
-                return mcpToolError('Publish failed', err)
+                return mcpUtils.mcpToolError('Publish failed', err)
             }
         },
     }

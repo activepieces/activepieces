@@ -342,6 +342,8 @@ function convertToIcon(event: ApplicationEvent) {
   switch (event.action) {
     case ApplicationEventName.FLOW_RUN_FINISHED:
     case ApplicationEventName.FLOW_RUN_STARTED:
+    case ApplicationEventName.FLOW_RUN_RESUMED:
+    case ApplicationEventName.FLOW_RUN_RETRIED:
       return {
         icon: <Logs className="size-4" />,
         tooltip: t('Flow Run'),
@@ -396,6 +398,10 @@ function convertToDetails(event: ApplicationEvent): string {
       )}`;
     case ApplicationEventName.FLOW_RUN_RESUMED:
       return `Flow run resumed in ${formatUtils.convertEnumToHumanReadable(
+        event.data.flowRun.environment,
+      )} environment`;
+    case ApplicationEventName.FLOW_RUN_RETRIED:
+      return `Flow run retried from failed step in ${formatUtils.convertEnumToHumanReadable(
         event.data.flowRun.environment,
       )} environment`;
     case ApplicationEventName.FLOW_CREATED:

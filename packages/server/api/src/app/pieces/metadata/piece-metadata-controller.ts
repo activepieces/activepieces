@@ -116,6 +116,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
     app.get('/registry', RegistryPiecesRequest, async (req) => {
         const pieces = await pieceMetadataService(req.log).registry({
             release: req.query.release,
+            platformId: getPlatformId(req.principal),
         })
         return pieces
     })
@@ -153,7 +154,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
 }
 
 function getPlatformId(principal: Principal): string | undefined {
-    return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN ? undefined : principal.platform?.id
+    return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.ONBOARDING ? undefined : principal.platform?.id
 }
 
 const RegistryPiecesRequest = {

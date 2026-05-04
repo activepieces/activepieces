@@ -6,12 +6,13 @@ import {
     McpServer,
     McpToolDefinition,
     NoteColorVariant,
+    Permission,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const manageNotesInput = z.object({
     flowId: z.string(),
@@ -32,6 +33,7 @@ const manageNotesInput = z.object({
 export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_manage_notes',
+        permission: Permission.WRITE_FLOW,
         description: 'Add, update, or delete canvas notes on a flow. Notes are visual annotations on the flow canvas.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
@@ -136,7 +138,7 @@ export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
                 return { content: [{ type: 'text', text: messages[op] }] }
             }
             catch (err) {
-                return mcpToolError('Note operation failed', err)
+                return mcpUtils.mcpToolError('Note operation failed', err)
             }
         },
     }

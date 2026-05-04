@@ -424,6 +424,35 @@ auth: linearAuth,
         };
       },
     }),
+  project_statuses: (required = false) =>
+    Property.Dropdown({
+      auth: linearAuth,
+      displayName: 'Project Status',
+      description: 'Filter by project status (leave empty to include all)',
+      required,
+      refreshers: ['auth'],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'connect your account first',
+            options: [],
+          };
+        }
+        const client = makeClient(auth);
+        const statuses = await client.listProjectStatuses();
+        // const seenTypes = new Set<string>();
+        // const uniqueStatuses = statuses.filter((s) => {
+        //   if (seenTypes.has(s.type)) return false;
+        //   seenTypes.add(s.type);
+        //   return true;
+        // });
+        return {
+          disabled: false,
+          options: statuses.map((s) => ({ label: s.name, value: s.name })),
+        };
+      },
+    }),
   project_status: (required = false) =>
     Property.StaticDropdown({
       displayName: 'Project Status',

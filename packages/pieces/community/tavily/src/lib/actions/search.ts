@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { tavilyAuth } from '../auth';
 
 export const searchAction = createAction({
@@ -105,11 +105,14 @@ export const searchAction = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://api.tavily.com/search',
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: auth.secret_text
+      },
       headers: {
         'Content-Type': 'application/json',
       },
       body: {
-        api_key: auth,
         query: propsValue.query,
         search_depth: propsValue.search_depth,
         topic: propsValue.topic,

@@ -22,10 +22,25 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         unzip \
         curl \
         ca-certificates \
+        iptables \
         libcap-dev && \
     yarn config set python /usr/bin/python3 && \
     sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
     locale-gen en_US.UTF-8
+
+RUN export ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
+    fi
+
+RUN unzip bun.zip \
+    && mv bun-*/bun /usr/local/bin/bun \
+    && chmod +x /usr/local/bin/bun \
+    && rm -rf bun.zip bun-*
+
+RUN bun --version
 
 # Install global npm packages in a single layer
 RUN --mount=type=cache,target=/root/.npm \
@@ -34,24 +49,14 @@ RUN --mount=type=cache,target=/root/.npm \
     npm@11.11.0 \
     pm2@6.0.10 \
     typescript@4.9.4 \
-    pnpm@10.33.0 \
     esbuild@0.25.0
 
 # Install isolated-vm globally (needed for sandboxes)
-RUN --mount=type=cache,target=/root/.npm \
-    cd /usr/src && npm install --no-fund --no-audit isolated-vm@6.0.2
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    cd /usr/src && bun install isolated-vm@6.0.2
 
 ### STAGE 1: Build ###
 FROM base AS build
-
-# Install bun for monorepo build (build-time only, not needed at runtime)
-RUN export ARCH=$(uname -m) && \
-    if [ "$ARCH" = "x86_64" ]; then \
-      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip; \
-    elif [ "$ARCH" = "aarch64" ]; then \
-      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
-    fi
-RUN unzip bun.zip && mv bun-*/bun /usr/local/bin/bun && chmod +x /usr/local/bin/bun && rm -rf bun.zip bun-*
 
 WORKDIR /usr/src/app
 
@@ -68,6 +73,13 @@ COPY . .
 
 # Build frontend, engine, server API, and worker
 RUN npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
+
+# Generate migration manifest (ordered list of migration names) for image-tag-based rollback
+RUN node -e "\
+  const {getMigrations} = require('./packages/server/api/dist/src/app/database/postgres-connection');\
+  const names = getMigrations().map(M => new M().name);\
+  process.stdout.write(JSON.stringify(names));\
+" > packages/server/api/dist/src/migration-manifest.json
 
 # Remove piece directories not needed at runtime (keeps only the 4 pieces api imports)
 # Then regenerate bun.lock so it matches the trimmed workspace
@@ -101,16 +113,13 @@ COPY --from=build /usr/src/app/bun.lock ./
 COPY --from=build /usr/src/app/bunfig.toml ./
 COPY --from=build /usr/src/app/LICENSE .
 
-# Copy workspace package.json files (needed for workspace resolution)
+# Copy workspace package.json files (needed for bun workspace resolution)
 COPY --from=build /usr/src/app/packages ./packages
 
 # Copy built engine
 COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
 
-# Copy bun from build stage (needed to resolve workspace:* protocol in package.json files)
-COPY --from=build /usr/local/bin/bun /usr/local/bin/bun
-
-# Install production dependencies
+# Regenerate lockfile and install production dependencies (pieces were trimmed from workspace)
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --production
 

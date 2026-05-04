@@ -11,6 +11,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing';
 import { projectHooks } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { cn } from '@/lib/utils';
 
 import { authenticationSession } from '../../../lib/authentication-session';
 import {
@@ -27,6 +28,7 @@ export type ProjectDashboardLayoutHeaderTab = {
   icon: ComponentType<{ className?: string; size?: number }>;
   hasPermission: boolean;
   show: boolean;
+  beta?: boolean;
 };
 
 const ProjectChangedRedirector = ({
@@ -77,6 +79,13 @@ export function ProjectDashboardLayout({
       icon: TrophyIcon,
       hasPermission: true,
     },
+    {
+      to: '/chat-with-ai',
+      label: t('Chat with AI'),
+      show: !isEmbedded,
+      icon: CompassIcon,
+      hasPermission: true,
+    },
   ];
 
   const hideHeader =
@@ -116,8 +125,20 @@ function ProjectDashboardLayoutInner({
     <SidebarProvider hoverMode={!searchOpen}>
       {!isEmbedded && <ProjectDashboardSidebar />}
       <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
-        <div className="flex-1 flex flex-col pr-2 pt-3 pb-3 overflow-hidden">
-          <div className="flex flex-col h-full bg-background rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border overflow-clip">
+        <div
+          className={cn(
+            'flex-1 flex flex-col overflow-hidden',
+            !isEmbedded && 'pr-2 pt-3 pb-3',
+          )}
+        >
+          <div
+            id="dashboard-content-container"
+            className={cn(
+              'relative flex flex-col h-full bg-background overflow-clip',
+              !isEmbedded &&
+                'rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border',
+            )}
+          >
             {!hideHeader && (
               <ProjectDashboardLayoutHeader key={currentProjectId} />
             )}

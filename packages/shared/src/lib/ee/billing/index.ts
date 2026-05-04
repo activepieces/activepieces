@@ -4,7 +4,6 @@ import { AiCreditsAutoTopUpState, PlanName, PlatformPlanWithOnlyLimits, Platform
 import { PiecesFilterType } from '../../management/project'
 
 export const PRICE_PER_EXTRA_ACTIVE_FLOWS = 5
-export const AI_CREDITS_USAGE_THRESHOLD = 15000
 
 export type ProjectPlanLimits = {
     nickname?: string
@@ -81,6 +80,8 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
     embeddingEnabled: false,
     agentsEnabled: true,
+    aiProvidersEnabled: false,
+    chatEnabled: false,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     environmentsEnabled: false,
@@ -97,12 +98,16 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     ssoEnabled: false,
     secretManagersEnabled: false,
     scimEnabled: false,
+    dedicatedWorkers: null,
+    canary: false,
 }
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     tablesEnabled: true,
     embeddingEnabled: false,
     agentsEnabled: true,
+    aiProvidersEnabled: true,
+    chatEnabled: false,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     includedAiCredits: 0,
@@ -114,7 +119,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     managePiecesEnabled: false,
     manageTemplatesEnabled: false,
     customAppearanceEnabled: false,
-    teamProjectsLimit: TeamProjectsLimit.NONE,
+    teamProjectsLimit: TeamProjectsLimit.ONE,
     projectRolesEnabled: false,
     customDomainsEnabled: false,
     apiKeysEnabled: false,
@@ -125,6 +130,8 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     stripeSubscriptionId: undefined,
     stripeSubscriptionStatus: undefined,
     aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
+    dedicatedWorkers: null,
+    canary: false,
 }
 
 export const APPSUMO_PLAN = (planName: PlanName): PlatformPlanWithOnlyLimits => ({

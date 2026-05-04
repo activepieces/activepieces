@@ -1,5 +1,5 @@
-import { ActionErrorHandlingOptions, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
-import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
+import { ActionErrorHandlingOptions, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, StreamStepProgress, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
+import { EngineConstants, ResolvedBeginExecuteFlowOperation } from '../../src/lib/handler/context/engine-constants'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
     return new EngineConstants(
@@ -20,13 +20,15 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
             engineToken: params?.engineToken ?? 'engineToken',
             projectId: params?.projectId ?? 'projectId',
             triggerPieceName: params?.triggerPieceName ?? 'mcp-trigger-piece-name',
-            progressUpdateType: params?.progressUpdateType ?? ProgressUpdateType.NONE,
-            serverHandlerId: params?.serverHandlerId ?? null,
+            streamStepProgress: params?.streamStepProgress ?? StreamStepProgress.NONE,
+            workerHandlerId: params?.workerHandlerId ?? null,
             httpRequestId: params?.httpRequestId ?? null,
             resumePayload: params?.resumePayload,
             runEnvironment: params?.runEnvironment ?? RunEnvironment.TESTING,
             stepNameToTest: params?.stepNameToTest ?? undefined,
             stepNames: params?.stepNames ?? [],
+            logsUploadUrl: params?.logsUploadUrl,
+            logsFileId: params?.logsFileId,
         })
 }
 
@@ -81,7 +83,7 @@ export function buildRouterWithOneCondition({ children, conditions, executionTyp
     }
 }
 
-export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOptions }: { name: 'echo_step' | 'runtime' | 'echo_step_1' | 'system_error', input: Record<string, unknown>, skip?: boolean, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: FlowAction }): CodeAction {
+export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOptions }: { name: 'echo_step' | 'runtime' | 'echo_step_1' | 'system_error' | 'process_exit' | 'unhandled_rejection' | 'hello_world_npm' | 'stdout_on_failure' | 'setTimeout_error', input: Record<string, unknown>, skip?: boolean, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: FlowAction }): CodeAction {
     return {
         name,
         displayName: 'Your Action Name',
@@ -123,8 +125,8 @@ export function buildPieceAction({ name, input, skip, pieceName, actionName, nex
 }
 
 export function buildMockBeginExecuteFlowOperation(
-    params: Partial<BeginExecuteFlowOperation> & Pick<BeginExecuteFlowOperation, 'flowVersion'>,
-): BeginExecuteFlowOperation {
+    params: Partial<ResolvedBeginExecuteFlowOperation> & Pick<BeginExecuteFlowOperation, 'flowVersion'>,
+): ResolvedBeginExecuteFlowOperation {
     return {
         projectId: 'projectId',
         engineToken: 'engineToken',
@@ -135,10 +137,9 @@ export function buildMockBeginExecuteFlowOperation(
         flowRunId: 'flowRunId',
         executionType: ExecutionType.BEGIN,
         runEnvironment: RunEnvironment.TESTING,
-        executionState: { steps: {}, tags: [] },
-        serverHandlerId: null,
+        workerHandlerId: null,
         httpRequestId: null,
-        progressUpdateType: ProgressUpdateType.NONE,
+        streamStepProgress: StreamStepProgress.NONE,
         stepNameToTest: null,
         triggerPayload: {},
         executeTrigger: false,

@@ -26,7 +26,10 @@ export const microsoftOneDrive = createPiece({
     listFiles,
     listFolders,
     createCustomApiCallAction({
-      baseUrl: () => oneDriveCommon.baseUrl,
+      baseUrl: (auth) => {
+        const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+        return oneDriveCommon.getBaseUrl(cloud);
+      },
       auth: oneDriveAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,

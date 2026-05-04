@@ -1,5 +1,9 @@
 {
   "Create and manage Power BI datasets and push data to them": "Erstellen und verwalten von Power BI-Datensätzen und Push-Daten",
+  "Cloud Environment": "Cloud-Umgebung",
+  "Select your Microsoft cloud environment.": "Wählen Sie Ihre Microsoft-Cloud-Umgebung.",
+  "Commercial (Global)": "Kommerzielle (Global)",
+  "US Government (GCC High)": "US-Regierung (GCC High)",
   "If you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Power BI Service (Delegated) permissions** under **API permissions**:\n - Dataset.ReadWrite.All\n - offline_access": "Wenn du deine eigene eigene Azure App anstelle der Standard Activepieces App verwenden möchtest, folge der [Azure App Erstellungsanleitung](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n hat die **Umleitungs-URI** auf {{redirectUrl}} gesetzt und die folgenden **Power BI Service (delegiert) Berechtigungen** unter **API Berechtigungen hinzugefügt**:\n - Dataset. eadWrite.Alle\n - offline_access",
   "Create Dataset": "Datensatz erstellen",
   "Push Rows to Dataset Table": "Zeilen an Datensatztabelle schieben",

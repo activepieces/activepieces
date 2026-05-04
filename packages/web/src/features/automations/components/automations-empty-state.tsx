@@ -308,26 +308,28 @@ export const AutomationsEmptyState = ({
             />
           </GetStartedCard>
 
-          <GetStartedCard
-            icon={<Table2 className="h-5 w-5 text-emerald-600" />}
-            iconBgClass="bg-emerald-100"
-            title={t('Create a Table')}
-            description={t('Organize and manage data')}
-          >
-            <ActionRow
-              icon={<Plus className="h-4 w-4" />}
-              label={t('Start from scratch')}
-              onClick={() => createTable({ name: t('New Table') })}
-              disabled={isCreateTablePending}
-              hasPermission={userHasPermissionToWriteTable}
-            />
-            <ActionRow
-              icon={<Upload className="h-4 w-4" />}
-              label={t('Import')}
-              onClick={() => setIsImportTableDialogOpen(true)}
-              hasPermission={userHasPermissionToWriteTable}
-            />
-          </GetStartedCard>
+          {!embedState.hideTables && (
+            <GetStartedCard
+              icon={<Table2 className="h-5 w-5 text-emerald-600" />}
+              iconBgClass="bg-emerald-100"
+              title={t('Create a Table')}
+              description={t('Organize and manage data')}
+            >
+              <ActionRow
+                icon={<Plus className="h-4 w-4" />}
+                label={t('Start from scratch')}
+                onClick={() => createTable({ name: t('New Table') })}
+                disabled={isCreateTablePending}
+                hasPermission={userHasPermissionToWriteTable}
+              />
+              <ActionRow
+                icon={<Upload className="h-4 w-4" />}
+                label={t('Import')}
+                onClick={() => setIsImportTableDialogOpen(true)}
+                hasPermission={userHasPermissionToWriteTable}
+              />
+            </GetStartedCard>
+          )}
         </div>
       </div>
 
@@ -366,11 +368,13 @@ export const AutomationsEmptyState = ({
         </div>
       )}
 
-      <ImportTableDialog
-        open={isImportTableDialogOpen}
-        setIsOpen={setIsImportTableDialogOpen}
-        showTrigger={false}
-      />
+      {!embedState.hideTables && (
+        <ImportTableDialog
+          open={isImportTableDialogOpen}
+          setIsOpen={setIsImportTableDialogOpen}
+          showTrigger={false}
+        />
+      )}
       <TemplatesBrowseDialog
         open={isTemplatesBrowseDialogOpen}
         onOpenChange={setIsTemplatesBrowseDialogOpen}
