@@ -12,7 +12,8 @@ import type { BeginExecuteFlowOperation, FlowVersion } from '@activepieces/share
 
 vi.mock('../../src/lib/helper/flow-run-progress-reporter', () => ({
     flowRunProgressReporter: {
-        backup: vi.fn(),
+        sendUpdate: vi.fn().mockResolvedValue(undefined),
+        backup: vi.fn().mockResolvedValue(undefined),
     },
 }))
 
