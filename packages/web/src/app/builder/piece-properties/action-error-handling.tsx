@@ -47,11 +47,11 @@ const ActionErrorHandlingForm = React.memo(
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <span className="ml-2">{t('Continue on Failure')}</span>
+                  <span className="ml-2">{t('Add Error Handler')}</span>
                 </FormLabel>
                 <ReadMoreDescription
                   text={t(
-                    'Enable this option to skip this step and continue the flow normally if it fails.',
+                    'Adds branches for success and failure, you can pass the error message to your failure branch.',
                   )}
                 />
               </FormItem>
