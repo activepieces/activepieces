@@ -15,6 +15,7 @@ import { useDebounce } from 'use-debounce';
 import { SearchInput } from '@/components/custom/search-input';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
+import { SendIcon } from '@/components/icons/send';
 import { ShieldIcon } from '@/components/icons/shield';
 import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -146,6 +147,17 @@ export function ProjectDashboardSidebar({
     });
   }, []);
 
+  const chatLink: SidebarItemType = {
+    type: 'link',
+    to: '/chat',
+    label: t('Chat'),
+    show: platform.plan.chatEnabled,
+    icon: SendIcon,
+    hasPermission: true,
+    isSubItem: false,
+    badge: t('Beta'),
+  };
+
   const exploreLink: SidebarItemType = {
     type: 'link',
     to: '/templates',
@@ -207,7 +219,7 @@ export function ProjectDashboardSidebar({
     },
   };
 
-  const items = [exploreLink, impactLink, leaderboardLink].filter(
+  const items = [chatLink, exploreLink, impactLink, leaderboardLink].filter(
     permissionFilter,
   );
 

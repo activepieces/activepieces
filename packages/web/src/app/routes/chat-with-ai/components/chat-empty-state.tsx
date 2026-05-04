@@ -13,16 +13,11 @@ import { useNavigate } from 'react-router-dom';
 import { PromptSuggestion } from '@/components/prompt-kit/prompt-suggestion';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { projectCollectionUtils } from '@/features/projects';
 
 export function EmptyState({ incognito }: { incognito: boolean }) {
-  const { project } = projectCollectionUtils.useCurrentProject();
-
   const greeting = incognito
     ? t('Private Chat')
-    : t('What would you like to do in {projectName}?', {
-        projectName: project.displayName,
-      });
+    : t('What would you like to work on?');
 
   return (
     <motion.div
