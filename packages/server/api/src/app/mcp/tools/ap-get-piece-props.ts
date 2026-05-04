@@ -168,6 +168,7 @@ async function discoverAvailableConnections({ pieceName, projectId, log }: {
             status: [AppConnectionStatus.ACTIVE],
             limit: 10,
             externalIds: undefined,
+            kind: undefined,
         })
         const active = connections.data
             .map(c => ({ externalId: c.externalId, displayName: c.displayName }))

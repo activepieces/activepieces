@@ -364,6 +364,7 @@ function convertToIcon(event: ApplicationEvent) {
       };
     case ApplicationEventName.CONNECTION_DELETED:
     case ApplicationEventName.CONNECTION_UPSERTED:
+    case ApplicationEventName.CONNECTION_VALUE_REVEALED:
       return {
         icon: <Link2 className="size-4" />,
         tooltip: t('Connection'),
@@ -456,11 +457,12 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
     case ApplicationEventName.FLOW_UPDATED:
       return [{ label: t('Flow'), value: event.data.flowVersion.displayName }];
     case ApplicationEventName.CONNECTION_UPSERTED:
-    case ApplicationEventName.CONNECTION_DELETED: {
+    case ApplicationEventName.CONNECTION_DELETED:
+    case ApplicationEventName.CONNECTION_VALUE_REVEALED: {
       const { connection } = event.data;
       return [
         { label: t('Connection'), value: connection.displayName },
-        { label: t('Piece'), value: connection.pieceName },
+        { label: t('Piece'), value: connection.pieceName ?? t('N/A') },
         {
           label: t('Type'),
           value: formatUtils.convertEnumToHumanReadable(connection.type),

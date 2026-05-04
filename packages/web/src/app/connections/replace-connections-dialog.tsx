@@ -315,7 +315,7 @@ const ReplaceConnectionsDialog = ({
                             return (
                               <div className="flex gap-2 items-center">
                                 <PieceIconWithPieceName
-                                  pieceName={conn!.pieceName}
+                                  pieceName={conn?.pieceName ?? ''}
                                   size="xs"
                                   border={false}
                                 />
@@ -357,7 +357,7 @@ const ReplaceConnectionsDialog = ({
                               return (
                                 <div className="flex gap-2 items-center">
                                   <PieceIconWithPieceName
-                                    pieceName={conn!.pieceName}
+                                    pieceName={conn?.pieceName ?? ''}
                                     size="xs"
                                     border={false}
                                   />

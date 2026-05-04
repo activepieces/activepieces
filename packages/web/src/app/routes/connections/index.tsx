@@ -1,4 +1,5 @@
 import {
+  AppConnectionKind,
   AppConnectionScope,
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
@@ -98,6 +99,7 @@ function AppConnectionsPage() {
       status,
       pieceName,
       displayName,
+      kind: AppConnectionKind.CONNECTION,
     },
     extraKeys: [location.search, projectId],
     showErrorDialog: true,
@@ -184,7 +186,7 @@ function AppConnectionsPage() {
               >
                 <div className="flex items-center gap-2 w-fit">
                   <PieceIconWithPieceName
-                    pieceName={row.original.pieceName}
+                    pieceName={row.original.pieceName ?? ''}
                     showTooltip={false}
                     size="sm"
                   />

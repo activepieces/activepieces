@@ -367,6 +367,7 @@ import { DropChatTokenColumns1782000000000 } from './migration/postgres/17820000
 import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
 import { ReplacesSandboxWithVercelAiSdk1785000000000 } from './migration/postgres/1785000000000-ReplacesSandboxWithVercelAiSdk'
 import { AddChatCompactionColumns1786000000000 } from './migration/postgres/1786000000000-AddChatCompactionColumns'
+import { RelaxAppConnectionPieceFields1787000000000 } from './migration/postgres/1787000000000-RelaxAppConnectionPieceFields'
 import { AddSsoDomainVerification1787100000000 } from './migration/postgres/1787100000000-AddSsoDomainVerification'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -750,6 +751,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddLastLoggedInPlatformIdToUserIdentity1777491000474,
         ReplacesSandboxWithVercelAiSdk1785000000000,
         AddChatCompactionColumns1786000000000,
+        RelaxAppConnectionPieceFields1787000000000,
         AddSsoDomainVerification1787100000000,
     ]
     return migrations

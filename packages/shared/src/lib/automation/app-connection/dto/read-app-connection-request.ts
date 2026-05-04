@@ -2,6 +2,11 @@ import { z } from 'zod'
 import { OptionalArrayFromQuery } from '../../../core/common/base-model'
 import { AppConnectionScope, AppConnectionStatus } from '../app-connection'
 
+export enum AppConnectionKind {
+    CONNECTION = 'connection',
+    SECRET = 'secret',
+}
+
 export const ListAppConnectionsRequestQuery = z.object({
     cursor: z.string().optional(),
     projectId: z.string(),
@@ -9,6 +14,7 @@ export const ListAppConnectionsRequestQuery = z.object({
     pieceName: z.string().optional(),
     displayName: z.string().optional(),
     status: OptionalArrayFromQuery(z.nativeEnum(AppConnectionStatus)),
+    kind: z.nativeEnum(AppConnectionKind).optional(),
     limit: z.coerce.number().optional(),
 })
 

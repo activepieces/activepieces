@@ -38,6 +38,7 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         },
         pieceName: {
             type: String,
+            nullable: true,
         },
         ownerId: {
             type: String,
@@ -60,6 +61,7 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         },
         pieceVersion: {
             type: String,
+            nullable: true,
         },
         preSelectForNewProjects: {
             type: Boolean,
@@ -75,6 +77,10 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         {
             name: 'idx_app_connection_owner_id',
             columns: ['ownerId'],
+        },
+        {
+            name: 'idx_app_connection_piece_name',
+            columns: ['pieceName'],
         },
     ],
     relations: {

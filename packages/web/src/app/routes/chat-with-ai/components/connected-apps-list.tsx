@@ -54,7 +54,10 @@ export function ConnectedAppsList() {
     .sort((a, b) => (a.created < b.created ? 1 : -1));
   const orderedPieceNames: string[] = [];
   for (const connection of activeConnections) {
-    if (!orderedPieceNames.includes(connection.pieceName)) {
+    if (
+      connection.pieceName &&
+      !orderedPieceNames.includes(connection.pieceName)
+    ) {
       orderedPieceNames.push(connection.pieceName);
     }
   }

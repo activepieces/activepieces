@@ -37,6 +37,9 @@ const FlowRunPage = React.lazy(() =>
 const AppConnectionsPage = React.lazy(() =>
   import('./connections').then((m) => ({ default: m.AppConnectionsPage })),
 );
+const CredentialsPage = React.lazy(() =>
+  import('./credentials').then((m) => ({ default: m.CredentialsPage })),
+);
 const ApTableEditorPage = React.lazy(() =>
   import('./tables/id').then((m) => ({ default: m.ApTableEditorPage })),
 );
@@ -202,6 +205,22 @@ export const projectRoutes = [
           <PageTitle title="Connections">
             <SuspenseWrapper>
               <AppConnectionsPage />
+            </SuspenseWrapper>
+          </PageTitle>
+        </RoutePermissionGuard>
+      </ProjectDashboardLayout>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.credentials,
+    element: (
+      <ProjectDashboardLayout>
+        <RoutePermissionGuard
+          requiredPermissions={Permission.READ_APP_CONNECTION}
+        >
+          <PageTitle title="Credentials">
+            <SuspenseWrapper>
+              <CredentialsPage />
             </SuspenseWrapper>
           </PageTitle>
         </RoutePermissionGuard>

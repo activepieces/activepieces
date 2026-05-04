@@ -32,6 +32,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
     async refresh(connection: AppConnection, projectId: ProjectId, log: FastifyBaseLogger): Promise<AppConnection> {
         switch (connection.value.type) {
             case AppConnectionType.PLATFORM_OAUTH2:
+                assertNotNullOrUndefined(connection.pieceName, 'pieceName')
                 connection.value = await oauth2Handler[connection.value.type](log).refresh({
                     pieceName: connection.pieceName,
                     platformId: connection.platformId,
@@ -40,6 +41,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 })
                 break
             case AppConnectionType.CLOUD_OAUTH2:
+                assertNotNullOrUndefined(connection.pieceName, 'pieceName')
                 connection.value = await oauth2Handler[connection.value.type](log).refresh({
                     pieceName: connection.pieceName,
                     platformId: connection.platformId,
@@ -48,6 +50,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 })
                 break
             case AppConnectionType.OAUTH2:
+                assertNotNullOrUndefined(connection.pieceName, 'pieceName')
                 connection.value = await oauth2Handler[connection.value.type](log).refresh({
                     pieceName: connection.pieceName,
                     platformId: connection.platformId,
