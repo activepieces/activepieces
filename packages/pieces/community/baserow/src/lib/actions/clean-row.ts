@@ -6,7 +6,7 @@ export const cleanRowAction = createAction({
   name: 'baserow_clean_row',
   displayName: 'Clean Row',
   description:
-    'Clears fields in a row. Empty values will clear the corresponding fields.',
+    'Sets all fields in a row to empty/null. To update only specific fields, use Update Row instead.',
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),

@@ -1,38 +1,42 @@
 import {
-    BeginExecuteFlowOperation,
     EngineGenericError,
     EngineResponse,
     EngineResponseStatus,
     ExecuteFlowOperation,
     ExecuteTriggerResponse,
+    ExecutionState,
     ExecutionType,
     FlowActionType,
     FlowRunStatus,
     flowStructureUtil,
     GenericStepOutput,
     isNil,
+    JobPayload,
     LoopStepOutput,
+    ResumePayload,
     StepOutput,
     StepOutputStatus,
     TriggerHookType,
     TriggerPayload,
 } from '@activepieces/shared'
-import { EngineConstants } from '../handler/context/engine-constants'
+import { EngineConstants, ResolvedBeginExecuteFlowOperation, ResolvedExecuteFlowOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
-import { runProgressService } from '../handler/run-progress'
+import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
+import { payloadFileClient } from '../helper/payload-file-client'
 import { triggerHelper } from '../helper/trigger-helper'
 
 export const flowOperation = {
     execute: async (operation: ExecuteFlowOperation): Promise<EngineResponse<undefined>> => {
-        const input = operation as ExecuteFlowOperation
+        const input = await resolveExecuteFlowOperation(operation)
         const constants = EngineConstants.fromExecuteFlowInput(input)
-        const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input)).finishExecution()
-        await runProgressService.backup({
+        const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input, constants)).finishExecution()
+        await flowRunProgressReporter.sendUpdate({
             engineConstants: constants,
             flowExecutorContext: output,
         })
+        await flowRunProgressReporter.backup()
         const status = output.verdict.status === FlowRunStatus.LOG_SIZE_EXCEEDED
             ? EngineResponseStatus.LOG_SIZE_EXCEEDED
             : EngineResponseStatus.OK
@@ -43,8 +47,7 @@ export const flowOperation = {
     },
 }
 
-const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): Promise<FlowExecutorContext> => {
-    const constants = EngineConstants.fromExecuteFlowInput(input)
+const executieSingleStepOrFlowOperation = async (input: ResolvedExecuteFlowOperation, constants: EngineConstants): Promise<FlowExecutorContext> => {
     const testSingleStepMode = !isNil(constants.stepNameToTest)
     if (testSingleStepMode) {
         const testContext = await testExecutionContext.stateFromFlowVersion({
@@ -59,37 +62,27 @@ const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): P
         const step = flowStructureUtil.getActionOrThrow(input.stepNameToTest!, input.flowVersion.trigger)
         return flowExecutor.execute({
             action: step,
-            executionState: await getFlowExecutionState(input, testContext),
-            constants: EngineConstants.fromExecuteFlowInput(input),
+            executionState: await getFlowExecutionState(input, constants, testContext),
+            constants,
         })
     }
     return flowExecutor.executeFromTrigger({
-        executionState: await getFlowExecutionState(input, FlowExecutorContext.empty()),
+        executionState: await getFlowExecutionState(input, constants, FlowExecutorContext.empty()),
         constants,
         input,
     })
 }
 
-async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
-    switch (input.executionType) {
-        case ExecutionType.BEGIN: {
-            if (Object.keys(input.executionState.steps).length > 0) {
-                throw new EngineGenericError('InvalidBeginStateError', 'BEGIN operation received with non-empty execution state')
-            }
-            const newPayload = await runOrReturnPayload(input)
-            flowContext = flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
-                type: input.flowVersion.trigger.type,
-                status: StepOutputStatus.SUCCEEDED,
-                input: {},
-            }).setOutput(newPayload))
-            break
-        }
-        case ExecutionType.RESUME: {
-            flowContext = flowContext.addTags(input.executionState.tags)
-            break
-        }
+async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, constants: EngineConstants, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
+    if (input.executionType === ExecutionType.BEGIN) {
+        const newPayload = await runOrReturnPayload(input, constants)
+        return flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
+            type: input.flowVersion.trigger.type,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+        }).setOutput(newPayload))
     }
-
+    flowContext = flowContext.addTags(input.executionState.tags)
     for (const [step, output] of Object.entries(input.executionState.steps)) {
         if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
             const newOutput = await insertSuccessStepsOrPausedRecursively(output)
@@ -101,7 +94,7 @@ async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: F
     return flowContext
 }
 
-async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<TriggerPayload> {
+async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, constants: EngineConstants): Promise<TriggerPayload> {
     if (!input.executeTrigger) {
         return input.triggerPayload as TriggerPayload
     }
@@ -113,7 +106,7 @@ async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<Tri
             webhookUrl: '',
             triggerPayload: input.triggerPayload as TriggerPayload,
         },
-        constants: EngineConstants.fromExecuteFlowInput(input),
+        constants,
     }) as ExecuteTriggerResponse<TriggerHookType.RUN>
     return newPayload.output[0] as TriggerPayload
 }
@@ -140,4 +133,42 @@ async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Pr
         return loopOutput.setIterations(newIterations)
     }
     return stepOutput
+}
+
+async function resolveExecuteFlowOperation(operation: ExecuteFlowOperation): Promise<ResolvedExecuteFlowOperation> {
+    if (operation.executionType === ExecutionType.BEGIN) {
+        return {
+            ...operation,
+            triggerPayload: await resolveJobPayload(operation.triggerPayload, operation),
+        }
+    }
+    const executionState = await fetchExecutionStateFromLogs(operation.logsFileId, operation)
+    if (Object.keys(executionState.steps).length === 0) {
+        throw new EngineGenericError('EmptyResumeStateError', 'RESUME operation received with empty execution state')
+    }
+    return {
+        ...operation,
+        resumePayload: await resolveJobPayload(operation.resumePayload, operation) as ResumePayload,
+        executionState,
+    }
+}
+
+async function resolveJobPayload(payload: JobPayload, operation: ExecuteFlowOperation): Promise<unknown> {
+    if (payload.type === 'inline') {
+        return payload.value
+    }
+    const buffer = await payloadFileClient.get({ apiUrl: operation.internalApiUrl, engineToken: operation.engineToken, fileId: payload.fileId })
+    return JSON.parse(buffer.toString('utf-8'))
+}
+
+async function fetchExecutionStateFromLogs(logsFileId: string | undefined, operation: ExecuteFlowOperation): Promise<ExecutionState> {
+    if (isNil(logsFileId)) {
+        throw new EngineGenericError('ResumeLogsFileMissing', 'logsFileId is missing for RESUME operation')
+    }
+    const buffer = await payloadFileClient.get({ apiUrl: operation.internalApiUrl, engineToken: operation.engineToken, fileId: logsFileId })
+    const parsed = JSON.parse(buffer.toString('utf-8'))
+    if (isNil(parsed?.executionState)) {
+        throw new EngineGenericError('ExecutionStateMissing', 'executionState is missing in logs file')
+    }
+    return parsed.executionState as ExecutionState
 }

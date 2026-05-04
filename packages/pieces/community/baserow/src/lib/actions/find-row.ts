@@ -77,11 +77,11 @@ export const findRowAction = createAction({
       undefined,
       undefined,
       { [`filter__${field_name}__equal`]: field_value }
-    )) as { results: Record<string, unknown>[]; count: number };
+    ))
 
     if (response.results.length === 0) {
-      return { found: false, row: null, count: 0 };
+      return { found: false, count: 0 };
     }
-    return { found: true, row: response.results[0], count: response.count };
+    return { found: true, count: response.count, ...response.results[0] };
   },
 });
