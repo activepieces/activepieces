@@ -119,14 +119,8 @@ function isHeadOfMemberExpression(node: Identifier, parent: MemberExpression): b
 }
 
 function isHeadOfProperty(node: Identifier, parent: Property | AssignmentProperty): boolean {
-    if (parent.shorthand && parent.value === node) {
-        return true
-    }
     if (parent.key === node) {
-        return parent.computed
-    }
-    if (parent.value === node) {
-        return true
+        return parent.shorthand || parent.computed
     }
     return true
 }
