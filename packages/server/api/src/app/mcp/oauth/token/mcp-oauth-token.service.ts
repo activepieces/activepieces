@@ -142,7 +142,7 @@ export class OAuthTokenError extends Error {
 
 type IssueAccessTokenParams = {
     userId: string
-    projectId: string
+    projectId: string | null
     platformId: string
     clientId: string
     scopes: string[]
@@ -154,7 +154,7 @@ type ExchangeCodeParams = {
     codeChallengeMethod: string
     clientId: string
     userId: string
-    projectId: string
+    projectId: string | null
     platformId: string
     scopes: string[]
 }
@@ -173,7 +173,7 @@ type TokenResponse = {
 
 export type McpOAuthAccessTokenPayload = {
     sub: string
-    projectId: string
+    projectId: string | null
     platformId: string
     clientId: string
     scopes: string[]

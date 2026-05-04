@@ -59,6 +59,11 @@ export function PlatformSidebar() {
       icon: BotIcon,
     },
     {
+      to: '/platform/setup/mcp',
+      label: t('MCP Server'),
+      icon: ServerIcon,
+    },
+    {
       to: '/platform/setup/branding',
       label: t('Branding'),
       icon: PaletteIcon,
