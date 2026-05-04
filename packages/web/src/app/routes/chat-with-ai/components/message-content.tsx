@@ -164,7 +164,7 @@ export function AutomationProposalCard({
               <span className="text-xs font-medium text-muted-foreground bg-muted rounded-full h-5 w-5 flex items-center justify-center shrink-0 mt-0.5">
                 {i + 1}
               </span>
-              <span className="text-foreground/80">{step}</span>
+              <span className="text-foreground/80">{step.label}</span>
             </div>
           ))}
         </div>
