@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { KeyRound, Plus, SearchXIcon } from 'lucide-react';
 import { useState } from 'react';
 
-import { ProjectSettingsDialog } from '@/app/components/project-settings';
+import { CredentialDialog } from '@/app/connections/credential-dialog';
 import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -17,13 +17,13 @@ import { useBuilderStateContext } from '../builder-hooks';
 const CredentialsTab = () => {
   const insertMention = useBuilderStateContext((state) => state.insertMention);
   const [search, setSearch] = useState('');
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const projectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
   const canRead = checkAccess(Permission.READ_APP_CONNECTION);
   const canWrite = checkAccess(Permission.WRITE_APP_CONNECTION);
 
-  const { data, isLoading } = appConnectionsQueries.useAppConnections({
+  const { data, isLoading, refetch } = appConnectionsQueries.useAppConnections({
     request: {
       projectId: projectId ?? '',
       limit: 200,
@@ -55,7 +55,7 @@ const CredentialsTab = () => {
             size="sm"
             variant="outline"
             className="shrink-0 gap-1.5"
-            onClick={() => setSettingsOpen(true)}
+            onClick={() => setCreateOpen(true)}
           >
             <Plus className="w-4 h-4" />
             {t('New')}
@@ -100,7 +100,7 @@ const CredentialsTab = () => {
                     type="button"
                     size="sm"
                     className="mt-2 gap-1.5"
-                    onClick={() => setSettingsOpen(true)}
+                    onClick={() => setCreateOpen(true)}
                   >
                     <Plus className="w-4 h-4" />
                     {t('New credential')}
@@ -154,10 +154,10 @@ const CredentialsTab = () => {
         )}
       </ScrollArea>
 
-      <ProjectSettingsDialog
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        initialTab="credentials"
+      <CredentialDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onSaved={() => refetch()}
       />
     </div>
   );
