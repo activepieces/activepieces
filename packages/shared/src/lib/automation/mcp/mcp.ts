@@ -13,9 +13,16 @@ export enum McpServerStatus {
     DISABLED = 'DISABLED',
 }
 
+export enum McpServerType {
+    PLATFORM = 'PLATFORM',
+    PROJECT = 'PROJECT',
+}
+
 export const McpServer = z.object({
     ...BaseModelSchema,
-    projectId: ApId,
+    platformId: ApId.nullable(),
+    projectId: ApId.nullable(),
+    type: z.enum([McpServerType.PLATFORM, McpServerType.PROJECT]),
     status: z.nativeEnum(McpServerStatus),
     token: ApId,
     enabledTools: z.array(z.string()).nullable(),
@@ -28,6 +35,7 @@ export type PopulatedMcpServer = z.infer<typeof PopulatedMcpServer>
 
 export type McpServer = z.infer<typeof McpServer>
 
+export type ProjectScopedMcpServer = McpServer & { projectId: string }
 
 export const UpdateMcpServerRequest = z.object({
     status: z.nativeEnum(McpServerStatus).optional(),
