@@ -141,14 +141,6 @@ export class FlowExecutorContext {
     }
    
     public currentState(referencedStepNames?: string[]): Record<string, unknown> {
-        return this.walkCurrentPath(referencedStepNames, extractOutput)
-    }
-
-    public currentErrors(referencedStepNames?: string[]): Record<string, { message: string }> {
-        return this.walkCurrentPath(referencedStepNames, extractErrors)
-    }
-
-    private walkCurrentPath<T>(referencedStepNames: string[] | undefined, extract: (steps: Record<string, StepOutput>) => Record<string, T>): Record<string, T> {
         const referencedSteps = referencedStepNames
             ?  referencedStepNames.reduce((acc, stepName) => {
                 if (this.steps[stepName]) acc[stepName] = this.steps[stepName]
@@ -156,7 +148,7 @@ export class FlowExecutorContext {
             }, {} as Record<string, StepOutput>)
             : this.steps
 
-        let flattened: Record<string, T> = extract(referencedSteps)
+        let flattened: Record<string, unknown> = extractStepView(referencedSteps)
         let targetMap = this.steps
 
         this.currentPath.path.forEach(([stepName, iteration]) => {
@@ -167,25 +159,19 @@ export class FlowExecutorContext {
             targetMap = stepOutput.output.iterations[iteration]
             flattened = {
                 ...flattened,
-                ...extract(targetMap),
+                ...extractStepView(targetMap),
             }
         })
         return flattened
     }
 }
 
-function extractOutput(steps: Record<string, StepOutput>): Record<string, unknown> {
+function extractStepView(steps: Record<string, StepOutput>): Record<string, unknown> {
     return Object.entries(steps).reduce((acc: Record<string, unknown>, [stepName, step]) => {
-        acc[stepName] = step.output
+        const error = step.status === StepOutputStatus.FAILED && step.errorMessage !== undefined
+            ? { message: step.errorMessage }
+            : undefined
+        acc[stepName] = { output: step.output, error }
         return acc
     }, {} as Record<string, unknown>)
-}
-
-function extractErrors(steps: Record<string, StepOutput>): Record<string, { message: string }> {
-    return Object.entries(steps).reduce((acc: Record<string, { message: string }>, [stepName, step]) => {
-        if (step.status === StepOutputStatus.FAILED && step.errorMessage !== undefined) {
-            acc[stepName] = { message: step.errorMessage }
-        }
-        return acc
-    }, {} as Record<string, { message: string }>)
 }

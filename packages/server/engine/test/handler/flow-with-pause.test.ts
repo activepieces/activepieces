@@ -53,7 +53,7 @@ const pauseFlowWithLoopAndBranch = buildSimpleLoopAction({
         conditions: [
             {
                 operator: BranchOperator.BOOLEAN_IS_TRUE,
-                firstValue: '{{ loop.item }}',
+                firstValue: '{{ loop.output.item }}',
             },
             
         ],
@@ -189,9 +189,13 @@ describe('flow with pause', () => {
         })
         expect(resumeResult.currentState()).toEqual({
             'approval': {
-                approved: true,
+                output: { approved: true },
+                error: undefined,
             },
-            echo_step: {},
+            echo_step: {
+                output: {},
+                error: undefined,
+            },
         })
     })
 

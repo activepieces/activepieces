@@ -127,9 +127,9 @@ describe('Props resolver', () => {
             }),
         )
 
-        const { resolvedInput: secondLevelResolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{step_7.delayForInMs}}', executionState: modifiedExecutionState })
+        const { resolvedInput: secondLevelResolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{step_7.output.delayForInMs}}', executionState: modifiedExecutionState })
         expect(secondLevelResolvedInput).toEqual(20000)
-        const { resolvedInput: firstLevelResolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{step_8.delayForInMs}}', executionState: modifiedExecutionState })
+        const { resolvedInput: firstLevelResolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{step_8.output.delayForInMs}}', executionState: modifiedExecutionState })
         expect(firstLevelResolvedInput).toEqual(20000)
 
     })
@@ -141,7 +141,7 @@ describe('Props resolver', () => {
     })
 
     test('Test resolve text with double variables', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: 'Price is {{ trigger.price }}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: 'Price is {{ trigger.output.price }}', executionState })
         expect(resolvedInput,
         ).toEqual('Price is 6.4')
     })
@@ -157,7 +157,7 @@ describe('Props resolver', () => {
     })
 
     test('Test resolve object steps variables', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.output}}', executionState })
         expect(resolvedInput).toEqual(
             {
                 items: [5, 'a'],
@@ -180,24 +180,24 @@ describe('Props resolver', () => {
     })
 
     test('flatten array path', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(trigger, [\'users\',\'name\'])}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(trigger.output, [\'users\',\'name\'])}}', executionState })
         expect(resolvedInput).toEqual(['Alice', 'Bob'])
     })
 
     test('merge multiple flatten array paths', async ()=>{
-        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(trigger, [\'users\',\'name\'])}} {{trigger.lastNames}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(trigger.output, [\'users\',\'name\'])}} {{trigger.output.lastNames}}', executionState })
         expect(resolvedInput).toEqual(['Alice Smith', 'Bob Doe'])
     })
 
     test('Test resolve steps variables', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.name}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.output.name}}', executionState })
         expect(resolvedInput).toEqual(
             'John',
         )
     })
 
     test('Test resolve multiple variables', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.name}} {{trigger.name}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.output.name}} {{trigger.output.name}}', executionState })
         expect(
             resolvedInput,
         ).toEqual('John John')
@@ -206,7 +206,7 @@ describe('Props resolver', () => {
     test('Test resolve variable array items', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput:
-                '{{trigger.items[0]}} {{trigger.items[1]}}',
+                '{{trigger.output.items[0]}} {{trigger.output.items[1]}}',
             executionState,
         })
         expect(
@@ -215,14 +215,14 @@ describe('Props resolver', () => {
     })
 
     test('Test resolve array variable', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.items}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.output.items}}', executionState })
         expect(resolvedInput).toEqual(
             [5, 'a'],
         )
     })
 
     test('Test resolve integer from variables', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.items[0]}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.output.items[0]}}', executionState })
         expect(
             resolvedInput,
         ).toEqual(5)
@@ -231,7 +231,7 @@ describe('Props resolver', () => {
     test('Test resolve text with undefined variables', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput:
-                'test {{configs.bar}} {{trigger.items[4]}}',
+                'test {{configs.bar}} {{trigger.output.items[4]}}',
             executionState,
         })
         expect(
@@ -241,75 +241,53 @@ describe('Props resolver', () => {
 
     test('failed step output resolves to empty string', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: '{{step_4}}',
+            unresolvedInput: '{{step_4.output}}',
             executionState: buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
         })
         expect(resolvedInput).toEqual('')
     })
 
-    test('failed step resolves to undefined inside an expression', async () => {
+    test('failed step output resolves to undefined inside an expression', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: '{{step_4 === undefined}}',
+            unresolvedInput: '{{step_4.output === undefined}}',
             executionState: buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
         })
         expect(resolvedInput).toEqual(true)
     })
 
-    test('errors namespace exposes the failure message via bracket path', async () => {
+    test('error channel exposes the failure message via bracket path', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: "{{errors['step_4']['message']}}",
+            unresolvedInput: "{{step_4['error']['message']}}",
             executionState: buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
         })
         expect(resolvedInput).toEqual('Custom Runtime Error')
     })
 
-    test('errors namespace exposes the failure message via dot path', async () => {
+    test('error channel exposes the failure message via dot path', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: '{{errors.step_4.message}}',
+            unresolvedInput: '{{step_4.error.message}}',
             executionState: buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
         })
         expect(resolvedInput).toEqual('Custom Runtime Error')
     })
 
-    test('errors map is empty when no step has failed', async () => {
+    test('error is undefined for SUCCEEDED step', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: '{{errors}}',
-            executionState: FlowExecutorContext.empty(),
+            unresolvedInput: '{{step_1.error}}',
+            executionState,
         })
-        expect(resolvedInput).toEqual({})
+        expect(resolvedInput).toEqual('')
     })
 
-    test('errors namespace contains an entry per failed step', async () => {
-        const stateWithFailures = FlowExecutorContext.empty()
-            .upsertStep('step_4', GenericStepOutput.create({
-                type: FlowActionType.PIECE,
-                status: StepOutputStatus.FAILED,
-                input: {},
-            }).setErrorMessage('first failure'))
-            .upsertStep('step_5', GenericStepOutput.create({
-                type: FlowActionType.PIECE,
-                status: StepOutputStatus.FAILED,
-                input: {},
-            }).setErrorMessage('second failure'))
+    test('non-existent step resolves to empty string', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: '{{errors}}',
-            executionState: stateWithFailures,
-        })
-        expect(resolvedInput).toEqual({
-            step_4: { message: 'first failure' },
-            step_5: { message: 'second failure' },
-        })
-    })
-
-    test('missing failed step error resolves to empty string', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: "{{errors['step_4']['message']}}",
+            unresolvedInput: '{{step_99}}',
             executionState: FlowExecutorContext.empty(),
         })
         expect(resolvedInput).toEqual('')
     })
 
-    test('errors namespace resolves a failure inside a loop iteration', async () => {
+    test('error channel resolves a failure inside a loop iteration', async () => {
         const stateWithLoopFailure = FlowExecutorContext.empty().upsertStep('step_3', GenericStepOutput.create({
             type: FlowActionType.LOOP_ON_ITEMS,
             status: StepOutputStatus.SUCCEEDED,
@@ -332,10 +310,73 @@ describe('Props resolver', () => {
             iteration: 0,
         }))
         const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: "{{errors['step_8']['message']}}",
+            unresolvedInput: "{{step_8['error']['message']}}",
             executionState: stateWithLoopFailure,
         })
         expect(resolvedInput).toEqual('inner failure')
+    })
+
+    test('Q5. loop current-iteration item from inside loop subgraph', async () => {
+        const stateInsideLoop = FlowExecutorContext.empty().upsertStep('step_3', GenericStepOutput.create({
+            type: FlowActionType.LOOP_ON_ITEMS,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: {
+                iterations: [{}],
+                item: { a: 42 },
+                index: 0,
+            },
+        })).setCurrentPath(StepExecutionPath.empty().loopIteration({
+            loopName: 'step_3',
+            iteration: 0,
+        }))
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: "{{step_3['output']['item']['a']}}",
+            executionState: stateInsideLoop,
+        })
+        expect(resolvedInput).toEqual(42)
+    })
+
+    test('Q7. step output is null (resolver normalizes nullish to empty string)', async () => {
+        const stateWithNullOutput = FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: null,
+        }))
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: "{{step_1['output']}}",
+            executionState: stateWithNullOutput,
+        })
+        expect(resolvedInput).toEqual('')
+    })
+
+    test('Q8. step output is a primitive number', async () => {
+        const stateWithPrimitive = FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: 42,
+        }))
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: "{{step_1['output']}}",
+            executionState: stateWithPrimitive,
+        })
+        expect(resolvedInput).toEqual(42)
+    })
+
+    test('Q9. step output is an array', async () => {
+        const stateWithArray = FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: ['a', 'b', 'c'],
+        }))
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: "{{step_1['output'][0]}}",
+            executionState: stateWithArray,
+        })
+        expect(resolvedInput).toEqual('a')
     })
 
     test('Test resolve empty text', async () => {
@@ -355,8 +396,8 @@ describe('Props resolver', () => {
             {
                 input: {
                     foo: 'bar',
-                    nums: [1, 2, '{{trigger.items[0]}}'],
-                    var: '{{trigger.price}}',
+                    nums: [1, 2, '{{trigger.output.items[0]}}'],
+                    var: '{{trigger.output.price}}',
                 },
             },
             executionState,
@@ -367,21 +408,21 @@ describe('Props resolver', () => {
     })
 
     test('Test resolve boolean from variables', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{step_1.success}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{step_1.output.success}}', executionState })
         expect(resolvedInput).toEqual(
             true,
         )
     })
 
     test('Test resolve addition from variables', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.price + 2 - 3}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.output.price + 2 - 3}}', executionState })
         expect(resolvedInput).toEqual(
             6.4 + 2 - 3,
         )
     })
 
     test('Test resolve text with array variable', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: 'items are {{trigger.items}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: 'items are {{trigger.output.items}}', executionState })
         expect(
             resolvedInput,
         ).toEqual('items are [5,"a"]')
@@ -390,7 +431,7 @@ describe('Props resolver', () => {
     test('Test resolve text with object variable', async () => {
         const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput:
-                'values from trigger step: {{trigger}}',
+                'values from trigger step: {{trigger.output}}',
             executionState,
         })
         expect(
@@ -399,14 +440,14 @@ describe('Props resolver', () => {
     })
 
     test('Test use built-in Math Min function', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{Math.min(trigger.price + 2 - 3, 2)}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{Math.min(trigger.output.price + 2 - 3, 2)}}', executionState })
         expect(resolvedInput).toEqual(
             2,
         )
     })
 
     test('Test use built-in Math Max function', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{Math.max(trigger.price + 2, 2)}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{Math.max(trigger.output.price + 2, 2)}}', executionState })
         expect(resolvedInput).toEqual(
             8.4,
         )
@@ -427,7 +468,7 @@ describe('Props resolver', () => {
 
     it('should not compress memory file in referenced value in non-logs mode', async () => {
         const input = {
-            base64: '{{step_2}}',
+            base64: '{{step_2.output}}',
         }
         const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput: input,
