@@ -33,7 +33,6 @@ import { ToolCallGroup } from './tool-call-group';
 const HIDDEN_TOOLS = new Set([
   'ap_set_session_title',
   'ap_select_project',
-  'ap_deselect_project',
 ]);
 
 export function ChatMessage({
