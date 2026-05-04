@@ -151,7 +151,8 @@ export const FlowCanvas = React.memo(
       selectedSteps.forEach((step) => {
         if (
           step.type === FlowActionType.LOOP_ON_ITEMS ||
-          step.type === FlowActionType.ROUTER
+          step.type === FlowActionType.ROUTER ||
+          sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
         ) {
           const childrenNotSelected = flowStructureUtil
             .getAllChildSteps(step)

@@ -22,9 +22,8 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 }
             }
             const referencedStepNames = extractReferencedStepNames(unresolvedInput, stepNames)
-            const referencedStepNamesArray = Array.from(referencedStepNames)
-            const currentState = executionState.currentState(referencedStepNamesArray)
-            const errors = executionState.currentErrors(referencedStepNamesArray)
+            const currentState = executionState.currentState(Array.from(referencedStepNames))
+            const errors = executionState.currentErrors()
             const resolveOptions = {
                 engineToken,
                 projectId,

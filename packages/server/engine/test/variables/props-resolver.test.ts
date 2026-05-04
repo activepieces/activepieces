@@ -56,6 +56,13 @@ const executionState = FlowExecutorContext.empty()
         output: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
     }))
 
+const buildStateWithFailedStep = (stepName: string, message: string) =>
+    FlowExecutorContext.empty().upsertStep(stepName, GenericStepOutput.create({
+        type: FlowActionType.PIECE,
+        status: StepOutputStatus.FAILED,
+        input: {},
+    }).setErrorMessage(message))
+
 
 
 describe('Props resolver', () => {
@@ -230,6 +237,105 @@ describe('Props resolver', () => {
         expect(
             resolvedInput,
         ).toEqual('test  ')
+    })
+
+    test('failed step output resolves to empty string', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: '{{step_4}}',
+            executionState: buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
+        })
+        expect(resolvedInput).toEqual('')
+    })
+
+    test('failed step resolves to undefined inside an expression', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: '{{step_4 === undefined}}',
+            executionState: buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
+        })
+        expect(resolvedInput).toEqual(true)
+    })
+
+    test('errors namespace exposes the failure message via bracket path', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: "{{errors['step_4']['message']}}",
+            executionState: buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
+        })
+        expect(resolvedInput).toEqual('Custom Runtime Error')
+    })
+
+    test('errors namespace exposes the failure message via dot path', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: '{{errors.step_4.message}}',
+            executionState: buildStateWithFailedStep('step_4', 'Custom Runtime Error'),
+        })
+        expect(resolvedInput).toEqual('Custom Runtime Error')
+    })
+
+    test('errors map is empty when no step has failed', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: '{{errors}}',
+            executionState: FlowExecutorContext.empty(),
+        })
+        expect(resolvedInput).toEqual({})
+    })
+
+    test('errors namespace contains an entry per failed step', async () => {
+        const stateWithFailures = FlowExecutorContext.empty()
+            .upsertStep('step_4', GenericStepOutput.create({
+                type: FlowActionType.PIECE,
+                status: StepOutputStatus.FAILED,
+                input: {},
+            }).setErrorMessage('first failure'))
+            .upsertStep('step_5', GenericStepOutput.create({
+                type: FlowActionType.PIECE,
+                status: StepOutputStatus.FAILED,
+                input: {},
+            }).setErrorMessage('second failure'))
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: '{{errors}}',
+            executionState: stateWithFailures,
+        })
+        expect(resolvedInput).toEqual({
+            step_4: { message: 'first failure' },
+            step_5: { message: 'second failure' },
+        })
+    })
+
+    test('missing failed step error resolves to empty string', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: "{{errors['step_4']['message']}}",
+            executionState: FlowExecutorContext.empty(),
+        })
+        expect(resolvedInput).toEqual('')
+    })
+
+    test('errors namespace resolves a failure inside a loop iteration', async () => {
+        const stateWithLoopFailure = FlowExecutorContext.empty().upsertStep('step_3', GenericStepOutput.create({
+            type: FlowActionType.LOOP_ON_ITEMS,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: {
+                iterations: [
+                    {
+                        step_8: GenericStepOutput.create({
+                            type: FlowActionType.PIECE,
+                            status: StepOutputStatus.FAILED,
+                            input: {},
+                        }).setErrorMessage('inner failure'),
+                    },
+                ],
+                item: 1,
+                index: 0,
+            },
+        })).setCurrentPath(StepExecutionPath.empty().loopIteration({
+            loopName: 'step_3',
+            iteration: 0,
+        }))
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: "{{errors['step_8']['message']}}",
+            executionState: stateWithLoopFailure,
+        })
+        expect(resolvedInput).toEqual('inner failure')
     })
 
     test('Test resolve empty text', async () => {
