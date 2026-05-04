@@ -1,4 +1,4 @@
-import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
+import { McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { executeFlowTest } from './flow-run-utils'
@@ -9,7 +9,7 @@ const testFlowInput = z.object({
     triggerTestData: z.record(z.string(), z.unknown()).optional().describe('Mock trigger output data. Saved as sample data before running the test. Useful when the trigger has no prior test data.'),
 })
 
-export const apTestFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apTestFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_test_flow',
         permission: Permission.WRITE_FLOW,

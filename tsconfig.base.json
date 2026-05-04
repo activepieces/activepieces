@@ -1964,6 +1964,9 @@
       ],
       "@activepieces/piece-knock": [
         "packages/pieces/community/knock/src/index.ts"
+      ],
+      "@activepieces/piece-proxycurl": [
+        "packages/pieces/community/proxycurl/src/index.ts"
       ]
     },
     "resolveJsonModule": true

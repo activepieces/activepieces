@@ -6,10 +6,10 @@ import {
     flowStructureUtil,
     FlowTriggerType,
     isNil,
-    McpServer,
     McpToolDefinition,
     Note,
     Permission,
+    ProjectScopedMcpServer,
     StepLocationRelativeToParent,
 } from '@activepieces/shared'
 import type { Step } from '@activepieces/shared'
@@ -314,7 +314,7 @@ function formatFlowStructure(
     return lines.join('\n')
 }
 
-export const apFlowStructureTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apFlowStructureTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_flow_structure',
         permission: Permission.READ_FLOW,
