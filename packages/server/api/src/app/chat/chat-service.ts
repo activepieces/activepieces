@@ -189,15 +189,15 @@ export const chatService = (log: FastifyBaseLogger) => ({
             onSessionTitle: (title) => {
                 pendingTitle = title
             },
-            onSelectProject: async (projectId) => {
+            onSetProjectContext: async (projectId) => {
                 await conversationRepo().update(conversationId, { projectId })
-                mcpProjectSelection.set({ platformId, userId, projectId })
+                if (projectId) {
+                    mcpProjectSelection.set({ platformId, userId, projectId })
+                }
+                else {
+                    mcpProjectSelection.clear({ platformId, userId })
+                }
             },
-            onDeselectProject: async () => {
-                await conversationRepo().update(conversationId, { projectId: null })
-                mcpProjectSelection.clear({ platformId, userId })
-            },
-            currentProjectId: selectedProjectId,
             availableProjectIds: userProjects.map((p) => p.id),
         })
         const tools = { ...localTools, ...mcpToolSet }
@@ -467,14 +467,19 @@ function extractTextFromContent(content: unknown): string {
     return text
 }
 
+function loadPromptTemplate(filename: string): string {
+    return readFileSync(path.resolve(`packages/server/api/src/assets/prompts/${filename}`), 'utf8')
+}
+
+const PROMPT_TEMPLATES = {
+    system: loadPromptTemplate('chat-system-prompt.md'),
+    projectSelected: loadPromptTemplate('chat-project-context-selected.md'),
+    noProject: loadPromptTemplate('chat-project-context-none.md'),
+}
+
 function sanitizeProjectName(name: string): string {
     return name.replace(/[^a-zA-Z0-9 \-_.]/g, '').slice(0, 64)
 }
-
-const SYSTEM_PROMPT_TEMPLATE = readFileSync(
-    path.resolve('packages/server/api/src/assets/prompts/chat-system-prompt.md'),
-    'utf8',
-)
 
 function buildProjectListBlock({ projects, frontendUrl }: {
     projects: Project[]
@@ -487,22 +492,31 @@ function buildProjectListBlock({ projects, frontendUrl }: {
     }).join('\n')
 }
 
+function buildProjectContextBlock({ project, frontendUrl }: {
+    project: Project | null
+    frontendUrl: string
+}): string {
+    if (!project) {
+        return PROMPT_TEMPLATES.noProject
+    }
+    return PROMPT_TEMPLATES.projectSelected
+        .replaceAll('{{PROJECT_NAME}}', sanitizeProjectName(project.displayName))
+        .replaceAll('{{PROJECT_ID}}', project.id)
+        .replaceAll('{{FRONTEND_URL}}', frontendUrl)
+}
+
 function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl }: {
     projects: Project[]
     currentProjectId: string | null
     frontendUrl: string
 }): string {
-    const projectListBlock = buildProjectListBlock({ projects, frontendUrl })
     const currentProject = currentProjectId
-        ? projects.find((p) => p.id === currentProjectId)
+        ? projects.find((p) => p.id === currentProjectId) ?? null
         : null
-    const projectContextBlock = currentProject
-        ? `You are currently working in project "${sanitizeProjectName(currentProject.displayName)}" (ID: ${currentProject.id}). All operations (flows, tables, connections) are scoped to this project. The project URL is: ${frontendUrl}/projects/${currentProject.id}`
-        : 'No project is currently selected. You have NO project tools available. You can answer general questions. If the user wants to build or modify automations, tell them to select a project from the dropdown in the chat input area, or call `ap_select_project` if they specify one.'
 
-    return SYSTEM_PROMPT_TEMPLATE
-        .replace('{{PROJECT_LIST}}', projectListBlock)
-        .replace('{{PROJECT_CONTEXT}}', projectContextBlock)
+    return PROMPT_TEMPLATES.system
+        .replace('{{PROJECT_LIST}}', buildProjectListBlock({ projects, frontendUrl }))
+        .replace('{{PROJECT_CONTEXT}}', buildProjectContextBlock({ project: currentProject, frontendUrl }))
         .replaceAll('{{FRONTEND_URL}}', frontendUrl)
 }
 
