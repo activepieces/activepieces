@@ -54,10 +54,10 @@ const ApStepCanvasNode = React.memo(
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });
-    const stepIndex = useMemo(() => {
-      const steps = flowStructureUtil.getAllSteps(flowVersion.trigger);
-      return steps.findIndex((s) => s.name === step.name) + 1;
-    }, [step, flowVersion]);
+    const stepIndex = useMemo(
+      () => flowStructureUtil.getStepNumber(flowVersion.trigger, step.name),
+      [step, flowVersion],
+    );
     const isTrigger = flowStructureUtil.isTrigger(step.type);
     const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion.trigger);
 

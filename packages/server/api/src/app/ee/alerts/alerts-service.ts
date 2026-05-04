@@ -1,5 +1,5 @@
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { ActivepiecesError, Alert, AlertChannel, ApEdition, ApId, apId, ErrorCode, FailedStep, ListAlertsParams, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, Alert, AlertChannel, ApEdition, ApId, apId, ErrorCode, FailedStep, flowStructureUtil, isNil, ListAlertsParams, SeekPage } from '@activepieces/shared'
 
 import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
@@ -48,6 +48,9 @@ export const alertsService = (log: FastifyBaseLogger) => ({
         const project = await projectService(log).getOneOrThrow(issueToAlert.projectId)
         const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issueToAlert.flowId)
 
+        const failedStepNumber = isNil(failedStep)
+            ? undefined
+            : flowStructureUtil.getStepNumber(flowVersion.trigger, failedStep.name) || undefined
         const alertsInfo = {
             flowVersionId: flowVersion.id,
             flowRunId,
@@ -60,6 +63,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
                 .tz('America/Los_Angeles')
                 .format('DD MMM YYYY, HH:mm [PT]'),
             failedStepDisplayName: failedStep?.displayName,
+            failedStepNumber,
             failedStepMessage: failedStep?.message,
         }
 

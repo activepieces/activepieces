@@ -50,6 +50,7 @@ type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     isIssue: string
     createdAt: string
     failedStepDisplayName: string
+    failedStepNumber: string
     failedStepMessage: string
 }>
 
