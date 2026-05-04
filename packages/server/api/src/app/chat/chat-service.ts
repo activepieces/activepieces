@@ -137,7 +137,10 @@ export const chatService = (log: FastifyBaseLogger) => ({
             buildUserContentWithFiles({ text: content, files }),
         ])
 
-        const selectedProjectId = conversation.projectId ?? null
+        const candidateProjectId = conversation.projectId ?? null
+        const selectedProjectId = candidateProjectId && userProjects.some((p) => p.id === candidateProjectId)
+            ? candidateProjectId
+            : null
 
         const modelName = conversation.modelName
             ?? await resolveDefaultChatModel({ platformId, provider: providerConfig.provider, log })
