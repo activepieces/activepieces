@@ -1,3 +1,4 @@
+import { loggerRedact } from '@activepieces/server-utils'
 import * as HyperDX from '@hyperdx/node-opentelemetry'
 import { Level, pino, transport, TransportTargetOptions } from 'pino'
 import { AppSystemProp, environmentVariables } from '../../system/system-props'
@@ -16,7 +17,7 @@ export const hyperdxTransport: TransportProvider = {
         })
 
         return pino(
-            { level, mixin: HyperDX.getPinoMixinFunction },
+            { level, redact: loggerRedact, mixin: HyperDX.getPinoMixinFunction },
             transport({
                 targets: [
                     HyperDX.getPinoTransport(level, {

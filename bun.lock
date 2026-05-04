@@ -8188,7 +8188,7 @@
     },
     "packages/server/utils": {
       "name": "@activepieces/server-utils",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@activepieces/shared": "workspace:*",
         "async-mutex": "0.4.0",
@@ -8201,6 +8201,7 @@
       },
       "devDependencies": {
         "@types/node": "24.11.0",
+        "pino": "10.1.0",
         "vitest": "3.0.8",
       },
     },
