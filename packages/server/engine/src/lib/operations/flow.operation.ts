@@ -66,20 +66,20 @@ const executieSingleStepOrFlowOperation = async (input: HydratedExecuteFlowOpera
         const step = flowStructureUtil.getActionOrThrow(input.stepNameToTest!, input.flowVersion.trigger)
         return flowExecutor.execute({
             action: step,
-            executionState: await getFlowExecutionState(input, testContext),
+            executionState: await getFlowExecutionState(input, constants, testContext),
             constants,
         })
     }
     return flowExecutor.executeFromTrigger({
-        executionState: await getFlowExecutionState(input, FlowExecutorContext.empty()),
+        executionState: await getFlowExecutionState(input, constants, FlowExecutorContext.empty()),
         constants,
         input,
     })
 }
 
-async function getFlowExecutionState(input: HydratedExecuteFlowOperation, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
+async function getFlowExecutionState(input: HydratedExecuteFlowOperation, constants: EngineConstants, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
     if (input.hydrated.kind === 'begin') {
-        const newPayload = await runOrReturnPayload(input as BeginExecuteFlowOperation, input.hydrated.payload)
+        const newPayload = await runOrReturnPayload(input as BeginExecuteFlowOperation, input.hydrated.payload, constants)
         flowContext = flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
             type: input.flowVersion.trigger.type,
             status: StepOutputStatus.SUCCEEDED,
@@ -101,7 +101,7 @@ async function getFlowExecutionState(input: HydratedExecuteFlowOperation, flowCo
     return flowContext
 }
 
-async function runOrReturnPayload(input: BeginExecuteFlowOperation, triggerPayload: unknown): Promise<TriggerPayload> {
+async function runOrReturnPayload(input: BeginExecuteFlowOperation, triggerPayload: unknown, constants: EngineConstants): Promise<TriggerPayload> {
     if (!input.executeTrigger) {
         return triggerPayload as TriggerPayload
     }
@@ -113,7 +113,7 @@ async function runOrReturnPayload(input: BeginExecuteFlowOperation, triggerPaylo
             webhookUrl: '',
             triggerPayload: triggerPayload as TriggerPayload,
         },
-        constants: EngineConstants.fromExecuteFlowInput(input),
+        constants,
     }) as ExecuteTriggerResponse<TriggerHookType.RUN>
     return newPayload.output[0] as TriggerPayload
 }

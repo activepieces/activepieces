@@ -43,6 +43,14 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.INTERNAL_ERROR }
         }
 
+        if (data.executionType === ExecutionType.RESUME && isNil(data.logsFileId)) {
+            await reportFlowStatus(ctx, data, FlowRunStatus.INTERNAL_ERROR)
+            throw new ActivepiecesError({
+                code: ErrorCode.RESUME_LOGS_FILE_MISSING,
+                params: { runId: data.runId },
+            }, 'logsFileId is missing for RESUME operation')
+        }
+
         const sandbox = ctx.sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
             await sandbox.start({
@@ -50,13 +58,6 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
                 platformId: data.platformId,
                 mounts: [],
             })
-
-            if (data.executionType === ExecutionType.RESUME && isNil(data.logsFileId)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.RESUME_LOGS_FILE_MISSING,
-                    params: { runId: data.runId },
-                }, 'logsFileId is missing for RESUME operation')
-            }
 
             const operation = buildFlowOperation(ctx, data, flowVersion, timeoutInSeconds)
             const result = await sandbox.execute(
