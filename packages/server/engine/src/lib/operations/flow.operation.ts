@@ -21,7 +21,7 @@ import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
-import { runProgressService } from '../handler/run-progress'
+import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { triggerHelper } from '../helper/trigger-helper'
 
 export const flowOperation = {
@@ -29,10 +29,11 @@ export const flowOperation = {
         const input = operation as ExecuteFlowOperation
         const constants = EngineConstants.fromExecuteFlowInput(input)
         const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input)).finishExecution()
-        await runProgressService.backup({
+        await flowRunProgressReporter.sendUpdate({
             engineConstants: constants,
             flowExecutorContext: output,
         })
+        await flowRunProgressReporter.backup()
         const status = output.verdict.status === FlowRunStatus.LOG_SIZE_EXCEEDED
             ? EngineResponseStatus.LOG_SIZE_EXCEEDED
             : EngineResponseStatus.OK
