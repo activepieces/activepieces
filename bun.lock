@@ -5552,6 +5552,16 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/proxycurl": {
+      "name": "@activepieces/piece-proxycurl",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/pushbullet": {
       "name": "@activepieces/piece-pushbullet",
       "version": "0.1.4",
@@ -9365,6 +9375,8 @@
     "@activepieces/piece-prompthub": ["@activepieces/piece-prompthub@workspace:packages/pieces/community/prompthub"],
 
     "@activepieces/piece-promptmate": ["@activepieces/piece-promptmate@workspace:packages/pieces/community/promptmate"],
+
+    "@activepieces/piece-proxycurl": ["@activepieces/piece-proxycurl@workspace:packages/pieces/community/proxycurl"],
 
     "@activepieces/piece-pushbullet": ["@activepieces/piece-pushbullet@workspace:packages/pieces/community/pushbullet"],
 

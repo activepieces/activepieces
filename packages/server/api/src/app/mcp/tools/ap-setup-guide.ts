@@ -58,11 +58,13 @@ async function connectionGuide(mcp: McpServer, log: FastifyBaseLogger, pieceName
         }
     }
 
+    // Resolve platformId so private (CUSTOM) pieces on this platform are discoverable.
+    const project = await projectService(log).getOneOrThrow(mcp.projectId)
     const piece = await pieceMetadataService(log).get({
         name: pieceName,
         version: undefined,
         projectId: mcp.projectId,
-        platformId: undefined,
+        platformId: project.platformId,
     })
 
     if (isNil(piece)) {
