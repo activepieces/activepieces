@@ -104,13 +104,8 @@ export const chatService = (log: FastifyBaseLogger) => ({
     },
 
     async deleteConversation({ id, platformId, userId }: ConversationIdentifier): Promise<void> {
-        const result = await conversationRepo().delete({ id, platformId, userId })
-        if (result.affected === 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: id, entityType: 'ChatConversation' },
-            })
-        }
+        const conversation = await this.getConversationOrThrow({ id, platformId, userId })
+        await conversationRepo().delete(conversation.id)
     },
 
     async getMessages({ id, platformId, userId }: ConversationIdentifier): Promise<{ data: ChatHistoryMessage[] }> {
