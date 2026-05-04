@@ -30,7 +30,7 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { Order } from '../helper/pagination/paginator'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
-import { mcpServerService } from '../mcp/mcp-service'
+import { mcpOAuthTokenService } from '../mcp/oauth/token/mcp-oauth-token.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { chatCompaction } from './chat-compaction'
@@ -129,20 +129,15 @@ export const chatService = (log: FastifyBaseLogger) => ({
     },
 
     async sendMessage({ conversationId, userId, platformId, content, files }: SendMessageParams): Promise<SendMessageResult> {
-        const [conversation, providerConfig, userProjects, userContent] = await Promise.all([
+        const [conversation, providerConfig, userProjects, mcpCredentials, userContent] = await Promise.all([
             this.getConversationOrThrow({ id: conversationId, platformId, userId }),
             resolveChatProvider({ platformId, log }),
             getUserProjects({ platformId, userId, log }),
+            getMcpCredentials({ platformId, userId, log }),
             buildUserContentWithFiles({ text: content, files }),
         ])
 
-        const candidateProjectId = conversation.projectId ?? null
-        const selectedProjectId = candidateProjectId && userProjects.some((p) => p.id === candidateProjectId)
-            ? candidateProjectId
-            : null
-        const mcpCredentials = selectedProjectId
-            ? await getMcpCredentials({ projectId: selectedProjectId, log })
-            : { mcpServerUrl: null, mcpToken: null }
+        const selectedProjectId = conversation.projectId ?? null
 
         const modelName = conversation.modelName
             ?? await resolveDefaultChatModel({ platformId, provider: providerConfig.provider, log })
@@ -374,17 +369,18 @@ async function connectMcpClient({ mcpCredentials, log }: {
     return { mcpClient: client, mcpToolSet }
 }
 
-async function getMcpCredentials({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<{ mcpServerUrl: string | null, mcpToken: string | null }> {
-    const { data: mcpServer, error } = await tryCatch(async () => mcpServerService(log).getByProjectId(projectId))
+async function getMcpCredentials({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<{ mcpServerUrl: string | null, mcpToken: string | null }> {
+    const { data: accessToken, error } = await tryCatch(() =>
+        mcpOAuthTokenService.issueInternalAccessToken({ userId, platformId, projectId: null }),
+    )
     if (error) {
-        log.warn({ err: error, projectId }, 'Failed to get MCP credentials — chat will work without MCP tools')
+        log.warn({ err: error, platformId }, 'Failed to get MCP credentials — chat will work without MCP tools')
         return { mcpServerUrl: null, mcpToken: null }
     }
     const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-    const mcpServerUrl = `${frontendUrl}/mcp`
     return {
-        mcpServerUrl,
-        mcpToken: mcpServer.token,
+        mcpServerUrl: `${frontendUrl}/mcp/platform`,
+        mcpToken: accessToken,
     }
 }
 

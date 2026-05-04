@@ -13,6 +13,7 @@ export enum SystemJobName {
     HARD_DELETE_PROJECT = 'hard-delete-project',
     HARD_DELETE_PLATFORM = 'hard-delete-platform',
     RESUME_DELAY_WAITPOINT = 'resume-delay-waitpoint',
+    EXPIRE_PENDING_SSO_DOMAINS = 'expire-pending-sso-domains',
 }
 
 type DeleteFlowDurableSystemJobData =  {
@@ -54,6 +55,7 @@ type SystemJobDataMap = {
     [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
     [SystemJobName.HARD_DELETE_PLATFORM]: HardDeletePlatformSystemJobData
     [SystemJobName.RESUME_DELAY_WAITPOINT]: ResumeDelayWaitpointSystemJobData
+    [SystemJobName.EXPIRE_PENDING_SSO_DOMAINS]: Record<string, never>
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never

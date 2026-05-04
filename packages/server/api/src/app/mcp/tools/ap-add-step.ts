@@ -5,9 +5,9 @@ import {
     FlowOperationType,
     flowStructureUtil,
     isNil,
-    McpServer,
     McpToolDefinition,
     Permission,
+    ProjectScopedMcpServer,
     RouterExecutionType,
     StepLocationRelativeToParent,
     UpdateActionRequest,
@@ -35,7 +35,7 @@ const addStepInput = z.object({
     loopItems: z.string().optional(),
 })
 
-export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apAddStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_add_step',
         permission: Permission.WRITE_FLOW,
