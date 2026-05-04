@@ -190,10 +190,10 @@ done
 echo "=== Starting concurrency monitor (limit=$CONCURRENCY_LIMIT) ==="
 (
   while true; do
-    RUNNING=$(curl -s "$BASE_URL/flow-runs?projectId=$PROJECT_ID&status=RUNNING&limit=200" \
-      -H "$AUTH" | jq '.data | length' 2>/dev/null || echo "0")
-    QUEUED=$(curl -s "$BASE_URL/flow-runs?projectId=$PROJECT_ID&status=QUEUED&limit=200" \
-      -H "$AUTH" | jq '.data | length' 2>/dev/null || echo "0")
+    COUNTS=$(curl -s "$BASE_URL/flow-runs/count-by-status?projectId=$PROJECT_ID" \
+      -H "$AUTH" 2>/dev/null || echo '{"data":[]}')
+    RUNNING=$(echo "$COUNTS" | jq '[.data[] | select(.status=="RUNNING") | .count] | add // 0')
+    QUEUED=$(echo "$COUNTS"  | jq '[.data[] | select(.status=="QUEUED")  | .count] | add // 0')
     TS=$(date +%s)
     echo "$TS running=$RUNNING queued=$QUEUED" >> "$MONITOR_LOG"
     if [ "$RUNNING" -gt "$CONCURRENCY_LIMIT" ]; then
