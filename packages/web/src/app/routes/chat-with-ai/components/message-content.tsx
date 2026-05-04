@@ -1,6 +1,7 @@
+import { PROJECT_COLOR_PALETTE, Project } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, Zap } from 'lucide-react';
+import { Check, Hammer, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
@@ -45,12 +46,18 @@ export function MessageContentWithAuth({
   isLastMessage = false,
   connectedPieces,
   onPieceConnected,
+  selectedProjectId,
+  projects,
+  onSelectProject,
 }: {
   content: string;
   onSend?: (text: string) => void;
   isLastMessage?: boolean;
   connectedPieces?: Set<string>;
   onPieceConnected?: (piece: string) => void;
+  selectedProjectId?: string | null;
+  projects?: Project[];
+  onSelectProject?: (projectId: string) => void;
 }) {
   const hasAuthUrl = AUTH_URL_PATTERN.test(content);
 
@@ -109,9 +116,15 @@ export function MessageContentWithAuth({
       {proposal && (
         <AutomationProposalCard
           proposal={proposal}
+          selectedProjectId={selectedProjectId ?? null}
+          projects={projects ?? []}
           onBuild={() =>
             onSend?.(`Yes, build the "${proposal.title}" automation`)
           }
+          onSelectProjectAndBuild={(projectId) => {
+            onSelectProject?.(projectId);
+            onSend?.(`Yes, build the "${proposal.title}" automation`);
+          }}
         />
       )}
     </div>
@@ -120,11 +133,20 @@ export function MessageContentWithAuth({
 
 export function AutomationProposalCard({
   proposal,
+  selectedProjectId,
+  projects,
   onBuild,
+  onSelectProjectAndBuild,
 }: {
   proposal: AutomationProposal;
+  selectedProjectId: string | null;
+  projects: Project[];
   onBuild: () => void;
+  onSelectProjectAndBuild: (projectId: string) => void;
 }) {
+  const [showProjectPicker, setShowProjectPicker] = useState(false);
+  const hasProjectContext = selectedProjectId !== null;
+
   return (
     <div className="rounded-xl border bg-background overflow-hidden my-2">
       <div className="p-4 space-y-3">
@@ -155,10 +177,53 @@ export function AutomationProposalCard({
       </div>
 
       <div className="border-t px-4 py-3 bg-muted/30">
-        <Button size="sm" className="gap-1.5" onClick={onBuild}>
-          <Zap className="h-3.5 w-3.5" />
-          {t('Build this automation')}
-        </Button>
+        {hasProjectContext ? (
+          <Button size="sm" className="gap-1.5" onClick={onBuild}>
+            <Zap className="h-3.5 w-3.5" />
+            {t('Build this automation')}
+          </Button>
+        ) : showProjectPicker ? (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              {t('Select a project to build in:')}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {projects.map((project) => {
+                const color = PROJECT_COLOR_PALETTE[project.icon.color];
+                return (
+                  <Button
+                    key={project.id}
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={() => onSelectProjectAndBuild(project.id)}
+                  >
+                    <span
+                      className="inline-flex items-center justify-center h-4 w-4 rounded-sm shrink-0 text-[9px] font-bold"
+                      style={{
+                        backgroundColor: color.color,
+                        color: color.textColor,
+                      }}
+                    >
+                      {project.displayName.charAt(0).toUpperCase()}
+                    </span>
+                    {project.displayName}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            onClick={() => setShowProjectPicker(true)}
+          >
+            <Hammer className="h-3.5 w-3.5" />
+            {t('Select project to build')}
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,4 @@
 import { ServerResponse } from 'http'
-import { readFileSync } from 'node:fs'
-import path from 'node:path'
 import {
     ActivepiecesError,
     AIProviderModelType,
@@ -9,17 +7,15 @@ import {
     apId,
     ChatConversation,
     ChatHistoryMessage,
-    ChatHistoryToolCall,
     CreateChatConversationRequest,
     ErrorCode,
     GetProviderConfigResponse,
     isNil,
+    Project,
     SeekPage,
     spreadIfDefined,
-    tryCatch,
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
-import { createMCPClient } from '@ai-sdk/mcp'
 import { LanguageModel, ModelMessage, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../ai/ai-provider-service'
@@ -29,23 +25,28 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { Order } from '../helper/pagination/paginator'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
-import { mcpOAuthTokenService } from '../mcp/oauth/token/mcp-oauth-token.service'
+import { mcpProjectSelection } from '../mcp/mcp-project-selection'
 import { projectService } from '../project/project-service'
+import { userService } from '../user/user-service'
 import { chatCompaction } from './chat-compaction'
 import { ChatConversationEntity } from './chat-conversation-entity'
 import { buildUserContentWithFiles } from './chat-file-utils'
 import { createChatModel } from './chat-model-factory'
-import { createChatTools } from './chat-tools'
+import { chatHistory } from './history/chat-history'
+import { chatMcp } from './mcp/chat-mcp'
+import { chatPrompt } from './prompt/chat-prompt'
+import { createChatTools } from './tools/chat-tools'
 
 const conversationRepo = repoFactory(ChatConversationEntity)
 
 const MAX_STEPS = 30
 
 export const chatService = (log: FastifyBaseLogger) => ({
-    async createConversation({ projectId, userId, request }: CreateConversationParams): Promise<ChatConversation> {
+    async createConversation({ platformId, userId, request }: CreateConversationParams): Promise<ChatConversation> {
         return conversationRepo().save({
             id: apId(),
-            projectId,
+            platformId,
+            projectId: null,
             userId,
             title: request.title ?? null,
             modelName: request.modelName ?? null,
@@ -53,7 +54,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async listConversations({ projectId, userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<ChatConversation>> {
+    async listConversations({ platformId, userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<ChatConversation>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
             entity: ChatConversationEntity,
@@ -70,14 +71,14 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
         const queryBuilder = conversationRepo()
             .createQueryBuilder('chat_conversation')
-            .where({ projectId, userId })
+            .where({ platformId, userId })
 
         const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage(data, paginationCursor)
     },
 
-    async getConversationOrThrow({ id, projectId, userId }: ConversationIdentifier): Promise<ChatConversation> {
-        const conversation = await conversationRepo().findOneBy({ id, projectId, userId })
+    async getConversationOrThrow({ id, platformId, userId }: ConversationIdentifier): Promise<ChatConversation> {
+        const conversation = await conversationRepo().findOneBy({ id, platformId, userId })
         if (isNil(conversation)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -87,8 +88,8 @@ export const chatService = (log: FastifyBaseLogger) => ({
         return conversation
     },
 
-    async updateConversation({ id, projectId, userId, request }: UpdateConversationParams): Promise<ChatConversation> {
-        const conversation = await this.getConversationOrThrow({ id, projectId, userId })
+    async updateConversation({ id, platformId, userId, request }: UpdateConversationParams): Promise<ChatConversation> {
+        const conversation = await this.getConversationOrThrow({ id, platformId, userId })
         const updates = {
             ...spreadIfDefined('title', request.title),
             ...spreadIfDefined('modelName', request.modelName),
@@ -100,35 +101,51 @@ export const chatService = (log: FastifyBaseLogger) => ({
         return { ...conversation, ...updates }
     },
 
-    async deleteConversation({ id, projectId, userId }: ConversationIdentifier): Promise<void> {
-        const result = await conversationRepo().delete({ id, projectId, userId })
-        if (result.affected === 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: id, entityType: 'ChatConversation' },
-            })
-        }
+    async deleteConversation({ id, platformId, userId }: ConversationIdentifier): Promise<void> {
+        const conversation = await this.getConversationOrThrow({ id, platformId, userId })
+        await conversationRepo().delete(conversation.id)
     },
 
-    async getMessages({ id, projectId, userId }: ConversationIdentifier): Promise<{ data: ChatHistoryMessage[] }> {
-        const conversation = await this.getConversationOrThrow({ id, projectId, userId })
-        const messages = reconstructChatHistory(conversation.messages as ModelMessage[])
+    async getMessages({ id, platformId, userId }: ConversationIdentifier): Promise<{ data: ChatHistoryMessage[] }> {
+        const conversation = await this.getConversationOrThrow({ id, platformId, userId })
+        const messages = chatHistory.reconstruct(conversation.messages as ModelMessage[])
         return { data: messages }
     },
 
-    async sendMessage({ conversationId, projectId, userId, platformId, content, files }: SendMessageParams): Promise<SendMessageResult> {
-        const [conversation, providerConfig, mcpCredentials, projectName, userContent] = await Promise.all([
-            this.getConversationOrThrow({ id: conversationId, projectId, userId }),
+    async setProjectContext({ id, platformId, userId, projectId }: SetProjectContextParams): Promise<ChatConversation> {
+        const conversation = await this.getConversationOrThrow({ id, platformId, userId })
+        if (projectId !== null) {
+            await assertUserHasProjectAccess({ platformId, userId, projectId, log })
+        }
+        await conversationRepo().update(conversation.id, { projectId })
+        return { ...conversation, projectId }
+    },
+
+    async sendMessage({ conversationId, userId, platformId, content, files }: SendMessageParams): Promise<SendMessageResult> {
+        const [conversation, providerConfig, userProjects, mcpCredentials, userContent] = await Promise.all([
+            this.getConversationOrThrow({ id: conversationId, platformId, userId }),
             resolveChatProvider({ platformId, log }),
-            getMcpCredentials({ platformId, userId, log }),
-            projectService(log).getOneOrThrow(projectId).then((p) => p.displayName),
+            getUserProjects({ platformId, userId, log }),
+            chatMcp.getCredentials({ platformId, userId, log }),
             buildUserContentWithFiles({ text: content, files }),
         ])
+
+        const candidateProjectId = conversation.projectId ?? null
+        const selectedProjectId = candidateProjectId && userProjects.some((p) => p.id === candidateProjectId)
+            ? candidateProjectId
+            : null
 
         const modelName = conversation.modelName
             ?? await resolveDefaultChatModel({ platformId, provider: providerConfig.provider, log })
 
-        const { mcpClient, mcpToolSet } = await connectMcpClient({ mcpCredentials, log })
+        const { mcpClient, mcpToolSet } = await chatMcp.connectClient({ mcpCredentials, log })
+
+        if (selectedProjectId) {
+            mcpProjectSelection.set({ platformId, userId, projectId: selectedProjectId })
+        }
+        else {
+            mcpProjectSelection.clear({ platformId, userId })
+        }
 
         const model = createChatModel({
             provider: providerConfig.provider,
@@ -138,7 +155,11 @@ export const chatService = (log: FastifyBaseLogger) => ({
         })
 
         const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-        const systemPrompt = buildAgentSystemPrompt({ projectName, projectId, frontendUrl })
+        const systemPrompt = chatPrompt.buildSystemPrompt({
+            projects: userProjects,
+            currentProjectId: selectedProjectId,
+            frontendUrl,
+        })
         const previousMessages = conversation.messages as ModelMessage[]
         const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
         const allMessages = [...previousMessages, newUserMessage]
@@ -165,6 +186,16 @@ export const chatService = (log: FastifyBaseLogger) => ({
             onSessionTitle: (title) => {
                 pendingTitle = title
             },
+            onSetProjectContext: async (projectId) => {
+                await conversationRepo().update(conversationId, { projectId })
+                if (projectId) {
+                    mcpProjectSelection.set({ platformId, userId, projectId })
+                }
+                else {
+                    mcpProjectSelection.clear({ platformId, userId })
+                }
+            },
+            availableProjectIds: userProjects.map((p) => p.id),
         })
         const tools = { ...localTools, ...mcpToolSet }
 
@@ -220,6 +251,34 @@ export const chatService = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+async function getUserProjects({ platformId, userId, log }: {
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<Project[]> {
+    const user = await userService(log).getOneOrFail({ id: userId })
+    return projectService(log).getAllForUser({
+        platformId,
+        userId,
+        isPrivileged: userService(log).isUserPrivileged(user),
+    })
+}
+
+async function assertUserHasProjectAccess({ platformId, userId, projectId, log }: {
+    platformId: string
+    userId: string
+    projectId: string
+    log: FastifyBaseLogger
+}): Promise<void> {
+    const userProjects = await getUserProjects({ platformId, userId, log })
+    if (!userProjects.some((p) => p.id === projectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: projectId, entityType: 'Project' },
+        })
+    }
+}
 
 async function resolveChatProvider({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
     const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
@@ -291,148 +350,14 @@ async function resolveCompactionState({ conversation, allMessages, systemPromptL
     return result
 }
 
-async function connectMcpClient({ mcpCredentials, log }: {
-    mcpCredentials: { mcpServerUrl: string | null, mcpToken: string | null }
-    log: FastifyBaseLogger
-}): Promise<{ mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null, mcpToolSet: Record<string, unknown> }> {
-    if (isNil(mcpCredentials.mcpServerUrl) || isNil(mcpCredentials.mcpToken)) {
-        return { mcpClient: null, mcpToolSet: {} }
-    }
-    const mcpUrl = mcpCredentials.mcpServerUrl
-    const mcpToken = mcpCredentials.mcpToken
-    const { data: client, error } = await tryCatch(async () => createMCPClient({
-        transport: {
-            type: 'http',
-            url: mcpUrl,
-            headers: { 'Authorization': `Bearer ${mcpToken}` },
-        },
-    }))
-    if (isNil(client)) {
-        log.warn({ err: error }, 'Failed to create MCP client — chat will work without MCP tools')
-        return { mcpClient: null, mcpToolSet: {} }
-    }
-    const mcpToolSet = await client.tools()
-    return { mcpClient: client, mcpToolSet }
-}
-
-async function getMcpCredentials({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<{ mcpServerUrl: string | null, mcpToken: string | null }> {
-    const { data: accessToken, error } = await tryCatch(() =>
-        mcpOAuthTokenService.issueInternalAccessToken({ userId, platformId, projectId: null }),
-    )
-    if (error) {
-        log.warn({ err: error, platformId }, 'Failed to get MCP credentials — chat will work without MCP tools')
-        return { mcpServerUrl: null, mcpToken: null }
-    }
-    const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-    return {
-        mcpServerUrl: `${frontendUrl}/mcp/platform`,
-        mcpToken: accessToken,
-    }
-}
-
-function reconstructChatHistory(messages: ModelMessage[]): ChatHistoryMessage[] {
-    const result: ChatHistoryMessage[] = []
-
-    for (const msg of messages) {
-        if (msg.role === 'user') {
-            const textContent = extractTextFromContent(msg.content)
-            if (textContent) {
-                result.push({ role: 'user', content: textContent })
-            }
-        }
-        else if (msg.role === 'assistant') {
-            const parts = Array.isArray(msg.content) ? msg.content : [{ type: 'text' as const, text: String(msg.content) }]
-            let text = ''
-            const toolCalls: ChatHistoryToolCall[] = []
-
-            for (const part of parts) {
-                if (typeof part === 'string') {
-                    text += part
-                }
-                else if (part.type === 'text') {
-                    text += part.text
-                }
-                else if (part.type === 'tool-call') {
-                    toolCalls.push({
-                        toolCallId: part.toolCallId,
-                        title: part.toolName,
-                        status: 'completed',
-                        input: typeof part.input === 'object' && part.input !== null ? part.input as Record<string, unknown> : undefined,
-                    })
-                }
-            }
-
-            if (text || toolCalls.length > 0) {
-                result.push({
-                    role: 'assistant',
-                    content: text,
-                    ...(toolCalls.length > 0 ? { toolCalls } : {}),
-                })
-            }
-        }
-        else if (msg.role === 'tool') {
-            const lastAssistant = result[result.length - 1]
-            if (lastAssistant?.role === 'assistant' && lastAssistant.toolCalls) {
-                const toolResults = Array.isArray(msg.content) ? msg.content : []
-                for (const toolResult of toolResults) {
-                    if (typeof toolResult === 'object' && toolResult !== null && 'type' in toolResult && toolResult.type === 'tool-result') {
-                        const tr = toolResult as { toolCallId: string, output: unknown }
-                        const existing = lastAssistant.toolCalls.find((tc) => tc.toolCallId === tr.toolCallId)
-                        if (existing) {
-                            existing.output = typeof tr.output === 'string'
-                                ? tr.output
-                                : JSON.stringify(tr.output)
-                            existing.status = 'completed'
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return result
-}
-
-function extractTextFromContent(content: unknown): string {
-    if (typeof content === 'string') return content
-    if (!Array.isArray(content)) return ''
-    let text = ''
-    for (const part of content) {
-        if (typeof part === 'object' && part !== null && 'type' in part && part.type === 'text' && 'text' in part) {
-            text += part.text
-        }
-    }
-    return text
-}
-
-function sanitizeProjectName(name: string): string {
-    return name.replace(/[^a-zA-Z0-9 \-_.]/g, '').slice(0, 64)
-}
-
-const SYSTEM_PROMPT_TEMPLATE = readFileSync(
-    path.resolve('packages/server/api/src/assets/prompts/chat-system-prompt.md'),
-    'utf8',
-)
-
-function buildAgentSystemPrompt({ projectName, projectId, frontendUrl }: {
-    projectName: string
-    projectId: string
-    frontendUrl: string
-}): string {
-    const projectUrl = `${frontendUrl}/projects/${projectId}`
-    return SYSTEM_PROMPT_TEMPLATE
-        .replace('{{PROJECT_NAME}}', sanitizeProjectName(projectName))
-        .replace('{{PROJECT_URL}}', projectUrl)
-}
-
 type CreateConversationParams = {
-    projectId: string
+    platformId: string
     userId: string
     request: CreateChatConversationRequest
 }
 
 type ListConversationsParams = {
-    projectId: string
+    platformId: string
     userId: string
     cursor?: string
     limit: number
@@ -440,7 +365,7 @@ type ListConversationsParams = {
 
 type ConversationIdentifier = {
     id: string
-    projectId: string
+    platformId: string
     userId: string
 }
 
@@ -448,9 +373,12 @@ type UpdateConversationParams = ConversationIdentifier & {
     request: UpdateChatConversationRequest
 }
 
+type SetProjectContextParams = ConversationIdentifier & {
+    projectId: string | null
+}
+
 type SendMessageParams = {
     conversationId: string
-    projectId: string
     userId: string
     platformId: string
     content: string
@@ -464,4 +392,3 @@ type SendMessageResult = {
     }
     closeMcpClient: () => Promise<void>
 }
-
