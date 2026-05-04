@@ -1,12 +1,12 @@
 import { performance } from 'node:perf_hooks'
-import { EngineGenericError, ExecuteFlowOperation, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
+import { EngineGenericError, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { loggingUtils } from '../helper/logging-utils'
 import { triggerHelper } from '../helper/trigger-helper'
 import { BaseExecutor } from './base-executor'
 import { codeExecutor } from './code-executor'
-import { EngineConstants } from './context/engine-constants'
+import { EngineConstants, ResolvedExecuteFlowOperation } from './context/engine-constants'
 import { FlowExecutorContext } from './context/flow-execution-context'
 import { loopExecutor } from './loop-executor'
 import { pieceExecutor } from './piece-executor'
@@ -35,7 +35,7 @@ export const flowExecutor = {
     async executeFromTrigger({ executionState, constants, input }: {
         executionState: FlowExecutorContext
         constants: EngineConstants
-        input: ExecuteFlowOperation
+        input: ResolvedExecuteFlowOperation
     }): Promise<FlowExecutorContext> {
         const trigger = input.flowVersion.trigger
         if (input.executionType === ExecutionType.BEGIN) {
