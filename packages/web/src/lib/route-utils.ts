@@ -24,7 +24,7 @@ export const determineDefaultRoute = (
     return authenticationSession.appendProjectRoutePrefix('/automations');
   }
   if (checkAccess(Permission.READ_CHAT)) {
-    return authenticationSession.appendProjectRoutePrefix('/chat');
+    return '/chat';
   }
   if (checkAccess(Permission.READ_RUN)) {
     return authenticationSession.appendProjectRoutePrefix('/runs');
