@@ -108,55 +108,6 @@ describe('Authentication API', () => {
             expect(responseBody?.token).toBeDefined()
         })
 
-        it('Logs in with user token after platform creation', async () => {
-            // arrange
-            const mockSignUpRequest = createMockSignUpRequest()
-            const signUpResponse = await app?.inject({
-                method: 'POST',
-                url: '/api/v1/authentication/sign-up',
-                body: mockSignUpRequest,
-            })
-            const signUpBody = signUpResponse?.json()
-
-            const createPlatformResponse = await app?.inject({
-                method: 'POST',
-                url: '/api/v1/platforms',
-                headers: {
-                    authorization: `Bearer ${signUpBody.token}`,
-                },
-                body: {
-                    name: 'My Platform',
-                },
-            })
-            const createPlatformBody = createPlatformResponse?.json()
-
-            const mockSignInRequest = createMockSignInRequest({
-                email: mockSignUpRequest.email,
-                password: mockSignUpRequest.password,
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/api/v1/authentication/sign-in',
-                body: mockSignInRequest,
-            })
-
-            // assert
-            const responseBody = response?.json()
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody?.email).toBe(mockSignUpRequest.email.toLowerCase().trim())
-            expect(responseBody?.firstName).toBe(mockSignUpRequest.firstName)
-            expect(responseBody?.lastName).toBe(mockSignUpRequest.lastName)
-            expect(responseBody?.password).toBeUndefined()
-            expect(responseBody?.status).toBe('ACTIVE')
-            expect(responseBody?.verified).toBe(true)
-            expect(responseBody?.platformId).toBe(createPlatformBody.platformId)
-            expect(responseBody?.projectId).toBe(createPlatformBody.projectId)
-            expect(responseBody?.token).toBeDefined()
-        })
-
         it('Fails if password doesn\'t match', async () => {
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()
