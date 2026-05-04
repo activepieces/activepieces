@@ -3,6 +3,7 @@ import { Migration } from '../../migration'
 
 export class MakeMcpOAuthProjectIdNullable1789000000000 implements Migration {
     name = 'MakeMcpOAuthProjectIdNullable1789000000000'
+    release = '0.82.1'
     breaking = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {
