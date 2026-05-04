@@ -52,8 +52,9 @@ export const getTableSchema = createAction({
                     };
                 });
             }
+            throw new Error(`Table '${table_name}' not found in database schema.`);
         }
 
-        return [];
+        throw new Error(`Failed to fetch database schema from OpenAPI fallback. Status: ${response.status}`);
     },
 });

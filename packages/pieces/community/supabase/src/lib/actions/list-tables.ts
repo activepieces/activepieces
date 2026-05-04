@@ -40,6 +40,6 @@ export const listTables = createAction({
             }));
         }
 
-        return [];
+        throw new Error(`Failed to fetch database schema from OpenAPI fallback. Status: ${response.status}`);
     },
 });
