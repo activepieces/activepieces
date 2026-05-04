@@ -118,7 +118,7 @@ export class EngineConstants {
         this.stepNames = params.stepNames
     }
   
-    public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
+    public static fromExecuteFlowInput(input: ExecuteFlowOperation, resumePayload?: ResumePayload): EngineConstants {
         return new EngineConstants({
             flowId: input.flowVersion.flowId,
             flowVersionId: input.flowVersion.id,
@@ -133,10 +133,10 @@ export class EngineConstants {
             streamStepProgress: input.streamStepProgress,
             workerHandlerId: input.workerHandlerId ?? null,
             httpRequestId: input.httpRequestId ?? null,
-            resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
+            resumePayload: input.executionType === ExecutionType.RESUME ? resumePayload : undefined,
             runEnvironment: input.runEnvironment,
             stepNameToTest: input.stepNameToTest ?? undefined,
-            logsUploadUrl: input.logsUploadUrl, 
+            logsUploadUrl: input.logsUploadUrl,
             logsFileId: input.logsFileId,
             timeoutInSeconds: input.timeoutInSeconds,
             platformId: input.platformId,

@@ -25,6 +25,7 @@ export function createSandboxForJob(params: {
         uploadRunLog: (input) => apiClient.uploadRunLog(input),
         sendFlowResponse: (input) => apiClient.sendFlowResponse(input),
         updateStepProgress: (input) => apiClient.updateStepProgress(input),
+        getPayloadFile: (input) => apiClient.getPayloadFile(input),
     }
 
     const memoryLimitMb = parseMemoryLimit(settings.SANDBOX_MEMORY_LIMIT)

@@ -137,12 +137,11 @@ export function buildMockBeginExecuteFlowOperation(
         flowRunId: 'flowRunId',
         executionType: ExecutionType.BEGIN,
         runEnvironment: RunEnvironment.TESTING,
-        executionState: { steps: {}, tags: [] },
         workerHandlerId: null,
         httpRequestId: null,
         streamStepProgress: StreamStepProgress.NONE,
         stepNameToTest: null,
-        triggerPayload: {},
+        triggerPayload: { type: 'inline', value: {} },
         executeTrigger: false,
         ...params,
     }

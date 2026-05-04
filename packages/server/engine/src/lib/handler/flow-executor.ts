@@ -32,10 +32,11 @@ export const flowExecutor = {
         
         return executor
     },
-    async executeFromTrigger({ executionState, constants, input }: {
+    async executeFromTrigger({ executionState, constants, input, triggerPayload }: {
         executionState: FlowExecutorContext
         constants: EngineConstants
         input: ExecuteFlowOperation
+        triggerPayload?: unknown
     }): Promise<FlowExecutorContext> {
         const trigger = input.flowVersion.trigger
         if (input.executionType === ExecutionType.BEGIN) {
@@ -46,7 +47,7 @@ export const flowExecutor = {
             void flowRunProgressReporter.backup().catch((err) => {
                 console.error('[Progress] Initial payload upload failed', err)
             })
-            await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
+            await triggerHelper.executeOnStart(trigger, constants, triggerPayload)
             await flowRunProgressReporter.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState,

@@ -10,6 +10,7 @@ export type WorkerContract = {
     uploadRunLog(input: UploadRunLogsRequest): Promise<void>
     sendFlowResponse(input: SendFlowResponseRequest): Promise<void>
     updateStepProgress(input: UpdateStepProgressRequest): Promise<void>
+    getPayloadFile(input: { fileId: string, projectId: string }): Promise<Buffer>
 }
 
 export type WorkerNotifyContract = {
