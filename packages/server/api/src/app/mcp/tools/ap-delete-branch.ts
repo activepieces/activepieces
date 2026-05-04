@@ -2,9 +2,9 @@ import {
     FlowOperationRequest,
     FlowOperationType,
     isNil,
-    McpServer,
     McpToolDefinition,
     Permission,
+    ProjectScopedMcpServer,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -18,7 +18,7 @@ const deleteBranchInput = z.object({
     branchIndex: z.number().int().min(0),
 })
 
-export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apDeleteBranchTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_delete_branch',
         permission: Permission.WRITE_FLOW,

@@ -86,7 +86,13 @@ export const McpServerSettings = () => {
                     'Control which built-in Activepieces tools are available to agents via this MCP server.',
                   )}
                 </p>
-                <McpTools mcpServer={mcpServer} />
+                <McpTools
+                  enabledTools={mcpServer.enabledTools}
+                  isPending={isUpdating}
+                  onUpdateEnabledTools={(tools) =>
+                    updateMcpServer({ enabledTools: tools })
+                  }
+                />
               </div>
 
               <div>

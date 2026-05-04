@@ -1,4 +1,4 @@
-import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
+import { McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { tableService } from '../../tables/table/table.service'
@@ -8,7 +8,7 @@ const deleteTableInput = z.object({
     tableId: z.string().describe('The ID of the table to delete. Use ap_list_tables to find it.'),
 })
 
-export const apDeleteTableTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apDeleteTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_delete_table',
         permission: Permission.WRITE_TABLE,
