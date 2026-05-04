@@ -1,9 +1,10 @@
-import { Permission, PrincipalType } from '@activepieces/shared'
+import { isNil, PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
-import { ProjectResourceType } from '../../../core/security/authorization/common'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
+import { projectService } from '../../../project/project-service'
+import { userService } from '../../../user/user-service'
 import { mcpOAuthCodeService } from './mcp-oauth-code.service'
 
 export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
@@ -12,6 +13,24 @@ export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
         const { authRequestId, projectId } = req.body
         const userId = req.principal.id
         const platformId = req.principal.platform.id
+
+        if (isNil(projectId)) {
+            const user = await userService(req.log).getOneOrFail({ id: userId })
+            if (user.platformRole !== PlatformRole.ADMIN) {
+                return reply.status(403).send({ error: 'access_denied', error_description: 'Only platform administrators can authorize platform-wide MCP access' })
+            }
+        }
+        else {
+            const user = await userService(req.log).getOneOrFail({ id: userId })
+            const accessibleProjects = await projectService(req.log).getAllForUser({
+                platformId,
+                userId,
+                isPrivileged: userService(req.log).isUserPrivileged(user),
+            })
+            if (!accessibleProjects.some(p => p.id === projectId)) {
+                return reply.status(403).send({ error: 'access_denied', error_description: 'You do not have access to this project' })
+            }
+        }
 
         const key = await jwtUtils.getJwtSecret()
         let authRequest: AuthRequestPayload
@@ -33,7 +52,7 @@ export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
         const code = await mcpOAuthCodeService.create({
             clientId: authRequest.clientId,
             userId,
-            projectId,
+            projectId: projectId ?? null,
             platformId,
             redirectUri: authRequest.redirectUri,
             codeChallenge: authRequest.codeChallenge,
@@ -54,17 +73,13 @@ export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
 
 const ApproveRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            Permission.WRITE_MCP,
-            { type: ProjectResourceType.BODY },
-        ),
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
         tags: ['mcp-oauth'],
         body: z.object({
             authRequestId: z.string(),
-            projectId: z.string(),
+            projectId: z.string().optional(),
         }),
     },
 }
@@ -76,5 +91,6 @@ type AuthRequestPayload = {
     codeChallengeMethod: string
     state: string | null
     scopes: string[]
+    resource: string | null
     type: 'mcp_auth_request'
 }
