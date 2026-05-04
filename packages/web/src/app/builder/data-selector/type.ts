@@ -10,6 +10,7 @@ export type DataSelectorTreeNodeData = {
   propertyPath: string;
   insertable: boolean;
   hideStepIcon?: boolean;
+  stepName?: string;
 };
 
 export type DataSelectorTestNodeData = {
