@@ -27,6 +27,8 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
             runEnvironment: params?.runEnvironment ?? RunEnvironment.TESTING,
             stepNameToTest: params?.stepNameToTest ?? undefined,
             stepNames: params?.stepNames ?? [],
+            logsUploadUrl: params?.logsUploadUrl,
+            logsFileId: params?.logsFileId,
         })
 }
 
