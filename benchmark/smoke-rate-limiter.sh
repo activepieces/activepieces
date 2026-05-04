@@ -92,10 +92,21 @@ echo "=== Signing up smoke user ($EMAIL) ==="
 SIGNUP_RESPONSE=$(curl -s --fail-with-body "$BASE_URL/authentication/sign-up" \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"$EMAIL\",\"password\":\"SmokeTestPass1\",\"firstName\":\"Smoke\",\"lastName\":\"Test\",\"trackEvents\":false,\"newsLetter\":false}")
-TOKEN=$(echo "$SIGNUP_RESPONSE" | jq -r '.token')
-PROJECT_ID=$(echo "$SIGNUP_RESPONSE" | jq -r '.projectId')
-if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+ONBOARDING_TOKEN=$(echo "$SIGNUP_RESPONSE" | jq -r '.token')
+if [ -z "$ONBOARDING_TOKEN" ] || [ "$ONBOARDING_TOKEN" = "null" ]; then
   echo "ERROR: sign-up failed: $SIGNUP_RESPONSE" >&2
+  exit 1
+fi
+
+echo "=== Creating platform ==="
+PLATFORM_RESPONSE=$(curl -s --fail-with-body "$BASE_URL/platforms" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ONBOARDING_TOKEN" \
+  -d '{"name":"Smoke Platform"}')
+TOKEN=$(echo "$PLATFORM_RESPONSE" | jq -r '.token')
+PROJECT_ID=$(echo "$PLATFORM_RESPONSE" | jq -r '.projectId')
+if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ] || [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then
+  echo "ERROR: platform creation failed: $PLATFORM_RESPONSE" >&2
   exit 1
 fi
 AUTH="Authorization: Bearer $TOKEN"
