@@ -1,4 +1,4 @@
-import { getConcurrencyPoolSetKey, getConcurrencyPoolWaitlistKey } from '../../../database/redis/keys'
+import { getConcurrencyPoolSetKey, getConcurrencyPoolWaitlistKey, getConcurrencyPoolWaitlistMembersKey } from '../../../database/redis/keys'
 import { redisConnections } from '../../../database/redis-connections'
 
 export const concurrencyPoolRedis = {
@@ -6,9 +6,10 @@ export const concurrencyPoolRedis = {
         const redis = await redisConnections.useExisting()
         const result = await redis.eval(
             ACQUIRE_OR_ENQUEUE_LUA,
-            2,
+            3,
             getConcurrencyPoolSetKey(poolId),
             getConcurrencyPoolWaitlistKey(poolId),
+            getConcurrencyPoolWaitlistMembersKey(poolId),
             Date.now().toString(),
             timeoutMs.toString(),
             maxJobs.toString(),
@@ -21,26 +22,15 @@ export const concurrencyPoolRedis = {
         const redis = await redisConnections.useExisting()
         const result = await redis.eval(
             RELEASE_AND_POP_LUA,
-            2,
+            3,
             getConcurrencyPoolSetKey(poolId),
             getConcurrencyPoolWaitlistKey(poolId),
+            getConcurrencyPoolWaitlistMembersKey(poolId),
             Date.now().toString(),
             timeoutMs.toString(),
             member,
         ) as string
         return result === '' ? null : result
-    },
-
-    async rollbackPromotion({ poolId, member, timeoutMs }: ReleaseParams): Promise<void> {
-        const redis = await redisConnections.useExisting()
-        await redis.eval(
-            ROLLBACK_PROMOTION_LUA,
-            2,
-            getConcurrencyPoolSetKey(poolId),
-            getConcurrencyPoolWaitlistKey(poolId),
-            timeoutMs.toString(),
-            member,
-        )
     },
 
     async dropPromotedMember({ poolId, member }: { poolId: string, member: string }): Promise<void> {
@@ -65,6 +55,7 @@ export const concurrencyPoolRedis = {
 const ACQUIRE_OR_ENQUEUE_LUA = `
 local activeKey = KEYS[1]
 local waitlistKey = KEYS[2]
+local waitlistMembersKey = KEYS[3]
 local currentTime = tonumber(ARGV[1])
 local timeoutMs = tonumber(ARGV[2])
 local maxJobs = tonumber(ARGV[3])
@@ -77,9 +68,15 @@ if redis.call('ZSCORE', activeKey, member) then
     return 'acquired'
 end
 
+if redis.call('SISMEMBER', waitlistMembersKey, member) == 1 then
+    return 'queued'
+end
+
 if redis.call('ZCARD', activeKey) >= maxJobs or redis.call('LLEN', waitlistKey) > 0 then
     redis.call('RPUSH', waitlistKey, member)
+    redis.call('SADD', waitlistMembersKey, member)
     redis.call('EXPIRE', waitlistKey, ttlSeconds)
+    redis.call('EXPIRE', waitlistMembersKey, ttlSeconds)
     return 'queued'
 end
 
@@ -91,6 +88,7 @@ return 'acquired'
 const RELEASE_AND_POP_LUA = `
 local activeKey = KEYS[1]
 local waitlistKey = KEYS[2]
+local waitlistMembersKey = KEYS[3]
 local currentTime = tonumber(ARGV[1])
 local timeoutMs = tonumber(ARGV[2])
 local member = ARGV[3]
@@ -103,22 +101,10 @@ if not nextMember then
     return ''
 end
 
+redis.call('SREM', waitlistMembersKey, nextMember)
 redis.call('ZADD', activeKey, currentTime, nextMember)
 redis.call('EXPIRE', activeKey, ttlSeconds)
 return nextMember
-`
-
-const ROLLBACK_PROMOTION_LUA = `
-local activeKey = KEYS[1]
-local waitlistKey = KEYS[2]
-local timeoutMs = tonumber(ARGV[1])
-local member = ARGV[2]
-local ttlSeconds = math.ceil(timeoutMs / 1000)
-
-redis.call('ZREM', activeKey, member)
-redis.call('LPUSH', waitlistKey, member)
-redis.call('EXPIRE', waitlistKey, ttlSeconds)
-return 1
 `
 
 export type AcquireOutcome = 'acquired' | 'queued'

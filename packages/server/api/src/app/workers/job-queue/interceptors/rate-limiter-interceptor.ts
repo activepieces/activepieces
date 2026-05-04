@@ -72,8 +72,8 @@ export const rateLimiterInterceptor: JobInterceptor = {
             return
         }
 
-        log.warn({ popped, poolId: effectivePoolId }, '[rateLimiterInterceptor] Waiter promotion failed, rolling back slot')
-        await concurrencyPoolRedis.rollbackPromotion({ poolId: effectivePoolId, member: popped, timeoutMs })
+        log.warn({ popped, poolId: effectivePoolId }, '[rateLimiterInterceptor] Waiter promotion failed; freeing slot without re-queueing (safety-net delay re-enqueues if job is still alive)')
+        await concurrencyPoolRedis.dropPromotedMember({ poolId: effectivePoolId, member: popped })
     },
 }
 

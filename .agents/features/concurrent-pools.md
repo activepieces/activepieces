@@ -83,19 +83,20 @@ Imagine a pool with **limit = 2**. Three runs arrive. One finishes:
 
 **`acquireSlotOrEnqueue`** — single atomic operation:
 1. `ZREMRANGEBYSCORE` sweeps entries older than `FLOW_TIMEOUT + 60s` (crash recovery)
-2. If member already present → return `"acquired"` (idempotent re-dispatch)
-3. If `ZCARD < maxJobs` → `ZADD` to active set, return `"acquired"`
-4. Else → `RPUSH` to waitlist, return `"queued"`
+2. If member already present in active set → return `"acquired"` (idempotent re-dispatch)
+3. If member already present in waitlist shadow set → return `"queued"` (prevents safety-net re-dispatch from creating duplicate waitlist entries)
+4. If `ZCARD < maxJobs` and waitlist empty → `ZADD` to active set, return `"acquired"`
+5. Else → `RPUSH` to waitlist + `SADD` to shadow set, return `"queued"`
 
 **`releaseSlotAndPopWaiter`** — single atomic operation:
 1. `ZREM` member from active set
 2. `LPOP` waitlist
-3. If a waiter was popped → `ZADD` it to active set (reserves slot), return its member id
+3. If a waiter was popped → `SREM` it from the shadow set, `ZADD` it to active set (reserves slot), return its member id
 4. Else → return empty string
 
-**`rollbackPromotion`** — used if BullMQ's `job.promote()` fails:
-1. `ZREM` the popped member from active set
-2. `LPUSH` it back to the head of the waitlist
+**`dropPromotedMember`** — used when the popped waiter cannot be promoted (job not found / not in delayed state, or unparseable member):
+1. `ZREM` the popped member from active set (frees the reserved slot)
+2. The member is **not** re-pushed to the waitlist — the BullMQ safety-net delay re-enqueues it via `preDispatch` if the job is still alive. This avoids a stale waiter at the head of the queue blocking all subsequent waiters until the waitlist TTL expires.
 
 ## Limit Resolution Order
 
