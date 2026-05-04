@@ -168,7 +168,7 @@ export function useAgentChat({
     null,
   );
   const [modelName, setModelNameState] = useState<string | null>(null);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
+  const [selectedProjectId, _setSelectedProjectId] = useState<string | null>(
     null,
   );
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -182,6 +182,11 @@ export function useAgentChat({
   const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
   const modelNameRef = useRef<string | null>(null);
+  const selectedProjectIdRef = useRef<string | null>(null);
+  const updateSelectedProjectId = useCallback((value: string | null) => {
+    selectedProjectIdRef.current = value;
+    _setSelectedProjectId(value);
+  }, []);
   const cancelledRef = useRef(false);
   const messageCountRef = useRef(0);
   const onTitleUpdateRef = useRef(onTitleUpdate);
@@ -324,7 +329,7 @@ export function useAgentChat({
       }
     }
     if (newProjectId !== undefined) {
-      setSelectedProjectId(newProjectId);
+      updateSelectedProjectId(newProjectId);
     }
   }, [uiMessages]);
 
@@ -340,7 +345,7 @@ export function useAgentChat({
       void chatApi
         .getConversation(conversationIdRef.current)
         .then((conv) => {
-          setSelectedProjectId(conv.projectId ?? null);
+          updateSelectedProjectId(conv.projectId ?? null);
         })
         .catch(() => undefined);
     }
@@ -361,7 +366,7 @@ export function useAgentChat({
     modelNameRef.current = null;
     setConversationIdState(null);
     setModelNameState(null);
-    setSelectedProjectId(null);
+    updateSelectedProjectId(null);
     setUiMessages([]);
     setLocalError(null);
     setWasCancelled(false);
@@ -471,7 +476,7 @@ export function useAgentChat({
       if (convResult.data) {
         modelNameRef.current = convResult.data.modelName ?? null;
         setModelNameState(convResult.data.modelName ?? null);
-        setSelectedProjectId(convResult.data.projectId ?? null);
+        updateSelectedProjectId(convResult.data.projectId ?? null);
       }
       setIsLoadingHistory(false);
     },
@@ -490,14 +495,15 @@ export function useAgentChat({
   }, []);
 
   const setProjectContext = useCallback(async (projectId: string | null) => {
-    setSelectedProjectId(projectId);
+    const previousProjectId = selectedProjectIdRef.current;
+    updateSelectedProjectId(projectId);
     const convId = conversationIdRef.current;
     if (!convId) return;
     const { error: err } = await tryCatch(() =>
       chatApi.setProjectContext(convId, { projectId }),
     );
     if (err) {
-      setSelectedProjectId(null);
+      updateSelectedProjectId(previousProjectId);
     }
   }, []);
 
