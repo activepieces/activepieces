@@ -26,6 +26,12 @@ export const formatUtils = {
   formatNumber(number: number) {
     return new Intl.NumberFormat(i18next.language).format(number);
   },
+  formatNumberCompact(number: number) {
+    return new Intl.NumberFormat(i18next.language, {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(number);
+  },
   formatDateOnlyOrFail(date: Date, fallback: string) {
     try {
       return this.formatDateOnly(date);

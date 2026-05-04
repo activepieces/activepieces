@@ -204,6 +204,7 @@
                      "install/architecture/waitpoints",
                      "install/architecture/concurrent-pools",
                      "install/architecture/network-security",
+                     "install/architecture/piece-syncing",
                      "install/architecture/benchmark"
                   ]
                }

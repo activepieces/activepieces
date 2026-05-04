@@ -3,6 +3,7 @@ name: Setup Environment
 on:
   pull_request:
     types: [opened, reopened, synchronize, edited, closed, labeled]
+  workflow_dispatch:
 
 concurrency:
   group: setup-environment
@@ -11,7 +12,7 @@ concurrency:
 jobs:
   Setup-Preview-Environment:
     runs-on: ubuntu-latest
-    if: github.repository == 'activepieces/activepieces' && github.event.pull_request.head.repo.full_name == 'activepieces/activepieces'
+    if: github.repository == 'activepieces/activepieces' && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == 'activepieces/activepieces')
     env:
       NX_NO_CLOUD: true 
     steps:
@@ -40,6 +41,13 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            const isManualTrigger = context.eventName === 'workflow_dispatch';
+            if (isManualTrigger) {
+              console.log('Manual trigger, skipping label check');
+              core.setOutput('should-setup', true);
+              return true;
+            }
+
             const labels = context.payload.pull_request.labels.map(label => label.name);
             const hasPreviewLabel = labels.includes('preview');
             
@@ -53,11 +61,12 @@ jobs:
         id: setup
         if: steps.check-label.outputs.should-setup == 'true'
         run: |
-          ssh preview-server -t -t 'bash -ic "cd /root/environments && npm run build && node dist/index.js setup ${{ github.head_ref }}; exit"'
-          echo "environment_url=https://$(echo '${{ github.head_ref }}' | sed 's|/|-|g').preview.activepieces.dev" >> $GITHUB_OUTPUT
+          BRANCH=${{ github.head_ref || github.ref_name }}
+          ssh preview-server -t -t "bash -ic \"cd /root/environments && npm run build && node dist/index.js setup ${BRANCH}; exit\""
+          echo "environment_url=https://$(echo "${BRANCH}" | sed 's|/|-|g').preview.activepieces.dev" >> $GITHUB_OUTPUT
 
       - name: Comment on PR
-        if: steps.check-label.outputs.should-setup == 'true'
+        if: steps.check-label.outputs.should-setup == 'true' && github.event_name != 'workflow_dispatch'
         uses: actions/github-script@v6
         with:
           script: |
@@ -65,5 +74,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '🚀 Preview environment has been set up!\n\n**Environment URL:** ${{ steps.setup.outputs.environment_url }}\n\nThe preview environment for branch `${{ github.head_ref }}` is now ready for testing.'
+              body: '🚀 Preview environment has been set up!\n\n**Environment URL:** ${{ steps.setup.outputs.environment_url }}\n\nThe preview environment for branch `${{ github.head_ref || github.ref_name }}` is now ready for testing.'
             })

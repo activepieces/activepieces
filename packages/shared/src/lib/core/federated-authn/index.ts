@@ -29,9 +29,17 @@ export const GithubAuthnProviderConfig = z.object({
 })
 export type GithubAuthnProviderConfig = z.infer<typeof GithubAuthnProviderConfig>
 
+export const SAMLAttributeMapping = z.object({
+    email: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
+})
+export type SAMLAttributeMapping = z.infer<typeof SAMLAttributeMapping>
+
 export const SAMLAuthnProviderConfig = z.object({
     idpMetadata: z.string(),
     idpCertificate: z.string(),
+    attributeMapping: SAMLAttributeMapping.optional(),
 })
 export type SAMLAuthnProviderConfig = z.infer<typeof SAMLAuthnProviderConfig>
 

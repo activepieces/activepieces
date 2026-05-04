@@ -8,6 +8,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
 
 const listPiecesSchema = z.object({
@@ -37,9 +38,13 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
         execute: async (args) => {
             try {
                 const params = listPiecesSchema.parse(args ?? {})
+                // Resolve platformId so private (CUSTOM) pieces owned by this project's
+                // platform show up alongside public (OFFICIAL) ones.
+                const project = await projectService(log).getOneOrThrow(mcp.projectId)
                 const pieces = await pieceMetadataService(log).list({
                     projectId: mcp.projectId,
-                    includeHidden: true,
+                    platformId: project.platformId,
+                    includeHidden: false,
                     categories: params.categories as PieceCategory[] | undefined,
                     tags: params.tags,
                     searchQuery: params.searchQuery,
@@ -78,7 +83,7 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                         name: piece.name,
                         version: piece.version,
                         projectId: mcp.projectId,
-                        platformId: undefined,
+                        platformId: project.platformId,
                     })
                     if (fullPiece) {
                         if (params.includeActions) {

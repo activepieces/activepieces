@@ -1,16 +1,16 @@
 import { performance } from 'node:perf_hooks'
-import { EngineGenericError, ExecuteFlowOperation, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
+import { EngineGenericError, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { loggingUtils } from '../helper/logging-utils'
 import { triggerHelper } from '../helper/trigger-helper'
 import { BaseExecutor } from './base-executor'
 import { codeExecutor } from './code-executor'
-import { EngineConstants } from './context/engine-constants'
+import { EngineConstants, ResolvedExecuteFlowOperation } from './context/engine-constants'
 import { FlowExecutorContext } from './context/flow-execution-context'
 import { loopExecutor } from './loop-executor'
 import { pieceExecutor } from './piece-executor'
 import { routerExecuter } from './router-executor'
-import { runProgressService } from './run-progress'
 
 function getExecuteFunction(): Record<FlowActionType, BaseExecutor<FlowAction>> {
     return {
@@ -35,18 +35,19 @@ export const flowExecutor = {
     async executeFromTrigger({ executionState, constants, input }: {
         executionState: FlowExecutorContext
         constants: EngineConstants
-        input: ExecuteFlowOperation
+        input: ResolvedExecuteFlowOperation
     }): Promise<FlowExecutorContext> {
         const trigger = input.flowVersion.trigger
         if (input.executionType === ExecutionType.BEGIN) {
-            void runProgressService.backup({
+            await flowRunProgressReporter.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState,
-            }).catch((err) => {
+            })
+            void flowRunProgressReporter.backup().catch((err) => {
                 console.error('[Progress] Initial payload upload failed', err)
             })
             await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
-            await runProgressService.sendUpdate({
+            await flowRunProgressReporter.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState,
                 stepNameToUpdate: trigger.name,
@@ -82,7 +83,7 @@ export const flowExecutor = {
             }
             const handler = this.getExecutorForAction(currentAction.type)
 
-            await runProgressService.sendUpdate({
+            await flowRunProgressReporter.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: flowExecutionContext,
                 stepNameToUpdate: previousAction!.name,
@@ -108,7 +109,7 @@ export const flowExecutor = {
 
         }
 
-        await runProgressService.sendUpdate({
+        await flowRunProgressReporter.sendUpdate({
             engineConstants: constants,
             flowExecutorContext: flowExecutionContext,
             stepNameToUpdate: previousAction?.name,

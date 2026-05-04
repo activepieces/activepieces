@@ -8,6 +8,7 @@ import {
     FlowId,
     FlowRetryStrategy,
     FlowRun,
+    FlowRunCountByStatus,
     FlowRunId,
     FlowRunStatus,
     FlowRunWithRetryError,
@@ -134,7 +135,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
         })
         log.info({ runId: flowRunId, flowId: oldFlowRun.flowId, strategy }, 'Flow run retry initiated')
-        
+
         const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
         if (
             isFlowRunStateTerminal({ status: oldFlowRun.status, ignoreInternalError: false }) &&
@@ -400,6 +401,27 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         return flowRun
     },
+    async countByStatus(params: CountByStatusParams): Promise<FlowRunCountByStatus[]> {
+        let query = flowRunRepo().createQueryBuilder('flow_run')
+            .select('flow_run.status', 'status')
+            .addSelect('COUNT(*)', 'count')
+            .where({
+                projectId: params.projectId,
+                environment: RunEnvironment.PRODUCTION,
+                archivedAt: IsNull(),
+            })
+            .groupBy('flow_run.status')
+
+        if (params.createdAfter) {
+            query = query.andWhere('flow_run.created >= :createdAfter', { createdAfter: params.createdAfter })
+        }
+        if (params.createdBefore) {
+            query = query.andWhere('flow_run.created <= :createdBefore', { createdBefore: params.createdBefore })
+        }
+
+        const results = await query.getRawMany()
+        return results.map((r: { status: FlowRunStatus, count: string }) => ({ status: r.status, count: parseInt(r.count, 10) }))
+    },
     async getOnePopulatedOrThrow(params: GetOneParams): Promise<FlowRun> {
         const flowRun = await this.getOneOrThrow(params)
         let steps = {}
@@ -621,7 +643,7 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
     }
 }
 
-function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
+export function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
     if (!createdTime) return false
     return apDayjs(createdTime).add(retentionDays, 'day').isBefore(apDayjs())
 }
@@ -743,6 +765,12 @@ type BulkArchiveActionParams = {
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
+}
+
+type CountByStatusParams = {
+    projectId: ProjectId
+    createdAfter?: string
+    createdBefore?: string
 }
 
 type FilterFlowRunsAndApplyFiltersParams = {

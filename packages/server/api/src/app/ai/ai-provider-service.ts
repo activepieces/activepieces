@@ -57,15 +57,13 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
 
-        const formattedProviders: AIProviderWithoutSensitiveData[] = await Promise.all(configuredProviders.map(async p => {
-            return {
-                id: p.id,
-                name: p.displayName,
-                provider: p.provider,
-                config: p.config,
-            }
+        return configuredProviders.map((p): AIProviderWithoutSensitiveData => ({
+            id: p.id,
+            name: p.displayName,
+            provider: p.provider,
+            config: p.config,
+            enabledForChat: p.enabledForChat ?? false,
         }))
-        return formattedProviders
     },
 
     async listModels(platformId: PlatformId, provider: AIProviderName): Promise<AIProviderModel[]> {
@@ -103,12 +101,23 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             platformId,
             id: providerId,
         })
-        if (isNil(aiProvider) || aiProvider.provider === AIProviderName.ACTIVEPIECES) {
+        if (isNil(aiProvider)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityId: providerId, entityType: 'AIProvider' },
             })
         }
+
+        if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
+            if (request.enabledForChat === true) {
+                await aiProviderRepo().manager.transaction(async (manager) => {
+                    await manager.update(AIProviderEntity, { platformId }, { enabledForChat: false })
+                    await manager.update(AIProviderEntity, providerId, { enabledForChat: true })
+                })
+            }
+            return
+        }
+
         const config = request.config ?? aiProvider.config
         if (!isNil(request.auth)) {
             await this.validateProviderCredentials(aiProvider.provider, request.auth, config)
@@ -119,11 +128,38 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
 
         const encryptedAuth = !isNil(request.auth) ? await encryptUtils.encryptObject(request.auth) : undefined
-        await aiProviderRepo().update(providerId, {
+        const updates = {
             ...spreadIfDefined('auth', encryptedAuth),
             ...spreadIfDefined('config', request.config),
+            ...spreadIfDefined('enabledForChat', request.enabledForChat),
             displayName: request.displayName,
-        })
+        }
+
+        if (request.enabledForChat === true) {
+            await aiProviderRepo().manager.transaction(async (manager) => {
+                await manager.update(AIProviderEntity, { platformId }, { enabledForChat: false })
+                await manager.update(AIProviderEntity, providerId, updates)
+            })
+        }
+        else {
+            await aiProviderRepo().update(providerId, updates)
+        }
+    },
+
+    async getChatProvider({ platformId }: { platformId: PlatformId }): Promise<GetProviderConfigResponse | null> {
+        const chatProvider = await aiProviderRepo().findOneBy({ platformId, enabledForChat: true })
+        if (isNil(chatProvider)) {
+            return null
+        }
+        let auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(chatProvider.auth)
+        if (chatProvider.provider === AIProviderName.ACTIVEPIECES) {
+            const doesHaveKeys = !isNil(auth) && 'apiKey' in auth && !isNil(auth.apiKey) && auth.apiKey !== ''
+            if (!doesHaveKeys) {
+                const enriched = await enrichWithKeysIfNeeded(chatProvider, platformId, log)
+                auth = enriched.auth
+            }
+        }
+        return { provider: chatProvider.provider, auth, config: chatProvider.config, platformId }
     },
 
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
