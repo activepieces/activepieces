@@ -140,7 +140,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
     }
 }
 
-const PENDING_DOMAIN_TTL_HOURS = 1
+const PENDING_DOMAIN_TTL_HOURS = 3 // if sso domain was not verified in this number of hours it will be set to null
 
 function computeNextVerification({ nextDomain, currentDomain, currentVerification }: { nextDomain: string | null, currentDomain: string | null, currentVerification: SsoDomainVerification | null }): SsoDomainVerification | null {
     if (isNil(nextDomain)) {
