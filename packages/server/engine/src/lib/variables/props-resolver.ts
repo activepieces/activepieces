@@ -142,7 +142,9 @@ async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unk
     if (isConnection) {
         return handleConnection(params)
     }
-    const isError = variableName.startsWith(ERRORS)
+    const isError = variableName === ERRORS
+        || variableName.startsWith(ERRORS + '.')
+        || variableName.startsWith(ERRORS + '[')
     if (isError) {
         return handleError({ variableName, errors })
     }
