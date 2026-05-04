@@ -5,7 +5,7 @@ import {
 } from '@activepieces/shared';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { CircleHelp } from 'lucide-react';
+import { ArrowRight, CircleHelp } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { flowRunUtils } from '@/features/flow-runs';
@@ -153,7 +153,8 @@ const RunInfoWidget = () => {
               onClick={handleJumpToFailedStep}
               className="text-destructive-700 hover:text-destructive-700 dark:text-destructive-200 dark:hover:text-destructive-200"
             >
-              {t('Go to failed step')}
+              <ArrowRight className="size-4" />
+              {t('Failed step')}
             </Button>
           )}
           <EditFlowOrViewDraftButton
