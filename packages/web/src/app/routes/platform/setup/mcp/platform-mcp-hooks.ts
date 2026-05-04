@@ -14,7 +14,17 @@ export const platformMcpHooks = {
     });
   },
 
-  useUpdatePlatformMcpServer() {
+  useUpdatePlatformMcpStatus() {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: platformMcpApi.update,
+      onSuccess: (data) => {
+        queryClient.setQueryData(QUERY_KEY, data);
+      },
+    });
+  },
+
+  useUpdatePlatformMcpTools() {
     const queryClient = useQueryClient();
     return useMutation({
       mutationFn: platformMcpApi.update,
