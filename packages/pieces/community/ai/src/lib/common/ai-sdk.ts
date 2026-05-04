@@ -75,8 +75,8 @@ export async function createAIModel({
         }
         case AIProviderName.AZURE: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            const { resourceName } = config as AzureProviderConfig
-            const provider = createAzure({ resourceName, apiKey })
+            const { resourceName, apiVersion } = config as AzureProviderConfig
+            const provider = createAzure({ resourceName, apiKey, apiVersion })
             if (isImage) {
                 return provider.imageModel(modelId)
             }
@@ -251,8 +251,8 @@ export async function createEmbeddingModel({
             return { model: p.textEmbeddingModel(embeddingModelId), embeddingModelId, providerOptions: {} }
         }
         case AIProviderName.AZURE: {
-            const { resourceName } = config as AzureProviderConfig
-            const p = createAzure({ resourceName, apiKey })
+            const { resourceName, apiVersion } = config as AzureProviderConfig
+            const p = createAzure({ resourceName, apiKey, apiVersion })
             return { model: p.embeddingModel(embeddingModelId), embeddingModelId, providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
         }
         case AIProviderName.ACTIVEPIECES:

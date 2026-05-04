@@ -723,6 +723,8 @@
   "Model Type": "",
   "AI Gateway Token": "",
   "Resource Name": "Resource Name",
+  "API Version": "API Version",
+  "Optional. Leave empty to use the default. Some Azure resources require a different version, e.g. 2023-03-15-preview.": "Optional. Leave empty to use the default. Some Azure resources require a different version, e.g. 2023-03-15-preview.",
   "Account ID": "",
   "Gateway ID": "",
   "Google Vertex Project Region": "",
