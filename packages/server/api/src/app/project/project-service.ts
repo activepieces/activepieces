@@ -16,6 +16,8 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { userService } from '../user/user-service'
 import { projectHooks } from './project-hooks'
 import { projectRepo } from './project-repo'
@@ -220,18 +222,31 @@ export async function applyProjectsAccessFilters<T extends ObjectLiteral>(
     params: ApplyProjectsAccessFiltersParams,
 ): Promise<void> {
     const { platformId, userId, isPrivileged } = params
+    const personalProjectsEnabled = system.getBoolean(AppSystemProp.ENABLE_PERSONAL_PROJECTS) !== false
+
     if (isPrivileged) {
+        if (!personalProjectsEnabled) {
+            queryBuilder.andWhere('project.type != :personalType', { personalType: ProjectType.PERSONAL })
+        }
         return
     }
 
     queryBuilder.andWhere(new Brackets(qb => {
-        qb.where(
-            'project."ownerId" = :userId AND project.type = :personalType',
-            { userId, personalType: ProjectType.PERSONAL },
-        ).orWhere(
-            'project.id IN (SELECT "projectId" FROM project_member WHERE "userId" = :userId AND "platformId" = :platformId)',
-            { userId, platformId },
-        )
+        if (personalProjectsEnabled) {
+            qb.where(
+                'project."ownerId" = :userId AND project.type = :personalType',
+                { userId, personalType: ProjectType.PERSONAL },
+            ).orWhere(
+                'project.id IN (SELECT "projectId" FROM project_member WHERE "userId" = :userId AND "platformId" = :platformId)',
+                { userId, platformId },
+            )
+        }
+        else {
+            qb.where(
+                'project.id IN (SELECT "projectId" FROM project_member WHERE "userId" = :userId AND "platformId" = :platformId)',
+                { userId, platformId },
+            )
+        }
     }))
 }
 async function assertExternalIdIsUnique(externalId: string | undefined | null, projectId: ProjectId): Promise<void> {
