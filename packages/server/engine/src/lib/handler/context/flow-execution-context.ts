@@ -1,4 +1,4 @@
-import { AP_ERROR_KEY, assertEqual, BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertEqual, BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
 
@@ -141,14 +141,22 @@ export class FlowExecutorContext {
     }
    
     public currentState(referencedStepNames?: string[]): Record<string, unknown> {
-        const referencedSteps = referencedStepNames 
+        return this.walkCurrentPath(referencedStepNames, extractOutput)
+    }
+
+    public currentErrors(referencedStepNames?: string[]): Record<string, { message: string }> {
+        return this.walkCurrentPath(referencedStepNames, extractErrors)
+    }
+
+    private walkCurrentPath<T>(referencedStepNames: string[] | undefined, extract: (steps: Record<string, StepOutput>) => Record<string, T>): Record<string, T> {
+        const referencedSteps = referencedStepNames
             ?  referencedStepNames.reduce((acc, stepName) => {
                 if (this.steps[stepName]) acc[stepName] = this.steps[stepName]
                 return acc
             }, {} as Record<string, StepOutput>)
             : this.steps
 
-        let flattenedSteps: Record<string, unknown> = extractOutput(referencedSteps)
+        let flattened: Record<string, T> = extract(referencedSteps)
         let targetMap = this.steps
 
         this.currentPath.path.forEach(([stepName, iteration]) => {
@@ -157,23 +165,27 @@ export class FlowExecutorContext {
                 throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', '[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
             }
             targetMap = stepOutput.output.iterations[iteration]
-            flattenedSteps = {
-                ...flattenedSteps,
-                ...extractOutput(targetMap),
+            flattened = {
+                ...flattened,
+                ...extract(targetMap),
             }
         })
-        return flattenedSteps
+        return flattened
     }
 }
 
 function extractOutput(steps: Record<string, StepOutput>): Record<string, unknown> {
     return Object.entries(steps).reduce((acc: Record<string, unknown>, [stepName, step]) => {
-        if (step.status === StepOutputStatus.FAILED) {
-            acc[stepName] = { [AP_ERROR_KEY]: { message: step.errorMessage } }
-        }
-        else {
-            acc[stepName] = step.output
-        }
+        acc[stepName] = step.output
         return acc
     }, {} as Record<string, unknown>)
+}
+
+function extractErrors(steps: Record<string, StepOutput>): Record<string, { message: string }> {
+    return Object.entries(steps).reduce((acc: Record<string, { message: string }>, [stepName, step]) => {
+        if (step.status === StepOutputStatus.FAILED && step.errorMessage !== undefined) {
+            acc[stepName] = { message: step.errorMessage }
+        }
+        return acc
+    }, {} as Record<string, { message: string }>)
 }

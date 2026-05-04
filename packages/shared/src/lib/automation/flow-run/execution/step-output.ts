@@ -2,8 +2,6 @@ import { isNil } from '../../../core/common'
 import { FlowActionType } from '../../flows/actions/action'
 import { FlowTriggerType } from '../../flows/triggers/trigger'
 
-export const AP_ERROR_KEY = '__ap_error'
-
 export enum StepOutputStatus {
     FAILED = 'FAILED',
     PAUSED = 'PAUSED',
@@ -18,7 +16,7 @@ type BaseStepOutputParams<T extends FlowActionType | FlowTriggerType, OUTPUT> = 
     input: unknown
     output?: OUTPUT
     duration?: number
-    errorMessage?: unknown
+    errorMessage?: string
 }
 
 export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPUT> {
@@ -27,7 +25,7 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
     input: unknown
     output?: OUTPUT
     duration?: number
-    errorMessage?: unknown
+    errorMessage?: string
 
     constructor(step: BaseStepOutputParams<T, OUTPUT>) {
         this.type = step.type
@@ -52,7 +50,7 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
         })
     }
 
-    setErrorMessage(errorMessage: unknown): GenericStepOutput<T, OUTPUT> {
+    setErrorMessage(errorMessage: string): GenericStepOutput<T, OUTPUT> {
         return new GenericStepOutput<T, OUTPUT>({
             ...this,
             errorMessage,
