@@ -1,0 +1,9 @@
+{
+  "Convert IP addresses into geolocation data including city, country, timezone, ASN, and currency.": "Convert IP addresses into geolocation data including city, country, timezone, ASN, and currency.",
+  "\nTo get your API Key:\n\n1. Sign up at https://ip2geo.dev\n2. Create a project and generate an API key\n3. Copy your secret key (starts with i2g_sk)\n4. Paste it here\n": "\nTo get your API Key:\n\n1. Sign up at https://ip2geo.dev\n2. Create a project and generate an API key\n3. Copy your secret key (starts with i2g_sk)\n4. Paste it here\n",
+  "IP Lookup": "IP Lookup",
+  "Convert an IP address into geolocation data including city, country, timezone, ASN, and currency": "Convert an IP address into geolocation data including city, country, timezone, ASN, and currency",
+  "IP Address": "IP Address",
+  "The IP address to look up (IPv4 or IPv6)": "The IP address to look up (IPv4 or IPv6)",
+  "API Key": "API Key"
+}
