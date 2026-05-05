@@ -9,6 +9,7 @@ import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
+import { flowApprovalRequestService } from '../../flows/flow-approval/flow-approval-request.service'
 import { platformAiCreditsService } from './platform-ai-credits.service'
 import { PlatformPlanEntity } from './platform-plan.entity'
 import { stripeHelper } from './stripe-helper'
@@ -58,6 +59,17 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         const platformPlan = await platformPlanRepo().findOneByOrFail({
             platformId,
         })
+
+        if (
+            platformPlan.flowApprovalEnabled &&
+            update.flowApprovalEnabled === false &&
+            await flowApprovalRequestService(log).hasPendingForPlatform(platformId)
+        ) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'Cannot disable flow approval while pending requests exist' },
+            })
+        }
 
         const normalizedUpdate = Object.fromEntries(
             Object.entries(update).map(([key, value]) => [key, value === undefined ? null : value]),

@@ -51,6 +51,7 @@ import { flowVersionMigrationService } from '../flow-version/flow-version-migrat
 import { flowVersionRepo, flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowExecutionCache } from './flow-execution-cache'
+import { publishHooksFactory } from './flow-publish-hooks'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
@@ -265,6 +266,20 @@ export const flowService = (log: FastifyBaseLogger) => ({
         return flow
     },
 
+    async getPublishedVersionOrThrow({ id, projectId }: GetOneParams): Promise<FlowVersion> {
+        const flow = await this.getOneOrThrow({ id, projectId })
+        if (isNil(flow.publishedVersionId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: id, entityType: 'FlowVersion' },
+            })
+        }
+        return flowVersionService(log).getFlowVersionOrThrow({
+            flowId: id,
+            versionId: flow.publishedVersionId,
+        })
+    },
+
     async getOnePopulated({
         id,
         projectId,
@@ -357,13 +372,26 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         switch (operation.type) {
             case FlowOperationType.LOCK_AND_PUBLISH: {
+                const flow = await this.getOneOrThrow({ id, projectId })
+                const requestedStatus = operation.request.status ?? FlowStatus.ENABLED
+                const route = await publishHooksFactory.get(log).routePublish({ flow, projectId, platformId, userId })
+                if (route === 'NEEDS_APPROVAL') {
+                    await publishHooksFactory.get(log).submitForApproval({
+                        flow,
+                        userId,
+                        projectId,
+                        platformId,
+                        requestedStatus,
+                    })
+                    break
+                }
                 await this.updatedPublishedVersionId({
                     id,
                     userId,
                     projectId,
                     platformId,
                 })
-                await applyStatusChange({ id, projectId, newStatus: operation.request.status ?? FlowStatus.ENABLED }, log)
+                await applyStatusChange({ id, projectId, newStatus: requestedStatus }, log)
                 break
             }
 
@@ -456,15 +484,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
             versionId: undefined,
         })
 
-        if (flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)) {
-            await triggerSourceService(log).disable({
-                flowId: flowToUpdate.id,
-                projectId: flowToUpdate.projectId,
-                simulate: false,
-                ignoreError: true,
-            })
-        }
-
         return transaction(async (entityManager) => {
             const lockedFlowVersion = await lockFlowVersionIfNotLocked({
                 flowVersion: flowVersionToPublish,
@@ -474,16 +493,39 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 entityManager,
                 log,
             })
-
-            flowToUpdate.publishedVersionId = lockedFlowVersion.id
-            flowToUpdate.status = FlowStatus.DISABLED
-            const updatedFlow = await flowRepo(entityManager).save(flowToUpdate)
-            await flowExecutionCache(log).invalidate(updatedFlow.id)
-            return {
-                ...updatedFlow,
-                version: lockedFlowVersion,
-            }
+            return this.setPublishedVersion({
+                flow: flowToUpdate,
+                lockedVersion: lockedFlowVersion,
+                entityManager,
+            })
         })
+    },
+
+    async setPublishedVersion({ flow, lockedVersion, entityManager }: SetPublishedVersionParams): Promise<PopulatedFlow> {
+        if (flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)) {
+            await triggerSourceService(log).disable({
+                flowId: flow.id,
+                projectId: flow.projectId,
+                simulate: false,
+                ignoreError: true,
+            })
+        }
+        flow.publishedVersionId = lockedVersion.id
+        flow.status = FlowStatus.DISABLED
+        const updatedFlow = await flowRepo(entityManager).save(flow)
+        await flowExecutionCache(log).invalidate(updatedFlow.id)
+        return {
+            ...updatedFlow,
+            version: lockedVersion,
+        }
+    },
+
+    async lockFlowVersionIfNotLocked(params: Omit<LockFlowVersionIfNotLockedParams, 'log'>): Promise<FlowVersion> {
+        return lockFlowVersionIfNotLocked({ ...params, log })
+    },
+
+    async applyStatusChangeForPublishedFlow(params: { id: FlowId, projectId: ProjectId, newStatus: FlowStatus }): Promise<void> {
+        await applyStatusChange(params, log)
     },
 
     async delete({ id, projectId }: DeleteParams): Promise<void> {
@@ -811,6 +853,12 @@ type UpdatePublishedVersionIdParams = {
     userId: UserId | null
     platformId: PlatformId
     projectId: ProjectId
+}
+
+type SetPublishedVersionParams = {
+    flow: Flow
+    lockedVersion: FlowVersion
+    entityManager?: EntityManager
 }
 
 type DeleteParams = {

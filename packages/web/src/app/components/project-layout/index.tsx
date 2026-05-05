@@ -29,6 +29,7 @@ export type ProjectDashboardLayoutHeaderTab = {
   hasPermission: boolean;
   show: boolean;
   beta?: boolean;
+  badgeCount?: number;
 };
 
 const ProjectChangedRedirector = ({

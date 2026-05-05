@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/shared';
+import { isNil, Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -6,12 +6,15 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { BoxIcon } from '@/components/icons/box';
 import { ConnectIcon } from '@/components/icons/connect';
 import { HistoryIcon } from '@/components/icons/history';
+import { ShieldIcon } from '@/components/icons/shield';
 import { WorkflowIcon } from '@/components/icons/workflow';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
@@ -57,17 +60,26 @@ const AnimatedTab = ({
           Beta
         </span>
       )}
+      {!isNil(tab.badgeCount) && tab.badgeCount > 0 && (
+        <span className="ml-1.5 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium leading-none text-primary-foreground">
+          {tab.badgeCount > 10 ? '10+' : tab.badgeCount}
+        </span>
+      )}
     </TabsTrigger>
   );
 };
 
 export const ProjectDashboardLayoutHeader = () => {
   const { project } = projectCollectionUtils.useCurrentProject();
-  const { checkAccess } = useAuthorization();
+  const { checkAccess, isFetchingProjectRole } = useAuthorization();
+  const { platform } = platformHooks.useCurrentPlatform();
   const { embedState } = useEmbedding();
   const location = useLocation();
   const navigate = useNavigate();
   const isEmbedded = embedState.isEmbedded;
+  const { data: pendingApprovalsBadge } =
+    flowApprovalsHooks.usePendingApprovalsBadge();
+  const pendingCount = pendingApprovalsBadge?.data.length ?? 0;
 
   const primaryTabs: ProjectDashboardLayoutHeaderTab[] = [
     {
@@ -103,6 +115,16 @@ export const ProjectDashboardLayoutHeader = () => {
         checkAccess(Permission.READ_PROJECT_RELEASE) &&
         !isEmbedded,
       show: project.releasesEnabled,
+    },
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/approvals'),
+      icon: ShieldIcon,
+      label: t('Pending approvals'),
+      hasPermission:
+        !isFetchingProjectRole &&
+        checkAccess(Permission.PUBLISH_SENSITIVE_FLOW_ACCESS),
+      show: !!platform.plan.flowApprovalEnabled,
+      badgeCount: pendingCount,
     },
   ];
 

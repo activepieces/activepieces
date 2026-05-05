@@ -1,4 +1,4 @@
-import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, isNil, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
+import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, isNil, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains } from 'typeorm'
@@ -146,8 +146,10 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
         return
     }
 
-    const lastPublishedVersion = await flowVersionService(log).getLatestVersion(flow.id, FlowVersionState.LOCKED)
-    assertNotNullOrUndefined(lastPublishedVersion, `Last published version not found for flow ${flow.id}`)
+    const lastPublishedVersion = await flowService(log).getPublishedVersionOrThrow({
+        id: flow.id,
+        projectId,
+    })
 
     await flowService(log).update({
         id: flow.id,

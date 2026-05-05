@@ -30,6 +30,7 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
         Permission.WRITE_KNOWLEDGE_BASE,
         Permission.READ_CHAT,
         Permission.WRITE_CHAT,
+        Permission.PUBLISH_SENSITIVE_FLOW_ACCESS,
     ],
     [DefaultProjectRole.EDITOR]: [
         Permission.READ_APP_CONNECTION,

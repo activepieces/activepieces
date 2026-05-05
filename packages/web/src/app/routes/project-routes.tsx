@@ -14,6 +14,7 @@ import { AfterImportFlowRedirect } from '../guards/after-import-flow-redirect';
 import { RoutePermissionGuard } from '../guards/permission-guard';
 import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
+import { ApprovalsPage } from './approvals';
 import { AutomationsPage } from './automations';
 const FlowBuilderPage = React.lazy(() =>
   import('./flows/id').then((m) => ({ default: m.FlowBuilderPage })),
@@ -191,6 +192,20 @@ export const projectRoutes = [
             <ProjectReleasesPage />
           </SuspenseWrapper>
         </PageTitle>
+      </ProjectDashboardLayout>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.approvals,
+    element: (
+      <ProjectDashboardLayout>
+        <RoutePermissionGuard requiredPermissions={Permission.READ_FLOW}>
+          <PageTitle title="Pending approvals">
+            <SuspenseWrapper>
+              <ApprovalsPage />
+            </SuspenseWrapper>
+          </PageTitle>
+        </RoutePermissionGuard>
       </ProjectDashboardLayout>
     ),
   }),

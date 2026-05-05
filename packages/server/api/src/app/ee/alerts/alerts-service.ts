@@ -44,7 +44,10 @@ export const alertsService = (log: FastifyBaseLogger) => ({
         }
 
         const project = await projectService(log).getOneOrThrow(issueToAlert.projectId)
-        const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issueToAlert.flowId)
+        const flowVersion = await flowVersionService(log).getFlowVersionOrThrow({
+            flowId: issueToAlert.flowId,
+            versionId: issueToAlert.flowVersionId,
+        })
 
         const alertsInfo = {
             flowVersionId: flowVersion.id,

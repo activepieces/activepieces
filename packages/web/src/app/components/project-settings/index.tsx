@@ -75,6 +75,7 @@ export function ProjectSettingsDialog({
       icon: project.icon,
       externalId: initialValues?.externalId,
       maxConcurrentJobs: project.maxConcurrentJobs,
+      sensitive: project.sensitive ?? false,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
@@ -85,6 +86,7 @@ export function ProjectSettingsDialog({
       externalId: values.externalId,
       icon: values.icon,
       maxConcurrentJobs: values.maxConcurrentJobs,
+      sensitive: values.sensitive,
     });
     toast.success(t('Your changes have been saved.'), {
       duration: 3000,

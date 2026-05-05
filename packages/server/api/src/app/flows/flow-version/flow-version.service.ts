@@ -176,19 +176,6 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         return new Map(migratedEntries)
     },
 
-    async getLatestLockedVersionOrThrow(flowId: FlowId): Promise<FlowVersion> {
-        const lockedVersion = await this.getLatestVersion(flowId, FlowVersionState.LOCKED)
-        if (isNil(lockedVersion)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityId: flowId,
-                    entityType: 'FlowVersion',
-                },
-            })
-        }
-        return lockedVersion
-    },
     async getOneOrThrow(id: FlowVersionId): Promise<FlowVersion> {
         const flowVersion = await flowVersionService(log).getOne(id)
 
