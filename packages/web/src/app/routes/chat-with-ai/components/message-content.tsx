@@ -18,9 +18,8 @@ import {
   parseAutomationProposal,
   parseMultiQuestion,
   parseQuickReplies,
+  stripIncompleteSpecialBlock,
 } from '../lib/message-parsers';
-
-import { MultiQuestionForm } from './multi-question-form';
 
 const PROSE_CLASSES =
   'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4 [&_h1]:text-[18px] [&_h2]:text-[18px] [&_h3]:text-[18px]';
@@ -43,14 +42,12 @@ function stripAuthContent(content: string): string {
 export function MessageContentWithAuth({
   content,
   onSend,
-  isLastMessage = false,
   selectedProjectId,
   projects,
   onSelectProject,
 }: {
   content: string;
   onSend?: (text: string) => void;
-  isLastMessage?: boolean;
   selectedProjectId?: string | null;
   projects?: Project[];
   onSelectProject?: (projectId: string) => void;
@@ -83,9 +80,9 @@ export function MessageContentWithAuth({
     parseAutomationProposal(content);
   const { connections, cleanContent: afterConnection } =
     parseAllConnectionsRequired(afterProposal);
-  const { questions, cleanContent: afterQuestions } =
-    parseMultiQuestion(afterConnection);
-  const { cleanContent: finalContent } = parseQuickReplies(afterQuestions);
+  const { cleanContent: afterQuestions } = parseMultiQuestion(afterConnection);
+  const { cleanContent: afterReplies } = parseQuickReplies(afterQuestions);
+  const finalContent = stripIncompleteSpecialBlock(afterReplies);
 
   return (
     <div className="space-y-2">
@@ -101,12 +98,6 @@ export function MessageContentWithAuth({
           onSend={onSend}
         />
       ))}
-      {questions.length > 0 && isLastMessage && (
-        <MultiQuestionForm
-          questions={questions}
-          onSubmit={(text) => onSend?.(text)}
-        />
-      )}
       {proposal && (
         <AutomationProposalCard
           proposal={proposal}

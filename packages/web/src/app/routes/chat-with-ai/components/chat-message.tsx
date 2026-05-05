@@ -211,7 +211,6 @@ function AssistantMessage({
           {renderParts({
             parts: renderableParts,
             isStreaming,
-            isLastMessage,
             onSend,
             selectedProjectId,
             projects,
@@ -278,7 +277,6 @@ function AssistantMessage({
 function renderParts({
   parts,
   isStreaming,
-  isLastMessage = false,
   onSend,
   selectedProjectId,
   projects,
@@ -286,7 +284,6 @@ function renderParts({
 }: {
   parts: ChatUIMessage['parts'];
   isStreaming: boolean;
-  isLastMessage?: boolean;
   onSend: (text: string, files?: File[]) => void;
   selectedProjectId?: string | null;
   projects?: Project[];
@@ -318,7 +315,6 @@ function renderParts({
           key={idx}
           content={part.text}
           onSend={onSend}
-          isLastMessage={isLastMessage}
           selectedProjectId={selectedProjectId}
           projects={projects}
           onSelectProject={onSelectProject}
