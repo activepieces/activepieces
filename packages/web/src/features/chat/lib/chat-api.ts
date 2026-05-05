@@ -3,22 +3,16 @@ import {
   ChatConversation,
   CreateChatConversationRequest,
   SeekPage,
+  SetProjectContextRequest,
   UpdateChatConversationRequest,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
-
-function projectId(): string {
-  return authenticationSession.getProjectId()!;
-}
 
 async function createConversation(
   request: CreateChatConversationRequest,
 ): Promise<ChatConversation> {
-  return api.post<ChatConversation>('/v1/chat/conversations', request, {
-    projectId: projectId(),
-  });
+  return api.post<ChatConversation>('/v1/chat/conversations', request);
 }
 
 async function listConversations({
@@ -29,16 +23,13 @@ async function listConversations({
   limit?: number;
 }): Promise<SeekPage<ChatConversation>> {
   return api.get<SeekPage<ChatConversation>>('/v1/chat/conversations', {
-    projectId: projectId(),
     limit,
     cursor,
   });
 }
 
 async function getConversation(id: string): Promise<ChatConversation> {
-  return api.get<ChatConversation>(`/v1/chat/conversations/${id}`, {
-    projectId: projectId(),
-  });
+  return api.get<ChatConversation>(`/v1/chat/conversations/${id}`);
 }
 
 async function getMessages(
@@ -46,7 +37,6 @@ async function getMessages(
 ): Promise<{ data: ChatHistoryMessage[] }> {
   return api.get<{ data: ChatHistoryMessage[] }>(
     `/v1/chat/conversations/${conversationId}/messages`,
-    { projectId: projectId() },
   );
 }
 
@@ -54,15 +44,21 @@ async function updateConversation(
   id: string,
   request: UpdateChatConversationRequest,
 ): Promise<ChatConversation> {
-  return api.post<ChatConversation>(`/v1/chat/conversations/${id}`, request, {
-    projectId: projectId(),
-  });
+  return api.post<ChatConversation>(`/v1/chat/conversations/${id}`, request);
 }
 
 async function deleteConversation(id: string): Promise<void> {
-  return api.delete<void>(`/v1/chat/conversations/${id}`, {
-    projectId: projectId(),
-  });
+  return api.delete<void>(`/v1/chat/conversations/${id}`);
+}
+
+async function setProjectContext(
+  conversationId: string,
+  request: SetProjectContextRequest,
+): Promise<ChatConversation> {
+  return api.post<ChatConversation>(
+    `/v1/chat/conversations/${conversationId}/project-context`,
+    request,
+  );
 }
 
 export const chatApi = {
@@ -72,4 +68,5 @@ export const chatApi = {
   getMessages,
   updateConversation,
   deleteConversation,
+  setProjectContext,
 };
