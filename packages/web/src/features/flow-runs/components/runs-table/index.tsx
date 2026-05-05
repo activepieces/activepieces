@@ -189,7 +189,6 @@ export const RunsTable = () => {
 
   const clearErrorMessageWhenStatusExcludesFailures = useCallback(
     (newStatuses: string[], params: URLSearchParams) => {
-      if (newStatuses.length === 0) return;
       if (newStatuses.includes(FlowRunStatus.FAILED)) return;
       if (!params.get('failedStepMessage')) return;
       params.delete('failedStepMessage');
