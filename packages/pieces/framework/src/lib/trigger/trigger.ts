@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { OnStartContext, TestOrRunHookContext, TriggerHookContext } from '../context';
+import { OutputDisplayHints } from '../output-display-hints';
 import { TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
@@ -53,7 +54,8 @@ type BaseTriggerParams<
   run: (context: TestOrRunHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<unknown[]>
   test?: (context: TestOrRunHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<unknown[]>,
   onStart?: OnStartRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps>,
-  sampleData: unknown
+  sampleData: unknown,
+  outputDisplayHints?: OutputDisplayHints,
 }
 
 type WebhookTriggerParams<
@@ -98,6 +100,7 @@ export class ITrigger<
     public readonly test: (ctx: TestOrRunHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly sampleData: unknown,
     public readonly testStrategy: TriggerTestStrategy,
+    public readonly outputDisplayHints?: OutputDisplayHints,
   ) { }
 }
 
@@ -134,6 +137,7 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         params.test ? TriggerTestStrategy.TEST_FUNCTION : TriggerTestStrategy.SIMULATION,
+        params.outputDisplayHints,
       )
     case TriggerStrategy.POLLING:
       return new ITrigger(
@@ -154,6 +158,7 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         TriggerTestStrategy.TEST_FUNCTION,
+        params.outputDisplayHints,
       )
     case TriggerStrategy.MANUAL:
       return new ITrigger(
@@ -174,6 +179,7 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         TriggerTestStrategy.TEST_FUNCTION,
+        params.outputDisplayHints,
       )
     case TriggerStrategy.APP_WEBHOOK:
       return new ITrigger(
@@ -194,6 +200,7 @@ export const createTrigger = <
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
         (isNil(params.sampleData) && isNil(params.test)) ? TriggerTestStrategy.SIMULATION : TriggerTestStrategy.TEST_FUNCTION,
+        params.outputDisplayHints,
       )
   }
 }

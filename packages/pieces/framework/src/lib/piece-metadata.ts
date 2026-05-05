@@ -5,6 +5,7 @@ import { PieceAuthProperty } from "./property/authentication";
 import { z } from "zod";
 import { LocalesEnum, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from "@activepieces/shared";
 import { ContextVersion } from "./context/versioning";
+import { OutputDisplayHints } from "./output-display-hints";
 
 const I18nForPiece = z.record(z.string(), z.record(z.string(), z.string())).optional();
 export type I18nForPiece = Partial<Record<LocalesEnum, Record<string, string>>> | undefined
@@ -52,6 +53,7 @@ export const ActionBase = z.object({
   props: PiecePropertyMap,
   requireAuth: z.boolean(),
   errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
+  outputDisplayHints: OutputDisplayHints.optional(),
 })
 
 export type ActionBase = {
@@ -61,6 +63,7 @@ export type ActionBase = {
   props: PiecePropertyMap,
   requireAuth: boolean;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
+  outputDisplayHints?: OutputDisplayHints;
 }
 
 export const TriggerBase = z.object({
@@ -74,6 +77,7 @@ export const TriggerBase = z.object({
   handshakeConfiguration: z.custom<WebhookHandshakeConfiguration>().optional(),
   renewConfiguration: WebhookRenewConfiguration.optional(),
   testStrategy: z.nativeEnum(TriggerTestStrategy),
+  outputDisplayHints: OutputDisplayHints.optional(),
 })
 export type TriggerBase = ActionBase & {
   type: TriggerStrategy;

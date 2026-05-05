@@ -2,6 +2,10 @@ import {
   StepOutputStatus,
   flowStructureUtil,
   AgentResult,
+  FlowAction,
+  FlowActionType,
+  FlowTrigger,
+  FlowTriggerType,
   isFlowRunStateTerminal,
   FlowRun,
   FlowRunStatus,
@@ -14,10 +18,12 @@ import { useMemo } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
 import { JsonViewer } from '@/components/custom/json-viewer';
+import { SmartOutputViewer } from '@/components/custom/smart-output-viewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents';
 import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
+import { usePieceOutputHints } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
@@ -53,6 +59,13 @@ export const FlowStepInputOutput = () => {
     selectedStepOutput?.errorMessage ??
     selectedStepOutput?.output ??
     'No output';
+
+  const pieceContext = extractPieceContext(selectedStep);
+  const pieceHints = usePieceOutputHints({
+    pieceName: pieceContext.pieceName,
+    pieceVersion: pieceContext.pieceVersion,
+    stepName: pieceContext.actionName ?? pieceContext.triggerName,
+  });
 
   const tabCount = isAgent ? 3 : 2;
   const gridCols = tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2';
@@ -138,7 +151,12 @@ export const FlowStepInputOutput = () => {
             {isStepRunning ? (
               <StepOutputSkeleton className="p-4" />
             ) : (
-              <JsonViewer json={parsedOutput} title={t('Output')} />
+              <SmartOutputViewer
+                json={parsedOutput}
+                title={t('Output')}
+                pieceName={pieceContext.pieceName}
+                pieceHints={pieceHints}
+              />
             )}
           </TabsContent>
         </Tabs>
@@ -146,6 +164,30 @@ export const FlowStepInputOutput = () => {
     </ScrollArea>
   );
 };
+
+function extractPieceContext(step: FlowAction | FlowTrigger | null): {
+  pieceName?: string;
+  pieceVersion?: string;
+  actionName?: string;
+  triggerName?: string;
+} {
+  if (!step) return {};
+  if (step.type === FlowActionType.PIECE) {
+    return {
+      pieceName: step.settings.pieceName,
+      pieceVersion: step.settings.pieceVersion,
+      actionName: step.settings.actionName,
+    };
+  }
+  if (step.type === FlowTriggerType.PIECE) {
+    return {
+      pieceName: step.settings.pieceName,
+      pieceVersion: step.settings.pieceVersion,
+      triggerName: step.settings.triggerName,
+    };
+  }
+  return {};
+}
 
 function handleRunFailureOrEmptyLog(
   run: FlowRun | null,

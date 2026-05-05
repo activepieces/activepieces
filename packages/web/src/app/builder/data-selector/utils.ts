@@ -9,6 +9,7 @@ import {
 
 import { pieceSelectorUtils } from '@/features/pieces';
 
+import { pathHelpers } from './path-helpers';
 import {
   DataSelectorTreeNode,
   DataSelectorTestNodeData,
@@ -152,7 +153,7 @@ function buildJsonPath(propertyPath: PathSegment[]): string {
   return propertyPathWithoutStepName.reduce((acc, segment) => {
     return `${acc}[${
       typeof segment === 'string'
-        ? `'${escapeMentionKey(String(segment))}'`
+        ? `'${pathHelpers.escapeMentionKey(String(segment))}'`
         : segment
     }]`;
   }, `${propertyPath[0]}`) as string;
@@ -288,10 +289,6 @@ function traverseOutput(
       insertable,
     );
   }
-}
-
-function escapeMentionKey(key: string) {
-  return key.replaceAll(/[\\"'\n\r\t’]/g, (char) => `\\${char}`);
 }
 
 function getSearchableValue(
