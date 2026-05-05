@@ -66,89 +66,168 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
 
     async approve({ requestId, projectId, approverPrincipal, request }: DecideParams): Promise<FlowApprovalRequest> {
         const approval = await this.getOneOrThrow({ requestId, projectId })
-        assertPending(approval)
         const flow = await flowService(log).getOneOrThrow({ id: approval.flowId, projectId: approval.projectId })
         const lockedVersion = await flowVersionService(log).getFlowVersionOrThrow({
             flowId: flow.id,
             versionId: approval.flowVersionId,
         })
 
-        const updated = await transaction(async (entityManager) => {
-            await flowService(log).setPublishedVersion({ flow, lockedVersion, entityManager })
-            return flowApprovalRequestRepo(entityManager).save({
-                ...approval,
-                state: FlowApprovalRequestState.APPROVED,
-                approverId: approverPrincipal.id,
-                decidedAt: new Date().toISOString(),
+        const decidedAt = new Date().toISOString()
+        const result = await transaction(async (entityManager) => {
+            const update = await flowApprovalRequestRepo(entityManager)
+                .createQueryBuilder()
+                .update()
+                .set({
+                    state: FlowApprovalRequestState.APPROVED,
+                    approverId: approverPrincipal.id,
+                    decidedAt,
+                })
+                .where('id = :id AND state = :pending', {
+                    id: approval.id,
+                    pending: FlowApprovalRequestState.PENDING,
+                })
+                .execute()
+
+            if (update.affected === 1) {
+                await flowService(log).setPublishedVersion({ flow, lockedVersion, entityManager })
+                const row: FlowApprovalRequest = {
+                    ...approval,
+                    state: FlowApprovalRequestState.APPROVED,
+                    approverId: approverPrincipal.id,
+                    decidedAt,
+                }
+                return { row, applied: true }
+            }
+            const current = await flowApprovalRequestRepo(entityManager).findOneByOrFail({ id: approval.id })
+            if (current.state === FlowApprovalRequestState.APPROVED) {
+                return { row: current, applied: false }
+            }
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'This approval request is no longer pending' },
             })
         })
 
-        await flowService(log).applyStatusChangeForPublishedFlow({
-            id: flow.id,
-            projectId: approval.projectId,
-            newStatus: approval.requestedStatus,
-        })
-        applicationEvents(log).sendUserEvent(request, {
-            action: ApplicationEventName.FLOW_APPROVAL_GRANTED,
-            data: {
-                approvalRequestId: approval.id,
-                flowId: flow.id,
-                flowVersionId: approval.flowVersionId,
-                flowDisplayName: lockedVersion.displayName,
-            },
-        })
-        return updated
+        if (result.applied) {
+            await flowService(log).applyStatusChangeForPublishedFlow({
+                id: flow.id,
+                projectId: approval.projectId,
+                newStatus: approval.requestedStatus,
+            })
+            applicationEvents(log).sendUserEvent(request, {
+                action: ApplicationEventName.FLOW_APPROVAL_GRANTED,
+                data: {
+                    approvalRequestId: approval.id,
+                    flowId: flow.id,
+                    flowVersionId: approval.flowVersionId,
+                    flowDisplayName: lockedVersion.displayName,
+                },
+            })
+        }
+        return result.row
     },
 
     async reject({ requestId, projectId, approverPrincipal, reason, request }: RejectParams): Promise<FlowApprovalRequest> {
         const approval = await this.getOneOrThrow({ requestId, projectId })
-        assertPending(approval)
         const lockedVersion = await flowVersionService(log).getFlowVersionOrThrow({
             flowId: approval.flowId,
             versionId: approval.flowVersionId,
         })
-        const updated = await flowApprovalRequestRepo().save({
-            ...approval,
-            state: FlowApprovalRequestState.REJECTED,
-            approverId: approverPrincipal.id,
-            decidedAt: new Date().toISOString(),
-            rejectionReason: reason ?? null,
+
+        const decidedAt = new Date().toISOString()
+        const rejectionReason = reason ?? null
+        const result = await transaction(async (entityManager) => {
+            const update = await flowApprovalRequestRepo(entityManager)
+                .createQueryBuilder()
+                .update()
+                .set({
+                    state: FlowApprovalRequestState.REJECTED,
+                    approverId: approverPrincipal.id,
+                    decidedAt,
+                    rejectionReason,
+                })
+                .where('id = :id AND state = :pending', {
+                    id: approval.id,
+                    pending: FlowApprovalRequestState.PENDING,
+                })
+                .execute()
+
+            if (update.affected === 1) {
+                const row: FlowApprovalRequest = {
+                    ...approval,
+                    state: FlowApprovalRequestState.REJECTED,
+                    approverId: approverPrincipal.id,
+                    decidedAt,
+                    rejectionReason,
+                }
+                return { row, applied: true }
+            }
+            const current = await flowApprovalRequestRepo(entityManager).findOneByOrFail({ id: approval.id })
+            if (current.state === FlowApprovalRequestState.REJECTED) {
+                return { row: current, applied: false }
+            }
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'This approval request is no longer pending' },
+            })
         })
-        applicationEvents(log).sendUserEvent(request, {
-            action: ApplicationEventName.FLOW_APPROVAL_REJECTED,
-            data: {
-                approvalRequestId: approval.id,
-                flowId: approval.flowId,
-                flowVersionId: approval.flowVersionId,
-                flowDisplayName: lockedVersion.displayName,
-                rejectionReason: reason ?? null,
-            },
-        })
-        return updated
+
+        if (result.applied) {
+            applicationEvents(log).sendUserEvent(request, {
+                action: ApplicationEventName.FLOW_APPROVAL_REJECTED,
+                data: {
+                    approvalRequestId: approval.id,
+                    flowId: approval.flowId,
+                    flowVersionId: approval.flowVersionId,
+                    flowDisplayName: lockedVersion.displayName,
+                    rejectionReason: reason ?? null,
+                },
+            })
+        }
+        return result.row
     },
 
     async withdraw({ requestId, projectId, request }: WithdrawParams): Promise<void> {
         const approval = await this.getOneOrThrow({ requestId, projectId })
-        assertPending(approval)
         const lockedVersion = await flowVersionService(log).getFlowVersionOrThrow({
             flowId: approval.flowId,
             versionId: approval.flowVersionId,
         })
 
-        await transaction(async (entityManager) => {
-            await flowApprovalRequestRepo(entityManager).delete({ id: approval.id })
+        const applied = await transaction(async (entityManager) => {
+            const remove = await flowApprovalRequestRepo(entityManager)
+                .createQueryBuilder()
+                .delete()
+                .where('id = :id AND state = :pending', {
+                    id: approval.id,
+                    pending: FlowApprovalRequestState.PENDING,
+                })
+                .execute()
+            if (remove.affected === 0) {
+                const current = await flowApprovalRequestRepo(entityManager).findOneBy({ id: approval.id })
+                if (isNil(current)) {
+                    return false
+                }
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: 'This approval request is no longer pending' },
+                })
+            }
             await flowVersionRepo(entityManager).update({ id: lockedVersion.id }, { state: FlowVersionState.DRAFT })
+            return true
         })
 
-        applicationEvents(log).sendUserEvent(request, {
-            action: ApplicationEventName.FLOW_APPROVAL_WITHDRAWN,
-            data: {
-                approvalRequestId: approval.id,
-                flowId: approval.flowId,
-                flowVersionId: approval.flowVersionId,
-                flowDisplayName: lockedVersion.displayName,
-            },
-        })
+        if (applied) {
+            applicationEvents(log).sendUserEvent(request, {
+                action: ApplicationEventName.FLOW_APPROVAL_WITHDRAWN,
+                data: {
+                    approvalRequestId: approval.id,
+                    flowId: approval.flowId,
+                    flowVersionId: approval.flowVersionId,
+                    flowDisplayName: lockedVersion.displayName,
+                },
+            })
+        }
     },
 
     async getOneOrThrow({ requestId, projectId }: { requestId: ApId, projectId: ProjectId }): Promise<FlowApprovalRequest> {
@@ -170,7 +249,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             entity: FlowApprovalRequestEntity,
             alias: 'far',
             query: {
-                limit: limit ?? Paginator.NO_LIMIT,
+                limit: limit ?? 50,
                 orderBy: [{ field: 'created', order: Order.DESC }],
                 afterCursor: decoded.nextCursor,
                 beforeCursor: decoded.previousCursor,
@@ -213,15 +292,6 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         return count > 0
     },
 })
-
-const assertPending = (approval: FlowApprovalRequest) => {
-    if (approval.state !== FlowApprovalRequestState.PENDING) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: { message: 'This approval request is no longer pending' },
-        })
-    }
-}
 
 type SubmitParams = {
     flow: Flow
