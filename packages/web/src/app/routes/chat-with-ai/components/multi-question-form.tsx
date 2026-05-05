@@ -83,11 +83,17 @@ export function MultiQuestionForm({
         overrideValue !== undefined
           ? { ...answers, [currentStep]: overrideValue }
           : answers;
-      if (!questions.every((_q, i) => finalAnswers[i]?.trim())) return;
       setSubmitted(true);
-      const lines = questions.map(
-        (qq, i) => `- **${qq.question}** ${finalAnswers[i]}`,
-      );
+      const lines = questions
+        .map((qq, i) => {
+          const a = finalAnswers[i]?.trim();
+          return a ? `- **${qq.question}** ${a}` : null;
+        })
+        .filter((l): l is string => l !== null);
+      if (lines.length === 0) {
+        onDismiss?.();
+        return;
+      }
       onSubmit(lines.join('\n'));
     } else {
       setCurrentStep((s) => s + 1);
