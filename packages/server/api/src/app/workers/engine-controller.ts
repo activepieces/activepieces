@@ -1,5 +1,5 @@
 
-import { FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest } from '@activepieces/shared'
+import { FileCompression, FileType, FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -48,6 +48,23 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
             .send(data)
     })
 
+    app.put('/files/blob/:fileId', UploadEngineLogBlobRequest, async (request, reply) => {
+        const data = request.body as Buffer
+        await fileService(request.log).save({
+            fileId: request.params.fileId,
+            projectId: request.principal.projectId,
+            data,
+            size: data.length,
+            type: FileType.FLOW_RUN_LOG_BLOB,
+            compression: FileCompression.ZSTD,
+            metadata: {
+                flowRunId: request.query.flowRunId,
+                projectId: request.principal.projectId,
+            },
+        })
+        return reply.status(StatusCodes.OK).send()
+    })
+
 
 }
 
@@ -81,5 +98,20 @@ const GetEnginePayloadFileRequest = {
         params: z.object({
             fileId: z.string(),
         }),
+    },
+}
+
+const UploadEngineLogBlobRequest = {
+    config: {
+        security: securityAccess.engine(),
+    },
+    schema: {
+        params: z.object({
+            fileId: z.string(),
+        }),
+        querystring: z.object({
+            flowRunId: z.string(),
+        }),
+        body: z.unknown(),
     },
 }

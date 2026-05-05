@@ -7,6 +7,11 @@ export type FileId = ApId
 export enum FileType {
     UNKNOWN = 'UNKNOWN',
     FLOW_RUN_LOG = 'FLOW_RUN_LOG',
+    /**
+     * Dehydrated step output / loop iteration blob referenced from a v2 flow-run-log manifest.
+     * Each blob is one step's output (or one loop-iteration bundle) above the spool threshold.
+     */
+    FLOW_RUN_LOG_BLOB = 'FLOW_RUN_LOG_BLOB',
     PACKAGE_ARCHIVE = 'PACKAGE_ARCHIVE',
     FLOW_STEP_FILE = 'FLOW_STEP_FILE',
     SAMPLE_DATA = 'SAMPLE_DATA',

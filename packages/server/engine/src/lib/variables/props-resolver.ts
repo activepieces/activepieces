@@ -1,8 +1,9 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { applyFunctionToValues, isNil, isString } from '@activepieces/shared'
+import { applyFunctionToValues, DehydratedRef, isNil, isString } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
-import { FlowExecutorContext } from '../handler/context/flow-execution-context'
+import { FlowExecutorContext, RefHydrator } from '../handler/context/flow-execution-context'
 import { createConnectionResolver } from '../piece-context/connection-resolver'
+import { SpoolContext, spoolService } from '../spool'
 import { utils } from '../utils'
 
 const VARIABLE_PATTERN = /\{\{(.*?)\}\}/g
@@ -10,7 +11,7 @@ const CONNECTIONS = 'connections'
 const FLATTEN_NESTED_KEYS_PATTERN = /\{\{\s*flattenNestedKeys(.*?)\}\}/g
 
 
-export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion, stepNames }: PropsResolverParams) => {
+export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion, stepNames, flowRunId }: PropsResolverParams) => {
     return {
         resolve: async <T = unknown>(params: ResolveInputParams): Promise<ResolveResult<T>> => {
             const { unresolvedInput, executionState } = params
@@ -21,7 +22,8 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 }
             }
             const referencedStepNames = extractReferencedStepNames(unresolvedInput, stepNames)
-            const currentState = executionState.currentState(Array.from(referencedStepNames))
+            const hydrator = createPerCallHydrator({ engineToken, projectId, apiUrl, flowRunId })
+            const currentState = await executionState.currentState(Array.from(referencedStepNames), hydrator)
             const resolveOptions = {
                 engineToken,
                 projectId,
@@ -283,4 +285,19 @@ type PropsResolverParams = {
     apiUrl: string
     contextVersion: ContextVersion | undefined
     stepNames: string[]
+    flowRunId: string
+}
+
+const createPerCallHydrator = ({ engineToken, projectId, apiUrl, flowRunId }: { engineToken: string, projectId: string, apiUrl: string, flowRunId: string }): RefHydrator => {
+    const cache = new Map<string, Promise<unknown>>()
+    const ctx: SpoolContext = { runId: flowRunId, projectId, engineToken, apiUrl }
+    return (ref: DehydratedRef): Promise<unknown> => {
+        const existing = cache.get(ref.fileId)
+        if (existing) {
+            return existing
+        }
+        const promise = spoolService.hydrate({ ref, ctx })
+        cache.set(ref.fileId, promise)
+        return promise
+    }
 }

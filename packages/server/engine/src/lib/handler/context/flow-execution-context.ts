@@ -1,19 +1,7 @@
-import { assertEqual, BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertEqual, BaseStepOutput, DehydratedRef, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isDehydratedRef, isNil, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
 
-
-export type FlowVerdict = {
-    status: FlowRunStatus.PAUSED
-} | {
-    status: FlowRunStatus.SUCCEEDED
-    stopResponse: RespondResponse | undefined
-} | {
-    status: FlowRunStatus.FAILED | FlowRunStatus.LOG_SIZE_EXCEEDED
-    failedStep: FailedStep
-} | {
-    status: FlowRunStatus.RUNNING
-} 
 
 export class FlowExecutorContext {
     tags: readonly string[]
@@ -60,7 +48,6 @@ export class FlowExecutorContext {
             return undefined
         }
         assertEqual(stepOutput.type, FlowActionType.LOOP_ON_ITEMS, 'stepOutput.type', 'LOOP_ON_ITEMS')
-        // The new LoopStepOutput is needed as casting directly to LoopClassOutput will just cast the data but the class methods will not be available
         return new LoopStepOutput(stepOutput as GenericStepOutput<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>)
     }
 
@@ -139,36 +126,73 @@ export class FlowExecutorContext {
             stepsCount: this.stepsCount + 1,
         })
     }
-   
-    public currentState(referencedStepNames?: string[]): Record<string, unknown> {
-        const referencedSteps = referencedStepNames 
-            ?  referencedStepNames.reduce((acc, stepName) => {
+
+    public async currentState(referencedStepNames?: string[], hydrator?: RefHydrator): Promise<Record<string, unknown>> {
+        const referencedSteps = referencedStepNames
+            ? referencedStepNames.reduce((acc, stepName) => {
                 if (this.steps[stepName]) acc[stepName] = this.steps[stepName]
                 return acc
             }, {} as Record<string, StepOutput>)
             : this.steps
 
-        let flattenedSteps: Record<string, unknown> = extractOutput(referencedSteps)
+        let flattenedSteps: Record<string, unknown> = await extractOutput(referencedSteps, hydrator)
         let targetMap = this.steps
 
-        this.currentPath.path.forEach(([stepName, iteration]) => {
+        for (const [stepName, iteration] of this.currentPath.path) {
             const stepOutput = targetMap[stepName]
             if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
                 throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', '[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
             }
-            targetMap = stepOutput.output.iterations[iteration]
+            const iterationsRaw = stepOutput.output.iterations[iteration]
+            const hydratedIteration = await hydrateIterationIfNeeded(iterationsRaw, hydrator)
+            targetMap = hydratedIteration
             flattenedSteps = {
                 ...flattenedSteps,
-                ...extractOutput(targetMap),
+                ...await extractOutput(targetMap, hydrator),
             }
-        })
+        }
         return flattenedSteps
     }
 }
 
-function extractOutput(steps: Record<string, StepOutput>): Record<string, unknown> {
-    return Object.entries(steps).reduce((acc: Record<string, unknown>, [stepName, step]) => {
-        acc[stepName] = step.output
-        return acc
-    }, {} as Record<string, unknown>)
+async function extractOutput(steps: Record<string, StepOutput>, hydrator: RefHydrator | undefined): Promise<Record<string, unknown>> {
+    const result: Record<string, unknown> = {}
+    for (const [stepName, step] of Object.entries(steps)) {
+        result[stepName] = await maybeHydrate(step.output, hydrator)
+    }
+    return result
+}
+
+async function maybeHydrate(value: unknown, hydrator: RefHydrator | undefined): Promise<unknown> {
+    if (!isDehydratedRef(value)) {
+        return value
+    }
+    if (isNil(hydrator)) {
+        throw new EngineGenericError('SpoolHydratorMissingError', `Encountered dehydrated ref ${value.fileId} without a hydrator`)
+    }
+    return hydrator(value)
+}
+
+async function hydrateIterationIfNeeded(iteration: unknown, hydrator: RefHydrator | undefined): Promise<Record<string, StepOutput>> {
+    if (isDehydratedRef(iteration)) {
+        if (isNil(hydrator)) {
+            throw new EngineGenericError('SpoolHydratorMissingError', `Encountered dehydrated iteration ${iteration.fileId} without a hydrator`)
+        }
+        return await hydrator(iteration) as Record<string, StepOutput>
+    }
+    return iteration as Record<string, StepOutput>
+}
+
+export type RefHydrator = (ref: DehydratedRef) => Promise<unknown>
+
+export type FlowVerdict = {
+    status: FlowRunStatus.PAUSED
+} | {
+    status: FlowRunStatus.SUCCEEDED
+    stopResponse: RespondResponse | undefined
+} | {
+    status: FlowRunStatus.FAILED | FlowRunStatus.LOG_SIZE_EXCEEDED
+    failedStep: FailedStep
+} | {
+    status: FlowRunStatus.RUNNING
 }

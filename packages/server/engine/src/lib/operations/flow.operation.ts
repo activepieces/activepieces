@@ -1,4 +1,5 @@
 import {
+    DehydratedRef,
     EngineGenericError,
     EngineResponse,
     EngineResponseStatus,
@@ -10,6 +11,7 @@ import {
     FlowRunStatus,
     flowStructureUtil,
     GenericStepOutput,
+    isDehydratedRef,
     isNil,
     JobPayload,
     LoopStepOutput,
@@ -26,23 +28,34 @@ import { flowExecutor } from '../handler/flow-executor'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { payloadFileClient } from '../helper/payload-file-client'
 import { triggerHelper } from '../helper/trigger-helper'
+import { spoolService } from '../spool'
 
 export const flowOperation = {
     execute: async (operation: ExecuteFlowOperation): Promise<EngineResponse<undefined>> => {
         const input = await resolveExecuteFlowOperation(operation)
         const constants = EngineConstants.fromExecuteFlowInput(input)
-        const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input, constants)).finishExecution()
-        await flowRunProgressReporter.sendUpdate({
-            engineConstants: constants,
-            flowExecutorContext: output,
-        })
-        await flowRunProgressReporter.backup()
-        const status = output.verdict.status === FlowRunStatus.LOG_SIZE_EXCEEDED
-            ? EngineResponseStatus.LOG_SIZE_EXCEEDED
-            : EngineResponseStatus.OK
-        return {
-            status,
-            response: undefined,
+        try {
+            const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input, constants)).finishExecution()
+            await flowRunProgressReporter.sendUpdate({
+                engineConstants: constants,
+                flowExecutorContext: output,
+            })
+            await flowRunProgressReporter.backup()
+            const status = output.verdict.status === FlowRunStatus.LOG_SIZE_EXCEEDED
+                ? EngineResponseStatus.LOG_SIZE_EXCEEDED
+                : EngineResponseStatus.OK
+            const isPaused = output.verdict.status === FlowRunStatus.PAUSED
+            if (!isPaused) {
+                await spoolService.cleanupRun(constants.flowRunId)
+            }
+            return {
+                status,
+                response: undefined,
+            }
+        }
+        catch (err) {
+            await spoolService.cleanupRun(constants.flowRunId).catch(() => undefined)
+            throw err
         }
     },
 }
@@ -119,10 +132,14 @@ async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Pr
     if (stepOutput.type === FlowActionType.LOOP_ON_ITEMS) {
         const loopOutput = new LoopStepOutput(stepOutput)
         const iterations = loopOutput.output?.iterations ?? []
-        const newIterations: Record<string, StepOutput>[] = []
+        const newIterations: (Record<string, StepOutput> | DehydratedRef)[] = []
         for (const iteration of iterations) {
+            if (isDehydratedRef(iteration)) {
+                newIterations.push(iteration)
+                continue
+            }
             const newSteps: Record<string, StepOutput> = {}
-            for (const [step, output] of Object.entries(iteration)) {
+            for (const [step, output] of Object.entries(iteration as Record<string, StepOutput>)) {
                 const newOutput = await insertSuccessStepsOrPausedRecursively(output)
                 if (!isNil(newOutput)) {
                     newSteps[step] = newOutput

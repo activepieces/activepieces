@@ -1,6 +1,7 @@
 import { isNil } from '../../../core/common'
 import { FlowActionType } from '../../flows/actions/action'
 import { FlowTriggerType } from '../../flows/triggers/trigger'
+import { DehydratedRef } from './dehydrated-ref'
 
 export enum StepOutputStatus {
     FAILED = 'FAILED',
@@ -118,10 +119,12 @@ RouterStepResult
     }
 }
 
+export type LoopIterationOrRef = Record<string, StepOutput> | DehydratedRef
+
 export type LoopStepResult = {
     item: unknown
     index: number
-    iterations: Record<string, StepOutput>[]
+    iterations: LoopIterationOrRef[]
 }
 
 export class LoopStepOutput extends GenericStepOutput<
@@ -147,7 +150,7 @@ LoopStepResult
         })
     }
 
-    setIterations(iterations: Record<string, StepOutput>[]): LoopStepOutput {
+    setIterations(iterations: LoopIterationOrRef[]): LoopStepOutput {
         return new LoopStepOutput({
             ...this,
             output: {

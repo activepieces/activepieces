@@ -261,6 +261,7 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
         engineToken,
         contextVersion: piece.getContextInfo?.().version,
         stepNames,
+        flowRunId: 'execute-trigger',
     }).resolve<StaticPropsValue<PiecePropertyMap>>({
         unresolvedInput: input,
         executionState: FlowExecutorContext.empty(),

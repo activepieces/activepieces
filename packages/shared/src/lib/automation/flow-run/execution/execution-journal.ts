@@ -1,5 +1,6 @@
 import { isNil } from '../../../core/common'
 import { FlowActionType } from '../../flows/actions/action'
+import { isDehydratedRef } from './dehydrated-ref'
 import { BaseStepOutput, LoopStepOutput, StepOutput, StepOutputStatus } from './step-output'
 
 export const executionJournal = {
@@ -16,7 +17,7 @@ export const executionJournal = {
 
     getStateAtPath({ path, steps }: GetStateAtPathParams): Record<string, StepOutput> {
         let target = steps
-    
+
         for (const [parentStepName, iteration] of path) {
             const step = target[parentStepName]
             if (!step) {
@@ -30,7 +31,10 @@ export const executionJournal = {
             if (!iterationOutput) {
                 throw new Error(`Iteration ${iteration} not found in path ${path}`)
             }
-            target = iterationOutput
+            if (isDehydratedRef(iterationOutput)) {
+                throw new Error(`Iteration ${iteration} for ${parentStepName} is dehydrated; cannot mutate spooled iteration`)
+            }
+            target = iterationOutput as Record<string, StepOutput>
         }
         return target
     },
@@ -41,7 +45,7 @@ export const executionJournal = {
      */
     getOrCreateStateAtPath({ path, steps }: GetStateAtPathParams): Record<string, StepOutput> {
         let target = steps
-    
+
         for (const [parentStepName, iteration] of path) {
             let step = target[parentStepName]
             if (!step ) {
@@ -55,9 +59,12 @@ export const executionJournal = {
             if (!iterationOutput ) {
                 loopStepOutput = loopStepOutput.setItemAndIndex({ item: undefined, index: iteration }).addIteration()
                 iterationOutput = loopStepOutput.output?.iterations[iteration] ?? {}
-            } 
+            }
+            if (isDehydratedRef(iterationOutput)) {
+                throw new Error(`Iteration ${iteration} for ${parentStepName} is dehydrated; cannot mutate spooled iteration`)
+            }
             target[parentStepName] = loopStepOutput
-            target = iterationOutput
+            target = iterationOutput as Record<string, StepOutput>
         }
         return target
     },
@@ -68,7 +75,10 @@ export const executionJournal = {
             if ( step.type === FlowActionType.LOOP_ON_ITEMS && step.output ) {
                 const iterations = step.output.iterations
                 iterations.forEach((iteration) => {
-                    const lastOneInIteration = this.findLastStepWithStatus(iteration, status)
+                    if (isDehydratedRef(iteration)) {
+                        return
+                    }
+                    const lastOneInIteration = this.findLastStepWithStatus(iteration as Record<string, StepOutput>, status)
                     if (!isNil(lastOneInIteration)) {
                         lastStepWithStatus = lastOneInIteration
                     }
@@ -77,7 +87,7 @@ export const executionJournal = {
             if (isNil(status)) {
                 lastStepWithStatus = stepName
                 return
-            } 
+            }
             if (step.status === status) {
                 lastStepWithStatus = stepName
                 return
@@ -91,9 +101,12 @@ export const executionJournal = {
         Object.entries(steps).forEach(([stepName, step]) => {
             if (step.type === FlowActionType.LOOP_ON_ITEMS) {
                 const iterationsResult = step.output?.iterations.reduce((acc, iteration) => {
+                    if (isDehydratedRef(iteration)) {
+                        return acc
+                    }
                     return {
                         ...acc,
-                        ...this.getLoopSteps(iteration),
+                        ...this.getLoopSteps(iteration as Record<string, StepOutput>),
                     }
                 }, {} as Record<string, LoopStepOutput>)
                 if (isNil(iterationsResult)) {
@@ -114,7 +127,10 @@ export const executionJournal = {
         if (parent.type !== FlowActionType.LOOP_ON_ITEMS) return false
         if (!parent.output?.iterations) return false
         for (const iteration of parent.output.iterations) {
-            for (const [name, output] of Object.entries(iteration)) {
+            if (isDehydratedRef(iteration)) {
+                continue
+            }
+            for (const [name, output] of Object.entries(iteration as Record<string, StepOutput>)) {
                 if (name === child) return true
                 if (this.isChildOf(output, child)) return true
             }
@@ -139,7 +155,10 @@ export const executionJournal = {
             if (!step.output?.iterations) continue
 
             for (const iteration of step.output.iterations) {
-                const nestedPath = this.getPathToStep(iteration, stepName, loopsIndexes, [...currentPath, [currentStepName, loopsIndexes[currentStepName]]])
+                if (isDehydratedRef(iteration)) {
+                    continue
+                }
+                const nestedPath = this.getPathToStep(iteration as Record<string, StepOutput>, stepName, loopsIndexes, [...currentPath, [currentStepName, loopsIndexes[currentStepName]]])
                 if (nestedPath) return nestedPath
             }
         }

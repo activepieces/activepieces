@@ -1,5 +1,6 @@
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { FlowRunStatus, isNil, LoopOnItemsAction, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { FlowRunStatus, isDehydratedRef, isNil, LoopOnItemsAction, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { SpoolContext, spoolService } from '../spool'
 import { BaseExecutor } from './base-executor'
 import { flowExecutor } from './flow-executor'
 
@@ -66,6 +67,24 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
 
             if (newExecutionContext.verdict.status !== FlowRunStatus.RUNNING) {
                 return newExecutionContext.upsertStep(action.name, stepOutput.setDuration(performance.now() - stepStartTime))
+            }
+
+            const spoolCtx: SpoolContext = {
+                runId: constants.flowRunId,
+                projectId: constants.projectId,
+                engineToken: constants.engineToken,
+                apiUrl: constants.internalApiUrl,
+            }
+            const liveLoop = newExecutionContext.getLoopStepOutput({ stepName: action.name })
+            const liveIteration = liveLoop?.output?.iterations[i]
+            if (liveLoop && liveIteration && !isDehydratedRef(liveIteration)) {
+                const maybeRef = await spoolService.maybeSpoolIteration({ iteration: liveIteration as Record<string, never>, ctx: spoolCtx })
+                if (isDehydratedRef(maybeRef)) {
+                    const newIterations = [...(liveLoop.output?.iterations ?? [])]
+                    newIterations[i] = maybeRef
+                    stepOutput = liveLoop.setIterations(newIterations)
+                    newExecutionContext = newExecutionContext.upsertStep(action.name, stepOutput)
+                }
             }
 
             if (testSingleStepMode) {

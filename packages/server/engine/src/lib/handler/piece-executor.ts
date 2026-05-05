@@ -9,6 +9,7 @@ import { createFileUploader } from '../piece-context/file-uploader'
 import { createFlowsContext } from '../piece-context/flows'
 import { createContextStore } from '../piece-context/store'
 import { waitpointClient } from '../piece-context/waitpoint-client'
+import { SpoolContext, spoolService } from '../spool'
 import { agentTools } from '../tools'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
@@ -172,23 +173,32 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         }
 
         const stepEndTime = performance.now()
+        const spoolCtx: SpoolContext = {
+            runId: constants.flowRunId,
+            projectId: constants.projectId,
+            engineToken: constants.engineToken,
+            apiUrl: constants.internalApiUrl,
+        }
         if (params.hookResponse.type === 'stopped') {
             if (isNil(params.hookResponse.response)) {
                 throw new EngineGenericError('StopResponseNotSetError', 'Stop response is not set')
             }
 
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({
+            const finalized = await spoolService.maybeSpoolStepOutput({ stepOutput: stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime), ctx: spoolCtx })
+            return newExecutionContext.upsertStep(action.name, finalized).incrementStepsExecuted().setVerdict({
                 status: FlowRunStatus.SUCCEEDED,
                 stopResponse: (params.hookResponse.response as StopHookParams).response,
             })
         }
         if (params.hookResponse.type === 'paused') {
+            const finalized = await spoolService.maybeSpoolStepOutput({ stepOutput: stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime), ctx: spoolCtx })
             return newExecutionContext
-                .upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime))
+                .upsertStep(action.name, finalized)
                 .incrementStepsExecuted()
                 .setVerdict({ status: FlowRunStatus.PAUSED })
         }
-        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
+        const finalized = await spoolService.maybeSpoolStepOutput({ stepOutput: stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime), ctx: spoolCtx })
+        return newExecutionContext.upsertStep(action.name, finalized).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
 
     }))
 

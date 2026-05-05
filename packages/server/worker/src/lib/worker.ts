@@ -26,6 +26,7 @@ import { EgressStack, startEgressStack } from './egress/lifecycle'
 import { getHandler } from './execute/job-registry'
 import { createSandboxManager, SandboxManager } from './execute/sandbox-manager'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
+import { spoolJanitor } from './spool-janitor'
 
 
 const tracer = trace.getTracer('worker')
@@ -59,6 +60,7 @@ export const worker = {
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
             await fetchAndStoreSettings(socket!)
+            await spoolJanitor.sweepOnBoot()
             if (!egressStack) {
                 const { data, error } = await tryCatch(() => startEgressStack({ log: logger, apiUrl }))
                 if (error) {
