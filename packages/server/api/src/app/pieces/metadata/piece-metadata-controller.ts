@@ -4,6 +4,9 @@ import {
     ALL_PRINCIPAL_TYPES,
     EngineResponse,
     ErrorCode,
+    ExecuteActionRequest,
+    ExecuteActionRequestParams,
+    ExecuteActionResponse,
     GetPieceRequestParams,
     GetPieceRequestQuery,
     GetPieceRequestWithScopeParams,
@@ -124,6 +127,32 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
     app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync({ publishCacheRefresh: true }))
 
     app.post(
+        '/:name/actions/:actionName/execute',
+        ExecuteActionEndpointRequest,
+        async (req): Promise<ExecuteActionResponse> => {
+            const projectId = req.projectId!
+            const platform = req.principal.platform!
+            const { name, actionName } = req.params
+            const { pieceVersion, input, stepNameToTest } = req.body
+            const decodedName = decodeURIComponent(name)
+
+            const { response } = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteActionResponse>>({
+                jobType: WorkerJobType.EXECUTE_ACTION,
+                platformId: platform.id,
+                projectId,
+                piece: await getPiecePackageWithoutArchive(req.log, platform.id, {
+                    pieceName: decodedName,
+                    pieceVersion,
+                }),
+                actionName,
+                input,
+                stepNameToTest,
+            }, req.log)
+            return response
+        },
+    )
+
+    app.post(
         '/options',
         OptionsPieceRequest,
         async (req) => {
@@ -208,6 +237,18 @@ const ListCategoriesRequest = {
 const OptionsPieceRequest = {
     schema: {
         body: PieceOptionRequest,
+    },
+    config: {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.BODY,
+        }),
+    },
+}
+
+const ExecuteActionEndpointRequest = {
+    schema: {
+        params: ExecuteActionRequestParams,
+        body: ExecuteActionRequest,
     },
     config: {
         security: securityAccess.project([PrincipalType.USER], undefined, {
