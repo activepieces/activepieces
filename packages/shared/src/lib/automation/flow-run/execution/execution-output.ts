@@ -19,6 +19,15 @@ export const ExecutionState = z.object({
 
 export type ExecutioOutputFile = {
     executionState: ExecutionState
+    version?: number
 }
 
 export type ResumePayload = TriggerPayload
+
+export {
+    DEHYDRATED_REF_MARKER,
+    DehydratedRef,
+    isDehydratedRef,
+    buildDehydratedRef,
+    FLOW_RUN_LOG_MANIFEST_V2,
+} from './dehydrated-ref'

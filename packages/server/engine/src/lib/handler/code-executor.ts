@@ -4,6 +4,7 @@ import { CodeAction, EngineGenericError, FlowActionType, FlowRunStatus, GenericS
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
+import { SpoolContext, spoolService } from '../spool'
 import { utils } from '../utils'
 import { ActionHandler, BaseExecutor } from './base-executor'
 
@@ -53,7 +54,14 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             inputs: resolvedInput,
         })
 
-        return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime)).incrementStepsExecuted()
+        const spoolCtx: SpoolContext = {
+            runId: constants.flowRunId,
+            projectId: constants.projectId,
+            engineToken: constants.engineToken,
+            apiUrl: constants.internalApiUrl,
+        }
+        const finalized = await spoolService.maybeSpoolStepOutput({ stepOutput: stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime), ctx: spoolCtx })
+        return executionState.upsertStep(action.name, finalized).incrementStepsExecuted()
     }))
 
     if (executionStateError) {

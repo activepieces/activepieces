@@ -51,6 +51,7 @@ export const pieceHelper = {
                 engineToken: constants.engineToken,
                 contextVersion: piece.getContextInfo?.().version,
                 stepNames: constants.stepNames,
+                flowRunId: constants.flowRunId,
             }).resolve<
             StaticPropsValue<PiecePropertyMap>
             >({

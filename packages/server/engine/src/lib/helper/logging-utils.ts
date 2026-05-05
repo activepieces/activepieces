@@ -1,4 +1,5 @@
-import { FlowActionType, StepOutput } from '@activepieces/shared'
+import { FlowActionType, isDehydratedRef, StepOutput } from '@activepieces/shared'
+import { recursiveSizeof } from '../spool'
 import { utils } from '../utils'
 
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
@@ -61,7 +62,7 @@ export const loggingUtils = {
 }
 
 function getTotalStepsSize(steps: Record<string, StepOutput>): number {
-    return utils.sizeof(steps)
+    return recursiveSizeof(steps)
 }
 
 function traverseStepsAndCollectKeys(
@@ -83,10 +84,13 @@ function traverseStepsAndCollectKeys(
         }
 
         if (step?.type === FlowActionType.LOOP_ON_ITEMS && step.output) {
-            const loopOutput = step.output as { iterations: Record<string, StepOutput>[] }
+            const loopOutput = step.output as { iterations: unknown[] }
             if (loopOutput.iterations) {
                 for (const iteration of loopOutput.iterations) {
-                    traverseStepsAndCollectKeys(iteration, entries)
+                    if (isDehydratedRef(iteration)) {
+                        continue
+                    }
+                    traverseStepsAndCollectKeys(iteration as Record<string, StepOutput>, entries)
                 }
             }
         }
