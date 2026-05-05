@@ -60,7 +60,6 @@ const EventDestinationsPage = () => {
     queries: flowIds.map((flowId) => ({
       queryKey: ['flow-display-name', flowId],
       queryFn: () => flowsApi.get(flowId),
-      staleTime: Infinity,
     })),
   });
 

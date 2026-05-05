@@ -22,7 +22,6 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
@@ -224,19 +223,22 @@ const EventDestinationForm = ({
 
   const availableEvents = Object.values(ApplicationEventName);
   const isSubmitDisabled = isCreating || isImporting;
-  const isTestingButtonDisabled = isTesting ||  !isNil(form.formState.errors.url) || watchedEvents.length === 0;
+  const isTestingButtonDisabled =
+    isTesting ||
+    !isNil(form.formState.errors.url) ||
+    watchedEvents.length === 0;
   return (
     <>
-        <DialogTitle>
-          {destination ? t('Edit custom alert') : t('New custom alert')}
-        </DialogTitle>
-        <DialogDescription>
-          {destination
-            ? t('Update the webhook endpoint and event subscriptions.')
-            : t(
-                'Send audit events to a webhook. Use an internal flow to route them to your notification channels — Slack, Gmail, Microsoft Teams, or any HTTP endpoint.',
-              )}
-        </DialogDescription>
+      <DialogTitle>
+        {destination ? t('Edit custom alert') : t('New custom alert')}
+      </DialogTitle>
+      <DialogDescription>
+        {destination
+          ? t('Update the webhook endpoint and event subscriptions.')
+          : t(
+              'Send audit events to a webhook. Use an internal flow to route them to your notification channels — Slack, Gmail, Microsoft Teams, or any HTTP endpoint.',
+            )}
+      </DialogDescription>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <FormField
@@ -244,7 +246,9 @@ const EventDestinationForm = ({
             name="events"
             render={({ field }) => (
               <FormItem>
-                <FormLabel showRequiredIndicator className="text-base">{t('Events')}</FormLabel>
+                <FormLabel showRequiredIndicator className="text-base">
+                  {t('Events')}
+                </FormLabel>
                 <ScrollArea
                   className="h-48 rounded-md "
                   viewPortClassName="px-0"
@@ -340,9 +344,7 @@ const EventDestinationForm = ({
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={
-                     isTestingButtonDisabled
-                  }
+                  disabled={isTestingButtonDisabled}
                 >
                   {isTesting ? t('Testing...') : t('Test webhook')}
                   <ChevronDown className="size-4" />
