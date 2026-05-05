@@ -6,6 +6,7 @@ import { bedrockProvider } from './bedrock-provider'
 import { cloudflareGatewayProvider } from './cloudflare-gateway-provider'
 import { googleProvider } from './google-provider'
 import { openAICompatibleProvider } from './openai-compatible-gateway-provider'
+import { n1nAIProvider } from './n1n-ai-provider'
 import { openaiProvider } from './openai-provider'
 import { openRouterProvider } from './openrouter-provider'
 
@@ -25,6 +26,7 @@ export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderAu
             // Activepieces provider is managed internally, no external validation needed
         },
     },
+    [AIProviderName.N1N_AI]: n1nAIProvider,
 }
 
 export { AIProviderStrategy } from './ai-provider'

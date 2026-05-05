@@ -49,10 +49,11 @@ export const askLocalAI = createAction({
 
         const authValue = auth as AppConnectionValueForAuthProperty<typeof localaiAuth>;
         try {
+          const url = (authValue.props.base_url?.trim() || '').replace(/\/$/, '');
           const response = await httpClient.sendRequest<{
             data: { id: string }[];
           }>({
-            url: authValue.props.base_url + '/models',
+            url: url + '/models',
             method: HttpMethod.GET,
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
@@ -121,8 +122,9 @@ export const askLocalAI = createAction({
     }),
   },
   async run({ auth, propsValue }) {
+    const url = (auth.props.base_url?.trim() || '').replace(/\/$/, '');
     const openai = new OpenAI({
-      baseURL: auth.props.base_url,
+      baseURL: url,
       apiKey: auth.props.access_token,
     });
     let billingIssue = false;

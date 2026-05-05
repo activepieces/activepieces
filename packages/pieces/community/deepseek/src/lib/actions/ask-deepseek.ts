@@ -27,9 +27,10 @@ export const askDeepseek = createAction({
           };
         }
         try {
+          const url = (auth.baseUrl?.trim() || baseUrl).replace(/\/$/, '');
           const openai = new OpenAI({
-            baseURL: baseUrl,
-            apiKey: auth.secret_text,
+            baseURL: url,
+            apiKey: auth.apiKey,
           });
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -130,9 +131,10 @@ export const askDeepseek = createAction({
       temperature: z.number().min(0).max(2).optional(),
       memoryKey: z.string().max(128).optional(),
     });
+    const url = (auth.baseUrl?.trim() || baseUrl).replace(/\/$/, '');
     const openai = new OpenAI({
-      baseURL: baseUrl,
-      apiKey: auth.secret_text,
+      baseURL: url,
+      apiKey: auth.apiKey,
     });
     const {
       model,
@@ -195,4 +197,3 @@ export const askDeepseek = createAction({
     return completion.choices[0].message.content;
   },
 });
-

@@ -5,6 +5,7 @@ import {
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 import { z } from 'zod';
+import { DEFAULT_BASE_URL } from '../common/common';
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const visionPrompt = createAction({
@@ -100,7 +101,8 @@ export const visionPrompt = createAction({
     });
 
     const openai = new OpenAI({
-      apiKey: auth.secret_text,
+      apiKey: auth.apiKey,
+      baseURL: auth.baseUrl?.trim() || DEFAULT_BASE_URL,
     });
     const { temperature, maxTokens, topP, frequencyPenalty, presencePenalty } =
       propsValue;

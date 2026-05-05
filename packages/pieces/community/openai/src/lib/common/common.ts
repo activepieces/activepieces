@@ -1,6 +1,13 @@
 import { encoding_for_model } from 'tiktoken';
 
-export const baseUrl = 'https://api.openai.com/v1';
+/** Default OpenAI API base URL. Used as the fallback when users do not supply a custom server URL. */
+export const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
+
+/**
+ * @deprecated Use DEFAULT_BASE_URL instead. Kept for backward compatibility
+ * with any actions that have not yet been updated.
+ */
+export const baseUrl = DEFAULT_BASE_URL;
 
 export const Languages = [
   { value: 'es', label: 'Spanish' },
