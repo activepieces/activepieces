@@ -20,7 +20,9 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/acs', AcsRequest, async (req, res) => {
-        const platformId = req.query.platformId ?? await platformUtils.getPlatformIdForRequest(req)
+        const platformId = req.query.platformId
+            ?? await platformUtils.getPlatformIdByLegacyHost(req.hostname)
+            ?? await platformUtils.getPlatformIdForRequest(req)
         assertNotNullOrUndefined(platformId, 'Platform Id should not be null')
         const { saml } = await authnSsoSamlService(req.log).getSamlConfigOrThrow(platformId)
         const response = await authnSsoSamlService(req.log).acs(platformId, saml, {
