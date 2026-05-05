@@ -1,4 +1,8 @@
-import { AlertChannel, ProjectWithLimits } from '@activepieces/shared';
+import {
+  AlertChannel,
+  ErrorCode,
+  ProjectWithLimits,
+} from '@activepieces/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { BellMinus, BellPlus, BellRing, ChevronDown } from 'lucide-react';
@@ -68,7 +72,7 @@ export const MyAlertSubscriptionsDropdown = ({
                 });
                 return 'subscribed';
               } catch (error) {
-                if (api.isError(error) && error.response?.status === 409) {
+                if (api.isApError(error, ErrorCode.EXISTING_ALERT_CHANNEL)) {
                   return 'already-subscribed';
                 }
                 throw error;

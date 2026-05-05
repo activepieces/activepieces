@@ -83,7 +83,7 @@ export const PersonalProjectAlerts = () => {
         </Label>
         <span className="text-xs text-muted-foreground">
           {t(
-            'Disabling this only removes your own subscription. Other receivers below continue to receive alerts.',
+            'Turn off to stop receiving emails when flows in this project fail.',
           )}
         </span>
       </div>

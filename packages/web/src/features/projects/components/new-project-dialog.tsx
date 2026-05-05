@@ -174,7 +174,9 @@ const NewProjectForm = ({
                   value={field.value ?? ''}
                 />
                 <span className="text-xs text-muted-foreground">
-                  {t('Receives flow failure emails for this project.')}
+                  {t(
+                    'Optional — receives flow failure emails for this project.',
+                  )}
                 </span>
                 <FormMessage />
               </FormItem>
