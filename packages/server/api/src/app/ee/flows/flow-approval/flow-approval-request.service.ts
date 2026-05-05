@@ -109,6 +109,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         })
 
         if (result.applied) {
+            await flowService(log).setPublishedVersionSideEffects({ flow })
             await flowService(log).applyStatusChangeForPublishedFlow({
                 id: flow.id,
                 projectId: approval.projectId,

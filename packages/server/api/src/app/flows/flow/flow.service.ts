@@ -484,7 +484,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             versionId: undefined,
         })
 
-        return transaction(async (entityManager) => {
+        const result = await transaction(async (entityManager) => {
             const lockedFlowVersion = await lockFlowVersionIfNotLocked({
                 flowVersion: flowVersionToPublish,
                 userId,
@@ -499,9 +499,24 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 entityManager,
             })
         })
+        await this.setPublishedVersionSideEffects({ flow: flowToUpdate })
+        return result
     },
 
     async setPublishedVersion({ flow, lockedVersion, entityManager }: SetPublishedVersionParams): Promise<PopulatedFlow> {
+        await flowRepo(entityManager).update({ id: flow.id }, {
+            publishedVersionId: lockedVersion.id,
+            status: FlowStatus.DISABLED,
+        })
+        return {
+            ...flow,
+            publishedVersionId: lockedVersion.id,
+            status: FlowStatus.DISABLED,
+            version: lockedVersion,
+        }
+    },
+
+    async setPublishedVersionSideEffects({ flow }: { flow: Flow }): Promise<void> {
         if (flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)) {
             await triggerSourceService(log).disable({
                 flowId: flow.id,
@@ -510,17 +525,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 ignoreError: true,
             })
         }
-        await flowRepo(entityManager).update({ id: flow.id }, {
-            publishedVersionId: lockedVersion.id,
-            status: FlowStatus.DISABLED,
-        })
         await flowExecutionCache(log).invalidate(flow.id)
-        return {
-            ...flow,
-            publishedVersionId: lockedVersion.id,
-            status: FlowStatus.DISABLED,
-            version: lockedVersion,
-        }
     },
 
     async lockFlowVersionIfNotLocked(params: Omit<LockFlowVersionIfNotLockedParams, 'log'>): Promise<FlowVersion> {
