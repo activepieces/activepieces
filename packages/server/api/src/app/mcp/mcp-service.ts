@@ -1,4 +1,4 @@
-import { apId, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpServer as McpServerSchema, McpServerStatus, McpServerType, PopulatedFlow, PopulatedMcpServer, spreadIfNotUndefined, tryCatch } from '@activepieces/shared'
+import { apId, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpServer as McpServerSchema, McpServerType, PopulatedFlow, PopulatedMcpServer, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
@@ -12,14 +12,14 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
     getByProjectId: async (projectId: string): Promise<McpServerSchema> => {
         return getOrCreate({
             where: { projectId },
-            defaults: { type: McpServerType.PROJECT, status: McpServerStatus.DISABLED, projectId, platformId: null },
+            defaults: { type: McpServerType.PROJECT, projectId, platformId: null },
         })
     },
 
     getByPlatformId: async (platformId: string): Promise<McpServerSchema> => {
         return getOrCreate({
             where: { platformId },
-            defaults: { type: McpServerType.PLATFORM, status: McpServerStatus.ENABLED, platformId, projectId: null },
+            defaults: { type: McpServerType.PLATFORM, platformId, projectId: null },
         })
     },
 
@@ -46,15 +46,19 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
         return mcpServerService(log).getByPlatformId(platformId)
     },
 
-    update: async ({ projectId, status, enabledTools }: UpdateParams): Promise<PopulatedMcpServer> => {
+    update: async ({ projectId, enabledTools }: UpdateParams): Promise<PopulatedMcpServer> => {
         const mcp = await mcpServerService(log).getByProjectId(projectId)
-        await applyPatch(mcp.id, { status, enabledTools })
+        if (!isNil(enabledTools)) {
+            await mcpServerRepository().update(mcp.id, { enabledTools })
+        }
         return mcpServerService(log).getPopulatedByProjectId(projectId)
     },
 
-    updatePlatform: async ({ platformId, status, enabledTools }: UpdatePlatformParams): Promise<McpServerSchema> => {
+    updatePlatform: async ({ platformId, enabledTools }: UpdatePlatformParams): Promise<McpServerSchema> => {
         const mcp = await mcpServerService(log).getByPlatformId(platformId)
-        await applyPatch(mcp.id, { status, enabledTools })
+        if (!isNil(enabledTools)) {
+            await mcpServerRepository().update(mcp.id, { enabledTools })
+        }
         return mcpServerService(log).getByPlatformId(platformId)
     },
 
@@ -70,7 +74,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
 
 async function getOrCreate({ where, defaults }: {
     where: { projectId: string } | { platformId: string }
-    defaults: { type: McpServerType, status: McpServerStatus, projectId: string | null, platformId: string | null }
+    defaults: { type: McpServerType, projectId: string | null, platformId: string | null }
 }): Promise<McpServerSchema> {
     const existing = await mcpServerRepository().findOneBy(where)
     if (!isNil(existing)) return existing
@@ -91,16 +95,6 @@ async function getOrCreate({ where, defaults }: {
     return created
 }
 
-async function applyPatch(id: string, { status, enabledTools }: { status?: McpServerStatus, enabledTools?: string[] }): Promise<void> {
-    const patch = {
-        ...spreadIfNotUndefined('status', status),
-        ...spreadIfNotUndefined('enabledTools', enabledTools),
-    }
-    if (Object.keys(patch).length > 0) {
-        await mcpServerRepository().update(id, patch)
-    }
-}
-
 async function listMcpFlows(projectId: string, logger: FastifyBaseLogger): Promise<PopulatedFlow[]> {
     const flows = await flowService(logger).list({
         projectIds: [projectId],
@@ -114,12 +108,10 @@ async function listMcpFlows(projectId: string, logger: FastifyBaseLogger): Promi
 
 type UpdateParams = {
     projectId: string
-    status?: McpServerStatus
     enabledTools?: string[]
 }
 
 type UpdatePlatformParams = {
     platformId: string
-    status?: McpServerStatus
     enabledTools?: string[]
 }
