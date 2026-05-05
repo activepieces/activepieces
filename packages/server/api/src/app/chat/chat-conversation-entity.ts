@@ -1,8 +1,9 @@
-import { ChatConversation, Project } from '@activepieces/shared'
+import { ChatConversation, Platform, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
 type ChatConversationWithRelations = ChatConversation & {
+    platform: Platform
     project: Project
     user: unknown
 }
@@ -11,9 +12,13 @@ export const ChatConversationEntity = new EntitySchema<ChatConversationWithRelat
     name: 'chat_conversation',
     columns: {
         ...BaseColumnSchemaPart,
-        projectId: {
+        platformId: {
             ...ApIdSchema,
             nullable: false,
+        },
+        projectId: {
+            ...ApIdSchema,
+            nullable: true,
         },
         userId: {
             ...ApIdSchema,
@@ -32,19 +37,37 @@ export const ChatConversationEntity = new EntitySchema<ChatConversationWithRelat
             nullable: false,
             default: '[]',
         },
+        summary: {
+            type: 'text',
+            nullable: true,
+        },
+        summarizedUpToIndex: {
+            type: Number,
+            nullable: true,
+        },
     },
     indices: [
         {
-            name: 'idx_chat_conversation_project_user_created_id',
-            columns: ['projectId', 'userId', 'created', 'id'],
+            name: 'idx_chat_conversation_platform_user_created_id',
+            columns: ['platformId', 'userId', 'created', 'id'],
         },
     ],
     relations: {
+        platform: {
+            type: 'many-to-one',
+            target: 'platform',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'platformId',
+                foreignKeyConstraintName: 'fk_chat_conversation_platform_id',
+            },
+        },
         project: {
             type: 'many-to-one',
             target: 'project',
             cascade: true,
-            onDelete: 'CASCADE',
+            onDelete: 'SET NULL',
             joinColumn: {
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_chat_conversation_project_id',

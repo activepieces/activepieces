@@ -1,4 +1,4 @@
-import { McpServer, McpToolDefinition } from '@activepieces/shared'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { apAddBranchTool } from './ap-add-branch'
 import { apAddStepTool } from './ap-add-step'
@@ -84,7 +84,7 @@ export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = [
     'ap_run_action',
 ]
 
-export const activepiecesTools = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition[] => [
+export const activepiecesTools = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition[] => [
     apBuildFlowTool(mcp, log),
     apCreateFlowTool(mcp, log),
     apDuplicateFlowTool(mcp, log),

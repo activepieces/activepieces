@@ -2,8 +2,10 @@
 import { FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 
@@ -35,6 +37,17 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
         return flowVersion
     })
 
+    app.get('/files/:fileId', GetEnginePayloadFileRequest, async (request, reply) => {
+        const { data } = await fileService(request.log).getDataOrThrow({
+            fileId: request.params.fileId,
+            projectId: request.principal.projectId,
+        })
+        return reply
+            .type('application/octet-stream')
+            .status(StatusCodes.OK)
+            .send(data)
+    })
+
 
 }
 
@@ -57,5 +70,16 @@ const GetLockedVersionRequest = {
         response: {
             [StatusCodes.OK]: FlowVersion,
         },
+    },
+}
+
+const GetEnginePayloadFileRequest = {
+    config: {
+        security: securityAccess.engine(),
+    },
+    schema: {
+        params: z.object({
+            fileId: z.string(),
+        }),
     },
 }

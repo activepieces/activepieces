@@ -1,4 +1,4 @@
-import { FlowStatus, FlowTriggerType, isNil, McpServer, McpToolDefinition, Permission, PopulatedFlow } from '@activepieces/shared'
+import { FlowStatus, FlowTriggerType, isNil, McpToolDefinition, Permission, PopulatedFlow, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -13,7 +13,7 @@ const listFlowsInput = z.object({
     name: z.string().optional(),
 })
 
-export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apListFlowsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_flows',
         permission: Permission.READ_FLOW,

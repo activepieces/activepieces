@@ -29,7 +29,7 @@ export default defineConfig(({ command, mode }) => {
           },
           ws: true,
         },
-        '^/mcp$': {
+        '^/mcp(/|$)': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,

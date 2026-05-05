@@ -16,6 +16,7 @@ import { ActivepiecesError,
     PlatformWithoutSensitiveData,
     ProjectType,
     spreadIfDefined,
+    SsoDomainVerification,
     UpdatePlatformRequestBody,
     UserId,
     UserStatus,
@@ -149,6 +150,8 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 params.enforceAllowedAuthDomains,
             ),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
+            ...spreadIfDefined('ssoDomain', params.ssoDomain),
+            ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
         }
         if (!isNil(params.plan)) {
@@ -266,6 +269,8 @@ type UpdateParams = UpdatePlatformRequestBody & {
     logoIconUrl?: string
     fullLogoUrl?: string
     favIconUrl?: string
+    ssoDomain?: string | null
+    ssoDomainVerification?: SsoDomainVerification | null
 }
 
 type CreatePlatformWithProjectParams = {

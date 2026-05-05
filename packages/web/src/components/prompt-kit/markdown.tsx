@@ -145,6 +145,13 @@ function makeHeading(Tag: 'h1' | 'h2' | 'h3') {
 }
 
 const INITIAL_COMPONENTS: Partial<Components> = {
+  table: function TableComponent({ children }) {
+    return (
+      <div className="my-4 overflow-hidden rounded-md border border-border">
+        <table className="w-full text-sm border-collapse">{children}</table>
+      </div>
+    );
+  },
   h1: makeHeading('h1'),
   h2: makeHeading('h2'),
   h3: makeHeading('h3'),
@@ -287,9 +294,9 @@ function MarkdownComponent({
     <div
       className={cn(
         '[&_pre]:overflow-x-auto [&_pre]:max-w-full',
-        '[&_table]:w-full [&_table]:text-sm [&_table]:border-collapse [&_table]:my-4',
         '[&_th]:text-left [&_th]:p-2.5 [&_th]:border-b [&_th]:border-border [&_th]:font-semibold',
         '[&_td]:p-2.5 [&_td]:border-b [&_td]:border-border',
+        '[&_tr:last-child_td]:border-b-0',
         className,
       )}
     >

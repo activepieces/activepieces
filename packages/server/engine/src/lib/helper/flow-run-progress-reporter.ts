@@ -2,57 +2,36 @@ import { promisify } from 'node:util'
 import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { CONTENT_ENCODING_ZSTD, DEFAULT_MCP_DATA, EngineGenericError, FlowActionType, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { CONTENT_ENCODING_ZSTD, DEFAULT_MCP_DATA, EngineGenericError, FlowActionType, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, tryCatch, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import fetchRetry from 'fetch-retry'
+import { EngineConstants } from '../handler/context/engine-constants'
+import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { utils } from '../utils'
 import { workerSocket } from '../worker-socket'
-import { EngineConstants } from './context/engine-constants'
-import { FlowExecutorContext } from './context/flow-execution-context'
 
 
 const zstdCompress = promisify(zstdCompressCallback)
-const lock = new Mutex()
-const updateLock = new Mutex()
+const stateLock = new Mutex()
 const fetchWithRetry = fetchRetry(global.fetch)
 
-const BACKUP_INTERVAL_MS = 15000
-export let latestUpdateParams: UpdateStepProgressParams | null = null
+const SNAPSHOT_FLUSH_INTERVAL_MS = 15000
+let latestUpdateParams: UpdateStepProgressParams | null = null
 let savedStartTime: string | null = null
-let backupController: AbortController | null = null
-let backupLoopPromise: Promise<void> | null = null
+let flushController: AbortController | null = null
+let flushLoopPromise: Promise<void> | null = null
 
-async function backupLoop(signal: AbortSignal): Promise<void> {
-    while (!signal.aborted) {
-        try {
-            if (latestUpdateParams) {
-                await runProgressService.backup(latestUpdateParams)
-            }
-        }
-        catch (err) {
-            console.error('[Progress] Backup failed', err)
-        }
-
-        try {
-            await setTimeout(BACKUP_INTERVAL_MS, undefined, { signal })
-        }
-        catch {
-            // sleep aborted → loop will exit naturally
-        }
-    }
-}
-
-export const runProgressService = {
+export const flowRunProgressReporter = {
     init: (): void => {
-        if (backupController) {
+        if (flushController) {
             return
         }
-        backupController = new AbortController()
-        backupLoopPromise = backupLoop(backupController.signal)
+        flushController = new AbortController()
+        flushLoopPromise = runFlushLoop(flushController.signal)
     },
     sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
-        return updateLock.runExclusive(async () => {
+        return stateLock.runExclusive(async () => {
             const { engineConstants, flowExecutorContext, stepNameToUpdate } = params
             if (params.startTime) {
                 savedStartTime = params.startTime
@@ -109,13 +88,19 @@ export const runProgressService = {
             },
         }
     },
-    backup: async (updateParams: BackUpLogsParams): Promise<void> => {
-        const isRunningMcp = updateParams.engineConstants.flowRunId === DEFAULT_MCP_DATA.flowRunId
-        if (isRunningMcp) {
-            return
-        }
-        await lock.runExclusive(async () => {
-            const { flowExecutorContext, engineConstants } = updateParams
+    backup: async (): Promise<void> => {
+        await stateLock.runExclusive(async () => {
+            const params = latestUpdateParams
+            if (isNil(params)) {
+                return
+            }
+            const { flowExecutorContext, engineConstants } = params
+            if (engineConstants.flowRunId === DEFAULT_MCP_DATA.flowRunId) {
+                return
+            }
+            const status = flowExecutorContext.verdict.status
+            const isTerminal = isFlowRunStateTerminal({ status, ignoreInternalError: false })
+
             const serialized = await logSerializer.serialize({
                 executionState: {
                     steps: flowExecutorContext.steps,
@@ -142,17 +127,14 @@ export const runProgressService = {
             const request: UploadRunLogsRequest = {
                 runId: engineConstants.flowRunId,
                 projectId: engineConstants.projectId,
-                status: flowExecutorContext.verdict.status,
+                status,
                 streamStepProgress: engineConstants.streamStepProgress,
                 logsFileId: engineConstants.logsFileId,
                 failedStep: 'failedStep' in flowExecutorContext.verdict ? flowExecutorContext.verdict.failedStep : undefined,
                 stepNameToTest: engineConstants.stepNameToTest,
                 stepResponse,
                 startTime: savedStartTime ?? undefined,
-                finishTime: isFlowRunStateTerminal({
-                    status: flowExecutorContext.verdict.status,
-                    ignoreInternalError: false,
-                }) ? dayjs().toISOString() : undefined,
+                finishTime: isTerminal ? dayjs().toISOString() : undefined,
                 tags: Array.from(flowExecutorContext.tags),
                 stepsCount: flowExecutorContext.stepsCount,
             }
@@ -160,25 +142,37 @@ export const runProgressService = {
         })
     },
     shutdown: async () => {
-        if (!backupController) {
+        if (!flushController) {
             return
         }
 
-        backupController.abort()
+        flushController.abort()
 
-        if (backupLoopPromise) {
-            await backupLoopPromise
+        if (flushLoopPromise) {
+            await flushLoopPromise
         }
 
-        backupController = null
-        backupLoopPromise = null
+        flushController = null
+        flushLoopPromise = null
         latestUpdateParams = null
         savedStartTime = null
     },
 }
 
-process.on('SIGTERM', () => void runProgressService.shutdown())
-process.on('SIGINT', () => void runProgressService.shutdown())
+process.on('SIGTERM', () => void flowRunProgressReporter.shutdown())
+process.on('SIGINT', () => void flowRunProgressReporter.shutdown())
+
+async function runFlushLoop(signal: AbortSignal): Promise<void> {
+    while (!signal.aborted) {
+        const { error: flushError } = await tryCatch(() => flowRunProgressReporter.backup())
+        if (flushError) {
+            console.error('[Progress] Snapshot flush failed', flushError)
+        }
+
+        // sleep aborted → loop will exit naturally on the next signal check
+        await tryCatch(() => setTimeout(SNAPSHOT_FLUSH_INTERVAL_MS, undefined, { signal }))
+    }
+}
 
 const sendUpdateProgress = async (request: UpdateRunProgressRequest): Promise<void> => {
     const result = await utils.tryCatchAndThrowOnEngineError(() =>
@@ -241,12 +235,6 @@ type UpdateStepProgressParams = {
     flowExecutorContext: FlowExecutorContext
     stepNameToUpdate?: string
     startTime?: string
-}
-
-type BackUpLogsParams = {
-    engineConstants: EngineConstants
-    flowExecutorContext: FlowExecutorContext
-    stepNameToUpdate?: string
 }
 
 type CreateOutputContextParams = {

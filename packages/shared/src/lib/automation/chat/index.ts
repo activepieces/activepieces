@@ -25,11 +25,14 @@ const ChatMessageFile = z.object({
 
 export const ChatConversation = z.object({
     ...BaseModelSchema,
-    projectId: z.string(),
+    platformId: z.string(),
+    projectId: Nullable(z.string()),
     userId: z.string(),
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
     messages: z.array(z.record(z.string(), z.unknown())).default([]),
+    summary: Nullable(z.string()),
+    summarizedUpToIndex: Nullable(z.number().int()),
 })
 export type ChatConversation = z.infer<typeof ChatConversation>
 
@@ -44,6 +47,11 @@ export const UpdateChatConversationRequest = z.object({
     modelName: Nullable(z.string()).optional(),
 })
 export type UpdateChatConversationRequest = z.infer<typeof UpdateChatConversationRequest>
+
+export const SetProjectContextRequest = z.object({
+    projectId: Nullable(z.string()),
+})
+export type SetProjectContextRequest = z.infer<typeof SetProjectContextRequest>
 
 export const SendChatMessageRequest = z.object({
     content: z.string().max(51200),

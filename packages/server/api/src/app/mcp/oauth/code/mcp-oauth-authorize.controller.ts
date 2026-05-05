@@ -12,7 +12,7 @@ const AUTH_REQUEST_TTL_10_MINUTES_SECONDS = 10 * 60
 export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/authorize', AuthorizeRequest, async (req, reply) => {
-        const { client_id, redirect_uri, response_type, code_challenge, code_challenge_method, state, scope } = req.query
+        const { client_id, redirect_uri, response_type, code_challenge, code_challenge_method, state, scope, resource } = req.query
 
         if (response_type !== 'code') {
             return reply.status(400).send({ error: 'unsupported_response_type' })
@@ -41,6 +41,7 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
                 codeChallengeMethod: code_challenge_method,
                 state: state ?? null,
                 scopes: scope ? scope.split(' ') : ['mcp'],
+                resource: resource ?? null,
                 type: 'mcp_auth_request',
             },
             key,
