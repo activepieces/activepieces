@@ -167,7 +167,9 @@ local timeoutMs = tonumber(ARGV[2])
 local member = ARGV[3]
 local ttlSeconds = math.ceil(timeoutMs / 1000)
 
-redis.call('ZREM', activeKey, member)
+if redis.call('ZREM', activeKey, member) == 0 then
+    return ''
+end
 
 local head = redis.call('ZPOPMIN', waitlistKey)
 if #head == 0 then

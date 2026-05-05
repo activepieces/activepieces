@@ -322,6 +322,27 @@ describe('concurrencyPoolRedis Lua primitives', () => {
             expect(popped).toBeNull()
             expect(await redis.zcard(setKey)).toBe(0)
         })
+
+        it('A17: release of a stale-swept member does not over-pop into a saturated pool', async () => {
+            const poolId = `a17-${crypto.randomUUID()}`
+            const redis = await redisConnections.useExisting()
+            const setKey = getConcurrencyPoolSetKey(poolId)
+            const waitlistKey = getConcurrencyPoolWaitlistKey(poolId)
+
+            await redis.zadd(setKey, Date.now(), 'p:replacement')
+            await redis.zadd(waitlistKey, Date.now(), 'p:waiter')
+
+            const popped = await concurrencyPoolRedis.raw.releaseSlotAndPopWaiter({
+                poolId,
+                projectId: 'p',
+                jobId: 'long-running',
+                timeoutMs: TIMEOUT_MS,
+            })
+
+            expect(popped).toBeNull()
+            expect(await redis.zrange(setKey, 0, -1)).toEqual(['p:replacement'])
+            expect(await redis.zrange(waitlistKey, 0, -1)).toEqual(['p:waiter'])
+        })
     })
 
     describe('Suite B — concurrent / race-condition correctness', () => {
