@@ -11,6 +11,7 @@ export enum AIProviderName {
     CLOUDFLARE_GATEWAY = 'cloudflare-gateway',
     CUSTOM = 'custom',
     BEDROCK = 'bedrock',
+    MISTRAL = 'mistral',
 }
 
 
@@ -55,6 +56,9 @@ export const BedrockProviderAuthConfig = z.object({
     secretAccessKey: z.string().min(1),
 })
 export type BedrockProviderAuthConfig = z.infer<typeof BedrockProviderAuthConfig>
+
+export const MistralProviderAuthConfig = BaseAIProviderAuthConfig
+export type MistralProviderAuthConfig = z.infer<typeof MistralProviderAuthConfig>
 
 export const AnthropicProviderConfig = z.object({})
 export type AnthropicProviderConfig = z.infer<typeof AnthropicProviderConfig>
@@ -106,6 +110,9 @@ export const BedrockProviderConfig = z.object({
 })
 export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 
+export const MistralProviderConfig = z.object({})
+export type MistralProviderConfig = z.infer<typeof MistralProviderConfig>
+
 export const AIProviderAuthConfig = z.union([
     AnthropicProviderAuthConfig,
     AzureProviderAuthConfig,
@@ -116,6 +123,7 @@ export const AIProviderAuthConfig = z.union([
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
     BedrockProviderAuthConfig,
+    MistralProviderAuthConfig,
 ])
 export type AIProviderAuthConfig = z.infer<typeof AIProviderAuthConfig>
 // Order matters, put schemas with required fields first, empty ones last. This is to avoid empty objects matching any object.
@@ -129,6 +137,7 @@ export const AIProviderConfig = z.union([
     OpenAIProviderConfig,
     OpenRouterProviderConfig,
     ActivePiecesProviderConfig,
+    MistralProviderConfig,
 ])
 export type AIProviderConfig = z.infer<typeof AIProviderConfig>
 
@@ -186,6 +195,12 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         provider: z.literal(AIProviderName.BEDROCK),
         config: BedrockProviderConfig,
         auth: BedrockProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.MISTRAL),
+        config: MistralProviderConfig,
+        auth: MistralProviderAuthConfig,
     }),
 ])
 
@@ -365,6 +380,7 @@ const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
     [AIProviderName.AZURE]: 128_000,
     [AIProviderName.OPENROUTER]: 128_000,
     [AIProviderName.ACTIVEPIECES]: 200_000,
+    [AIProviderName.MISTRAL]: 128_000,
 }
 
 function getMaxContextTokens({ provider }: { provider: AIProviderName | undefined }): number {
