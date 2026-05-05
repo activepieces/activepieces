@@ -1,6 +1,6 @@
 import { Redis } from 'ioredis'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { getConcurrencyPoolSetKey, getConcurrencyPoolWaitlistKey, getConcurrencyPoolWaitlistMembersKey } from '../../../../../../src/app/database/redis/keys'
+import { getConcurrencyPoolSetKey, getConcurrencyPoolWaitlistKey } from '../../../../../../src/app/database/redis/keys'
 import { redisConnections } from '../../../../../../src/app/database/redis-connections'
 import { concurrencyPoolRedis } from '../../../../../../src/app/workers/job-queue/interceptors/concurrency-pool-redis'
 
@@ -16,12 +16,11 @@ async function deleteKeysByPattern(redis: Redis, pattern: string): Promise<void>
 async function clearPoolKeys(): Promise<void> {
     const redis = await redisConnections.useExisting()
     await deleteKeysByPattern(redis, 'active_jobs_set:*')
-    await deleteKeysByPattern(redis, 'waiting_jobs_list:*')
-    await deleteKeysByPattern(redis, 'waiting_jobs_set:*')
+    await deleteKeysByPattern(redis, 'waiting_jobs_zset:*')
 }
 
-function member(projectId: string, jobId: string): string {
-    return concurrencyPoolRedis.buildMember({ projectId, jobId })
+function memberKey(projectId: string, jobId: string): string {
+    return `${projectId}:${jobId}`
 }
 
 describe('concurrencyPoolRedis Lua primitives', () => {
@@ -37,15 +36,16 @@ describe('concurrencyPoolRedis Lua primitives', () => {
             for (let i = 0; i < 5; i++) {
                 const result = await concurrencyPoolRedis.acquireSlotOrEnqueue({
                     poolId,
-                    member: member('p', `job-${i}`),
+                    projectId: 'p',
+                    jobId: `job-${i}`,
                     maxJobs: 5,
                     timeoutMs: TIMEOUT_MS,
                 })
-                expect(result).toBe('acquired')
+                expect(result.outcome).toBe('acquired')
             }
 
             expect(await redis.zcard(getConcurrencyPoolSetKey(poolId))).toBe(5)
-            expect(await redis.llen(getConcurrencyPoolWaitlistKey(poolId))).toBe(0)
+            expect(await redis.zcard(getConcurrencyPoolWaitlistKey(poolId))).toBe(0)
         })
 
         it('A2: overflow pushes to waitlist and leaves set at max', async () => {
@@ -55,51 +55,53 @@ describe('concurrencyPoolRedis Lua primitives', () => {
             for (let i = 0; i < 3; i++) {
                 await concurrencyPoolRedis.acquireSlotOrEnqueue({
                     poolId,
-                    member: member('p', `active-${i}`),
+                    projectId: 'p',
+                    jobId: `active-${i}`,
                     maxJobs: 3,
                     timeoutMs: TIMEOUT_MS,
                 })
             }
             const queued = await concurrencyPoolRedis.acquireSlotOrEnqueue({
                 poolId,
-                member: member('p', 'overflow'),
+                projectId: 'p',
+                jobId: 'overflow',
                 maxJobs: 3,
                 timeoutMs: TIMEOUT_MS,
             })
 
-            expect(queued).toBe('queued')
+            expect(queued.outcome).toBe('queued')
             expect(await redis.zcard(getConcurrencyPoolSetKey(poolId))).toBe(3)
-            const waiters = await redis.lrange(getConcurrencyPoolWaitlistKey(poolId), 0, -1)
+            const waiters = await redis.zrange(getConcurrencyPoolWaitlistKey(poolId), 0, -1)
             expect(waiters).toEqual(['p:overflow'])
         })
 
         it('A3: FIFO order is preserved on multiple pops', async () => {
             const poolId = `a3-${crypto.randomUUID()}`
 
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'active'), maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'active', maxJobs: 1, timeoutMs: TIMEOUT_MS })
             for (const id of ['w1', 'w2', 'w3']) {
-                await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', id), maxJobs: 1, timeoutMs: TIMEOUT_MS })
+                await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: id, maxJobs: 1, timeoutMs: TIMEOUT_MS })
             }
 
-            const first = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: member('p', 'active'), timeoutMs: TIMEOUT_MS })
-            expect(first).toBe(member('p', 'w1'))
+            const first = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, projectId: 'p', jobId: 'active', timeoutMs: TIMEOUT_MS })
+            expect(first).toEqual({ projectId: 'p', jobId: 'w1' })
             if (first === null) throw new Error('expected w1')
 
-            const second = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: first, timeoutMs: TIMEOUT_MS })
-            expect(second).toBe(member('p', 'w2'))
+            const second = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, projectId: first.projectId, jobId: first.jobId, timeoutMs: TIMEOUT_MS })
+            expect(second).toEqual({ projectId: 'p', jobId: 'w2' })
             if (second === null) throw new Error('expected w2')
 
-            const third = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: second, timeoutMs: TIMEOUT_MS })
-            expect(third).toBe(member('p', 'w3'))
+            const third = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, projectId: second.projectId, jobId: second.jobId, timeoutMs: TIMEOUT_MS })
+            expect(third).toEqual({ projectId: 'p', jobId: 'w3' })
         })
 
         it('A4: release returns null when waitlist empty', async () => {
             const poolId = `a4-${crypto.randomUUID()}`
             const redis = await redisConnections.useExisting()
 
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'solo'), maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'solo', maxJobs: 1, timeoutMs: TIMEOUT_MS })
 
-            const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: member('p', 'solo'), timeoutMs: TIMEOUT_MS })
+            const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, projectId: 'p', jobId: 'solo', timeoutMs: TIMEOUT_MS })
 
             expect(popped).toBeNull()
             expect(await redis.zcard(getConcurrencyPoolSetKey(poolId))).toBe(0)
@@ -110,18 +112,18 @@ describe('concurrencyPoolRedis Lua primitives', () => {
             const redis = await redisConnections.useExisting()
 
             for (let i = 0; i < 5; i++) {
-                await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', `a${i}`), maxJobs: 5, timeoutMs: TIMEOUT_MS })
+                await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: `a${i}`, maxJobs: 5, timeoutMs: TIMEOUT_MS })
             }
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'w1'), maxJobs: 5, timeoutMs: TIMEOUT_MS })
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'w2'), maxJobs: 5, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'w1', maxJobs: 5, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'w2', maxJobs: 5, timeoutMs: TIMEOUT_MS })
 
-            const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: member('p', 'a0'), timeoutMs: TIMEOUT_MS })
-            expect(popped).toBe(member('p', 'w1'))
+            const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, projectId: 'p', jobId: 'a0', timeoutMs: TIMEOUT_MS })
+            expect(popped).toEqual({ projectId: 'p', jobId: 'w1' })
 
             const active = new Set(await redis.zrange(getConcurrencyPoolSetKey(poolId), 0, -1))
             expect(active).toEqual(new Set(['p:a1', 'p:a2', 'p:a3', 'p:a4', 'p:w1']))
 
-            const remaining = await redis.lrange(getConcurrencyPoolWaitlistKey(poolId), 0, -1)
+            const remaining = await redis.zrange(getConcurrencyPoolWaitlistKey(poolId), 0, -1)
             expect(remaining).toEqual(['p:w2'])
         })
 
@@ -129,13 +131,13 @@ describe('concurrencyPoolRedis Lua primitives', () => {
             const poolId = `a6-${crypto.randomUUID()}`
             const redis = await redisConnections.useExisting()
 
-            const first = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'same'), maxJobs: 3, timeoutMs: TIMEOUT_MS })
-            const second = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'same'), maxJobs: 3, timeoutMs: TIMEOUT_MS })
+            const first = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'same', maxJobs: 3, timeoutMs: TIMEOUT_MS })
+            const second = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'same', maxJobs: 3, timeoutMs: TIMEOUT_MS })
 
-            expect(first).toBe('acquired')
-            expect(second).toBe('acquired')
+            expect(first.outcome).toBe('acquired')
+            expect(second.outcome).toBe('acquired')
             expect(await redis.zcard(getConcurrencyPoolSetKey(poolId))).toBe(1)
-            expect(await redis.llen(getConcurrencyPoolWaitlistKey(poolId))).toBe(0)
+            expect(await redis.zcard(getConcurrencyPoolWaitlistKey(poolId))).toBe(0)
         })
 
         it('A7: stale entries are swept on acquire', async () => {
@@ -150,12 +152,13 @@ describe('concurrencyPoolRedis Lua primitives', () => {
 
             const result = await concurrencyPoolRedis.acquireSlotOrEnqueue({
                 poolId,
-                member: member('p', 'fresh'),
+                projectId: 'p',
+                jobId: 'fresh',
                 maxJobs: 5,
                 timeoutMs: TIMEOUT_MS,
             })
 
-            expect(result).toBe('acquired')
+            expect(result.outcome).toBe('acquired')
             const members = await redis.zrange(setKey, 0, -1)
             expect(members).toEqual(['p:fresh'])
         })
@@ -174,11 +177,12 @@ describe('concurrencyPoolRedis Lua primitives', () => {
 
             const result = await concurrencyPoolRedis.acquireSlotOrEnqueue({
                 poolId,
-                member: member('p', 'new'),
+                projectId: 'p',
+                jobId: 'new',
                 maxJobs: 5,
                 timeoutMs: TIMEOUT_MS,
             })
-            expect(result).toBe('acquired')
+            expect(result.outcome).toBe('acquired')
 
             const members = new Set(await redis.zrange(setKey, 0, -1))
             expect(members).toEqual(new Set(['p:fresh-1', 'p:fresh-2', 'p:fresh-3', 'p:new']))
@@ -188,7 +192,7 @@ describe('concurrencyPoolRedis Lua primitives', () => {
             const poolId = `a9-${crypto.randomUUID()}`
             const redis = await redisConnections.useExisting()
 
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'x'), maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'x', maxJobs: 1, timeoutMs: TIMEOUT_MS })
 
             const ttl = await redis.ttl(getConcurrencyPoolSetKey(poolId))
             expect(ttl).toBeGreaterThan(0)
@@ -199,13 +203,13 @@ describe('concurrencyPoolRedis Lua primitives', () => {
             const poolId = `a10-${crypto.randomUUID()}`
             const redis = await redisConnections.useExisting()
 
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'a'), maxJobs: 1, timeoutMs: TIMEOUT_MS })
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'w1'), maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'a', maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'w1', maxJobs: 1, timeoutMs: TIMEOUT_MS })
 
             const ttl1 = await redis.ttl(getConcurrencyPoolWaitlistKey(poolId))
             expect(ttl1).toBeGreaterThan(0)
 
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'w2'), maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'w2', maxJobs: 1, timeoutMs: TIMEOUT_MS })
 
             const ttl2 = await redis.ttl(getConcurrencyPoolWaitlistKey(poolId))
             expect(ttl2).toBeGreaterThan(0)
@@ -215,69 +219,108 @@ describe('concurrencyPoolRedis Lua primitives', () => {
             const poolId = `a11-${crypto.randomUUID()}`
             const redis = await redisConnections.useExisting()
 
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'a'), maxJobs: 1, timeoutMs: TIMEOUT_MS })
-            const first = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'w1'), maxJobs: 1, timeoutMs: TIMEOUT_MS })
-            const second = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'w1'), maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'a', maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            const first = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'w1', maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            const second = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'w1', maxJobs: 1, timeoutMs: TIMEOUT_MS })
 
-            expect(first).toBe('queued')
-            expect(second).toBe('queued')
-            const waiters = await redis.lrange(getConcurrencyPoolWaitlistKey(poolId), 0, -1)
+            expect(first.outcome).toBe('queued')
+            expect(second.outcome).toBe('queued')
+            const waiters = await redis.zrange(getConcurrencyPoolWaitlistKey(poolId), 0, -1)
             expect(waiters).toEqual(['p:w1'])
-            expect(await redis.scard(getConcurrencyPoolWaitlistMembersKey(poolId))).toBe(1)
         })
 
-        it('A12: shadow set is cleaned up on release so the same member can be re-enqueued later', async () => {
+        it('A12: dropPromotedWaiter cleans active set so the same member can be re-enqueued later', async () => {
             const poolId = `a12-${crypto.randomUUID()}`
-            const redis = await redisConnections.useExisting()
 
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'a'), maxJobs: 1, timeoutMs: TIMEOUT_MS })
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'w1'), maxJobs: 1, timeoutMs: TIMEOUT_MS })
-            expect(await redis.scard(getConcurrencyPoolWaitlistMembersKey(poolId))).toBe(1)
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'a', maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'w1', maxJobs: 1, timeoutMs: TIMEOUT_MS })
 
-            const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: member('p', 'a'), timeoutMs: TIMEOUT_MS })
-            expect(popped).toBe('p:w1')
-            expect(await redis.scard(getConcurrencyPoolWaitlistMembersKey(poolId))).toBe(0)
+            const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, projectId: 'p', jobId: 'a', timeoutMs: TIMEOUT_MS })
+            expect(popped).toEqual({ projectId: 'p', jobId: 'w1' })
 
-            await concurrencyPoolRedis.dropPromotedMember({ poolId, member: 'p:w1' })
+            await concurrencyPoolRedis.dropPromotedWaiter({ poolId, waiter: { projectId: 'p', jobId: 'w1' } })
 
-            const requeue = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'w1'), maxJobs: 1, timeoutMs: TIMEOUT_MS })
-            expect(requeue).toBe('acquired')
+            const requeue = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'w1', maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            expect(requeue.outcome).toBe('acquired')
         })
 
-        it('A13: new acquire is queued when capacity exists but waitlist is non-empty', async () => {
+        it('A13: acquire promotes orphan waiters into active when capacity exists, then admits the new arrival', async () => {
             const poolId = `a13-${crypto.randomUUID()}`
             const redis = await redisConnections.useExisting()
             const waitlistKey = getConcurrencyPoolWaitlistKey(poolId)
 
-            await redis.rpush(waitlistKey, 'p:orphan')
+            await redis.zadd(waitlistKey, Date.now(), 'p:orphan')
 
             const result = await concurrencyPoolRedis.acquireSlotOrEnqueue({
                 poolId,
-                member: member('p', 'newcomer'),
+                projectId: 'p',
+                jobId: 'newcomer',
                 maxJobs: 5,
                 timeoutMs: TIMEOUT_MS,
             })
 
-            expect(result).toBe('queued')
-            expect(await redis.zcard(getConcurrencyPoolSetKey(poolId))).toBe(0)
-            const waiters = await redis.lrange(waitlistKey, 0, -1)
-            expect(waiters).toEqual(['p:orphan', 'p:newcomer'])
+            expect(result.outcome).toBe('acquired')
+            expect(result.promoted).toEqual([{ projectId: 'p', jobId: 'orphan' }])
+            const active = new Set(await redis.zrange(getConcurrencyPoolSetKey(poolId), 0, -1))
+            expect(active).toEqual(new Set(['p:orphan', 'p:newcomer']))
+            expect(await redis.zcard(waitlistKey)).toBe(0)
         })
 
-        it('A14: dropPromotedMember removes the member from the active set without re-queueing', async () => {
+        it('A14: dropPromotedWaiter removes the waiter from the active set without re-queueing', async () => {
             const poolId = `a14-${crypto.randomUUID()}`
             const redis = await redisConnections.useExisting()
             const setKey = getConcurrencyPoolSetKey(poolId)
             const waitlistKey = getConcurrencyPoolWaitlistKey(poolId)
 
-            await redis.zadd(setKey, Date.now(), 'bogus-member')
-            await redis.rpush(waitlistKey, 'p:next-valid-waiter')
+            await redis.zadd(setKey, Date.now(), 'p:bogus')
+            await redis.zadd(waitlistKey, Date.now(), 'p:next-valid-waiter')
 
-            await concurrencyPoolRedis.dropPromotedMember({ poolId, member: 'bogus-member' })
+            await concurrencyPoolRedis.dropPromotedWaiter({ poolId, waiter: { projectId: 'p', jobId: 'bogus' } })
 
             expect(await redis.zcard(setKey)).toBe(0)
-            const waiters = await redis.lrange(waitlistKey, 0, -1)
+            const waiters = await redis.zrange(waitlistKey, 0, -1)
             expect(waiters).toEqual(['p:next-valid-waiter'])
+        })
+
+        it('A15: acquire silently drops invalid promoted members from the active set', async () => {
+            const poolId = `a15-${crypto.randomUUID()}`
+            const redis = await redisConnections.useExisting()
+            const waitlistKey = getConcurrencyPoolWaitlistKey(poolId)
+
+            await redis.zadd(waitlistKey, Date.now(), 'invalid-no-colon')
+
+            const result = await concurrencyPoolRedis.acquireSlotOrEnqueue({
+                poolId,
+                projectId: 'p',
+                jobId: 'newcomer',
+                maxJobs: 5,
+                timeoutMs: TIMEOUT_MS,
+            })
+
+            expect(result.outcome).toBe('acquired')
+            expect(result.promoted).toEqual([])
+            const active = new Set(await redis.zrange(getConcurrencyPoolSetKey(poolId), 0, -1))
+            expect(active).toEqual(new Set(['p:newcomer']))
+        })
+
+        it('A16: release silently drops invalid popped waiter and returns null', async () => {
+            const poolId = `a16-${crypto.randomUUID()}`
+            const redis = await redisConnections.useExisting()
+            const setKey = getConcurrencyPoolSetKey(poolId)
+            const waitlistKey = getConcurrencyPoolWaitlistKey(poolId)
+
+            await redis.zadd(setKey, Date.now(), 'p:active')
+            await redis.zadd(waitlistKey, 0, 'invalid-no-colon')
+
+            const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({
+                poolId,
+                projectId: 'p',
+                jobId: 'active',
+                timeoutMs: TIMEOUT_MS,
+            })
+
+            expect(popped).toBeNull()
+            expect(await redis.zcard(setKey)).toBe(0)
         })
     })
 
@@ -298,20 +341,21 @@ describe('concurrencyPoolRedis Lua primitives', () => {
                     Array.from({ length: 100 }, (_, i) =>
                         concurrencyPoolRedis.acquireSlotOrEnqueue({
                             poolId,
-                            member: member('p', `job-${i}`),
+                            projectId: 'p',
+                            jobId: `job-${i}`,
                             maxJobs: 10,
                             timeoutMs: TIMEOUT_MS,
                         }),
                     ),
                 )
 
-                const acquired = results.filter(r => r === 'acquired').length
-                const queued = results.filter(r => r === 'queued').length
+                const acquired = results.filter(r => r.outcome === 'acquired').length
+                const queued = results.filter(r => r.outcome === 'queued').length
 
                 expect(acquired).toBe(10)
                 expect(queued).toBe(90)
                 expect(await redis.zcard(getConcurrencyPoolSetKey(poolId))).toBe(10)
-                expect(await redis.llen(getConcurrencyPoolWaitlistKey(poolId))).toBe(90)
+                expect(await redis.zcard(getConcurrencyPoolWaitlistKey(poolId))).toBe(90)
             }
         })
 
@@ -321,25 +365,25 @@ describe('concurrencyPoolRedis Lua primitives', () => {
                 const poolId = `b2-${iter}-${crypto.randomUUID()}`
 
                 for (let i = 0; i < 10; i++) {
-                    await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', `a-${i}`), maxJobs: 10, timeoutMs: TIMEOUT_MS })
+                    await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: `a-${i}`, maxJobs: 10, timeoutMs: TIMEOUT_MS })
                 }
                 for (let i = 0; i < 90; i++) {
-                    await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', `w-${i}`), maxJobs: 10, timeoutMs: TIMEOUT_MS })
+                    await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: `w-${i}`, maxJobs: 10, timeoutMs: TIMEOUT_MS })
                 }
 
                 const popped = await Promise.all(
                     Array.from({ length: 10 }, (_, i) =>
-                        concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: member('p', `a-${i}`), timeoutMs: TIMEOUT_MS }),
+                        concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, projectId: 'p', jobId: `a-${i}`, timeoutMs: TIMEOUT_MS }),
                     ),
                 )
 
-                const nonNull = popped.filter((v): v is string => v !== null)
+                const nonNull = popped.filter((v): v is NonNullable<typeof v> => v !== null)
                 expect(nonNull).toHaveLength(10)
-                expect(new Set(nonNull).size).toBe(10)
+                expect(new Set(nonNull.map(w => `${w.projectId}:${w.jobId}`)).size).toBe(10)
 
                 const redis = await redisConnections.useExisting()
                 expect(await redis.zcard(getConcurrencyPoolSetKey(poolId))).toBe(10)
-                expect(await redis.llen(getConcurrencyPoolWaitlistKey(poolId))).toBe(80)
+                expect(await redis.zcard(getConcurrencyPoolWaitlistKey(poolId))).toBe(80)
             }
         })
 
@@ -351,14 +395,14 @@ describe('concurrencyPoolRedis Lua primitives', () => {
                 const redis = await redisConnections.useExisting()
 
                 for (let i = 0; i < maxJobs; i++) {
-                    await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', `seed-${i}`), maxJobs, timeoutMs: TIMEOUT_MS })
+                    await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: `seed-${i}`, maxJobs, timeoutMs: TIMEOUT_MS })
                 }
 
                 const newAcquires = Array.from({ length: 50 }, (_, i) =>
-                    concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', `new-${i}`), maxJobs, timeoutMs: TIMEOUT_MS }),
+                    concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: `new-${i}`, maxJobs, timeoutMs: TIMEOUT_MS }),
                 )
                 const releases = Array.from({ length: 10 }, (_, i) =>
-                    concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: member('p', `seed-${i}`), timeoutMs: TIMEOUT_MS }),
+                    concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, projectId: 'p', jobId: `seed-${i}`, timeoutMs: TIMEOUT_MS }),
                 )
 
                 await Promise.all([...newAcquires, ...releases])
@@ -372,15 +416,15 @@ describe('concurrencyPoolRedis Lua primitives', () => {
             const poolId = `b4-${crypto.randomUUID()}`
             const redis = await redisConnections.useExisting()
 
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', 'active'), maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'active', maxJobs: 1, timeoutMs: TIMEOUT_MS })
             for (let i = 0; i < 1000; i++) {
-                await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: member('p', `w-${i}`), maxJobs: 1, timeoutMs: TIMEOUT_MS })
+                await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: `w-${i}`, maxJobs: 1, timeoutMs: TIMEOUT_MS })
             }
 
-            const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: member('p', 'active'), timeoutMs: TIMEOUT_MS })
-            expect(popped).toBe(member('p', 'w-0'))
+            const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, projectId: 'p', jobId: 'active', timeoutMs: TIMEOUT_MS })
+            expect(popped).toEqual({ projectId: 'p', jobId: 'w-0' })
 
-            expect(await redis.llen(getConcurrencyPoolWaitlistKey(poolId))).toBe(999)
+            expect(await redis.zcard(getConcurrencyPoolWaitlistKey(poolId))).toBe(999)
             expect(await redis.zcard(getConcurrencyPoolSetKey(poolId))).toBe(1)
         })
 
@@ -390,16 +434,15 @@ describe('concurrencyPoolRedis Lua primitives', () => {
                 const poolId = `b5-${iter}-${crypto.randomUUID()}`
                 const redis = await redisConnections.useExisting()
 
-                const dup = member('p', 'duplicate')
                 const results = await Promise.all(
                     Array.from({ length: 50 }, () =>
-                        concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: dup, maxJobs: 3, timeoutMs: TIMEOUT_MS }),
+                        concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'duplicate', maxJobs: 3, timeoutMs: TIMEOUT_MS }),
                     ),
                 )
 
-                expect(results.every(r => r === 'acquired')).toBe(true)
+                expect(results.every(r => r.outcome === 'acquired')).toBe(true)
                 expect(await redis.zcard(getConcurrencyPoolSetKey(poolId))).toBe(1)
-                expect(await redis.llen(getConcurrencyPoolWaitlistKey(poolId))).toBe(0)
+                expect(await redis.zcard(getConcurrencyPoolWaitlistKey(poolId))).toBe(0)
             }
         })
 
@@ -411,17 +454,17 @@ describe('concurrencyPoolRedis Lua primitives', () => {
                 const redis = await redisConnections.useExisting()
 
                 const p1Acquires = Array.from({ length: 20 }, (_, i) =>
-                    concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId: pool1, member: member('p1', `job-${i}`), maxJobs: 3, timeoutMs: TIMEOUT_MS }),
+                    concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId: pool1, projectId: 'p1', jobId: `job-${i}`, maxJobs: 3, timeoutMs: TIMEOUT_MS }),
                 )
                 const p2Acquires = Array.from({ length: 20 }, (_, i) =>
-                    concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId: pool2, member: member('p2', `job-${i}`), maxJobs: 5, timeoutMs: TIMEOUT_MS }),
+                    concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId: pool2, projectId: 'p2', jobId: `job-${i}`, maxJobs: 5, timeoutMs: TIMEOUT_MS }),
                 )
                 await Promise.all([...p1Acquires, ...p2Acquires])
 
                 expect(await redis.zcard(getConcurrencyPoolSetKey(pool1))).toBe(3)
-                expect(await redis.llen(getConcurrencyPoolWaitlistKey(pool1))).toBe(17)
+                expect(await redis.zcard(getConcurrencyPoolWaitlistKey(pool1))).toBe(17)
                 expect(await redis.zcard(getConcurrencyPoolSetKey(pool2))).toBe(5)
-                expect(await redis.llen(getConcurrencyPoolWaitlistKey(pool2))).toBe(15)
+                expect(await redis.zcard(getConcurrencyPoolWaitlistKey(pool2))).toBe(15)
             }
         })
 
@@ -436,11 +479,12 @@ describe('concurrencyPoolRedis Lua primitives', () => {
 
             const result = await concurrencyPoolRedis.acquireSlotOrEnqueue({
                 poolId,
-                member: member('p', 'new'),
+                projectId: 'p',
+                jobId: 'new',
                 maxJobs: 5,
                 timeoutMs: TIMEOUT_MS,
             })
-            expect(result).toBe('acquired')
+            expect(result.outcome).toBe('acquired')
 
             const members = new Set(await redis.zrange(setKey, 0, -1))
             expect(members).toEqual(new Set(['p:future-1', 'p:future-2', 'p:new']))
@@ -461,16 +505,16 @@ describe('concurrencyPoolRedis Lua primitives', () => {
                     const toRelease = Array.from(outstanding)[0]
                     outstanding.delete(toRelease)
                     operations.push(async () => {
-                        await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: toRelease, timeoutMs: TIMEOUT_MS })
+                        await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, projectId: 'p', jobId: toRelease, timeoutMs: TIMEOUT_MS })
                         released++
                     })
                 }
                 else {
-                    const m = member('p', `job-${i}`)
-                    outstanding.add(m)
+                    const jobId = `job-${i}`
+                    outstanding.add(jobId)
                     operations.push(async () => {
-                        const r = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: m, maxJobs, timeoutMs: TIMEOUT_MS })
-                        if (r === 'acquired') acquired++
+                        const r = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId, maxJobs, timeoutMs: TIMEOUT_MS })
+                        if (r.outcome === 'acquired') acquired++
                     })
                 }
             }
@@ -499,12 +543,13 @@ describe('concurrencyPoolRedis Lua primitives', () => {
 
             const result = await concurrencyPoolRedis.acquireSlotOrEnqueue({
                 poolId,
-                member: member('p', 'survivor'),
+                projectId: 'p',
+                jobId: 'survivor',
                 maxJobs: 1,
                 timeoutMs: shortTimeout,
             })
 
-            expect(result).toBe('acquired')
+            expect(result.outcome).toBe('acquired')
             const members = await redis.zrange(setKey, 0, -1)
             expect(members).toEqual(['p:survivor'])
         })
@@ -514,15 +559,15 @@ describe('concurrencyPoolRedis Lua primitives', () => {
             const redis = await redisConnections.useExisting()
 
             for (let i = 0; i < 500; i++) {
-                const m = member('p', `job-${i}`)
-                const r = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: m, maxJobs: 10, timeoutMs: TIMEOUT_MS })
-                if (r === 'acquired') {
-                    await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: m, timeoutMs: TIMEOUT_MS })
+                const jobId = `job-${i}`
+                const r = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId, maxJobs: 10, timeoutMs: TIMEOUT_MS })
+                if (r.outcome === 'acquired') {
+                    await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, projectId: 'p', jobId, timeoutMs: TIMEOUT_MS })
                 }
             }
 
             expect(await redis.zcard(getConcurrencyPoolSetKey(poolId))).toBe(0)
-            expect(await redis.llen(getConcurrencyPoolWaitlistKey(poolId))).toBe(0)
+            expect(await redis.zcard(getConcurrencyPoolWaitlistKey(poolId))).toBe(0)
         })
     })
 
@@ -534,104 +579,38 @@ describe('concurrencyPoolRedis Lua primitives', () => {
         it('fills capacity, queues overflow, and promotes the queued waiter on release', async () => {
             const poolId = `smoke-${crypto.randomUUID()}`
             const redis = await redisConnections.useExisting()
-            const active = member('p', 'active')
-            const waiter = member('p', 'waiter')
 
-            const acquire = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: active, maxJobs: 1, timeoutMs: TIMEOUT_MS })
-            expect(acquire).toBe('acquired')
+            const acquire = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'active', maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            expect(acquire.outcome).toBe('acquired')
 
-            const queued = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: waiter, maxJobs: 1, timeoutMs: TIMEOUT_MS })
-            expect(queued).toBe('queued')
+            const queued = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'waiter', maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            expect(queued.outcome).toBe('queued')
 
-            const reQueued = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: waiter, maxJobs: 1, timeoutMs: TIMEOUT_MS })
-            expect(reQueued).toBe('queued')
-            expect(await redis.llen(getConcurrencyPoolWaitlistKey(poolId))).toBe(1)
+            const reQueued = await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'waiter', maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            expect(reQueued.outcome).toBe('queued')
+            expect(await redis.zcard(getConcurrencyPoolWaitlistKey(poolId))).toBe(1)
 
-            const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: active, timeoutMs: TIMEOUT_MS })
-            expect(popped).toBe(waiter)
+            const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, projectId: 'p', jobId: 'active', timeoutMs: TIMEOUT_MS })
+            expect(popped).toEqual({ projectId: 'p', jobId: 'waiter' })
 
-            expect(await redis.zrange(getConcurrencyPoolSetKey(poolId), 0, -1)).toEqual([waiter])
-            expect(await redis.llen(getConcurrencyPoolWaitlistKey(poolId))).toBe(0)
-            expect(await redis.scard(getConcurrencyPoolWaitlistMembersKey(poolId))).toBe(0)
+            expect(await redis.zrange(getConcurrencyPoolSetKey(poolId), 0, -1)).toEqual([memberKey('p', 'waiter')])
+            expect(await redis.zcard(getConcurrencyPoolWaitlistKey(poolId))).toBe(0)
         })
 
         it('release refreshes waitlist + members TTL so a sustained-saturation pool does not lose its keys', async () => {
             const poolId = `smoke-ttl-${crypto.randomUUID()}`
             const redis = await redisConnections.useExisting()
-            const active = member('p', 'active')
-            const waiter1 = member('p', 'waiter-1')
-            const waiter2 = member('p', 'waiter-2')
 
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: active, maxJobs: 1, timeoutMs: TIMEOUT_MS })
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: waiter1, maxJobs: 1, timeoutMs: TIMEOUT_MS })
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: waiter2, maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'active', maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'waiter-1', maxJobs: 1, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, projectId: 'p', jobId: 'waiter-2', maxJobs: 1, timeoutMs: TIMEOUT_MS })
 
             await redis.expire(getConcurrencyPoolWaitlistKey(poolId), 5)
-            await redis.expire(getConcurrencyPoolWaitlistMembersKey(poolId), 5)
 
-            await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, member: active, timeoutMs: TIMEOUT_MS })
+            await concurrencyPoolRedis.releaseSlotAndPopWaiter({ poolId, projectId: 'p', jobId: 'active', timeoutMs: TIMEOUT_MS })
 
             const waitlistTtl = await redis.ttl(getConcurrencyPoolWaitlistKey(poolId))
-            const membersTtl = await redis.ttl(getConcurrencyPoolWaitlistMembersKey(poolId))
             expect(waitlistTtl).toBeGreaterThan(60)
-            expect(membersTtl).toBeGreaterThan(60)
         })
-
-        it('selfHealEmptyPool returns null when pool has running jobs', async () => {
-            const poolId = `smoke-heal-active-${crypto.randomUUID()}`
-            const redis = await redisConnections.useExisting()
-            const active = member('p', 'active')
-            const waiter = member('p', 'waiter')
-
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: active, maxJobs: 1, timeoutMs: TIMEOUT_MS })
-            await concurrencyPoolRedis.acquireSlotOrEnqueue({ poolId, member: waiter, maxJobs: 1, timeoutMs: TIMEOUT_MS })
-
-            const healed = await concurrencyPoolRedis.selfHealEmptyPool({ poolId, timeoutMs: TIMEOUT_MS })
-
-            expect(healed).toBeNull()
-            expect(await redis.zrange(getConcurrencyPoolSetKey(poolId), 0, -1)).toEqual([active])
-            expect(await redis.lrange(getConcurrencyPoolWaitlistKey(poolId), 0, -1)).toEqual([waiter])
-        })
-
-        it('selfHealEmptyPool returns null when waitlist is empty', async () => {
-            const poolId = `smoke-heal-empty-${crypto.randomUUID()}`
-            const healed = await concurrencyPoolRedis.selfHealEmptyPool({ poolId, timeoutMs: TIMEOUT_MS })
-            expect(healed).toBeNull()
-        })
-
-        it('selfHealEmptyPool promotes head waiter when active set is empty (closes wedged-pool gap)', async () => {
-            const poolId = `smoke-heal-wedged-${crypto.randomUUID()}`
-            const redis = await redisConnections.useExisting()
-            const head = member('p', 'head')
-            const tail = member('p', 'tail')
-
-            await redis.rpush(getConcurrencyPoolWaitlistKey(poolId), head, tail)
-            await redis.sadd(getConcurrencyPoolWaitlistMembersKey(poolId), head, tail)
-
-            const healed = await concurrencyPoolRedis.selfHealEmptyPool({ poolId, timeoutMs: TIMEOUT_MS })
-
-            expect(healed).toBe(head)
-            expect(await redis.zrange(getConcurrencyPoolSetKey(poolId), 0, -1)).toEqual([head])
-            expect(await redis.lrange(getConcurrencyPoolWaitlistKey(poolId), 0, -1)).toEqual([tail])
-            expect(await redis.sismember(getConcurrencyPoolWaitlistMembersKey(poolId), head)).toBe(0)
-            expect(await redis.sismember(getConcurrencyPoolWaitlistMembersKey(poolId), tail)).toBe(1)
-        })
-
-        it('selfHealEmptyPool sweeps stale active entries before deciding the pool is non-empty', async () => {
-            const poolId = `smoke-heal-stale-${crypto.randomUUID()}`
-            const redis = await redisConnections.useExisting()
-            const stale = member('p', 'stale')
-            const head = member('p', 'head')
-
-            await redis.zadd(getConcurrencyPoolSetKey(poolId), Date.now() - TIMEOUT_MS - 1000, stale)
-            await redis.rpush(getConcurrencyPoolWaitlistKey(poolId), head)
-            await redis.sadd(getConcurrencyPoolWaitlistMembersKey(poolId), head)
-
-            const healed = await concurrencyPoolRedis.selfHealEmptyPool({ poolId, timeoutMs: TIMEOUT_MS })
-
-            expect(healed).toBe(head)
-            expect(await redis.zrange(getConcurrencyPoolSetKey(poolId), 0, -1)).toEqual([head])
-        })
-
     })
 })

@@ -92,7 +92,7 @@ describe('rateLimiterInterceptor', () => {
 
         const redis = await redisConnections.useExisting()
         await deleteKeysByPattern(redis, 'active_jobs_set:*')
-        await deleteKeysByPattern(redis, 'waiting_jobs_list:*')
+        await deleteKeysByPattern(redis, 'waiting_jobs_zset:*')
         await deleteKeysByPattern(redis, 'project:max-concurrent-jobs:*')
         await deleteKeysByPattern(redis, 'platform_plan:plan:*')
         await deleteKeysByPattern(redis, 'project:concurrency-pool:*')
@@ -212,7 +212,7 @@ describe('rateLimiterInterceptor', () => {
             }
 
             const redis = await redisConnections.useExisting()
-            const waiters = await redis.lrange(getConcurrencyPoolWaitlistKey(jobData.projectId), 0, -1)
+            const waiters = await redis.zrange(getConcurrencyPoolWaitlistKey(jobData.projectId), 0, -1)
             expect(waiters).toEqual([`${jobData.projectId}:job-3`])
         })
 
@@ -256,7 +256,7 @@ describe('rateLimiterInterceptor', () => {
             const redis = await redisConnections.useExisting()
             const members = await redis.zrange(getConcurrencyPoolSetKey(jobData.projectId), 0, -1)
             expect(members).toHaveLength(1)
-            const waiters = await redis.lrange(getConcurrencyPoolWaitlistKey(jobData.projectId), 0, -1)
+            const waiters = await redis.zrange(getConcurrencyPoolWaitlistKey(jobData.projectId), 0, -1)
             expect(waiters).toEqual([])
         })
 
@@ -448,7 +448,7 @@ describe('rateLimiterInterceptor', () => {
             expect(r3.verdict).toBe(InterceptorVerdict.REJECT)
 
             const redis = await redisConnections.useExisting()
-            expect(await redis.llen(getConcurrencyPoolWaitlistKey(jobData.projectId))).toBe(2)
+            expect(await redis.zcard(getConcurrencyPoolWaitlistKey(jobData.projectId))).toBe(2)
 
             await rateLimiterInterceptor.onJobFinished({ jobId: 'active', jobData, failed: false, log: mockLog })
 
@@ -459,11 +459,11 @@ describe('rateLimiterInterceptor', () => {
             expect(activeMembers).toHaveLength(1)
             expect(activeMembers[0]).toBe(`${jobData.projectId}:waiter-1`)
 
-            const remainingWaiters = await redis.lrange(getConcurrencyPoolWaitlistKey(jobData.projectId), 0, -1)
+            const remainingWaiters = await redis.zrange(getConcurrencyPoolWaitlistKey(jobData.projectId), 0, -1)
             expect(remainingWaiters).toEqual([`${jobData.projectId}:waiter-2`])
         })
 
-        it('rollsback slot reservation when promote fails', async () => {
+        it('drops the popped waiter and frees the slot when promote fails (safety-net delay re-enqueues if alive)', async () => {
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return FLOW_TIMEOUT_SECONDS
                 if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 1
@@ -483,8 +483,8 @@ describe('rateLimiterInterceptor', () => {
             const activeMembers = await redis.zrange(getConcurrencyPoolSetKey(jobData.projectId), 0, -1)
             expect(activeMembers).toHaveLength(0)
 
-            const remainingWaiters = await redis.lrange(getConcurrencyPoolWaitlistKey(jobData.projectId), 0, -1)
-            expect(remainingWaiters).toEqual([`${jobData.projectId}:waiter-1`])
+            const remainingWaiters = await redis.zrange(getConcurrencyPoolWaitlistKey(jobData.projectId), 0, -1)
+            expect(remainingWaiters).toEqual([])
         })
 
         it('does not call promoteJob when waitlist is empty on release', async () => {
@@ -515,14 +515,14 @@ describe('rateLimiterInterceptor', () => {
             await rateLimiterInterceptor.preDispatch({ jobId: 'valid-waiter', jobData, job: createMockJob(), log: mockLog })
 
             const redis = await redisConnections.useExisting()
-            await redis.lpush(getConcurrencyPoolWaitlistKey(jobData.projectId), 'invalid-no-colon')
+            await redis.zadd(getConcurrencyPoolWaitlistKey(jobData.projectId), 0, 'invalid-no-colon')
 
             await rateLimiterInterceptor.onJobFinished({ jobId: 'active', jobData, failed: false, log: mockLog })
 
             expect(promoteJob).not.toHaveBeenCalled()
             const activeMembers = await redis.zrange(getConcurrencyPoolSetKey(jobData.projectId), 0, -1)
             expect(activeMembers).toHaveLength(0)
-            const waiters = await redis.lrange(getConcurrencyPoolWaitlistKey(jobData.projectId), 0, -1)
+            const waiters = await redis.zrange(getConcurrencyPoolWaitlistKey(jobData.projectId), 0, -1)
             expect(waiters).toEqual([`${jobData.projectId}:valid-waiter`])
 
             await rateLimiterInterceptor.onJobFinished({ jobId: 'filler', jobData, failed: false, log: mockLog })
@@ -545,7 +545,7 @@ describe('rateLimiterInterceptor', () => {
             await rateLimiterInterceptor.preDispatch({ jobId: 'w2', jobData, job: createMockJob(), log: mockLog })
 
             const redis = await redisConnections.useExisting()
-            expect(await redis.llen(getConcurrencyPoolWaitlistKey(jobData.projectId))).toBe(2)
+            expect(await redis.zcard(getConcurrencyPoolWaitlistKey(jobData.projectId))).toBe(2)
 
             await rateLimiterInterceptor.onJobFinished({ jobId: 'a1', jobData, failed: false, log: mockLog })
             await rateLimiterInterceptor.onJobFinished({ jobId: 'a2', jobData, failed: false, log: mockLog })
@@ -554,7 +554,7 @@ describe('rateLimiterInterceptor', () => {
             expect(promoteJob).toHaveBeenNthCalledWith(1, { jobId: 'w1', platformId: jobData.platformId })
             expect(promoteJob).toHaveBeenNthCalledWith(2, { jobId: 'w2', platformId: jobData.platformId })
 
-            expect(await redis.llen(getConcurrencyPoolWaitlistKey(jobData.projectId))).toBe(0)
+            expect(await redis.zcard(getConcurrencyPoolWaitlistKey(jobData.projectId))).toBe(0)
             const activeMembers = await redis.zrange(getConcurrencyPoolSetKey(jobData.projectId), 0, -1)
             expect(new Set(activeMembers)).toEqual(new Set([`${jobData.projectId}:w1`, `${jobData.projectId}:w2`]))
         })
@@ -594,7 +594,7 @@ describe('rateLimiterInterceptor', () => {
             expect(r4.verdict).toBe(InterceptorVerdict.REJECT)
 
             const redis = await redisConnections.useExisting()
-            const waiters = await redis.lrange(getConcurrencyPoolWaitlistKey(poolId), 0, -1)
+            const waiters = await redis.zrange(getConcurrencyPoolWaitlistKey(poolId), 0, -1)
             expect(waiters).toEqual([`${projectIdA}:job-a2`, `${projectIdB}:job-b2`])
         })
 

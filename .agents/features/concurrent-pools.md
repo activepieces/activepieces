@@ -20,7 +20,7 @@ Concurrent Pools caps how many flow runs can execute in parallel for a given pla
 ## Domain Terms
 - **Pool**: A named bucket of N concurrent slots. Can span multiple projects (EE) or default to a single project (CE).
 - **Slot**: One executing flow run. Represented as a member in a Redis sorted set `active_jobs_set:pool:{poolId}`, score = acquisition timestamp.
-- **Waiter**: A rate-limited flow run sitting in Redis list `waiting_jobs_list:pool:{poolId}`, FIFO. Its BullMQ job is parked in `delayed` state with a safety-net delay.
+- **Waiter**: A rate-limited flow run sitting in Redis sorted set `waiting_jobs_zset:pool:{poolId}`, ordered by an insertion counter (FIFO). Its BullMQ job is parked in `delayed` state with a safety-net delay.
 - **Member**: `{projectId}:{jobId}` string used as the identifier in both the active set and the waitlist.
 - **Effective pool id**: `project.poolId ?? projectId` — when a project is not attached to a shared pool, its own id plays the role of a solo pool.
 - **Safety-net delay**: The BullMQ delay applied to a rate-limited job. Set to `FLOW_TIMEOUT_SECONDS + 120s`. If the normal promote-on-release path fails, this timer eventually re-dispatches the job. Acts as a last-resort backstop only.
@@ -49,7 +49,7 @@ Imagine a pool with **limit = 2**. Three runs arrive. One finishes:
                               │   atomic Lua: release-and-pop       │
                               │                                     │
                               │   1. remove A from active set       │
-                              │   2. LPOP waitlist → "C"            │
+                              │   2. ZPOPMIN waitlist → "C"         │
                               │   3. ZADD C into active set         │
                               │   4. return "C" to JS               │
                               └─────────────────────────────────────┘
@@ -73,7 +73,7 @@ Imagine a pool with **limit = 2**. Three runs arrive. One finishes:
 | Key | Type | Contents |
 |-----|------|----------|
 | `active_jobs_set:pool:{poolId}` | ZSET | Currently running members, score = timestamp (used to sweep stale entries on the next acquire) |
-| `waiting_jobs_list:pool:{poolId}` | LIST | FIFO waiters pushed on the right, popped from the left |
+| `waiting_jobs_zset:pool:{poolId}` | ZSET | FIFO waiters; score = monotonically increasing insertion timestamp/counter |
 | `concurrency-pool:limit:{poolId}` | string | Cached `maxConcurrentJobs` (24h TTL) |
 | `project:concurrency-pool:{projectId}` | string | `poolId` or `"none"` sentinel (24h TTL) |
 
@@ -81,20 +81,23 @@ Imagine a pool with **limit = 2**. Three runs arrive. One finishes:
 
 ## Lua Scripts
 
-**`acquireSlotOrEnqueue`** — single atomic operation:
+**`acquireSlotOrEnqueue`** — single atomic operation, returns `{outcome, promoted[]}`:
 1. `ZREMRANGEBYSCORE` sweeps entries older than `FLOW_TIMEOUT + 60s` (crash recovery)
-2. If member already present in active set → return `"acquired"` (idempotent re-dispatch)
-3. If member already present in waitlist shadow set → return `"queued"` (prevents safety-net re-dispatch from creating duplicate waitlist entries)
-4. If `ZCARD < maxJobs` and waitlist empty → `ZADD` to active set, return `"acquired"`
-5. Else → `RPUSH` to waitlist + `SADD` to shadow set, return `"queued"`
+2. If member already present in active set → return `{acquired, []}` (idempotent re-dispatch)
+3. If member already present in waitlist (`ZSCORE`) → return `{queued, []}` (prevents safety-net re-dispatch from creating duplicate waitlist entries)
+4. **Promote loop**: while `ZCARD active < maxJobs`, `ZPOPMIN` head of waitlist into active. This self-heals wedged pools (active empty, waiters parked) on the next acquire — no separate cron needed.
+5. If `ZCARD active < maxJobs` after promotion → `ZADD` arrival to active, return `{acquired, [promoted...]}`.
+6. Else → `ZADD` arrival to waitlist (score = max(now, lastScore+1)), return `{queued, [promoted...]}`.
+
+The caller is responsible for invoking `jobQueue.promoteJob` on each member in `promoted[]` to wake their parked BullMQ jobs.
 
 **`releaseSlotAndPopWaiter`** — single atomic operation:
 1. `ZREM` member from active set
-2. `LPOP` waitlist
-3. If a waiter was popped → `SREM` it from the shadow set, `ZADD` it to active set (reserves slot), return its member id
+2. `ZPOPMIN` head of waitlist
+3. If a waiter was popped → `ZADD` it to active set (reserves slot), return its member id
 4. Else → return empty string
 
-**`dropPromotedMember`** — used when the popped waiter cannot be promoted (job not found / not in delayed state, or unparseable member):
+**`dropPromotedWaiter`** — used when the popped waiter cannot be promoted (job not found / not in delayed state). Unparseable members are filtered and dropped silently inside the pool itself, so callers only ever see well-formed `{projectId, jobId}` waiters:
 1. `ZREM` the popped member from active set (frees the reserved slot)
 2. The member is **not** re-pushed to the waitlist — the BullMQ safety-net delay re-enqueues it via `preDispatch` if the job is still alive. This avoids a stale waiter at the head of the queue blocking all subsequent waiters until the waitlist TTL expires.
 

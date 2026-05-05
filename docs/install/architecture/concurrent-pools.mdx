@@ -108,5 +108,5 @@ This is a last-resort backstop. The wait here is exactly the **safety-net delay*
 
 ```bash
 redis-cli ZCARD active_jobs_set:pool:{poolId}     # live slots
-redis-cli LLEN  waiting_jobs_list:pool:{poolId}   # waiters
+redis-cli ZCARD waiting_jobs_zset:pool:{poolId}   # waiters
 ```

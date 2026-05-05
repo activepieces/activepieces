@@ -8,7 +8,7 @@ import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { InterceptorResult, InterceptorVerdict, JobInterceptor } from '../job-interceptor'
 import { jobQueue } from '../job-queue'
-import { concurrencyPoolRedis } from './concurrency-pool-redis'
+import { concurrencyPoolRedis, WaiterIdentity } from './concurrency-pool-redis'
 
 export const rateLimiterInterceptor: JobInterceptor = {
     async preDispatch({ jobId, jobData, log }): Promise<InterceptorResult> {
@@ -16,21 +16,21 @@ export const rateLimiterInterceptor: JobInterceptor = {
             return { verdict: InterceptorVerdict.ALLOW }
         }
 
-        const { poolId, effectivePoolId } = await resolveEffectivePoolId({ projectId: jobData.projectId, log })
-        const maxConcurrentJobs = await getMaxConcurrentJobs({ poolId, platformId: jobData.platformId, log })
-        const outcome = await concurrencyPoolRedis.acquireSlotOrEnqueue({
-            poolId: effectivePoolId,
-            member: concurrencyPoolRedis.buildMember({ projectId: jobData.projectId, jobId }),
-            maxJobs: maxConcurrentJobs,
+        const { poolId, maxJobs } = await resolvePoolContext({ projectId: jobData.projectId, platformId: jobData.platformId, log })
+        const { outcome, promoted } = await concurrencyPoolRedis.acquireSlotOrEnqueue({
+            poolId,
+            projectId: jobData.projectId,
+            jobId,
+            maxJobs,
             timeoutMs: getStaleEntryThresholdMs(),
         })
+
+        await dispatchPromotedWaiters({ poolId, platformId: jobData.platformId, waiters: promoted, log })
 
         if (outcome === 'acquired') {
             log.debug({ jobId, projectId: jobData.projectId }, '[rateLimiterInterceptor] Job allowed')
             return { verdict: InterceptorVerdict.ALLOW }
         }
-
-        await selfHealWedgedPool({ poolId: effectivePoolId, platformId: jobData.platformId, timeoutMs: getStaleEntryThresholdMs(), log })
 
         const delayInMs = getFlowTimeoutMs() + SAFETY_NET_DELAY_BUFFER_MS
         log.info({ jobId, projectId: jobData.projectId, delayInMs }, '[rateLimiterInterceptor] Job enqueued to waitlist')
@@ -46,36 +46,18 @@ export const rateLimiterInterceptor: JobInterceptor = {
             return
         }
 
-        const { effectivePoolId } = await resolveEffectivePoolId({ projectId: jobData.projectId, log })
-        const timeoutMs = getStaleEntryThresholdMs()
+        const poolId = await resolveEffectivePoolId({ projectId: jobData.projectId, log })
         const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({
-            poolId: effectivePoolId,
-            member: concurrencyPoolRedis.buildMember({ projectId: jobData.projectId, jobId }),
-            timeoutMs,
+            poolId,
+            projectId: jobData.projectId,
+            jobId,
+            timeoutMs: getStaleEntryThresholdMs(),
         })
         if (isNil(popped)) {
             return
         }
 
-        const parsed = concurrencyPoolRedis.parseMember(popped)
-        if (isNil(parsed)) {
-            log.warn({ popped }, '[rateLimiterInterceptor] popped waiter has invalid format, dropping')
-            await concurrencyPoolRedis.dropPromotedMember({ poolId: effectivePoolId, member: popped })
-            return
-        }
-
-        const promoted = await jobQueue(log).promoteJob({
-            jobId: parsed.jobId,
-            platformId: jobData.platformId,
-        })
-
-        if (promoted) {
-            log.debug({ promotedJobId: parsed.jobId, poolId: effectivePoolId }, '[rateLimiterInterceptor] Waiter promoted')
-            return
-        }
-
-        log.warn({ popped, poolId: effectivePoolId }, '[rateLimiterInterceptor] Waiter promotion failed; freeing slot without re-queueing (safety-net delay re-enqueues if job is still alive)')
-        await concurrencyPoolRedis.dropPromotedMember({ poolId: effectivePoolId, member: popped })
+        await dispatchPromotedWaiters({ poolId, platformId: jobData.platformId, waiters: [popped], log })
     },
 }
 
@@ -93,48 +75,51 @@ function shouldContinue(jobData: JobData): jobData is ExecuteFlowJobData {
     return true
 }
 
-async function resolveEffectivePoolId({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<{ poolId: string | null, effectivePoolId: string }> {
-    const { data: poolId } = await tryCatch(() => concurrencyPoolService(log).getProjectPoolId(projectId))
-    const effectivePoolId = poolId ?? projectId
-    return { poolId: poolId ?? null, effectivePoolId }
+async function resolvePoolContext({ projectId, platformId, log }: { projectId: string, platformId: PlatformId, log: FastifyBaseLogger }): Promise<{ poolId: string, maxJobs: number }> {
+    const explicitPoolId = await getExplicitPoolId({ projectId, log })
+    const poolId = explicitPoolId ?? projectId
+    const maxJobs = await resolveMaxJobs({ explicitPoolId, platformId, log })
+    return { poolId, maxJobs }
 }
 
-async function getMaxConcurrentJobs({ poolId, platformId, log }: { poolId: string | null, platformId: PlatformId, log: FastifyBaseLogger }): Promise<number> {
-    if (!isNil(poolId)) {
-        const { data: value, error } = await tryCatch(() => concurrencyPoolService(log).getPoolLimit(poolId))
-        if (error === null && !isNil(value)) {
-            return value
+async function resolveEffectivePoolId({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<string> {
+    const explicitPoolId = await getExplicitPoolId({ projectId, log })
+    return explicitPoolId ?? projectId
+}
+
+async function getExplicitPoolId({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<string | null> {
+    const { data } = await tryCatch(() => concurrencyPoolService(log).getProjectPoolId(projectId))
+    return data ?? null
+}
+
+async function resolveMaxJobs({ explicitPoolId, platformId, log }: { explicitPoolId: string | null, platformId: PlatformId, log: FastifyBaseLogger }): Promise<number> {
+    if (!isNil(explicitPoolId)) {
+        const { data, error } = await tryCatch(() => concurrencyPoolService(log).getPoolLimit(explicitPoolId))
+        if (error === null && !isNil(data)) {
+            return data
         }
     }
     if (system.getEdition() !== ApEdition.CLOUD) {
         return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
     }
-    const platformPlanName = await distributedStore.get<string>(getPlatformPlanNameKey(platformId))
-    if (!isNil(platformPlanName)) {
-        const limit = PLAN_CONCURRENT_JOBS_LIMITS[platformPlanName]
-        if (!isNil(limit)) return limit
+    const planName = await distributedStore.get<string>(getPlatformPlanNameKey(platformId))
+    if (!isNil(planName)) {
+        const planLimit = PLAN_CONCURRENT_JOBS_LIMITS[planName]
+        if (!isNil(planLimit)) return planLimit
     }
     return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
 }
 
-async function selfHealWedgedPool({ poolId, platformId, timeoutMs, log }: { poolId: string, platformId: PlatformId, timeoutMs: number, log: FastifyBaseLogger }): Promise<void> {
-    const healed = await concurrencyPoolRedis.selfHealEmptyPool({ poolId, timeoutMs })
-    if (isNil(healed)) {
-        return
+async function dispatchPromotedWaiters({ poolId, platformId, waiters, log }: { poolId: string, platformId: PlatformId, waiters: WaiterIdentity[], log: FastifyBaseLogger }): Promise<void> {
+    for (const waiter of waiters) {
+        const promoted = await jobQueue(log).promoteJob({ jobId: waiter.jobId, platformId })
+        if (promoted) {
+            log.debug({ promotedJobId: waiter.jobId, poolId }, '[rateLimiterInterceptor] Waiter promoted')
+            continue
+        }
+        log.warn({ waiter, poolId }, '[rateLimiterInterceptor] Waiter promotion failed; freeing slot (safety-net delay re-enqueues if alive)')
+        await concurrencyPoolRedis.dropPromotedWaiter({ poolId, waiter })
     }
-    const parsed = concurrencyPoolRedis.parseMember(healed)
-    if (isNil(parsed)) {
-        log.warn({ healed, poolId }, '[rateLimiterInterceptor] self-heal popped invalid member, dropping')
-        await concurrencyPoolRedis.dropPromotedMember({ poolId, member: healed })
-        return
-    }
-    const promoted = await jobQueue(log).promoteJob({ jobId: parsed.jobId, platformId })
-    if (promoted) {
-        log.debug({ healedJobId: parsed.jobId, poolId }, '[rateLimiterInterceptor] self-heal promoted wedged head waiter')
-        return
-    }
-    log.warn({ healed, poolId }, '[rateLimiterInterceptor] self-heal promotion failed; dropping member (safety-net delay re-enqueues if alive)')
-    await concurrencyPoolRedis.dropPromotedMember({ poolId, member: healed })
 }
 
 function getFlowTimeoutMs(): number {
