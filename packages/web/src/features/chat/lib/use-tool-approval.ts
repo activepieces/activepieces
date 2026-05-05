@@ -80,8 +80,13 @@ export function useToolApproval({
   }, [pendingApprovalRequest]);
 
   const dismiss = useCallback(() => {
+    if (!pendingApprovalRequest) return;
     setDismissed(true);
-  }, []);
+    void sendApprovalDecision({
+      gateId: pendingApprovalRequest.gateId,
+      approved: false,
+    });
+  }, [pendingApprovalRequest]);
 
   return {
     hasActiveApproval,

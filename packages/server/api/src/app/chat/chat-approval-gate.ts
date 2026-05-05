@@ -1,3 +1,4 @@
+import { redisConnections } from '../database/redis-connections'
 import { pubsub } from '../helper/pubsub'
 
 const GATE_TIMEOUT_MS = 5 * 60 * 1000
@@ -9,6 +10,7 @@ function channelName(gateId: string): string {
 
 async function waitForApproval({ gateId }: { gateId: string }): Promise<boolean> {
     const channel = channelName(gateId)
+    const subscriber = await redisConnections.create()
 
     return new Promise<boolean>((resolve) => {
         let settled = false
@@ -16,7 +18,7 @@ async function waitForApproval({ gateId }: { gateId: string }): Promise<boolean>
         const cleanup = () => {
             if (settled) return
             settled = true
-            void pubsub.unsubscribe(channel)
+            subscriber.unsubscribe(channel).then(() => subscriber.quit()).catch(() => undefined)
         }
 
         const timeout = setTimeout(() => {
@@ -24,7 +26,8 @@ async function waitForApproval({ gateId }: { gateId: string }): Promise<boolean>
             resolve(false)
         }, GATE_TIMEOUT_MS)
 
-        void pubsub.subscribe(channel, (message) => {
+        subscriber.on('message', (_ch, message) => {
+            if (_ch !== channel) return
             clearTimeout(timeout)
             cleanup()
             try {
@@ -35,6 +38,8 @@ async function waitForApproval({ gateId }: { gateId: string }): Promise<boolean>
                 resolve(false)
             }
         })
+
+        void subscriber.subscribe(channel)
     })
 }
 

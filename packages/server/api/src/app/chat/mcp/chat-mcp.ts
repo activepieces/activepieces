@@ -59,6 +59,7 @@ const AP_TOOLS_REQUIRING_APPROVAL = new Set([
     'ap_run_action',
     'ap_test_step',
     'ap_test_flow',
+    'ap_change_flow_status',
 ])
 
 function humanizeToolName(name: string): string {
