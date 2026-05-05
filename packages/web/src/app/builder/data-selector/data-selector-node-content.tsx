@@ -1,4 +1,8 @@
-import { flowStructureUtil } from '@activepieces/shared';
+import {
+  FlowAction,
+  flowStructureUtil,
+  FlowTrigger,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -45,15 +49,16 @@ const DataSelectorNodeContent = ({
   const insertMention = useBuilderStateContext((state) => state.insertMention);
 
   const [ripple, rippleEvent] = useApRipple();
-  const step =
+  const stepName =
     node.data.type === 'value' && !node.data.hideStepIcon
-      ? flowStructureUtil.getStep(node.data.propertyPath, flowVersion.trigger)
+      ? node.data.stepName
       : node.data.type === 'test'
-      ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
+      ? node.data.stepName
       : undefined;
-  const stepMetadata = step
-    ? stepsHooks.useStepMetadata({ step }).stepMetadata
+  const step = stepName
+    ? flowStructureUtil.getStep(stepName, flowVersion.trigger)
     : undefined;
+
   const showInsertButton =
     node.data.type === 'value' && node.data.insertable && !node.isLoopStepNode;
   const showNodeValue = !node.children && node.data.type === 'value';
@@ -86,17 +91,7 @@ const DataSelectorNodeContent = ({
             }px`,
           }}
         ></div>
-        {stepMetadata && (
-          <div className="shrink-0">
-            <PieceIcon
-              displayName={stepMetadata.displayName}
-              logoUrl={stepMetadata.logoUrl}
-              showTooltip={false}
-              border={false}
-              size="sm"
-            ></PieceIcon>
-          </div>
-        )}
+        {step && <StepMetadataIcon step={step}></StepMetadataIcon>}
         {node.data.type !== 'test' && (
           <div className={cn('truncate', node.data.displayNameClassName)}>
             {node.data.displayName}
@@ -142,3 +137,18 @@ const DataSelectorNodeContent = ({
 };
 DataSelectorNodeContent.displayName = 'DataSelectorNodeContent';
 export { DataSelectorNodeContent };
+
+const StepMetadataIcon = ({ step }: { step: FlowAction | FlowTrigger }) => {
+  const stepMetadata = stepsHooks.useStepMetadata({ step }).stepMetadata;
+  return (
+    stepMetadata && (
+      <PieceIcon
+        displayName={stepMetadata.displayName}
+        logoUrl={stepMetadata.logoUrl}
+        showTooltip={false}
+        border={false}
+        size="sm"
+      ></PieceIcon>
+    )
+  );
+};

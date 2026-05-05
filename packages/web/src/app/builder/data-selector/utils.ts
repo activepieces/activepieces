@@ -157,7 +157,7 @@ function buildJsonPath(propertyPath: PathSegment[]): string {
         ? `'${escapeMentionKey(String(segment))}'`
         : segment
     }]`;
-  }, `${propertyPath[0]}`) as string;
+  }, `${propertyPath[0]}['output']`) as string;
 }
 
 function buildDataSelectorNode(
@@ -341,6 +341,9 @@ function traverseStep(
       true,
     );
     headNode.isLoopStepNode = true;
+    if (headNode.data.type === 'value') {
+      headNode.data = { ...headNode.data, stepName: step.name };
+    }
     return headNode;
   }
 
@@ -351,6 +354,9 @@ function traverseStep(
     zipArraysOfProperties,
     true,
   );
+  if (stepNode.data.type === 'value') {
+    stepNode.data = { ...stepNode.data, stepName: step.name };
+  }
 
   const cofEnabled = flowCanvasUtils.hasContinueOnFailureBranches(step);
   if (cofEnabled) {
@@ -368,7 +374,7 @@ function traverseStep(
         data: {
           type: 'value',
           displayName: t('Output'),
-          propertyPath: step.name,
+          propertyPath: `${step.name}['output']`,
           value: stepNode.data.value,
           insertable: true,
           hideStepIcon: true,

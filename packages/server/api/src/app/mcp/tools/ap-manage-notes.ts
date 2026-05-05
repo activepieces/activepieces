@@ -3,10 +3,10 @@ import {
     FlowOperationRequest,
     FlowOperationType,
     isNil,
-    McpServer,
     McpToolDefinition,
     NoteColorVariant,
     Permission,
+    ProjectScopedMcpServer,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -30,7 +30,7 @@ const manageNotesInput = z.object({
     }).optional(),
 })
 
-export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apManageNotesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_manage_notes',
         permission: Permission.WRITE_FLOW,

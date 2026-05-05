@@ -1,11 +1,13 @@
 import {
     BranchExecutionType,
     BranchOperator,
+    CodeAction,
     FlowAction,
     FlowActionType,
     FlowOperationRequest,
     flowOperations,
     FlowOperationType,
+    flowStructureUtil,
     FlowTrigger,
     FlowTriggerType,
     FlowVersion,
@@ -350,7 +352,151 @@ describe('Flow Helper', () => {
         }
         expect(resultFlow.trigger).toEqual(expectedTrigger)
     })
+
+    describe('isChildOf', () => {
+        it('recognises a step inside a LOOP_ON_ITEMS as a child', () => {
+            const loop: FlowAction = {
+                name: 'loop',
+                type: FlowActionType.LOOP_ON_ITEMS,
+                valid: true,
+                displayName: 'Loop',
+                lastUpdatedDate: '2026-05-02T00:00:00.000Z',
+                settings: { items: '' },
+                firstLoopAction: createCodeAction('inner_step'),
+            }
+            expect(flowStructureUtil.isChildOf(loop, 'inner_step')).toBe(true)
+        })
+
+        it('recognises a deeply nested step inside a LOOP_ON_ITEMS as a child', () => {
+            const loop: FlowAction = {
+                name: 'loop',
+                type: FlowActionType.LOOP_ON_ITEMS,
+                valid: true,
+                displayName: 'Loop',
+                lastUpdatedDate: '2026-05-02T00:00:00.000Z',
+                settings: { items: '' },
+                firstLoopAction: {
+                    ...createCodeAction('inner_step'),
+                    nextAction: createCodeAction('deep_step'),
+                },
+            }
+            expect(flowStructureUtil.isChildOf(loop, 'deep_step')).toBe(true)
+        })
+
+        it('recognises a step inside a ROUTER branch as a child', () => {
+            const router: FlowAction = {
+                name: 'router',
+                type: FlowActionType.ROUTER,
+                valid: true,
+                displayName: 'Router',
+                lastUpdatedDate: '2026-05-02T00:00:00.000Z',
+                settings: {
+                    branches: [
+                        {
+                            branchName: 'branch_a',
+                            branchType: BranchExecutionType.CONDITION,
+                            conditions: [[]],
+                        },
+                    ],
+                    executionType: RouterExecutionType.EXECUTE_ALL_MATCH,
+                },
+                children: [createCodeAction('branch_a_step')],
+            }
+            expect(flowStructureUtil.isChildOf(router, 'branch_a_step')).toBe(true)
+        })
+
+        it('recognises a step inside a CoF onSuccess branch as a child', () => {
+            const cofParent = buildCofCodeAction({
+                name: 'cof',
+                onSuccess: createCodeAction('success_head'),
+                onFailure: createCodeAction('failure_head'),
+            })
+            expect(flowStructureUtil.isChildOf(cofParent, 'success_head')).toBe(true)
+        })
+
+        it('recognises a step inside a CoF onFailure branch as a child', () => {
+            const cofParent = buildCofCodeAction({
+                name: 'cof',
+                onSuccess: createCodeAction('success_head'),
+                onFailure: createCodeAction('failure_head'),
+            })
+            expect(flowStructureUtil.isChildOf(cofParent, 'failure_head')).toBe(true)
+        })
+
+        it('recognises a deeply nested step inside a CoF branch as a child', () => {
+            const cofParent = buildCofCodeAction({
+                name: 'cof',
+                onSuccess: {
+                    ...createCodeAction('success_head'),
+                    nextAction: createCodeAction('success_tail'),
+                },
+                onFailure: createCodeAction('failure_head'),
+            })
+            expect(flowStructureUtil.isChildOf(cofParent, 'success_tail')).toBe(true)
+        })
+
+        it('returns false for a step that is not part of any descendant', () => {
+            const cofParent = buildCofCodeAction({
+                name: 'cof',
+                onSuccess: createCodeAction('success_head'),
+                onFailure: createCodeAction('failure_head'),
+            })
+            expect(flowStructureUtil.isChildOf(cofParent, 'unrelated')).toBe(false)
+        })
+
+        it('returns false when called with the parent step name itself', () => {
+            const cofParent = buildCofCodeAction({
+                name: 'cof',
+                onSuccess: createCodeAction('success_head'),
+            })
+            expect(flowStructureUtil.isChildOf(cofParent, 'cof')).toBe(false)
+        })
+
+        it('returns false for a CODE step without CoF branches', () => {
+            const plain = createCodeAction('plain')
+            expect(flowStructureUtil.isChildOf(plain, 'anything')).toBe(false)
+        })
+
+        it('does not include the next action of the parent as a child', () => {
+            const cofParent = buildCofCodeAction({
+                name: 'cof',
+                onSuccess: createCodeAction('success_head'),
+                nextAction: createCodeAction('next_step'),
+            })
+            expect(flowStructureUtil.isChildOf(cofParent, 'next_step')).toBe(false)
+        })
+    })
 })
+
+function buildCofCodeAction({
+    name,
+    onSuccess,
+    onFailure,
+    nextAction,
+}: {
+    name: string
+    onSuccess?: FlowAction
+    onFailure?: FlowAction
+    nextAction?: FlowAction
+}): CodeAction {
+    return {
+        name,
+        type: FlowActionType.CODE,
+        valid: true,
+        displayName: name,
+        lastUpdatedDate: '2026-05-02T00:00:00.000Z',
+        settings: {
+            sourceCode: { code: '', packageJson: '{}' },
+            input: {},
+            errorHandlingOptions: {
+                continueOnFailure: { value: true },
+                retryOnFailure: { value: false },
+                continueOnFailureBranches: { onSuccess, onFailure },
+            },
+        },
+        nextAction,
+    }
+}
 
 test('Duplicate Flow With Loops using Import', () => {
     const flowVersion: FlowVersion = {

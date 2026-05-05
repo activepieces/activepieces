@@ -1,6 +1,6 @@
 import { isNil } from '../../../core/common'
 import { ActivepiecesError, ErrorCode } from '../../../core/common/activepieces-error'
-import { BranchCondition, BranchExecutionType, emptyCondition, FlowAction, FlowActionType, LoopOnItemsAction, RouterAction } from '../actions/action'
+import { BranchCondition, BranchExecutionType, emptyCondition, FlowAction, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 
@@ -176,7 +176,7 @@ function findPathToStep(trigger: FlowTrigger, targetStepName: string): StepWithI
 }
 
 
-function getAllChildSteps(action: LoopOnItemsAction | RouterAction): Step[] {
+function getAllChildSteps(action: Step): Step[] {
     return getAllSteps({
         ...action,
         nextAction: undefined,
@@ -184,16 +184,7 @@ function getAllChildSteps(action: LoopOnItemsAction | RouterAction): Step[] {
 }
 
 function isChildOf(parent: Step, childStepName: string): boolean {
-    switch (parent.type) {
-        case FlowActionType.ROUTER:
-        case FlowActionType.LOOP_ON_ITEMS: {
-            const children = getAllChildSteps(parent)
-            return children.findIndex((c) => c.name === childStepName) > -1
-        }
-        default:
-            break
-    }
-    return false
+    return getAllChildSteps(parent).some((c) => c.name === childStepName && c.name !== parent.name)
 }
 
 const findUnusedNames = (source: FlowTrigger | string[], count = 1) => {

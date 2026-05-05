@@ -554,10 +554,11 @@ const isSkipped = (stepName: string, trigger: FlowTrigger) => {
     .filter(
       (stepInPath) =>
         stepInPath.type === FlowActionType.LOOP_ON_ITEMS ||
-        stepInPath.type === FlowActionType.ROUTER,
+        stepInPath.type === FlowActionType.ROUTER ||
+        sharedFlowCanvasUtils.hasContinueOnFailureBranches(stepInPath),
     )
-    .filter((routerOrLoop) =>
-      flowStructureUtil.isChildOf(routerOrLoop, stepName),
+    .filter((parentInPath) =>
+      flowStructureUtil.isChildOf(parentInPath, stepName),
     )
     .filter((parent) => parent.skip);
 

@@ -12,6 +12,7 @@ export type DataSelectorTreeNodeData = {
   insertable: boolean;
   hideStepIcon?: boolean;
   displayNameClassName?: string;
+  stepName?: string;
 };
 
 export type DataSelectorTestNodeData = {
