@@ -164,7 +164,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         return approval
     },
 
-    async list({ projectId, state, cursor, limit }: ListParams): Promise<SeekPage<PopulatedFlowApprovalRequest>> {
+    async list({ projectId, state, flowVersionId, cursor, limit }: ListParams): Promise<SeekPage<PopulatedFlowApprovalRequest>> {
         const decoded = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
             entity: FlowApprovalRequestEntity,
@@ -187,6 +187,9 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             .where({ projectId })
         if (state) {
             qb.andWhere({ state })
+        }
+        if (flowVersionId) {
+            qb.andWhere({ flowVersionId })
         }
         const result = await paginator.paginate<FlowApprovalRequest & { flowVersion?: { id: string, displayName: string, flowId: string, state: FlowVersionState, created: string, updated: string } }>(qb)
         const populated: PopulatedFlowApprovalRequest[] = result.data.map((row) => ({
@@ -248,6 +251,7 @@ type WithdrawParams = {
 type ListParams = {
     projectId: ProjectId
     state?: FlowApprovalRequestState
+    flowVersionId?: ApId
     cursor?: Cursor
     limit?: number
 }

@@ -65,18 +65,21 @@ export const flowApprovalsHooks = {
       enabled: !!projectId && platform.plan.flowApprovalEnabled && canApprove,
     });
   },
-  useListApprovalsForFlow: (flowId: string | undefined) => {
+  useApprovalForVersion: (flowVersionId: string | undefined) => {
     const { platform } = platformHooks.useCurrentPlatform();
     const projectId = authenticationSession.getProjectId();
     return useQuery({
-      queryKey: ['flow-approval-requests', 'flow', flowId, projectId],
+      queryKey: ['flow-approval-requests', 'version', flowVersionId, projectId],
       queryFn: async () => {
-        const all = await flowApprovalsApi.list({
+        const page = await flowApprovalsApi.list({
           projectId: projectId ?? undefined,
+          flowVersionId,
+          limit: 1,
         });
-        return all.data.filter((r) => r.flowId === flowId);
+        return page.data[0] ?? null;
       },
-      enabled: !!flowId && !!projectId && platform.plan.flowApprovalEnabled,
+      enabled:
+        !!flowVersionId && !!projectId && platform.plan.flowApprovalEnabled,
     });
   },
   useApprove: () => {

@@ -18,13 +18,12 @@ import { OverwriteDraftDialog } from '../../flow-versions/overwrite-draft-dialog
 import LargeWidgetWrapper from './large-widget-wrapper';
 
 const ViewingOldVersionWidget = () => {
-  const [run, readonly, version, isPublishing, flow] = useBuilderStateContext(
+  const [run, readonly, version, isPublishing] = useBuilderStateContext(
     (state) => [
       state.run,
       state.readonly,
       state.flowVersion,
       state.isPublishing,
-      state.flow,
     ],
   );
   const versionNumber = flowHooks
@@ -32,14 +31,11 @@ const ViewingOldVersionWidget = () => {
     .toString();
   const { checkAccess } = useAuthorization();
   const hasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
-  const { data: approvals } = flowApprovalsHooks.useListApprovalsForFlow(
-    flow.id,
+  const { data: approval } = flowApprovalsHooks.useApprovalForVersion(
+    version.id,
   );
-  const hasPendingApprovalForThisVersion = (approvals ?? []).some(
-    (request) =>
-      request.flowVersionId === version.id &&
-      request.state === FlowApprovalRequestState.PENDING,
-  );
+  const hasPendingApprovalForThisVersion =
+    approval?.state === FlowApprovalRequestState.PENDING;
   if (
     !isNil(run) ||
     !readonly ||

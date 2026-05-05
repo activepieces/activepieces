@@ -13,6 +13,7 @@ export const flowApprovalRequestController: FastifyPluginAsyncZod = async (app) 
         return flowApprovalRequestService(req.log).list({
             projectId: req.projectId,
             state: req.query.state,
+            flowVersionId: req.query.flowVersionId,
             cursor: req.query.cursor,
             limit: req.query.limit,
         })

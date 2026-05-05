@@ -1,5 +1,4 @@
 import {
-  FlowApprovalRequest,
   FlowApprovalRequestState,
   FlowVersionState,
   isNil,
@@ -7,7 +6,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ShieldAlert } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { RightSideBarType } from '@/app/builder/types';
 import { Button } from '@/components/ui/button';
@@ -42,14 +41,10 @@ const FlowApprovalBanner = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const featureEnabled = platform.plan.flowApprovalEnabled;
-  const { data: approvals } = flowApprovalsHooks.useListApprovalsForFlow(
-    featureEnabled ? flow.id : undefined,
+  const { data: latestApproval } = flowApprovalsHooks.useApprovalForVersion(
+    featureEnabled ? flowVersion.id : undefined,
   );
 
-  const latestApproval = useMemo(
-    () => pickLatest(approvals ?? []),
-    [approvals],
-  );
   const { mutateAsync: approve, isPending: isApproving } =
     flowApprovalsHooks.useApprove();
   const { mutateAsync: reject, isPending: isRejecting } =
@@ -90,9 +85,6 @@ const FlowApprovalBanner = () => {
   const [rejectReason, setRejectReason] = useState('');
 
   if (!featureEnabled || isNil(latestApproval)) {
-    return null;
-  }
-  if (latestApproval.flowVersionId !== flowVersion.id) {
     return null;
   }
   if (flowVersion.state !== FlowVersionState.LOCKED) {
@@ -187,13 +179,6 @@ const FlowApprovalBanner = () => {
       </div>
     </LargeWidgetWrapper>
   );
-};
-
-const pickLatest = (
-  rows: FlowApprovalRequest[],
-): FlowApprovalRequest | null => {
-  if (rows.length === 0) return null;
-  return [...rows].sort((a, b) => (b.created > a.created ? 1 : -1))[0];
 };
 
 FlowApprovalBanner.displayName = 'FlowApprovalBanner';

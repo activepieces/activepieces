@@ -40,6 +40,7 @@ export type RejectFlowApprovalRequestBody = z.infer<typeof RejectFlowApprovalReq
 export const ListFlowApprovalRequestsQuery = z.object({
     state: z.nativeEnum(FlowApprovalRequestState).optional(),
     projectId: ApId.optional(),
+    flowVersionId: ApId.optional(),
     cursor: z.string().optional(),
     limit: z.coerce.number().min(1).max(100).optional(),
 })
