@@ -16,7 +16,7 @@ services:
     networks:
       - activepieces
   worker:
-    image: ghcr.io/activepieces/activepieces:0.79.0
+    image: ghcr.io/activepieces/activepieces:0.80.1
     restart: unless-stopped
     depends_on:
       - app
