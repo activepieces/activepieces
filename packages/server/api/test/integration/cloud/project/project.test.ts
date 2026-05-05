@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     ApiKeyResponseWithValue,
     DefaultProjectRole,
@@ -16,8 +15,8 @@ import {
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { generateMockToken } from '../../../helpers/auth'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import {
     createMockApiKey,
@@ -30,6 +29,7 @@ import {
     mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 

@@ -145,8 +145,10 @@ const NewProjectForm = ({
           <FormField
             name="displayName"
             render={({ field }) => (
-              <FormItem className="grid space-y-2" >
-                <Label htmlFor="displayName" showRequiredIndicator>{t('Project Name')}</Label>
+              <FormItem className="grid space-y-2">
+                <Label htmlFor="displayName" showRequiredIndicator>
+                  {t('Project Name')}
+                </Label>
                 <Input
                   {...field}
                   id="displayName"
@@ -172,9 +174,7 @@ const NewProjectForm = ({
                   value={field.value ?? ''}
                 />
                 <span className="text-xs text-muted-foreground">
-                  {t(
-                    'Receives flow failure emails for this project.',
-                  )}
+                  {t('Receives flow failure emails for this project.')}
                 </span>
                 <FormMessage />
               </FormItem>

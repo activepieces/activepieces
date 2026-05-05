@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { AlertChannel, PlatformRole, PrincipalType, ProjectType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
@@ -8,6 +7,7 @@ import {
     mockBasicUser,
 } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -202,7 +202,7 @@ describe('Alert API', () => {
                 receiver: faker.internet.email(),
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
         })
 
         it('should list alerts on a personal project', async () => {
