@@ -2,7 +2,7 @@ import { AIProviderName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   ChatContainerContent,
@@ -11,8 +11,8 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
+import { useToolApproval } from '@/features/chat/lib/use-tool-approval';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 
@@ -27,6 +27,8 @@ import { ChatMessage } from './components/chat-message';
 import { ChatModelSelector } from './components/chat-model-selector';
 import { ChatProjectSelector } from './components/chat-project-selector';
 import { QuickReplies } from './components/message-content';
+import { MultiQuestionForm } from './components/multi-question-form';
+import { ToolApprovalForm } from './components/tool-approval-form';
 import {
   getTextFromParts,
   parseMultiQuestion,
@@ -45,15 +47,7 @@ export function AIChatBox({
   const chatProvider = providers?.find((p) => p.enabledForChat);
   const hasChatProvider = Boolean(chatProvider);
 
-  if (isLoadingProviders) {
-    return (
-      <div className="flex items-center justify-center h-full flex-1 min-w-0">
-        <Skeleton className="h-8 w-48" />
-      </div>
-    );
-  }
-
-  if (!hasChatProvider) {
+  if (!isLoadingProviders && !hasChatProvider) {
     return <SetupRequiredState />;
   }
 
@@ -88,6 +82,7 @@ function ChatBoxContent({
     setConversationId,
     setModelName,
     setProjectContext,
+    pendingApprovalRequest,
   } = useAgentChat({ onTitleUpdate, onConversationCreated });
   const { data: allProjects } = projectCollectionUtils.useAll();
   const projects = allProjects ?? [];
@@ -99,12 +94,9 @@ function ChatBoxContent({
     [setProjectContext],
   );
 
-  const [connectedPieces, setConnectedPieces] = useState<Set<string>>(
+  const [dismissedFormIds, setDismissedFormIds] = useState<Set<string>>(
     new Set(),
   );
-  const markPieceConnected = useCallback((piece: string) => {
-    setConnectedPieces((prev) => new Set(prev).add(piece));
-  }, []);
 
   useEffect(() => {
     if (initialConversationId) {
@@ -126,12 +118,31 @@ function ChatBoxContent({
   }, [messages, sendMessage]);
 
   const lastMessage = messages[messages.length - 1];
-  const lastMessageText =
-    lastMessage?.role === 'assistant'
-      ? getTextFromParts(lastMessage.parts)
-      : '';
+  const lastMessageText = useMemo(
+    () =>
+      lastMessage?.role === 'assistant'
+        ? getTextFromParts(lastMessage.parts)
+        : '',
+    [lastMessage],
+  );
+  const activeQuestions = useMemo(
+    () => parseMultiQuestion(lastMessageText).questions,
+    [lastMessageText],
+  );
   const hasActiveForm =
-    parseMultiQuestion(lastMessageText).questions.length > 0;
+    activeQuestions.length > 0 &&
+    !!lastMessage &&
+    !dismissedFormIds.has(lastMessage.id);
+
+  const {
+    hasActiveApproval,
+    approvalDisplayName,
+    approve,
+    approveAndRemember,
+    reject,
+    dismiss: dismissApproval,
+  } = useToolApproval({ pendingApprovalRequest });
+
   const isEmpty = messages.length === 0 && !isLoadingHistory && !isStreaming;
 
   if (isEmpty) {
@@ -179,7 +190,7 @@ function ChatBoxContent({
             'linear-gradient(to bottom, black 0%, black calc(100% - 40px), transparent 100%)',
         }}
       >
-        <ChatContainerContent className="max-w-4xl mx-auto px-6 py-8 gap-0">
+        <ChatContainerContent className="max-w-3xl mx-auto px-6 pt-8 pb-16 gap-0">
           {isLoadingHistory && <MessageSkeletons />}
 
           {messages.map((msg, idx) => {
@@ -195,8 +206,6 @@ function ChatBoxContent({
                 isStreaming={isLastStreamingAssistant}
                 isLastMessage={idx === messages.length - 1}
                 onSend={handleSend}
-                connectedPieces={connectedPieces}
-                onPieceConnected={markPieceConnected}
                 onRetry={handleRetry}
                 selectedProjectId={selectedProjectId}
                 projects={projects}
@@ -212,18 +221,12 @@ function ChatBoxContent({
             </div>
           )}
 
-          {!wasCancelled &&
-            messages.length > 0 &&
-            messages[messages.length - 1]?.role === 'assistant' && (
-              <QuickReplies
-                replies={
-                  parseQuickReplies(
-                    getTextFromParts(messages[messages.length - 1].parts),
-                  ).replies
-                }
-                onSend={handleSend}
-              />
-            )}
+          {!wasCancelled && lastMessageText && (
+            <QuickReplies
+              replies={parseQuickReplies(lastMessageText).replies}
+              onSend={handleSend}
+            />
+          )}
 
           {error && (
             <motion.div
@@ -251,9 +254,43 @@ function ChatBoxContent({
         <ScrollButton className="absolute bottom-4 right-1/2 translate-x-1/2" />
       </ChatContainerRoot>
 
-      {!hasActiveForm && (
-        <div className="pb-4 px-6">
-          <div className="max-w-3xl mx-auto">
+      <div className="px-6">
+        <div className="max-w-3xl mx-auto">
+          {hasActiveApproval ? (
+            <ToolApprovalForm
+              key={pendingApprovalRequest?.gateId}
+              displayName={approvalDisplayName ?? ''}
+              onApprove={approve}
+              onApproveAndRemember={approveAndRemember}
+              onReject={reject}
+              onDismiss={dismissApproval}
+            />
+          ) : hasActiveForm ? (
+            <MultiQuestionForm
+              key={lastMessage?.id}
+              questions={activeQuestions}
+              onSubmit={(text) => {
+                if (lastMessage?.id) {
+                  setDismissedFormIds((prev) => {
+                    const next = new Set(prev);
+                    next.add(lastMessage.id);
+                    return next;
+                  });
+                }
+                void handleSend(text);
+              }}
+              onDismiss={() => {
+                if (lastMessage?.id) {
+                  setDismissedFormIds((prev) => {
+                    const next = new Set(prev);
+                    next.add(lastMessage.id);
+                    return next;
+                  });
+                }
+                void handleSend(t('Skip these questions'));
+              }}
+            />
+          ) : (
             <ChatInput
               isStreaming={isStreaming}
               onSend={handleSend}
@@ -274,9 +311,9 @@ function ChatBoxContent({
                 </>
               }
             />
-          </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
