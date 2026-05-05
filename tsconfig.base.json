@@ -243,6 +243,9 @@
       "@activepieces/piece-checkout": [
         "packages/pieces/community/checkout/src/index.ts"
       ],
+      "@activepieces/piece-chess-com": [
+        "packages/pieces/community/chess-com/src/index.ts"
+      ],
       "@activepieces/piece-circle": [
         "packages/pieces/community/circle/src/index.ts"
       ],
@@ -880,6 +883,9 @@
       ],
       "@activepieces/piece-pagerduty": [
         "packages/pieces/community/pagerduty/src/index.ts"
+      ],
+      "@activepieces/piece-parallel": [
+        "packages/pieces/community/parallel/src/index.ts"
       ],
       "@activepieces/piece-parseur": [
         "packages/pieces/community/parseur/src/index.ts"
