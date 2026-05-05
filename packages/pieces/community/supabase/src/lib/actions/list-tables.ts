@@ -4,7 +4,7 @@ import { supabaseAuth } from '../auth';
 export const listTables = createAction({
     name: 'list_tables',
     displayName: 'List Tables',
-    description: 'Returns a list of all public tables in the database',
+    description: 'Returns a list of all public tables and views in the database',
     auth: supabaseAuth,
     props: {},
     async run(context) {
