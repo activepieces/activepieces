@@ -155,6 +155,9 @@
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
       ],
+      "@activepieces/piece-billsby": [
+        "packages/pieces/community/billsby/src/index.ts"
+      ],
       "@activepieces/piece-bigcommerce": [
         "packages/pieces/community/bigcommerce/src/index.ts"
       ],
