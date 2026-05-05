@@ -26,7 +26,7 @@ services:
     deploy:
       replicas: 5
     volumes:
-      - /path/to/your/dist/assistro:/usr/src/app/dist/packages/pieces/community/assistro
+      - ./cache:/usr/src/app/cache
     networks:
       - activepieces
   postgres:
