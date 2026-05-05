@@ -1,8 +1,21 @@
+import { FastifyBaseLogger } from 'fastify'
 import { Redis } from 'ioredis'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { getConcurrencyPoolSetKey, getConcurrencyPoolWaitlistKey } from '../../../../../../src/app/database/redis/keys'
 import { redisConnections } from '../../../../../../src/app/database/redis-connections'
 import { concurrencyPoolRedis } from '../../../../../../src/app/workers/job-queue/interceptors/concurrency-pool-redis'
+
+const noopLog = {
+    debug: () => undefined,
+    info: () => undefined,
+    warn: () => undefined,
+    error: () => undefined,
+    fatal: () => undefined,
+    trace: () => undefined,
+    child: () => noopLog,
+    silent: () => undefined,
+    level: 'silent',
+} as unknown as FastifyBaseLogger
 
 const TIMEOUT_MS = 600_000
 
@@ -321,6 +334,35 @@ describe('concurrencyPoolRedis Lua primitives', () => {
 
             expect(popped).toBeNull()
             expect(await redis.zcard(setKey)).toBe(0)
+        })
+
+        it('A18: forPool cascades to next waiter when promote() returns false', async () => {
+            const poolId = `a18-${crypto.randomUUID()}`
+            const redis = await redisConnections.useExisting()
+            const setKey = getConcurrencyPoolSetKey(poolId)
+            const waitlistKey = getConcurrencyPoolWaitlistKey(poolId)
+
+            await redis.zadd(setKey, Date.now(), 'p:active')
+            await redis.zadd(waitlistKey, Date.now(), 'p:bad')
+            await redis.zadd(waitlistKey, Date.now() + 1, 'p:good')
+
+            const promoteCalls: string[] = []
+            const pool = concurrencyPoolRedis.forPool({
+                poolId,
+                timeoutMs: TIMEOUT_MS,
+                getMaxJobs: async () => 1,
+                promote: async ({ jobId }) => {
+                    promoteCalls.push(jobId)
+                    return jobId === 'good'
+                },
+                log: noopLog,
+            })
+
+            await pool.release({ projectId: 'p', jobId: 'active' })
+
+            expect(promoteCalls).toEqual(['bad', 'good'])
+            expect(await redis.zrange(setKey, 0, -1)).toEqual(['p:good'])
+            expect(await redis.zcard(waitlistKey)).toBe(0)
         })
 
         it('A17: release of a stale-swept member does not over-pop into a saturated pool', async () => {

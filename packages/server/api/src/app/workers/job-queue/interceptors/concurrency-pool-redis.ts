@@ -5,15 +5,21 @@ import { redisConnections } from '../../../database/redis-connections'
 
 export const concurrencyPoolRedis = {
     forPool({ poolId, timeoutMs, getMaxJobs, promote, log }: PoolConfig): ConcurrencyPool {
-        const dispatchPromoted = async (waiters: WaiterIdentity[]): Promise<void> => {
-            for (const waiter of waiters) {
+        const dispatchPromoted = async (initial: WaiterIdentity[]): Promise<void> => {
+            const queue = [...initial]
+            while (queue.length > 0) {
+                const waiter = queue.shift()
+                if (isNil(waiter)) break
                 const promoted = await promote(waiter)
                 if (promoted) {
                     log.debug({ poolId, promotedJobId: waiter.jobId }, '[concurrencyPool] Waiter promoted')
                     continue
                 }
-                log.warn({ poolId, waiter }, '[concurrencyPool] Waiter promotion failed; freeing slot (safety-net delay re-enqueues if alive)')
-                await dropPromotedWaiter({ poolId, waiter })
+                log.warn({ poolId, waiter }, '[concurrencyPool] Waiter promotion failed; cascading to next waiter')
+                const next = await releaseSlotAndPopWaiter({ poolId, projectId: waiter.projectId, jobId: waiter.jobId, timeoutMs })
+                if (!isNil(next)) {
+                    queue.push(next)
+                }
             }
         }
         return {
