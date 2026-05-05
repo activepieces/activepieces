@@ -35,6 +35,7 @@ function buildTestStepNode(
       displayName,
       propertyPath: stepName,
       insertable: false,
+      stepName,
     },
     children: [
       {
@@ -390,7 +391,7 @@ function traverseStep(
         data: {
           type: 'value',
           displayName: t('Error message'),
-          propertyPath: `errors['${step.name}']['message']`,
+          propertyPath: `${step.name}['error']['message']`,
           value: '---runtime error message---',
           insertable: true,
         },
