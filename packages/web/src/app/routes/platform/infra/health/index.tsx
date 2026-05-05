@@ -1,10 +1,17 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Activity, Calendar, HeartPulse, LineChart } from 'lucide-react';
-import React from 'react';
+import {
+  Activity,
+  Calendar,
+  HeartPulse,
+  LineChart,
+  ShieldAlert,
+} from 'lucide-react';
+import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { NotificationDot } from '@/components/custom/notification-dot';
 import {
   Select,
   SelectContent,
@@ -13,13 +20,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  healthQueries,
+  useSecurityAdvisoryStore,
+  useUnseenSecurityAdvisories,
+} from '@/features/platform-admin';
 
+import { AdvisoryItem } from './advisory-item';
+import { CheckItem } from './components/check-item';
 import { QueueTab } from './components/queue-tab';
 import { RunsTab } from './components/runs-tab';
 import { SystemHealthTab } from './components/system-health-tab';
 import { healthMetricsQueries } from './lib/health-metrics-hooks';
 
-type TabValue = 'system' | 'runs' | 'queue';
+type TabValue = 'system' | 'runs' | 'queue' | 'security';
 
 type MonthOption = { value: string; label: string };
 
@@ -39,6 +53,28 @@ export default function SettingsHealthPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get('tab') as TabValue) || 'system';
   const selectedMonth = searchParams.get('month') || monthOptions[0].value;
+
+  const { data: advisories, isPending: advisoriesPending } =
+    healthQueries.useSecurityAdvisories({ showErrorDialog: true });
+  const advisoryList = advisories?.advisories ?? [];
+  const showPartialNote = advisories?.partial === true;
+  const unseen = useUnseenSecurityAdvisories();
+  const markSeen = useSecurityAdvisoryStore((s) => s.markSeen);
+
+  const criticalIdsKey = React.useMemo(
+    () =>
+      (advisories?.advisories ?? [])
+        .filter((a) => a.severity === 'high' || a.severity === 'critical')
+        .map((a) => a.id)
+        .sort()
+        .join('|'),
+    [advisories],
+  );
+
+  useEffect(() => {
+    if (activeTab !== 'security' || !criticalIdsKey) return;
+    markSeen(criticalIdsKey.split('|'));
+  }, [activeTab, criticalIdsKey, markSeen]);
 
   const range = React.useMemo(() => {
     const month = dayjs(`${selectedMonth}-01`);
@@ -110,6 +146,13 @@ export default function SettingsHealthPage() {
             <Activity className="w-4 h-4 mr-2" />
             {t('Queue Health')}
           </TabsTrigger>
+          <TabsTrigger variant="outline" value="security">
+            <ShieldAlert className="w-4 h-4 mr-2" />
+            {t('Security Issues')}
+            {unseen.length > 0 && (
+              <NotificationDot className="ml-1.5" count={unseen.length} />
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="system">
@@ -122,6 +165,41 @@ export default function SettingsHealthPage() {
 
         <TabsContent value="queue">
           <QueueTab live={live} isLoading={isLiveLoading} />
+        </TabsContent>
+
+        <TabsContent value="security" className="mt-4 pb-6" tabIndex={-1}>
+          <div className="flex flex-col gap-4">
+            {showPartialNote && (
+              <p className="text-xs text-muted-foreground">
+                {t(
+                  'Some advisory sources are unavailable; the list may be incomplete.',
+                )}
+              </p>
+            )}
+            {advisoriesPending ? (
+              <CheckItem
+                id="security-advisories"
+                title={t('Security advisories')}
+                icon={<ShieldAlert />}
+                isChecked={false}
+                message={''}
+                loading={true}
+              />
+            ) : advisoryList.length === 0 ? (
+              <CheckItem
+                id="security-advisories"
+                title={t('Security advisories')}
+                icon={<ShieldAlert />}
+                isChecked={true}
+                message={t('No advisories affect your version.')}
+                loading={false}
+              />
+            ) : (
+              advisoryList.map((advisory) => (
+                <AdvisoryItem key={advisory.id} advisory={advisory} />
+              ))
+            )}
+          </div>
         </TabsContent>
       </Tabs>
     </div>

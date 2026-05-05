@@ -2,7 +2,7 @@ import { LockKeyhole } from 'lucide-react';
 import React, { ComponentType, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { Dot } from '@/components/custom/dot';
+import { NotificationDot } from '@/components/custom/notification-dot';
 import {
   SidebarMenuButton,
   SidebarMenuItem,
@@ -16,6 +16,7 @@ export type SidebarItemType = {
   type: 'link';
   icon?: ComponentType<{ className?: string }>;
   notification?: boolean;
+  notificationCount?: number;
   locked?: boolean;
   newWindow?: boolean;
   isActive?: (pathname: string) => boolean;
@@ -73,16 +74,20 @@ export const ApSidebarItem = (item: SidebarItemType) => {
       {!isCollapsed && item.locked && !item.badge && (
         <LockKeyhole className="size-3.5! ml-auto" />
       )}
-      {item.notification && !item.locked && (
-        <Dot
-          variant="destructive"
-          className="absolute right-1 top-2 transform -translate-y-1/2 size-2 rounded-full"
-        />
-      )}
     </SidebarMenuButton>
   );
 
-  return <SidebarMenuItem>{button}</SidebarMenuItem>;
+  return (
+    <SidebarMenuItem>
+      {button}
+      {item.notification && !item.locked && (
+        <NotificationDot
+          count={item.notificationCount}
+          className="pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2"
+        />
+      )}
+    </SidebarMenuItem>
+  );
 };
 
 function renderIcon(

@@ -18,6 +18,7 @@ import {
   GlobalSearchProvider,
   useGlobalSearch,
 } from '../global-search/global-search-context';
+import { SecurityAdvisoryBanner } from '../security-advisory-banner';
 import { ProjectDashboardSidebar } from '../sidebar/dashboard';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
@@ -139,6 +140,7 @@ function ProjectDashboardLayoutInner({
                 'rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border',
             )}
           >
+            <SecurityAdvisoryBanner />
             {!hideHeader && (
               <ProjectDashboardLayoutHeader key={currentProjectId} />
             )}

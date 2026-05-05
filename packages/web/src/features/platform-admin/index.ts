@@ -56,3 +56,7 @@ export {
   RefreshAnalyticsContext,
   RefreshAnalyticsProvider,
 } from './stores/refresh-analytics-context';
+export {
+  useSecurityAdvisoryStore,
+  useUnseenSecurityAdvisories,
+} from './stores/security-advisory-seen-store';

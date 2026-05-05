@@ -37,6 +37,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
+import { useUnseenSecurityAdvisories } from '@/features/platform-admin';
 import {
   CreateProjectButton,
   projectCollectionUtils,
@@ -376,6 +377,12 @@ function SidebarPlatformAdminLink() {
     return null;
   }
 
+  return <PlatformAdminLinkInner />;
+}
+
+function PlatformAdminLinkInner() {
+  const unseen = useUnseenSecurityAdvisories();
+
   return (
     <SidebarMenu>
       <ApSidebarItem
@@ -386,6 +393,8 @@ function SidebarPlatformAdminLink() {
         isSubItem={false}
         show={true}
         hasPermission={true}
+        notification={unseen.length > 0}
+        notificationCount={unseen.length}
         onClick={() => {
           const page = STATIC_PAGES.find(
             (p) =>
