@@ -875,6 +875,9 @@
       "@activepieces/piece-pagerduty": [
         "packages/pieces/community/pagerduty/src/index.ts"
       ],
+      "@activepieces/piece-parallel": [
+        "packages/pieces/community/parallel/src/index.ts"
+      ],
       "@activepieces/piece-parseur": [
         "packages/pieces/community/parseur/src/index.ts"
       ],
