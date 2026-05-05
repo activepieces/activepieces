@@ -1616,7 +1616,7 @@
   "When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.": "When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.",
   "invalidSsoDomain": "Must be a valid lowercase domain (e.g. acme.com)",
   "Alert Receiver Email": "Alert Receiver Email",
-  "Optional — receives flow failure emails for this project.": "Optional — receives flow failure emails for this project.",
+  "receives flow failure emails for this project.": "receives flow failure emails for this project.",
   "Email me when my flows fail": "Email me when my flows fail",
   "Turn off to stop receiving emails when flows in this project fail.": "Turn off to stop receiving emails when flows in this project fail.",
   "My alert subscriptions": "My alert subscriptions",
