@@ -8,7 +8,7 @@ import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { InterceptorResult, InterceptorVerdict, JobInterceptor } from '../job-interceptor'
 import { jobQueue } from '../job-queue'
-import { concurrencyPoolRedis, WaiterIdentity } from './concurrency-pool-redis'
+import { ConcurrencyPool, concurrencyPoolRedis } from './concurrency-pool-redis'
 
 export const rateLimiterInterceptor: JobInterceptor = {
     async preDispatch({ jobId, jobData, log }): Promise<InterceptorResult> {
@@ -16,16 +16,8 @@ export const rateLimiterInterceptor: JobInterceptor = {
             return { verdict: InterceptorVerdict.ALLOW }
         }
 
-        const { poolId, maxJobs } = await resolvePoolContext({ projectId: jobData.projectId, platformId: jobData.platformId, log })
-        const { outcome, promoted } = await concurrencyPoolRedis.acquireSlotOrEnqueue({
-            poolId,
-            projectId: jobData.projectId,
-            jobId,
-            maxJobs,
-            timeoutMs: getStaleEntryThresholdMs(),
-        })
-
-        await dispatchPromotedWaiters({ poolId, platformId: jobData.platformId, waiters: promoted, log })
+        const pool = await getPool({ jobData, log })
+        const outcome = await pool.tryAcquire({ projectId: jobData.projectId, jobId })
 
         if (outcome === 'acquired') {
             log.debug({ jobId, projectId: jobData.projectId }, '[rateLimiterInterceptor] Job allowed')
@@ -45,19 +37,8 @@ export const rateLimiterInterceptor: JobInterceptor = {
         if (!shouldContinue(jobData)) {
             return
         }
-
-        const poolId = await resolveEffectivePoolId({ projectId: jobData.projectId, log })
-        const popped = await concurrencyPoolRedis.releaseSlotAndPopWaiter({
-            poolId,
-            projectId: jobData.projectId,
-            jobId,
-            timeoutMs: getStaleEntryThresholdMs(),
-        })
-        if (isNil(popped)) {
-            return
-        }
-
-        await dispatchPromotedWaiters({ poolId, platformId: jobData.platformId, waiters: [popped], log })
+        const pool = await getPool({ jobData, log })
+        await pool.release({ projectId: jobData.projectId, jobId })
     },
 }
 
@@ -75,16 +56,16 @@ function shouldContinue(jobData: JobData): jobData is ExecuteFlowJobData {
     return true
 }
 
-async function resolvePoolContext({ projectId, platformId, log }: { projectId: string, platformId: PlatformId, log: FastifyBaseLogger }): Promise<{ poolId: string, maxJobs: number }> {
-    const explicitPoolId = await getExplicitPoolId({ projectId, log })
-    const poolId = explicitPoolId ?? projectId
-    const maxJobs = await resolveMaxJobs({ explicitPoolId, platformId, log })
-    return { poolId, maxJobs }
-}
-
-async function resolveEffectivePoolId({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<string> {
-    const explicitPoolId = await getExplicitPoolId({ projectId, log })
-    return explicitPoolId ?? projectId
+async function getPool({ jobData, log }: { jobData: ExecuteFlowJobData, log: FastifyBaseLogger }): Promise<ConcurrencyPool> {
+    const explicitPoolId = await getExplicitPoolId({ projectId: jobData.projectId, log })
+    const poolId = explicitPoolId ?? jobData.projectId
+    return concurrencyPoolRedis.forPool({
+        poolId,
+        timeoutMs: getStaleEntryThresholdMs(),
+        getMaxJobs: () => resolveMaxJobs({ explicitPoolId, platformId: jobData.platformId, log }),
+        promote: ({ jobId }) => jobQueue(log).promoteJob({ jobId, platformId: jobData.platformId }),
+        log,
+    })
 }
 
 async function getExplicitPoolId({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<string | null> {
@@ -108,18 +89,6 @@ async function resolveMaxJobs({ explicitPoolId, platformId, log }: { explicitPoo
         if (!isNil(planLimit)) return planLimit
     }
     return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
-}
-
-async function dispatchPromotedWaiters({ poolId, platformId, waiters, log }: { poolId: string, platformId: PlatformId, waiters: WaiterIdentity[], log: FastifyBaseLogger }): Promise<void> {
-    for (const waiter of waiters) {
-        const promoted = await jobQueue(log).promoteJob({ jobId: waiter.jobId, platformId })
-        if (promoted) {
-            log.debug({ promotedJobId: waiter.jobId, poolId }, '[rateLimiterInterceptor] Waiter promoted')
-            continue
-        }
-        log.warn({ waiter, poolId }, '[rateLimiterInterceptor] Waiter promotion failed; freeing slot (safety-net delay re-enqueues if alive)')
-        await concurrencyPoolRedis.dropPromotedWaiter({ poolId, waiter })
-    }
 }
 
 function getFlowTimeoutMs(): number {

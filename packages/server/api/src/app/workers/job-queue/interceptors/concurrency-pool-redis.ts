@@ -1,48 +1,83 @@
 import { isNil } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { getConcurrencyPoolSetKey, getConcurrencyPoolWaitlistKey } from '../../../database/redis/keys'
 import { redisConnections } from '../../../database/redis-connections'
 
 export const concurrencyPoolRedis = {
-    async acquireSlotOrEnqueue({ poolId, projectId, jobId, maxJobs, timeoutMs }: AcquireParams): Promise<AcquireResult> {
-        const redis = await redisConnections.useExisting()
-        const result = await redis.eval(
-            ACQUIRE_OR_ENQUEUE_LUA,
-            2,
-            getConcurrencyPoolSetKey(poolId),
-            getConcurrencyPoolWaitlistKey(poolId),
-            Date.now().toString(),
-            timeoutMs.toString(),
-            maxJobs.toString(),
-            encodeMember({ projectId, jobId }),
-        ) as [string, string[]]
+    forPool({ poolId, timeoutMs, getMaxJobs, promote, log }: PoolConfig): ConcurrencyPool {
+        const dispatchPromoted = async (waiters: WaiterIdentity[]): Promise<void> => {
+            for (const waiter of waiters) {
+                const promoted = await promote(waiter)
+                if (promoted) {
+                    log.debug({ poolId, promotedJobId: waiter.jobId }, '[concurrencyPool] Waiter promoted')
+                    continue
+                }
+                log.warn({ poolId, waiter }, '[concurrencyPool] Waiter promotion failed; freeing slot (safety-net delay re-enqueues if alive)')
+                await dropPromotedWaiter({ poolId, waiter })
+            }
+        }
         return {
-            outcome: result[0] === 'acquired' ? 'acquired' : 'queued',
-            promoted: await collectValidPromotions({ poolId, raw: result[1] ?? [] }),
+            async tryAcquire({ projectId, jobId }: WaiterIdentity): Promise<AcquireOutcome> {
+                const maxJobs = await getMaxJobs()
+                const result = await acquireSlotOrEnqueue({ poolId, projectId, jobId, maxJobs, timeoutMs })
+                await dispatchPromoted(result.promoted)
+                return result.outcome
+            },
+            async release({ projectId, jobId }: WaiterIdentity): Promise<void> {
+                const popped = await releaseSlotAndPopWaiter({ poolId, projectId, jobId, timeoutMs })
+                if (isNil(popped)) {
+                    return
+                }
+                await dispatchPromoted([popped])
+            },
         }
     },
-
-    async releaseSlotAndPopWaiter({ poolId, projectId, jobId, timeoutMs }: ReleaseParams): Promise<WaiterIdentity | null> {
-        const redis = await redisConnections.useExisting()
-        const result = await redis.eval(
-            RELEASE_AND_POP_LUA,
-            2,
-            getConcurrencyPoolSetKey(poolId),
-            getConcurrencyPoolWaitlistKey(poolId),
-            Date.now().toString(),
-            timeoutMs.toString(),
-            encodeMember({ projectId, jobId }),
-        ) as string
-        if (result === '') {
-            return null
-        }
-        const promotions = await collectValidPromotions({ poolId, raw: [result] })
-        return promotions[0] ?? null
+    raw: {
+        acquireSlotOrEnqueue,
+        releaseSlotAndPopWaiter,
+        dropPromotedWaiter,
     },
+}
 
-    async dropPromotedWaiter({ poolId, waiter }: DropParams): Promise<void> {
-        const redis = await redisConnections.useExisting()
-        await redis.zrem(getConcurrencyPoolSetKey(poolId), encodeMember(waiter))
-    },
+async function acquireSlotOrEnqueue({ poolId, projectId, jobId, maxJobs, timeoutMs }: AcquireParams): Promise<AcquireResult> {
+    const redis = await redisConnections.useExisting()
+    const result = await redis.eval(
+        ACQUIRE_OR_ENQUEUE_LUA,
+        2,
+        getConcurrencyPoolSetKey(poolId),
+        getConcurrencyPoolWaitlistKey(poolId),
+        Date.now().toString(),
+        timeoutMs.toString(),
+        maxJobs.toString(),
+        encodeMember({ projectId, jobId }),
+    ) as [string, string[]]
+    return {
+        outcome: result[0] === 'acquired' ? 'acquired' : 'queued',
+        promoted: await collectValidPromotions({ poolId, raw: result[1] ?? [] }),
+    }
+}
+
+async function releaseSlotAndPopWaiter({ poolId, projectId, jobId, timeoutMs }: ReleaseParams): Promise<WaiterIdentity | null> {
+    const redis = await redisConnections.useExisting()
+    const result = await redis.eval(
+        RELEASE_AND_POP_LUA,
+        2,
+        getConcurrencyPoolSetKey(poolId),
+        getConcurrencyPoolWaitlistKey(poolId),
+        Date.now().toString(),
+        timeoutMs.toString(),
+        encodeMember({ projectId, jobId }),
+    ) as string
+    if (result === '') {
+        return null
+    }
+    const promotions = await collectValidPromotions({ poolId, raw: [result] })
+    return promotions[0] ?? null
+}
+
+async function dropPromotedWaiter({ poolId, waiter }: DropParams): Promise<void> {
+    const redis = await redisConnections.useExisting()
+    await redis.zrem(getConcurrencyPoolSetKey(poolId), encodeMember(waiter))
 }
 
 async function collectValidPromotions({ poolId, raw }: { poolId: string, raw: string[] }): Promise<WaiterIdentity[]> {
@@ -154,7 +189,20 @@ export type WaiterIdentity = {
     jobId: string
 }
 
-export type AcquireResult = {
+export type ConcurrencyPool = {
+    tryAcquire: (id: WaiterIdentity) => Promise<AcquireOutcome>
+    release: (id: WaiterIdentity) => Promise<void>
+}
+
+type PoolConfig = {
+    poolId: string
+    timeoutMs: number
+    getMaxJobs: () => Promise<number>
+    promote: (waiter: WaiterIdentity) => Promise<boolean>
+    log: FastifyBaseLogger
+}
+
+type AcquireResult = {
     outcome: AcquireOutcome
     promoted: WaiterIdentity[]
 }
