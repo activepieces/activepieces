@@ -18,7 +18,8 @@ export const PersonalProjectAlerts = () => {
   const { project: currentProject } =
     projectCollectionUtils.useCurrentProject();
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { data: alertsData } = alertQueries.useAlertsEmailList();
+  const { data: alertsData, isLoading: isLoadingAlerts } =
+    alertQueries.useAlertsEmailList();
 
   const userEmail = currentUser?.email;
   const writeAlertPermission =
@@ -90,7 +91,9 @@ export const PersonalProjectAlerts = () => {
       <Switch
         id="personal-alerts-switch"
         checked={isMySubscriptionOn}
-        disabled={isToggling || writeAlertPermission === false}
+        disabled={
+          isLoadingAlerts || isToggling || writeAlertPermission === false
+        }
         onCheckedChange={handleToggle}
       />
     </div>
