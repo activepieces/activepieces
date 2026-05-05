@@ -26,6 +26,7 @@ import { updateRowAction } from './lib/actions/update-row';
 import { clearRangeAction } from './lib/actions/clear-cells-by-range';
 import { clearColumnAction } from './lib/actions/clear-column-by-index';
 import { clearRowAction } from './lib/actions/clear-row-by-id';
+import { deleteRowAction } from './lib/actions/delete-row';
 import { createWorksheetAction } from './lib/actions/create-worksheet';
 import { findRowAction } from './lib/actions/find-row';
 import { getRangeAction } from './lib/actions/get-cells-in-range';
@@ -85,6 +86,7 @@ export const microsoftExcel = createPiece({
 		clearColumnAction,
 		clearRangeAction,
 		clearRowAction,
+		deleteRowAction,
 		createWorksheetAction,
 		findRowAction,
 		findWorkbookAction,
@@ -94,7 +96,10 @@ export const microsoftExcel = createPiece({
 		getWorksheetAction,
 		renameWorksheetAction,
 		createCustomApiCallAction({
-			baseUrl: () => excelCommon.baseUrl,
+			baseUrl: (auth) => {
+				const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+				return excelCommon.getBaseUrl(cloud);
+			},
 			auth: excelAuth,
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,

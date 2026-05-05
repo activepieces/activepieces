@@ -1,5 +1,5 @@
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
-import { apDayjs } from '@activepieces/server-common'
+import { apDayjs } from '@activepieces/server-utils'
 import {
     AiCreditsAutoTopUpState,
     AIProvider,
@@ -201,6 +201,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         releasesEnabled: project?.releasesEnabled ?? false,
         metadata: project?.metadata ?? null,
         type: project?.type ?? ProjectType.TEAM,
+        poolId: project?.poolId ?? null,
         icon,
     }
 }
@@ -245,6 +246,9 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         stripeSubscriptionStatus: undefined,
         showPoweredBy: platformPlan?.showPoweredBy ?? false,
         embeddingEnabled: platformPlan?.embeddingEnabled ?? false,
+        agentsEnabled: platformPlan?.agentsEnabled ?? false,
+        aiProvidersEnabled: platformPlan?.aiProvidersEnabled ?? false,
+        chatEnabled: platformPlan?.chatEnabled ?? false,
         teamProjectsLimit: platformPlan?.teamProjectsLimit ?? TeamProjectsLimit.NONE,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
         customDomainsEnabled: platformPlan?.customDomainsEnabled ?? false,
@@ -253,6 +257,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         plan: platformPlan?.plan,
         secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
         scimEnabled: platformPlan?.scimEnabled ?? false,
+        canary: platformPlan?.canary ?? false
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
@@ -446,7 +451,7 @@ export const createMockCustomDomain = (
         updated: customDomain?.updated ?? faker.date.recent().toISOString(),
         domain: customDomain?.domain ?? faker.internet.domainName(),
         platformId: customDomain?.platformId ?? apId(),
-        status: customDomain?.status ?? faker.helpers.enumValue(CustomDomainStatus),
+        status: customDomain?.status ?? CustomDomainStatus.ACTIVE,
     }
 }
 
@@ -782,7 +787,7 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         auth: await encryptUtils.encryptObject({
             apiKey: process.env.OPENAI_API_KEY ?? faker.string.uuid(),
         }),
-        config: {},
+        config: aiProvider?.config ?? {},
     }
     
 }

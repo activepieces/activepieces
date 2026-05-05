@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
@@ -48,6 +48,7 @@ export const clearColumnAction = createAction({
     const { storageSource, siteId, documentId, workbookId, worksheetId, column_index, applyTo } =
       context.propsValue;
     const { access_token } = context.auth;
+    const cloud = (context.auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 
     if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
       throw new Error('please select SharePoint site and document library.');
@@ -68,7 +69,7 @@ export const clearColumnAction = createAction({
     // Construct the range address for the entire column, e.g., 'C:C'
     const columnAddress = `${columnLetter}:${columnLetter}`;
 
-    const client = createMSGraphClient(access_token);
+    const client = createMSGraphClient(access_token, cloud);
     await client
       .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${columnAddress}')/clear`)
       .post({ applyTo: applyTo });

@@ -1,4 +1,3 @@
-import { AppSystemProp, exceptionHandler, fileCompressor, WorkerSystemProp } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     apId,
@@ -17,7 +16,10 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, LessThanOrEqual } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { exceptionHandler } from '../helper/exception-handler'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
+import { fileCompressor } from './file-compressor'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
 
@@ -92,7 +94,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
         return file
     },
     async getFileOrThrow(params: GetOneParams): Promise<File> {
-        const file = await this.getFile(params)
+        const file = !isNil(params.fileId) ? await this.getFile(params) : undefined
         if (isNil(file)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -143,6 +145,19 @@ export const fileService = (log: FastifyBaseLogger) => ({
             fileName: file.fileName ?? undefined,
         }
     },
+    async delete(params: { projectId: ProjectId, fileId: FileId }): Promise<void> {
+        const file = await fileRepo().findOneBy({
+            id: params.fileId,
+            projectId: params.projectId,
+        })
+        if (isNil(file)) {
+            return
+        }
+        if (!isNil(file.s3Key)) {
+            await s3Helper(log).deleteFiles([file.s3Key])
+        }
+        await fileRepo().delete({ id: file.id })
+    },
     async deleteStaleBulk(types: FileType[]) {
         const retentionDateBoundary = dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').toISOString()
         const maximumFilesToDeletePerIteration = 4000
@@ -180,11 +195,11 @@ export const fileService = (log: FastifyBaseLogger) => ({
     },
     async uploadPublicAsset(params: UploadPublicAssetParams): Promise<string | undefined> {
         const { file, type, platformId, allowedMimeTypes = IMAGE_MIME_TYPES, maxFileSizeInBytes, metadata } = params
-        
+
         if (isNil(file)) {
             return undefined
         }
-        
+
         if (!isMultipartFile(file)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -225,7 +240,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
             },
         })
 
-        return `${system.get(WorkerSystemProp.FRONTEND_URL)}/api/v1/platforms/assets/${savedFile.id}`
+        return `${system.get(AppSystemProp.FRONTEND_URL)}/api/v1/platforms/assets/${savedFile.id}`
     },
 })
 
@@ -249,6 +264,7 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.FLOW_STEP_FILE:
         case FileType.TRIGGER_PAYLOAD:
         case FileType.TRIGGER_EVENT_FILE:
+        case FileType.WEBHOOK_PAYLOAD:
             return true
         case FileType.PLATFORM_ASSET:
         case FileType.USER_PROFILE_PICTURE:
@@ -257,6 +273,7 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.PACKAGE_ARCHIVE:
         case FileType.PROJECT_RELEASE:
         case FileType.FLOW_VERSION_BACKUP:
+        case FileType.KNOWLEDGE_BASE:
             return false
         default:
             throw new Error(`File type ${type} is not supported`)
@@ -276,7 +293,7 @@ type SaveParams = {
 }
 
 type GetOneParams = {
-    fileId: FileId
+    fileId?: FileId
     projectId?: ProjectId
     type?: FileType
 }

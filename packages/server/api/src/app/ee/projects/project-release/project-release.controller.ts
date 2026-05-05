@@ -1,8 +1,9 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import { ApId, ApplicationEventName, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { ProjectResourceType } from '../../../core/security/authorization/common'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../../helper/application-events'
 import { platformService } from '../../../platform/platform.service'
 import { ProjectReleaseEntity } from './project-release.entity'
@@ -49,7 +50,13 @@ export const projectReleaseController: FastifyPluginAsyncZod = async (app) => {
     app.post('/diff', DiffProjectReleaseRequest, async (req) => {
         const platform = await platformService(req.log).getOneOrThrow(req.principal.platform.id)
         const ownerId = platform.ownerId
-        return projectReleaseService.releasePlan(req.projectId, ownerId, req.body, req.log)
+        return projectReleaseService.releasePlan({
+            projectId: req.projectId,
+            userId: ownerId,
+            platformId: req.principal.platform.id,
+            params: req.body,
+            log: req.log,
+        })
     })
 }
 

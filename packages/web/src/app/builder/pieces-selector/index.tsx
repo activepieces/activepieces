@@ -1,4 +1,8 @@
-import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
+import {
+  FlowOperationType,
+  FlowTriggerType,
+  isNil,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   CheckCircle2Icon,
@@ -7,7 +11,7 @@ import {
   SparklesIcon,
   WrenchIcon,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -27,6 +31,7 @@ import {
   PieceSearchProvider,
   usePieceSearchContext,
 } from '@/features/pieces';
+import { aiProviderQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -37,7 +42,7 @@ import { PiecesCardList } from './pieces-card-list';
 
 const getTabsList = (
   operationType: FlowOperationType,
-  isEmbeddingEnabled: boolean,
+  agentsEnabled: boolean,
 ) => {
   const baseTabs = [
     {
@@ -62,19 +67,20 @@ const getTabsList = (
     FlowOperationType.UPDATE_ACTION,
   ].includes(operationType);
 
-  if (replaceOrAddAction && !isEmbeddingEnabled) {
+  if (replaceOrAddAction && agentsEnabled) {
     baseTabs.splice(1, 0, {
       value: PieceSelectorTabType.AI_AND_AGENTS,
       name: t('AI & Agents'),
       icon: <SparklesIcon className="size-5" />,
     });
+  }
+  if (replaceOrAddAction) {
     baseTabs.push({
       value: PieceSelectorTabType.APPROVALS,
       name: t('Approvals'),
       icon: <CheckCircle2Icon className="size-5" />,
     });
   }
-
   return baseTabs;
 };
 
@@ -133,16 +139,18 @@ const PieceSelectorContent = ({
       });
     }
   }, [isOpen]);
-
+  const { data: aiProviders } = aiProviderQueries.useAiProviders();
   const clearSearch = () => {
     setSearchQuery('');
     setSelectedPieceMetadataInPieceSelector(null);
   };
 
   const { platform } = platformHooks.useCurrentPlatform();
-  const tabsList = useMemo(
-    () => getTabsList(operation.type, platform?.plan.embeddingEnabled ?? false),
-    [operation.type, platform?.plan.embeddingEnabled],
+  const tabsList = getTabsList(
+    operation.type,
+    platform.plan.agentsEnabled &&
+      !isNil(aiProviders) &&
+      aiProviders.length > 0,
   );
 
   return (

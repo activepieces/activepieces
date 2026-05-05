@@ -141,6 +141,12 @@ type McpToolCalled = {
     toolName: string
 }
 
+type McpServerConnected = {
+    userId: string
+    projectId?: string
+    platformId?: string
+}
+
 type PieceSelectorSearch = {
     search: string
     isTrigger: boolean
@@ -177,7 +183,7 @@ export enum TelemetryEventName {
     AI_PROVIDER_USED = 'ai.provider.used',
     AI_PROVIDER_CONFIGURED = 'ai.provider.configured',
     MCP_TOOL_CALLED = 'mcp.tool.called',
-
+    MCP_SERVER_CONNECTED = 'mcp.server.connected',
     UPGRADE_POPUP_OPENED = 'upgrade.popup.opened',
     UPGRADE_CLICKED = 'upgrade.clicked',
     OPENED_PRICING_FROM_DASHBOARD = 'opened.pricing.from.dashboard',
@@ -250,4 +256,5 @@ export type TelemetryEvent =
   AiProviderConfiguredOrUsed
   >
   | BaseTelemetryEvent<TelemetryEventName.MCP_TOOL_CALLED, McpToolCalled>
+  | BaseTelemetryEvent<TelemetryEventName.MCP_SERVER_CONNECTED, McpServerConnected>
   | BaseTelemetryEvent<TelemetryEventName.PIECE_SELECTOR_SEARCH, PieceSelectorSearch>

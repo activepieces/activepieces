@@ -21,9 +21,10 @@ export const deleteEventAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
+    const cloud = (auth as unknown as { props?: Record<string, unknown> }).props?.['cloud'] as string | undefined;
     const request: HttpRequest = {
       method: HttpMethod.DELETE,
-      url: `${outlookCalendarCommon.baseUrl}/calendars/${propsValue.calendarId}/events/${propsValue.eventId}`,
+      url: `${outlookCalendarCommon.getBaseUrl(cloud)}/calendars/${propsValue.calendarId}/events/${propsValue.eventId}`,
       body: {},
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,

@@ -1,28 +1,28 @@
-import { AppSystemProp, apVersionUtil } from '@activepieces/server-common'
 import { ProjectId, TelemetryEvent, User, UserId, UserIdentity } from '@activepieces/shared'
 import { Analytics } from '@segment/analytics-node'
 import { FastifyBaseLogger } from 'fastify'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { system } from './system/system'
+import { AppSystemProp, apVersionUtil } from './system/system-props'
 
 const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
 
 const analytics = new Analytics({ writeKey: '42TtMD2Fh9PEIcDO2CagCGFmtoPwOmqK' })
 
 export const telemetry = (log: FastifyBaseLogger) => ({
-    async identify(user: User, identity: UserIdentity, projectId: ProjectId): Promise<void> {
+    async identify(identity: UserIdentity, user?: User, projectId?: ProjectId): Promise<void> {
         if (!telemetryEnabled) {
             return
         }
         const identify = {
-            userId: user.id,
+            userId: user?.id ?? identity.id,
             traits: {
                 email: identity.email,
                 firstName: identity.firstName,
                 lastName: identity.lastName,
                 projectId,
-                firstSeenAt: user.created,
+                firstSeenAt: user?.created ?? identity.created,
                 ...(await getMetadata()),
             },
         }

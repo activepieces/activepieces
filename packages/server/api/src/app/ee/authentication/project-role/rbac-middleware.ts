@@ -1,4 +1,3 @@
-import { AuthorizationRouteSecurity, AuthorizationType, ProjectAuthorizationConfig, RouteKind } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ApEdition,
@@ -13,6 +12,8 @@ import {
     ProjectRole,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { AuthorizationRouteSecurity, ProjectAuthorizationConfig } from '../../../core/security/authorization/authorization'
+import { AuthorizationType, RouteKind } from '../../../core/security/authorization/common'
 import { convertToSecurityAccessRequest } from '../../../core/security/v2/authz/authorization-middleware'
 import { system } from '../../../helper/system/system'
 import { projectMemberService } from '../../projects/project-members/project-member.service'
@@ -76,7 +77,7 @@ export async function assertUserHasPermissionToFlow(
             await assertRoleHasPermission(principal, projectId, Permission.WRITE_FLOW, log)
             break
         }
-      
+
     }
 }
 
@@ -98,7 +99,7 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
     if (EDITION_IS_COMMUNITY) {
         return true
     }
-    const ignoredPrefixes = ['/redirect', '/ui']
+    const ignoredPrefixes = ['/redirect', '/ui', '/api/ui']
     if (ignoredPrefixes.some(p => req.url.startsWith(p))) {
         return true
     }

@@ -1,8 +1,9 @@
 import {
+  AIProviderAuthConfig,
   CreateAIProviderRequest,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 
 import { aiProviderApi } from '../api/ai-provider-api';
@@ -26,6 +27,19 @@ export const aiProviderMutations = {
       onSuccess,
     });
   },
+  useToggleChatProvider: ({ onSuccess }: { onSuccess: () => void }) => {
+    return useMutation({
+      mutationFn: ({
+        providerId,
+        displayName,
+      }: {
+        providerId: string;
+        displayName: string;
+      }) =>
+        aiProviderApi.update(providerId, { displayName, enabledForChat: true }),
+      onSuccess,
+    });
+  },
   useUpsertAiProvider: ({
     providerId,
     onSuccess,
@@ -37,7 +51,7 @@ export const aiProviderMutations = {
           const updateData: UpdateAIProviderRequest = {
             displayName: data.displayName,
             config: data.config,
-            ...(data.auth?.apiKey?.length > 0 ? { auth: data.auth } : {}),
+            ...(hasAnyAuthFieldFilled(data.auth) ? { auth: data.auth } : {}),
           };
           return aiProviderApi.update(providerId, updateData);
         } else {
@@ -48,6 +62,17 @@ export const aiProviderMutations = {
       onError,
     });
   },
+};
+
+export const hasAnyAuthFieldFilled = (
+  auth: AIProviderAuthConfig | undefined,
+): boolean => {
+  if (!auth) {
+    return false;
+  }
+  return Object.values(auth).some(
+    (value) => typeof value === 'string' && value.length > 0,
+  );
 };
 
 type UpsertAiProviderOptions = {

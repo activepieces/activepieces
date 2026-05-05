@@ -21,6 +21,7 @@ import { useContext, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { userApi } from '@/api/user-api';
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { PageHeader } from '@/components/custom/page-header';
 import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
@@ -48,6 +49,7 @@ import {
   RefreshAnalyticsProvider,
 } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { downloadFile } from '@/lib/dom-utils';
 import { formatUtils } from '@/lib/format-utils';
 import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
@@ -97,6 +99,7 @@ function applyTimeSavedFilter<T extends { minutesSaved: number }>(
 }
 
 export default function LeaderboardPage() {
+  const { platform } = platformHooks.useCurrentPlatform();
   const [timePeriod, setTimePeriod] = useState<AnalyticsTimePeriod>(
     AnalyticsTimePeriod.LAST_WEEK,
   );
@@ -193,11 +196,6 @@ export default function LeaderboardPage() {
       unitMin: draftTimeUnitMin,
       unitMax: draftTimeUnitMax,
     });
-    setTimeSavedPopoverOpen(false);
-  };
-
-  const clearTimeSavedFilter = () => {
-    setAppliedFilter(emptyFilter);
     setTimeSavedPopoverOpen(false);
   };
 
@@ -342,194 +340,208 @@ export default function LeaderboardPage() {
   };
 
   return (
-    <RefreshAnalyticsProvider>
-      <div className="flex flex-col gap-2 w-full">
-        <PageHeader
-          showSidebarToggle={true}
-          title={
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-medium">{t('Leaderboard')}</span>
+    <LockedFeatureGuard
+      featureKey="ANALYTICS"
+      locked={!platform.plan.analyticsEnabled}
+      lockTitle={t('Unlock Leaderboard')}
+      lockDescription={t(
+        'See top performers by flows created and time saved across your platform',
+      )}
+    >
+      <RefreshAnalyticsProvider>
+        <div className="flex flex-col gap-2 w-full">
+          <PageHeader
+            showSidebarToggle={true}
+            title={
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-medium">{t('Leaderboard')}</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t('See top performers by flows created and time saved')}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            }
+            rightContent={
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-muted-foreground">
+                  <span>
+                    {t('Updated')}{' '}
+                    {dayjs(analyticsData?.cachedAt).format('MMM DD, hh:mm A')}
+                    {' — '}
+                    {t('Refreshes daily')}
+                  </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() =>
+                          refreshAnalytics(undefined, {
+                            onSuccess: () =>
+                              toast.success(t('Data refreshed successfully')),
+                          })
+                        }
+                        disabled={isRefreshing}
+                      >
+                        <RefreshCcw
+                          className={`h-3.5 w-3.5 ${
+                            isRefreshing ? 'animate-spin' : ''
+                          }`}
+                        />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t('Refresh analytics')}</TooltipContent>
+                  </Tooltip>
+                </div>
+
+                <Select
+                  value={timePeriod}
+                  onValueChange={(value) =>
+                    setTimePeriod(value as AnalyticsTimePeriod)
+                  }
+                >
+                  <SelectTrigger className="w-auto gap-2 h-8">
+                    <Calendar className="h-4 w-4" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent side="bottom" align="end">
+                    <SelectItem value={AnalyticsTimePeriod.LAST_WEEK}>
+                      {t('Last 7 days')}
+                    </SelectItem>
+                    <SelectItem value={AnalyticsTimePeriod.LAST_MONTH}>
+                      {t('Last 30 days')}
+                    </SelectItem>
+                    <SelectItem value={AnalyticsTimePeriod.LAST_THREE_MONTHS}>
+                      {t('Last 3 months')}
+                    </SelectItem>
+                    <SelectItem value={AnalyticsTimePeriod.LAST_SIX_MONTHS}>
+                      {t('Last 6 months')}
+                    </SelectItem>
+                    <SelectItem value={AnalyticsTimePeriod.LAST_YEAR}>
+                      {t('Last year')}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            }
+            className="min-w-full"
+          />
+
+          <Tabs
+            defaultValue="creators"
+            className="w-full mt-2"
+            onValueChange={handleTabChange}
+          >
+            <TabsList
+              variant="outline"
+              className={cn('border-b w-full', DASHBOARD_CONTENT_PADDING_X)}
+            >
+              <TabsTrigger variant="outline" value="creators">
+                <Users className="w-4 h-4 mr-1.5" />
+                {t('People')}
+              </TabsTrigger>
+              <TabsTrigger variant="outline" value="projects">
+                <LayoutGrid className="w-4 h-4 mr-1.5" />
+                {t('Projects')}
+              </TabsTrigger>
+            </TabsList>
+
+            <div
+              className={cn(
+                'flex items-center justify-between mt-4 mb-4',
+                DASHBOARD_CONTENT_PADDING_X,
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <SearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder={
+                    activeTab === 'creators'
+                      ? t('Search users')
+                      : t('Search projects')
+                  }
+                  className="w-[200px]"
+                />
+                <Popover
+                  open={timeSavedPopoverOpen}
+                  onOpenChange={handleTimeSavedPopoverOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="gap-2 font-normal border-dashed"
+                    >
+                      <Clock className="h-4 w-4" />
+                      <span>{t('Time Saved')}</span>
+                      {timeSavedLabel && (
+                        <span className="rounded bg-accent px-1.5 py-0.5 text-xs font-medium">
+                          {timeSavedLabel}
+                        </span>
+                      )}
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[200px] p-4" align="start">
+                    <TimeSavedFilterContent
+                      draftMin={draftTimeSavedMin}
+                      onMinChange={setDraftTimeSavedMin}
+                      unitMin={draftTimeUnitMin}
+                      onCycleUnitMin={cycleDraftTimeUnitMin}
+                      draftMax={draftTimeSavedMax}
+                      onMaxChange={setDraftTimeSavedMax}
+                      unitMax={draftTimeUnitMax}
+                      onCycleUnitMax={cycleDraftTimeUnitMax}
+                      onApply={handleApplyFilter}
+                    />
+                  </PopoverContent>
+                </Popover>
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                    <X className="h-4 w-4" />
+                    {t('Clear')}
+                  </Button>
+                )}
+              </div>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownload}
+                    disabled={isDownloadDisabled}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    {t('Download')}
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {t('See top performers by flows created and time saved')}
+                  {t('Download leaderboard data')}
                 </TooltipContent>
               </Tooltip>
             </div>
-          }
-          rightContent={
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-muted-foreground">
-                <span>
-                  {t('Updated')}{' '}
-                  {dayjs(analyticsData?.cachedAt).format('MMM DD, hh:mm A')}
-                  {' — '}
-                  {t('Refreshes daily')}
-                </span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() =>
-                        refreshAnalytics(undefined, {
-                          onSuccess: () =>
-                            toast.success(t('Data refreshed successfully')),
-                        })
-                      }
-                      disabled={isRefreshing}
-                    >
-                      <RefreshCcw
-                        className={`h-3.5 w-3.5 ${
-                          isRefreshing ? 'animate-spin' : ''
-                        }`}
-                      />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{t('Refresh analytics')}</TooltipContent>
-                </Tooltip>
-              </div>
 
-              <Select
-                value={timePeriod}
-                onValueChange={(value) =>
-                  setTimePeriod(value as AnalyticsTimePeriod)
-                }
-              >
-                <SelectTrigger className="w-auto gap-2 h-8">
-                  <Calendar className="h-4 w-4" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent side="bottom" align="end">
-                  <SelectItem value={AnalyticsTimePeriod.LAST_WEEK}>
-                    {t('Last 7 days')}
-                  </SelectItem>
-                  <SelectItem value={AnalyticsTimePeriod.LAST_MONTH}>
-                    {t('Last 30 days')}
-                  </SelectItem>
-                  <SelectItem value={AnalyticsTimePeriod.LAST_THREE_MONTHS}>
-                    {t('Last 3 months')}
-                  </SelectItem>
-                  <SelectItem value={AnalyticsTimePeriod.LAST_SIX_MONTHS}>
-                    {t('Last 6 months')}
-                  </SelectItem>
-                  <SelectItem value={AnalyticsTimePeriod.LAST_YEAR}>
-                    {t('Last year')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          }
-          className="min-w-full"
-        />
-
-        <Tabs
-          defaultValue="creators"
-          className="w-full mt-2"
-          onValueChange={handleTabChange}
-        >
-          <TabsList
-            variant="outline"
-            className={cn('border-b w-full', DASHBOARD_CONTENT_PADDING_X)}
-          >
-            <TabsTrigger variant="outline" value="creators">
-              <Users className="w-4 h-4 mr-1.5" />
-              {t('People')}
-            </TabsTrigger>
-            <TabsTrigger variant="outline" value="projects">
-              <LayoutGrid className="w-4 h-4 mr-1.5" />
-              {t('Projects')}
-            </TabsTrigger>
-          </TabsList>
-
-          <div
-            className={cn(
-              'flex items-center justify-between mt-4 mb-4',
-              DASHBOARD_CONTENT_PADDING_X,
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder={
-                  activeTab === 'creators'
-                    ? t('Search users')
-                    : t('Search projects')
-                }
-                className="w-[200px]"
+            <TabsContent value="creators">
+              <UsersLeaderboard
+                data={filteredPeopleData}
+                isLoading={isLoading}
               />
-              <Popover
-                open={timeSavedPopoverOpen}
-                onOpenChange={handleTimeSavedPopoverOpen}
-              >
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="gap-2 font-normal border-dashed"
-                  >
-                    <Clock className="h-4 w-4" />
-                    <span>{t('Time Saved')}</span>
-                    {timeSavedLabel && (
-                      <span className="rounded bg-accent px-1.5 py-0.5 text-xs font-medium">
-                        {timeSavedLabel}
-                      </span>
-                    )}
-                    <ChevronDown className="h-4 w-4 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-4" align="start">
-                  <TimeSavedFilterContent
-                    draftMin={draftTimeSavedMin}
-                    onMinChange={setDraftTimeSavedMin}
-                    unitMin={draftTimeUnitMin}
-                    onCycleUnitMin={cycleDraftTimeUnitMin}
-                    draftMax={draftTimeSavedMax}
-                    onMaxChange={setDraftTimeSavedMax}
-                    unitMax={draftTimeUnitMax}
-                    onCycleUnitMax={cycleDraftTimeUnitMax}
-                    onApply={handleApplyFilter}
-                  />
-                </PopoverContent>
-              </Popover>
-              {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearAllFilters}>
-                  <X className="h-4 w-4" />
-                  {t('Clear')}
-                </Button>
-              )}
-            </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownload}
-                  disabled={isDownloadDisabled}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  {t('Download')}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('Download leaderboard data')}</TooltipContent>
-            </Tooltip>
-          </div>
+            </TabsContent>
 
-          <TabsContent value="creators">
-            <UsersLeaderboard data={filteredPeopleData} isLoading={isLoading} />
-          </TabsContent>
-
-          <TabsContent value="projects">
-            <ProjectsLeaderboard
-              data={filteredProjectsData}
-              isLoading={isLoading}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </RefreshAnalyticsProvider>
+            <TabsContent value="projects">
+              <ProjectsLeaderboard
+                data={filteredProjectsData}
+                isLoading={isLoading}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </RefreshAnalyticsProvider>
+    </LockedFeatureGuard>
   );
 }

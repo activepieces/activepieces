@@ -5,6 +5,8 @@ import {
   AnthropicProviderConfig,
   AzureProviderAuthConfig,
   AzureProviderConfig,
+  BedrockProviderAuthConfig,
+  BedrockProviderConfig,
   CloudflareGatewayProviderAuthConfig,
   CloudflareGatewayProviderConfig,
   CreateAIProviderRequest,
@@ -51,7 +53,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
-import { aiProviderApi } from '@/features/platform-admin';
+import {
+  aiProviderApi,
+  hasAnyAuthFieldFilled,
+} from '@/features/platform-admin';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
@@ -165,7 +170,7 @@ export const UpsertAIProviderDialogContent = ({
         const updateData: UpdateAIProviderRequest = {
           displayName: data.displayName,
           config: data.config,
-          ...(data.auth?.apiKey?.length > 0 ? { auth: data.auth } : {}),
+          ...(hasAnyAuthFieldFilled(data.auth) ? { auth: data.auth } : {}),
         };
         return aiProviderApi.update(providerId, updateData);
       } else {
@@ -209,50 +214,52 @@ export const UpsertAIProviderDialogContent = ({
             onSubmit={form.handleSubmit(handleSave)}
           >
             <ScrollArea viewPortClassName="max-h-[calc(70vh)] p-px">
-              <FormField
-                control={form.control}
-                name="displayName"
-                render={({ field }) => (
-                  <FormItem
-                    className="space-y-3"
-                    hidden={
-                      currentProviderDef.provider !== AIProviderName.CUSTOM
-                    }
-                  >
-                    <FormLabel>{t('Display Name')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder={'My Provider'}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem
+                      className="space-y-3"
+                      hidden={
+                        currentProviderDef.provider !== AIProviderName.CUSTOM
+                      }
+                    >
+                      <FormLabel>{t('Display Name')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder={'My Provider'}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {currentProviderDef.markdown && (
+                  <div className="text-sm text-muted-foreground">
+                    <ApMarkdown
+                      markdown={currentProviderDef.markdown}
+                    ></ApMarkdown>
+                  </div>
                 )}
-              />
 
-              {currentProviderDef.markdown && (
-                <div className="mb-4 text-sm text-muted-foreground">
-                  <ApMarkdown
-                    markdown={currentProviderDef.markdown}
-                  ></ApMarkdown>
-                </div>
-              )}
+                <UpsertProviderConfigForm
+                  form={form}
+                  provider={provider}
+                  apiKeyRequired={!config}
+                  isLoading={isPending}
+                  isEditMode={!!providerId}
+                />
 
-              <UpsertProviderConfigForm
-                form={form}
-                provider={provider}
-                apiKeyRequired={!config}
-                isLoading={isPending}
-                isEditMode={!!providerId}
-              />
-
-              {form.formState.errors.root?.serverError && (
-                <FormMessage className="mt-2">
-                  {form.formState.errors.root.serverError.message}
-                </FormMessage>
-              )}
+                {form.formState.errors.root?.serverError && (
+                  <FormMessage>
+                    {form.formState.errors.root.serverError.message}
+                  </FormMessage>
+                )}
+              </div>
             </ScrollArea>
 
             <DialogFooter>
@@ -282,6 +289,8 @@ export const UpsertAIProviderDialogContent = ({
 const OptionalAuthSchema = z
   .object({
     apiKey: z.string().optional(),
+    accessKeyId: z.string().optional(),
+    secretAccessKey: z.string().optional(),
   })
   .optional();
 
@@ -308,6 +317,14 @@ const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
       provider: z.literal(AIProviderName.CUSTOM),
       config: OpenAICompatibleProviderConfig,
       auth: editMode ? OptionalAuthSchema : OpenAICompatibleProviderAuthConfig,
+    });
+  }
+  if (provider === AIProviderName.BEDROCK) {
+    return z.object({
+      displayName: z.string().min(1),
+      provider: z.literal(AIProviderName.BEDROCK),
+      config: BedrockProviderConfig,
+      auth: editMode ? OptionalAuthSchema : BedrockProviderAuthConfig,
     });
   }
   const authSchema = z.union([

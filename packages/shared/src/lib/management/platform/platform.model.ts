@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { BaseModelSchema, DateOrString, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../../core/federated-authn'
+import { SsoDomainVerification } from './sso-domain-verification'
 
 export type PlatformId = ApId
 
@@ -67,6 +68,9 @@ export const PlatformPlan = z.object({
     showPoweredBy: z.boolean(),
     auditLogEnabled: z.boolean(),
     embeddingEnabled: z.boolean(),
+    agentsEnabled: z.boolean(),
+    aiProvidersEnabled: z.boolean(),
+    chatEnabled: z.boolean(),
     managePiecesEnabled: z.boolean(),
     manageTemplatesEnabled: z.boolean(),
     customAppearanceEnabled: z.boolean(),
@@ -91,9 +95,13 @@ export const PlatformPlan = z.object({
     projectsLimit: Nullable(z.number()),
     activeFlowsLimit: Nullable(z.number()),
 
+    /** @deprecated use workerGroupId instead — will be removed in 0.83.0 */
     dedicatedWorkers: Nullable(z.object({
         trustedEnvironment: z.boolean(),
     })),
+    /** @deprecated use workerGroupId instead — will be removed in 0.83.0 */
+    canary: z.boolean(),
+    workerGroupId: Nullable(z.string()),
 })
 export type PlatformPlan = z.infer<typeof PlatformPlan>
 
@@ -120,6 +128,8 @@ export const Platform = z.object({
     cloudAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),
     allowedAuthDomains: z.array(z.string()),
+    ssoDomain: Nullable(z.string()),
+    ssoDomainVerification: Nullable(SsoDomainVerification),
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
@@ -144,6 +154,8 @@ export const PlatformWithoutSensitiveData = z.object({
     cloudAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),
     allowedAuthDomains: z.array(z.string()),
+    ssoDomain: Nullable(z.string()),
+    ssoDomainVerification: Nullable(SsoDomainVerification),
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
 })

@@ -107,5 +107,10 @@
   "None": "Nenhuma",
   "JSON": "JSON",
   "Form Data": "Dados de Formulário",
-  "Raw": "RAW"
+  "Raw": "RAW",
+  "New Folder": "Nova Pasta",
+  "Triggers when a new folder is created inside a watched Dropbox folder.": "Aciona quando uma nova pasta é criada dentro de uma pasta do Dropbox observada.",
+  "Watched Folder Path": "Caminho da pasta assistida",
+  "Folder path to watch. Use empty string \"\" for root.": "Caminho da pasta para assistir. Use string vazia \"\" para root.",
+  "Watch subfolders recursively. May return many results.": "Assista subpastas recursivamente. Pode retornar muitos resultados."
 }

@@ -47,6 +47,10 @@ export const UserEntity = new EntitySchema<UserSchema>({
             columns: ['platformId', 'externalId'],
             unique: true,
         },
+        {
+            name: 'idx_user_identity_id',
+            columns: ['identityId'],
+        },
     ],
     relations: {
         projects: {

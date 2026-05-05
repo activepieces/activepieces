@@ -1,4 +1,5 @@
 import { FilesService, TriggerStrategy, createTrigger,  Property } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { Message, FileAttachment } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
@@ -84,10 +85,12 @@ export const newAttachmentTrigger = createTrigger({
 	},
 	async test(context) {
 		const { folderId, attachmentNameFilter, sender } = context.propsValue;
+		const cloud = context.auth.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(context.auth.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 		const baseUrl = folderId ? `/me/mailFolders/${folderId}/messages` : '/me/messages';
 
@@ -112,10 +115,12 @@ export const newAttachmentTrigger = createTrigger({
 		}
 
 		const { folderId, attachmentNameFilter, sender } = context.propsValue;
+		const cloud = context.auth.props?.['cloud'] as string | undefined;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(context.auth.access_token),
 			},
+			baseUrl: getGraphBaseUrl(cloud),
 		});
 
 		const baseUrl = folderId ? `/me/mailFolders/${folderId}/messages` : '/me/messages';

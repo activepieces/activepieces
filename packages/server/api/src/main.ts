@@ -7,18 +7,16 @@ import { appPostBoot } from './app/app'
 import { initializeDatabase } from './app/database'
 import { distributedLock } from './app/database/redis-connections'
 import { system } from './app/helper/system/system'
+import { AppSystemProp } from './app/helper/system/system-props'
 import { setupServer } from './app/server'
-import { workerPostBoot } from './app/worker'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
+        const port = Number(system.get(AppSystemProp.PORT))
         await app.listen({
-            host: '0.0.0.0',
-            port: 3000,
+            host: '::',
+            port,
         })
-        if (system.isWorker()) {
-            await workerPostBoot(app)
-        }
         if (system.isApp()) {
             await appPostBoot(app)
         }

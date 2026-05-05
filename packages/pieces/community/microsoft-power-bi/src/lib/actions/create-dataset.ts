@@ -1,5 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { getPowerBiBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsoft-cloud';
 import { microsoftPowerBiAuth } from '../auth';
 
 type ColumnDefinition = {
@@ -80,8 +81,8 @@ export const createDatasetAction = createAction({
             throw new Error(`Invalid tables JSON format. Received value: ${JSON.stringify(context.propsValue.tables)}`);
         }
 
-        // Always use My Workspace URL
-        const baseUrl = 'https://api.powerbi.com/v1.0/myorg';
+        const cloud = getMicrosoftCloudFromAuth(auth as OAuth2PropertyValue);
+        const baseUrl = getPowerBiBaseUrl(cloud);
 
         // Define the dataset schema
         const datasetDefinition = {

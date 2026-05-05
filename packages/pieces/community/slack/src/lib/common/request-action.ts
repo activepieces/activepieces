@@ -4,7 +4,7 @@ import {
     slackSendMessage,
     textToSectionBlocks,
 } from './utils';
-import { assertNotNullOrUndefined, ExecutionType, PauseType } from '@activepieces/shared';
+import { assertNotNullOrUndefined, ExecutionType } from '@activepieces/shared';
 import { ChatPostMessageResponse } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from './auth-helpers';
 
@@ -29,22 +29,19 @@ export const requestAction = async (conversationId: string, context: any) => {
     });
 
     if (context.executionType === ExecutionType.BEGIN) {
-        context.run.pause({
-            pauseMetadata: {
-                type: PauseType.WEBHOOK,
-                actions: actionTextToIds.map((action: { actionId: string }) => action.actionId),
-            },
+        const waitpoint = await context.run.createWaitpoint({
+            type: 'WEBHOOK',
         });
 
         const token = getBotToken(context.auth as SlackAuthValue);
-        const { text, username, profilePicture } = context.propsValue;
+        const { text, username, profilePicture, replyBroadcast } = context.propsValue;
 
         assertNotNullOrUndefined(token, 'token');
         assertNotNullOrUndefined(text, 'text');
 
         const actionElements = actionTextToIds.map(
             (action: { label: string; style: string; actionId: string }) => {
-                const actionLink = context.generateResumeUrl({
+                const actionLink = waitpoint.buildResumeUrl({
                     queryParams: { action: action.actionId },
                 });
 
@@ -69,6 +66,7 @@ export const requestAction = async (conversationId: string, context: any) => {
             threadTs: context.propsValue.threadTs
                 ? processMessageTimestamp(context.propsValue.threadTs)
                 : undefined,
+            replyBroadcast,
             blocks: [
                 ...textToSectionBlocks(`${context.propsValue.text}`),
                 {
@@ -82,6 +80,8 @@ export const requestAction = async (conversationId: string, context: any) => {
             ],
             conversationId: conversationId,
         });
+
+        context.run.waitForWaitpoint(waitpoint.id);
 
         return {
             action: actionTextToIds.at(0) || 'N/A',

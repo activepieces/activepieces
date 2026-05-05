@@ -1,6 +1,6 @@
 
 import { z } from 'zod'
-import { ProgressUpdateType } from '../../engine/engine-operation'
+import { StreamStepProgress } from '../../engine/engine-operation'
 
 export enum FlowRunStatus {
     FAILED = 'FAILED',
@@ -26,7 +26,7 @@ export const DelayPauseMetadata = z.object({
     resumeDateTime: z.string(),
     requestIdToReply: z.string().optional(),
     handlerId: z.string().optional(),
-    progressUpdateType: z.nativeEnum(ProgressUpdateType).optional(),
+    streamStepProgress: z.nativeEnum(StreamStepProgress).optional(),
 })
 
 export type DelayPauseMetadata = z.infer<typeof DelayPauseMetadata>
@@ -53,7 +53,7 @@ export const WebhookPauseMetadata = z.object({
     requestIdToReply: z.string().optional(),
     response: RespondResponse,
     handlerId: z.string().optional(),
-    progressUpdateType: z.nativeEnum(ProgressUpdateType).optional(),
+    streamStepProgress: z.nativeEnum(StreamStepProgress).optional(),
 })
 export type WebhookPauseMetadata = z.infer<typeof WebhookPauseMetadata>
 
@@ -74,7 +74,6 @@ export const isFlowRunStateTerminal = ({ status, ignoreInternalError }: { status
             return !ignoreInternalError
         case FlowRunStatus.QUEUED:
         case FlowRunStatus.RUNNING:
-            return false
         case FlowRunStatus.PAUSED:
             return false
     }

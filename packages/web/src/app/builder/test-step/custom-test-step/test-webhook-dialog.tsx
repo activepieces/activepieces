@@ -1,4 +1,3 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { FlowAction, ApFlagId, FlowTrigger } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -6,6 +5,7 @@ import { useState } from 'react';
 import { ControllerRenderProps, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { JsonEditor } from '@/components/custom/json-editor';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -24,12 +24,20 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 
 enum BodyType {
   JSON = 'json',
   TEXT = 'text',
   FORM_DATA = 'form-data',
+}
+
+enum HttpMethod {
+  GET = 'GET',
+  POST = 'POST',
+  PATCH = 'PATCH',
+  PUT = 'PUT',
+  DELETE = 'DELETE',
+  HEAD = 'HEAD',
 }
 
 const BodyFormInput = ({
@@ -46,12 +54,11 @@ const BodyFormInput = ({
       return <Input {...field} />;
     case BodyType.FORM_DATA:
       return (
-        <DictionaryProperty
+        <DictionaryInput
           values={field.value}
           onChange={field.onChange}
           disabled={false}
-          useMentionTextInput={false}
-        ></DictionaryProperty>
+        />
       );
   }
 };
@@ -223,12 +230,13 @@ const TestWebhookFunctionalityForm = (
               render={({ field }) => {
                 return (
                   <FormItem>
-                    <DictionaryProperty
+                    <DictionaryInput
                       values={field.value}
-                      onChange={field.onChange}
+                      onChange={(record) =>
+                        field.onChange({ target: { value: record } })
+                      }
                       disabled={false}
-                      useMentionTextInput={false}
-                    ></DictionaryProperty>
+                    />
                   </FormItem>
                 );
               }}
@@ -242,12 +250,13 @@ const TestWebhookFunctionalityForm = (
               render={({ field }) => {
                 return (
                   <FormItem>
-                    <DictionaryProperty
+                    <DictionaryInput
                       values={field.value}
-                      onChange={field.onChange}
+                      onChange={(record) =>
+                        field.onChange({ target: { value: record } })
+                      }
                       disabled={false}
-                      useMentionTextInput={false}
-                    ></DictionaryProperty>
+                    />
                   </FormItem>
                 );
               }}

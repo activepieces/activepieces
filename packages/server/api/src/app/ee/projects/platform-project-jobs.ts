@@ -1,11 +1,12 @@
 import { AppConnectionScope, assertNotNullOrUndefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { ArrayContains, In } from 'typeorm'
+import { ArrayContains } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { flowExecutionCache } from '../../flows/flow/flow-execution-cache'
 import { flowSideEffects } from '../../flows/flow/flow-service-side-effects'
+import { batchDeleteByFlowId } from '../../flows/flow/flow.jobs'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
@@ -41,10 +42,12 @@ export const platformProjectBackgroundJobs = (log: FastifyBaseLogger) => ({
 
         const flowIds = allFlows.map(flow => flow.id)
 
+        for (const flowId of flowIds) {
+            await batchDeleteByFlowId(flowId)
+            await flowRepo().delete({ id: flowId })
+        }
+
         await transaction(async (entityManager) => {
-            if (flowIds.length > 0) {
-                await flowRepo(entityManager).delete({ id: In(flowIds) })
-            }
             await appConnectionsRepo(entityManager).delete({
                 scope: AppConnectionScope.PROJECT,
                 projectIds: ArrayContains([projectId]),

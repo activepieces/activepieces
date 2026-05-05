@@ -1,12 +1,14 @@
-import { AppConnectionScope, AppConnectionStatus, AppConnectionType, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowAction, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
+import { AppConnectionScope, AppConnectionStatus, AppConnectionType, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowOperationStatus, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../../file/file.service'
 import { flowRepo } from '../../../../flows/flow/flow.repo'
-import { flowService } from '../../../../flows/flow/flow.service'
+import { flowVersionService } from '../../../../flows/flow-version/flow-version.service'
 import { flowMigrations } from '../../../../flows/flow-version/migrations'
 import { fieldService } from '../../../../tables/field/field.service'
 import { tableService } from '../../../../tables/table/table.service'
+import { triggerSourceService } from '../../../../trigger/trigger-source/trigger-source-service'
+import { cleanFlowStateUtil } from './clean-flow-state'
 import { projectStateHelper } from './project-state-helper'
 
 export const projectStateService = (log: FastifyBaseLogger) => ({
@@ -174,31 +176,40 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 projectId,
             },
         })
-        const allPopulatedFlows = await Promise.all(flows.map(async (flow) => {
-            return flowService(log).getOnePopulatedOrThrow({
-                id: flow.id,
-                projectId,
-            })
-        }))
+        const flowIds = flows.map((f) => f.id)
 
-        const connections: ConnectionState[] = await appConnectionService(log).getManyConnectionStates({
-            projectId,
-        })
-
-        const tables = await tableService.list({
-            folderId: undefined,
-            projectId,
-            cursor: undefined,
-            limit: 1000,
-            name: undefined,
-            externalIds: undefined,
-        })
-        const populatedTables = await Promise.all(tables.data.map(async (table) => {
-            const fields = await fieldService.getAll({
+        const [flowVersionMap, triggerSourceMap, connections, tables] = await Promise.all([
+            flowVersionService(log).getLatestVersionsByFlowIds(flowIds, projectId),
+            triggerSourceService(log).getByFlowIds({ flowIds, projectId }),
+            appConnectionService(log).getManyConnectionStates({ projectId }),
+            tableService.list({
+                folderId: undefined,
                 projectId,
-                tableId: table.id,
+                cursor: undefined,
+                limit: 1000,
+                name: undefined,
+                externalIds: undefined,
+            }),
+        ])
+
+        const allPopulatedFlows: PopulatedFlow[] = flows
+            .filter((flow) => flowVersionMap.has(flow.id))
+            .map((flow) => {
+                const triggerSource = triggerSourceMap.get(flow.id)
+                return {
+                    ...flow,
+                    version: flowVersionMap.get(flow.id)!,
+                    triggerSource: triggerSource ? {
+                        schedule: triggerSource.schedule,
+                    } : undefined,
+                }
             })
-            return { ...table, fields }
+
+        const tableIds = tables.data.map((t) => t.id)
+        const fieldsMap = await fieldService.getAllByTableIds({ projectId, tableIds })
+        const populatedTables = tables.data.map((table) => ({
+            ...table,
+            fields: fieldsMap.get(table.id) ?? [],
         }))
 
         return toProjectState({
@@ -209,14 +220,14 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         })
     },
     async getFlowState(flow: PopulatedFlow): Promise<FlowState> {
+        const migratedVersion = await flowMigrations.apply(flow.version)
         const flowState: FlowState = {
             ...flow,
+            operationStatus: flow.operationStatus ?? FlowOperationStatus.NONE,
             externalId: flow.externalId ?? flow.id,
-            version: await flowMigrations.apply(flow.version),
+            version: migratedVersion,
         }
-        const cleanedFlowState = FlowState.parse(flowState)
-        cleanedFlowState.version.trigger.nextAction = isNil(cleanedFlowState.version.trigger.nextAction) ? undefined : FlowAction.parse(cleanedFlowState.version.trigger.nextAction)
-        return cleanedFlowState
+        return cleanFlowStateUtil.cleanFlowState(flowState)
     },
     getTableState(table: PopulatedTable): TableState {
         const fields: FieldState[] = table.fields.map((field) => ({

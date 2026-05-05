@@ -5,7 +5,7 @@ import { tableDropdown, createServiceNowClient, servicenowAuth } from '../common
 
 const CreateRecordInputSchema = z.object({
   table: z.string().min(1),
-  fields: z.record(z.any()),
+  fields: z.record(z.string(), z.any()),
   sysparm_display_value: z.enum(['true', 'false', 'all']).optional(),
   sysparm_fields: z.array(z.string()).optional(),
   sysparm_input_display_value: z.boolean().optional(),

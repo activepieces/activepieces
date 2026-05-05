@@ -33,7 +33,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
@@ -82,13 +81,10 @@ export function FlowsDetails({
         ),
         cell: ({ row }) => (
           <div
-            className="flex items-center gap-1 text-foreground hover:underline cursor-pointer max-w-[300px]"
-            onClick={() =>
-              window.open(
-                `/projects/${row.original.projectId}/flows/${row.original.flowId}`,
-                '_blank',
-              )
-            }
+            className={cn(
+              'flex items-center gap-3 flex-wrap',
+              DASHBOARD_CONTENT_PADDING_X,
+            )}
           >
             <Workflow className="size-4 mr-2 text-primary shrink-0" />
             <span className="truncate">{row.original.flowName}</span>
@@ -258,12 +254,7 @@ export function FlowsDetails({
 
   return (
     <div className="flex flex-col gap-4">
-      <div
-        className={cn(
-          'flex items-center gap-3 flex-wrap',
-          DASHBOARD_CONTENT_PADDING_X,
-        )}
-      >
+      <div className="flex items-center gap-3 flex-wrap">
         <div className="relative w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input

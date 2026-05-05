@@ -1,15 +1,46 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Allow skipping this hook by setting SKIP_CHECK env variable
-if [ ! -z "$SKIP_CHECK" ]; then
+if [ -n "${SKIP_CHECK:-}" ]; then
   exit 0
 fi
 
-while read local_ref local_sha remote_ref remote_sha
+while read -r local_ref local_sha remote_ref remote_sha
 do
     if [ "$remote_ref" = "refs/heads/main" ]; then
         echo "Direct pushes to 'main' are not allowed. Please use a feature branch and a pull request."
         exit 1
     fi
 done
+
+if [ "$CLAUDE_PUSH" = "yes" ]; then
+  RUN_CHECKS="y"
+elif [ -n "${CI:-}" ] && [ "$CI" != "false" ] && [ "$CI" != "0" ]; then
+  RUN_CHECKS="n"
+elif [ -t 1 ]; then
+  # IDE / CI Git runs with stdout on a pipe, not a TTY — do not prompt (avoids blocking forever on read /dev/tty)
+  printf "Run lint and tests before pushing? [Y/n] " > /dev/tty
+  if read -r RUN_CHECKS < /dev/tty; then
+    :
+  else
+    RUN_CHECKS="n"
+  fi
+else
+  RUN_CHECKS="n"
+fi
+
+case "$RUN_CHECKS" in
+  [nN][oO]|[nN])
+    echo "Skipping lint and tests."
+    ;;
+  *)
+    echo "Running lint..."
+    npm run lint-core || { echo ""; echo "Lint failed. To auto-fix issues, run:"; echo "  npm run lint-dev"; echo "Or target a specific package:"; echo "  npx turbo run lint --filter=\"<packageName>\" --force -- --fix"; exit 1; }
+    npm run lint-affected || { echo ""; echo "Lint failed. To auto-fix issues, run:"; echo "  npm run lint-dev"; echo "Or target a specific package:"; echo "  npx turbo run lint --filter=\"<packageName>\" --force -- --fix"; exit 1; }
+    echo "Running tests..."
+    npm run test-unit || { echo ""; echo "Unit tests failed. Check the output above for details."; exit 1; }
+    npm run test-api || { echo ""; echo "API tests failed. Check the output above for details."; exit 1; }
+    ;;
+esac
+
+

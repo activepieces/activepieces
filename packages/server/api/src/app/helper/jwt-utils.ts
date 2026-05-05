@@ -1,6 +1,5 @@
 import { randomBytes } from 'crypto'
 import { promisify } from 'util'
-import { AppSystemProp, RedisType } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -13,13 +12,22 @@ import jwtLibrary, {
     SignOptions,
     VerifyOptions,
 } from 'jsonwebtoken'
+import { RedisType } from '../database/redis/types'
 import { redisConnections } from '../database/redis-connections'
 import { localFileStore } from './local-store'
 import { system } from './system/system'
+import { AppSystemProp } from './system/system-props'
 
 export enum JwtSignAlgorithm {
     HS256 = 'HS256',
     RS256 = 'RS256',
+}
+
+export enum JwtAudience {
+    FLOW_RUN_LOG = 'FLOW_RUN_LOG',
+    USER_INVITATION = 'USER_INVITATION',
+    MCP_OAUTH_ACCESS = 'MCP_OAUTH_ACCESS',
+    MCP_OAUTH_AUTH_REQUEST = 'MCP_OAUTH_AUTH_REQUEST',
 }
 
 const ONE_WEEK = 7 * 24 * 3600
@@ -36,12 +44,14 @@ export const jwtUtils = {
         expiresInSeconds = ONE_WEEK,
         keyId = KEY_ID,
         algorithm = ALGORITHM,
+        audience,
     }: SignParams): Promise<string> {
         const signOptions: SignOptions = {
             algorithm,
             keyid: keyId,
             expiresIn: expiresInSeconds,
             issuer: ISSUER,
+            ...spreadIfDefined('audience', audience),
         }
         return new Promise((resolve, reject) => {
             jwtLibrary.sign(payload, key, signOptions, (err, token) => {
@@ -128,6 +138,7 @@ type SignParams = {
     expiresInSeconds?: number
     algorithm?: JwtSignAlgorithm
     keyId?: string
+    audience?: JwtAudience
 }
 
 type VerifyParams = {
@@ -135,7 +146,7 @@ type VerifyParams = {
     key: string
     algorithm?: JwtSignAlgorithm
     issuer?: string | string[] | null
-    audience?: string
+    audience?: JwtAudience | string
 }
 
 type DecodeParams = {

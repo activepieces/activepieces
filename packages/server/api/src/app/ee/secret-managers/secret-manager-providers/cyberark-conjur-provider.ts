@@ -1,44 +1,11 @@
-import https from 'https'
-import { apAxios } from '@activepieces/server-common'
-import { ActivepiecesError, ErrorCode, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
+import { safeHttp } from '@activepieces/server-utils'
+import { SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { SecretManagerProvider } from './secret-manager-providers'
+import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
 
-export const CYBERARK_PROVIDER_METADATA: SecretManagerProviderMetaData = {
-    id: SecretManagerProviderId.CYBERARK,
-    name: 'Cyberark Conjur',
-    logo: 'https://cdn.activepieces.com/pieces/cyberark.png',
-    fields: {
-        url: {
-            displayName: 'URL',
-            placeholder: 'https://conjur.example.com',
-            type: 'text',
-        },
-        organizationAccountName: {
-            displayName: 'Organization Account Name',
-            placeholder: 'Your Conjur Organization Account Name',
-            type: 'text',
-        },
-        loginId: {
-            displayName: 'Login ID',
-            placeholder: 'Your Conjur Login ID',
-            type: 'text',
-        },
-        apiKey: {
-            displayName: 'API Key',
-            placeholder: 'Your Conjur API Key',
-            type: 'password',
-        },
-    },
-    secretParams: [
-        {
-            name: 'secretKey',
-            displayName: 'Secret key',
-            placeholder: 'Your Conjur Secret Key',
-            type: 'text',
-        },
-    ],
-}
+const conjurAxios = safeHttp.createRetryingAxios(undefined, {
+    httpsAgentOptions: { rejectUnauthorized: false },
+})
 
 export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.CYBERARK> => ({
     checkConnection: async (config) => {
@@ -48,23 +15,11 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
             method: 'POST',
             body: config.apiKey,
         }).catch((error) => {
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
-                params: {
-                    message: error.message,
-                    provider: SecretManagerProviderId.CYBERARK,
-                },
-            })
+            throwConnectionError({ error, provider: SecretManagerProviderId.CYBERARK, log })
         })
         const token = response.data
         if (!token) {
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
-                params: {
-                    message: 'No token received',
-                    provider: SecretManagerProviderId.CYBERARK,
-                },
-            })
+            throwConnectionError({ error: 'No token received', provider: SecretManagerProviderId.CYBERARK, log })
         }
         return Buffer.from(String(token).trim(), 'utf8').toString('base64')
     },
@@ -83,36 +38,12 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
             token,
             method: 'GET',
         }).catch((error) => {
-            log.error({
-                message: error.message,
-                provider: SecretManagerProviderId.CYBERARK,
-                request,
-            }, '[cyberarkConjurProvider#getSecret]')
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
-                params: {
-                    message: error.message,
-                    provider: SecretManagerProviderId.CYBERARK,
-                    request,
-                },
-            })
+            throwGetSecretError({ error, path: request.path, provider: SecretManagerProviderId.CYBERARK, request, log })
         })
         const data = response.data
 
         if (!data) {
-            log.error({
-                message: 'No secret found at requested path',
-                provider: SecretManagerProviderId.CYBERARK,
-                request,
-            }, '[cyberarkConjurProvider#getSecret]')
-            throw new ActivepiecesError({
-                code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
-                params: {
-                    message: 'No secret found at requested path',
-                    provider: SecretManagerProviderId.CYBERARK,
-                    request,
-                },
-            })
+            throwGetSecretError({ error: 'No secret found at requested path', path: request.path, provider: SecretManagerProviderId.CYBERARK, request, log })
         }
         return data
     },
@@ -134,7 +65,7 @@ const conjurApi = async ({
     method: string
     body?: Record<string, unknown> | string
 }) => {
-    return apAxios.request({
+    return conjurAxios.request({
         url,
         method,
         headers: {
@@ -143,8 +74,5 @@ const conjurApi = async ({
         },
         data: body,
         responseType: typeof body === 'string' ? 'text' : 'json',
-        httpsAgent: new https.Agent({
-            rejectUnauthorized: false,
-        }),
     })
 }

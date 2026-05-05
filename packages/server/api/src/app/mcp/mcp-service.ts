@@ -1,154 +1,103 @@
-import { rejectedPromiseHandler } from '@activepieces/server-common'
-import { apId, FlowStatus, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, mcpToolNameUtils, McpTrigger, PopulatedFlow, PopulatedMcpServer, spreadIfNotUndefined, TelemetryEventName } from '@activepieces/shared'
-import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { apId, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpServer as McpServerSchema, McpServerType, PopulatedFlow, PopulatedMcpServer, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { z } from 'zod'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
-import { telemetry } from '../helper/telemetry.utils'
-import { WebhookFlowVersionToRun } from '../webhooks/webhook-handler'
-import { webhookService } from '../webhooks/webhook.service'
 import { McpServerEntity } from './mcp-entity'
-import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES } from './tools'
+import { buildMcpServer } from './mcp-server-builder'
+import { ALL_CONTROLLABLE_TOOL_NAMES } from './tools'
 
 export const mcpServerRepository = repoFactory(McpServerEntity)
 
-export const mcpServerService = (log: FastifyBaseLogger) => {
-    return {
-        getPopulatedByProjectId: async (projectId: string): Promise<PopulatedMcpServer> => {
-            const mcp = await mcpServerService(log).getByProjectId(projectId)
-            const flows = await listFlows(mcp, log)
-            return {
-                ...mcp,
-                flows,
-            }
-        },
-        getByProjectId: async (projectId: string): Promise<McpServerSchema> => {
-            const mcpServer = await mcpServerRepository().findOneBy({ projectId })
-            if (isNil(mcpServer)) {
-                await mcpServerRepository().upsert({
-                    id: apId(),
-                    status: McpServerStatus.DISABLED,
-                    projectId,
-                    token: apId(72),
-                    enabledTools: ALL_CONTROLLABLE_TOOL_NAMES,
-                }, ['projectId'])
-                return mcpServerRepository().findOneByOrFail({ projectId })
-            }
-            return mcpServer
-        },
-        rotateToken: async ({ projectId }: RotateTokenRequest): Promise<PopulatedMcpServer> => {
-            const mcp = await mcpServerService(log).getByProjectId(projectId)
-            await mcpServerRepository().update(mcp.id, {
-                token: apId(72),
-            })
-            return mcpServerService(log).getPopulatedByProjectId(projectId)
-        },
-        update: async ({ projectId, status, enabledTools }: UpdateParams) => {
-            const mcp = await mcpServerService(log).getByProjectId(projectId)
-            const patch = {
-                ...spreadIfNotUndefined('status', status),
-                ...spreadIfNotUndefined('enabledTools', enabledTools),
-            }
-            if (Object.keys(patch).length > 0) {
-                await mcpServerRepository().update(mcp.id, patch)
-            }
-            return mcpServerService(log).getPopulatedByProjectId(projectId)
-        },
-        buildServer: async ({ mcp }: BuildServerRequest): Promise<McpServer> => {
-            const server = new McpServer({
-                name: 'Activepieces',
-                title: 'Activepieces',
-                version: '1.0.0',
-                websiteUrl: 'https://activepieces.com',
-                description: 'Automation and workflow MCP server by Activepieces',
-                icons: [
-                    {
-                        src: 'https://cdn.activepieces.com/pieces/activepieces.png',
-                        mimeType: 'image/png',
-                        sizes: ['48x48', '96x96'],
-                    },
-                ],
-            })
-            const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
-            for (const flow of enabledFlows) {
-                const mcpTrigger = flow.version.trigger.settings as McpTrigger
-                const mcpInputs = mcpTrigger.input?.inputSchema ?? []
-                const zodFromInputSchema = Object.fromEntries(mcpInputs.map((property) => [property.name, mcpPropertyToZod(property)]))
-                
-                const baseName = (mcpTrigger.input?.toolName ?? flow.version.displayName) + '_' + flow.id.substring(0, 4)
-                const toolName = mcpToolNameUtils.createToolName(baseName)
-                const toolDescription: string = mcpTrigger.input?.toolDescription ?? ''
+export const mcpServerService = (log: FastifyBaseLogger) => ({
+    getByProjectId: async (projectId: string): Promise<McpServerSchema> => {
+        return getOrCreate({
+            where: { projectId },
+            defaults: { type: McpServerType.PROJECT, projectId, platformId: null },
+        })
+    },
 
-                server.tool(toolName, toolDescription, zodFromInputSchema, { title: toolName }, async (args) => {
+    getByPlatformId: async (platformId: string): Promise<McpServerSchema> => {
+        return getOrCreate({
+            where: { platformId },
+            defaults: { type: McpServerType.PLATFORM, platformId, projectId: null },
+        })
+    },
 
-                    const returnsResponse = mcpTrigger.input?.returnsResponse
-                    const response = await webhookService.handleWebhook({
-                        data: () => {
-                            return Promise.resolve({
-                                body: {},
-                                method: 'POST',
-                                headers: {},
-                                queryParams: {},
-                            })
-                        },
-                        logger: log,
-                        flowId: flow.id,
-                        async: !returnsResponse,
-                        flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                        saveSampleData: false,
-                        payload: args,
-                        execute: true,
-                        failParentOnFailure: false,
-                    })
-                    const isOkay = Math.floor(response.status / 100) === 2
+    getPopulatedByProjectId: async (projectId: string): Promise<PopulatedMcpServer> => {
+        const mcp = await mcpServerService(log).getByProjectId(projectId)
+        const flows = await listMcpFlows(projectId, log)
+        return { ...mcp, flows }
+    },
 
-                    rejectedPromiseHandler(telemetry(log).trackProject(mcp.projectId, {
-                        name: TelemetryEventName.MCP_TOOL_CALLED,
-                        payload: {
-                            mcpId: mcp.projectId,
-                            toolName,
-                        },
-                    }), log)
-                    
-                    if (isOkay) {
-                        return {
-                            content: [{
-                                type: 'text',
-                                text: `✅ Successfully executed flow ${flow.version.displayName}\n\n` +
-                                    `Output:\n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\``,
-                            }],
-                        }
-                    }
-                    return {
-                        content: [
-                            {
-                                type: 'text',
-                                text: `❌ Error executing flow ${flow.version.displayName}\n\n` +
-                                    `Error details:\n\`\`\`json\n${JSON.stringify(response, null, 2) || 'Unknown error occurred'}\n\`\`\``,
-                            },
-                        ],
-                    }
-                })
-            }
-            
-            const allTools = activepiecesTools(mcp, log)
-            const enabledControllable = new Set(mcp.enabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES)
-            const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || enabledControllable.has(t.title))
-            tools.forEach((tool) => {
-                server.registerTool(tool.title, { title: tool.title, description: tool.description, inputSchema: tool.inputSchema }, (args: Record<string, unknown>) => tool.execute(args))
-            })
+    getPopulatedByPlatformId: async (platformId: string): Promise<PopulatedMcpServer> => {
+        const mcp = await mcpServerService(log).getByPlatformId(platformId)
+        return { ...mcp, flows: [] }
+    },
 
-            registerEmptyResourcesAndPrompts(server)
-            return server
-        },
+    rotateToken: async ({ projectId }: { projectId: string }): Promise<PopulatedMcpServer> => {
+        const mcp = await mcpServerService(log).getByProjectId(projectId)
+        await mcpServerRepository().update(mcp.id, { token: apId(72) })
+        return mcpServerService(log).getPopulatedByProjectId(projectId)
+    },
+
+    rotatePlatformToken: async ({ platformId }: { platformId: string }): Promise<McpServerSchema> => {
+        const mcp = await mcpServerService(log).getByPlatformId(platformId)
+        await mcpServerRepository().update(mcp.id, { token: apId(72) })
+        return mcpServerService(log).getByPlatformId(platformId)
+    },
+
+    update: async ({ projectId, enabledTools }: UpdateParams): Promise<PopulatedMcpServer> => {
+        const mcp = await mcpServerService(log).getByProjectId(projectId)
+        if (!isNil(enabledTools)) {
+            await mcpServerRepository().update(mcp.id, { enabledTools })
+        }
+        return mcpServerService(log).getPopulatedByProjectId(projectId)
+    },
+
+    updatePlatform: async ({ platformId, enabledTools }: UpdatePlatformParams): Promise<McpServerSchema> => {
+        const mcp = await mcpServerService(log).getByPlatformId(platformId)
+        if (!isNil(enabledTools)) {
+            await mcpServerRepository().update(mcp.id, { enabledTools })
+        }
+        return mcpServerService(log).getByPlatformId(platformId)
+    },
+
+    buildServer: async ({ mcp, userId }: { mcp: PopulatedMcpServer, userId: string | null }) => {
+        return buildMcpServer({
+            mcp,
+            userId,
+            log,
+            resolveProjectMcp: (projectId: string) => mcpServerService(log).getPopulatedByProjectId(projectId),
+        })
+    },
+})
+
+async function getOrCreate({ where, defaults }: {
+    where: { projectId: string } | { platformId: string }
+    defaults: { type: McpServerType, projectId: string | null, platformId: string | null }
+}): Promise<McpServerSchema> {
+    const existing = await mcpServerRepository().findOneBy(where)
+    if (!isNil(existing)) return existing
+    const { data: created, error } = await tryCatch(async () =>
+        mcpServerRepository().save({
+            id: apId(),
+            ...defaults,
+            token: apId(72),
+            enabledTools: ALL_CONTROLLABLE_TOOL_NAMES,
+        }),
+    )
+    if (error) {
+        // Unique constraint violation from a concurrent insert — the other request won
+        const fallback = await mcpServerRepository().findOneBy(where)
+        if (!isNil(fallback)) return fallback
+        throw error
     }
+    return created
 }
 
-
-async function listFlows(mcp: McpServerSchema, logger: FastifyBaseLogger): Promise<PopulatedFlow[]> {
+async function listMcpFlows(projectId: string, logger: FastifyBaseLogger): Promise<PopulatedFlow[]> {
     const flows = await flowService(logger).list({
-        projectIds: [mcp.projectId],
+        projectIds: [projectId],
         limit: 1000000,
         cursorRequest: null,
         versionState: FlowVersionState.DRAFT,
@@ -157,69 +106,12 @@ async function listFlows(mcp: McpServerSchema, logger: FastifyBaseLogger): Promi
     return flows.data.filter((flow) => flow.version.trigger.type === FlowTriggerType.PIECE && flow.version.trigger.settings.pieceName === MCP_TRIGGER_PIECE_NAME)
 }
 
-function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
-    let schema: z.ZodTypeAny
-
-    switch (property.type) {
-        case McpPropertyType.TEXT:
-        case McpPropertyType.DATE:
-            schema = z.string()
-            break
-        case McpPropertyType.NUMBER:
-            schema = z.number()
-            break
-        case McpPropertyType.BOOLEAN:
-            schema = z.boolean()
-            break
-        case McpPropertyType.ARRAY:
-            schema = z.array(z.string())
-            break
-        case McpPropertyType.OBJECT:
-            schema = z.record(z.string(), z.string())
-            break
-        default:
-            schema = z.unknown()
-    }
-
-    if (property.description) {
-        schema = schema.describe(property.description)
-    }
-
-    return property.required ? schema : schema.nullish()
-}
-
-/**
- * Registers resources/list and prompts/list so they return empty lists.
- * 
- * - Resources: register a resource template with an empty list.
- * - Prompts: register an empty prompt so the handler is set and returns [].
- * 
- * Claude Desktop (mcp-remote) does not support prompts/list, so we register an empty prompt.
- */
-function registerEmptyResourcesAndPrompts(server: McpServer): void {
-    server.registerResource(
-        '_',
-        new ResourceTemplate('activepieces://empty', {
-            list: async () => ({ resources: [] }),
-        }),
-        {},
-        async () => ({ contents: [] }),
-    )
-    server.registerPrompt('_', {}, () => ({ messages: [] }))
-}
-
-
-
-type BuildServerRequest = {
-    mcp: PopulatedMcpServer
-}
-
-type RotateTokenRequest = {
-    projectId: string
-}
-
 type UpdateParams = {
-    status?: McpServerStatus
     projectId: string
+    enabledTools?: string[]
+}
+
+type UpdatePlatformParams = {
+    platformId: string
     enabledTools?: string[]
 }

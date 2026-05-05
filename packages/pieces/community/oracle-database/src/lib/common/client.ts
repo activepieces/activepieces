@@ -2,10 +2,6 @@ import { OracleDbAuth } from './types';
 import oracledb from 'oracledb';
 import { ensureOracleClient } from './thick-mode';
 
-interface ExecuteManyResult {
-  rowsAffected?: number;
-}
-
 export class OracleDbClient {
   private readonly auth: OracleDbAuth;
   private connection: oracledb.Connection | undefined;
@@ -15,7 +11,7 @@ export class OracleDbClient {
   }
 
   private async connect(): Promise<void> {
-    await ensureOracleClient(this.auth.thickMode ?? false);
+    await ensureOracleClient({ thickMode: this.auth.thickMode ?? false, logs: [] });
 
     const connectString =
       this.auth.connectionType === 'serviceName'

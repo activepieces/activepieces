@@ -24,6 +24,7 @@ import { deleteUserAction } from './lib/actions/delete-user';
 import { findOrganizationAction } from './lib/actions/find-organization';
 import { findTicketsAction } from './lib/actions/find-tickets';
 import { findUserAction } from './lib/actions/find-user';
+import { updateUserAction } from './lib/actions/update-user';
 
 const markdownProperty = `
 **Organization**: The organization name can be found in the URL (e.g https://ORGANIZATION_NAME.zendesk.com).
@@ -61,7 +62,7 @@ export const zendesk = createPiece({
 
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zendesk.png',
-  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud","aryel780","onyedikachi-david"],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud","aryel780","onyedikachi-david","murex971"],
   categories: [PieceCategory.CUSTOMER_SUPPORT],
   auth: zendeskAuth,
   actions: [
@@ -76,6 +77,7 @@ export const zendesk = createPiece({
     findOrganizationAction,
     findTicketsAction,
     findUserAction,
+    updateUserAction,
     createCustomApiCallAction({
       baseUrl: (auth) =>
         auth?

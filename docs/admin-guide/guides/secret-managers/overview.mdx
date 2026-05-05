@@ -20,28 +20,45 @@ Secret Managers allow you to integrate external secret management systems with A
 - **[HashiCorp Vault](./hashicorp)** - Enterprise-grade secrets management
 - **[CyberArk Conjur](./cyberark-conjur)** - Centralized secrets management with host-based authentication
 - **[AWS Secrets Manager](./aws)** - Managed secrets storage on AWS
-- **[1Password](./1password)** - Consumer and team password manager with Secrets Automation
+- **[1Password](./onepassword)** - Consumer and team password manager with Secrets Automation
 
 ## How to Connect
 
 1. Go to **Platform Admin → Security → Secret Managers**
-2. Select the secret manager provider you want to connect
-3. Follow the provider-specific setup instructions in the provider documentation
-4. Enter the required connection details
-5. Click **Connect** to test and save the connection
+2. Click **New Connection**
+3. Select the secret manager provider you want to connect
+4. Enter a **Name** for the connection
+5. Choose a **Scope** (see [Connection Scopes](#connection-scopes) below)
+6. Follow the provider-specific setup instructions in the provider documentation
+7. Enter the required connection details
+8. Click **Save** to test and save the connection
 
-The connection will be encrypted and stored securely. You can disconnect at any time by clicking the **Remove** button.
+The connection will be encrypted and stored securely. You can edit or delete it at any time from the Secret Managers page.
 
-## Using Secret Managers in Global Connections
+## Connection Scopes
 
-Once connected, you can use secret managers when creating or editing global connections:
+Each secret manager connection has a **scope** that controls which projects can use it:
 
-1. When configuring a global connection that requires credentials (like API keys or passwords)
-2. Click the **key icon** (🔑) next to the input field
-3. Select your secret manager provider from the dropdown
+| Scope | Description |
+|-------|-------------|
+| **Platform** | Available to all projects on the platform |
+| **Project** | Restricted to specific projects you select |
+
+When creating or editing a connection, select **Project** scope and choose the projects that should have access. Platform-scoped connections are always visible to all projects.
+
+## Using Secret Managers in Connection Dialogs
+
+Once connected, you can reference secrets from your secret managers when configuring piece connections:
+
+1. Open a connection dialog (either a global connection or one inside the flow builder)
+2. Click the **key icon** (🔑) next to a credential field
+3. Select a secret manager connection from the dropdown
 4. Enter the secret path/identifier required by your provider (see provider-specific documentation)
 5. The connection will automatically retrieve the secret from your secret manager when needed
 
+**Global connections (Platform Admin):** All platform-scoped and project-scoped secret manager connections are available to select.
+
+**Flow builder connections:** Only secret manager connections that are accessible to the current project are shown — this includes platform-scoped connections and project-scoped connections assigned to that project.
 
 ![Manage Oauth2 apps](/resources/screenshots/secret-manager.png)
 
@@ -56,17 +73,23 @@ When you use a secret manager in a connection:
 
 ## Caching
 
-Connection checks and retrieved secrets are cached in redis encrypted for **1 hour** to reduce latency and provider API load.
+Connection checks and retrieved secrets are cached in Redis (encrypted) for **1 hour** to reduce latency and provider API load.
 
-To force a refresh (e.g. after rotating credentials or updating secrets), platform admins can clear the cache in the secret managers setup page
+To force a refresh (e.g. after rotating credentials or updating secrets), platform admins can clear the cache per connection using the **refresh icon** next to each connection row in the Secret Managers page.
 
 ![Clear secret manager cache](/resources/screenshots/clear-secret-manager-cache.png)
 
-or by calling the endpoint
+You can also clear the cache via the API. Omit `connectionId` to clear all cached entries for the platform, or pass a `connectionId` to clear only that connection's cache:
 
-```
+```bash
+# Clear cache for a specific connection
 curl --request DELETE \
-  --url https://<domain>/api/v1/secret-managers/cache \
+  --url 'https://<domain>/api/v1/secret-managers/cache?connectionId=<connectionId>' \
+  --header 'Authorization: Bearer <token>'
+
+# Clear all platform cache entries
+curl --request DELETE \
+  --url 'https://<domain>/api/v1/secret-managers/cache' \
   --header 'Authorization: Bearer <token>'
 ```
 

@@ -9,19 +9,18 @@ import { ControllerRenderProps, UseFormReturn } from 'react-hook-form';
 
 import { SecretInput } from '@/app/connections/secret-input';
 import { ColorPicker } from '@/components/custom/color-picker';
+import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { JsonEditor } from '@/components/custom/json-editor';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { FormControl } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
 import { BuilderJsonEditorWrapper } from './builder-json-wrapper';
 import CustomProperty from './custom-property';
-import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
@@ -41,7 +40,6 @@ export const selectGenericFormComponentForProperty = ({
   propertySettings,
   hideLabel,
   enableMarkdownForInputWithMention,
-  showSecretInput = false,
 }: SelectGenericFormComponentForPropertyParams) => {
   switch (property.type) {
     case PropertyType.ARRAY:
@@ -76,12 +74,23 @@ export const selectGenericFormComponentForProperty = ({
           allowDynamicValues={allowDynamicValues}
           dynamicInputModeToggled={dynamicInputModeToggled}
         >
-          <DictionaryProperty
+          <DictionaryInput
             disabled={disabled}
             values={field.value}
             onChange={field.onChange}
-            useMentionTextInput={useMentionTextInput}
-          ></DictionaryProperty>
+            keyInputClassName={useMentionTextInput ? 'h-[38px]' : undefined}
+            renderValueInput={
+              useMentionTextInput
+                ? ({ value, onChange, disabled }) => (
+                    <TextInputWithMentions
+                      initialValue={value}
+                      disabled={disabled}
+                      onChange={onChange}
+                    />
+                  )
+                : undefined
+            }
+          />
         </AutoFormFieldWrapper>
       );
     case PropertyType.CHECKBOX:
@@ -243,9 +252,8 @@ export const selectGenericFormComponentForProperty = ({
               onChange={field.onChange}
               enableMarkdown={enableMarkdownForInputWithMention}
             ></TextInputWithMentions>
-          ) : showSecretInput ? (
+          ) : (
             <SecretInput
-              allowTogglingSecretManagerMode={true}
               ref={field.ref}
               value={field.value}
               onChange={field.onChange}
@@ -254,16 +262,6 @@ export const selectGenericFormComponentForProperty = ({
                 property.type === PropertyType.SECRET_TEXT ? 'password' : 'text'
               }
             ></SecretInput>
-          ) : (
-            <Input
-              ref={field.ref}
-              value={field.value}
-              onChange={field.onChange}
-              disabled={disabled}
-              type={
-                property.type === PropertyType.SECRET_TEXT ? 'password' : 'text'
-              }
-            ></Input>
           )}
         </AutoFormFieldWrapper>
       );
@@ -319,7 +317,6 @@ export const selectGenericFormComponentForProperty = ({
 };
 
 export type SelectGenericFormComponentForPropertyParams = {
-  showSecretInput?: boolean;
   field: ControllerRenderProps<Record<string, any>, string>;
   hideLabel?: boolean;
   propertyName: string;

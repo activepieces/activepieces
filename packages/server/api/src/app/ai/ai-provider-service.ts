@@ -1,6 +1,9 @@
 import {
     ActivepiecesError, ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
     apId,
+    BaseAIProviderAuthConfig,
+    BedrockProviderAuthConfig,
+    BedrockProviderConfig,
     CreateAIProviderRequest,
     ErrorCode,
     GetProviderConfigResponse,
@@ -18,6 +21,7 @@ import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openroute
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
@@ -53,21 +57,19 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
 
-        const formattedProviders: AIProviderWithoutSensitiveData[] = await Promise.all(configuredProviders.map(async p => {
-            return {
-                id: p.id,
-                name: p.displayName,
-                provider: p.provider,
-                config: p.config,
-            }
+        return configuredProviders.map((p): AIProviderWithoutSensitiveData => ({
+            id: p.id,
+            name: p.displayName,
+            provider: p.provider,
+            config: p.config,
+            enabledForChat: p.enabledForChat ?? false,
         }))
-        return formattedProviders
     },
 
     async listModels(platformId: PlatformId, provider: AIProviderName): Promise<AIProviderModel[]> {
         const { config, auth } = await this.getConfigOrThrow({ platformId, provider })
 
-        const cacheKey = `${provider}-${auth.apiKey}`
+        const cacheKey = `${provider}-${getAuthCacheFingerprint({ provider, auth, config })}`
         if (modelsCache.has(cacheKey) && !('models' in config)) {
             return modelsCache.get(cacheKey)!
         }
@@ -99,12 +101,23 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             platformId,
             id: providerId,
         })
-        if (isNil(aiProvider) || aiProvider.provider === AIProviderName.ACTIVEPIECES) {
+        if (isNil(aiProvider)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityId: providerId, entityType: 'AIProvider' },
             })
         }
+
+        if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
+            if (request.enabledForChat === true) {
+                await aiProviderRepo().manager.transaction(async (manager) => {
+                    await manager.update(AIProviderEntity, { platformId }, { enabledForChat: false })
+                    await manager.update(AIProviderEntity, providerId, { enabledForChat: true })
+                })
+            }
+            return
+        }
+
         const config = request.config ?? aiProvider.config
         if (!isNil(request.auth)) {
             await this.validateProviderCredentials(aiProvider.provider, request.auth, config)
@@ -115,11 +128,38 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
 
         const encryptedAuth = !isNil(request.auth) ? await encryptUtils.encryptObject(request.auth) : undefined
-        await aiProviderRepo().update(providerId, {
+        const updates = {
             ...spreadIfDefined('auth', encryptedAuth),
             ...spreadIfDefined('config', request.config),
+            ...spreadIfDefined('enabledForChat', request.enabledForChat),
             displayName: request.displayName,
-        })
+        }
+
+        if (request.enabledForChat === true) {
+            await aiProviderRepo().manager.transaction(async (manager) => {
+                await manager.update(AIProviderEntity, { platformId }, { enabledForChat: false })
+                await manager.update(AIProviderEntity, providerId, updates)
+            })
+        }
+        else {
+            await aiProviderRepo().update(providerId, updates)
+        }
+    },
+
+    async getChatProvider({ platformId }: { platformId: PlatformId }): Promise<GetProviderConfigResponse | null> {
+        const chatProvider = await aiProviderRepo().findOneBy({ platformId, enabledForChat: true })
+        if (isNil(chatProvider)) {
+            return null
+        }
+        let auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(chatProvider.auth)
+        if (chatProvider.provider === AIProviderName.ACTIVEPIECES) {
+            const doesHaveKeys = !isNil(auth) && 'apiKey' in auth && !isNil(auth.apiKey) && auth.apiKey !== ''
+            if (!doesHaveKeys) {
+                const enriched = await enrichWithKeysIfNeeded(chatProvider, platformId, log)
+                auth = enriched.auth
+            }
+        }
+        return { provider: chatProvider.provider, auth, config: chatProvider.config, platformId }
     },
 
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
@@ -167,27 +207,17 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         let auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(aiProvider.auth)
 
         if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
-            const doesHaveKeys = !isNil(auth) && !isNil(auth.apiKey) && auth.apiKey !== ''
+            const doesHaveKeys = !isNil(auth) && 'apiKey' in auth && !isNil(auth.apiKey) && auth.apiKey !== ''
             if (!doesHaveKeys) {
                 const { auth: activePiecesAuth } = await enrichWithKeysIfNeeded(aiProvider, platformId, log)
 
                 auth = activePiecesAuth
             }
 
-            await systemJobsSchedule(log).upsertJob({
-                job: {
-                    name: SystemJobName.AI_CREDIT_UPDATE_CHECK,
-                    data: { apiKeyHash: (auth as ActivePiecesProviderAuthConfig).apiKeyHash, platformId },
-                },
-                schedule: {
-                    type: 'one-time',
-                    date: dayjs(),
-                },
-            })
         }
-        
-        
-        return { provider: aiProvider.provider, auth, config: aiProvider.config }
+
+
+        return { provider: aiProvider.provider, auth, config: aiProvider.config, platformId }
     },
     async getActivepiecesProviderIfEnriched(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig | null> {
         const aiProvider = await aiProviderRepo().findOneBy({
@@ -223,7 +253,19 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
 
         const { auth } = await this.getConfigOrThrow({ platformId, provider: AIProviderName.ACTIVEPIECES })
-        return auth as ActivePiecesProviderAuthConfig
+        const activePiecesAuth = auth as ActivePiecesProviderAuthConfig
+        rejectedPromiseHandler(systemJobsSchedule(log).upsertJob({
+            job: {
+                name: SystemJobName.AI_CREDIT_UPDATE_CHECK,
+                data: { apiKeyHash: activePiecesAuth.apiKeyHash, platformId },
+                jobId: `ai-credit-update-check-${platformId}`,
+            },
+            schedule: {
+                type: 'one-time',
+                date: dayjs(),
+            },
+        }), log)
+        return activePiecesAuth
     },
 
     async getAllActivePiecesProvidersConfigs(platformIds?: string[]): Promise<{ [platformId: string]: ActivePiecesProviderAuthConfig }> {
@@ -271,7 +313,7 @@ async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: 
         platformId,
         lastFreeAiCreditsRenewalDate: new Date().toISOString(),
     })
-    return { provider: savedAiProvider.provider, auth: rawAuth, config: savedAiProvider.config }
+    return { provider: savedAiProvider.provider, auth: rawAuth, config: savedAiProvider.config, platformId }
 }
 
 
@@ -281,4 +323,18 @@ async function doesActivepiecesProviderHasKeys(aiProvider: AIProviderSchema): Pr
     }
     const decryptedAuth = await encryptUtils.decryptObject<ActivePiecesProviderAuthConfig>(aiProvider.auth)
     return !isNil(decryptedAuth) && !isNil(decryptedAuth.apiKey) && decryptedAuth.apiKey !== ''
+}
+
+function getAuthCacheFingerprint({ provider, auth, config }: { provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig }): string {
+    switch (provider) {
+        case AIProviderName.BEDROCK: {
+            const { accessKeyId, secretAccessKey } = auth as BedrockProviderAuthConfig
+            const { region } = config as BedrockProviderConfig
+            return `${accessKeyId}-${secretAccessKey}-${region}`
+        }
+        default: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return apiKey
+        }
+    }
 }

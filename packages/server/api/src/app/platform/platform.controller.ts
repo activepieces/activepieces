@@ -1,9 +1,11 @@
-import { apDayjs, securityAccess } from '@activepieces/server-common'
+import { apDayjs } from '@activepieces/server-utils'
 import {
     ActivepiecesError,
     ApEdition,
     ApId,
     assertNotNullOrUndefined,
+    AuthenticationResponse,
+    CreatePlatformRequest,
     ErrorCode,
     FileType,
     PlatformWithoutSensitiveData,
@@ -15,6 +17,7 @@ import {
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { stripeHelper } from '../ee/platform/platform-plan/stripe-helper'
@@ -23,13 +26,34 @@ import { fileService } from '../file/file.service'
 import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
+import { userIdentityHelper } from '../helper/user-identity-helper'
 import { projectService } from '../project/project-service'
 import { userRepo, userService } from '../user/user-service'
 import { platformService } from './platform.service'
 
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncZod = async (app) => {
+    app.post('/', CreatePlatformEndpoint, async (req) => {
+        const isOnboarding = req.principal.type === PrincipalType.ONBOARDING
+        const identityId = isOnboarding
+            ? req.principal.id
+            : (await userService(req.log).getOneOrFail({ id: req.principal.id })).identityId
+        return platformService(req.log).createPlatformWithProject({
+            identityId,
+            name: req.body.name,
+            invalidatePreviousTokens: isOnboarding,
+        })
+    })
+
     app.post('/:id', UpdatePlatformRequest, async (req, _res) => {
+        if (req.principal.platform.id !== req.params.id) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'You are not authorized to access this platform',
+                },
+            })
+        }
         const platformId = req.principal.platform.id
 
         const [logoIconUrl, fullLogoUrl, favIconUrl] = await Promise.all([
@@ -54,13 +78,13 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
         ])
 
         await platformService(req.log).update({
-            id: req.params.id,
+            id: platformId,
             ...req.body,
             logoIconUrl,
             fullLogoUrl,
             favIconUrl,
         })
-        return platformService(req.log).getOneWithPlanAndUsageOrThrow(req.params.id)
+        return platformService(req.log).getOneWithPlanAndUsageOrThrow(platformId)
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
@@ -72,7 +96,20 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
         }
-        return platformService(req.log).getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
+        const platform = await platformService(req.log).getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
+        if (req.principal.type === PrincipalType.USER) {
+            const isEmbedded = await userIdentityHelper(req.log).isUserEmbedded(req.principal.id)
+            if (isEmbedded) {
+                return {
+                    ...platform,
+                    plan: {
+                        ...platform.plan,
+                        licenseKey: null,
+                    },
+                }
+            }
+        }
+        return platform
     })
 
     app.get('/assets/:id', GetAssetRequest, async (req, reply) => {
@@ -89,6 +126,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             .status(StatusCodes.OK)
             .send(data.data)
     })
+
 
     if (edition === ApEdition.CLOUD) {
         app.delete('/:id', DeletePlatformRequest, async (req, res) => {
@@ -157,6 +195,18 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
     }
 }
 
+const CreatePlatformEndpoint = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.ONBOARDING, PrincipalType.USER]),
+    },
+    schema: {
+        body: CreatePlatformRequest,
+        response: {
+            [StatusCodes.OK]: AuthenticationResponse,
+        },
+    },
+}
+
 const UpdatePlatformRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
@@ -211,3 +261,4 @@ const GetAssetRequest = {
         }),
     },
 }
+

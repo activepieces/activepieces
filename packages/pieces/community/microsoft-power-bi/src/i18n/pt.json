@@ -1,5 +1,9 @@
 {
   "Create and manage Power BI datasets and push data to them": "Criar e gerenciar conjuntos de dados Power BI e enviar dados para eles",
+  "Cloud Environment": "Ambiente de Nuvem",
+  "Select your Microsoft cloud environment.": "Selecione seu ambiente de nuvem da Microsoft.",
+  "Commercial (Global)": "Comercial (Global)",
+  "US Government (GCC High)": "Governo dos EUA (GCC High)",
   "If you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Power BI Service (Delegated) permissions** under **API permissions**:\n - Dataset.ReadWrite.All\n - offline_access": "Se você quiser usar seu próprio aplicativo Azure personalizado em vez do aplicativo Activepieces padrão, siga o [guia de criação de aplicativo Azu](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n definiu a **URI de redirecionamento** para {{redirectUrl}} e adicionar a seguinte **Serviço de energia BI (excluir) permissões** em **permissões de API**:\n - Dataset. eadWrite.All\n - offline_access",
   "Create Dataset": "Criar dados",
   "Push Rows to Dataset Table": "Empurrar Linhas para a Tabela de Conjunto de Dados",

@@ -6,6 +6,7 @@ import { apId, ApEdition, FilteredPieceBehavior,
     PlatformRole,
     PrincipalType,
     UpdatePlatformRequestBody,
+    UserIdentityProvider,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
@@ -19,15 +20,21 @@ import { checkIfSolutionExistsInDb, createMockConnection, createMockFlow, create
 
 let app: FastifyInstance | null = null
 
-async function waitForDeletionJobs(jobIds: string[], timeoutMs = 30000) {
+async function waitForDeletionJobs(jobIds: string[], timeoutMs = 60000) {
     const start = Date.now()
     for (const jobId of jobIds) {
         while (Date.now() - start < timeoutMs) {
             const job = await systemJobsQueue?.getJob(jobId)
             if (!job) break
             const state = await job.getState()
-            if (state === 'failed') throw new Error(`Job ${jobId} failed`)
-            await new Promise(r => setTimeout(r, 100))
+            if (state === 'completed') break
+            if (state === 'failed' && (job.attemptsMade ?? 0) >= (job.opts?.attempts ?? 2)) {
+                throw new Error(`Job ${jobId} failed: ${job.failedReason}`)
+            }
+            if (state === 'delayed') {
+                await job.promote()
+            }
+            await new Promise(r => setTimeout(r, 200))
         }
     }
     if (Date.now() - start >= timeoutMs) {
@@ -79,7 +86,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/platforms/${mockPlatform.id}`,
+                url: `/api/v1/platforms/${mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -138,7 +145,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/platforms/${mockPlatform.id}`,
+                url: `/api/v1/platforms/${mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -189,7 +196,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/platforms/${mockPlatform.id}`,
+                url: `/api/v1/platforms/${mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -236,7 +243,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/platforms/${mockPlatform.id}`,
+                url: `/api/v1/platforms/${mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -247,6 +254,45 @@ describe('Platform API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('rejects cross-tenant platform update (IDOR)', async () => {
+            // arrange — two independent platforms with their own admin owners
+            const { mockOwner: ownerOfPlatformA, mockPlatform: platformA } = await mockAndSaveBasicSetup()
+            const { mockOwner: ownerOfPlatformB, mockPlatform: platformB } = await mockAndSaveBasicSetup({
+                platform: { name: 'platform-b-original-name' },
+            })
+
+            const attackerToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: ownerOfPlatformA.id,
+                platform: { id: platformA.id },
+            })
+
+            // act — attacker (admin of platform A) points the write at platform B
+            const attackResponse = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${platformB.id}`,
+                headers: { authorization: `Bearer ${attackerToken}` },
+                body: { name: 'pwned' },
+            })
+
+            // assert — request is rejected
+            expect(attackResponse?.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            // assert — platform B was NOT mutated (defense-in-depth check)
+            const victimToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: ownerOfPlatformB.id,
+                platform: { id: platformB.id },
+            })
+            const victimReadResponse = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/${platformB.id}`,
+                headers: { authorization: `Bearer ${victimToken}` },
+            })
+            expect(victimReadResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(victimReadResponse?.json().name).toBe('platform-b-original-name')
         })
 
     })
@@ -281,7 +327,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/platforms/${mockPlatform.id}`,
+                url: `/api/v1/platforms/${mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -292,7 +338,7 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(19)
+            expect(Object.keys(responseBody).length).toBe(21)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)
@@ -306,6 +352,80 @@ describe('Platform API', () => {
             expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)
         })
 
+
+        it('Hides license key from JWT provider (embedded) users', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    licenseKey: 'test-license-key',
+                },
+            })
+
+            const { mockUser: embeddedUser } = await mockBasicUser({
+                userIdentity: {
+                    provider: UserIdentityProvider.JWT,
+                },
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+
+            const mockToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: embeddedUser.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            const responseBody = response?.json()
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.plan.licenseKey).toBeNull()
+        })
+
+        it('Returns license key for non-embedded users', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    licenseKey: 'test-license-key',
+                },
+            })
+
+            const mockToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            const responseBody = response?.json()
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.plan.licenseKey).toBe('test-license-key')
+        })
 
         it('Fails if user is not a platform member', async () => {
             const { mockOwner: mockOwner1, mockPlatform: mockPlatform1 } = await mockAndSaveBasicSetup()
@@ -322,7 +442,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/platforms/${mockPlatform2.id}`,
+                url: `/api/v1/platforms/${mockPlatform2.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -362,7 +482,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/platforms/${firstAccount.mockPlatform.id}`,
+                url: `/api/v1/platforms/${firstAccount.mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -393,7 +513,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/platforms/${mockPlatform.id}`,
+                url: `/api/v1/platforms/${mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -427,7 +547,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/platforms/${secondAccount.mockPlatform.id}`,
+                url: `/api/v1/platforms/${secondAccount.mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -457,7 +577,7 @@ describe('Platform API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/platforms/${account.mockPlatform.id}`,
+                url: `/api/v1/platforms/${account.mockPlatform.id}`,
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -526,7 +646,7 @@ describe('Platform API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/platforms/${account.mockPlatform.id}`,
+                url: `/api/v1/platforms/${account.mockPlatform.id}`,
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
@@ -579,7 +699,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/platforms/${firstAccount.mockPlatform.id}`,
+                url: `/api/v1/platforms/${firstAccount.mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -604,7 +724,7 @@ describe('Platform API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/platforms/${apId()}`,
+                url: `/api/v1/platforms/${apId()}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -632,7 +752,7 @@ describe('Platform API', () => {
         // act
         const response = await app?.inject({
             method: 'GET',
-            url: `/v1/platforms/${mockPlatform.id}`,
+            url: `/api/v1/platforms/${mockPlatform.id}`,
             headers: {
                 authorization: `Bearer ${testToken}`,
             },

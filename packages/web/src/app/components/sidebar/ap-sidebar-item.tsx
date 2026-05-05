@@ -23,6 +23,9 @@ export type SidebarItemType = {
   show?: boolean;
   hasPermission?: boolean;
   onClick?: () => void;
+  badge?: string;
+  iconClassName?: string;
+  highlight?: boolean;
 };
 
 export const ApSidebarItem = (item: SidebarItemType) => {
@@ -43,39 +46,52 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     }
   }, [isHovered]);
 
-  return (
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        className={cn(
-          { 'bg-sidebar-accent hover:bg-sidebar-accent!': isLinkActive },
-          '',
-        )}
-        onClick={() => navigate(item.to)}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {item.icon && renderIcon(item.icon, iconRef)}
-        {!isCollapsed && <span className="text-sm">{item.label}</span>}
-        {!isCollapsed && item.locked && (
-          <LockKeyhole className="size-3.5! ml-auto" />
-        )}
-        {item.notification && !item.locked && (
-          <Dot
-            variant="destructive"
-            className="absolute right-1 top-2 transform -translate-y-1/2 size-2 rounded-full"
-          />
-        )}
-      </SidebarMenuButton>
-    </SidebarMenuItem>
+  const button = (
+    <SidebarMenuButton
+      className={cn(
+        { 'bg-sidebar-accent hover:bg-sidebar-accent!': isLinkActive },
+        item.highlight && !isLinkActive && 'hover:bg-sidebar-accent/60',
+      )}
+      onClick={() => {
+        item.onClick?.();
+        navigate(item.to);
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {item.icon && renderIcon(item.icon, iconRef, item.iconClassName)}
+      {!isCollapsed && (
+        <span className={cn('text-sm', { 'font-semibold': isLinkActive })}>
+          {item.label}
+        </span>
+      )}
+      {!isCollapsed && item.badge && (
+        <span className="ml-auto text-[10px] font-medium text-primary">
+          {item.badge}
+        </span>
+      )}
+      {!isCollapsed && item.locked && !item.badge && (
+        <LockKeyhole className="size-3.5! ml-auto" />
+      )}
+      {item.notification && !item.locked && (
+        <Dot
+          variant="destructive"
+          className="absolute right-1 top-2 transform -translate-y-1/2 size-2 rounded-full"
+        />
+      )}
+    </SidebarMenuButton>
   );
+
+  return <SidebarMenuItem>{button}</SidebarMenuItem>;
 };
 
 function renderIcon(
   Icon: ComponentType<{ className?: string }>,
   ref: React.RefObject<AnimatedIconHandle | null>,
+  iconClassName?: string,
 ) {
   return React.createElement(Icon, {
-    className: 'size-4 pointer-events-none',
+    className: cn('size-4 pointer-events-none', iconClassName),
     ref,
   } as { className: string });
 }

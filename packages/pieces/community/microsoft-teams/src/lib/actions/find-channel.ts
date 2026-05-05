@@ -1,7 +1,8 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { microsoftTeamsCommon } from '../common';
+import { createGraphClient } from '../common/graph';
 
 export const findChannelAction = createAction({
 	auth: microsoftTeamsAuth,
@@ -18,11 +19,8 @@ export const findChannelAction = createAction({
 	async run(context) {
 		const { teamId, channelName } = context.propsValue;
 
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(context.auth.access_token),
-			},
-		});
+		const cloud = context.auth.props?.['cloud'] as string | undefined;
+		const client = createGraphClient(context.auth.access_token, cloud);
 
 		const response: PageCollection = await client
 			.api(`/teams/${teamId}/allChannels`)

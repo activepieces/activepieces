@@ -1,4 +1,3 @@
-import { securityAccess } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -19,6 +18,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { flagService } from '../flags/flag.service'
 import { migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
@@ -103,6 +103,25 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
             request.body.flows = migratedFlows
         },
     }, async (request, reply) => {
+        const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
+
+        switch (template.type) {
+            case TemplateType.OFFICIAL:
+            case TemplateType.SHARED:
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: { message: 'Cannot update official or shared templates' },
+                })
+            case TemplateType.CUSTOM: {
+                await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                assertTemplateBelongsToPlatform({
+                    templatePlatformId: template.platformId,
+                    principalPlatformId: request.principal.platform.id,
+                })
+                break
+            }
+        }
+
         const result = await templateService(app.log).update({ id: request.params.id, params: request.body })
         return reply.status(StatusCodes.OK).send(result)
     })
@@ -110,8 +129,21 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
     app.delete('/:id', DeleteParams, async (request, reply) => {
         const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
 
-        if (template.type === TemplateType.CUSTOM) {
-            await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+        switch (template.type) {
+            case TemplateType.OFFICIAL:
+            case TemplateType.SHARED:
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: { message: 'Cannot delete official or shared templates' },
+                })
+            case TemplateType.CUSTOM: {
+                await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                assertTemplateBelongsToPlatform({
+                    templatePlatformId: template.platformId,
+                    principalPlatformId: request.principal.platform.id,
+                })
+                break
+            }
         }
 
         await templateService(app.log).delete({
@@ -199,6 +231,18 @@ const UpdateParams = {
     },
 }
 
+function assertTemplateBelongsToPlatform({ templatePlatformId, principalPlatformId }: {
+    templatePlatformId: string | null | undefined
+    principalPlatformId: string
+}): void {
+    if (templatePlatformId !== principalPlatformId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: { message: 'Template does not belong to your platform' },
+        })
+    }
+}
+
 async function loadOfficialTemplatesOrReturnEmpty(
     log: FastifyBaseLogger,
     query: ListTemplatesRequestQuery,
@@ -226,7 +270,7 @@ async function loadCustomTemplatesOrReturnEmpty(
     if ((!isNil(query.type) && query.type !== TemplateType.CUSTOM)) {
         return []
     }
-    const platformId = principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER ? null : principal.platform.id
+    const platformId = principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER || principal.type === PrincipalType.ONBOARDING ? null : principal.platform.id
     if (isNil(platformId)) {
         return []
     }
