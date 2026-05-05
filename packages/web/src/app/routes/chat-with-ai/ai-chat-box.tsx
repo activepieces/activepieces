@@ -1,8 +1,8 @@
-import { AIProviderName } from '@activepieces/shared';
+import { AIProviderName, ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   ChatContainerContent,
@@ -97,6 +97,23 @@ function ChatBoxContent({
   const [dismissedFormIds, setDismissedFormIds] = useState<Set<string>>(
     new Set(),
   );
+
+  const didAutoSelectProjectRef = useRef(false);
+  useEffect(() => {
+    if (
+      didAutoSelectProjectRef.current ||
+      selectedProjectId !== null ||
+      initialConversationId
+    )
+      return;
+    const personalProject = projects.find(
+      (p) => p.type === ProjectType.PERSONAL,
+    );
+    if (personalProject) {
+      didAutoSelectProjectRef.current = true;
+      void setProjectContext(personalProject.id);
+    }
+  }, [projects, selectedProjectId, initialConversationId, setProjectContext]);
 
   useEffect(() => {
     if (initialConversationId) {
