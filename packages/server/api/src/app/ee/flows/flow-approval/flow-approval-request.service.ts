@@ -25,43 +25,54 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
                 params: { message: 'flow.approval.error.pendingAlreadyExists' },
             })
         }
-        return transaction(async (entityManager) => {
-            const lockedVersion = draft.state === FlowVersionState.LOCKED
-                ? draft
-                : await flowVersionService(log).applyOperation({
-                    userId,
-                    projectId,
-                    platformId,
-                    flowVersion: draft,
-                    userOperation: { type: FlowOperationType.LOCK_FLOW, request: {} },
-                    entityManager,
-                })
-            const now = new Date().toISOString()
-            const created = await flowApprovalRequestRepo(entityManager).save({
-                id: apId(),
-                flowId: flow.id,
-                flowVersionId: lockedVersion.id,
-                projectId,
-                platformId,
-                submitterId: userId ?? null,
-                submittedAt: now,
-                approverId: null,
-                decidedAt: null,
-                state: FlowApprovalRequestState.PENDING,
-                requestedStatus,
-                rejectionReason: null,
-            })
-            applicationEvents(log).sendUserEvent({ platformId, userId: userId ?? undefined, projectId }, {
-                action: ApplicationEventName.FLOW_APPROVAL_REQUESTED,
-                data: {
-                    approvalRequestId: created.id,
+        try {
+            return await transaction(async (entityManager) => {
+                const lockedVersion = draft.state === FlowVersionState.LOCKED
+                    ? draft
+                    : await flowVersionService(log).applyOperation({
+                        userId,
+                        projectId,
+                        platformId,
+                        flowVersion: draft,
+                        userOperation: { type: FlowOperationType.LOCK_FLOW, request: {} },
+                        entityManager,
+                    })
+                const now = new Date().toISOString()
+                const created = await flowApprovalRequestRepo(entityManager).save({
+                    id: apId(),
                     flowId: flow.id,
                     flowVersionId: lockedVersion.id,
-                    flowDisplayName: lockedVersion.displayName,
-                },
+                    projectId,
+                    platformId,
+                    submitterId: userId ?? null,
+                    submittedAt: now,
+                    approverId: null,
+                    decidedAt: null,
+                    state: FlowApprovalRequestState.PENDING,
+                    requestedStatus,
+                    rejectionReason: null,
+                })
+                applicationEvents(log).sendUserEvent({ platformId, userId: userId ?? undefined, projectId }, {
+                    action: ApplicationEventName.FLOW_APPROVAL_REQUESTED,
+                    data: {
+                        approvalRequestId: created.id,
+                        flowId: flow.id,
+                        flowVersionId: lockedVersion.id,
+                        flowDisplayName: lockedVersion.displayName,
+                    },
+                })
+                return created
             })
-            return created
-        })
+        }
+        catch (err) {
+            if (isPendingApprovalDuplicateError(err)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: 'flow.approval.error.pendingAlreadyExists' },
+                })
+            }
+            throw err
+        }
     },
 
     async approve({ requestId, projectId, approverPrincipal, request }: DecideParams): Promise<FlowApprovalRequest> {
@@ -221,6 +232,19 @@ const assertPending = (approval: FlowApprovalRequest) => {
             params: { message: 'flow.approval.error.notPending' },
         })
     }
+}
+
+const PG_UNIQUE_VIOLATION = '23505'
+const FLOW_VERSION_UNIQUE_INDEX = 'idx_flow_approval_request_flow_version_id'
+
+const isPendingApprovalDuplicateError = (err: unknown): boolean => {
+    if (isNil(err) || typeof err !== 'object') {
+        return false
+    }
+    const driverError = (err as { driverError?: { code?: string, constraint?: string } }).driverError
+    const code = driverError?.code ?? (err as { code?: string }).code
+    const constraint = driverError?.constraint ?? (err as { constraint?: string }).constraint
+    return code === PG_UNIQUE_VIOLATION && constraint === FLOW_VERSION_UNIQUE_INDEX
 }
 
 type SubmitParams = {

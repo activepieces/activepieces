@@ -72,6 +72,10 @@ export const FlowApprovalRequestEntity = new EntitySchema<FlowApprovalRequestSch
             columns: ['projectId', 'state'],
         },
         {
+            name: 'idx_flow_approval_request_flow_id_state',
+            columns: ['flowId', 'state'],
+        },
+        {
             name: 'idx_flow_approval_request_platform_id',
             columns: ['platformId'],
         },
