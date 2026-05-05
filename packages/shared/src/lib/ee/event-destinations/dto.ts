@@ -29,6 +29,7 @@ export type UpdatePlatformEventDestinationRequestBody = z.infer<typeof UpdatePla
 
 export const TestPlatformEventDestinationRequestBody = z.object({
     url: z.string().url(),
+    event: z.nativeEnum(ApplicationEventName).optional(),
 })
 
 export type TestPlatformEventDestinationRequestBody = z.infer<typeof TestPlatformEventDestinationRequestBody>

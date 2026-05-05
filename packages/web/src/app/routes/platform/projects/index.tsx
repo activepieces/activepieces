@@ -31,6 +31,7 @@ import {
   EditProjectDialog,
   projectCollectionUtils,
 } from '@/features/projects';
+import { MyAlertSubscriptionsDropdown } from '@/features/projects/components/my-alert-subscriptions-dropdown';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
 import { validationUtils } from '@/lib/validation-utils';
@@ -274,13 +275,17 @@ export default function ProjectsPage() {
 
   const toolbarButtons = useMemo(
     () => [
+      <MyAlertSubscriptionsDropdown
+        key="my-alert-subscriptions"
+        selectedProjects={selectedRows}
+      />,
       <CreateProjectButton
         key="new-project"
         variant="full"
         projects={allProjects}
       />,
     ],
-    [allProjects],
+    [allProjects, selectedRows],
   );
 
   const errorToastMessage = (error: unknown): string | undefined => {

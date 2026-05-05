@@ -74,15 +74,18 @@ export const alertMutations = {
 };
 
 export const alertQueries = {
-  useAlertsEmailList: () =>
-    useQuery<Alert[], Error, Alert[]>({
-      queryKey: alertsKeys.all,
+  useAlertsEmailList: () =>{
+    const projectId = authenticationSession.getProjectId()!;
+    return  useQuery<Alert[], Error, Alert[]>({
+      queryKey: [...alertsKeys.all, projectId],
       queryFn: async () => {
         const page = await alertsApi.list({
-          projectId: authenticationSession.getProjectId()!,
+          projectId,
           limit: 100,
         });
         return page.data;
       },
-    }),
+    })
+  }
+   
 };

@@ -185,8 +185,8 @@ export function PlatformSidebar() {
           icon: MousePointerClickIcon,
         },
         {
-          to: '/platform/infrastructure/event-destinations',
-          label: t('Event Streaming'),
+          to: '/platform/infrastructure/custom-alerts',
+          label: t('Custom Alerts'),
           icon: WebhookIcon,
           locked: !platform.plan.eventStreamingEnabled,
         },

@@ -347,15 +347,19 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/infrastructure/event-destinations',
+    path: '/platform/infrastructure/custom-alerts',
     element: (
       <PlatformLayout>
-        <PageTitle title="Event Streaming">
+        <PageTitle title="Custom Alerts">
           <SuspenseWrapper>
             <EventDestinationsPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
+  },
+  {
+    path: '/platform/infrastructure/event-destinations',
+    element: <Navigate to="/platform/infrastructure/custom-alerts" replace />,
   },
 ];
