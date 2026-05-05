@@ -5,7 +5,6 @@ import {
     FlowActionType,
     FlowRunStatus,
     McpServer,
-    McpServerStatus,
     PackageType,
     PieceType,
     RunEnvironment,
@@ -152,7 +151,6 @@ function makeMcp(projectId: string): McpServer {
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
         projectId,
-        status: McpServerStatus.ENABLED,
         token: apId(),
         enabledTools: null,
     }

@@ -27,6 +27,14 @@ export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => 
             authorization_servers: [issuer],
         })
     })
+
+    app.get('/.well-known/oauth-protected-resource/mcp/platform', ProtectedResourceMetadataRequest, async (_req, reply) => {
+        const issuer = mcpOAuthTokenService.getIssuerUrl()
+        return reply.status(200).header('Access-Control-Allow-Origin', '*').send({
+            resource: `${issuer}/mcp/platform`,
+            authorization_servers: [issuer],
+        })
+    })
 }
 
 const AuthorizationServerMetadataRequest = {

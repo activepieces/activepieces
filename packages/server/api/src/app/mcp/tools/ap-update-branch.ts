@@ -5,9 +5,9 @@ import {
     FlowOperationRequest,
     FlowOperationType,
     isNil,
-    McpServer,
     McpToolDefinition,
     Permission,
+    ProjectScopedMcpServer,
     RouterActionSettings,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -24,7 +24,7 @@ const updateBranchInput = z.object({
     conditions: mcpUtils.BRANCH_CONDITIONS_INPUT_SCHEMA.optional(),
 })
 
-export const apUpdateBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apUpdateBranchTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_branch',
         permission: Permission.WRITE_FLOW,

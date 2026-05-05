@@ -1,4 +1,4 @@
-import { AIProviderModelType, AIProviderName, McpServer, McpToolDefinition } from '@activepieces/shared'
+import { AIProviderModelType, AIProviderName, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
@@ -11,7 +11,7 @@ const listAiModelsInput = z.object({
     provider: providerSchema.optional().describe('Filter by provider name. Omit to list all configured providers and their models.'),
 })
 
-export const apListAiModelsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_ai_models',
         description: 'List configured AI providers and their available models. Use this to discover valid provider and model values for configuring Run Agent steps. The output shows provider names and model IDs needed for the aiProviderModel input.',
