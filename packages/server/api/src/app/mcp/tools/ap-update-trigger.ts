@@ -3,10 +3,10 @@ import {
     FlowOperationType,
     FlowTriggerType,
     isNil,
-    McpServer,
     McpToolDefinition,
     Permission,
     PieceTrigger,
+    ProjectScopedMcpServer,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -25,7 +25,7 @@ const updateTriggerInput = z.object({
     displayName: z.string().optional(),
 })
 
-export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_trigger',
         permission: Permission.WRITE_FLOW,
