@@ -90,7 +90,7 @@ export function ChatInput({
           placeholder={placeholder ?? t('Tell me what you need...')}
           className="min-h-[44px] text-sm"
         />
-        <PromptInputActions className="flex items-center justify-between px-1">
+        <PromptInputActions className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <PromptInputAction tooltip={t('Attach files')}>
               <FileUploadTrigger asChild>
