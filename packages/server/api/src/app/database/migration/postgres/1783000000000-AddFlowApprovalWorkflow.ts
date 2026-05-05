@@ -13,20 +13,6 @@ export class AddFlowApprovalWorkflow1783000000000 implements Migration {
         `)
 
         await queryRunner.query(`
-            ALTER TABLE "platform_plan"
-            ADD COLUMN IF NOT EXISTS "flowApprovalEnabled" boolean
-        `)
-        await queryRunner.query(`
-            UPDATE "platform_plan"
-            SET "flowApprovalEnabled" = false
-            WHERE "flowApprovalEnabled" IS NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform_plan"
-            ALTER COLUMN "flowApprovalEnabled" SET NOT NULL
-        `)
-
-        await queryRunner.query(`
             CREATE TABLE IF NOT EXISTS "flow_approval_request" (
                 "id" character varying(21) NOT NULL,
                 "created" timestamp with time zone NOT NULL DEFAULT now(),
@@ -77,7 +63,6 @@ export class AddFlowApprovalWorkflow1783000000000 implements Migration {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query('DROP TABLE IF EXISTS "flow_approval_request"')
-        await queryRunner.query('ALTER TABLE "platform_plan" DROP COLUMN IF EXISTS "flowApprovalEnabled"')
         await queryRunner.query('ALTER TABLE "project" DROP COLUMN IF EXISTS "sensitive"')
     }
 }

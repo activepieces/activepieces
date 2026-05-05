@@ -123,7 +123,7 @@ export const ProjectDashboardLayoutHeader = () => {
       hasPermission:
         !isFetchingProjectRole &&
         checkAccess(Permission.PUBLISH_SENSITIVE_FLOW_ACCESS),
-      show: !!platform.plan.flowApprovalEnabled,
+      show: !!platform.plan.environmentsEnabled,
       badgeCount: pendingCount,
     },
   ];

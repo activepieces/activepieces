@@ -3,6 +3,6 @@ import { platformMustHaveFeatureEnabled } from '../../authentication/ee-authoriz
 import { flowApprovalRequestController } from './flow-approval-request.controller'
 
 export const flowApprovalModule: FastifyPluginAsyncZod = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.flowApprovalEnabled))
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.environmentsEnabled))
     await app.register(flowApprovalRequestController, { prefix: '/v1/flow-approval-requests' })
 }

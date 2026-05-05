@@ -45,7 +45,7 @@ export const flowApprovalsHooks = {
           limit,
           projectId: projectId ?? undefined,
         }),
-      enabled: !!projectId && platform.plan.flowApprovalEnabled && canApprove,
+      enabled: !!projectId && platform.plan.environmentsEnabled && canApprove,
       meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
   },
@@ -62,7 +62,7 @@ export const flowApprovalsHooks = {
           limit: PENDING_BADGE_PROBE_LIMIT,
           projectId: projectId ?? undefined,
         }),
-      enabled: !!projectId && platform.plan.flowApprovalEnabled && canApprove,
+      enabled: !!projectId && platform.plan.environmentsEnabled && canApprove,
     });
   },
   useApprovalForVersion: (flowVersionId: string | undefined) => {
@@ -79,7 +79,7 @@ export const flowApprovalsHooks = {
         return page.data[0] ?? null;
       },
       enabled:
-        !!flowVersionId && !!projectId && platform.plan.flowApprovalEnabled,
+        !!flowVersionId && !!projectId && platform.plan.environmentsEnabled,
     });
   },
   useApprove: () => {

@@ -65,7 +65,7 @@ const PublishFlowReminderWidget = () => {
     Permission.PUBLISH_SENSITIVE_FLOW_ACCESS,
   );
   const requiresApproval =
-    platform.plan.flowApprovalEnabled &&
+    platform.plan.environmentsEnabled &&
     project.sensitive &&
     !canBypassApproval;
   const { mutate: discardChange, isPending: isDiscardingChanges } = useMutation(

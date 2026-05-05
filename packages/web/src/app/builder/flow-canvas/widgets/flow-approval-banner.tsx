@@ -40,7 +40,7 @@ const FlowApprovalBanner = () => {
     ]);
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
-  const featureEnabled = platform.plan.flowApprovalEnabled;
+  const featureEnabled = platform.plan.environmentsEnabled;
   const { data: latestApproval } = flowApprovalsHooks.useApprovalForVersion(
     featureEnabled ? flowVersion.id : undefined,
   );

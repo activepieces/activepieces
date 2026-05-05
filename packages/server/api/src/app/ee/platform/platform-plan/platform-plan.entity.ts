@@ -110,9 +110,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         scimEnabled: {
             type: Boolean,
         },
-        flowApprovalEnabled: {
-            type: Boolean,
-        },
         licenseKey: {
             type: String,
             nullable: true,

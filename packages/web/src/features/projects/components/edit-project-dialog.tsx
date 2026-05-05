@@ -194,7 +194,7 @@ const EditProjectForm = ({
             />
           )}
 
-        {platform.plan.flowApprovalEnabled &&
+        {platform.plan.environmentsEnabled &&
           platformRole === PlatformRole.ADMIN && (
             <FormField
               name="sensitive"

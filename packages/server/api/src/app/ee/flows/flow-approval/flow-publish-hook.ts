@@ -9,7 +9,7 @@ import { flowApprovalRequestService } from './flow-approval-request.service'
 export const eeFlowPublishHook = (log: FastifyBaseLogger): PublishHooks => ({
     async routePublish({ projectId, platformId, userId }: RoutePublishParams) {
         const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
-        if (!platform.plan.flowApprovalEnabled) {
+        if (!platform.plan.environmentsEnabled) {
             return 'PUBLISH_NOW'
         }
         const project = await projectService(log).getOneOrThrow(projectId)
