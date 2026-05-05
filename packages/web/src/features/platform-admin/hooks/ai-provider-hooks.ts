@@ -27,6 +27,19 @@ export const aiProviderMutations = {
       onSuccess,
     });
   },
+  useToggleChatProvider: ({ onSuccess }: { onSuccess: () => void }) => {
+    return useMutation({
+      mutationFn: ({
+        providerId,
+        displayName,
+      }: {
+        providerId: string;
+        displayName: string;
+      }) =>
+        aiProviderApi.update(providerId, { displayName, enabledForChat: true }),
+      onSuccess,
+    });
+  },
   useUpsertAiProvider: ({
     providerId,
     onSuccess,

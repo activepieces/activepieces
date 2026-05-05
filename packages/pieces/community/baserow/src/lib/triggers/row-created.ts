@@ -1,32 +1,39 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
-import { baserowCommon } from '../common';
-import { createWebhookTriggerHooks } from '../common/webhook-trigger';
+import { baserowCommon, makeClient } from '../common';
+import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
 
-const webhookHooks = createWebhookTriggerHooks('rows.created', 'baserow_row_created');
+const triggerHooks = createWebhookTriggerHooks({
+  events: ['rows.created'],
+  storeKey: 'baserow_row_created_trigger',
+});
 
 export const rowCreatedTrigger = createTrigger({
   name: 'baserow_row_created',
   auth: baserowAuth,
-  displayName: 'Row Created',
+  displayName: 'New Row',
   description: 'Triggers when a new row is created in a Baserow table.',
   type: TriggerStrategy.WEBHOOK,
   props: {
     table_id: baserowCommon.tableId(),
+    instructions: dynamicWebhookInstructions('Rows created'),
   },
   sampleData: {
     id: 1,
     order: '1.00000000000000000000',
     Name: 'Example row',
   },
-  async onEnable(context) {
-    await webhookHooks.onEnable(context);
-  },
-  async onDisable(context) {
-    await webhookHooks.onDisable(context);
-  },
+  onEnable: triggerHooks.onEnable,
+  onDisable: triggerHooks.onDisable,
   async run(context) {
     const body = context.payload.body as { items?: unknown[] };
     return body.items ?? [];
+  },
+  async test(context) {
+    const tableId = context.propsValue.table_id;
+    if (!tableId) return [];
+    const client = await makeClient(context.auth);
+    const response = await client.listRows(tableId, 1, 5);
+    return response.results;
   },
 });

@@ -17,7 +17,10 @@ export const McpOAuthAuthorizationCodeEntity = new EntitySchema<McpOAuthAuthoriz
             nullable: false,
         },
         userId: ApIdSchema,
-        projectId: ApIdSchema,
+        projectId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
         platformId: ApIdSchema,
         redirectUri: {
             type: String,

@@ -28,6 +28,7 @@ export type ProjectDashboardLayoutHeaderTab = {
   icon: ComponentType<{ className?: string; size?: number }>;
   hasPermission: boolean;
   show: boolean;
+  beta?: boolean;
 };
 
 const ProjectChangedRedirector = ({
@@ -76,6 +77,13 @@ export function ProjectDashboardLayout({
       label: t('Leaderboard'),
       show: !isEmbedded,
       icon: TrophyIcon,
+      hasPermission: true,
+    },
+    {
+      to: '/chat',
+      label: t('Chat'),
+      show: !isEmbedded,
+      icon: CompassIcon,
       hasPermission: true,
     },
   ];
