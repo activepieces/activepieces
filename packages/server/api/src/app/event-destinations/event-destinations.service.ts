@@ -110,6 +110,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         const broadcastToProject = !isNil(projectId) && PROJECT_SCOPE_EVENTS.includes(event.action)
         if (broadcastToProject) {
             conditions.push({
+                platformId,
                 projectId,
                 events: ArrayContains([event.action]),
                 scope: EventDestinationScope.PROJECT,

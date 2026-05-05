@@ -28,7 +28,6 @@ export const customAlertsFlowBuilder = {
       );
     }
 
-    const sampleData = buildSampleData(events[0].name);
     const topRouter = buildTopRouter(events, labels);
     const lastUpdatedDate = new Date().toISOString();
 
@@ -66,7 +65,6 @@ export const customAlertsFlowBuilder = {
               pieceVersion: WEBHOOK_PIECE_VERSION,
               triggerName: WEBHOOK_TRIGGER_NAME,
               input: { authType: 'none', authFields: {} },
-              sampleData,
               propertySettings: {
                 authType: { type: PropertyExecutionType.MANUAL },
                 authFields: {
@@ -180,141 +178,6 @@ function buildFlowRunFinishedStatusRouter({
     },
     children: [null, null],
   };
-}
-
-function buildSampleData(event: ApplicationEventName): Record<string, unknown> {
-  const project = { displayName: 'Sample project' };
-  const isoNow = new Date().toISOString();
-  const envelope = {
-    id: apId(),
-    created: isoNow,
-    updated: isoNow,
-    ip: '127.0.0.1',
-    platformId: apId(),
-    projectId: apId(),
-    userId: apId(),
-  };
-
-  switch (event) {
-    case ApplicationEventName.FLOW_RUN_STARTED:
-    case ApplicationEventName.FLOW_RUN_FINISHED:
-    case ApplicationEventName.FLOW_RUN_RESUMED:
-    case ApplicationEventName.FLOW_RUN_RETRIED:
-      return {
-        ...envelope,
-        action: event,
-        data: {
-          flowRun: {
-            id: apId(),
-            startTime: isoNow,
-            finishTime: isoNow,
-            duration: 1234,
-            environment: 'PRODUCTION',
-            flowId: apId(),
-            flowVersionId: apId(),
-            flowDisplayName: 'Sample flow',
-            status:
-              event === ApplicationEventName.FLOW_RUN_FINISHED
-                ? 'FAILED'
-                : 'RUNNING',
-          },
-          project,
-        },
-      };
-    case ApplicationEventName.FLOW_CREATED:
-    case ApplicationEventName.FLOW_DELETED:
-      return {
-        ...envelope,
-        action: event,
-        data: {
-          flow: { id: apId(), created: isoNow, updated: isoNow },
-          project,
-        },
-      };
-    case ApplicationEventName.FLOW_UPDATED:
-      return {
-        ...envelope,
-        action: event,
-        data: {
-          flowVersion: {
-            id: apId(),
-            displayName: 'Sample flow',
-            flowId: apId(),
-            created: isoNow,
-            updated: isoNow,
-          },
-          project,
-        },
-      };
-    case ApplicationEventName.FOLDER_CREATED:
-    case ApplicationEventName.FOLDER_UPDATED:
-    case ApplicationEventName.FOLDER_DELETED:
-      return {
-        ...envelope,
-        action: event,
-        data: {
-          folder: {
-            id: apId(),
-            displayName: 'Sample folder',
-            created: isoNow,
-            updated: isoNow,
-          },
-          project,
-        },
-      };
-    case ApplicationEventName.CONNECTION_UPSERTED:
-    case ApplicationEventName.CONNECTION_DELETED:
-      return {
-        ...envelope,
-        action: event,
-        data: {
-          connection: {
-            id: apId(),
-            displayName: 'Sample connection',
-            externalId: 'sample-connection',
-          },
-          project,
-        },
-      };
-    case ApplicationEventName.USER_SIGNED_UP:
-    case ApplicationEventName.USER_SIGNED_IN:
-    case ApplicationEventName.USER_PASSWORD_RESET:
-    case ApplicationEventName.USER_EMAIL_VERIFIED:
-      return {
-        ...envelope,
-        action: event,
-        data: {
-          user: { id: apId(), email: 'sample@example.com' },
-        },
-      };
-    case ApplicationEventName.SIGNING_KEY_CREATED:
-      return {
-        ...envelope,
-        action: event,
-        data: {
-          signingKey: { id: apId(), displayName: 'Sample signing key' },
-        },
-      };
-    case ApplicationEventName.PROJECT_ROLE_CREATED:
-    case ApplicationEventName.PROJECT_ROLE_UPDATED:
-    case ApplicationEventName.PROJECT_ROLE_DELETED:
-      return {
-        ...envelope,
-        action: event,
-        data: {
-          projectRole: { id: apId(), name: 'Sample role' },
-        },
-      };
-    case ApplicationEventName.PROJECT_RELEASE_CREATED:
-      return {
-        ...envelope,
-        action: event,
-        data: {
-          projectRelease: { id: apId(), name: 'v1.0.0' },
-          project,
-        },
-      };
-  }
 }
 
 type RouterBranches = RouterAction['settings']['branches'];
