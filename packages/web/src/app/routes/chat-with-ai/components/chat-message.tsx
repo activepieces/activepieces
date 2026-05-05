@@ -38,8 +38,6 @@ export function ChatMessage({
   isLastMessage = false,
   onRetry,
   onSend,
-  connectedPieces,
-  onPieceConnected,
   selectedProjectId,
   projects,
   onSelectProject,
@@ -49,8 +47,6 @@ export function ChatMessage({
   isLastMessage?: boolean;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
-  connectedPieces: Set<string>;
-  onPieceConnected: (piece: string) => void;
   selectedProjectId?: string | null;
   projects?: Project[];
   onSelectProject?: (projectId: string) => void;
@@ -66,8 +62,6 @@ export function ChatMessage({
       isLastMessage={isLastMessage}
       onRetry={onRetry}
       onSend={onSend}
-      connectedPieces={connectedPieces}
-      onPieceConnected={onPieceConnected}
       selectedProjectId={selectedProjectId}
       projects={projects}
       onSelectProject={onSelectProject}
@@ -75,7 +69,7 @@ export function ChatMessage({
   );
 }
 
-export function UserMessage({
+function UserMessage({
   message,
   isLastMessage = false,
 }: {
@@ -142,14 +136,12 @@ export function UserMessage({
   );
 }
 
-export function AssistantMessage({
+function AssistantMessage({
   message,
   isStreaming,
   isLastMessage = false,
   onRetry,
   onSend,
-  connectedPieces,
-  onPieceConnected,
   selectedProjectId,
   projects,
   onSelectProject,
@@ -159,8 +151,6 @@ export function AssistantMessage({
   isLastMessage?: boolean;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
-  connectedPieces: Set<string>;
-  onPieceConnected: (piece: string) => void;
   selectedProjectId?: string | null;
   projects?: Project[];
   onSelectProject?: (projectId: string) => void;
@@ -221,10 +211,7 @@ export function AssistantMessage({
           {renderParts({
             parts: renderableParts,
             isStreaming,
-            isLastMessage,
             onSend,
-            connectedPieces,
-            onPieceConnected,
             selectedProjectId,
             projects,
             onSelectProject,
@@ -290,20 +277,14 @@ export function AssistantMessage({
 function renderParts({
   parts,
   isStreaming,
-  isLastMessage = false,
   onSend,
-  connectedPieces,
-  onPieceConnected,
   selectedProjectId,
   projects,
   onSelectProject,
 }: {
   parts: ChatUIMessage['parts'];
   isStreaming: boolean;
-  isLastMessage?: boolean;
   onSend: (text: string, files?: File[]) => void;
-  connectedPieces: Set<string>;
-  onPieceConnected: (piece: string) => void;
   selectedProjectId?: string | null;
   projects?: Project[];
   onSelectProject?: (projectId: string) => void;
@@ -334,9 +315,6 @@ function renderParts({
           key={idx}
           content={part.text}
           onSend={onSend}
-          isLastMessage={isLastMessage}
-          connectedPieces={connectedPieces}
-          onPieceConnected={onPieceConnected}
           selectedProjectId={selectedProjectId}
           projects={projects}
           onSelectProject={onSelectProject}
