@@ -31,13 +31,13 @@ export const getFormResponses = createAction({
                 }
             }
             return {
+                ...responseFields,
                 uuid: i['uuid'] ?? null,
                 number: i['number'] ?? null,
                 number_formatted: i['number_formatted'] ?? null,
                 form_id: i['form_id'] ?? null,
                 created_at: i['created_at'] ?? null,
                 updated_at: i['updated_at'] ?? null,
-                ...responseFields,
             };
         });
     },
