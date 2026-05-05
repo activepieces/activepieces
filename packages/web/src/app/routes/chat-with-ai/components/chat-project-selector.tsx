@@ -1,4 +1,4 @@
-import { PROJECT_COLOR_PALETTE, Project } from '@activepieces/shared';
+import { Project, ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, ChevronDown, FolderOpen, X } from 'lucide-react';
 import { useState } from 'react';
@@ -16,8 +16,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { getProjectName } from '@/features/projects';
+import { ApProjectDisplay } from '@/features/projects';
 import { cn } from '@/lib/utils';
+
+function projectName(project: Project): string {
+  return project.type === ProjectType.PERSONAL
+    ? t('Personal Project')
+    : project.displayName;
+}
 
 export function ChatProjectSelector({
   projects,
@@ -28,10 +34,6 @@ export function ChatProjectSelector({
 
   const selectedProject = selectedProjectId
     ? projects.find((p) => p.id === selectedProjectId)
-    : null;
-
-  const selectedColor = selectedProject
-    ? PROJECT_COLOR_PALETTE[selectedProject.icon.color]
     : null;
 
   return (
@@ -49,18 +51,13 @@ export function ChatProjectSelector({
         >
           {selectedProject ? (
             <>
-              <span
-                className="inline-flex items-center justify-center h-3.5 w-3.5 rounded-sm shrink-0 text-[8px] font-bold"
-                style={{
-                  backgroundColor: selectedColor?.color,
-                  color: selectedColor?.textColor,
-                }}
-              >
-                {getProjectName(selectedProject).charAt(0).toUpperCase()}
-              </span>
-              <span className="max-w-[120px] truncate">
-                {getProjectName(selectedProject)}
-              </span>
+              <ApProjectDisplay
+                title={projectName(selectedProject)}
+                icon={selectedProject.icon}
+                projectType={selectedProject.type}
+                iconClassName="size-3.5"
+                titleClassName="max-w-[120px] truncate text-xs"
+              />
               <button
                 type="button"
                 className="ml-0.5 rounded-full p-0.5 hover:bg-muted transition-colors"
@@ -88,41 +85,32 @@ export function ChatProjectSelector({
           )}
           <CommandEmpty>{t('No project found.')}</CommandEmpty>
           <CommandGroup className="max-h-64 overflow-auto">
-            {projects.map((project) => {
-              const color = PROJECT_COLOR_PALETTE[project.icon.color];
-              return (
-                <CommandItem
-                  key={project.id}
-                  value={getProjectName(project)}
-                  onSelect={() => {
-                    onProjectChange(project.id);
-                    setOpen(false);
-                  }}
-                  className="cursor-pointer gap-2"
-                >
-                  <span
-                    className="inline-flex items-center justify-center h-5 w-5 rounded-sm shrink-0 text-[10px] font-bold"
-                    style={{
-                      backgroundColor: color.color,
-                      color: color.textColor,
-                    }}
-                  >
-                    {getProjectName(project).charAt(0).toUpperCase()}
-                  </span>
-                  <span className="flex-1 truncate">
-                    {getProjectName(project)}
-                  </span>
-                  <Check
-                    className={cn(
-                      'ml-auto size-4',
-                      selectedProjectId === project.id
-                        ? 'opacity-100'
-                        : 'opacity-0',
-                    )}
-                  />
-                </CommandItem>
-              );
-            })}
+            {projects.map((project) => (
+              <CommandItem
+                key={project.id}
+                value={projectName(project)}
+                onSelect={() => {
+                  onProjectChange(project.id);
+                  setOpen(false);
+                }}
+                className="cursor-pointer gap-2"
+              >
+                <ApProjectDisplay
+                  title={projectName(project)}
+                  icon={project.icon}
+                  projectType={project.type}
+                  iconClassName="size-4"
+                />
+                <Check
+                  className={cn(
+                    'ml-auto size-4',
+                    selectedProjectId === project.id
+                      ? 'opacity-100'
+                      : 'opacity-0',
+                  )}
+                />
+              </CommandItem>
+            ))}
           </CommandGroup>
         </Command>
       </PopoverContent>
