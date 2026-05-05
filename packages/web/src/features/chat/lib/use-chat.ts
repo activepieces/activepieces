@@ -187,6 +187,11 @@ export function useAgentChat({
     selectedProjectIdRef.current = value;
     _setSelectedProjectId(value);
   }, []);
+  const [pendingApprovalRequest, setPendingApprovalRequest] = useState<{
+    gateId: string;
+    toolName: string;
+    displayName: string;
+  } | null>(null);
   const cancelledRef = useRef(false);
   const messageCountRef = useRef(0);
   const onTitleUpdateRef = useRef(onTitleUpdate);
@@ -234,16 +239,32 @@ export function useAgentChat({
   } = useChat({
     transport,
     onData: (dataPart) => {
+      const data = dataPart.data;
       if (
         dataPart.type === 'data-session-title' &&
-        typeof dataPart.data === 'object' &&
-        dataPart.data !== null &&
-        typeof (dataPart.data as Record<string, unknown>)['title'] === 'string'
+        typeof data === 'object' &&
+        data !== null &&
+        typeof (data as Record<string, unknown>)['title'] === 'string'
       ) {
         onTitleUpdateRef.current?.(
-          (dataPart.data as Record<string, unknown>)['title'] as string,
+          (data as Record<string, unknown>)['title'] as string,
           conversationIdRef.current ?? undefined,
         );
+      }
+      if (
+        dataPart.type === 'data-approval-request' &&
+        typeof data === 'object' &&
+        data !== null
+      ) {
+        const d = data as Record<string, unknown>;
+        if (typeof d.gateId === 'string' && typeof d.toolName === 'string') {
+          setPendingApprovalRequest({
+            gateId: d.gateId,
+            toolName: d.toolName,
+            displayName:
+              typeof d.displayName === 'string' ? d.displayName : d.toolName,
+          });
+        }
       }
     },
     onError: () => {
@@ -396,6 +417,7 @@ export function useAgentChat({
       cancelledRef.current = false;
       setLocalError(null);
       setWasCancelled(false);
+      setPendingApprovalRequest(null);
 
       const fileNames = files?.map((f) => f.name) ?? [];
       lastSentFileNamesRef.current = fileNames;
@@ -523,5 +545,6 @@ export function useAgentChat({
     setConversationId,
     setModelName,
     setProjectContext,
+    pendingApprovalRequest,
   };
 }

@@ -6,6 +6,7 @@ import { mcpUtils } from './mcp-utils'
 
 const deleteTableInput = z.object({
     tableId: z.string().describe('The ID of the table to delete. Use ap_list_tables to find it.'),
+    displayName: z.string().optional().describe('Short approval prompt shown to the user (e.g. "Delete Customer Emails table"). Must include what the action does and the target name.'),
 })
 
 export const apDeleteTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
