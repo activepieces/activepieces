@@ -67,7 +67,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         ) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
-                params: { message: 'flow.approval.error.cannotDisableWithPending' },
+                params: { message: 'Cannot disable flow approval while pending requests exist' },
             })
         }
 

@@ -22,57 +22,46 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         if (!isNil(existingPending)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
-                params: { message: 'flow.approval.error.pendingAlreadyExists' },
+                params: { message: 'A pending approval request already exists for this flow' },
             })
         }
-        try {
-            return await transaction(async (entityManager) => {
-                const lockedVersion = draft.state === FlowVersionState.LOCKED
-                    ? draft
-                    : await flowVersionService(log).applyOperation({
-                        userId,
-                        projectId,
-                        platformId,
-                        flowVersion: draft,
-                        userOperation: { type: FlowOperationType.LOCK_FLOW, request: {} },
-                        entityManager,
-                    })
-                const now = new Date().toISOString()
-                const created = await flowApprovalRequestRepo(entityManager).save({
-                    id: apId(),
-                    flowId: flow.id,
-                    flowVersionId: lockedVersion.id,
+        return transaction(async (entityManager) => {
+            const lockedVersion = draft.state === FlowVersionState.LOCKED
+                ? draft
+                : await flowVersionService(log).applyOperation({
+                    userId,
                     projectId,
                     platformId,
-                    submitterId: userId ?? null,
-                    submittedAt: now,
-                    approverId: null,
-                    decidedAt: null,
-                    state: FlowApprovalRequestState.PENDING,
-                    requestedStatus,
-                    rejectionReason: null,
+                    flowVersion: draft,
+                    userOperation: { type: FlowOperationType.LOCK_FLOW, request: {} },
+                    entityManager,
                 })
-                applicationEvents(log).sendUserEvent({ platformId, userId: userId ?? undefined, projectId }, {
-                    action: ApplicationEventName.FLOW_APPROVAL_REQUESTED,
-                    data: {
-                        approvalRequestId: created.id,
-                        flowId: flow.id,
-                        flowVersionId: lockedVersion.id,
-                        flowDisplayName: lockedVersion.displayName,
-                    },
-                })
-                return created
+            const now = new Date().toISOString()
+            const created = await flowApprovalRequestRepo(entityManager).save({
+                id: apId(),
+                flowId: flow.id,
+                flowVersionId: lockedVersion.id,
+                projectId,
+                platformId,
+                submitterId: userId ?? null,
+                submittedAt: now,
+                approverId: null,
+                decidedAt: null,
+                state: FlowApprovalRequestState.PENDING,
+                requestedStatus,
+                rejectionReason: null,
             })
-        }
-        catch (err) {
-            if (isPendingApprovalDuplicateError(err)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
-                    params: { message: 'flow.approval.error.pendingAlreadyExists' },
-                })
-            }
-            throw err
-        }
+            applicationEvents(log).sendUserEvent({ platformId, userId: userId ?? undefined, projectId }, {
+                action: ApplicationEventName.FLOW_APPROVAL_REQUESTED,
+                data: {
+                    approvalRequestId: created.id,
+                    flowId: flow.id,
+                    flowVersionId: lockedVersion.id,
+                    flowDisplayName: lockedVersion.displayName,
+                },
+            })
+            return created
+        })
     },
 
     async approve({ requestId, projectId, approverPrincipal, request }: DecideParams): Promise<FlowApprovalRequest> {
@@ -229,22 +218,9 @@ const assertPending = (approval: FlowApprovalRequest) => {
     if (approval.state !== FlowApprovalRequestState.PENDING) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
-            params: { message: 'flow.approval.error.notPending' },
+            params: { message: 'This approval request is no longer pending' },
         })
     }
-}
-
-const PG_UNIQUE_VIOLATION = '23505'
-const FLOW_VERSION_UNIQUE_INDEX = 'idx_flow_approval_request_flow_version_id'
-
-const isPendingApprovalDuplicateError = (err: unknown): boolean => {
-    if (isNil(err) || typeof err !== 'object') {
-        return false
-    }
-    const driverError = (err as { driverError?: { code?: string, constraint?: string } }).driverError
-    const code = driverError?.code ?? (err as { code?: string }).code
-    const constraint = driverError?.constraint ?? (err as { constraint?: string }).constraint
-    return code === PG_UNIQUE_VIOLATION && constraint === FLOW_VERSION_UNIQUE_INDEX
 }
 
 type SubmitParams = {
