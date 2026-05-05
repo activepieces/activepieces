@@ -1,4 +1,8 @@
 {
+  "Cloud Environment": "Cloud-Umgebung",
+  "Select your Microsoft cloud environment.": "Wählen Sie Ihre Microsoft-Cloud-Umgebung.",
+  "Commercial (Global)": "Kommerzielle (Global)",
+  "US Government (GCC High)": "US-Regierung (GCC High)",
   "\nIf you'd like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:\n  - User.Read\n\t- Channel.Create\n\t- Channel.ReadBasic.All\n\t- ChannelMessage.Send\n\t- Team.ReadBasic.All\n\t- Chat.ReadWrite\n\t- ChannelMessage.R": "\nWenn Sie Ihre eigene eigene Azure App anstelle der Standard Activepieces App verwenden möchten, folge der [Azure App Erstellungsanleitung](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),\n setzte die **Umleitungs-URI** auf {{redirectUrl}} und füge folgende **Microsoft Graph (Delegiert) Berechtigungen** unter **API Berechtigungen**:\n  - Benutzer hinzu. ead\n\t- Kanal. reate\n\t- Channel.ReadBasic.Alles\n\t- ChannelMessage.Senden\n\t- Team.ReadBasic.Alle\n\t- Chat.ReadWrite\n\t- ChannelMessage.Read.Read.Alles\n\t- Benutzer. eadBasic.Alle\n\t- Presence.Read.Alle\n\t- TeamMember.Read.Alles\n\t- openid\n\t- E-Mail\n\t- Profil\n\t- offline_access",
   "Create Channel": "Kanal erstellen",
   "Send Channel Message": "Kanalnachricht senden",
@@ -51,6 +55,7 @@
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
   "Follow redirects": "Weiterleitungen folgen",
+  "Use @username to mention team members in the message.": "Nutze @username um Teammitglieder in der Nachricht zu erwähnen.",
   "ID of the parent message to reply to.": "ID der zu antwortenden übergeordneten Nachricht.",
   "The ID of the message to retrieve.": "Die ID der zu holenden Nachricht.",
   "The ID of the message to delete.": "Die ID der zu löschenden Nachricht.",

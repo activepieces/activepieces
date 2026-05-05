@@ -5,10 +5,8 @@ import {
     FlowStatus,
     isFlowRunStateTerminal,
     isNil,
-    PauseMetadata,
     PiecePackage,
-    ProgressUpdateType,
-    spreadIfDefined,
+    StreamStepProgress,
     WebsocketClientEvent,
     WorkerToApiContract,
 } from '@activepieces/shared'
@@ -17,7 +15,7 @@ import { websocketService } from '../../core/websockets.service'
 import { distributedStore } from '../../database/redis-connections'
 import { fileService } from '../../file/file.service'
 import { flowService } from '../../flows/flow/flow.service'
-import { flowRunRepo, flowRunService } from '../../flows/flow-run/flow-run-service'
+import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
@@ -27,24 +25,20 @@ import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { getPlatformQueueName, QueueName, redisMetadataKey, RunsMetadataUpsertData } from '../job'
+import { getWorkerGroupQueueName, QueueName, RunsMetadataUpsertData } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
-const getPollQueueName = (platformIdForDedicatedWorker?: string, isCanaryWorker = false): string => {
-    return isCanaryWorker
-        ? QueueName.CANARY_JOBS
-        : platformIdForDedicatedWorker
-            ? getPlatformQueueName(platformIdForDedicatedWorker)
-            : QueueName.WORKER_JOBS
+const getPollQueueName = (workerGroupId?: string): string => {
+    return workerGroupId ? getWorkerGroupQueueName(workerGroupId) : QueueName.WORKER_JOBS
 }
 
-export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWorker?: string, isCanaryWorker = false): WorkerToApiContract {
+export function createHandlers(log: FastifyBaseLogger, workerGroupId?: string): WorkerToApiContract {
     return {
         async poll(input) {
-            log.info({ workerId: input.workerId, platformIdForDedicatedWorker, isCanaryWorker }, '[workerRpc#poll] Poll request received')
-            await machineService(log).onConnection(input, platformIdForDedicatedWorker)
-            const pollQueueName = getPollQueueName(platformIdForDedicatedWorker, isCanaryWorker)
+            log.info({ workerId: input.workerId, workerGroupId }, '[workerRpc#poll] Poll request received')
+            await machineService(log).onConnection(input, workerGroupId)
+            const pollQueueName = getPollQueueName(workerGroupId)
             const job = await jobBroker(log).poll(pollQueueName)
             if (job) {
                 log.info({ workerId: input.workerId, jobId: job.jobId, jobType: job.jobData.jobType }, '[workerRpc#poll] Returning job to worker')
@@ -65,29 +59,6 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
         },
 
         async uploadRunLog(input) {
-            if (input.pauseMetadata) {
-                const result = await flowRunRepo().update(input.runId, {
-                    status: input.status,
-                    ...spreadIfDefined('pauseMetadata', input.pauseMetadata as PauseMetadata),
-                    // Also persist logsFileId so that a concurrent resume() call can build the
-                    // correct RESUME job pointing at the right execution-state file.
-                    ...spreadIfDefined('logsFileId', input.logsFileId),
-                })
-                if (!result.affected) {
-                    // Run not yet in DB (PRODUCTION runs are created async via queue).
-                    // Force-flush the run metadata from Redis to DB so resume works immediately.
-                    const key = redisMetadataKey(input.runId)
-                    const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
-                    if (!isNil(runMetadata) && Object.keys(runMetadata).length > 0) {
-                        await flowRunRepo().save({
-                            ...runMetadata,
-                            status: input.status,
-                            pauseMetadata: input.pauseMetadata as PauseMetadata,
-                            logsFileId: input.logsFileId,
-                        })
-                    }
-                }
-            }
             const logData: RunsMetadataUpsertData = {
                 id: input.runId,
                 projectId: input.projectId,
@@ -97,13 +68,12 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
                 failedStep: input.failedStep,
                 startTime: input.startTime,
                 finishTime: input.finishTime,
-                pauseMetadata: input.pauseMetadata,
                 stepsCount: input.stepsCount,
                 stepNameToTest: input.stepNameToTest,
             }
             await runsMetadataQueue(log).add(logData)
 
-            if (input.stepResponse && input.progressUpdateType === ProgressUpdateType.TEST_FLOW) {
+            if (input.stepResponse && input.streamStepProgress === StreamStepProgress.WEBSOCKET) {
                 const stepData = { ...input.stepResponse, projectId: input.projectId }
                 const isTerminalStatus = isFlowRunStateTerminal({
                     status: input.status,
@@ -130,7 +100,7 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
         },
 
         async submitPayloads(input) {
-            const { flowVersionId, projectId, payloads, httpRequestId, progressUpdateType, environment, parentRunId, failParentOnFailure } = input
+            const { flowVersionId, projectId, payloads, httpRequestId, streamStepProgress, environment, parentRunId, failParentOnFailure } = input
 
             const flowVersion = await flowVersionService(log).getOne(flowVersionId)
             if (!flowVersion) {
@@ -150,9 +120,9 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
                         projectId,
                         platformId,
                         httpRequestId,
-                        synchronousHandlerId: undefined,
+                        workerHandlerId: undefined,
                         executionType: ExecutionType.BEGIN,
-                        progressUpdateType,
+                        streamStepProgress,
                         executeTrigger: false,
                         parentRunId,
                         failParentOnFailure,
@@ -224,13 +194,13 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
         },
 
         async getUsedPieces() {
-            const redisKey = `usedPieces:${platformIdForDedicatedWorker ?? 'shared'}`
+            const redisKey = `usedPieces:${workerGroupId ?? 'shared'}`
             const pieces = await distributedStore.get<PiecePackage[]>(redisKey)
             return pieces ?? []
         },
 
         async markPieceAsUsed(input) {
-            const redisKey = `usedPieces:${platformIdForDedicatedWorker ?? 'shared'}`
+            const redisKey = `usedPieces:${workerGroupId ?? 'shared'}`
             const existing = await distributedStore.get<PiecePackage[]>(redisKey) ?? []
             const existingKeys = new Set(existing.map((p) => `${p.pieceName}@${p.pieceVersion}`))
             const newPieces = input.pieces.filter((p) => !existingKeys.has(`${p.pieceName}@${p.pieceVersion}`))
@@ -260,3 +230,4 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
         },
     }
 }
+

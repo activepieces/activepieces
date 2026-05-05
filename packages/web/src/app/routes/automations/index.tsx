@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { recordAccess } from '@/app/components/global-search/access-history';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { AutomationsEmptyState } from '@/features/automations/components/automations-empty-state';
 import { AutomationsFilters as AutomationsFiltersComponent } from '@/features/automations/components/automations-filters';
 import { AutomationsNoResultsState } from '@/features/automations/components/automations-no-results-state';
@@ -42,6 +43,7 @@ export const AutomationsPage = () => {
 const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
   const [, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { embedState } = useEmbedding();
 
   const { data: allProjects = [] } = projectCollectionUtils.useAll();
   const currentProjectName = (() => {
@@ -330,12 +332,14 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
         />
       </ImportFlowDialog>
 
-      <ImportTableDialog
-        open={dialogs.isImportTableDialogOpen}
-        setIsOpen={dialogs.setIsImportTableDialogOpen}
-        showTrigger={false}
-        onImportSuccess={() => invalidateAll()}
-      />
+      {!embedState.hideTables && (
+        <ImportTableDialog
+          open={dialogs.isImportTableDialogOpen}
+          setIsOpen={dialogs.setIsImportTableDialogOpen}
+          showTrigger={false}
+          onImportSuccess={() => invalidateAll()}
+        />
+      )}
     </div>
   );
 };

@@ -3,16 +3,16 @@ import {
     FlowOperationRequest,
     FlowOperationType,
     isNil,
-    McpServer,
     McpToolDefinition,
     NoteColorVariant,
     Permission,
+    ProjectScopedMcpServer,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const manageNotesInput = z.object({
     flowId: z.string(),
@@ -30,7 +30,7 @@ const manageNotesInput = z.object({
     }).optional(),
 })
 
-export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apManageNotesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_manage_notes',
         permission: Permission.WRITE_FLOW,
@@ -138,7 +138,7 @@ export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
                 return { content: [{ type: 'text', text: messages[op] }] }
             }
             catch (err) {
-                return mcpToolError('Note operation failed', err)
+                return mcpUtils.mcpToolError('Note operation failed', err)
             }
         },
     }

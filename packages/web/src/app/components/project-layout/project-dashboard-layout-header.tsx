@@ -52,6 +52,11 @@ const AnimatedTab = ({
     >
       <IconComponent ref={iconRef} size={16} className="mr-2" />
       {tab.label}
+      {tab.beta && (
+        <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium leading-none text-primary">
+          Beta
+        </span>
+      )}
     </TabsTrigger>
   );
 };
@@ -111,8 +116,8 @@ export const ProjectDashboardLayoutHeader = () => {
   return (
     <div className="flex flex-col">
       {!isEmbedded && <ProjectDashboardPageHeader />}
-      <Tabs className="px-3 pt-2 border-b">
-        {!embedState.hideSideNav && (
+      {!embedState.hideSideNav && (
+        <Tabs className="px-3 pt-2 border-b">
           <TabsList variant="outline">
             {visiblePrimaryTabs.map((tab) => (
               <AnimatedTab
@@ -138,8 +143,8 @@ export const ProjectDashboardLayoutHeader = () => {
               />
             ))}
           </TabsList>
-        )}
-      </Tabs>
+        </Tabs>
+      )}
     </div>
   );
 };

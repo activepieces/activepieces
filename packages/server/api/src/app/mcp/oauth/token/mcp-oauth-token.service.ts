@@ -2,9 +2,9 @@ import { randomBytes } from 'crypto'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { apId, McpOAuthToken } from '@activepieces/shared'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { jwtUtils } from '../../../helper/jwt-utils'
+import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp, WorkerSystemProp } from '../../../helper/system/system-props'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { mcpOAuthPkce } from '../mcp-oauth.pkce'
 import { McpOAuthTokenEntity } from './mcp-oauth-token.entity'
 
@@ -12,6 +12,7 @@ const repo = repoFactory(McpOAuthTokenEntity)
 
 const ACCESS_TOKEN_TTL_15_MINUTES_SECONDS = 15 * 60
 const REFRESH_TOKEN_TTL_30_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+const INTERNAL_CHAT_CLIENT_ID = 'internal-chat'
 
 function generateRefreshToken(): string {
     return randomBytes(48).toString('base64url')
@@ -34,6 +35,7 @@ async function issueAccessToken(params: IssueAccessTokenParams): Promise<string>
         },
         key,
         expiresInSeconds: ACCESS_TOKEN_TTL_15_MINUTES_SECONDS,
+        audience: JwtAudience.MCP_OAUTH_ACCESS,
     })
 }
 
@@ -108,6 +110,7 @@ export const mcpOAuthTokenService = {
         const payload = await jwtUtils.decodeAndVerify<McpOAuthAccessTokenPayload>({
             jwt: token,
             key,
+            audience: JwtAudience.MCP_OAUTH_ACCESS,
         })
         if (payload.type !== 'mcp_oauth') {
             throw new OAuthTokenError('invalid_token', 'Not an MCP OAuth token')
@@ -123,9 +126,13 @@ export const mcpOAuthTokenService = {
         await repo().update(criteria, { revoked: true })
     },
 
+    async issueInternalAccessToken({ userId, platformId, projectId }: { userId: string, platformId: string, projectId: string | null }): Promise<string> {
+        return issueAccessToken({ userId, platformId, projectId, clientId: INTERNAL_CHAT_CLIENT_ID, scopes: ['mcp'] })
+    },
+
     getIssuerUrl(): string {
         return system.get(AppSystemProp.MCP_OAUTH_ISSUER_URL)
-            ?? system.getOrThrow(WorkerSystemProp.FRONTEND_URL)
+            ?? system.getOrThrow(AppSystemProp.FRONTEND_URL)
     },
 }
 
@@ -140,7 +147,7 @@ export class OAuthTokenError extends Error {
 
 type IssueAccessTokenParams = {
     userId: string
-    projectId: string
+    projectId: string | null
     platformId: string
     clientId: string
     scopes: string[]
@@ -152,7 +159,7 @@ type ExchangeCodeParams = {
     codeChallengeMethod: string
     clientId: string
     userId: string
-    projectId: string
+    projectId: string | null
     platformId: string
     scopes: string[]
 }
@@ -171,7 +178,7 @@ type TokenResponse = {
 
 export type McpOAuthAccessTokenPayload = {
     sub: string
-    projectId: string
+    projectId: string | null
     platformId: string
     clientId: string
     scopes: string[]

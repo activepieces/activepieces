@@ -1,17 +1,37 @@
 import {
   DynamicPropsValue,
   DropdownState,
-  PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
-import { baserowAuth } from '../auth';
+import { tryCatch, unique } from '@activepieces/shared';
+import {
+  baserowAuth,
+  BaserowAuthValue,
+  baserowAuthHelpers,
+} from '../auth';
 import { BaserowClient } from './client';
 import { BaserowFieldType } from './constants';
+import { BaserowField } from './types';
 
-export function makeClient(
-  auth: PiecePropValueSchema<typeof baserowAuth>
-): BaserowClient {
-  return new BaserowClient(auth.apiUrl, auth.token);
+export async function makeClient(
+  auth: BaserowAuthValue
+): Promise<BaserowClient> {
+  const { apiUrl, token, email, password } = auth.props;
+  if (baserowAuthHelpers.isJwtAuth(auth)) {
+    if (!email || !password) {
+      throw new Error(
+        'Email and Password are required for JWT authentication. Update your Baserow connection.'
+      );
+    }
+    const jwt = await BaserowClient.getJwtToken({ apiUrl, email, password });
+    return new BaserowClient(apiUrl, `JWT ${jwt}`, true);
+  }
+  if (!token) {
+    throw new Error(
+      'Database Token is required for Database Token authentication. Update your Baserow connection.'
+    );
+  }
+  return new BaserowClient(apiUrl, `Token ${token}`);
 }
 
 export function formatFieldValues(
@@ -72,13 +92,62 @@ export function formatFieldValues(
         break;
     }
   }
-  // Remove undefined entries (from skipEmpty mode)
   for (const key of Object.keys(result)) {
     if (result[key] === undefined) {
       delete result[key];
     }
   }
   return result;
+}
+
+export async function ensureSelectOptionsExist({
+  fields,
+  payload,
+  client,
+}: {
+  fields: BaserowField[];
+  payload: Record<string, unknown>;
+  client: BaserowClient;
+}): Promise<void> {
+  for (const field of fields) {
+    if (
+      field.type !== BaserowFieldType.SINGLE_SELECT &&
+      field.type !== BaserowFieldType.MULTI_SELECT
+    ) {
+      continue;
+    }
+    const value = payload[field.name];
+    if (value === undefined || value === null || value === '') continue;
+
+    const requested = collectRequestedSelectValues(value);
+    if (requested.length === 0) continue;
+
+    const existingValues = new Set(field.select_options.map((o) => o.value));
+    const missing = unique(requested.filter((v) => !existingValues.has(v)));
+    if (missing.length === 0) continue;
+
+    const result = await tryCatch(() =>
+      client.updateFieldSelectOptions({
+        fieldId: field.id,
+        existingOptions: field.select_options,
+        newOptions: missing,
+      }),
+    );
+    if (result.error) {
+      console.error(
+        `[baserow] Failed to auto-create missing select options for field "${field.name}":`,
+        result.error,
+      );
+    }
+  }
+}
+
+function collectRequestedSelectValues(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((v): v is string => typeof v === 'string' && v.length > 0);
+  }
+  if (typeof value === 'string' && value.length > 0) return [value];
+  return [];
 }
 
 export const baserowCommon = {
@@ -97,7 +166,7 @@ export const baserowCommon = {
             options: [],
           };
         }
-        const client = makeClient(auth.props);
+        const client = await makeClient(auth);
         const tables = await client.listTables();
         return {
           disabled: false,
@@ -113,19 +182,15 @@ export const baserowCommon = {
       auth: baserowAuth,
       refreshers: ['auth', 'table_id'],
       options: async ({ auth, table_id }): Promise<DropdownState<number>> => {
-        if (!auth || !table_id) {
+        if (!auth || typeof table_id !== 'number') {
           return {
             disabled: true,
             placeholder: 'Select a table first.',
             options: [],
           };
         }
-        const client = makeClient(auth.props);
-        const response = (await client.listRows(
-          table_id as unknown as number,
-          undefined,
-          200
-        )) as { results: Record<string, unknown>[] };
+        const client = await makeClient(auth);
+        const response = await client.listRows(table_id, undefined, 200);
         return {
           disabled: false,
           options: response.results.map((row) => {
@@ -133,10 +198,8 @@ export const baserowCommon = {
               .filter(([k]) => k !== 'id' && k !== 'order')
               .map(([, v]) => (typeof v === 'string' && v ? v : null))
               .find(Boolean);
-            const label = primaryValue
-              ? `#${row['id']} ${primaryValue}`
-              : `Row #${row['id']}`;
-            return { label, value: row['id'] as number };
+            const label = primaryValue ? `#${row.id} ${primaryValue}` : `Row #${row.id}`;
+            return { label, value: row.id };
           }),
         };
       },
@@ -148,14 +211,12 @@ export const baserowCommon = {
       required,
       refreshers: ['table_id'],
       props: async ({ auth, table_id }) => {
-        if (!auth || !table_id) return {};
+        if (!auth || typeof table_id !== 'number') return {};
 
         const fields: DynamicPropsValue = {};
         try {
-          const client = makeClient(auth.props);
-          const tableFields = await client.listTableFields(
-            table_id as unknown as number
-          );
+          const client = await makeClient(auth);
+          const tableFields = await client.listTableFields(table_id);
           for (const field of tableFields) {
             if (
               !field.read_only &&
@@ -181,9 +242,7 @@ export const baserowCommon = {
                     required: false,
                     description: `Enter date in ${field.date_format} format ${
                       field.date_include_time
-                        ? 'and time in ' +
-                          field.date_time_format +
-                          ' hour format'
+                        ? 'and time in ' + field.date_time_format + ' hour format'
                         : ''
                     }.`,
                   });

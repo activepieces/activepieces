@@ -28,9 +28,7 @@ import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
 import { flowCanvasHooks } from './flow-canvas/hooks';
 import { flowCanvasConsts } from './flow-canvas/utils/consts';
-import PublishFlowReminderWidget from './flow-canvas/widgets/publish-flow-reminder-widget';
-import { RunInfoWidget } from './flow-canvas/widgets/run-info-widget';
-import { ViewingOldVersionWidget } from './flow-canvas/widgets/viewing-old-version-widget';
+import { BuilderBanner } from './flow-canvas/widgets/builder-banner';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { CursorPositionProvider } from './state/cursor-position-context';
@@ -100,9 +98,7 @@ const BuilderPage = () => {
               ></FlowCanvas>
             </CursorPositionProvider>
 
-            <PublishFlowReminderWidget />
-            <RunInfoWidget />
-            <ViewingOldVersionWidget />
+            <BuilderBanner />
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
                 <CanvasControls

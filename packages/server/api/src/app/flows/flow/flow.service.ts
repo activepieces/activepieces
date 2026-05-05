@@ -13,6 +13,7 @@ import {
     FlowOperationType,
     flowPieceUtil,
     FlowStatus,
+    FlowTriggerType,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -865,16 +866,31 @@ async function createNewDraftIfVersionIsPublished({
             displayName: lockedVersion.displayName,
             notes: lockedVersion.notes,
         })
-        lastVersion = await flowVersionService(log).applyOperation({
-            userId,
-            projectId,
-            platformId,
-            flowVersion: lastVersion,
-            userOperation: {
-                type: FlowOperationType.IMPORT_FLOW,
-                request: lockedVersion,
-            },
-        })
+        const operations: FlowOperationRequest[] = [{
+            type: FlowOperationType.IMPORT_FLOW,
+            request: lockedVersion,
+        }]
+        if (
+            lockedVersion.trigger.type === FlowTriggerType.PIECE &&
+            !isNil(lockedVersion.trigger.settings.sampleData)
+        ) {
+            operations.push({
+                type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+                request: {
+                    stepName: lockedVersion.trigger.name,
+                    sampleDataSettings: lockedVersion.trigger.settings.sampleData,
+                },
+            })
+        }
+        for (const operation of operations) {
+            lastVersion = await flowVersionService(log).applyOperation({
+                userId,
+                projectId,
+                platformId,
+                flowVersion: lastVersion,
+                userOperation: operation,
+            })
+        }
     }
     return lastVersion
 }

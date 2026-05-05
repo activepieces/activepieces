@@ -6,7 +6,8 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { createGraphClient, withGraphRetry } from '../common/graph';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { Chat, ChatType } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 
@@ -54,11 +55,8 @@ export const newChatTrigger = createTrigger({
 const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, lastFetchEpochMS }) {
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-		});
+		const cloud = auth.props?.['cloud'] as string | undefined;
+		const client = createGraphClient(auth.access_token, cloud);
 		const lastFetchDate = dayjs(lastFetchEpochMS).toISOString();
 
 		const chats: Chat[] = [];
@@ -67,10 +65,9 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 				? '$top=10'
 				: `$filter=createdDateTime gt ${lastFetchDate}`;
 
-		let response: PageCollection = await client.api(`/chats?${filter}`).get();
-
-		console.log('RESPONE');
-		console.log(JSON.stringify(response))
+		let response: PageCollection = await withGraphRetry(() =>
+			client.api(`/chats?${filter}`).get(),
+		);
 
 		while (response.value && response.value.length > 0) {
 			for (const channel of response.value as Chat[]) {
@@ -79,8 +76,9 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 				}
 				chats.push(channel);
 			}
-			if (lastFetchEpochMS !== 0 && response['@odata.nextLink']) {
-				response = await client.api(response['@odata.nextLink']).get();
+			const nextLink = response['@odata.nextLink'];
+			if (lastFetchEpochMS !== 0 && nextLink) {
+				response = await withGraphRetry(() => client.api(nextLink).get());
 			} else {
 				break;
 			}

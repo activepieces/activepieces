@@ -1,10 +1,8 @@
 {
   "CRM software solutions and enterprise cloud computing": "CRMソフトウェアソリューションとエンタープライズクラウドコンピューティング",
-  "Environment": "環境",
-  "Choose environment": "環境を選択",
-  "Production": "Production",
-  "Development": "開発",
-  "Authenticate with Salesforce Production": "Salesforce Productionによる認証",
+  "Salesforce Domain": "Salesforce ドメイン",
+  "Enter your Salesforce domain. Use \"login.salesforce.com\" for Production, \"test.salesforce.com\" for Sandbox, or your custom My Domain (e.g. \"mycompany.my.salesforce.com\" or \"mycompany.sandbox.my.salesforce.com\").": "Salesforceドメインを入力します。Productionに\"login.salesforce.com\"を使用するか、Sandboxに\"test.salesforce.com\"を使用するか、カスタムマイドメイン (\"mycompany.my.salesforce.com\"または\"mycompany.sandbox.my.salesforce.com\")を使用します。",
+  "Authenticate with Salesforce": "Salesforce で認証",
   "Add Contact to Campaign": "キャンペーンに連絡先を追加",
   "Add File to Record": "ファイルをレコードに追加",
   "Add Lead to Campaign": "キャンペーンにリードを追加",

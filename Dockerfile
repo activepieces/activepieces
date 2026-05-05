@@ -22,6 +22,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         unzip \
         curl \
         ca-certificates \
+        iptables \
         libcap-dev && \
     yarn config set python /usr/bin/python3 && \
     sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \

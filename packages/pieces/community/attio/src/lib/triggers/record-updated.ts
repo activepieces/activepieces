@@ -77,14 +77,21 @@ export const recordUpdatedTrigger = createTrigger({
 		}
 	},
 	async test(context) {
+		const { filter_attribute, filter_value } = context.propsValue;
+		const fetchLimit = filter_attribute ? 20 : 5;
+
 		const response = await attioApiCall<{ data: Array<Record<string, unknown>> }>({
 			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/objects/${context.propsValue.objectTypeId}/records/query`,
-			body: { limit: 5, offset: 0 },
+			body: { limit: fetchLimit, offset: 0 },
 		});
 
-		return response.data;
+		const filtered = response.data.filter((record) =>
+			recordMatchesFilter(record, filter_attribute, filter_value),
+		);
+
+		return filtered.slice(0, 5);
 	},
 	async run(context) {
 		const triggerData = await context.store.get<{ webhookId: string; WebhookSecret: string }>(
@@ -115,27 +122,36 @@ export const recordUpdatedTrigger = createTrigger({
 		const record = response.data;
 		const { filter_attribute, filter_value } = context.propsValue;
 
-		if (filter_attribute) {
-			const values = record['values'];
-			const attrValues: Array<Record<string, unknown>> =
-				values !== null && typeof values === 'object' && !Array.isArray(values)
-					? ((values as Record<string, unknown>)[filter_attribute] as Array<Record<string, unknown>> ?? [])
-					: [];
-
-			if (filter_value) {
-				const matched = attrValues.some((v) => {
-					const current = extractAttributeDisplayValue(v);
-					return current !== null && current.toLowerCase() === filter_value.toLowerCase();
-				});
-				if (!matched) return [];
-			} else if (attrValues.length === 0) {
-				return [];
-			}
+		if (!recordMatchesFilter(record, filter_attribute, filter_value)) {
+			return [];
 		}
 
 		return [record];
 	},
 });
+
+function recordMatchesFilter(
+	record: Record<string, unknown>,
+	filterAttribute: string | undefined,
+	filterValue: string | undefined,
+): boolean {
+	if (!filterAttribute) return true;
+
+	const values = record['values'];
+	const attrValues: Array<Record<string, unknown>> =
+		values !== null && typeof values === 'object' && !Array.isArray(values)
+			? ((values as Record<string, unknown>)[filterAttribute] as Array<Record<string, unknown>> ?? [])
+			: [];
+
+	if (filterValue) {
+		return attrValues.some((v) => {
+			const current = extractAttributeDisplayValue(v);
+			return current !== null && current.toLowerCase() === filterValue.toLowerCase();
+		});
+	}
+
+	return attrValues.length > 0;
+}
 
 function extractAttributeDisplayValue(valueObj: Record<string, unknown>): string | null {
 	if (isNil(valueObj)) return null;

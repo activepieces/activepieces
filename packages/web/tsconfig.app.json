@@ -18,9 +18,6 @@
       "@activepieces/pieces-framework": [
         "../../packages/pieces/framework/src"
       ],
-      "@activepieces/pieces-common": [
-        "../../packages/pieces/common/src"
-      ],
       "ee-embed-sdk": [
         "../../packages/ee/embed-sdk/src"
       ],

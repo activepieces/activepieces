@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-approval",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {

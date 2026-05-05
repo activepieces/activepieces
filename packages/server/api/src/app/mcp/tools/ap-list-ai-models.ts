@@ -1,9 +1,9 @@
-import { AIProviderModelType, AIProviderName, McpServer, McpToolDefinition } from '@activepieces/shared'
+import { AIProviderModelType, AIProviderName, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { projectService } from '../../project/project-service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 
 const providerSchema = z.enum(Object.values(AIProviderName) as [AIProviderName, ...AIProviderName[]])
 
@@ -11,7 +11,7 @@ const listAiModelsInput = z.object({
     provider: providerSchema.optional().describe('Filter by provider name. Omit to list all configured providers and their models.'),
 })
 
-export const apListAiModelsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_ai_models',
         description: 'List configured AI providers and their available models. Use this to discover valid provider and model values for configuring Run Agent steps. The output shows provider names and model IDs needed for the aiProviderModel input.',
@@ -38,15 +38,20 @@ export const apListAiModelsTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
                     return { content: [{ type: 'text', text: `Provider "${filterProvider}" is not configured. Available providers: ${available}` }] }
                 }
 
+                const MAX_MODELS_PER_PROVIDER = 20
                 const sections = await Promise.all(
                     filteredProviders.map(async (p) => {
                         try {
                             const models = await service.listModels(project.platformId, p.provider)
                             const textModels = models.filter(m => m.type === AIProviderModelType.TEXT)
-                            const modelLines = textModels.length > 0
-                                ? textModels.map(m => `    - ${m.name} (id: ${m.id})`).join('\n')
+                            const capped = textModels.slice(0, MAX_MODELS_PER_PROVIDER)
+                            const modelLines = capped.length > 0
+                                ? capped.map(m => `    - ${m.name} (id: ${m.id})`).join('\n')
                                 : '    (no text models available)'
-                            return `- ${p.provider} (${p.name})\n  Models:\n${modelLines}`
+                            const overflow = textModels.length > MAX_MODELS_PER_PROVIDER
+                                ? `\n    ... and ${textModels.length - MAX_MODELS_PER_PROVIDER} more${filterProvider ? '' : ` (use provider="${p.provider}" to see all)`}`
+                                : ''
+                            return `- ${p.provider} (${p.name}) — ${textModels.length} text model(s)\n  Models:\n${modelLines}${overflow}`
                         }
                         catch (err) {
                             log.warn({ err, provider: p.provider }, 'ap_list_ai_models: failed to fetch models for provider')
@@ -64,7 +69,7 @@ export const apListAiModelsTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_list_ai_models failed')
-                return mcpToolError('Failed to list AI models', err)
+                return mcpUtils.mcpToolError('Failed to list AI models', err)
             }
         },
     }

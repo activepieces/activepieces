@@ -7,6 +7,7 @@ export default defineConfig({
     environment: 'node',
     pool: 'forks',
     include: [path.resolve(__dirname, 'test/**/*.test.ts')],
+    exclude: [path.resolve(__dirname, 'test/e2e/**')],
   },
   resolve: {
     alias: {

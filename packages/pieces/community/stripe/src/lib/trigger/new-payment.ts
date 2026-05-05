@@ -136,6 +136,7 @@ export const stripeNewPayment = createTrigger({
       headers: {
         Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
+         'Stripe-Version': "2026-02-25.clover",
       },
       queryParams: {
         query: 'status:"succeeded"',

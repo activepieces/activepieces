@@ -2,6 +2,7 @@ import {
   PieceAuth,
   PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
+import { microsoftCloudProperty } from './common/microsoft-cloud';
 import { createGraphClient, withGraphRetry } from './common/graph';
 
 const authDesc = `
@@ -17,6 +18,8 @@ If you'd like to use your own custom Azure app instead of the default Activepiec
 	- User.ReadBasic.All
 	- Presence.Read.All
 	- TeamMember.Read.All
+	- OnlineMeetingTranscript.Read.All
+	- OnlineMeetingRecording.Read.All
 	- openid
 	- email
 	- profile
@@ -24,6 +27,9 @@ If you'd like to use your own custom Azure app instead of the default Activepiec
 
 export const microsoftTeamsAuth = PieceAuth.OAuth2({
   description: authDesc,
+  props: {
+    cloud: microsoftCloudProperty,
+  },
   required: true,
   scope: [
     'openid',
@@ -40,14 +46,18 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
     'TeamMember.Read.All',
     'User.ReadBasic.All',
     'Presence.Read.All',
+    // 'OnlineMeetings.Read',
+    'OnlineMeetingTranscript.Read.All',
+    'OnlineMeetingRecording.Read.All',
   ],
   prompt: 'omit',
-  authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+  authUrl: 'https://{cloud}/common/oauth2/v2.0/authorize',
+  tokenUrl: 'https://{cloud}/common/oauth2/v2.0/token',
   validate: async ({ auth }) => {
     try {
       const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
-      const client = createGraphClient(authValue.access_token);
+      const cloud = authValue.props?.['cloud'] as string | undefined;
+      const client = createGraphClient(authValue.access_token, cloud);
       await withGraphRetry(() => client.api('/me').get());
       return { valid: true };
     } catch (error) {

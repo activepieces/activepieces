@@ -1,6 +1,7 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { microsoftToDoAuth } from '../auth';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
+import { createTodoClient } from '../common';
 import { TodoTaskList } from '@microsoft/microsoft-graph-types';
 
 export const findTaskListByNameAction = createAction({
@@ -46,11 +47,7 @@ export const findTaskListByNameAction = createAction({
 				break;
 		}
 
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-		});
+		const client = createTodoClient(auth);
 
 		const result = [];
 

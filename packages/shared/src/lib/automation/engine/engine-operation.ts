@@ -3,11 +3,12 @@ import { PlatformId } from '../../management/platform'
 import { ProjectId } from '../../management/project/project'
 import { ExecutionToolStatus, PredefinedInputsStructure } from '../agents'
 import { AppConnectionValue } from '../app-connection/app-connection'
-import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
+import { ExecutionType } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { PiecePackage } from '../pieces'
 import { ScheduleOptions } from '../trigger'
+import { JobPayload } from '../workers/job-data'
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
@@ -89,29 +90,27 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     flowRunId: FlowRunId
     executionType: T
     runEnvironment: RunEnvironment
-    executionState: ExecutionState
-    serverHandlerId: string | null
+    workerHandlerId: string | null
     httpRequestId: string | null
-    progressUpdateType: ProgressUpdateType
+    streamStepProgress: StreamStepProgress
     stepNameToTest: string | null
     sampleData?: Record<string, unknown>
     logsUploadUrl?: string
     logsFileId?: string
 }
 
-export enum ProgressUpdateType {
-    WEBHOOK_RESPONSE = 'WEBHOOK_RESPONSE',
-    TEST_FLOW = 'TEST_FLOW',
+export enum StreamStepProgress {
+    WEBSOCKET = 'WEBSOCKET',
     NONE = 'NONE',
 }
 
 export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN> & {
-    triggerPayload: unknown
+    triggerPayload: JobPayload
     executeTrigger: boolean
 }
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
-    resumePayload: ResumePayload
+    resumePayload: JobPayload
 }
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
@@ -281,7 +280,6 @@ export type ExecuteValidateAuthResponse =
 export type EngineResponse<T = unknown> = {
     status: EngineResponseStatus
     response: T
-    delayInSeconds?: number
     error?: string
 }
 

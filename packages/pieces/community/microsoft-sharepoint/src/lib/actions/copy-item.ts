@@ -1,5 +1,6 @@
 import { microsoftSharePointAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client, ResponseType } from '@microsoft/microsoft-graph-client';
 
@@ -59,10 +60,12 @@ export const copyItemAction = createAction({
       conflict_behavior,
     } = context.propsValue;
 
+    const cloud = context.auth.props?.['cloud'] as string | undefined;
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
+      baseUrl: getGraphBaseUrl(cloud),
     });
 
     const body: { parentReference: { driveId: string; id?: string }; name?: string } = {

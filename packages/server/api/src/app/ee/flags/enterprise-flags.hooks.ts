@@ -10,7 +10,12 @@ import { appearanceHelper } from '../helper/appearance-helper'
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
         const modifiedFlags: Record<string, string | boolean | number | Record<string, unknown>> = { ...flags }
-        const platformIdFromPrincipal = !request.principal || request.principal.type === PrincipalType.UNKNOWN || request.principal.type === PrincipalType.WORKER ? null : request.principal.platform.id
+        const platformIdFromPrincipal = !request.principal
+            || request.principal.type === PrincipalType.UNKNOWN
+            || request.principal.type === PrincipalType.WORKER
+            || request.principal.type === PrincipalType.ONBOARDING
+            ? null
+            : request.principal.platform.id
         const platformId = platformIdFromPrincipal ?? await platformUtils.getPlatformIdForRequest(request)
         const edition = system.getEdition()
         if (isNil(platformId)) {
@@ -21,7 +26,6 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             }
             return modifiedFlags
         }
-        modifiedFlags[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] = edition !== ApEdition.CLOUD
         const platformWithPlan = await platformService(request.log).getOneWithPlanOrThrow(platformId)
         const platform = await platformService(request.log).getOneOrThrow(platformId)
         modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {

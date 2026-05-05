@@ -29,7 +29,6 @@ export type ApErrorParams =
     | EngineOperationFailureParams
     | EntityNotFoundErrorParams
     | ExistingUserErrorParams
-    | FlowIsLockedErrorParams
     | FlowOperationErrorParams
     | FlowOperationInProgressErrorParams
     | FlowRunRetryOutsideRetentionErrorParams
@@ -69,6 +68,7 @@ export type ApErrorParams =
     | SessionExpiredParams
     | InvalidLicenseKeyParams
     | NoChatResponseParams
+    | ChatContextLimitExceededParams
     | InvalidSmtpCredentialsErrorParams
     | InvalidGitCredentialsParams
     | InvalidReleaseTypeParams
@@ -95,6 +95,7 @@ export type ApErrorParams =
     | ResumeLogsFileMissingParams
     | ExecutionStateMissingParams
     | GenericErrorParams
+    | SandboxCapacityExceededParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -143,6 +144,8 @@ export type SessionExpiredParams = BaseErrorParams<ErrorCode.SESSION_EXPIRED, {
 }>
 
 export type NoChatResponseParams = BaseErrorParams<ErrorCode.NO_CHAT_RESPONSE, Record<string, never>>
+
+export type ChatContextLimitExceededParams = BaseErrorParams<ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED, Record<string, never>>
 
 export type EmailAuthIsDisabledParams = BaseErrorParams<ErrorCode.EMAIL_AUTH_DISABLED, Record<string, never>>
 
@@ -257,13 +260,6 @@ ErrorCode.FLOW_OPERATION_INVALID,
 
 export type FlowOperationInProgressErrorParams = BaseErrorParams<
 ErrorCode.FLOW_OPERATION_IN_PROGRESS, {
-    message: string
-}>
-
-export type FlowIsLockedErrorParams = BaseErrorParams<
-ErrorCode.FLOW_IN_USE,
-{
-    flowVersionId: FlowVersionId
     message: string
 }>
 
@@ -495,12 +491,15 @@ export type GenericErrorParams = BaseErrorParams<ErrorCode.GENERIC_ERROR, {
     message: string
 }>
 
+export type SandboxCapacityExceededParams = BaseErrorParams<ErrorCode.SANDBOX_CAPACITY_EXCEEDED, Record<string, never>>
+
 export enum ErrorCode {
     INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
     MACHINE_NOT_AVAILABLE = 'MACHINE_NOT_AVAILABLE',
     INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
+    CHAT_CONTEXT_LIMIT_EXCEEDED = 'CHAT_CONTEXT_LIMIT_EXCEEDED',
     ERROR_UPDATING_SUBSCRIPTION = 'ERROR_UPDATING_SUBSCRIPTION',
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
@@ -514,6 +513,7 @@ export enum ErrorCode {
     SANDBOX_EXECUTION_TIMEOUT = 'SANDBOX_EXECUTION_TIMEOUT',
     SANDBOX_MEMORY_ISSUE = 'SANDBOX_MEMORY_ISSUE',
     SANDBOX_INTERNAL_ERROR = 'SANDBOX_INTERNAL_ERROR',
+    SANDBOX_CAPACITY_EXCEEDED = 'SANDBOX_CAPACITY_EXCEEDED',
     TRIGGER_EXECUTION_FAILED = 'TRIGGER_EXECUTION_FAILED',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
@@ -521,7 +521,6 @@ export enum ErrorCode {
     PROJECT_EXTERNAL_ID_ALREADY_EXISTS = 'PROJECT_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
-    FLOW_IN_USE = 'FLOW_IN_USE',
     FLOW_RUN_RETRY_OUTSIDE_RETENTION = 'FLOW_RUN_RETRY_OUTSIDE_RETENTION',
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',

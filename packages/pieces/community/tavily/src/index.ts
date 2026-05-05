@@ -1,17 +1,9 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { searchAction } from './lib/actions/search';
 import { extractAction } from './lib/actions/extract';
 import { tavilyAuth } from './lib/auth';
-
-const markdownDescription = `
-Follow these steps to obtain your Tavily API Key:
-
-1. Visit [tavily](https://tavily.com/) and create an account.
-2. Log in and navigate to your dashboard.
-3. Locate and copy your API key from the dashboard.
-`;
 
 export const tavily = createPiece({
 	displayName: 'Tavily',
@@ -21,6 +13,12 @@ export const tavily = createPiece({
 	categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
 	authors: ['OsamaHaikal'],
 	auth: tavilyAuth,
-	actions: [searchAction, extractAction],
+	actions: [searchAction, extractAction,
+		createCustomApiCallAction({
+			baseUrl: () => 'https://api.tavily.com',
+			auth: tavilyAuth,
+			authMapping: async (auth) => ({ Authorization: `Bearer ${auth.secret_text}` }),
+		})
+	],
 	triggers: [],
 });

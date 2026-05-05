@@ -4,8 +4,8 @@ import {
     EngineResponseStatus,
     ExecuteTriggerResponse,
     PollingJobData,
-    ProgressUpdateType,
     RunEnvironment,
+    StreamStepProgress,
     TriggerHookType,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -61,7 +61,7 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
                         projectId: data.projectId,
                         payloads: triggerResult.output,
                         environment: RunEnvironment.PRODUCTION,
-                        progressUpdateType: ProgressUpdateType.NONE,
+                        streamStepProgress: StreamStepProgress.NONE,
                     })
                 }
             }

@@ -1,8 +1,8 @@
-import { FieldType, isNil, McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
+import { FieldType, isNil, McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
-import { mcpToolError } from './mcp-utils'
+import { mcpUtils } from './mcp-utils'
 import { fieldTypeSchema, formatFieldInfo } from './table-utils'
 
 const manageFieldsInput = z.object({
@@ -14,11 +14,11 @@ const manageFieldsInput = z.object({
     options: z.array(z.string()).optional().describe('Dropdown options (required for ADD with STATIC_DROPDOWN type)'),
 })
 
-export const apManageFieldsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_manage_fields',
         permission: Permission.WRITE_TABLE,
-        description: 'Add, rename, or delete fields (columns) on a table. Use ap_list_tables to see existing fields and their IDs. Max 100 fields per table.',
+        description: 'Add, rename, or delete fields on a table. Max 100 fields per table.',
         inputSchema: manageFieldsInput.shape,
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
@@ -83,7 +83,7 @@ export const apManageFieldsTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
             }
             catch (err) {
                 log.error({ err, projectId: mcp.projectId }, 'ap_manage_fields failed')
-                return mcpToolError('Field operation failed', err)
+                return mcpUtils.mcpToolError('Field operation failed', err)
             }
         },
     }

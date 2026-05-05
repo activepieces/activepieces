@@ -4,12 +4,11 @@ import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
-import { platformCanaryService } from '../../../core/canary/platform-canary.service'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
-import { dedicatedWorkers } from '../platform-plan/platform-dedicated-workers'
+import { CANARY_WORKER_GROUP_ID, workerGroupService } from '../platform-plan/worker-group.service'
 import { adminPlatformService } from './admin-platform.service'
 
 const API_KEY_HEADER = 'api-key'
@@ -60,42 +59,29 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         return res.status(StatusCodes.OK).send()
     })
 
-    app.post('/platforms/dedicated-workers', ConfigureDedicatedWorkersRequest, async (req, res) => {
-        await dedicatedWorkers(req.log).updateWorkerConfig({
-            operation: req.body.operation,
-            platformId: req.body.platformId,
-            trustedEnvironment: req.body.trustedEnvironment,
-        })
+    app.post('/platforms/worker-group', UpdateWorkerGroupRequest, async (req, res) => {
+        const { platformId, workerGroupId } = req.body
+        await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId })
+        await workerGroupService(req.log).updateWorkerGroup({ platformId, workerGroupId })
         return res.status(StatusCodes.OK).send()
     })
 
     app.post('/platforms/canary', UpdateCanaryRequest, async (req, res) => {
-        await platformCanaryService(req.log).updateCanary(req.body.platformId, req.body.canary)
-        return res.status(StatusCodes.OK).send()
-    })
-
-    app.delete('/platforms/canary', DisableAllCanaryRequest, async (req, res) => {
-        await platformCanaryService(req.log).disableAll()
+        const { platformId, canary } = req.body
+        await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId: canary ? CANARY_WORKER_GROUP_ID : null })
+        await workerGroupService(req.log).updateCanary({ platformId, canary })
         return res.status(StatusCodes.OK).send()
     })
 }
 
 
-const ConfigureDedicatedWorkersRequest = {
+const UpdateWorkerGroupRequest = {
     schema: {
         body: z.object({
-            operation: z.union([z.literal('enable'), z.literal('disable')]),
             platformId: z.string(),
-            trustedEnvironment: z.boolean(),
+            workerGroupId: z.string().nullable(),
         }),
     },
-    config: {
-        security: securityAccess.public(),
-    },
-}
-
-const DisableAllCanaryRequest = {
-    schema: {},
     config: {
         security: securityAccess.public(),
     },
@@ -112,7 +98,6 @@ const UpdateCanaryRequest = {
         security: securityAccess.public(),
     },
 }
-
 
 const AdminRetryRunsRequest = {
     schema: {

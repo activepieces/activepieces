@@ -353,6 +353,25 @@ import { AddUserIdentityIdIndex1774400000000 } from './migration/postgres/177440
 import { AddUserFkIndices1774449358000 } from './migration/postgres/1774449358000-AddUserFkIndices'
 import { AddMcpOAuthTables1774500000000 } from './migration/postgres/1774500000000-AddMcpOAuthTables'
 import { AddCanaryToPlatformPlan1774600000000 } from './migration/postgres/1774600000000-AddCanaryToPlatformPlan'
+import { MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000 } from './migration/postgres/1775656136000-MergeCanaryAndDedicatedWorkersIntoWorkerGroupId'
+import { AddAiProvidersEnabledToPlatformPlan1775728983000 } from './migration/postgres/1775728983000-AddAiProvidersEnabledToPlatformPlan'
+import { AddWaitpointTable1775747638323 } from './migration/postgres/1775747638323-AddWaitpointTable'
+import { AddConcurrencyPoolTable1775800000000 } from './migration/postgres/1775800000000-AddConcurrencyPoolTable'
+import { AddDefaultToAiProvidersEnabled1776000000000 } from './migration/postgres/1776000000000-AddDefaultToAiProvidersEnabled'
+import { AddChatTables1776200000000 } from './migration/postgres/1776200000000-AddChatTables'
+import { DropWaitpointTimeoutSeconds1776342514732 } from './migration/postgres/1776342514732-DropWaitpointTimeoutSeconds'
+import { AddMcpServerTokenIndex1776400000000 } from './migration/postgres/1776400000000-AddMcpServerTokenIndex'
+import { AddRunStatusCoverIndex1777370308000 } from './migration/postgres/1777370308000-AddRunStatusCoverIndex'
+import { AddLastLoggedInPlatformIdToUserIdentity1777491000474 } from './migration/postgres/1777491000474-AddLastLoggedInPlatformIdToUserIdentity'
+import { DropChatTokenColumns1782000000000 } from './migration/postgres/1782000000000-DropChatTokenColumns'
+import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
+import { ReplacesSandboxWithVercelAiSdk1785000000000 } from './migration/postgres/1785000000000-ReplacesSandboxWithVercelAiSdk'
+import { AddChatCompactionColumns1786000000000 } from './migration/postgres/1786000000000-AddChatCompactionColumns'
+import { MakeChatConversationPlatformWide1787000000000 } from './migration/postgres/1787000000000-MakeChatConversationPlatformWide'
+import { AddSsoDomainVerification1787100000000 } from './migration/postgres/1787100000000-AddSsoDomainVerification'
+import { AddPlatformMcpServer1788000000000 } from './migration/postgres/1788000000000-AddPlatformMcpServer'
+import { MakeMcpOAuthProjectIdNullable1789000000000 } from './migration/postgres/1789000000000-MakeMcpOAuthProjectIdNullable'
+import { RemoveMcpServerStatus1790000000000 } from './migration/postgres/1790000000000-RemoveMcpServerStatus'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -721,6 +740,25 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddKnowledgeBaseChunkTable1773627989515,
         AddMcpOAuthTables1774500000000,
         AddCanaryToPlatformPlan1774600000000,
+        AddWaitpointTable1775747638323,
+        MergeCanaryAndDedicatedWorkersIntoWorkerGroupId1775656136000,
+        AddAiProvidersEnabledToPlatformPlan1775728983000,
+        AddConcurrencyPoolTable1775800000000,
+        AddDefaultToAiProvidersEnabled1776000000000,
+        DropWaitpointTimeoutSeconds1776342514732,
+        AddChatTables1776200000000,
+        AddMcpServerTokenIndex1776400000000,
+        AddRunStatusCoverIndex1777370308000,
+        DropChatTokenColumns1782000000000,
+        AddUserSandboxTable1784000000000,
+        AddLastLoggedInPlatformIdToUserIdentity1777491000474,
+        ReplacesSandboxWithVercelAiSdk1785000000000,
+        AddChatCompactionColumns1786000000000,
+        AddSsoDomainVerification1787100000000,
+        AddPlatformMcpServer1788000000000,
+        MakeMcpOAuthProjectIdNullable1789000000000,
+        MakeChatConversationPlatformWide1787000000000,
+        RemoveMcpServerStatus1790000000000,
     ]
     return migrations
 }

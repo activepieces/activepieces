@@ -19,7 +19,7 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import * as s3HelperModule from '../../../../../src/app/file/s3-helper'
 import { flowRunLogsService } from '../../../../../src/app/flows/flow-run/logs/flow-run-logs-service'
-import { jwtUtils, JwtSignAlgorithm } from '../../../../../src/app/helper/jwt-utils'
+import { JwtAudience, jwtUtils, JwtSignAlgorithm } from '../../../../../src/app/helper/jwt-utils'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../../helpers/auth'
 import { db } from '../../../../helpers/db'
@@ -63,6 +63,7 @@ async function generateLogsToken(params: {
         key: await jwtUtils.getJwtSecret(),
         algorithm: JwtSignAlgorithm.HS256,
         expiresInSeconds: 3600,
+        audience: JwtAudience.FLOW_RUN_LOG,
     })
 }
 
