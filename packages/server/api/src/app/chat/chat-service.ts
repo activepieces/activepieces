@@ -163,6 +163,8 @@ export const chatService = (log: FastifyBaseLogger) => ({
         const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
         const allMessages = [...previousMessages, newUserMessage]
 
+        await conversationRepo().update(conversationId, { messages: allMessages })
+
         const compactionState = await resolveCompactionState({
             conversation,
             allMessages,
