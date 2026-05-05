@@ -510,12 +510,15 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 ignoreError: true,
             })
         }
-        flow.publishedVersionId = lockedVersion.id
-        flow.status = FlowStatus.DISABLED
-        const updatedFlow = await flowRepo(entityManager).save(flow)
-        await flowExecutionCache(log).invalidate(updatedFlow.id)
+        await flowRepo(entityManager).update({ id: flow.id }, {
+            publishedVersionId: lockedVersion.id,
+            status: FlowStatus.DISABLED,
+        })
+        await flowExecutionCache(log).invalidate(flow.id)
         return {
-            ...updatedFlow,
+            ...flow,
+            publishedVersionId: lockedVersion.id,
+            status: FlowStatus.DISABLED,
             version: lockedVersion,
         }
     },
