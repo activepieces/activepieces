@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { savvyCalApiCall, savvyCalPaginatedCall, flattenEvent, buildTeamOptions, buildLinkOptions, SavvyCalEvent } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 export const listEventsAction = createAction({
   auth: savvyCalAuth,
@@ -39,7 +39,7 @@ export const listEventsAction = createAction({
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildTeamOptions(auth.secret_text);
+          const options = await buildTeamOptions(getToken(auth));
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load teams.' };
@@ -55,7 +55,7 @@ export const listEventsAction = createAction({
       options: async ({ auth, team_id }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildLinkOptions(auth.secret_text, team_id as string | null);
+          const options = await buildLinkOptions(getToken(auth), team_id as string | null);
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load scheduling links.' };
@@ -69,7 +69,7 @@ export const listEventsAction = createAction({
     }),
   },
   async run(context) {
-    const token = context.auth.secret_text;
+    const token = getToken(context.auth);
     const { states, start_after, start_before, link_ids, limit } = context.propsValue;
 
     const selectedStates = states as string[] | undefined;

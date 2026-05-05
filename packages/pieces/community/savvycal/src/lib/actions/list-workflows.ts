@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { savvyCalPaginatedCall } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 interface SavvyCalWorkflow {
   id: string;
@@ -19,7 +19,7 @@ export const listWorkflowsAction = createAction({
   props: {},
   async run(context) {
     const workflows = await savvyCalPaginatedCall<SavvyCalWorkflow>({
-      token: context.auth.secret_text,
+      token: getToken(context.auth),
       path: '/workflows',
     });
     return workflows.map((workflow) => ({

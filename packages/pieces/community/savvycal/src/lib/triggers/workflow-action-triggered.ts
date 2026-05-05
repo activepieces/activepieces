@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { savvyCalApiCall, verifyWebhookSignature } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 const SAMPLE_DATA = {
   event_type: 'workflow.action.triggered',
@@ -20,7 +20,7 @@ export const workflowActionTriggeredTrigger = createTrigger({
 
   async onEnable(context) {
     const response = await savvyCalApiCall<{ id: string; secret: string }>({
-      token: context.auth.secret_text,
+      token: getToken(context.auth),
       method: HttpMethod.POST,
       path: '/webhooks',
       body: { url: context.webhookUrl },
@@ -33,7 +33,7 @@ export const workflowActionTriggeredTrigger = createTrigger({
     const webhookId = await context.store.get<string>('webhookId');
     if (webhookId) {
       await savvyCalApiCall({
-        token: context.auth.secret_text,
+        token: getToken(context.auth),
         method: HttpMethod.DELETE,
         path: `/webhooks/${webhookId}`,
       });

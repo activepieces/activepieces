@@ -7,7 +7,7 @@ import {
   buildLinkOptions,
   SavvyCalEvent,
 } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 export const createEventAction = createAction({
   auth: savvyCalAuth,
@@ -24,7 +24,7 @@ export const createEventAction = createAction({
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildTeamOptions(auth.secret_text);
+          const options = await buildTeamOptions(getToken(auth));
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load teams.' };
@@ -45,7 +45,7 @@ export const createEventAction = createAction({
             placeholder: 'Please connect your account first',
           };
         try {
-          const options = await buildLinkOptions(auth.secret_text, team_id as string | null);
+          const options = await buildLinkOptions(getToken(auth), team_id as string | null);
           return { disabled: false, options };
         } catch {
           return {
@@ -80,7 +80,7 @@ export const createEventAction = createAction({
   },
   async run(context) {
     const response = await savvyCalApiCall<SavvyCalEvent>({
-      token: context.auth.secret_text,
+      token: getToken(context.auth),
       method: HttpMethod.POST,
       path: `/links/${context.propsValue.link_id}/events`,
       body: {

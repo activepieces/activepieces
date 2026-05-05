@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { savvyCalApiCall, buildWorkflowOptions } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 interface SavvyCalWorkflowRule {
   id: string;
@@ -26,7 +26,7 @@ export const getWorkflowRulesAction = createAction({
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildWorkflowOptions(auth.secret_text);
+          const options = await buildWorkflowOptions(getToken(auth));
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load workflows.' };
@@ -36,7 +36,7 @@ export const getWorkflowRulesAction = createAction({
   },
   async run(context) {
     const response = await savvyCalApiCall<{ entries: SavvyCalWorkflowRule[] } | SavvyCalWorkflowRule[]>({
-      token: context.auth.secret_text,
+      token: getToken(context.auth),
       method: HttpMethod.GET,
       path: `/workflows/${context.propsValue.workflow_id}/rules`,
     });

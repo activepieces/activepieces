@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { savvyCalApiCall, verifyWebhookSignature } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 const POLL_RESPONSE_TYPES = [
   { label: 'Poll Response Created', value: 'poll.response.created' },
@@ -32,7 +32,7 @@ export const newPollResponseTrigger = createTrigger({
 
   async onEnable(context) {
     const response = await savvyCalApiCall<{ id: string; secret: string }>({
-      token: context.auth.secret_text,
+      token: getToken(context.auth),
       method: HttpMethod.POST,
       path: '/webhooks',
       body: { url: context.webhookUrl },
@@ -45,7 +45,7 @@ export const newPollResponseTrigger = createTrigger({
     const webhookId = await context.store.get<string>('webhookId');
     if (webhookId) {
       await savvyCalApiCall({
-        token: context.auth.secret_text,
+        token: getToken(context.auth),
         method: HttpMethod.DELETE,
         path: `/webhooks/${webhookId}`,
       });

@@ -7,7 +7,7 @@ import {
   flattenLink,
   SavvyCalSchedulingLink,
 } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 export const getSchedulingLinkAction = createAction({
   auth: savvyCalAuth,
@@ -24,7 +24,7 @@ export const getSchedulingLinkAction = createAction({
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildTeamOptions(auth.secret_text);
+          const options = await buildTeamOptions(getToken(auth));
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load teams.' };
@@ -40,7 +40,7 @@ export const getSchedulingLinkAction = createAction({
       options: async ({ auth, team_id }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildLinkOptions(auth.secret_text, team_id as string | null);
+          const options = await buildLinkOptions(getToken(auth), team_id as string | null);
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load scheduling links.' };
@@ -50,7 +50,7 @@ export const getSchedulingLinkAction = createAction({
   },
   async run(context) {
     const response = await savvyCalApiCall<SavvyCalSchedulingLink>({
-      token: context.auth.secret_text,
+      token: getToken(context.auth),
       method: HttpMethod.GET,
       path: `/links/${context.propsValue.link_id}`,
     });

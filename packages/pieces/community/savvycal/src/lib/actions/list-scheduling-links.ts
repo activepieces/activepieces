@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { savvyCalPaginatedCall, buildTeamOptions, flattenLink, SavvyCalSchedulingLink } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 export const listSchedulingLinksAction = createAction({
   auth: savvyCalAuth,
@@ -17,7 +17,7 @@ export const listSchedulingLinksAction = createAction({
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildTeamOptions(auth.secret_text);
+          const options = await buildTeamOptions(getToken(auth));
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load teams.' };
@@ -27,7 +27,7 @@ export const listSchedulingLinksAction = createAction({
   },
   async run(context) {
     const links = await savvyCalPaginatedCall<SavvyCalSchedulingLink>({
-      token: context.auth.secret_text,
+      token: getToken(context.auth),
       path: '/links',
     });
 

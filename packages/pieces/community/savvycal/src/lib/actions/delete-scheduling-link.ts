@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { savvyCalApiCall, buildTeamOptions, buildLinkOptions } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 export const deleteSchedulingLinkAction = createAction({
   auth: savvyCalAuth,
@@ -18,7 +18,7 @@ export const deleteSchedulingLinkAction = createAction({
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildTeamOptions(auth.secret_text);
+          const options = await buildTeamOptions(getToken(auth));
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load teams.' };
@@ -34,7 +34,7 @@ export const deleteSchedulingLinkAction = createAction({
       options: async ({ auth, team_id }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildLinkOptions(auth.secret_text, team_id as string | null);
+          const options = await buildLinkOptions(getToken(auth), team_id as string | null);
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load scheduling links.' };
@@ -44,7 +44,7 @@ export const deleteSchedulingLinkAction = createAction({
   },
   async run(context) {
     await savvyCalApiCall({
-      token: context.auth.secret_text,
+      token: getToken(context.auth),
       method: HttpMethod.DELETE,
       path: `/links/${context.propsValue.link_id}`,
     });

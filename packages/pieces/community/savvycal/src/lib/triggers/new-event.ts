@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { savvyCalApiCall, flattenEvent, buildTeamOptions, buildLinkOptions, verifyWebhookSignature, SavvyCalEvent } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 const EVENT_TYPES = [
   { label: 'Event Created', value: 'event.created' },
@@ -44,7 +44,7 @@ export const newEventTrigger = createTrigger({
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildTeamOptions(auth.secret_text);
+          const options = await buildTeamOptions(getToken(auth));
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load teams.' };
@@ -60,7 +60,7 @@ export const newEventTrigger = createTrigger({
       options: async ({ auth, team_id }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
         try {
-          const options = await buildLinkOptions(auth.secret_text, team_id as string | null);
+          const options = await buildLinkOptions(getToken(auth), team_id as string | null);
           return { disabled: false, options };
         } catch {
           return { disabled: true, options: [], placeholder: 'Failed to load scheduling links.' };
@@ -111,7 +111,7 @@ export const newEventTrigger = createTrigger({
 
   async onEnable(context) {
     const response = await savvyCalApiCall<{ id: string; secret: string }>({
-      token: context.auth.secret_text,
+      token: getToken(context.auth),
       method: HttpMethod.POST,
       path: '/webhooks',
       body: { url: context.webhookUrl },
@@ -124,7 +124,7 @@ export const newEventTrigger = createTrigger({
     const webhookId = await context.store.get<string>('webhookId');
     if (webhookId) {
       await savvyCalApiCall({
-        token: context.auth.secret_text,
+        token: getToken(context.auth),
         method: HttpMethod.DELETE,
         path: `/webhooks/${webhookId}`,
       });
@@ -163,7 +163,7 @@ export const newEventTrigger = createTrigger({
     if (selectedLinkIds && selectedLinkIds.length === 1) queryParams['link_id'] = selectedLinkIds[0];
 
     const response = await savvyCalApiCall<{ entries: SavvyCalEvent[] }>({
-      token: context.auth.secret_text,
+      token: getToken(context.auth),
       method: HttpMethod.GET,
       path: '/events',
       queryParams,
