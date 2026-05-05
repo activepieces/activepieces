@@ -6,10 +6,12 @@ import {
     SetProjectContextRequest,
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
+import { pipeUIMessageStreamToResponse } from 'ai'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { chatApprovalGate } from './chat-approval-gate'
 import { chatService } from './chat-service'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
@@ -72,7 +74,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const { content, files } = request.body
         const log = request.log
 
-        const { result, closeMcpClient } = await chatService(log).sendMessage({
+        const { stream, closeMcpClient } = await chatService(log).sendMessage({
             conversationId: request.params.id,
             userId: request.principal.id,
             platformId: request.principal.platform.id,
@@ -83,12 +85,16 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         await reply.hijack()
 
         try {
-            result.pipeUIMessageStreamToResponse(reply.raw, {
+            pipeUIMessageStreamToResponse({
+                response: reply.raw,
+                stream,
                 headers: {
                     'X-Accel-Buffering': 'no',
                 },
             })
-            await result.consumeStream()
+            await new Promise<void>((resolve) => {
+                reply.raw.on('close', resolve)
+            })
         }
         catch (err: unknown) {
             const isClientDisconnect = err instanceof Error && 'code' in err && err.code === 'ECONNRESET'
@@ -102,6 +108,14 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         finally {
             await closeMcpClient()
         }
+    })
+
+    app.post('/tool-approvals/:gateId', ToolApprovalRoute, async (request, reply) => {
+        await chatApprovalGate.resolveGate({
+            gateId: request.params.gateId,
+            approved: request.body.approved,
+        })
+        return reply.status(StatusCodes.OK).send({ success: true })
     })
 
     app.post('/conversations/:id/project-context', SetProjectContextRoute, async (request) => {
@@ -195,6 +209,18 @@ const SendMessageRoute = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
         body: SendChatMessageRequest,
+    },
+}
+
+const ToolApprovalRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: z.object({ gateId: z.string() }),
+        body: z.object({ approved: z.boolean() }),
     },
 }
 
