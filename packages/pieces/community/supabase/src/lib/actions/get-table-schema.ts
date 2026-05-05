@@ -1,6 +1,5 @@
 import { createAction } from "@activepieces/pieces-framework";
 import { supabaseAuth } from '../auth';
-import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
 
 export const getTableSchema = createAction({
@@ -14,19 +13,6 @@ export const getTableSchema = createAction({
     async run(context) {
         const { table_name } = context.propsValue;
         const { url, apiKey } = context.auth.props;
-        const supabase = createClient(url, apiKey);
-
-        try {
-            const { data: columns, error } = await supabase.rpc('get_table_columns', {
-                p_table_name: table_name
-            });
-
-            if (!error && columns && columns.length > 0) {
-                return columns;
-            }
-        } catch (rpcError) {
-            // Fallback to OpenAPI
-        }
 
         const response = await fetch(`${url}/rest/v1/`, {
             method: 'GET',

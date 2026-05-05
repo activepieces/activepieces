@@ -1,6 +1,5 @@
 import { createAction } from "@activepieces/pieces-framework";
 import { supabaseAuth } from '../auth';
-import { createClient } from "@supabase/supabase-js";
 
 export const listTables = createAction({
     name: 'list_tables',
@@ -10,18 +9,6 @@ export const listTables = createAction({
     props: {},
     async run(context) {
         const { url, apiKey } = context.auth.props;
-        const supabase = createClient(url, apiKey);
-
-        try {
-            const { data: tables, error } = await supabase.rpc('get_public_tables');
-            if (!error && tables) {
-                return tables.map((table: any) => ({
-                    name: table.table_name || table.name || table
-                }));
-            }
-        } catch (rpcError) {
-            // Fallback to OpenAPI
-        }
 
         const response = await fetch(`${url}/rest/v1/`, {
             method: 'GET',
