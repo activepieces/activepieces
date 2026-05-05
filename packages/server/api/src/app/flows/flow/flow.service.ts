@@ -484,6 +484,15 @@ export const flowService = (log: FastifyBaseLogger) => ({
             versionId: undefined,
         })
 
+        if (flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)) {
+            await triggerSourceService(log).disable({
+                flowId: flowToUpdate.id,
+                projectId: flowToUpdate.projectId,
+                simulate: false,
+                ignoreError: true,
+            })
+        }
+
         const result = await transaction(async (entityManager) => {
             const lockedFlowVersion = await lockFlowVersionIfNotLocked({
                 flowVersion: flowVersionToPublish,
@@ -499,7 +508,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 entityManager,
             })
         })
-        await this.setPublishedVersionSideEffects({ flow: flowToUpdate })
+        await flowExecutionCache(log).invalidate(flowToUpdate.id)
         return result
     },
 
@@ -514,18 +523,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
             status: FlowStatus.DISABLED,
             version: lockedVersion,
         }
-    },
-
-    async setPublishedVersionSideEffects({ flow }: { flow: Flow }): Promise<void> {
-        if (flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)) {
-            await triggerSourceService(log).disable({
-                flowId: flow.id,
-                projectId: flow.projectId,
-                simulate: false,
-                ignoreError: true,
-            })
-        }
-        await flowExecutionCache(log).invalidate(flow.id)
     },
 
     async lockFlowVersionIfNotLocked(params: Omit<LockFlowVersionIfNotLockedParams, 'log'>): Promise<FlowVersion> {

@@ -1,12 +1,14 @@
 import { ActivepiecesError, apId, ApId, ApplicationEventName, Cursor, ErrorCode, Flow, FlowApprovalRequest, FlowApprovalRequestState, FlowOperationType, FlowStatus, FlowVersionState, isNil, PlatformId, PopulatedFlowApprovalRequest, Principal, ProjectId, SeekPage, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { transaction } from '../../../core/db/transaction'
+import { flowExecutionCache } from '../../../flows/flow/flow-execution-cache'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowVersionRepo, flowVersionService } from '../../../flows/flow-version/flow-version.service'
 import { applicationEvents } from '../../../helper/application-events'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import Paginator, { Order } from '../../../helper/pagination/paginator'
+import { triggerSourceService } from '../../../trigger/trigger-source/trigger-source-service'
 import { FlowApprovalRequestEntity } from './flow-approval-request.entity'
 import { flowApprovalRequestRepo } from './flow-approval-request.repo'
 
@@ -72,6 +74,15 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             versionId: approval.flowVersionId,
         })
 
+        if (flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)) {
+            await triggerSourceService(log).disable({
+                flowId: flow.id,
+                projectId: flow.projectId,
+                simulate: false,
+                ignoreError: true,
+            })
+        }
+
         const decidedAt = new Date().toISOString()
         const result = await transaction(async (entityManager) => {
             const update = await flowApprovalRequestRepo(entityManager)
@@ -109,7 +120,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         })
 
         if (result.applied) {
-            await flowService(log).setPublishedVersionSideEffects({ flow })
+            await flowExecutionCache(log).invalidate(flow.id)
             await flowService(log).applyStatusChangeForPublishedFlow({
                 id: flow.id,
                 projectId: approval.projectId,
