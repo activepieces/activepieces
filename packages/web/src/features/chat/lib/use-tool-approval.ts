@@ -36,10 +36,8 @@ export function useToolApproval({
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (!pendingApprovalRequest) {
-      setDismissed(false);
-      return;
-    }
+    if (!pendingApprovalRequest) return;
+    setDismissed(false);
     if (autoApproveRef.current) {
       void sendApprovalDecision({
         gateId: pendingApprovalRequest.gateId,
