@@ -1,4 +1,3 @@
-import { ServerResponse } from 'http'
 import {
     ActivepiecesError,
     AIProviderModelType,
@@ -16,7 +15,7 @@ import {
     spreadIfDefined,
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
-import { LanguageModel, ModelMessage, stepCountIs, streamText } from 'ai'
+import { createUIMessageStream, LanguageModel, ModelMessage, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
@@ -197,7 +196,6 @@ export const chatService = (log: FastifyBaseLogger) => ({
             },
             availableProjectIds: userProjects.map((p) => p.id),
         })
-        const tools = { ...localTools, ...mcpToolSet }
 
         const closeMcpClient = async (): Promise<void> => {
             if (mcpClient) {
@@ -207,47 +205,50 @@ export const chatService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        try {
-            const result = streamText({
-                model,
-                system: systemPrompt,
-                messages: messagesForLlm,
-                tools,
-                stopWhen: stepCountIs(MAX_STEPS),
-                onStepFinish: ({ finishReason, usage }) => {
-                    log.debug({ conversationId, finishReason, usage }, 'Chat step finished')
-                },
-                onFinish: async ({ response, usage }) => {
-                    const updatedMessages = [...allMessages, ...response.messages]
-                    try {
-                        await conversationRepo().update(conversationId, {
-                            messages: updatedMessages,
-                            ...(pendingTitle ? { title: pendingTitle } : {}),
-                            ...(isNil(conversation.modelName) ? { modelName } : {}),
-                        })
-                    }
-                    catch (saveErr) {
-                        log.error({ err: saveErr, conversationId }, 'Failed to persist conversation messages')
-                    }
+        const stream = createUIMessageStream({
+            execute: ({ writer }) => {
+                const gatedTools = chatMcp.withApprovalGates({ mcpToolSet, writer, log })
+                const tools = { ...localTools, ...gatedTools }
 
-                    log.info({
-                        conversationId,
-                        inputTokens: usage.inputTokens,
-                        outputTokens: usage.outputTokens,
-                        provider: providerConfig.provider,
-                    }, 'Chat message completed')
-                },
-                onError: ({ error }) => {
-                    log.error({ err: error, conversationId }, 'Chat streamText error')
-                },
-            })
+                const textStream = streamText({
+                    model,
+                    system: systemPrompt,
+                    messages: messagesForLlm,
+                    tools,
+                    stopWhen: stepCountIs(MAX_STEPS),
+                    onStepFinish: ({ finishReason, usage }) => {
+                        log.debug({ conversationId, finishReason, usage }, 'Chat step finished')
+                    },
+                    onFinish: async ({ response, usage }) => {
+                        const updatedMessages = [...allMessages, ...response.messages]
+                        try {
+                            await conversationRepo().update(conversationId, {
+                                messages: updatedMessages,
+                                ...(pendingTitle ? { title: pendingTitle } : {}),
+                                ...(isNil(conversation.modelName) ? { modelName } : {}),
+                            })
+                        }
+                        catch (saveErr) {
+                            log.error({ err: saveErr, conversationId }, 'Failed to persist conversation messages')
+                        }
 
-            return { result, closeMcpClient }
-        }
-        catch (err) {
-            await closeMcpClient()
-            throw err
-        }
+                        log.info({
+                            conversationId,
+                            inputTokens: usage.inputTokens,
+                            outputTokens: usage.outputTokens,
+                            provider: providerConfig.provider,
+                        }, 'Chat message completed')
+                    },
+                    onError: ({ error }) => {
+                        log.error({ err: error, conversationId }, 'Chat streamText error')
+                    },
+                })
+
+                writer.merge(textStream.toUIMessageStream())
+            },
+        })
+
+        return { stream, closeMcpClient }
     },
 
 })
@@ -386,9 +387,6 @@ type SendMessageParams = {
 }
 
 type SendMessageResult = {
-    result: {
-        pipeUIMessageStreamToResponse(response: ServerResponse, options?: Record<string, unknown>): void
-        consumeStream(): PromiseLike<void>
-    }
+    stream: ReadableStream
     closeMcpClient: () => Promise<void>
 }
