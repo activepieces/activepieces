@@ -6,6 +6,8 @@ on:
 jobs:
   Release:
     runs-on: ubuntu-24.04
+    permissions:
+      id-token: write
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3

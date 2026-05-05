@@ -11,6 +11,8 @@ on:
 jobs:
   release:
     runs-on: ubuntu-24.04
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
