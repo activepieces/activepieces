@@ -1,3 +1,4 @@
+// @ts-ignore
 import { RequestFilteringHttpAgent, RequestFilteringHttpsAgent } from 'request-filtering-agent';
 
 const IP_REGEX = /^(\d{1,3}\.){3}\d{1,3}(\/\d+)?$|^[0-9a-fA-F:]+$/;
