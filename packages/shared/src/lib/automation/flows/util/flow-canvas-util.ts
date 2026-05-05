@@ -1,5 +1,6 @@
 import { CodeAction, FlowAction, FlowActionType, PieceAction } from '../actions/action'
 import { FlowTrigger } from '../triggers/trigger'
+import { flowStructureUtil } from './flow-structure-util'
 
 export const FLOW_CANVAS_STEP_HEIGHT = 60
 export const FLOW_CANVAS_STEP_WIDTH = 232
@@ -179,6 +180,20 @@ function getContinueOnFailureBranchPair(step: CodeAction | PieceAction): (FlowAc
     return [branches?.onSuccess, branches?.onFailure]
 }
 
+function getStepBranchRelativeTo(ancestor: Step | FlowAction, targetStepName: string): 'on-success' | 'on-failure' | null {
+    if (!hasContinueOnFailureBranches(ancestor)) {
+        return null
+    }
+    const [onSuccess, onFailure] = getContinueOnFailureBranchPair(ancestor)
+    if (onSuccess && flowStructureUtil.getAllSteps(onSuccess).some((s) => s.name === targetStepName)) {
+        return 'on-success'
+    }
+    if (onFailure && flowStructureUtil.getAllSteps(onFailure).some((s) => s.name === targetStepName)) {
+        return 'on-failure'
+    }
+    return null
+}
+
 export const flowCanvasUtils = {
     /**
      * Compute canvas (x, y) positions for every step in a flow.
@@ -191,5 +206,6 @@ export const flowCanvasUtils = {
     },
     hasContinueOnFailureBranches,
     getContinueOnFailureBranchPair,
+    getStepBranchRelativeTo,
     computeRouterChildOffsets,
 }

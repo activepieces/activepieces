@@ -35,6 +35,7 @@ function buildTestStepNode(
       displayName,
       propertyPath: stepName,
       insertable: false,
+      stepName,
     },
     children: [
       {
@@ -317,6 +318,7 @@ function traverseStep(
   step: (FlowAction | FlowTrigger) & { dfsIndex: number },
   sampleData: Record<string, unknown>,
   zipArraysOfProperties: boolean,
+  targetStepName: string,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
   const stepNeedsTesting =
@@ -359,7 +361,15 @@ function traverseStep(
 
   const cofEnabled = flowCanvasUtils.hasContinueOnFailureBranches(step);
   if (cofEnabled) {
-    if (isNil(stepNode.children) && stepNode.data.type === 'value') {
+    const branch = flowCanvasUtils.getStepBranchRelativeTo(
+      step,
+      targetStepName,
+    );
+    if (
+      branch !== 'on-failure' &&
+      isNil(stepNode.children) &&
+      stepNode.data.type === 'value'
+    ) {
       const outputLeaf: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> = {
         key: `${step.name}_output`,
         data: {
@@ -375,26 +385,47 @@ function traverseStep(
       stepNode.children = [outputLeaf];
     }
 
-    const onFailureNode: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> = {
-      key: `${step.name}_on_failure`,
-      data: {
-        type: 'chunk',
-        displayName: t('On failure'),
-      },
-      children: [
-        {
-          key: `${step.name}_error_message`,
-          data: {
-            type: 'value',
-            displayName: t('Error message'),
-            propertyPath: `${step.name}['error']['message']`,
-            value: '---runtime error message---',
-            insertable: true,
-          },
+    const errorMessageLeaf: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> =
+      {
+        key: `${step.name}_error_message`,
+        data: {
+          type: 'value',
+          displayName: t('Error message'),
+          propertyPath: `${step.name}['error']['message']`,
+          value: '---runtime error message---',
+          insertable: true,
         },
-      ],
-    };
-    stepNode.children = [...(stepNode.children ?? []), onFailureNode];
+      };
+
+    if (branch === 'on-failure') {
+      if (stepNode.data.type === 'value') {
+        stepNode.data = { ...stepNode.data, insertable: false };
+      }
+      stepNode.children = [errorMessageLeaf];
+    } else if (branch !== 'on-success') {
+      const onSuccessNode: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> =
+        {
+          key: `${step.name}_on_success`,
+          data: {
+            type: 'chunk',
+            displayName: t('On success'),
+            displayNameClassName: 'text-success-700 dark:text-success-200',
+          },
+          children: stepNode.children,
+        };
+      const onFailureNode: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> =
+        {
+          key: `${step.name}_on_failure`,
+          data: {
+            type: 'chunk',
+            displayName: t('On failure'),
+            displayNameClassName:
+              'text-destructive-700 dark:text-destructive-200',
+          },
+          children: [errorMessageLeaf],
+        };
+      stepNode.children = [onSuccessNode, onFailureNode];
+    }
   }
 
   return stepNode;
