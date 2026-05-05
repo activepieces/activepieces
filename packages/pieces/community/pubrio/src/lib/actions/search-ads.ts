@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
-import { pubrioRequest, splitComma } from '../common';
+import { pubrioRequest } from '../common';
 
 export const searchAds = createAction({
   auth: pubrioAuth,
@@ -9,54 +9,49 @@ export const searchAds = createAction({
   displayName: 'Search Advertisements',
   description: 'Search company advertisements and ad campaigns',
   props: {
-    search_terms: Property.ShortText({
+    search_terms: Property.Array({
       displayName: 'Search Terms',
-      description: 'Comma-separated search terms',
       required: false,
     }),
-    target_locations: Property.ShortText({
+    target_locations: Property.Array({
       displayName: 'Target Locations',
-      description: 'Comma-separated target locations',
       required: false,
     }),
-    exclude_target_locations: Property.ShortText({
+    exclude_target_locations: Property.Array({
       displayName: 'Exclude Target Locations',
-      description: 'Comma-separated locations to exclude',
+      description: 'Locations to exclude',
       required: false,
     }),
-    headlines: Property.ShortText({
+    headlines: Property.Array({
       displayName: 'Headlines',
-      description: 'Comma-separated headline keywords',
+      description: 'Headline keywords',
       required: false,
     }),
-    start_dates: Property.ShortText({
+    start_dates: Property.Array({
       displayName: 'Start Dates',
-      description: 'Comma-separated start date filters',
+      description: 'Start date filters',
       required: false,
     }),
-    end_dates: Property.ShortText({
+    end_dates: Property.Array({
       displayName: 'End Dates',
-      description: 'Comma-separated end date filters',
+      description: 'End date filters',
       required: false,
     }),
-    company_locations: Property.ShortText({
+    company_locations: Property.Array({
       displayName: 'Company Locations',
-      description: 'Comma-separated company locations',
       required: false,
     }),
-    domains: Property.ShortText({
+    domains: Property.Array({
       displayName: 'Company Domains',
-      description: 'Comma-separated domains',
       required: false,
     }),
-    linkedin_urls: Property.ShortText({
+    linkedin_urls: Property.Array({
       displayName: 'LinkedIn URLs',
-      description: 'Comma-separated LinkedIn URLs',
       required: false,
     }),
-    companies: Property.ShortText({
+    companies: Property.Array({
       displayName: 'Companies',
-      description: 'Comma-separated company domain_search_id UUIDs',
+      description: 'Company domain_search_id UUIDs',
       required: false,
     }),
     page: Property.Number({
@@ -77,27 +72,25 @@ export const searchAds = createAction({
       per_page: context.propsValue.per_page ?? 25,
     };
     if (context.propsValue.search_terms)
-      body.search_terms = splitComma(context.propsValue.search_terms);
+      body.search_terms = context.propsValue.search_terms;
     if (context.propsValue.target_locations)
-      body.target_locations = splitComma(context.propsValue.target_locations);
+      body.target_locations = context.propsValue.target_locations;
     if (context.propsValue.exclude_target_locations)
-      body.exclude_target_locations = splitComma(
-        context.propsValue.exclude_target_locations
-      );
+      body.exclude_target_locations = context.propsValue.exclude_target_locations;
     if (context.propsValue.headlines)
-      body.headlines = splitComma(context.propsValue.headlines);
+      body.headlines = context.propsValue.headlines;
     if (context.propsValue.start_dates)
-      body.start_dates = splitComma(context.propsValue.start_dates);
+      body.start_dates = context.propsValue.start_dates;
     if (context.propsValue.end_dates)
-      body.end_dates = splitComma(context.propsValue.end_dates);
+      body.end_dates = context.propsValue.end_dates;
     if (context.propsValue.company_locations)
-      body.company_locations = splitComma(context.propsValue.company_locations);
+      body.company_locations = context.propsValue.company_locations;
     if (context.propsValue.domains)
-      body.domains = splitComma(context.propsValue.domains);
+      body.domains = context.propsValue.domains;
     if (context.propsValue.linkedin_urls)
-      body.linkedin_urls = splitComma(context.propsValue.linkedin_urls);
+      body.linkedin_urls = context.propsValue.linkedin_urls;
     if (context.propsValue.companies)
-      body.companies = splitComma(context.propsValue.companies);
+      body.companies = context.propsValue.companies;
     return await pubrioRequest(
       context.auth.secret_text,
       HttpMethod.POST,

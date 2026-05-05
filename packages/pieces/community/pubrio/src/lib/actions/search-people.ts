@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
-import { pubrioRequest, splitComma } from '../common';
+import { pubrioRequest } from '../common';
 
 export const searchPeople = createAction({
   auth: pubrioAuth,
@@ -18,64 +18,56 @@ export const searchPeople = createAction({
       displayName: 'Person Name',
       required: false,
     }),
-    people_titles: Property.ShortText({
+    people_titles: Property.Array({
       displayName: 'Job Titles',
-      description: 'Comma-separated',
+      description: '',
       required: false,
     }),
-    peoples: Property.ShortText({
+    peoples: Property.Array({
       displayName: 'People IDs',
-      description: 'Comma-separated people UUIDs',
+      description: 'People UUIDs',
       required: false,
     }),
-    management_levels: Property.ShortText({
+    management_levels: Property.Array({
       displayName: 'Management Levels',
-      description: 'Comma-separated',
       required: false,
     }),
-    departments: Property.ShortText({
+    departments: Property.Array({
       displayName: 'Departments',
-      description: 'Comma-separated',
       required: false,
     }),
-    department_functions: Property.ShortText({
+    department_functions: Property.Array({
       displayName: 'Department Functions',
-      description: 'Comma-separated',
       required: false,
     }),
-    employees: Property.ShortText({
+    employees: Property.Array({
       displayName: 'Employee Ranges',
-      description: 'Comma-separated employee count ranges',
+      description: 'Employee count ranges',
       required: false,
     }),
-    people_locations: Property.ShortText({
+    people_locations: Property.Array({
       displayName: 'People Locations',
-      description: 'Comma-separated locations',
       required: false,
     }),
-    company_locations: Property.ShortText({
+    company_locations: Property.Array({
       displayName: 'Company Locations',
-      description: 'Comma-separated locations',
       required: false,
     }),
-    company_linkedin_urls: Property.ShortText({
+    company_linkedin_urls: Property.Array({
       displayName: 'Company LinkedIn URLs',
-      description: 'Comma-separated',
       required: false,
     }),
-    linkedin_urls: Property.ShortText({
+    linkedin_urls: Property.Array({
       displayName: 'People LinkedIn URLs',
-      description: 'Comma-separated',
       required: false,
     }),
-    companies: Property.ShortText({
+    companies: Property.Array({
       displayName: 'Companies',
-      description: 'Comma-separated company UUIDs',
+      description: 'Company UUIDs',
       required: false,
     }),
-    domains: Property.ShortText({
+    domains: Property.Array({
       displayName: 'Company Domains',
-      description: 'Comma-separated',
       required: false,
     }),
     page: Property.Number({
@@ -100,39 +92,29 @@ export const searchPeople = createAction({
     if (context.propsValue.people_name)
       body['people_name'] = context.propsValue.people_name;
     if (context.propsValue.people_titles)
-      body['people_titles'] = splitComma(context.propsValue.people_titles);
+      body['people_titles'] = context.propsValue.people_titles;
     if (context.propsValue.peoples)
-      body['peoples'] = splitComma(context.propsValue.peoples);
+      body['peoples'] = context.propsValue.peoples;
     if (context.propsValue.management_levels)
-      body['management_levels'] = splitComma(
-        context.propsValue.management_levels
-      );
+      body['management_levels'] = context.propsValue.management_levels;
     if (context.propsValue.departments)
-      body['departments'] = splitComma(context.propsValue.departments);
+      body['departments'] = context.propsValue.departments;
     if (context.propsValue.department_functions)
-      body['department_functions'] = splitComma(
-        context.propsValue.department_functions
-      );
+      body['department_functions'] = context.propsValue.department_functions;
     if (context.propsValue.employees)
-      body['employees'] = splitComma(context.propsValue.employees);
+      body['employees'] = context.propsValue.employees;
     if (context.propsValue.people_locations)
-      body['people_locations'] = splitComma(
-        context.propsValue.people_locations
-      );
+      body['people_locations'] = context.propsValue.people_locations;
     if (context.propsValue.company_locations)
-      body['company_locations'] = splitComma(
-        context.propsValue.company_locations
-      );
+      body['company_locations'] = context.propsValue.company_locations;
     if (context.propsValue.company_linkedin_urls)
-      body['company_linkedin_urls'] = splitComma(
-        context.propsValue.company_linkedin_urls
-      );
+      body['company_linkedin_urls'] = context.propsValue.company_linkedin_urls;
     if (context.propsValue.linkedin_urls)
-      body['linkedin_urls'] = splitComma(context.propsValue.linkedin_urls);
+      body['linkedin_urls'] = context.propsValue.linkedin_urls;
     if (context.propsValue.companies)
-      body['companies'] = splitComma(context.propsValue.companies);
+      body['companies'] = context.propsValue.companies;
     if (context.propsValue.domains)
-      body['domains'] = splitComma(context.propsValue.domains);
+      body['domains'] = context.propsValue.domains;
     return await pubrioRequest(
       context.auth.secret_text,
       HttpMethod.POST,

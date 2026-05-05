@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
-import { pubrioRequest, splitComma } from '../common';
+import { pubrioRequest } from '../common';
 
 export const searchNews = createAction({
   auth: pubrioAuth,
@@ -13,54 +13,50 @@ export const searchNews = createAction({
       displayName: 'Search Term',
       required: false,
     }),
-    search_terms: Property.ShortText({
+    search_terms: Property.Array({
       displayName: 'Search Terms',
-      description: 'Comma-separated keywords',
+      description: 'Keywords',
       required: false,
     }),
-    domains: Property.ShortText({
+    domains: Property.Array({
       displayName: 'Company Domains',
-      description: 'Comma-separated',
       required: false,
     }),
-    companies: Property.ShortText({
+    companies: Property.Array({
       displayName: 'Companies',
-      description: 'Comma-separated company domain_search_id UUIDs',
+      description: 'Company domain_search_id UUIDs',
       required: false,
     }),
-    categories: Property.ShortText({
+    categories: Property.Array({
       displayName: 'News Categories',
-      description: 'Comma-separated',
       required: false,
     }),
-    published_dates: Property.ShortText({
+    published_dates: Property.Array({
       displayName: 'Published Dates',
-      description: 'Comma-separated date filters',
+      description: 'Date filters',
       required: false,
     }),
-    locations: Property.ShortText({
+    locations: Property.Array({
       displayName: 'Locations',
-      description: 'Comma-separated locations',
       required: false,
     }),
-    company_locations: Property.ShortText({
+    company_locations: Property.Array({
       displayName: 'Company Locations',
-      description: 'Comma-separated company locations',
       required: false,
     }),
-    news_gallery_ids: Property.ShortText({
+    news_gallery_ids: Property.Array({
       displayName: 'News Gallery IDs',
-      description: 'Comma-separated gallery IDs',
+      description: 'Gallery IDs',
       required: false,
     }),
-    news_galleries: Property.ShortText({
+    news_galleries: Property.Array({
       displayName: 'News Galleries',
-      description: 'Comma-separated gallery names',
+      description: 'Gallery names',
       required: false,
     }),
-    news_languages: Property.ShortText({
+    news_languages: Property.Array({
       displayName: 'News Languages',
-      description: 'Comma-separated language codes',
+      description: 'Language codes',
       required: false,
     }),
     page: Property.Number({
@@ -83,29 +79,25 @@ export const searchNews = createAction({
     if (context.propsValue.search_term)
       body['search_term'] = context.propsValue.search_term;
     if (context.propsValue.search_terms)
-      body['search_terms'] = splitComma(context.propsValue.search_terms);
+      body['search_terms'] = context.propsValue.search_terms;
     if (context.propsValue.domains)
-      body['domains'] = splitComma(context.propsValue.domains);
+      body['domains'] = context.propsValue.domains;
     if (context.propsValue.companies)
-      body['companies'] = splitComma(context.propsValue.companies);
+      body['companies'] = context.propsValue.companies;
     if (context.propsValue.categories)
-      body['categories'] = splitComma(context.propsValue.categories);
+      body['categories'] = context.propsValue.categories;
     if (context.propsValue.published_dates)
-      body['published_dates'] = splitComma(context.propsValue.published_dates);
+      body['published_dates'] = context.propsValue.published_dates;
     if (context.propsValue.locations)
-      body['locations'] = splitComma(context.propsValue.locations);
+      body['locations'] = context.propsValue.locations;
     if (context.propsValue.company_locations)
-      body['company_locations'] = splitComma(
-        context.propsValue.company_locations
-      );
+      body['company_locations'] = context.propsValue.company_locations;
     if (context.propsValue.news_gallery_ids)
-      body['news_gallery_ids'] = splitComma(
-        context.propsValue.news_gallery_ids
-      );
+      body['news_gallery_ids'] = context.propsValue.news_gallery_ids;
     if (context.propsValue.news_galleries)
-      body['news_galleries'] = splitComma(context.propsValue.news_galleries);
+      body['news_galleries'] = context.propsValue.news_galleries;
     if (context.propsValue.news_languages)
-      body['news_languages'] = splitComma(context.propsValue.news_languages);
+      body['news_languages'] = context.propsValue.news_languages;
     return await pubrioRequest(
       context.auth.secret_text,
       HttpMethod.POST,

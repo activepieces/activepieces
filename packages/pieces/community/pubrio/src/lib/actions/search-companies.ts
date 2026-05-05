@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
-import { pubrioRequest, splitComma } from '../common';
+import { pubrioRequest } from '../common';
 
 export const searchCompanies = createAction({
   auth: pubrioAuth,
@@ -14,69 +14,66 @@ export const searchCompanies = createAction({
       displayName: 'Company Name',
       required: false,
     }),
-    domains: Property.ShortText({
+    domains: Property.Array({
       displayName: 'Domains',
-      description: 'Comma-separated domains',
       required: false,
     }),
-    linkedin_urls: Property.ShortText({
+    linkedin_urls: Property.Array({
       displayName: 'LinkedIn URLs',
-      description: 'Comma-separated LinkedIn company URLs',
+      description: 'LinkedIn company URLs',
       required: false,
     }),
-    locations: Property.ShortText({
+    locations: Property.Array({
       displayName: 'Locations',
-      description: 'Comma-separated location codes',
+      description: 'Location codes',
       required: false,
     }),
-    exclude_locations: Property.ShortText({
+    exclude_locations: Property.Array({
       displayName: 'Exclude Locations',
-      description: 'Comma-separated ISO country codes to exclude',
+      description: 'ISO country codes to exclude',
       required: false,
     }),
-    places: Property.ShortText({
+    places: Property.Array({
       displayName: 'Places',
-      description: 'Comma-separated place names',
+      description: 'Place names',
       required: false,
     }),
-    exclude_places: Property.ShortText({
+    exclude_places: Property.Array({
       displayName: 'Exclude Places',
-      description: 'Comma-separated place names to exclude',
+      description: 'Place names to exclude',
       required: false,
     }),
-    keywords: Property.ShortText({
+    keywords: Property.Array({
       displayName: 'Keywords',
-      description: 'Comma-separated keywords',
       required: false,
     }),
-    verticals: Property.ShortText({
+    verticals: Property.Array({
       displayName: 'Verticals',
-      description: 'Comma-separated industry verticals',
+      description: 'Industry verticals',
       required: false,
     }),
-    vertical_categories: Property.ShortText({
+    vertical_categories: Property.Array({
       displayName: 'Vertical Categories',
-      description: 'Comma-separated vertical category IDs',
+      description: 'Vertical category IDs',
       required: false,
     }),
-    vertical_sub_categories: Property.ShortText({
+    vertical_sub_categories: Property.Array({
       displayName: 'Vertical Sub-Categories',
-      description: 'Comma-separated vertical sub-category IDs',
+      description: 'Vertical sub-category IDs',
       required: false,
     }),
-    technologies: Property.ShortText({
+    technologies: Property.Array({
       displayName: 'Technologies',
-      description: 'Comma-separated technologies',
       required: false,
     }),
-    categories: Property.ShortText({
+    categories: Property.Array({
       displayName: 'Technology Categories',
-      description: 'Comma-separated technology category IDs',
+      description: 'Technology category IDs',
       required: false,
     }),
-    companies: Property.ShortText({
+    companies: Property.Array({
       displayName: 'Companies',
-      description: 'Comma-separated company domain_search_id UUIDs',
+      description: 'Company domain_search_id UUIDs',
       required: false,
     }),
     employees_min: Property.Number({
@@ -115,74 +112,73 @@ export const searchCompanies = createAction({
       description: '0-1',
       required: false,
     }),
-    exclude_fields: Property.ShortText({
+    exclude_fields: Property.Array({
       displayName: 'Exclude Fields',
-      description: 'Comma-separated field names to exclude',
+      description: 'Field names to exclude',
       required: false,
     }),
-    job_titles: Property.ShortText({
+    job_titles: Property.Array({
       displayName: 'Job Titles',
-      description: 'Comma-separated job titles',
       required: false,
     }),
-    job_locations: Property.ShortText({
+    job_locations: Property.Array({
       displayName: 'Job Locations',
-      description: 'Comma-separated country codes for job locations',
+      description: 'Country codes for job locations',
       required: false,
     }),
-    job_exclude_locations: Property.ShortText({
+    job_exclude_locations: Property.Array({
       displayName: 'Job Exclude Locations',
-      description: 'Comma-separated country codes to exclude',
+      description: 'Country codes to exclude',
       required: false,
     }),
-    job_posted_dates: Property.ShortText({
+    job_posted_dates: Property.Array({
       displayName: 'Job Posted Dates',
-      description: 'Comma-separated date range YYYY-MM-DD',
+      description: 'Date range YYYY-MM-DD',
       required: false,
     }),
-    news_categories: Property.ShortText({
+    news_categories: Property.Array({
       displayName: 'News Categories',
-      description: 'Comma-separated news category slugs',
+      description: 'News category slugs',
       required: false,
     }),
-    news_published_dates: Property.ShortText({
+    news_published_dates: Property.Array({
       displayName: 'News Published Dates',
-      description: 'Comma-separated date range YYYY-MM-DD',
+      description: 'Date range YYYY-MM-DD',
       required: false,
     }),
-    news_galleries: Property.ShortText({
+    news_galleries: Property.Array({
       displayName: 'News Galleries',
-      description: 'Comma-separated news gallery slugs',
+      description: 'News gallery slugs',
       required: false,
     }),
-    news_gallery_ids: Property.ShortText({
+    news_gallery_ids: Property.Array({
       displayName: 'News Gallery IDs',
-      description: 'Comma-separated news gallery UUIDs',
+      description: 'News gallery UUIDs',
       required: false,
     }),
-    advertisement_search_terms: Property.ShortText({
+    advertisement_search_terms: Property.Array({
       displayName: 'Advertisement Search Terms',
-      description: 'Comma-separated keywords',
+      description: 'Keywords',
       required: false,
     }),
-    advertisement_target_locations: Property.ShortText({
+    advertisement_target_locations: Property.Array({
       displayName: 'Advertisement Target Locations',
-      description: 'Comma-separated country codes',
+      description: 'Country codes',
       required: false,
     }),
-    advertisement_exclude_target_locations: Property.ShortText({
+    advertisement_exclude_target_locations: Property.Array({
       displayName: 'Advertisement Exclude Target Locations',
-      description: 'Comma-separated country codes',
+      description: 'Country codes',
       required: false,
     }),
-    advertisement_start_dates: Property.ShortText({
+    advertisement_start_dates: Property.Array({
       displayName: 'Advertisement Start Dates',
-      description: 'Comma-separated date range YYYY-MM-DD',
+      description: 'Date range YYYY-MM-DD',
       required: false,
     }),
-    advertisement_end_dates: Property.ShortText({
+    advertisement_end_dates: Property.Array({
       displayName: 'Advertisement End Dates',
-      description: 'Comma-separated date range YYYY-MM-DD',
+      description: 'Date range YYYY-MM-DD',
       required: false,
     }),
     page: Property.Number({
@@ -205,37 +201,31 @@ export const searchCompanies = createAction({
     if (context.propsValue.company_name)
       body['company_name'] = context.propsValue.company_name;
     if (context.propsValue.domains)
-      body['domains'] = splitComma(context.propsValue.domains);
+      body['domains'] = context.propsValue.domains;
     if (context.propsValue.linkedin_urls)
-      body['linkedin_urls'] = splitComma(context.propsValue.linkedin_urls);
+      body['linkedin_urls'] = context.propsValue.linkedin_urls;
     if (context.propsValue.locations)
-      body['locations'] = splitComma(context.propsValue.locations);
+      body['locations'] = context.propsValue.locations;
     if (context.propsValue.exclude_locations)
-      body['exclude_locations'] = splitComma(
-        context.propsValue.exclude_locations
-      );
+      body['exclude_locations'] = context.propsValue.exclude_locations;
     if (context.propsValue.places)
-      body['places'] = splitComma(context.propsValue.places);
+      body['places'] = context.propsValue.places;
     if (context.propsValue.exclude_places)
-      body['exclude_places'] = splitComma(context.propsValue.exclude_places);
+      body['exclude_places'] = context.propsValue.exclude_places;
     if (context.propsValue.keywords)
-      body['keywords'] = splitComma(context.propsValue.keywords);
+      body['keywords'] = context.propsValue.keywords;
     if (context.propsValue.verticals)
-      body['verticals'] = splitComma(context.propsValue.verticals);
+      body['verticals'] = context.propsValue.verticals;
     if (context.propsValue.vertical_categories)
-      body['vertical_categories'] = splitComma(
-        context.propsValue.vertical_categories
-      );
+      body['vertical_categories'] = context.propsValue.vertical_categories;
     if (context.propsValue.vertical_sub_categories)
-      body['vertical_sub_categories'] = splitComma(
-        context.propsValue.vertical_sub_categories
-      );
+      body['vertical_sub_categories'] = context.propsValue.vertical_sub_categories;
     if (context.propsValue.technologies)
-      body['technologies'] = splitComma(context.propsValue.technologies);
+      body['technologies'] = context.propsValue.technologies;
     if (context.propsValue.categories)
-      body['categories'] = splitComma(context.propsValue.categories);
+      body['categories'] = context.propsValue.categories;
     if (context.propsValue.companies)
-      body['companies'] = splitComma(context.propsValue.companies);
+      body['companies'] = context.propsValue.companies;
     if (
       context.propsValue.employees_min != null ||
       context.propsValue.employees_max != null
@@ -269,51 +259,33 @@ export const searchCompanies = createAction({
     if (context.propsValue.similarity_score != null)
       body['similarity_score'] = context.propsValue.similarity_score;
     if (context.propsValue.exclude_fields)
-      body['exclude_fields'] = splitComma(context.propsValue.exclude_fields);
+      body['exclude_fields'] = context.propsValue.exclude_fields;
     if (context.propsValue.job_titles)
-      body['job_titles'] = splitComma(context.propsValue.job_titles);
+      body['job_titles'] = context.propsValue.job_titles;
     if (context.propsValue.job_locations)
-      body['job_locations'] = splitComma(context.propsValue.job_locations);
+      body['job_locations'] = context.propsValue.job_locations;
     if (context.propsValue.job_exclude_locations)
-      body['job_exclude_locations'] = splitComma(
-        context.propsValue.job_exclude_locations
-      );
+      body['job_exclude_locations'] = context.propsValue.job_exclude_locations;
     if (context.propsValue.job_posted_dates)
-      body['job_posted_dates'] = splitComma(
-        context.propsValue.job_posted_dates
-      );
+      body['job_posted_dates'] = context.propsValue.job_posted_dates;
     if (context.propsValue.news_categories)
-      body['news_categories'] = splitComma(context.propsValue.news_categories);
+      body['news_categories'] = context.propsValue.news_categories;
     if (context.propsValue.news_published_dates)
-      body['news_published_dates'] = splitComma(
-        context.propsValue.news_published_dates
-      );
+      body['news_published_dates'] = context.propsValue.news_published_dates;
     if (context.propsValue.news_galleries)
-      body['news_galleries'] = splitComma(context.propsValue.news_galleries);
+      body['news_galleries'] = context.propsValue.news_galleries;
     if (context.propsValue.news_gallery_ids)
-      body['news_gallery_ids'] = splitComma(
-        context.propsValue.news_gallery_ids
-      );
+      body['news_gallery_ids'] = context.propsValue.news_gallery_ids;
     if (context.propsValue.advertisement_search_terms)
-      body['advertisement_search_terms'] = splitComma(
-        context.propsValue.advertisement_search_terms
-      );
+      body['advertisement_search_terms'] = context.propsValue.advertisement_search_terms;
     if (context.propsValue.advertisement_target_locations)
-      body['advertisement_target_locations'] = splitComma(
-        context.propsValue.advertisement_target_locations
-      );
+      body['advertisement_target_locations'] = context.propsValue.advertisement_target_locations;
     if (context.propsValue.advertisement_exclude_target_locations)
-      body['advertisement_exclude_target_locations'] = splitComma(
-        context.propsValue.advertisement_exclude_target_locations
-      );
+      body['advertisement_exclude_target_locations'] = context.propsValue.advertisement_exclude_target_locations;
     if (context.propsValue.advertisement_start_dates)
-      body['advertisement_start_dates'] = splitComma(
-        context.propsValue.advertisement_start_dates
-      );
+      body['advertisement_start_dates'] = context.propsValue.advertisement_start_dates;
     if (context.propsValue.advertisement_end_dates)
-      body['advertisement_end_dates'] = splitComma(
-        context.propsValue.advertisement_end_dates
-      );
+      body['advertisement_end_dates'] = context.propsValue.advertisement_end_dates;
     return await pubrioRequest(
       context.auth.secret_text ,
       HttpMethod.POST,

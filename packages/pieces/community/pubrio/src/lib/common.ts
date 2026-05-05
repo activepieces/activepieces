@@ -22,10 +22,4 @@ export async function pubrioRequest(
   return response.body;
 }
 
-export function splitComma(value: string | undefined): string[] | undefined {
-  if (!value) return undefined;
-  return value
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
+

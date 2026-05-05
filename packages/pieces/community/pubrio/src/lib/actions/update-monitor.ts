@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
-import { pubrioRequest, splitComma } from '../common';
+import { pubrioRequest } from '../common';
 
 export const updateMonitor = createAction({
   auth: pubrioAuth,
@@ -76,19 +76,17 @@ export const updateMonitor = createAction({
       displayName: 'Max Records Per Trigger',
       required: false,
     }),
-    companies: Property.ShortText({
+    companies: Property.Array({
       displayName: 'Companies',
-      description: 'Comma-separated company names',
+      description: 'Company names',
       required: false,
     }),
-    domains: Property.ShortText({
+    domains: Property.Array({
       displayName: 'Domains',
-      description: 'Comma-separated domains',
       required: false,
     }),
-    linkedin_urls: Property.ShortText({
+    linkedin_urls: Property.Array({
       displayName: 'LinkedIn URLs',
-      description: 'Comma-separated LinkedIn URLs',
       required: false,
     }),
     company_filters: Property.LongText({
@@ -179,11 +177,11 @@ export const updateMonitor = createAction({
       body['max_records_per_trigger'] =
         context.propsValue.max_records_per_trigger;
     if (context.propsValue.companies)
-      body['companies'] = splitComma(context.propsValue.companies);
+      body['companies'] = context.propsValue.companies;
     if (context.propsValue.domains)
-      body['domains'] = splitComma(context.propsValue.domains);
+      body['domains'] = context.propsValue.domains;
     if (context.propsValue.linkedin_urls)
-      body['linkedin_urls'] = splitComma(context.propsValue.linkedin_urls);
+      body['linkedin_urls'] = context.propsValue.linkedin_urls;
     if (context.propsValue.company_filters)
       body['company_filters'] = JSON.parse(context.propsValue.company_filters);
     if (context.propsValue.signal_filters)

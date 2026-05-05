@@ -28,7 +28,10 @@ import { duplicateMonitor } from './lib/actions/duplicate-monitor';
 import { testRunMonitor } from './lib/actions/test-run-monitor';
 import { revealMonitorSignature } from './lib/actions/reveal-monitor-signature';
 import { pubrioWebhookTrigger } from './lib/triggers/webhook';
-import { HttpMethod } from '@activepieces/pieces-common';
+import {
+  createCustomApiCallAction,
+  HttpMethod,
+} from '@activepieces/pieces-common';
 import { pubrioRequest } from './lib/common';
 
 export const pubrioAuth = PieceAuth.SecretText({
@@ -50,8 +53,10 @@ export const pubrioAuth = PieceAuth.SecretText({
 
 export const pubrio = createPiece({
   displayName: 'Pubrio',
+  description:
+    'Enrich company and people data, monitor changes, and get notified with Pubrio.',
   auth: pubrioAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/pubrio.png',
   authors: ['pubrio', 'sanket-a11y'],
   actions: [
@@ -83,6 +88,13 @@ export const pubrio = createPiece({
     duplicateMonitor,
     testRunMonitor,
     revealMonitorSignature,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.pubrio.com',
+      auth: pubrioAuth,
+      authMapping: async (auth) => ({
+        'pubrio-api-key': auth.secret_text,
+      }),
+    }),
   ],
   triggers: [pubrioWebhookTrigger],
 });

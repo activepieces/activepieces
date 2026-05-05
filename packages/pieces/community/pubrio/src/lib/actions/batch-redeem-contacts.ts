@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
-import { pubrioRequest, splitComma } from '../common';
+import { pubrioRequest } from '../common';
 
 export const batchRedeemContacts = createAction({
   auth: pubrioAuth,
@@ -10,10 +10,10 @@ export const batchRedeemContacts = createAction({
   description:
     'Reveal email or phone numbers for multiple people at once (uses credits)',
   props: {
-    peoples: Property.ShortText({
+    peoples: Property.Array({
       displayName: 'People Search IDs',
       required: true,
-      description: 'Comma-separated people search IDs',
+      description: 'People search IDs',
     }),
     people_contact_types: Property.StaticMultiSelectDropdown({
       displayName: 'Contact Types',
@@ -29,7 +29,7 @@ export const batchRedeemContacts = createAction({
   },
   async run(context) {
     const body: Record<string, unknown> = {
-      peoples: splitComma(context.propsValue.peoples),
+      peoples: context.propsValue.peoples,
     };
     if (
       context.propsValue.people_contact_types &&
