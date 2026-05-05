@@ -103,6 +103,79 @@ describe('Project API', () => {
             expect(responseBody.ownerId).toBe(mockUser.id)
             expect(responseBody.platformId).toBe(mockPlatform.id)
         })
+
+        it('subscribes alertReceiverEmail when provided on team project create', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const alertReceiverEmail = faker.internet.email()
+            const createResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects',
+                body: {
+                    displayName: faker.animal.bird(),
+                    alertReceiverEmail,
+                },
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+            expect(createResponse?.statusCode).toBe(StatusCodes.CREATED)
+            const createdProjectId: string = createResponse!.json().id
+
+            const projectScopedToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                projectId: createdProjectId,
+                platform: { id: mockPlatform.id },
+            })
+            const listResponse = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/alerts',
+                query: { projectId: createdProjectId },
+                headers: { authorization: `Bearer ${projectScopedToken}` },
+            })
+            expect(listResponse?.statusCode).toBe(StatusCodes.OK)
+            const receivers = listResponse!.json().data.map((alert: { receiver: string }) => alert.receiver)
+            expect(receivers).toEqual([alertReceiverEmail])
+        })
+
+        it('does not auto-subscribe anyone when alertReceiverEmail is omitted on team project create', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const createResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects',
+                body: { displayName: faker.animal.bird() },
+                headers: { authorization: `Bearer ${testToken}` },
+            })
+            expect(createResponse?.statusCode).toBe(StatusCodes.CREATED)
+            const createdProjectId: string = createResponse!.json().id
+
+            const projectScopedToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                projectId: createdProjectId,
+                platform: { id: mockPlatform.id },
+            })
+            const listResponse = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/alerts',
+                query: { projectId: createdProjectId },
+                headers: { authorization: `Bearer ${projectScopedToken}` },
+            })
+            expect(listResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(listResponse!.json().data).toEqual([])
+        })
     })
 
     describe('List Projects by api key', () => {

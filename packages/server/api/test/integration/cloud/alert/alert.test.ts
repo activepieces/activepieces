@@ -1,5 +1,5 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { AlertChannel, PlatformRole, PrincipalType } from '@activepieces/shared'
+import { AlertChannel, PlatformRole, PrincipalType, ProjectType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -159,6 +159,63 @@ describe('Alert API', () => {
             })
 
             expect(deleteResponse?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+    })
+
+    describe('Personal projects', () => {
+        it('should accept creating an alert when receiver matches the project owner email', async () => {
+            const ctx = await createTestContext(app!, {
+                project: { type: ProjectType.PERSONAL },
+            })
+
+            const response = await ctx.post('/v1/alerts', {
+                projectId: ctx.project.id,
+                channel: AlertChannel.EMAIL,
+                receiver: ctx.userIdentity.email,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('should accept the owner email regardless of casing', async () => {
+            const ctx = await createTestContext(app!, {
+                project: { type: ProjectType.PERSONAL },
+            })
+
+            const response = await ctx.post('/v1/alerts', {
+                projectId: ctx.project.id,
+                channel: AlertChannel.EMAIL,
+                receiver: ctx.userIdentity.email.toUpperCase(),
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('should reject creating an alert when receiver is not the project owner', async () => {
+            const ctx = await createTestContext(app!, {
+                project: { type: ProjectType.PERSONAL },
+            })
+
+            const response = await ctx.post('/v1/alerts', {
+                projectId: ctx.project.id,
+                channel: AlertChannel.EMAIL,
+                receiver: faker.internet.email(),
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('should list alerts on a personal project', async () => {
+            const ctx = await createTestContext(app!, {
+                project: { type: ProjectType.PERSONAL },
+            })
+
+            const response = await ctx.get('/v1/alerts', {
+                projectId: ctx.project.id,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().data).toEqual([])
         })
     })
 })
