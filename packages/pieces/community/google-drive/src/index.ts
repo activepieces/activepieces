@@ -26,7 +26,7 @@ import { googleDriveAuth, getAccessToken, GoogleDriveAuthValue } from './lib/aut
 export { googleDriveAuth, getAccessToken, GoogleDriveAuthValue, createGoogleClient } from './lib/auth';
 
 export const googleDrive = createPiece({
-  minimumSupportedRelease: '0.5.7',
+  minimumSupportedRelease: '0.5.6',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-drive.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
   displayName: 'Google Drive',
