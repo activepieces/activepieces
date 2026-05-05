@@ -4,7 +4,6 @@ import { lookupCompany } from './lib/actions/lookup-company';
 import { enrichCompany } from './lib/actions/enrich-company';
 import { searchPeople } from './lib/actions/search-people';
 import { lookupPerson } from './lib/actions/lookup-person';
-import { enrichPerson } from './lib/actions/enrich-person';
 import { revealContact } from './lib/actions/reveal-contact';
 import { searchJobs } from './lib/actions/search-jobs';
 import { searchNews } from './lib/actions/search-news';
@@ -65,7 +64,6 @@ export const pubrio = createPiece({
     enrichCompany,
     searchPeople,
     lookupPerson,
-    enrichPerson,
     revealContact,
     searchJobs,
     searchNews,
