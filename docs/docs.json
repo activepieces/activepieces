@@ -28,6 +28,10 @@
       {
          "source": "/getting-started/introduction",
          "destination": "/overview/welcome"
+      },
+      {
+         "source": "/admin-guide/guides/event-streaming",
+         "destination": "/admin-guide/guides/custom-alerts"
       }
    ],
    "background": {
@@ -107,7 +111,7 @@
                       ]
                     },
                     "admin-guide/guides/permissions",
-                    "admin-guide/guides/event-streaming",
+                    "admin-guide/guides/custom-alerts",
                     "admin-guide/guides/project-releases",
                     "admin-guide/guides/manage-concurrency"
                   ]
