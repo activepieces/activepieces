@@ -99,6 +99,14 @@ function ChatBoxContent({
   );
 
   useEffect(() => {
+    if (selectedProjectId !== null || initialConversationId) return;
+    const firstProject = projects[0];
+    if (firstProject) {
+      void setProjectContext(firstProject.id);
+    }
+  }, [projects, selectedProjectId, initialConversationId, setProjectContext]);
+
+  useEffect(() => {
     if (initialConversationId) {
       void setConversationId(initialConversationId);
     }

@@ -16,6 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { getProjectName } from '@/features/projects';
 import { cn } from '@/lib/utils';
 
 export function ChatProjectSelector({
@@ -55,10 +56,10 @@ export function ChatProjectSelector({
                   color: selectedColor?.textColor,
                 }}
               >
-                {selectedProject.displayName.charAt(0).toUpperCase()}
+                {getProjectName(selectedProject).charAt(0).toUpperCase()}
               </span>
               <span className="max-w-[120px] truncate">
-                {selectedProject.displayName}
+                {getProjectName(selectedProject)}
               </span>
               <button
                 type="button"
@@ -92,7 +93,7 @@ export function ChatProjectSelector({
               return (
                 <CommandItem
                   key={project.id}
-                  value={project.displayName}
+                  value={getProjectName(project)}
                   onSelect={() => {
                     onProjectChange(project.id);
                     setOpen(false);
@@ -106,9 +107,11 @@ export function ChatProjectSelector({
                       color: color.textColor,
                     }}
                   >
-                    {project.displayName.charAt(0).toUpperCase()}
+                    {getProjectName(project).charAt(0).toUpperCase()}
                   </span>
-                  <span className="flex-1 truncate">{project.displayName}</span>
+                  <span className="flex-1 truncate">
+                    {getProjectName(project)}
+                  </span>
                   <Check
                     className={cn(
                       'ml-auto size-4',
