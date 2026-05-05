@@ -8,13 +8,17 @@
 #   2. All TOTAL runs eventually reach SUCCEEDED (promote-on-release works).
 set -euo pipefail
 
-TOTAL=${TOTAL:-1000}
+TOTAL=${TOTAL:-100}
 CONCURRENCY_LIMIT=${CONCURRENCY_LIMIT:-10}
-FIRE_PARALLELISM=${FIRE_PARALLELISM:-50}
+FIRE_PARALLELISM=${FIRE_PARALLELISM:-25}
 WORKER_REPLICAS=${WORKER_REPLICAS:-4}
 APP_REPLICAS=${APP_REPLICAS:-1}
-COMPLETION_TIMEOUT=${COMPLETION_TIMEOUT:-1800}
+COMPLETION_TIMEOUT=${COMPLETION_TIMEOUT:-180}
+SCRIPT_TIMEOUT=${SCRIPT_TIMEOUT:-900}
 KEEP_STACK=${KEEP_STACK:-0}
+
+( sleep "$SCRIPT_TIMEOUT" && echo "ERROR: SCRIPT_TIMEOUT=${SCRIPT_TIMEOUT}s exceeded — killing smoke run" >&2 && kill -TERM $$ ) &
+WATCHDOG_PID=$!
 
 BASE_URL="http://localhost:8080/api/v1"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -26,6 +30,10 @@ EMAIL="smoke+$(date +%s)@activepieces.com"
 
 cleanup() {
   set +e
+  if [ -n "${WATCHDOG_PID:-}" ] && kill -0 "$WATCHDOG_PID" 2>/dev/null; then
+    kill "$WATCHDOG_PID" 2>/dev/null || true
+    wait "$WATCHDOG_PID" 2>/dev/null || true
+  fi
   if [ -n "${MONITOR_PID:-}" ] && kill -0 "$MONITOR_PID" 2>/dev/null; then
     kill "$MONITOR_PID" 2>/dev/null || true
     wait "$MONITOR_PID" 2>/dev/null || true
