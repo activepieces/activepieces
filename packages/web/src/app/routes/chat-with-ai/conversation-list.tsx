@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { DelayedTooltip } from './components/delayed-tooltip';
@@ -23,7 +22,6 @@ export function ConversationList({
   selectedId?: string | null;
 }) {
   const queryClient = useQueryClient();
-  const projectId = authenticationSession.getProjectId();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
@@ -32,7 +30,7 @@ export function ConversationList({
 
   const { data: conversationsPage, isLoading: isLoadingConversations } =
     useQuery({
-      queryKey: ['chat-conversations', projectId],
+      queryKey: ['chat-conversations'],
       queryFn: () => chatApi.listConversations({ limit: 100 }),
     });
 
@@ -43,7 +41,7 @@ export function ConversationList({
     mutationFn: (id: string) => chatApi.deleteConversation(id),
     onSuccess: (_data, deletedId) => {
       void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations', projectId],
+        queryKey: ['chat-conversations'],
       });
       if (selectedIdRef.current === deletedId) {
         onNewChat?.();
@@ -113,7 +111,7 @@ export function ConversationList({
     if (items.length === 0) return null;
     const isCollapsed = collapsed[label];
     return (
-      <div className="mb-2 flex flex-col gap-0.5">
+      <div className="mb-2 flex flex-col gap-px">
         <button
           type="button"
           className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-[11px] font-semibold px-2 py-1 uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
@@ -135,14 +133,12 @@ export function ConversationList({
               key={conv.id}
               className={cn(
                 'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-all hover:bg-muted relative animate-in fade-in slide-in-from-top-1 duration-200',
-                selectedId === conv.id && 'bg-muted font-semibold',
+                selectedId === conv.id &&
+                  'bg-muted font-semibold border-l-2 border-l-primary',
               )}
               style={{ animationDelay: `${index * 30}ms` }}
               onClick={() => handleClick(conv)}
             >
-              {selectedId === conv.id && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-3.5 rounded-full bg-primary animate-in fade-in zoom-in-50 duration-200" />
-              )}
               <span className="overflow-hidden text-ellipsis whitespace-nowrap pr-5 flex-1">
                 {conv.title ?? t('New conversation')}
               </span>

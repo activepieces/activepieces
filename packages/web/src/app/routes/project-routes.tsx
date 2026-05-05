@@ -15,8 +15,6 @@ import { RoutePermissionGuard } from '../guards/permission-guard';
 import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
 import { AutomationsPage } from './automations';
-import { ChatWithAIPage } from './chat-with-ai';
-
 const FlowBuilderPage = React.lazy(() =>
   import('./flows/id').then((m) => ({ default: m.FlowBuilderPage })),
 );
@@ -81,30 +79,6 @@ export const projectRoutes = [
             </SuspenseWrapper>
           </PageTitle>
         </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: '/chat',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Chat">
-          <SuspenseWrapper>
-            <ChatWithAIPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: '/chat/:conversationId',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Chat">
-          <SuspenseWrapper>
-            <ChatWithAIPage />
-          </SuspenseWrapper>
-        </PageTitle>
       </ProjectDashboardLayout>
     ),
   }),

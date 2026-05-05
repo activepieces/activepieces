@@ -5,7 +5,6 @@ import {
     FlowActionType,
     FlowRunStatus,
     McpServer,
-    McpServerStatus,
     PackageType,
     PieceType,
     RunEnvironment,
@@ -152,7 +151,6 @@ function makeMcp(projectId: string): McpServer {
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
         projectId,
-        status: McpServerStatus.ENABLED,
         token: apId(),
         enabledTools: null,
     }
@@ -2412,5 +2410,117 @@ describe('MCP Tools integration', () => {
         })
 
         expect(text(result)).not.toContain('special characters')
+    })
+
+    // ── Private (CUSTOM) pieces visibility ───────────────────────────
+    // MCP tools must resolve the caller's platformId so pieces created
+    // on that platform (pieceType: CUSTOM) are discoverable. Without the
+    // platformId filter, `pieceCache.filterPieceBasedOnType` drops them.
+
+    it('90. ap_list_pieces — includes CUSTOM pieces belonging to the caller\'s platform', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const privatePiece = createMockPieceMetadata({
+            name: '@activepieces/piece-private-custom',
+            displayName: 'Private Custom Piece',
+            version: '0.1.0',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctx.platform.id,
+            actions: {
+                run: {
+                    name: 'run',
+                    displayName: 'Run',
+                    description: 'Runs the private action',
+                    requireAuth: false,
+                    props: {},
+                },
+            },
+            triggers: {},
+        })
+        await db.save('piece_metadata', privatePiece)
+
+        const result = await apListPiecesTool(mcp, mockLog).execute({
+            searchQuery: 'private-custom',
+        })
+
+        expect(text(result)).toContain('✅')
+        expect(text(result)).toContain('@activepieces/piece-private-custom')
+    })
+
+    it('91. ap_get_piece_props — resolves CUSTOM pieces on the caller\'s platform via lookupPieceComponent', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const privatePiece = createMockPieceMetadata({
+            name: '@activepieces/piece-private-lookup',
+            displayName: 'Private Lookup Piece',
+            version: '0.1.0',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctx.platform.id,
+            actions: {
+                do_thing: {
+                    name: 'do_thing',
+                    displayName: 'Do Thing',
+                    description: 'Does a thing on the private piece',
+                    requireAuth: false,
+                    props: {
+                        note: { type: 'SHORT_TEXT', displayName: 'Note', required: false },
+                    },
+                },
+            },
+            triggers: {},
+        })
+        await db.save('piece_metadata', privatePiece)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            pieceName: '@activepieces/piece-private-lookup',
+            actionOrTriggerName: 'do_thing',
+            type: 'action',
+        })
+
+        // If the platformId resolution is broken, lookupPieceComponent returns
+        // "Piece not found" here. With the fix, the schema is returned.
+        expect(text(result)).not.toContain('not found')
+        expect(text(result)).toContain('do_thing')
+    })
+
+    it('92. ap_list_pieces — does NOT include CUSTOM pieces from a different platform', async () => {
+        // Two independent projects on two different platforms. Each platform's
+        // private piece must stay invisible to the other.
+        const ctxA = await createTestContext(app)
+        const ctxB = await createTestContext(app)
+        const mcpA = makeMcp(ctxA.project.id)
+
+        const privateOfB = createMockPieceMetadata({
+            name: '@activepieces/piece-private-only-b',
+            displayName: 'Private Piece Only for Platform B',
+            version: '0.1.0',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctxB.platform.id,
+            actions: {
+                run: {
+                    name: 'run',
+                    displayName: 'Run',
+                    description: 'Only visible on platform B',
+                    requireAuth: false,
+                    props: {},
+                },
+            },
+            triggers: {},
+        })
+        await db.save('piece_metadata', privateOfB)
+
+        const result = await apListPiecesTool(mcpA, mockLog).execute({
+            searchQuery: 'private-only-b',
+        })
+
+        // Require the call to have succeeded — otherwise an error response
+        // (which also wouldn't contain the piece name) would falsely pass.
+        expect(text(result)).toContain('✅')
+        expect(text(result)).not.toContain('@activepieces/piece-private-only-b')
     })
 })

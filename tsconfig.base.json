@@ -361,7 +361,13 @@
       "@activepieces/piece-deepseek": [
         "packages/pieces/community/deepseek/src/index.ts"
       ],
+      "@activepieces/piece-deftform": [
+        "packages/pieces/community/deftform/src/index.ts"
+      ],
       "@activepieces/piece-delay": ["packages/pieces/core/delay/src/index.ts"],
+      "@activepieces/piece-descript": [
+        "packages/pieces/community/descript/src/index.ts"
+      ],
       "@activepieces/piece-devin": [
         "packages/pieces/community/devin/src/index.ts"
       ],
@@ -545,6 +551,9 @@
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
+      "@activepieces/piece-greenhouse": [
+        "packages/pieces/community/greenhouse/src/index.ts"
+      ],
       "@activepieces/piece-granola": [
         "packages/pieces/community/granola/src/index.ts"
       ],
@@ -553,9 +562,6 @@
       ],
       "@activepieces/piece-gravityforms": [
         "packages/pieces/community/gravityforms/src/index.ts"
-      ],
-      "@activepieces/piece-greenhouse": [
-        "packages/pieces/community/greenhouse/src/index.ts"
       ],
       "@activepieces/piece-grist": [
         "packages/pieces/community/grist/src/index.ts"
@@ -1964,6 +1970,9 @@
       ],
       "@activepieces/piece-knock": [
         "packages/pieces/community/knock/src/index.ts"
+      ],
+      "@activepieces/piece-proxycurl": [
+        "packages/pieces/community/proxycurl/src/index.ts"
       ]
     },
     "resolveJsonModule": true
