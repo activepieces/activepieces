@@ -18,9 +18,8 @@ import {
   parseAutomationProposal,
   parseMultiQuestion,
   parseQuickReplies,
+  stripIncompleteSpecialBlock,
 } from '../lib/message-parsers';
-
-import { MultiQuestionForm } from './multi-question-form';
 
 const PROSE_CLASSES =
   'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4 [&_h1]:text-[18px] [&_h2]:text-[18px] [&_h3]:text-[18px]';
@@ -43,18 +42,12 @@ function stripAuthContent(content: string): string {
 export function MessageContentWithAuth({
   content,
   onSend,
-  isLastMessage = false,
-  connectedPieces,
-  onPieceConnected,
   selectedProjectId,
   projects,
   onSelectProject,
 }: {
   content: string;
   onSend?: (text: string) => void;
-  isLastMessage?: boolean;
-  connectedPieces?: Set<string>;
-  onPieceConnected?: (piece: string) => void;
   selectedProjectId?: string | null;
   projects?: Project[];
   onSelectProject?: (projectId: string) => void;
@@ -87,9 +80,9 @@ export function MessageContentWithAuth({
     parseAutomationProposal(content);
   const { connections, cleanContent: afterConnection } =
     parseAllConnectionsRequired(afterProposal);
-  const { questions, cleanContent: afterQuestions } =
-    parseMultiQuestion(afterConnection);
-  const { cleanContent: finalContent } = parseQuickReplies(afterQuestions);
+  const { cleanContent: afterQuestions } = parseMultiQuestion(afterConnection);
+  const { cleanContent: afterReplies } = parseQuickReplies(afterQuestions);
+  const finalContent = stripIncompleteSpecialBlock(afterReplies);
 
   return (
     <div className="space-y-2">
@@ -103,16 +96,8 @@ export function MessageContentWithAuth({
           key={conn.piece}
           connection={conn}
           onSend={onSend}
-          connectedPieces={connectedPieces}
-          onPieceConnected={onPieceConnected}
         />
       ))}
-      {questions.length > 0 && isLastMessage && (
-        <MultiQuestionForm
-          questions={questions}
-          onSubmit={(text) => onSend?.(text)}
-        />
-      )}
       {proposal && (
         <AutomationProposalCard
           proposal={proposal}
@@ -170,7 +155,7 @@ export function AutomationProposalCard({
               <span className="text-xs font-medium text-muted-foreground bg-muted rounded-full h-5 w-5 flex items-center justify-center shrink-0 mt-0.5">
                 {i + 1}
               </span>
-              <span className="text-foreground/80">{step}</span>
+              <span className="text-foreground/80">{step.label}</span>
             </div>
           ))}
         </div>
@@ -232,17 +217,13 @@ export function AutomationProposalCard({
 export function ConnectionRequiredCard({
   connection,
   onSend,
-  connectedPieces,
-  onPieceConnected,
 }: {
   connection: ConnectionRequired;
   onSend?: (text: string) => void;
-  connectedPieces?: Set<string>;
-  onPieceConnected?: (piece: string) => void;
 }) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const connected = connectedPieces?.has(connection.piece) ?? false;
+  const [connected, setConnected] = useState(false);
   const shortName = connection.piece.replace(/[^a-z0-9-]/gi, '');
   const pieceName = connection.piece.startsWith('@activepieces/')
     ? connection.piece
@@ -312,7 +293,7 @@ export function ConnectionRequiredCard({
           setOpen={(open, createdConnection) => {
             setDialogOpen(open);
             if (createdConnection) {
-              onPieceConnected?.(connection.piece);
+              setConnected(true);
               void queryClient.invalidateQueries({
                 queryKey: ['app-connections'],
               });
