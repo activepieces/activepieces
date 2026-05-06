@@ -1,7 +1,7 @@
+import { convertBase64FieldsToUrls } from '@activepieces/pieces-common';
 import {
   createTrigger,
   DynamicPropsValue,
-  FilesService,
   PieceAuth,
   Property,
   TriggerStrategy,
@@ -333,64 +333,3 @@ export function verifyHmacAuth(
   }
 }
 
-const BASE64_CONVERT_MIN_CHARS = 10_000
-
-const DATA_URI_BASE64_REGEX =
-  /^data:([a-zA-Z0-9][a-zA-Z0-9!#$&\-^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_]*);base64,([A-Za-z0-9+/\-_]+=*)$/;
-
-const RAW_BASE64_REGEX = /^[A-Za-z0-9+/\-_]+=*$/;
-
-function isLargeBase64(value: string): boolean {
-  if (value.length < BASE64_CONVERT_MIN_CHARS) return false;
-  return DATA_URI_BASE64_REGEX.test(value) || RAW_BASE64_REGEX.test(value);
-}
-
-function detectMimeTypeFromBuffer(buffer: Buffer): string {
-  if (buffer.length < 4) return 'application/octet-stream';
-  const [b0, b1, b2, b3] = buffer;
-  if (b0 === 0x25 && b1 === 0x50 && b2 === 0x44 && b3 === 0x46) return 'application/pdf';
-  if (b0 === 0x89 && b1 === 0x50 && b2 === 0x4e && b3 === 0x47) return 'image/png';
-  if (b0 === 0xff && b1 === 0xd8 && b2 === 0xff) return 'image/jpeg';
-  if (b0 === 0x47 && b1 === 0x49 && b2 === 0x46 && b3 === 0x38) return 'image/gif';
-  if (b0 === 0x50 && b1 === 0x4b) return 'application/zip';
-  return 'application/octet-stream';
-}
-
-const MIME_TO_EXTENSION: Record<string, string> = {
-  'application/pdf': 'pdf',
-  'image/png': 'png',
-  'image/jpeg': 'jpg',
-  'image/gif': 'gif',
-  'application/zip': 'zip',
-};
-
-function decodeBase64String(value: string): { data: Buffer; mimeType: string } {
-  const dataUriMatch = value.match(DATA_URI_BASE64_REGEX);
-  if (dataUriMatch) {
-    return { data: Buffer.from(dataUriMatch[2], 'base64'), mimeType: dataUriMatch[1] };
-  }
-  const data = Buffer.from(value, 'base64');
-  return { data, mimeType: detectMimeTypeFromBuffer(data) };
-}
-
-async function convertBase64FieldsToUrls(
-  value: unknown,
-  files: FilesService
-): Promise<unknown> {
-  if (typeof value === 'string' && isLargeBase64(value)) {
-    const { data, mimeType } = decodeBase64String(value);
-    const extension = MIME_TO_EXTENSION[mimeType] ?? 'bin';
-    return files.write({ fileName: `file.${extension}`, data });
-  }
-  if (Array.isArray(value)) {
-    return Promise.all(value.map((item) => convertBase64FieldsToUrls(item, files)));
-  }
-  if (value !== null && typeof value === 'object') {
-    const result: Record<string, unknown> = {};
-    for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
-      result[key] = await convertBase64FieldsToUrls(val, files);
-    }
-    return result;
-  }
-  return value;
-}
