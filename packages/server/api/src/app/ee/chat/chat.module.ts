@@ -1,5 +1,5 @@
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
-import { platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { chatController } from './chat-controller'
 
 export const chatModule: FastifyPluginAsyncZod = async (app) => {
