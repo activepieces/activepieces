@@ -25,26 +25,26 @@ import { EventLabelsMap } from '../lib/use-event-labels';
 
 import EventDestinationActions from './event-destination-actions';
 
-type CustomAlertRowProps = {
+type EventDestinationRowProps = {
   destination: EventDestination;
   parsed: ParsedDestination;
   flowDisplayName: string | undefined;
   eventLabels: EventLabelsMap;
 };
 
-export const CustomAlertRow = ({
+export const EventDestinationRow = ({
   destination,
   parsed,
   flowDisplayName,
   eventLabels,
-}: CustomAlertRowProps) => {
+}: EventDestinationRowProps) => {
   const isInternal = parsed.kind === 'flow';
   const flowId = parsed.kind === 'flow' ? parsed.flowId : undefined;
   const title =
     isInternal && flowDisplayName
       ? flowDisplayName
       : isInternal && flowId
-      ? t('Custom alert (flow {flowId})', { flowId })
+      ? t('Destination (flow {flowId})', { flowId })
       : destination.url;
 
   return (

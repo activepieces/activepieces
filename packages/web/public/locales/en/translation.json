@@ -1641,7 +1641,7 @@
   "You need a personal project to generate the alert flow.": "You need a personal project to generate the alert flow.",
   "Failed to generate the alert flow. Please try again.": "Failed to generate the alert flow. Please try again.",
   "Webhook URL prefix is not configured.": "Webhook URL prefix is not configured.",
-  "Send audit events to a webhook. Use an internal flow to route them to your notification channels — Slack, Gmail, Microsoft Teams, or any HTTP endpoint.": "Send audit events to a webhook. Use an internal flow to route them to your notification channels — Slack, Gmail, Microsoft Teams, or any HTTP endpoint.",
+  "Send audit events to a webhook. Use an internal flow to route them to your notification channels — Slack, Gmail, Microsoft Teams, or any other channel.": "Send audit events to a webhook. Use an internal flow to route them to your notification channels — Slack, Gmail, Microsoft Teams, or any other channel.",
   "Or generate an internal flow to handle the selected events:": "Or generate an internal flow to handle the selected events:",
   "Don't forget to publish your flow before creating the alert.": "Don't forget to publish your flow before creating the alert.",
   "Custom alerts starter": "Custom alerts starter",

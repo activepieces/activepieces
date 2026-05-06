@@ -130,14 +130,14 @@ export const eventDestinationsCollectionUtils = {
     });
   },
 
-  useImportAlertFlow: (
+  useImportHandlerFlow: (
     onSuccess: (flow: PopulatedFlow) => void,
     onError: (error: Error) => void,
   ) => {
     const { data: currentUser } = userHooks.useCurrentUser();
     const { data: allProjects } = projectCollectionUtils.useAll();
 
-    return useMutation<PopulatedFlow, Error, ImportAlertFlowParams>({
+    return useMutation<PopulatedFlow, Error, ImportHandlerFlowParams>({
       mutationFn: async ({ template, selectedEvents }) => {
         const personalProject = allProjects.find(
           (project) =>
@@ -146,7 +146,7 @@ export const eventDestinationsCollectionUtils = {
         );
         if (!personalProject) {
           throw new Error(
-            t('You need a personal project to generate the alert flow.'),
+            t('You need a personal project to generate the handler flow.'),
           );
         }
 
@@ -205,7 +205,7 @@ function buildWebhookTriggerPayload(
   };
 }
 
-export type ImportAlertFlowParams = {
+export type ImportHandlerFlowParams = {
   template: Template;
   selectedEvents: ApplicationEventName[];
 };

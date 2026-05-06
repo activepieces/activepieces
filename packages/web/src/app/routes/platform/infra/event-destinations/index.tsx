@@ -14,8 +14,8 @@ import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-import { CustomAlertRow } from './components/custom-alert-row';
 import { EventDestinationDialog } from './components/event-destination-dialog';
+import { EventDestinationRow } from './components/event-destination-row';
 import { eventDestinationsCollectionUtils } from './lib/event-destinations-collection';
 import { parseFlowIdFromUrl } from './lib/parse-flow-id-from-url';
 import { useEventLabels } from './lib/use-event-labels';
@@ -78,20 +78,20 @@ const EventDestinationsPage = () => {
     <LockedFeatureGuard
       featureKey="EVENT_DESTINATIONS"
       locked={!isEnabled}
-      lockTitle={t('Unlock Custom Alerts')}
+      lockTitle={t('Unlock Event Streaming')}
       lockDescription={t(
         'Forward every audit event we emit to a webhook, then handle it in a flow — wire it to Slack, Gmail, PagerDuty, or anywhere else.',
       )}
     >
       <CenteredPage
-        title={t('Custom Alerts')}
+        title={t('Event Streaming')}
         description={t(
           'Send a webhook for every audit event and build fully customizable alerts on top.',
         )}
         actions={
           <EventDestinationDialog destination={null}>
             <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-              {t('New custom alert')}
+              {t('New Destination')}
             </AnimatedIconButton>
           </EventDestinationDialog>
         }
@@ -104,7 +104,7 @@ const EventDestinationsPage = () => {
           <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
             <Workflow className="size-10" />
             <p className="text-sm">
-              {t('No custom alerts yet. Click New custom alert to create one.')}
+              {t('No destinations yet. Create one to get started.')}
             </p>
           </div>
         )}
@@ -112,7 +112,7 @@ const EventDestinationsPage = () => {
         {!isLoading && parsedDestinations.length > 0 && (
           <ItemGroup className="gap-2">
             {parsedDestinations.map(({ destination, parsed }) => (
-              <CustomAlertRow
+              <EventDestinationRow
                 key={destination.id}
                 destination={destination}
                 parsed={parsed}

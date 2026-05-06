@@ -42,8 +42,8 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
-import { customAlertsFlowBuilder } from '../lib/custom-alerts-flow-builder';
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
+import { handlerFlowBuilder } from '../lib/handler-flow-builder';
 import { useEventLabels } from '../lib/use-event-labels';
 
 interface EventDestinationDialogProps {
@@ -112,7 +112,7 @@ const EventDestinationForm = ({
     eventDestinationsCollectionUtils.useCreateEventDestination(
       () => {
         toast.success(t('Success'), {
-          description: t('Custom alert created successfully'),
+          description: t('Destination created successfully'),
         });
         onClose();
       },
@@ -128,7 +128,7 @@ const EventDestinationForm = ({
       try {
         eventDestinationsCollectionUtils.update(destination.id, data);
         toast.success(t('Success'), {
-          description: t('Custom alert updated successfully'),
+          description: t('Destination updated successfully'),
         });
         onClose();
       } catch (error) {
@@ -141,8 +141,8 @@ const EventDestinationForm = ({
     }
   };
 
-  const { mutate: importAlertFlow, isPending: isImporting } =
-    eventDestinationsCollectionUtils.useImportAlertFlow(
+  const { mutate: importHandlerFlow, isPending: isImporting } =
+    eventDestinationsCollectionUtils.useImportHandlerFlow(
       (createdFlow) => {
         form.setValue('url', `${webhookPrefixUrl}/${createdFlow.id}`, {
           shouldValidate: true,
@@ -156,12 +156,12 @@ const EventDestinationForm = ({
       (error) => {
         toast.error(
           error.message ||
-            t('Failed to generate the alert flow. Please try again.'),
+            t('Failed to generate the handler flow. Please try again.'),
         );
       },
     );
 
-  const handleImportStarterFlow = () => {
+  const handleImportHandlerFlow = () => {
     const selectedEvents = form.getValues('events') ?? [];
     if (selectedEvents.length === 0) {
       form.setError('events', {
@@ -173,15 +173,15 @@ const EventDestinationForm = ({
       toast.error(t('Webhook URL prefix is not configured.'));
       return;
     }
-    const template = customAlertsFlowBuilder.buildCustomAlertsTemplate({
+    const template = handlerFlowBuilder.buildHandlerFlowTemplate({
       events: selectedEvents.map((name) => ({
         name,
         label: eventLabels[name].label,
       })),
       labels: {
-        flowDisplayName: t('Custom alerts starter'),
+        flowDisplayName: t('Event handler starter'),
         flowDescription: t(
-          'Routes audit events from Custom Alerts into branches you can wire to Slack, Gmail, Teams, or any HTTP endpoint.',
+          'Routes audit events into branches you can wire to Slack, Gmail, Teams, or any HTTP endpoint.',
         ),
         webhookTriggerDisplayName: t('Catch Webhook'),
         eventTypeRouterDisplayName: t('Event type checker'),
@@ -190,7 +190,7 @@ const EventDestinationForm = ({
         otherwiseBranchName: t('Otherwise'),
       },
     });
-    importAlertFlow({ template, selectedEvents });
+    importHandlerFlow({ template, selectedEvents });
   };
 
   const availableEvents = Object.values(ApplicationEventName);
@@ -202,13 +202,13 @@ const EventDestinationForm = ({
   return (
     <>
       <DialogTitle>
-        {destination ? t('Edit custom alert') : t('New custom alert')}
+        {destination ? t('Edit Destination') : t('New Destination')}
       </DialogTitle>
       <DialogDescription>
         {destination
           ? t('Update the webhook endpoint and event subscriptions.')
           : t(
-              'Send audit events to a webhook. Use an internal flow to route them to your notification channels — Slack, Gmail, Microsoft Teams, or any HTTP endpoint.',
+              'Send audit events to a webhook. Use an internal flow to route them to your notification channels — Slack, Gmail, Microsoft Teams, or any other channel.',
             )}
       </DialogDescription>
       <Form {...form}>
@@ -283,12 +283,12 @@ const EventDestinationForm = ({
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={handleImportStarterFlow}
+                        onClick={handleImportHandlerFlow}
                         disabled={isImporting || isCreating}
                         loading={isImporting}
                       >
                         <Sparkles className="size-4" />
-                        {t('Generate alert flow')}
+                        {t('Generate handler flow')}
                       </Button>
                     </div>
                     <span className="text-xs text-muted-foreground">

@@ -20,11 +20,11 @@ const WEBHOOK_TRIGGER_NAME = 'catch_webhook';
 const EVENT_FIELD_PATH = "{{trigger['body']['action']}}";
 const STATUS_FIELD_PATH = "{{trigger['body']['data']['flowRun']['status']}}";
 
-export const customAlertsFlowBuilder = {
-  buildCustomAlertsTemplate: ({ events, labels }: BuildParams): Template => {
+export const handlerFlowBuilder = {
+  buildHandlerFlowTemplate: ({ events, labels }: BuildParams): Template => {
     if (events.length === 0) {
       throw new Error(
-        'At least one event is required to build a custom alerts flow.',
+        'At least one event is required to build a handler flow.',
       );
     }
 
@@ -86,7 +86,7 @@ export const customAlertsFlowBuilder = {
 
 function buildTopRouter(
   events: LabeledEvent[],
-  labels: CustomAlertsFlowLabels,
+  labels: HandlerFlowLabels,
 ): RouterAction {
   const lastUpdatedDate = new Date().toISOString();
   const branches: RouterBranches = events.map(({ name, label }) => ({
@@ -144,7 +144,7 @@ function buildFlowRunFinishedStatusRouter({
 }: {
   stepName: string;
   lastUpdatedDate: string;
-  labels: CustomAlertsFlowLabels;
+  labels: HandlerFlowLabels;
 }): RouterAction {
   return {
     name: stepName,
@@ -187,7 +187,7 @@ export type LabeledEvent = {
   label: string;
 };
 
-export type CustomAlertsFlowLabels = {
+export type HandlerFlowLabels = {
   flowDisplayName: string;
   flowDescription: string;
   webhookTriggerDisplayName: string;
@@ -199,5 +199,5 @@ export type CustomAlertsFlowLabels = {
 
 type BuildParams = {
   events: LabeledEvent[];
-  labels: CustomAlertsFlowLabels;
+  labels: HandlerFlowLabels;
 };

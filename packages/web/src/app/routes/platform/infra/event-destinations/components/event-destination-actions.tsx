@@ -48,11 +48,11 @@ const EventDestinationActions = ({
           </EventDestinationDialog>
 
           <ConfirmationDeleteDialog
-            title={t('Delete custom alert')}
+            title={t('Delete destination')}
             message={t(
-              'Deleting this custom alert will stop all event notifications to its webhook.',
+              'Deleting this destination will stop all event notifications to its webhook.',
             )}
-            entityName={t('custom alert')}
+            entityName={t('destination')}
             buttonText={t('Delete')}
             showToast
             mutationFn={async () => {
