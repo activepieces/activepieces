@@ -19,8 +19,9 @@ export type MarkdownProps = {
 function normalizeMarkdownSpacing(markdown: string): string {
   let text = markdown;
 
-  // Ensure headings have a newline before them (fixes "text.## Heading" streaming artifact)
-  text = text.replace(/([^\n])(#{1,6}\s)/g, '$1\n\n$2');
+  // Ensure headings have a blank line before them (fixes "text\n## Heading" streaming artifact).
+  // Uses multiline flag so ^ matches after every \n; only touches lines that start with #.
+  text = text.replace(/^(#{1,6}\s)/gm, '\n$1');
 
   // Ensure blank lines between non-empty content lines (except inside tables/code/lists)
   const lines = text.split('\n');
