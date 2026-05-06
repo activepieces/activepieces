@@ -77,6 +77,11 @@ export const createEventAction = createAction({
       description: 'Email address of the person booking the meeting.',
       required: true,
     }),
+    time_zone: Property.ShortText({
+      displayName: 'Time Zone',
+      description: "Attendee's local time zone in Olson format (e.g. America/New_York, Europe/London, Africa/Lagos).",
+      required: true,
+    }),
   },
   async run(context) {
     const response = await savvyCalApiCall<SavvyCalEvent>({
@@ -88,6 +93,7 @@ export const createEventAction = createAction({
         end_at: context.propsValue.end_at,
         display_name: context.propsValue.attendee_name,
         email: context.propsValue.attendee_email,
+        time_zone: context.propsValue.time_zone,
       },
     });
     return flattenEvent(response.body);

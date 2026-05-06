@@ -73,6 +73,8 @@
   "The End date and time of the meeting": "The End date and time of the meeting",
   "Full name of the person booking the meeting.": "Full name of the person booking the meeting.",
   "Email address of the person booking the meeting.": "Email address of the person booking the meeting.",
+  "Time Zone": "Time Zone",
+  "Attendee's local time zone in Olson format (e.g. America/New_York, Europe/London, Africa/Lagos).": "Attendee's local time zone in Olson format (e.g. America/New_York, Europe/London, Africa/Lagos).",
   "The email address of the attendee to search for.": "The email address of the attendee to search for.",
   "Only search events starting after this date. Use this to limit the search scope and improve performance.": "Only search events starting after this date. Use this to limit the search scope and improve performance.",
   "Only search events starting before this date.": "Only search events starting before this date.",
