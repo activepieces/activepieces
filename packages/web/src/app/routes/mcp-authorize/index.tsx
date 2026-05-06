@@ -26,7 +26,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 function McpAuthorizePage() {
   const [searchParams] = useSearchParams();
   const authRequestId = searchParams.get('authRequestId');
-  const clientName = decodeJwtClientName(authRequestId);
+  const { clientName, isPlatformScoped } = decodeJwtPayload(authRequestId);
   const [selectedProjectId, setSelectedProjectId] = useState<
     string | undefined
   >(undefined);
@@ -48,11 +48,11 @@ function McpAuthorizePage() {
         ...(searchValue && { displayName: searchValue }),
         ...(selectedTypes.length > 0 && { types: selectedTypes }),
       }),
-    enabled: isLoggedIn && !!authRequestId,
+    enabled: isLoggedIn && !!authRequestId && !isPlatformScoped,
   });
 
   const approveMutation = useMutation({
-    mutationFn: (body: { authRequestId: string; projectId: string }) =>
+    mutationFn: (body: { authRequestId: string; projectId?: string }) =>
       api.post<{ redirectUrl: string }>('/v1/mcp-oauth/approve', body),
     onSuccess: (data) => {
       window.location.href = data.redirectUrl;
@@ -79,10 +79,10 @@ function McpAuthorizePage() {
   }
 
   const handleAuthorize = () => {
-    if (!selectedProjectId) return;
+    if (!isPlatformScoped && !selectedProjectId) return;
     approveMutation.mutate({
       authRequestId,
-      projectId: selectedProjectId,
+      ...(selectedProjectId && { projectId: selectedProjectId }),
     });
   };
 
@@ -101,7 +101,9 @@ function McpAuthorizePage() {
                 <span className="font-medium text-foreground">
                   {clientName}
                 </span>{' '}
-                {t('is now connected to your project.')}
+                {isPlatformScoped
+                  ? t('is now connected to your platform.')
+                  : t('is now connected to your project.')}
               </CardDescription>
             </div>
             <Separator />
@@ -145,43 +147,45 @@ function McpAuthorizePage() {
 
           <Separator />
 
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">
-                {t('Select Project')}
-              </label>
-              <MultiSelectFilter
-                label={t('Type')}
-                icon={<FolderKanban className="size-4" />}
-                options={projectTypeOptions}
-                selectedValues={selectedTypes}
-                onChange={setSelectedTypes}
+          {!isPlatformScoped && (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">
+                  {t('Select Project')}
+                </label>
+                <MultiSelectFilter
+                  label={t('Type')}
+                  icon={<FolderKanban className="size-4" />}
+                  options={projectTypeOptions}
+                  selectedValues={selectedTypes}
+                  onChange={setSelectedTypes}
+                />
+              </div>
+              <SearchableSelect<string>
+                options={options}
+                onChange={(value) => setSelectedProjectId(value ?? undefined)}
+                value={selectedProjectId}
+                placeholder={t('Search projects...')}
+                disabled={projectsLoading}
+                loading={projectsLoading}
+                refreshOnSearch={debouncedSetSearchValue}
+                valuesRendering={(value) => {
+                  const project = projectsMap.get(String(value));
+                  if (!project) return null;
+                  return (
+                    <div className="flex w-full items-center justify-between gap-2">
+                      <span className="truncate">{project.displayName}</span>
+                      <Badge variant="outline" className="shrink-0 text-[10px]">
+                        {project.type === ProjectType.PERSONAL
+                          ? t('Personal')
+                          : t('Team')}
+                      </Badge>
+                    </div>
+                  );
+                }}
               />
             </div>
-            <SearchableSelect<string>
-              options={options}
-              onChange={(value) => setSelectedProjectId(value ?? undefined)}
-              value={selectedProjectId}
-              placeholder={t('Search projects...')}
-              disabled={projectsLoading}
-              loading={projectsLoading}
-              refreshOnSearch={debouncedSetSearchValue}
-              valuesRendering={(value) => {
-                const project = projectsMap.get(String(value));
-                if (!project) return null;
-                return (
-                  <div className="flex w-full items-center justify-between gap-2">
-                    <span className="truncate">{project.displayName}</span>
-                    <Badge variant="outline" className="shrink-0 text-[10px]">
-                      {project.type === ProjectType.PERSONAL
-                        ? t('Personal')
-                        : t('Team')}
-                    </Badge>
-                  </div>
-                );
-              }}
-            />
-          </div>
+          )}
 
           {approveMutation.isError && (
             <div className="rounded-md border border-destructive/50 bg-destructive-100 p-3 text-sm text-destructive">
@@ -202,7 +206,7 @@ function McpAuthorizePage() {
               type="button"
               className="flex-1"
               loading={approveMutation.isPending}
-              disabled={!selectedProjectId}
+              disabled={!isPlatformScoped && !selectedProjectId}
               onClick={handleAuthorize}
             >
               {t('Authorize')}
@@ -231,13 +235,22 @@ function PermissionItem({
   );
 }
 
-function decodeJwtClientName(token: string | null): string {
+function decodeJwtPayload(token: string | null): {
+  clientName: string;
+  isPlatformScoped: boolean;
+} {
   try {
-    if (!token) return t('Unknown app');
-    const payload = jwtDecode<{ clientName?: string }>(token);
-    return payload.clientName ?? t('Unknown app');
+    if (!token)
+      return { clientName: t('Unknown app'), isPlatformScoped: false };
+    const payload = jwtDecode<{ clientName?: string; resource?: string }>(
+      token,
+    );
+    const clientName = payload.clientName ?? t('Unknown app');
+    const isPlatformScoped =
+      payload.resource?.endsWith('/mcp/platform') ?? false;
+    return { clientName, isPlatformScoped };
   } catch {
-    return t('Unknown app');
+    return { clientName: t('Unknown app'), isPlatformScoped: false };
   }
 }
 
