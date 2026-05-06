@@ -117,7 +117,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             })
         }
         const destinations = await eventDestinationRepo().findBy(conditions)
-        const destinationsToDispatch = await skipDestinationsOnFlowCycle({
+        const destinationsToDispatch = await skipInternalDestinationsOnFlowCycle({
             destinations,
             event,
             platformId,
@@ -159,7 +159,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
 })
 
 
-const skipDestinationsOnFlowCycle = async ({
+const skipInternalDestinationsOnFlowCycle = async ({
     destinations,
     event,
     platformId,
@@ -172,23 +172,29 @@ const skipDestinationsOnFlowCycle = async ({
         path: 'v1/webhooks',
         platformId,
     })
-    const destinationFlowIds = new Set(
-        destinations
-            .map((destination) => extractFlowIdFromWebhookUrl({
-                destinationUrl: destination.url,
-                webhookUrlPrefix,
-            }))
+    const destinationsWithFlowIds = destinations.map((destination) => ({
+        destination,
+        flowId: extractFlowIdFromWebhookUrl({
+            destinationUrl: destination.url,
+            webhookUrlPrefix,
+        }),
+    }))
+    const internalFlowIds = new Set(
+        destinationsWithFlowIds
+            .map(({ flowId }) => flowId)
             .filter((flowId): flowId is string => !isNil(flowId)),
     )
     const eventFlowId = event.data.flowRun.flowId
-    if (!destinationFlowIds.has(eventFlowId)) {
+    if (!internalFlowIds.has(eventFlowId)) {
         return destinations
     }
     log.warn({
         flowId: eventFlowId,
         action: event.action,
-    }, '[eventDestinationService#trigger] Skipping all destinations: source flow is itself a webhook target in this destination list, which would cycle')
-    return []
+    }, '[eventDestinationService#trigger] Source flow is wired as an internal webhook target; dropping internal destinations to break the cycle, external destinations will still fire')
+    return destinationsWithFlowIds
+        .filter(({ flowId }) => isNil(flowId))
+        .map(({ destination }) => destination)
 }
 
 const isFlowRunEvent = (

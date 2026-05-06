@@ -294,6 +294,77 @@ describe('Event Destination Trigger', () => {
         )
     })
 
+    it('should drop both internal destinations when two flows are mutually wired (A↔B cycle), and still fire externals', async () => {
+        const ctx = await createTestContext(app)
+        const flowAId = apId()
+        const flowBId = apId()
+        const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
+            path: 'v1/webhooks',
+            platformId: ctx.platform.id,
+        })
+        const internalDestinationA = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_RUN_FINISHED],
+            scope: EventDestinationScope.PLATFORM,
+            url: `${webhookUrlPrefix}/${flowAId}`,
+        })
+        const internalDestinationB = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_RUN_FINISHED],
+            scope: EventDestinationScope.PLATFORM,
+            url: `${webhookUrlPrefix}/${flowBId}`,
+        })
+        const externalDestination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_RUN_FINISHED],
+            scope: EventDestinationScope.PLATFORM,
+            url: 'https://hooks.slack.example.com/services/abc',
+        })
+        await db.save('event_destination', [internalDestinationA, internalDestinationB, externalDestination])
+
+        await eventDestinationService(app.log).trigger({
+            platformId: ctx.platform.id,
+            event: buildFlowRunEvent({ platformId: ctx.platform.id, flowId: flowAId }),
+        })
+
+        expect(addSpy).toHaveBeenCalledTimes(1)
+        expect(addSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({ webhookUrl: externalDestination.url }),
+            }),
+        )
+    })
+
+    it('should not fire any destination when an A↔B cycle has no external destinations', async () => {
+        const ctx = await createTestContext(app)
+        const flowAId = apId()
+        const flowBId = apId()
+        const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
+            path: 'v1/webhooks',
+            platformId: ctx.platform.id,
+        })
+        const internalDestinationA = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_RUN_FINISHED],
+            scope: EventDestinationScope.PLATFORM,
+            url: `${webhookUrlPrefix}/${flowAId}`,
+        })
+        const internalDestinationB = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_RUN_FINISHED],
+            scope: EventDestinationScope.PLATFORM,
+            url: `${webhookUrlPrefix}/${flowBId}`,
+        })
+        await db.save('event_destination', [internalDestinationA, internalDestinationB])
+
+        await eventDestinationService(app.log).trigger({
+            platformId: ctx.platform.id,
+            event: buildFlowRunEvent({ platformId: ctx.platform.id, flowId: flowAId }),
+        })
+
+        expect(addSpy).not.toHaveBeenCalled()
+    })
+
     it('should dispatch FLOW_RUN_FINISHED to a PROJECT scope destination matching the project', async () => {
         const ctx = await createTestContext(app)
         const destination = createMockEventDestination({
