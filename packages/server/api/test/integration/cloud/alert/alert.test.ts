@@ -49,6 +49,26 @@ describe('Alert API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
         })
+
+        it('should fail if alert with same receiver already exists, ignoring casing', async () => {
+            const ctx = await createTestContext(app!)
+
+            const mockReceiver = faker.internet.email()
+
+            await ctx.post('/v1/alerts', {
+                projectId: ctx.project.id,
+                channel: AlertChannel.EMAIL,
+                receiver: mockReceiver.toLowerCase(),
+            })
+
+            const response = await ctx.post('/v1/alerts', {
+                projectId: ctx.project.id,
+                channel: AlertChannel.EMAIL,
+                receiver: mockReceiver.toUpperCase(),
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        })
     })
 
     describe('List Alerts endpoint', () => {
@@ -69,7 +89,7 @@ describe('Alert API', () => {
             const responseBody = response?.json()
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody.data).toHaveLength(1)
-            expect(responseBody.data[0].receiver).toBe(mockReceiver)
+            expect(responseBody.data[0].receiver).toBe(mockReceiver.toLowerCase())
             expect(responseBody.data[0].channel).toBe(AlertChannel.EMAIL)
             expect(responseBody.data[0].projectId).toBe(ctx.project.id)
         })

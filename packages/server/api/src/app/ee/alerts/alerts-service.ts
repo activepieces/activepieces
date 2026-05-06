@@ -64,11 +64,12 @@ export const alertsService = (log: FastifyBaseLogger) => ({
         await sendAlertOnFlowFailure(log, alertsInfo)
     },
     async add({ projectId, channel, receiver }: AddPrams): Promise<void> {
+        const normalizedReceiver = receiver.toLowerCase()
         const project = await projectService(log).getOneOrThrow(projectId)
         if (project.type === ProjectType.PERSONAL) {
             const owner = await userService(log).getOneOrFail({ id: project.ownerId })
             const identity = await userIdentityService(log).getOneOrFail({ id: owner.identityId })
-            if (identity.email.toLowerCase() !== receiver.toLowerCase()) {
+            if (identity.email.toLowerCase() !== normalizedReceiver) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
                     params: {
@@ -78,16 +79,17 @@ export const alertsService = (log: FastifyBaseLogger) => ({
             }
         }
         const alertId = apId()
-        const existingAlert = await repo().findOneBy({
-            projectId,
-            receiver,
-        })
+        const existingAlert = await repo()
+            .createQueryBuilder('alert')
+            .where('alert."projectId" = :projectId', { projectId })
+            .andWhere('LOWER(alert.receiver) = :receiver', { receiver: normalizedReceiver })
+            .getOne()
 
         if (existingAlert) {
             throw new ActivepiecesError({
                 code: ErrorCode.EXISTING_ALERT_CHANNEL,
                 params: {
-                    email: receiver,
+                    email: normalizedReceiver,
                 },
             })
         }
@@ -99,7 +101,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
                 id: alertId,
                 channel,
                 projectId,
-                receiver,
+                receiver: normalizedReceiver,
                 created: dayjs().toISOString(),
             })
             .execute()
