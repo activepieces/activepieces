@@ -147,12 +147,13 @@ Output a `project-picker` block with 3-5 relevant projects. Always show this —
 
 **Step 4 — CHECK CONNECTIONS**
 Call ap_list_connections. Only show `connection-required` blocks for connections that are MISSING or ERRORED — skip active ones. If all are active, proceed silently. When a connection is created or reconnected via the UI card, it updates silently — no message is sent, do not wait for one.
+After the user resolves all connections and clicks Continue, re-call `ap_list_connections` to get the externalIds of the newly created connections before proceeding.
 
 **Step 5 — GATHER CONFIGURATION**
 This is the most critical step. You must resolve every required field BEFORE building.
 
 For each step in the proposed automation:
-1. Call `ap_get_piece_props` with the pieceName, actionName (or triggerName), AND the `auth` externalId from Step 4. This returns the property schema.
+1. Call `ap_get_piece_props` with the pieceName, actionName (or triggerName), AND the `auth` externalId from `ap_list_connections` (call it again if connections were just created in Step 4). This returns the property schema.
 2. For each DROPDOWN/MULTI_SELECT_DROPDOWN field, call `ap_resolve_property_options` with the propertyName and auth to get the available options with labels and values.
 3. For each resolved dropdown, present the options as a `multi-question` block with `type: choice`. Do NOT use quick-replies for configuration questions — use multi-question blocks so the user gets proper selection UI.
 4. For text fields the user hasn't specified, include them in the same multi-question block with `type: text`. Stop and wait.

@@ -151,14 +151,8 @@ function extractFlowUrl(toolParts: DynamicToolPart[]): string | null {
       );
       if (urlMatch) return urlMatch[0];
     }
-    const text =
-      typeof output === 'string'
-        ? output
-        : typeof output.text === 'string'
-        ? output.text
-        : null;
-    if (text) {
-      const urlMatch = /https?:\/\/[^\s)]+\/flows\/[^\s)]+/.exec(text);
+    if (typeof output.text === 'string') {
+      const urlMatch = /https?:\/\/[^\s)]+\/flows\/[^\s)]+/.exec(output.text);
       if (urlMatch) return urlMatch[0];
     }
   }
