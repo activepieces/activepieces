@@ -1,5 +1,5 @@
 import { ConsumeJobRequest, ConsumeJobResponse, EngineResponseStatus, isNil, JobData, tryCatch } from '@activepieces/shared'
-import { UnrecoverableError, Worker as BullMQWorker, Job } from 'bullmq'
+import { Worker as BullMQWorker, Job, UnrecoverableError } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
@@ -187,11 +187,6 @@ async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jo
     return null
 }
 
-function isStalledJobError(error: unknown): boolean {
-    const msg = error instanceof Error ? error.message : String(error)
-    return msg.includes('Missing lock') || msg.includes('job stalled') || msg.includes('Cannot read properties of null (reading \'moveToFinishedArgs\')')
-}
-
 function buildFailedReason(errorMessage: string, logs?: string): string {
     if (!logs) return errorMessage
     return `${errorMessage}\n${logs}`
@@ -245,12 +240,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
             }
         })
         if (error) {
-            if (isStalledJobError(error)) {
-                log.warn({ jobId: input.jobId, error: String(error), originalError: input.errorMessage }, '[jobBroker] Stalled job error during completeJob')
-            }
-            else {
-                log.error({ jobId: input.jobId, error: String(error), originalError: input.errorMessage }, '[jobBroker] Failed to move job to final state')
-            }
+            log.error({ jobId: input.jobId, error: String(error), originalError: input.errorMessage }, '[jobBroker] Failed to move job to final state — leaving for stalled-scan recovery')
             if (userJobData) {
                 await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
                     status: EngineResponseStatus.INTERNAL_ERROR,
