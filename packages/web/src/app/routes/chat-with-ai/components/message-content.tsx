@@ -49,12 +49,14 @@ export function MessageContentWithAuth({
   selectedProjectId,
   projects,
   onSelectProject,
+  isLastMessage = false,
 }: {
   content: string;
   onSend?: (text: string) => void;
   selectedProjectId?: string | null;
   projects?: Project[];
   onSelectProject?: (projectId: string) => void;
+  isLastMessage?: boolean;
 }) {
   const hasAuthUrl = AUTH_URL_PATTERN.test(content);
 
@@ -108,6 +110,7 @@ export function MessageContentWithAuth({
         <ConnectionPickerCard
           picker={connectionPicker}
           onSelect={(text) => onSend?.(text)}
+          isInteractive={isLastMessage}
         />
       )}
       {proposal && (
