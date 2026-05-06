@@ -27,7 +27,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
         const strategy = FlowRetryStrategy.FROM_FAILED_STEP
 
         let query = flowRunRepo().createQueryBuilder('flow_run').where({
-            id: In(runIds ?? [])
+            id: In(runIds ?? []),
         })
         if (!createdBefore) {
             query = query.andWhere('flow_run.created <= :createdBefore', {
