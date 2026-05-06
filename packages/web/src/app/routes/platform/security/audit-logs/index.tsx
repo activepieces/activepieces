@@ -351,6 +351,9 @@ function convertToIcon(event: ApplicationEvent) {
     case ApplicationEventName.FLOW_CREATED:
     case ApplicationEventName.FLOW_DELETED:
     case ApplicationEventName.FLOW_UPDATED:
+    case ApplicationEventName.FLOW_PUBLISHED:
+    case ApplicationEventName.FLOW_ACTIVATED:
+    case ApplicationEventName.FLOW_DEACTIVATED:
       return {
         icon: <Workflow className="size-4" />,
         tooltip: t('Flow'),
@@ -454,6 +457,9 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       return [];
     case ApplicationEventName.FLOW_DELETED:
     case ApplicationEventName.FLOW_UPDATED:
+    case ApplicationEventName.FLOW_PUBLISHED:
+    case ApplicationEventName.FLOW_ACTIVATED:
+    case ApplicationEventName.FLOW_DEACTIVATED:
       return [{ label: t('Flow'), value: event.data.flowVersion.displayName }];
     case ApplicationEventName.CONNECTION_UPSERTED:
     case ApplicationEventName.CONNECTION_DELETED: {
