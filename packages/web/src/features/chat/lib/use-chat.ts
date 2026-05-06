@@ -463,6 +463,13 @@ export function useAgentChat({
           setPendingMessages([]);
           return;
         }
+        const convId = conversationIdRef.current;
+        const projectId = selectedProjectIdRef.current;
+        if (convId && projectId) {
+          await tryCatch(() =>
+            chatApi.setProjectContext(convId, { projectId }),
+          );
+        }
         if (cancelledRef.current) {
           setPendingMessages([]);
           return;
