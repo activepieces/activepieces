@@ -127,6 +127,8 @@ function useLiveConnections({
       fullConnectionsRef.current = connMap;
       setStatuses(statusMap);
       setIsLoading(false);
+    }).catch(() => {
+      if (!cancelled) setIsLoading(false);
     });
 
     return () => {
