@@ -1,0 +1,11 @@
+{
+  "Access Chess.com player data": "Access Chess.com player data",
+  "Get Player Profile": "Get Player Profile",
+  "Get Player Stats": "Get Player Stats",
+  "Get Daily Puzzle": "Get Daily Puzzle",
+  "Retrieve a Chess.com player's public profile by username (avatar, country, join date, followers).": "Retrieve a Chess.com player's public profile by username (avatar, country, join date, followers).",
+  "Retrieve a Chess.com player's ratings and W/D/L for rapid, blitz, bullet, and chess960.": "Retrieve a Chess.com player's ratings and W/D/L for rapid, blitz, bullet, and chess960.",
+  "Retrieve today's Chess.com daily puzzle.": "Retrieve today's Chess.com daily puzzle.",
+  "Username": "Username",
+  "The Chess.com username to look up.": "The Chess.com username to look up."
+}

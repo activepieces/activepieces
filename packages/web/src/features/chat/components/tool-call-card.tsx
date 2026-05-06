@@ -10,54 +10,10 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { DynamicToolPart } from '@/features/chat/lib/chat-types';
-import { formatUtils } from '@/lib/format-utils';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { cn } from '@/lib/utils';
 
 type ToolStatus = 'running' | 'completed' | 'failed' | 'stopped';
-
-function humanizePieceName(raw: string): string {
-  return formatUtils.convertEnumToHumanReadable(
-    raw.replace(/^@activepieces\/piece-/, '').replace(/-/g, '_'),
-  );
-}
-
-export function extractToolContext({
-  input,
-}: {
-  input: Record<string, unknown> | undefined;
-}): string | null {
-  if (!input) return null;
-  const parts: string[] = [];
-
-  if (typeof input.pieceName === 'string') {
-    parts.push(humanizePieceName(input.pieceName));
-  }
-  if (typeof input.actionName === 'string' && input.actionName) {
-    parts.push(formatUtils.convertEnumToHumanReadable(input.actionName));
-  } else if (typeof input.displayName === 'string' && input.displayName) {
-    parts.push(input.displayName);
-  }
-  if (typeof input.triggerName === 'string' && input.triggerName) {
-    parts.push(formatUtils.convertEnumToHumanReadable(input.triggerName));
-  }
-  if (typeof input.flowId === 'string' && parts.length === 0) {
-    parts.push(input.flowId.slice(0, 8));
-  }
-  if (typeof input.query === 'string' && parts.length === 0) {
-    parts.push(
-      `"${input.query.slice(0, 30)}${input.query.length > 30 ? '…' : ''}"`,
-    );
-  }
-  if (
-    isObject(input.settings) &&
-    typeof input.settings.pieceName === 'string' &&
-    parts.length === 0
-  ) {
-    parts.push(humanizePieceName(input.settings.pieceName));
-  }
-
-  return parts.length > 0 ? parts.join(' ') : null;
-}
 
 function deriveStatus(part: DynamicToolPart): ToolStatus {
   if (part.state === 'output-available') return 'completed';
@@ -76,20 +32,6 @@ function extractOutput(part: DynamicToolPart): string | undefined {
     return part.errorText;
   }
   return undefined;
-}
-
-function formatToolLabel({ part }: { part: DynamicToolPart }): string {
-  const raw = part.title ?? part.toolName;
-  const mcpMatch = /^mcp__[^_]+__(.+)$/.exec(raw);
-  const name = mcpMatch ? mcpMatch[1] : raw;
-  const baseName = formatUtils.convertEnumToHumanReadable(
-    name.replace(/^ap_/, ''),
-  );
-
-  const input = isObject(part.input) ? part.input : undefined;
-  const context = extractToolContext({ input });
-  if (!context) return baseName;
-  return `${baseName} — ${context}`;
 }
 
 function StatusIcon({ status }: { status: ToolStatus }) {
@@ -122,7 +64,7 @@ export function ToolCallCard({ toolPart }: { toolPart: DynamicToolPart }) {
   const status = deriveStatus(toolPart);
   const output = extractOutput(toolPart);
   const input = isObject(toolPart.input) ? toolPart.input : undefined;
-  const displayName = formatToolLabel({ part: toolPart });
+  const displayName = chatUtils.formatToolLabel({ part: toolPart });
   const hasInput = input && Object.keys(input).length > 0;
   const hasOutput = Boolean(output);
   const hasContent = hasInput || hasOutput;

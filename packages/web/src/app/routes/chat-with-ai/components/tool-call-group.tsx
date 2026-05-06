@@ -8,11 +8,9 @@ import {
   ChainOfThoughtStep,
   ChainOfThoughtTrigger,
 } from '@/components/prompt-kit/chain-of-thought';
-import {
-  extractToolContext,
-  ToolCallCard,
-} from '@/features/chat/components/tool-call-card';
+import { ToolCallCard } from '@/features/chat/components/tool-call-card';
 import { ChatUIMessage, DynamicToolPart } from '@/features/chat/lib/chat-types';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 
 const PENDING_STATES = new Set([
   'input-streaming',
@@ -131,7 +129,7 @@ function describeToolParts(parts: DynamicToolPart[]): string {
 
   for (const part of parts) {
     const name = (part.title ?? part.toolName).toLowerCase();
-    const ctx = extractToolContext({
+    const ctx = chatUtils.extractToolContext({
       input: isObject(part.input) ? part.input : undefined,
     });
     if (ctx && !contexts.includes(ctx)) contexts.push(ctx);
