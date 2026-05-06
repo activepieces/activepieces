@@ -32,6 +32,12 @@ type ArrayField = {
 
 const getDefaultValuesForInputs = (arrayProperties: ArraySubProps<boolean>) => {
   return Object.entries(arrayProperties).reduce((acc, [key, value]) => {
+    if (value.defaultValue !== undefined) {
+      return {
+        ...acc,
+        [key]: value.defaultValue,
+      };
+    }
     switch (value.type) {
       case PropertyType.LONG_TEXT:
       case PropertyType.SHORT_TEXT:
@@ -51,10 +57,6 @@ const getDefaultValuesForInputs = (arrayProperties: ArraySubProps<boolean>) => {
       case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
       case PropertyType.MULTI_SELECT_DROPDOWN:
       case PropertyType.DATE_TIME:
-        return {
-          ...acc,
-          [key]: null,
-        };
       case PropertyType.FILE:
         return {
           ...acc,
