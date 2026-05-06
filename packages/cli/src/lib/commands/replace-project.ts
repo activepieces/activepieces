@@ -26,10 +26,10 @@ const EXIT_TRANSPORT = 4;
 export const replaceProjectCommand = new Command('replace')
     .description(REPLACE_DOC)
     .requiredOption('--source-url <url>', 'Source Activepieces base URL')
-    .requiredOption('--source-token <token>', 'Source platform API token')
+    .option('--source-token <token>', 'Source platform API token (or set AP_SOURCE_TOKEN env var; env recommended for CI)')
     .requiredOption('--source-project <projectId>', 'Source project id')
     .requiredOption('--dest-url <url>', 'Destination Activepieces base URL')
-    .requiredOption('--dest-token <token>', 'Destination platform API token')
+    .option('--dest-token <token>', 'Destination platform API token (or set AP_DEST_TOKEN env var; env recommended for CI)')
     .requiredOption('--dest-project <projectId>', 'Destination project id')
     .option('--json', 'Emit machine-readable JSON output')
     .action(async (opts) => {
@@ -55,21 +55,32 @@ export const replaceProjectCommand = new Command('replace')
 
 function normalizeOptions(opts: Record<string, string | boolean | undefined>): ReplaceConfig {
     return {
-        sourceUrl: stripTrailingSlash(stringOpt(opts.sourceUrl)),
-        sourceToken: stringOpt(opts.sourceToken),
-        sourceProjectId: stringOpt(opts.sourceProject),
-        destUrl: stripTrailingSlash(stringOpt(opts.destUrl)),
-        destToken: stringOpt(opts.destToken),
-        destProjectId: stringOpt(opts.destProject),
+        sourceUrl: stripTrailingSlash(stringOpt(opts.sourceUrl, 'source-url')),
+        sourceToken: tokenOpt(opts.sourceToken, 'AP_SOURCE_TOKEN', 'source-token'),
+        sourceProjectId: stringOpt(opts.sourceProject, 'source-project'),
+        destUrl: stripTrailingSlash(stringOpt(opts.destUrl, 'dest-url')),
+        destToken: tokenOpt(opts.destToken, 'AP_DEST_TOKEN', 'dest-token'),
+        destProjectId: stringOpt(opts.destProject, 'dest-project'),
         json: opts.json === true,
     };
 }
 
-function stringOpt(value: string | boolean | undefined): string {
+function stringOpt(value: string | boolean | undefined, name: string): string {
     if (typeof value !== 'string') {
-        throw new Error('Missing required option');
+        throw new Error(`Missing required option --${name}`);
     }
     return value;
+}
+
+function tokenOpt(value: string | boolean | undefined, envName: string, flagName: string): string {
+    if (typeof value === 'string' && value.length > 0) {
+        return value;
+    }
+    const fromEnv = process.env[envName];
+    if (typeof fromEnv === 'string' && fromEnv.length > 0) {
+        return fromEnv;
+    }
+    throw new Error(`Missing API token: pass --${flagName} <token> or set ${envName} environment variable. ${envName} is recommended for CI to keep tokens out of process arguments and shell history.`);
 }
 
 function stripTrailingSlash(url: string): string {

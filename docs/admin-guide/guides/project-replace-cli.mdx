@@ -38,12 +38,14 @@ The `activepieces` CLI is shipped with each Activepieces release; pin the versio
 ## Command
 
 ```bash
+# tokens via env vars (recommended for CI — keeps secrets out of process args and shell history)
+export AP_SOURCE_TOKEN="$STAGING_API_TOKEN"
+export AP_DEST_TOKEN="$PROD_API_TOKEN"
+
 ap project replace \
   --source-url    https://staging.activepieces.com \
-  --source-token  "$STAGING_API_TOKEN" \
   --source-project "$STAGING_PROJECT_ID" \
   --dest-url      https://prod.activepieces.com \
-  --dest-token    "$PROD_API_TOKEN" \
   --dest-project  "$PROD_PROJECT_ID" \
   [--json]
 ```
@@ -53,14 +55,16 @@ ap project replace \
 | Flag | Required | Purpose |
 | --- | --- | --- |
 | `--source-url` | yes | Base URL of the source instance (no trailing slash needed). |
-| `--source-token` | yes | Platform API token for the source. |
+| `--source-token` | flag *or* env | Platform API token for the source. Falls back to `AP_SOURCE_TOKEN`. |
 | `--source-project` | yes | Project id on the source instance. |
 | `--dest-url` | yes | Base URL of the destination instance. |
-| `--dest-token` | yes | Platform API token for the destination. |
+| `--dest-token` | flag *or* env | Platform API token for the destination. Falls back to `AP_DEST_TOKEN`. |
 | `--dest-project` | yes | Project id on the destination instance. |
 | `--json` | no | Emit machine-readable JSON instead of a human summary. |
 
-There is no config file and no environment-variable resolution — every flag must be passed per call.
+<Warning>
+**Don't pass tokens via `--source-token` / `--dest-token` flags in CI or production scripts.** Process arguments are visible to other users on the host (`ps aux`), get captured in CI log output, and persist in shell history. Use `AP_SOURCE_TOKEN` / `AP_DEST_TOKEN` environment variables instead — they don't show up in any of those places.
+</Warning>
 
 ## Exit codes
 
@@ -190,12 +194,13 @@ jobs:
       - run: |
           ap project replace \
             --source-url   "${{ vars.STAGING_URL }}" \
-            --source-token "${{ secrets.STAGING_API_TOKEN }}" \
             --source-project "${{ vars.STAGING_PROJECT_ID }}" \
             --dest-url     "${{ vars.PROD_URL }}" \
-            --dest-token   "${{ secrets.PROD_API_TOKEN }}" \
             --dest-project "${{ vars.PROD_PROJECT_ID }}" \
             --json
+        env:
+          AP_SOURCE_TOKEN: ${{ secrets.STAGING_API_TOKEN }}
+          AP_DEST_TOKEN: ${{ secrets.PROD_API_TOKEN }}
 ```
 
 A non-zero exit code fails the job — preflight errors, server errors, or transport errors all surface naturally to GitHub Actions without extra wiring.
