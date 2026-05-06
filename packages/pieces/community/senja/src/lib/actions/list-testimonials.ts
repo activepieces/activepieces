@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
-import { senjaApiCall, INTEGRATION_OPTIONS } from '../common';
+import { senjaApiCall, INTEGRATION_OPTIONS, mapTestimonial } from '../common';
 
 export const listTestimonialsAction = createAction({
   auth: senjaAuth,
@@ -9,6 +9,12 @@ export const listTestimonialsAction = createAction({
   displayName: 'List Testimonials',
   description: 'Retrieve all testimonials from your Senja project.',
   props: {
+    query: Property.ShortText({
+      displayName: 'Search',
+      description:
+        'Full-text search across testimonial text, title, customer name, customer email, and customer tagline.',
+      required: false,
+    }),
     sort: Property.StaticDropdown({
       displayName: 'Sort By',
       description: 'Field used to sort the results.',
@@ -96,6 +102,7 @@ export const listTestimonialsAction = createAction({
   },
   async run(context) {
     const {
+      query,
       sort,
       order,
       approved,
@@ -109,6 +116,7 @@ export const listTestimonialsAction = createAction({
     } = context.propsValue;
 
     const queryParams: Record<string, string> = {};
+    if (query) queryParams['query'] = query;
     if (sort) queryParams['sort'] = sort;
     if (order) queryParams['order'] = order;
     if (approved !== undefined && approved !== null)
@@ -139,31 +147,6 @@ export const listTestimonialsAction = createAction({
 
     const testimonials = response.body.testimonials ?? [];
 
-    return testimonials.map((t) => ({
-      id: t['id'] ?? null,
-      type: t['type'] ?? null,
-      title: t['title'] ?? null,
-      text: t['text'] ?? null,
-      rating: t['rating'] ?? null,
-      url: t['url'] ?? null,
-      date: t['date'] ?? null,
-      approved: t['approved'] ?? null,
-      integration: t['integration'] ?? null,
-      tags: (t['tags'] as string[]) ?? [],
-      lang: t['lang'] ?? null,
-      video_url: t['video_url'] ?? null,
-      thumbnail_url: t['thumbnail_url'] ?? null,
-      form_id: t['form_id'] ?? null,
-      customer_name: t['customer_name'] ?? null,
-      customer_email: t['customer_email'] ?? null,
-      customer_company: t['customer_company'] ?? null,
-      customer_tagline: t['customer_tagline'] ?? null,
-      customer_username: t['customer_username'] ?? null,
-      customer_url: t['customer_url'] ?? null,
-      customer_avatar: t['customer_avatar'] ?? null,
-      customer_company_logo: t['customer_company_logo'] ?? null,
-      created_at: t['created_at'] ?? null,
-      updated_at: t['updated_at'] ?? null,
-    }));
+    return testimonials.map((t) => mapTestimonial({ testimonial: t }));
   },
 });

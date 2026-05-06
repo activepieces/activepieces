@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
-import { senjaApiCall, INTEGRATION_OPTIONS } from '../common';
+import { senjaApiCall, INTEGRATION_OPTIONS, mapTestimonial } from '../common';
 
 export const createTestimonialAction = createAction({
   auth: senjaAuth,
@@ -128,6 +128,12 @@ export const createTestimonialAction = createAction({
       description: 'ID of the Senja form to associate this testimonial with.',
       required: false,
     }),
+    media: Property.Array({
+      displayName: 'Media (Images)',
+      description:
+        'List of image URLs to attach to this testimonial. Each entry must be a JSON object with a "url" field and optionally "alt" text, e.g. {"url": "https://...", "alt": "description"}.',
+      required: false,
+    }),
   },
   async run(context) {
     const {
@@ -151,6 +157,7 @@ export const createTestimonialAction = createAction({
       tags,
       thumbnail_url,
       form_id,
+      media,
     } = context.propsValue;
 
     const body: Record<string, unknown> = {
@@ -178,6 +185,14 @@ export const createTestimonialAction = createAction({
     if (tags && Array.isArray(tags) && tags.length > 0) body['tags'] = tags;
     if (thumbnail_url) body['thumbnail_url'] = thumbnail_url;
     if (form_id) body['form_id'] = form_id;
+    if (media && Array.isArray(media) && media.length > 0) {
+      body['media'] = media.map((item) => {
+        if (typeof item === 'string') {
+          try { return JSON.parse(item); } catch { return { url: item }; }
+        }
+        return item;
+      });
+    }
 
     const response = await senjaApiCall<Record<string, unknown>>({
       token: context.auth.secret_text,
@@ -186,32 +201,6 @@ export const createTestimonialAction = createAction({
       body,
     });
 
-    const t = response.body;
-    return {
-      id: t['id'] ?? null,
-      type: t['type'] ?? null,
-      title: t['title'] ?? null,
-      text: t['text'] ?? null,
-      rating: t['rating'] ?? null,
-      url: t['url'] ?? null,
-      date: t['date'] ?? null,
-      approved: t['approved'] ?? null,
-      integration: t['integration'] ?? null,
-      tags: (t['tags'] as string[]) ?? [],
-      lang: t['lang'] ?? null,
-      video_url: t['video_url'] ?? null,
-      thumbnail_url: t['thumbnail_url'] ?? null,
-      form_id: t['form_id'] ?? null,
-      customer_name: t['customer_name'] ?? null,
-      customer_email: t['customer_email'] ?? null,
-      customer_company: t['customer_company'] ?? null,
-      customer_tagline: t['customer_tagline'] ?? null,
-      customer_username: t['customer_username'] ?? null,
-      customer_url: t['customer_url'] ?? null,
-      customer_avatar: t['customer_avatar'] ?? null,
-      customer_company_logo: t['customer_company_logo'] ?? null,
-      created_at: t['created_at'] ?? null,
-      updated_at: t['updated_at'] ?? null,
-    };
+    return mapTestimonial({ testimonial: response.body });
   },
 });
