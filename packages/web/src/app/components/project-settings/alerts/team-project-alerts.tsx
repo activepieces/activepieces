@@ -21,7 +21,7 @@ import {
 import { alertMutations, alertQueries } from '@/features/alerts';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
-import { AddAlertEmailDialog } from './add-alert-email-dialog';
+import { AddAlertEmailForm } from './add-alert-email-form';
 
 export const TeamProjectAlerts = () => {
   const { checkAccess } = useAuthorization();
@@ -100,7 +100,7 @@ export const TeamProjectAlerts = () => {
           </ItemGroup>
         )}
       </div>
-      <AddAlertEmailDialog />
+      <AddAlertEmailForm />
     </>
   );
 };

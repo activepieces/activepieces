@@ -31,7 +31,7 @@ import {
   EditProjectDialog,
   projectCollectionUtils,
 } from '@/features/projects';
-import { MyAlertSubscriptionsDropdown } from '@/features/projects/components/my-alert-subscriptions-dropdown';
+import { PlatformAdminProjectAlertSubscriptionDropdown } from '@/features/projects/components/platform-admin-project-alert-subscription-dropdown';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
 import { validationUtils } from '@/lib/validation-utils';
@@ -203,7 +203,9 @@ export default function ProjectsPage() {
                   ? t(
                       'Cannot delete active project, switch to another project first',
                     )
-                  : t('Personal projects cannot be deleted')}
+                  : t(
+                      'Personal projects cannot be deleted, and you can’t subscribe to their alerts',
+                    )}
               </TooltipContent>
             )}
           </Tooltip>
@@ -275,7 +277,7 @@ export default function ProjectsPage() {
 
   const toolbarButtons = useMemo(
     () => [
-      <MyAlertSubscriptionsDropdown
+      <PlatformAdminProjectAlertSubscriptionDropdown
         key="my-alert-subscriptions"
         selectedProjects={selectedRows}
       />,
