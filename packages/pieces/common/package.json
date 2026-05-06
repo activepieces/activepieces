@@ -12,6 +12,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "axios": "1.15.0",
+    "file-type": "16.5.4",
     "axios-retry": "4.4.1",
     "form-data": "4.0.4",
     "http-proxy-agent": "7.0.2",

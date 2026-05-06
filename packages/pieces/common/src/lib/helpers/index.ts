@@ -430,3 +430,5 @@ const handleBinaryResponse = async (
 const isBinaryBody = (body: string | ArrayBuffer | Buffer) => {
   return body instanceof ArrayBuffer || Buffer.isBuffer(body);
 };
+
+export { convertBase64FieldsToUrls } from './base64-utils';

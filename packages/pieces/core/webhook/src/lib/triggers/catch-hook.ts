@@ -1,3 +1,4 @@
+import { convertBase64FieldsToUrls } from '@activepieces/pieces-common';
 import {
   createTrigger,
   DynamicPropsValue,
@@ -71,6 +72,20 @@ export const catchWebhook = createTrigger({
           { label: 'HMAC Signature', value: AuthType.HMAC },
         ],
       },
+    }),
+    convertBase64ToFiles: Property.Checkbox({
+      displayName: 'Auto-convert Base64 to File URLs',
+      description:
+        'When enabled, any base64-encoded string in the payload is decoded and stored as a file. The field value is replaced with a download URL.',
+      required: false,
+      defaultValue: false,
+    }),
+    excludeRawBody: Property.Checkbox({
+      displayName: 'Exclude Raw Body',
+      description:
+        'When enabled, the raw request body is removed from the trigger output. Use this to reduce execution log size when the payload contains large strings.',
+      required: false,
+      defaultValue: false,
     }),
     authFields: Property.DynamicProperties({
       auth: PieceAuth.None(),
@@ -197,7 +212,19 @@ export const catchWebhook = createTrigger({
     if (!verified) {
       return [];
     }
-    return [context.payload];
+    let payload = context.payload;
+
+    if (context.propsValue.convertBase64ToFiles) {
+      const convertedBody = await convertBase64FieldsToUrls(payload.body, context.files);
+      payload = { ...payload, body: convertedBody };
+    }
+
+    if (context.propsValue.excludeRawBody) {
+      const { rawBody: _rawBody, ...payloadWithoutRawBody } = payload;
+      return [payloadWithoutRawBody];
+    }
+
+    return [payload];
   },
 });
 
@@ -317,3 +344,4 @@ export function verifyHmacAuth(
     return false;
   }
 }
+
