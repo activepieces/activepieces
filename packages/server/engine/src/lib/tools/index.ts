@@ -33,6 +33,7 @@ export const agentTools = {
                         pieceVersion: tool.pieceMetadata.pieceVersion,
                         actionName: tool.pieceMetadata.actionName,
                         predefinedInput: tool.pieceMetadata.predefinedInput,
+                        parentFlowConstants: engineConstants,
                         model,
                     }),
             }
@@ -173,7 +174,7 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
         const output = await flowExecutor.getExecutorForAction(step.type).handle({
             action: step,
             executionState: FlowExecutorContext.empty(),
-            constants: EngineConstants.fromExecuteActionInput(operation),
+            constants: operation.parentFlowConstants ?? EngineConstants.fromExecuteActionInput(operation),
         })
         const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
         
@@ -244,6 +245,7 @@ ${propertyDetailsSection}
 
 type ExecuteToolOperationWithModel = ExecuteToolOperation & {
     model: LanguageModel
+    parentFlowConstants?: EngineConstants
 }
 
 async function propertyToSchema(propertyName: string, property: PieceProperty, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
