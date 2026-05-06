@@ -68,34 +68,7 @@ export const youtubeListPlaylistItemsAction = createAction({
       queryParams,
     });
 
-    const body = response.body;
-
-    const items = (body.items ?? []).map((item) => ({
-      id: item.id ?? null,
-      kind: item.kind ?? null,
-      etag: item.etag ?? null,
-      playlist_id: item.snippet?.playlistId ?? null,
-      position: item.snippet?.position ?? null,
-      published_at: item.snippet?.publishedAt ?? null,
-      title: item.snippet?.title ?? null,
-      description: item.snippet?.description ?? null,
-      channel_id: item.snippet?.channelId ?? null,
-      channel_title: item.snippet?.channelTitle ?? null,
-      video_id: item.snippet?.resourceId?.videoId ?? item.contentDetails?.videoId ?? null,
-      video_kind: item.snippet?.resourceId?.kind ?? null,
-      video_published_at: item.contentDetails?.videoPublishedAt ?? null,
-      video_owner_channel_id: item.snippet?.videoOwnerChannelId ?? null,
-      video_owner_channel_title: item.snippet?.videoOwnerChannelTitle ?? null,
-      privacy_status: item.status?.privacyStatus ?? null,
-    }));
-
-    return {
-      total_results: body.pageInfo?.totalResults ?? null,
-      results_per_page: body.pageInfo?.resultsPerPage ?? null,
-      next_page_token: body.nextPageToken ?? null,
-      prev_page_token: body.prevPageToken ?? null,
-      items,
-    };
+    return response.body;
   },
 });
 

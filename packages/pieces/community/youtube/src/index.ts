@@ -7,6 +7,9 @@ import { youtubeNewVideoTrigger } from './lib/triggers/new-video.trigger';
 import { youtubeAuth } from './lib/common/auth';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { youtubeListPlaylistItemsAction } from './lib/actions/list-playlist-items';
+import { youtubeSearchAction } from './lib/actions/search';
+import { youtubeListCaptionsAction } from './lib/actions/list-captions';
+import { youtubeDownloadCaptionAction } from './lib/actions/download-caption';
 
 export { youtubeAuth };
 
@@ -21,6 +24,9 @@ export const youtube = createPiece({
   auth: youtubeAuth,
   authors: ['abaza738', 'kishanprmr', 'khaledmashaly', 'abuaboud', 'hugh-codes'],
   actions: [
+    youtubeDownloadCaptionAction,
+    youtubeListCaptionsAction,
+    youtubeSearchAction,
     youtubeListPlaylistItemsAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://www.googleapis.com/youtube/v3',
