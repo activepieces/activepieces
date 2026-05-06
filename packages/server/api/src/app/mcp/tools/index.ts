@@ -29,6 +29,9 @@ import { apRenameFlowTool } from './ap-rename-flow'
 import { apRetryRunTool } from './ap-retry-run'
 import { apRunActionTool } from './ap-run-action'
 import { apSetupGuideTool } from './ap-setup-guide'
+import { apStoreDeleteTool } from './ap-store-delete'
+import { apStoreGetTool } from './ap-store-get'
+import { apStorePutTool } from './ap-store-put'
 import { apTestFlowTool } from './ap-test-flow'
 import { apTestStepTool } from './ap-test-step'
 import { apUpdateBranchTool } from './ap-update-branch'
@@ -78,6 +81,9 @@ export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = [
     'ap_insert_records',
     'ap_update_record',
     'ap_delete_records',
+    'ap_store_get',
+    'ap_store_put',
+    'ap_store_delete',
     'ap_test_flow',
     'ap_test_step',
     'ap_retry_run',
@@ -115,6 +121,9 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
     apInsertRecordsTool(mcp, log),
     apUpdateRecordTool(mcp, log),
     apDeleteRecordsTool(mcp, log),
+    apStoreGetTool(mcp, log),
+    apStorePutTool(mcp, log),
+    apStoreDeleteTool(mcp, log),
     apListRunsTool(mcp, log),
     apGetRunTool(mcp, log),
     apTestFlowTool(mcp, log),
