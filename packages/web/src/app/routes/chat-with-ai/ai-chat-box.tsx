@@ -1,8 +1,8 @@
-import { AIProviderName } from '@activepieces/shared';
+import { AIProviderName, ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   ChatContainerContent,
@@ -12,6 +12,7 @@ import {
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
+import { useToolApproval } from '@/features/chat/lib/use-tool-approval';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 
@@ -27,6 +28,7 @@ import { ChatModelSelector } from './components/chat-model-selector';
 import { ChatProjectSelector } from './components/chat-project-selector';
 import { QuickReplies } from './components/message-content';
 import { MultiQuestionForm } from './components/multi-question-form';
+import { ToolApprovalForm } from './components/tool-approval-form';
 import {
   getTextFromParts,
   parseMultiQuestion,
@@ -80,6 +82,7 @@ function ChatBoxContent({
     setConversationId,
     setModelName,
     setProjectContext,
+    pendingApprovalRequest,
   } = useAgentChat({ onTitleUpdate, onConversationCreated });
   const { data: allProjects } = projectCollectionUtils.useAll();
   const projects = allProjects ?? [];
@@ -94,6 +97,23 @@ function ChatBoxContent({
   const [dismissedFormIds, setDismissedFormIds] = useState<Set<string>>(
     new Set(),
   );
+
+  const didAutoSelectProjectRef = useRef(false);
+  useEffect(() => {
+    if (
+      didAutoSelectProjectRef.current ||
+      selectedProjectId !== null ||
+      initialConversationId
+    )
+      return;
+    const personalProject = projects.find(
+      (p) => p.type === ProjectType.PERSONAL,
+    );
+    if (personalProject) {
+      didAutoSelectProjectRef.current = true;
+      void setProjectContext(personalProject.id);
+    }
+  }, [projects, selectedProjectId, initialConversationId, setProjectContext]);
 
   useEffect(() => {
     if (initialConversationId) {
@@ -130,6 +150,16 @@ function ChatBoxContent({
     activeQuestions.length > 0 &&
     !!lastMessage &&
     !dismissedFormIds.has(lastMessage.id);
+
+  const {
+    hasActiveApproval,
+    approvalDisplayName,
+    approve,
+    approveAndRemember,
+    reject,
+    dismiss: dismissApproval,
+  } = useToolApproval({ pendingApprovalRequest });
+
   const isEmpty = messages.length === 0 && !isLoadingHistory && !isStreaming;
 
   if (isEmpty) {
@@ -243,7 +273,16 @@ function ChatBoxContent({
 
       <div className="px-6">
         <div className="max-w-3xl mx-auto">
-          {hasActiveForm ? (
+          {hasActiveApproval ? (
+            <ToolApprovalForm
+              key={pendingApprovalRequest?.gateId}
+              displayName={approvalDisplayName ?? ''}
+              onApprove={approve}
+              onApproveAndRemember={approveAndRemember}
+              onReject={reject}
+              onDismiss={dismissApproval}
+            />
+          ) : hasActiveForm ? (
             <MultiQuestionForm
               key={lastMessage?.id}
               questions={activeQuestions}
