@@ -84,6 +84,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.SHOW_CHAT,
+                value: system.getEdition() !== ApEdition.COMMUNITY,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.SHOW_PROJECT_MEMBERS,
                 value: system.getEdition() !== ApEdition.COMMUNITY,
                 created,
