@@ -222,6 +222,16 @@ async function checkConnections({ projectId, platformId, request, errors }: Chec
     }
 }
 
+// Apply phase intentionally does NOT wrap its writes in a single DB transaction.
+// Three reasons:
+//   1. The design supports partial success (HTTP 207 + failed[]). A single tx
+//      would roll back every successfully-applied folder/table/connection just
+//      because one flow's republish failed.
+//   2. republishFlow triggers BullMQ jobs and trigger-source registration —
+//      those can't sit inside a SQL transaction anyway.
+//   3. Recovery is by re-run: every op matches by externalId, so a crashed
+//      apply leaves dest in a state the next run's diff phase detects and
+//      finishes. CI/CD's natural retry covers process-level failures.
 async function applyReplace({ projectId, platformId, request, log }: ApplyParams): Promise<ProjectReplaceResponse> {
     const newState: ProjectState = {
         flows: request.flows,
