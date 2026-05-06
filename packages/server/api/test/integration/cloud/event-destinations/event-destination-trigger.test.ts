@@ -10,6 +10,7 @@ import {
 import { FastifyInstance } from 'fastify'
 import { domainHelper } from '../../../../src/app/ee/custom-domains/domain-helper'
 import { eventDestinationService } from '../../../../src/app/event-destinations/event-destinations.service'
+import { applicationEvents } from '../../../../src/app/helper/application-events'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
 import { createMockEventDestination } from '../../../helpers/mocks'
@@ -457,6 +458,60 @@ describe('Event Destination Trigger', () => {
                         platformId: ctx.platform.id,
                     }),
                 }),
+            }),
+        )
+    })
+
+    it('regression: ensure that we have setup the event streaming listeners', async () => {
+        const ctx = await createTestContext(app)
+        const workerDestination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_RUN_FINISHED],
+            scope: EventDestinationScope.PLATFORM,
+            url: 'https://example.com/worker-listener-regression',
+        })
+        const userDestination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+            url: 'https://example.com/user-listener-regression',
+        })
+        await db.save('event_destination', [workerDestination, userDestination])
+
+        applicationEvents(app.log).sendWorkerEvent(ctx.project.id, {
+            action: ApplicationEventName.FLOW_RUN_FINISHED,
+            data: {
+                flowRun: {
+                    id: apId(),
+                    environment: 'PRODUCTION',
+                    flowId: apId(),
+                    flowVersionId: apId(),
+                    status: 'SUCCEEDED',
+                },
+                project: { displayName: 'Test' },
+            },
+        })
+        applicationEvents(app.log).sendUserEvent({ platformId: ctx.platform.id }, {
+            action: ApplicationEventName.FLOW_CREATED,
+            data: {
+                flow: {
+                    id: apId(),
+                    created: new Date().toISOString(),
+                    updated: new Date().toISOString(),
+                },
+                project: { displayName: 'Test' },
+            },
+        })
+
+        await vi.waitFor(() => expect(addSpy).toHaveBeenCalledTimes(2), { timeout: 2000 })
+        expect(addSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({ webhookUrl: workerDestination.url }),
+            }),
+        )
+        expect(addSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({ webhookUrl: userDestination.url }),
             }),
         )
     })
