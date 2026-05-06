@@ -1,5 +1,5 @@
 import { apDayjsDuration, memoryLock } from '@activepieces/server-utils'
-import { ApId, EventDestinationJobData, ExecuteFlowJobData, getDefaultJobPriority, isNil, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { ApId, EventDestinationJobData, ExecuteFlowJobData, getDefaultJobPriority, isNil, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, tryCatch, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -84,6 +84,21 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
             jobId,
             queueName,
         }, '[jobQueue#removeOneTimeJob] job not found in queue')
+    },
+
+    async promoteJob({ jobId, platformId }: { jobId: ApId, platformId: string | null }): Promise<boolean> {
+        const queueName = await getQueueName(platformId, log)
+        const queue = await ensureQueueExists({ log, queueName })
+        const job = await queue.getJob(jobId)
+        if (isNil(job)) {
+            return false
+        }
+        const { error } = await tryCatch(() => job.promote())
+        if (error) {
+            log.debug({ jobId, queueName, error: String(error) }, '[jobQueue#promoteJob] promote failed (likely not in delayed state)')
+            return false
+        }
+        return true
     },
 
     async getOrCreateQueue({ queueName }: { queueName: string }): Promise<Queue> {
