@@ -91,6 +91,7 @@ export function ChatWithAIPage() {
       setIsRenaming(false);
       return;
     }
+    renameCancelledRef.current = true;
     try {
       await chatApi.updateConversation(convId, {
         title: renameValue.trim(),
@@ -102,6 +103,7 @@ export function ChatWithAIPage() {
     } catch {
       // keep existing title on failure
     } finally {
+      renameCancelledRef.current = false;
       setIsRenaming(false);
     }
   }, [selectedConversationId, pendingConversationId, renameValue, queryClient]);
@@ -127,12 +129,16 @@ export function ChatWithAIPage() {
 
   useEffect(() => {
     if (!selectedConversationId) return;
+    let cancelled = false;
     chatApi
       .getConversation(selectedConversationId)
       .then((conv) => {
-        setConversationTitle(conv.title ?? null);
+        if (!cancelled) setConversationTitle(conv.title ?? null);
       })
       .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
   }, [selectedConversationId]);
 
   useEffect(() => {
