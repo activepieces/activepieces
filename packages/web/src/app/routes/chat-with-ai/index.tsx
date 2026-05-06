@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ export function ChatWithAIPage() {
   );
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
+  const renameCancelledRef = useRef(false);
 
   const selectedConversationId = urlConversationId ?? null;
 
@@ -81,29 +82,42 @@ export function ChatWithAIPage() {
   );
 
   const handleRename = useCallback(async () => {
+    if (renameCancelledRef.current) {
+      renameCancelledRef.current = false;
+      return;
+    }
     const convId = selectedConversationId ?? pendingConversationId;
     if (!convId || !renameValue.trim()) {
       setIsRenaming(false);
       return;
     }
-    await chatApi.updateConversation(convId, {
-      title: renameValue.trim(),
-    });
-    setConversationTitle(renameValue.trim());
-    setIsRenaming(false);
-    void queryClient.invalidateQueries({
-      queryKey: ['chat-conversations'],
-    });
+    try {
+      await chatApi.updateConversation(convId, {
+        title: renameValue.trim(),
+      });
+      setConversationTitle(renameValue.trim());
+      void queryClient.invalidateQueries({
+        queryKey: ['chat-conversations'],
+      });
+    } catch {
+      // keep existing title on failure
+    } finally {
+      setIsRenaming(false);
+    }
   }, [selectedConversationId, pendingConversationId, renameValue, queryClient]);
 
   const handleDelete = useCallback(async () => {
     const convId = selectedConversationId ?? pendingConversationId;
     if (!convId) return;
-    await chatApi.deleteConversation(convId);
-    void queryClient.invalidateQueries({
-      queryKey: ['chat-conversations'],
-    });
-    handleNewChat();
+    try {
+      await chatApi.deleteConversation(convId);
+      void queryClient.invalidateQueries({
+        queryKey: ['chat-conversations'],
+      });
+      handleNewChat();
+    } catch {
+      // silently fail — conversation stays
+    }
   }, [
     selectedConversationId,
     pendingConversationId,
@@ -158,7 +172,10 @@ export function ChatWithAIPage() {
               onBlur={() => void handleRename()}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') void handleRename();
-                if (e.key === 'Escape') setIsRenaming(false);
+                if (e.key === 'Escape') {
+                  renameCancelledRef.current = true;
+                  setIsRenaming(false);
+                }
               }}
               className="h-7 text-sm font-semibold max-w-[300px]"
             />
