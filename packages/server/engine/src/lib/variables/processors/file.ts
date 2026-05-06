@@ -150,5 +150,4 @@ const MIME_EXTENSIONS: Record<string, string> = {
     'font/woff2': 'woff2',
     'font/ttf': 'ttf',
     'font/otf': 'otf',
-    'font/otf': 'otf',
 }
