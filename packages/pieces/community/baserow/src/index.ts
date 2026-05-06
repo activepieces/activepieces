@@ -51,17 +51,17 @@ export const baserow = createPiece({
   authors: ["kishanprmr", "MoShizzle", "abuaboud", 'bst1n', 'sanket-a11y', 'onyedikachi-david'],
   actions: [
     createRowAction,
-    deleteRowAction,
     getRowAction,
     listRowsAction,
-    updateRowAction,
     findRowAction,
+    updateRowAction,
+    upsertRowAction,
+    deleteRowAction,
     cleanRowAction,
-    aggregateFieldAction,
     batchCreateRowsAction,
     batchUpdateRowsAction,
     batchDeleteRowsAction,
-    upsertRowAction,
+    aggregateFieldAction,
     uploadFileAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
