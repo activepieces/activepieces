@@ -1,13 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
     AgentToolType,
+    DEFAULT_MCP_DATA,
     FlowVersionState,
     RunEnvironment,
     StepOutputStatus,
     StreamStepProgress,
 } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
-import { agentTools } from '../../src/lib/tools'
+import { agentTools, getToolExecutionConstants } from '../../src/lib/tools'
 
 const captured = vi.hoisted(() => ({
     constants: undefined as EngineConstants | undefined,
@@ -97,5 +98,27 @@ describe('agentTools', () => {
         expect(captured.constants?.flowRunId).toBe('flow-run-real')
         expect(captured.constants?.flowVersionId).toBe('flow-version-real')
         expect(captured.constants?.stepNames).toEqual(['trigger', 'agent'])
+    })
+
+    it('falls back to MCP constants when no parent flow constants are provided', () => {
+        const constants = getToolExecutionConstants({
+            actionName: 'test_action',
+            pieceName: '@activepieces/piece-test',
+            pieceVersion: '1.0.0',
+            instruction: 'run standalone',
+            projectId: 'project-id',
+            engineToken: 'engine-token',
+            internalApiUrl: 'http://server:3000',
+            publicApiUrl: 'https://app.example.com/api/',
+            timeoutInSeconds: 600,
+            platformId: 'platform-id',
+            model: {} as never,
+        })
+
+        expect(constants.flowId).toBe(DEFAULT_MCP_DATA.flowId)
+        expect(constants.flowRunId).toBe(DEFAULT_MCP_DATA.flowRunId)
+        expect(constants.flowVersionId).toBe(DEFAULT_MCP_DATA.flowVersionId)
+        expect(constants.stepNames).toEqual([])
+        expect(constants.internalApiUrl).toBe('http://server:3000/')
     })
 })
