@@ -72,6 +72,10 @@ The `run` function is the function that is called when the action is executed. I
 
 The `run` function utilizes the httpClient.sendRequest function to make a GET request, fetching a random ice cream flavor. It incorporates API key authentication in the request headers. Finally, it returns the response body.
 
+<Tip>
+If your action returns an object keyed by opaque IDs or slugs, you can add `__displayName` to each child object so the data selector shows a readable label instead of the raw key. See [Output Display Names](/build-pieces/piece-reference/output-display-names).
+</Tip>
+
 ## Expose The Definition
 
 To make the action readable by Activepieces, add it to the array of actions in the piece definition.

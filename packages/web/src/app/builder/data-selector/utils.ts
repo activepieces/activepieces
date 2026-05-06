@@ -20,6 +20,7 @@ type PathSegment = string | number;
 
 const MAX_CHUNK_LENGTH = 10;
 const JOINED_VALUES_MAX_LENGTH = 32;
+const OUTPUT_DISPLAY_NAME_KEY = '__displayName' as const;
 
 function buildTestStepNode(
   displayName: string,
@@ -199,6 +200,19 @@ function breakArrayIntoChunks<T>(
   );
 }
 
+function stripDisplayNameKey(keys: Record<string, Node>): Record<string, Node> {
+  const { [OUTPUT_DISPLAY_NAME_KEY]: _, ...rest } = keys;
+  return rest;
+}
+
+function getOutputDisplayName(value: unknown, fallback: string): string {
+  return isObject(value) &&
+    typeof value[OUTPUT_DISPLAY_NAME_KEY] === 'string' &&
+    value[OUTPUT_DISPLAY_NAME_KEY].length > 0
+    ? value[OUTPUT_DISPLAY_NAME_KEY]
+    : fallback;
+}
+
 function traverseOutput(
   displayName: string,
   propertyPath: PathSegment[],
@@ -209,15 +223,19 @@ function traverseOutput(
   if (Array.isArray(node)) {
     const isArrayOfObjects = node.some((value) => isObject(value));
     if (!zipArraysOfProperties || !isArrayOfObjects) {
-      const mentionNodes = node.map((value, idx) =>
-        traverseOutput(
+      const mentionNodes = node.map((value, idx) => {
+        const elementLabel = getOutputDisplayName(
+          value,
           `${displayName} [${idx + 1}]`,
+        );
+        return traverseOutput(
+          elementLabel,
           [...propertyPath, idx],
           value,
           zipArraysOfProperties,
           insertable,
-        ),
-      );
+        );
+      });
       const chunks = breakArrayIntoChunks(mentionNodes, MAX_CHUNK_LENGTH);
       const isSingleChunk = chunks.length === 1;
       if (isSingleChunk) {
@@ -246,32 +264,38 @@ function traverseOutput(
         displayName,
         propertyPath,
         node,
-        convertArrayToZippedView(extractUniqueKeys(node), propertyPath),
+        convertArrayToZippedView(
+          stripDisplayNameKey(extractUniqueKeys(node)),
+          propertyPath,
+        ),
         insertable,
       );
     }
   } else if (isObject(node)) {
-    const children = Object.entries(node).map(([key, value]) => {
-      if (zipArraysOfProperties) {
-        return buildDataSelectorNode(
-          key,
+    const children = Object.entries(node)
+      .filter(([key]) => key !== OUTPUT_DISPLAY_NAME_KEY)
+      .map(([key, value]) => {
+        const childDisplayName = getOutputDisplayName(value, key);
+        if (zipArraysOfProperties) {
+          return buildDataSelectorNode(
+            childDisplayName,
+            [...propertyPath, key],
+            value,
+            convertArrayToZippedView(
+              stripDisplayNameKey(extractUniqueKeys(value)),
+              [...propertyPath, key],
+            ),
+            insertable,
+          );
+        }
+        return traverseOutput(
+          childDisplayName,
           [...propertyPath, key],
           value,
-          convertArrayToZippedView(extractUniqueKeys(value), [
-            ...propertyPath,
-            key,
-          ]),
+          zipArraysOfProperties,
           insertable,
         );
-      }
-      return traverseOutput(
-        key,
-        [...propertyPath, key],
-        value,
-        zipArraysOfProperties,
-        insertable,
-      );
-    });
+      });
     return buildDataSelectorNode(
       displayName,
       propertyPath,

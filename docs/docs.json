@@ -282,6 +282,7 @@
                      "build-pieces/piece-reference/piece-versioning",
                      "build-pieces/piece-reference/examples",
                      "build-pieces/piece-reference/custom-api-calls",
+                     "build-pieces/piece-reference/output-display-names",
                      "build-pieces/piece-reference/i18n"
                   ]
                },
