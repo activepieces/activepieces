@@ -120,7 +120,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
         const issues = parseResult.error.issues.map(issue => `${issue.path.join('.') || '<root>'}: ${issue.message}`).join('; ')
         const reason = `Job data failed schema validation after migration: ${issues}`
         log.error(
-            { queueName, jobId, schemaVersion: migratedData.schemaVersion, jobType: (migratedData as Record<string, unknown>).jobType, issues: parseResult.error.issues },
+            { queueName, jobId, schemaVersion: migratedData.schemaVersion, jobType: migratedData.jobType, issues: parseResult.error.issues },
             '[jobBroker#tryDequeue] Failing job with invalid schema as unrecoverable',
         )
         const { error: failError } = await tryCatch(() => job.moveToFailed(new UnrecoverableError(reason), token, false))

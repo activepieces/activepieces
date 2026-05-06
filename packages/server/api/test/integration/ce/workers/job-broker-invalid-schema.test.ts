@@ -1,7 +1,10 @@
 import {
     apId,
     ExecuteFlowJobData,
+    ExecutionType,
     LATEST_JOB_DATA_SCHEMA_VERSION,
+    RunEnvironment,
+    StreamStepProgress,
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
@@ -41,9 +44,9 @@ describe('jobBroker.tryDequeue — invalid-schema poison handling', () => {
             flowId: apId(),
             flowVersionId: apId(),
             runId: apId(),
-            environment: 'PRODUCTION' as ExecuteFlowJobData['environment'],
-            executionType: 'BEGIN' as ExecuteFlowJobData['executionType'],
-            streamStepProgress: 'NONE' as ExecuteFlowJobData['streamStepProgress'],
+            environment: RunEnvironment.PRODUCTION,
+            executionType: ExecutionType.BEGIN,
+            streamStepProgress: StreamStepProgress.NONE,
             payload: { type: 'inline', value: null },
             logsFileId: apId(),
             logsUploadUrl: 'https://example.invalid/v1/flow-runs/logs?token=x',
