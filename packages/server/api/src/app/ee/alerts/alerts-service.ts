@@ -1,9 +1,10 @@
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { ActivepiecesError, Alert, AlertChannel, ApEdition, ApId, apId, ErrorCode, ListAlertsParams, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, Alert, AlertChannel, ApEdition, ApId, apId, ErrorCode, ListAlertsParams, ProjectType, SeekPage } from '@activepieces/shared'
 
 import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
 import { FastifyBaseLogger } from 'fastify'
+import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -11,6 +12,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
 import { domainHelper } from '../custom-domains/domain-helper'
 import { emailService } from '../helper/email/email-service'
 import { AlertEntity } from './alerts-entity'
@@ -62,17 +64,32 @@ export const alertsService = (log: FastifyBaseLogger) => ({
         await sendAlertOnFlowFailure(log, alertsInfo)
     },
     async add({ projectId, channel, receiver }: AddPrams): Promise<void> {
+        const normalizedReceiver = receiver.toLowerCase()
+        const project = await projectService(log).getOneOrThrow(projectId)
+        if (project.type === ProjectType.PERSONAL) {
+            const owner = await userService(log).getOneOrFail({ id: project.ownerId })
+            const identity = await userIdentityService(log).getOneOrFail({ id: owner.identityId })
+            if (identity.email.toLowerCase() !== normalizedReceiver) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'Personal projects only allow the project owner as alert receiver',
+                    },
+                })
+            }
+        }
         const alertId = apId()
-        const existingAlert = await repo().findOneBy({
-            projectId,
-            receiver,
-        })
+        const existingAlert = await repo()
+            .createQueryBuilder('alert')
+            .where('alert."projectId" = :projectId', { projectId })
+            .andWhere('LOWER(alert.receiver) = :receiver', { receiver: normalizedReceiver })
+            .getOne()
 
         if (existingAlert) {
             throw new ActivepiecesError({
                 code: ErrorCode.EXISTING_ALERT_CHANNEL,
                 params: {
-                    email: receiver,
+                    email: normalizedReceiver,
                 },
             })
         }
@@ -84,7 +101,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
                 id: alertId,
                 channel,
                 projectId,
-                receiver,
+                receiver: normalizedReceiver,
                 created: dayjs().toISOString(),
             })
             .execute()
