@@ -49,9 +49,17 @@ export const savvyCalAuth = [
 
 export type SavvyCalAuthValue =
   | { type: AppConnectionType.OAUTH2; access_token: string }
+  | { type: AppConnectionType.CLOUD_OAUTH2; access_token: string }
+  | { type: AppConnectionType.PLATFORM_OAUTH2; access_token: string }
   | { type: AppConnectionType.CUSTOM_AUTH; props: { token: string } };
 
 export function getToken(auth: SavvyCalAuthValue): string {
-  if (auth.type === AppConnectionType.OAUTH2) return auth.access_token;
+  if (
+    auth.type === AppConnectionType.OAUTH2 ||
+    auth.type === AppConnectionType.CLOUD_OAUTH2 ||
+    auth.type === AppConnectionType.PLATFORM_OAUTH2
+  ) {
+    return auth.access_token;
+  }
   return auth.props.token;
 }
