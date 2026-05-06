@@ -113,7 +113,7 @@ function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
                 summary.options = prop.options.options.map((o: { label: string, value: unknown }) => ({ label: o.label, value: o.value }))
             }
             if (prop.type === PropertyType.DROPDOWN || prop.type === PropertyType.MULTI_SELECT_DROPDOWN) {
-                summary.note = 'Dynamic dropdown — options load from your account via API. Configure in the Activepieces UI, or provide a known value.'
+                summary.note = 'Resolve with ap_resolve_property_options. Use the returned value (ID), not label.'
             }
             if (prop.type === PropertyType.DYNAMIC) {
                 summary.note = 'DYNAMIC — call ap_get_piece_props with auth+input to resolve sub-fields.'
@@ -276,6 +276,16 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
     }
 }
 
+function withTimeout<T>({ promise, ms }: { promise: Promise<T>, ms: number }): Promise<T> {
+    let timer: ReturnType<typeof setTimeout>
+    return Promise.race([
+        promise.finally(() => clearTimeout(timer)),
+        new Promise<never>((_resolve, reject) => {
+            timer = setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)
+        }),
+    ])
+}
+
 export const mcpUtils = {
     mcpToolError,
     truncate,
@@ -289,6 +299,7 @@ export const mcpUtils = {
     findResolvableProps,
     validateAuth,
     fillDefaultsForMissingOptionalProps,
+    withTimeout,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
 }
