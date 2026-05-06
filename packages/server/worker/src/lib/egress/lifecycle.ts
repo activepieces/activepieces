@@ -1,6 +1,8 @@
 import dnsSync from 'node:dns'
 import dns from 'node:dns/promises'
+import { readFile } from 'node:fs/promises'
 import net from 'node:net'
+import path from 'node:path'
 import { ActivepiecesError, ErrorCode, ExecutionMode, NetworkMode, tryCatch, WorkerSettingsResponse } from '@activepieces/shared'
 import { Logger } from 'pino'
 import { workerSettings } from '../config/worker-settings'
@@ -55,9 +57,23 @@ async function maybeApplyIptablesLockdown({ log, proxy, settings }: ApplyLockdow
             },
         })
     }
-    const nameservers = listDnsNameservers()
+    const hostNameservers = listDnsNameservers()
+    const { nameservers: sandboxNameservers, readError: sandboxResolvConfReadError } = await readSandboxResolvConfNameservers()
+    if (sandboxResolvConfReadError !== undefined) {
+        log.warn(
+            { sandboxResolvConf: SANDBOX_RESOLV_CONF_PATH, err: sandboxResolvConfReadError },
+            'Could not read sandbox resolv.conf — DNS allowlist will only include host nameservers, which may not match what the sandbox queries. This is the exact condition that caused the 2026-05-06 EAI_AGAIN outage.',
+        )
+    }
+    else if (sandboxNameservers.length === 0) {
+        log.warn(
+            { sandboxResolvConf: SANDBOX_RESOLV_CONF_PATH },
+            'Sandbox resolv.conf was readable but contained no nameserver lines — DNS allowlist will only include host nameservers.',
+        )
+    }
+    const nameservers = [...new Set([...hostNameservers, ...sandboxNameservers])]
     if (nameservers.length === 0) {
-        const message = 'No DNS nameservers configured on the worker host — refusing to apply kernel lockdown that would starve the sandbox of name resolution. ' +
+        const message = 'No DNS nameservers configured on the worker host or sandbox resolv.conf — refusing to apply kernel lockdown that would starve the sandbox of name resolution. ' +
             'Ensure /etc/resolv.conf has at least one valid nameserver, or inspect dns.getServers() output.'
         throw new ActivepiecesError(
             { code: ErrorCode.ENGINE_OPERATION_FAILURE, params: { message } },
@@ -101,6 +117,29 @@ async function resolveHostToIps({ rawUrl }: ResolveHostParams): Promise<string[]
 
 function listDnsNameservers(): string[] {
     return dnsSync.getServers().map(extractNameserverIp).filter((ip): ip is string => ip !== null)
+}
+
+async function listSandboxResolvConfNameservers(): Promise<string[]> {
+    const { nameservers } = await readSandboxResolvConfNameservers()
+    return nameservers
+}
+
+async function readSandboxResolvConfNameservers(): Promise<{ nameservers: string[], readError?: Error }> {
+    const { data, error } = await tryCatch(() => readFile(SANDBOX_RESOLV_CONF_PATH, 'utf8'))
+    if (error !== null) return { nameservers: [], readError: error }
+    return { nameservers: parseResolvConfNameservers(data) }
+}
+
+function parseResolvConfNameservers(body: string): string[] {
+    const ips: string[] = []
+    for (const rawLine of body.split('\n')) {
+        const line = rawLine.replace(/#.*$/, '').trim()
+        const match = line.match(/^nameserver\s+(\S+)$/i)
+        if (!match) continue
+        const ip = extractNameserverIp(match[1])
+        if (ip) ips.push(ip)
+    }
+    return ips
 }
 
 function extractNameserverIp(server: string): string | null {
@@ -147,3 +186,10 @@ export type EgressStack = {
     proxyPort: number | null
     shutdown: () => Promise<void>
 }
+
+export const egressInternals = {
+    listSandboxResolvConfNameservers,
+    parseResolvConfNameservers,
+}
+
+const SANDBOX_RESOLV_CONF_PATH = path.resolve(process.cwd(), 'packages/server/api/src/assets/etc/resolv.conf')
