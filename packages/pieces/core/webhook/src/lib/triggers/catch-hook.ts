@@ -76,7 +76,7 @@ export const catchWebhook = createTrigger({
     convertBase64ToFiles: Property.Checkbox({
       displayName: 'Auto-convert Base64 to File URLs',
       description:
-        'When enabled, any large base64-encoded string in the payload (>10 KB) is decoded and stored as a file. The field value is replaced with a download URL.',
+        'When enabled, any base64-encoded string in the payload is decoded and stored as a file. The field value is replaced with a download URL.',
       required: false,
       defaultValue: false,
     }),

@@ -6,7 +6,7 @@ export async function convertBase64FieldsToUrls(
   value: unknown,
   files: FilesService
 ): Promise<unknown> {
-  if (typeof value === 'string' && isLargeBase64(value)) {
+  if (typeof value === 'string' && isBase64(value)) {
     const { data, mimeType } = await decodeBase64String(value);
     const extension = mime.extension(mimeType) || 'bin';
     return files.write({ fileName: `file.${extension}`, data });
@@ -24,10 +24,11 @@ export async function convertBase64FieldsToUrls(
   return value;
 }
 
-// Strings shorter than this are treated as tokens/hashes, not binary data
-const BASE64_CONVERT_MIN_CHARS = 10_000;
+// Minimum meaningful base64 payload — anything shorter is a token/id, not a file
+const BASE64_MIN_CHARS = 4;
 
-// Number of random positions sampled to verify base64 character set — O(1) regardless of string size
+// Above this length, sample instead of scanning the full string — O(1) for large payloads
+const BASE64_FULL_SCAN_THRESHOLD = 1_000;
 const BASE64_SAMPLE_COUNT = 200;
 
 const DATA_URI_BASE64_REGEX =
@@ -35,8 +36,8 @@ const DATA_URI_BASE64_REGEX =
 
 const BASE64_CHARS = new Set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=_-');
 
-function isLargeBase64(value: string): boolean {
-  if (value.length < BASE64_CONVERT_MIN_CHARS) return false;
+function isBase64(value: string): boolean {
+  if (value.length < BASE64_MIN_CHARS) return false;
   if (DATA_URI_BASE64_REGEX.test(value)) return true;
   return isRawBase64(value);
 }
@@ -46,7 +47,10 @@ function isRawBase64(value: string): boolean {
   const unpadded = value.replace(/=+$/, '');
   if (unpadded.length % 4 === 1) return false;
 
-  // Sample random positions rather than scanning the full string
+  // Full scan for short strings; random sampling for large ones
+  if (value.length <= BASE64_FULL_SCAN_THRESHOLD) {
+    return [...value].every((ch) => BASE64_CHARS.has(ch));
+  }
   for (let i = 0; i < BASE64_SAMPLE_COUNT; i++) {
     const pos = Math.floor(Math.random() * value.length);
     if (!BASE64_CHARS.has(value[pos])) return false;
