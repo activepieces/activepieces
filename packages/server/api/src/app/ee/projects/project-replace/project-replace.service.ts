@@ -275,10 +275,13 @@ async function applyReplace({ projectId, platformId, request, log }: ApplyParams
         await runFolderOp({ op, projectId, log, applied, failed })
     }
 
-    applied.flowsUnchanged = Math.max(0, request.flows.length - applied.flowsCreated - applied.flowsUpdated)
-    applied.tablesUnchanged = Math.max(0, request.tables.length - applied.tablesCreated - applied.tablesUpdated)
-    applied.foldersUnchanged = Math.max(0, request.folders.length - applied.foldersCreated - applied.foldersUpdated)
-    applied.connectionsUnchanged = Math.max(0, request.connections.length - applied.connectionsCreated - applied.connectionsUpdated)
+    // Derive "unchanged" from the diff (success-independent): items in the request
+    // that the diff service didn't flag as create/update are unchanged. A failed
+    // CREATE/UPDATE goes into failed[] and is NOT counted as unchanged.
+    applied.flowsUnchanged = Math.max(0, request.flows.length - flowOpsCreateUpdate.length)
+    applied.tablesUnchanged = Math.max(0, request.tables.length - tableOpsCreateUpdate.length)
+    applied.foldersUnchanged = Math.max(0, request.folders.length - folderOpsCreateUpdate.length)
+    applied.connectionsUnchanged = Math.max(0, request.connections.length - connectionOps.length)
 
     const connectionsAwaitingAuthorization = await collectConnectionsAwaitingAuthorization({
         projectId,
