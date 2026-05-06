@@ -1,69 +1,34 @@
-import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
-import { makeRequest } from './client';
-import { instantlyAiAuth } from '../auth';
+import { tryCatch } from '@activepieces/shared';
+import { instantlyAuth } from '../auth';
+import { instantlyClient } from './client';
+import { InstantlyCampaign, InstantlyLead, InstantlyLeadList } from './types';
 
-export const listId = (required = true) =>
-  Property.Dropdown({
-    auth: instantlyAiAuth,
-    displayName: 'List',
-    refreshers: [],
-    required,
-    options: async ({ auth }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please connect your account first.',
-        };
-      }
+function hasProperty<K extends PropertyKey>(
+  obj: object,
+  key: K,
+): obj is Record<K, unknown> {
+  return key in obj;
+}
 
-      const options: DropdownOption<string>[] = [];
+function getAuthToken(auth: unknown): string | null {
+  if (typeof auth !== 'object' || auth === null || !hasProperty(auth, 'secret_text')) {
+    return null;
+  }
+  const { secret_text } = auth;
+  return typeof secret_text === 'string' ? secret_text : null;
+}
 
-      let startingAfter: string | undefined = undefined;
-      let hasMore = true;
-
-      do {
-        const qs: QueryParams = {
-          limit: '100',
-        };
-
-        if (startingAfter) qs['starting_after'] = startingAfter;
-
-        const response = (await makeRequest({
-          endpoint: 'lead-lists',
-          method: HttpMethod.GET,
-          apiKey: auth,
-          queryParams: qs,
-        })) as {
-          next_starting_after?: string;
-          items: { id: string; name: string }[];
-        };
-
-        const items = response.items || [];
-        for (const item of items) {
-          options.push({ label: item.name, value: item.id });
-        }
-
-        startingAfter = response.next_starting_after;
-        hasMore = !!startingAfter && items.length > 0;
-      } while (hasMore);
-
-      return {
-        disabled: false,
-        options,
-      };
-    },
-  });
-
-export const campaignId = (required = true) =>
-  Property.Dropdown({
-    auth: instantlyAiAuth,
+function campaignId(required = true) {
+  return Property.Dropdown({
+    auth: instantlyAuth,
     displayName: 'Campaign',
     refreshers: [],
     required,
     options: async ({ auth }) => {
-      if (!auth) {
+      const token = getAuthToken(auth);
+      if (!token) {
         return {
           disabled: true,
           options: [],
@@ -71,52 +36,77 @@ export const campaignId = (required = true) =>
         };
       }
 
-      const options: DropdownOption<string>[] = [];
+      const { data: campaigns, error } = await tryCatch(() =>
+        instantlyClient.listAllPages<InstantlyCampaign>({
+          auth: token,
+          path: 'campaigns',
+        }),
+      );
 
-      let startingAfter: string | undefined = undefined;
-      let hasMore = true;
-
-      do {
-        const qs: QueryParams = {
-          limit: '100',
+      if (error) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load campaigns. Check your connection.',
         };
-
-        if (startingAfter) qs['starting_after'] = startingAfter;
-
-        const response = (await makeRequest({
-          endpoint: 'campaigns',
-          method: HttpMethod.GET,
-          apiKey: auth,
-          queryParams: qs,
-        })) as {
-          next_starting_after?: string;
-          items: { id: string; name: string }[];
-        };
-
-        const items = response.items || [];
-        for (const item of items) {
-          options.push({ label: item.name, value: item.id });
-        }
-
-        startingAfter = response.next_starting_after;
-        hasMore = !!startingAfter && items.length > 0;
-      } while (hasMore);
+      }
 
       return {
         disabled: false,
-        options,
+        options: campaigns.map((c) => ({ label: c.name, value: c.id })),
       };
     },
   });
+}
 
-export const leadId = (required = true) =>
-  Property.Dropdown({
-    auth: instantlyAiAuth,
+function listId(required = true) {
+  return Property.Dropdown({
+    auth: instantlyAuth,
+    displayName: 'List',
+    refreshers: [],
+    required,
+    options: async ({ auth }) => {
+      const token = getAuthToken(auth);
+      if (!token) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your account first.',
+        };
+      }
+
+      const { data: lists, error } = await tryCatch(() =>
+        instantlyClient.listAllPages<InstantlyLeadList>({
+          auth: token,
+          path: 'lead-lists',
+        }),
+      );
+
+      if (error) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load lists. Check your connection.',
+        };
+      }
+
+      return {
+        disabled: false,
+        options: lists.map((l) => ({ label: l.name, value: l.id })),
+      };
+    },
+  });
+}
+
+function leadId(required = true) {
+  return Property.Dropdown({
+    auth: instantlyAuth,
     displayName: 'Lead',
     refreshers: [],
     required,
     options: async ({ auth }) => {
-      if (!auth) {
+      const token = getAuthToken(auth);
+      if (!token) {
         return {
           disabled: true,
           options: [],
@@ -124,37 +114,32 @@ export const leadId = (required = true) =>
         };
       }
 
-      const options: DropdownOption<string>[] = [];
-
-      let startingAfter: string | undefined = undefined;
-      let hasMore = true;
-
-      do {
-        const body:Record<string,any> = {
-          limit: 100,
-        };
-
-        if (startingAfter) body['starting_after'] = startingAfter;
-
-        const response = (await makeRequest({
-          endpoint: 'leads/list',
+      const { data: leads, error } = await tryCatch(() =>
+        instantlyClient.listAllPages<InstantlyLead>({
+          auth: token,
+          path: 'leads/list',
           method: HttpMethod.POST,
-          apiKey: auth,
-          body
-        })) as {
-          next_starting_after?: string;
-          items: { id: string; email: string ,first_name:string,last_name:string}[];
+          maxPages: 5,
+        }),
+      );
+
+      if (error) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load leads. Check your connection.',
         };
+      }
 
-
-        const items = response.items || [];
-        for (const item of items) {
-          options.push({ label: `${item.first_name} ${item.last_name}`, value: item.id });
-        }
-
-        startingAfter = response.next_starting_after;
-        hasMore = !!startingAfter && items.length > 0;
-      } while (hasMore);
+      const options: DropdownOption<string>[] = leads.map((lead) => {
+        const name = [lead.first_name, lead.last_name]
+          .filter(Boolean)
+          .join(' ');
+        return {
+          label: name || lead.email,
+          value: lead.id,
+        };
+      });
 
       return {
         disabled: false,
@@ -162,4 +147,10 @@ export const leadId = (required = true) =>
       };
     },
   });
+}
 
+export const instantlyProps = {
+  campaignId,
+  listId,
+  leadId,
+};

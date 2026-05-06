@@ -1,17 +1,25 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
-import { instantlyAiAuth } from '../auth';
-import { campaignId, leadId } from '../common/props';
+import { instantlyAuth } from '../auth';
+import { instantlyClient } from '../common/client';
+import { instantlyProps } from '../common/props';
+import { InstantlyBackgroundJob } from '../common/types';
+
+const MAX_POLL_ATTEMPTS = 100;
+const POLL_INTERVAL_MS = 5000;
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export const addLeadToCampaignAction = createAction({
-  auth: instantlyAiAuth,
+  auth: instantlyAuth,
   name: 'add_lead_to_campaign',
   displayName: 'Add Lead to Campaign',
   description: 'Adds a lead to a campaign.',
   props: {
-    lead_id: leadId(true),
-    campaign_id: campaignId(true),
+    lead_id: instantlyProps.leadId(true),
+    campaign_id: instantlyProps.campaignId(true),
     skip_if_in_campaign: Property.Checkbox({
       displayName: 'Skip if in Campaign',
       defaultValue: false,
@@ -21,39 +29,50 @@ export const addLeadToCampaignAction = createAction({
   },
   async run(context) {
     const { lead_id, campaign_id, skip_if_in_campaign } = context.propsValue;
+    const auth = context.auth.secret_text;
 
-    const response = (await makeRequest({
-      apiKey: context.auth,
-      endpoint: 'leads/move',
+    const response = await instantlyClient.makeRequest<InstantlyBackgroundJob>({
+      auth,
       method: HttpMethod.POST,
+      path: 'leads/move',
       body: {
         ids: [lead_id],
         to_campaign_id: campaign_id,
         check_duplicates_in_campaigns: skip_if_in_campaign,
       },
-    })) as { id: string; status: string };
+    });
 
-    const jobId = response.id;
-    let jobStatus = response.status;
+    let { status } = response;
+    let attempts = 0;
 
-    const wait = (ms: number) =>
-      new Promise((resolve) => setTimeout(resolve, ms));
+    while (['pending', 'in-progress'].includes(status)) {
+      if (attempts >= MAX_POLL_ATTEMPTS) {
+        throw new Error(
+          `Background job ${response.id} did not complete after ${MAX_POLL_ATTEMPTS * POLL_INTERVAL_MS / 1000} seconds. Last status: ${status}`,
+        );
+      }
 
-    while (['pending', 'in-progress'].includes(jobStatus)) {
-      await wait(3000);
+      await wait(POLL_INTERVAL_MS);
+      attempts++;
 
-      const jobResponse = (await makeRequest({
-        apiKey: context.auth,
-        endpoint: `background-jobs/${jobId}`,
+      const jobResponse = await instantlyClient.makeRequest<InstantlyBackgroundJob>({
+        auth,
         method: HttpMethod.GET,
-      })) as { status: string };
+        path: `background-jobs/${response.id}`,
+      });
 
-      jobStatus = jobResponse.status;
+      status = jobResponse.status;
+    }
+
+    if (status === 'failed' || status === 'error') {
+      throw new Error(
+        `Background job ${response.id} failed with status: ${status}`,
+      );
     }
 
     return {
       ...response,
-      status: 'success',
+      status,
     };
   },
 });
