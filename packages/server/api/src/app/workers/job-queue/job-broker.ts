@@ -95,7 +95,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
             { queueName, jobId: job.id, jobName: job.name, deferredFailure: job.deferredFailure },
             '[jobBroker#tryDequeue] Failing job with deferred failure (BullMQ stalled limit exceeded)',
         )
-        const { error: failError } = await tryCatch(() => job.moveToFailed(new Error(job.deferredFailure), token, false))
+        const { error: failError } = await tryCatch(() => job.moveToFailed(new UnrecoverableError(job.deferredFailure), token, false))
         if (failError) {
             log.error(
                 { queueName, jobId: job.id, error: String(failError) },
@@ -202,11 +202,6 @@ async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jo
     return null
 }
 
-function isStalledJobError(error: unknown): boolean {
-    const msg = error instanceof Error ? error.message : String(error)
-    return msg.includes('Missing lock') || msg.includes('job stalled') || msg.includes('Cannot read properties of null (reading \'moveToFinishedArgs\')')
-}
-
 function buildFailedReason(errorMessage: string, logs?: string): string {
     if (!logs) return errorMessage
     return `${errorMessage}\n${logs}`
@@ -260,12 +255,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
             }
         })
         if (error) {
-            if (isStalledJobError(error)) {
-                log.warn({ jobId: input.jobId, error: String(error), originalError: input.errorMessage }, '[jobBroker] Stalled job error during completeJob')
-            }
-            else {
-                log.error({ jobId: input.jobId, error: String(error), originalError: input.errorMessage }, '[jobBroker] Failed to move job to final state')
-            }
+            log.error({ jobId: input.jobId, error: String(error), originalError: input.errorMessage }, '[jobBroker] Failed to move job to final state — leaving for stalled-scan recovery')
             if (userJobData) {
                 await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
                     status: EngineResponseStatus.INTERNAL_ERROR,

@@ -1,9 +1,9 @@
 import { apId, isNil, tryCatch } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
 import { FastifyBaseLogger } from 'fastify'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-props'
-import { mcpOAuthTokenService } from '../../mcp/oauth/token/mcp-oauth-token.service'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
+import { mcpOAuthTokenService } from '../../../mcp/oauth/token/mcp-oauth-token.service'
 import { chatApprovalGate } from '../chat-approval-gate'
 
 type StreamWriter = {
