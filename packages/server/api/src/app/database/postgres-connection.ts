@@ -372,6 +372,7 @@ import { AddSsoDomainVerification1787100000000 } from './migration/postgres/1787
 import { AddPlatformMcpServer1788000000000 } from './migration/postgres/1788000000000-AddPlatformMcpServer'
 import { MakeMcpOAuthProjectIdNullable1789000000000 } from './migration/postgres/1789000000000-MakeMcpOAuthProjectIdNullable'
 import { RemoveMcpServerStatus1790000000000 } from './migration/postgres/1790000000000-RemoveMcpServerStatus'
+import { AddExternalIdToFolder1791000000000 } from './migration/postgres/1791000000000-AddExternalIdToFolder'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -759,6 +760,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         MakeMcpOAuthProjectIdNullable1789000000000,
         MakeChatConversationPlatformWide1787000000000,
         RemoveMcpServerStatus1790000000000,
+        AddExternalIdToFolder1791000000000,
     ]
     return migrations
 }

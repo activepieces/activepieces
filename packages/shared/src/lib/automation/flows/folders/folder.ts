@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { BaseModelSchema } from '../../../core/common'
+import { BaseModelSchema, Nullable } from '../../../core/common'
 
 export type FolderId = string
 
@@ -9,6 +9,7 @@ export const Folder = z.object({
     projectId: z.string(),
     displayName: z.string(),
     displayOrder: z.number(),
+    externalId: Nullable(z.string()),
 })
 
 export const UncategorizedFolderId = 'NULL'

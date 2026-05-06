@@ -109,6 +109,7 @@
                     "admin-guide/guides/permissions",
                     "admin-guide/guides/event-streaming",
                     "admin-guide/guides/project-releases",
+                    "admin-guide/guides/project-replace-cli",
                     "admin-guide/guides/manage-concurrency"
                   ]
                },

@@ -86,6 +86,7 @@ export * from './lib/automation/chat'
 export * from './lib/automation/tables'
 export * from './lib/automation/project-release/project-release'
 export * from './lib/automation/project-release/project-release.request'
+export * from './lib/automation/project-release/project-replace'
 export * from './lib/automation/project-release/project-state'
 export * from './lib/automation/websocket'
 

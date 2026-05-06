@@ -1,0 +1,240 @@
+---
+title: 'Project Replace CLI'
+description: 'Mirror a project across Activepieces deployments from CI/CD without Git'
+icon: 'arrow-right-arrow-left'
+---
+
+The `ap project replace` CLI mirrors a project's flows, table schemas, and folders from one Activepieces deployment to another using direct API calls. Use it from CI/CD to promote work between independent staging and production instances when Git-based [Project Releases](/admin-guide/guides/project-releases) aren't a fit.
+
+<Tip>
+**Use case:** A nightly GitHub Action runs `ap project replace --source-url=staging --dest-url=prod`. Staging is treated as the source of truth; production becomes a byte-for-byte mirror. The job fails before any write if the destination is missing required pieces or referenced connections.
+</Tip>
+
+## Prerequisites
+
+- The **Environments** feature must be enabled on the destination platform's plan — see [Project Releases prerequisites](/admin-guide/guides/project-releases#prerequisites).
+- You need a **platform-scoped API key** (`SERVICE` principal) on **both** instances. The same project id format must be used on each side.
+- Both deployments must share the same major Activepieces version, and the destination version must be greater than or equal to the source version.
+
+## What gets mirrored
+
+| Resource | Behavior |
+| --- | --- |
+| Flows | Created / updated / deleted on the destination by `externalId`. |
+| Table schemas | Schema only — fields, name, externalId. **Row data is never copied.** |
+| Folders | Mirrored by `externalId`. |
+| Required pieces | Auto-installed on the destination at the source's exact pinned version (official + custom from npm). Replace aborts before any other writes if any install fails. |
+| Connections | **Metadata auto-mirrored** (externalId, pieceName, displayName); secret values never cross the wire. New connections land on the destination as placeholders with `status: MISSING`. Operator authorizes each one in the destination UI before flows can run. |
+| MCP servers, agents, project metadata, custom domains, app credentials | **Out of scope.** Not touched. |
+
+## Installation
+
+```bash
+npm install -g activepieces
+```
+
+The `activepieces` CLI is shipped with each Activepieces release; pin the version that matches your destination instance to keep request shapes aligned.
+
+## Command
+
+```bash
+# tokens via env vars (recommended for CI — keeps secrets out of process args and shell history)
+export AP_SOURCE_TOKEN="$STAGING_API_TOKEN"
+export AP_DEST_TOKEN="$PROD_API_TOKEN"
+
+ap project replace \
+  --source-url    https://staging.activepieces.com \
+  --source-project "$STAGING_PROJECT_ID" \
+  --dest-url      https://prod.activepieces.com \
+  --dest-project  "$PROD_PROJECT_ID" \
+  [--json]
+```
+
+### Flags
+
+| Flag | Required | Purpose |
+| --- | --- | --- |
+| `--source-url` | yes | Base URL of the source instance (no trailing slash needed). |
+| `--source-token` | flag *or* env | Platform API token for the source. Falls back to `AP_SOURCE_TOKEN`. |
+| `--source-project` | yes | Project id on the source instance. |
+| `--dest-url` | yes | Base URL of the destination instance. |
+| `--dest-token` | flag *or* env | Platform API token for the destination. Falls back to `AP_DEST_TOKEN`. |
+| `--dest-project` | yes | Project id on the destination instance. |
+| `--json` | no | Emit machine-readable JSON instead of a human summary. |
+
+<Warning>
+**Don't pass tokens via `--source-token` / `--dest-token` flags in CI or production scripts.** Process arguments are visible to other users on the host (`ps aux`), get captured in CI log output, and persist in shell history. Use `AP_SOURCE_TOKEN` / `AP_DEST_TOKEN` environment variables instead — they don't show up in any of those places.
+</Warning>
+
+## Exit codes
+
+| Code | Meaning |
+| --- | --- |
+| `0` | Apply succeeded; every item applied cleanly. |
+| `1` | Apply succeeded but at least one item failed. Inspect `failed[]` in the response. |
+| `2` | Server-side preflight failed (`422`). No writes occurred. |
+| `3` | Server abort: piece install failed (`502`), generic 5xx, **or** another replace was already in progress on the destination project (`409`). |
+| `4` | Local CLI / transport error — bad URL, unreachable host, invalid token. |
+
+## What happens when you run it
+
+1. **CLI** lists the source project's flows, folders, and table schemas via the source instance's REST API.
+2. **CLI** packages them into a `ProjectReplaceRequest` and `POST`s to `/v1/projects/:projectId/replace` on the destination.
+3. **Destination** acquires a per-project `NoWait` lock. If another replace is in flight, it returns `409 REPLACE_IN_PROGRESS`.
+4. **Destination preflight** (no writes if any of these fail):
+    - Activepieces version is parsed; same major + `dest >= source`.
+    - For every source connection: if the destination already has one with the same `externalId`, its `pieceName` must match.
+5. **Install phase** — for each entry in `requiredPieces` not already on dest at the exact pinned version, the server installs it from npm (`packageType: REGISTRY`, scope: platform). All installs are attempted; if any fail, the response aborts with `502` listing every failure. **No other writes have happened at this point** — folders, tables, flows, and connections are still untouched.
+6. **Apply phase** — connections, then folders, then tables, then flows are created/updated. Deletes run in reverse order. Each item runs in its own try/catch; per-item failures are collected, systemic 5xx errors abort the run.
+6. **Audit event** `project.replaced` is emitted on every attempt — success, partial failure, preflight failure, lock contention, or abort.
+
+## Output
+
+### Human-readable (default)
+
+```text
+Replace finished in 1240ms
+  pieces      : 1 installed
+  flows       : 1 created, 2 updated, 0 deleted, 47 unchanged
+  tables      : 0 created, 0 updated, 0 deleted, 5 unchanged
+  folders     : 0 created, 1 updated, 0 deleted, 3 unchanged
+  connections : 1 created, 0 updated, 4 unchanged
+
+1 piece(s) installed on destination:
+  - activepieces-onlinepay@0.0.7 (CUSTOM)
+
+1 connection(s) need authorization on destination before flows can run:
+  - Slack Main (@activepieces/piece-slack) [externalId=slack_main]
+```
+
+### `--json`
+
+```jsonc
+{
+  "applied": {
+    "flowsCreated": 1, "flowsUpdated": 2, "flowsDeleted": 0, "flowsUnchanged": 47,
+    "tablesCreated": 0, "tablesUpdated": 0, "tablesDeleted": 0, "tablesUnchanged": 5,
+    "foldersCreated": 0, "foldersUpdated": 1, "foldersDeleted": 0, "foldersUnchanged": 3,
+    "connectionsCreated": 1, "connectionsUpdated": 0, "connectionsUnchanged": 4
+  },
+  "failed": [
+    { "kind": "flow", "externalId": "...", "op": "UPDATE", "error": "..." }
+  ],
+  "piecesInstalled": [
+    { "name": "activepieces-onlinepay", "version": "0.0.7", "pieceType": "CUSTOM" }
+  ],
+  "connectionsAwaitingAuthorization": [
+    { "externalId": "slack_main", "pieceName": "@activepieces/piece-slack", "displayName": "Slack Main" }
+  ],
+  "durationMs": 1240
+}
+```
+
+### Preflight failures (exit 2)
+
+```jsonc
+{
+  "errors": [
+    { "kind": "AP_VERSION_MISMATCH", "sourceVersion": "1.2.0", "destVersion": "1.1.5", "message": "..." },
+    { "kind": "CONNECTION_PIECE_MISMATCH", "externalId": "slack_main", "expectedPieceName": "@activepieces/piece-slack", "foundPieceName": "@activepieces/piece-discord" }
+  ]
+}
+```
+
+The full set of preflight error kinds: `AP_VERSION_MISMATCH`, `PIECE_VERSION_MISMATCH`, `CONNECTION_PIECE_MISMATCH`.
+
+### Install failures (exit 3, HTTP 502)
+
+```jsonc
+{
+  "failures": [
+    { "pieceName": "@activepieces/piece-slack", "version": "1.2.3", "pieceType": "OFFICIAL", "message": "ENGINE_OPERATION_FAILURE: ..." },
+    { "pieceName": "pdfcrowd-piece-activepieces", "version": "0.0.5", "pieceType": "CUSTOM", "message": "..." }
+  ]
+}
+```
+
+When this happens, no flows / tables / folders / connections have been touched yet — the run aborted before the apply phase. Common causes: piece not on npm at that version, npm registry unreachable, engine crashed during metadata extraction, npm auth token missing on the destination platform for a private package.
+
+## Idempotency and retries
+
+Re-running the CLI after a partial failure converges to the source state. Items applied on the previous run are detected as unchanged via a typed deep-equality check and skipped; failed items are retried. The destination is left in a partially-applied state on hard failure — by design, since pause/restore would force downtime on every successful release.
+
+The apply phase is **not wrapped in a single database transaction**, and that's deliberate:
+
+- Partial-success semantics (`207` + `failed[]`) require successfully-applied items to persist across a sibling failure. A single transaction would roll back every successful folder/table/connection just because one flow's republish failed.
+- Flow republish dispatches BullMQ jobs and trigger-source registrations that can't sit inside a SQL transaction.
+- Recovery is by re-run, not rollback. Every operation matches by `externalId`, so a process crash mid-apply leaves the destination in some intermediate state that the next run's diff phase detects and finishes. CI/CD's natural retry handles process-level failures (OOM, SIGKILL, deploy timeout).
+
+If your CI does want a clean "all-or-nothing" property at the workflow level, drive replace from a job step that retries on non-zero exit and treat success only as exit `0`.
+
+## Connections
+
+Connection metadata (externalId, pieceName, displayName) is mirrored to the destination as **placeholder records** with `status: MISSING`. Secret values (OAuth tokens, API keys, etc.) **never cross the wire** — each instance keeps its own.
+
+After a replace, the CLI prints any connections that still need authorization on the destination:
+
+```text
+1 connection(s) need authorization on destination before flows can run:
+  - Slack Main (@activepieces/piece-slack) [externalId=slack_main]
+```
+
+The operator opens the destination UI → **Connections** → reconnects each placeholder using the destination's credentials (a different Slack workspace, prod-grade API key, etc.). Until that's done, any flow run that uses the connection will fail at execution time. Re-running the CLI after authorization is a no-op for connections that are already `ACTIVE`.
+
+If a connection on the destination already exists with the same `externalId` but a different `pieceName`, the replace fails preflight with `CONNECTION_PIECE_MISMATCH` so the conflict can be resolved without overwriting unrelated flows.
+
+## GitHub Actions example
+
+```yaml
+name: Promote staging to prod
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+jobs:
+  replace:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install -g activepieces
+      - run: |
+          ap project replace \
+            --source-url   "${{ vars.STAGING_URL }}" \
+            --source-project "${{ vars.STAGING_PROJECT_ID }}" \
+            --dest-url     "${{ vars.PROD_URL }}" \
+            --dest-project "${{ vars.PROD_PROJECT_ID }}" \
+            --json
+        env:
+          AP_SOURCE_TOKEN: ${{ secrets.STAGING_API_TOKEN }}
+          AP_DEST_TOKEN: ${{ secrets.PROD_API_TOKEN }}
+```
+
+A non-zero exit code fails the job — preflight errors, server errors, or transport errors all surface naturally to GitHub Actions without extra wiring.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="409 REPLACE_IN_PROGRESS">
+    Another replace is running against the same destination project. Wait a few seconds and retry — the lock is per-project and released as soon as the previous run finishes.
+  </Accordion>
+  <Accordion title="Install failed (502)">
+    The CLI passed preflight but a required piece couldn't be installed on the destination. Check `failures[*].message` in the response — most commonly the piece doesn't exist on npm at that version, the registry is unreachable, or the engine crashed during metadata extraction. The replace aborted before any writes; fix the install issue and re-run.
+  </Accordion>
+  <Accordion title="PIECE_VERSION_MISMATCH">
+    The destination already has the piece installed at a different version than the source. Either upgrade/downgrade the destination piece manually, or update the source flow to use a version compatible with what's on the destination.
+  </Accordion>
+  <Accordion title="Flows fail at runtime with 'connection not authorized'">
+    The replace mirrored the connection metadata as a placeholder; the destination still needs the secret. Open the destination UI → **Connections** → reconnect each placeholder. The replace response and CLI output list every connection that needs authorization.
+  </Accordion>
+  <Accordion title="CONNECTION_PIECE_MISMATCH">
+    The destination already has a connection with the same `externalId` but for a different piece. Either rename the source's externalId or delete/replace the conflicting connection on the destination before re-running.
+  </Accordion>
+  <Accordion title="AP_VERSION_MISMATCH">
+    The destination is on an older version or a different major than the source. Upgrade the destination first.
+  </Accordion>
+  <Accordion title="Feature is disabled">
+    The destination platform's plan does not have the **Environments** feature enabled. Contact your platform owner.
+  </Accordion>
+</AccordionGroup>
