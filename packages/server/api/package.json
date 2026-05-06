@@ -104,7 +104,7 @@
     "redlock": "5.0.0-beta.2",
     "samlify": "2.10.0",
     "semver": "7.6.0",
-    "simple-git": "3.33.0",
+    "simple-git": "3.36.0",
     "socket.io": "4.8.1",
     "sqlite3": "5.1.7",
     "stripe": "18.2.1",
