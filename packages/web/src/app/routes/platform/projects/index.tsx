@@ -31,7 +31,7 @@ import {
   EditProjectDialog,
   projectCollectionUtils,
 } from '@/features/projects';
-import { PlatformAdminProjectAlertSubscriptionDropdown } from '@/features/projects/components/platform-admin-project-alert-subscription-dropdown';
+import { PlatformAdminProjectAlertSubscriptionBulkActions } from '@/features/projects/components/platform-admin-project-alert-subscription-bulk-actions';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
 import { validationUtils } from '@/lib/validation-utils';
@@ -221,6 +221,20 @@ export default function ProjectsPage() {
         render: (
           _: RowDataWithActions<ProjectWithLimits>[],
           resetSelection: () => void,
+        ) => (
+          <PlatformAdminProjectAlertSubscriptionBulkActions
+            selectedProjects={selectedRows}
+            resetSelection={() => {
+              resetSelection();
+              setSelectedRows([]);
+            }}
+          />
+        ),
+      },
+      {
+        render: (
+          _: RowDataWithActions<ProjectWithLimits>[],
+          resetSelection: () => void,
         ) => {
           const canDeleteAny = selectedRows.some(
             (row) =>
@@ -277,17 +291,13 @@ export default function ProjectsPage() {
 
   const toolbarButtons = useMemo(
     () => [
-      <PlatformAdminProjectAlertSubscriptionDropdown
-        key="my-alert-subscriptions"
-        selectedProjects={selectedRows}
-      />,
       <CreateProjectButton
         key="new-project"
         variant="full"
         projects={allProjects}
       />,
     ],
-    [allProjects, selectedRows],
+    [allProjects],
   );
 
   const errorToastMessage = (error: unknown): string | undefined => {

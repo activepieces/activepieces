@@ -1,6 +1,6 @@
 import { ProjectWithLimits } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Bell, BellMinus, BellPlus, BellRing, ChevronDown } from 'lucide-react';
+import { BellMinus, BellPlus } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -12,91 +12,59 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { alertMutations } from '@/features/alerts';
 import { userHooks } from '@/hooks/user-hooks';
-import { cn } from '@/lib/utils';
 
-export const PlatformAdminProjectAlertSubscriptionDropdown = ({
+export const PlatformAdminProjectAlertSubscriptionBulkActions = ({
   selectedProjects,
-}: PlatformAdminProjectAlertSubscriptionDropdownProps) => {
+  resetSelection,
+}: PlatformAdminProjectAlertSubscriptionBulkActionsProps) => {
   const { data: currentUser } = userHooks.useCurrentUser();
-  const [open, setOpen] = useState(false);
   const [confirmUnsubscribeOpen, setConfirmUnsubscribeOpen] = useState(false);
-
-  const userEmail = currentUser?.email;
-  const hasSelection = selectedProjects.length > 0;
 
   const { mutate: subscribe, isPending: isSubscribing } =
     alertMutations.useBulkSubscribeAlerts();
   const { mutate: unsubscribe, isPending: isUnsubscribing } =
     alertMutations.useBulkUnsubscribeAlerts();
 
-  if (!userEmail) {
+  const userEmail = currentUser?.email;
+  if (!userEmail || selectedProjects.length === 0) {
     return null;
   }
 
   const isRunning = isSubscribing || isUnsubscribing;
 
   const handleSubscribe = () => {
-    setOpen(false);
     subscribe({ email: userEmail, projects: selectedProjects });
+    resetSelection();
   };
 
   const handleUnsubscribe = () => {
     setConfirmUnsubscribeOpen(false);
     unsubscribe({ email: userEmail, projects: selectedProjects });
+    resetSelection();
   };
 
   return (
     <>
-      <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            loading={isRunning}
-            className={cn('gap-1')}
-          >
-            {hasSelection ? (
-              <BellRing className="size-4" />
-            ) : (
-              <Bell className="size-4" />
-            )}
-            {t('My alert subscriptions')}
-            {hasSelection && (
-              <span className="text-muted-foreground">
-                ({selectedProjects.length})
-              </span>
-            )}
-            <ChevronDown className="size-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            disabled={!hasSelection || isRunning}
-            onSelect={handleSubscribe}
-          >
-            <BellPlus className="size-4 mr-2" />
-            {t('Subscribe me to alerts on selected projects')}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={!hasSelection || isRunning}
-            onSelect={() => {
-              setOpen(false);
-              setConfirmUnsubscribeOpen(true);
-            }}
-          >
-            <BellMinus className="size-4 mr-2" />
-            {t('Unsubscribe me from alerts on selected projects')}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={isRunning}
+        onClick={handleSubscribe}
+      >
+        <BellPlus className="mr-1 w-4" />
+        {t('Subscribe to alerts')}
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={isRunning}
+        onClick={() => setConfirmUnsubscribeOpen(true)}
+      >
+        <BellMinus className="mr-1 w-4" />
+        {t('Unsubscribe from alerts')}
+      </Button>
 
       <Dialog
         open={confirmUnsubscribeOpen}
@@ -131,6 +99,7 @@ export const PlatformAdminProjectAlertSubscriptionDropdown = ({
   );
 };
 
-type PlatformAdminProjectAlertSubscriptionDropdownProps = {
+type PlatformAdminProjectAlertSubscriptionBulkActionsProps = {
   selectedProjects: ProjectWithLimits[];
+  resetSelection: () => void;
 };
