@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { postizAuth } from '../common/auth';
-import { postizApiCall, PostizAuth } from '../common';
+import { postizApiCall } from '../common';
 
 export const listIntegrations = createAction({
   auth: postizAuth,
