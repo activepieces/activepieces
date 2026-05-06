@@ -37,7 +37,13 @@ function formatError({ error }: { error: unknown }): string {
   return `OroCommerce API Error: ${String(error)}`;
 }
 
-async function getAccessToken({ auth }: { auth: OroAuth }): Promise<string> {
+export function getOroBaseUrl({ auth }: { auth: OroAuth }): string {
+  const serverUrl = auth.props.serverUrl.replace(/\/*$/, '');
+  const adminPrefix = auth.props.adminPrefix.replace(/^\/+|\/+$/g, '');
+  return `${serverUrl}/${adminPrefix}/api`;
+}
+
+export async function getAccessToken({ auth }: { auth: OroAuth }): Promise<string> {
   const cacheKey = buildCacheKey({ auth });
   const cached = tokenCache.get(cacheKey);
 
@@ -77,13 +83,11 @@ export async function oroApiCall({
   headers: extraHeaders,
 }: OroApiCallParams): Promise<HttpResponse<HttpMessageBody>> {
   try {
-    const serverUrl = auth.props.serverUrl.replace(/\/*$/, '');
-    const adminPrefix = auth.props.adminPrefix.replace(/^\/+|\/+$/g, '');
     const resource = resourceUri.replace(/^\/+/, '');
 
     return await httpClient.sendRequest({
       method,
-      url: `${serverUrl}/${adminPrefix}/api/${resource}`,
+      url: `${getOroBaseUrl({ auth })}/${resource}`,
       headers: {
         'Content-Type': 'application/vnd.api+json',
         ...extraHeaders,
