@@ -43,6 +43,7 @@ export enum ApplicationEventName {
     PROJECT_ROLE_DELETED = 'project.role.deleted',
     PROJECT_ROLE_UPDATED = 'project.role.updated',
     PROJECT_RELEASE_CREATED = 'project.release.created',
+    PROJECT_REPLACED = 'project.replaced',
 }
 
 const BaseAuditEventProps = {
@@ -271,6 +272,36 @@ export const ProjectReleaseEvent = z.object({
 
 export type ProjectReleaseEvent = z.infer<typeof ProjectReleaseEvent>
 
+export const ProjectReplacedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.PROJECT_REPLACED),
+    data: z.object({
+        sourceActivepiecesVersion: z.string(),
+        applied: z.object({
+            flowsCreated: z.number(),
+            flowsUpdated: z.number(),
+            flowsDeleted: z.number(),
+            flowsUnchanged: z.number(),
+            tablesCreated: z.number(),
+            tablesUpdated: z.number(),
+            tablesDeleted: z.number(),
+            tablesUnchanged: z.number(),
+            foldersCreated: z.number(),
+            foldersUpdated: z.number(),
+            foldersDeleted: z.number(),
+            foldersUnchanged: z.number(),
+            connectionsCreated: z.number(),
+            connectionsUpdated: z.number(),
+            connectionsUnchanged: z.number(),
+        }),
+        failedCount: z.number(),
+        outcome: z.enum(['SUCCESS', 'PARTIAL_FAILURE', 'PREFLIGHT_FAILED', 'INSTALL_FAILED', 'ABORTED', 'LOCKED']),
+        durationMs: z.number(),
+    }),
+})
+
+export type ProjectReplacedEvent = z.infer<typeof ProjectReplacedEvent>
+
 export const ApplicationEvent = z.union([
     ConnectionEvent,
     FlowCreatedEvent,
@@ -283,6 +314,7 @@ export const ApplicationEvent = z.union([
     SigningKeyEvent,
     ProjectRoleEvent,
     ProjectReleaseEvent,
+    ProjectReplacedEvent,
 ])
 
 export type ApplicationEvent = z.infer<typeof ApplicationEvent>
@@ -335,6 +367,13 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `${event.data.projectRole.name} is deleted`
         case ApplicationEventName.PROJECT_RELEASE_CREATED:
             return `${event.data.release.name} is created`
+        case ApplicationEventName.PROJECT_REPLACED: {
+            const { applied, failedCount, outcome, durationMs } = event.data
+            const totals = applied.flowsCreated + applied.flowsUpdated + applied.flowsDeleted
+                + applied.tablesCreated + applied.tablesUpdated + applied.tablesDeleted
+                + applied.foldersCreated + applied.foldersUpdated + applied.foldersDeleted
+            return `Project replace ${outcome.toLowerCase()} in ${durationMs}ms (${totals} changes, ${failedCount} failed)`
+        }
     }
 }
 

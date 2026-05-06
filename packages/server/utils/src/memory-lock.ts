@@ -21,6 +21,22 @@ export const memoryLock = {
             },
         }
     },
+    tryAcquire: async (key: string): Promise<ApLock | null> => {
+        let lock = memoryLocks.get(key)
+        if (!lock) {
+            lock = new Mutex()
+            memoryLocks.set(key, lock)
+        }
+        if (lock.isLocked()) {
+            return null
+        }
+        const release = await lock.acquire()
+        return {
+            release: async () => {
+                release()
+            },
+        }
+    },
     isTimeoutError: (e: unknown): boolean => {
         return e === E_TIMEOUT
     },

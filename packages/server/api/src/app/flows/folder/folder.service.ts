@@ -65,12 +65,45 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
             id: folderId,
             projectId,
             displayName: request.displayName,
+            externalId: folderId,
         }, ['projectId', 'displayName'])
         const folder = await folderRepo().findOneByOrFail({ projectId, id: folderId })
         return {
             ...folder,
             numberOfFlows: 0,
         }
+    },
+    async listAllByProject(params: ListAllParams): Promise<Folder[]> {
+        const { projectId } = params
+        return folderRepo().find({ where: { projectId } })
+    },
+    async upsertByExternalId(params: UpsertByExternalIdParams): Promise<Folder> {
+        const { projectId, externalId, displayName, displayOrder } = params
+        const existing = await folderRepo().findOneBy({ projectId, externalId })
+        if (!isNil(existing)) {
+            await folderRepo().update(existing.id, {
+                displayName,
+                displayOrder,
+            })
+            return folderRepo().findOneByOrFail({ id: existing.id, projectId })
+        }
+        const folderId = apId()
+        await folderRepo().insert({
+            id: folderId,
+            projectId,
+            displayName,
+            displayOrder,
+            externalId,
+        })
+        return folderRepo().findOneByOrFail({ id: folderId, projectId })
+    },
+    async deleteByExternalId(params: DeleteByExternalIdParams): Promise<void> {
+        const { projectId, externalId } = params
+        const existing = await folderRepo().findOneBy({ projectId, externalId })
+        if (isNil(existing)) {
+            return
+        }
+        await folderRepo().delete({ id: existing.id, projectId })
     },
     async list(params: ListParams): Promise<SeekPage<FolderDto>> {
         const { projectId, cursorRequest, limit } = params
@@ -151,4 +184,20 @@ type GetOneByDisplayNameParams = {
 type GetOneOrThrowParams = {
     projectId: ProjectId
     folderId: FolderId
+}
+
+type ListAllParams = {
+    projectId: ProjectId
+}
+
+type UpsertByExternalIdParams = {
+    projectId: ProjectId
+    externalId: string
+    displayName: string
+    displayOrder: number
+}
+
+type DeleteByExternalIdParams = {
+    projectId: ProjectId
+    externalId: string
 }

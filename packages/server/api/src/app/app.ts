@@ -50,6 +50,7 @@ import { platformProjectModule } from './ee/projects/platform-project-module'
 import { projectMemberModule } from './ee/projects/project-members/project-member.module'
 import { gitRepoModule } from './ee/projects/project-release/git-sync/git-sync.module'
 import { projectReleaseModule } from './ee/projects/project-release/project-release.module'
+import { projectReplaceModule } from './ee/projects/project-replace/project-replace.module'
 import { projectRoleModule } from './ee/projects/project-role/project-role.module'
 import { scimModule } from './ee/scim/scim-module'
 import { secretManagersModule } from './ee/secret-managers/secret-managers.module'
@@ -286,6 +287,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
+            await app.register(projectReplaceModule)
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)
@@ -315,6 +317,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
+            await app.register(projectReplaceModule)
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)

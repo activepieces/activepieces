@@ -518,6 +518,29 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       }
       return rows;
     }
+    case ApplicationEventName.PROJECT_REPLACED: {
+      const { applied, failedCount, outcome, durationMs } = event.data;
+      return [
+        {
+          label: t('Outcome'),
+          value: formatUtils.convertEnumToHumanReadable(outcome),
+        },
+        { label: t('Duration'), value: `${durationMs}ms` },
+        {
+          label: t('Flows'),
+          value: `${applied.flowsCreated} created, ${applied.flowsUpdated} updated, ${applied.flowsDeleted} deleted`,
+        },
+        {
+          label: t('Tables'),
+          value: `${applied.tablesCreated} created, ${applied.tablesUpdated} updated, ${applied.tablesDeleted} deleted`,
+        },
+        {
+          label: t('Folders'),
+          value: `${applied.foldersCreated} created, ${applied.foldersUpdated} updated, ${applied.foldersDeleted} deleted`,
+        },
+        { label: t('Failed'), value: String(failedCount) },
+      ];
+    }
   }
 }
 

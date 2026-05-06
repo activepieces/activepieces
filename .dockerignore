@@ -11,7 +11,9 @@
 .vscode
 builds
 deploy
+dev
 Dockerfile
 dist
+**/dist
 docs
 **/node_modules
