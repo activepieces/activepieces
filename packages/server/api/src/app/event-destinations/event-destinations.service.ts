@@ -4,7 +4,7 @@ import {
     ApplicationEventName,
     CreatePlatformEventDestinationRequestBody,
     Cursor,
-    EventDestination, EventDestinationScope, FlowRunEvent, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProjectId, SeekPage, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
+    EventDestination, EventDestinationScope, FlowRunEvent, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProjectId, SeekPage, tryCatchSync, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, FindOptionsWhere } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -117,7 +117,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             })
         }
         const destinations = await eventDestinationRepo().findBy(conditions)
-        const destinationsToDispatch = await skipSelfTargetingDestinations({
+        const destinationsToDispatch = await skipDestinationsOnFlowCycle({
             destinations,
             event,
             platformId,
@@ -159,35 +159,36 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
 })
 
 
-const skipSelfTargetingDestinations = async ({
+const skipDestinationsOnFlowCycle = async ({
     destinations,
     event,
     platformId,
     log,
-}: SkipSelfTargetingParams): Promise<EventDestinationSchema[]> => {
+}: SkipDestinationsParams): Promise<EventDestinationSchema[]> => {
     if (destinations.length === 0 || !isFlowRunEvent(event)) {
         return destinations
     }
-    const eventFlowId = event.data.flowRun.flowId
     const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
         path: 'v1/webhooks',
         platformId,
     })
-    return destinations.filter((destination) => {
-        const destinationFlowId = extractFlowIdFromWebhookUrl({
-            destinationUrl: destination.url,
-            webhookUrlPrefix,
-        })
-        const isSelfTargeting = !isNil(destinationFlowId) && destinationFlowId === eventFlowId
-        if (isSelfTargeting) {
-            log.warn({
-                destinationId: destination.id,
-                flowId: eventFlowId,
-                action: event.action,
-            }, '[eventDestinationService#trigger] Skipping self-targeting destination to avoid recursive flow runs')
-        }
-        return !isSelfTargeting
-    })
+    const destinationFlowIds = new Set(
+        destinations
+            .map((destination) => extractFlowIdFromWebhookUrl({
+                destinationUrl: destination.url,
+                webhookUrlPrefix,
+            }))
+            .filter((flowId): flowId is string => !isNil(flowId)),
+    )
+    const eventFlowId = event.data.flowRun.flowId
+    if (!destinationFlowIds.has(eventFlowId)) {
+        return destinations
+    }
+    log.warn({
+        flowId: eventFlowId,
+        action: event.action,
+    }, '[eventDestinationService#trigger] Skipping all destinations: source flow is itself a webhook target in this destination list, which would cycle')
+    return []
 }
 
 const isFlowRunEvent = (
@@ -198,14 +199,19 @@ const extractFlowIdFromWebhookUrl = ({
     destinationUrl,
     webhookUrlPrefix,
 }: ExtractFlowIdParams): string | null => {
-    const normalizedPrefix = webhookUrlPrefix.replace(/\/+$/, '')
-    const prefixWithSlash = `${normalizedPrefix}/`
-    if (!destinationUrl.startsWith(prefixWithSlash)) {
+    const { data: destination } = tryCatchSync(() => new URL(destinationUrl))
+    const { data: prefix } = tryCatchSync(() => new URL(webhookUrlPrefix))
+    if (isNil(destination) || isNil(prefix) || destination.origin !== prefix.origin) {
         return null
     }
-    const remainder = destinationUrl.slice(prefixWithSlash.length)
-    const match = remainder.match(/^([^/?#]+)/)
-    return match?.[1] ?? null
+    const prefixPath = prefix.pathname + '/'
+    if (!destination.pathname.startsWith(prefixPath)) {
+        return null
+    }
+    const destinationWithoutPrefix = destination.pathname.slice(prefixPath.length)
+    const slashIndex = destinationWithoutPrefix.indexOf('/')
+    const flowId = slashIndex === -1 ? destinationWithoutPrefix : destinationWithoutPrefix.slice(0, slashIndex)
+    return flowId || null
 }
 
 
@@ -239,7 +245,7 @@ type TestParams = {
     event?: ApplicationEventName
 }
 
-type SkipSelfTargetingParams = {
+type SkipDestinationsParams = {
     destinations: EventDestinationSchema[]
     event: ApplicationEvent
     platformId: PlatformId
