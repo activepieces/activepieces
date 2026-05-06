@@ -141,19 +141,29 @@ export const alertMutations = {
     >({
       mutationFn: async ({ email, projects }) => {
         const limit = pLimit(MAX_PARALLEL_REQUESTS);
+        const lowerEmail = email.toLowerCase();
         const results = await Promise.allSettled(
           projects.map(
             (project): Promise<UnsubscribeOutcome> =>
               limit(async () => {
-                const page = await alertsApi.list({
-                  projectId: project.id,
-                  limit: ALERTS_LIST_LIMIT,
-                });
-                const myAlerts = page.data.filter(
-                  (alert) =>
-                    alert.channel === AlertChannel.EMAIL &&
-                    alert.receiver.toLowerCase() === email.toLowerCase(),
-                );
+                const myAlerts: Alert[] = [];
+                let cursor: string | undefined = undefined;
+                do {
+                  const page = await alertsApi.list({
+                    projectId: project.id,
+                    limit: ALERTS_LIST_LIMIT,
+                    cursor,
+                  });
+                  for (const alert of page.data) {
+                    if (
+                      alert.channel === AlertChannel.EMAIL &&
+                      alert.receiver.toLowerCase() === lowerEmail
+                    ) {
+                      myAlerts.push(alert);
+                    }
+                  }
+                  cursor = page.next ?? undefined;
+                } while (cursor);
                 if (myAlerts.length === 0) {
                   return 'not-subscribed';
                 }
