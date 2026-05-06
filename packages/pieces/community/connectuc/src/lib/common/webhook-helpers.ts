@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { TriggerHookContext } from '@activepieces/pieces-framework';
+import { BaseContext, InputPropertyMap, PieceAuthProperty } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 
 export const CONNECTUC_BASE_URL = 'https://api.connectuc.io/activepieces';
@@ -9,25 +9,34 @@ interface WebhookResponse {
     id: string;
 }
 
-interface RegisterWebhookParams {
+interface RegisterWebhookParams<
+    PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
+    Props extends InputPropertyMap
+> {
     auth: {
         access_token: string;
     };
     webhookUrl: string;
     event?: string;
     events?: string[];
-    context: TriggerHookContext<unknown, unknown, unknown>;
+    context: BaseContext<PieceAuth, Props>;
 }
 
-interface UnregisterWebhookParams {
+interface UnregisterWebhookParams<
+    PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
+    Props extends InputPropertyMap
+> {
     auth: {
         access_token: string;
     };
     webhookUrl: string;
-    context: TriggerHookContext<unknown, unknown, unknown>;
+    context: BaseContext<PieceAuth, Props>;
 }
 
-export async function registerConnectUCWebhook(params: RegisterWebhookParams): Promise<WebhookResponse> {
+export async function registerConnectUCWebhook<
+    PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
+    Props extends InputPropertyMap
+>(params: RegisterWebhookParams<PieceAuth, Props>): Promise<WebhookResponse> {
     const { auth, webhookUrl, event, events, context } = params;
 
     try {
@@ -49,10 +58,10 @@ export async function registerConnectUCWebhook(params: RegisterWebhookParams): P
         };
 
         if (event) {
-            webhookBody.event = event;
+            webhookBody['event'] = event;
         }
         if (events) {
-            webhookBody.events = events;
+            webhookBody['events'] = events;
         }
 
         const response = await httpClient.sendRequest<WebhookResponse>({
@@ -75,7 +84,10 @@ export async function registerConnectUCWebhook(params: RegisterWebhookParams): P
     }
 }
 
-export async function unregisterConnectUCWebhook(params: UnregisterWebhookParams): Promise<void> {
+export async function unregisterConnectUCWebhook<
+    PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
+    Props extends InputPropertyMap
+>(params: UnregisterWebhookParams<PieceAuth, Props>): Promise<void> {
     const { auth, webhookUrl, context } = params;
     const webhookData = await context.store.get<{ webhookId: string }>(CONNECTUC_WEBHOOK_TRIGGER_KEY);
 
