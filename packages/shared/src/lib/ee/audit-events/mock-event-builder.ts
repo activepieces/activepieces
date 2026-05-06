@@ -1,23 +1,23 @@
+import { FlowStatus } from '../../automation/flows/flow'
+import { FlowOperationType } from '../../automation/flows/operations'
+import { apId } from '../../core/common/id-generator'
+import { PlatformId } from '../../management/platform/platform.model'
+import { ProjectId } from '../../management/project/project'
 import {
-    apId,
     ApplicationEvent,
     ApplicationEventName,
     AuthenticationEvent,
     ConnectionEvent,
     FlowCreatedEvent,
     FlowDeletedEvent,
-    FlowOperationType,
     FlowRunEvent,
-    FlowStatus,
     FlowUpdatedEvent,
     FolderEvent,
-    PlatformId,
-    ProjectId,
     ProjectReleaseEvent,
     ProjectRoleEvent,
     SigningKeyEvent,
     SignUpEvent,
-} from '@activepieces/shared'
+} from './index'
 
 export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventParams): ApplicationEvent => {
     const isoNow = new Date().toISOString()
@@ -211,7 +211,7 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
     }
 }
 
-type BuildMockEventParams = {
+export type BuildMockEventParams = {
     event: ApplicationEventName
     platformId: PlatformId
     projectId?: ProjectId

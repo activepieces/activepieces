@@ -2,6 +2,7 @@ import {
     apId,
     ApplicationEvent,
     ApplicationEventName,
+    buildMockEvent,
     CreatePlatformEventDestinationRequestBody,
     Cursor,
     EventDestination, EventDestinationScope, FlowRunEvent, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProjectId, SeekPage, tryCatchSync, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
@@ -17,7 +18,6 @@ import {
     EventDestinationEntity,
     EventDestinationSchema,
 } from './event-destinations.entity'
-import { buildMockEvent } from './mock-event-builder'
 
 const eventDestinationRepo = repoFactory<EventDestinationSchema>(
     EventDestinationEntity,

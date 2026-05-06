@@ -3,11 +3,9 @@ import {
   ApplicationEventName,
   EventDestination,
   CreatePlatformEventDestinationRequestBody,
-  ProjectType,
   isNil,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronDown, Sparkles } from 'lucide-react';
 import { useId, useState } from 'react';
@@ -42,10 +40,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { flowHooks } from '@/features/flows';
-import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { userHooks } from '@/hooks/user-hooks';
 
 import { customAlertsFlowBuilder } from '../lib/custom-alerts-flow-builder';
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
@@ -89,8 +84,6 @@ const EventDestinationForm = ({
   const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
     ApFlagId.WEBHOOK_URL_PREFIX,
   );
-  const { data: currentUser } = userHooks.useCurrentUser();
-  const { data: allProjects } = projectCollectionUtils.useAll();
   const checkboxIdPrefix = useId();
 
   const formSchema = z.object({
@@ -148,67 +141,25 @@ const EventDestinationForm = ({
     }
   };
 
-  const { mutate: importStarterFlow, isPending: isImporting } = useMutation<
-    void,
-    Error,
-    ApplicationEventName[]
-  >({
-    mutationFn: async (selectedEvents) => {
-      if (!webhookPrefixUrl) {
-        throw new Error(t('Webhook URL prefix is not configured.'));
-      }
-      const personalProject = allProjects.find(
-        (project) =>
-          project.type === ProjectType.PERSONAL &&
-          project.ownerId === currentUser?.id,
-      );
-      if (!personalProject) {
-        throw new Error(
-          t('You need a personal project to generate the alert flow.'),
+  const { mutate: importAlertFlow, isPending: isImporting } =
+    eventDestinationsCollectionUtils.useImportAlertFlow(
+      (createdFlow) => {
+        form.setValue('url', `${webhookPrefixUrl}/${createdFlow.id}`, {
+          shouldValidate: true,
+        });
+        window.open(
+          `/flows/${createdFlow.id}`,
+          '_blank',
+          'noopener,noreferrer',
         );
-      }
-
-      const template = customAlertsFlowBuilder.buildCustomAlertsTemplate({
-        events: selectedEvents.map((name) => ({
-          name,
-          label: eventLabels[name].label,
-        })),
-        labels: {
-          flowDisplayName: t('Custom alerts starter'),
-          flowDescription: t(
-            'Routes audit events from Custom Alerts into branches you can wire to Slack, Gmail, Teams, or any HTTP endpoint.',
-          ),
-          webhookTriggerDisplayName: t('Catch Webhook'),
-          eventTypeRouterDisplayName: t('Event type checker'),
-          runStatusRouterDisplayName: t('Run status check'),
-          failedRunBranchName: t('Failed run'),
-          otherwiseBranchName: t('Otherwise'),
-        },
-      });
-
-      projectCollectionUtils.setCurrentProject(personalProject.id);
-      const flows = await flowHooks.importFlowsFromTemplates({
-        templates: [template],
-        projectId: personalProject.id,
-      });
-      const createdFlow = flows[0];
-      if (!createdFlow) {
-        throw new Error('Flow import returned no flow.');
-      }
-
-      form.setValue('url', `${webhookPrefixUrl}/${createdFlow.id}`, {
-        shouldValidate: true,
-      });
-
-      window.open(`/flows/${createdFlow.id}`, '_blank', 'noopener,noreferrer');
-    },
-    onError: (error) => {
-      toast.error(
-        error.message ||
-          t('Failed to generate the alert flow. Please try again.'),
-      );
-    },
-  });
+      },
+      (error) => {
+        toast.error(
+          error.message ||
+            t('Failed to generate the alert flow. Please try again.'),
+        );
+      },
+    );
 
   const handleImportStarterFlow = () => {
     const selectedEvents = form.getValues('events') ?? [];
@@ -218,7 +169,28 @@ const EventDestinationForm = ({
       });
       return;
     }
-    importStarterFlow(selectedEvents);
+    if (!webhookPrefixUrl) {
+      toast.error(t('Webhook URL prefix is not configured.'));
+      return;
+    }
+    const template = customAlertsFlowBuilder.buildCustomAlertsTemplate({
+      events: selectedEvents.map((name) => ({
+        name,
+        label: eventLabels[name].label,
+      })),
+      labels: {
+        flowDisplayName: t('Custom alerts starter'),
+        flowDescription: t(
+          'Routes audit events from Custom Alerts into branches you can wire to Slack, Gmail, Teams, or any HTTP endpoint.',
+        ),
+        webhookTriggerDisplayName: t('Catch Webhook'),
+        eventTypeRouterDisplayName: t('Event type checker'),
+        runStatusRouterDisplayName: t('Run status check'),
+        failedRunBranchName: t('Failed run'),
+        otherwiseBranchName: t('Otherwise'),
+      },
+    });
+    importAlertFlow({ template, selectedEvents });
   };
 
   const availableEvents = Object.values(ApplicationEventName);
