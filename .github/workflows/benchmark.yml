@@ -1,0 +1,162 @@
+name: Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      total_requests:
+        description: 'Total number of requests for hey'
+        required: false
+        default: '500'
+jobs:
+  benchmark:
+    runs-on: depot-ubuntu-24.04-16
+    timeout-minutes: 30
+    env:
+      AP_FILE_STORAGE_LOCATION: ${{ secrets.AP_FILE_STORAGE_LOCATION }}
+      AP_EXECUTION_MODE: SANDBOX_CODE_ONLY
+      AP_S3_BUCKET: ${{ secrets.AP_S3_BUCKET }}
+      AP_S3_ACCESS_KEY_ID: ${{ secrets.AP_S3_ACCESS_KEY_ID }}
+      AP_S3_SECRET_ACCESS_KEY: ${{ secrets.AP_S3_SECRET_ACCESS_KEY }}
+      AP_S3_ENDPOINT: ${{ secrets.AP_S3_ENDPOINT }}
+      AP_S3_REGION: ${{ secrets.AP_S3_REGION }}
+      AP_S3_USE_SIGNED_URLS: ${{ secrets.AP_S3_USE_SIGNED_URLS }}
+    strategy:
+      matrix:
+        include:
+          - apps: 1
+            workers: 2
+            label: "1app-2workers"
+          - apps: 2
+            workers: 4
+            label: "2app-4workers"
+          - apps: 3
+            workers: 6
+            label: "3app-6workers"
+          - apps: 1
+            workers: 4
+            label: "1app-4workers"
+          - apps: 2
+            workers: 8
+            label: "2app-8workers"
+          - apps: 3
+            workers: 12
+            label: "3app-12workers"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t activepieces-benchmark:local .
+
+      - name: Start benchmark stack
+        run: |
+          APP_REPLICAS=${{ matrix.apps }} \
+          WORKER_REPLICAS=${{ matrix.workers }} \
+            docker compose -f benchmark/docker-compose.yml up -d
+          echo "Waiting for containers to start..."
+          sleep 5
+          docker compose -f benchmark/docker-compose.yml ps
+
+      - name: Setup flow and wait for app
+        id: setup
+        run: |
+          chmod +x benchmark/setup.sh
+          FLOW_ID=$(benchmark/setup.sh)
+          echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
+          echo "Flow ID: $FLOW_ID"
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: false
+
+      - name: Install hey
+        run: go install github.com/rakyll/hey@latest
+
+      - name: Warmup
+        run: |
+          echo "Running warmup: 500 requests, ${{ matrix.workers }} concurrency"
+          hey -n 500 -c ${{ matrix.workers }} -t 60 \
+              -m POST \
+              -H "Content-Type: application/json" \
+              -d '{"test":true}' \
+              "http://localhost:8080/api/v1/webhooks/${{ steps.setup.outputs.flow_id }}/sync" \
+              | tail -5
+          echo "Warmup complete"
+
+      - name: Run benchmark
+        run: |
+          echo "Running benchmark: ${{ inputs.total_requests }} requests, ${{ matrix.workers }} concurrency (= workers), ${{ matrix.apps }} apps"
+          echo "---"
+          hey -n ${{ inputs.total_requests }} \
+              -c ${{ matrix.workers }} \
+              -t 60 \
+              -m POST \
+              -H "Content-Type: application/json" \
+              -d '{"test":true}' \
+              "http://localhost:8080/api/v1/webhooks/${{ steps.setup.outputs.flow_id }}/sync" \
+              | tee /tmp/hey-output.txt
+
+      - name: Parse results
+        run: |
+          chmod +x benchmark/parse.sh
+          benchmark/parse.sh /tmp/hey-output.txt /tmp/results.json
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ matrix.label }}
+          path: |
+            /tmp/hey-output.txt
+            /tmp/results.json
+
+      - name: Show container logs on failure
+        if: failure()
+        run: |
+          docker compose -f benchmark/docker-compose.yml logs --tail=100
+
+      - name: Teardown
+        if: always()
+        run: docker compose -f benchmark/docker-compose.yml down -v
+
+  summary:
+    runs-on: ubuntu-latest
+    needs: benchmark
+    if: always()
+    steps:
+      - name: Download all benchmark artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: benchmark-results-*
+          path: /tmp/results
+
+      - name: Generate comparison table
+        run: |
+          echo "## Benchmark Results Comparison" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Configuration | Throughput (req/s) | Mean Latency | P50 | P99 | Fastest | Slowest | 200 OK |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|---|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+
+          for dir in /tmp/results/benchmark-results-*/; do
+            label=$(basename "$dir" | sed 's/benchmark-results-//')
+            json="$dir/results.json"
+            if [ -f "$json" ]; then
+              throughput=$(jq -r '.throughput' "$json")
+              mean=$(jq -r '.mean_latency' "$json")
+              p50=$(jq -r '.p50' "$json")
+              p99=$(jq -r '.p99' "$json")
+              fastest=$(jq -r '.fastest' "$json")
+              slowest=$(jq -r '.slowest' "$json")
+              ok=$(jq -r '.ok_count' "$json")
+              echo "| $label | $throughput | ${mean}s | ${p50}s | ${p99}s | ${fastest}s | ${slowest}s | $ok |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| $label | N/A | N/A | N/A | N/A | N/A | N/A | N/A |" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Total requests per config**: ${{ inputs.total_requests || '500' }}" >> "$GITHUB_STEP_SUMMARY"
+          cat "$GITHUB_STEP_SUMMARY"

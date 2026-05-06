@@ -1,5 +1,5 @@
 
-import { workableAuth } from '../../index';
+import { workableAuth } from '../auth';
 import { createTrigger, Property, TriggerStrategy, WebhookResponse } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getAccountSubdomain } from '../common/get-subdomain';

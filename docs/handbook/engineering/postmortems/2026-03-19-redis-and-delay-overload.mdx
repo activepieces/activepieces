@@ -1,0 +1,56 @@
+---
+title: "Delay Step Infinite Loop — Mar 19, 2026"
+---
+
+## Summary
+
+On March 19, 2026, a bug in the Delay step caused flows to restart from the beginning instead of resuming after the delay, creating an infinite loop that flooded Redis with jobs. Affected flows never completed, and the growing job backlog degraded queue processing for all users.
+
+## Impact
+
+- Flows with a Delay step looped forever without completing.
+- The runaway job creation overloaded Redis, causing delays for other flows.
+- All affected executions were replayed once service was restored — no data was lost.
+
+## Timeline
+
+All times are in UTC.
+
+1. **Mar 18, ~9:00 PM** — A code change to the Delay step is deployed, introducing the infinite loop bug.
+2. **Mar 19, ~8:45 AM** — Customer reports arrive indicating flows with Delay steps are not completing. Investigation begins.
+4. **Mar 19, ~10:45 AM** — Fix for the Delay step bug deployed.
+
+## Root Cause
+
+When a flow hits a Delay step, the system puts the job on hold via BullMQ's `moveToDelayed()`. The bug was that the job still carried `executionType: BEGIN` instead of `RESUME`. When the delay expired, the worker re-ran the entire flow from the first step, hit the Delay again, paused again, and looped forever — flooding Redis with new jobs on every iteration.
+
+```
+Trigger -> Step 1 -> Delay(20s) -> PAUSE
+    | (20s later, job still says "BEGIN")
+Trigger -> Step 1 -> Delay(20s) -> PAUSE
+    | (20s later, job still says "BEGIN")
+    ... forever
+```
+
+The platform does enforce per-execution time limits, but because the job was marked as `BEGIN` instead of `RESUME`, each loop iteration was treated as a brand-new execution rather than a continuation. Each fresh execution only ran from the trigger to the Delay step — well within the time limit — before spawning another delayed job and repeating.
+
+## Detection & Monitoring Gaps
+
+- **Detected by customers, not automated alerting.** There was no monitoring on repeated execution patterns or runaway job creation for a single flow.
+- No alerting on Redis queue depth growth rate or sudden spikes in scheduled job volume.
+
+## Action Items
+
+| Action Item | Status |
+|---|---|
+| Update job data to `executionType: RESUME` before calling `moveToDelayed()` so the worker continues from the correct step | Done |
+| Add test coverage for Delay step resume behavior to catch regressions where a delayed job restarts instead of resuming | Done |
+| Prevent a flow from entering an infinite state by detecting and halting repeated re-executions of the same run ([ENG-320](https://linear.app/activepieces/issue/ENG-320)) | Done |
+| Add alerting on abnormal queue depth growth to detect runaway job creation before customers are impacted | To do |
+| Add monitoring for repeated execution patterns on a single flow (e.g., same flow re-triggered N times within a short window) | To do |
+
+## Improvements Done
+
+- **Delay step fix** — Updated job data to `executionType: RESUME` before calling `moveToDelayed()`, so the worker continues from where the flow left off instead of restarting.
+- **Defense-in-depth: RESUME empty state guard** — Worker validates that RESUME operations have non-empty execution state. An empty state with RESUME is the exact signature of the original bug and is rejected with a `VALIDATION` error.
+- **Defense-in-depth: BEGIN non-empty state assertion** — Engine asserts that BEGIN operations have empty execution state. A BEGIN with pre-existing steps would indicate a code regression.

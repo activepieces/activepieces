@@ -4,7 +4,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { openPhoneAuth } from '../..';
+import { openPhoneAuth } from '../auth';
 
 export interface OpenPhoneMessage {
   id: string;

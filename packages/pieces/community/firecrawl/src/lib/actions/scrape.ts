@@ -1,6 +1,6 @@
 import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { firecrawlAuth } from '../../index';
+import { firecrawlAuth } from '../auth';
 import { forScreenshotOutputFormat, forSimpleOutputFormat, downloadAndSaveScreenshot, forJsonOutputFormat, FIRECRAWL_API_BASE_URL } from '../common/common';
 
 function forDefaultScreenshot(): any {
@@ -274,7 +274,7 @@ export const scrape = createAction({
       url: `${FIRECRAWL_API_BASE_URL}/scrape`,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `Bearer ${auth.secret_text}`,
       },
       body: body,
     });

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { discordCommon } from '../common';
-import { discordAuth } from '../../index';
+import { discordAuth } from '../auth';
 import {
   httpClient,
   HttpMethod,

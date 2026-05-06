@@ -1,6 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { BlobServiceClient } from '@azure/storage-blob';
-import { azureBlobStorageAuth } from '..';
+import { azureBlobStorageAuth } from './auth';
 
 export const containerProp = Property.Dropdown({
     displayName: 'Container',

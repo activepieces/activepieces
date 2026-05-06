@@ -54,7 +54,7 @@ export const inboundCall = createTrigger({
     auth: famulorAuth,
     name: 'inboundCall',
     displayName: 'Inbound Call Received',
-    description: 'Triggers when an inbound call is received by your AI assistant. Webhook must be enabled for the selected assistant.',
+    description: 'Triggers when an inbound call is received by your AI assistant.',
     props: {
         assistant_id: inboundAssistantDropdown(),
     },

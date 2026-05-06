@@ -2,6 +2,7 @@ import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework
 import { sendMessage } from './lib/actions/send-message';
 import { sendMedia } from './lib/actions/send-media';
 import { sendTemplateMessageAction } from './lib/actions/send-from-template';
+import { whatsappAuth } from './lib/auth';
 
 const markdown = `
 To Obtain a Phone Number ID and a Permanent System User Access Token, follow these steps:
@@ -16,23 +17,6 @@ To Obtain a Phone Number ID and a Permanent System User Access Token, follow the
 8. Click on Settings.
 9. Create a new System User with access over the app and copy the access token.
 `;
-
-export const whatsappAuth = PieceAuth.CustomAuth({
-	required: true,
-	description: markdown,
-	props: {
-		access_token: PieceAuth.SecretText({
-			displayName: 'System User Access Token',
-			description: 'The system user access token of your WhatsApp business account.',
-			required: true,
-		}),
-		businessAccountId: Property.ShortText({
-			displayName: 'Business Account ID',
-			description: 'The business account ID of your WhatsApp business account.',
-			required: true,
-		}),
-	},
-});
 
 export const whatsapp = createPiece({
 	displayName: 'WhatsApp Business',

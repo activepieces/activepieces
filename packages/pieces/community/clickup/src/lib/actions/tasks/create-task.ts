@@ -11,7 +11,7 @@ import {
   callClickUpApi,
   listAccessibleCustomFields,
 } from '../../common';
-import { clickupAuth } from '../../../';
+import { clickupAuth } from '../../auth';
 
 export const createClickupTask = createAction({
   auth: clickupAuth,

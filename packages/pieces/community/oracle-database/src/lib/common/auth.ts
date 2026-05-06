@@ -4,12 +4,7 @@ import {
   StaticPropsValue,
 } from '@activepieces/pieces-framework';
 import oracledb from 'oracledb';
-
-try {
-  oracledb.initOracleClient();
-} catch (e) {
-  console.log('Oracle client already initialized or failed to initialize.');
-}
+import { ensureOracleClient } from './thick-mode';
 
 export const oracleDbAuth = PieceAuth.CustomAuth({
   description: `Connect to Oracle Database using either Service Name (host/port/service) or a full connection string.`,
@@ -56,11 +51,20 @@ export const oracleDbAuth = PieceAuth.CustomAuth({
       displayName: 'Password',
       required: true,
     }),
+    thickMode: Property.Checkbox({
+      displayName: 'Thick Mode',
+      description:
+        'Enable to support older Oracle Database versions (11g, 10g password verifiers). ' +
+        'Oracle Instant Client will be downloaded and installed automatically if not already present.',
+      required: false,
+      defaultValue: false,
+    }),
   },
 
   validate: async ({ auth }) => {
     let connection: oracledb.Connection | undefined;
     const typedAuth = auth as StaticPropsValue<(typeof oracleDbAuth)['props']>;
+    const logs: string[] = [];
 
     try {
       let connectString: string | undefined;
@@ -69,10 +73,12 @@ export const oracleDbAuth = PieceAuth.CustomAuth({
         if (!typedAuth.host || !typedAuth.port || !typedAuth.serviceName) {
           return {
             valid: false,
-            error: 'Host, Port, and Service Name are required for this connection type.',
+            error:
+              'Host, Port, and Service Name are required for this connection type.',
           };
         }
         connectString = `${typedAuth.host}:${typedAuth.port}/${typedAuth.serviceName}`;
+        logs.push(`[oracle] Connection type: serviceName → ${connectString}`);
       } else {
         if (!typedAuth.connectionString) {
           return {
@@ -81,26 +87,33 @@ export const oracleDbAuth = PieceAuth.CustomAuth({
           };
         }
         connectString = typedAuth.connectionString;
+        logs.push(`[oracle] Connection type: connectionString → ${connectString.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')}`);
       }
+
+      logs.push(`[oracle] Thick mode: ${typedAuth.thickMode === true}`);
+      await ensureOracleClient({ thickMode: typedAuth.thickMode === true, logs });
+      logs.push('[oracle] Oracle client ready. Opening connection...');
 
       connection = await oracledb.getConnection({
         user: typedAuth.user,
         password: typedAuth.password,
         connectString: connectString,
       });
-
+      logs.push('[oracle] Connection established successfully.');
+      console.log(logs.join('\n'));
       return { valid: true };
     } catch (e) {
+      logs.push(`[oracle] Error: ${(e as Error)?.message ?? 'Unknown error'}`);
       return {
         valid: false,
-        error: (e as Error)?.message || 'Unknown connection error.',
+        error: `Connection failed. Debug log:\n${logs.join('\n')}`,
       };
     } finally {
       if (connection) {
         try {
           await connection.close();
-        } catch (e) {
-          console.error('Failed to close Oracle DB connection:', e);
+        } catch {
+          // ignore
         }
       }
     }

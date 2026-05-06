@@ -1,22 +1,23 @@
-import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FlowUpdatedEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectReleaseEvent, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { AppSystemProp, exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, Folder, ProjectRelease, ProjectWithLimits, spreadIfDefined, Template, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuthenticationEvent, ConnectionEvent, Flow, FlowCreatedEvent, FlowDeletedEvent, FlowRun, FlowRunEvent, FlowUpdatedEvent, Folder, FolderEvent, GitRepoWithoutSensitiveData, isNil, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
+import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
-import fastifySocketIO from 'fastify-socket'
-import { Socket } from 'socket.io'
+import Mustache from 'mustache'
+import { agentsModule } from './agents/agents-module'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
+import { chatModule } from './chat/chat.module'
+import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
+import { collaborativeModule } from './core/collaborative/collaborative.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { authenticationMiddleware } from './core/security/v2/authn/authentication-middleware'
 import { authorizationMiddleware } from './core/security/v2/authz/authorization-middleware'
-import { websocketService } from './core/websockets.service'
 import { distributedLock, redisConnections } from './database/redis-connections'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
@@ -24,7 +25,6 @@ import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-serv
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
 import { appSumoModule } from './ee/appsumo/appsumo.module'
 import { auditEventModule } from './ee/audit-logs/audit-event-module'
-import { auditLogService } from './ee/audit-logs/audit-event-service'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import { otpModule } from './ee/authentication/otp/otp-module'
@@ -43,14 +43,17 @@ import { adminPlatformModule } from './ee/platform/admin/admin-platform.controll
 import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates/admin-platform-templates-cloud.module'
 import { platformAiCreditsService } from './ee/platform/platform-plan/platform-ai-credits.service'
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
+import { platformWebhooksModule } from './ee/platform-webhooks/platform-webhooks.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
+import { platformProjectBackgroundJobs } from './ee/projects/platform-project-jobs'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { projectMemberModule } from './ee/projects/project-members/project-member.module'
 import { gitRepoModule } from './ee/projects/project-release/git-sync/git-sync.module'
 import { projectReleaseModule } from './ee/projects/project-release/project-release.module'
 import { projectRoleModule } from './ee/projects/project-role/project-role.module'
+import { scimModule } from './ee/scim/scim-module'
+import { secretManagersModule } from './ee/secret-managers/secret-managers.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
-import { solutionsModule } from './ee/solutions/solutions.module'
 import { userModule } from './ee/users/user.module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
@@ -60,34 +63,37 @@ import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
-import { eventsHooks } from './helper/application-events'
+import { exceptionHandler } from './helper/exception-handler'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { system } from './helper/system/system'
+import { AppSystemProp } from './helper/system/system-props'
 import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from './helper/system-jobs/system-job'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
+import { knowledgeBaseModule } from './knowledge-base/knowledge-base.module'
 import { mcpServerModule } from './mcp/mcp-module'
+import { mcpOAuthApproveController } from './mcp/oauth/code/mcp-oauth-approve.controller'
 import { communityPiecesModule } from './pieces/community-piece-module'
+import { startDevPieceWatcher } from './pieces/dev-piece-watcher'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { tagsModule } from './pieces/tags/tags-module'
+import { platformBackgroundJobs } from './platform/platform-jobs'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
-import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
 import { templateModule } from './template/template.module'
-import { todoActivityModule } from './todos/activity/todos-activity.module'
-import { todoModule } from './todos/todo.module'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
 import { triggerModule } from './trigger/trigger.module'
+import { userBadgeModule } from './user/badges/badge-module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
-import { queueMetricsModule } from './workers/queue/metrics/queue-metrics.module'
+
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
@@ -96,7 +102,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         return payload as Buffer
     })
 
-    await app.register(swagger, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await app.register(swagger as any, {
         hideUntagged: true,
         openapi: {
             servers: [
@@ -124,6 +131,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     [ApplicationEventName.FOLDER_DELETED]: FolderEvent,
                     [ApplicationEventName.FLOW_RUN_STARTED]: FlowRunEvent,
                     [ApplicationEventName.FLOW_RUN_FINISHED]: FlowRunEvent,
+                    [ApplicationEventName.FLOW_RUN_RETRIED]: FlowRunEvent,
                     [ApplicationEventName.USER_SIGNED_UP]: SignUpEvent,
                     [ApplicationEventName.USER_SIGNED_IN]: AuthenticationEvent,
                     [ApplicationEventName.USER_PASSWORD_RESET]: AuthenticationEvent,
@@ -181,6 +189,12 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     app.addHook('preHandler', authenticationMiddleware)
     app.addHook('preHandler', authorizationMiddleware)
     app.addHook('preHandler', rbacMiddleware)
+    
+    const canaryAppUrl = system.get(AppSystemProp.CANARY_APP_URL)
+    if (!isNil(canaryAppUrl)) {
+        await app.register(replyFrom, { base: canaryAppUrl })
+        app.addHook('preHandler', canaryRoutingMiddleware)
+    }
 
     await systemJobsSchedule(app.log).init()
     await app.register(fileModule)
@@ -190,6 +204,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await pieceSyncService(app.log).setup()
     await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
+    await app.register(collaborativeModule)
     await app.register(flowModule)
     await app.register(flowRunModule)
     await app.register(webhookModule)
@@ -202,6 +217,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(humanInputModule)
     await app.register(tagsModule)
     await app.register(mcpServerModule)
+    await app.register(mcpOAuthApproveController)
+    await app.register(agentsModule)
     await app.register(platformUserModule)
     await app.register(alertsModule)
     await app.register(invitationModule)
@@ -210,14 +227,14 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(aiProviderModule)
     await app.register(licenseKeysModule)
     await app.register(tablesModule)
+    await app.register(knowledgeBaseModule)
+    await app.register(chatModule)
     await app.register(userModule)
-    await app.register(todoModule)
-    await app.register(todoActivityModule)
-    await app.register(solutionsModule)
     await app.register(templateModule)
+    await app.register(userBadgeModule)
     await app.register(platformAnalyticsModule)
-    systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteHandler(data))
-    systemJobHandlers.registerJobHandler(SystemJobName.UPDATE_FLOW_STATUS, (data) => flowBackgroundJobs(app.log).updateStatusHandler(data))
+    systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
+    systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
 
     app.get(
         '/redirect',
@@ -225,40 +242,17 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             request: FastifyRequest<{ Querystring: { code: string } }>,
             reply,
         ) => {
-            const params = {
-                code: request.query.code,
+            const code = request.query.code
+            if (!code) {
+                return reply.type('text/plain').send('The code is missing in url')
             }
-            if (!params.code) {
-                return reply.send('The code is missing in url')
-            }
-            else {
-                return reply
-                    .type('text/html')
-                    .send(
-                        `<script>if(window.opener){window.opener.postMessage({ 'code': '${encodeURIComponent(
-                            params.code,
-                        )}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`,
-                    )
-            }
+            return reply
+                .type('text/html')
+                .header('Content-Security-Policy', 'default-src \'none\'; script-src \'unsafe-inline\'')
+                .header('X-Content-Type-Options', 'nosniff')
+                .send(Mustache.render(REDIRECT_HTML_TEMPLATE, { code }))
         },
     )
-    await app.register(fastifySocketIO, {
-        cors: {
-            origin: '*',
-        },
-        maxHttpBufferSize: 1e8,
-        ...spreadIfDefined('adapter', await getAdapter()),
-        transports: ['websocket'],
-    })
-    app.io.use((socket: Socket, next: (err?: Error) => void) => {
-        websocketService
-            .verifyPrincipal(socket)
-            .then(() => next())
-            .catch(() => next(new Error('Authentication error')))
-    })
-
-    app.io.on('connection', (socket: Socket) => rejectedPromiseHandler(websocketService.init(socket, app.log), app.log))
-    app.io.on('disconnect', (socket: Socket) => rejectedPromiseHandler(websocketService.onDisconnect(socket), app.log))
 
     await validateEnvPropsOnStartup(app.log)
 
@@ -289,14 +283,17 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(apiKeyModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
+            await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
+            await app.register(secretManagersModule)
+            await app.register(scimModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
-            eventsHooks.set(auditLogService)
             flagHooks.set(enterpriseFlagsHooks)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
+            systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformBackgroundJobs(app.log).hardDeletePlatformHandler(data))
             break
         case ApEdition.ENTERPRISE:
             await platformAiCreditsService(app.log).init()
@@ -315,21 +312,23 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(apiKeyModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
+            await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
-            await app.register(queueMetricsModule)
+            await app.register(secretManagersModule)
+            await app.register(scimModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
-            eventsHooks.set(auditLogService)
             flagHooks.set(enterpriseFlagsHooks)
             break
         case ApEdition.COMMUNITY:
-            await app.register(projectModule)
+            await app.register(platformProjectModule)
             await app.register(communityPiecesModule)
-            await app.register(queueMetricsModule)
             break
     }
+
+    await systemJobsSchedule(app.log).startWorker()
 
     app.addHook('onClose', async () => {
         app.log.info('Shutting down')
@@ -344,7 +343,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
 
 
-async function getAdapter() {
+export async function getAdapter() {
     const redisConnectionInstance = await redisConnections.useExisting()
     const sub = redisConnectionInstance.duplicate()
     const pub = redisConnectionInstance.duplicate()
@@ -379,4 +378,23 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
             `[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`,
         )
     }
+    void startDevPieceWatcher(app)
 }
+
+const REDIRECT_HTML_TEMPLATE = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Redirect</title></head>
+<body>
+Redirect successful, this window should close now.
+<meta id="ap-oauth-code" content="{{code}}">
+<script>
+(function () {
+    var el = document.getElementById('ap-oauth-code');
+    var code = el ? el.getAttribute('content') : null;
+    if (window.opener && code) {
+        window.opener.postMessage({ code: code }, '*');
+    }
+})();
+</script>
+</body>
+</html>`

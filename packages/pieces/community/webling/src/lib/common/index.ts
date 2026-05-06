@@ -1,6 +1,6 @@
 import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { getCalendars } from './helpers';
-import { weblingAuth } from '../../index';
+import { weblingAuth } from '../auth';
 
 export const weblingCommon = {
   calendarDropdown: () => {

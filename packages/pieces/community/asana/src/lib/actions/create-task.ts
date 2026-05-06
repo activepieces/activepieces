@@ -1,7 +1,7 @@
 import { asanaCommon, callAsanaApi, getTags } from '../common';
 import { getAccessTokenOrThrow, HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { asanaAuth } from '../../';
+import { asanaAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const asanaCreateTaskAction = createAction({

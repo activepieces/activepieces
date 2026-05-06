@@ -40,10 +40,12 @@
   "Method": "Método",
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
+  "Body Type": "Tipo de cuerpo",
   "Body": "Cuerpo",
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Organization ID": "ID de la organización",
   "Additional information related to the tickets.": "Información adicional relacionada con los billetes.",
   "ID of the contact raising the ticket": "ID del contacto que levanta el ticket",
@@ -64,7 +66,7 @@
   "Array of skill IDs associated with the ticket": "Arreglo de IDs de habilidades asociadas con el ticket",
   "Custom fields in the ticket": "Campos personalizados en el ticket",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
-  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
+  "Enable for files like PDFs, images, etc.": "Activar para archivos como PDFs, imágenes, etc.",
   "Select organization ID to include in auth headers.": "Seleccione el ID de la organización para incluir en las cabeceras de autenticación.",
   "contacts": "contactos",
   "products": "productos",
@@ -88,5 +90,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "BORRAR",
-  "HEAD": "LIMPIO"
+  "HEAD": "LIMPIO",
+  "None": "Ninguna",
+  "JSON": "JSON",
+  "Form Data": "Datos de Formulario",
+  "Raw": "Rápido"
 }

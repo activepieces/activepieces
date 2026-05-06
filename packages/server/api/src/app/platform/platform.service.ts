@@ -1,22 +1,32 @@
-import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
-import {
-    ActivepiecesError,
+import { ActivepiecesError,
     ApEdition,
     apId,
+    AuthenticationResponse,
     ErrorCode,
+    FederatedAuthnProviderConfig,
+    FederatedAuthnProviderConfigWithoutSensitiveData,
     FilteredPieceBehavior,
     isNil,
+    OPEN_SOURCE_PLAN,
     Platform,
     PlatformId,
     PlatformPlanLimits,
+    PlatformRole,
     PlatformUsage,
     PlatformWithoutSensitiveData,
+    ProjectType,
     spreadIfDefined,
+    SsoDomainVerification,
     UpdatePlatformRequestBody,
     UserId,
     UserStatus,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { nanoid } from 'nanoid'
+import { authenticationUtils } from '../authentication/authentication-utils'
+import { userIdentityRepository } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-client'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
@@ -26,22 +36,23 @@ import { PlatformEntity } from './platform.entity'
 
 export const platformRepo = repoFactory<Platform>(PlatformEntity)
 
-export const platformService = {
+export const platformService = (log: FastifyBaseLogger) => ({
     async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
-        const users = await userService.getByIdentityId({ identityId: params.identityId })
+        const users = await userService(log).getByIdentityId({ identityId: params.identityId })
 
         const platformsWithProjects = await Promise.all(users.map(async (user) => {
             if (isNil(user.platformId) || user.status === UserStatus.INACTIVE) {
                 return null
             }
-            const hasProjects = await projectService.userHasProjects({
+            const hasProjects = await projectService(log).userHasProjects({
                 platformId: user.platformId,
                 userId: user.id,
+                isPrivileged: userService(log).isUserPrivileged(user),
             })
             return hasProjects ? user.platformId : null
         }))
 
-        const platforms = await Promise.all(platformsWithProjects.filter((platformId) => !isNil(platformId)).map((platformId) => platformService.getOneWithPlanOrThrow(platformId)))
+        const platforms = await Promise.all(platformsWithProjects.filter((platformId) => !isNil(platformId)).map((platformId) => this.getOneWithPlanOrThrow(platformId)))
         return platforms
     },
     async create(params: AddParams): Promise<Platform> {
@@ -73,12 +84,37 @@ export const platformService = {
         }
 
         const savedPlatform = await platformRepo().save(newPlatform)
-        await userService.addOwnerToPlatform({
+        await userService(log).addOwnerToPlatform({
             id: ownerId,
             platformId: savedPlatform.id,
         })
 
+        log.info({ platformId: savedPlatform.id, ownerId }, 'Platform created')
         return savedPlatform
+    },
+    async createPlatformWithProject({ identityId, name, invalidatePreviousTokens }: CreatePlatformWithProjectParams): Promise<AuthenticationResponse> {
+        const newUser = await userService(log).create({
+            identityId,
+            platformRole: PlatformRole.ADMIN,
+            platformId: null,
+        })
+        const platform = await this.create({ ownerId: newUser.id, name })
+        const defaultProject = await projectService(log).create({
+            displayName: `${name}'s Project`,
+            ownerId: newUser.id,
+            platformId: platform.id,
+            type: ProjectType.PERSONAL,
+        })
+        if (invalidatePreviousTokens) {
+            await userIdentityRepository().update(identityId, {
+                tokenVersion: nanoid(),
+            })
+        }
+        return authenticationUtils(log).getProjectAndToken({
+            userId: newUser.id,
+            platformId: platform.id,
+            projectId: defaultProject.id,
+        })
     },
     async getAll(): Promise<Platform[]> {
         return platformRepo().find()
@@ -114,14 +150,20 @@ export const platformService = {
                 params.enforceAllowedAuthDomains,
             ),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
+            ...spreadIfDefined('ssoDomain', params.ssoDomain),
+            ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
         }
         if (!isNil(params.plan)) {
-            await platformPlanService(system.globalLogger()).update({
+            await platformPlanService(log).update({
                 platformId: params.id,
                 ...params.plan,
             })
         }
+        if (!isNil(params.federatedAuthProviders?.saml)) {
+            invalidateSamlClientCache(params.id)
+        }
+        log.info({ platformId: params.id }, 'Platform updated')
         return platformRepo().save(updatedPlatform)
     },
     async getOneOrThrow(id: PlatformId): Promise<Platform> {
@@ -149,23 +191,30 @@ export const platformService = {
         }
         return {
             ...platform,
-            usage: await getUsage(platform),
-            plan: await getPlan(platform),
+            federatedAuthProviders: stripSensitiveData(platform.federatedAuthProviders),
+            usage: await getUsage(log, platform),
+            plan: await getPlan(log, platform),
         }
     },
     async getOneWithPlanOrThrow(id: PlatformId): Promise<Omit<PlatformWithoutSensitiveData, 'usage'>> {
         const platform = await this.getOneOrThrow(id)
         return {
             ...platform,
-            plan: await getPlan(platform),
+            federatedAuthProviders: stripSensitiveData(platform.federatedAuthProviders),
+            plan: await getPlan(log, platform),
         }
     },
     async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
         const platform = await this.getOneOrThrow(id)
+        const [usage, plan] = await Promise.all([
+            getUsage(log, platform),
+            getPlan(log, platform),
+        ])
         return {
             ...platform,
-            usage: await getUsage(platform),
-            plan: await getPlan(platform),
+            federatedAuthProviders: stripSensitiveData(platform.federatedAuthProviders),
+            usage,
+            plan,
         }
     },
     async getOne(id: PlatformId): Promise<Platform | null> {
@@ -173,17 +222,17 @@ export const platformService = {
             id,
         })
     },
-}
+})
 
-async function getUsage(platform: Platform): Promise<PlatformUsage | undefined> {
+async function getUsage(log: FastifyBaseLogger, platform: Platform): Promise<PlatformUsage | undefined> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
         return undefined
     }
-    return platformPlanService(system.globalLogger()).getUsage(platform.id)
+    return platformPlanService(log).getUsage(platform.id)
 }
 
-async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
+async function getPlan(log: FastifyBaseLogger, platform: Platform): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
         return {
@@ -192,7 +241,15 @@ async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
             stripeSubscriptionEndDate: 0,
         }
     }
-    return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
+    return platformPlanService(log).getOrCreateForPlatform(platform.id)
+}
+
+function stripSensitiveData(providers: FederatedAuthnProviderConfig): FederatedAuthnProviderConfigWithoutSensitiveData {
+    return {
+        google: providers.google ? { clientId: providers.google.clientId } : null,
+        github: providers.github ? { clientId: providers.github.clientId } : null,
+        saml: providers.saml ? {} : null,
+    }
 }
 
 type AddParams = {
@@ -212,6 +269,14 @@ type UpdateParams = UpdatePlatformRequestBody & {
     logoIconUrl?: string
     fullLogoUrl?: string
     favIconUrl?: string
+    ssoDomain?: string | null
+    ssoDomainVerification?: SsoDomainVerification | null
+}
+
+type CreatePlatformWithProjectParams = {
+    identityId: string
+    name: string
+    invalidatePreviousTokens: boolean
 }
 
 type ListPlatformsForIdentityParams = {

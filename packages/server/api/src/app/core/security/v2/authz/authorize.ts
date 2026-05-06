@@ -1,8 +1,11 @@
-import { AuthorizationRouteSecurity, AuthorizationType, ProjectAuthorizationConfig, RouteKind } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, isNil, PlatformRole, Principal, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, Permission, PlatformRole, Principal, PrincipalType, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { userIdentityService } from '../../../../authentication/user-identity/user-identity-service'
 import { rbacService } from '../../../../ee/authentication/project-role/rbac-service'
+import { projectMemberService } from '../../../../ee/projects/project-members/project-member.service'
 import { userService } from '../../../../user/user-service'
+import { AuthorizationRouteSecurity, ProjectAuthorizationConfig } from '../../authorization/authorization'
+import { AuthorizationType, RouteKind } from '../../authorization/common'
 
 export const authorizeOrThrow = async (principal: Principal, security: AuthorizationRouteSecurity, log: FastifyBaseLogger): Promise<void> => {
     if (security.kind === RouteKind.PUBLIC) {
@@ -16,7 +19,10 @@ export const authorizeOrThrow = async (principal: Principal, security: Authoriza
         case AuthorizationType.PLATFORM:
             await assertPrinicpalIsOneOf(security.authorization.allowedPrincipals, principal.type)
             if (security.authorization.adminOnly) {
-                await assertPlatformIsOwnedByCurrentPrincipal(principal)
+                await assertPlatformIsOwnedByCurrentPrincipal(principal, log)
+            }
+            if (security.authorization.nonEmbedUsersOnly) {
+                await assertNonEmbedOrAdmin(principal, log)
             }
             break
         case AuthorizationType.UNSCOPED:
@@ -28,11 +34,51 @@ export const authorizeOrThrow = async (principal: Principal, security: Authoriza
 }
 
 
-async function assertPlatformIsOwnedByCurrentPrincipal(principal: Principal): Promise<void> {
+async function assertNonEmbedOrAdmin(principal: Principal, log: FastifyBaseLogger): Promise<void> {
     if (principal.type === PrincipalType.SERVICE) {
         return
     }
-    const user = await userService.getOneOrFail({ id: principal.id })
+    const user = await userService(log).getOneOrFail({ id: principal.id })
+    if (user.platformRole === PlatformRole.ADMIN) {
+        return
+    }
+    const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
+    if (identity.provider === UserIdentityProvider.JWT) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'Embed users are not allowed to access this resource.',
+            },
+        })
+    }
+    if (isNil(user.platformId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'User is not associated with a platform.',
+            },
+        })
+    }
+    const hasInvitePermission = await projectMemberService(log).hasPermissionOnAnyProject({
+        userId: user.id,
+        platformId: user.platformId,
+        permission: Permission.WRITE_INVITATION,
+    })
+    if (!hasInvitePermission) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'User does not have invite permission on any project.',
+            },
+        })
+    }
+}
+
+async function assertPlatformIsOwnedByCurrentPrincipal(principal: Principal, log: FastifyBaseLogger): Promise<void> {
+    if (principal.type === PrincipalType.SERVICE) {
+        return
+    }
+    const user = await userService(log).getOneOrFail({ id: principal.id })
     if (user.platformRole !== PlatformRole.ADMIN) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,

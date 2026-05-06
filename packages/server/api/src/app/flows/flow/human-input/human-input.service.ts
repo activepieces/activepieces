@@ -38,9 +38,10 @@ export const humanInputService = (log: FastifyBaseLogger) => ({
         const flow = await getPopulatedFlowById(log, flowId, useDraft)
         if (!isFormTrigger(flow)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FLOW_FORM_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    flowId,
+                    entityType: 'flow_form',
+                    entityId: flowId,
                     message: 'Flow form not found in draft version of flow.',
                 },
             })
@@ -48,7 +49,7 @@ export const humanInputService = (log: FastifyBaseLogger) => ({
         const pieceVersion = await pieceMetadataService(log).resolveExactVersion({
             name: FORMS_PIECE_NAME,
             version: flow.version.trigger.settings.pieceVersion,
-            platformId: await projectService.getPlatformId(flow.projectId),
+            platformId: await projectService(log).getPlatformId(flow.projectId),
         })
         const triggerSettings = flow.version.trigger.settings
         return {
@@ -65,15 +66,16 @@ export const humanInputService = (log: FastifyBaseLogger) => ({
             || flow.version.trigger.settings.triggerName !== 'chat_submission'
             || flow.version.trigger.settings.pieceName !== FORMS_PIECE_NAME) {
             throw new ActivepiecesError({
-                code: ErrorCode.FLOW_FORM_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    flowId,
+                    entityType: 'flow_form',
+                    entityId: flowId,
                     message: 'Flow chat ui not found in draft version of flow.',
                 },
             })
         }
-        const platformId = await projectService.getPlatformId(flow.projectId)
-        const platform = await platformService.getOneOrThrow(platformId)
+        const platformId = await projectService(log).getPlatformId(flow.projectId)
+        const platform = await platformService(log).getOneOrThrow(platformId)
         return {
             id: flow.id,
             title: flow.version.displayName,

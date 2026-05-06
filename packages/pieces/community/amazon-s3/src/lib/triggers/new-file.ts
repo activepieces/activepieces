@@ -2,7 +2,7 @@ import { AppConnectionValueForAuthProperty, Property, createTrigger } from '@act
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
-import { amazonS3Auth } from '../..';
+import { amazonS3Auth } from '../auth';
 import { createS3 } from '../common';
 import dayjs from 'dayjs';
 import { ListObjectsV2CommandInput } from '@aws-sdk/client-s3';

@@ -1,9 +1,9 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { projectMustBeTeamType } from '../authentication/ee-authorization'
 import { alertsController } from './alerts-controller'
 
-export const alertsModule: FastifyPluginAsyncTypebox = async (app) => {
+export const alertsModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     app.addHook('preHandler', projectMustBeTeamType)
     await app.register(alertsController, { prefix: '/v1/alerts' })

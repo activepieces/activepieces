@@ -1,7 +1,5 @@
 # pieces-gameball
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-gameball` to build the library.
+Run `turbo run build --filter=@activepieces/piece-gameball` to build the library.

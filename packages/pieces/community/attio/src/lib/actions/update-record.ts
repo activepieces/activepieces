@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { attioAuth } from '../../index';
+import { attioAuth } from '../auth';
 import { attioApiCall } from '../common/client';
 import { formatInputFields, objectFields, objectTypeIdDropdown } from '../common/props';
 
@@ -20,7 +20,7 @@ export const updateRecordAction = createAction({
 			required: true,
 		}),
 
-		attributes: objectFields(true),
+		attributes: objectFields(false, true),
 	},
 	async run(context) {
 		const accessToken = context.auth.secret_text;

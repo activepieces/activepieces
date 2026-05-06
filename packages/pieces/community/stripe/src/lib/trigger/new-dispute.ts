@@ -85,12 +85,13 @@ export const stripeNewDispute = createTrigger({
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/checkout/disputes',
+      url: 'https://api.stripe.com/v1/issuing/disputes',
       headers: {
         Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {
+        status: 'submitted',
         limit: '5',
       },
     });

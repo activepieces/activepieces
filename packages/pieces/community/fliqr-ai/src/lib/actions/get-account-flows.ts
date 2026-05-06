@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { fliqrConfig } from '../common/models';
-import { fliqrAuth } from '../../index';
+import { fliqrAuth } from '../auth';
 
 export const getFliqrAccountFlows = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,

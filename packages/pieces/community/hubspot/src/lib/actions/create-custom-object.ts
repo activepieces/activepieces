@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/shared';
-import { hubspotAuth } from '../..';
+import { hubspotAuth } from '../auth';
 import {
 	customObjectDropdown,
 	customObjectDynamicProperties,

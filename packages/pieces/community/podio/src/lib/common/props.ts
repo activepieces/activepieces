@@ -2,7 +2,7 @@ import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { podioApiCall } from './client';
 import { getAccessToken } from './auth';
-import { podioAuth } from '../..';
+import { podioAuth } from '../auth';
 
 export const appIdProperty = Property.Number({
   displayName: 'App ID',

@@ -2,7 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 import { airparserApiCall } from './index';
-import { airparserAuth } from '../..';
+import { airparserAuth } from '../auth';
 
 export const inboxIdDropdown = Property.Dropdown<string,true,typeof airparserAuth>({
 	auth: airparserAuth,

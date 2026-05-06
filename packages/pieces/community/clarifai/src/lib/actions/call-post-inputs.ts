@@ -1,4 +1,4 @@
-import { clarifaiAuth } from '../../';
+import { clarifaiAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import {
   CommonClarifaiProps,

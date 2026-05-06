@@ -1,29 +1,27 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
+import { gmailReplyToEmailAction } from './lib/actions/reply-to-email-action';
+import { gmailCreateDraftReplyAction } from './lib/actions/create-draft-reply-action';
 import { gmailNewEmailTrigger } from './lib/triggers/new-email';
 import { gmailNewLabeledEmailTrigger } from './lib/triggers/new-labeled-email';
+import { requestApprovalInEmail } from './lib/actions/request-approval-in-email';
+import { gmailNewAttachmentTrigger } from './lib/triggers/new-attachment';
+import { gmailNewLabelTrigger } from './lib/triggers/new-label';
+import { gmailSearchMailAction } from './lib/actions/search-email-action';
+import { gmailGetEmailAction } from './lib/actions/get-mail-action';
+import { gmailAuth, getAccessToken, GmailAuthValue } from './lib/auth';
 
-export const gmailAuth = PieceAuth.OAuth2({
-  description: '',
-  authUrl: 'https://accounts.google.com/o/oauth2/auth',
-  tokenUrl: 'https://oauth2.googleapis.com/token',
-  required: true,
-  scope: [
-    'https://www.googleapis.com/auth/gmail.send',
-    'email',
-    'https://www.googleapis.com/auth/gmail.readonly',
-    'https://www.googleapis.com/auth/gmail.compose',
-  ],
-});
+export {
+  gmailAuth,
+  getAccessToken,
+  GmailAuthValue,
+  createGoogleClient,
+} from './lib/auth';
 
 export const gmail = createPiece({
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.82.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/gmail.png',
   categories: [
     PieceCategory.COMMUNICATION,
@@ -31,11 +29,16 @@ export const gmail = createPiece({
   ],
   actions: [
     gmailSendEmailAction,
+    requestApprovalInEmail,
+    gmailReplyToEmailAction,
+    gmailCreateDraftReplyAction,
+    gmailGetEmailAction,
+    gmailSearchMailAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${await getAccessToken(auth as GmailAuthValue)}`,
       }),
     }),
   ],
@@ -53,7 +56,14 @@ export const gmail = createPiece({
     'khaledmashaly',
     'abuaboud',
     'AdamSelene',
+    'sanket-a11y',
+    'onyedikachi-david',
   ],
-  triggers: [gmailNewEmailTrigger, gmailNewLabeledEmailTrigger],
+  triggers: [
+    gmailNewEmailTrigger,
+    gmailNewLabeledEmailTrigger,
+    gmailNewAttachmentTrigger,
+    gmailNewLabelTrigger,
+  ],
   auth: gmailAuth,
 });
