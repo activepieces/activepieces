@@ -81,8 +81,25 @@ function createMigrations(log: FastifyBaseLogger): JobMigration[] {
             }
         },
     }
+    const backfillRequiredExecuteFlowFields: JobMigration = {
+        runAtSchemaVersion: 7,
+        migrate: async (job: JobData) => {
+            if (job.jobType !== WorkerJobType.EXECUTE_FLOW) {
+                return { ...job, schemaVersion: 8 }
+            }
+            const legacy = job as Record<string, unknown>
+            const streamStepProgress: StreamStepProgress = (legacy['streamStepProgress'] as StreamStepProgress | undefined) ?? migrateProgressUpdateType(legacy['progressUpdateType'] as string | undefined)
+            const workerHandlerId: string | null = (legacy['workerHandlerId'] as string | undefined) ?? (legacy['synchronousHandlerId'] as string | undefined) ?? null
+            return {
+                ...job,
+                schemaVersion: 8,
+                streamStepProgress,
+                workerHandlerId,
+            }
+        },
+    }
 
-    return [enrichFlowIdAndLogsUrl, migratePayloadToUnion, renameProgressAndHandlerFields, reSignLogsUploadUrlWithAudience]
+    return [enrichFlowIdAndLogsUrl, migratePayloadToUnion, renameProgressAndHandlerFields, reSignLogsUploadUrlWithAudience, backfillRequiredExecuteFlowFields]
 }
 
 function extractLogsBehaviorFromUrl(url: string): UploadLogsBehavior | null {

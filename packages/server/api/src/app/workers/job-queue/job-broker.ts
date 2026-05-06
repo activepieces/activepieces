@@ -1,5 +1,5 @@
 import { ConsumeJobRequest, ConsumeJobResponse, EngineResponseStatus, isNil, JobData, tryCatch } from '@activepieces/shared'
-import { Worker as BullMQWorker, Job } from 'bullmq'
+import { Worker as BullMQWorker, Job, UnrecoverableError } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
@@ -113,6 +113,21 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
 
     if (migratedData.schemaVersion !== originalSchemaVersion) {
         await job.updateData(migratedData)
+    }
+
+    const parseResult = JobData.safeParse(migratedData)
+    if (!parseResult.success) {
+        const issues = parseResult.error.issues.map(issue => `${issue.path.join('.') || '<root>'}: ${issue.message}`).join('; ')
+        const reason = `Job data failed schema validation after migration: ${issues}`
+        log.error(
+            { queueName, jobId, schemaVersion: migratedData.schemaVersion, jobType: (migratedData as Record<string, unknown>).jobType, issues: parseResult.error.issues },
+            '[jobBroker#tryDequeue] Failing job with invalid schema as unrecoverable',
+        )
+        const { error: failError } = await tryCatch(() => job.moveToFailed(new UnrecoverableError(reason), token, false))
+        if (failError) {
+            log.error({ queueName, jobId, error: String(failError) }, '[jobBroker#tryDequeue] Failed to fail invalid-schema job')
+        }
+        return tryDequeue(worker, queueName, log)
     }
 
     const interceptorResult = await runInterceptors({ jobId, jobData: migratedData, job, log })
