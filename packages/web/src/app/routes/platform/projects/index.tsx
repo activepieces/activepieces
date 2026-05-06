@@ -204,7 +204,7 @@ export default function ProjectsPage() {
                       'Cannot delete active project, switch to another project first',
                     )
                   : t(
-                      'Personal projects cannot be deleted, and you can’t subscribe to their alerts',
+                      "Personal projects cannot be deleted, and you can't subscribe to their alerts",
                     )}
               </TooltipContent>
             )}
