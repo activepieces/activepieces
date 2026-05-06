@@ -4,6 +4,7 @@ import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { projectService } from '../../project/project-service'
 
 const NON_INPUT_PROP_TYPES = new Set<PropertyType>([
     PropertyType.OAUTH2,
@@ -142,7 +143,11 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
     if (isNil(normalized)) {
         return { error: mcpToolError('Validation failed', new Error('pieceName is required')) }
     }
-    const piece = await pieceMetadataService(log).get({ name: normalized, projectId })
+    // Resolve platformId so private (CUSTOM) pieces on this platform are findable by
+    // every tool that uses this helper (ap_add_step, ap_update_step, ap_get_piece_props,
+    // ap_validate_step_config, ap_run_action, etc.).
+    const project = await projectService(log).getOneOrThrow(projectId)
+    const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId: project.platformId })
     if (isNil(piece)) {
         return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_list_pieces to get valid piece names.` }] } }
     }

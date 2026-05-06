@@ -1,6 +1,7 @@
+import { PROJECT_COLOR_PALETTE, Project } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, Zap } from 'lucide-react';
+import { Check, Hammer, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
@@ -13,13 +14,16 @@ import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-
 import {
   AutomationProposal,
   ConnectionRequired,
+  normalizePieceName,
   parseAllConnectionsRequired,
   parseAutomationProposal,
+  parseConnectionPicker,
   parseMultiQuestion,
   parseQuickReplies,
+  stripIncompleteSpecialBlock,
 } from '../lib/message-parsers';
 
-import { MultiQuestionForm } from './multi-question-form';
+import { ConnectionPickerCard } from './connection-picker-card';
 
 const PROSE_CLASSES =
   'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4 [&_h1]:text-[18px] [&_h2]:text-[18px] [&_h3]:text-[18px]';
@@ -42,15 +46,17 @@ function stripAuthContent(content: string): string {
 export function MessageContentWithAuth({
   content,
   onSend,
+  selectedProjectId,
+  projects,
+  onSelectProject,
   isLastMessage = false,
-  connectedPieces,
-  onPieceConnected,
 }: {
   content: string;
   onSend?: (text: string) => void;
+  selectedProjectId?: string | null;
+  projects?: Project[];
+  onSelectProject?: (projectId: string) => void;
   isLastMessage?: boolean;
-  connectedPieces?: Set<string>;
-  onPieceConnected?: (piece: string) => void;
 }) {
   const hasAuthUrl = AUTH_URL_PATTERN.test(content);
 
@@ -80,9 +86,11 @@ export function MessageContentWithAuth({
     parseAutomationProposal(content);
   const { connections, cleanContent: afterConnection } =
     parseAllConnectionsRequired(afterProposal);
-  const { questions, cleanContent: afterQuestions } =
-    parseMultiQuestion(afterConnection);
-  const { cleanContent: finalContent } = parseQuickReplies(afterQuestions);
+  const { picker: connectionPicker, cleanContent: afterPicker } =
+    parseConnectionPicker(afterConnection);
+  const { cleanContent: afterQuestions } = parseMultiQuestion(afterPicker);
+  const { cleanContent: afterReplies } = parseQuickReplies(afterQuestions);
+  const finalContent = stripIncompleteSpecialBlock(afterReplies);
 
   return (
     <div className="space-y-2">
@@ -96,22 +104,27 @@ export function MessageContentWithAuth({
           key={conn.piece}
           connection={conn}
           onSend={onSend}
-          connectedPieces={connectedPieces}
-          onPieceConnected={onPieceConnected}
         />
       ))}
-      {questions.length > 0 && isLastMessage && (
-        <MultiQuestionForm
-          questions={questions}
-          onSubmit={(text) => onSend?.(text)}
+      {connectionPicker && (
+        <ConnectionPickerCard
+          picker={connectionPicker}
+          onSelect={(text) => onSend?.(text)}
+          isInteractive={isLastMessage}
         />
       )}
       {proposal && (
         <AutomationProposalCard
           proposal={proposal}
+          selectedProjectId={selectedProjectId ?? null}
+          projects={projects ?? []}
           onBuild={() =>
             onSend?.(`Yes, build the "${proposal.title}" automation`)
           }
+          onSelectProjectAndBuild={(projectId) => {
+            onSelectProject?.(projectId);
+            onSend?.(`Yes, build the "${proposal.title}" automation`);
+          }}
         />
       )}
     </div>
@@ -120,11 +133,20 @@ export function MessageContentWithAuth({
 
 export function AutomationProposalCard({
   proposal,
+  selectedProjectId,
+  projects,
   onBuild,
+  onSelectProjectAndBuild,
 }: {
   proposal: AutomationProposal;
+  selectedProjectId: string | null;
+  projects: Project[];
   onBuild: () => void;
+  onSelectProjectAndBuild: (projectId: string) => void;
 }) {
+  const [showProjectPicker, setShowProjectPicker] = useState(false);
+  const hasProjectContext = selectedProjectId !== null;
+
   return (
     <div className="rounded-xl border bg-background overflow-hidden my-2">
       <div className="p-4 space-y-3">
@@ -148,17 +170,60 @@ export function AutomationProposalCard({
               <span className="text-xs font-medium text-muted-foreground bg-muted rounded-full h-5 w-5 flex items-center justify-center shrink-0 mt-0.5">
                 {i + 1}
               </span>
-              <span className="text-foreground/80">{step}</span>
+              <span className="text-foreground/80">{step.label}</span>
             </div>
           ))}
         </div>
       </div>
 
       <div className="border-t px-4 py-3 bg-muted/30">
-        <Button size="sm" className="gap-1.5" onClick={onBuild}>
-          <Zap className="h-3.5 w-3.5" />
-          {t('Build this automation')}
-        </Button>
+        {hasProjectContext ? (
+          <Button size="sm" className="gap-1.5" onClick={onBuild}>
+            <Zap className="h-3.5 w-3.5" />
+            {t('Build this automation')}
+          </Button>
+        ) : showProjectPicker ? (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              {t('Select a project to build in:')}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {projects.map((project) => {
+                const color = PROJECT_COLOR_PALETTE[project.icon.color];
+                return (
+                  <Button
+                    key={project.id}
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={() => onSelectProjectAndBuild(project.id)}
+                  >
+                    <span
+                      className="inline-flex items-center justify-center h-4 w-4 rounded-sm shrink-0 text-[9px] font-bold"
+                      style={{
+                        backgroundColor: color.color,
+                        color: color.textColor,
+                      }}
+                    >
+                      {project.displayName.charAt(0).toUpperCase()}
+                    </span>
+                    {project.displayName}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            onClick={() => setShowProjectPicker(true)}
+          >
+            <Hammer className="h-3.5 w-3.5" />
+            {t('Select project to build')}
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -167,21 +232,14 @@ export function AutomationProposalCard({
 export function ConnectionRequiredCard({
   connection,
   onSend,
-  connectedPieces,
-  onPieceConnected,
 }: {
   connection: ConnectionRequired;
   onSend?: (text: string) => void;
-  connectedPieces?: Set<string>;
-  onPieceConnected?: (piece: string) => void;
 }) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const connected = connectedPieces?.has(connection.piece) ?? false;
-  const shortName = connection.piece.replace(/[^a-z0-9-]/gi, '');
-  const pieceName = connection.piece.startsWith('@activepieces/')
-    ? connection.piece
-    : `@activepieces/piece-${shortName}`;
+  const [connected, setConnected] = useState(false);
+  const pieceName = normalizePieceName(connection.piece);
   const { pieceModel, isLoading } = piecesHooks.usePiece({ name: pieceName });
 
   return (
@@ -247,7 +305,7 @@ export function ConnectionRequiredCard({
           setOpen={(open, createdConnection) => {
             setDialogOpen(open);
             if (createdConnection) {
-              onPieceConnected?.(connection.piece);
+              setConnected(true);
               void queryClient.invalidateQueries({
                 queryKey: ['app-connections'],
               });

@@ -56,6 +56,14 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             array: true,
         },
+        ssoDomain: {
+            type: String,
+            nullable: true,
+        },
+        ssoDomainVerification: {
+            type: 'jsonb',
+            nullable: true,
+        },
         enforceAllowedAuthDomains: {
             type: Boolean,
             nullable: false,
@@ -73,7 +81,14 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             nullable: false,
         },
     },
-    indices: [],
+    indices: [
+        {
+            name: 'idx_platform_sso_domain',
+            columns: ['ssoDomain'],
+            unique: true,
+            where: '"ssoDomain" IS NOT NULL',
+        },
+    ],
     relations: {
         owner: {
             type: 'one-to-one',

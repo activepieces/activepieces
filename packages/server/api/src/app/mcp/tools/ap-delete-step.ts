@@ -3,9 +3,9 @@ import {
     FlowOperationType,
     flowStructureUtil,
     isNil,
-    McpServer,
     McpToolDefinition,
     Permission,
+    ProjectScopedMcpServer,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -18,7 +18,7 @@ const deleteStepInput = z.object({
     stepName: z.string(),
 })
 
-export const apDeleteStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apDeleteStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_delete_step',
         permission: Permission.WRITE_FLOW,
@@ -26,6 +26,7 @@ export const apDeleteStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             stepName: z.string().describe('The name of the step to delete. Use ap_flow_structure to get valid values.'),
+            displayName: z.string().optional().describe('Short approval prompt shown to the user (e.g. "Delete Send Email step"). Must include what the action does and the target name.'),
         },
         annotations: { destructiveHint: true, openWorldHint: false },
         execute: async (args) => {

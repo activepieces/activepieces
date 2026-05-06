@@ -1,5 +1,5 @@
 import { ActionErrorHandlingOptions, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, StreamStepProgress, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
-import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
+import { EngineConstants, ResolvedBeginExecuteFlowOperation } from '../../src/lib/handler/context/engine-constants'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
     return new EngineConstants(
@@ -27,6 +27,8 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
             runEnvironment: params?.runEnvironment ?? RunEnvironment.TESTING,
             stepNameToTest: params?.stepNameToTest ?? undefined,
             stepNames: params?.stepNames ?? [],
+            logsUploadUrl: params?.logsUploadUrl,
+            logsFileId: params?.logsFileId,
         })
 }
 
@@ -123,8 +125,8 @@ export function buildPieceAction({ name, input, skip, pieceName, actionName, nex
 }
 
 export function buildMockBeginExecuteFlowOperation(
-    params: Partial<BeginExecuteFlowOperation> & Pick<BeginExecuteFlowOperation, 'flowVersion'>,
-): BeginExecuteFlowOperation {
+    params: Partial<ResolvedBeginExecuteFlowOperation> & Pick<BeginExecuteFlowOperation, 'flowVersion'>,
+): ResolvedBeginExecuteFlowOperation {
     return {
         projectId: 'projectId',
         engineToken: 'engineToken',
@@ -135,7 +137,6 @@ export function buildMockBeginExecuteFlowOperation(
         flowRunId: 'flowRunId',
         executionType: ExecutionType.BEGIN,
         runEnvironment: RunEnvironment.TESTING,
-        executionState: { steps: {}, tags: [] },
         workerHandlerId: null,
         httpRequestId: null,
         streamStepProgress: StreamStepProgress.NONE,

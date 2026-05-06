@@ -19,8 +19,9 @@ export type MarkdownProps = {
 function normalizeMarkdownSpacing(markdown: string): string {
   let text = markdown;
 
-  // Ensure headings have a newline before them (fixes "text.## Heading" streaming artifact)
-  text = text.replace(/([^\n])(#{1,6}\s)/g, '$1\n\n$2');
+  // Ensure headings have a blank line before them (fixes "text\n## Heading" streaming artifact).
+  // Uses multiline flag so ^ matches after every \n; only touches lines that start with #.
+  text = text.replace(/^(#{1,6}\s)/gm, '\n$1');
 
   // Ensure blank lines between non-empty content lines (except inside tables/code/lists)
   const lines = text.split('\n');
@@ -145,6 +146,13 @@ function makeHeading(Tag: 'h1' | 'h2' | 'h3') {
 }
 
 const INITIAL_COMPONENTS: Partial<Components> = {
+  table: function TableComponent({ children }) {
+    return (
+      <div className="my-4 overflow-hidden rounded-md border border-border">
+        <table className="w-full text-sm border-collapse">{children}</table>
+      </div>
+    );
+  },
   h1: makeHeading('h1'),
   h2: makeHeading('h2'),
   h3: makeHeading('h3'),
@@ -287,9 +295,9 @@ function MarkdownComponent({
     <div
       className={cn(
         '[&_pre]:overflow-x-auto [&_pre]:max-w-full',
-        '[&_table]:w-full [&_table]:text-sm [&_table]:border-collapse [&_table]:my-4',
         '[&_th]:text-left [&_th]:p-2.5 [&_th]:border-b [&_th]:border-border [&_th]:font-semibold',
         '[&_td]:p-2.5 [&_td]:border-b [&_td]:border-border',
+        '[&_tr:last-child_td]:border-b-0',
         className,
       )}
     >

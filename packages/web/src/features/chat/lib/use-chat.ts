@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { API_URL } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -168,6 +168,9 @@ export function useAgentChat({
     null,
   );
   const [modelName, setModelNameState] = useState<string | null>(null);
+  const [selectedProjectId, _setSelectedProjectId] = useState<string | null>(
+    null,
+  );
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [wasCancelled, setWasCancelled] = useState(false);
@@ -179,6 +182,16 @@ export function useAgentChat({
   const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
   const modelNameRef = useRef<string | null>(null);
+  const selectedProjectIdRef = useRef<string | null>(null);
+  const updateSelectedProjectId = useCallback((value: string | null) => {
+    selectedProjectIdRef.current = value;
+    _setSelectedProjectId(value);
+  }, []);
+  const [pendingApprovalRequest, setPendingApprovalRequest] = useState<{
+    gateId: string;
+    toolName: string;
+    displayName: string;
+  } | null>(null);
   const cancelledRef = useRef(false);
   const messageCountRef = useRef(0);
   const onTitleUpdateRef = useRef(onTitleUpdate);
@@ -200,11 +213,10 @@ export function useAgentChat({
             .join('') ?? '';
 
         const token = authenticationSession.getToken();
-        const projectId = authenticationSession.getProjectId();
         const convId = conversationIdRef.current;
 
         return {
-          api: `${API_URL}/v1/chat/conversations/${convId}/messages?projectId=${projectId}`,
+          api: `${API_URL}/v1/chat/conversations/${convId}/messages`,
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -227,16 +239,32 @@ export function useAgentChat({
   } = useChat({
     transport,
     onData: (dataPart) => {
+      const data = dataPart.data;
       if (
         dataPart.type === 'data-session-title' &&
-        typeof dataPart.data === 'object' &&
-        dataPart.data !== null &&
-        typeof (dataPart.data as Record<string, unknown>)['title'] === 'string'
+        typeof data === 'object' &&
+        data !== null &&
+        typeof (data as Record<string, unknown>)['title'] === 'string'
       ) {
         onTitleUpdateRef.current?.(
-          (dataPart.data as Record<string, unknown>)['title'] as string,
+          (data as Record<string, unknown>)['title'] as string,
           conversationIdRef.current ?? undefined,
         );
+      }
+      if (
+        dataPart.type === 'data-approval-request' &&
+        typeof data === 'object' &&
+        data !== null
+      ) {
+        const d = data as Record<string, unknown>;
+        if (typeof d.gateId === 'string' && typeof d.toolName === 'string') {
+          setPendingApprovalRequest({
+            gateId: d.gateId,
+            toolName: d.toolName,
+            displayName:
+              typeof d.displayName === 'string' ? d.displayName : d.toolName,
+          });
+        }
       }
     },
     onError: () => {
@@ -301,6 +329,49 @@ export function useAgentChat({
     return [...withoutEmptyAssistant, createPendingAssistantMessage()];
   }, [hasPending, uiMessages, pendingMessages]);
 
+  // Detect project context changes from AI tool calls during streaming (optimistic update)
+  useEffect(() => {
+    const lastMsg = uiMessages[uiMessages.length - 1];
+    if (!lastMsg || lastMsg.role !== 'assistant') return;
+    let newProjectId: string | null | undefined;
+    for (const part of lastMsg.parts) {
+      if (part.type !== 'dynamic-tool') continue;
+      if (
+        part.toolName === 'ap_select_project' &&
+        typeof part.input === 'object' &&
+        part.input !== null &&
+        'projectId' in part.input &&
+        typeof part.input.projectId === 'string'
+      ) {
+        newProjectId = part.input.projectId;
+      }
+      if (part.toolName === 'ap_deselect_project') {
+        newProjectId = null;
+      }
+    }
+    if (newProjectId !== undefined) {
+      updateSelectedProjectId(newProjectId);
+    }
+  }, [uiMessages]);
+
+  // Sync project context from server after streaming completes (authoritative)
+  const prevStatusRef = useRef(status);
+  useEffect(() => {
+    const wasStreaming =
+      prevStatusRef.current === 'streaming' ||
+      prevStatusRef.current === 'submitted';
+    const isNowIdle = status === 'ready' || status === 'error';
+    prevStatusRef.current = status;
+    if (wasStreaming && isNowIdle && conversationIdRef.current) {
+      void chatApi
+        .getConversation(conversationIdRef.current)
+        .then((conv) => {
+          updateSelectedProjectId(conv.projectId ?? null);
+        })
+        .catch(() => undefined);
+    }
+  }, [status]);
+
   const error = localError ?? (useChatError ? useChatError.message : null);
 
   const cancelStream = useCallback(() => {
@@ -316,6 +387,7 @@ export function useAgentChat({
     modelNameRef.current = null;
     setConversationIdState(null);
     setModelNameState(null);
+    updateSelectedProjectId(null);
     setUiMessages([]);
     setLocalError(null);
     setWasCancelled(false);
@@ -345,6 +417,7 @@ export function useAgentChat({
       cancelledRef.current = false;
       setLocalError(null);
       setWasCancelled(false);
+      setPendingApprovalRequest(null);
 
       const fileNames = files?.map((f) => f.name) ?? [];
       lastSentFileNamesRef.current = fileNames;
@@ -390,6 +463,13 @@ export function useAgentChat({
           setPendingMessages([]);
           return;
         }
+        const convId = conversationIdRef.current;
+        const projectId = selectedProjectIdRef.current;
+        if (convId && projectId) {
+          await tryCatch(() =>
+            chatApi.setProjectContext(convId, { projectId }),
+          );
+        }
         if (cancelledRef.current) {
           setPendingMessages([]);
           return;
@@ -425,6 +505,7 @@ export function useAgentChat({
       if (convResult.data) {
         modelNameRef.current = convResult.data.modelName ?? null;
         setModelNameState(convResult.data.modelName ?? null);
+        updateSelectedProjectId(convResult.data.projectId ?? null);
       }
       setIsLoadingHistory(false);
     },
@@ -442,9 +523,23 @@ export function useAgentChat({
     }
   }, []);
 
+  const setProjectContext = useCallback(async (projectId: string | null) => {
+    const previousProjectId = selectedProjectIdRef.current;
+    updateSelectedProjectId(projectId);
+    const convId = conversationIdRef.current;
+    if (!convId) return;
+    const { error: err } = await tryCatch(() =>
+      chatApi.setProjectContext(convId, { projectId }),
+    );
+    if (err) {
+      updateSelectedProjectId(previousProjectId);
+    }
+  }, []);
+
   return {
     conversationId,
     modelName,
+    selectedProjectId,
     messages,
     isStreaming,
     wasCancelled,
@@ -456,5 +551,7 @@ export function useAgentChat({
     createConversation,
     setConversationId,
     setModelName,
+    setProjectContext,
+    pendingApprovalRequest,
   };
 }

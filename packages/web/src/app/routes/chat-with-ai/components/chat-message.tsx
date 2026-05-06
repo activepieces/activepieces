@@ -1,3 +1,4 @@
+import { Project } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Copy, Paperclip, RefreshCw } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -29,22 +30,26 @@ import { ChatThinkingLoader } from './chat-thinking-loader';
 import { MessageContentWithAuth } from './message-content';
 import { ToolCallGroup } from './tool-call-group';
 
+const HIDDEN_TOOLS = new Set(['ap_set_session_title', 'ap_select_project']);
+
 export function ChatMessage({
   message,
   isStreaming,
   isLastMessage = false,
   onRetry,
   onSend,
-  connectedPieces,
-  onPieceConnected,
+  selectedProjectId,
+  projects,
+  onSelectProject,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
-  connectedPieces: Set<string>;
-  onPieceConnected: (piece: string) => void;
+  selectedProjectId?: string | null;
+  projects?: Project[];
+  onSelectProject?: (projectId: string) => void;
 }) {
   if (message.role === 'user') {
     return <UserMessage message={message} isLastMessage={isLastMessage} />;
@@ -57,13 +62,14 @@ export function ChatMessage({
       isLastMessage={isLastMessage}
       onRetry={onRetry}
       onSend={onSend}
-      connectedPieces={connectedPieces}
-      onPieceConnected={onPieceConnected}
+      selectedProjectId={selectedProjectId}
+      projects={projects}
+      onSelectProject={onSelectProject}
     />
   );
 }
 
-export function UserMessage({
+function UserMessage({
   message,
   isLastMessage = false,
 }: {
@@ -130,22 +136,24 @@ export function UserMessage({
   );
 }
 
-export function AssistantMessage({
+function AssistantMessage({
   message,
   isStreaming,
   isLastMessage = false,
   onRetry,
   onSend,
-  connectedPieces,
-  onPieceConnected,
+  selectedProjectId,
+  projects,
+  onSelectProject,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
-  connectedPieces: Set<string>;
-  onPieceConnected: (piece: string) => void;
+  selectedProjectId?: string | null;
+  projects?: Project[];
+  onSelectProject?: (projectId: string) => void;
 }) {
   const reasoningParts = message.parts.filter(
     (p): p is { type: 'reasoning'; text: string } => p.type === 'reasoning',
@@ -153,7 +161,6 @@ export function AssistantMessage({
   const thoughts = reasoningParts.map((p) => p.text).join('');
   const hasThoughts = thoughts.length > 0;
 
-  const HIDDEN_TOOLS = new Set(['ap_set_session_title']);
   const dynamicToolParts = message.parts.filter(
     (p) => p.type === 'dynamic-tool' && !HIDDEN_TOOLS.has(p.toolName),
   );
@@ -206,8 +213,9 @@ export function AssistantMessage({
             isStreaming,
             isLastMessage,
             onSend,
-            connectedPieces,
-            onPieceConnected,
+            selectedProjectId,
+            projects,
+            onSelectProject,
           })}
 
           {isStreaming && !isWaiting && <ChatThinkingLoader showText={false} />}
@@ -270,17 +278,19 @@ export function AssistantMessage({
 function renderParts({
   parts,
   isStreaming,
-  isLastMessage = false,
   onSend,
-  connectedPieces,
-  onPieceConnected,
+  selectedProjectId,
+  projects,
+  onSelectProject,
+  isLastMessage,
 }: {
   parts: ChatUIMessage['parts'];
   isStreaming: boolean;
-  isLastMessage?: boolean;
+  isLastMessage: boolean;
   onSend: (text: string, files?: File[]) => void;
-  connectedPieces: Set<string>;
-  onPieceConnected: (piece: string) => void;
+  selectedProjectId?: string | null;
+  projects?: Project[];
+  onSelectProject?: (projectId: string) => void;
 }): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   const toolBuffer: ChatUIMessage['parts'] = [];
@@ -308,9 +318,10 @@ function renderParts({
           key={idx}
           content={part.text}
           onSend={onSend}
+          selectedProjectId={selectedProjectId}
+          projects={projects}
+          onSelectProject={onSelectProject}
           isLastMessage={isLastMessage}
-          connectedPieces={connectedPieces}
-          onPieceConnected={onPieceConnected}
         />,
       );
     }
