@@ -185,9 +185,25 @@ export default class Paginator<Entity extends ObjectLiteral> {
         }
 
         const operator = this.getOperator()
-        const queryString = `DATE_TRUNC('second', ${this.alias}.${PAGINATION_KEY}) ${operator} DATE_TRUNC('second', :${PAGINATION_KEY}::timestamp)`
+        const paginationKeyParam = { [PAGINATION_KEY]: cursors[PAGINATION_KEY] }
 
-        where.orWhere(queryString, cursors)
+        where.orWhere(
+            `DATE_TRUNC('second', ${this.alias}.${PAGINATION_KEY}) ${operator} DATE_TRUNC('second', :${PAGINATION_KEY}::timestamp)`,
+            paginationKeyParam,
+        )
+
+        if (cursors['id'] !== undefined) {
+            where.orWhere(new Brackets((qb) => {
+                qb.andWhere(
+                    `DATE_TRUNC('second', ${this.alias}.${PAGINATION_KEY}) = DATE_TRUNC('second', :cursor_eq_${PAGINATION_KEY}::timestamp)`,
+                    { [`cursor_eq_${PAGINATION_KEY}`]: cursors[PAGINATION_KEY] },
+                )
+                qb.andWhere(
+                    `${this.alias}.id ${operator} :cursor_id`,
+                    { cursor_id: cursors['id'] },
+                )
+            }))
+        }
     }
 
     private buildCompositeCursorQuery(
@@ -262,6 +278,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
         const orderByCondition: Record<string, Order> = {}
         orderByCondition[`${this.alias}.${this.orderBy}`] = order
+        orderByCondition[`${this.alias}.id`] = order
 
         return orderByCondition
     }
@@ -289,7 +306,8 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
         const type = this.getEntityPropertyType(PAGINATION_KEY)
         const value = encodeByType(type, entity[PAGINATION_KEY])
-        const payload = `${PAGINATION_KEY}:${value}`
+        const idValue = encodeByType('string', entity['id'])
+        const payload = `${PAGINATION_KEY}:${value},id:${idValue}`
 
         return btoa(payload)
     }
@@ -321,6 +339,9 @@ export default class Paginator<Entity extends ObjectLiteral> {
         if (col === undefined) {
             throw new Error('entity property not found ' + key)
         }
+        if (col.type === String) return 'string'
+        if (col.type === Number) return 'number'
+        if (col.type === Date) return 'date'
         return col.type.toString()
     }
 
