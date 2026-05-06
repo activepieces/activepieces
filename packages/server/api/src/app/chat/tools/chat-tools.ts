@@ -131,10 +131,10 @@ function pieceDisplayLabel(shortName: string): string {
 function buildConnectionPickerBlock({ shortName, displayName, connections }: {
     shortName: string
     displayName: string
-    connections: Array<{ displayName: string, project: string, externalId: string, projectId: string }>
+    connections: Array<{ displayName: string, project: string, externalId: string, projectId: string, status: string }>
 }): string {
     const connLines = connections.map((c) =>
-        `- label: ${c.displayName}\n  project: ${c.project}\n  externalId: ${c.externalId}\n  projectId: ${c.projectId}`,
+        `- label: ${c.displayName}\n  project: ${c.project}\n  externalId: ${c.externalId}\n  projectId: ${c.projectId}\n  status: ${c.status}`,
     ).join('\n')
     return `\`\`\`connection-picker\npiece: ${shortName}\ndisplayName: ${displayName}\nconnections:\n${connLines}\n\`\`\``
 }
@@ -165,6 +165,7 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
                 externalId: c.externalId,
                 project: chatPrompt.projectDisplayName(project),
                 projectId: project.id,
+                status: c.status,
             }))
         }),
     )
