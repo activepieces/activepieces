@@ -1,15 +1,20 @@
-import { PROJECT_COLOR_PALETTE, Project } from '@activepieces/shared';
+import {
+  AppConnectionStatus,
+  AppConnectionWithoutSensitiveData,
+} from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, Hammer, Zap } from 'lucide-react';
+import { Check, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { Markdown } from '@/components/prompt-kit/markdown';
 import { Button } from '@/components/ui/button';
+import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { piecesHooks } from '@/features/pieces';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import {
   AutomationProposal,
@@ -17,13 +22,16 @@ import {
   normalizePieceName,
   parseAllConnectionsRequired,
   parseAutomationProposal,
+  parseBuildProgress,
   parseConnectionPicker,
   parseMultiQuestion,
+  parseProjectPicker,
   parseQuickReplies,
   stripIncompleteSpecialBlock,
 } from '../lib/message-parsers';
 
 import { ConnectionPickerCard } from './connection-picker-card';
+import { ProjectPickerCard } from './project-picker-card';
 
 const PROSE_CLASSES =
   'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4 [&_h1]:text-[18px] [&_h2]:text-[18px] [&_h3]:text-[18px]';
@@ -47,14 +55,12 @@ export function MessageContentWithAuth({
   content,
   onSend,
   selectedProjectId,
-  projects,
   onSelectProject,
   isLastMessage = false,
 }: {
   content: string;
   onSend?: (text: string) => void;
   selectedProjectId?: string | null;
-  projects?: Project[];
   onSelectProject?: (projectId: string) => void;
   isLastMessage?: boolean;
 }) {
@@ -88,9 +94,20 @@ export function MessageContentWithAuth({
     parseAllConnectionsRequired(afterProposal);
   const { picker: connectionPicker, cleanContent: afterPicker } =
     parseConnectionPicker(afterConnection);
-  const { cleanContent: afterQuestions } = parseMultiQuestion(afterPicker);
+  const { picker: projectPicker, cleanContent: afterProjectPicker } =
+    parseProjectPicker(afterPicker);
+  const { progress: buildProgress, cleanContent: afterBuildProgress } =
+    parseBuildProgress(afterProjectPicker);
+  const { cleanContent: afterQuestions } =
+    parseMultiQuestion(afterBuildProgress);
   const { cleanContent: afterReplies } = parseQuickReplies(afterQuestions);
-  const finalContent = stripIncompleteSpecialBlock(afterReplies);
+  const strippedContent = buildProgress
+    ? afterReplies
+        .replace(/\[.*?\]\(https?:\/\/[^\s)]*\/flows\/[^\s)]*\)\s*/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim()
+    : afterReplies;
+  const finalContent = stripIncompleteSpecialBlock(strippedContent);
 
   return (
     <div className="space-y-2">
@@ -99,13 +116,9 @@ export function MessageContentWithAuth({
           <Markdown>{finalContent}</Markdown>
         </div>
       )}
-      {connections.map((conn) => (
-        <ConnectionRequiredCard
-          key={conn.piece}
-          connection={conn}
-          onSend={onSend}
-        />
-      ))}
+      {connections.length > 0 && (
+        <ConnectionsRequiredCard connections={connections} onSend={onSend} />
+      )}
       {connectionPicker && (
         <ConnectionPickerCard
           picker={connectionPicker}
@@ -113,18 +126,23 @@ export function MessageContentWithAuth({
           isInteractive={isLastMessage}
         />
       )}
+      {projectPicker && (
+        <ProjectPickerCard
+          picker={projectPicker}
+          selectedProjectId={selectedProjectId}
+          isInteractive={isLastMessage}
+          onSelect={(projectId, projectName) => {
+            onSelectProject?.(projectId);
+            onSend?.(`Use ${projectName}.`);
+          }}
+        />
+      )}
       {proposal && (
         <AutomationProposalCard
           proposal={proposal}
-          selectedProjectId={selectedProjectId ?? null}
-          projects={projects ?? []}
           onBuild={() =>
             onSend?.(`Yes, build the "${proposal.title}" automation`)
           }
-          onSelectProjectAndBuild={(projectId) => {
-            onSelectProject?.(projectId);
-            onSend?.(`Yes, build the "${proposal.title}" automation`);
-          }}
         />
       )}
     </div>
@@ -133,20 +151,11 @@ export function MessageContentWithAuth({
 
 export function AutomationProposalCard({
   proposal,
-  selectedProjectId,
-  projects,
   onBuild,
-  onSelectProjectAndBuild,
 }: {
   proposal: AutomationProposal;
-  selectedProjectId: string | null;
-  projects: Project[];
   onBuild: () => void;
-  onSelectProjectAndBuild: (projectId: string) => void;
 }) {
-  const [showProjectPicker, setShowProjectPicker] = useState(false);
-  const hasProjectContext = selectedProjectId !== null;
-
   return (
     <div className="rounded-xl border bg-background overflow-hidden my-2">
       <div className="p-4 space-y-3">
@@ -177,70 +186,150 @@ export function AutomationProposalCard({
       </div>
 
       <div className="border-t px-4 py-3 bg-muted/30">
-        {hasProjectContext ? (
-          <Button size="sm" className="gap-1.5" onClick={onBuild}>
-            <Zap className="h-3.5 w-3.5" />
-            {t('Build this automation')}
-          </Button>
-        ) : showProjectPicker ? (
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">
-              {t('Select a project to build in:')}
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {projects.map((project) => {
-                const color = PROJECT_COLOR_PALETTE[project.icon.color];
-                return (
-                  <Button
-                    key={project.id}
-                    size="sm"
-                    variant="outline"
-                    className="gap-1.5"
-                    onClick={() => onSelectProjectAndBuild(project.id)}
-                  >
-                    <span
-                      className="inline-flex items-center justify-center h-4 w-4 rounded-sm shrink-0 text-[9px] font-bold"
-                      style={{
-                        backgroundColor: color.color,
-                        color: color.textColor,
-                      }}
-                    >
-                      {project.displayName.charAt(0).toUpperCase()}
-                    </span>
-                    {project.displayName}
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5"
-            onClick={() => setShowProjectPicker(true)}
-          >
-            <Hammer className="h-3.5 w-3.5" />
-            {t('Select project to build')}
-          </Button>
-        )}
+        <Button size="sm" className="gap-1.5" onClick={onBuild}>
+          <Zap className="h-3.5 w-3.5" />
+          {t('Build this automation')}
+        </Button>
       </div>
     </div>
   );
 }
 
-export function ConnectionRequiredCard({
+function ConnectionRow({
   connection,
-  onSend,
+  isConnected,
+  existingConn,
+  onConnect,
 }: {
   connection: ConnectionRequired;
+  isConnected: boolean;
+  existingConn: AppConnectionWithoutSensitiveData | null;
+  onConnect: () => void;
+}) {
+  const pieceName = normalizePieceName(connection.piece);
+  const { isLoading } = piecesHooks.usePiece({ name: pieceName });
+  const isReconnect =
+    existingConn !== null && existingConn.status !== AppConnectionStatus.ACTIVE;
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 border-t first:border-t-0">
+      <PieceIconWithPieceName
+        pieceName={pieceName}
+        size="sm"
+        border={false}
+        showTooltip={false}
+      />
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium">{connection.displayName}</div>
+        <div className="text-xs text-muted-foreground">
+          {isConnected
+            ? t('Ready to use')
+            : isReconnect
+            ? t('Your {name} connection is expired', {
+                name: connection.displayName,
+              })
+            : t('Not connected')}
+        </div>
+      </div>
+      {isConnected ? (
+        <motion.span
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+          className="shrink-0 flex items-center justify-center"
+        >
+          <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+        </motion.span>
+      ) : (
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5 shrink-0"
+          disabled={isLoading}
+          onClick={onConnect}
+        >
+          {isReconnect ? t('Reconnect') : t('Connect')}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function ConnectionsRequiredCard({
+  connections,
+  onSend,
+}: {
+  connections: ConnectionRequired[];
   onSend?: (text: string) => void;
 }) {
   const queryClient = useQueryClient();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [connected, setConnected] = useState(false);
-  const pieceName = normalizePieceName(connection.piece);
-  const { pieceModel, isLoading } = piecesHooks.usePiece({ name: pieceName });
+  const [connectedSet, setConnectedSet] = useState<Set<string>>(new Set());
+  const [existingConns, setExistingConns] = useState<
+    Record<string, AppConnectionWithoutSensitiveData>
+  >({});
+  const [activeConnection, setActiveConnection] =
+    useState<ConnectionRequired | null>(null);
+  const [continued, setContinued] = useState(false);
+
+  const activePieceName = activeConnection
+    ? normalizePieceName(activeConnection.piece)
+    : null;
+  const { pieceModel } = piecesHooks.usePiece({
+    name: activePieceName ?? '',
+    enabled: !!activePieceName,
+  });
+
+  const connectionsKey = useMemo(
+    () => connections.map((c) => c.piece).join(','),
+    [connections],
+  );
+
+  useEffect(() => {
+    const projectId = authenticationSession.getProjectId();
+    if (!projectId) return;
+    let cancelled = false;
+
+    void Promise.all(
+      connections.map(async (conn) => {
+        const pieceName = normalizePieceName(conn.piece);
+        const result = await appConnectionsApi.list({
+          projectId,
+          pieceName,
+          limit: 1,
+        });
+        return { piece: conn.piece, connection: result.data[0] ?? null };
+      }),
+    ).then((results) => {
+      if (cancelled) return;
+      const map: Record<string, AppConnectionWithoutSensitiveData> = {};
+      const alreadyActive = new Set<string>();
+      for (const { piece, connection } of results) {
+        if (connection) {
+          map[piece] = connection;
+          if (connection.status === AppConnectionStatus.ACTIVE) {
+            alreadyActive.add(piece);
+          }
+        }
+      }
+      setExistingConns(map);
+      if (alreadyActive.size > 0) {
+        setConnectedSet(alreadyActive);
+      }
+      if (alreadyActive.size === connections.length) {
+        setContinued(true);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [connectionsKey]);
+
+  const allConnected = connections.every((c) => connectedSet.has(c.piece));
+
+  function handleConnect(connection: ConnectionRequired) {
+    setActiveConnection(connection);
+  }
 
   return (
     <>
@@ -255,66 +344,63 @@ export function ConnectionRequiredCard({
           damping: 25,
         }}
       >
-        <div className="p-4 flex items-center gap-3">
-          <PieceIconWithPieceName
-            pieceName={pieceName}
-            size="sm"
-            border={false}
-            showTooltip={false}
+        {connections.map((conn) => (
+          <ConnectionRow
+            key={conn.piece}
+            connection={conn}
+            isConnected={connectedSet.has(conn.piece)}
+            existingConn={existingConns[conn.piece] ?? null}
+            onConnect={() => handleConnect(conn)}
           />
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm">
-              {connected
-                ? t('{name} connected', { name: connection.displayName })
-                : t('Connect {name}', { name: connection.displayName })}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {connected
-                ? t('Ready to use')
-                : t('This automation needs a {name} connection to work', {
-                    name: connection.displayName,
-                  })}
-            </p>
+        ))}
+
+        {allConnected && (
+          <div className="border-t px-4 py-3 bg-muted/30">
+            {continued ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                {t('All connected')}
+              </div>
+            ) : (
+              onSend && (
+                <Button
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => {
+                    setContinued(true);
+                    onSend(t('All connections are ready, continue building.'));
+                  }}
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  {t('Continue')}
+                </Button>
+              )
+            )}
           </div>
-          {connected ? (
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-              className="shrink-0 flex items-center justify-center"
-            >
-              <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
-            </motion.span>
-          ) : (
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 shrink-0"
-              disabled={isLoading}
-              onClick={() => setDialogOpen(true)}
-            >
-              {t('Connect')}
-            </Button>
-          )}
-        </div>
+        )}
       </motion.div>
-      {pieceModel && (
+
+      {pieceModel && activeConnection && (
         <CreateOrEditConnectionDialog
+          key={activeConnection.piece}
           piece={pieceModel}
-          open={dialogOpen}
+          open={true}
           setOpen={(open, createdConnection) => {
-            setDialogOpen(open);
-            if (createdConnection) {
-              setConnected(true);
-              void queryClient.invalidateQueries({
-                queryKey: ['app-connections'],
-              });
-              onSend?.(
-                `Done — ${connection.displayName} is connected. [auth externalId: ${createdConnection.externalId}]`,
-              );
+            if (!open) {
+              if (createdConnection) {
+                setConnectedSet((prev) => {
+                  const next = new Set(prev);
+                  next.add(activeConnection.piece);
+                  return next;
+                });
+                void queryClient.invalidateQueries({
+                  queryKey: ['app-connections'],
+                });
+              }
+              setActiveConnection(null);
             }
           }}
-          reconnectConnection={null}
+          reconnectConnection={existingConns[activeConnection.piece] ?? null}
           isGlobalConnection={false}
         />
       )}
