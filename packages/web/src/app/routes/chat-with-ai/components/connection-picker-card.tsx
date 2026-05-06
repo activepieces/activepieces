@@ -114,22 +114,24 @@ function useLiveConnections({
         });
         return result.data;
       }),
-    ).then((results) => {
-      if (cancelled) return;
-      const statusMap: Record<string, AppConnectionStatus> = {};
-      const connMap: Record<string, AppConnectionWithoutSensitiveData> = {};
-      for (const conns of results) {
-        for (const conn of conns) {
-          statusMap[conn.externalId] = conn.status;
-          connMap[conn.externalId] = conn;
+    )
+      .then((results) => {
+        if (cancelled) return;
+        const statusMap: Record<string, AppConnectionStatus> = {};
+        const connMap: Record<string, AppConnectionWithoutSensitiveData> = {};
+        for (const conns of results) {
+          for (const conn of conns) {
+            statusMap[conn.externalId] = conn.status;
+            connMap[conn.externalId] = conn;
+          }
         }
-      }
-      fullConnectionsRef.current = connMap;
-      setStatuses(statusMap);
-      setIsLoading(false);
-    }).catch(() => {
-      if (!cancelled) setIsLoading(false);
-    });
+        fullConnectionsRef.current = connMap;
+        setStatuses(statusMap);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) setIsLoading(false);
+      });
 
     return () => {
       cancelled = true;
