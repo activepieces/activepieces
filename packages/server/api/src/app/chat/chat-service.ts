@@ -196,7 +196,9 @@ export const chatService = (log: FastifyBaseLogger) => ({
                     mcpProjectSelection.clear({ platformId, userId })
                 }
             },
-            availableProjectIds: userProjects.map((p) => p.id),
+            projects: userProjects,
+            platformId,
+            log,
         })
 
         const closeMcpClient = async (): Promise<void> => {

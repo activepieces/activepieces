@@ -75,8 +75,9 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     props,
                 }
 
+                const descLine = component.description ? `\nDescription: ${component.description}\n` : ''
                 return {
-                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":\n${JSON.stringify(result, null, 2)}` }],
+                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":${descLine}\n${JSON.stringify(result, null, 2)}` }],
                 }
             }
             catch (err) {
