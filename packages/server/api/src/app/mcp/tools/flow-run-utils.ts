@@ -267,6 +267,22 @@ export async function executeAdhocAction({
     }
 }
 
+function looksEmpty(output: unknown): boolean {
+    if (output === undefined || output === null) return true
+    if (Array.isArray(output) && output.length === 0) return true
+    if (typeof output === 'object' && output !== null) {
+        const obj = output as Record<string, unknown>
+        if (obj.found === false) return true
+        if (Array.isArray(obj.messages) && obj.messages.length === 0) return true
+        if (Array.isArray(obj.results) && obj.results.length === 0) return true
+        if (typeof obj.results === 'object' && obj.results !== null) {
+            const results = obj.results as Record<string, unknown>
+            if (Array.isArray(results.messages) && results.messages.length === 0 && results.count === 0) return true
+        }
+    }
+    return false
+}
+
 function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: string): string {
     const steps = run.steps
     if (isNil(steps) || typeof steps !== 'object') {
@@ -284,12 +300,16 @@ function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: st
         const outStr = output === undefined
             ? '(no output)'
             : typeof output === 'string' ? output : JSON.stringify(output)
-        return `✅ ${displayName} completed (run ${run.id}).\n\n${mcpUtils.truncate(outStr, 4000)}`
+        const base = `✅ ${displayName} completed (run ${run.id}).\n\n${mcpUtils.truncate(outStr, 4000)}`
+        if (looksEmpty(output)) {
+            return `${base}\n\nNote: The action returned empty results. Your filters may be too narrow. Try again with broader parameters (e.g., remove category/label filters, use a wider date range, or use a common search term like "a" for text searches).`
+        }
+        return base
     }
     const errStr = errorMessage === undefined
         ? `status: ${String(status)}`
         : typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)
-    return `❌ ${displayName} failed (run ${run.id}): ${mcpUtils.truncate(errStr, 2000)}`
+    return `❌ ${displayName} failed (run ${run.id}): ${mcpUtils.truncate(errStr, 2000)}\n\nRetry suggestion: Check the error above. If it mentions missing criteria, try adding a broad filter (e.g., after_date with a recent date, or a common search term). If it mentions auth, verify the connection.`
 }
 
 export async function pollForRunCompletion(log: FastifyBaseLogger, runId: string, projectId: string): Promise<FlowRun> {

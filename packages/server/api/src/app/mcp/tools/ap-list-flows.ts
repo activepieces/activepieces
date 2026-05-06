@@ -50,7 +50,7 @@ export const apListFlowsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
     }
 }
 
-function formatFlowLine(flow: PopulatedFlow): string {
+export function formatFlowLine(flow: PopulatedFlow): string {
     const trigger = flow.version.trigger
     const triggerLabel = trigger.type === FlowTriggerType.PIECE
         ? (trigger.settings.pieceName ?? 'piece (unconfigured)')

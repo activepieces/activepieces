@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { Project } from '@activepieces/shared'
+import { Project, ProjectType } from '@activepieces/shared'
 
 function loadPromptTemplate(filename: string): string {
     return readFileSync(path.resolve(`packages/server/api/src/assets/prompts/${filename}`), 'utf8')
@@ -16,6 +16,10 @@ function sanitizeProjectName(name: string): string {
     return name.replace(/[^a-zA-Z0-9 \-_.]/g, '').slice(0, 64)
 }
 
+function projectDisplayName(project: Project): string {
+    return project.type === ProjectType.PERSONAL ? 'Personal Project' : project.displayName
+}
+
 function buildProjectListBlock({ projects, frontendUrl }: {
     projects: Project[]
     frontendUrl: string
@@ -23,7 +27,7 @@ function buildProjectListBlock({ projects, frontendUrl }: {
     if (projects.length === 0) return 'No projects available.'
     return projects.map((p) => {
         const url = `${frontendUrl}/projects/${p.id}`
-        return `- **${sanitizeProjectName(p.displayName)}** (ID: ${p.id}) — [Open](${url})`
+        return `- **${sanitizeProjectName(projectDisplayName(p))}** (ID: ${p.id}) — [Open](${url})`
     }).join('\n')
 }
 
@@ -35,7 +39,7 @@ function buildProjectContextBlock({ project, frontendUrl }: {
         return PROMPT_TEMPLATES.noProject
     }
     return PROMPT_TEMPLATES.projectSelected
-        .replaceAll('{{PROJECT_NAME}}', sanitizeProjectName(project.displayName))
+        .replaceAll('{{PROJECT_NAME}}', sanitizeProjectName(projectDisplayName(project)))
         .replaceAll('{{PROJECT_ID}}', project.id)
         .replaceAll('{{FRONTEND_URL}}', frontendUrl)
 }
@@ -57,4 +61,5 @@ function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl }: {
 
 export const chatPrompt = {
     buildSystemPrompt: buildAgentSystemPrompt,
+    projectDisplayName,
 }
