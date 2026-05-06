@@ -80,6 +80,13 @@ export const catchWebhook = createTrigger({
       required: false,
       defaultValue: false,
     }),
+    excludeRawBody: Property.Checkbox({
+      displayName: 'Exclude Raw Body',
+      description:
+        'When enabled, the raw request body is removed from the trigger output. Use this to reduce execution log size when the payload contains large strings.',
+      required: false,
+      defaultValue: false,
+    }),
     authFields: Property.DynamicProperties({
       auth: PieceAuth.None(),
       displayName: 'Authentication Fields',
@@ -205,14 +212,19 @@ export const catchWebhook = createTrigger({
     if (!verified) {
       return [];
     }
+    let payload = context.payload;
+
     if (context.propsValue.convertBase64ToFiles) {
-      const convertedBody = await convertBase64FieldsToUrls(
-        context.payload.body,
-        context.files
-      );
-      return [{ ...context.payload, body: convertedBody }];
+      const convertedBody = await convertBase64FieldsToUrls(payload.body, context.files);
+      payload = { ...payload, body: convertedBody };
     }
-    return [context.payload];
+
+    if (context.propsValue.excludeRawBody) {
+      const { rawBody: _rawBody, ...payloadWithoutRawBody } = payload;
+      return [payloadWithoutRawBody];
+    }
+
+    return [payload];
   },
 });
 
