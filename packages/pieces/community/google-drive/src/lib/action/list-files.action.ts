@@ -162,11 +162,31 @@ export const googleDriveListFiles = createAction({
     // If downloadFiles is enabled, download each file and add URLs to array
     if (context.propsValue.downloadFiles) {
       const downloadedFiles: string[] = [];
+      const extensionMap: Record<string, string> = {
+        'application/pdf': '.pdf',
+        'image/jpeg': '.jpg',
+        'image/png': '.png',
+        'image/tiff': '.tiff',
+        'text/plain': '.txt',
+        'text/csv': '.csv',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx'
+      };
+
       for (const fileWithLevel of filesWithLevel) {
         const file = fileWithLevel.file;
         // Skip folders when downloading
         if (file.mimeType === 'application/vnd.google-apps.folder') {
           continue;
+        }
+
+        let safeName = file.name;
+        const correctExtension = extensionMap[file.mimeType];
+        if (correctExtension && !safeName.toLowerCase().endsWith(correctExtension)) {
+            // Check for the .jpeg edge case before appending .jpg
+            if (!(file.mimeType === 'image/jpeg' && safeName.toLowerCase().endsWith('.jpeg'))) {
+                safeName = safeName + correctExtension;
+            }
         }
         
         try {
@@ -174,7 +194,7 @@ export const googleDriveListFiles = createAction({
             context.auth,
             context.files,
             file.id,
-            file.name
+            safeName
           );
           downloadedFiles.push(fileUrl);
         } catch (error) {
