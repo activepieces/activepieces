@@ -1,12 +1,9 @@
 import { AlertChannel, isNil, Permission } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { Label } from '@/components/ui/label';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
 import { alertQueries } from '@/features/alerts';
-import { alertsApi } from '@/features/alerts/api/alerts-api';
 import { alertMutations } from '@/features/alerts/hooks/alert-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
@@ -32,10 +29,7 @@ export const PersonalProjectAlerts = () => {
     alertMutations.useCreateAlert();
 
   const { mutate: unsubscribeToAlerts, isPending: isUnsubscribingToAlerts } =
-    useMutation<void, Error, string>({
-      mutationFn: (alertId) => alertsApi.delete(alertId),
-      onError: () => internalErrorToast(),
-    });
+    alertMutations.useDeleteAlert();
 
   const isToggling = isSubscribingToAlerts || isUnsubscribingToAlerts;
 
@@ -49,7 +43,7 @@ export const PersonalProjectAlerts = () => {
       return;
     }
     if (userAlert) {
-      unsubscribeToAlerts(userAlert.id);
+      unsubscribeToAlerts(userAlert);
     }
   };
 

@@ -1,6 +1,6 @@
 import { ProjectWithLimits } from '@activepieces/shared';
 import { t } from 'i18next';
-import { BellMinus, BellPlus, BellRing, ChevronDown } from 'lucide-react';
+import { Bell, BellMinus, BellPlus, BellRing, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -61,9 +61,13 @@ export const PlatformAdminProjectAlertSubscriptionDropdown = ({
             variant="outline"
             size="sm"
             loading={isRunning}
-            className={cn('gap-1', hasSelection && 'border-primary/40')}
+            className={cn('gap-1')}
           >
-            <BellRing className="size-4" />
+            {hasSelection ? (
+              <BellRing className="size-4" />
+            ) : (
+              <Bell className="size-4" />
+            )}
             {t('My alert subscriptions')}
             {hasSelection && (
               <span className="text-muted-foreground">
