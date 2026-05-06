@@ -27,14 +27,31 @@ export async function convertBase64FieldsToUrls(
 // Strings shorter than this are treated as tokens/hashes, not binary data
 const BASE64_CONVERT_MIN_CHARS = 10_000;
 
+// Number of random positions sampled to verify base64 character set — O(1) regardless of string size
+const BASE64_SAMPLE_COUNT = 200;
+
 const DATA_URI_BASE64_REGEX =
   /^data:([a-zA-Z0-9][a-zA-Z0-9!#$&\-^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_]*);base64,([A-Za-z0-9+/\-_]+=*)$/;
 
-const RAW_BASE64_REGEX = /^[A-Za-z0-9+/\-_]+=*$/;
+const BASE64_CHARS = new Set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=_-');
 
 function isLargeBase64(value: string): boolean {
   if (value.length < BASE64_CONVERT_MIN_CHARS) return false;
-  return DATA_URI_BASE64_REGEX.test(value) || RAW_BASE64_REGEX.test(value);
+  if (DATA_URI_BASE64_REGEX.test(value)) return true;
+  return isRawBase64(value);
+}
+
+function isRawBase64(value: string): boolean {
+  // Valid base64 length % 4 is never 1 (would require a half-byte with no valid padding)
+  const unpadded = value.replace(/=+$/, '');
+  if (unpadded.length % 4 === 1) return false;
+
+  // Sample random positions rather than scanning the full string
+  for (let i = 0; i < BASE64_SAMPLE_COUNT; i++) {
+    const pos = Math.floor(Math.random() * value.length);
+    if (!BASE64_CHARS.has(value[pos])) return false;
+  }
+  return true;
 }
 
 async function decodeBase64String(value: string): Promise<{ data: Buffer; mimeType: string }> {
