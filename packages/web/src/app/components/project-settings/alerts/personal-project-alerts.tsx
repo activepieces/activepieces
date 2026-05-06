@@ -21,7 +21,8 @@ export const PersonalProjectAlerts = () => {
 
   const userAlert = alertsData?.find(
     (alert) =>
-      alert.channel === AlertChannel.EMAIL && alert.receiver === userEmail,
+      alert.channel === AlertChannel.EMAIL &&
+      alert.receiver.toLowerCase() === userEmail?.toLowerCase(),
   );
   const isUserSubscribedToAlerts = !isNil(userAlert);
 

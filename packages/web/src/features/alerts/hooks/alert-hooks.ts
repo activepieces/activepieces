@@ -152,7 +152,7 @@ export const alertMutations = {
                 const myAlerts = page.data.filter(
                   (alert) =>
                     alert.channel === AlertChannel.EMAIL &&
-                    alert.receiver === email,
+                    alert.receiver.toLowerCase() === email.toLowerCase(),
                 );
                 if (myAlerts.length === 0) {
                   return 'not-subscribed';

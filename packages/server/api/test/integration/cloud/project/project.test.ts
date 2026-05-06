@@ -141,7 +141,7 @@ describe('Project API', () => {
             })
             expect(listResponse?.statusCode).toBe(StatusCodes.OK)
             const receivers = listResponse!.json().data.map((alert: { receiver: string }) => alert.receiver)
-            expect(receivers).toEqual([alertReceiverEmail])
+            expect(receivers).toEqual([alertReceiverEmail.toLowerCase()])
         })
 
         it('does not auto-subscribe anyone when alertReceiverEmail is omitted on team project create', async () => {
