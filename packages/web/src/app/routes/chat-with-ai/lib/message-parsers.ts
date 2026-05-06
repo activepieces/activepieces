@@ -2,6 +2,13 @@ import { ChatUIMessage } from '@/features/chat/lib/chat-types';
 
 import { ProposalStep, stepVisuals } from './step-visuals';
 
+export function normalizePieceName(piece: string): string {
+  const shortName = piece.replace(/[^a-z0-9-]/gi, '');
+  return piece.startsWith('@activepieces/')
+    ? piece
+    : `@activepieces/piece-${shortName}`;
+}
+
 export function getTextFromParts(parts: ChatUIMessage['parts']): string {
   return parts
     .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
@@ -31,6 +38,7 @@ const SPECIAL_FENCES = [
   'multi-question',
   'automation-proposal',
   'connection-required',
+  'connection-picker',
   'quick-replies',
 ];
 
@@ -235,3 +243,59 @@ export function parseMultiQuestion(content: string): {
 
   return { questions, cleanContent };
 }
+
+export function parseConnectionPicker(content: string): {
+  picker: ConnectionPickerData | null;
+  cleanContent: string;
+} {
+  const { block, cleanContent } = parseCodeBlock(content, 'connection-picker');
+  if (!block) return { picker: null, cleanContent: content };
+
+  const pieceMatch = /^piece:\s*(.+)$/m.exec(block);
+  const displayNameMatch = /^displayName:\s*(.+)$/m.exec(block);
+  if (!pieceMatch) return { picker: null, cleanContent: content };
+
+  const connections: ConnectionPickerData['connections'] = [];
+  const connectionBlocks = block.split(/^-\s+label:\s*/m).slice(1);
+
+  for (const connBlock of connectionBlocks) {
+    const lines = connBlock.split('\n');
+    const label = lines[0]?.trim();
+    if (!label) continue;
+
+    const projectMatch = /^\s+project:\s*(.+)$/m.exec(connBlock);
+    const externalIdMatch = /^\s+externalId:\s*(.+)$/m.exec(connBlock);
+    const projectIdMatch = /^\s+projectId:\s*(.+)$/m.exec(connBlock);
+
+    const externalId = externalIdMatch?.[1].trim() ?? '';
+    const projectId = projectIdMatch?.[1].trim() ?? '';
+    if (!externalId) continue;
+
+    connections.push({
+      label,
+      project: projectMatch?.[1].trim() ?? '',
+      externalId,
+      projectId,
+    });
+  }
+
+  return {
+    picker: {
+      piece: pieceMatch[1].trim(),
+      displayName: displayNameMatch?.[1].trim() ?? pieceMatch[1].trim(),
+      connections,
+    },
+    cleanContent,
+  };
+}
+
+export type ConnectionPickerData = {
+  piece: string;
+  displayName: string;
+  connections: Array<{
+    label: string;
+    project: string;
+    externalId: string;
+    projectId: string;
+  }>;
+};

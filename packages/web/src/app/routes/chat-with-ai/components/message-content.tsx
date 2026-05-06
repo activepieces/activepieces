@@ -14,12 +14,16 @@ import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-
 import {
   AutomationProposal,
   ConnectionRequired,
+  normalizePieceName,
   parseAllConnectionsRequired,
   parseAutomationProposal,
+  parseConnectionPicker,
   parseMultiQuestion,
   parseQuickReplies,
   stripIncompleteSpecialBlock,
 } from '../lib/message-parsers';
+
+import { ConnectionPickerCard } from './connection-picker-card';
 
 const PROSE_CLASSES =
   'max-w-none break-words text-sm [&_p]:mb-4 [&_p:last-child]:mb-0 [&_table]:mb-4 [&_h1]:text-[18px] [&_h2]:text-[18px] [&_h3]:text-[18px]';
@@ -45,12 +49,14 @@ export function MessageContentWithAuth({
   selectedProjectId,
   projects,
   onSelectProject,
+  isLastMessage = false,
 }: {
   content: string;
   onSend?: (text: string) => void;
   selectedProjectId?: string | null;
   projects?: Project[];
   onSelectProject?: (projectId: string) => void;
+  isLastMessage?: boolean;
 }) {
   const hasAuthUrl = AUTH_URL_PATTERN.test(content);
 
@@ -80,7 +86,9 @@ export function MessageContentWithAuth({
     parseAutomationProposal(content);
   const { connections, cleanContent: afterConnection } =
     parseAllConnectionsRequired(afterProposal);
-  const { cleanContent: afterQuestions } = parseMultiQuestion(afterConnection);
+  const { picker: connectionPicker, cleanContent: afterPicker } =
+    parseConnectionPicker(afterConnection);
+  const { cleanContent: afterQuestions } = parseMultiQuestion(afterPicker);
   const { cleanContent: afterReplies } = parseQuickReplies(afterQuestions);
   const finalContent = stripIncompleteSpecialBlock(afterReplies);
 
@@ -98,6 +106,13 @@ export function MessageContentWithAuth({
           onSend={onSend}
         />
       ))}
+      {connectionPicker && (
+        <ConnectionPickerCard
+          picker={connectionPicker}
+          onSelect={(text) => onSend?.(text)}
+          isInteractive={isLastMessage}
+        />
+      )}
       {proposal && (
         <AutomationProposalCard
           proposal={proposal}
@@ -224,10 +239,7 @@ export function ConnectionRequiredCard({
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [connected, setConnected] = useState(false);
-  const shortName = connection.piece.replace(/[^a-z0-9-]/gi, '');
-  const pieceName = connection.piece.startsWith('@activepieces/')
-    ? connection.piece
-    : `@activepieces/piece-${shortName}`;
+  const pieceName = normalizePieceName(connection.piece);
   const { pieceModel, isLoading } = piecesHooks.usePiece({ name: pieceName });
 
   return (
