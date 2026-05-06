@@ -32,27 +32,18 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
         const strategy = FlowRetryStrategy.FROM_FAILED_STEP
 
         let query = flowRunRepo().createQueryBuilder('flow_run').where({
-            status: In([FlowRunStatus.INTERNAL_ERROR]),
+            id: In(runIds ?? [])
         })
-        if (!isNil(runIds)) {
-            query = query.andWhere({
-                id: In(runIds),
+        if (!createdBefore) {
+            query = query.andWhere('flow_run.created <= :createdBefore', {
+                createdBefore,
             })
         }
-        if (!createdAfter || !createdBefore) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'createdAfter and createdBefore are required',
-                },
+        if (!createdAfter) {
+            query = query.andWhere('flow_run.created >= :createdAfter', {
+                createdAfter,
             })
         }
-        query = query.andWhere('flow_run.created >= :createdAfter', {
-            createdAfter,
-        })
-        query = query.andWhere('flow_run.created <= :createdBefore', {
-            createdBefore,
-        })
 
         const flowRuns = await query.getMany()
         const flowRunsByProject = flowRuns.reduce((acc, flowRun) => {
@@ -93,7 +84,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
         }
         await licenseKeysService(log).applyLimits(platform.id, key)
     },
-    async increaseAiCredits({  amountInUsd, platformId }: IncreaseAICreditsForPlatformRequestBody): Promise<void> {
+    async increaseAiCredits({ amountInUsd, platformId }: IncreaseAICreditsForPlatformRequestBody): Promise<void> {
         const { apiKeyHash } = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
         const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
 
