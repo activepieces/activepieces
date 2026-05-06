@@ -41,13 +41,15 @@ const mockLog: FastifyBaseLogger = {
     level: 'info',
 } as unknown as FastifyBaseLogger
 
-function createMockJob(id: string, data?: Record<string, unknown>): Job {
+function createMockJob(id: string, data?: Record<string, unknown>, deferredFailure?: string): Job {
     return {
         id,
         name: `job-name-${id}`,
         data: { projectId: 'proj-1', platformId: 'plat-1', ...data },
         attemptsMade: 0,
+        deferredFailure,
         moveToDelayed: vi.fn().mockResolvedValue(undefined),
+        moveToFailed: vi.fn().mockResolvedValue(undefined),
         changePriority: vi.fn().mockResolvedValue(undefined),
         updateData: vi.fn().mockResolvedValue(undefined),
     } as unknown as Job
@@ -155,6 +157,45 @@ describe('tryDequeue', () => {
 
         expect(result!.jobId).toBe('job-b')
         expect(jobA.changePriority).toHaveBeenCalledWith({ priority: 10 })
+    })
+
+    it('should fail job with deferredFailure and skip interceptors', async () => {
+        const zombieJob = createMockJob('zombie-1', undefined, 'job stalled more than allowable limit')
+
+        vi.mocked(mockWorker.getNextJob)
+            .mockResolvedValueOnce(zombieJob)
+            .mockResolvedValueOnce(undefined as unknown as Job)
+
+        const result = await tryDequeue(mockWorker, 'test-queue', mockLog)
+
+        expect(result).toBeNull()
+        expect(zombieJob.moveToFailed).toHaveBeenCalledTimes(1)
+        const moveToFailedCall = vi.mocked(zombieJob.moveToFailed).mock.calls[0]
+        expect(moveToFailedCall[0]).toBeInstanceOf(Error)
+        expect((moveToFailedCall[0] as Error).message).toBe('job stalled more than allowable limit')
+        expect(moveToFailedCall[1]).toMatch(/^token-/)
+        expect(moveToFailedCall[2]).toBe(false)
+        expect(mockPreDispatch).not.toHaveBeenCalled()
+        expect(mockOnJobFinished).not.toHaveBeenCalled()
+        expect(mockWorker.getNextJob).toHaveBeenCalledTimes(2)
+    })
+
+    it('should keep draining when moveToFailed throws on a deferred-failure job', async () => {
+        const zombieJob = createMockJob('zombie-2', undefined, 'job stalled more than allowable limit')
+        vi.mocked(zombieJob.moveToFailed).mockRejectedValueOnce(new Error('Missing lock'))
+        const liveJob = createMockJob('live-1')
+
+        vi.mocked(mockWorker.getNextJob)
+            .mockResolvedValueOnce(zombieJob)
+            .mockResolvedValueOnce(liveJob)
+
+        mockPreDispatch.mockResolvedValueOnce({ verdict: InterceptorVerdict.ALLOW })
+
+        const result = await tryDequeue(mockWorker, 'test-queue', mockLog)
+
+        expect(result).not.toBeNull()
+        expect(result!.jobId).toBe('live-1')
+        expect(mockWorker.getNextJob).toHaveBeenCalledTimes(2)
     })
 
     it('should return null when queue is empty (no jobs at all)', async () => {
