@@ -48,6 +48,22 @@
                 </td>
               </tr>
 
+              {{#failedStepDisplayName}}
+              <tr>
+                <td align="left" style="padding: 16px 40px 0 40px; font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 16px; line-height: 24px; color: #2f2e2e;">
+                  <strong>Failed at:</strong> {{#failedStepNumber}}{{failedStepNumber}}. {{/failedStepNumber}}{{failedStepDisplayName}}
+                </td>
+              </tr>
+              {{/failedStepDisplayName}}
+
+              {{#failedStepMessage}}
+              <tr>
+                <td align="left" style="padding: 8px 40px 0 40px; font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px; line-height: 22px; color: #2f2e2e; word-break: break-word;">
+                  <strong>Reason:</strong> {{failedStepMessage}}
+                </td>
+              </tr>
+              {{/failedStepMessage}}
+
               <tr>
                 <td align="left" style="padding: 28px 40px 0 40px;">
                   <table role="presentation" border="0" cellspacing="0" cellpadding="0">

@@ -72,7 +72,7 @@ export const flowRunUtils = {
     });
     return lastStepWithStatus;
   },
-  findLoopsState(
+  pinLoopsToIterationsWithFailedStep(
     run: FlowRun,
     //runs get updated if they aren't terminated yet, so we shouldn't reset the loops state on each update
     currentLoopsState: Record<string, number>,
@@ -164,7 +164,7 @@ export const flowRunUtils = {
     return cn('text-xs border rounded-md leading-tight', {
       'text-success-800 bg-success-50 border-success-200 dark:text-success-200 dark:bg-success-900 dark:border-success-800':
         variant === 'success',
-      'text-destructive-800 bg-destructive-50 border-destructive-200 dark:text-destructive-200 dark:bg-destructive-900 dark:border-destructive-800':
+      'text-destructive-700 bg-destructive-50 border-destructive-200 dark:text-destructive-200 dark:bg-destructive-900 dark:border-destructive-800':
         variant === 'error',
       'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-600 dark:bg-amber-950 border-amber-500 dark:border-amber-900':
         variant === 'warning',

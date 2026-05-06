@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 type JsonViewerProps = {
   json: any;
-  title: string;
+  title: React.ReactNode;
   hideDownload?: boolean;
   className?: string;
 };
@@ -97,7 +97,7 @@ const JsonViewer = React.memo(
     const handleDownloadFile = (fileUrl: string, ext = '') => {
       const link = document.createElement('a');
       link.href = fileUrl;
-      link.download = `${title}${ext}`;
+      link.download = `${typeof title === 'string' ? title : 'data'}${ext}`;
       link.click();
       URL.revokeObjectURL(fileUrl);
     };

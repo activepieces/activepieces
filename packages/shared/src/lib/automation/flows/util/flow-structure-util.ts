@@ -130,6 +130,10 @@ function getAllSteps(step: Step): Step[] {
     return steps
 }
 
+function getStepNumber(trigger: FlowTrigger, stepName: string): number {
+    return getAllSteps(trigger).findIndex((s) => s.name === stepName) + 1
+}
+
 
 const createBranch = (branchName: string, conditions: BranchCondition[][] | undefined) => {
     return {
@@ -254,6 +258,7 @@ export const flowStructureUtil = {
     isTrigger,
     isAction,
     getAllSteps,
+    getStepNumber,
     transferStep,
     transferFlow,
     getStepOrThrow,

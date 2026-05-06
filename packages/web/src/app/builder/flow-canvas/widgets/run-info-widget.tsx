@@ -3,9 +3,11 @@ import {
   FlowRunStatus,
   isFlowRunStateTerminal,
 } from '@activepieces/shared';
+import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { CircleHelp } from 'lucide-react';
+import { ArrowRight, CircleHelp } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import { flowRunUtils } from '@/features/flow-runs';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
@@ -13,6 +15,7 @@ import { cn } from '@/lib/utils';
 
 import { EditFlowOrViewDraftButton } from '../../builder-header/flow-status/view-draft-or-edit-flow-button';
 import { useBuilderStateContext } from '../../builder-hooks';
+import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 
 import LargeWidgetWrapper from './large-widget-wrapper';
 
@@ -64,7 +67,10 @@ function getStatusText({
 }
 
 const RunInfoWidget = () => {
-  const [run] = useBuilderStateContext((state) => [state.run]);
+  const [run, selectedStep, goToFailedStep] = useBuilderStateContext(
+    (state) => [state.run, state.selectedStep, state.goToFailedStep],
+  );
+  const { fitView } = useReactFlow();
   const { variant, Icon } = run
     ? flowRunUtils.getStatusIcon(run.status)
     : { variant: 'default' as const, Icon: CircleHelp };
@@ -84,6 +90,13 @@ const RunInfoWidget = () => {
     status: run.status,
     ignoreInternalError: false,
   });
+  const showJumpToFailedStep =
+    !!run.failedStep && selectedStep !== run.failedStep.name;
+  const handleJumpToFailedStep = () => {
+    if (!run.failedStep) return;
+    goToFailedStep();
+    fitView(flowCanvasUtils.createFocusStepInGraphParams(run.failedStep.name));
+  };
   return (
     <LargeWidgetWrapper
       containerClassName={cn(
@@ -132,7 +145,22 @@ const RunInfoWidget = () => {
           </div>
         </div>
 
-        <EditFlowOrViewDraftButton onCanvas={false}></EditFlowOrViewDraftButton>
+        <div className="flex items-center gap-2">
+          {showJumpToFailedStep && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleJumpToFailedStep}
+              className="text-destructive-700 hover:text-destructive-700 dark:text-destructive-200 dark:hover:text-destructive-200"
+            >
+              <ArrowRight className="size-4" />
+              {t('Failed step')}
+            </Button>
+          )}
+          <EditFlowOrViewDraftButton
+            onCanvas={false}
+          ></EditFlowOrViewDraftButton>
+        </div>
       </div>
     </LargeWidgetWrapper>
   );
