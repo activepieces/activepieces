@@ -91,5 +91,12 @@
   "Triggers when a new record is added to the selected table.": "Se activa cuando se añade un nuevo registro a la tabla seleccionada.",
   "Triggers when a record is created or updated in selected table.": "Se activa cuando se crea o actualiza un registro en la tabla seleccionada.",
   "Trigger field": "Campo de activación",
-  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "El campo **Última Hora Modificada** se utilizará para ver registros nuevos o actualizados. lease create **Last Modified Time** field in your schema,if you don't have any timestamp field."
+  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "El campo **Última Hora Modificada** se utilizará para ver registros nuevos o actualizados. lease create **Last Modified Time** field in your schema,if you don't have any timestamp field.",
+  "Clean Record": "Clean Record",
+  "Clears fields in a record. Empty values will clear the corresponding fields.": "Clears fields in a record. Empty values will clear the corresponding fields.",
+  "Please connect your account": "Please connect your account",
+  "Please select a base first": "Please select a base first",
+  "Please select a table first": "Please select a table first",
+  "Please check your permission scope": "Please check your permission scope",
+  "Please select a base and table first": "Please select a base and table first"
 }

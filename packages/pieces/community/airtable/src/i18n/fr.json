@@ -91,5 +91,12 @@
   "Triggers when a new record is added to the selected table.": "Déclenche lorsqu'un nouvel enregistrement est ajouté à la table sélectionnée.",
   "Triggers when a record is created or updated in selected table.": "Déclenche lorsqu'un enregistrement est créé ou mis à jour dans la table sélectionnée.",
   "Trigger field": "Champ de déclenchement",
-  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "Le champ **Dernière Modification** sera utilisé pour regarder les enregistrements nouveaux ou mis à jour. créer un champ **Dernière modification** dans votre schéma, si vous n'avez pas de champ d'horodatage."
+  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "Le champ **Dernière Modification** sera utilisé pour regarder les enregistrements nouveaux ou mis à jour. créer un champ **Dernière modification** dans votre schéma, si vous n'avez pas de champ d'horodatage.",
+  "Clean Record": "Nettoyer l'enregistrement",
+  "Clears fields in a record. Empty values will clear the corresponding fields.": "Efface les champs d'un enregistrement. Les valeurs vides effaceront les champs correspondants.",
+  "Please connect your account": "Veuillez connecter votre compte",
+  "Please select a base first": "Veuillez d'abord sélectionner une base",
+  "Please select a table first": "Veuillez d'abord sélectionner une table",
+  "Please check your permission scope": "Veuillez vérifier vos permissions",
+  "Please select a base and table first": "Veuillez d'abord sélectionner une base et une table"
 }

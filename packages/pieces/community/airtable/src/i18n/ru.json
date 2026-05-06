@@ -47,5 +47,12 @@
   "Triggers when a new record is added to the selected table.": "Включает при добавлении новой записи в выбранную таблицу.",
   "Triggers when a record is created or updated in selected table.": "Триггеры при создании или обновлении записи в выбранной таблице.",
   "Trigger field": "Триггер поле",
-  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "Поле **Время последнего изменения** будет использоваться для просмотра новых или обновленных записей. в аренде создайте поле **Последнее Изменённое время** в вашей схеме, если у вас нет поля отметки времени."
+  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "Поле **Время последнего изменения** будет использоваться для просмотра новых или обновленных записей. в аренде создайте поле **Последнее Изменённое время** в вашей схеме, если у вас нет поля отметки времени.",
+  "Clean Record": "Clean Record",
+  "Clears fields in a record. Empty values will clear the corresponding fields.": "Clears fields in a record. Empty values will clear the corresponding fields.",
+  "Please connect your account": "Please connect your account",
+  "Please select a base first": "Please select a base first",
+  "Please select a table first": "Please select a table first",
+  "Please check your permission scope": "Please check your permission scope",
+  "Please select a base and table first": "Please select a base and table first"
 }

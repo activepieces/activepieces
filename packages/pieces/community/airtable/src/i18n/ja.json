@@ -91,5 +91,12 @@
   "Triggers when a new record is added to the selected table.": "選択したテーブルに新しいレコードが追加されたときにトリガーされます。",
   "Triggers when a record is created or updated in selected table.": "選択したテーブルでレコードを作成または更新したときにトリガーします。",
   "Trigger field": "トリガーフィールド",
-  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "**最終更新時刻** フィールドは、新しいレコードや更新を見るために使用されます。 リース作成**最終更新時刻** あなたのスキーマにタイムスタンプフィールドがなければ、あなたのスキーマにフィールドを作成します。"
+  "**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.": "**最終更新時刻** フィールドは、新しいレコードや更新を見るために使用されます。 リース作成**最終更新時刻** あなたのスキーマにタイムスタンプフィールドがなければ、あなたのスキーマにフィールドを作成します。",
+  "Clean Record": "Clean Record",
+  "Clears fields in a record. Empty values will clear the corresponding fields.": "Clears fields in a record. Empty values will clear the corresponding fields.",
+  "Please connect your account": "Please connect your account",
+  "Please select a base first": "Please select a base first",
+  "Please select a table first": "Please select a table first",
+  "Please check your permission scope": "Please check your permission scope",
+  "Please select a base and table first": "Please select a base and table first"
 }
