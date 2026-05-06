@@ -89,6 +89,22 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
     if (isNil(job)) {
         return null  // waiting list empty — drainDelay provided backpressure
     }
+
+    if (job.deferredFailure) {
+        log.warn(
+            { queueName, jobId: job.id, jobName: job.name, deferredFailure: job.deferredFailure },
+            '[jobBroker#tryDequeue] Failing job with deferred failure (BullMQ stalled limit exceeded)',
+        )
+        const { error: failError } = await tryCatch(() => job.moveToFailed(new Error(job.deferredFailure), token, false))
+        if (failError) {
+            log.error(
+                { queueName, jobId: job.id, error: String(failError) },
+                '[jobBroker#tryDequeue] Failed to fail deferred-failure job',
+            )
+        }
+        return tryDequeue(worker, queueName, log)
+    }
+
     log.info({ queueName, jobId: job.id, jobName: job.name }, '[jobBroker#tryDequeue] Dequeued job')
 
     const originalSchemaVersion = (job.data as Record<string, unknown>).schemaVersion

@@ -6,6 +6,7 @@ import { mcpUtils } from './mcp-utils'
 
 const deleteRecordsInput = z.object({
     recordIds: z.array(z.string()).describe('Array of record IDs to delete. Use ap_find_records to find them.'),
+    displayName: z.string().optional().describe('Short approval prompt shown to the user (e.g. "Delete 3 records from Emails table"). Must include what the action does and the target name.'),
 })
 
 export const apDeleteRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
