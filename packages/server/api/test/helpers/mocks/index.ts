@@ -257,7 +257,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         plan: platformPlan?.plan,
         secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
         scimEnabled: platformPlan?.scimEnabled ?? false,
-        canary: platformPlan?.canary ?? false
+        canary: platformPlan?.canary ?? false,
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
@@ -825,6 +825,7 @@ export const createMockEventDestination = (eventDestination?: Partial<{
     created: string
     updated: string
     platformId: string
+    projectId: string | null
     events: ApplicationEventName[]
     url: string
     scope: EventDestinationScope
@@ -833,6 +834,7 @@ export const createMockEventDestination = (eventDestination?: Partial<{
     created: string
     updated: string
     platformId: string
+    projectId: string | null
     events: ApplicationEventName[]
     url: string
     scope: EventDestinationScope
@@ -842,6 +844,7 @@ export const createMockEventDestination = (eventDestination?: Partial<{
         created: eventDestination?.created ?? faker.date.recent().toISOString(),
         updated: eventDestination?.updated ?? faker.date.recent().toISOString(),
         platformId: eventDestination?.platformId ?? apId(),
+        projectId: eventDestination?.projectId ?? null,
         events: eventDestination?.events ?? [faker.helpers.enumValue(ApplicationEventName)],
         url: eventDestination?.url ?? faker.internet.url(),
         scope: eventDestination?.scope ?? EventDestinationScope.PLATFORM,

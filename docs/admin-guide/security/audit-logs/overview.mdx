@@ -1,10 +1,57 @@
 ---
 title: "Overview"
-description: ""
+description: "Track every action on your platform and forward events to your tools"
 ---
 
 <Snippet file="enterprise-feature.mdx" />
 
-This table in admin console contains all application events. We are constantly adding new events, so there is no better place to see the events defined in the code than [here](https://github.com/activepieces/activepieces/blob/main/packages/shared/src/lib/ee/audit-events/index.ts).
+## What are audit events?
+
+Activepieces records an audit event for every meaningful action on the platform — a flow gets created, a run finishes, a user signs in, a connection is saved, a signing key is rotated, and so on. Each event captures what happened, who did it, when, and the project or platform it belongs to.
+
+You can do two things with these events: **view them in the audit log table** for compliance and forensics, or **stream them to a webhook** to react in real time.
+
+## View them in the audit log
+
+Open **Platform Admin → Security → Audit Logs** to browse the full table. Filter by action, user, project, or date range to find a specific event, and click any row to see the full payload.
 
 ![Audit Logs](/resources/screenshots/audit-logs.png)
+
+## Forward them to your tools
+
+To react to events in real time — get a Slack alert when a flow fails, forward audit logs to your SIEM, send a daily digest of new sign-ups — use [Event Streaming](/admin-guide/guides/event-streaming). It POSTs each event to a webhook URL of your choice, which you can point at an external system or at an internal handler flow that routes each event to the channel you care about.
+
+## Event catalog
+
+The full list of documented events. We add new ones as the platform grows; the source of truth for every event we emit is the [event schema in the codebase](https://github.com/activepieces/activepieces/blob/main/packages/shared/src/lib/ee/audit-events/index.ts).
+
+### Flows
+- [Flow created](/admin-guide/security/audit-logs/flow-created)
+- [Flow updated](/admin-guide/security/audit-logs/flow-updated)
+- [Flow deleted](/admin-guide/security/audit-logs/flow-deleted)
+
+### Flow runs
+- [Flow run started](/admin-guide/security/audit-logs/flow-run-started)
+- [Flow run finished](/admin-guide/security/audit-logs/flow-run-finished)
+
+### Folders
+- [Folder created](/admin-guide/security/audit-logs/folder-created)
+- [Folder updated](/admin-guide/security/audit-logs/folder-updated)
+- [Folder deleted](/admin-guide/security/audit-logs/folder-deleted)
+
+### Connections
+- [Connection saved](/admin-guide/security/audit-logs/connection-upserted)
+- [Connection deleted](/admin-guide/security/audit-logs/connection-deleted)
+
+### Users
+- [User signed up](/admin-guide/security/audit-logs/user-signed-up)
+- [User signed in](/admin-guide/security/audit-logs/user-signed-in)
+- [User email verified](/admin-guide/security/audit-logs/user-email-verified)
+- [User password reset](/admin-guide/security/audit-logs/user-password-reset)
+
+### Platform
+- [Signing key created](/admin-guide/security/audit-logs/signing-key-created)
+
+## See also
+
+- [Event Streaming](/admin-guide/guides/event-streaming) — forward audit events to a webhook URL
