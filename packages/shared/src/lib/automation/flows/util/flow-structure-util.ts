@@ -1,6 +1,6 @@
 import { isNil } from '../../../core/common'
 import { ActivepiecesError, ErrorCode } from '../../../core/common/activepieces-error'
-import { BranchCondition, BranchExecutionType, emptyCondition, FlowAction, FlowActionType, LoopOnItemsAction, RouterAction } from '../actions/action'
+import { BranchCondition, BranchExecutionType, emptyCondition, FlowAction, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 
@@ -14,6 +14,13 @@ type StepWithIndex = Step & {
 
 function isAction(type: FlowActionType | FlowTriggerType | undefined): type is FlowActionType {
     return Object.entries(FlowActionType).some(([, value]) => value === type)
+}
+
+function isStepAction(step: Step): step is FlowAction {
+    return step.type === FlowActionType.CODE
+        || step.type === FlowActionType.PIECE
+        || step.type === FlowActionType.LOOP_ON_ITEMS
+        || step.type === FlowActionType.ROUTER
 }
 
 function isTrigger(type: FlowActionType | FlowTriggerType | undefined): type is FlowTriggerType {
@@ -98,6 +105,22 @@ function transferStep<T extends Step>(
             break
     }
 
+    if (updatedStep.type === FlowActionType.CODE || updatedStep.type === FlowActionType.PIECE) {
+        const branches = updatedStep.settings.errorHandlingOptions?.continueOnFailureBranches
+        if (branches?.onSuccess) {
+            const transferred = transferStep(branches.onSuccess, transferFunction)
+            if (isStepAction(transferred)) {
+                branches.onSuccess = transferred
+            }
+        }
+        if (branches?.onFailure) {
+            const transferred = transferStep(branches.onFailure, transferFunction)
+            if (isStepAction(transferred)) {
+                branches.onFailure = transferred
+            }
+        }
+    }
+
     if (updatedStep.nextAction) {
         updatedStep.nextAction = transferStep(
             updatedStep.nextAction,
@@ -153,7 +176,7 @@ function findPathToStep(trigger: FlowTrigger, targetStepName: string): StepWithI
 }
 
 
-function getAllChildSteps(action: LoopOnItemsAction | RouterAction): Step[] {
+function getAllChildSteps(action: Step): Step[] {
     return getAllSteps({
         ...action,
         nextAction: undefined,
@@ -161,16 +184,7 @@ function getAllChildSteps(action: LoopOnItemsAction | RouterAction): Step[] {
 }
 
 function isChildOf(parent: Step, childStepName: string): boolean {
-    switch (parent.type) {
-        case FlowActionType.ROUTER:
-        case FlowActionType.LOOP_ON_ITEMS: {
-            const children = getAllChildSteps(parent)
-            return children.findIndex((c) => c.name === childStepName) > -1
-        }
-        default:
-            break
-    }
-    return false
+    return getAllChildSteps(parent).some((c) => c.name === childStepName && c.name !== parent.name)
 }
 
 const findUnusedNames = (source: FlowTrigger | string[], count = 1) => {

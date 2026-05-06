@@ -1,4 +1,5 @@
 import {
+  flowCanvasUtils as sharedFlowCanvasUtils,
   FlowActionType,
   flowStructureUtil,
   FlowTriggerType,
@@ -150,7 +151,8 @@ export const FlowCanvas = React.memo(
       selectedSteps.forEach((step) => {
         if (
           step.type === FlowActionType.LOOP_ON_ITEMS ||
-          step.type === FlowActionType.ROUTER
+          step.type === FlowActionType.ROUTER ||
+          sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
         ) {
           const childrenNotSelected = flowStructureUtil
             .getAllChildSteps(step)
@@ -269,8 +271,23 @@ const getChildrenKey = (step: Step) => {
         return `${routerKey}-${childrenKey}`;
       }, '');
     case FlowActionType.CODE:
-    case FlowActionType.PIECE:
-      return '';
+    case FlowActionType.PIECE: {
+      const cofEnabled =
+        sharedFlowCanvasUtils.hasContinueOnFailureBranches(step);
+      const branches =
+        step.settings.errorHandlingOptions?.continueOnFailureBranches;
+      const onSuccessKey = branches?.onSuccess
+        ? flowStructureUtil
+            .getAllSteps(branches.onSuccess)
+            .reduce((acc, s) => `${acc}-${s.name}`, '')
+        : 'null';
+      const onFailureKey = branches?.onFailure
+        ? flowStructureUtil
+            .getAllSteps(branches.onFailure)
+            .reduce((acc, s) => `${acc}-${s.name}`, '')
+        : 'null';
+      return `cof:${cofEnabled}-success:${onSuccessKey}-failure:${onFailureKey}`;
+    }
   }
 };
 const createGraphKey = (

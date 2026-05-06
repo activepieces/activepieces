@@ -1,4 +1,4 @@
-import { FlowAction, FlowActionType, FlowState, FlowTrigger, FlowTriggerType, FlowVersion, isNil } from '@activepieces/shared'
+import { CodeActionSettings, FlowAction, FlowActionType, FlowState, FlowTrigger, FlowTriggerType, FlowVersion, isNil, PieceActionSettings } from '@activepieces/shared'
 
 function cleanFlowState(flowState: FlowState): FlowState {
     return {
@@ -68,9 +68,9 @@ function cleanAction(action: FlowAction): FlowAction {
 
     switch (action.type) {
         case FlowActionType.CODE:
-            return { ...commonProps, type: action.type, settings: action.settings, nextAction }
+            return { ...commonProps, type: action.type, settings: cleanSettingsWithBranches(action.settings), nextAction }
         case FlowActionType.PIECE:
-            return { ...commonProps, type: action.type, settings: action.settings, nextAction }
+            return { ...commonProps, type: action.type, settings: cleanSettingsWithBranches(action.settings), nextAction }
         case FlowActionType.LOOP_ON_ITEMS:
             return {
                 ...commonProps, type: action.type, settings: action.settings, nextAction,
@@ -81,6 +81,23 @@ function cleanAction(action: FlowAction): FlowAction {
                 ...commonProps, type: action.type, settings: action.settings, nextAction,
                 children: action.children.map((child) => isNil(child) ? null : cleanAction(child)),
             }
+    }
+}
+
+function cleanSettingsWithBranches<S extends CodeActionSettings | PieceActionSettings>(settings: S): S {
+    const branches = settings.errorHandlingOptions?.continueOnFailureBranches
+    if (isNil(branches) || (isNil(branches.onSuccess) && isNil(branches.onFailure))) {
+        return settings
+    }
+    return {
+        ...settings,
+        errorHandlingOptions: {
+            ...settings.errorHandlingOptions,
+            continueOnFailureBranches: {
+                onSuccess: isNil(branches.onSuccess) ? undefined : cleanAction(branches.onSuccess),
+                onFailure: isNil(branches.onFailure) ? undefined : cleanAction(branches.onFailure),
+            },
+        },
     }
 }
 

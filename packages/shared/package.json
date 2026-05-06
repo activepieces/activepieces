@@ -1,13 +1,16 @@
 {
   "name": "@activepieces/shared",
-  "version": "0.71.3",
+  "version": "0.72.0",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
+    "acorn": "8.16.0",
+    "acorn-walk": "8.3.5",
     "dayjs": "1.11.9",
     "deepmerge-ts": "7.1.0",
+    "eslint-scope": "7.2.2",
     "ipaddr.js": "2.3.0",
     "nanoid": "3.3.8",
     "semver": "7.6.0",
@@ -21,6 +24,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@types/eslint-scope": "3.7.7",
     "@types/node": "24.11.0",
     "@types/semver": "7.5.6",
     "vitest": "3.0.8"

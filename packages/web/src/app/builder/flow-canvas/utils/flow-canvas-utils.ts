@@ -3,6 +3,7 @@ import {
   FlowActionType,
   FlowOperationType,
   FlowRun,
+  flowCanvasUtils as sharedFlowCanvasUtils,
   flowStructureUtil,
   FlowVersion,
   isNil,
@@ -33,7 +34,7 @@ import {
 } from './types';
 
 const createBigAddButtonGraph: (
-  parentStep: LoopOnItemsAction | RouterAction,
+  parentStep: FlowAction,
   nodeData: ApBigAddButtonNode['data'],
 ) => ApGraph = (parentStep, nodeData) => {
   const bigAddButtonNode: ApBigAddButtonNode = {
@@ -119,7 +120,8 @@ const createStepGraph: (
     nodes: [stepNode, graphEndNode],
     edges:
       step.type !== FlowActionType.LOOP_ON_ITEMS &&
-      step.type !== FlowActionType.ROUTER
+      step.type !== FlowActionType.ROUTER &&
+      !sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
         ? [straightLineEdge]
         : [],
   };
@@ -145,6 +147,8 @@ const buildFlowGraph: (
       ? buildLoopChildGraph(step)
       : step.type === FlowActionType.ROUTER
       ? buildRouterChildGraph(step)
+      : sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
+      ? buildContinueOnFailureBranchesGraph(step)
       : null;
 
   const graphWithChild = childGraph ? mergeGraph(graph, childGraph) : graph;
@@ -402,34 +406,115 @@ const buildRouterChildGraph = (step: RouterAction) => {
   };
 };
 
-const offsetRouterChildSteps = (childGraphs: ApGraph[]) => {
-  const childGraphsBoundingBoxes = childGraphs.map((childGraph) =>
-    calculateGraphBoundingBox(childGraph),
-  );
-  const totalWidth =
-    childGraphsBoundingBoxes.reduce((acc, current) => acc + current.width, 0) +
-    flowCanvasConsts.HORIZONTAL_SPACE_BETWEEN_NODES * (childGraphs.length - 1);
-  let deltaLeftX =
-    -(
-      totalWidth -
-      childGraphsBoundingBoxes[0].left -
-      childGraphsBoundingBoxes[childGraphs.length - 1].right
-    ) /
-      2 -
-    childGraphsBoundingBoxes[0].left;
+const buildContinueOnFailureBranchesGraph = (step: FlowAction): ApGraph => {
+  const branches =
+    step.type === FlowActionType.CODE || step.type === FlowActionType.PIECE
+      ? step.settings.errorHandlingOptions?.continueOnFailureBranches
+      : undefined;
+  const branchOrder = [
+    {
+      branch: branches?.onSuccess,
+      label: t('Success'),
+      location: StepLocationRelativeToParent.INSIDE_ON_SUCCESS_BRANCH as const,
+    },
+    {
+      branch: branches?.onFailure,
+      label: t('Failure'),
+      location: StepLocationRelativeToParent.INSIDE_ON_FAILURE_BRANCH as const,
+    },
+  ];
 
-  return childGraphsBoundingBoxes.map((childGraphBoundingBox, index) => {
-    const x = deltaLeftX + childGraphBoundingBox.left;
-    deltaLeftX +=
-      childGraphBoundingBox.width +
-      flowCanvasConsts.HORIZONTAL_SPACE_BETWEEN_NODES;
-    return offsetGraph(childGraphs[index], {
-      x,
+  const childGraphs = branchOrder.map(({ branch, location }, index) =>
+    branch
+      ? buildFlowGraph(branch)
+      : createBigAddButtonGraph(step, {
+          parentStepName: step.name,
+          stepLocationRelativeToParent: location,
+          edgeId: `${step.name}-cof-branch-${index}-start-edge`,
+        }),
+  );
+
+  const childGraphsAfterOffset = offsetRouterChildSteps(childGraphs);
+
+  const maxHeight = Math.max(
+    ...childGraphsAfterOffset.map((cg) => calculateGraphBoundingBox(cg).height),
+  );
+
+  const subgraphEndSubNode: ApGraphEndNode = {
+    id: `${step.name}-cof-subgraph-end`,
+    type: ApNodeType.GRAPH_END_WIDGET,
+    position: {
+      x: flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
+      y:
+        flowCanvasConsts.AP_NODE_SIZE.STEP.height +
+        flowCanvasConsts.VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD +
+        maxHeight +
+        flowCanvasConsts.ARC_LENGTH +
+        flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS,
+    },
+    data: {},
+    selectable: false,
+  };
+
+  const edges: ApEdge[] = childGraphsAfterOffset
+    .map((childGraph, branchIndex) => {
+      const { label, location, branch } = branchOrder[branchIndex];
+      return [
+        {
+          id: `${step.name}-cof-branch-${branchIndex}-start-edge`,
+          source: step.name,
+          target: `${childGraph.nodes[0].id}`,
+          type: ApEdgeType.ROUTER_START_EDGE as const,
+          data: {
+            isBranchEmpty: isNil(branch),
+            label,
+            stepLocationRelativeToParent: location,
+            drawHorizontalLine: true,
+            drawStartingVerticalLine: branchIndex === 0,
+          },
+        },
+        {
+          id: `${step.name}-cof-branch-${branchIndex}-end-edge`,
+          source: `${childGraph.nodes.at(-1)!.id}`,
+          target: subgraphEndSubNode.id,
+          type: ApEdgeType.ROUTER_END_EDGE as const,
+          data: {
+            drawEndingVerticalLine: branchIndex === 0,
+            verticalSpaceBetweenLastNodeInBranchAndEndLine:
+              subgraphEndSubNode.position.y -
+              childGraph.nodes.at(-1)!.position.y -
+              flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS -
+              flowCanvasConsts.ARC_LENGTH,
+            drawHorizontalLine: true,
+            routerOrBranchStepName: step.name,
+            isNextStepEmpty: isNil(step.nextAction),
+          },
+        },
+      ];
+    })
+    .flat();
+
+  return {
+    nodes: [
+      ...childGraphsAfterOffset.map((cg) => cg.nodes).flat(),
+      subgraphEndSubNode,
+    ],
+    edges: [...childGraphsAfterOffset.map((cg) => cg.edges).flat(), ...edges],
+  };
+};
+
+const offsetRouterChildSteps = (childGraphs: ApGraph[]) => {
+  const boundingBoxes = childGraphs.map((g) => calculateGraphBoundingBox(g));
+  const offsets =
+    sharedFlowCanvasUtils.computeRouterChildOffsets(boundingBoxes);
+  return childGraphs.map((g, i) =>
+    offsetGraph(g, {
+      x: offsets[i],
       y:
         flowCanvasConsts.AP_NODE_SIZE.STEP.height +
         flowCanvasConsts.VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD,
-    });
-  });
+    }),
+  );
 };
 
 const createAddOperationFromAddButtonData = (data: ApButtonData) => {
@@ -469,10 +554,11 @@ const isSkipped = (stepName: string, trigger: FlowTrigger) => {
     .filter(
       (stepInPath) =>
         stepInPath.type === FlowActionType.LOOP_ON_ITEMS ||
-        stepInPath.type === FlowActionType.ROUTER,
+        stepInPath.type === FlowActionType.ROUTER ||
+        sharedFlowCanvasUtils.hasContinueOnFailureBranches(stepInPath),
     )
-    .filter((routerOrLoop) =>
-      flowStructureUtil.isChildOf(routerOrLoop, stepName),
+    .filter((parentInPath) =>
+      flowStructureUtil.isChildOf(parentInPath, stepName),
     )
     .filter((parent) => parent.skip);
 

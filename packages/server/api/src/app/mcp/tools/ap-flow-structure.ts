@@ -23,7 +23,7 @@ type StepInfo = {
     type: string
     displayName: string
     parentName: string | null
-    relationship: 'trigger' | 'next' | 'first_loop_action' | 'branch'
+    relationship: 'trigger' | 'next' | 'first_loop_action' | 'branch' | 'on_success_branch' | 'on_failure_branch'
     branchIndex?: number
     branchName?: string
     valid: boolean
@@ -93,6 +93,23 @@ function formatStepSettings(step: Step): string[] {
     return lines
 }
 
+function formatRelationshipLabel(step: StepInfo): string {
+    switch (step.relationship) {
+        case 'trigger':
+            return 'trigger'
+        case 'next':
+            return 'after parent'
+        case 'first_loop_action':
+            return 'inside_loop'
+        case 'on_success_branch':
+            return 'on_success_branch'
+        case 'on_failure_branch':
+            return 'on_failure_branch'
+        case 'branch':
+            return `branch ${step.branchIndex}${step.branchName ? ` "${step.branchName}"` : ''}`
+    }
+}
+
 function formatBranchConditions(conditions: BranchCondition[][]): string {
     const groups = conditions.map((andGroup) => {
         const parts = andGroup.map((c) => {
@@ -149,6 +166,19 @@ function buildFlowStructure(trigger: Step): { structure: StepInfo[], stepByName:
                     break
                 }
             }
+            if (parent.type === FlowActionType.CODE || parent.type === FlowActionType.PIECE) {
+                const branches = parent.settings.errorHandlingOptions?.continueOnFailureBranches
+                if (branches?.onSuccess?.name === step.name) {
+                    parentName = parent.name
+                    relationship = 'on_success_branch'
+                    break
+                }
+                if (branches?.onFailure?.name === step.name) {
+                    parentName = parent.name
+                    relationship = 'on_failure_branch'
+                    break
+                }
+            }
         }
         return {
             name: step.name,
@@ -199,12 +229,7 @@ function formatFlowStructure(
             continue
         }
 
-        const rel =
-            step.relationship === 'next'
-                ? 'after parent'
-                : step.relationship === 'first_loop_action'
-                    ? 'inside_loop'
-                    : `branch ${step.branchIndex}${step.branchName ? ` "${step.branchName}"` : ''}`
+        const rel = formatRelationshipLabel(step)
 
         let stepDetail = ''
         if (step.type === FlowActionType.PIECE) {
@@ -255,6 +280,15 @@ function formatFlowStructure(
             branches.forEach((b, i) => {
                 lines.push(`  Branch ${i} of "${step.name}"${b.branchName ? ` ("${b.branchName}")` : ''}: parentStepName="${step.name}", stepLocationRelativeToParent="${StepLocationRelativeToParent.INSIDE_BRANCH}", branchIndex=${i}`)
             })
+        }
+        if (step.type === FlowActionType.CODE || step.type === FlowActionType.PIECE) {
+            const fullStep = stepByName.get(step.name)
+            const isFullStepCodeOrPiece = fullStep?.type === FlowActionType.CODE || fullStep?.type === FlowActionType.PIECE
+            const cofEnabled = isFullStepCodeOrPiece && fullStep?.settings.errorHandlingOptions?.continueOnFailure?.value
+            if (cofEnabled) {
+                lines.push(`  On success branch of "${step.name}": parentStepName="${step.name}", stepLocationRelativeToParent="${StepLocationRelativeToParent.INSIDE_ON_SUCCESS_BRANCH}"`)
+                lines.push(`  On failure branch of "${step.name}": parentStepName="${step.name}", stepLocationRelativeToParent="${StepLocationRelativeToParent.INSIDE_ON_FAILURE_BRANCH}"`)
+            }
         }
     }
 

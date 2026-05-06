@@ -1,5 +1,6 @@
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
 import { t } from 'i18next';
+import { ShieldAlert } from 'lucide-react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -10,6 +11,8 @@ import {
   FormLabel,
   FormControl,
 } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 
@@ -27,8 +30,17 @@ const ActionErrorHandlingForm = React.memo(
   }: ActionErrorHandlingFormProps) => {
     const form = useFormContext<FlowAction | FlowTrigger>();
 
+    if (hideContinueOnFailure === true && hideRetryOnFailure === true) {
+      return null;
+    }
+
     return (
-      <div className={cn('grid', GAP_SIZE_FOR_STEP_SETTINGS)}>
+      <div className={cn('flex flex-col', GAP_SIZE_FOR_STEP_SETTINGS)}>
+        <Separator />
+        <div className="flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4" />
+          <Label className="text-base">{t('Error handling')}</Label>
+        </div>
         {hideContinueOnFailure !== true && (
           <FormField
             name="settings.errorHandlingOptions.continueOnFailure.value"
@@ -47,11 +59,11 @@ const ActionErrorHandlingForm = React.memo(
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <span className="ml-2">{t('Continue on Failure')}</span>
+                  <span className="ml-2">{t('Add Error Handler')}</span>
                 </FormLabel>
                 <ReadMoreDescription
                   text={t(
-                    'Enable this option to skip this step and continue the flow normally if it fails.',
+                    'Adds Success and Failure branches, errors go into Failure.',
                   )}
                 />
               </FormItem>
@@ -79,9 +91,7 @@ const ActionErrorHandlingForm = React.memo(
                   <span className="ml-2">{t('Retry on Failure')}</span>
                 </FormLabel>
                 <ReadMoreDescription
-                  text={t(
-                    'Automatically retry up to four attempts when failed.',
-                  )}
+                  text={t('Retries up to 4 times before failing the step.')}
                 />
               </FormItem>
             )}

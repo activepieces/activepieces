@@ -74,7 +74,32 @@ function _getImportOperationsForSteps(step: FlowAction | FlowTrigger | undefined
                 break
             }
             case FlowActionType.CODE:
-            case FlowActionType.PIECE:
+            case FlowActionType.PIECE: {
+                const branches = step.settings.errorHandlingOptions?.continueOnFailureBranches
+                if (!isNil(branches?.onSuccess)) {
+                    steps.push({
+                        type: FlowOperationType.ADD_ACTION,
+                        request: {
+                            parentStep: step.name,
+                            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_ON_SUCCESS_BRANCH,
+                            action: removeAnySubsequentAction(branches.onSuccess),
+                        },
+                    })
+                    steps.push(..._getImportOperationsForSteps(branches.onSuccess))
+                }
+                if (!isNil(branches?.onFailure)) {
+                    steps.push({
+                        type: FlowOperationType.ADD_ACTION,
+                        request: {
+                            parentStep: step.name,
+                            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_ON_FAILURE_BRANCH,
+                            action: removeAnySubsequentAction(branches.onFailure),
+                        },
+                    })
+                    steps.push(..._getImportOperationsForSteps(branches.onFailure))
+                }
+                break
+            }
             case FlowTriggerType.PIECE:
             case FlowTriggerType.EMPTY: {
                 break
@@ -122,8 +147,14 @@ function removeAnySubsequentAction(action: FlowAction): FlowAction {
             break
         }
         case FlowActionType.PIECE:
-        case FlowActionType.CODE:
+        case FlowActionType.CODE: {
+            const branches = clonedAction.settings.errorHandlingOptions?.continueOnFailureBranches
+            if (branches) {
+                delete branches.onSuccess
+                delete branches.onFailure
+            }
             break
+        }
     }
     delete clonedAction.nextAction
     return clonedAction
