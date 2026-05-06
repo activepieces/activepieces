@@ -9,6 +9,7 @@ import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
+import { flowApprovalRequestService } from '../../flows/flow-approval/flow-approval-request.service'
 import { platformAiCreditsService } from './platform-ai-credits.service'
 import { PlatformPlanEntity } from './platform-plan.entity'
 import { stripeHelper } from './stripe-helper'
@@ -67,6 +68,17 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         if (!isNil(updatedPlatformPlan.plan)) {
             await distributedStore.put(getPlatformPlanNameKey(platformId), updatedPlatformPlan.plan)
         }
+
+        const environmentsJustDisabled = platformPlan.environmentsEnabled === true && updatedPlatformPlan.environmentsEnabled === false
+        if (environmentsJustDisabled) {
+            try {
+                await flowApprovalRequestService(log).withdrawAllPendingForPlatform(platformId)
+            }
+            catch (error) {
+                log.warn({ platformId, error }, 'failed to clean up pending flow approval requests after disabling environments')
+            }
+        }
+
         return updatedPlatformPlan
     },
     async getNextBillingAmount(params: GetBillingAmountParams): Promise<number> {
