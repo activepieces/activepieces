@@ -80,10 +80,12 @@ function useLiveConnections({
 }): {
   statuses: Record<string, AppConnectionStatus>;
   fullConnections: Record<string, AppConnectionWithoutSensitiveData>;
+  isLoading: boolean;
 } {
   const [statuses, setStatuses] = useState<Record<string, AppConnectionStatus>>(
     {},
   );
+  const [isLoading, setIsLoading] = useState(false);
   const fullConnectionsRef = useRef<
     Record<string, AppConnectionWithoutSensitiveData>
   >({});
@@ -96,6 +98,7 @@ function useLiveConnections({
   useEffect(() => {
     if (!enabled || !projectIdsKey) return;
     let cancelled = false;
+    setIsLoading(true);
 
     const projectIds = projectIdsKey.split(',');
 
@@ -107,7 +110,7 @@ function useLiveConnections({
         const result = await appConnectionsApi.list({
           projectId: effectiveProjectId,
           pieceName,
-          limit: 50,
+          limit: 100,
         });
         return result.data;
       }),
@@ -123,6 +126,7 @@ function useLiveConnections({
       }
       fullConnectionsRef.current = connMap;
       setStatuses(statusMap);
+      setIsLoading(false);
     });
 
     return () => {
@@ -130,7 +134,7 @@ function useLiveConnections({
     };
   }, [projectIdsKey, pieceName, enabled]);
 
-  return { statuses, fullConnections: fullConnectionsRef.current };
+  return { statuses, fullConnections: fullConnectionsRef.current, isLoading };
 }
 
 export function ConnectionPickerCard({
@@ -150,7 +154,11 @@ export function ConnectionPickerCard({
     ConnectionPickerData['connections'][number] | null
   >(null);
 
-  const { statuses: liveStatuses, fullConnections } = useLiveConnections({
+  const {
+    statuses: liveStatuses,
+    fullConnections,
+    isLoading: isLoadingStatuses,
+  } = useLiveConnections({
     connections: picker.connections,
     pieceName,
     enabled: isInteractive && !selectedConnection,
@@ -267,12 +275,23 @@ export function ConnectionPickerCard({
                   >
                     {t('Use')}
                   </Button>
-                ) : (
+                ) : status === AppConnectionStatus.MISSING ? (
                   <Button
                     size="sm"
                     variant="outline"
                     className="shrink-0 gap-1.5"
                     disabled={isPieceLoading}
+                    onClick={handleNewConnection}
+                  >
+                    <Plus className="h-3 w-3" />
+                    {t('Connect')}
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0 gap-1.5"
+                    disabled={isPieceLoading || isLoadingStatuses}
                     onClick={() => handleReconnect(conn.externalId)}
                   >
                     <RefreshCw className="h-3 w-3" />
