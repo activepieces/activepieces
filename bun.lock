@@ -6007,7 +6007,7 @@
     },
     "packages/pieces/community/savvycal": {
       "name": "@activepieces/piece-savvycal",
-      "version": "0.0.2",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -8213,7 +8213,6 @@
         "http-proxy-agent": "7.0.2",
         "https-proxy-agent": "7.0.6",
         "isolated-vm": "6.0.2",
-        "mime-types": "2.1.35",
         "nanoid": "3.3.8",
         "socket.io-client": "4.8.1",
         "tslib": "2.6.2",
@@ -8221,7 +8220,6 @@
         "zod": "4.3.6",
       },
       "devDependencies": {
-        "@types/mime-types": "2.1.1",
         "@types/node": "24.11.0",
         "vitest": "3.0.8",
       },
@@ -8280,7 +8278,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.71.1",
+      "version": "0.71.4",
       "dependencies": {
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
