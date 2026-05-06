@@ -266,8 +266,8 @@ export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, rea
     [AIProviderName.ANTHROPIC]: ANTHROPIC_CHAT_MODELS,
     [AIProviderName.GOOGLE]: GOOGLE_CHAT_MODELS,
     [AIProviderName.ACTIVEPIECES]: [
-        ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
         ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((m) => `${AIProviderName.ANTHROPIC}/${m}`),
+        ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
         ...GOOGLE_CHAT_MODELS.map((m) => `${AIProviderName.GOOGLE}/${m}`),
         ...X_AI_OPENROUTER_CHAT_MODELS.map((m) => `x-ai/${m}`),
     ],
