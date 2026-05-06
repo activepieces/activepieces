@@ -17,9 +17,9 @@ const result = await esbuild.build({
     outfile: outputPath,
     format: 'cjs',
     sourcemap: true,
-    minifySyntax: true,
-    minifyWhitespace: true,
+    minify: true,
     metafile: true,
+    treeShaking: true,
     alias: {
         '@activepieces/shared': path.resolve(__dirname, '../../shared/src'),
         '@activepieces/pieces-framework': path.resolve(__dirname, '../../pieces/framework/src'),
