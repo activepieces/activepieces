@@ -41,12 +41,15 @@ export function ProjectPickerCard({
   }
 
   if (selected || !isInteractive) {
-    const resolvedProject = projects.find((p) => p.id === selected);
+    const projectId = selected ?? selectedProjectId;
+    const resolvedProject = projectId
+      ? projects.find((p) => p.id === projectId)
+      : null;
     const displayName = resolvedProject
       ? getProjectName(resolvedProject)
-      : selected
-      ? picker.suggestedProjects.find((p) => p.id === selected)?.name ?? ''
-      : '';
+      : projectId
+      ? picker.suggestedProjects.find((p) => p.id === projectId)?.name ?? ''
+      : picker.suggestedProjects[0]?.name ?? '';
     return (
       <motion.div
         className="flex flex-wrap gap-2 my-2"
@@ -55,7 +58,7 @@ export function ProjectPickerCard({
         transition={{ duration: 0.2 }}
       >
         <div className="inline-flex items-center gap-2 rounded-full border bg-muted/60 px-3 py-1.5 text-sm">
-          {resolvedProject && (
+          {resolvedProject ? (
             <ApProjectDisplay
               title={getProjectName(resolvedProject)}
               icon={resolvedProject.icon}
@@ -63,9 +66,8 @@ export function ProjectPickerCard({
               iconClassName="size-4"
               titleClassName="text-sm"
             />
-          )}
-          {!resolvedProject && displayName && (
-            <span className="text-sm">{displayName}</span>
+          ) : (
+            displayName && <span className="text-sm">{displayName}</span>
           )}
           <Check className="size-3.5 text-green-600 dark:text-green-400" />
         </div>
