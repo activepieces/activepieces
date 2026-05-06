@@ -302,7 +302,7 @@ function formatAdhocActionResult(run: FlowRun, stepName: string, displayName: st
             : typeof output === 'string' ? output : JSON.stringify(output)
         const base = `✅ ${displayName} completed (run ${run.id}).\n\n${mcpUtils.truncate(outStr, 4000)}`
         if (looksEmpty(output)) {
-            return `${base}\n\nNote: The action returned empty results. Your filters may be too narrow. Try again with broader parameters (e.g., remove category/label filters, use a wider date range, or use a common search term like "a" for text searches).`
+            return `${base}\n\nNote: No results matched. If the user expected data, try broader parameters (e.g., wider date range, fewer filters).`
         }
         return base
     }

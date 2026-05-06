@@ -12,6 +12,8 @@ import { tableService } from '../../tables/table/table.service'
 import { chatPrompt } from '../prompt/chat-prompt'
 
 const RESOURCE_TYPES = ['flows', 'tables', 'runs', 'connections'] as const
+const CROSS_PROJECT_CONNECTION_LIMIT = 100
+const CROSS_PROJECT_FLOW_LIMIT = 200
 const FLOW_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowStatus))
 const FLOW_RUN_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowRunStatus))
 
@@ -154,7 +156,7 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
                 cursorRequest: null,
                 displayName: undefined,
                 status: undefined,
-                limit: 50,
+                limit: CROSS_PROJECT_CONNECTION_LIMIT,
                 scope: undefined,
                 externalIds: undefined,
             })
@@ -199,7 +201,7 @@ async function listFlowsAcrossProjects({ projects, status, log }: {
     const result = await flowService(log).list({
         projectIds: projects.map((p) => p.id),
         cursorRequest: null,
-        limit: 100,
+        limit: CROSS_PROJECT_FLOW_LIMIT,
         status: statusFilter,
     })
 
@@ -235,7 +237,7 @@ async function listConnectionsAcrossProjects({ projects, platformId, log }: {
                 cursorRequest: null,
                 displayName: undefined,
                 status: undefined,
-                limit: 50,
+                limit: CROSS_PROJECT_CONNECTION_LIMIT,
                 scope: undefined,
                 externalIds: undefined,
             })
