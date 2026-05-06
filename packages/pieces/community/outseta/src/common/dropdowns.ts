@@ -16,153 +16,26 @@ export function makeClient(auth: unknown): OutsetaClient | null {
   });
 }
 
-export function accountUidDropdown(options?: {
-  required?: boolean;
-  displayName?: string;
-  description?: string;
-}) {
-  return Property.Dropdown({
-    auth: outsetaAuth,
-    displayName: options?.displayName ?? 'Account',
-    description: options?.description ?? 'Select the account.',
-    refreshers: [],
-    required: options?.required ?? true,
-    options: async ({ auth }) => {
-      const client = makeClient(auth);
-      if (!client) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Connect your Outseta account first.',
-        };
-      }
-      try {
-        const res = await client.get<any>('/api/v1/crm/accounts?$top=100');
-        const items: any[] = res?.items ?? res?.Items ?? [];
-        return {
-          disabled: false,
-          options: items.map((a: any) => ({
-            label: a.Name ?? a.Uid,
-            value: a.Uid,
-          })),
-        };
-      } catch {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Failed to load accounts.',
-        };
-      }
-    },
-  });
-}
+// --- Structural dropdowns (few items, must be complete) ---
 
-export function personUidDropdown(options?: {
+export function pipelineDropdown(options?: {
   required?: boolean;
   displayName?: string;
   description?: string;
 }) {
   return Property.Dropdown({
     auth: outsetaAuth,
-    displayName: options?.displayName ?? 'Person',
-    description: options?.description ?? 'Select the person.',
+    displayName: options?.displayName ?? 'Pipeline',
+    description: options?.description ?? 'Select the deal pipeline.',
     refreshers: [],
     required: options?.required ?? true,
     options: async ({ auth }) => {
       const client = makeClient(auth);
       if (!client) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Connect your Outseta account first.',
-        };
+        return { disabled: true, options: [], placeholder: 'Connect your Outseta account first.' };
       }
       try {
-        const res = await client.get<any>('/api/v1/crm/people?$top=100');
-        const items: any[] = res?.items ?? res?.Items ?? [];
-        return {
-          disabled: false,
-          options: items.map((p: any) => {
-            return {
-              label: `${p.Email ?? p.Uid}`,
-              value: p.Uid,
-            };
-          }),
-        };
-      } catch {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Failed to load people.',
-        };
-      }
-    },
-  });
-}
-
-export function dealUidDropdown(options?: {
-  required?: boolean;
-  displayName?: string;
-  description?: string;
-}) {
-  return Property.Dropdown({
-    auth: outsetaAuth,
-    displayName: options?.displayName ?? 'Deal',
-    description: options?.description ?? 'Select the deal.',
-    refreshers: [],
-    required: options?.required ?? true,
-    options: async ({ auth }) => {
-      const client = makeClient(auth);
-      if (!client) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Connect your Outseta account first.',
-        };
-      }
-      try {
-        const res = await client.get<any>('/api/v1/crm/deals?$top=100');
-        const items: any[] = res?.items ?? res?.Items ?? [];
-        return {
-          disabled: false,
-          options: items.map((d: any) => ({
-            label: d.Name ?? d.Uid,
-            value: d.Uid,
-          })),
-        };
-      } catch {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Failed to load deals.',
-        };
-      }
-    },
-  });
-}
-
-export function planUidDropdown(options?: {
-  required?: boolean;
-  displayName?: string;
-  description?: string;
-}) {
-  return Property.Dropdown({
-    auth: outsetaAuth,
-    displayName: options?.displayName ?? 'Plan',
-    description: options?.description ?? 'Select the subscription plan.',
-    refreshers: [],
-    required: options?.required ?? true,
-    options: async ({ auth }) => {
-      const client = makeClient(auth);
-      if (!client) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Connect your Outseta account first.',
-        };
-      }
-      try {
-        const res = await client.get<any>('/api/v1/billing/plans?$top=100');
+        const res = await client.get<any>('/api/v1/crm/deals/pipelines?limit=100');
         const items: any[] = res?.items ?? res?.Items ?? [];
         return {
           disabled: false,
@@ -172,37 +45,142 @@ export function planUidDropdown(options?: {
           })),
         };
       } catch {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Failed to load plans.',
-        };
+        return { disabled: true, options: [], placeholder: 'Failed to load pipelines.' };
       }
     },
   });
 }
 
+export function pipelineStageDropdown(options?: {
+  required?: boolean;
+  displayName?: string;
+  description?: string;
+}) {
+  return Property.Dropdown({
+    auth: outsetaAuth,
+    displayName: options?.displayName ?? 'Pipeline Stage',
+    description: options?.description ?? 'Select the pipeline stage.',
+    refreshers: ['pipelineUid'],
+    required: options?.required ?? true,
+    options: async ({ auth, pipelineUid }) => {
+      const client = makeClient(auth);
+      if (!client) {
+        return { disabled: true, options: [], placeholder: 'Connect your Outseta account first.' };
+      }
+      if (!pipelineUid) {
+        return { disabled: true, options: [], placeholder: 'Select a pipeline first.' };
+      }
+      try {
+        const pipeline = await client.get<any>(`/api/v1/crm/deals/pipelines/${pipelineUid}`);
+        const stages: any[] = pipeline?.DealPipelineStages?.items
+          ?? pipeline?.DealPipelineStages?.Items
+          ?? pipeline?.DealPipelineStages
+          ?? [];
+        return {
+          disabled: false,
+          options: stages.map((s: any) => ({
+            label: s.Name ?? s.Uid,
+            value: s.Uid,
+          })),
+        };
+      } catch {
+        return { disabled: true, options: [], placeholder: 'Failed to load pipeline stages.' };
+      }
+    },
+  });
+}
 
+export function planUidDropdown(options?: {
+  required?: boolean;
+  displayName?: string;
+  description?: string;
+  refreshers?: string[];
+}) {
+  return Property.Dropdown({
+    auth: outsetaAuth,
+    displayName: options?.displayName ?? 'Plan',
+    description: options?.description ?? 'Select the subscription plan.',
+    refreshers: options?.refreshers ?? ['accountUid'],
+    required: options?.required ?? true,
+    options: async ({ auth, accountUid }) => {
+      const client = makeClient(auth);
+      if (!client) {
+        return { disabled: true, options: [], placeholder: 'Connect your Outseta account first.' };
+      }
 
-export function addOnUidDropdown(options?: { required?: boolean }) {
+      let planFamilyUid: string | null = null;
+      if (accountUid) {
+        try {
+          const account = await client.get<any>(
+            `/api/v1/crm/accounts/${accountUid}?fields=CurrentSubscription.Plan.PlanFamily.*`
+          );
+          planFamilyUid = account?.CurrentSubscription?.Plan?.PlanFamily?.Uid ?? null;
+        } catch {
+          return { disabled: true, options: [], placeholder: 'Failed to load account. Check the Account UID.' };
+        }
+      }
+
+      try {
+        const res = await client.get<any>('/api/v1/billing/plans?limit=100');
+        let items: any[] = res?.items ?? res?.Items ?? [];
+
+        if (planFamilyUid) {
+          items = items.filter((p: any) => p.PlanFamily?.Uid === planFamilyUid);
+        }
+
+        return {
+          disabled: false,
+          options: items.map((p: any) => ({
+            label: p.Name ?? p.Uid,
+            value: p.Uid,
+          })),
+        };
+      } catch {
+        return { disabled: true, options: [], placeholder: 'Failed to load plans.' };
+      }
+    },
+  });
+}
+
+export function addOnUidDropdown(options?: {
+  required?: boolean;
+  refreshers?: string[];
+}) {
   return Property.Dropdown({
     auth: outsetaAuth,
     displayName: 'Add-On',
-    description:
-      'Select the metered add-on. Manage add-ons in Outseta → Billing → Add-ons.',
-    refreshers: [],
+    description: 'Select the metered add-on.',
+    refreshers: options?.refreshers ?? ['accountUid'],
     required: options?.required ?? true,
-    options: async ({ auth }) => {
+    options: async ({ auth, accountUid }) => {
       const client = makeClient(auth);
       if (!client) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Connect your Outseta account first.',
-        };
+        return { disabled: true, options: [], placeholder: 'Connect your Outseta account first.' };
       }
+
+      if (accountUid) {
+        try {
+          const account = await client.get<any>(
+            `/api/v1/crm/accounts/${accountUid}?fields=CurrentSubscription.SubscriptionAddOns.*,CurrentSubscription.SubscriptionAddOns.AddOn.*`
+          );
+          const rawAddOns = account?.CurrentSubscription?.SubscriptionAddOns;
+          const subscriptionAddOns: any[] = Array.isArray(rawAddOns)
+            ? rawAddOns
+            : (rawAddOns?.items ?? rawAddOns?.Items ?? []);
+          return {
+            disabled: false,
+            options: subscriptionAddOns.map((sa: any) => ({
+              label: sa.AddOn?.Name ?? sa.Uid,
+              value: sa.AddOn?.Uid ?? sa.Uid,
+            })),
+          };
+        } catch {
+          return { disabled: true, options: [], placeholder: 'Failed to load account. Check the Account UID.' };
+        }
+      }
+
       try {
-        const res = await client.get<any>('/api/v1/billing/addons?$top=100');
+        const res = await client.get<any>('/api/v1/billing/addons?limit=100');
         const items: any[] = res?.items ?? res?.Items ?? [];
         return {
           disabled: false,
@@ -212,11 +190,7 @@ export function addOnUidDropdown(options?: { required?: boolean }) {
           })),
         };
       } catch {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Failed to load add-ons.',
-        };
+        return { disabled: true, options: [], placeholder: 'Failed to load add-ons.' };
       }
     },
   });
@@ -226,20 +200,16 @@ export function emailListUidDropdown(options?: { required?: boolean }) {
   return Property.Dropdown({
     auth: outsetaAuth,
     displayName: 'Email List',
-    description: 'Select the email list to subscribe to.',
+    description: 'Select the email list.',
     refreshers: [],
     required: options?.required ?? true,
     options: async ({ auth }) => {
       const client = makeClient(auth);
       if (!client) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Connect your Outseta account first.',
-        };
+        return { disabled: true, options: [], placeholder: 'Connect your Outseta account first.' };
       }
       try {
-        const res = await client.get<any>('/api/v1/email/lists?$top=100');
+        const res = await client.get<any>('/api/v1/email/lists?limit=100');
         const items: any[] = res?.items ?? res?.Items ?? [];
         return {
           disabled: false,
@@ -249,11 +219,38 @@ export function emailListUidDropdown(options?: { required?: boolean }) {
           })),
         };
       } catch {
+        return { disabled: true, options: [], placeholder: 'Failed to load email lists.' };
+      }
+    },
+  });
+}
+
+export function discountDropdown(options?: { required?: boolean }) {
+  return Property.Dropdown({
+    auth: outsetaAuth,
+    displayName: 'Discount',
+    description: 'Select the discount coupon to apply.',
+    refreshers: [],
+    required: options?.required ?? true,
+    options: async ({ auth }) => {
+      const client = makeClient(auth);
+      if (!client) {
+        return { disabled: true, options: [], placeholder: 'Connect your Outseta account first.' };
+      }
+      try {
+        const res = await client.get<any>('/api/v1/billing/discountcoupons?limit=100');
+        const items: any[] = res?.items ?? res?.Items ?? [];
         return {
-          disabled: true,
-          options: [],
-          placeholder: 'Failed to load email lists.',
+          disabled: false,
+          options: items
+            .filter((d: any) => d.IsActive !== false)
+            .map((d: any) => ({
+              label: `${d.Name ?? d.UniqueIdentifier ?? d.Uid}${d.PercentOff ? ` (${d.PercentOff}% off)` : d.AmountOff ? ` ($${d.AmountOff} off)` : ''}`,
+              value: d.Uid,
+            })),
         };
+      } catch {
+        return { disabled: true, options: [], placeholder: 'Failed to load discounts.' };
       }
     },
   });

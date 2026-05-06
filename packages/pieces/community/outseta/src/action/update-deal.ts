@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { accountUidDropdown, dealUidDropdown, personUidDropdown } from '../common/dropdowns';
+import { pipelineDropdown, pipelineStageDropdown } from '../common/dropdowns';
 
 export const updateDealAction = createAction({
   name: 'update_deal',
@@ -9,16 +9,17 @@ export const updateDealAction = createAction({
   displayName: 'Update Deal',
   description: 'Update an existing deal.',
   props: {
-    dealUid: dealUidDropdown(),
+    dealUid: Property.ShortText({
+      displayName: 'Deal UID',
+      description: 'The UID of the deal to update.',
+      required: true,
+    }),
     name: Property.ShortText({
       displayName: 'Name',
       required: false,
     }),
-    dealPipelineStageUid: Property.ShortText({
-      displayName: 'Pipeline Stage UID',
-      required: false,
-      description: 'The UID of the pipeline stage for this deal.',
-    }),
+    pipelineUid: pipelineDropdown({ required: false }),
+    dealPipelineStageUid: pipelineStageDropdown({ required: false }),
     amount: Property.Number({
       displayName: 'Amount',
       required: false,
@@ -33,8 +34,17 @@ export const updateDealAction = createAction({
       displayName: 'Due Date',
       required: false,
     }),
-    accountUid: accountUidDropdown({ required: false, displayName: 'Account' }),
-    personUid: personUidDropdown({ required: false, displayName: 'Person' }),
+    accountUid: Property.ShortText({
+      displayName: 'Account UID',
+      description: 'The UID of the account to associate with this deal.',
+      required: false,
+    }),
+    personUid: Property.ShortText({
+      displayName: 'Person UID',
+      description:
+        'UID of a person to add as a contact on this deal. Existing contacts are preserved.',
+      required: false,
+    }),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -43,34 +53,61 @@ export const updateDealAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // const deal = await client.get<any>(
-    //   `/api/v1/crm/deals/${context.propsValue.dealUid}`
-    // );
-    const deal: any = {};
+    // Fetch full deal with DealPeople expanded to avoid wiping fields on PUT
+    const deal = await client.get<any>(
+      `/api/v1/crm/deals/${context.propsValue.dealUid}?fields=*,DealPeople.*,DealPeople.Person.*,DealPipelineStage.*,Account.*`
+    );
 
+    let changed = false;
     if (context.propsValue.name) {
       deal.Name = context.propsValue.name;
+      changed = true;
     }
     if (context.propsValue.dealPipelineStageUid) {
       deal.DealPipelineStage = { Uid: context.propsValue.dealPipelineStageUid };
+      changed = true;
     }
     if (context.propsValue.amount != null) {
       deal.Amount = context.propsValue.amount;
+      changed = true;
     }
     if (context.propsValue.assignedToPersonClientIdentifier) {
       deal.AssignedToPersonClientIdentifier =
         context.propsValue.assignedToPersonClientIdentifier;
+      changed = true;
     }
     if (context.propsValue.dueDate) {
       deal.DueDate = context.propsValue.dueDate;
+      changed = true;
     }
     if (context.propsValue.accountUid) {
       deal.Account = { Uid: context.propsValue.accountUid };
+      changed = true;
     }
     if (context.propsValue.personUid) {
-      deal.DealPeople = [
-        { Person: { Uid: context.propsValue.personUid } },
-      ];
+      const existing: any[] =
+        deal.DealPeople?.items ?? deal.DealPeople?.Items ?? deal.DealPeople ?? [];
+      const alreadyLinked = existing.some(
+        (dp: any) => dp.Person?.Uid === context.propsValue.personUid
+      );
+      if (!alreadyLinked) {
+        // Preserve the existing DealPeople join records' Uid so the server
+        // treats them as the same entities. Without this, Outseta may delete
+        // the old join records and create new ones (changing all the
+        // PersonAccount-style references downstream).
+        deal.DealPeople = [
+          ...existing.map((dp: any) => ({
+            Uid: dp.Uid,
+            Person: { Uid: dp.Person?.Uid },
+          })),
+          { Person: { Uid: context.propsValue.personUid } },
+        ];
+        changed = true;
+      }
+    }
+
+    if (!changed) {
+      throw new Error('At least one field must be provided.');
     }
 
     const updated = await client.put<any>(

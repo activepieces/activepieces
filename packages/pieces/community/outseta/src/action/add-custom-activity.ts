@@ -43,9 +43,9 @@ export const addCustomActivityAction = createAction({
         }
         try {
           let path = '';
-          if (entityType === 1) path = '/api/v1/crm/accounts?$top=100';
-          else if (entityType === 2) path = '/api/v1/crm/people?$top=100';
-          else if (entityType === 3) path = '/api/v1/crm/deals?$top=100';
+          if (entityType === 1) path = '/api/v1/crm/accounts?limit=100';
+          else if (entityType === 2) path = '/api/v1/crm/people?limit=100';
+          else if (entityType === 3) path = '/api/v1/crm/deals?limit=100';
           else return { disabled: true, options: [], placeholder: 'Unknown entity type.' };
 
           const res = await client.get<any>(path);

@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { accountUidDropdown } from '../common/dropdowns';
 
 export const cancelSubscriptionAction = createAction({
   name: 'cancel_subscription',
@@ -10,7 +9,11 @@ export const cancelSubscriptionAction = createAction({
   description:
     'Cancel the current subscription on an account. By default, the subscription expires at the end of the current term. You can also cancel immediately.',
   props: {
-    accountUid: accountUidDropdown(),
+    accountUid: Property.ShortText({
+      displayName: 'Account UID',
+      description: 'The UID of the account whose subscription to cancel.',
+      required: true,
+    }),
     cancelImmediately: Property.Checkbox({
       displayName: 'Cancel Immediately',
       required: false,

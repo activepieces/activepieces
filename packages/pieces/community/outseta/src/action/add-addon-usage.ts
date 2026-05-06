@@ -1,17 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { accountUidDropdown, addOnUidDropdown } from '../common/dropdowns';
+import { addOnUidDropdown } from '../common/dropdowns';
 
 export const addAddonUsageAction = createAction({
-  name: 'add_addon_usage',
+  name: 'add_usage',
   auth: outsetaAuth,
-  displayName: 'Track Add-on Usage',
+  displayName: 'Add Usage for Add-on',
   description:
     'Track usage for a metered (usage-based) add-on on an account.',
   props: {
-    accountUid: accountUidDropdown(),
-    addOnUid: addOnUidDropdown(),
+    accountUid: Property.ShortText({
+      displayName: 'Account UID',
+      description: 'The UID of the account to record usage for.',
+      required: true,
+    }),
+    addOnUid: addOnUidDropdown({ refreshers: ['accountUid'] }),
     amount: Property.Number({
       displayName: 'Amount',
       required: true,

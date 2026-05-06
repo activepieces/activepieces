@@ -2,33 +2,40 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 
-export const findOrAddPersonAction = createAction({
-  name: 'find_or_add_person',
+export const createAccountAction = createAction({
+  name: 'create_account',
   auth: outsetaAuth,
-  displayName: 'Find or Add Person',
-  description:
-    'Search for a person by email. If not found, create a new one.',
+  displayName: 'Create Account',
+  description: 'Create a new account in Outseta CRM.',
   props: {
-    email: Property.ShortText({
-      displayName: 'Email',
+    name: Property.ShortText({
+      displayName: 'Name',
       required: true,
-      description: 'Email to search for. If no match is found, a new person is created with this email.',
     }),
-    firstName: Property.ShortText({
-      displayName: 'First Name',
+    accountStage: Property.StaticDropdown({
+      displayName: 'Account Stage',
       required: false,
+      options: {
+        options: [
+          { label: 'Lead', value: 1 },
+          { label: 'Trialing', value: 2 },
+          { label: 'Subscribing', value: 3 },
+          { label: 'Delinquent', value: 4 },
+          { label: 'Cancelling', value: 5 },
+          { label: 'Expired', value: 6 },
+          { label: 'Demo', value: 7 },
+        ],
+      },
     }),
-    lastName: Property.ShortText({
-      displayName: 'Last Name',
+    clientIdentifier: Property.ShortText({
+      displayName: 'Client Identifier',
       required: false,
+      description: 'A custom identifier you assign to this account (e.g. your internal customer ID).',
     }),
-    phoneMobile: Property.ShortText({
-      displayName: 'Mobile #',
+    invoiceNotes: Property.LongText({
+      displayName: 'Invoice Notes',
       required: false,
-    }),
-    phoneWork: Property.ShortText({
-      displayName: 'Work #',
-      required: false,
+      description: 'Notes that appear on invoices sent to this account.',
     }),
     addressLine1: Property.ShortText({
       displayName: 'Address Line 1',
@@ -62,24 +69,12 @@ export const findOrAddPersonAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    const items = await client.getAllPages<any>(
-      `/api/v1/crm/people?Email=${encodeURIComponent(context.propsValue.email)}`
-    );
-    const exactMatch = items.find(
-      (item: any) =>
-        item.Email?.toLowerCase() === context.propsValue.email.toLowerCase()
-    );
-    if (exactMatch) {
-      return { created: false, person: exactMatch };
-    }
-
     const body: Record<string, unknown> = {
-      Email: context.propsValue.email,
+      Name: context.propsValue.name,
     };
-    if (context.propsValue.firstName) body['FirstName'] = context.propsValue.firstName;
-    if (context.propsValue.lastName) body['LastName'] = context.propsValue.lastName;
-    if (context.propsValue.phoneMobile) body['PhoneMobile'] = context.propsValue.phoneMobile;
-    if (context.propsValue.phoneWork) body['PhoneWork'] = context.propsValue.phoneWork;
+    if (context.propsValue.accountStage != null) body['AccountStage'] = context.propsValue.accountStage;
+    if (context.propsValue.clientIdentifier) body['ClientIdentifier'] = context.propsValue.clientIdentifier;
+    if (context.propsValue.invoiceNotes) body['InvoiceNotes'] = context.propsValue.invoiceNotes;
 
     const hasAddress = context.propsValue.addressLine1 || context.propsValue.city || context.propsValue.country;
     if (hasAddress) {
@@ -90,10 +85,9 @@ export const findOrAddPersonAction = createAction({
       if (context.propsValue.state) address['State'] = context.propsValue.state;
       if (context.propsValue.postalCode) address['PostalCode'] = context.propsValue.postalCode;
       if (context.propsValue.country) address['Country'] = context.propsValue.country;
-      body['MailingAddress'] = address;
+      body['BillingAddress'] = address;
     }
 
-    const newPerson = await client.post<any>('/api/v1/crm/people', body);
-    return { created: true, person: newPerson };
+    return client.post<unknown>('/api/v1/crm/accounts', body);
   },
 });

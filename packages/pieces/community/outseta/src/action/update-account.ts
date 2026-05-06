@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { accountUidDropdown } from '../common/dropdowns';
 
 export const updateAccountAction = createAction({
   name: 'update_account',
@@ -9,7 +8,11 @@ export const updateAccountAction = createAction({
   displayName: 'Update Account',
   description: 'Update an existing account in Outseta.',
   props: {
-    accountUid: accountUidDropdown(),
+    accountUid: Property.ShortText({
+      displayName: 'Account UID',
+      description: 'The UID of the account to update.',
+      required: true,
+    }),
     name: Property.ShortText({
       displayName: 'Name',
       required: false,
@@ -71,12 +74,12 @@ export const updateAccountAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // // Fetch full account first to avoid wiping fields with a partial PUT
-    // const account = await client.get<any>(
-    //   `/api/v1/crm/accounts/${context.propsValue.accountUid}`
-    // );
-    const account: any = {}; 
-    console.log('Fetched account:', account);
+    // Fetch full account with nested collections expanded to avoid wiping
+    // fields like PersonAccount / BillingAddress / Subscriptions on PUT
+    const account = await client.get<any>(
+      `/api/v1/crm/accounts/${context.propsValue.accountUid}?fields=*,BillingAddress.*,MailingAddress.*,PersonAccount.*,PersonAccount.Person.*,Subscriptions.*`
+    );
+
     let changed = false;
     if (context.propsValue.name) { account.Name = context.propsValue.name; changed = true; }
     if (context.propsValue.accountStage != null) { account.AccountStage = context.propsValue.accountStage; changed = true; }

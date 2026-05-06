@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { personUidDropdown } from '../common/dropdowns';
 
 export const updatePersonAction = createAction({
   name: 'update_person',
@@ -9,7 +8,11 @@ export const updatePersonAction = createAction({
   displayName: 'Update Person',
   description: 'Update an existing person in Outseta.',
   props: {
-    personUid: personUidDropdown(),
+    personUid: Property.ShortText({
+      displayName: 'Person UID',
+      description: 'The UID of the person to update.',
+      required: true,
+    }),
     email: Property.ShortText({
       displayName: 'Email',
       required: false,
@@ -67,12 +70,13 @@ export const updatePersonAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // Fetch full person first to avoid wiping fields with a partial PUT
-    // const person = await client.get<any>(
-    //   `/api/v1/crm/people/${context.propsValue.personUid}`
-    // );
-    const person: any = {};
-     console.log('Fetched person:', person);
+    // Fetch full person with nested objects expanded to avoid wiping on PUT.
+    // PersonAccount is the collection of join records linking this person to
+    // accounts — expanding it preserves memberships when we PUT back.
+    const person = await client.get<any>(
+      `/api/v1/crm/people/${context.propsValue.personUid}?fields=*,MailingAddress.*,Account.*,PersonAccount.*,PersonAccount.Account.*`
+    );
+
     let changed = false;
     if (context.propsValue.email) {
       person.Email = context.propsValue.email;
