@@ -1,4 +1,4 @@
-import { E_TIMEOUT, Mutex, MutexInterface, withTimeout } from 'async-mutex'
+import { E_ALREADY_LOCKED, E_TIMEOUT, Mutex, MutexInterface, tryAcquire as makeTryAcquire, withTimeout } from 'async-mutex'
 
 const memoryLocks = new Map<string, MutexInterface>()
 
@@ -27,14 +27,19 @@ export const memoryLock = {
             lock = new Mutex()
             memoryLocks.set(key, lock)
         }
-        if (lock.isLocked()) {
-            return null
+        try {
+            const release = await makeTryAcquire(lock).acquire()
+            return {
+                release: async () => {
+                    release()
+                },
+            }
         }
-        const release = await lock.acquire()
-        return {
-            release: async () => {
-                release()
-            },
+        catch (e) {
+            if (e === E_ALREADY_LOCKED) {
+                return null
+            }
+            throw e
         }
     },
     isTimeoutError: (e: unknown): boolean => {

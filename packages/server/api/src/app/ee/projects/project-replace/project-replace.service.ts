@@ -29,10 +29,11 @@ import {
     ProjectState,
     RequiredPiece,
     TableOperationType,
+    unique,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
-import { ArrayContains } from 'typeorm'
+import { ArrayContains, In } from 'typeorm'
 import { appConnectionsRepo } from '../../../app-connection/app-connection-service/app-connection-service'
 import { flowFolderService } from '../../../flows/folder/folder.service'
 import { encryptUtils } from '../../../helper/encryption'
@@ -195,25 +196,27 @@ async function checkConnections({ projectId, platformId, request, errors }: Chec
     if (request.connections.length === 0) {
         return
     }
+    const externalIds = unique(request.connections.map((c) => c.externalId))
+    const existing = await appConnectionsRepo().find({
+        where: {
+            projectIds: ArrayContains([projectId]),
+            platformId,
+            externalId: In(externalIds),
+        },
+        select: { externalId: true, pieceName: true },
+    })
+    const destByExternalId = new Map(existing.map((row) => [row.externalId, row.pieceName]))
     const seen = new Set<string>()
     for (const conn of request.connections) {
         if (seen.has(conn.externalId)) continue
         seen.add(conn.externalId)
-
-        const found = await appConnectionsRepo().findOne({
-            where: {
-                projectIds: ArrayContains([projectId]),
-                externalId: conn.externalId,
-                platformId,
-            },
-            select: { externalId: true, pieceName: true },
-        })
-        if (!isNil(found) && found.pieceName !== conn.pieceName) {
+        const destPieceName = destByExternalId.get(conn.externalId)
+        if (!isNil(destPieceName) && destPieceName !== conn.pieceName) {
             errors.push({
                 kind: ProjectReplaceErrorKind.CONNECTION_PIECE_MISMATCH,
                 externalId: conn.externalId,
                 expectedPieceName: conn.pieceName,
-                foundPieceName: found.pieceName,
+                foundPieceName: destPieceName,
             })
         }
     }
@@ -346,16 +349,17 @@ async function runConnectionOp({ op, projectId, platformId, applied, failed }: R
 
 async function collectConnectionsAwaitingAuthorization({ projectId, platformId, connections }: CollectAwaitingParams): Promise<ConnectionAwaitingAuthorization[]> {
     if (connections.length === 0) return []
-    const externalIds = connections.map((c) => c.externalId)
+    const externalIds = unique(connections.map((c) => c.externalId))
     const rows = await appConnectionsRepo().find({
         where: {
             projectIds: ArrayContains([projectId]),
             platformId,
+            externalId: In(externalIds),
         },
         select: { externalId: true, pieceName: true, displayName: true, status: true },
     })
     return rows
-        .filter((row) => externalIds.includes(row.externalId) && row.status !== AppConnectionStatus.ACTIVE)
+        .filter((row) => row.status !== AppConnectionStatus.ACTIVE)
         .map((row) => ({
             externalId: row.externalId,
             pieceName: row.pieceName,
@@ -536,10 +540,12 @@ async function runFlowOp({ op, projectId, log, applied, failed }: RunFlowOpParam
             }
             case FlowProjectOperationType.UPDATE_FLOW: {
                 const updated = await projectStateHelper(log).updateFlowInProject(op.flowState, op.newFlowState, projectId)
+                // Mirror the source's published/disabled state — replace semantics are
+                // "dest equals source", unlike project-releases which keeps dest's prior status.
                 await projectStateHelper(log).republishFlow({
                     flow: updated,
                     projectId,
-                    status: op.flowState.status,
+                    status: op.newFlowState.status,
                 })
                 applied.flowsUpdated++
                 break
