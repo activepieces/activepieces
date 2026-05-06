@@ -51,11 +51,21 @@ export const webhookHandshake = {
 export function isHandshakeRequest(params: IsHandshakeRequestParams): boolean {
     const { payload, handshakeConfiguration } = params
 
-    if (isNil(handshakeConfiguration) || isNil(handshakeConfiguration.strategy) || isNil(handshakeConfiguration.paramName)) {
+    if (isNil(handshakeConfiguration) || isNil(handshakeConfiguration.strategy)) {
         return false
     }
 
-    const { strategy, paramName } = handshakeConfiguration
+    const { strategy } = handshakeConfiguration
+
+    if (strategy === WebhookHandshakeStrategy.NONE) {
+        return payload.method.toUpperCase() === 'HEAD'
+    }
+
+    if (isNil(handshakeConfiguration.paramName)) {
+        return false
+    }
+
+    const { paramName } = handshakeConfiguration
 
     switch (strategy) {
         case WebhookHandshakeStrategy.HEADER_PRESENT:
