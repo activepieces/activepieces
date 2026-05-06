@@ -33,20 +33,24 @@ export const savvyCal = createPiece({
   auth: savvyCalAuth,
   authors: ['bst1n','sanket-a11y', 'onyedikachi-david'],
   actions: [
-    getCurrentUserAction,
-    listEventsAction,
-    getEventAction,
-    cancelEventAction,
     createEventAction,
+    cancelEventAction,
+    getEventAction,
+    listEventsAction,
     findEventsByEmailAction,
+
     listSchedulingLinksAction,
     getSchedulingLinkAction,
-    deleteSchedulingLinkAction,
-    duplicateSchedulingLinkAction,
-    toggleSchedulingLinkAction,
     getLinkSlotsAction,
+    toggleSchedulingLinkAction,
+    duplicateSchedulingLinkAction,
+    deleteSchedulingLinkAction,
+
     listWorkflowsAction,
     getWorkflowRulesAction,
+
+    getCurrentUserAction,
+
     createCustomApiCallAction({
       baseUrl: () => SAVVYCAL_BASE_URL,
       auth: savvyCalAuth,

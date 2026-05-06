@@ -214,6 +214,22 @@ export interface SavvyCalScope {
   slug: string;
 }
 
+export interface SavvyCalLinkFieldOption {
+  id?: string;
+  label?: string;
+  name?: string;
+  value?: string;
+}
+
+export interface SavvyCalLinkField {
+  id: string;
+  label: string;
+  type: string;
+  is_required?: boolean;
+  options?: SavvyCalLinkFieldOption[] | string[];
+  choices?: SavvyCalLinkFieldOption[] | string[];
+}
+
 export interface SavvyCalSchedulingLink {
   id: string;
   name: string;
@@ -224,4 +240,5 @@ export interface SavvyCalSchedulingLink {
   created_at: string;
   updated_at: string;
   scope: SavvyCalScope | null;
+  fields?: SavvyCalLinkField[];
 }
