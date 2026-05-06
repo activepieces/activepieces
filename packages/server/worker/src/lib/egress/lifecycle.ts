@@ -58,7 +58,19 @@ async function maybeApplyIptablesLockdown({ log, proxy, settings }: ApplyLockdow
         })
     }
     const hostNameservers = listDnsNameservers()
-    const sandboxNameservers = await listSandboxResolvConfNameservers()
+    const { nameservers: sandboxNameservers, readError: sandboxResolvConfReadError } = await readSandboxResolvConfNameservers()
+    if (sandboxResolvConfReadError !== undefined) {
+        log.warn(
+            { sandboxResolvConf: SANDBOX_RESOLV_CONF_PATH, err: sandboxResolvConfReadError },
+            'Could not read sandbox resolv.conf — DNS allowlist will only include host nameservers, which may not match what the sandbox queries. This is the exact condition that caused the 2026-05-06 EAI_AGAIN outage.',
+        )
+    }
+    else if (sandboxNameservers.length === 0) {
+        log.warn(
+            { sandboxResolvConf: SANDBOX_RESOLV_CONF_PATH },
+            'Sandbox resolv.conf was readable but contained no nameserver lines — DNS allowlist will only include host nameservers.',
+        )
+    }
     const nameservers = [...new Set([...hostNameservers, ...sandboxNameservers])]
     if (nameservers.length === 0) {
         const message = 'No DNS nameservers configured on the worker host or sandbox resolv.conf — refusing to apply kernel lockdown that would starve the sandbox of name resolution. ' +
@@ -108,9 +120,14 @@ function listDnsNameservers(): string[] {
 }
 
 async function listSandboxResolvConfNameservers(): Promise<string[]> {
+    const { nameservers } = await readSandboxResolvConfNameservers()
+    return nameservers
+}
+
+async function readSandboxResolvConfNameservers(): Promise<{ nameservers: string[], readError?: Error }> {
     const { data, error } = await tryCatch(() => readFile(SANDBOX_RESOLV_CONF_PATH, 'utf8'))
-    if (error || data === undefined) return []
-    return parseResolvConfNameservers(data)
+    if (error !== null) return { nameservers: [], readError: error }
+    return { nameservers: parseResolvConfNameservers(data) }
 }
 
 function parseResolvConfNameservers(body: string): string[] {
