@@ -6,6 +6,9 @@ import { PieceCategory } from '@activepieces/shared';
 import { youtubeNewVideoTrigger } from './lib/triggers/new-video.trigger';
 import { youtubeAuth } from './lib/common/auth';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { youtubeListPlaylistItemsAction } from './lib/actions/list-playlist-items';
+
+export { youtubeAuth };
 
 export const youtube = createPiece({
   displayName: 'YouTube',
@@ -18,6 +21,7 @@ export const youtube = createPiece({
   auth: youtubeAuth,
   authors: ['abaza738', 'kishanprmr', 'khaledmashaly', 'abuaboud', 'hugh-codes'],
   actions: [
+    youtubeListPlaylistItemsAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://www.googleapis.com/youtube/v3',
       auth: youtubeAuth,
