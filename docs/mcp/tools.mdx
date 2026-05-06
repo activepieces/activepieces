@@ -57,6 +57,24 @@ Get the detailed input property schema for a specific piece action or trigger. R
 | `flowId` | string | No | Flow ID for resolving dependent dropdowns that need step context. |
 | `input` | object | No | Known input values for resolving dependent DYNAMIC properties (e.g., `{"body_type": "json"}`). |
 
+### ap_resolve_property_options
+
+Resolve dropdown options for a single piece property. Returns available choices with labels and internal IDs. Use this to discover valid values for dynamic dropdown fields (e.g., Slack channels, Google Sheets, email labels) before configuring a step.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `pieceName` | string | Yes | Piece name (e.g., `@activepieces/piece-slack`) |
+| `actionOrTriggerName` | string | Yes | Action or trigger name (e.g., `send_channel_message`) |
+| `type` | string | Yes | `action` or `trigger` |
+| `propertyName` | string | Yes | The exact property name to resolve (e.g., `channel`) |
+| `auth` | string | Yes | Connection externalId — required to fetch options from the user's account |
+| `input` | object | No | Values for parent properties that this field depends on (refreshers) |
+| `searchValue` | string | No | Search term to filter results for large dropdown lists (e.g., "sales" to find sales-related channels) |
+
+<Tip>
+Each option in the response has a `label` (human-readable name) and a `value` (internal ID). Always pass the **value** when configuring a step — never use the label. For example, if the response includes `{label: "general", value: "C1234567890"}`, use `"C1234567890"` as the channel value.
+</Tip>
+
 ### ap_validate_step_config
 
 Validate a step configuration before applying it. Returns field-level errors without modifying any flow.

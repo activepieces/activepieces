@@ -19,7 +19,6 @@ import { openRouterApi } from '../platform-plan/openrouter/openrouter-api'
 
 export const adminPlatformService = (log: FastifyBaseLogger) => ({
 
-
     retryRuns: async ({
         createdAfter,
         createdBefore,
@@ -56,6 +55,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
             })
         }
     },
+
     async applyLicenseKeyByEmail({ email, licenseKey }: ApplyLicenseKeyByEmailRequestBody): Promise<void> {
         const identity = await userIdentityService(log).getIdentityByEmail(email)
         if (!identity) {

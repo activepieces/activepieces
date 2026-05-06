@@ -147,7 +147,7 @@ async function resolvePropertyOptions({ props, componentProps, pieceName, pieceV
             }
         }
         catch (err) {
-            log.debug({ err, propertyName: prop.name }, 'Failed to resolve property, keeping placeholder note')
+            log.warn({ err, propertyName: prop.name }, 'Failed to resolve property options — dropdown will be empty. Try calling ap_get_piece_props again with auth.')
         }
     }))
 }
@@ -183,15 +183,7 @@ async function discoverAvailableConnections({ pieceName, projectId, log }: {
     }
 }
 
-function withTimeout<T>({ promise, ms }: { promise: Promise<T>, ms: number }): Promise<T> {
-    let timer: ReturnType<typeof setTimeout>
-    return Promise.race([
-        promise.finally(() => clearTimeout(timer)),
-        new Promise<never>((_resolve, reject) => {
-            timer = setTimeout(() => reject(new Error(`Property resolution timed out after ${ms}ms`)), ms)
-        }),
-    ])
-}
+const { withTimeout } = mcpUtils
 
 const getPiecePropsInput = z.object({
     pieceName: z.string().describe('The piece name (e.g. "@activepieces/piece-slack"). Use ap_list_pieces to get valid values.'),
@@ -202,7 +194,7 @@ const getPiecePropsInput = z.object({
     input: z.record(z.string(), z.unknown()).optional().describe('Known input values to resolve dependent dynamic properties.'),
 })
 
-const PROPERTY_TIMEOUT_MS = 15_000
+const PROPERTY_TIMEOUT_MS = 30_000
 
 type ResolvePropertyOptionsParams = {
     props: PropSummary[]

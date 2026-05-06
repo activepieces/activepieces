@@ -1,4 +1,3 @@
-import { Project } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Copy, Paperclip, RefreshCw } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -24,8 +23,9 @@ import {
 import { ChatUIMessage } from '@/features/chat/lib/chat-types';
 import { cn } from '@/lib/utils';
 
-import { getTextFromParts } from '../lib/message-parsers';
+import { getTextFromParts, parseBuildProgress } from '../lib/message-parsers';
 
+import { BuildProgressCard } from './build-progress-card';
 import { ChatThinkingLoader } from './chat-thinking-loader';
 import { MessageContentWithAuth } from './message-content';
 import { ToolCallGroup } from './tool-call-group';
@@ -39,7 +39,6 @@ export function ChatMessage({
   onRetry,
   onSend,
   selectedProjectId,
-  projects,
   onSelectProject,
 }: {
   message: ChatUIMessage;
@@ -48,7 +47,6 @@ export function ChatMessage({
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
   selectedProjectId?: string | null;
-  projects?: Project[];
   onSelectProject?: (projectId: string) => void;
 }) {
   if (message.role === 'user') {
@@ -63,7 +61,6 @@ export function ChatMessage({
       onRetry={onRetry}
       onSend={onSend}
       selectedProjectId={selectedProjectId}
-      projects={projects}
       onSelectProject={onSelectProject}
     />
   );
@@ -143,7 +140,6 @@ function AssistantMessage({
   onRetry,
   onSend,
   selectedProjectId,
-  projects,
   onSelectProject,
 }: {
   message: ChatUIMessage;
@@ -152,7 +148,6 @@ function AssistantMessage({
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
   selectedProjectId?: string | null;
-  projects?: Project[];
   onSelectProject?: (projectId: string) => void;
 }) {
   const reasoningParts = message.parts.filter(
@@ -214,7 +209,6 @@ function AssistantMessage({
             isLastMessage,
             onSend,
             selectedProjectId,
-            projects,
             onSelectProject,
           })}
 
@@ -280,7 +274,6 @@ function renderParts({
   isStreaming,
   onSend,
   selectedProjectId,
-  projects,
   onSelectProject,
   isLastMessage,
 }: {
@@ -289,9 +282,19 @@ function renderParts({
   isLastMessage: boolean;
   onSend: (text: string, files?: File[]) => void;
   selectedProjectId?: string | null;
-  projects?: Project[];
   onSelectProject?: (projectId: string) => void;
 }): React.ReactNode[] {
+  const fullText = parts
+    .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+    .map((p) => p.text)
+    .join('');
+  const { progress: buildProgress } = parseBuildProgress(fullText);
+
+  const allToolParts = buildProgress
+    ? parts.filter((p) => p.type === 'dynamic-tool')
+    : [];
+  let buildCardRendered = false;
+
   const nodes: React.ReactNode[] = [];
   const toolBuffer: ChatUIMessage['parts'] = [];
 
@@ -299,13 +302,29 @@ function renderParts({
     if (toolBuffer.length === 0) return;
     const snapshot = [...toolBuffer];
     toolBuffer.length = 0;
-    nodes.push(
-      <ToolCallGroup
-        key={key}
-        toolParts={snapshot}
-        isStreaming={isStreaming}
-      />,
-    );
+
+    if (buildProgress) {
+      if (!buildCardRendered) {
+        buildCardRendered = true;
+        nodes.push(
+          <BuildProgressCard
+            key="build-progress"
+            progress={buildProgress}
+            toolParts={allToolParts}
+            allParts={parts}
+            isStreaming={isStreaming}
+          />,
+        );
+      }
+    } else {
+      nodes.push(
+        <ToolCallGroup
+          key={key}
+          toolParts={snapshot}
+          isStreaming={isStreaming}
+        />,
+      );
+    }
   }
 
   parts.forEach((part, idx) => {
@@ -319,7 +338,6 @@ function renderParts({
           content={part.text}
           onSend={onSend}
           selectedProjectId={selectedProjectId}
-          projects={projects}
           onSelectProject={onSelectProject}
           isLastMessage={isLastMessage}
         />,
