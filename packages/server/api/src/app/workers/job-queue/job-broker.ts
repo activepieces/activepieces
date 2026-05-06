@@ -1,5 +1,5 @@
 import { ConsumeJobRequest, ConsumeJobResponse, EngineResponseStatus, isNil, JobData, tryCatch } from '@activepieces/shared'
-import { Worker as BullMQWorker, Job } from 'bullmq'
+import { UnrecoverableError, Worker as BullMQWorker, Job } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
@@ -95,7 +95,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
             { queueName, jobId: job.id, jobName: job.name, deferredFailure: job.deferredFailure },
             '[jobBroker#tryDequeue] Failing job with deferred failure (BullMQ stalled limit exceeded)',
         )
-        const { error: failError } = await tryCatch(() => job.moveToFailed(new Error(job.deferredFailure), token, false))
+        const { error: failError } = await tryCatch(() => job.moveToFailed(new UnrecoverableError(job.deferredFailure), token, false))
         if (failError) {
             log.error(
                 { queueName, jobId: job.id, error: String(failError) },
