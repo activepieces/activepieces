@@ -1,4 +1,4 @@
-import { ApplicationEventName, assertNotNullOrUndefined, SAMLAuthnProviderConfig } from '@activepieces/shared'
+import { ApplicationEventName, assertNotNullOrUndefined, PrincipalType, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
@@ -9,6 +9,7 @@ import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformService } from '../../../platform/platform.service'
 import { platformUtils } from '../../../platform/platform.utils'
+import { platformMustHaveFeatureEnabled } from '../ee-authorization'
 import { authnSsoSamlService } from './authn-sso-saml-service'
 
 export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
@@ -29,7 +30,7 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
         applicationEvents(req.log).sendUserEvent({
             platformId,
             userId: response.id,
-            projectId: response.projectId,
+            projectId: response.projectId ?? undefined,
             ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
         }, {
             action: ApplicationEventName.USER_SIGNED_UP,
@@ -38,6 +39,19 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
             },
         })
         return res.redirect(url.toString())
+    })
+
+    app.post('/sso-domain', UpdateSsoDomainRequest, async (req) => {
+        return authnSsoSamlService(req.log).updateSsoDomain({
+            platformId: req.principal.platform.id,
+            ssoDomain: req.body.ssoDomain,
+        })
+    })
+
+    app.post('/sso-domain/verify', VerifySsoDomainRequest, async (req) => {
+        return authnSsoSamlService(req.log).verifySsoDomain({
+            platformId: req.principal.platform.id,
+        })
     })
 }
 
@@ -67,4 +81,23 @@ const LoginRequest = {
     config: {
         security: securityAccess.public(),
     },
+}
+
+const UpdateSsoDomainRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
+    schema: {
+        body: z.object({
+            ssoDomain: z.string().max(253).nullable(),
+        }),
+    },
+}
+
+const VerifySsoDomainRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
 }

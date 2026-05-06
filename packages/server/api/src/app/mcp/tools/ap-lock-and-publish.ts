@@ -4,9 +4,9 @@ import {
     FlowStatus,
     flowStructureUtil,
     isNil,
-    McpServer,
     McpToolDefinition,
     Permission,
+    ProjectScopedMcpServer,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -18,7 +18,7 @@ const lockAndPublishInput = z.object({
     flowId: z.string(),
 })
 
-export const apLockAndPublishTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apLockAndPublishTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_lock_and_publish',
         permission: Permission.UPDATE_FLOW_STATUS,

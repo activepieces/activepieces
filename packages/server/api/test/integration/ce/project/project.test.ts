@@ -3,6 +3,7 @@ import {
     ErrorCode,
     PrincipalType,
     ProjectType,
+    TeamProjectsLimit,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
@@ -25,6 +26,7 @@ describe('Project API (CE)', () => {
         it('should create one team project', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 project: { type: ProjectType.PERSONAL },
+                plan: { teamProjectsLimit: TeamProjectsLimit.ONE },
             })
 
             const testToken = await generateMockToken({
@@ -49,7 +51,9 @@ describe('Project API (CE)', () => {
         })
 
         it('should fail to create a second team project', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: { teamProjectsLimit: TeamProjectsLimit.ONE },
+            })
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,

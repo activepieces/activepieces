@@ -22,8 +22,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import {
+  Form,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormMessage,
+} from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -141,14 +146,20 @@ Activepieces
             <FormField
               name="idpMetadata"
               render={({ field }) => (
-                <FormItem className="grid space-y-4">
+                <FormItem className="grid space-y-2">
                   <Label htmlFor="idpMetadata">{t('IDP Metadata')}</Label>
-                  <Input
+                  <Textarea
                     {...field}
                     required
                     id="idpMetadata"
-                    className="rounded-sm"
+                    rows={6}
+                    className="rounded-sm font-mono text-xs"
                   />
+                  <FormDescription>
+                    {t(
+                      'Paste the metadata XML contents or the metadata URL provided by your identity provider.',
+                    )}
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

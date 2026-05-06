@@ -6,8 +6,8 @@ import {
     FlowVersion,
     isNil,
     isObject,
-    McpServer,
     McpToolDefinition,
+    ProjectScopedMcpServer,
     SampleDataFileType,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -21,7 +21,7 @@ import { projectService } from '../../project/project-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpUtils, PropSummary } from './mcp-utils'
 
-export const apGetPiecePropsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_get_piece_props',
         description: 'Get the input property schema for a piece action or trigger. Returns field names, types, required/optional, defaults, and options. Pass auth to resolve dynamic dropdowns and dynamic property sub-fields (e.g. Custom API Call url/body fields).',
@@ -75,8 +75,9 @@ export const apGetPiecePropsTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                     props,
                 }
 
+                const descLine = component.description ? `\nDescription: ${component.description}\n` : ''
                 return {
-                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":\n${JSON.stringify(result, null, 2)}` }],
+                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":${descLine}\n${JSON.stringify(result, null, 2)}` }],
                 }
             }
             catch (err) {

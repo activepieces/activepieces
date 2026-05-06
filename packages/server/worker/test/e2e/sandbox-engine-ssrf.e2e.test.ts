@@ -48,6 +48,7 @@ describe.skipIf(skip)('sandbox engine ssrf-guard — real hooks under real proxy
             wsRpcPortRange: { first: wsRpcListener.port, last: wsRpcListener.port },
             firstBoxUid: SANDBOX_UID,
             numBoxes: 1,
+            nameservers: [],
         })
 
         const plan: ProbePlanItem[] = [

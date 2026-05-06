@@ -1,19 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
     FlowActionType,
+    FlowOperationType,
     FlowTriggerType,
     FlowVersionState,
+    PieceTrigger,
+    SampleDataSettings,
 } from '@activepieces/shared'
 import type { FlowVersion } from '@activepieces/shared'
 
 const mockGetPiece = vi.fn()
 const mockGetPlatformId = vi.fn().mockResolvedValue('platform-1')
+const mockRepoFindOne = vi.fn()
+const mockRepoSave = vi.fn()
+const mockRepoExists = vi.fn()
 
 vi.mock('../../../../../src/app/core/db/repo-factory', () => ({
     repoFactory: vi.fn(() => () => ({
-        findOne: vi.fn().mockResolvedValue(null),
-        save: vi.fn(),
-        exists: vi.fn().mockResolvedValue(false),
+        findOne: mockRepoFindOne,
+        save: mockRepoSave,
+        exists: mockRepoExists,
     })),
 }))
 
@@ -55,11 +61,12 @@ vi.mock('../../../../../src/app/flows/flow-version/flow-version-side-effects', (
 
 vi.mock('../../../../../src/app/flows/flow-version/flow-version-validator-util', () => ({
     flowVersionValidationUtil: vi.fn(() => ({
-        prepareRequest: vi.fn((r: unknown) => Promise.resolve(r)),
+        prepareRequest: vi.fn(({ request }: { request: unknown }) => Promise.resolve(request)),
     })),
 }))
 
 import { flowVersionService } from '../../../../../src/app/flows/flow-version/flow-version.service'
+import type { FastifyBaseLogger } from 'fastify'
 
 const mockLog = {
     info: vi.fn(),
@@ -71,28 +78,33 @@ const mockLog = {
     trace: vi.fn(),
     silent: vi.fn(),
     level: 'info',
-} as any
+} as unknown as FastifyBaseLogger
 
-function makeFlowVersionWithPiece(): FlowVersion {
+function makePieceTriggerSettings(extras: Partial<PieceTrigger['settings']> = {}): PieceTrigger['settings'] {
     return {
-        id: 'fv-1',
+        pieceName: '@activepieces/piece-gmail',
+        pieceVersion: '~0.1.0',
+        triggerName: 'new_email',
+        input: {},
+        propertySettings: {},
+        ...extras,
+    }
+}
+
+function makeFlowVersion(overrides: { id?: string, trigger?: FlowVersion['trigger'] } = {}): FlowVersion {
+    return {
+        id: overrides.id ?? 'fv-1',
         created: '2024-01-01T00:00:00Z',
         updated: '2024-01-01T00:00:00Z',
         flowId: 'flow-1',
         displayName: 'Test Flow',
-        trigger: {
-            name: 'trigger_1',
+        trigger: overrides.trigger ?? {
+            name: 'trigger',
             valid: true,
             displayName: 'Gmail Trigger',
             lastUpdatedDate: '2024-01-01T00:00:00Z',
             type: FlowTriggerType.PIECE,
-            settings: {
-                pieceName: '@activepieces/piece-gmail',
-                pieceVersion: '~0.1.0',
-                triggerName: 'new_email',
-                input: {},
-                propertySettings: {},
-            },
+            settings: makePieceTriggerSettings(),
             nextAction: {
                 name: 'step_1',
                 valid: true,
@@ -119,47 +131,94 @@ function makeFlowVersionWithPiece(): FlowVersion {
     }
 }
 
-describe('lockPieceVersions', () => {
+describe('flowVersionService.applyOperation - USE_AS_DRAFT', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         mockGetPlatformId.mockResolvedValue('platform-1')
+        mockRepoFindOne.mockResolvedValue(null)
+        mockRepoSave.mockImplementation((v: FlowVersion) => Promise.resolve(v))
+        mockRepoExists.mockResolvedValue(false)
     })
 
-    it('returns success:false when a piece is not found', async () => {
-        mockGetPiece.mockResolvedValue(null)
+    it('preserves PIECE trigger sample data from the previous version', async () => {
+        const sampleData: SampleDataSettings = {
+            sampleDataFileId: 'sd-file-1',
+            sampleDataInputFileId: 'sdi-file-1',
+            lastTestDate: '2024-01-01T00:00:00Z',
+        }
+        const currentDraft = makeFlowVersion()
+        const previousVersion = makeFlowVersion({
+            id: 'fv-prev',
+            trigger: {
+                ...makeFlowVersion().trigger,
+                settings: makePieceTriggerSettings({ sampleData }),
+            } as PieceTrigger,
+        })
+        mockRepoFindOne.mockResolvedValue(previousVersion)
 
-        const result = await flowVersionService(mockLog).lockPieceVersions({
+        const result = await flowVersionService(mockLog).applyOperation({
             projectId: 'proj-1',
-            flowVersion: makeFlowVersionWithPiece(),
+            platformId: 'platform-1',
+            userId: 'user-1',
+            flowVersion: currentDraft,
+            userOperation: {
+                type: FlowOperationType.USE_AS_DRAFT,
+                request: { versionId: 'fv-prev' },
+            },
         })
 
-        expect(result.success).toBe(false)
-        expect(result.message).toContain('@activepieces/piece-gmail')
+        expect(result.trigger.type).toBe(FlowTriggerType.PIECE)
+        const settings = (result.trigger as PieceTrigger).settings
+        expect(settings.sampleData?.sampleDataFileId).toBe(sampleData.sampleDataFileId)
+        expect(settings.sampleData?.sampleDataInputFileId).toBe(sampleData.sampleDataInputFileId)
     })
 
-    it('returns success:true with locked versions when all pieces are found', async () => {
-        mockGetPiece.mockImplementation(({ name }: { name: string }) =>
-            Promise.resolve({ version: name.includes('gmail') ? '1.2.3' : '4.5.6' }),
-        )
+    it('does not set trigger sample data when previous version has no sampleData', async () => {
+        const currentDraft = makeFlowVersion()
+        const previousVersion = makeFlowVersion({ id: 'fv-prev' })
+        mockRepoFindOne.mockResolvedValue(previousVersion)
 
-        const result = await flowVersionService(mockLog).lockPieceVersions({
+        const result = await flowVersionService(mockLog).applyOperation({
             projectId: 'proj-1',
-            flowVersion: makeFlowVersionWithPiece(),
+            platformId: 'platform-1',
+            userId: 'user-1',
+            flowVersion: currentDraft,
+            userOperation: {
+                type: FlowOperationType.USE_AS_DRAFT,
+                request: { versionId: 'fv-prev' },
+            },
         })
 
-        expect(result.success).toBe(true)
-        expect(result.data?.trigger.settings.pieceVersion).toBe('1.2.3')
+        expect(result.trigger.type).toBe(FlowTriggerType.PIECE)
+        expect((result.trigger as PieceTrigger).settings.sampleData).toBeUndefined()
     })
 
-    it('returns the flow as-is when already LOCKED', async () => {
-        const locked: FlowVersion = { ...makeFlowVersionWithPiece(), state: FlowVersionState.LOCKED }
+    it('skips the sample data preservation when previous version has an EMPTY trigger', async () => {
+        const currentDraft = makeFlowVersion()
+        const previousVersion = makeFlowVersion({
+            id: 'fv-prev',
+            trigger: {
+                name: 'trigger',
+                valid: false,
+                displayName: 'Select Trigger',
+                lastUpdatedDate: '2024-01-01T00:00:00Z',
+                type: FlowTriggerType.EMPTY,
+                settings: {},
+            },
+        })
+        mockRepoFindOne.mockResolvedValue(previousVersion)
 
-        const result = await flowVersionService(mockLog).lockPieceVersions({
+        const result = await flowVersionService(mockLog).applyOperation({
             projectId: 'proj-1',
-            flowVersion: locked,
+            platformId: 'platform-1',
+            userId: 'user-1',
+            flowVersion: currentDraft,
+            userOperation: {
+                type: FlowOperationType.USE_AS_DRAFT,
+                request: { versionId: 'fv-prev' },
+            },
         })
 
-        expect(result.success).toBe(true)
-        expect(result.data).toBe(locked)
+        expect(result.trigger.type).toBe(FlowTriggerType.EMPTY)
     })
 })

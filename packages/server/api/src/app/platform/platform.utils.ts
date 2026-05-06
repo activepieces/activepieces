@@ -6,7 +6,12 @@ import { platformService } from './platform.service'
 
 export const platformUtils = {
     async getPlatformIdForRequest(req: FastifyRequest): Promise<PlatformId | null> {
-        if (req.principal && req.principal.type !== PrincipalType.UNKNOWN && req.principal.type !== PrincipalType.WORKER) {
+        if (
+            req.principal
+            && req.principal.type !== PrincipalType.UNKNOWN
+            && req.principal.type !== PrincipalType.WORKER
+            && req.principal.type !== PrincipalType.ONBOARDING
+        ) {
             return req.principal.platform.id
         }
         const platformIdFromHostName = await getPlatformIdForHostname(req.headers.host as string)

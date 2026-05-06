@@ -1,4 +1,4 @@
-import { McpServer, McpToolDefinition } from '@activepieces/shared'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { apAddBranchTool } from './ap-add-branch'
 import { apAddStepTool } from './ap-add-step'
@@ -27,6 +27,7 @@ import { apManageFieldsTool } from './ap-manage-fields'
 import { apManageNotesTool } from './ap-manage-notes'
 import { apRenameFlowTool } from './ap-rename-flow'
 import { apRetryRunTool } from './ap-retry-run'
+import { apRunActionTool } from './ap-run-action'
 import { apSetupGuideTool } from './ap-setup-guide'
 import { apTestFlowTool } from './ap-test-flow'
 import { apTestStepTool } from './ap-test-step'
@@ -80,9 +81,10 @@ export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = [
     'ap_test_flow',
     'ap_test_step',
     'ap_retry_run',
+    'ap_run_action',
 ]
 
-export const activepiecesTools = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition[] => [
+export const activepiecesTools = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition[] => [
     apBuildFlowTool(mcp, log),
     apCreateFlowTool(mcp, log),
     apDuplicateFlowTool(mcp, log),
@@ -118,5 +120,6 @@ export const activepiecesTools = (mcp: McpServer, log: FastifyBaseLogger): McpTo
     apTestFlowTool(mcp, log),
     apTestStepTool(mcp, log),
     apRetryRunTool(mcp, log),
+    apRunActionTool(mcp, log),
     apSetupGuideTool(mcp, log),
 ]
