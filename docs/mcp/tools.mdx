@@ -202,6 +202,14 @@ Enable or disable a flow.
 | `flowId` | string | Yes | The flow ID |
 | `status` | string | Yes | `ENABLED` or `DISABLED` |
 
+### ap_delete_flow
+
+Permanently delete a flow and all its versions. This cannot be undone.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The ID of the flow to delete |
+
 ### ap_lock_and_publish
 
 Publish the current draft of a flow. Validates all steps are configured.

@@ -91,7 +91,7 @@ export const apListPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                                 name: a.name,
                                 displayName: a.displayName,
                                 description: a.description,
-                                requireAuth: a.requireAuth,
+                                requiresAuth: a.requireAuth,
                             }))
                         }
                         if (params.includeTriggers) {
@@ -99,7 +99,7 @@ export const apListPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                                 name: t.name,
                                 displayName: t.displayName,
                                 description: t.description,
-                                requireAuth: t.requireAuth,
+                                requiresAuth: t.requireAuth,
                             }))
                         }
                     }

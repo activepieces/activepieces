@@ -121,7 +121,7 @@ function routerEnumHint(): string {
 }
 
 function validateRouter(settings: Record<string, unknown> | undefined): McpResult {
-    if (!settings || !settings.branches || !settings.executionType) {
+    if (!settings || !settings.branches || !settings.executionType || (Array.isArray(settings.branches) && settings.branches.length === 0)) {
         const example = JSON.stringify({
             branches: [
                 {

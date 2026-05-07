@@ -174,9 +174,13 @@ const CATEGORY_LABELS: Record<ValidationIssue['category'], string> = {
 }
 
 function formatValidationResult({ result, flowDisplayName }: { result: ValidationResult, flowDisplayName: string }): string {
-    if (result.issues.length === 0) {
+    if (result.issues.length === 0 && result.validSteps > 0) {
         const skippedNote = result.skippedSteps > 0 ? `, ${result.skippedSteps} skipped` : ''
         return `✅ Flow "${flowDisplayName}" is ready to publish (${result.totalSteps} steps, ${result.validSteps} valid${skippedNote}).`
+    }
+
+    if (result.issues.length === 0 && result.validSteps === 0) {
+        return `⚠️ Flow "${flowDisplayName}" has no valid steps (${result.totalSteps} total). Configure the trigger and actions before publishing.`
     }
 
     const grouped = new Map<ValidationIssue['category'], ValidationIssue[]>()

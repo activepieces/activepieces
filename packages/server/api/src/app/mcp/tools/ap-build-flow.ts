@@ -61,11 +61,12 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
         },
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
+            let flowId: string | undefined
+            const projectId = mcp.projectId
             try {
                 const { flowName, trigger, steps } = buildFlowInput.parse(args)
-                const project = await projectService(log).getOneOrThrow(mcp.projectId)
+                const project = await projectService(log).getOneOrThrow(projectId)
                 const platformId = project.platformId
-                const projectId = mcp.projectId
 
                 const triggerAuthError = mcpUtils.validateAuth(trigger.auth)
                 if (triggerAuthError) {
@@ -82,7 +83,7 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
                     projectId,
                     request: { displayName: flowName, projectId },
                 })
-                const flowId = flow.id
+                flowId = flow.id
 
                 const triggerInput = {
                     ...(trigger.input ?? {}),
@@ -146,6 +147,9 @@ export const apBuildFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
                 return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix.` }] }
             }
             catch (err) {
+                if (flowId) {
+                    await flowService(log).delete({ id: flowId, projectId }).catch(() => undefined)
+                }
                 return mcpUtils.mcpToolError('Failed to build flow', err)
             }
         },

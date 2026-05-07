@@ -10,11 +10,11 @@ export const apCreateFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
         permission: Permission.WRITE_FLOW,
         description: 'Create a new flow in Activepieces',
         inputSchema: {
-            flowName: z.string().describe('The name of the flow'),
+            flowName: z.string().trim().min(1, 'Flow name cannot be empty').max(255, 'Flow name must be 255 characters or less').describe('The name of the flow'),
         },
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
-            const { flowName } = z.object({ flowName: z.string() }).parse(args)
+            const { flowName } = z.object({ flowName: z.string().trim().min(1).max(255) }).parse(args)
             try {
                 const flow = await flowService(log).create({
                     projectId: mcp.projectId,
