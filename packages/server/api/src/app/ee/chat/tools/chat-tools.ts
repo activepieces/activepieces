@@ -2,13 +2,13 @@ import { FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepiece
 import { tool } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
-import { flowService } from '../../flows/flow/flow.service'
-import { flowRunService } from '../../flows/flow-run/flow-run-service'
-import { formatFlowLine } from '../../mcp/tools/ap-list-flows'
-import { executeAdhocAction, formatRunSummary } from '../../mcp/tools/flow-run-utils'
-import { mcpUtils } from '../../mcp/tools/mcp-utils'
-import { tableService } from '../../tables/table/table.service'
+import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
+import { flowService } from '../../../flows/flow/flow.service'
+import { flowRunService } from '../../../flows/flow-run/flow-run-service'
+import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
+import { executeAdhocAction, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
+import { mcpUtils } from '../../../mcp/tools/mcp-utils'
+import { tableService } from '../../../tables/table/table.service'
 import { chatPrompt } from '../prompt/chat-prompt'
 
 const RESOURCE_TYPES = ['flows', 'tables', 'runs', 'connections'] as const
@@ -131,10 +131,10 @@ function pieceDisplayLabel(shortName: string): string {
 function buildConnectionPickerBlock({ shortName, displayName, connections }: {
     shortName: string
     displayName: string
-    connections: Array<{ displayName: string, project: string, externalId: string, projectId: string }>
+    connections: Array<{ displayName: string, project: string, externalId: string, projectId: string, status: string }>
 }): string {
     const connLines = connections.map((c) =>
-        `- label: ${c.displayName}\n  project: ${c.project}\n  externalId: ${c.externalId}\n  projectId: ${c.projectId}`,
+        `- label: ${c.displayName}\n  project: ${c.project}\n  externalId: ${c.externalId}\n  projectId: ${c.projectId}\n  status: ${c.status}`,
     ).join('\n')
     return `\`\`\`connection-picker\npiece: ${shortName}\ndisplayName: ${displayName}\nconnections:\n${connLines}\n\`\`\``
 }
@@ -165,6 +165,7 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
                 externalId: c.externalId,
                 project: chatPrompt.projectDisplayName(project),
                 projectId: project.id,
+                status: c.status,
             }))
         }),
     )

@@ -1,6 +1,19 @@
+import { AppConnectionStatus } from '@activepieces/shared';
+
 import { ChatUIMessage } from '@/features/chat/lib/chat-types';
 
 import { ProposalStep, stepVisuals } from './step-visuals';
+
+const CONNECTION_STATUS_VALUES: ReadonlySet<string> = new Set(
+  Object.values(AppConnectionStatus),
+);
+
+function toConnectionStatus(value: string): AppConnectionStatus {
+  if (CONNECTION_STATUS_VALUES.has(value)) {
+    return value as AppConnectionStatus;
+  }
+  return AppConnectionStatus.ACTIVE;
+}
 
 export function normalizePieceName(piece: string): string {
   const shortName = piece.replace(/[^a-z0-9-]/gi, '');
@@ -39,6 +52,8 @@ const SPECIAL_FENCES = [
   'automation-proposal',
   'connection-required',
   'connection-picker',
+  'project-picker',
+  'build-progress',
   'quick-replies',
 ];
 
@@ -122,10 +137,12 @@ export function parseAllConnectionsRequired(content: string): {
     const block = match[1];
     const pieceMatch = /^piece:\s*(.+)$/m.exec(block);
     const nameMatch = /^displayName:\s*(.+)$/m.exec(block);
+    const statusMatch = /^status:\s*(.+)$/m.exec(block);
     if (pieceMatch) {
       connections.push({
         piece: pieceMatch[1].trim(),
         displayName: nameMatch?.[1].trim() ?? pieceMatch[1].trim(),
+        status: statusMatch?.[1].trim() === 'error' ? 'error' : undefined,
       });
     }
     cleaned = cleaned.replace(match[0], '');
@@ -196,6 +213,7 @@ export type AutomationProposal = {
 export type ConnectionRequired = {
   piece: string;
   displayName: string;
+  status?: 'error';
 };
 
 export type MultiQuestion = {
@@ -266,6 +284,7 @@ export function parseConnectionPicker(content: string): {
     const projectMatch = /^\s+project:\s*(.+)$/m.exec(connBlock);
     const externalIdMatch = /^\s+externalId:\s*(.+)$/m.exec(connBlock);
     const projectIdMatch = /^\s+projectId:\s*(.+)$/m.exec(connBlock);
+    const statusMatch = /^\s+status:\s*(.+)$/m.exec(connBlock);
 
     const externalId = externalIdMatch?.[1].trim() ?? '';
     const projectId = projectIdMatch?.[1].trim() ?? '';
@@ -276,6 +295,7 @@ export function parseConnectionPicker(content: string): {
       project: projectMatch?.[1].trim() ?? '',
       externalId,
       projectId,
+      status: toConnectionStatus(statusMatch?.[1].trim() ?? ''),
     });
   }
 
@@ -297,5 +317,95 @@ export type ConnectionPickerData = {
     project: string;
     externalId: string;
     projectId: string;
+    status: AppConnectionStatus;
+  }>;
+};
+
+export function parseProjectPicker(content: string): {
+  picker: ProjectPickerData | null;
+  cleanContent: string;
+} {
+  const { block, cleanContent } = parseCodeBlock(content, 'project-picker');
+  if (!block) return { picker: null, cleanContent: content };
+
+  const projects: ProjectPickerData['suggestedProjects'] = [];
+  const projectBlocks = block.split(/^-\s+name:\s*/m).slice(1);
+
+  for (const projBlock of projectBlocks) {
+    const lines = projBlock.split('\n');
+    const name = lines[0]?.trim();
+    if (!name) continue;
+
+    const idMatch = /^\s+id:\s*(.+)$/m.exec(projBlock);
+    const id = idMatch?.[1].trim() ?? '';
+    if (!id) continue;
+
+    projects.push({ name, id });
+  }
+
+  if (projects.length === 0) return { picker: null, cleanContent: content };
+
+  return {
+    picker: { suggestedProjects: projects },
+    cleanContent,
+  };
+}
+
+export type ProjectPickerData = {
+  suggestedProjects: Array<{
+    name: string;
+    id: string;
+  }>;
+};
+
+export function parseBuildProgress(content: string): {
+  progress: BuildProgressData | null;
+  cleanContent: string;
+} {
+  const { block, cleanContent } = parseCodeBlock(content, 'build-progress');
+  if (!block) return { progress: null, cleanContent: content };
+
+  const titleMatch = /^title:\s*(.+)$/m.exec(block);
+  const projectMatch = /^project:\s*(.+)$/m.exec(block);
+  if (!titleMatch) return { progress: null, cleanContent: content };
+
+  const steps: BuildProgressData['steps'] = [];
+  const stepBlocks = block.split(/^-\s+type:\s*/m).slice(1);
+
+  for (const stepBlock of stepBlocks) {
+    const lines = stepBlock.split('\n');
+    const type = lines[0]?.trim();
+    if (type !== 'trigger' && type !== 'action') continue;
+
+    const pieceMatch = /^\s+piece:\s*(.+)$/m.exec(stepBlock);
+    const labelMatch = /^\s+label:\s*(.+)$/m.exec(stepBlock);
+    if (!pieceMatch || !labelMatch) continue;
+
+    steps.push({
+      type: type as 'trigger' | 'action',
+      piece: pieceMatch[1].trim(),
+      label: labelMatch[1].trim(),
+    });
+  }
+
+  if (steps.length === 0) return { progress: null, cleanContent: content };
+
+  return {
+    progress: {
+      title: titleMatch[1].trim(),
+      project: projectMatch?.[1].trim() ?? '',
+      steps,
+    },
+    cleanContent,
+  };
+}
+
+export type BuildProgressData = {
+  title: string;
+  project: string;
+  steps: Array<{
+    type: 'trigger' | 'action';
+    piece: string;
+    label: string;
   }>;
 };

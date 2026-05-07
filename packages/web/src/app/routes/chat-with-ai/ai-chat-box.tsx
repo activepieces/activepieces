@@ -155,7 +155,6 @@ function ChatBoxContent({
     hasActiveApproval,
     approvalDisplayName,
     approve,
-    approveAndRemember,
     reject,
     dismiss: dismissApproval,
   } = useToolApproval({ pendingApprovalRequest });
@@ -225,7 +224,6 @@ function ChatBoxContent({
                 onSend={handleSend}
                 onRetry={handleRetry}
                 selectedProjectId={selectedProjectId}
-                projects={projects}
                 onSelectProject={handleProjectChange}
               />
             );
@@ -278,7 +276,6 @@ function ChatBoxContent({
               key={pendingApprovalRequest?.gateId}
               displayName={approvalDisplayName ?? ''}
               onApprove={approve}
-              onApproveAndRemember={approveAndRemember}
               onReject={reject}
               onDismiss={dismissApproval}
             />
