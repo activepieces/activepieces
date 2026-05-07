@@ -171,6 +171,7 @@ export function useAgentChat({
   const [selectedProjectId, _setSelectedProjectId] = useState<string | null>(
     null,
   );
+  const [projectSetInSession, setProjectSetInSession] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [wasCancelled, setWasCancelled] = useState(false);
@@ -351,10 +352,11 @@ export function useAgentChat({
     }
     if (newProjectId !== undefined) {
       updateSelectedProjectId(newProjectId);
+      setProjectSetInSession(true);
     }
   }, [uiMessages]);
 
-  // Sync project context from server after streaming completes (authoritative)
+  // Sync project context from server after streaming completes
   const prevStatusRef = useRef(status);
   useEffect(() => {
     const wasStreaming =
@@ -366,7 +368,11 @@ export function useAgentChat({
       void chatApi
         .getConversation(conversationIdRef.current)
         .then((conv) => {
-          updateSelectedProjectId(conv.projectId ?? null);
+          const projectId = conv.projectId ?? null;
+          updateSelectedProjectId(projectId);
+          if (projectId) {
+            setProjectSetInSession(true);
+          }
         })
         .catch(() => undefined);
     }
@@ -388,6 +394,7 @@ export function useAgentChat({
     setConversationIdState(null);
     setModelNameState(null);
     updateSelectedProjectId(null);
+    setProjectSetInSession(false);
     setUiMessages([]);
     setLocalError(null);
     setWasCancelled(false);
@@ -505,7 +512,9 @@ export function useAgentChat({
       if (convResult.data) {
         modelNameRef.current = convResult.data.modelName ?? null;
         setModelNameState(convResult.data.modelName ?? null);
+        // Set project for backend tool scoping, but don't show it visually (projectSetInSession stays false)
         updateSelectedProjectId(convResult.data.projectId ?? null);
+        setProjectSetInSession(false);
       }
       setIsLoadingHistory(false);
     },
@@ -526,6 +535,9 @@ export function useAgentChat({
   const setProjectContext = useCallback(async (projectId: string | null) => {
     const previousProjectId = selectedProjectIdRef.current;
     updateSelectedProjectId(projectId);
+    if (projectId) {
+      setProjectSetInSession(true);
+    }
     const convId = conversationIdRef.current;
     if (!convId) return;
     const { error: err } = await tryCatch(() =>
@@ -540,6 +552,7 @@ export function useAgentChat({
     conversationId,
     modelName,
     selectedProjectId,
+    projectSetInSession,
     messages,
     isStreaming,
     wasCancelled,
