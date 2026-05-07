@@ -1,7 +1,7 @@
 import {
     BranchExecutionType,
-    McpServer,
     McpToolDefinition,
+    ProjectScopedMcpServer,
     RouterActionSettingsWithValidation,
     RouterExecutionType,
     SourceCode,
@@ -10,7 +10,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { mcpUtils } from './mcp-utils'
 
-export const apValidateStepConfigTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apValidateStepConfigTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_validate_step_config',
         description: 'Validate a step configuration before applying it. Returns field-level errors without modifying any flow. Use this to check your config is correct before calling ap_update_step or ap_update_trigger.',

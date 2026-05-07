@@ -1,16 +1,22 @@
-import { isNil, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { isNil, McpServerType, PopulatedMcpServer, TelemetryEventName, tryCatch } from '@activepieces/shared'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { telemetry } from '../../helper/telemetry.utils'
-import { projectService } from '../../project/project-service'
-import { mcpServerRepository, mcpServerService } from '../mcp-service'
+import { mcpServerService } from '../mcp-service'
 import { mcpOAuthTokenService } from './token/mcp-oauth-token.service'
 
 export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
+    registerMcpEndpoint(app, McpServerType.PROJECT)
+}
 
+export const mcpPlatformHttpController: FastifyPluginAsyncZod = async (app) => {
+    registerMcpEndpoint(app, McpServerType.PLATFORM)
+}
+
+function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: McpServerType): void {
     app.addContentTypeParser(
         'application/json',
         { parseAs: 'string' },
@@ -18,7 +24,6 @@ export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
             if (body == null || body.trim() === '') {
                 return done(null, {})
             }
-
             try {
                 done(null, JSON.parse(body))
             }
@@ -48,7 +53,7 @@ export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
             })
         }
 
-        const identity = await resolveIdentity(token, req.log)
+        const identity = await resolveIdentity({ token, scope, log: req.log })
         if (isNil(identity)) {
             return reply.status(401).send({
                 error: 'unauthorized',
@@ -56,26 +61,15 @@ export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
             })
         }
 
-        rejectedPromiseHandler(telemetry(req.log).trackProject(identity.projectId, {
-            name: TelemetryEventName.MCP_SERVER_CONNECTED,
-            payload: {
-                projectId: identity.projectId,
-                userId: identity.userId,
-            },
-        }), req.log)
-
-        let mcp: PopulatedMcpServer
-        try {
-            mcp = await mcpServerService(req.log).getPopulatedByProjectId(identity.projectId)
-        }
-        catch (err) {
-            req.log.debug({ err }, 'Failed to resolve MCP server for project')
+        const { mcp, userId } = await resolveMcpAndUser({ identity, log: req.log })
+        if (isNil(mcp)) {
             return reply.status(401).send({
                 error: 'unauthorized',
                 message: 'Invalid project or token.',
             })
         }
-        const { server } = await mcpServerService(req.log).buildServer({ mcp, userId: identity.userId })
+
+        const { server } = await mcpServerService(req.log).buildServer({ mcp, userId })
 
         const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
@@ -91,30 +85,55 @@ export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-async function resolveIdentity(token: string, log: FastifyBaseLogger): Promise<ResolvedIdentity | null> {
-    if (token.split('.').length === 3) {
-        try {
-            const payload = await mcpOAuthTokenService.verifyAccessToken(token)
-            return { projectId: payload.projectId, userId: payload.sub }
-        }
-        catch (e) {
-            log.debug({ err: e }, 'JWT verification failed')
-        }
+async function resolveIdentity({ token, scope, log }: { token: string, scope: McpServerType, log: FastifyBaseLogger }): Promise<ResolvedIdentity | null> {
+    const { data: payload, error } = await tryCatch(() => mcpOAuthTokenService.verifyAccessToken(token))
+    if (error) {
+        log.debug({ err: error }, 'OAuth token verification failed')
+        return null
     }
-
-    const mcpServer = await mcpServerRepository().findOneBy({ token })
-    if (!isNil(mcpServer)) {
-        const project = await projectService(log).getOneOrThrow(mcpServer.projectId)
-        return { projectId: mcpServer.projectId, userId: project.ownerId }
+    const { projectId } = payload
+    const isPlatformToken = isNil(projectId)
+    if (isPlatformToken && scope === McpServerType.PLATFORM) {
+        return { type: McpServerType.PLATFORM, platformId: payload.platformId, userId: payload.sub }
     }
-
+    if (!isPlatformToken && scope === McpServerType.PROJECT) {
+        return { type: McpServerType.PROJECT, projectId, userId: payload.sub }
+    }
     return null
 }
 
-type ResolvedIdentity = {
-    projectId: string
-    userId: string
+async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity, log: FastifyBaseLogger }): Promise<{ mcp: PopulatedMcpServer | null, userId: string | null }> {
+    try {
+        if (identity.type === McpServerType.PLATFORM) {
+            rejectedPromiseHandler(telemetry(log).trackPlatform(identity.platformId, {
+                name: TelemetryEventName.MCP_SERVER_CONNECTED,
+                payload: {
+                    platformId: identity.platformId,
+                    userId: identity.userId,
+                },
+            }), log)
+            const mcp = await mcpServerService(log).getPopulatedByPlatformId(identity.platformId)
+            return { mcp, userId: identity.userId }
+        }
+        rejectedPromiseHandler(telemetry(log).trackProject(identity.projectId, {
+            name: TelemetryEventName.MCP_SERVER_CONNECTED,
+            payload: {
+                projectId: identity.projectId,
+                userId: identity.userId,
+            },
+        }), log)
+        const mcp = await mcpServerService(log).getPopulatedByProjectId(identity.projectId)
+        return { mcp, userId: identity.userId }
+    }
+    catch (err) {
+        log.debug({ err }, 'Failed to resolve MCP server')
+        return { mcp: null, userId: null }
+    }
 }
+
+type ResolvedIdentity =
+    | { type: McpServerType.PROJECT, projectId: string, userId: string }
+    | { type: McpServerType.PLATFORM, platformId: string, userId: string }
 
 const McpEndpointConfig = {
     config: { security: securityAccess.public() },

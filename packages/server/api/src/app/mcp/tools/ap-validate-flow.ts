@@ -3,9 +3,9 @@ import {
     flowStructureUtil,
     FlowTriggerType,
     isNil,
-    McpServer,
     McpToolDefinition,
     Permission,
+    ProjectScopedMcpServer,
     Step,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -13,7 +13,7 @@ import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { mcpUtils } from './mcp-utils'
 
-export const apValidateFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apValidateFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_validate_flow',
         permission: Permission.READ_FLOW,
