@@ -98,6 +98,7 @@ export const stripeInvoicePaymentFailed = createTrigger({
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {
+        status : 'open',
         limit: '5',
       },
     });
