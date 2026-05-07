@@ -14,10 +14,11 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     async createForPause(params: CreateForPauseParams): Promise<CreateForPauseResult> {
         const preCompleted = await waitpointRepo().findOneBy({
             flowRunId: params.flowRunId,
+            stepName: params.stepName,
             status: WaitpointStatus.COMPLETED,
         })
         if (!isNil(preCompleted)) {
-            log.info({ flowRunId: params.flowRunId, existingStatus: preCompleted.status }, '[waitpointService#createForPause] Waitpoint already pre-completed')
+            log.info({ flowRunId: params.flowRunId, stepName: params.stepName, existingStatus: preCompleted.status }, '[waitpointService#createForPause] Waitpoint already pre-completed for this step')
             return { inserted: false, waitpoint: preCompleted }
         }
 

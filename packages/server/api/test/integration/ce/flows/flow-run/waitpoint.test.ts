@@ -62,6 +62,36 @@ describe('Waitpoint service', () => {
             expect(result.waitpoint.type).toBe(PauseType.WEBHOOK)
         })
 
+        it('should NOT return a COMPLETED waitpoint that belongs to a different step', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+
+            const step1Pause = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'step_1',
+                type: PauseType.WEBHOOK,
+            })
+
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: step1Pause.waitpoint.id,
+                resumePayload: { body: { from: 'step_1' } },
+            })
+
+            const step2Pause = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'step_2',
+                type: PauseType.WEBHOOK,
+            })
+
+            expect(step2Pause.inserted).toBe(true)
+            expect(step2Pause.waitpoint.status).toBe(WaitpointStatus.PENDING)
+            expect(step2Pause.waitpoint.stepName).toBe('step_2')
+            expect(step2Pause.waitpoint.id).not.toBe(step1Pause.waitpoint.id)
+        })
+
         it('should return existing COMPLETED waitpoint when resume arrived during RUNNING (fast subflow race)', async () => {
             const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
 
