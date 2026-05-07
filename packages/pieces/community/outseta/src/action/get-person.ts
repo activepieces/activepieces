@@ -54,9 +54,19 @@ export const getPersonAction = createAction({
       mailing_address_state: person.MailingAddress?.State ?? null,
       mailing_address_postal_code: person.MailingAddress?.PostalCode ?? null,
       mailing_address_country: person.MailingAddress?.Country ?? null,
-      account_uid: person.PersonAccount?.[0]?.Account?.Uid ?? null,
-      account_name: person.PersonAccount?.[0]?.Account?.Name ?? null,
-      account_stage: person.PersonAccount?.[0]?.Account?.AccountStage ?? null,
+      account_uid: firstMembership(person)?.Account?.Uid ?? null,
+      account_name: firstMembership(person)?.Account?.Name ?? null,
+      account_stage: firstMembership(person)?.Account?.AccountStage ?? null,
     };
   },
 });
+
+function firstMembership(person: any): any {
+  // PersonAccount comes back as a direct array on /crm/people, but be
+  // defensive in case the API ever wraps it in {items: [...]} like other
+  // collections do.
+  const list = Array.isArray(person?.PersonAccount)
+    ? person.PersonAccount
+    : (person?.PersonAccount?.items ?? person?.PersonAccount?.Items ?? []);
+  return list[0];
+}

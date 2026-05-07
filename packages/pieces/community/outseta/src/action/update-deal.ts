@@ -110,6 +110,14 @@ export const updateDealAction = createAction({
       throw new Error('At least one field must be provided.');
     }
 
+    // Defensive: ensure DealPeople is a flat array on the way out, so we
+    // never PUT back a {items: [...]} envelope that the server might
+    // misinterpret as "no contacts" and wipe.
+    if (deal.DealPeople && !Array.isArray(deal.DealPeople)) {
+      deal.DealPeople =
+        deal.DealPeople.items ?? deal.DealPeople.Items ?? [];
+    }
+
     const updated = await client.put<any>(
       `/api/v1/crm/deals/${context.propsValue.dealUid}`,
       deal
