@@ -48,6 +48,12 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 const requiresAuth = component.requireAuth && !isNil(piece.auth)
 
                 let authHint: AuthHint | undefined
+                if (requiresAuth && auth) {
+                    const authOwnership = await validateAuthOwnership({ auth, pieceName: normalized, projectId: mcp.projectId, log })
+                    if (authOwnership) {
+                        return authOwnership
+                    }
+                }
                 if (requiresAuth && !auth) {
                     authHint = await discoverAvailableConnections({ pieceName: normalized, projectId: mcp.projectId, log })
                 }
@@ -181,6 +187,41 @@ async function discoverAvailableConnections({ pieceName, projectId, log }: {
         log.debug({ err, pieceName }, 'Failed to discover connections')
         return { message: 'Use ap_list_connections to find connections.', connections: [] }
     }
+}
+
+async function validateAuthOwnership({ auth, pieceName, projectId, log }: {
+    auth: string
+    pieceName: string
+    projectId: string
+    log: FastifyBaseLogger
+}): Promise<{ content: [{ type: 'text', text: string }] } | null> {
+    try {
+        const project = await projectService(log).getOneOrThrow(projectId)
+        const connections = await appConnectionService(log).list({
+            projectId,
+            platformId: project.platformId,
+            pieceName,
+            cursorRequest: null,
+            scope: undefined,
+            displayName: undefined,
+            status: undefined,
+            limit: 1,
+            externalIds: [auth],
+        })
+        const match = connections.data[0]
+        if (!match) {
+            return {
+                content: [{
+                    type: 'text',
+                    text: `⚠️ Connection "${auth}" does not belong to piece "${pieceName}". Use ap_list_connections to find the correct connection for this piece.`,
+                }],
+            }
+        }
+    }
+    catch {
+        // If lookup fails, proceed anyway — don't block the user
+    }
+    return null
 }
 
 const { withTimeout } = mcpUtils

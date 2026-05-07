@@ -90,8 +90,10 @@ export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: F
                     }
                 }
 
-                if (Array.isArray(options)) {
-                    const mapped = options.map((o: { label: string, value: unknown }) => ({ label: o.label, value: o.value }))
+                const optionsArray = extractOptionsArray(options)
+
+                if (optionsArray !== null) {
+                    const mapped = optionsArray.map((o: { label: string, value: unknown }) => ({ label: String(o.label ?? ''), value: o.value }))
                     if (mapped.length === 0) {
                         return {
                             content: [{ type: 'text', text: `⚠️ No options found for "${propertyName}". The account may have no items. You may use the value the user provided directly, but the dropdown in the flow editor will appear unset.` }],
@@ -102,8 +104,9 @@ export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: F
                     }
                 }
 
+                log.warn({ propertyName, optionsType: typeof options, options }, 'ap_resolve_property_options: unrecognized options format')
                 return {
-                    content: [{ type: 'text', text: `⚠️ Unexpected response format for "${propertyName}".` }],
+                    content: [{ type: 'text', text: `⚠️ Could not parse options for "${propertyName}". You may use the value the user provided directly — it may work at runtime.` }],
                 }
             }
             catch (err) {
@@ -114,6 +117,19 @@ export const apResolvePropertyOptionsTool = (mcp: ProjectScopedMcpServer, log: F
             }
         },
     }
+}
+
+function extractOptionsArray(options: unknown): Array<{ label: string, value: unknown }> | null {
+    if (Array.isArray(options)) return options
+
+    if (isObject(options) && !Array.isArray(options)) {
+        const obj = options as Record<string, unknown>
+        if (Array.isArray(obj.options)) {
+            return obj.options as Array<{ label: string, value: unknown }>
+        }
+    }
+
+    return null
 }
 
 const resolvePropertyOptionsInput = z.object({

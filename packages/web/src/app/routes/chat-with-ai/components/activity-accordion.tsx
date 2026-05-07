@@ -295,6 +295,7 @@ function classifyTool(part: DynamicToolPart): string {
   if (name.includes('run_action') || name.includes('run_one_time'))
     return 'execute';
   if (name.includes('setup_guide')) return 'setup';
+  if (name.includes('manage_notes')) return 'notes';
   if (name.includes('rename_flow') || name.includes('duplicate_flow'))
     return 'flows';
   if (
@@ -436,6 +437,12 @@ function buildStep({
       return {
         summary: t('Found setup instructions.'),
         chipLabel: t('Getting setup guide'),
+        pieceNames: [],
+      };
+    case 'notes':
+      return {
+        summary: t('Added flow documentation.'),
+        chipLabel: t('Adding notes'),
         pieceNames: [],
       };
     default:
