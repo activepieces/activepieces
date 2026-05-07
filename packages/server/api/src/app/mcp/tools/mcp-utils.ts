@@ -23,9 +23,28 @@ const RESOLVABLE_PROP_TYPES = new Set<PropertyType>([
 const STEP_REFERENCE_HINT = 'Use {{stepName.field}} to reference prior steps (no .output. in path).'
 
 function mcpToolError(prefix: string, err: unknown): { content: [{ type: 'text', text: string }] } {
+    const entityDetail = extractEntityNotFoundDetail(err)
+    if (entityDetail) {
+        return { content: [{ type: 'text', text: `❌ ${prefix}: ${entityDetail} not found. Check the ID or name and try again.` }] }
+    }
     const raw = err instanceof Error ? err.message : String(err)
     const message = sanitizeErrorMessage(raw)
     return { content: [{ type: 'text', text: `❌ ${prefix}: ${message}` }] }
+}
+
+function extractEntityNotFoundDetail(err: unknown): string | null {
+    if (!isObject(err)) return null
+    const error = (err as Record<string, unknown>).error
+    if (!isObject(error)) return null
+    const typed = error as Record<string, unknown>
+    if (typed.code !== 'ENTITY_NOT_FOUND') return null
+    if (!isObject(typed.params)) return null
+    const params = typed.params as Record<string, unknown>
+    if (typeof params.message === 'string') return params.message
+    const entityType = typeof params.entityType === 'string' ? params.entityType : null
+    const entityId = typeof params.entityId === 'string' ? params.entityId : null
+    if (entityType) return `${entityType}${entityId ? ` "${entityId}"` : ''}`
+    return entityId ? `"${entityId}"` : null
 }
 
 function sanitizeErrorMessage(message: string): string {

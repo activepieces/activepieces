@@ -187,7 +187,18 @@ function AssistantMessage({
     [fullText],
   );
 
-  const showActivity = activityEverShown && !hasBuildProgress;
+  const postBuildToolParts = useMemo(
+    () =>
+      hasBuildProgress
+        ? allToolParts.filter(
+            (p): p is DynamicToolPart => p.toolName === 'ap_manage_notes',
+          )
+        : allToolParts,
+    [allToolParts, hasBuildProgress],
+  );
+
+  const showActivity =
+    activityEverShown && (!hasBuildProgress || postBuildToolParts.length > 0);
 
   const renderableParts = message.parts.filter(
     (p): p is { type: 'text'; text: string } =>
@@ -209,7 +220,7 @@ function AssistantMessage({
         <div className="min-w-0 space-y-2 flex-1">
           {showActivity && (
             <ActivityAccordion
-              toolParts={allToolParts}
+              toolParts={hasBuildProgress ? postBuildToolParts : allToolParts}
               reasoningText={reasoningText}
               isStreaming={isStreaming}
               hasContent={hasContent}
