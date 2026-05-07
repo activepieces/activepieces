@@ -207,7 +207,7 @@ function AssistantMessage({
     >
       <Message>
         <div className="min-w-0 space-y-2 flex-1">
-          {showActivity && !hasBuildProgress && (
+          {showActivity && (
             <ActivityAccordion
               toolParts={allToolParts}
               reasoningText={reasoningText}
