@@ -105,8 +105,12 @@ export const createEventAction = createAction({
       refreshers: ['link_id'],
       props: async ({ auth, link_id }) => {
         if (!auth || !link_id) return {} as InputPropertyMap;
-        const fields = await fetchLinkFields(getToken(auth), link_id as unknown as string);
-        return buildCustomFieldProps(fields);
+        try {
+          const fields = await fetchLinkFields(getToken(auth), link_id as unknown as string);
+          return buildCustomFieldProps(fields);
+        } catch {
+          return {} as InputPropertyMap;
+        }
       },
     }),
     metadata: Property.Object({
@@ -158,16 +162,12 @@ export const createEventAction = createAction({
 });
 
 async function fetchLinkFields(token: string, linkId: string): Promise<SavvyCalLinkField[]> {
-  try {
-    const response = await savvyCalApiCall<SavvyCalSchedulingLink>({
-      token,
-      method: HttpMethod.GET,
-      path: `/links/${linkId}`,
-    });
-    return response.body.fields ?? [];
-  } catch {
-    return [];
-  }
+  const response = await savvyCalApiCall<SavvyCalSchedulingLink>({
+    token,
+    method: HttpMethod.GET,
+    path: `/links/${linkId}`,
+  });
+  return response.body.fields ?? [];
 }
 
 function buildCustomFieldProps(fields: SavvyCalLinkField[]): InputPropertyMap {
@@ -210,7 +210,7 @@ function serializeCustomFields({
   for (const field of linkFields) {
     const raw = customFields[field.id];
     if (raw === undefined || raw === null || raw === '') continue;
-    const value = Array.isArray(raw) ? raw.join(', ') : String(raw);
+    const value = Array.isArray(raw) ? raw.join(MULTI_SELECT_VALUE_DELIMITER) : String(raw);
     result.push({ id: field.id, label: field.label, type: field.type, value });
   }
   return result;
@@ -252,3 +252,9 @@ function isLongTextFieldType(type: string): boolean {
 function isHiddenFieldType(type: string): boolean {
   return type.toLowerCase() === 'hidden';
 }
+
+// SavvyCal's CreateEventRequest documents fields[].value as a string. Multi-select
+// (checkboxes) selections are joined with this delimiter. The exact format SavvyCal
+// expects on the receiving side isn't documented; ", " matches common form-encoding
+// conventions. Adjust here if SavvyCal rejects multi-select payloads.
+const MULTI_SELECT_VALUE_DELIMITER = ', ';
