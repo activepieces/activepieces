@@ -1,8 +1,8 @@
 import {
     AppConnectionStatus,
-    McpServer,
     McpToolDefinition,
     Permission,
+    ProjectScopedMcpServer,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -33,7 +33,7 @@ const listConnectionsSchema = z.object({
         ),
 })
 
-export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apListConnectionsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_connections',
         permission: Permission.READ_APP_CONNECTION,

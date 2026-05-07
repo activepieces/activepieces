@@ -1,4 +1,4 @@
-import { McpServer, McpToolDefinition, Permission } from '@activepieces/shared'
+import { McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { executeAdhocAction } from './flow-run-utils'
@@ -12,7 +12,7 @@ const runActionInput = z.object({
     pieceVersion: z.string().optional().describe('Defaults to the latest installed version. Use "~X.Y.Z" for minor-version pinning.'),
 })
 
-export const apRunActionTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apRunActionTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_run_action',
         permission: Permission.WRITE_RUN,

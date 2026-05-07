@@ -23,11 +23,14 @@ import {
 import { ChatUIMessage } from '@/features/chat/lib/chat-types';
 import { cn } from '@/lib/utils';
 
-import { getTextFromParts } from '../lib/message-parsers';
+import { getTextFromParts, parseBuildProgress } from '../lib/message-parsers';
 
+import { BuildProgressCard } from './build-progress-card';
 import { ChatThinkingLoader } from './chat-thinking-loader';
 import { MessageContentWithAuth } from './message-content';
 import { ToolCallGroup } from './tool-call-group';
+
+const HIDDEN_TOOLS = new Set(['ap_set_session_title', 'ap_select_project']);
 
 export function ChatMessage({
   message,
@@ -35,16 +38,16 @@ export function ChatMessage({
   isLastMessage = false,
   onRetry,
   onSend,
-  connectedPieces,
-  onPieceConnected,
+  selectedProjectId,
+  onSelectProject,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
-  connectedPieces: Set<string>;
-  onPieceConnected: (piece: string) => void;
+  selectedProjectId?: string | null;
+  onSelectProject?: (projectId: string) => void;
 }) {
   if (message.role === 'user') {
     return <UserMessage message={message} isLastMessage={isLastMessage} />;
@@ -57,13 +60,13 @@ export function ChatMessage({
       isLastMessage={isLastMessage}
       onRetry={onRetry}
       onSend={onSend}
-      connectedPieces={connectedPieces}
-      onPieceConnected={onPieceConnected}
+      selectedProjectId={selectedProjectId}
+      onSelectProject={onSelectProject}
     />
   );
 }
 
-export function UserMessage({
+function UserMessage({
   message,
   isLastMessage = false,
 }: {
@@ -130,22 +133,22 @@ export function UserMessage({
   );
 }
 
-export function AssistantMessage({
+function AssistantMessage({
   message,
   isStreaming,
   isLastMessage = false,
   onRetry,
   onSend,
-  connectedPieces,
-  onPieceConnected,
+  selectedProjectId,
+  onSelectProject,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
-  connectedPieces: Set<string>;
-  onPieceConnected: (piece: string) => void;
+  selectedProjectId?: string | null;
+  onSelectProject?: (projectId: string) => void;
 }) {
   const reasoningParts = message.parts.filter(
     (p): p is { type: 'reasoning'; text: string } => p.type === 'reasoning',
@@ -153,7 +156,6 @@ export function AssistantMessage({
   const thoughts = reasoningParts.map((p) => p.text).join('');
   const hasThoughts = thoughts.length > 0;
 
-  const HIDDEN_TOOLS = new Set(['ap_set_session_title']);
   const dynamicToolParts = message.parts.filter(
     (p) => p.type === 'dynamic-tool' && !HIDDEN_TOOLS.has(p.toolName),
   );
@@ -206,8 +208,8 @@ export function AssistantMessage({
             isStreaming,
             isLastMessage,
             onSend,
-            connectedPieces,
-            onPieceConnected,
+            selectedProjectId,
+            onSelectProject,
           })}
 
           {isStreaming && !isWaiting && <ChatThinkingLoader showText={false} />}
@@ -270,18 +272,29 @@ export function AssistantMessage({
 function renderParts({
   parts,
   isStreaming,
-  isLastMessage = false,
   onSend,
-  connectedPieces,
-  onPieceConnected,
+  selectedProjectId,
+  onSelectProject,
+  isLastMessage,
 }: {
   parts: ChatUIMessage['parts'];
   isStreaming: boolean;
-  isLastMessage?: boolean;
+  isLastMessage: boolean;
   onSend: (text: string, files?: File[]) => void;
-  connectedPieces: Set<string>;
-  onPieceConnected: (piece: string) => void;
+  selectedProjectId?: string | null;
+  onSelectProject?: (projectId: string) => void;
 }): React.ReactNode[] {
+  const fullText = parts
+    .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+    .map((p) => p.text)
+    .join('');
+  const { progress: buildProgress } = parseBuildProgress(fullText);
+
+  const allToolParts = buildProgress
+    ? parts.filter((p) => p.type === 'dynamic-tool')
+    : [];
+  let buildCardRendered = false;
+
   const nodes: React.ReactNode[] = [];
   const toolBuffer: ChatUIMessage['parts'] = [];
 
@@ -289,13 +302,29 @@ function renderParts({
     if (toolBuffer.length === 0) return;
     const snapshot = [...toolBuffer];
     toolBuffer.length = 0;
-    nodes.push(
-      <ToolCallGroup
-        key={key}
-        toolParts={snapshot}
-        isStreaming={isStreaming}
-      />,
-    );
+
+    if (buildProgress) {
+      if (!buildCardRendered) {
+        buildCardRendered = true;
+        nodes.push(
+          <BuildProgressCard
+            key="build-progress"
+            progress={buildProgress}
+            toolParts={allToolParts}
+            allParts={parts}
+            isStreaming={isStreaming}
+          />,
+        );
+      }
+    } else {
+      nodes.push(
+        <ToolCallGroup
+          key={key}
+          toolParts={snapshot}
+          isStreaming={isStreaming}
+        />,
+      );
+    }
   }
 
   parts.forEach((part, idx) => {
@@ -308,9 +337,9 @@ function renderParts({
           key={idx}
           content={part.text}
           onSend={onSend}
+          selectedProjectId={selectedProjectId}
+          onSelectProject={onSelectProject}
           isLastMessage={isLastMessage}
-          connectedPieces={connectedPieces}
-          onPieceConnected={onPieceConnected}
         />,
       );
     }

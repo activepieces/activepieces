@@ -1,4 +1,4 @@
-import { FlowRunStatus, isNil, McpServer, McpToolDefinition, Permission, RunEnvironment } from '@activepieces/shared'
+import { FlowRunStatus, isNil, McpToolDefinition, Permission, ProjectScopedMcpServer, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
@@ -15,7 +15,7 @@ const listRunsInput = z.object({
     limit: z.number().min(1).max(50).optional().describe('Max runs to return (default 10, max 50)'),
 })
 
-export const apListRunsTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apListRunsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_runs',
         permission: Permission.READ_RUN,

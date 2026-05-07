@@ -1,4 +1,3 @@
-import { PopulatedMcpServer } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Lock } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -16,37 +15,36 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
-import { mcpHooks } from './utils/mcp-hooks';
 import {
   ALL_CONTROLLABLE_TOOL_NAMES,
   TOOL_CATEGORIES,
 } from './utils/mcp-tools-metadata';
 
 type McpToolsProps = {
-  mcpServer: PopulatedMcpServer;
+  enabledTools: string[] | null;
+  isPending: boolean;
+  onUpdateEnabledTools: (tools: string[]) => void;
 };
 
-export function McpTools({ mcpServer }: McpToolsProps) {
-  const currentProjectId = authenticationSession.getProjectId();
-  const { mutate: updateMcpServer, isPending } = mcpHooks.useUpdateMcpServer(
-    currentProjectId!,
-  );
-
+export function McpTools({
+  enabledTools: externalEnabledTools,
+  isPending,
+  onUpdateEnabledTools,
+}: McpToolsProps) {
   const [enabledTools, setEnabledTools] = useState<string[]>(
-    () => mcpServer.enabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES,
+    () => externalEnabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES,
   );
 
   useEffect(() => {
     if (!isPending) {
-      setEnabledTools(mcpServer.enabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES);
+      setEnabledTools(externalEnabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES);
     }
-  }, [mcpServer.enabledTools, isPending]);
+  }, [externalEnabledTools, isPending]);
 
   const saveEnabledTools = useDebouncedCallback((tools: string[]) => {
-    updateMcpServer({ enabledTools: tools });
+    onUpdateEnabledTools(tools);
   }, 300);
 
   const toggleTool = (name: string, checked: boolean) => {
