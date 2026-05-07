@@ -243,6 +243,9 @@
       "@activepieces/piece-checkout": [
         "packages/pieces/community/checkout/src/index.ts"
       ],
+      "@activepieces/piece-chess-com": [
+        "packages/pieces/community/chess-com/src/index.ts"
+      ],
       "@activepieces/piece-circle": [
         "packages/pieces/community/circle/src/index.ts"
       ],
@@ -603,6 +606,9 @@
       "@activepieces/piece-hunter": [
         "packages/pieces/community/hunter/src/index.ts"
       ],
+      "@activepieces/piece-iloveapi": [
+        "packages/pieces/community/iloveapi/src/index.ts"
+      ],
       "@activepieces/piece-image-ai": [
         "packages/pieces/community/image-ai/src/index.ts"
       ],
@@ -880,6 +886,9 @@
       ],
       "@activepieces/piece-pagerduty": [
         "packages/pieces/community/pagerduty/src/index.ts"
+      ],
+      "@activepieces/piece-parallel": [
+        "packages/pieces/community/parallel/src/index.ts"
       ],
       "@activepieces/piece-parseur": [
         "packages/pieces/community/parseur/src/index.ts"
@@ -1976,6 +1985,9 @@
       ],
       "@activepieces/piece-proxycurl": [
         "packages/pieces/community/proxycurl/src/index.ts"
+      ],
+      "@activepieces/piece-connectuc": [
+        "packages/pieces/community/connectuc/src/index.ts"
       ]
     },
     "resolveJsonModule": true
