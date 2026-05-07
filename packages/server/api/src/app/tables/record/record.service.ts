@@ -16,7 +16,7 @@ import {
     UpdateRecordRequest,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, In } from 'typeorm'
+import { EntityManager, In, QueryFailedError } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { system } from '../../helper/system/system'
@@ -52,24 +52,35 @@ export const recordService = {
         )
 
         let insertedRecordIds: string[] = []
-        insertedRecordIds = await transaction(async (entityManager: EntityManager) => {
-            const batches = chunk(validRecords, MAX_BATCH_SIZE)
-            const records: RecordSchema[] = []
-            const insertedRecordIds: string[] = []
+        try {
+            insertedRecordIds = await transaction(async (entityManager: EntityManager) => {
+                const batches = chunk(validRecords, MAX_BATCH_SIZE)
+                const records: RecordSchema[] = []
+                const insertedRecordIds: string[] = []
 
-            for (const batch of batches) {
-                const now = new Date(new Date().getTime() + records.length)
-                const recordInsertions = prepareRecordInsertions(batch, request.tableId, projectId, now)
-                await entityManager.getRepository(RecordEntity).insert(recordInsertions)
+                for (const batch of batches) {
+                    const now = new Date(new Date().getTime() + records.length)
+                    const recordInsertions = prepareRecordInsertions(batch, request.tableId, projectId, now)
+                    await entityManager.getRepository(RecordEntity).insert(recordInsertions)
 
-                const cellInsertions = prepareCellInsertions(batch, recordInsertions, projectId)
-                await entityManager.getRepository(CellEntity).insert(cellInsertions)
+                    const cellInsertions = prepareCellInsertions(batch, recordInsertions, projectId)
+                    await entityManager.getRepository(CellEntity).insert(cellInsertions)
 
-                insertedRecordIds.push(...recordInsertions.map((r) => r.id))
+                    insertedRecordIds.push(...recordInsertions.map((r) => r.id))
+                }
+
+                return insertedRecordIds
+            })
+        }
+        catch (e) {
+            if (e instanceof QueryFailedError && isUniqueViolation(e)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: 'Record or cell already exists for the given (projectId, tableId, fieldId, recordId)' },
+                })
             }
-
-            return insertedRecordIds
-        })
+            throw e
+        }
 
         const insertedRecords = await recordRepo().find({
             where: { id: In(insertedRecordIds), tableId: request.tableId, projectId },
@@ -424,6 +435,15 @@ type CellInsertion = {
     fieldId: string
     projectId: string
     value: string
+}
+
+function isUniqueViolation(error: QueryFailedError): boolean {
+    // Postgres: 23505 (unique_violation). Sqlite: SQLITE_CONSTRAINT_UNIQUE / SQLITE_CONSTRAINT.
+    const driverError = (error as QueryFailedError & { driverError?: { code?: string } }).driverError
+    const code = driverError?.code
+    return code === '23505'
+        || code === 'SQLITE_CONSTRAINT_UNIQUE'
+        || code === 'SQLITE_CONSTRAINT'
 }
 
 function prepareRecordInsertions(

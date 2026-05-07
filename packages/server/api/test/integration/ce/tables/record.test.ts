@@ -115,6 +115,28 @@ describe('Record API', () => {
             expect(body.length).toBe(1)
             expect(body[0].cells[field.id].value).toBe('valid')
         })
+
+        it('should return 409 (not 500) when a unique-violation hits the cell index', async () => {
+            // Two cells with the same fieldId in one record → identical (projectId, fieldId, recordId)
+            // → fires idx_cell_project_id_field_id_record_id_unique → QueryFailedError → caught and
+            // translated to ActivepiecesError(VALIDATION) → mapped to CONFLICT by error-handler.
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+
+            const response = await ctx.post('/v1/records', {
+                tableId: table.id,
+                records: [
+                    [
+                        { fieldId: field.id, value: 'first' },
+                        { fieldId: field.id, value: 'second' },
+                    ],
+                ],
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            const body = response?.json()
+            expect(body.code).toBe('VALIDATION')
+        })
     })
 
     describeWithAuth('GET /v1/records (List)', () => app!, (setup) => {
