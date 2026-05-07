@@ -38,6 +38,18 @@ export const getFormResponses = createAction({
                 form_id: i['form_id'] ?? null,
                 created_at: i['created_at'] ?? null,
                 updated_at: i['updated_at'] ?? null,
+            return {
+                id: i['id'] ?? null,
+                uuid: i['uuid'] ?? null,
+                form_id: i['form_id'] ?? null,
+                created_at: i['created_at'] ?? null,
+                updated_at: i['updated_at'] ?? null,
+                ...Object.fromEntries(
+                    Object.entries((i['fields'] as Record<string, unknown>) || {}).map(([k, v]) => [
+                        `field_${k}`,
+                        typeof v === 'object' ? JSON.stringify(v) : v,
+                    ]),
+                ),
             };
         });
     },

@@ -6,6 +6,7 @@
         "paths": {},
         "outDir": "./dist",
         "declaration": true,
+        "declarationMap": true,
         "module": "commonjs",
         "types": ["node"]
     },

@@ -4,10 +4,10 @@ import {
     FlowOperationType,
     flowStructureUtil,
     isNil,
-    McpServer,
     McpToolDefinition,
     Permission,
     PieceActionSettings,
+    ProjectScopedMcpServer,
     UpdateActionRequest,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -30,7 +30,7 @@ const updateStepInput = z.object({
     packageJson: z.string().optional(),
 })
 
-export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apUpdateStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_step',
         permission: Permission.WRITE_FLOW,

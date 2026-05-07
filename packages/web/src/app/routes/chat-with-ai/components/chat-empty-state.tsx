@@ -1,6 +1,5 @@
 import { t } from 'i18next';
 import {
-  AlertTriangle,
   Database,
   Lightbulb,
   Settings,
@@ -14,16 +13,11 @@ import { useNavigate } from 'react-router-dom';
 import { PromptSuggestion } from '@/components/prompt-kit/prompt-suggestion';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { projectCollectionUtils } from '@/features/projects';
 
 export function EmptyState({ incognito }: { incognito: boolean }) {
-  const { project } = projectCollectionUtils.useCurrentProject();
-
   const greeting = incognito
     ? t('Private Chat')
-    : t('What would you like to do in {projectName}?', {
-        projectName: project.displayName,
-      });
+    : t('What would you like to work on?');
 
   return (
     <motion.div
@@ -84,11 +78,11 @@ export function SetupRequiredState() {
       </div>
       <div className="space-y-2">
         <h2 className="text-xl font-semibold">
-          {t('Set up Anthropic to get started')}
+          {t('Set up an AI provider to get started')}
         </h2>
         <p className="text-muted-foreground text-sm max-w-md">
           {t(
-            'AI Chat requires an Anthropic API key. Add your Anthropic provider in the AI settings to start chatting.',
+            'AI Chat requires an AI provider. Add your provider in the AI settings to start chatting.',
           )}
         </p>
       </div>
@@ -96,24 +90,6 @@ export function SetupRequiredState() {
         <Settings className="h-4 w-4" />
         {t('Go to AI Settings')}
       </Button>
-    </div>
-  );
-}
-
-export function SandboxNotConfiguredState() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-20 flex-1 min-w-0">
-      <div className="flex items-center justify-center h-16 w-16 rounded-2xl bg-destructive/10">
-        <AlertTriangle className="h-8 w-8 text-destructive" />
-      </div>
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold">{t('Sandbox not configured')}</h2>
-        <p className="text-muted-foreground text-sm max-w-md">
-          {t(
-            'AI Chat requires an E2B sandbox to run. Ask your admin to set the AP_E2B_API_KEY environment variable.',
-          )}
-        </p>
-      </div>
     </div>
   );
 }

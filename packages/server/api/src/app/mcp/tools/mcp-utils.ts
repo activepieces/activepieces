@@ -4,6 +4,7 @@ import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { projectService } from '../../project/project-service'
 
 const NON_INPUT_PROP_TYPES = new Set<PropertyType>([
     PropertyType.OAUTH2,
@@ -112,7 +113,7 @@ function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
                 summary.options = prop.options.options.map((o: { label: string, value: unknown }) => ({ label: o.label, value: o.value }))
             }
             if (prop.type === PropertyType.DROPDOWN || prop.type === PropertyType.MULTI_SELECT_DROPDOWN) {
-                summary.note = 'Dynamic dropdown — options load from your account via API. Configure in the Activepieces UI, or provide a known value.'
+                summary.note = 'Resolve with ap_resolve_property_options. Use the returned value (ID), not label.'
             }
             if (prop.type === PropertyType.DYNAMIC) {
                 summary.note = 'DYNAMIC — call ap_get_piece_props with auth+input to resolve sub-fields.'
@@ -142,7 +143,11 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
     if (isNil(normalized)) {
         return { error: mcpToolError('Validation failed', new Error('pieceName is required')) }
     }
-    const piece = await pieceMetadataService(log).get({ name: normalized, projectId })
+    // Resolve platformId so private (CUSTOM) pieces on this platform are findable by
+    // every tool that uses this helper (ap_add_step, ap_update_step, ap_get_piece_props,
+    // ap_validate_step_config, ap_run_action, etc.).
+    const project = await projectService(log).getOneOrThrow(projectId)
+    const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId: project.platformId })
     if (isNil(piece)) {
         return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_list_pieces to get valid piece names.` }] } }
     }
@@ -271,6 +276,16 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
     }
 }
 
+function withTimeout<T>({ promise, ms }: { promise: Promise<T>, ms: number }): Promise<T> {
+    let timer: ReturnType<typeof setTimeout>
+    return Promise.race([
+        promise.finally(() => clearTimeout(timer)),
+        new Promise<never>((_resolve, reject) => {
+            timer = setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)
+        }),
+    ])
+}
+
 export const mcpUtils = {
     mcpToolError,
     truncate,
@@ -284,6 +299,7 @@ export const mcpUtils = {
     findResolvableProps,
     validateAuth,
     fillDefaultsForMissingOptionalProps,
+    withTimeout,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
 }

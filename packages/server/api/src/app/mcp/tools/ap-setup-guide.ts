@@ -1,5 +1,5 @@
 import { PropertyType } from '@activepieces/pieces-framework'
-import { AIProviderName, isNil, McpServer, McpToolDefinition } from '@activepieces/shared'
+import { AIProviderName, isNil, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
@@ -12,7 +12,7 @@ const setupGuideInput = z.object({
     pieceName: z.string().optional().describe('For connections: the piece that needs auth (e.g., "@activepieces/piece-gmail"). Omit for general instructions.'),
 })
 
-export const apSetupGuideTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apSetupGuideTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_setup_guide',
         description: 'Get setup instructions for connections or AI providers. Returns steps for the user to follow in the UI.',
@@ -35,7 +35,7 @@ export const apSetupGuideTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
     }
 }
 
-async function connectionGuide(mcp: McpServer, log: FastifyBaseLogger, pieceName?: string): Promise<{ content: [{ type: 'text', text: string }] }> {
+async function connectionGuide(mcp: ProjectScopedMcpServer, log: FastifyBaseLogger, pieceName?: string): Promise<{ content: [{ type: 'text', text: string }] }> {
     if (isNil(pieceName)) {
         return {
             content: [{
@@ -58,11 +58,13 @@ async function connectionGuide(mcp: McpServer, log: FastifyBaseLogger, pieceName
         }
     }
 
+    // Resolve platformId so private (CUSTOM) pieces on this platform are discoverable.
+    const project = await projectService(log).getOneOrThrow(mcp.projectId)
     const piece = await pieceMetadataService(log).get({
         name: pieceName,
         version: undefined,
         projectId: mcp.projectId,
-        platformId: undefined,
+        platformId: project.platformId,
     })
 
     if (isNil(piece)) {
@@ -143,7 +145,7 @@ async function connectionGuide(mcp: McpServer, log: FastifyBaseLogger, pieceName
     return { content: [{ type: 'text', text: lines.join('\n') }] }
 }
 
-async function aiProviderGuide(mcp: McpServer, log: FastifyBaseLogger): Promise<{ content: [{ type: 'text', text: string }] }> {
+async function aiProviderGuide(mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): Promise<{ content: [{ type: 'text', text: string }] }> {
     const project = await projectService(log).getOneOrThrow(mcp.projectId)
     const providers = await aiProviderService(log).listProviders(project.platformId)
 

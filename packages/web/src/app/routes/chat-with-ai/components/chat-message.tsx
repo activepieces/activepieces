@@ -1,11 +1,9 @@
-import { isDataUIPart } from 'ai';
 import { t } from 'i18next';
 import { Check, Copy, Paperclip, RefreshCw } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   forwardRef,
-  useEffect,
-  useRef,
+  useMemo,
   useState,
   type ButtonHTMLAttributes,
 } from 'react';
@@ -16,20 +14,15 @@ import {
   MessageActions,
   MessageContent,
 } from '@/components/prompt-kit/message';
-import {
-  Reasoning,
-  ReasoningContent,
-  ReasoningTrigger,
-} from '@/components/prompt-kit/reasoning';
-import { PlanCard } from '@/features/chat/components/plan-card';
-import { ChatDataParts, ChatUIMessage } from '@/features/chat/lib/chat-types';
+import { ChatUIMessage, DynamicToolPart } from '@/features/chat/lib/chat-types';
 import { cn } from '@/lib/utils';
 
-import { getTextFromParts } from '../lib/message-parsers';
+import { getTextFromParts, parseBuildProgress } from '../lib/message-parsers';
 
+import { ActivityAccordion } from './activity-accordion';
+import { BuildProgressCard } from './build-progress-card';
 import { ChatThinkingLoader } from './chat-thinking-loader';
 import { MessageContentWithAuth } from './message-content';
-import { ToolCallGroup } from './tool-call-group';
 
 export function ChatMessage({
   message,
@@ -37,16 +30,16 @@ export function ChatMessage({
   isLastMessage = false,
   onRetry,
   onSend,
-  connectedPieces,
-  onPieceConnected,
+  selectedProjectId,
+  onSelectProject,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
-  connectedPieces: Set<string>;
-  onPieceConnected: (piece: string) => void;
+  selectedProjectId?: string | null;
+  onSelectProject?: (projectId: string) => void;
 }) {
   if (message.role === 'user') {
     return <UserMessage message={message} isLastMessage={isLastMessage} />;
@@ -59,13 +52,13 @@ export function ChatMessage({
       isLastMessage={isLastMessage}
       onRetry={onRetry}
       onSend={onSend}
-      connectedPieces={connectedPieces}
-      onPieceConnected={onPieceConnected}
+      selectedProjectId={selectedProjectId}
+      onSelectProject={onSelectProject}
     />
   );
 }
 
-export function UserMessage({
+function UserMessage({
   message,
   isLastMessage = false,
 }: {
@@ -132,64 +125,78 @@ export function UserMessage({
   );
 }
 
-function extractPlanEntries(
-  parts: ChatUIMessage['parts'],
-): Array<{ content: string; status: string }> {
-  const last = parts.findLast(
-    (p): p is Extract<typeof p, { type: 'data-plan' }> =>
-      isDataUIPart<ChatDataParts>(p) && p.type === 'data-plan',
-  );
-  return last ? last.data.entries : [];
-}
-
-export function AssistantMessage({
+function AssistantMessage({
   message,
   isStreaming,
   isLastMessage = false,
   onRetry,
   onSend,
-  connectedPieces,
-  onPieceConnected,
+  selectedProjectId,
+  onSelectProject,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
   isLastMessage?: boolean;
   onRetry: () => void;
   onSend: (text: string, files?: File[]) => void;
-  connectedPieces: Set<string>;
-  onPieceConnected: (piece: string) => void;
+  selectedProjectId?: string | null;
+  onSelectProject?: (projectId: string) => void;
 }) {
-  const reasoningParts = message.parts.filter(
-    (p): p is { type: 'reasoning'; text: string } => p.type === 'reasoning',
+  const allToolParts = useMemo(
+    () =>
+      message.parts.filter(
+        (p): p is DynamicToolPart => p.type === 'dynamic-tool',
+      ),
+    [message.parts],
   );
-  const thoughts = reasoningParts.map((p) => p.text).join('');
-  const hasThoughts = thoughts.length > 0;
 
-  const dynamicToolParts = message.parts.filter(
-    (p) => p.type === 'dynamic-tool',
+  const reasoningText = useMemo(
+    () =>
+      message.parts
+        .filter(
+          (p): p is { type: 'reasoning'; text: string } =>
+            p.type === 'reasoning',
+        )
+        .map((p) => p.text)
+        .join(''),
+    [message.parts],
   );
+  const hasReasoning = reasoningText.length > 0;
   const textParts = message.parts.filter(
     (p): p is { type: 'text'; text: string } =>
       p.type === 'text' && p.text.length > 0,
   );
   const hasContent = textParts.length > 0;
-  const hasAnyParts = hasThoughts || dynamicToolParts.length > 0 || hasContent;
+  const hasToolCalls = allToolParts.length > 0;
+  const hasAnyVisible = hasToolCalls || hasContent || hasReasoning;
 
-  const isWaiting = isStreaming && !hasAnyParts;
-  const isThinkingOnly =
-    isStreaming && hasThoughts && !hasContent && dynamicToolParts.length === 0;
-  const isThinking = isWaiting || isThinkingOnly;
-  const thinkingSeconds = useThinkingTimer(isThinking);
-  const [isReasoningOpen, setIsReasoningOpen] = useState(false);
+  const isWaiting = isStreaming && !hasAnyVisible;
+  const activityActive =
+    isWaiting || hasToolCalls || (isStreaming && hasReasoning && !hasContent);
+
+  const [activityEverShown, setActivityEverShown] = useState(
+    activityActive || hasToolCalls,
+  );
+  if ((activityActive || hasToolCalls) && !activityEverShown) {
+    setActivityEverShown(true);
+  }
+
   const fullText = getTextFromParts(message.parts);
+  const hasBuildProgress = useMemo(
+    () => parseBuildProgress(fullText).progress !== null,
+    [fullText],
+  );
 
-  const planEntries = extractPlanEntries(message.parts);
+  const showActivity = activityEverShown && !hasBuildProgress;
 
   const renderableParts = message.parts.filter(
-    (p) =>
-      (p.type === 'text' && 'text' in p && p.text.length > 0) ||
-      p.type === 'dynamic-tool',
+    (p): p is { type: 'text'; text: string } =>
+      p.type === 'text' && p.text.length > 0,
   );
+
+  if (!isStreaming && !isLastMessage && !hasContent) {
+    return null;
+  }
 
   return (
     <motion.div
@@ -200,56 +207,49 @@ export function AssistantMessage({
     >
       <Message>
         <div className="min-w-0 space-y-2 flex-1">
-          <AnimatePresence mode="wait">
-            {isWaiting && (
+          {showActivity && (
+            <ActivityAccordion
+              toolParts={allToolParts}
+              reasoningText={reasoningText}
+              isStreaming={isStreaming}
+              hasContent={hasContent}
+            />
+          )}
+
+          <AnimatePresence>
+            {hasContent && (
               <motion.div
-                key="thinking"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.3 }}
               >
-                <ChatThinkingLoader />
+                {renderTextParts({
+                  parts: renderableParts,
+                  isStreaming,
+                  isLastMessage,
+                  onSend,
+                  selectedProjectId,
+                  onSelectProject,
+                  allParts: message.parts,
+                })}
               </motion.div>
             )}
           </AnimatePresence>
 
-          {renderParts({
-            parts: renderableParts,
-            isStreaming,
-            isLastMessage,
-            onSend,
-            connectedPieces,
-            onPieceConnected,
-          })}
+          {isStreaming && !isWaiting && !showActivity && !hasContent && (
+            <ChatThinkingLoader showText={false} />
+          )}
 
-          {planEntries.length > 0 && <PlanCard entries={planEntries} />}
-
-          {isStreaming && !isWaiting && <ChatThinkingLoader showText={false} />}
-
-          {hasContent && !isStreaming && (
-            <Reasoning
-              isStreaming={isThinkingOnly}
-              open={isReasoningOpen}
-              onOpenChange={setIsReasoningOpen}
-            >
-              {hasThoughts && (
-                <ReasoningContent
-                  markdown
-                  className="pl-2"
-                  contentClassName="text-xs italic text-muted-foreground relative pl-3 py-3 before:absolute before:left-0 before:top-3 before:bottom-3 before:w-0.5 before:bg-muted-foreground/30"
-                >
-                  {thoughts}
-                </ReasoningContent>
-              )}
-              <MessageActions
-                className={cn(
-                  'gap-1 transition-opacity',
-                  isLastMessage
-                    ? 'opacity-100'
-                    : 'opacity-0 group-hover/msg:opacity-100',
-                )}
-              >
+          <MessageActions
+            className={cn(
+              'gap-1 transition-opacity',
+              isLastMessage
+                ? 'opacity-100'
+                : 'opacity-0 group-hover/msg:opacity-100',
+            )}
+          >
+            {hasContent && !isStreaming && (
+              <>
                 <MessageAction tooltip={t('Copy')}>
                   <CopyIconButton textToCopy={fullText} className="h-6 w-6" />
                 </MessageAction>
@@ -262,112 +262,64 @@ export function AssistantMessage({
                     <RefreshCw className="h-3.5 w-3.5" />
                   </button>
                 </MessageAction>
-                {hasThoughts && thinkingSeconds >= 0.1 && (
-                  <MessageAction
-                    tooltip={
-                      isReasoningOpen ? t('Hide thinking') : t('Show thinking')
-                    }
-                  >
-                    <ReasoningTrigger className="text-xs text-muted-foreground rounded-md px-1.5 py-1 gap-1 transition-colors hover:bg-muted hover:text-foreground [&>span]:!text-muted-foreground hover:[&>span]:!text-foreground [&>div>svg]:!h-3 [&>div>svg]:!w-3">
-                      {formatThinkingTime({ seconds: thinkingSeconds })}
-                    </ReasoningTrigger>
-                  </MessageAction>
-                )}
-              </MessageActions>
-            </Reasoning>
-          )}
+              </>
+            )}
+          </MessageActions>
         </div>
       </Message>
     </motion.div>
   );
 }
 
-function renderParts({
+function renderTextParts({
   parts,
   isStreaming,
-  isLastMessage = false,
   onSend,
-  connectedPieces,
-  onPieceConnected,
+  selectedProjectId,
+  onSelectProject,
+  isLastMessage,
+  allParts,
 }: {
-  parts: ChatUIMessage['parts'];
+  parts: Array<{ type: 'text'; text: string }>;
   isStreaming: boolean;
-  isLastMessage?: boolean;
+  isLastMessage: boolean;
   onSend: (text: string, files?: File[]) => void;
-  connectedPieces: Set<string>;
-  onPieceConnected: (piece: string) => void;
+  selectedProjectId?: string | null;
+  onSelectProject?: (projectId: string) => void;
+  allParts: ChatUIMessage['parts'];
 }): React.ReactNode[] {
-  const nodes: React.ReactNode[] = [];
-  const toolBuffer: ChatUIMessage['parts'] = [];
+  const fullText = parts.map((p) => p.text).join('');
+  const { progress: buildProgress } = parseBuildProgress(fullText);
 
-  function flushTools(key: string) {
-    if (toolBuffer.length === 0) return;
-    const snapshot = [...toolBuffer];
-    toolBuffer.length = 0;
+  const nodes: React.ReactNode[] = [];
+
+  if (buildProgress) {
+    const toolParts = allParts.filter((p) => p.type === 'dynamic-tool');
     nodes.push(
-      <ToolCallGroup
-        key={key}
-        toolParts={snapshot}
+      <BuildProgressCard
+        key="build-progress"
+        progress={buildProgress}
+        toolParts={toolParts}
+        allParts={allParts}
         isStreaming={isStreaming}
       />,
     );
   }
 
-  parts.forEach((part, idx) => {
-    if (part.type === 'dynamic-tool') {
-      toolBuffer.push(part);
-    } else if (part.type === 'text') {
-      flushTools(`tools-before-${idx}`);
-      nodes.push(
-        <MessageContentWithAuth
-          key={idx}
-          content={part.text}
-          onSend={onSend}
-          isLastMessage={isLastMessage}
-          connectedPieces={connectedPieces}
-          onPieceConnected={onPieceConnected}
-        />,
-      );
-    }
-  });
+  for (let i = 0; i < parts.length; i++) {
+    nodes.push(
+      <MessageContentWithAuth
+        key={i}
+        content={parts[i].text}
+        onSend={onSend}
+        selectedProjectId={selectedProjectId}
+        onSelectProject={onSelectProject}
+        isLastMessage={isLastMessage}
+      />,
+    );
+  }
 
-  flushTools('tools-end');
   return nodes;
-}
-
-function useThinkingTimer(isActive: boolean): number {
-  const startRef = useRef<number | null>(null);
-  const finalRef = useRef<number>(0);
-  const [seconds, setSeconds] = useState(0);
-
-  useEffect(() => {
-    if (isActive) {
-      startRef.current = Date.now();
-    } else {
-      if (startRef.current) {
-        finalRef.current = (Date.now() - startRef.current) / 1000;
-      }
-      startRef.current = null;
-      setSeconds(finalRef.current);
-    }
-  }, [isActive]);
-
-  useEffect(() => {
-    if (!isActive) return;
-    const interval = setInterval(() => {
-      if (startRef.current) {
-        setSeconds((Date.now() - startRef.current) / 1000);
-      }
-    }, 100);
-    return () => clearInterval(interval);
-  }, [isActive]);
-
-  return seconds;
-}
-
-function formatThinkingTime({ seconds }: { seconds: number }): string {
-  const rounded = Math.round(seconds * 10) / 10;
-  return Number.isInteger(rounded) ? `${rounded}s` : `${rounded.toFixed(1)}s`;
 }
 
 const CopyIconButton = forwardRef<
