@@ -16,6 +16,7 @@ import {
     spreadIfDefined,
     UpdateChatConversationRequest,
 } from '@activepieces/shared'
+import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createUIMessageStream, LanguageModel, ModelMessage, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
@@ -367,19 +368,21 @@ function stripThinkingBlocks(messages: ModelMessage[]): ModelMessage[] {
     )
     if (!hasThinking) return messages
 
-    return messages.map((msg) => {
-        if (msg.role !== 'assistant' || !Array.isArray(msg.content)) {
-            return msg
-        }
-        const filtered = (msg.content as Array<Record<string, unknown>>).filter(
-            (part) => part.type !== 'reasoning' && part.type !== 'thinking',
-        )
-        if (filtered.length === msg.content.length) {
-            return msg
-        }
-        if (filtered.length === 0) return msg
-        return { ...msg, content: filtered }
-    })
+    return messages
+        .map((msg) => {
+            if (msg.role !== 'assistant' || !Array.isArray(msg.content)) {
+                return msg
+            }
+            const filtered = (msg.content as Array<Record<string, unknown>>).filter(
+                (part) => part.type !== 'reasoning' && part.type !== 'thinking',
+            )
+            if (filtered.length === msg.content.length) {
+                return msg
+            }
+            if (filtered.length === 0) return null
+            return { ...msg, content: filtered }
+        })
+        .filter((msg): msg is ModelMessage => msg !== null)
 }
 
 const TIER_EFFORT: Record<string, { anthropicBudget: number, openrouterEffort: string }> = {
@@ -408,7 +411,7 @@ function supportsThinking({ modelId }: { modelId: string }): boolean {
     return THINKING_CAPABLE_MODELS.has(bareModel)
 }
 
-function buildThinkingOptions({ provider, modelId }: { provider: AIProviderName, modelId: string }): Record<string, unknown> {
+function buildThinkingOptions({ provider, modelId }: { provider: AIProviderName, modelId: string }): SharedV3ProviderOptions {
     if (!supportsThinking({ modelId })) return {}
     const effort = resolveEffort({ modelId })
     switch (provider) {
