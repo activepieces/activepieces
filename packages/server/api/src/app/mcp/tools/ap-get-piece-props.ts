@@ -205,10 +205,10 @@ async function validateAuthOwnership({ auth, pieceName, projectId, log }: {
             scope: undefined,
             displayName: undefined,
             status: undefined,
-            limit: 100,
-            externalIds: undefined,
+            limit: 1,
+            externalIds: [auth],
         })
-        const match = connections.data.find(c => c.externalId === auth)
+        const match = connections.data[0]
         if (!match) {
             return {
                 content: [{
