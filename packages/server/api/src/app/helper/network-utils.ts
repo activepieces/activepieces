@@ -63,7 +63,8 @@ const extractClientRealIp = (request: FastifyRequest, clientIpHeader: string | u
 }
 
 const getRequestBaseUrl = (req: FastifyRequest): string => {
-    return `${req.protocol}://${req.hostname}`
+    const protocol = req.headers['x-forwarded-proto'] as string ?? req.protocol
+    return `${protocol}://${req.hostname}`
 }
 
 export const networkUtils = {
