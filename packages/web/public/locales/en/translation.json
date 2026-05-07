@@ -1587,6 +1587,7 @@
   "Found setup instructions.": "Found setup instructions.",
   "Getting setup guide": "Getting setup guide",
   "Added": "Added",
+  "Configuring {name}": "Configuring {name}",
   "Running {name}": "Running {name}",
   "Executing": "Executing",
   "Completed a step.": "Completed a step.",
