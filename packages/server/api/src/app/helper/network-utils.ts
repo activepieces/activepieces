@@ -63,7 +63,8 @@ const extractClientRealIp = (request: FastifyRequest, clientIpHeader: string | u
 }
 
 const getRequestBaseUrl = (req: FastifyRequest): string => {
-    const protocol = req.headers['x-forwarded-proto'] as string ?? req.protocol
+    const forwardedProto = req.headers['x-forwarded-proto'] as string | undefined
+    const protocol = forwardedProto?.split(',')[0]?.trim() ?? req.protocol
     const host = req.headers['x-forwarded-host'] as string ?? req.hostname
     return `${protocol}://${host}`
 }
